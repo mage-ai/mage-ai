@@ -1,2 +1,0 @@
-def clean(df):
-    pass

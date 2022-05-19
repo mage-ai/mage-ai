@@ -1,0 +1,16 @@
+CHART_TYPE_BAR_HORIZONTAL = 'bar_horizontal'
+CHART_TYPE_LINE_CHART = 'line_chart'
+CHART_TYPE_HISTOGRAM = 'histogram'
+
+LABEL_TYPE_RANGE = 'range'
+
+DATA_KEY_CHARTS = 'charts'
+DATA_KEY_CORRELATION = 'correlations'
+DATA_KEY_OVERVIEW = 'overview'
+DATA_KEY_TIME_SERIES = 'time_series'
+DATA_KEYS = [
+    DATA_KEY_CHARTS,
+    DATA_KEY_CORRELATION,
+    DATA_KEY_OVERVIEW,
+    DATA_KEY_TIME_SERIES,
+]
