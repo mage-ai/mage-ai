@@ -5,10 +5,10 @@ from data_cleaner.transformer_actions.constants import (
 )
 
 
-class RemoveColumnWithSingleValueRule(BaseRule):
+class RemoveColumnsWithSingleValue(BaseRule):
 
     # Check statistic [feature_uuid]/count_distinct
-    def _evaluate(self, data):
+    def evaluate(self):
         columns_with_single_value = []
         for c in self.df_columns:
             if f'{c}/count_distinct' not in self.statistics:
@@ -20,7 +20,7 @@ class RemoveColumnWithSingleValueRule(BaseRule):
         suggestions.append(self._build_transformer_action_suggestion(
             'Remove columns with single value',
             f'The following columns have single value in all rows: {columns_with_single_value}.'\
-            ' Suggest to remove it.',
+            ' Suggest to remove them.',
             ActionType.REMOVE,
             action_arguments=columns_with_single_value,
             axis=Axis.COLUMN,

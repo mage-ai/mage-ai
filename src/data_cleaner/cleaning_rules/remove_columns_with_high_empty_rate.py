@@ -16,7 +16,7 @@ class RemoveColumnsWithHighEmptyRate(BaseRule):
                 columns_with_no_values.append(c)
             elif f'{c}/null_value_rate' in self.statistics:
                 null_value_rate = self.statistics[f'{c}/null_value_rate']
-                if null_value_rate > self.MISSING_RATE_THRESHOLD:
+                if null_value_rate >= self.MISSING_RATE_THRESHOLD:
                     columns_with_missing_values.append(c)
 
         suggestions = []

@@ -1,12 +1,12 @@
 from data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
     import RemoveColumnsWithHighEmptyRate
 from data_cleaner.cleaning_rules.remove_columns_with_single_value \
-    import RemoveColumnWithSingleValueRule
+    import RemoveColumnsWithSingleValue
 from data_cleaner.transformer_actions.base import BaseAction
 
 DEFAULT_RULES = [
     RemoveColumnsWithHighEmptyRate,
-    RemoveColumnWithSingleValueRule,
+    RemoveColumnsWithSingleValue,
 ]
 
 
