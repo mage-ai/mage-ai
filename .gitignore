@@ -128,3 +128,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# data
+mage/server/data/feature_sets
+
+*.ipynb
