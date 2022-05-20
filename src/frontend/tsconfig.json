@@ -1,5 +1,29 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@api": [
+        "api/index"
+      ],
+      "@api/*": [
+        "api/*"
+      ],
+      "@components/*": [
+        "components/*"
+      ],
+      "@interfaces/*": [
+        "interfaces/*"
+      ],
+      "@oracle/*": [
+        "oracle/*"
+      ],
+      "@styles/*": [
+        "styles/*"
+      ],
+      "@utils/*": [
+        "utils/*"
+      ]
+    },
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
