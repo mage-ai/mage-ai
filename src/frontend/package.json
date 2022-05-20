@@ -3,15 +3,36 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
     "start": "next start",
-    "lint": "next lint"
+    "type": "next build"
   },
   "dependencies": {
+    "@visx/axis": "^2.10.0",
+    "@visx/curve": "^2.1.0",
+    "@visx/event": "^2.6.0",
+    "@visx/gradient": "^2.10.0",
+    "@visx/grid": "^2.10.0",
+    "@visx/group": "^2.10.0",
+    "@visx/legend": "^2.10.0",
+    "@visx/responsive": "^2.10.0",
+    "@visx/scale": "^2.2.2",
+    "@visx/shape": "^2.10.0",
+    "@visx/threshold": "^2.10.0",
+    "@visx/tooltip": "^2.10.0",
+    "axios": "^0.27.2",
+    "moment": "^2.29.3",
     "next": "12.1.6",
     "react": "18.1.0",
-    "react-dom": "18.1.0"
+    "react-dom": "18.1.0",
+    "react-top-loading-bar": "^2.1.0",
+    "storybook": "^6.5.3",
+    "styled-bootstrap-grid": "^3.1.2",
+    "styled-components": "^5.3.5",
+    "styled-system": "^5.1.5",
+    "swr": "^1.3.0"
   },
   "devDependencies": {
     "@types/node": "17.0.34",
