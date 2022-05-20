@@ -2,12 +2,10 @@ from data_cleaner.analysis.constants import (
     CHART_TYPE_BAR_HORIZONTAL,
     CHART_TYPE_LINE_CHART,
     CHART_TYPE_HISTOGRAM,
-    DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
     LABEL_TYPE_RANGE,
 )
-from data_cleaner.utils import shared
-from datetime import datetime
+from data_cleaner.shared.utils import clean_series
 from data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
@@ -114,7 +112,7 @@ def build_correlation_data(df, col1, features):
         col2 = feature['uuid']
         column_type = feature['column_type']
         series = df_copy[col2]
-        df_copy[col2] =  shared.clean_series(series, column_type, dropna=False)
+        df_copy[col2] = clean_series(series, column_type, dropna=False)
 
     corr = df_copy.corr()
     for feature in features:
@@ -148,7 +146,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
 
     # print(feature, datetime_column)
 
-    datetimes = shared.clean_series(df[datetime_column], DATETIME)
+    datetimes = clean_series(df[datetime_column], DATETIME)
     if datetimes.size <= 1:
         return
 
@@ -185,7 +183,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
             min=min_value,
         ))
 
-        series_cleaned = shared.clean_series(series, column_type, dropna=False)
+        series_cleaned = clean_series(series, column_type, dropna=False)
         df_value_counts = series_cleaned.value_counts(dropna=False)
         series_non_null = series_cleaned.dropna()
         count_unique = len(df_value_counts.index)
@@ -241,7 +239,7 @@ def build_overview_data(df, datetime_features):
         tags = dict(datetime_column=datetime_column)
         increment(f'{DD_KEY}.build_overview_time_series.start', tags)
 
-        if shared.clean_series(df_copy[datetime_column], DATETIME).size <= 1:
+        if clean_series(df_copy[datetime_column], DATETIME).size <= 1:
             continue
 
         df_copy[datetime_column] = \

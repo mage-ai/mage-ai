@@ -1,4 +1,4 @@
-class Base:
+class BaseRule:
     def __init__(self, df, column_types, statistics):
         self.df = df
         self.df_columns = df.columns.tolist()
@@ -6,6 +6,11 @@ class Base:
         self.statistics = statistics
 
     def evaluate(self):
+        """Evaluate data cleaning rule and generate suggested actions
+        Returns
+        -------
+        A list of suggested actions
+        """
         return []
 
     def _build_transformer_action_suggestion(

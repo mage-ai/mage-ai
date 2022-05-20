@@ -2,10 +2,9 @@ from data_cleaner.analysis import charts
 from data_cleaner.analysis.constants import (
     DATA_KEY_CHARTS,
     DATA_KEY_CORRELATION,
-    DATA_KEY_OVERVIEW,
     DATA_KEY_TIME_SERIES,
 )
-from data_cleaner.utils import shared
+from data_cleaner.shared.utils import clean_series
 from data_cleaner.shared.hash import merge_dict
 from data_cleaner.shared.multi import run_parallel
 from data_cleaner.transformer_actions import constants
@@ -17,7 +16,6 @@ from data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
-import math
 
 DD_KEY = 'lambda.analysis_calculator'
 
@@ -97,7 +95,7 @@ class AnalysisCalculator():
         increment(f'{DD_KEY}.calculate_column.start', tags)
 
         series = df[col]
-        series_cleaned = shared.clean_series(series, column_type)
+        series_cleaned = clean_series(series, column_type)
 
         chart_data = []
         correlation = []

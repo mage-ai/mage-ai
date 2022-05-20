@@ -1,0 +1,82 @@
+from column_type_detector import NUMBER_TYPES
+from expanders import list_string
+from transformer_actions.constants import VariableType
+from transformer_actions.helpers import query_with_action_code
+import pandas as pd
+
+
+def drop_duplicates(df, action, **kwargs):
+    keep = action.get('action_options', {}).get('keep', 'last')
+    return df.drop_duplicates(subset=action['action_arguments'], keep=keep)
+
+def explode(df, action, **kwargs):
+    action_options = action.get('action_options', {})
+    separator = action_options.get('separator', ',')
+    list_column = action['action_arguments'][0]
+    output_column = action['outputs'][0]['uuid']
+    return list_string.explode_list(
+        df,
+        list_column,
+        separator=separator,
+        output_column=output_column,
+    )
+
+
+def filter_rows(df, action, **kwargs):
+    """
+    df:
+        Pandas DataFrame
+    action:
+        TransformerAction serialized into a dictionary
+    """
+    action_code = action['action_code']
+
+    return query_with_action_code(df, action_code, kwargs)
+
+
+def sort_rows(df, action, **kwargs):
+    ascending = action.get('action_options', {}).get('ascending', True)
+    ascendings = action.get('action_options', {}).get('ascendings', [])
+    if len(ascendings) > 0:
+        ascending = ascendings[0]
+
+    feature_by_uuid = {}
+    if action.get('action_variables'):
+        for _, val in action['action_variables'].items():
+            feature = val.get('feature')
+            if feature:
+                feature_by_uuid[feature['uuid']] = feature
+
+    na_indexes = None
+    as_types = {}
+
+    for idx, uuid in enumerate(action['action_arguments']):
+        feature = feature_by_uuid.get(uuid)
+        if feature and feature['column_type'] in NUMBER_TYPES:
+            as_types[uuid] = float
+            if idx == 0:
+                na_indexes = df[(df[uuid].isnull()) | (df[uuid].astype(str).str.len() == 0)].index
+
+    bad_df = None
+    if na_indexes is not None:
+        bad_df = df.index.isin(na_indexes)
+
+    index = (df[~bad_df] if bad_df is not None else df).astype(as_types).sort_values(
+        by=action['action_arguments'],
+        ascending=ascendings if len(ascendings) > 0 else ascending,
+    ).index
+
+    df_final = df.loc[index]
+    if bad_df is not None:
+        if ascending:
+            return pd.concat([
+                df.iloc[bad_df],
+                df_final,
+            ])
+
+        return pd.concat([
+                df_final,
+                df.iloc[bad_df],
+        ])
+
+    return df_final

@@ -1,7 +1,3 @@
-REDIS_EXPIRATION_TIME_DEFAULT = 12
-REDIS_EXPIRATION_TIME_WITH_ACTION = 3
-
-
 class ActionType():
     ADD = 'add'
     AVERAGE = 'average'

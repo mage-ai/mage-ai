@@ -1,4 +1,3 @@
-from data_cleaner.shared.array import find
 from data_cleaner.shared.hash import merge_dict
 from data_cleaner.shared.multi import run_parallel
 from data_cleaner.column_type_detector import (
