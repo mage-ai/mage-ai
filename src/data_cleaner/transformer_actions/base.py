@@ -32,7 +32,7 @@ FUNCTION_MAPPING = {
     },
     Axis.ROW: {
         ActionType.DROP_DUPLICATE: row.drop_duplicates,
-        ActionType.EXPLODE: row.explode,
+        # ActionType.EXPLODE: row.explode,
         ActionType.FILTER: row.filter_rows,
         ActionType.SORT: row.sort_rows,
     },

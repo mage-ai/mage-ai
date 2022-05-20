@@ -1,25 +1,12 @@
-from column_type_detector import NUMBER_TYPES
-from expanders import list_string
-from transformer_actions.constants import VariableType
-from transformer_actions.helpers import query_with_action_code
+from data_cleaner.column_type_detector import NUMBER_TYPES
+from data_cleaner.transformer_actions.constants import VariableType
+from data_cleaner.transformer_actions.helpers import query_with_action_code
 import pandas as pd
 
 
 def drop_duplicates(df, action, **kwargs):
     keep = action.get('action_options', {}).get('keep', 'last')
     return df.drop_duplicates(subset=action['action_arguments'], keep=keep)
-
-def explode(df, action, **kwargs):
-    action_options = action.get('action_options', {})
-    separator = action_options.get('separator', ',')
-    list_column = action['action_arguments'][0]
-    output_column = action['outputs'][0]['uuid']
-    return list_string.explode_list(
-        df,
-        list_column,
-        separator=separator,
-        output_column=output_column,
-    )
 
 
 def filter_rows(df, action, **kwargs):

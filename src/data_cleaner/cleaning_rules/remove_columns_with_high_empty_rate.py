@@ -5,7 +5,7 @@ from data_cleaner.transformer_actions.constants import (
 )
 
 
-class RemoveColumnsWithHighEmptyRate(Base):
+class RemoveColumnsWithHighEmptyRate(BaseRule):
     MISSING_RATE_THRESHOLD = 0.8
 
     def evaluate(self):

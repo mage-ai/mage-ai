@@ -26,7 +26,8 @@ class BasePipeline():
 
     def transform(self, df):
         if len(self.actions) == 0:
-            raise Exception('Pipeline is empty.')
+            print('Pipeline is empty.')
+            return df
         df_transformed = df
         for action in self.actions:
             df_transformed = BaseAction(action['action_payload']).execute(df_transformed)

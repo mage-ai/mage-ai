@@ -1,5 +1,4 @@
 from concurrent.futures import ThreadPoolExecutor
-from joblib import Parallel, delayed
 from threading import Thread
 
 MAX_WORKERS = 16
@@ -34,11 +33,3 @@ def run_parallel_threads(list_of_funcs_and_args_or_kwargs):
 def run_parallel(func, arr_args_1, arr_args_2):
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         return pool.map(func, *arr_args_1, *arr_args_2)
-
-
-def execute_parallel(list_of_funcs_and_args_or_kwargs, verbose=0):
-    parallel = Parallel(n_jobs=-1, prefer='threads', verbose=verbose)
-    return parallel(
-        delayed(func)(*args) if type(args) is list else delayed(func)(**args)
-        for func, args in list_of_funcs_and_args_or_kwargs
-    )

@@ -1,4 +1,4 @@
-from transformer_actions.constants import VariableType
+from data_cleaner.transformer_actions.constants import VariableType
 import re
 
 
