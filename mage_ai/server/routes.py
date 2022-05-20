@@ -1,3 +1,4 @@
+from mage_ai.data_cleaner.data_cleaner import clean
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from mage_ai.server import app
 
@@ -22,12 +23,12 @@ def process():
 def index():
     return render_template("index.html")
 
-@app.route("/test")
-def test():
-    data = {'col1': [1, 2], 'col2': [3, 4]}
-    df = pd.DataFrame(data)
-    feature_set = FeatureSet(df=df)
-    return feature_set.data.to_json()
+# @app.route("/test")
+# def test():
+#     data = {'col1': [1, 2], 'col2': [3, 4]}
+#     df = pd.DataFrame(data)
+#     feature_set = FeatureSet(df=df)
+#     return feature_set.data.to_json()
 
 @app.route("/feature_sets")
 def feature_sets():
@@ -45,8 +46,7 @@ def feature_set_column(id, column_name):
 
 @app.route("/cleaning_functions")
 def cleaning_functions():
-    feature_set = FeatureSet(id=id)
-    return feature_set.to_dict()
+    pass
 
 @app.route("/pipelines")
 def pipelines():
@@ -58,7 +58,3 @@ def launch(df) -> None:
     app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
     thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
-
-# placeholder for cleaning library methods
-def clean(df):
-    pass
