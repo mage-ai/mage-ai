@@ -1,5 +1,5 @@
-from transformer_actions.helpers import query_with_action_code
-from transformer_actions.udf.base import BaseUDF
+from data_cleaner.transformer_actions.action_code import query_with_action_code
+from data_cleaner.transformer_actions.udf.base import BaseUDF
 
 class IfElse(BaseUDF):
     def execute(self):

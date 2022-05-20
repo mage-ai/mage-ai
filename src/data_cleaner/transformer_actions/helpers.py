@@ -69,37 +69,3 @@ def get_time_window_str(window_in_seconds):
     else:
         time_window = f'{window_in_seconds}s'
     return time_window
-
-
-def query_with_action_code(df, action_code, kwargs):
-    match = re.search(r'^[\w.]+\s{1}', action_code)
-    if match:
-        column_name = match[0].strip()
-    else:
-        column_name = None
-
-    original_df = df
-    if original_df is not None and column_name:
-        dropped_na = original_df[column_name].dropna()
-        is_bool = len(dropped_na.index) >= 1 and type(dropped_na.iloc[0]) is bool
-        is_string = original_df[column_name].dtype == 'object' and not is_bool
-
-        if f'{column_name} {Operator.NOT_EQUALS} null' == action_code:
-            if is_string:
-                return original_df[~original_df[column_name].isnull() & (original_df[column_name].str.len() >= 1)]
-            elif is_bool:
-                return original_df[~original_df[column_name].isnull() & (original_df[column_name] != '')]
-            else:
-                return original_df[~original_df[column_name].isnull()]
-        elif f'{column_name} {Operator.EQUALS} null' == action_code:
-            if is_string or is_bool:
-                return original_df[original_df[column_name].isnull() | (original_df[column_name].str.len() == 0)]
-            else:
-                return original_df[original_df[column_name].isnull()]
-        elif action_code.startswith(f'{column_name} {Operator.CONTAINS}'):
-            if is_string:
-                value = action_code.split(' ')[2].strip('"')
-                return original_df[(original_df[column_name].notna()) & (original_df[column_name].str.contains(value))]
-            raise Exception('"contrains" operator can only be used for string columns.')
-
-    return df.query(action_code)

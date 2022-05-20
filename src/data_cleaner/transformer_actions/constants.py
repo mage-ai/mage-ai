@@ -43,6 +43,7 @@ class VariableType():
 
 class Operator():
     CONTAINS = 'contains'
+    NOT_CONTAINS = 'not contains'
     EQUALS = '=='
     NOT_EQUALS = '!='
     GREATER_THAN = '>'

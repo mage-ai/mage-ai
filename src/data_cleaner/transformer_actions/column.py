@@ -1,8 +1,8 @@
+from data_cleaner.transformer_actions.action_code import query_with_action_code
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
     get_time_window_str,
-    query_with_action_code,
 )
 from data_cleaner.transformer_actions.udf.base import execute_udf
 import pandas as pd
@@ -58,7 +58,7 @@ def impute(df, action, **kwargs):
     elif strategy == 'median':
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
     elif strategy == 'column':
-        replacement_df = pd.DataFrame({col:df[value] for col in columns})
+        replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
     elif value is not None:
         df[columns] = df[columns].fillna(value)
