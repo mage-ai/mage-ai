@@ -4,33 +4,19 @@ import { media } from 'styled-bootstrap-grid';
 import light from '@oracle/styles/themes/light';
 import {
   FONT_FAMILY_BOLD,
-  // FONT_FAMILY_DEMI_BOLD,
-  // FONT_FAMILY_EXTRA_BOLD,
-  // FONT_FAMILY_EXTRA_LIGHT,
-  // FONT_FAMILY_HEAVY,
   FONT_FAMILY_LIGHT,
   FONT_FAMILY_MEDIUM,
   FONT_FAMILY_REGULAR,
   FONT_FAMILY_THIN,
 } from '@oracle/styles/fonts/primary';
-// import {
-//   FONT_FAMILY_BOLD as SECONDARY_FONT_FAMILY_BOLD,
-//   FONT_FAMILY_REGULAR as SECONDARY_FONT_FAMILY_REGULAR,
-// } from '@oracle/styles/fonts/secondary';
 import {
-  // LARGE,
-  // LARGE_LG,
-  // LARGE_SM,
   REGULAR,
   SMALL,
   XLARGE,
-  // XSMALL,
-  // XXLARGE,
 } from '@oracle/styles/fonts/sizes';
-// import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
+import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
 
 export type TextProps = {
-  alert?: boolean;
   bold?: boolean;
   breakAll?: boolean;
   breakSpaces?: boolean;
@@ -43,13 +29,9 @@ export type TextProps = {
   disabled?: boolean;
   editorial?: boolean;
   fullwidth?: boolean;
-  grey300?: boolean;
-  grey400?: boolean;
   info?: boolean;
   inline?: boolean;
   inlineText?: boolean;
-  inverted?: boolean;
-  invertedTheme?: boolean;
   italic?: boolean;
   large?: boolean;
   largeLg?: boolean;
@@ -63,7 +45,6 @@ export type TextProps = {
   maxWidth?: number | string;
   monospace?: boolean;
   muted?: boolean;
-  neutral300?: boolean;
   noColor?: boolean;
   noWrapping?: boolean;
   overflow?: string;
@@ -79,7 +60,6 @@ export type TextProps = {
   useModelTheme?: boolean;
   warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-  white?: boolean;
   whiteSpaceNormal?: boolean;
   width?: number;
   wordBreak?: boolean;
@@ -93,87 +73,15 @@ export const SHARED_LARGE_TEXT_RESPONSIVE_STYLES = css`
     ${props => props.largeSm && `
       ${REGULAR}
     `}
-
-    ${props => props.large && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.largeLg && `
-      ${LARGE}
-    `}
-
-    ${props => props.xlarge && `
-      ${LARGE_LG}
-    `}
-  `}
-
-  ${media.sm`
-    ${props => props.largeSm && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.large && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.largeLg && `
-      ${LARGE}
-    `}
-
-    ${props => props.xlarge && `
-      ${LARGE_LG}
-    `}
-  `}
-
-  ${media.md`
-    ${props => props.largeSm && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.large && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.largeLg && `
-      ${LARGE}
-    `}
-
-    ${props => props.xlarge && `
-      ${LARGE_LG}
-    `}
   `}
 
   ${media.lg`
-    ${props => props.largeSm && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.large && `
-      ${LARGE}
-    `}
-
-    ${props => props.largeLg && `
-      ${LARGE_LG}
-    `}
-
     ${props => props.xlarge && `
       ${XLARGE}
     `}
   `}
 
   ${media.xl`
-    ${props => props.largeSm && `
-      ${LARGE_SM}
-    `}
-
-    ${props => props.large && `
-      ${LARGE}
-    `}
-
-    ${props => props.largeLg && `
-      ${LARGE_LG}
-    `}
-
     ${props => props.xlarge && `
       ${XLARGE}
     `}
@@ -194,20 +102,8 @@ export const SHARED_TEXT_STYLES = css`
     ${SMALL}
   `}
 
-  ${props => props.xsmall && `
-    ${XSMALL}
-  `}
-
-  ${props => props.xxlarge && `
-    ${XXLARGE}
-  `}
-
   ${props => !props.monospace && Number(props.weightStyle) === 0 && `
     font-family: ${FONT_FAMILY_THIN};
-  `}
-
-  ${props => !props.monospace && Number(props.weightStyle) === 1 && `
-    font-family: ${FONT_FAMILY_EXTRA_LIGHT};
   `}
 
   ${props => !props.monospace && Number(props.weightStyle) === 2 && `
@@ -222,25 +118,8 @@ export const SHARED_TEXT_STYLES = css`
     font-family: ${FONT_FAMILY_MEDIUM};
   `}
 
-  ${props => !props.monospace && Number(props.weightStyle) === 5 && `
-    font-family: ${FONT_FAMILY_DEMI_BOLD};
-  `}
-
   ${props => !props.monospace && (Number(props.weightStyle) === 6 || props.bold) && `
     font-family: ${FONT_FAMILY_BOLD};
-  `}
-
-  ${props => !props.monospace && Number(props.weightStyle) === 7 && `
-    font-family: ${FONT_FAMILY_EXTRA_BOLD};
-  `}
-
-  ${props => !props.monospace && Number(props.weightStyle) === 8 && `
-    font-family: ${FONT_FAMILY_HEAVY};
-  `}
-
-  ${props => props.monospace && !props.bold && `
-    font-family: ${SECONDARY_FONT_FAMILY_REGULAR};
-    word-break: break-all;
   `}
 
   ${props => props.disableWordBreak && `
@@ -253,12 +132,6 @@ export const SHARED_TEXT_STYLES = css`
 
   ${props => props.overflowWrap && `
     overflow-wrap: break-word;
-  `}
-
-  ${props => props.monospace && props.bold && `
-    font-family: ${SECONDARY_FONT_FAMILY_BOLD};
-    font-style: normal;
-    font-weight: 700; // Needs this here or else it won’t be bold
   `}
 
   ${props => props.letterSpacing && `
@@ -287,12 +160,8 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${SHARED_TEXT_STYLES}
 
-  ${props => !(props.default && props.disabled && props.inverted && props.muted) && !props.noColor && !props.invertedTheme && `
+  ${props => !(props.default && props.disabled  && props.muted) && !props.noColor && `
     color: ${(props.theme.content || light.content).active};
-  `}
-
-  ${props => !(props.default && props.disabled && props.inverted && props.muted) && !props.noColor && props.invertedTheme && `
-    color: ${(props.theme.contentInverted || light.contentInverted).active};
   `}
 
   ${props => props.noColor && `
@@ -304,44 +173,8 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${props.color} !important;
   `}
 
-  ${props => props.default && !props.invertedTheme && `
-    color: ${(props.theme.monotone || light.monotone).grey400};
-  `}
-
-  ${props => props.default && props.invertedTheme && `
-    color: ${(props.theme.contentInverted || light.contentInverted).default};
-  `}
-
   ${props => props.disabled && `
     color: ${(props.theme.content || light.content).disabled};
-  `}
-
-  ${props => props.info && `
-    color: ${(props.theme.accent || light.accent).info};
-  `}
-
-  ${props => props.inverted && `
-    color: ${(props.theme.content || light.content).inverted};
-  `}
-
-  ${props => props.muted && !props.invertedTheme && `
-    color: ${(props.theme.monotone || light.monotone).grey300};
-  `}
-
-  ${props => props.muted && props.invertedTheme && `
-    color: ${(props.theme.monotone || light.monotone).grey300};
-  `}
-
-  ${props => props.neutral300 && `
-    color: ${(props.theme.neutral || light.neutral).n300};
-  `}
-
-  ${props => props.grey300 && `
-    color: ${(props.theme.monotone || light.monotone).grey300};
-  `}
-
-  ${props => props.grey400 && `
-    color: ${(props.theme.monotone || light.monotone).grey400};
   `}
 
   ${props => props.white && `
@@ -352,16 +185,8 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${(props.theme.interactive || light.interactive).primaryAction};
   `}
 
-  ${props => props.warning && `
-    color: ${(props.theme.accent || light.accent).warning};
-  `}
-
   ${props => props.danger && `
     color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
-  `}
-
-  ${props => props.alert && `
-    color: ${(props.theme.accent || light.accent).alert};
   `}
 
   ${props => props.underline && `
