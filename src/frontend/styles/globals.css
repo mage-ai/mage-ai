@@ -484,3 +484,52 @@ textarea {
   color: #000;
   padding: 0.2em 0;
 }
+
+@font-face {
+  font-family: 'Roboto Thin';
+  font-style: normal;
+  font-weight: 100;
+  src: url('/fonts/Roboto/Roboto-Thin.ttf') format('ttf');
+}
+
+@font-face {
+  font-family: 'Roboto Light';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/Roboto/Roboto-Light.ttf') format('ttf')
+}
+
+@font-face {
+  font-family: 'Roboto Regular';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/Roboto/Roboto-Regular.ttf') format('ttf')
+}
+
+@font-face {
+  font-family: 'Roboto Medium';
+  font-style: normal;
+  font-weight: 500;
+  src: url('/fonts/Roboto/Roboto-Medium.ttf') format('ttf')
+}
+
+@font-face {
+  font-family: 'Roboto Bold';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/Roboto/Roboto-Bold.ttf') format('ttf')
+}
+
+@font-face {
+  font-family: 'Roboto Mono Regular';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf') format('ttf');
+}
+
+@font-face {
+  font-family: 'Roboto Mono Bold';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf') format('ttf');
+}
