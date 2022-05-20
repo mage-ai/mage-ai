@@ -130,6 +130,6 @@ dmypy.json
 .pyre/
 
 # data
-mage/server/data/feature_sets
+mage/server/data/files
 
 *.ipynb

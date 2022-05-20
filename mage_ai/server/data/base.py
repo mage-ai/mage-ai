@@ -4,7 +4,8 @@ import os.path
 class Model():
     def __init__(self, id=None):
         # TODO: figure out a good directory to store the files
-        self.path = os.path.abspath(os.path.join(os.path.dirname(__file__), self.folder_name()))
+        data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
+        self.path = os.path.join(data_path, self.folder_name())
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
 

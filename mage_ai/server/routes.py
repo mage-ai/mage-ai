@@ -2,9 +2,6 @@ from mage_ai.data_cleaner.data_cleaner import clean
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from mage_ai.server import app
 
-from flask import render_template
-
-import pandas as pd
 import threading
 
 @app.route("/process", methods=["POST"])
@@ -18,10 +15,6 @@ def process():
     # get insights, statistics, etc.
 
     index_df = df_cleaned
-
-@app.route("/")
-def index():
-    return render_template("index.html")
 
 # @app.route("/test")
 # def test():

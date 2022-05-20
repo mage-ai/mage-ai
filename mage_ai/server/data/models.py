@@ -1,9 +1,9 @@
+from mage_ai.server.data.base import Model
+
 import json
 import os
 import os.path
 import pandas as pd
-
-from mage_ai.server.data.base import Model
 
 # right now, we are writing the feature sets to local files
 class FeatureSet(Model):
