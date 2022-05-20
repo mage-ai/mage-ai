@@ -7,8 +7,6 @@ type FlexContainerProps = {
   fullHeight?: boolean;
   fullScreenHeight?: boolean;
   fullWidth?: boolean;
-  gutter?: number;
-  minContent?: boolean;
   offsetHeight?: number;
   relative?: boolean;
   textOverflow?: boolean;
