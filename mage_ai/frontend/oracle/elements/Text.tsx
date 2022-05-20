@@ -14,7 +14,7 @@ import {
   SMALL,
   XLARGE,
 } from '@oracle/styles/fonts/sizes';
-import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
+// import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
 
 export type TextProps = {
   bold?: boolean;
@@ -283,10 +283,10 @@ const Text = ({
   const muted = typeof mutedProp === 'undefined' ? false : mutedProp;
   const El = props?.inline ? SpanStyle : TextStyle;
 
-  const { sharedProps } = useModelThemeContext();
+  // const { sharedProps } = useModelThemeContext();
   const combinedProps = {
     ...props,
-    ...(useModelTheme ? sharedProps : {}),
+    ...({}),
   };
 
   if (raw) {
