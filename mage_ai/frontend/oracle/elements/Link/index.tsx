@@ -57,7 +57,7 @@ export type LinkProps = {
   xsmall?: boolean;
 };
 
-export const SHARED_LINK_STYLES = css<LinkProps>`
+export const SHARED_LINK_STYLES = css<any>`
   outline: none;
   text-decoration: none;
 
