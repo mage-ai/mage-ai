@@ -1,5 +1,4 @@
 import styled, { css } from 'styled-components';
-import { media } from 'styled-bootstrap-grid';
 
 import light from '@oracle/styles/themes/light';
 import {
@@ -27,16 +26,13 @@ export type TextProps = {
   default?: boolean;
   disableWordBreak?: boolean;
   disabled?: boolean;
-  editorial?: boolean;
-  fullwidth?: boolean;
+  fullWidth?: boolean;
   info?: boolean;
   inline?: boolean;
   inlineText?: boolean;
   italic?: boolean;
   large?: boolean;
-  largeLg?: boolean;
   letterSpacing?: number;
-  largeSm?: boolean;
   leftAligned?: boolean;
   lineHeight?: number;
   lineHeightUnit?: number;
@@ -57,26 +53,19 @@ export type TextProps = {
   title?: string;
   underline?: boolean;
   uppercase?: boolean;
-  useModelTheme?: boolean;
-  warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   whiteSpaceNormal?: boolean;
   width?: number;
   wordBreak?: boolean;
-  xlarge?: boolean;
-  xsmall?: boolean;
-  xxlarge?: boolean;
+  
+  
 };
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
 
-  ${props => !props.large && !props.largeLg && !props.small && !props.xsmall && `
+  ${props => !props.large && !props.small && `
     ${REGULAR}
   `}
-  ${props => !props.large && !props.small && !props.xsmall && props.editorial && `
-    line-height: 24px !important;
-  `}
-
   ${props => props.small && `
     ${SMALL}
   `}
@@ -204,7 +193,7 @@ export const SHARED_STYLES = css<TextProps>`
     white-space: nowrap;
   `}
 
-  ${props => props.fullwidth && `
+  ${props => props.fullWidth && `
     overflow: hidden;
     max-width: 100%;
     text-overflow: ellipsis;
@@ -256,7 +245,6 @@ const Text = ({
   children,
   muted: mutedProp,
   raw,
-  useModelTheme,
   ...props
 }: TextProps) => {
   const muted = typeof mutedProp === 'undefined' ? false : mutedProp;
