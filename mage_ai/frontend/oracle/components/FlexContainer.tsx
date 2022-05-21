@@ -49,10 +49,6 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
     position: relative;
   `}
 
-  ${props => props.wrapContent && `
-    flex-wrap: wrap;
-  `}
-
   ${props => props.textOverflow && `
     min-width: 0;
     overflow: hidden;
@@ -71,9 +67,7 @@ const FlexContainer = React.forwardRef(({
   <FlexContainerStyle
     {...props}
     fullHeight={fullHeight}
-    ref={ref}
     verticalHeightOffset={verticalHeightOffset}
-    wrapContent={wrap}
   >
     {children}
   </FlexContainerStyle>

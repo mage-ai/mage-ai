@@ -38,6 +38,8 @@
     "@types/node": "17.0.34",
     "@types/react": "18.0.9",
     "@types/react-dom": "18.0.4",
+    "@types/styled-components": "^5.1.25",
+    "@types/styled-system": "^5.1.15",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
     "eslint": "8.15.0",

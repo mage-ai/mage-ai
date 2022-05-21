@@ -18,20 +18,6 @@ const Flex = styled.div<FlexProps>`
   ${flexbox}
   ${space}
 
-  ${props => props.noScrollbar && `
-    ::-webkit-scrollbar {
-      display: none;
-    }
-  `}
-
-  ${props => props.overflowHidden && `
-    overflow: hidden;
-  `}
-
-  ${props => props.overflowY && `
-    overflow-y: ${props.overflowY};
-  `}
-
   ${props => props.position && `
     position: ${props.position};
   `}
