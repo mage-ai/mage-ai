@@ -29,6 +29,7 @@
     "next": "12.1.6",
     "react": "18.1.0",
     "react-dom": "18.1.0",
+    "react-loading": "^2.0.3",
     "react-top-loading-bar": "^2.1.0",
     "storybook": "^6.5.3",
     "styled-bootstrap-grid": "^3.1.2",
