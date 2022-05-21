@@ -10,7 +10,7 @@ import {
 } from '@oracle/styles/fonts/primary';
 import {
   REGULAR,
-  SMALL
+  SMALL,
 } from '@oracle/styles/fonts/sizes';
 // import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
 
