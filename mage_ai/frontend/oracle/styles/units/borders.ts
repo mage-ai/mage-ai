@@ -9,3 +9,6 @@ export const BORDER_RADIUS_SMALL: number = 4;
 export const BORDER_COLOR = GRAY_LINES;
 export const BORDER_COLOR_DARK = DARK_GRAY_LINES;
 export const BORDER_COLOR_NAVY = NAVY_LINES;
+
+export const OUTLINE_OFFSET: number = 2;
+export const OUTLINE_WIDTH: number = 3;
