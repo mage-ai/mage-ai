@@ -11,13 +11,13 @@ import {
 } from '@oracle/styles/fonts/primary';
 import {
   REGULAR,
-  SMALL,
-  XLARGE,
+  SMALL
 } from '@oracle/styles/fonts/sizes';
 // import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
 
 export type TextProps = {
   bold?: boolean;
+  black?: boolean;
   breakAll?: boolean;
   breakSpaces?: boolean;
   center?: boolean;
@@ -68,28 +68,7 @@ export type TextProps = {
   xxlarge?: boolean;
 };
 
-export const SHARED_LARGE_TEXT_RESPONSIVE_STYLES = css`
-  ${media.xs`
-    ${props => props.largeSm && `
-      ${REGULAR}
-    `}
-  `}
-
-  ${media.lg`
-    ${props => props.xlarge && `
-      ${XLARGE}
-    `}
-  `}
-
-  ${media.xl`
-    ${props => props.xlarge && `
-      ${XLARGE}
-    `}
-  `}
-`;
-
-export const SHARED_TEXT_STYLES = css`
-  ${SHARED_LARGE_TEXT_RESPONSIVE_STYLES}
+export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => !props.large && !props.largeLg && !props.small && !props.xsmall && `
     ${REGULAR}
@@ -177,8 +156,8 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${(props.theme.content || light.content).disabled};
   `}
 
-  ${props => props.white && `
-    color: ${(props.theme.monotone || light.monotone).white};
+  ${props => props.black && `
+    color: ${(props.theme.monotone || light.monotone).black};
   `}
 
   ${props => props.primary && `
