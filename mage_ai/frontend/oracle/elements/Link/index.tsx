@@ -230,7 +230,7 @@ export const SHARED_LINK_STYLES = css<LinkProps>`
   `}
 `;
 
-const LinkStyle = styled.a<LinkProps>`
+const LinkStyle = styled.a`
   ${SHARED_LINK_STYLES}
   ${SHARED_TEXT_STYLES}
 
