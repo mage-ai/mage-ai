@@ -15,11 +15,12 @@ import {
 export default {
   background: {
     page: WHITE,
+    muted: SILVER,
     header: SILVER,
     row: LIGHT,
   },
   content: {
-    active: WHITE,
+    active: BLACK,
     default: WHITE,
     disabled: GRAY,
     muted: GRAY,

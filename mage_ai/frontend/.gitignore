@@ -34,5 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-build-storybook.log
+# eslint
 .eslintcache
+
+# storybook
+storybook-static
+build-storybook.log
