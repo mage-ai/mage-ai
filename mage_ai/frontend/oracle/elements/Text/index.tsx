@@ -7,6 +7,8 @@ import {
   FONT_FAMILY_MEDIUM,
   FONT_FAMILY_REGULAR,
   FONT_FAMILY_THIN,
+  MONO_FONT_FAMILY_BOLD,
+  MONO_FONT_FAMILY_REGULAR,
 } from '@oracle/styles/fonts/primary';
 import {
   LARGE,
@@ -96,6 +98,17 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => !props.monospace && (Number(props.weightStyle) === 6 || props.bold) && `
     font-family: ${FONT_FAMILY_BOLD};
+  `}
+
+  ${props => props.monospace && !props.bold && `
+    font-family: ${MONO_FONT_FAMILY_REGULAR};
+    word-break: break-all;
+  `}
+
+  ${props => props.monospace && props.bold && `
+    font-family: ${MONO_FONT_FAMILY_BOLD};
+    font-style: normal;
+    font-weight: 700;
   `}
 
   ${props => props.disableWordBreak && `

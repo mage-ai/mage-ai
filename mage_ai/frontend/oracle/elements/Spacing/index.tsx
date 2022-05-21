@@ -40,4 +40,4 @@ function Spacing({
   );
 }
 
-export default React.forwardRef(Spacing);
+export default Spacing;
