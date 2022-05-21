@@ -21,10 +21,10 @@ const StylesTemplate: Story<TextProps> = ({ ...props }) => (
     <Text {...props} bold monospace>Bold monospace</Text>
   </ThemeBlock>
 );
-export const Styles: Story<TextProps> = StylesTemplate.bind({});
+export const Styles = StylesTemplate.bind({});
 Styles.args = {};
 
-const SizesTemplate = ({ ...props }) => (
+const SizesTemplate: Story<TextProps> = ({ ...props }) => (
   <ThemeBlock>
     <Text {...props} small>Small</Text>
     <Text {...props}>Regular</Text>
