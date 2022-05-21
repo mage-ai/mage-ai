@@ -27,7 +27,6 @@ export type TextProps = {
   disableWordBreak?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
-  info?: boolean;
   inline?: boolean;
   inlineText?: boolean;
   italic?: boolean;
@@ -57,8 +56,6 @@ export type TextProps = {
   whiteSpaceNormal?: boolean;
   width?: number;
   wordBreak?: boolean;
-  
-  
 };
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
