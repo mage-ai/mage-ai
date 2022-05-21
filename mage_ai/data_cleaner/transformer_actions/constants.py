@@ -53,8 +53,9 @@ class Operator():
     LESS_THAN_OR_EQUALS = '<='
 
 class ImputationStrategy():
-    AVG = "average"
-    MED = "median"
+    AVERAGE = "average"
+    COLUMN = "column"
+    MEDIAN = "median"
     NOOP = "no_action"
     RANDOM = "random"
     ROW_RM = "remove_rows"

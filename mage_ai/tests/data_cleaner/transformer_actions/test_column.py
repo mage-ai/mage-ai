@@ -13,7 +13,11 @@ from data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from pandas.util.testing import assert_frame_equal
+<<<<<<< HEAD:mage_ai/tests/data_cleaner/transformer_actions/test_column.py
 from tests.base_test import TestCase
+=======
+from random import seed
+>>>>>>> [sk] Added new imputing methods to transformer actinos:mage_ai/data_cleaner/tests/transformer_actions/test_column.py
 import numpy as np
 import pandas as pd
 
@@ -29,6 +33,10 @@ TEST_DATAFRAME = pd.DataFrame([
 
 
 class ColumnTests(TestCase):
+    def setUp(self):
+        seed(42)
+        return super().setUp()
+    
     def test_remove_column(self):
         df = pd.DataFrame([
             [0, False, 'a'],
@@ -1313,6 +1321,18 @@ class ColumnTests(TestCase):
                 'value': 'prev_sold',
             },
         )
+        action6 = dict(
+            action_arguments=['sold', 'curr_profit'],
+            action_options={
+                'strategy': 'sequential'
+            },
+        )
+        action7 = dict(
+            action_arguments=['sold', 'curr_profit'],
+            action_options={
+                'strategy': 'random'
+            },
+        )
         action_invalid = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
@@ -1324,6 +1344,8 @@ class ColumnTests(TestCase):
         df_new3 = impute(df.copy(), action3)
         df_new4 = impute(df.copy(), action4)
         df_new5 = impute(df.copy(), action5)
+        df_new6 = impute(df.copy(), action6)
+        df_new7 = impute(df.copy(), action7)
 
         df_expected1 = pd.DataFrame([
             ['2020-01-01', 1000, 0, 800],
@@ -1385,6 +1407,30 @@ class ColumnTests(TestCase):
             'curr_profit',
             'prev_sold',
         ])
+        df_expected6 = pd.DataFrame([
+            ['2020-01-01', 1000, None, 800],
+            ['2020-01-02', 1000, 1200, 700],
+            ['2020-01-03', 1200, 1200, 900],
+            ['2020-01-04', 1200, 1200, 700],
+            ['2020-01-05', 1700, 1300, 800],
+        ], columns=[
+            'date',
+            'sold',
+            'curr_profit',
+            'prev_sold',
+        ])
+        df_expected7 = pd.DataFrame([
+            ['2020-01-01', 1000, 1200, 800],
+            ['2020-01-02', 1700, 1200, 700],
+            ['2020-01-03', 1200, 1300, 900],
+            ['2020-01-04', 1000, 1200, 700],
+            ['2020-01-05', 1700, 1300, 800],
+        ], columns=[
+            'date',
+            'sold',
+            'curr_profit',
+            'prev_sold',
+        ])
         
         df_new1['sold'] = df_new1['sold'].astype(int)
         df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
@@ -1395,15 +1441,43 @@ class ColumnTests(TestCase):
         df_new4['curr_profit'] = df_new4['curr_profit'].astype(int)
         df_new5['sold'] = df_new5['sold'].astype(int)
         df_new5['curr_profit'] = df_new5['curr_profit'].astype(int)
+        df_new6['sold'] = df_new6['sold'].astype(int)
+        df_new7['sold'] = df_new7['sold'].astype(int)
+        df_new7['curr_profit'] = df_new7['curr_profit'].astype(int)
 
         assert_frame_equal(df_new1, df_expected1)
         assert_frame_equal(df_new2, df_expected2)
         assert_frame_equal(df_new3, df_expected3)
         assert_frame_equal(df_new4, df_expected4)
         assert_frame_equal(df_new5, df_expected5)
+        assert_frame_equal(df_new6, df_expected6)
+        assert_frame_equal(df_new7, df_expected7)
         
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action_invalid)
+
+    def test_impute_random_edge(self):
+        from data_cleaner.transformer_actions.column import impute
+        df = pd.DataFrame([
+            ['2020-01-01', 1000, '       ', 800],
+            ['2020-01-02', '', None, 700],
+            ['2020-01-03', 1200, np.NaN, 900],
+            ['2020-01-04', np.NaN, '  ', 700],
+            ['2020-01-05', 1700, np.NaN, 800],
+        ], columns=[
+            'date',
+            'sold',
+            'curr_profit',
+            'prev_sold',
+        ])
+        action = dict(
+            action_arguments=['sold', 'curr_profit'],
+            action_options={
+                'strategy': 'random'
+            },
+        )
+        with self.assertRaises(Exception):
+            _ = impute(df.copy(), action)
 
     def test_last_column(self):
         df = pd.DataFrame([

@@ -1,5 +1,6 @@
 from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
+from data_cleaner.transformer_actions.constants import ImputationStrategy
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
@@ -7,6 +8,7 @@ from data_cleaner.transformer_actions.helpers import (
 )
 from data_cleaner.transformer_actions.udf.base import execute_udf
 from keyword import iskeyword
+from random import randint
 import pandas as pd
 import numpy as np
 import re
@@ -75,13 +77,26 @@ def impute(df, action, **kwargs):
     empty_string_pattern = r'^\s*$'
     df[columns] = df[columns].replace(empty_string_pattern, np.nan, regex=True)
 
-    if strategy == 'average':
+    if strategy == ImputationStrategy.AVERAGE:
         df[columns] = df[columns].fillna(df[columns].astype(float).mean(axis=0))
-    elif strategy == 'median':
+    elif strategy == ImputationStrategy.MEDIAN:
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
-    elif strategy == 'column':
+    elif strategy == ImputationStrategy.COLUMN:
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
+    elif strategy == ImputationStrategy.SEQ:
+        df[columns] = df[columns].fillna(method='ffill')
+    elif strategy == ImputationStrategy.RANDOM:
+        for column in columns:
+            valid_idx = df[df[column].notna()].index
+            if len(valid_idx) == 0:
+                raise Exception(
+                    f'Random impute has no valid values to sample from in column \'{column}\''
+                )
+            invalid_idx = df[df[column].isna()].index
+            for idx in invalid_idx:
+                rand_location = randint(0, len(valid_idx)-1)
+                df.at[idx, column] = df.at[valid_idx[rand_location], column]
     elif value is not None:
         df[columns] = df[columns].fillna(value)
     else:
