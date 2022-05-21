@@ -10,6 +10,10 @@ export type ThemeType = {
     disabled: string;
     muted: string;
   };
+  loader: {
+    color: string,
+    colorInverted: string,
+  },
   monotone: {
     black: string;
     gray: string;

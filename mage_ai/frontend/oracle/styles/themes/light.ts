@@ -12,6 +12,7 @@ import {
   WHITE,
 } from '../colors/main';
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   background: {
     page: WHITE,
@@ -24,6 +25,10 @@ export default {
     default: WHITE,
     disabled: GRAY,
     muted: GRAY,
+  },
+  loader: {
+    color: SILVER,
+    colorInverted: LIGHT,
   },
   monotone: {
     black: BLACK,
@@ -45,3 +50,4 @@ export default {
     linkSecondary: BLUE,
   },
 };
+
