@@ -1,4 +1,3 @@
-from data_cleaner.tests.base_test import TestCase
 from data_cleaner.transformer_actions.base import BaseAction
 from data_cleaner.transformer_actions.row import (
     drop_duplicates,
@@ -7,6 +6,7 @@ from data_cleaner.transformer_actions.row import (
     sort_rows,
 )
 from pandas.util.testing import assert_frame_equal
+from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

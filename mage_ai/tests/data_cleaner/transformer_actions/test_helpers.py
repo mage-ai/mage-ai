@@ -1,5 +1,5 @@
-from data_cleaner.tests.base_test import TestCase
 from data_cleaner.transformer_actions.helpers import extract_join_feature_set_version_id
+from tests.base_test import TestCase
 
 
 class ColumnTests(TestCase):
