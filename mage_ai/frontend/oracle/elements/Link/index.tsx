@@ -65,6 +65,16 @@ export const SHARED_LINK_STYLES = css<any>`
     outline: none;
   }
 
+  ${(props) =>
+    !props.danger &&
+    !props.noColor &&
+    !props.sameColorAsText &&
+    !props.secondary &&
+    !props.warning &&
+    `
+    color: ${(props.theme.interactive || light.interactive).linkPrimary};
+  `}
+
   ${props => props.pointerEventsEnabled && `
     pointer-events: all;
   `}
@@ -154,11 +164,11 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
 
   ${props => props.muted && !props.disabled && `
-    color: ${(props.theme.monotone || light.monotone).grey300};
+    color: ${(props.theme.content || light.content).disabled};
 
     &:hover,
     &:focus {
-      color: ${(props.theme.monotone || light.monotone).grey300};
+      color: ${(props.theme.content || light.content).disabled};
     }
   `}
 
