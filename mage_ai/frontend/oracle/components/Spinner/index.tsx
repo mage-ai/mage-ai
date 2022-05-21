@@ -8,6 +8,7 @@ import { UNIT, PADDING } from '@oracle/styles/units/spacing';
 
 export type SpinnerProps = {
   fullScreen?: boolean;
+  inverted?: boolean;
   large?: boolean;
   left?: number;
   relative?: boolean;
@@ -18,6 +19,7 @@ export type SpinnerProps = {
 
 const Spinner = ({
   fullScreen,
+  inverted,
   large,
   left = 0,
   relative,
@@ -25,9 +27,9 @@ const Spinner = ({
   small,
   top = 0,
 }: SpinnerProps) => {
-  const [bodyHeight, setBodyHeight] = useState(window?.document?.body?.offsetHeight);
-  const [bodyWidth, setBodyWidth] = useState(window?.document?.body?.offsetWidth);
-  const themeContext:ThemeType = useContext(ThemeContext);
+  const [bodyHeight, setBodyHeight] = useState(undefined);
+  const [bodyWidth, setBodyWidth] = useState(undefined);
+  const themeContext: ThemeType = useContext(ThemeContext);
 
   let size: number = UNIT * 3;
   if (large) {
@@ -47,8 +49,9 @@ const Spinner = ({
     const bodyHeightAdjusted: number = bodyHeight - (PADDING);
     const loadingEl = (
       <ReactLoading
-        color={
-          (themeContext.loader || light.loader).color
+        color={inverted
+          ? (themeContext.loader || light.loader).colorInverted
+          : (themeContext.loader || light.loader).color
         }
         height={size}
         type="spin"
@@ -63,7 +66,7 @@ const Spinner = ({
     return (
       <div
         style={{
-          left: !relative ? (left + ((bodyWidth - size) / 2)) - right : 0,
+          left: !relative ? (left + ((bodyWidth - size) / 2)) - right : null,
           position: 'fixed',
           top: top + (bodyHeightAdjusted / 2) - (size / 2),
           zIndex: 50,

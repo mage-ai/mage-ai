@@ -27,8 +27,8 @@ export default {
     muted: GRAY,
   },
   loader: {
-    color: SILVER,
-    colorInverted: LIGHT,
+    color: RED,
+    colorInverted: BLUE,
   },
   monotone: {
     black: BLACK,
