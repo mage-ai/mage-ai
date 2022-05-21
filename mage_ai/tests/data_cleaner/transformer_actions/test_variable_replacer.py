@@ -1,6 +1,6 @@
-from data_cleaner.tests.base_test import TestCase
-from data_cleaner.tests.transformer_actions.shared import TEST_ACTION
 from data_cleaner.transformer_actions.variable_replacer import interpolate, replace_true_false
+from tests.base_test import TestCase
+from tests.data_cleaner.transformer_actions.shared import TEST_ACTION
 
 
 class VariableReplacerTests(TestCase):

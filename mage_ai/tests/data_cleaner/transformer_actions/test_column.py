@@ -1,4 +1,3 @@
-from data_cleaner.tests.base_test import TestCase
 from data_cleaner.transformer_actions.column import (
     add_column,
     count,
@@ -13,6 +12,7 @@ from data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from pandas.util.testing import assert_frame_equal
+from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 
