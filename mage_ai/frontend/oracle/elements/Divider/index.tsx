@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { MarginProps, PaddingProps } from 'styled-system';
 
-// import Spacing from '../Spacing';
+import Spacing from '../Spacing';
 import light from '../../styles/themes/light';
 import { ThemeType } from '../../styles/themes/constants';
 
@@ -33,9 +33,9 @@ const DividerStyle = styled.div<DividerProps>`
 
 const Divider = ({ short, ...props }: DividerProps) => (
   <DividerContainerStyle short={short}>
-    {/* <Spacing {...props}> */}
+    <Spacing {...props}>
       <DividerStyle {...props} />
-    {/* </Spacing> */}
+    </Spacing>
   </DividerContainerStyle>
 );
 

@@ -5,11 +5,11 @@ import Text, { TextProps } from '../../../oracle/elements/Text';
 import ThemeBlock from '../../ThemeBlock';
 
 export default {
-  title: 'Oracle/Elements/Text',
   component: Text,
+  title: 'Oracle/Elements/Text',
 } as Meta;
 
-const StylesTemplate = ({ ...props }) => (
+const StylesTemplate: Story<TextProps> = ({ ...props }) => (
   <ThemeBlock>
     <Text {...props} weightStyle={0}>Thin</Text>
     <Text {...props} weightStyle={2}>Light</Text>
@@ -21,7 +21,7 @@ const StylesTemplate = ({ ...props }) => (
     <Text {...props} bold monospace>Bold monospace</Text>
   </ThemeBlock>
 );
-export const Styles = StylesTemplate.bind({});
+export const Styles: Story<TextProps> = StylesTemplate.bind({});
 Styles.args = {};
 
 const SizesTemplate = ({ ...props }) => (

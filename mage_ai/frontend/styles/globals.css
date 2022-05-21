@@ -496,28 +496,28 @@ textarea {
   font-family: 'Roboto Light';
   font-style: normal;
   font-weight: 300;
-  src: url('/fonts/Roboto/Roboto-Light.ttf') format('ttf')
+  src: url('/fonts/Roboto/Roboto-Light.ttf') format('ttf');
 }
 
 @font-face {
   font-family: 'Roboto Regular';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/Roboto/Roboto-Regular.ttf') format('ttf')
+  src: url('/fonts/Roboto/Roboto-Regular.ttf') format('ttf');
 }
 
 @font-face {
   font-family: 'Roboto Medium';
   font-style: normal;
   font-weight: 500;
-  src: url('/fonts/Roboto/Roboto-Medium.ttf') format('ttf')
+  src: url('/fonts/Roboto/Roboto-Medium.ttf') format('ttf');
 }
 
 @font-face {
   font-family: 'Roboto Bold';
   font-style: normal;
   font-weight: 700;
-  src: url('/fonts/Roboto/Roboto-Bold.ttf') format('ttf')
+  src: url('/fonts/Roboto/Roboto-Bold.ttf') format('ttf');
 }
 
 @font-face {
