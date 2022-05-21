@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 
-import Spacing from '../oracle/elements/Spacing';
+// import Spacing from '../oracle/elements/Spacing';
 import Text from '../oracle/elements/Text';
 import light from '../oracle/styles/themes/light';
 import { gridTheme, theme } from '../styles/theme';
@@ -35,14 +35,14 @@ const ThemeBlock = ({
         <Text bold>{title || 'Light'}</Text>
         <br />
 
-        <Spacing mt={3}>
+        {/* <Spacing mt={3}> */}
           {React.Children.map(children, (child, idx) => React.cloneElement(
             child,
             {
               key: idx,
             },
           ))}
-        </Spacing>
+        {/* </Spacing> */}
       </Container>
     </ThemeProvider>
   );
