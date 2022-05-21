@@ -9,29 +9,22 @@ export type BaseIconProps = {
   color?: string;
   default?: boolean;
   disabled?: boolean;
-  earth?: boolean;
   fill?: string;
   fillRule?: string;
-  fire?: boolean;
   info?: boolean;
   inverted?: boolean;
   invertedTheme?: boolean;
   muted?: boolean;
   negative?: boolean;
-  neutral100?: boolean;
-  neutral300?: boolean;
   opacity?: number;
   positive?: boolean;
   primary?: boolean;
   size?: number;
   stroke?: string;
   style?: any;
-  useModelTheme?: boolean;
   useStroke?: boolean;
   viewBox?: string;
   warning?: boolean;
-  water?: boolean;
-  wind?: boolean;
 };
 
 type BaseIconInternalProps = {
@@ -41,7 +34,7 @@ type BaseIconInternalProps = {
 
 export const SVGStyle = styled.svg``;
 
-export const SHARED_STYLES = css`
+export const SHARED_STYLES = css<any>`
 
   ${props => props.fill && typeof props.fill !== 'undefined' && `
     fill: ${props.fill};
@@ -64,11 +57,11 @@ export const SHARED_STYLES = css`
   `}
 
   ${props => !props.useStroke && props.muted && !props.disabled && !props.invertedTheme && `
-    fill: ${(props.theme.monotone || light.monotone).grey300};
+    fill: ${(props.theme.monotone || light.monotone).gray};
   `}
 
   ${props => !props.useStroke && props.default && !props.disabled && !props.invertedTheme && `
-    fill: ${(props.theme.monotone || light.monotone).grey500};
+    fill: ${(props.theme.monotone || light.monotone).gray};
   `}
 
   ${props => !props.useStroke && props.disabled && !props.invertedTheme && `
@@ -88,11 +81,11 @@ export const SHARED_STYLES = css`
   `}
 
   ${props => props.useStroke && props.muted && !props.disabled && !props.invertedTheme && `
-    stroke: ${(props.theme.monotone || light.monotone).grey300};
+    stroke: ${(props.theme.monotone || light.monotone).gray};
   `}
 
   ${props => props.useStroke && props.default && !props.disabled && !props.invertedTheme && `
-    stroke: ${(props.theme.monotone || light.monotone).grey500};
+    stroke: ${(props.theme.monotone || light.monotone).gray};
   `}
 
   ${props => props.useStroke && props.disabled && !props.invertedTheme && `
@@ -130,7 +123,6 @@ const BaseIcon = ({
   opacity,
   size = DEFAULT_SIZE,
   style,
-  title = 'icon',
   viewBox = '0 0 24 24',
 }: BaseIconProps & BaseIconInternalProps) => (
   <SVGStyle

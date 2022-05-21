@@ -25,7 +25,7 @@ function build(arrayOfPathProps, iconProps: {
           key={idx}
         />
       ) : (
-        <Style
+        <PathStyle
           useStroke={iconProps?.useStroke}
           {...props}
           {...pathProps}
