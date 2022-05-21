@@ -9,8 +9,10 @@ import {
   FONT_FAMILY_THIN,
 } from '@oracle/styles/fonts/primary';
 import {
+  LARGE,
   REGULAR,
   SMALL,
+  XLARGE,
 } from '@oracle/styles/fonts/sizes';
 
 export type TextProps = {
@@ -55,15 +57,25 @@ export type TextProps = {
   whiteSpaceNormal?: boolean;
   width?: number;
   wordBreak?: boolean;
+  xlarge?: boolean;
 };
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
 
-  ${props => !props.large && !props.small && `
+  ${props => !props.large && !props.small && !props.xlarge && `
     ${REGULAR}
   `}
+
   ${props => props.small && `
     ${SMALL}
+  `}
+
+  ${props => props.large && `
+    ${LARGE}
+  `}
+
+  ${props => props.xlarge && `
+    ${XLARGE}
   `}
 
   ${props => !props.monospace && Number(props.weightStyle) === 0 && `

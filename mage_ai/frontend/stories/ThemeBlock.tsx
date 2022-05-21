@@ -2,6 +2,7 @@ import React from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 
+import Divider from '../oracle/elements/Divider';
 // import Spacing from '../oracle/elements/Spacing';
 import Text from '../oracle/elements/Text';
 import light from '../oracle/styles/themes/light';
@@ -12,11 +13,7 @@ const Container = styled.div`
   padding: 48px;
 
   ${props => props.theme && `
-    background-color: ${props.theme.background.page};
-  `}
-
-  ${props => props.theme && props.inverted && `
-    background-color: ${props.theme.background.pageInverted};
+    background-color: ${props.theme.background.muted};
   `}
 `;
 
@@ -32,7 +29,9 @@ const ThemeBlock = ({
   const lightEl = (
     <ThemeProvider theme={{ ...theme, ...light }}>
       <Container>
-        <Text bold>{title || 'Light'}</Text>
+        <Text bold xlarge>{title || 'Light'}</Text>
+        <br />
+        <Divider short />
         <br />
 
         {/* <Spacing mt={3}> */}

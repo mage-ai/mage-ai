@@ -29,20 +29,8 @@ const SizesTemplate = ({ ...props }) => (
     <Text {...props} small>Small</Text>
     <Text {...props}>Regular</Text>
     <Text {...props} large>Large</Text>
+    <Text {...props} xlarge>X-Large</Text>
   </ThemeBlock>
 );
 export const Sizes = SizesTemplate.bind({});
 Sizes.args = {};
-
-const PlaygroundTemplate = ({ ...props }) => (
-  <ThemeBlock>
-    <Text {...props} />
-  </ThemeBlock>
-);
-
-const Template: Story<TextProps> = (args) => <PlaygroundTemplate {...args} />;
-
-export const Playground = Template.bind({});
-Playground.args = {
-  children: 'Text',
-};
