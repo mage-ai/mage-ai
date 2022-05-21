@@ -12,7 +12,6 @@ export type ThemeType = {
   };
   loader: {
     color: string,
-    colorInverted: string,
   },
   monotone: {
     black: string;

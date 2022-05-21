@@ -28,7 +28,6 @@ export default {
   },
   loader: {
     color: RED,
-    colorInverted: BLUE,
   },
   monotone: {
     black: BLACK,

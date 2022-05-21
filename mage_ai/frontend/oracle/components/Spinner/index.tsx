@@ -19,7 +19,6 @@ export type SpinnerProps = {
 
 const Spinner = ({
   fullScreen,
-  inverted,
   large,
   left = 0,
   relative,
@@ -49,9 +48,8 @@ const Spinner = ({
     const bodyHeightAdjusted: number = bodyHeight - (PADDING);
     const loadingEl = (
       <ReactLoading
-        color={inverted
-          ? (themeContext.loader || light.loader).colorInverted
-          : (themeContext.loader || light.loader).color
+        color={
+          (themeContext.loader || light.loader).color
         }
         height={size}
         type="spin"
