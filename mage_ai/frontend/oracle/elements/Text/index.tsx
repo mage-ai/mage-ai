@@ -12,7 +12,6 @@ import {
   REGULAR,
   SMALL,
 } from '@oracle/styles/fonts/sizes';
-// import { useModelTheme as useModelThemeContext } from '@context/ModelTheme';
 
 export type TextProps = {
   bold?: boolean;
