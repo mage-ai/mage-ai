@@ -28,7 +28,7 @@ export type ButtonProps = {
   href?: string;
   loading?: boolean;
   noPadding?: boolean;
-  onClick?: (e?: Event) => void;
+  onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   outlineBackgroundColorSelector?: (theme: any) => string;
   padding?: number;
   pointerEventsEnabled?: boolean;
