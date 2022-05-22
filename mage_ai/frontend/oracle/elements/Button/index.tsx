@@ -149,7 +149,7 @@ const Button = ({
   spaceBetween,
   type = 'button',
   ...props
-}: ButtonProps, ref) => {
+}: ButtonProps, ref: any) => {
   const iconProps = {
     disabled,
     size: UNIT * 3,
