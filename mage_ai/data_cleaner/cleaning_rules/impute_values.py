@@ -84,19 +84,19 @@ class ImputeValues(BaseRule):
         if self.statistics[f"{column}/null_value_rate"] != 1:
             dtype = self.column_types[column]
             if dtype in NUMBER_TYPES:
-                strategy = self.__get_numerical_strategy(column)
+                strategy = self.get_numerical_strategy(column)
             elif dtype in CATEGORICAL_TYPES:
-                strategy = self.__get_categorical_strategy(column)
+                strategy = self.get_categorical_strategy(column)
             elif dtype in STRING_TYPES:
                 strategy = self.__get_string_strategy()
             elif dtype in DATETIME:
-                strategy = self.__get_datetime_strategy(column)
+                strategy = self.get_datetime_strategy(column)
             else:
                 raise TypeError(f'Invalid column type \'{dtype}\' for column \'{column}\'')
         return strategy
 
-    def __get_categorical_strategy(self, column):
-        longest_sequence = self.__get_longest_null_seq(column)
+    def get_categorical_strategy(self, column):
+        longest_sequence = self.get_longest_null_seq(column)
         if self.statistics[f'{column}/count'] <= self.DATA_SM_UB:
             params = self.SM_LG_HYPERPARAMS["small"]
             if(self.statistics[f'{column}/count_distinct'] <= params["rand_max_unique_count"]
@@ -112,14 +112,14 @@ class ImputeValues(BaseRule):
                 return ImputationStrategy.SEQ
         return ImputationStrategy.NOOP
 
-    def __get_datetime_strategy(self, column):
-        longest_sequence = self.__get_longest_null_seq(column)
+    def get_datetime_strategy(self, column):
+        longest_sequence = self.get_longest_null_seq(column)
         if longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
 
-    def __get_longest_null_seq(self, column):
+    def get_longest_null_seq(self, column):
         longest_sequence = 0
         curr_sequence = 0
         for is_null in self.cleaned_df[column].isna():
@@ -130,7 +130,7 @@ class ImputeValues(BaseRule):
                 curr_sequence = 0
         return longest_sequence
 
-    def __get_numerical_strategy(self, column):
+    def get_numerical_strategy(self, column):
         if self.statistics[f'{column}/count'] <= self.DATA_SM_UB:
             # this is a smaller dataset, need to enforce tougher restrictions
             hyperparams = self.SM_LG_HYPERPARAMS["large"]
