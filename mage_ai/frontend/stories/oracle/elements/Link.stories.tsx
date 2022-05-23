@@ -9,6 +9,7 @@ export default {
   title: 'Oracle/Elements/Link',
 } as Meta;
 
+// eslint-disable-next-line react/prop-types
 const TemplateWithTheme = ({ children, ...props }) => (
   <ThemeBlock>
     <Link {...props}>

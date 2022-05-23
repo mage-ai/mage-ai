@@ -15,17 +15,14 @@ export type LinkProps = {
   default?: boolean;
   disabled?: boolean;
   flex?: number;
-  fitContent?: boolean;
+  fitContentHeight?: boolean;
   fitContentWidth?: boolean;
   fullHeight?: boolean;
   fullWidth?: boolean;
   height?: number;
   href?: string;
-  info?: boolean;
   inline?: boolean;
   large?: boolean;
-  lineHeight?: number;
-  monospace?: boolean;
   muted?: boolean;
   noColor?: boolean;
   noHoverUnderline?: boolean;
@@ -33,8 +30,6 @@ export type LinkProps = {
   onClick?: (event: any) => void;
   onContextMenuClick?: (event: any) => void;
   onFocus?: (event: any) => void;
-  onMouseEnter?: any;
-  onMouseLeave?: any;
   openNewWindow?: boolean;
   overflow?: string;
   pointerEventsEnabled?: boolean;
@@ -47,14 +42,12 @@ export type LinkProps = {
   target?: string;
   textOverflow?: string;
   title?: string;
+
   transparentBorder?: boolean;
   underline?: boolean;
-  useModelTheme?: boolean;
-  warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   width?: number;
   wordWrap?: boolean;
-  xsmall?: boolean;
 };
 
 export const SHARED_LINK_STYLES = css<any>`
@@ -70,7 +63,6 @@ export const SHARED_LINK_STYLES = css<any>`
     !props.noColor &&
     !props.sameColorAsText &&
     !props.secondary &&
-    !props.warning &&
     `
     color: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
@@ -125,12 +117,7 @@ export const SHARED_LINK_STYLES = css<any>`
     line-height: inherit !important;
   `}
 
-  ${props => !props.autoHeight && `
-    // This breaks Safari. What was it originally used for? I forgot...
-    // height: -webkit-fill-available;
-  `}
-
-  ${props => props.fitContent && `
+  ${props => props.fitContentHeight && `
     height: fit-content;
   `}
 
@@ -183,20 +170,20 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
 
   ${props => props.disabled && `
-    color: ${(props.theme.monotone || light.monotone).grey300};
+    color: ${(props.theme.monotone || light.monotone).gray};
     cursor: not-allowed;
 
     &:focus,
     &:hover {
-      color: ${(props.theme.monotone || light.monotone).grey300};
+      color: ${(props.theme.monotone || light.monotone).gray};
     }
   `}
 
   ${props => props.default && !props.disabled && `
-    color: ${(props.theme.monotone || light.monotone).grey400};
+    color: ${(props.theme.monotone || light.monotone).gray};
 
     &:hover {
-      color: ${(props.theme.monotone || light.monotone).grey400};
+      color: ${(props.theme.monotone || light.monotone).gray};
     }
   `}
 
