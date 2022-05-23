@@ -1035,7 +1035,7 @@ class ColumnTests(TestCase):
             ]
         )
         expected_df = pd.DataFrame([
-            ['','','','','','','','','']
+            ['', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
             'bad_case',

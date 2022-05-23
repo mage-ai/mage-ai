@@ -1,5 +1,6 @@
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import REGEX_NUMBER
+from data_cleaner.transformer_actions.constants import ActionType
 from keyword import iskeyword
 import re
 
@@ -37,7 +38,7 @@ class CleanColumnNames(BaseRule):
                 f'{matches}. '
                 'Making these names lowercase and alphanumeric may improve'
                 'ease of dataset access and reduce security risks.',
-                action_type="clean_column_name",
+                action_type=ActionType.CLEAN_COLUMN_NAME,
                 action_arguments=matches,
                 axis='column'
             ))

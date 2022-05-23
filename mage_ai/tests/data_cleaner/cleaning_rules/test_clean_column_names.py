@@ -1,4 +1,5 @@
 from data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
+from data_cleaner.transformer_actions.constants import ActionType
 from tests.base_test import TestCase
 import pandas as pd
 
@@ -34,7 +35,7 @@ class CleanColumnNameTests(TestCase):
                 '. Making these names lowercase and alphanumeric may improve'
                 'ease of dataset access and reduce security risks.',
                 action_payload=dict(
-                    action_type='clean_column_name',
+                    action_type=ActionType.CLEAN_COLUMN_NAME,
                     action_arguments=[
                         'Bad Case',
                         '%@#342%34@@#342',

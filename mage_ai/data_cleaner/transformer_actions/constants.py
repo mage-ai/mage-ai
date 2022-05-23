@@ -1,6 +1,7 @@
 class ActionType():
     ADD = 'add'
     AVERAGE = 'average'
+    CLEAN_COLUMN_NAME = 'clean_column_name'
     COUNT = 'count'
     COUNT_DISTINCT = 'count_distinct'
     DIFF = 'diff'
