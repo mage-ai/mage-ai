@@ -18,7 +18,7 @@ export type ProgressProps = {
 
 const ProgressContainerStyle = styled.div<ProgressProps>`
   border-radius: ${BORDER_RADIUS_SMALL};
-  height: ${UNIT / 1.75}px;
+  height: ${UNIT * 0.75}px;
   overflow: hidden;
   position: relative;
   width: 100%;
