@@ -23,13 +23,13 @@ export type ButtonProps = {
 };
 
 const ButtonStyle = styled.button<ButtonProps>`
-  background-color: ${light.button.default.background};
+  background-color: ${light.interactive.defaultBackground};
   border: none;
-  border-color: ${light.button.default.lines};
+  border-color: ${light.interactive.defaultBorder};
   border-radius: ${BORDER_RADIUS}px;
   border-style: solid;
   border-width: 1px;
-  color: ${light.button.default.color};
+  color: ${light.content.active};
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
   position: relative;
@@ -38,36 +38,35 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => !props.disabled && `
     &:hover {
-      border-color: ${light.button.default.hover};
+      border-color: ${light.interactive.hoverBorder};
     }
     &:active {
-      border-color: ${light.button.selected};
-      background: ${light.button.default.inverted};
+      border-color: ${light.content.active};
     }
   `}
 
   ${props => props.primary && !props.disabled && `
-    background-color: ${light.button.primary.background};
-    color: ${light.button.primary.color};
-    border-color: ${light.button.primary.lines};
+    background-color: ${light.interactive.primaryBackground};
+    color: ${light.monotone.white};
+    border-color: ${light.interactive.primaryBackground};
     &:hover {
-      border-color: ${light.button.primary.hover};
+      border-color: ${light.interactive.focusBorder};
     }
     &:active {
-      border-color: ${light.button.selected};
-      background: ${light.button.primary.inverted};
+      border-color: ${light.monotone.black};
+      background: ${light.interactive.focusBackground};
     }
   `}
 
   ${props => props.disabled && `
-    color: ${light.button.disabled};
+    color: ${light.interactive.disabledBorder};
     &:hover {
       cursor: not-allowed;
     }
   `}
 
   ${props => props.selected && `
-    border-color: ${light.button.selected};
+    border-color: ${light.content.active};
   `}
 
   ${props => props.width && `

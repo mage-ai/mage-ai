@@ -21,24 +21,6 @@ export default {
     header: SILVER,
     row: LIGHT,
   },
-  button: {
-    default: {
-      color: BLACK,
-      background: LIGHT,
-      hover: DARK_GRAY_LINES,
-      inverted: LIGHT,
-      lines: GRAY_LINES,
-    },
-    primary: {
-      color: WHITE,
-      background: BLUE,
-      hover: NAVY_LINES,
-      inverted: NAVY,
-      lines: BLUE,
-    },
-    disabled: GRAY,
-    selected: BLACK,
-  },
   content: {
     active: BLACK,
     default: WHITE,
