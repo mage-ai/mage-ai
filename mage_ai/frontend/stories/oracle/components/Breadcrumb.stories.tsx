@@ -20,10 +20,10 @@ const Template: Story<BreadcrumbType> = (args) => <TemplateWithTheme {...args} /
 export const Regular = Template.bind({});
 Regular.args = {};
 
-export const Large = Template.bind({});
-Large.args = {
+export const XLarge = Template.bind({});
+XLarge.args = {
   ...Regular.args,
-  large: true,
+  xlarge: true,
 };
 
 export const Selected = Template.bind({});
