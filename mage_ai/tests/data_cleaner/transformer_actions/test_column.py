@@ -1021,7 +1021,7 @@ class ColumnTests(TestCase):
 
     def test_clean_column_name(self):
         df = pd.DataFrame([
-            ['','','','','','','','','']
+            ['', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
             'Bad Case',
@@ -1040,12 +1040,12 @@ class ColumnTests(TestCase):
             'good_name',
             'bad_case',
             'number_34234342',
-            '__yield',
+            'yield__',
             'number_12342',
             '1234___23',
-            '__true',
+            'true__',
             'true_crime',
-            '__for'
+            'for__'
             ]
         )
         action = dict(

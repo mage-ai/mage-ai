@@ -1,12 +1,12 @@
 from data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
-from data_cleaner.tests.base_test import TestCase
+from tests.base_test import TestCase
 import pandas as pd
 
 
 class CleanColumnNameTests(TestCase):
     def test_evaluate(self):
         df = pd.DataFrame([
-            ['','','','','','','','',''], 
+            ['', '', '', '', '', '', '' , '', ''], 
         ], columns=[
             'good_name',
             'Bad Case',
