@@ -1,3 +1,6 @@
+STATUS_NOT_APPLIED = 'not_applied'
+STATUS_COMPLETED = 'completed'
+
 class BaseRule:
     def __init__(self, df, column_types, statistics):
         self.df = df
@@ -28,6 +31,7 @@ class BaseRule:
         return dict(
             title=title,
             message=message,
+            status=STATUS_NOT_APPLIED,
             action_payload=dict(
                 action_type=action_type,
                 action_arguments=action_arguments,
