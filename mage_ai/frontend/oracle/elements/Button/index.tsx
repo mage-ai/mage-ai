@@ -46,9 +46,9 @@ const ButtonStyle = styled.button<ButtonProps>`
   `}
 
   ${props => props.primary && !props.disabled && `
-    background-color: ${light.interactive.primaryBackground};
+    background-color: ${light.interactive.linkPrimary};
     color: ${light.monotone.white};
-    border-color: ${light.interactive.primaryBackground};
+    border-color: ${light.interactive.linkPrimary};
     &:hover {
       border-color: ${light.interactive.focusBorder};
     }
