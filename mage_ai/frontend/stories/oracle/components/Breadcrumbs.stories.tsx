@@ -9,12 +9,6 @@ export default {
   title: 'Oracle/Components/Breadcrumbs',
 } as Meta;
 
-const breadcrumbs:any = [];
-
-breadcrumbs.push({
-  label: "Storybook",
-});
-
 const TemplateWithTheme = ({ ...props }) => (
   <ThemeBlock>
    <BreadCrumbs breadcrumbs={[]} {...props} />
@@ -23,14 +17,25 @@ const TemplateWithTheme = ({ ...props }) => (
 
 const Template: Story<any> = (args) => <TemplateWithTheme {...args} />;
 
-export const Regular = Template.bind({});
-Regular.args = {
+export const Select = Template.bind({});
+Select.args = {
   breadcrumbs: [
     {
-      label: "one",
+      label: "Stories",
+      selected: true,
+    },
+  ],
+}
+
+export const SelectTwo = Template.bind({});
+SelectTwo.args = {
+  breadcrumbs: [
+    {
+      label: "Stories",
     },
     {
-      label: "two",
+      label: "Oracle",
+      selected: true,
     },
-  ],    
-};
+  ],
+}

@@ -171,7 +171,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.primary && `
-    color: ${(props.theme.interactive || light.interactive).primaryAction};
+    color: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
 
   ${props => props.danger && `

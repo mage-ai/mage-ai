@@ -5,8 +5,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { ArrowRight } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
 
 export type BreadcrumbType = {
   as?: string;
@@ -40,7 +38,7 @@ function Breadcrumb({
           {!textOnly && label}
 
           {textOnly && (
-            <Text bold={selected} large={large}>
+            <Text bold={selected} large={large} primary={!selected}>
               {label}
             </Text>
           )}
@@ -48,7 +46,7 @@ function Breadcrumb({
       </Flex>
       {!hideIcon && (
         <Flex>
-          <ArrowRight muted size={UNIT * 1.75} />
+          <Text disabled> / </Text>
         </Flex>
       )}
     </FlexContainer>
