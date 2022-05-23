@@ -11,7 +11,7 @@ export default {
 
 const TemplateWithTheme = ({ ...props }) => (
   <ThemeBlock>
-   <BreadCrumbs breadcrumbs={[]} {...props} />
+    <BreadCrumbs breadcrumbs={[]} {...props} />
   </ThemeBlock>
 );
 
@@ -25,7 +25,7 @@ Select.args = {
       selected: true,
     },
   ],
-}
+};
 
 export const SelectTwo = Template.bind({});
 SelectTwo.args = {
@@ -38,4 +38,20 @@ SelectTwo.args = {
       selected: true,
     },
   ],
-}
+};
+
+export const SelectThree = Template.bind({});
+SelectThree.args = {
+  breadcrumbs: [
+    {
+      label: "dataset.csv",
+    },
+    {
+      label: "columns",
+    },
+    {
+      label: "features",
+      selected: true,
+    },
+  ],
+};
