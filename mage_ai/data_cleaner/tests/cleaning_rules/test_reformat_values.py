@@ -1,5 +1,6 @@
 from data_cleaner.cleaning_rules.reformat_values import ReformatValues
 from data_cleaner.tests.base_test import TestCase
+from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 
@@ -151,4 +152,73 @@ class ReformatValuesCleaningRule(TestCase):
             ),
         ]
         self.assertEqual(results, expected_results)
-    
+
+    def test_datetime_conversion(self):
+        df = pd.DataFrame([
+            [dt(2022, 8, 4), '08/04/22', 'Thursday, August 4, 2022', 'Thurs, Aug 04 2022', '8-4-2022'],
+            [dt(2022, 1, 20), '', 'Thursday,   JaNUary 20, 2022', 'ThurS, Jan 20 2022', ''],
+            [None, '12/24/22', '', 'Sat, Dec 24 2022', '12-24-2022'],
+            [dt(2022, 10, 31), '10/31/22', 'Monday,   ocTober 31, 2022', 'OctobEr is good', None],
+            [dt(2022, 6, 27), None, 'MonDay, June 27, 2022', 'Mon, jUn 27 2022', '6-27-2022'],
+            [dt(2022, 3, 8), '03/08/    22', None, 'tuEsday   is a good day', '3-8-2022']
+        ], columns=[
+            'date1',
+            'date2',
+            'date3',
+            'date4',
+            'date5',
+        ])
+        column_types = {
+            'date1': 'datetime',
+            'date2': 'datetime',
+            'date3': 'category',
+            'date4': 'category',
+            'date5': 'text'
+        }
+        statistics = {
+            'date1/count': 5,
+            'date2/count': 4,
+            'date3/count': 4,
+            'date4/count': 6,
+            'date5/count': 4
+        }
+        rule = ReformatValues(df, column_types, statistics)
+        results = rule.evaluate()
+        expected_results = [
+            dict(
+                title='Reformat values',
+                message='The following columns have mixed capitalization formats: '
+                        '[\'date3\', \'date4\']. '
+                        'Reformat these columns with fully lowercase text to improve data quality.',
+                action_payload=dict(
+                    action_type='reformat',
+                    action_arguments=['date3', 'date4'],
+                    axis='column',
+                    action_options = {
+                        'reformat': 'standardize_capitalization',
+                        'capitalization': 'lowercase'
+                    },
+                    action_variables = {},
+                    action_code = '',
+                    outputs = [],
+                )
+            ),
+            dict(
+                title='Reformat values',
+                message='The following columns have date values: '
+                        '[\'date1\', \'date2\', \'date3\', \'date4\', \'date5\']. '
+                        'Reformat these columns to improve data quality.',
+                action_payload=dict(
+                    action_type='reformat',
+                    action_arguments=['date1', 'date2', 'date3', 'date4', 'date5'],
+                    axis='column',
+                    action_options = {
+                        'reformat': 'date_conversion',
+                    },
+                    action_variables = {},
+                    action_code = '',
+                    outputs = [],
+                )
+            ),
+        ]
+        self.assertEqual(results, expected_results)
