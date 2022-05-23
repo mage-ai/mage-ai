@@ -40,18 +40,21 @@ SelectTwo.args = {
   ],
 };
 
-export const SelectThree = Template.bind({});
-SelectThree.args = {
+export const SelectThreeXL = Template.bind({});
+SelectThreeXL.args = {
   breadcrumbs: [
     {
       label: "dataset.csv",
+      xlarge: true,
     },
     {
       label: "columns",
+      xlarge: true,
     },
     {
       label: "features",
       selected: true,
+      xlarge: true,
     },
   ],
 };
