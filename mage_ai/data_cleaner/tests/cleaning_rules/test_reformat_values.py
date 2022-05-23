@@ -69,10 +69,18 @@ class ReformatValuesCleaningRule(TestCase):
                     action_arguments=['location'],
                     axis='column',
                     action_options = {
-                        'reformat': 'standardize_capitalization',
+                        'reformat': 'caps_standardization',
                         'capitalization': 'uppercase'
                     },
-                    action_variables = {},
+                    action_variables = {
+                        'location': {
+                            'feature' : {
+                                'column_type': 'category',
+                                'uuid': 'location'
+                            },
+                            'type': 'feature'
+                        }
+                    },
                     action_code = '',
                     outputs = [],
                 )
@@ -87,10 +95,25 @@ class ReformatValuesCleaningRule(TestCase):
                     action_arguments=['company_name', 'name'],
                     axis='column',
                     action_options = {
-                        'reformat': 'standardize_capitalization',
+                        'reformat': 'caps_standardization',
                         'capitalization': 'lowercase'
                     },
-                    action_variables = {},
+                    action_variables = {
+                        'company_name': {
+                            'feature' : {
+                                'column_type': 'category_high_cardinality',
+                                'uuid': 'company_name'
+                            },
+                            'type': 'feature'
+                        },
+                        'name': {
+                            'feature' : {
+                                'column_type': 'text',
+                                'uuid': 'name'
+                            },
+                            'type': 'feature'
+                        }
+                    },
                     action_code = '',
                     outputs = [],
                 )
@@ -143,9 +166,17 @@ class ReformatValuesCleaningRule(TestCase):
                     action_arguments=['value'],
                     axis='column',
                     action_options = {
-                        'reformat': 'currency',
+                        'reformat': 'currency_to_num',
                     },
-                    action_variables = {},
+                    action_variables = {
+                        'value': {
+                            'feature' : {
+                                'column_type': 'number_with_decimals',
+                                'uuid': 'value'
+                            },
+                            'type': 'feature'
+                        }
+                    },
                     action_code = '',
                     outputs = [],
                 )
@@ -195,10 +226,25 @@ class ReformatValuesCleaningRule(TestCase):
                     action_arguments=['date3', 'date4'],
                     axis='column',
                     action_options = {
-                        'reformat': 'standardize_capitalization',
+                        'reformat': 'caps_standardization',
                         'capitalization': 'lowercase'
                     },
-                    action_variables = {},
+                    action_variables = {
+                        'date3': {
+                            'feature' : {
+                                'column_type': 'category',
+                                'uuid': 'date3'
+                            },
+                            'type': 'feature'
+                        },
+                        'date4': {
+                            'feature' : {
+                                'column_type': 'category',
+                                'uuid': 'date4'
+                            },
+                            'type': 'feature'
+                        }
+                    },
                     action_code = '',
                     outputs = [],
                 )
@@ -213,9 +259,45 @@ class ReformatValuesCleaningRule(TestCase):
                     action_arguments=['date1', 'date2', 'date3', 'date4', 'date5'],
                     axis='column',
                     action_options = {
-                        'reformat': 'date_conversion',
+                        'reformat': 'date_format_conversion',
                     },
-                    action_variables = {},
+                    action_variables = {
+                        'date1': {
+                            'feature' : {
+                                'column_type': 'datetime',
+                                'uuid': 'date1'
+                            },
+                            'type': 'feature'
+                        },
+                        'date2': {
+                            'feature' : {
+                                'column_type': 'datetime',
+                                'uuid': 'date2'
+                            },
+                            'type': 'feature'
+                        },
+                        'date3': {
+                            'feature' : {
+                                'column_type': 'category',
+                                'uuid': 'date3'
+                            },
+                            'type': 'feature'
+                        },
+                        'date4': {
+                            'feature' : {
+                                'column_type': 'category',
+                                'uuid': 'date4'
+                            },
+                            'type': 'feature'
+                        },
+                        'date5': {
+                            'feature' : {
+                                'column_type': 'text',
+                                'uuid': 'date5'
+                            },
+                            'type': 'feature'
+                        }
+                    },
                     action_code = '',
                     outputs = [],
                 )

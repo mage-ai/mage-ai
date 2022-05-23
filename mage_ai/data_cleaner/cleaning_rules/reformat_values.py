@@ -1,5 +1,3 @@
-from distutils.command.clean import clean
-from posixpath import split
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -39,6 +37,21 @@ class ReformatValuesSubRule():
         Removes all null entries from a specific column
         """
         return self.clean_column_cache.setdefault(column, self.df[column].dropna(axis=0))
+
+    def construct_action_variables(self, columns):
+        """
+        Constructs action variable set for action payload
+        """
+        variable_set = {}
+        for column_name in columns:
+            variable_set[column_name] = {
+                'feature': {
+                    'column_type': self.column_types[column_name],
+                    'uuid': column_name,
+                },
+                'type': 'feature',
+            }
+        return variable_set
 
     def get_column_dtype(self, column):
         """
@@ -130,19 +143,20 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                     action_arguments=payloads[case],
                     axis=Axis.COLUMN,
                     action_options = {
-                        'reformat': 'standardize_capitalization',
+                        'reformat': 'caps_standardization',
                         'capitalization': case
-                    }
+                    },
+                    action_variables = self.construct_action_variables(payloads[case])
                 ))
         return suggestions
 
 
 class ConvertCurrencySubRule(ReformatValuesSubRule):
-    CURRENCY_PATTERN = r'^(?:[\$\€\¥\₹\元\£]|(?:Rs)(?:CAD))[\s\t]*[0-9]*\.{0,1}[0-9]+$'
+    CURRENCY_PATTERN = r'^(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))[\s\t]*[0-9]*\.{0,1}[0-9]+$'
     CURRENCY_TYPES = frozenset((
         CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS
     ))
-    CURRENCY_TYPE_LB = 0.6
+    CURRENCY_TYPE_LB = 0.8
 
     def __init__(self, df, column_types, statistics, action_builder):
         super().__init__(df, column_types, statistics, action_builder)
@@ -182,8 +196,9 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
                 action_arguments=self.matches,
                 axis=Axis.COLUMN,
                 action_options = {
-                    'reformat': 'currency',
-                }
+                    'reformat': 'currency_to_num',
+                },
+                action_variables = self.construct_action_variables(self.matches)
             ))
         return suggestions
 
@@ -274,8 +289,9 @@ class ReformatDateSubRule(ReformatValuesSubRule):
                 action_arguments=self.matches,
                 axis=Axis.COLUMN,
                 action_options = {
-                    'reformat': 'date_conversion',
-                }
+                    'reformat': 'date_format_conversion',
+                },
+                action_variables = self.construct_action_variables(self.matches)
             ))
         return suggestions
 
