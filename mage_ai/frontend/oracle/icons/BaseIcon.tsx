@@ -5,26 +5,17 @@ import { DEFAULT_SIZE } from './shared/constants';
 
 export type BaseIconProps = {
   black?: boolean;
-  clipRule?: string;
-  color?: string;
   default?: boolean;
   disabled?: boolean;
   fill?: string;
-  fillRule?: string;
-  info?: boolean;
-  inverted?: boolean;
-  invertedTheme?: boolean;
   muted?: boolean;
-  negative?: boolean;
   opacity?: number;
-  positive?: boolean;
   primary?: boolean;
   size?: number;
   stroke?: string;
   style?: any;
   useStroke?: boolean;
   viewBox?: string;
-  warning?: boolean;
 };
 
 type BaseIconInternalProps = {
@@ -44,27 +35,27 @@ export const SHARED_STYLES = css<any>`
     stroke: ${props.stroke};
   `}
 
-  ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && !props.invertedTheme && `
+  ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && `
     fill: ${(props.theme.content || light.content).active};
   `}
 
-  ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && !props.invertedTheme && `
+  ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && `
     stroke: ${(props.theme.content || light.content).active};
   `}
 
-  ${props => !props.useStroke && props.inverted && !props.disabled && !props.invertedTheme && `
+  ${props => !props.useStroke && props.inverted && !props.disabled && `
     fill: ${(props.theme.content || light.content).inverted};
   `}
 
-  ${props => !props.useStroke && props.muted && !props.disabled && !props.invertedTheme && `
+  ${props => !props.useStroke && props.muted && !props.disabled && `
     fill: ${(props.theme.monotone || light.monotone).gray};
   `}
 
-  ${props => !props.useStroke && props.default && !props.disabled && !props.invertedTheme && `
+  ${props => !props.useStroke && props.default && !props.disabled && `
     fill: ${(props.theme.monotone || light.monotone).gray};
   `}
 
-  ${props => !props.useStroke && props.disabled && !props.invertedTheme && `
+  ${props => !props.useStroke && props.disabled && `
     fill: ${(props.theme.content || light.content).disabled};
   `}
 
@@ -76,25 +67,25 @@ export const SHARED_STYLES = css<any>`
     stroke: ${(props.theme.monotone || light.monotone).black};
   `}
 
-  ${props => props.useStroke && props.inverted && !props.disabled && !props.invertedTheme && `
-    stroke: ${(props.theme.content || light.content).inverted};
-  `}
-
-  ${props => props.useStroke && props.muted && !props.disabled && !props.invertedTheme && `
+  ${props => props.useStroke && props.muted && !props.disabled && `
     stroke: ${(props.theme.monotone || light.monotone).gray};
   `}
 
-  ${props => props.useStroke && props.default && !props.disabled && !props.invertedTheme && `
+  ${props => props.useStroke && props.default && !props.disabled && `
     stroke: ${(props.theme.monotone || light.monotone).gray};
   `}
 
-  ${props => props.useStroke && props.disabled && !props.invertedTheme && `
+  ${props => props.useStroke && props.disabled && `
     stroke: ${(props.theme.content || light.content).disabled};
   `}
 
   ${props => props.useStroke && !props.disabled && props.primary && `
-    stroke: ${(props.theme.interactive || light.interactive).primaryAction};
+    stroke: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
+  ${props => !props.useStroke && !props.disabled && props.primary && `
+    fill: ${(props.theme.monotone || light.monotone).linkPrimary};
+  `}
+
 `;
 
 export const CircleStyle = styled.circle`

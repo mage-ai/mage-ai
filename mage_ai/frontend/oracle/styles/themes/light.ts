@@ -32,6 +32,7 @@ export default {
   monotone: {
     black: BLACK,
     gray: GRAY,
+    purple: PURPLE,
     white: WHITE,
   },
   progress: {
