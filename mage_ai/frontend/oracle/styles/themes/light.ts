@@ -34,6 +34,10 @@ export default {
     gray: GRAY,
     white: WHITE,
   },
+  progress: {
+    positive: PURPLE,
+    negative: RED,
+  },
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     hover: '8px 24px 24px 0 rgba(0, 0, 0, 0.12)',
