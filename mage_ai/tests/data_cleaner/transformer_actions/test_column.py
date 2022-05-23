@@ -13,11 +13,8 @@ from data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from pandas.util.testing import assert_frame_equal
-<<<<<<< HEAD:mage_ai/tests/data_cleaner/transformer_actions/test_column.py
 from tests.base_test import TestCase
-=======
 from random import seed
->>>>>>> [sk] Added new imputing methods to transformer actinos:mage_ai/data_cleaner/tests/transformer_actions/test_column.py
 import numpy as np
 import pandas as pd
 

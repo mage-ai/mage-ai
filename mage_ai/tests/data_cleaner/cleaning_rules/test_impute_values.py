@@ -1,5 +1,5 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
-from data_cleaner.tests.base_test import TestCase
+from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

@@ -1,6 +1,10 @@
+from ast import Num
+from http.client import ACCEPTED
+from re import I
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import (
     CATEGORICAL_TYPES,
+    COLUMN_TYPES,
     DATETIME,
     NUMBER_TYPES,
     STRING_TYPES
@@ -12,40 +16,167 @@ from data_cleaner.transformer_actions.constants import (
 )
 import numpy as np
 
-
-class ImputeValues(BaseRule):
-    # ub = upper bound, lb = lower bound
+class TypeImputeSubRule():
+    """
+    Assumptions of TypeImputeSubRule
+    1. `df` will not contain any empty strings - all empty strings are converted to null types
+    2. `column_types` will contain the correct type value
+    3. Every column in 'df' is of dtype object and the entries must be used to infer type.
+       This is not always the case, but this assumption simplifies code
+    """
     DATA_SM_UB = 100
-    MAX_NULL_SEQ_LENGTH = 4
-    ROW_KEPT_LB = 0.7
+
+    def __init__(self, df, column_types, statistics):
+        self.df = df
+        self.column_types = column_types
+        self.statistics = statistics
+
+    def accepted_dtypes(self):
+        """
+        Gets the list of dtypes this subrule accepts and checks
+        """
+        raise NotImplementedError("Children of TypeImputeSubRule must override \'accepted_dtypes()\'")
+
+    def evaluate(self, column):
+        """
+        Gets the imputation strategy associated with this type
+        """
+        raise NotImplementedError("Children of TypeImputeSubRule must override \'evaluate()\'")
+
+    def get_longest_null_seq(self, column):
+        """
+        Gets the length of the longest consecutive sequence of null values observed in
+        the column
+        """
+        longest_sequence = 0
+        curr_sequence = 0
+        for is_null in self.df[column].isna():
+            if is_null:
+                curr_sequence += 1
+            else:
+                longest_sequence = max(longest_sequence, curr_sequence)
+                curr_sequence = 0
+        return longest_sequence
+
+    def get_statistics(self, column, statistic):
+        """
+        Gets the statistic requested. If not found, the statistic is calculated and cached
+        for the next call
+        """
+        value = self.statistics.get(f'{column}/{statistic}')
+        if value is None:
+            if statistic == 'count':
+                value = self.cleaned_df[column].count()
+            elif statistic == 'count_distinct':
+                value = self.cleaned_df[column].nunique()
+            elif statistic == 'null_value_rate':
+                value = 1 - self.cleaned_df[column].count() / len(self.cleaned_df[column])
+            self.statistics[f'{column}/{statistic}'] = value
+        return value
+
+
+class NumericalImputeSubRule(TypeImputeSubRule):
+    ACCEPTED_DTYPES = frozenset(NUMBER_TYPES)
     SKEW_UB = 0.7
     SM_LG_HYPERPARAMS = {
         "small": {
-            "avg_med_empty_ub": 0.3,
-            "rand_max_unique_count": 10,
-            "rand_min_count": 30
+            "avg_med_empty_ub": 0.3
         },
         "large": {
-            "avg_med_empty_ub": 0.5,
-            "rand_empty_ub": 0.3
+            "avg_med_empty_ub": 0.5
         }
     }
 
+    def accepted_dtypes(self):
+        return self.ACCEPTED_DTYPES
+    
+    def evaluate(self, column):
+        if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
+            # this is a smaller dataset, need to enforce tougher restrictions
+            hyperparams = self.SM_LG_HYPERPARAMS["large"]
+            if self.get_statistics(column, 'null_value_rate') <= hyperparams["avg_med_empty_ub"]:
+                if abs(self.df[column].skew()) < self.SKEW_UB:
+                    return ImputationStrategy.AVERAGE
+                else:
+                    return ImputationStrategy.MEDIAN
+        else:
+            # this is a larger dataset, can be more lax
+            hyperparams = self.SM_LG_HYPERPARAMS["small"]
+            if self.get_statistics(column, 'null_value_rate') <= hyperparams["avg_med_empty_ub"]:
+                if abs(self.df[column].skew()) < self.SKEW_UB:
+                    return ImputationStrategy.AVERAGE
+                else:
+                    return ImputationStrategy.MEDIAN
+        return ImputationStrategy.NOOP
+
+class CategoricalImputeSubRule(TypeImputeSubRule):
+    ACCEPTED_DTYPES = frozenset(CATEGORICAL_TYPES)
+    RAND_EMPTY_UB = 0.3
+    MAX_NULL_SEQ_LENGTH = 4
+    
+    def accepted_dtypes(self):
+        return self.ACCEPTED_DTYPES
+
+    def evaluate(self, column):
+        longest_sequence = self.get_longest_null_seq(column)
+        if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+            return ImputationStrategy.RANDOM
+        elif longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
+            return ImputationStrategy.SEQ
+        return ImputationStrategy.NOOP
+
+class DateTimeImputeSubRule(TypeImputeSubRule):
+    ACCEPTED_DTYPES = frozenset((DATETIME,))
+    MAX_NULL_SEQ_LENGTH = 4
+
+    def accepted_dtypes(self):
+        return self.ACCEPTED_DTYPES
+    
+    def evaluate(self, column):
+        longest_sequence = self.get_longest_null_seq(column)
+        if longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
+            return ImputationStrategy.SEQ
+        else:
+            return ImputationStrategy.NOOP
+
+class StringImputeSubRule(TypeImputeSubRule):
+    ACCEPTED_DTYPES = frozenset(STRING_TYPES)
+    RAND_EMPTY_UB = 0.3
+
+    def accepted_dtypes(self):
+        return self.ACCEPTED_DTYPES
+    
+    def evaluate(self, column):
+        if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+            return ImputationStrategy.RANDOM
+        return ImputationStrategy.NOOP
+
+class ImputeValues(BaseRule):
+    RULESET = (
+        CategoricalImputeSubRule,
+        DateTimeImputeSubRule,
+        NumericalImputeSubRule,
+        StringImputeSubRule
+    )
+    ROW_KEPT_LB = 0.7
+
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
-        self.strategy_cache = {
-            ImputationStrategy.AVG: [],
-            ImputationStrategy.MED: [],
-            ImputationStrategy.NOOP: [],
-            ImputationStrategy.RANDOM: [],
-            ImputationStrategy.ROW_RM: [],
-            ImputationStrategy.SEQ: []
-        }
         self.action_constructor = ImputeActionConstructor(
             self.df, 
             self.column_types, 
             self._build_transformer_action_suggestion
         )
+        self.cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
+        self.strategy_cache = {
+            ImputationStrategy.AVERAGE: [],
+            ImputationStrategy.MEDIAN: [],
+            ImputationStrategy.NOOP: [],
+            ImputationStrategy.RANDOM: [],
+            ImputationStrategy.ROW_RM: [],
+            ImputationStrategy.SEQ: []
+        }
+        self.hydrate_rules()
 
     def build_suggestions(self):
         suggestions = []
@@ -65,9 +196,7 @@ class ImputeValues(BaseRule):
 
     def evaluate(self):
         if not self.df.empty:
-            self.cleaned_df = self.df.applymap(lambda x: x if (not isinstance(x, str) or
-                                (len(x) > 0 and not x.isspace())) else np.nan)
-            null_mask = self.__get_null_mask()
+            null_mask = self.get_null_mask()
             ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
             if ratio_rows_kept == 1:
                 self.strategy_cache[ImputationStrategy.NOOP].extend(self.df_columns)
@@ -76,90 +205,34 @@ class ImputeValues(BaseRule):
                 self.strategy_cache[ImputationStrategy.ROW_RM].extend(indices)
             else:
                 for column in self.df_columns:
-                    self.strategy_cache[self.get_strategy_by_column(column)].append(column)
+                    dtype = self.column_types[column]
+                    rule = self.rule_map[dtype]
+                    self.strategy_cache[rule.evaluate(column)].append(column)
         return self.build_suggestions()
 
-    def get_strategy_by_column(self, column):
-        strategy = ImputationStrategy.NOOP
-        if self.statistics[f"{column}/null_value_rate"] != 1:
-            dtype = self.column_types[column]
-            if dtype in NUMBER_TYPES:
-                strategy = self.get_numerical_strategy(column)
-            elif dtype in CATEGORICAL_TYPES:
-                strategy = self.get_categorical_strategy(column)
-            elif dtype in STRING_TYPES:
-                strategy = self.__get_string_strategy()
-            elif dtype in DATETIME:
-                strategy = self.get_datetime_strategy(column)
-            else:
-                raise TypeError(f'Invalid column type \'{dtype}\' for column \'{column}\'')
-        return strategy
-
-    def get_categorical_strategy(self, column):
-        longest_sequence = self.get_longest_null_seq(column)
-        if self.statistics[f'{column}/count'] <= self.DATA_SM_UB:
-            params = self.SM_LG_HYPERPARAMS["small"]
-            if(self.statistics[f'{column}/count_distinct'] <= params["rand_max_unique_count"]
-              and self.statistics[f'{column}/count'] >= params["rand_min_count"]):
-                return ImputationStrategy.RANDOM
-            elif longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
-                return ImputationStrategy.SEQ
-        else:
-            params = self.SM_LG_HYPERPARAMS["large"]
-            if(self.statistics[f'{column}/null_value_rate'] <= params["rand_empty_ub"]):
-                return ImputationStrategy.RANDOM
-            elif longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
-                return ImputationStrategy.SEQ
-        return ImputationStrategy.NOOP
-
-    def get_datetime_strategy(self, column):
-        longest_sequence = self.get_longest_null_seq(column)
-        if longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
-            return ImputationStrategy.SEQ
-        else:
-            return ImputationStrategy.NOOP
-
-    def get_longest_null_seq(self, column):
-        longest_sequence = 0
-        curr_sequence = 0
-        for is_null in self.cleaned_df[column].isna():
-            if is_null:
-                curr_sequence += 1
-            else:
-                longest_sequence = max(longest_sequence, curr_sequence)
-                curr_sequence = 0
-        return longest_sequence
-
-    def get_numerical_strategy(self, column):
-        if self.statistics[f'{column}/count'] <= self.DATA_SM_UB:
-            # this is a smaller dataset, need to enforce tougher restrictions
-            hyperparams = self.SM_LG_HYPERPARAMS["large"]
-            if self.statistics[f'{column}/null_value_rate'] <= hyperparams["avg_med_empty_ub"]:
-                if abs(self.df[column].skew()) < self.SKEW_UB:
-                    return ImputationStrategy.AVG
-                else:
-                    return ImputationStrategy.MED
-            else:
-                return ImputationStrategy.NOOP
-        else:
-            # this is a larger dataset, can be more lax
-            hyperparams = self.SM_LG_HYPERPARAMS["small"]
-            if self.statistics[f'{column}/null_value_rate'] <= hyperparams["avg_med_empty_ub"]:
-                if abs(self.df[column].skew()) < self.SKEW_UB:
-                    return ImputationStrategy.AVG
-                else:
-                    return ImputationStrategy.MED
-            else:
-                return ImputationStrategy.NOOP
-
-    def __get_null_mask(self):
+    def get_null_mask(self):
         null_mask = self.cleaned_df[self.df_columns[0]].isna()
         for column_name in self.df_columns[1:]:
             null_mask |= self.cleaned_df[column_name].isna()
         return null_mask
 
-    def __get_string_strategy(self):
-        return ImputationStrategy.NOOP
+
+    def hydrate_rules(self):
+        self.rules = list(
+            map(lambda x: x(self.cleaned_df, self.column_types, self.statistics),
+            self.RULESET)
+        )
+
+        self.rule_map = {}
+        for dtype in COLUMN_TYPES:
+            rule_iterator = iter(self.rules)
+            curr_rule = next(rule_iterator)
+            while dtype not in curr_rule.accepted_dtypes():
+                try:
+                   curr_rule = next(rule_iterator)
+                except StopIteration:
+                    raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
+            self.rule_map[dtype] = curr_rule
 
 
 class ImputeActionConstructor():
@@ -187,7 +260,7 @@ class ImputeActionConstructor():
         axis = None
         outputs = []
 
-        if strategy == ImputationStrategy.AVG:
+        if strategy == ImputationStrategy.AVERAGE:
             message = 'The following columns have null-valued entries and '\
                       'the distribution of remaining values is approximately symmetric: '\
                       f'{strategy_cache_entry}. ' \
@@ -197,7 +270,7 @@ class ImputeActionConstructor():
             axis = Axis.COLUMN
             action_options = {"strategy": strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
-        elif strategy == ImputationStrategy.MED:
+        elif strategy == ImputationStrategy.MEDIAN:
             message = 'The following columns have null-valued entries and '\
                       'the distribution of remaining values is skewed: ' \
                       f'{strategy_cache_entry}. ' \
