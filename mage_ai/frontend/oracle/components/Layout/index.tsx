@@ -79,7 +79,6 @@ function Layout({
       {header}
       <LayoutContainerStyle>
         {before}
-
         <MainStyle role="main">
           <MainContentStyle
             centerAlign={centerAlign}
@@ -89,7 +88,6 @@ function Layout({
             {children}
           </MainContentStyle>
         </MainStyle>
-
         {after}
       </LayoutContainerStyle>
       {footer}
