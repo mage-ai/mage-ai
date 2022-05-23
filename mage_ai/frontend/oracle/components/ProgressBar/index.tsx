@@ -11,13 +11,13 @@ type AnimateProgressType = {
   start: number;
 };
 
-export type ProgressProps = {
+export type ProgressBarProps = {
   animateProgress?: AnimateProgressType;
   progress?: number;
   danger?: boolean;
 };
 
-const ProgressContainerStyle = styled.div<ProgressProps>`
+const ProgressBarContainerStyle = styled.div<ProgressBarProps>`
   border-radius: ${BORDER_RADIUS_SMALL};
   height: ${UNIT * 0.75}px;
   overflow: hidden;
@@ -25,7 +25,7 @@ const ProgressContainerStyle = styled.div<ProgressProps>`
   width: 100%;
 `;
 
-const ProgressStyle = styled.div<ProgressProps>`
+const ProgressBarStyle = styled.div<ProgressBarProps>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
   height: inherit;
   position: absolute;
@@ -57,12 +57,12 @@ const ProgressStyle = styled.div<ProgressProps>`
   `}
 `;
 
-const Progress = ({
+const ProgressBar = ({
   ...props
-}: ProgressProps) => (
-  <ProgressContainerStyle {...props}>
-    <ProgressStyle {...props} />
-  </ProgressContainerStyle>
+}: ProgressBarProps) => (
+  <ProgressBarContainerStyle {...props}>
+    <ProgressBarStyle {...props} />
+  </ProgressBarContainerStyle>
 );
 
-export default Progress;
+export default ProgressBar;
