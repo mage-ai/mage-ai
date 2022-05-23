@@ -9,8 +9,8 @@ import Spacing from '@oracle/elements/Spacing';
 import TabEl, { TabArgsProps } from './Tab';
 import light from '@oracle/styles/themes/light';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
 export type TabsProps = {
   active?: boolean;
@@ -31,18 +31,19 @@ const TabHeaderContainerStyle = styled.div<TabsProps>`
 
 const TabHeader = styled.div<TabsProps>`
 
-  ${props => `
-    border-bottom: ${UNIT * 10} px solid ${(props.theme.neutral || light.monotone).black};
-    border-top-left-radius: ${BORDER_RADIUS}px;
-    border-top-right-radius: ${BORDER_RADIUS}px;
-  `}
+  border-top-left-radius: ${BORDER_RADIUS_SMALL}px;
+  border-top-right-radius: ${BORDER_RADIUS_SMALL}px;
+  margin-right: ${UNIT * 6}px;
+  position: relative;
+  z-index: 2;
 
   ${props => props.noBottomBorder && `
     border-bottom: none;
   `}
 
   ${props => props.active && `
-    border-color: ${(props.theme.content || light.content).active};
+    border-bottom: ${PADDING_UNITS}px solid;
+    border-color: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
 
   ${props => props.fullWidth && `
