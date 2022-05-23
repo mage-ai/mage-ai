@@ -1,6 +1,6 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-
+import BreadCrumbs from '@oracle/components/Breadcrumbs';
 import Breadcrumb, { BreadcrumbType } from '@oracle/components/Breadcrumbs/Breadcrumb';
 import ThemeBlock from 'stories/ThemeBlock';
 
@@ -11,7 +11,7 @@ export default {
 
 const TemplateWithTheme = ({ ...props }) => (
   <ThemeBlock>
-    <Breadcrumb label={'Storybook'} {...props} />
+    <Breadcrumbs breadcrumb={[{label: 'Storybook'}, {label: 'Breadcrumbs'}]} {...props} />
   </ThemeBlock>
 );
 
@@ -19,12 +19,6 @@ const Template: Story<BreadcrumbType> = (args) => <TemplateWithTheme {...args} /
 
 export const Regular = Template.bind({});
 Regular.args = {};
-
-export const Disabled = Template.bind({});
-Disabled.args = {
-  ...Regular.args,
-  disabled: true,
-};
 
 export const Large = Template.bind({});
 Large.args = {

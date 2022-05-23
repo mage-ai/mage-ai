@@ -11,7 +11,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 export type BreadcrumbType = {
   as?: string;
   bold?: boolean;
-  disabled?: boolean;
   hideIcon?: boolean;
   highlighted?: boolean;
   href?: string;
@@ -25,7 +24,6 @@ export type BreadcrumbType = {
 function Breadcrumb({
   as,
   bold,
-  disabled,
   hideIcon,
   highlighted,
   href,
@@ -42,7 +40,7 @@ function Breadcrumb({
           {!textOnly && label}
 
           {textOnly && (
-            <Text bold={selected} large={large} muted={disabled}>
+            <Text bold={selected} large={large}>
               {label}
             </Text>
           )}
@@ -61,7 +59,6 @@ function Breadcrumb({
     block: true,
     bold: bold || selected,
     large,
-    muted: disabled,
     sameColorAsText: !highlighted,
   };
 
