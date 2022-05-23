@@ -1,3 +1,5 @@
+from distutils.command.clean import clean
+from posixpath import split
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -13,6 +15,7 @@ from data_cleaner.column_type_detector import (
 )
 from datetime import datetime
 import numpy as np
+import pandas as pd
 
 from mage_ai.data_cleaner.column_type_detector import DATETIME
 
@@ -55,7 +58,7 @@ class ReformatValuesSubRule():
 class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     UPPERCASE_PATTERN = r'^[^a-z]*$'
     LOWERCASE_PATTERN = r'^[^A-Z]*$'
-    NON_ALPH_PATTERN = r'[^A-Za-z]'
+    NON_ALPH_PATTERN = r'[^A-Za-z\s\t\n\r]'
     ALPHABETICAL_TYPES = frozenset((CATEGORY_HIGH_CARDINALITY, CATEGORY, TEXT, EMAIL))
     NON_ALPH_UB = 0.4
     ALPH_RATIO_LB = 0.6
@@ -184,10 +187,105 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             ))
         return suggestions
 
+
+class ReformatDateSubRule(ReformatValuesSubRule):
+    NONSTANDARD_DATE_FORMATS = [
+            '%a %b %d %y',
+            '%A %b %d %y',
+            '%a %B %d %y',
+            '%A %B %d %y',
+            '%a %b %d %Y',
+            '%A %b %d %Y',
+            '%a %B %d %Y',
+            '%A %B %d %Y',
+            '%m %d %y',
+            '%m %d %Y',
+            '%d %m %Y',
+            '%d %m %Y'
+        ]
+    DATE_MATCHES_LB = 0.3
+    DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
+    
+    def __init__(self, df, column_types, statistics, action_builder):
+        super().__init__(df, column_types, statistics, action_builder)
+        self.matches = []
+
+    def date_iter(self, column):
+        clean_col = self.clean_column(column)
+        try:
+            clean_col = clean_col.str.replace(r'(\D\d\D)', lambda digit: f'{digit[0]}0{digit[1:]}')
+        except IndexError:
+            pass
+        clean_col = clean_col.str.lower()
+        yield from clean_col.str.split(r'[\s\,\-\_\\\/]+').str.join(" ")
+
+    def is_date_standard(self, stripped_str):
+        try:
+            datetime.strptime(stripped_str, '%x')
+            return True
+        except ValueError:
+            return False
+
+    def is_date_nonstandard(self, stripped_str):
+        for format_string in self.NONSTANDARD_DATE_FORMATS:
+            try:
+                datetime.strptime(stripped_str, format_string)
+                return True
+            except ValueError:
+                continue
+        return False
+            
+    
+    def evaluate(self, column):
+        """
+        Rule: 
+        1. If column is not of type category or datetime, no suggestion
+        2. If column is already contains datetime, autosuggest converting to locale format
+        3. Else, if column does not contain string types, no suggestion
+        4. If column contains string types,
+        Count the number of entries that are of a known date format. If this ratio is
+           above the lower bound, suggest reformatting to locale format
+        """
+        dtype = self.column_types[column]
+        if dtype in self.DATE_TYPES:
+            exact_dtype = self.get_column_dtype(column)
+            num_nonstandard, num_standard = 0,0
+            if exact_dtype is str:
+                for date in self.date_iter(column):
+                    if self.is_date_standard(date):
+                        num_standard += 1
+                    elif self.is_date_nonstandard(date):
+                        num_nonstandard += 1
+                date_ratio = num_standard + num_nonstandard / self.statistics[f'{column}/count']
+                if date_ratio >= self.DATE_MATCHES_LB and num_nonstandard != 0:
+                    self.matches.append(column)
+            elif exact_dtype is pd.Timestamp or exact_dtype is np.datetime64:
+                self.matches.append(column) # TODO make sure that reformat can handle null values
+
+    def get_suggestions(self):
+        suggestions = []
+        if len(self.matches) != 0:
+            suggestions.append(self.action_builder(
+                'Reformat values',
+                'The following columns have date values: '
+                f'{self.matches}. '
+                'Reformat these columns to improve data quality.',
+                'reformat',
+                action_arguments=self.matches,
+                axis=Axis.COLUMN,
+                action_options = {
+                    'reformat': 'date_conversion',
+                }
+            ))
+        return suggestions
+
+
+
 class ReformatValues(BaseRule):
     RULE_LIST = [
         StandardizeCapitalizationSubRule,
-        ConvertCurrencySubRule
+        ConvertCurrencySubRule,
+        ReformatDateSubRule
     ]
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
