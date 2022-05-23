@@ -10,6 +10,7 @@ import {
   RED,
   SILVER,
   WHITE,
+  NAVY,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -19,6 +20,24 @@ export default {
     muted: SILVER,
     header: SILVER,
     row: LIGHT,
+  },
+  button: {
+    default: {
+      color: BLACK,
+      background: LIGHT,
+      hover: DARK_GRAY_LINES,
+      inverted: LIGHT,
+      lines: GRAY_LINES,
+    },
+    primary: {
+      color: WHITE,
+      background: BLUE,
+      hover: NAVY_LINES,
+      inverted: NAVY,
+      lines: BLUE,
+    },
+    disabled: GRAY,
+    selected: BLACK,
   },
   content: {
     active: BLACK,
@@ -46,8 +65,10 @@ export default {
   },
   interactive: {
     dangerBorder: RED,
+    defaultBackground: LIGHT,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
+    focusBackground: NAVY,
     focusBorder: NAVY_LINES,
     hoverBorder: DARK_GRAY_LINES,
     linkPrimary: BLUE,

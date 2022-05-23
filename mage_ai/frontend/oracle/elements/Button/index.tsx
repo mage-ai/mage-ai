@@ -1,155 +1,89 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
-import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS } from '@oracle/styles/units/radius';
-import { FONT_FAMILY_BOLD, FONT_FAMILY_MEDIUM } from '@oracle/styles/fonts/primary';
-import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
+import light from '@oracle/styles/themes/light';
 
 export type ButtonProps = {
   afterIcon?: any;
-  basic?: boolean;
   beforeIcon?: any;
-  bold?: boolean;
-  borderColor?: string;
-  centerText?: boolean;
   children?: any;
-  color?: string;
-  default?: boolean;
   disabled?: boolean;
-  disabledColor?: boolean;
-  fullWidth?: boolean;
-  height?: number;
-  href?: string;
-  loading?: boolean;
-  noPadding?: boolean;
+  iconOnly?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
-  outlineBackgroundColorSelector?: (theme: any) => string;
-  padding?: number;
-  pointerEventsEnabled?: boolean;
-  positionRight?: boolean;
+  primary?: boolean;
   selected?: boolean;
-  spaceBetween?: boolean;
   target?: string;
-  title?: string;
-  type?: 'button' | 'submit' | 'reset';
   width?: number;
 };
 
-export function selectOutlineColor(props: any) {
-  if (props.outlineBackgroundColorSelector) {
-    return props.outlineBackgroundColorSelector(props.theme);
-  }
-
-  return props.theme.background.page;
-}
-
-const SHARED_STYLES = css<ButtonProps>`
+const ButtonStyle = styled.button<ButtonProps>`
+  background-color: ${light.button.default.background};
   border: none;
+  border-color: ${light.button.default.lines};
+  border-radius: ${BORDER_RADIUS}px;
+  border-style: solid;
+  border-width: 1px;
+  color: ${light.button.default.color};
   display: block;
+  font-family: ${FONT_FAMILY_BOLD};
   position: relative;
+  padding: 10px 16px;
   z-index: 0;
 
-  ${props => props.pointerEventsEnabled && `
-    pointer-events: all;
+  ${props => !props.disabled && `
+    &:hover {
+      border-color: ${light.button.default.hover};
+    }
+    &:active {
+      border-color: ${light.button.selected};
+      background: ${light.button.default.inverted};
+    }
   `}
 
-  ${props => (props.disabled || props.disabledColor) && `
+  ${props => props.primary && !props.disabled && `
+    background-color: ${light.button.primary.background};
+    color: ${light.button.primary.color};
+    border-color: ${light.button.primary.lines};
+    &:hover {
+      border-color: ${light.button.primary.hover};
+    }
+    &:active {
+      border-color: ${light.button.selected};
+      background: ${light.button.primary.inverted};
+    }
+  `}
+
+  ${props => props.disabled && `
+    color: ${light.button.disabled};
     &:hover {
       cursor: not-allowed;
     }
   `}
 
-  ${props => props.noPadding && `
-    padding: 0;
-  `}
-
-  ${props => props.padding && `
-    padding: ${props.padding}px !important;
-  `}
-
-  ${props => props.color && `
-    background-color: ${props.color} !important;
-  `}
-
-  ${props => props.default && `
-    color: ${props.theme.content.default};
-  `}
-
-  ${props => props.borderColor && `
-    border-color: ${props.borderColor};
-  `}
-
   ${props => props.selected && `
-    background-color: ${props.theme.interactive.selectedBackgroundInverted};
-  `}
-
-  ${props => props.basic && `
-    color: ${props.theme.content.active};
-    background-color: transparent;
-  `}
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
-
-  ${props => !props.bold && `
-    font-family: ${FONT_FAMILY_MEDIUM};
-  `}
-
-  ${props => props.bold && `
-    font-family: ${FONT_FAMILY_BOLD};
-  `}
-
-  ${props => (props.disabled || props.disabledColor) && `
-    color: ${props.theme.content.disabled} !important;
-  `}
-
-  ${props => props.disabled && !props.basic && `
-    background-color: ${props.theme.interactive.disabledBackground} !important;
+    border-color: ${light.button.selected};
   `}
 
   ${props => props.width && `
     width: ${props.width}px;
   `}
-
-  ${props => props.fullWidth && `
-    width: 100%;
-  `}
-`;
-
-const ButtonStyle = styled.button<ButtonProps>`
-  ${SHARED_STYLES}
-
-  ${props => props.positionRight && `
-    position: absolute;
-    right: 32px
-  `}
-
-  ${props => !props.positionRight && `
-    position: relative;
-  `}
-
 `;
 
 const Button = ({
   afterIcon,
   beforeIcon,
-  centerText,
   children,
   disabled,
-  href,
-  loading,
+  iconOnly,
   onClick,
-  spaceBetween,
-  type = 'button',
   ...props
-}: ButtonProps, ref: any) => {
+}: ButtonProps) => {
   const iconProps = {
     disabled,
     size: UNIT * 3,
@@ -159,33 +93,16 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
-      href={href}
       onClick={(e) => {
-        if (href) {
-          if (typeof window !== 'undefined') {
-            window.open(href, '_blank');
-          }
-        }
-
-        if (onClick) {
-          if (!href && e) {
-            e.preventDefault();
-          }
-
-          onClick(e);
-        }
+        e?.preventDefault();
+        onClick?.(e);
       }}
-      ref={ref}
-      type={type}
     >
       <FlexContainer
         alignItems="center"
-        justifyContent={centerText
-          ? 'center'
-          : (spaceBetween ? 'space-between' : null)
-        }
+        justifyContent="center"
       >
-        {!loading && beforeIcon && (
+        {beforeIcon && (
           <Spacing mr={1}>
             <Flex>
               {React.cloneElement(beforeIcon, {
@@ -195,13 +112,10 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        {loading && <Spinner />}
-        {!loading && (
-          <Flex>
-            {children}
-          </Flex>
-        )}
-        {!loading && afterIcon && (
+        <Flex>
+          {children}
+        </Flex>
+        {afterIcon && (
           <Spacing ml={1}>
             <Flex>
               {React.cloneElement(afterIcon, {
@@ -216,4 +130,4 @@ const Button = ({
   );
 };
 
-export default React.forwardRef(Button);
+export default Button;
