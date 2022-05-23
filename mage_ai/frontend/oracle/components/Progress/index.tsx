@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+
 import light from '@oracle/styles/themes/light';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type AnimateProgressType = {
   duration: number;
