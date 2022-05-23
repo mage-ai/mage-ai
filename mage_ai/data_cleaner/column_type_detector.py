@@ -46,6 +46,10 @@ REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
 
 
+def get_mismatched_rows(df, column, column_type):
+    pass
+
+
 def infer_column_types(df, **kwargs):
     binary_feature_names = []
     category_feature_names = []
@@ -83,14 +87,14 @@ def infer_column_types(df, **kwargs):
                 else:
                     df_sub = df_sub.astype(str)
                     incorrect_emails = len(
-                        df_sub[df_sub.str.contains(REGEX_EMAIL) == False].index,
+                        df_sub[~df_sub.str.contains(REGEX_EMAIL)].index,
                     )
                     warnings.filterwarnings('ignore', 'This pattern has match groups')
                     incorrect_phone_numbers = len(
-                        df_sub[df_sub.str.contains(REGEX_PHONE_NUMBER) == False].index,
+                        df_sub[~df_sub.str.contains(REGEX_PHONE_NUMBER)].index,
                     )
                     incorrect_zip_codes = len(
-                        df_sub[df_sub.str.contains(REGEX_ZIP_CODE) == False].index,
+                        df_sub[~df_sub.str.contains(REGEX_ZIP_CODE)].index,
                     )
 
                     if all(df_sub.str.contains(REGEX_INTEGER)):

@@ -6,7 +6,11 @@ import pandas as pd
 
 def drop_duplicates(df, action, **kwargs):
     keep = action.get('action_options', {}).get('keep', 'last')
-    return df.drop_duplicates(subset=action['action_arguments'], keep=keep)
+    action_args = dict(keep=keep)
+    subset_cols = action.get('action_arguments')
+    if subset_cols is not None and len(subset_cols) > 0:
+        action_args['subset'] = subset_cols
+    return df.drop_duplicates(**action_args)
 
 
 def filter_rows(df, action, **kwargs):
