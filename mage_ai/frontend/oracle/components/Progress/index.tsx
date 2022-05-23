@@ -27,16 +27,19 @@ const ProgressContainerStyle = styled.div<ProgressProps>`
 
 const ProgressStyle = styled.div<ProgressProps>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
-  background-color: ${light.progress.positive};
   height: inherit;
   position: absolute;
+
+  ${props => `
+    background-color: ${(props.theme.progress || light.progress).positive};
+  `}
 
   ${props => props.progress && `
     width: ${props.progress}%;
   `}
 
   ${props => props.danger && `
-    background-color: ${light.progress.negative}
+    background-color: ${(props.theme.progress || light.progress).negative}
   `}
 
   ${props => props.animateProgress && `
