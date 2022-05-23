@@ -1,11 +1,14 @@
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from numpyencoder import NumpyEncoder
+from mage_ai.data_cleaner.shared.hash import merge_dict
 from server.data.base import Model
 
 import json
 import os
 import os.path
 import pandas as pd
+
+SAMPLE_SIZE = 20
 
 # right now, we are writing the feature sets to local files
 class FeatureSet(Model):
@@ -49,10 +52,10 @@ class FeatureSet(Model):
 
     @property
     def sample_data(self):
-        sample_size = 20
+        sample_size = SAMPLE_SIZE
         if self._data.size < sample_size:
-            sample_size = self._data.size 
-        return self._data.sample(1)
+            sample_size = len(self._data) 
+        return self._data.sample(n=sample_size)
 
     @property
     def statistics(self):
@@ -98,20 +101,23 @@ class FeatureSet(Model):
             column_dict['insights'] = json.load(column_insights)
         return column_dict
 
-    def to_dict(self):
-        return dict(
+    def to_dict(self, detailed=True):
+        obj = dict(
             id=self.id,
             metadata=self.metadata,
-            pipeline_actions=self.pipeline.actions,
-            sample_data=self.sample_data.to_dict(),
-            statistics=self.statistics,
-            insights=self.insights,
-            suggestions=self.suggestions,
         )
+        if detailed:
+            obj = merge_dict(obj, dict(
+                pipeline_actions=self.pipeline.actions,
+                sample_data=self.sample_data.to_dict(),
+                statistics=self.statistics,
+                insights=self.insights,
+                suggestions=self.suggestions,
+            ))
+        return obj
         
 class Pipeline(Model):
     def __init__(self, id=None, pipeline=None):
-        # TODO: figure out a good directory to store the files
         super().__init__(id)
         if pipeline is not None:
             self.pipeline = pipeline
@@ -130,7 +136,7 @@ class Pipeline(Model):
         with open(os.path.join(self.dir, 'pipeline.json'), 'w') as file:
             json.dump(pipeline.actions, file)
 
-    def to_dict(self):
+    def to_dict(self, detailed=False):
         return dict(
             actions=self.pipeline.actions,
         )

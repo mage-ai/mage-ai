@@ -1,6 +1,7 @@
 import os
 import os.path
 
+# This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 class Model():
@@ -10,7 +11,6 @@ class Model():
             os.mkdir(DATA_PATH)
 
         self.path = self.path_name()
-        print('path:', self.path)
         if not os.path.isdir(self.path):
             os.mkdir(self.path)
 
@@ -27,13 +27,13 @@ class Model():
         self.dir = os.path.join(self.path, str(self.id))
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
+
+    def to_dict(self, detailed):
+        pass
     
     @classmethod
     def folder_name(cls):
         return cls.__name__
-
-    def to_dict(self):
-        pass
 
     @classmethod
     def path_name(cls):
@@ -41,5 +41,9 @@ class Model():
 
     @classmethod
     def objects(cls):
-        dirs = [name for name in os.listdir(cls.path_name())]
-        return [cls(id=id) for id in dirs]
+        try:
+            dirs = [name for name in os.listdir(cls.path_name())]
+            return [cls(id=id) for id in dirs]
+        except:
+            print('error')
+            return []

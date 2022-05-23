@@ -1,4 +1,4 @@
-from data_cleaner.data_cleaner import analyze, clean
+from data_cleaner.data_cleaner import analyze, clean as clean_data
 from flask import request
 from numpyencoder import NumpyEncoder
 from server.data.models import FeatureSet, Pipeline
@@ -24,7 +24,7 @@ def process():
     metadata = feature_set.metadata
 
     if request_data.get('clean', True):
-        result = clean(df)
+        result = clean_data(df)
     else:
         result = analyze(df)
 
@@ -34,7 +34,7 @@ def process():
     metadata['column_types'] = column_types
 
     feature_set.metadata = metadata
-    
+
     response = app.response_class(
         response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -45,26 +45,15 @@ def process():
 @app.route("/clean")
 def clean_route():
     global index_df
-    feature_set = FeatureSet(df=index_df)
-
-    metadata = feature_set.metadata
-
-    result = clean(index_df)
-
-    feature_set.write_files(result)
-
-    column_types = result['column_types']
-    metadata['column_types'] = column_types
-
-    feature_set.metadata = metadata
-    index_df = result['df_cleaned']
+    
+    index_df = clean_df(index_df)
 
     return {}
 
 @app.route("/feature_sets")
 def feature_sets():
     feature_sets = FeatureSet.objects()
-    feature_sets = list(map(lambda fs: fs.to_dict(), feature_sets))
+    feature_sets = list(map(lambda fs: fs.to_dict(False), feature_sets))
     response = app.response_class(
         response=json.dumps(feature_sets, cls=NumpyEncoder),
         status=200,
@@ -90,7 +79,7 @@ def feature_set(id):
 @app.route("/pipelines")
 def pipelines():
     pipelines = Pipeline.objects()
-    pipelines = list(map(lambda p: p.to_dict(), pipelines))
+    pipelines = list(map(lambda p: p.to_dict(False), pipelines))
     response = app.response_class(
         response=json.dumps(pipelines, cls=NumpyEncoder),
         status=200,
@@ -98,9 +87,31 @@ def pipelines():
     )
     return response
 
+def clean_df(df):
+    feature_set = FeatureSet(df=df)
+
+    metadata = feature_set.metadata
+
+    result = clean_data(df)
+
+    feature_set.write_files(result)
+
+    column_types = result['column_types']
+    metadata['column_types'] = column_types
+
+    feature_set.metadata = metadata
+    return result['df_cleaned']
+
 def launch(df) -> None:
     global index_df
     index_df = df
+    app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
+    thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
+    thread.start()
+
+def clean(df, pipeline_uuid) -> None:
+    global index_df
+    index_df = clean_df(df)
     app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
     thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
