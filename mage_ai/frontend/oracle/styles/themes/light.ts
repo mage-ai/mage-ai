@@ -50,8 +50,8 @@ export default {
     disabledBorder: GRAY,
     focusBorder: NAVY_LINES,
     hoverBorder: DARK_GRAY_LINES,
-    linkPrimary: PURPLE,
-    linkSecondary: BLUE,
+    linkPrimary: BLUE,
+    linkSecondary: PURPLE,
   },
 };
 
