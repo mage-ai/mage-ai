@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
-import theme from '@oracle/styles/themes/light';
+import light from '@oracle/styles/themes/light';
 
 type AnimateProgressType = {
   duration: number;
@@ -26,7 +26,7 @@ const ProgressContainerStyle = styled.div<ProgressProps>`
 
 const ProgressStyle = styled.div<ProgressProps>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
-  background-color: ${theme.progress.positive};
+  background-color: ${light.progress.positive};
   height: inherit;
   position: absolute;
 
@@ -35,7 +35,7 @@ const ProgressStyle = styled.div<ProgressProps>`
   `}
 
   ${props => props.danger && `
-    background-color: ${theme.progress.negative}
+    background-color: ${light.progress.negative}
   `}
 
   ${props => props.animateProgress && `
