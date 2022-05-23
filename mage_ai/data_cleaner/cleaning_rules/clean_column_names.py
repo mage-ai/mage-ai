@@ -1,10 +1,5 @@
-from sre_parse import WHITESPACE
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import REGEX_NUMBER
-from data_cleaner.transformer_actions.constants import (
-    ActionType,
-    Axis,
-)
 from keyword import iskeyword
 import re
 
@@ -15,7 +10,7 @@ class CleanColumnNames(BaseRule):
     def evaluate(self):
         """
         Rule:
-        1. If column name contains an invalid character, suggest cleaning (remove all such characters)
+        1. If column name contains an invalid character, suggest cleaning (remove all characters)
         2. If column name is a reserved python keyword, suggest cleaning (pad with symbols)
         3. If column is of mixedcase, suggest cleaning (convert to lowercase)
         4. If column contains only numbers, suggest cleaning (pad with letters)
