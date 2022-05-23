@@ -1,17 +1,17 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import BreadCrumbs from '@oracle/components/Breadcrumbs';
+
 import Breadcrumb, { BreadcrumbType } from '@oracle/components/Breadcrumbs/Breadcrumb';
 import ThemeBlock from 'stories/ThemeBlock';
 
 export default {
   component: Breadcrumb,
-  title: 'Oracle/Components/Breadcrumbs',
+  title: 'Oracle/Components/Breadcrumb',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
   <ThemeBlock>
-    <Breadcrumbs breadcrumb={[{label: 'Storybook'}, {label: 'Breadcrumbs'}]} {...props} />
+    <Breadcrumb label={'Storybook'} {...props} />
   </ThemeBlock>
 );
 
