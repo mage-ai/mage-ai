@@ -17,9 +17,15 @@ const TemplateWithTheme = ({ ...props }) => (
       <Text>
       Hello world!
       What do I put in here exactly?
+      </Text>
       <Spacing/>
+      <Text>
       How do I test this?
       </Text>
+      <Spacing/>
+      <Text>
+      Try resizing the screen!
+      </Text>      
       <Spacing/>
     </Layout>
   </ThemeBlock>
@@ -36,10 +42,8 @@ CenterAlign.args = {
   centerAlign: true,
 };
 
-export const Footer = Template.bind({});
-Footer.args = {
+export const Fluid = Template.bind({});
+Fluid.args = {
   ...Regular.args,
-  footer: {
-    value :"bye",
-  },
+  fluid: true,
 };
