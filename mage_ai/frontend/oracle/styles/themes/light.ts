@@ -10,6 +10,8 @@ import {
   RED,
   SILVER,
   WHITE,
+  PURPLE_HIGHLIGHT,
+  PURPLE_DISABLED,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -26,6 +28,10 @@ export default {
     default: WHITE,
     disabled: GRAY,
     muted: GRAY,
+  },
+  feature: {
+    active: PURPLE_HIGHLIGHT,
+    disabled: PURPLE_DISABLED,
   },
   interactive: {
     dangerBorder: RED,
