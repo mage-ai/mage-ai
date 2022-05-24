@@ -1,0 +1,82 @@
+from data_cleaner.cleaning_rules.base import BaseRule
+from data_cleaner.column_type_detector import NUMBER_TYPES
+from data_cleaner.transformer_actions.constants import ActionType, Axis
+import numpy as np
+
+
+class RemoveCollinearColumns(BaseRule):
+    EPSILON = 1e-12
+    MIN_ENTRIES = 3
+    ROW_SAMPLE_SIZE = 300
+    VIF_UB = 5
+
+    def __init__(self, df, column_types, statistics):
+        super().__init__(df, column_types, statistics)
+        self.numeric_df, self.numeric_columns = self.filter_numeric_types()
+        self.numeric_indices = np.arange(len(self.numeric_df))
+
+    def evaluate(self):
+        suggestions = []
+        if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
+            return suggestions
+        collinear_columns = []
+        for column in self.numeric_columns[:-1]:
+            variance_inflation_factor = self.get_variance_inflation_factor(column)
+            if variance_inflation_factor > self.VIF_UB:
+                collinear_columns.append(column)
+                self.numeric_df.drop(column, axis=1, inplace=True) 
+        if len(collinear_columns) != len(self.numeric_columns)-1:
+            # check the final column if and only if there are other columns to compare it to
+            column = self.numeric_columns[-1]
+            variance_inflation_factor = self.get_variance_inflation_factor(column)
+            if variance_inflation_factor > self.VIF_UB:
+                collinear_columns.append(column)
+        if len(collinear_columns) != 0:
+            suggestions.append(self._build_transformer_action_suggestion(
+                'Remove collinear columns',
+                'The following columns are strongly correlated '
+                f'with other columns in the dataset: {collinear_columns}. '
+                'Removing these columns may increase data quality '
+                'by removing redundant and closely related data.',
+                ActionType.REMOVE,
+                action_arguments=collinear_columns,
+                axis=Axis.COLUMN,
+            ))
+        return suggestions
+
+    def filter_numeric_types(self):
+        cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
+        numeric_columns = []
+        for column in self.df_columns:
+            if self.column_types[column] in NUMBER_TYPES:
+                cleaned_df[column] = cleaned_df[column].astype(float)
+                numeric_columns.append(column)
+            else:
+                cleaned_df.drop(column, axis=1, inplace=True)
+        cleaned_df = cleaned_df.dropna(axis=0)
+        return cleaned_df, numeric_columns
+
+    def get_variance_inflation_factor(self, column):
+        """
+        Variance Inflation Factor = 1 / (1 - <coefficient of determination on column k>)
+        Measures increase in regression model variance due to collinearity 
+        => column k is multicollinear with others if model predicting its value 
+        has this variance inflation greater than some amount
+        """
+        if self.numeric_df.empty:
+            raise RuntimeError('No other columns to compare \'{column}\' against')
+        if len(self.numeric_df) > self.ROW_SAMPLE_SIZE:
+            sample = self.numeric_df.sample(self.ROW_SAMPLE_SIZE)
+        else:
+            sample = self.numeric_df
+
+        responses = sample[column].to_numpy()
+        predictors = sample.drop(column, axis=1).to_numpy()
+        params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
+
+        predictions = predictors @ params
+        sum_sq_model = np.sum(predictions * predictions)
+        sum_sq_to = np.sum(responses * responses)
+
+        r_sq = sum_sq_model / sum_sq_to
+        return 1 / (1 - r_sq + self.EPSILON)
