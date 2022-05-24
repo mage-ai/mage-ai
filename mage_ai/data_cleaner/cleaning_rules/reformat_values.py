@@ -1,3 +1,4 @@
+from multiprocessing import Value
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -12,8 +13,6 @@ from data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TEXT,
 )
-from datetime import datetime
-from dateutil.parser import ParserError
 import numpy as np
 import pandas as pd
 
@@ -289,7 +288,6 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         return clean_col.str.lower()
 
 
-
 class ReformatValues(BaseRule):
     RULE_LIST = [
         StandardizeCapitalizationSubRule,
@@ -298,10 +296,8 @@ class ReformatValues(BaseRule):
     ]
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
-        self.cleaned_df = self.df.copy().applymap(
-            lambda x: x if (not isinstance(x, str) or
-            (len(x) > 0 and not x.isspace())) else np.nan
-        )
+        # TODO Clean dataframe prior to giving to rule
+        self.cleaned_df = self.df.replace('^\s*$', None, regex=True)
 
     def hydrate_rule_list(self):
         return list(map(
@@ -323,3 +319,14 @@ class ReformatValues(BaseRule):
         for rule in rules:
             suggestions.extend(rule.get_suggestions())
         return suggestions
+
+    def infer_exact_dtypes(self):
+        exact_dtypes = {}
+        for column in self.df_columns:
+            clean_col = self.cleaned_df[column].dropna(axis=0)
+            try:
+                dtype = type(clean_col.iloc[0])
+            except IndexError:
+                dtype = None
+            exact_dtypes[column] = dtype
+        return exact_dtypes
