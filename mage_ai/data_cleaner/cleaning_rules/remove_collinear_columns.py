@@ -13,7 +13,6 @@ class RemoveCollinearColumns(BaseRule):
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
         self.numeric_df, self.numeric_columns = self.filter_numeric_types()
-        self.rng = np.random.default_rng()
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
@@ -66,9 +65,10 @@ class RemoveCollinearColumns(BaseRule):
         """
         if self.numeric_df.empty:
             raise RuntimeError('No other columns to compare \'{column}\' against')
-        self.rng.shuffle(self.numeric_indices)
-        sample_indices = self.numeric_indices[:self.ROW_SAMPLE_SIZE]
-        sample = self.numeric_df.iloc[sample_indices]
+        if len(self.numeric_df) > self.ROW_SAMPLE_SIZE:
+            sample = self.numeric_df.sample(self.ROW_SAMPLE_SIZE)
+        else:
+            sample = self.numeric_df
 
         responses = sample[column].to_numpy()
         predictors = sample.drop(column, axis=1).to_numpy()
