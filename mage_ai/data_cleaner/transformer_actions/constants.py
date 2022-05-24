@@ -19,6 +19,7 @@ class ActionType():
     MEDIAN = 'median'
     MIN = 'min'
     MODE = 'mode'
+    REFORMAT = 'reformat'
     REMOVE = 'remove'
     SCALE = 'scale'
     SELECT = 'select'

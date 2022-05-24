@@ -1,3 +1,4 @@
+from argparse import Action
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -17,7 +18,7 @@ import pandas as pd
 
 class ReformatValuesSubRule():
     """
-    Assumptions of TypeImputeSubRule
+    Assumptions of ReformatValuesSubRule
     1. df will not contain any empty strings - all empty strings are converted to null types.
     This is handled in ImputeValues.
     2. column_types will contain the correct type value
@@ -174,7 +175,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                     'The following columns have mixed capitalization formats: '
                     f'{payloads[case]}. '
                     f'Reformat these columns with fully {case} text to improve data quality.',
-                    'reformat',
+                    ActionType.REFORMAT,
                     action_arguments=payloads[case],
                     axis=Axis.COLUMN,
                     action_options = {
@@ -223,7 +224,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
                 'The following columns have currency type values: '
                 f'{self.matches}. '
                 'Reformat these columns as numbers to improve data quality.',
-                'reformat',
+                ActionType.REFORMAT,
                 action_arguments=self.matches,
                 axis=Axis.COLUMN,
                 action_options = {
@@ -265,7 +266,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
                 'The following columns have date values: '
                 f'{self.matches}. '
                 'Reformat these columns as datetime objects to improve data quality.',
-                'reformat',
+                ActionType.REFORMAT,
                 action_arguments=self.matches,
                 axis=Axis.COLUMN,
                 action_options = {
