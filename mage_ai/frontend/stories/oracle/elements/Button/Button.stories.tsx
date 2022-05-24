@@ -37,6 +37,9 @@ All.args = {
     <Button>
       Regular
     </Button>,
+    <Button basic>
+      Basic
+    </Button>,
     <Button primary>
       Primary
     </Button>,
@@ -46,6 +49,12 @@ All.args = {
     <Button disabled>
       Disabled
     </Button>,
+    <Button large>
+      Large
+    </Button>,
+    <Button small>
+      Small
+    </Button>,
     <Button beforeIcon={<Add />}>
       Before Icon
     </Button>,
@@ -53,6 +62,9 @@ All.args = {
       After Icon
     </Button>,
     <Button iconOnly>
+      <Add />
+    </Button>,
+    <Button basic iconOnly padding="0px">
       <Add />
     </Button>
   ],

@@ -8,15 +8,22 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import light from '@oracle/styles/themes/light';
+import Spinner from '@oracle/components/Spinner';
+import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
 export type ButtonProps = {
   afterIcon?: any;
+  basic?: boolean;
   beforeIcon?: any;
   children?: any;
   disabled?: boolean;
   iconOnly?: boolean;
+  large?: boolean;
+  loading?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  padding?: string;
   primary?: boolean;
+  small?: boolean;
   selected?: boolean;
   target?: string;
   width?: number;
@@ -29,14 +36,31 @@ const ButtonStyle = styled.button<ButtonProps>`
   color: ${light.content.active};
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
+  
+  padding: 7px 16px;
   position: relative;
   z-index: 0;
 
-  ${props => !props.iconOnly && `
+  ${props => props.padding && `
+    padding: ${props.padding};
+  `}
+
+  ${props => !props.basic && `
     border-radius: ${BORDER_RADIUS}px;
     border-style: solid;
     border-width: 1px;
-    padding: 10px 16px;
+  `}
+
+  ${props => !props.iconOnly && props.large && `
+    ${LARGE}
+  `}
+
+  ${props => !props.iconOnly && !props.large && !props.small && `
+    ${REGULAR}
+  `}
+
+  ${props => !props.iconOnly && props.small && `
+    ${SMALL}
   `}
 
   ${props => !props.disabled && `
@@ -81,6 +105,7 @@ const Button = ({
   beforeIcon,
   children,
   disabled,
+  loading,
   onClick,
   ...props
 }: ButtonProps) => {
@@ -102,7 +127,7 @@ const Button = ({
         alignItems="center"
         justifyContent="center"
       >
-        {beforeIcon && (
+        {!loading && beforeIcon && (
           <Spacing mr={1}>
             <Flex>
               {React.cloneElement(beforeIcon, {
@@ -112,10 +137,13 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        <Flex>
-          {children}
-        </Flex>
-        {afterIcon && (
+        {loading && <Spinner />}
+        {!loading && (
+          <Flex>
+            {children}
+          </Flex>
+        )}
+        {!loading && afterIcon && (
           <Spacing ml={1}>
             <Flex>
               {React.cloneElement(afterIcon, {
