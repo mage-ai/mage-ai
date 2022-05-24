@@ -14,9 +14,9 @@ from data_cleaner.transformer_actions.column import (
 )
 from pandas.util.testing import assert_frame_equal
 from tests.base_test import TestCase
-from random import seed
 import numpy as np
 import pandas as pd
+from random import seed
 
 TEST_DATAFRAME = pd.DataFrame([
     [1, 1000],

@@ -15,16 +15,17 @@ import numpy as np
 
 
 class TypeImputeSubRule():
-    """
-    Assumptions of TypeImputeSubRule
-    1. `df` will not contain any empty strings - all empty strings are converted to null types
-    2. `column_types` will contain the correct type value
-    3. Every column in `df` is of dtype `object` and the entries must be used to infer type.
-       This is not always the case, but this assumption simplifies code
-    """
     DATA_SM_UB = 100
 
     def __init__(self, df, column_types, statistics):
+        """
+        Assumptions of TypeImputeSubRule
+        1. df will not contain any empty strings - all empty strings are converted to null types.
+        This is handled in ImputeValues.
+        2. column_types will contain the correct type value
+        3. Every column in df is of dtype object and the entries must be used to infer type.
+        This is not always the case, but this assumption simplifies code
+        """
         self.df = df
         self.column_types = column_types
         self.statistics = statistics
@@ -89,6 +90,15 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         return self.ACCEPTED_DTYPES
     
     def evaluate(self, column):
+        """
+        Rule:
+        1. If the number of nonnull entries is sell than DATA_SM_UB, use the
+           small dataset bound; else use the large dataset bound
+        2. If the null value rate of the column is greater than AVG_OR_MED_EMPTY_UB
+           (which can vary for small vs large dataset), suggest no imputation (not enough values)
+        3. If null value rate is less thatn AVG_OR_MED_EMPTY_UB and skew is less than SKEW_UB
+           suggest imputing with mean value; else impute with median value
+        """
         if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
             avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
         else:
@@ -111,13 +121,19 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         return self.ACCEPTED_DTYPES
 
     def evaluate(self, column):
+        """
+        Rule:
+        1. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
+        2. If the longest sequence of consecutive null values is less than MAX_NULL_SEQ_LENGTH
+           impute using sequential method
+        3. Else suggest no imputation (no good fit)
+        """
         longest_sequence = self.get_longest_null_seq(column)
         if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
         elif longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
             return ImputationStrategy.SEQ
         return ImputationStrategy.NOOP
-
 
 class DateTimeImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset((DATETIME,))
@@ -127,12 +143,17 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         return self.ACCEPTED_DTYPES
     
     def evaluate(self, column):
+        """
+        Rule:
+        1. If the longest sequence of consecutive null values is less than MAX_NULL_SEQ_LENGTH
+           impute using sequential method
+        2. Else suggest no imputation (no good fit)
+        """
         longest_sequence = self.get_longest_null_seq(column)
         if longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
-
 
 class StringImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(STRING_TYPES)
@@ -142,10 +163,14 @@ class StringImputeSubRule(TypeImputeSubRule):
         return self.ACCEPTED_DTYPES
     
     def evaluate(self, column):
+        """
+        Rule:
+        1. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
+        3. Else suggest no imputation (no good fit)
+        """
         if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
-
 
 class ImputeValues(BaseRule):
     RULESET = (
