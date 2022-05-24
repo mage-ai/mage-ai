@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_REGULAR, MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
@@ -17,8 +17,9 @@ export type BadgeProps = {
 };
 
 const BadgeStyle = styled.p<BadgeProps>`
-  border-radius: ${BORDER_RADIUS}px;
+  border-radius: ${BORDER_RADIUS_SMALL}px;
   font-family: ${MONO_FONT_FAMILY_REGULAR};
+  font-size: ${REGULAR};
   margin: 0;
 
   ${props => !props.block && `
@@ -34,7 +35,7 @@ const BadgeStyle = styled.p<BadgeProps>`
   `}
 
   ${props => !props.compact && !props.regular && `
-    padding: 3.5px 8px;
+    padding: 2px 4px;
   `};
 
   ${props => props.compact && !props.regular && `
