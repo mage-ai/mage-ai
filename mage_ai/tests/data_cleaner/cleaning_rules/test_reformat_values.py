@@ -353,11 +353,11 @@ class ReformatValuesCleaningRule(TestCase):
             dict(
                 title='Reformat values',
                 message='The following columns have date values: '
-                        '[\'date2\', \'mostlydate\', \'date5\']. '
+                        '[\'date2\', \'mostlydate\']. '
                         'Reformat these columns as datetime objects to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
-                    action_arguments=['date2', 'mostlydate', 'date5'],
+                    action_arguments=['date2', 'mostlydate'],
                     axis='column',
                     action_options = {
                         'reformat': 'date_format_conversion',
@@ -377,13 +377,6 @@ class ReformatValuesCleaningRule(TestCase):
                             },
                             'type': 'feature'
                         },
-                        'date5': {
-                            'feature' : {
-                                'column_type': 'number',
-                                'uuid': 'date5'
-                            },
-                            'type': 'feature'
-                        }
                     },
                     action_code = '',
                     outputs = [],

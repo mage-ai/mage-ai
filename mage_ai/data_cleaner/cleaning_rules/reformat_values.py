@@ -1,4 +1,3 @@
-from multiprocessing import Value
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -13,7 +12,6 @@ from data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TEXT,
 )
-import numpy as np
 import pandas as pd
 
 
@@ -26,12 +24,22 @@ class ReformatValuesSubRule():
     3. Every column in df is of dtype object and the entries must be used to infer type.
     This is not always the case, but this assumption simplifies code
     """
-    def __init__(self, df, column_types, statistics, action_builder):
+    def __init__(
+        self,
+        action_builder,
+        clean_column_cache,
+        column_types,
+        df,
+        exact_dtypes,
+        statistics
+    ):
         self.df = df
         self.column_types = column_types
+        self.exact_dtypes = exact_dtypes
         self.statistics = statistics
         self.action_builder = action_builder
-        self.clean_column_cache = {}
+        self.clean_column_cache = clean_column_cache
+        self.matches = []
 
     def clean_column(self, column):
         """
@@ -57,19 +65,9 @@ class ReformatValuesSubRule():
     def evaluate(self, column):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
 
-    def get_column_dtype(self, column):
-        """
-        Will get the dtype of the first nonnull entry or returns None if there is no such entry
-        """
-        try:
-            return type(self.clean_column(column).iloc[0])
-        except IndexError:
-            return None
-
     def get_statistics(self, column, statistic):
         """
         Gets the statistic requested. If not found, the statistic is calculated and cached
-        for the next call
         """
         value = self.statistics.get(f'{column}/{statistic}')
         if value is None:
@@ -93,8 +91,23 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     NON_ALPH_UB = 0.4
     ALPH_RATIO_LB = 0.6
 
-    def __init__(self, df, column_types, statistics, action_builder):
-        super().__init__(df, column_types, statistics, action_builder)
+    def __init__(
+        self,
+        action_builder,
+        clean_column_cache,
+        column_types,
+        df,
+        exact_dtypes,
+        statistics
+    ):
+        super().__init__(
+            action_builder,
+            clean_column_cache,
+            column_types,
+            df,
+            exact_dtypes,
+            statistics
+        )
         self.uppercase = []
         self.lowercase = []
 
@@ -125,8 +138,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
             return
 
         clean_col = self.clean_column(column)
-        exact_dtype = self.get_column_dtype(column)
-        if exact_dtype is not str:
+        if self.exact_dtypes[column] is not str:
             return
 
         non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
@@ -180,10 +192,6 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
         CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS
     ))
 
-    def __init__(self, df, column_types, statistics, action_builder):
-        super().__init__(df, column_types, statistics, action_builder)
-        self.matches = []
-
     def evaluate(self, column):
         """
         Rule:
@@ -196,8 +204,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
         if dtype not in self.CURRENCY_TYPES:
             return
         clean_col = self.clean_column(column)
-        exact_dtype = self.get_column_dtype(column)
-        if exact_dtype is not str:
+        if self.exact_dtypes[column] is not str:
             return
         currency_pattern_mask = clean_col.str.match(self.CURRENCY_PATTERN)
         try:
@@ -229,33 +236,23 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
-    DATE_TYPES = frozenset((DATETIME, CATEGORY, NUMBER, CATEGORY_HIGH_CARDINALITY, TEXT))
-    
-    def __init__(self, df, column_types, statistics, action_builder):
-        super().__init__(df, column_types, statistics, action_builder)
-        self.matches = []
+    DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
     
     def evaluate(self, column):
         """
         Rule: 
-        1. If column is not of dtype category or datetime, no suggestion
-        2. If column is already contains datetime or np.datetime64, no suggestion
-        3. If column does not contain string types, no suggestion
-        4. Try use Pandas datetime parse to convert from string to datetime. 
+        1. If column is not of dtype category or text, no suggestion
+        2. If column does not contain string types, no suggestion
+        3. Try use Pandas datetime parse to convert from string to datetime. 
            If more than DATE_MATCHES_LB entries are succesfully converted, suggest 
            conversion to datetime type
         """
         dtype = self.column_types[column]
         if dtype not in self.DATE_TYPES:
             return
-        exact_dtype = self.get_column_dtype(column)
-        if exact_dtype is str:
-            clean_col = self.strip_column_for_date_parsing(column)
-        elif np.issubdtype(exact_dtype, np.integer):
-            clean_col = self.clean_column(column)
-        else:
+        if not self.exact_dtypes[column] is str:
             return
-        
+        clean_col = self.strip_column_for_date_parsing(column)
         clean_col = pd.to_datetime(clean_col, infer_datetime_format=True, errors='coerce')
         if clean_col.count() / len(clean_col) >= self.DATE_MATCHES_LB:
             self.matches.append(column)
@@ -298,17 +295,23 @@ class ReformatValues(BaseRule):
         super().__init__(df, column_types, statistics)
         # TODO Clean dataframe prior to giving to rule
         self.cleaned_df = self.df.replace('^\s*$', None, regex=True)
+        self.clean_column_cache = {}
+        self.exact_dtypes = self.infer_exact_dtypes()
 
     def hydrate_rule_list(self):
-        return list(map(
-            lambda x: x(
-                self.cleaned_df, 
-                self.column_types, 
-                self.statistics,
-                self._build_transformer_action_suggestion
-            ),
-            self.RULE_LIST
-        ))
+        return list(
+            map(
+                lambda x: x(
+                    self._build_transformer_action_suggestion,
+                    self.clean_column_cache,
+                    self.column_types,
+                    self.cleaned_df,
+                    self.exact_dtypes,
+                    self.statistics,
+                ),
+                self.RULE_LIST
+            )
+        )
 
     def evaluate(self):
         rules = self.hydrate_rule_list()
