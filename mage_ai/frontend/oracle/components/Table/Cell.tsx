@@ -1,0 +1,109 @@
+import React, { useState } from 'react';
+import Flex from '@oracle/components/Flex';
+import Link from '@oracle/elements/Link';
+import Text from '@oracle/elements/Text';
+import { ArrowDown, ArrowRight } from '@oracle/icons';
+import { RowCellStyle } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
+
+type CellProps = {
+  cellIndex: number;
+  flex: number;
+  render?: any;
+  rowGroupIndex: number;
+  rowIndex: number;
+  selected: boolean;
+  small: boolean;
+  value: any;
+};
+
+function Cell({
+  cellIndex,
+  flex,
+  render,
+  rowGroupIndex,
+  rowIndex,
+  selected,
+  small,
+  value,
+}: CellProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  let cellEl;
+
+  const isArray = Array.isArray(value);
+
+  if (render) {
+    cellEl = render(value);
+  } else if (typeof value === 'function') {
+    // @ts-ignore
+    cellEl = value({
+      selected,
+    });
+  } else if (isArray) {
+    cellEl = (
+      <Flex
+        alignItems="start"
+        flexDirection="row"
+        justifyContent="space-between"
+      >
+        <Text
+          small={small}
+          textOverflow
+          title={value[0]}
+        >
+          {collapsed && (
+            <>
+              {`${value[0]} & ${value.length - 1} more`}
+            </>
+          )}
+          {!collapsed && (
+            <>
+              {value.map(v => (
+                <div key={v}>
+                  {v}
+                </div>
+              ))}
+            </>
+          )}
+        </Text>
+        <Link
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          {collapsed && (
+            <ArrowDown muted size={UNIT * 2} />
+          )}
+          {!collapsed && (
+            <ArrowRight muted size={UNIT * 2} />
+          )}
+        </Link>
+      </Flex>
+    );
+  } else {
+    cellEl = (
+      <Text
+        small={small}
+        textOverflow
+        title={value}
+      >
+        {value}
+      </Text>
+    );
+  }
+
+  return (
+    <Flex
+      flex={flex}
+      key={`cell-${rowGroupIndex}-${rowIndex}-${cellIndex}-${value}`}
+      textOverflow
+    >
+      <RowCellStyle
+        first={cellIndex === 0}
+        small={small}
+      >
+        {cellEl}
+      </RowCellStyle>
+    </Flex>
+  );
+}
+
+export default Cell;
