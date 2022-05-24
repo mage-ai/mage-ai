@@ -1,6 +1,6 @@
-from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from data_cleaner.pipelines.base import BasePipeline
+from data_cleaner.shared.hash import merge_dict
 from numpyencoder import NumpyEncoder
-from mage_ai.data_cleaner.shared.hash import merge_dict
 from server.data.base import Model
 
 import json
@@ -12,7 +12,7 @@ SAMPLE_SIZE = 20
 
 # right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
-    def __init__(self, id=None, df=None):
+    def __init__(self, id=None, df=None, name=None):
         super().__init__(id)
 
         try:
@@ -20,6 +20,9 @@ class FeatureSet(Model):
         except:
             self.metadata = {}
             metadata = self.metadata
+        
+        if name is not None:
+            metadata['name'] = name
 
         if self.pipeline is None:
             pipeline = Pipeline()
@@ -125,7 +128,7 @@ class Pipeline(Model):
 
     @pipeline.setter
     def pipeline(self, pipeline):
-        return self.read_json_file('pipeline.json', pipeline.actions)
+        return self.write_json_file('pipeline.json', pipeline.actions)
 
     def to_dict(self, detailed=True):
         return dict(

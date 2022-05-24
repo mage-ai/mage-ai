@@ -6,3 +6,6 @@ app = Flask(__name__,
             template_folder="../frontend/out")
 
 import server.routes
+
+def create_app():
+    return app

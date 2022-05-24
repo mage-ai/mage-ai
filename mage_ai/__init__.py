@@ -1,10 +1,14 @@
-from server.routes import clean as clean_flask, launch as launch_flask
+from server.routes import clean_df, connect_df, launch as launch_flask
 
-def connect_data(df):
-    launch_flask(df)
+def launch():
+    launch_flask()
+
+def connect_data(df, name):
+    connect_df(df, name)
 
 def clean(df, pipeline_uuid=None):
-    clean_flask(df, pipeline_uuid)
+    (_, df_clean) = clean_df(df, pipeline_uuid)
+    return df_clean
 
 def init(api_key):
     # verify api_key with Mage backend

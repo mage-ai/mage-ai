@@ -79,7 +79,7 @@ def pipelines():
     )
     return response
 
-def clean_df(df):
+def clean_df(df, name, pipeline_uuid=None):
     feature_set = FeatureSet(df=df)
 
     metadata = feature_set.metadata
@@ -92,18 +92,24 @@ def clean_df(df):
     metadata['column_types'] = column_types
 
     feature_set.metadata = metadata
-    return result['df_cleaned']
+    return (feature_set, result['df_cleaned'])
 
-def launch(df) -> None:
-    global index_df
-    index_df = df
-    app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
-    thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
-    thread.start()
+def connect_df(df, name):
+    feature_set = FeatureSet(df=df, name=name)
 
-def clean(df, pipeline_uuid) -> None:
-    global index_df
-    index_df = clean_df(df)
+    metadata = feature_set.metadata
+
+    result = analyze(df)
+
+    feature_set.write_files(result)
+
+    column_types = result['column_types']
+    metadata['column_types'] = column_types
+    
+    feature_set.metadata = metadata
+    return (feature_set, df)
+
+def launch() -> None:
     app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
     thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
