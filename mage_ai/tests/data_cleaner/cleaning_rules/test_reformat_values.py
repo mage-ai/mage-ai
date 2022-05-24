@@ -252,23 +252,16 @@ class ReformatValuesCleaningRule(TestCase):
             dict(
                 title='Reformat values',
                 message='The following columns have date values: '
-                        '[\'date1\', \'date2\', \'date3\', \'date4\', \'date5\']. '
-                        'Reformat these columns to improve data quality.',
+                        '[\'date2\', \'date3\', \'date4\', \'date5\']. '
+                        'Reformat these columns as datetime objects to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
-                    action_arguments=['date1', 'date2', 'date3', 'date4', 'date5'],
+                    action_arguments=['date2', 'date3', 'date4', 'date5'],
                     axis='column',
                     action_options = {
                         'reformat': 'date_format_conversion',
                     },
                     action_variables = {
-                        'date1': {
-                            'feature' : {
-                                'column_type': 'datetime',
-                                'uuid': 'date1'
-                            },
-                            'type': 'feature'
-                        },
                         'date2': {
                             'feature' : {
                                 'column_type': 'datetime',
@@ -293,6 +286,100 @@ class ReformatValuesCleaningRule(TestCase):
                         'date5': {
                             'feature' : {
                                 'column_type': 'text',
+                                'uuid': 'date5'
+                            },
+                            'type': 'feature'
+                        }
+                    },
+                    action_code = '',
+                    outputs = [],
+                )
+            ),
+        ]
+        self.assertEqual(results, expected_results)
+
+    def test_datetime_conversion_type_edge_cases(self):
+        df = pd.DataFrame([
+            [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', 234],
+            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
+            [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
+            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
+            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212],
+            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', 2034]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+        ])
+        column_types = {
+            'date1': 'datetime',
+            'date2': 'datetime',
+            'notdate': 'text',
+            'mostlydate': 'category_high_cardinality',
+            'date5': 'number'
+        }
+        statistics = {}
+        rule = ReformatValues(df, column_types, statistics)
+        results = rule.evaluate()
+        expected_results = [
+            dict(
+                title='Reformat values',
+                message='The following columns have mixed capitalization formats: '
+                        '[\'notdate\']. '
+                        'Reformat these columns with fully lowercase text to improve data quality.',
+                action_payload=dict(
+                    action_type='reformat',
+                    action_arguments=['notdate'],
+                    axis='column',
+                    action_options = {
+                        'reformat': 'caps_standardization',
+                        'capitalization': 'lowercase'
+                    },
+                    action_variables = {
+                        'notdate': {
+                            'feature' : {
+                                'column_type': 'text',
+                                'uuid': 'notdate'
+                            },
+                            'type': 'feature'
+                        },
+                    },
+                    action_code = '',
+                    outputs = [],
+                )
+            ),
+            dict(
+                title='Reformat values',
+                message='The following columns have date values: '
+                        '[\'date2\', \'mostlydate\', \'date5\']. '
+                        'Reformat these columns as datetime objects to improve data quality.',
+                action_payload=dict(
+                    action_type='reformat',
+                    action_arguments=['date2', 'mostlydate', 'date5'],
+                    axis='column',
+                    action_options = {
+                        'reformat': 'date_format_conversion',
+                    },
+                    action_variables = {
+                        'date2': {
+                            'feature' : {
+                                'column_type': 'datetime',
+                                'uuid': 'date2'
+                            },
+                            'type': 'feature'
+                        },
+                        'mostlydate': {
+                            'feature' : {
+                                'column_type': 'category_high_cardinality',
+                                'uuid': 'mostlydate'
+                            },
+                            'type': 'feature'
+                        },
+                        'date5': {
+                            'feature' : {
+                                'column_type': 'number',
                                 'uuid': 'date5'
                             },
                             'type': 'feature'

@@ -1,29 +1,32 @@
+from distutils.command.clean import clean
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
 )
-from data_cleaner.column_type_detector import ( 
-    TEXT, 
+from data_cleaner.column_type_detector import (  
     CATEGORY, 
-    CATEGORY_HIGH_CARDINALITY, 
+    CATEGORY_HIGH_CARDINALITY,
+    DATETIME,
     EMAIL,
     NUMBER,
     NUMBER_WITH_DECIMALS,
+    TEXT,
 )
 from datetime import datetime
+from dateutil.parser import ParserError
 import numpy as np
 import pandas as pd
-
-from mage_ai.data_cleaner.column_type_detector import DATETIME
 
 
 class ReformatValuesSubRule():
     """
-    Assumptions about subrules:
-    - df will have all empty string values removed - all null values are either `None` or `np.nan`. This is asserted in `ReformatValues`
-    - assume all columns are of `object` type - will need to check manually for actual dtype.
-    - column_types give the correct inferred type always
+    Assumptions of TypeImputeSubRule
+    1. df will not contain any empty strings - all empty strings are converted to null types.
+    This is handled in ImputeValues.
+    2. column_types will contain the correct type value
+    3. Every column in df is of dtype object and the entries must be used to infer type.
+    This is not always the case, but this assumption simplifies code
     """
     def __init__(self, df, column_types, statistics, action_builder):
         self.df = df
@@ -53,6 +56,9 @@ class ReformatValuesSubRule():
             }
         return variable_set
 
+    def evaluate(self, column):
+        raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
+
     def get_column_dtype(self, column):
         """
         Will get the dtype of the first nonnull entry or returns None if there is no such entry
@@ -62,8 +68,21 @@ class ReformatValuesSubRule():
         except IndexError:
             return None
 
-    def evaluate(self, column):
-        raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
+    def get_statistics(self, column, statistic):
+        """
+        Gets the statistic requested. If not found, the statistic is calculated and cached
+        for the next call
+        """
+        value = self.statistics.get(f'{column}/{statistic}')
+        if value is None:
+            if statistic == 'count':
+                value = self.df[column].count()
+            elif statistic == 'count_distinct':
+                value = self.df[column].nunique()
+            elif statistic == 'null_value_rate':
+                value = 1 - self.df[column].count() / len(self.cleaned_df[column])
+            self.statistics[f'{column}/{statistic}'] = value
+        return value
     
     def get_suggestions(self):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
@@ -113,7 +132,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
             return
 
         non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
-        unfiltered_length =  self.statistics[f'{column}/count']
+        unfiltered_length =  self.get_statistics(column, 'count')
         clean_col = clean_col[non_alpha_ratio <= self.NON_ALPH_UB]
         new_length = clean_col.count()
         if new_length / unfiltered_length <= self.ALPH_RATIO_LB:
@@ -187,7 +206,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             count = currency_pattern_mask.value_counts()[True]
         except KeyError:
             count = 0
-        if count / self.statistics[f'{column}/count'] == 1:
+        if count / self.get_statistics(column, 'count') == 1:
             self.matches.append(column)
                 
 
@@ -226,7 +245,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
             '%d %m %Y'
         ]
     DATE_MATCHES_LB = 0.3
-    DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
+    DATE_TYPES = frozenset((DATETIME, CATEGORY, NUMBER, CATEGORY_HIGH_CARDINALITY, TEXT))
     
     def __init__(self, df, column_types, statistics, action_builder):
         super().__init__(df, column_types, statistics, action_builder)
@@ -234,11 +253,6 @@ class ReformatDateSubRule(ReformatValuesSubRule):
 
     def date_iter(self, column):
         clean_col = self.clean_column(column)
-        try:
-            clean_col = clean_col.str.replace(r'(\D\d\D)', lambda digit: f'{digit[0]}0{digit[1:]}')
-        except IndexError:
-            pass
-        clean_col = clean_col.str.lower()
         yield from clean_col.str.split(r'[\s\,\-\_\\\/]+').str.join(" ")
 
     def is_date_standard(self, stripped_str):
@@ -256,33 +270,50 @@ class ReformatDateSubRule(ReformatValuesSubRule):
             except ValueError:
                 continue
         return False
+
+    def manual_date_matching(self, column):
+        num_nonstandard, num_standard = 0, 0
+        for date in self.date_iter(column):
+            if self.is_date_standard(date):
+                num_standard += 1
+            elif self.is_date_nonstandard(date):
+                num_nonstandard += 1
+        date_ratio = num_standard + num_nonstandard / self.get_statistics(column, 'count')
+        if date_ratio >= self.DATE_MATCHES_LB and num_nonstandard != 0:
+            self.matches.append(column)
             
     
     def evaluate(self, column):
         """
         Rule: 
-        1. If column is not of type category or datetime, no suggestion
-        2. If column is already contains datetime, autosuggest converting to locale format
-        3. Else, if column does not contain string types, no suggestion
-        4. If column contains string types,
-        Count the number of entries that are of a known date format. If this ratio is
-           above DATE_MATCHES_LB, suggest reformatting to locale format
+        1. If column is not of dtype category or datetime, no suggestion
+        2. If column is already contains datetime or np.datetime64, no suggestion
+        3. If column does not contain string types, no suggestion
+        4. Try use Pandas datetime parse to convert from string to datetime. 
+           If success, suggest conversion to datetime
+        5. Manually compare entries of column to known datetime formats. If DATE_MATCHES_LB
+           of all matches are successfully shown to be a datetime match, suggest conversion
+           to datetime
         """
         dtype = self.column_types[column]
-        if dtype in self.DATE_TYPES:
-            exact_dtype = self.get_column_dtype(column)
-            num_nonstandard, num_standard = 0,0
-            if exact_dtype is str:
-                for date in self.date_iter(column):
-                    if self.is_date_standard(date):
-                        num_standard += 1
-                    elif self.is_date_nonstandard(date):
-                        num_nonstandard += 1
-                date_ratio = num_standard + num_nonstandard / self.statistics[f'{column}/count']
-                if date_ratio >= self.DATE_MATCHES_LB and num_nonstandard != 0:
-                    self.matches.append(column)
-            elif exact_dtype is pd.Timestamp or exact_dtype is np.datetime64:
-                self.matches.append(column) # TODO make sure that reformat can handle null values
+        if dtype not in self.DATE_TYPES:
+            return
+        exact_dtype = self.get_column_dtype(column)
+        if exact_dtype is str:
+            clean_col = self.strip_column_for_date_parsing(column)
+        elif np.issubdtype(exact_dtype, np.integer):
+            clean_col = self.clean_column(column)
+        else:
+            return
+        try:
+            pd.to_datetime(clean_col, infer_datetime_format=True)
+            self.matches.append(column)
+        except ParserError:
+            # unknown format, use manual pattern matching
+            self.manual_date_matching(column)
+        except ValueError:
+            # this is not a datetime string
+            return
 
     def get_suggestions(self):
         suggestions = []
@@ -291,7 +322,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
                 'Reformat values',
                 'The following columns have date values: '
                 f'{self.matches}. '
-                'Reformat these columns to improve data quality.',
+                'Reformat these columns as datetime objects to improve data quality.',
                 'reformat',
                 action_arguments=self.matches,
                 axis=Axis.COLUMN,
@@ -301,6 +332,19 @@ class ReformatDateSubRule(ReformatValuesSubRule):
                 action_variables = self.construct_action_variables(self.matches)
             ))
         return suggestions
+
+    def strip_column_for_date_parsing(self, column):
+        clean_col = self.clean_column(column)
+        clean_col = clean_col.str.replace(
+            r'\D\d\D',
+            lambda d: f'{d.group(0)[0]}0{d.group(0)[1:]}'
+        )
+        clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
+        clean_col = clean_col.str.replace(
+            r'\s*([\/\\\-\.]+)\s*',
+            lambda group: group.group(1)[0]
+        )
+        return clean_col.str.lower()
 
 
 
