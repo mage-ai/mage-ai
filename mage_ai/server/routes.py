@@ -1,6 +1,7 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
 from flask import render_template, request
 from numpyencoder import NumpyEncoder
+from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from server.data.models import FeatureSet, Pipeline
 from server import app
 
@@ -54,9 +55,21 @@ def feature_sets():
     )
     return response
 
-@app.route("/feature_sets/<id>", methods=["GET", "PUT"])
+@app.route("/feature_sets/<id>", methods=["GET"])
 def feature_set(id):
     feature_set = FeatureSet(id=id)
+    response = app.response_class(
+        response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
+
+@app.route("/feature_sets/<id>", methods=["PUT"])
+def update_feature_set(id):
+    request_data = request.json
+    feature_set = FeatureSet(id=id)
+    feature_set.write_files(request_data)
     response = app.response_class(
         response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -74,6 +87,28 @@ def pipelines():
     pipelines = list(map(lambda p: p.to_dict(False), Pipeline.objects()))
     response = app.response_class(
         response=json.dumps(pipelines, cls=NumpyEncoder),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
+
+@app.route("/pipelines/<id>")
+def pipeline(id):
+    pipeline = Pipeline(id=id)
+    response = app.response_class(
+        response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
+
+@app.route("/pipelines/<id>", methods=["PUT"])
+def update_pipeline(id):
+    request_data = request.json
+    pipeline = Pipeline(id=id)
+    pipeline.pipeline = BasePipeline(request_data)
+    response = app.response_class(
+        response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
         mimetype='application/json'
     )

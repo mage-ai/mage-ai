@@ -54,14 +54,26 @@ class FeatureSet(Model):
     @property
     def statistics(self):
         return self.read_json_file('statistics.json')
+    
+    @statistics.setter
+    def statistics(self, metadata):
+        return self.write_json_file('statistics.json', metadata)
 
     @property
     def insights(self):
         return self.read_json_file('insights.json')
 
+    @insights.setter
+    def insights(self, metadata):
+        return self.write_json_file('insights.json', metadata)
+
     @property
     def suggestions(self):
         return self.read_json_file('suggestions.json')
+
+    @suggestions.setter
+    def suggestions(self, metadata):
+        return self.write_json_file('suggestions.json', metadata)
     
     @property
     def pipeline(self):
@@ -80,15 +92,14 @@ class FeatureSet(Model):
     def write_files(self, obj):
         if 'df_cleaned' in obj:
             self.data = obj['df_cleaned']
+        if 'metadata' in obj:
+            self.metadata = obj['metadata']
         if 'suggested_actions' in obj:
-            with open(os.path.join(self.dir, 'suggestions.json'), 'w') as file:
-                json.dump(obj['suggested_actions'], file)
+            self.suggested_actions = obj['suggested_actions']
         if 'statistics' in obj:
-            with open(os.path.join(self.dir, 'statistics.json'), 'w') as file:
-                json.dump(obj['statistics'], file, cls=NumpyEncoder)
+            self.statistics = obj['statistics']
         if 'analysis' in obj:
-            with open(os.path.join(self.dir, 'insights.json'), 'w') as file:
-                json.dump(obj['analysis'], file, cls=NumpyEncoder)
+            self.insights = obj['analysis']
 
     # def column(self, column):
     #     column_dict = dict()

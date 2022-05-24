@@ -31,6 +31,7 @@ class RemoveDuplicateRowsTests(TestCase):
                 title='Remove duplicate rows',
                 message='There\'re 2 duplicate rows in the dataset.'
                 ' Suggest to remove them.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='drop_duplicate',
                     action_arguments=[],

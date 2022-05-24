@@ -1,3 +1,5 @@
+from numpyencoder import NumpyEncoder
+
 import json
 import os
 import os.path
@@ -17,10 +19,7 @@ class Model():
 
         if id is None:
             dirs = [name for name in os.listdir(self.path)]
-            max = -1
-            for dir in dirs:
-                if int(dir) > max:
-                    max = int(dir)
+            max = sorted([int(dir) for dir in dirs], reverse=True)[0]
             self.id = max + 1
         else:
             self.id = id
@@ -35,7 +34,7 @@ class Model():
 
     def write_json_file(self, file_name, obj):
         with open(os.path.join(self.dir, file_name), 'w') as file:
-            json.dump(obj, file)
+            json.dump(obj, file, cls=NumpyEncoder)
 
     def to_dict(self, detailed):
         pass
