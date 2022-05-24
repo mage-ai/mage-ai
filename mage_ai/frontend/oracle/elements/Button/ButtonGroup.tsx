@@ -7,7 +7,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 export type ButtonGroupProps = {
   children: any;
   condensed?: boolean;
-  noDivider?: boolean;
+  divider?: boolean;
 };
 
 const ButtonGroupStyle = styled.div<ButtonGroupProps>``;
@@ -18,8 +18,7 @@ const VerticalDivider = styled.div`
 
 const ButtonGroup = ({
   children,
-  condensed,
-  noDivider,
+  divider,
 }: ButtonGroupProps) => {
   const numberOfButtons: number = children.length;
 
@@ -28,7 +27,7 @@ const ButtonGroup = ({
       <FlexContainer>
         {React.Children.map(children, (child, idx) => child && (
           <Flex key={`button-group-child-${idx}`}>
-            {!condensed && idx >= 1 && !noDivider && <VerticalDivider />}
+            {idx >= 1 && divider && <VerticalDivider />}
 
             {React.cloneElement(child, {
               borderRadiusLeft: idx === 0,
@@ -36,7 +35,7 @@ const ButtonGroup = ({
               halfPaddingLeft: idx !== 0,
               halfPaddingRight: idx !== numberOfButtons - 1,
               noBorder: idx > 0 && idx < numberOfButtons - 1,
-              noBorderRight: condensed && idx !== numberOfButtons - 1,
+              noBorderRight: idx !== numberOfButtons - 1,
             })}
           </Flex>
         ))}

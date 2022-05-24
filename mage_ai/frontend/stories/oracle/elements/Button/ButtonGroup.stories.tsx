@@ -40,12 +40,6 @@ Regular.args = {
   ],
 };
 
-export const RegularCondensed = Template.bind({});
-RegularCondensed.args = {
-  ...Regular.args,
-  condensed: true,
-};
-
 export const Combo = Template.bind({});
 Combo.args = {
   ...Regular.args,
@@ -59,10 +53,10 @@ Combo.args = {
   ],
 };
 
-export const Condensed = Template.bind({});
-Condensed.args = {
+export const Divided = Template.bind({});
+Divided.args = {
   ...Combo.args,
-  condensed: true,
+  divider: true,
 };
 
 export const IconsOnly = Template.bind({});
@@ -70,17 +64,16 @@ IconsOnly.args = {
   ...Combo.args,
   children: [
     <Button iconOnly>
-      <Sort size={UNIT * 3} />
+      <Sort />
     </Button>,
     <Button iconOnly>
-      <Graph size={UNIT * 3} />
+      <Graph />
     </Button>,
     <Button iconOnly>
-      <ApplyAction size={UNIT * 3} />
+      <ArrowDown />
     </Button>,
     <Button iconOnly>
-      <Check size={UNIT * 3} />
+      <Check />
     </Button>,
   ],
-  condensed: true,
 };
