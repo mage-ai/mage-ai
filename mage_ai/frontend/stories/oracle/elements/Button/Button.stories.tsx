@@ -7,8 +7,8 @@ import ThemeBlock from 'stories/ThemeBlock';
 import { Add } from '@oracle/icons';
 
 export default {
-  title: 'Oracle/Elements/Button',
   component: Button,
+  title: 'Oracle/Elements/Button',
 } as Meta;
 
 const TemplateWithTheme = ({ buttons, ...props }) => buttons ? (
@@ -46,6 +46,15 @@ All.args = {
     <Button disabled>
       Disabled
     </Button>,
+    <Button beforeIcon={<Add />}>
+      Before Icon
+    </Button>,
+    <Button afterIcon={<Add />}>
+      After Icon
+    </Button>,
+    <Button iconOnly={true}>
+      <Add />
+    </Button>
   ],
 };
 
