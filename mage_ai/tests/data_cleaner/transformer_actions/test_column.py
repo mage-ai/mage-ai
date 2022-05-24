@@ -1040,12 +1040,12 @@ class ColumnTests(TestCase):
             'good_name',
             'bad_case',
             'number_34234342',
-            'yield__',
+            'yield_',
             'number_12342',
             '1234___23',
-            'true__',
+            'true_',
             'true_crime',
-            'for__'
+            'for_'
             ]
         )
         action = dict(
