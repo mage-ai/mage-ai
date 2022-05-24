@@ -18,7 +18,12 @@ import pandas as pd
 class TypeImputeSubRule():
     DATA_SM_UB = 100
 
-    def __init__(self, df, column_types, exact_dtypes, statistics, **kwargs):
+    def __init__(self,
+        df,
+        column_types,
+        statistics,
+        is_timeseries=False
+    ):
         """
         Assumptions of TypeImputeSubRule
         1. df will not contain any empty strings - all empty strings are converted to null types.
@@ -30,8 +35,7 @@ class TypeImputeSubRule():
         self.df = df
         self.df_columns = df.columns.tolist()
         self.column_types = column_types
-        self.exact_dtypes = exact_dtypes
-        self.is_timeseries = kwargs.get("is_timeseries")
+        self.is_timeseries = is_timeseries
         self.statistics = statistics
 
     def accepted_dtypes(self):
@@ -73,17 +77,22 @@ class TypeImputeSubRule():
         value = self.statistics.get(f'{column}/{statistic}')
         if value is None:
             if statistic == 'count':
-                value = self.cleaned_df[column].count()
+                value = self.df[column].count()
             elif statistic == 'count_distinct':
-                value = self.cleaned_df[column].nunique()
+                value = self.df[column].nunique()
             elif statistic == 'null_value_rate':
-                value = 1 - self.cleaned_df[column].count() / len(self.cleaned_df[column])
+                value = 1 - self.df[column].count() / len(self.df[column])
+            elif statistic == 'mode':
+                value = self.df[column].value_counts().index[0]
+            elif statistic == 'mode_ratio':
+                value_counts = self.df[column].value_counts()
+                value = value_counts.max() / value_counts.sum()
             self.statistics[f'{column}/{statistic}'] = value
         return value
 
 
 class NumericalImputeSubRule(TypeImputeSubRule):
-    ACCEPTED_DTYPES = frozenset(NUMBER_TYPES)
+    ACCEPTED_DTYPES = NUMBER_TYPES
     SKEW_UB = 0.7
     AVG_OR_MED_EMPTY_UB = {
         'small': 0.3,
@@ -123,8 +132,9 @@ class NumericalImputeSubRule(TypeImputeSubRule):
 
 
 class CategoricalImputeSubRule(TypeImputeSubRule):
-    ACCEPTED_DTYPES = frozenset(CATEGORICAL_TYPES)
+    ACCEPTED_DTYPES = CATEGORICAL_TYPES
     RAND_EMPTY_UB = 0.3
+    MODE_PROP_LB = 0.4
     
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
@@ -135,7 +145,9 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
-        4. Else suggest no imputation (no good fit)
+        4. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
+           imputation with mode 
+        5. Else suggest no imputation (no good fit)
         """
         if self.get_statistics(column, 'null_value_rate') == 0:
             return ImputationStrategy.NOOP
@@ -143,6 +155,8 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
             return ImputationStrategy.SEQ
         elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
+        elif(self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB):
+            return ImputationStrategy.MODE
         return ImputationStrategy.NOOP
 
 
@@ -165,9 +179,11 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         else:
             return ImputationStrategy.NOOP
 
+
 class StringImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(STRING_TYPES)
     RAND_EMPTY_UB = 0.3
+    MODE_PROP_LB = 0.4
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
@@ -178,13 +194,18 @@ class StringImputeSubRule(TypeImputeSubRule):
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
-        4. Else suggest no imputation (no good fit)
+        4. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
+           imputation with mode 
+        5. Else suggest no imputation (no good fit)
         """
         if self.is_timeseries:
             return ImputationStrategy.SEQ
         elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
+        elif(self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB):
+            return ImputationStrategy.MODE
         return ImputationStrategy.NOOP
+
 
 class ImputeValues(BaseRule):
     RULESET = (
@@ -211,6 +232,7 @@ class ImputeValues(BaseRule):
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: [],
             ImputationStrategy.MEDIAN: [],
+            ImputationStrategy.MODE: [],
             ImputationStrategy.NOOP: [],
             ImputationStrategy.RANDOM: [],
             ImputationStrategy.ROW_RM: [],
@@ -267,16 +289,15 @@ class ImputeValues(BaseRule):
             null_mask |= self.cleaned_df[column_name].isna()
         return null_mask
 
-
     def hydrate_rules(self):
+        is_timeseries = self.is_timeseries()
         self.rules = list(
             map(
                 lambda x: x(
                     self.cleaned_df,
                     self.column_types,
-                    self.exact_dtypes,
                     self.statistics,
-                    **self.subrule_kwargs
+                    is_timeseries
                 ),
                 self.RULESET
             )
@@ -348,6 +369,16 @@ class ImputeActionConstructor():
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
+            action_variables = self.__construct_action_variables(strategy_cache_entry)
+        elif strategy == ImputationStrategy.MODE:
+            message = 'The following columns have null valued entries and '\
+                      'a large proportion of entries are a single value: '\
+                      f'{strategy_cache_entry}. ' \
+                      'Suggested: fill null values with this most frequent value.'
+            action_arguments = strategy_cache_entry
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {'strategy': 'mode'}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
         elif strategy == ImputationStrategy.RANDOM:
             message = 'The following columns have null-valued entries and are categorical: '\

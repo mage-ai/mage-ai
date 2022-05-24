@@ -1330,10 +1330,16 @@ class ColumnTests(TestCase):
                 'strategy': 'random'
             },
         )
+        action8 = dict(
+            action_arguments=['sold', 'curr_profit'],
+            action_options={
+                'strategy': 'mode'
+            },
+        )
         action_invalid = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
-                'strategy': 'mode',
+                'strategy': 'knn',
             },
         )
         df_new1 = impute(df.copy(), action1)
@@ -1343,6 +1349,7 @@ class ColumnTests(TestCase):
         df_new5 = impute(df.copy(), action5)
         df_new6 = impute(df.copy(), action6)
         df_new7 = impute(df.copy(), action7)
+        df_new8 = impute(df.copy(), action8)
 
         df_expected1 = pd.DataFrame([
             ['2020-01-01', 1000, 0, 800],
@@ -1416,6 +1423,18 @@ class ColumnTests(TestCase):
             'curr_profit',
             'prev_sold',
         ])
+        df_expected8 = pd.DataFrame([
+            ['2020-01-01', 1000, 1200, 800],
+            ['2020-01-02', 1000, 1200, 700],
+            ['2020-01-03', 1200, 1200, 900],
+            ['2020-01-04', 1000, 1200, 700],
+            ['2020-01-05', 1700, 1300, 800],
+        ], columns=[
+            'date',
+            'sold',
+            'curr_profit',
+            'prev_sold',
+        ])
         
         df_new1['sold'] = df_new1['sold'].astype(int)
         df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
@@ -1429,6 +1448,8 @@ class ColumnTests(TestCase):
         df_new6['sold'] = df_new6['sold'].astype(int)
         df_new7['sold'] = df_new7['sold'].astype(int)
         df_new7['curr_profit'] = df_new7['curr_profit'].astype(int)
+        df_new8['sold'] = df_new8['sold'].astype(int)
+        df_new8['curr_profit'] = df_new8['curr_profit'].astype(int)
 
         assert_frame_equal(df_new1, df_expected1)
         assert_frame_equal(df_new2, df_expected2)
@@ -1437,6 +1458,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new5, df_expected5)
         assert_frame_equal(df_new6, df_expected6)
         assert_frame_equal(df_new7, df_new7.dropna(axis=0))
+        assert_frame_equal(df_new8, df_expected8)
         
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action_invalid)

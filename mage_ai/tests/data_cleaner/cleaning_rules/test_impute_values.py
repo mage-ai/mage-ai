@@ -1,7 +1,10 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
+from faker import Faker
 from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
+
+fake = Faker()
 
 
 class ImputeValuesTest(TestCase):
@@ -170,6 +173,68 @@ class ImputeValuesTest(TestCase):
                             feature=dict(
                                 column_type='number_with_decimals',
                                 uuid='profit'
+                            ),
+                            type='feature'
+                        )
+                    ),
+                    action_code='',
+                    axis='column',
+                    outputs=[]
+                )
+            )
+        ]
+        suggestions = ImputeValues(
+            df,
+            column_types,
+            statistics,
+        ).evaluate()
+        self.assertEqual(expected_suggestions, suggestions)
+
+    def test_mode(self):
+        df = pd.DataFrame(
+            [
+                [90.5, 'one', 34934],
+                [np.nan, None, np.nan],
+                [667, 'one', 10010],
+                [np.nan, 'one', 34934],
+                [-234, None, np.nan],
+                [np.nan, None, 34934],
+                [-1.4, 'one', np.nan],
+                [-1.6, 'None', 10010],
+            ],
+            columns=['profit', 'company', 'industry']
+        )
+        column_types = {
+            'profit': 'number_with_decimals', 
+            'company': 'category',
+            'industry': 'zip_code'
+        }
+        statistics = {}
+        expected_suggestions = [
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null valued entries and '
+                      'a large proportion of entries are a single value: '
+                      '[\'company\', \'industry\']. '
+                      'Suggested: fill null values with this most frequent value.',
+                action_payload=dict(
+                    action_type='impute',
+                    action_arguments=['company', 'industry'],
+                    action_options=dict(
+                        strategy='mode'
+                    ),
+                    action_variables=dict(
+                        company=dict(
+                            feature=dict(
+                                column_type='category',
+                                uuid='company'
+                            ),
+                            type='feature'
+                        ),
+                        industry=dict(
+                            feature=dict(
+                                column_type='zip_code',
+                                uuid='industry'
                             ),
                             type='feature'
                         )

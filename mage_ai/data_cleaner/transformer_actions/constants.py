@@ -53,10 +53,11 @@ class Operator():
     LESS_THAN_OR_EQUALS = '<='
 
 class ImputationStrategy():
-    AVERAGE = "average"
-    COLUMN = "column"
-    MEDIAN = "median"
-    NOOP = "no_action"
-    RANDOM = "random"
-    ROW_RM = "remove_rows"
-    SEQ = "sequential"
+    AVERAGE = 'average'
+    COLUMN = 'column'
+    MEDIAN = 'median'
+    MODE = 'mode'
+    NOOP = 'no_action'
+    RANDOM = 'random'
+    ROW_RM = 'remove_rows'
+    SEQ = 'sequential'
