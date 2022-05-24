@@ -58,6 +58,7 @@ module.exports = {
     'operator-linebreak': 'off',
     'radix': 'off',
     'react/display-name': 'off',
+    'react-hooks/rules-of-hooks': 'warn',
     'react/jsx-closing-tag-location': 'off',
     'react/jsx-curly-newline': 'off',
     'react/jsx-one-expression-per-line': 'off',
