@@ -1,6 +1,3 @@
-from ast import Num
-from http.client import ACCEPTED
-from re import I
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import (
     CATEGORICAL_TYPES,
@@ -16,12 +13,13 @@ from data_cleaner.transformer_actions.constants import (
 )
 import numpy as np
 
+
 class TypeImputeSubRule():
     """
     Assumptions of TypeImputeSubRule
     1. `df` will not contain any empty strings - all empty strings are converted to null types
     2. `column_types` will contain the correct type value
-    3. Every column in 'df' is of dtype object and the entries must be used to infer type.
+    3. Every column in `df` is of dtype `object` and the entries must be used to infer type.
        This is not always the case, but this assumption simplifies code
     """
     DATA_SM_UB = 100
@@ -35,13 +33,17 @@ class TypeImputeSubRule():
         """
         Gets the list of dtypes this subrule accepts and checks
         """
-        raise NotImplementedError("Children of TypeImputeSubRule must override \'accepted_dtypes()\'")
+        raise NotImplementedError(
+            'Children of TypeImputeSubRule must override \'accepted_dtypes()\''
+        )
 
     def evaluate(self, column):
         """
-        Gets the imputation strategy associated with this type
+        Gets the imputation strategy for the given column
         """
-        raise NotImplementedError("Children of TypeImputeSubRule must override \'evaluate()\'")
+        raise NotImplementedError(
+            'Children of TypeImputeSubRule must override \'evaluate()\''
+        )
 
     def get_longest_null_seq(self, column):
         """
@@ -78,13 +80,9 @@ class TypeImputeSubRule():
 class NumericalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(NUMBER_TYPES)
     SKEW_UB = 0.7
-    SM_LG_HYPERPARAMS = {
-        "small": {
-            "avg_med_empty_ub": 0.3
-        },
-        "large": {
-            "avg_med_empty_ub": 0.5
-        }
+    AVG_OR_MED_EMPTY_UB = {
+        'small': 0.3,
+        'large': 0.5
     }
 
     def accepted_dtypes(self):
@@ -92,22 +90,17 @@ class NumericalImputeSubRule(TypeImputeSubRule):
     
     def evaluate(self, column):
         if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
-            # this is a smaller dataset, need to enforce tougher restrictions
-            hyperparams = self.SM_LG_HYPERPARAMS["large"]
-            if self.get_statistics(column, 'null_value_rate') <= hyperparams["avg_med_empty_ub"]:
-                if abs(self.df[column].skew()) < self.SKEW_UB:
-                    return ImputationStrategy.AVERAGE
-                else:
-                    return ImputationStrategy.MEDIAN
+            avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
         else:
-            # this is a larger dataset, can be more lax
-            hyperparams = self.SM_LG_HYPERPARAMS["small"]
-            if self.get_statistics(column, 'null_value_rate') <= hyperparams["avg_med_empty_ub"]:
-                if abs(self.df[column].skew()) < self.SKEW_UB:
-                    return ImputationStrategy.AVERAGE
-                else:
-                    return ImputationStrategy.MEDIAN
+            avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['large']
+        
+        if self.get_statistics(column, 'null_value_rate') <= avg_or_med_empty_ub:
+            if abs(self.df[column].skew()) < self.SKEW_UB:
+                return ImputationStrategy.AVERAGE
+            else:
+                return ImputationStrategy.MEDIAN
         return ImputationStrategy.NOOP
+
 
 class CategoricalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(CATEGORICAL_TYPES)
@@ -125,6 +118,7 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
             return ImputationStrategy.SEQ
         return ImputationStrategy.NOOP
 
+
 class DateTimeImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset((DATETIME,))
     MAX_NULL_SEQ_LENGTH = 4
@@ -139,6 +133,7 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         else:
             return ImputationStrategy.NOOP
 
+
 class StringImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(STRING_TYPES)
     RAND_EMPTY_UB = 0.3
@@ -150,6 +145,7 @@ class StringImputeSubRule(TypeImputeSubRule):
         if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
+
 
 class ImputeValues(BaseRule):
     RULESET = (
@@ -195,19 +191,20 @@ class ImputeValues(BaseRule):
         return suggestions
 
     def evaluate(self):
-        if not self.df.empty:
-            null_mask = self.get_null_mask()
-            ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
-            if ratio_rows_kept == 1:
-                self.strategy_cache[ImputationStrategy.NOOP].extend(self.df_columns)
-            elif ratio_rows_kept >= self.ROW_KEPT_LB:
-                indices = self.df[null_mask].index
-                self.strategy_cache[ImputationStrategy.ROW_RM].extend(indices)
-            else:
-                for column in self.df_columns:
-                    dtype = self.column_types[column]
-                    rule = self.rule_map[dtype]
-                    self.strategy_cache[rule.evaluate(column)].append(column)
+        if self.df.empty:
+            return []
+        null_mask = self.get_null_mask()
+        ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
+        if ratio_rows_kept == 1:
+            self.strategy_cache[ImputationStrategy.NOOP].extend(self.df_columns)
+        elif ratio_rows_kept >= self.ROW_KEPT_LB:
+            indices = self.df[null_mask].index
+            self.strategy_cache[ImputationStrategy.ROW_RM].extend(indices)
+        else:
+            for column in self.df_columns:
+                dtype = self.column_types[column]
+                rule = self.rule_map[dtype]
+                self.strategy_cache[rule.evaluate(column)].append(column)
         return self.build_suggestions()
 
     def get_null_mask(self):
@@ -268,7 +265,7 @@ class ImputeActionConstructor():
             action_arguments = strategy_cache_entry
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
-            action_options = {"strategy": strategy}
+            action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
         elif strategy == ImputationStrategy.MEDIAN:
             message = 'The following columns have null-valued entries and '\
@@ -278,7 +275,7 @@ class ImputeActionConstructor():
             action_arguments = strategy_cache_entry
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
-            action_options = {"strategy": strategy}
+            action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
         elif strategy == ImputationStrategy.RANDOM:
             message = 'The following columns have null-valued entries and are categorical: '\
@@ -287,10 +284,10 @@ class ImputeActionConstructor():
             action_arguments = strategy_cache_entry
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
-            action_options = {"strategy": strategy}
+            action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
         elif strategy == ImputationStrategy.ROW_RM:
-            title = "Remove rows with missing entries"
+            title = 'Remove rows with missing entries'
             message = 'The rows at the following indices have null values: '\
                       f'{strategy_cache_entry}. ' \
                       'Suggested: remove these rows to remove null values from the dataset.'
@@ -298,7 +295,7 @@ class ImputeActionConstructor():
             action_type = ActionType.FILTER
             axis = Axis.ROW
             action_variables = self.__construct_action_variables(self.df_columns)
-            action_code = " and ".join(map(lambda name: f"{name} != null", self.df_columns))
+            action_code = ' and '.join(map(lambda name: f'{name} != null', self.df_columns))
         elif strategy == ImputationStrategy.SEQ:
             message = 'The following columns have null-valued entries which '\
                       'may either be sparsely distributed, or these columns have '\
@@ -308,7 +305,7 @@ class ImputeActionConstructor():
             action_arguments = strategy_cache_entry
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
-            action_options = {"strategy": strategy}
+            action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry)
 
         return self.action_builder(
