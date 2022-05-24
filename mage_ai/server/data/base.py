@@ -1,3 +1,4 @@
+import json
 import os
 import os.path
 
@@ -28,6 +29,14 @@ class Model():
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
 
+    def read_json_file(self, file_name):
+        with open(os.path.join(self.dir, file_name)) as file:
+            return json.load(file)
+
+    def write_json_file(self, file_name, obj):
+        with open(os.path.join(self.dir, file_name), 'w') as file:
+            json.dump(obj, file)
+
     def to_dict(self, detailed):
         pass
     
@@ -45,5 +54,4 @@ class Model():
             dirs = [name for name in os.listdir(cls.path_name())]
             return [cls(id=id) for id in dirs]
         except:
-            print('error')
             return []

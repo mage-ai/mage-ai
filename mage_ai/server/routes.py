@@ -1,11 +1,15 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
-from flask import request
+from flask import render_template, request
 from numpyencoder import NumpyEncoder
 from server.data.models import FeatureSet, Pipeline
 from server import app
 
 import json
 import threading
+
+@app.route("/")
+def index():
+    return render_template('index.html')
 
 @app.route("/process", methods=["POST"])
 def process():
@@ -14,13 +18,11 @@ def process():
         request_data = request.form
 
     id = request_data['id']
-
     if not id:
         return
 
     feature_set = FeatureSet(id=id)
     df = feature_set.data
-
     metadata = feature_set.metadata
 
     if request_data.get('clean', True):
@@ -42,18 +44,9 @@ def process():
     )
     return response
 
-@app.route("/clean")
-def clean_route():
-    global index_df
-    
-    index_df = clean_df(index_df)
-
-    return {}
-
 @app.route("/feature_sets")
 def feature_sets():
-    feature_sets = FeatureSet.objects()
-    feature_sets = list(map(lambda fs: fs.to_dict(False), feature_sets))
+    feature_sets = list(map(lambda fs: fs.to_dict(False), FeatureSet.objects()))
     response = app.response_class(
         response=json.dumps(feature_sets, cls=NumpyEncoder),
         status=200,
@@ -78,8 +71,7 @@ def feature_set(id):
 
 @app.route("/pipelines")
 def pipelines():
-    pipelines = Pipeline.objects()
-    pipelines = list(map(lambda p: p.to_dict(False), pipelines))
+    pipelines = list(map(lambda p: p.to_dict(False), Pipeline.objects()))
     response = app.response_class(
         response=json.dumps(pipelines, cls=NumpyEncoder),
         status=200,

@@ -10,7 +10,7 @@ import pandas as pd
 
 SAMPLE_SIZE = 20
 
-# right now, we are writing the feature sets to local files
+# right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
     def __init__(self, id=None, df=None):
         super().__init__(id)
@@ -42,13 +42,30 @@ class FeatureSet(Model):
     
     @property
     def metadata(self):
-        with open(os.path.join(self.dir, 'metadata.json')) as file:
-            return json.load(file)
+        return self.read_json_file('metadata.json')
     
     @metadata.setter
     def metadata(self, metadata):
-        with open(os.path.join(self.dir, 'metadata.json'), 'w') as file:
-            json.dump(metadata, file)
+        return self.write_json_file('metadata.json', metadata)
+
+    @property
+    def statistics(self):
+        return self.read_json_file('statistics.json')
+
+    @property
+    def insights(self):
+        return self.read_json_file('insights.json')
+
+    @property
+    def suggestions(self):
+        return self.read_json_file('suggestions.json')
+    
+    @property
+    def pipeline(self):
+        pipeline_id = self.metadata.get('pipeline_id')
+        if pipeline_id is None:
+            return None
+        return Pipeline(id=pipeline_id)
 
     @property
     def sample_data(self):
@@ -56,29 +73,6 @@ class FeatureSet(Model):
         if self._data.size < sample_size:
             sample_size = len(self._data) 
         return self._data.sample(n=sample_size)
-
-    @property
-    def statistics(self):
-        with open(os.path.join(self.dir, 'statistics.json')) as file:
-            return json.load(file)
-
-    @property
-    def insights(self):
-        with open(os.path.join(self.dir, 'insights.json')) as file:
-            return json.load(file)
-
-    @property
-    def suggestions(self):
-        with open(os.path.join(self.dir, 'suggestions.json')) as file:
-            return json.load(file)
-    
-    @property
-    def pipeline(self):
-        metadata = self.metadata
-        if 'pipeline_id' not in metadata:
-            return None    
-        pipeline = Pipeline(id=metadata['pipeline_id'])
-        return pipeline.pipeline
 
     def write_files(self, obj):
         if 'df_cleaned' in obj:
@@ -93,13 +87,13 @@ class FeatureSet(Model):
             with open(os.path.join(self.dir, 'insights.json'), 'w') as file:
                 json.dump(obj['analysis'], file, cls=NumpyEncoder)
 
-    def column(self, column):
-        column_dict = dict()
-        with open(os.path.join(self.dir, f'columns/{column}/statistics.json')) as column_stats:
-            column_dict['statistics'] = json.load(column_stats)
-        with open(os.path.join(self.dir, f'columns/{column}/insights.json')) as column_insights:
-            column_dict['insights'] = json.load(column_insights)
-        return column_dict
+    # def column(self, column):
+    #     column_dict = dict()
+    #     with open(os.path.join(self.dir, f'columns/{column}/statistics.json')) as column_stats:
+    #         column_dict['statistics'] = json.load(column_stats)
+    #     with open(os.path.join(self.dir, f'columns/{column}/insights.json')) as column_insights:
+    #         column_dict['insights'] = json.load(column_insights)
+    #     return column_dict
 
     def to_dict(self, detailed=True):
         obj = dict(
@@ -108,7 +102,7 @@ class FeatureSet(Model):
         )
         if detailed:
             obj = merge_dict(obj, dict(
-                pipeline_actions=self.pipeline.actions,
+                pipeline=self.pipeline.to_dict(),
                 sample_data=self.sample_data.to_dict(),
                 statistics=self.statistics,
                 insights=self.insights,
@@ -126,17 +120,15 @@ class Pipeline(Model):
     
     @property
     def pipeline(self):
-        actions = []
-        with open(os.path.join(self.dir, 'pipeline.json')) as file:
-            actions = json.load(file)
+        actions = self.read_json_file('pipeline.json')
         return BasePipeline(actions=actions)
 
     @pipeline.setter
     def pipeline(self, pipeline):
-        with open(os.path.join(self.dir, 'pipeline.json'), 'w') as file:
-            json.dump(pipeline.actions, file)
+        return self.read_json_file('pipeline.json', pipeline.actions)
 
-    def to_dict(self, detailed=False):
+    def to_dict(self, detailed=True):
         return dict(
+            id=self.id,
             actions=self.pipeline.actions,
         )
