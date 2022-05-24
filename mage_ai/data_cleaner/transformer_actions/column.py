@@ -87,16 +87,16 @@ def impute(df, action, **kwargs):
     elif strategy == ImputationStrategy.SEQ:
         df[columns] = df[columns].fillna(method='ffill')
     elif strategy == ImputationStrategy.RANDOM:
+        rng = np.random.default_rng()
         for column in columns:
             valid_idx = df[df[column].notna()].index
             if len(valid_idx) == 0:
                 raise Exception(
-                    f'Random impute has no valid values to sample from in column \'{column}\''
+                    f'Random impute has no values to sample from in column \'{column}\''
                 )
             invalid_idx = df[df[column].isna()].index
-            for idx in invalid_idx:
-                rand_location = randint(0, len(valid_idx)-1)
-                df.at[idx, column] = df.at[valid_idx[rand_location], column]
+            index_sample = rng.integers(0, len(valid_idx), (len(invalid_idx)))
+            df[column].loc[invalid_idx] = df[column].loc[valid_idx].to_numpy()[index_sample]
     elif value is not None:
         df[columns] = df[columns].fillna(value)
     else:
