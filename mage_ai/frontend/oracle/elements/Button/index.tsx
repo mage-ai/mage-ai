@@ -50,10 +50,9 @@ const ButtonStyle = styled.button<ButtonProps>`
     color: ${light.monotone.white};
     border-color: ${light.interactive.linkPrimary};
     &:hover {
-      border-color: ${light.interactive.focusBorder};
+      border-color: ${light.monotone.black};
     }
     &:active {
-      border-color: ${light.monotone.black};
       background: ${light.interactive.focusBackground};
     }
   `}
