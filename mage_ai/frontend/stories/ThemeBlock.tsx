@@ -23,7 +23,7 @@ const Container = styled.div<ContainerProps>`
   `}
 
   ${props => props.theme && `
-    background-color: ${props.theme.background.muted};
+    background-color: ${props.theme.background.row};
   `}
 `;
 
