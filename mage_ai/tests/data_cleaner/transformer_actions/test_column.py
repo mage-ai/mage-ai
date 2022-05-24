@@ -2,6 +2,7 @@ from data_cleaner.transformer_actions.column import (
     add_column,
     count,
     count_distinct,
+    clean_column_name,
     diff,
     # expand_column,
     first,
@@ -1017,6 +1018,55 @@ class ColumnTests(TestCase):
             'order_count',
         ])
         assert_frame_equal(df_new, df_expected)
+
+    def test_clean_column_name(self):
+        df = pd.DataFrame([
+            ['', '', '', '', '', '', '', '', '']
+        ], columns=[
+            'good_name',
+            'Bad Case',
+            '%@#342%34@@#342',
+            'yield',
+            '12342',
+            '1234.  23',
+            'true',
+            'true_crime',
+            '@#f$%&*o$*(%^&r*$%&'
+            ]
+        )
+        expected_df = pd.DataFrame([
+            ['', '', '', '', '', '', '', '', '']
+        ], columns=[
+            'good_name',
+            'bad_case',
+            'number_34234342',
+            'yield__',
+            'number_12342',
+            '1234___23',
+            'true__',
+            'true_crime',
+            'for__'
+            ]
+        )
+        action = dict(
+            action_type='clean_column_name',
+            action_arguments=[
+                'Bad Case',
+                '%@#342%34@@#342',
+                'yield',
+                '12342',
+                '1234.  23',
+                'true',
+                '@#f$%&*o$*(%^&r*$%&'
+            ],
+            action_code='',
+            action_options={},
+            action_variables={},
+            axis='column',
+            outputs=[],
+        )
+        new_df = clean_column_name(df, action)
+        assert_frame_equal(new_df, expected_df)
 
     def test_diff(self):
         df = pd.DataFrame([

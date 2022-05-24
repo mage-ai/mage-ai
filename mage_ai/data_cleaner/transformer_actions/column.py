@@ -1,3 +1,4 @@
+from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
@@ -5,8 +6,10 @@ from data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from data_cleaner.transformer_actions.udf.base import execute_udf
+from keyword import iskeyword
 import pandas as pd
 import numpy as np
+import re
 
 
 def add_column(df, action, **kwargs):
@@ -35,6 +38,25 @@ def count(df, action, **kwargs):
 
 def count_distinct(df, action, **kwargs):
     return __groupby_agg(df, action, 'nunique')
+
+def clean_column_name(df, action, **kwargs):
+    columns = action['action_arguments']
+    mapping = {}
+    for column in columns:
+        orig_name = column
+        if iskeyword(column):
+            column = f'{column}__'
+        column = column.lower()
+        column = re.sub(r'[\s\t\-\.]', '_', column)
+        column = re.sub(r'[^a-z0-9\_]', '', column)
+        column = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', column)
+        if column == 'true' or column == 'false':
+            column = f'{column}__'
+        if iskeyword(column):
+            # check second time if a keyword appears after removing nonalphanum
+            column = f'{column}__'
+        mapping[orig_name] = column
+    return df.rename(columns=mapping)
 
 def diff(df, action, **kwargs):
     output_col = action['outputs'][0]['uuid']
