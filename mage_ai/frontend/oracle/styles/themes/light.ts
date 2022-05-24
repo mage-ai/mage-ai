@@ -10,6 +10,7 @@ import {
   RED,
   SILVER,
   WHITE,
+  NAVY,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -48,6 +49,7 @@ export default {
     dangerBorder: RED,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
+    focusBackground: NAVY,
     focusBorder: NAVY_LINES,
     hoverBorder: DARK_GRAY_LINES,
     linkPrimary: BLUE,

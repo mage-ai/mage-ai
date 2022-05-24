@@ -4,6 +4,7 @@ export const SILVER = '#F9FAFC';
 export const GRAY = '#C9CEDA';
 export const BLACK = '#060606';
 export const BLUE = '#195AFF';
+export const NAVY = '#003BD0';
 export const PURPLE = '#7F4FEB';
 export const RED = '#FF0505';
 export const GRAY_LINES = '#D8DCE3';
