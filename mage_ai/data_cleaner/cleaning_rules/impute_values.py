@@ -17,6 +17,7 @@ import pandas as pd
 
 class TypeImputeSubRule():
     DATA_SM_UB = 100
+    MAX_NULL_SEQ_LENGTH = 4
 
     def __init__(self,
         df,
@@ -87,6 +88,8 @@ class TypeImputeSubRule():
             elif statistic == 'mode_ratio':
                 value_counts = self.df[column].value_counts()
                 value = value_counts.max() / value_counts.sum()
+            elif statistic == 'max_null_seq':
+                value = self.get_longest_null_seq(column)
             self.statistics[f'{column}/{statistic}'] = value
         return value
 
@@ -116,7 +119,8 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         """
         if self.get_statistics(column, 'null_value_rate') == 0:
             return ImputationStrategy.NOOP
-        elif self.is_timeseries:
+        elif (self.is_timeseries and 
+              self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
         else:
             if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
@@ -151,11 +155,12 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         """
         if self.get_statistics(column, 'null_value_rate') == 0:
             return ImputationStrategy.NOOP
-        elif self.is_timeseries:
+        elif (self.is_timeseries and 
+              self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
-        elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+        elif self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB:
             return ImputationStrategy.RANDOM
-        elif(self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB):
+        elif self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
         return ImputationStrategy.NOOP
 
@@ -173,8 +178,9 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else suggest no imputation (no good fit)
         """
-        longest_sequence = self.get_longest_null_seq(column)
-        if longest_sequence != 0:
+        if self.get_statistics(column, 'null_value_rate') == 0:
+            return ImputationStrategy.NOOP
+        elif self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH:
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
@@ -227,7 +233,7 @@ class ImputeValues(BaseRule):
         self.cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
         self.exact_dtypes = self.get_exact_dtypes()
         self.subrule_kwargs = {
-            "is_timeseries": self.is_timeseries()
+            'is_timeseries': self.is_timeseries()
         }
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: [],

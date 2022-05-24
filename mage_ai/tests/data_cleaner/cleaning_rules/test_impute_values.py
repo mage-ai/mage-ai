@@ -1,10 +1,7 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
-from faker import Faker
 from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
-
-fake = Faker()
 
 
 class ImputeValuesTest(TestCase):
