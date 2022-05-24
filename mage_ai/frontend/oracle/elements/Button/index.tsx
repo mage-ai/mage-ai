@@ -26,15 +26,18 @@ const ButtonStyle = styled.button<ButtonProps>`
   background-color: ${light.interactive.defaultBackground};
   border: none;
   border-color: ${light.interactive.defaultBorder};
-  border-radius: ${BORDER_RADIUS}px;
-  border-style: solid;
-  border-width: 1px;
   color: ${light.content.active};
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
   position: relative;
-  padding: 10px 16px;
   z-index: 0;
+
+  ${props => !props.iconOnly && `
+    border-radius: ${BORDER_RADIUS}px;
+    border-style: solid;
+    border-width: 1px;
+    padding: 10px 16px;
+  `}
 
   ${props => !props.disabled && `
     &:hover {
@@ -78,7 +81,6 @@ const Button = ({
   beforeIcon,
   children,
   disabled,
-  iconOnly,
   onClick,
   ...props
 }: ButtonProps) => {

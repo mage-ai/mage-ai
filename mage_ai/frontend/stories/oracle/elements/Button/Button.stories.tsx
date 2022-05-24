@@ -52,7 +52,7 @@ All.args = {
     <Button afterIcon={<Add />}>
       After Icon
     </Button>,
-    <Button iconOnly={true}>
+    <Button iconOnly>
       <Add />
     </Button>
   ],
@@ -79,15 +79,15 @@ Primary.args = {
 export const BeforeIcon = Template.bind({});
 BeforeIcon.args = {
   ...Regular.args,
-  children: 'Button',
   beforeIcon: <Add />,
+  children: 'Button',
 };
 
 export const AfterIcon = Template.bind({});
 AfterIcon.args = {
   ...Regular.args,
-  children: 'Button',
   afterIcon: <Add />,
+  children: 'Button',
 };
 
 export const IconOnly = Template.bind({});
