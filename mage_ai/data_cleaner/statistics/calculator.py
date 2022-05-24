@@ -5,6 +5,7 @@ from data_cleaner.column_type_detector import (
     NUMBER,
     NUMBER_TYPES,
     NUMBER_WITH_DECIMALS,
+    get_mismatched_row_count,
 )
 import math
 import numpy as np
@@ -133,6 +134,7 @@ class StatisticsCalculator():
             f'{col}/count': series_non_null.size,
             f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
             f'{col}/null_value_rate': 0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
+            f'{col}/null_value_count': series_cleaned.isnull().sum(),
         }
 
         if len(series_non_null) == 0:
@@ -162,5 +164,8 @@ class StatisticsCalculator():
                 mode = mode.isoformat()
 
             data[f'{col}/mode'] = mode
+
+        # Detect mismatched formats for some column types
+        data[f'{col}/mismatched_count'] = get_mismatched_row_count(series, column_type)
 
         return data

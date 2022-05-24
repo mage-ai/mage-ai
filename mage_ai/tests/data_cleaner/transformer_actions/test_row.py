@@ -11,13 +11,14 @@ import numpy as np
 import pandas as pd
 
 
-class RowTests(TestCase): 
+class RowTests(TestCase):
     def test_drop_duplicates(self):
         df = pd.DataFrame([
             [0, False, 'a'],
             [1, True, 'b'],
             [1, True, 'c'],
             [0, True, 'd'],
+            [1, True, 'b'],
         ], columns=[
             'integer',
             'boolean',
@@ -25,11 +26,12 @@ class RowTests(TestCase):
         ])
 
         test_cases = [
-            (dict(action_arguments=['integer']), df.iloc[[2, 3]]),
+            (dict(action_arguments=['integer']), df.iloc[[3, 4]]),
             (dict(action_arguments=['integer'], action_options=dict(keep='first')), df.iloc[[0, 1]]),
-            (dict(action_arguments=['boolean']), df.iloc[[0, 3]]),
+            (dict(action_arguments=['boolean']), df.iloc[[0, 4]]),
             (dict(action_arguments=['boolean'], action_options=dict(keep='first')), df.iloc[[0, 1]]),
-            (dict(action_arguments=['integer', 'boolean']), df.iloc[[0, 2, 3]]),
+            (dict(action_arguments=['integer', 'boolean']), df.iloc[[0, 3, 4]]),
+            (dict(action_arguments=[]), df.iloc[[0, 2, 3, 4]]),
         ]
 
         for action, val in test_cases:

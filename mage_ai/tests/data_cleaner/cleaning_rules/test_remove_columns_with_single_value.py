@@ -29,7 +29,7 @@ class RemoveColumnWithSingleValueTests(TestCase):
         self.assertEqual(result, [
             dict(
                 title='Remove columns with single value',
-                message=f'The following columns have single value in all rows: [\'is_active\'].'\
+                message='The following columns have single value in all rows: [\'is_active\'].'
                         ' Suggest to remove them.',
                 action_payload=dict(
                     action_type='remove',

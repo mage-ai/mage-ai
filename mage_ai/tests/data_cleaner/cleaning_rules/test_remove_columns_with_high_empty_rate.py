@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-class RemoveColumnWithHighMissingRateTests(TestCase):
+class RemoveColumnWithHighEmptyRateTests(TestCase):
     def test_evaluate(self):
         df = pd.DataFrame([
             [1, '2022-01-01'],
@@ -31,7 +31,7 @@ class RemoveColumnWithHighMissingRateTests(TestCase):
         self.assertEqual(result, [
             dict(
                 title='Remove columns with high empty rate',
-                message='The following columns have high empty rate: [\'deleted_at\'].'\
+                message='The following columns have high empty rate: [\'deleted_at\'].'
                 ' Removing them may increase your data quality.',
                 action_payload=dict(
                     action_type='remove',
