@@ -1,6 +1,5 @@
 from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
-from data_cleaner.cleaning_rules.reformat_values import ReformatDateSubRule
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
@@ -106,7 +105,6 @@ def reformat(df, action, **kwargs):
     columns = action['action_arguments']
     options = action['action_options']
     reformat_action = options['reformat']
-    action_variables = action["action_variables"]
     clean_cols = df[columns].replace('^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
@@ -123,11 +121,10 @@ def reformat(df, action, **kwargs):
         df[columns] = df[columns].astype(float)
     elif reformat_action == 'date_format_conversion':
         for column in columns:
-            dtype = action_variables[column]["feature"]["column_type"]
-            if dtype not in ReformatDateSubRule.DATE_TYPES:
-                continue
             clean_col = clean_cols[column]
-            if type(clean_col.iloc[0]) is str:
+            dropped = clean_col.dropna(axis=0)
+            exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
+            if exact_dtype is str:
                 clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
                 clean_col = clean_col.str.replace(
                     r'\s*([\/\\\-\.]+)\s*',

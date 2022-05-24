@@ -1696,7 +1696,7 @@ class ColumnTests(TestCase):
     def test_reformat_time(self):
         from data_cleaner.transformer_actions.column import reformat
         df = pd.DataFrame([
-            [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', 234],
+            [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
             [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
             [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
             [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
@@ -1710,12 +1710,48 @@ class ColumnTests(TestCase):
             'date5',
         ])
         expected_df = pd.DataFrame([
-            [dt(2022, 8, 4), pd.to_datetime('08/04/22'), 'Action Movie #1', pd.NaT, pd.to_datetime(234)],
-            [dt(2022, 1, 20), pd.NaT, 'sportsball', pd.to_datetime('1-20-2022'), pd.to_datetime(13234)],
-            [None, pd.to_datetime('12/24/22'), 'reality tv show', pd.to_datetime('12-24-2022'), pd.to_datetime(23234)],
-            [dt(2022, 10, 31), pd.to_datetime('10/31/22'), '', pd.to_datetime('10.31.2022'), pd.to_datetime(21432)],
-            [dt(2022, 6, 27), pd.NaT, 'action Movie #2', pd.to_datetime('6/27/2022'), pd.to_datetime(324212)],
-            [dt(2022, 3, 8), pd.to_datetime('03/08/22'), 'game show', pd.to_datetime('3/8/2022'), pd.to_datetime(2034)]
+            [
+                dt(2022, 8, 4),
+                pd.NaT,
+                'Action Movie #1',
+                pd.NaT,
+                pd.to_datetime(234)
+            ],
+            [
+                dt(2022, 1, 20),
+                pd.NaT,
+                'sportsball',
+                pd.to_datetime('1-20-2022'),
+                pd.to_datetime(13234)
+            ],
+            [
+                None,
+                pd.to_datetime('12/24/22'),
+                'reality tv show',
+                pd.to_datetime('12-24-2022'),
+                pd.to_datetime(23234)
+            ],
+            [
+                dt(2022, 10, 31),
+                pd.to_datetime('10/31/22'),
+                '',
+                pd.to_datetime('10.31.2022'),
+                pd.to_datetime(21432)
+            ],
+            [
+                dt(2022, 6, 27),
+                pd.NaT,
+                'action Movie #2',
+                pd.to_datetime('6/27/2022'),
+                pd.to_datetime(324212)
+            ],
+            [
+                dt(2022, 3, 8),
+                pd.to_datetime('03/08/22'),
+                'game show',
+                pd.to_datetime('3/8/2022'),
+                pd.to_datetime(2034)
+            ]
         ], columns=[
             'date1',
             'date2',
@@ -1749,6 +1785,144 @@ class ColumnTests(TestCase):
                     'feature' : {
                         'column_type': 'number',
                         'uuid': 'date5'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        df_new = reformat(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, expected_df)
+
+    def test_reformat_time_bad_inputs(self):
+        from data_cleaner.transformer_actions.column import reformat
+        df = pd.DataFrame([
+            [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', np.nan, True],
+            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', -1323.4, False],
+            [None, '12/24/22', 'reality tv show', '12-24-2022', -232342.322, False],
+            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21.432, None],
+            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212, True],
+            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', -9830, False]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ])
+        expected_df = pd.DataFrame([
+            [
+                dt(2022, 8, 4),
+                pd.to_datetime('08/04/22'),
+                pd.NaT,
+                pd.NaT,
+                np.nan,
+                pd.NaT
+            ],
+            [
+                dt(2022, 1, 20),
+                pd.NaT,
+                pd.NaT,
+                pd.to_datetime('1-20-2022'),
+                pd.to_datetime(-1323.4),
+                pd.NaT
+            ],
+            [
+                None,
+                pd.to_datetime('12/24/22'),
+                pd.NaT,
+                pd.to_datetime('12-24-2022'),
+                pd.to_datetime(-232342.322),
+                pd.NaT
+            ],
+            [
+                dt(2022, 10, 31),
+                pd.to_datetime('10/31/22'),
+                pd.NaT,
+                pd.to_datetime('10.31.2022'),
+                pd.to_datetime(21.432),
+                pd.NaT
+            ],
+            [
+                dt(2022, 6, 27),
+                pd.NaT,
+                pd.NaT,
+                pd.to_datetime('6/27/2022'),
+                pd.to_datetime(324212),
+                pd.NaT
+            ],
+            [
+                dt(2022, 3, 8),
+                pd.to_datetime('03/08/22'),
+                pd.NaT,
+                pd.to_datetime('3/8/2022'),
+                pd.to_datetime(-9830),
+                pd.NaT
+            ]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ])
+        action = dict(
+            action_type='reformat',
+            action_arguments=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ],
+            axis='column',
+            action_options = {
+                'reformat': 'date_format_conversion',
+            },
+            action_variables = {
+                'date1': {
+                    'feature' : {
+                        'column_type': 'datetime',
+                        'uuid': 'date1'
+                    },
+                    'type': 'feature'
+                },
+                'date2': {
+                    'feature' : {
+                        'column_type': 'datetime',
+                        'uuid': 'date2'
+                    },
+                    'type': 'feature'
+                },
+                'notdate': {
+                    'feature' : {
+                        'column_type': 'text',
+                        'uuid': 'notdate'
+                    },
+                    'type': 'feature'
+                },
+                'mostlydate': {
+                    'feature' : {
+                        'column_type': 'category_high_cardinality',
+                        'uuid': 'mostlydate'
+                    },
+                    'type': 'feature'
+                },
+                'date5': {
+                    'feature' : {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'date5'
+                    },
+                    'type': 'feature'
+                },
+                'boolean': {
+                    'feature' : {
+                        'column_type': 'true_or_false',
+                        'uuid': 'boolean'
                     },
                     'type': 'feature'
                 }
