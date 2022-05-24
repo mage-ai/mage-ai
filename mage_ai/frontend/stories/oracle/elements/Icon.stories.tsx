@@ -52,10 +52,11 @@ const Icons = () => (
       <ThemeBlock
         // @ts-ignore
         key={Icon.displayName}
+        reducedPadding
         // @ts-ignore
         title={Icon.displayName}
       >
-        <Icon size={UNIT * 3} />
+        <Icon />
       </ThemeBlock>
     ))}
   </>
