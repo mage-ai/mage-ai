@@ -21,18 +21,17 @@ export type OnClickRowProps = {
 };
 
 type RowGroupDataType = {
-  renderTitle?: (i18nArg: any) => string;
+  title: string;
   rowData: {
     columnValues: (string | number | any)[];
     uuid: string | number;
   }[];
 };
 
-type StatsTableProps = {
+type SimpleDataTableProps = {
   columnFlexNumbers: number[];
   columnHeaders: string[];
   height?: number;
-  inverted?: boolean;
   isTextSelectionRequired?: boolean;
   onClickRow?: (opts: OnClickRowProps) => void;
   onHoverRow?: (opts: OnClickRowProps) => void;
@@ -45,7 +44,7 @@ type StatsTableProps = {
   flex?: boolean;
 };
 
-function StatsTable({
+function SimpleDataTable({
   columnFlexNumbers,
   columnHeaders,
   height,
@@ -57,7 +56,7 @@ function StatsTable({
   selectedRowIndexes,
   small,
   flex,
-}: StatsTableProps) {
+}: SimpleDataTableProps) {
   const numberOfRowGroups = useMemo(() => rowGroupData.length, [rowGroupData]);
 
   return (
@@ -205,4 +204,4 @@ function StatsTable({
   );
 }
 
-export default StatsTable;
+export default SimpleDataTable;

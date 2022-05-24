@@ -32,7 +32,7 @@ export const ColumnHeaderRowStyle = styled.div<any>`
   z-index: 2;
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).page};
+    background-color: ${(props.theme.background || light.background).dark};
   `}
 `;
 
