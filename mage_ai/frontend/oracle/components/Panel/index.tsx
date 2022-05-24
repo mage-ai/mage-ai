@@ -1,13 +1,61 @@
+import styled, { css } from 'styled-components';
+
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import {
-  ContentStyle,
-  FooterStyle,
-  HeaderStyle,
-  PanelStyle,
-} from '@oracle/components/Panel/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+
+import light from '@oracle/styles/themes/light';
+import { BORDER_RADIUS_LARGE, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
+
+const HEADERS_HEIGHT_OFFSET = 14;
+const HEADER_PADDING_Y_UNITS = 2;
+const FOOTER_PADDING_UNITS = 2;
+const PADDING_UNITS = 3;
+
+const HEADER_STYLES = css`
+  padding: ${PADDING_UNITS * UNIT}px;
+  padding-bottom: ${HEADER_PADDING_Y_UNITS * UNIT}px;
+  padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
+`;
+
+const PanelStyle = styled.div`
+  border-radius: ${BORDER_RADIUS_LARGE}px;
+  overflow: hidden;
+  width: 100%;
+
+  ${props => `
+    background-color: ${(props.theme.background || light.background).page};
+  `}
+
+`;
+
+const HeaderStyle = styled.div<any>`
+  ${props => `
+    background-color: ${(props.theme.background || light.background).header};
+  `}
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+
+  ${HEADER_STYLES}
+`;
+
+const ContentStyle = styled.div<any>`
+  overflow-y: auto;
+  padding: ${PADDING_UNITS * UNIT}px;
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
+`;
+
+export const FooterStyle = styled.div`
+  border-style: ${BORDER_STYLE};
+  border-top-width: ${BORDER_WIDTH}px;
+  padding: ${FOOTER_PADDING_UNITS * UNIT}px;
+`;
 
 export type PanelProps = {
   children?: any;
@@ -19,11 +67,12 @@ export type PanelProps = {
   headerTitle?: string;
   footer?: JSX.Element;
   fullHeight?: boolean;
+  inverted?: boolean;
+  keyboardShortcut?: JSX.Element;
 };
 
 const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
 const PANEL_FOOTER_HEIGHT = 6.5 * UNIT;
-const HEADERS_HEIGHT_OFFSET = 6 * UNIT;
 
 function Panel({
   children,
@@ -36,10 +85,7 @@ function Panel({
   headerIcon,
   headerTitle,
 }: PanelProps) {
-
-  const height = 100
-
-  let contentSectionHeight = height - HEADERS_HEIGHT_OFFSET;
+  let contentSectionHeight = HEADERS_HEIGHT_OFFSET;
 
   if (headerTitle || header) {
     contentSectionHeight -= (headerHeight || PANEL_HEADER_HEIGHT);

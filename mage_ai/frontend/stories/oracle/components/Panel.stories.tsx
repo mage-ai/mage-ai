@@ -8,7 +8,7 @@ import { Check } from '@oracle/icons';
 
 export default {
   component: Panel,
-  title: 'Oracle/Components_V3/Panel',
+  title: 'Oracle/Components/Panel',
 } as Meta;
 
 const TemplateWithTheme = ({ children, ...props }: PanelProps) => (
