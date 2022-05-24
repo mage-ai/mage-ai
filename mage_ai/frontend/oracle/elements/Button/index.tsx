@@ -15,11 +15,15 @@ export type ButtonProps = {
   afterIcon?: any;
   basic?: boolean;
   beforeIcon?: any;
+  borderRadiusLeft?: boolean;
+  borderRadiusRight?: boolean;
   children?: any;
   disabled?: boolean;
   iconOnly?: boolean;
   large?: boolean;
   loading?: boolean;
+  noBorder?: boolean;
+  noBorderRight?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
@@ -46,9 +50,24 @@ const ButtonStyle = styled.button<ButtonProps>`
   `}
 
   ${props => !props.basic && `
-    border-radius: ${BORDER_RADIUS}px;
     border-style: solid;
     border-width: 1px;
+  `}
+
+  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
+    border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => !props.borderRadiusLeft && props.borderRadiusRight && `
+    border-radius: 0px ${BORDER_RADIUS}px ${BORDER_RADIUS}px 0px;
+  `}
+
+  ${props => props.borderRadiusLeft && !props.borderRadiusRight && `
+    border-radius: ${BORDER_RADIUS}px 0px 0px ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.noBorderRight && `
+    border-right: none;
   `}
 
   ${props => !props.iconOnly && props.large && `
