@@ -27,3 +27,11 @@ Regular.args = {
   headerIcon: <Check />,
   headerTitle: 'Define features',
 };
+
+export const Subtitle = Template.bind({});
+Subtitle.args = {
+  children: <Text> 1.00 </Text>,
+  headerTitle: 'Quality Metrics',
+  items: <Check />,
+  subtitle: <Text disabled large> Good </Text>,
+};

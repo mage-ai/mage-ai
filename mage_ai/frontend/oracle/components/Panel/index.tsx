@@ -34,7 +34,7 @@ const PanelStyle = styled.div`
 const HeaderStyle = styled.div<any>`
   ${props => `
     background-color: ${(props.theme.background || light.background).header};
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.height && `
@@ -69,8 +69,8 @@ export type PanelProps = {
   headerTitle?: string;
   footer?: JSX.Element;
   fullHeight?: boolean;
-  inverted?: boolean;
-  keyboardShortcut?: JSX.Element;
+  items?: JSX.Element;
+  subtitle?: JSX.Element;
 };
 
 const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
@@ -86,6 +86,8 @@ function Panel({
   headerHeight,
   headerIcon,
   headerTitle,
+  items,
+  subtitle,
 }: PanelProps) {
   let contentSectionHeight = HEADERS_HEIGHT_OFFSET;
 
@@ -111,7 +113,20 @@ function Panel({
                   </Text>
                 </Spacing>
               </FlexContainer>
+              { items &&
+                <>
+                  {items}
+                </> 
+              }
             </FlexContainer>
+          }
+          { subtitle &&
+          <>
+            <Spacing mb={2}/>
+            <FlexContainer alignItems="right">
+              {subtitle}
+            </FlexContainer>
+          </>
           }
         </HeaderStyle>
       }
