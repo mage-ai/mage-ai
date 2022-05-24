@@ -90,16 +90,16 @@ class FeatureSet(Model):
         return self._data.sample(n=sample_size)
 
     def write_files(self, obj):
-        if 'df_cleaned' in obj:
-            self.data = obj['df_cleaned']
+        if 'df' in obj:
+            self.data = obj['df']
         if 'metadata' in obj:
             self.metadata = obj['metadata']
-        if 'suggested_actions' in obj:
-            self.suggested_actions = obj['suggested_actions']
+        if 'suggestions' in obj:
+            self.suggestions = obj['suggestions']
         if 'statistics' in obj:
             self.statistics = obj['statistics']
-        if 'analysis' in obj:
-            self.insights = obj['analysis']
+        if 'insights' in obj:
+            self.insights = obj['insights']
 
     # def column(self, column):
     #     column_dict = dict()

@@ -1,7 +1,7 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
+from data_cleaner.pipelines.base import BasePipeline
 from flask import render_template, request
 from numpyencoder import NumpyEncoder
-from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from server.data.models import FeatureSet, Pipeline
 from server import app
 
@@ -12,6 +12,22 @@ import threading
 def index():
     return render_template('index.html')
 
+
+"""
+request: {
+    id: string (feature set id)
+    clean: boolean
+}
+
+response: {
+    id,
+    metadata,
+    sample_data,
+    statistics,
+    insights,
+    suggestions
+}
+"""
 @app.route("/process", methods=["POST"])
 def process():
     request_data = request.json
@@ -45,6 +61,14 @@ def process():
     )
     return response
 
+"""
+response: [
+    {
+        id,
+        metadata,
+    }
+]
+"""
 @app.route("/feature_sets")
 def feature_sets():
     feature_sets = list(map(lambda fs: fs.to_dict(False), FeatureSet.objects()))
@@ -55,7 +79,15 @@ def feature_sets():
     )
     return response
 
-@app.route("/feature_sets/<id>", methods=["GET"])
+"""
+response: [
+    {
+        id,
+        metadata,
+    }
+]
+"""
+@app.route("/feature_sets/<id>")
 def feature_set(id):
     feature_set = FeatureSet(id=id)
     response = app.response_class(
@@ -65,6 +97,24 @@ def feature_set(id):
     )
     return response
 
+"""
+request: {
+    metadata,
+    statistics,
+    insights,
+    suggestions,
+}
+
+response: {
+    id,
+    metadata,
+    pipeline,
+    sample_data,
+    statistics,
+    insights,
+    suggestions,
+}
+"""
 @app.route("/feature_sets/<id>", methods=["PUT"])
 def update_feature_set(id):
     request_data = request.json
@@ -77,11 +127,14 @@ def update_feature_set(id):
     )
     return response
 
-# @app.route("/feature_sets/<id>/columns/<column_name>")
-# def feature_set_column(id, column_name):
-#     feature_set = FeatureSet(id=id)
-#     return feature_set.column(column_name)
-
+"""
+response: [
+    {
+        id,
+        pipeline_actions,
+    }
+]
+"""
 @app.route("/pipelines")
 def pipelines():
     pipelines = list(map(lambda p: p.to_dict(False), Pipeline.objects()))
@@ -92,6 +145,12 @@ def pipelines():
     )
     return response
 
+"""
+response: {
+    id,
+    actions,
+}
+"""
 @app.route("/pipelines/<id>")
 def pipeline(id):
     pipeline = Pipeline(id=id)
@@ -102,11 +161,21 @@ def pipeline(id):
     )
     return response
 
+"""
+request: {
+    actions,
+}
+
+response: {
+    id,
+    actions,
+}
+"""
 @app.route("/pipelines/<id>", methods=["PUT"])
 def update_pipeline(id):
     request_data = request.json
     pipeline = Pipeline(id=id)
-    pipeline.pipeline = BasePipeline(request_data)
+    pipeline.pipeline = BasePipeline(request_data.get('actions', []))
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -114,8 +183,13 @@ def update_pipeline(id):
     )
     return response
 
+# @app.route("/feature_sets/<id>/columns/<column_name>")
+# def feature_set_column(id, column_name):
+#     feature_set = FeatureSet(id=id)
+#     return feature_set.column(column_name)
+
 def clean_df(df, name, pipeline_uuid=None):
-    feature_set = FeatureSet(df=df)
+    feature_set = FeatureSet(df=df, name=name)
 
     metadata = feature_set.metadata
 
