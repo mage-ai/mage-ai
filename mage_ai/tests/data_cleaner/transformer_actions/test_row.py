@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 
-class RowTests(TestCase): 
+class RowTests(TestCase):
     def test_drop_duplicates(self):
         df = pd.DataFrame([
             [0, False, 'a'],
