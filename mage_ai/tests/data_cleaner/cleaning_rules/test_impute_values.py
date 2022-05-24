@@ -347,20 +347,20 @@ class ImputeValuesTest(TestCase):
     def test_seq(self):
         df = pd.DataFrame(
             [
-                ['CT', '06902'],
-                ['NY', '10001'],
-                [None, ''],
-                ['CA', ''],
-                ['', None],
-                [None, ''],
-                ['CA', None],
-                ['MA', '12214'],
-                ['PA', ''],
-                ['TX', '75001']
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                [None, '', None],
+                ['CA', '', '12-28-2022'],
+                ['', None, ''],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '', '1-2-2023'],
+                ['TX', '75001', '1-2-2023']
             ],
-            columns=['state', 'location']
+            columns=['state', 'location', 'timestamp']
         )
-        column_types = {'state': 'category', 'location': 'zip_code'}
+        column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
         statistics = {
             'state/count': 7,
             'state/count_distinct': 6,
@@ -373,12 +373,13 @@ class ImputeValuesTest(TestCase):
             dict(
                 title='Fill in missing values',
                 message='The following columns have null-valued entries which '
-                        'may either be sparsely distributed, or these columns have '
-                        'sequential values: [\'state\']. '
-                        'Suggested: fill null values with previously occurring value in sequence.',
+                        'may be part of timeseries data: '
+                        '[\'state\', \'location\', \'timestamp\']. '
+                        'Suggested: fill null values with previously occurring '
+                        'value in timeseries.',
                 action_payload=dict(
                     action_type='impute',
-                    action_arguments=['state'],
+                    action_arguments=['state', 'location', 'timestamp'],
                     action_options=dict(
                         strategy='sequential'
                     ),
@@ -387,6 +388,20 @@ class ImputeValuesTest(TestCase):
                             feature=dict(
                                 column_type='category',
                                 uuid='state'
+                            ),
+                            type='feature'
+                        ),
+                        location=dict(
+                            feature=dict(
+                                column_type='zip_code',
+                                uuid='location'
+                            ),
+                            type='feature'
+                        ),
+                        timestamp=dict(
+                            feature=dict(
+                                column_type='datetime',
+                                uuid='timestamp'
                             ),
                             type='feature'
                         )
@@ -404,48 +419,56 @@ class ImputeValuesTest(TestCase):
         ).evaluate()
         self.assertEqual(expected_suggestions, suggestions)
 
-    def test_seq_datetime(self):
+    def test_seq_edge(self):
         df = pd.DataFrame(
             [
-                ['2022-01-05'],
-                [None],
-                ['2022-01-16'],
-                [None],
-                ['2022-02-27'],
-                ['2022-03-15'],
-                ['2022-03-17'],
-                ['2022-03-19'],
-                [''],
-                ['2022-05-04'],
-                [None],
-                ['2022-05-11']
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                [None, '', '12-26-2022'],
+                ['CA', '', '12-28-2022'],
+                ['', None, '12-28-2022'],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '', '1-2-2023'],
+                ['TX', '75001', '1-2-2023']
             ],
-            columns=['date']
+            columns=['state', 'location', 'timestamp']
         )
-        column_types = {'date': 'datetime'}
+        column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
         statistics = {
-            'date/count': 8,
-            'date/count_distinct': 8,
-            'date/null_value_rate': 2/3,
+            'state/count': 7,
+            'state/count_distinct': 6,
+            'state/null_value_rate': 0.4,
+            'location/count': 4,
+            'location/count_distinct': 4,
+            'location/null_value_rate': 0.6,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
                 message='The following columns have null-valued entries which '
-                        'may either be sparsely distributed, or these columns have '
-                        'sequential values: [\'date\']. '
-                        'Suggested: fill null values with previously occurring value in sequence.',
+                        'may be part of timeseries data: [\'state\', \'location\']. '
+                        'Suggested: fill null values with previously occurring '
+                        'value in timeseries.',
                 action_payload=dict(
                     action_type='impute',
-                    action_arguments=['date'],
+                    action_arguments=['state', 'location'],
                     action_options=dict(
                         strategy='sequential'
                     ),
                     action_variables=dict(
-                        date=dict(
+                        state=dict(
                             feature=dict(
-                                column_type='datetime',
-                                uuid='date'
+                                column_type='category',
+                                uuid='state'
+                            ),
+                            type='feature'
+                        ),
+                        location=dict(
+                            feature=dict(
+                                column_type='zip_code',
+                                uuid='location'
                             ),
                             type='feature'
                         )

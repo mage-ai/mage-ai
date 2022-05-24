@@ -12,12 +12,13 @@ from data_cleaner.transformer_actions.constants import (
     ImputationStrategy
 )
 import numpy as np
+import pandas as pd
 
 
 class TypeImputeSubRule():
     DATA_SM_UB = 100
 
-    def __init__(self, df, column_types, statistics):
+    def __init__(self, df, column_types, exact_dtypes, statistics, **kwargs):
         """
         Assumptions of TypeImputeSubRule
         1. df will not contain any empty strings - all empty strings are converted to null types.
@@ -27,7 +28,10 @@ class TypeImputeSubRule():
         This is not always the case, but this assumption simplifies code
         """
         self.df = df
+        self.df_columns = df.columns.tolist()
         self.column_types = column_types
+        self.exact_dtypes = exact_dtypes
+        self.is_timeseries = kwargs.get("is_timeseries")
         self.statistics = statistics
 
     def accepted_dtypes(self):
@@ -92,30 +96,35 @@ class NumericalImputeSubRule(TypeImputeSubRule):
     def evaluate(self, column):
         """
         Rule:
-        1. If the number of nonnull entries is sell than DATA_SM_UB, use the
+        1. If there are no null entries, no suggestion
+        2. If the dataset was identified as timeseries, suggest sequential imputation
+        3. If the number of nonnull entries is sell than DATA_SM_UB, use the
            small dataset bound; else use the large dataset bound
-        2. If the null value rate of the column is greater than AVG_OR_MED_EMPTY_UB
+        3a. If the null value rate of the column is greater than AVG_OR_MED_EMPTY_UB
            (which can vary for small vs large dataset), suggest no imputation (not enough values)
-        3. If null value rate is less thatn AVG_OR_MED_EMPTY_UB and skew is less than SKEW_UB
+        3b. If null value rate is less that AVG_OR_MED_EMPTY_UB and skew is less than SKEW_UB
            suggest imputing with mean value; else impute with median value
         """
-        if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
-            avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
+        if self.get_statistics(column, 'null_value_rate') == 0:
+            return ImputationStrategy.NOOP
+        elif self.is_timeseries:
+            return ImputationStrategy.SEQ
         else:
-            avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['large']
-        
-        if self.get_statistics(column, 'null_value_rate') <= avg_or_med_empty_ub:
-            if abs(self.df[column].skew()) < self.SKEW_UB:
-                return ImputationStrategy.AVERAGE
+            if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
+                avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
             else:
-                return ImputationStrategy.MEDIAN
+                avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['large']
+            if self.get_statistics(column, 'null_value_rate') <= avg_or_med_empty_ub:
+                if abs(self.df[column].skew()) < self.SKEW_UB:
+                    return ImputationStrategy.AVERAGE
+                else:
+                    return ImputationStrategy.MEDIAN
         return ImputationStrategy.NOOP
 
 
 class CategoricalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset(CATEGORICAL_TYPES)
     RAND_EMPTY_UB = 0.3
-    MAX_NULL_SEQ_LENGTH = 4
     
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
@@ -123,21 +132,22 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
     def evaluate(self, column):
         """
         Rule:
-        1. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
-        2. If the longest sequence of consecutive null values is less than MAX_NULL_SEQ_LENGTH
-           impute using sequential method
-        3. Else suggest no imputation (no good fit)
+        1. If there are no null entries, no suggestion
+        2. If the dataset was identified as timeseries, suggest sequential imputation
+        3. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
+        4. Else suggest no imputation (no good fit)
         """
-        longest_sequence = self.get_longest_null_seq(column)
-        if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
-            return ImputationStrategy.RANDOM
-        elif longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
+        if self.get_statistics(column, 'null_value_rate') == 0:
+            return ImputationStrategy.NOOP
+        elif self.is_timeseries:
             return ImputationStrategy.SEQ
+        elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+            return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
+
 
 class DateTimeImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = frozenset((DATETIME,))
-    MAX_NULL_SEQ_LENGTH = 4
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
@@ -145,12 +155,12 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
     def evaluate(self, column):
         """
         Rule:
-        1. If the longest sequence of consecutive null values is less than MAX_NULL_SEQ_LENGTH
-           impute using sequential method
-        2. Else suggest no imputation (no good fit)
+        1. If there are no null entries, no suggestion
+        2. If the dataset was identified as timeseries, suggest sequential imputation
+        3. Else suggest no imputation (no good fit)
         """
         longest_sequence = self.get_longest_null_seq(column)
-        if longest_sequence <= self.MAX_NULL_SEQ_LENGTH:
+        if longest_sequence != 0:
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
@@ -165,10 +175,14 @@ class StringImputeSubRule(TypeImputeSubRule):
     def evaluate(self, column):
         """
         Rule:
-        1. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
-        3. Else suggest no imputation (no good fit)
+        1. If there are no null entries, no suggestion
+        2. If the dataset was identified as timeseries, suggest sequential imputation
+        3. If less than RAND_EMPTY_UB ratio of entries are null, use random imputation
+        4. Else suggest no imputation (no good fit)
         """
-        if(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+        if self.is_timeseries:
+            return ImputationStrategy.SEQ
+        elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
             return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
 
@@ -188,7 +202,12 @@ class ImputeValues(BaseRule):
             self.column_types, 
             self._build_transformer_action_suggestion
         )
+        # TODO Clean dataframe once to remove empty strings and replace with np.nan
         self.cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
+        self.exact_dtypes = self.get_exact_dtypes()
+        self.subrule_kwargs = {
+            "is_timeseries": self.is_timeseries()
+        }
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: [],
             ImputationStrategy.MEDIAN: [],
@@ -232,6 +251,16 @@ class ImputeValues(BaseRule):
                 self.strategy_cache[rule.evaluate(column)].append(column)
         return self.build_suggestions()
 
+    def get_exact_dtypes(self):
+        def _get_exact_dtype(column):
+            dropped = self.cleaned_df[column].dropna(axis=0)
+            try:
+                return type(dropped.iloc[0])
+            except IndexError:
+                return None
+        exact_dtypes = {column : _get_exact_dtype(column) for column in self.df_columns}
+        return exact_dtypes
+    
     def get_null_mask(self):
         null_mask = self.cleaned_df[self.df_columns[0]].isna()
         for column_name in self.df_columns[1:]:
@@ -241,8 +270,16 @@ class ImputeValues(BaseRule):
 
     def hydrate_rules(self):
         self.rules = list(
-            map(lambda x: x(self.cleaned_df, self.column_types, self.statistics),
-            self.RULESET)
+            map(
+                lambda x: x(
+                    self.cleaned_df,
+                    self.column_types,
+                    self.exact_dtypes,
+                    self.statistics,
+                    **self.subrule_kwargs
+                ),
+                self.RULESET
+            )
         )
 
         self.rule_map = {}
@@ -255,6 +292,16 @@ class ImputeValues(BaseRule):
                 except StopIteration:
                     raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
             self.rule_map[dtype] = curr_rule
+
+    def is_timeseries(self):
+        for column in self.df_columns:
+            dtype = self.column_types[column]
+            exact_dtype = self.exact_dtypes[column]
+            if dtype == DATETIME:
+                return True
+            elif exact_dtype is np.datetime64 or exact_dtype is pd.Timestamp:
+                return True
+        return False
 
 
 class ImputeActionConstructor():
@@ -323,10 +370,9 @@ class ImputeActionConstructor():
             action_code = ' and '.join(map(lambda name: f'{name} != null', self.df_columns))
         elif strategy == ImputationStrategy.SEQ:
             message = 'The following columns have null-valued entries which '\
-                      'may either be sparsely distributed, or these columns have '\
-                      'sequential values: '\
+                      'may be part of timeseries data: '\
                       f'{strategy_cache_entry}. ' \
-                      'Suggested: fill null values with previously occurring value in sequence.'
+                      'Suggested: fill null values with previously occurring value in timeseries.'
             action_arguments = strategy_cache_entry
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
