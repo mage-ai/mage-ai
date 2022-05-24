@@ -96,38 +96,44 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         Rule: 
         1. If column is not a category/string type which may have alphabet, no suggestion
         2. If non-null entries are not string, no suggestion
-        3. If majority of entries are not majority alphabetical, no suggestion
+        3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority alphabetical
+           == ALPH_RATIO_LB of all chars are alphabet
         4. If all entries are same case, no suggestion
         5. Suggest the more prevalent occurrence (e.g., if most alphabetical entries are lowercase 
         text but some mixedcase and uppercase text, suggest conversion to lowercase)
         5a. If most alphabetical entries are mixedcase, suggest conversion to lowercase
         """
         dtype = self.column_types[column]
-        if dtype in self.ALPHABETICAL_TYPES:
-            clean_col = self.clean_column(column)
-            exact_dtype = self.get_column_dtype(column)
-            if exact_dtype is str: # will return str only if clean_col is nonempty
-                non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
-                unfiltered_length =  self.statistics[f'{column}/count']
-                clean_col = clean_col[non_alpha_ratio <= self.NON_ALPH_UB]
-                new_length = clean_col.count()
+        if not dtype in self.ALPHABETICAL_TYPES:
+            return
 
-                if new_length / unfiltered_length > self.ALPH_RATIO_LB:
-                    uppercase, clean_col = self.filter_column_regex(clean_col, self.UPPERCASE_PATTERN)
-                    lowercase, clean_col = self.filter_column_regex(clean_col, self.LOWERCASE_PATTERN)
-                    mixedcase = clean_col.count()
+        clean_col = self.clean_column(column)
+        exact_dtype = self.get_column_dtype(column)
+        if exact_dtype is not str:
+            return
 
-                    number_alphabetical = uppercase + lowercase + mixedcase
-                    uppercase_ratio = uppercase/number_alphabetical
-                    lowercase_ratio = lowercase/number_alphabetical
-                    mixedcase_ratio = mixedcase/number_alphabetical
+        non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
+        unfiltered_length =  self.statistics[f'{column}/count']
+        clean_col = clean_col[non_alpha_ratio <= self.NON_ALPH_UB]
+        new_length = clean_col.count()
+        if new_length / unfiltered_length <= self.ALPH_RATIO_LB:
+            return
+        
+        uppercase, clean_col = self.filter_column_regex(clean_col, self.UPPERCASE_PATTERN)
+        lowercase, clean_col = self.filter_column_regex(clean_col, self.LOWERCASE_PATTERN)
+        mixedcase = clean_col.count()
 
-                    if (uppercase_ratio != 1 and lowercase_ratio != 1):
-                        max_case_style = max(uppercase_ratio, lowercase_ratio, mixedcase_ratio)
-                        if max_case_style == uppercase_ratio:
-                            self.uppercase.append(column)
-                        else:
-                            self.lowercase.append(column)
+        uppercase_ratio = uppercase/new_length
+        lowercase_ratio = lowercase/new_length
+        mixedcase_ratio = mixedcase/new_length
+
+        if (uppercase_ratio != 1 and lowercase_ratio != 1):
+            max_case_style = max(uppercase_ratio, lowercase_ratio, mixedcase_ratio)
+            if max_case_style == uppercase_ratio:
+                self.uppercase.append(column)
+            else:
+                # if mixed case, default to lowercase
+                self.lowercase.append(column)
 
     def get_suggestions(self):
         suggestions = []
@@ -156,7 +162,6 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
     CURRENCY_TYPES = frozenset((
         CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS
     ))
-    CURRENCY_TYPE_LB = 0.8
 
     def __init__(self, df, column_types, statistics, action_builder):
         super().__init__(df, column_types, statistics, action_builder)
@@ -165,23 +170,25 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
     def evaluate(self, column):
         """
         Rule:
-        1. If the entry is not a text, number, or category, no suggestion
-        2. If the entry is not a string type, it can't contain currency symbol, no suggestion
-        3. If the majority of entries are of currency type (currency symbol followed by number), 
-           suggest removal; else don't
+        1. If the column is not a text, number, or category type, no suggestion
+        2. If the column is not a string type, it can't contain currency symbol, no suggestion
+        3. If all entries are of currency type (currency symbol followed by number), 
+           suggest conversion to number_with_decimal; else don't
         """
         dtype = self.column_types[column]
-        if dtype in self.CURRENCY_TYPES :
-            clean_col = self.clean_column(column)
-            exact_dtype = self.get_column_dtype(column)
-            if exact_dtype is str:
-                currency_pattern_mask = clean_col.str.match(self.CURRENCY_PATTERN)
-                try:
-                    count = currency_pattern_mask.value_counts()[True]
-                except KeyError:
-                    count = 0
-                if count / self.statistics[f'{column}/count'] >= self.CURRENCY_TYPE_LB:
-                    self.matches.append(column)
+        if dtype not in self.CURRENCY_TYPES:
+            return
+        clean_col = self.clean_column(column)
+        exact_dtype = self.get_column_dtype(column)
+        if exact_dtype is not str:
+            return
+        currency_pattern_mask = clean_col.str.match(self.CURRENCY_PATTERN)
+        try:
+            count = currency_pattern_mask.value_counts()[True]
+        except KeyError:
+            count = 0
+        if count / self.statistics[f'{column}/count'] == 1:
+            self.matches.append(column)
                 
 
     def get_suggestions(self):
@@ -259,7 +266,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         3. Else, if column does not contain string types, no suggestion
         4. If column contains string types,
         Count the number of entries that are of a known date format. If this ratio is
-           above the lower bound, suggest reformatting to locale format
+           above DATE_MATCHES_LB, suggest reformatting to locale format
         """
         dtype = self.column_types[column]
         if dtype in self.DATE_TYPES:
