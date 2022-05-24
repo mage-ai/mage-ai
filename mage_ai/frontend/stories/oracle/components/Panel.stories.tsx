@@ -24,7 +24,6 @@ const Template: Story<PanelProps> = (args) => <TemplateWithTheme {...args} />;
 export const Regular = Template.bind({});
 Regular.args = {
   children: <Text> 1.00 </Text>,
-  footer: <Text> Available features limited </Text>,
   headerIcon: <Check />,
   headerTitle: 'Define features',
 };

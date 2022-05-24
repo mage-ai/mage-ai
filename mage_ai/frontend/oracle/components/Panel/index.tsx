@@ -6,7 +6,7 @@ import Text from '@oracle/elements/Text';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS_LARGE, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 
 const HEADERS_HEIGHT_OFFSET = 14;
 const HEADER_PADDING_Y_UNITS = 2;
@@ -20,12 +20,13 @@ const HEADER_STYLES = css`
 `;
 
 const PanelStyle = styled.div`
-  border-radius: ${BORDER_RADIUS_LARGE}px;
+  border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
+    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
 `;
@@ -33,6 +34,7 @@ const PanelStyle = styled.div`
 const HeaderStyle = styled.div<any>`
   ${props => `
     background-color: ${(props.theme.background || light.background).header};
+    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.height && `
