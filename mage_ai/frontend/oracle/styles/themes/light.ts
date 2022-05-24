@@ -47,6 +47,13 @@ export default {
     purple: PURPLE,
     white: WHITE,
   },
+  neutral: {
+    n100: '#E7E8EA',
+    n200: '#D8DADE',
+    n300: '#CBCCD0',
+    n400: '#BCBEC4',
+    n500: '#AEB0B6',
+  },
   progress: {
     negative: RED,
     positive: PURPLE,
