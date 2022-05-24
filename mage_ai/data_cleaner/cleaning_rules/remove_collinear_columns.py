@@ -5,10 +5,10 @@ import numpy as np
 
 
 class RemoveCollinearColumns(BaseRule):
-    VIF_UB = 5
+    EPSILON = 1e-12
     MIN_ENTRIES = 3
     ROW_SAMPLE_SIZE = 300
-    EPSILON = 1e-12
+    VIF_UB = 5
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
@@ -16,11 +16,37 @@ class RemoveCollinearColumns(BaseRule):
         self.rng = np.random.default_rng()
         self.numeric_indices = np.arange(len(self.numeric_df))
 
+    def evaluate(self):
+        suggestions = []
+        if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
+            return suggestions
+        collinear_columns = []
+        for column in self.numeric_columns[:-1]:
+            variance_inflation_factor = self.get_variance_inflation_factor(column)
+            if variance_inflation_factor > self.VIF_UB:
+                collinear_columns.append(column)
+                self.numeric_df.drop(column, axis=1, inplace=True) 
+        if len(collinear_columns) != len(self.numeric_columns)-1:
+            # check the final column if and only if there are other columns to compare it to
+            column = self.numeric_columns[-1]
+            variance_inflation_factor = self.get_variance_inflation_factor(column)
+            if variance_inflation_factor > self.VIF_UB:
+                collinear_columns.append(column)
+        if len(collinear_columns) != 0:
+            suggestions.append(self._build_transformer_action_suggestion(
+                'Remove collinear columns',
+                'The following columns are strongly correlated '
+                f'with other columns in the dataset: {collinear_columns}. '
+                'Removing these columns may increase data quality '
+                'by removing redundant and closely related data.',
+                ActionType.REMOVE,
+                action_arguments=collinear_columns,
+                axis=Axis.COLUMN,
+            ))
+        return suggestions
+
     def filter_numeric_types(self):
-        cleaned_df = self.df.copy().applymap(
-            lambda x: x if (not isinstance(x, str) or
-            (len(x) > 0 and not x.isspace())) else np.nan
-        )
+        cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
         numeric_columns = []
         for column in self.df_columns:
             if self.column_types[column] in NUMBER_TYPES:
@@ -54,31 +80,3 @@ class RemoveCollinearColumns(BaseRule):
 
         r_sq = sum_sq_model / sum_sq_to
         return 1 / (1 - r_sq + self.EPSILON)
-
-    def evaluate(self):
-        suggestions = []
-        if not self.numeric_df.empty and len(self.numeric_df) > self.MIN_ENTRIES:
-            collinear_columns = []
-            for column in self.numeric_columns[:-1]:
-                variance_inflation_factor = self.get_variance_inflation_factor(column)
-                if variance_inflation_factor > self.VIF_UB:
-                    collinear_columns.append(column)
-                    self.numeric_df.drop(column, axis=1, inplace=True) 
-            if len(collinear_columns) != len(self.numeric_columns)-1:
-                # check the final column if and only if there are other columns to compare it to
-                column = self.numeric_columns[-1]
-                variance_inflation_factor = self.get_variance_inflation_factor(column)
-                if variance_inflation_factor > self.VIF_UB:
-                    collinear_columns.append(column)
-            if len(collinear_columns) != 0:
-                suggestions.append(self._build_transformer_action_suggestion(
-                    'Remove collinear columns',
-                    'The following columns are strongly correlated with other columns in the'
-                    f'dataset: {collinear_columns}. '
-                    'Removing these columns may increase data quality by removing redundant '
-                    'and closely related data.',
-                    ActionType.REMOVE,
-                    action_arguments=collinear_columns,
-                    axis=Axis.COLUMN,
-                ))
-        return suggestions
