@@ -45,16 +45,16 @@ def clean_column_name(df, action, **kwargs):
     for column in columns:
         orig_name = column
         if iskeyword(column):
-            column = f'{column}__'
+            column = f'{column}_'
         column = column.lower()
         column = re.sub(r'[\s\t\-\.]', '_', column)
         column = re.sub(r'[^a-z0-9\_]', '', column)
         column = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', column)
         if column == 'true' or column == 'false':
-            column = f'{column}__'
+            column = f'{column}_'
         if iskeyword(column):
             # check second time if a keyword appears after removing nonalphanum
-            column = f'{column}__'
+            column = f'{column}_'
         mapping[orig_name] = column
     return df.rename(columns=mapping)
 
