@@ -1,4 +1,3 @@
-from distutils.command.clean import clean
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -230,58 +229,12 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 
 
 class ReformatDateSubRule(ReformatValuesSubRule):
-    NONSTANDARD_DATE_FORMATS = [
-            '%a %b %d %y',
-            '%A %b %d %y',
-            '%a %B %d %y',
-            '%A %B %d %y',
-            '%a %b %d %Y',
-            '%A %b %d %Y',
-            '%a %B %d %Y',
-            '%A %B %d %Y',
-            '%m %d %y',
-            '%m %d %Y',
-            '%d %m %Y',
-            '%d %m %Y'
-        ]
     DATE_MATCHES_LB = 0.3
     DATE_TYPES = frozenset((DATETIME, CATEGORY, NUMBER, CATEGORY_HIGH_CARDINALITY, TEXT))
     
     def __init__(self, df, column_types, statistics, action_builder):
         super().__init__(df, column_types, statistics, action_builder)
         self.matches = []
-
-    def date_iter(self, column):
-        clean_col = self.clean_column(column)
-        yield from clean_col.str.split(r'[\s\,\-\_\\\/]+').str.join(" ")
-
-    def is_date_standard(self, stripped_str):
-        try:
-            datetime.strptime(stripped_str, '%x')
-            return True
-        except ValueError:
-            return False
-
-    def is_date_nonstandard(self, stripped_str):
-        for format_string in self.NONSTANDARD_DATE_FORMATS:
-            try:
-                datetime.strptime(stripped_str, format_string)
-                return True
-            except ValueError:
-                continue
-        return False
-
-    def manual_date_matching(self, column):
-        num_nonstandard, num_standard = 0, 0
-        for date in self.date_iter(column):
-            if self.is_date_standard(date):
-                num_standard += 1
-            elif self.is_date_nonstandard(date):
-                num_nonstandard += 1
-        date_ratio = num_standard + num_nonstandard / self.get_statistics(column, 'count')
-        if date_ratio >= self.DATE_MATCHES_LB and num_nonstandard != 0:
-            self.matches.append(column)
-            
     
     def evaluate(self, column):
         """
@@ -290,10 +243,8 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         2. If column is already contains datetime or np.datetime64, no suggestion
         3. If column does not contain string types, no suggestion
         4. Try use Pandas datetime parse to convert from string to datetime. 
-           If success, suggest conversion to datetime
-        5. Manually compare entries of column to known datetime formats. If DATE_MATCHES_LB
-           of all matches are successfully shown to be a datetime match, suggest conversion
-           to datetime
+           If more than DATE_MATCHES_LB entries are succesfully converted, suggest 
+           conversion to datetime type
         """
         dtype = self.column_types[column]
         if dtype not in self.DATE_TYPES:
@@ -305,15 +256,10 @@ class ReformatDateSubRule(ReformatValuesSubRule):
             clean_col = self.clean_column(column)
         else:
             return
-        try:
-            pd.to_datetime(clean_col, infer_datetime_format=True)
+        
+        clean_col = pd.to_datetime(clean_col, infer_datetime_format=True, errors='coerce')
+        if clean_col.count() / len(clean_col) >= self.DATE_MATCHES_LB:
             self.matches.append(column)
-        except ParserError:
-            # unknown format, use manual pattern matching
-            self.manual_date_matching(column)
-        except ValueError:
-            # this is not a datetime string
-            return
 
     def get_suggestions(self):
         suggestions = []
@@ -335,10 +281,6 @@ class ReformatDateSubRule(ReformatValuesSubRule):
 
     def strip_column_for_date_parsing(self, column):
         clean_col = self.clean_column(column)
-        clean_col = clean_col.str.replace(
-            r'\D\d\D',
-            lambda d: f'{d.group(0)[0]}0{d.group(0)[1:]}'
-        )
         clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
         clean_col = clean_col.str.replace(
             r'\s*([\/\\\-\.]+)\s*',

@@ -131,7 +131,7 @@ class ReformatValuesCleaningRule(TestCase):
             ['₹', '₹        10000', np.nan, '₹:FDSA', -7.80],
             ['Rs', 'Rs 10000', '', '₹:ASDF', 4.44],
             ['', '元10000', 'stock exchange china', '元:ASDF', 1.02],
-            [None, '', 'stock exchange san jose', None, -2.01],
+            [None, None, 'stock exchange san jose', None, -2.01],
         ], columns=[
             'native_currency',
             'value',
@@ -186,8 +186,8 @@ class ReformatValuesCleaningRule(TestCase):
 
     def test_datetime_conversion(self):
         df = pd.DataFrame([
-            [dt(2022, 8, 4), '08/04/22', 'Thursday, August 4, 2022', 'Thurs, Aug 04 2022', '8-4-2022'],
-            [dt(2022, 1, 20), '', 'Thursday,   JaNUary 20, 2022', 'ThurS, Jan 20 2022', ''],
+            [dt(2022, 8, 4), '08/04/22', 'Thursday, August 4, 2022', 'Thu, Aug 04 22', '8-4-2022'],
+            [dt(2022, 1, 20), '', 'Thursday,   JaNUary 20, 2022', 'THU, Jan 20 22', ''],
             [None, '12/24/22', '', 'Sat, Dec 24 2022', '12-24-2022'],
             [dt(2022, 10, 31), '10/31/22', 'Monday,   ocTober 31, 2022', 'OctobEr is good', None],
             [dt(2022, 6, 27), None, 'MonDay, June 27, 2022', 'Mon, jUn 27 2022', '6-27-2022'],
