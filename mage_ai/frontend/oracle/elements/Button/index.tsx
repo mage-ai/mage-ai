@@ -30,7 +30,7 @@ export type ButtonProps = {
 };
 
 const ButtonStyle = styled.button<ButtonProps>`
-  background-color: ${light.interactive.defaultBackground};
+  background-color: ${light.background.row};
   border: none;
   border-color: ${light.interactive.defaultBorder};
   color: ${light.content.active};

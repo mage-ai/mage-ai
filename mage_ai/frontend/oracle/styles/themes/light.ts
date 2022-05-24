@@ -47,7 +47,6 @@ export default {
   },
   interactive: {
     dangerBorder: RED,
-    defaultBackground: LIGHT,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
     focusBackground: NAVY,
