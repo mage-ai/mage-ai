@@ -114,7 +114,7 @@ const BaseIcon = ({
   opacity,
   size = DEFAULT_SIZE,
   style,
-  viewBox = '0 0 24 24',
+  viewBox = '0 0 12 12',
 }: BaseIconProps & BaseIconInternalProps) => (
   <SVGStyle
     fill={fill}

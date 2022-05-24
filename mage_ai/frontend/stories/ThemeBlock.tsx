@@ -6,29 +6,41 @@ import Divider from '../oracle/elements/Divider';
 import Spacing from '../oracle/elements/Spacing';
 import Text from '../oracle/elements/Text';
 import light from '../oracle/styles/themes/light';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { gridTheme, theme } from '../styles/theme';
 
-const Container = styled.div`
+type ContainerProps = {
+  reducedPadding?: boolean;
+  theme?: any;
+}
+
+const Container = styled.div<ContainerProps>`
   flex: 1;
-  padding: 48px;
+  padding: ${UNIT * 4}px;
+
+  ${props => props.reducedPadding && `
+    padding: ${UNIT * 2.5}px;
+  `}
 
   ${props => props.theme && `
-    background-color: ${props.theme.background.muted};
+    background-color: ${props.theme.background.row};
   `}
 `;
 
 type ThemeBlockProps = {
   children: any;
+  reducedPadding?: boolean;
   title?: string;
 };
 
 const ThemeBlock = ({
   children,
+  reducedPadding,
   title,
 }: ThemeBlockProps) => {
   const lightEl = (
     <ThemeProvider theme={{ ...theme, ...light }}>
-      <Container>
+      <Container reducedPadding={reducedPadding}>
         <Text bold xlarge>{title || 'Light Theme'}</Text>
         <br />
         <Divider short />

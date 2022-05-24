@@ -1,24 +1,24 @@
 import {
   BLACK,
   BLUE,
+  BLUE_HIGHLIGHT,
   DARK_GRAY_LINES,
   GRAY_LINES,
   GRAY,
   LIGHT,
-  NAVY_LINES,
   PURPLE,
   RED,
   SILVER,
   WHITE,
-  NAVY,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
   background: {
-    page: WHITE,
-    muted: SILVER,
+    dark: GRAY,
     header: SILVER,
+    muted: SILVER,
+    page: WHITE,
     row: LIGHT,
   },
   content: {
@@ -26,6 +26,17 @@ export default {
     default: WHITE,
     disabled: GRAY,
     muted: GRAY,
+  },
+  interactive: {
+    dangerBorder: RED,
+    defaultBorder: GRAY_LINES,
+    disabledBorder: GRAY,
+    focusBackground: GRAY,
+    focusBorder: BLUE_HIGHLIGHT,
+    hoverBackground: SILVER,
+    hoverBorder: DARK_GRAY_LINES,
+    linkPrimary: BLUE,
+    linkSecondary: PURPLE,
   },
   loader: {
     color: RED,
@@ -37,23 +48,13 @@ export default {
     white: WHITE,
   },
   progress: {
-    positive: PURPLE,
     negative: RED,
+    positive: PURPLE,
   },
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
-    hover: '8px 24px 24px 0 rgba(0, 0, 0, 0.12)',
-    popup: '10px 20px 40px rgba(0, 0, 0, 0.2);',
-  },
-  interactive: {
-    dangerBorder: RED,
-    defaultBorder: GRAY_LINES,
-    disabledBorder: GRAY,
-    focusBackground: NAVY,
-    focusBorder: NAVY_LINES,
-    hoverBorder: DARK_GRAY_LINES,
-    linkPrimary: BLUE,
-    linkSecondary: PURPLE,
+    menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
+    popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
   },
 };
 

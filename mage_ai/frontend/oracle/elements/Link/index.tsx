@@ -1,8 +1,10 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+
 import light from '@oracle/styles/themes/light';
 import { BORDER_STYLE, BORDER_WIDTH, BORDER_RADIUS, OUTLINE_WIDTH } from '@oracle/styles/units/borders';
 import { SHARED_TEXT_STYLES } from '@oracle/elements/Text';
+import { transition } from '@oracle/styles/mixins';
 
 
 export type LinkProps = {
@@ -51,6 +53,7 @@ export type LinkProps = {
 };
 
 export const SHARED_LINK_STYLES = css<any>`
+  ${transition()}
   outline: none;
   text-decoration: none;
 
