@@ -1,7 +1,7 @@
 export const WHITE = '#FFFFFF';
 export const LIGHT = '#FBFCFD';
 export const SILVER = '#F9FAFC';
-export const GRAY = '#C9CEDA';
+export const GRAY = '#B9BFCA';
 export const BLACK = '#060606';
 export const BLUE = '#195AFF';
 export const BLUE_HIGHLIGHT = '#86E2FF';

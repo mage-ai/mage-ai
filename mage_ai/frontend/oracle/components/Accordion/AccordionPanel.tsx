@@ -226,7 +226,7 @@ const AccordionPanel = ({
           timeout={400}
         >
           <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-right-enter-done-visible'}>
-            <ArrowRight default={!visible} />
+            <ArrowRight default />
           </Flex>
         </CSSTransition>
 
