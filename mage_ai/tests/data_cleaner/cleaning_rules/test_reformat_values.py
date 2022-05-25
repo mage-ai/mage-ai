@@ -82,7 +82,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
             dict(
                 title='Reformat values',
@@ -100,7 +101,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             )
         ]
         self.assertEqual(results, expected_results)
@@ -155,7 +157,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
         ]
         self.assertEqual(results, expected_results)
@@ -198,7 +201,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
         ]
         self.assertEqual(results, expected_results)
@@ -252,7 +256,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
             dict(
                 title='Reformat values',
@@ -269,7 +274,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
         ]
         self.assertEqual(results, expected_results)
@@ -327,7 +333,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
             dict(
                 title='Reformat values',
@@ -344,7 +351,8 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_variables = {},
                     action_code = '',
                     outputs = [],
-                )
+                ),
+                status='not_applied',
             ),
         ]
         self.assertEqual(results, expected_results)
