@@ -33,6 +33,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 4,
             'number_of_years/count_distinct': 4,
             'number_of_years/null_value_rate': 6/10,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -92,6 +93,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/null_value_rate': (
                 1 - df['number_of_years'].count() / len(df['number_of_years'])
             ),
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -153,6 +155,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 0.6,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -219,7 +222,8 @@ class ImputeValuesTest(TestCase):
             'industry/count': 5,
             'industry/null_value_rate': 3/8,
             'industry/mode': 34934,
-            'industry/mode_ratio': 3/5
+            'industry/mode_ratio': 3/5,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -286,6 +290,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 6/8,
+            'is_timeseries': False
         }
         expected_suggestions = []
         suggestions = ImputeValues(
@@ -329,6 +334,7 @@ class ImputeValuesTest(TestCase):
             'dest/mode': cleaned_df['dest'].mode(),
             'dest/mode_ratio': cleaned_df['dest'].value_counts().max()  / 
                                cleaned_df['dest'].count(),
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -389,6 +395,7 @@ class ImputeValuesTest(TestCase):
             'location/count': 8,
             'location/count_distinct': 8,
             'location/null_value_rate': 0.2,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -457,6 +464,8 @@ class ImputeValuesTest(TestCase):
             'location/max_null_seq': 4,
             'timestamp/null_value_rate': 1/10,
             'timestamp/max_null_seq': 1,
+            'is_timeseries': True,
+            'timeseries_index': ['timestamp']
         }
         expected_suggestions = [
             dict(
@@ -538,6 +547,8 @@ class ImputeValuesTest(TestCase):
             'location/max_null_seq': 3,
             'timestamp/null_value_rate': 0,
             'timestamp/max_null_seq': 0,
+            'is_timeseries': True,
+            'timeseries_index': ['timestamp']
         }
         expected_suggestions = [
             dict(

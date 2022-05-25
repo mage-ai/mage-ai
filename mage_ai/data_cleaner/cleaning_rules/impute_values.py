@@ -205,10 +205,10 @@ class ImputeValues(BaseRule):
             ImputationStrategy.ROW_RM: {'entries': []},
             ImputationStrategy.SEQ: {'entries': []}
         }
-        timeseries_index = self.get_timeseries_index()
-        if len(timeseries_index) != 0:
+        if self.statistics['is_timeseries']:
             self.is_timeseries = True
-            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index'] = timeseries_index
+            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index']\
+                = self.statistics['timeseries_index']
         else:
             self.is_timeseries = False
         self.hydrate_rules()
@@ -279,20 +279,6 @@ class ImputeValues(BaseRule):
                 except StopIteration:
                     raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
             self.rule_map[dtype] = curr_rule
-
-    def get_timeseries_index(self):
-        indices = []
-        for column in self.df_columns:
-            dtype = self.column_types[column]
-            exact_dtype = self.exact_dtypes[column]
-            null_value_rate = self.statistics[f'{column}/null_value_rate']
-            if null_value_rate <= self.TIMESERIES_NULL_RATIO_MAX:
-                if dtype == DATETIME:
-                    indices.append(column)
-                elif exact_dtype is np.datetime64 or exact_dtype is pd.Timestamp:
-                    indices.append(column)
-        return indices
-
 
 class ImputeActionConstructor():
     def __init__(self, df, column_types, action_builder):
