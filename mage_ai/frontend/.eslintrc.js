@@ -61,6 +61,7 @@ module.exports = {
     'react-hooks/rules-of-hooks': 'warn',
     'react/jsx-closing-tag-location': 'off',
     'react/jsx-curly-newline': 'off',
+    'react/jsx-indent': 'on',
     'react/jsx-one-expression-per-line': 'off',
     'react/jsx-props-no-spreading': 'off',
     'react/jsx-sort-props': ['warn', {

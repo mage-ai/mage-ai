@@ -82,8 +82,9 @@ export const SHARED_STYLES = css<any>`
   ${props => props.useStroke && !props.disabled && props.primary && `
     stroke: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
+
   ${props => !props.useStroke && !props.disabled && props.primary && `
-    fill: ${(props.theme.monotone || light.monotone).linkPrimary};
+    fill: ${(props.theme.interactive || light.interactive).linkPrimary};
   `}
 
 `;
