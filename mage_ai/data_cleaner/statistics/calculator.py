@@ -1,5 +1,6 @@
 from data_cleaner.shared.hash import merge_dict
 from data_cleaner.shared.multi import run_parallel
+from data_cleaner.shared.utils import timer
 from data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER,
@@ -18,21 +19,6 @@ VALUE_COUNT_LIMIT = 255
 
 def increment(metric, tags):
     pass
-
-
-class timer(object):
-    """
-    with timer('metric.metric', tags={ 'key': 'value' }):
-        function()
-    """
-    def __init__(self, metric, tags={}):
-        pass
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, type, value, traceback):
-        pass
 
 
 class StatisticsCalculator():
