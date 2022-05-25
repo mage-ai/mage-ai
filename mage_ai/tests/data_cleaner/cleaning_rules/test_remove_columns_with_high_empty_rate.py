@@ -33,6 +33,7 @@ class RemoveColumnWithHighEmptyRateTests(TestCase):
                 title='Remove columns with high empty rate',
                 message='The following columns have high empty rate: [\'deleted_at\'].'
                 ' Removing them may increase your data quality.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['deleted_at'],

@@ -108,6 +108,7 @@ class RemoveCollinearColumnsTests(TestCase):
                         'with other columns in the dataset: [\'number_of_users\']. '
                         'Removing these columns may increase data quality '
                         'by removing redundant and closely related data.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
@@ -188,6 +189,7 @@ class RemoveCollinearColumnsTests(TestCase):
                         'with other columns in the dataset: [\'number_of_users\']. '
                         'Removing these columns may increase data quality '
                         'by removing redundant and closely related data.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
@@ -264,6 +266,7 @@ class RemoveCollinearColumnsTests(TestCase):
                         'with other columns in the dataset: [\'number_of_users\']. '
                         'Removing these columns may increase data quality '
                         'by removing redundant and closely related data.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
@@ -344,6 +347,7 @@ class RemoveCollinearColumnsTests(TestCase):
                         'with other columns in the dataset: [\'number_of_users\']. '
                         'Removing these columns may increase data quality '
                         'by removing redundant and closely related data.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
@@ -384,6 +388,7 @@ class RemoveCollinearColumnsTests(TestCase):
                         ' [\'number_of_users\', \'views\', \'revenue\']. '
                         'Removing these columns may increase data quality '
                         'by removing redundant and closely related data.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users', 'views', 'revenue'],

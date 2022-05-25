@@ -4,6 +4,9 @@ from data_cleaner.pipelines.base import BasePipeline
 from data_cleaner.shared.hash import merge_dict
 from data_cleaner.statistics.calculator import StatisticsCalculator
 
+def analyze(df):
+    cleaner = DataCleaner()
+    return cleaner.analyze(df)
 
 def clean(df):
     cleaner = DataCleaner()
@@ -21,7 +24,7 @@ class DataCleaner():
         statistics = StatisticsCalculator(column_types).process(df)
         analysis = AnalysisCalculator(df, column_types).process(df)
         return dict(
-            analysis=analysis,
+            insights=analysis,
             column_types=column_types,
             statistics=statistics,
         )
@@ -36,6 +39,7 @@ class DataCleaner():
         )
         df_cleaned = pipeline.transform(df)
         return merge_dict(df_stats, dict(
-            df_cleaned=df_cleaned,
-            suggested_actions=suggested_actions,
+            df=df_cleaned,
+            suggestions=suggested_actions,
+            pipeline=pipeline,
         ))

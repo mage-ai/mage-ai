@@ -1,3 +1,4 @@
+from data_cleaner.cleaning_rules.base import STATUS_COMPLETED
 from data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
     import RemoveColumnsWithHighEmptyRate
 from data_cleaner.cleaning_rules.remove_columns_with_single_value \
@@ -34,4 +35,5 @@ class BasePipeline():
         df_transformed = df
         for action in self.actions:
             df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
+            action['status'] = STATUS_COMPLETED
         return df_transformed

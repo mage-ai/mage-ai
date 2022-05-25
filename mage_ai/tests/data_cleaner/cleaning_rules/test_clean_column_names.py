@@ -34,6 +34,7 @@ class CleanColumnNameTests(TestCase):
                 ' \'12342\', \'1234.    23\', \'true\', \'@#f$%&*o$*(%^&r*$%&\']'
                 '. Making these names lowercase and alphanumeric may improve'
                 'ease of dataset access and reduce security risks.',
+                status='not_applied',
                 action_payload=dict(
                     action_type=ActionType.CLEAN_COLUMN_NAME,
                     action_arguments=[

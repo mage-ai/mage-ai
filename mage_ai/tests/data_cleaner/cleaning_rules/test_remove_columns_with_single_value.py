@@ -31,6 +31,7 @@ class RemoveColumnWithSingleValueTests(TestCase):
                 title='Remove columns with single value',
                 message='The following columns have single value in all rows: [\'is_active\'].'
                         ' Suggest to remove them.',
+                status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['is_active'],

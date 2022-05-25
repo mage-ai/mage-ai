@@ -128,3 +128,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# data files
+mage_ai/server/data/files/**
+
+# test notebook
+test.ipynb
