@@ -1,0 +1,210 @@
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import Pie, { ProvidedProps, PieArcDatum } from '@visx/shape/lib/shapes/Pie';
+import React, { useState } from 'react';
+import { Group } from '@visx/group';
+import { animated, useTransition, interpolate } from 'react-spring';
+import { scaleOrdinal } from '@visx/scale';
+
+import { COLORS_IN_ORDER } from './constants';
+import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
+import { UNIT } from '@oracle/styles/units/spacing';
+
+const defaultMargin = {
+  bottom: 0,
+  left: 0,
+  right: 0,
+  top: 0,
+};
+
+type PieProps = {
+  animate?: boolean;
+  data: any[];
+  height?: number;
+  margin?: typeof defaultMargin;
+  getX: (data: any) => string;
+  getY: (data: any) => number;
+  width?: number;
+};
+
+export type PieChartProps = PieProps & {
+  height?: number | string;
+  width?: number | string;
+};
+
+// react-spring transition definitions
+type AnimatedStyles = { startAngle: number; endAngle: number; opacity: number };
+
+const fromLeaveTransition = ({ endAngle }: PieArcDatum<any>) => ({
+  endAngle: endAngle > Math.PI ? 2 * Math.PI : 0,
+  opacity: 0,
+  startAngle: endAngle > Math.PI ? 2 * Math.PI : 0,
+});
+const enterUpdateTransition = ({ startAngle, endAngle }: PieArcDatum<any>) => ({
+  endAngle,
+  opacity: 1,
+  startAngle,
+});
+
+type AnimatedPieProps<Datum> = ProvidedProps<Datum> & {
+  animate?: boolean;
+  delay?: number;
+  getColor: (d: PieArcDatum<Datum>) => string;
+  getKey: (d: PieArcDatum<Datum>) => string;
+  onClickDatum: (d: PieArcDatum<Datum>) => void;
+};
+
+function AnimatedPie<Datum>({
+  animate,
+  arcs,
+  path,
+  getKey,
+  getColor,
+  onClickDatum,
+}: AnimatedPieProps<Datum>) {
+  const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(arcs, {
+    enter: enterUpdateTransition,
+    from: animate ? fromLeaveTransition : enterUpdateTransition,
+    keys: getKey,
+    leave: animate ? fromLeaveTransition : enterUpdateTransition,
+    update: enterUpdateTransition,
+  });
+
+  return transitions((props, arc, { key }) => {
+    const [centroidX, centroidY] = path.centroid(arc);
+    const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.1;
+
+    return (
+      <g key={key}>
+        <animated.path
+          d={interpolate([props.startAngle, props.endAngle], (startAngle, endAngle) =>
+            path({
+              ...arc,
+              endAngle,
+              startAngle,
+            }),
+          )}
+          fill={getColor(arc)}
+          onClick={() => onClickDatum(arc)}
+          onTouchStart={() => onClickDatum(arc)}
+        />
+
+        {hasSpaceForLabel && (
+          <animated.g style={{ opacity: props.opacity }}>
+            <text
+              dy=".33em"
+              fill="white"
+              fontFamily={FONT_FAMILY_REGULAR}
+              fontSize={SMALL_FONT_SIZE}
+              pointerEvents="none"
+              textAnchor="middle"
+              x={centroidX}
+              y={centroidY}
+            >
+              {getKey(arc)}
+            </text>
+          </animated.g>
+        )}
+      </g>
+    );
+  });
+}
+
+function PieChart({
+  animate = true,
+  data,
+  getX,
+  getY,
+  height,
+  margin = defaultMargin,
+  width,
+}: PieProps) {
+  const [selectedData, setSelectedData] = useState(null);
+
+  if (width < 10) {
+    return null;
+  }
+
+  const getColor = scaleOrdinal({
+    domain: data.map(d => getX(d)),
+    range: COLORS_IN_ORDER,
+  });
+
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  const radius = Math.min(innerWidth, innerHeight) / 2;
+  const centerY = innerHeight / 2;
+  const centerX = innerWidth / 2;
+  const donutThickness = Math.min(innerWidth / 4, UNIT * 12);
+
+  return (
+    <svg
+      height={height}
+      width={width}
+    >
+      <Group
+        left={centerX + margin.left}
+        top={centerY + margin.top}
+      >
+        {/* Donut */}
+        <Pie
+          cornerRadius={UNIT / 2}
+          data={
+            selectedData ?
+              data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
+              : data
+          }
+          innerRadius={radius - donutThickness}
+          outerRadius={radius}
+          padAngle={0.005}
+          pieValue={getY}
+        >
+          {(pie) => (
+            <AnimatedPie
+              {...pie}
+              animate={animate}
+              getColor={({ data }) => getColor(getX(data))}
+              getKey={({ data }) => getX(data)}
+              onClickDatum={({ data }) => animate &&
+                setSelectedData(
+                  selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data
+                )
+              }
+            />
+          )}
+        </Pie>
+      </Group>
+    </svg>
+  );
+}
+
+export default function PieChartContainer({
+  height: heightProp,
+  width: widthProp,
+  ...props
+}: PieChartProps) {
+  const style: {
+    height?: number;
+    width?: number;
+  } = {};
+  if (heightProp) {
+    style.height = heightProp;
+  }
+  if (widthProp) {
+    style.width = widthProp;
+  }
+
+  return (
+    <div style={style}>
+      <ParentSize>
+        {({ width, height }) => (
+          <PieChart
+            {...props}
+            height={height}
+            width={width}
+          />
+        )}
+      </ParentSize>
+    </div>
+  );
+}
