@@ -35,3 +35,9 @@ Subtitle.args = {
   items: <Check />,
   subtitle: <Text disabled large> Good </Text>,
 };
+
+export const Borderless = Template.bind({});
+Borderless.args = {
+  ...Regular.args,
+  borderless: true,
+};

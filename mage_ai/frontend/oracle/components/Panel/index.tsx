@@ -19,16 +19,19 @@ const HEADER_STYLES = css`
   padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
 `;
 
-const PanelStyle = styled.div`
+const PanelStyle = styled.div<any>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
   width: 100%;
-
+  
   ${props => `
-    background-color: ${(props.theme.background || light.background).page};
+    background-color: ${(props.theme.background || light.background).header};
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
-
+  
+  ${props =>  props.borderless &&`
+    border: none;
+  `}
 `;
 
 const HeaderStyle = styled.div<any>`
@@ -60,6 +63,7 @@ export const FooterStyle = styled.div`
 `;
 
 export type PanelProps = {
+  borderless?: any;
   children?: any;
   containerRef?: any;
   contentContainerRef?: any;
@@ -77,6 +81,7 @@ const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
 const PANEL_FOOTER_HEIGHT = 6.5 * UNIT;
 
 function Panel({
+  borderless,
   children,
   containerRef,
   contentContainerRef,
@@ -99,7 +104,7 @@ function Panel({
   }
 
   return (
-    <PanelStyle ref={containerRef}>
+    <PanelStyle ref={containerRef} borderless={borderless}>
       {(header || headerTitle) &&
         <HeaderStyle height={headerHeight}>
           {header && header}
