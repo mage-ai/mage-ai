@@ -19,8 +19,10 @@ class Model():
 
         if id is None:
             dirs = [name for name in os.listdir(self.path)]
-            max = sorted([int(dir) for dir in dirs], reverse=True)[0]
-            self.id = max + 1
+            max_id = -1
+            if len(dirs) > 0:
+                max_id = sorted([int(dir) for dir in dirs], reverse=True)[0]
+            self.id = max_id + 1
         else:
             self.id = id
         
@@ -29,10 +31,13 @@ class Model():
             os.mkdir(self.dir)
 
     def read_json_file(self, file_name):
-        with open(os.path.join(self.dir, file_name)) as file:
+        file_path = os.path.join(self.dir, file_name)
+        if not os.path.exists(file_path):
+            return None
+        with open(os.path.join(self.dir, file_path)) as file:
             return json.load(file)
 
-    def write_json_file(self, file_name, obj):
+    def write_json_file(self, file_name, obj={}):
         with open(os.path.join(self.dir, file_name), 'w') as file:
             json.dump(obj, file, cls=NumpyEncoder)
 
