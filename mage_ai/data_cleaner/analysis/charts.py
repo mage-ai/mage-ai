@@ -199,8 +199,12 @@ def build_time_series_data(df, feature, datetime_column, column_type):
         )
 
         if column_type in [NUMBER, NUMBER_WITH_DECIMALS]:
+            if len(series_non_null) == 0:
+                average = 0
+            else:
+                average = series_non_null.sum() / len(series_non_null)
             y_data.update(dict(
-                average=series_non_null.sum() / len(series_non_null),
+                average=series_non_null.sum() / len(series_non_null) if len(series_non_null) else 0,
                 max=series_non_null.max(),
                 median=series_non_null.quantile(0.5),
                 min=series_non_null.min(),
