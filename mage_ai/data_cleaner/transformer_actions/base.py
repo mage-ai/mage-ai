@@ -25,6 +25,7 @@ FUNCTION_MAPPING = {
         ActionType.MAX: column.max,
         ActionType.MEDIAN: column.median,
         ActionType.MIN: column.min,
+        ActionType.REFORMAT: column.reformat,
         ActionType.REMOVE: column.remove_column,
         ActionType.SELECT: column.select,
         ActionType.SHIFT_DOWN: column.shift_down,

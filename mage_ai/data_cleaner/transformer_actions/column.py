@@ -101,6 +101,45 @@ def median(df, action, **kwargs):
 def min(df, action, **kwargs):
     return __agg(df, action, 'min')
 
+def reformat(df, action, **kwargs):
+    columns = action['action_arguments']
+    options = action['action_options']
+    reformat_action = options['reformat']
+    clean_cols = df[columns].replace('^\s*$', np.nan, regex=True)
+
+    if reformat_action == 'caps_standardization':
+        capitalization = options['capitalization']
+        for column in columns:
+            if capitalization == 'uppercase':
+                df[column] = clean_cols[column].str.upper()
+            else:
+                df[column] = clean_cols[column].str.lower()
+    elif reformat_action == 'currency_to_num':
+        currency_symbols = r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))'
+        clean_cols = clean_cols.replace(currency_symbols, '', regex=True)
+        clean_cols = clean_cols.replace('\s', '', regex=True)
+        clean_cols = clean_cols.replace('^\s*$', np.nan, regex=True)
+        df[columns] = clean_cols.astype(float)
+    elif reformat_action == 'date_format_conversion':
+        for column in columns:
+            clean_col = clean_cols[column]
+            dropped = clean_col.dropna(axis=0)
+            exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
+            if exact_dtype is str:
+                clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
+                clean_col = clean_col.str.replace(
+                    r'\s*([\/\\\-\.]+)\s*',
+                    lambda group: group.group(1)[0]
+                )
+                clean_col = clean_col.str.lower()
+            df[column] = pd.to_datetime(
+                clean_col, 
+                infer_datetime_format=True, 
+                errors='coerce'
+            )
+    
+    return df
+
 def remove_column(df, action, **kwargs):
     cols = action['action_arguments']
     original_columns = df.columns

@@ -12,6 +12,7 @@ from data_cleaner.transformer_actions.column import (
     shift_down,
     shift_up,
 )
+from datetime import datetime as dt
 from pandas.util.testing import assert_frame_equal
 from tests.base_test import TestCase
 import numpy as np
@@ -1526,6 +1527,462 @@ class ColumnTests(TestCase):
             'min_amount',
         ])
         assert_frame_equal(df_new, df_expected)
+
+    def test_reformat_capitalization(self):
+        from data_cleaner.transformer_actions.column import reformat
+        df = pd.DataFrame([
+            [None, 'us', 30000, 'Funny Video Corp','cute animal #1', 100, 30],
+            ['500', 'CA', 10000, 'Machine Learning 4 U', 'intro to regression', 3000, 20],
+            ['', '', np.nan, 'News Inc', 'Daily news #1', None, 75],
+            ['250', 'CA', 7500, 'Machine Learning 4 U', 'MACHINE LEARNING SEMINAR', 8000, 20],
+            ['1000', 'mx', 45003, None, 'cute Animal #4', 90, 40],
+            ['1500', 'MX', 75000, 'Funny Video Corp', '', 70, 25],
+            ['1500', np.nan, 75000, 'News Inc', 'daily news #3', 70, 25],
+            [None, 'mx', 75000, 'Z Combinator', 'Tutorial: how to Start a startup', 70, np.nan],
+            ['1250', 'US', 60000, 'Funny Video Corp', 'cute animal #3', 80, 20],
+            ['', 'CA', 5000, '', '', 10000, 30],
+            ['800', None, 12050, 'Funny Video Corp', 'meme Compilation', 2000, 45],
+            ['600', 'CA', 11000, 'News Inc', 'daily news #2', 3000, 50],
+            ['600', 'ca', '', 'Funny Video Corp', '', 3000, None], 
+            ['700', 'MX', 11750, 'Funny Video Corp', 'cute animal #2', 2750, 55],
+            ['700', '', None, 'Funny Video Corp', '', None, 55], 
+            ['700', 'MX', 11750, 'Funny Video Corp', '', 2750, 55], 
+            ['1200', 'MX', 52000, 'Z Combinator', 'vc funding strats', 75, 60]
+        ], columns=[
+            'userid',
+            'location',
+            'number_of_creators',
+            'company_name',
+            'name',
+            'losses',
+            'number_of_advertisers'
+        ])
+        df_expected = pd.DataFrame([
+            [None, 'US', 30000, 'funny video corp','cute animal #1', 100, 30],
+            ['500', 'CA', 10000, 'machine learning 4 u', 'intro to regression', 3000, 20],
+            ['', None, np.nan, 'news inc', 'daily news #1', None, 75],
+            ['250', 'CA', 7500, 'machine learning 4 u', 'machine learning seminar', 8000, 20],
+            ['1000', 'MX', 45003, None, 'cute animal #4', 90, 40],
+            ['1500', 'MX', 75000, 'funny video corp', None, 70, 25],
+            ['1500', np.nan, 75000, 'news inc', 'daily news #3', 70, 25],
+            [None, 'MX', 75000, 'z combinator', 'tutorial: how to start a startup', 70, np.nan],
+            ['1250', 'US', 60000, 'funny video corp', 'cute animal #3', 80, 20],
+            ['', 'CA', 5000, None, None, 10000, 30],
+            ['800', None, 12050, 'funny video corp', 'meme compilation', 2000, 45],
+            ['600', 'CA', 11000, 'news inc', 'daily news #2', 3000, 50],
+            ['600', 'CA', '', 'funny video corp', None, 3000, None], 
+            ['700', 'MX', 11750, 'funny video corp', 'cute animal #2', 2750, 55],
+            ['700', None, None, 'funny video corp', None, None, 55], 
+            ['700', 'MX', 11750, 'funny video corp', None, 2750, 55], 
+            ['1200', 'MX', 52000, 'z combinator', 'vc funding strats', 75, 60]
+        ], columns=[
+            'userid',
+            'location',
+            'number_of_creators',
+            'company_name',
+            'name',
+            'losses',
+            'number_of_advertisers'
+        ])
+        action1 =dict(
+            action_type='reformat',
+            action_arguments=['location'],
+            axis='column',
+            action_options = {
+                'reformat': 'caps_standardization',
+                'capitalization': 'uppercase'
+            },
+            action_variables = {
+                'location': {
+                    'feature' : {
+                        'column_type': 'category',
+                        'uuid': 'location'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        action2 = dict(
+            action_type='reformat',
+            action_arguments=['company_name', 'name'],
+            axis='column',
+            action_options = {
+                'reformat': 'caps_standardization',
+                'capitalization': 'lowercase'
+            },
+            action_variables = {
+                'company_name': {
+                    'feature' : {
+                        'column_type': 'category_high_cardinality',
+                        'uuid': 'company_name'
+                    },
+                    'type': 'feature'
+                },
+                'name': {
+                    'feature' : {
+                        'column_type': 'text',
+                        'uuid': 'name'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        df_new = reformat(df, action1)
+        df_new = reformat(df_new, action2)
+        assert_frame_equal(df_new, df_expected)
+
+    def test_reformat_currency(self):
+        from data_cleaner.transformer_actions.column import reformat
+        df_currency = pd.DataFrame([
+            ['$', '$    10000', 'stock exchange america', '$:MAGE', 5.34],
+            ['£', '£200', 'huddersfield stock exchange', '£:XYZA', -1.34],
+            ['CAD', 'CAD 100', None, '', -0.89],
+            ['¥', '', 'stock exchange japan', '', 4.23],
+            ['€', '€ 123.34', 'dresden stock exchange', '€:1234', 2.34],
+            ['₹', '₹        10000', np.nan, '₹:FDSA', -7.80],
+            ['Rs', 'Rs 10000', '', '₹:ASDF', 4.44],
+            ['', '元10000', 'stock exchange china', '元:ASDF', 1.02],
+            [None, None, 'stock exchange san jose', None, -2.01],
+        ], columns=[
+            'native_currency',
+            'value',
+            'exchange',
+            'ticker',
+            'growth_rate',
+        ])
+        df_expected = pd.DataFrame([
+            ['$', 10000, 'stock exchange america', '$:MAGE', 5.34],
+            ['£', 200, 'huddersfield stock exchange', '£:XYZA', -1.34],
+            ['CAD', 100, None, '', -0.89],
+            ['¥', np.nan, 'stock exchange japan', '', 4.23],
+            ['€', 123.34, 'dresden stock exchange', '€:1234', 2.34],
+            ['₹', 10000, np.nan, '₹:FDSA', -7.80],
+            ['Rs', 10000, '', '₹:ASDF', 4.44],
+            ['', 10000, 'stock exchange china', '元:ASDF', 1.02],
+            [None, np.nan, 'stock exchange san jose', None, -2.01],
+        ], columns=[
+            'native_currency',
+            'value',
+            'exchange',
+            'ticker',
+            'growth_rate',
+        ])
+        action_currency = dict(
+            action_type='reformat',
+            action_arguments=['value'],
+            axis='column',
+            action_options = {
+                'reformat': 'currency_to_num',
+            },
+            action_variables = {
+                'value': {
+                    'feature' : {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'value'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        df_new = reformat(df_currency, action_currency)
+        assert_frame_equal(df_new, df_expected)
+
+    def test_currency_conversion_test_all_formatting(self):
+        from data_cleaner.transformer_actions.column import reformat
+        values = [
+            '  $ 10000',
+            '- ¥ 22.324523',
+            'Rs 100000.23   ',
+            '  € 12.23425',
+            'CAD     12423      ',
+            '£ .0927503',
+            '-₹ 0',
+            ' 10000 元   ',
+            ' 0.42 €',
+            ' -  3.42032 CAD'
+        ]
+        expected_values = [
+            10000,
+            -22.324523,
+            100000.23,
+            12.23425,
+            12423,
+            0.0927503,
+            -0.0,
+            10000,
+            0.42,
+            -3.42032
+        ]
+
+        df = pd.DataFrame({'column': values})
+        expected_df = pd.DataFrame({'column': expected_values})
+        action = dict(
+            action_type='reformat',
+            action_arguments=['column'],
+            axis='column',
+            action_options = {
+                'reformat': 'currency_to_num',
+            },
+            action_variables = {
+                'column': {
+                    'feature' : {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'column'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        new_df = reformat(df, action)
+        assert_frame_equal(new_df, expected_df)
+
+    def test_reformat_time(self):
+        from data_cleaner.transformer_actions.column import reformat
+        df = pd.DataFrame([
+            [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
+            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
+            [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
+            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
+            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212],
+            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', 2034]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+        ])
+        expected_df = pd.DataFrame([
+            [
+                dt(2022, 8, 4),
+                pd.NaT,
+                'Action Movie #1',
+                pd.NaT,
+                pd.to_datetime(234)
+            ],
+            [
+                dt(2022, 1, 20),
+                pd.NaT,
+                'sportsball',
+                pd.to_datetime('1-20-2022'),
+                pd.to_datetime(13234)
+            ],
+            [
+                None,
+                pd.to_datetime('12/24/22'),
+                'reality tv show',
+                pd.to_datetime('12-24-2022'),
+                pd.to_datetime(23234)
+            ],
+            [
+                dt(2022, 10, 31),
+                pd.to_datetime('10/31/22'),
+                '',
+                pd.to_datetime('10.31.2022'),
+                pd.to_datetime(21432)
+            ],
+            [
+                dt(2022, 6, 27),
+                pd.NaT,
+                'action Movie #2',
+                pd.to_datetime('6/27/2022'),
+                pd.to_datetime(324212)
+            ],
+            [
+                dt(2022, 3, 8),
+                pd.to_datetime('03/08/22'),
+                'game show',
+                pd.to_datetime('3/8/2022'),
+                pd.to_datetime(2034)
+            ]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+        ])
+        action = dict(
+            action_type='reformat',
+            action_arguments=['date2', 'mostlydate', 'date5'],
+            axis='column',
+            action_options = {
+                'reformat': 'date_format_conversion',
+            },
+            action_variables = {
+                'date2': {
+                    'feature' : {
+                        'column_type': 'datetime',
+                        'uuid': 'date2'
+                    },
+                    'type': 'feature'
+                },
+                'mostlydate': {
+                    'feature' : {
+                        'column_type': 'category_high_cardinality',
+                        'uuid': 'mostlydate'
+                    },
+                    'type': 'feature'
+                },
+                'date5': {
+                    'feature' : {
+                        'column_type': 'number',
+                        'uuid': 'date5'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        df_new = reformat(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, expected_df)
+
+    def test_reformat_time_bad_inputs(self):
+        from data_cleaner.transformer_actions.column import reformat
+        df = pd.DataFrame([
+            [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', np.nan, True],
+            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', -1323.4, False],
+            [None, '12/24/22', 'reality tv show', '12-24-2022', -232342.322, False],
+            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21.432, None],
+            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212, True],
+            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', -9830, False]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ])
+        expected_df = pd.DataFrame([
+            [
+                dt(2022, 8, 4),
+                pd.to_datetime('08/04/22'),
+                pd.NaT,
+                pd.NaT,
+                np.nan,
+                pd.NaT
+            ],
+            [
+                dt(2022, 1, 20),
+                pd.NaT,
+                pd.NaT,
+                pd.to_datetime('1-20-2022'),
+                pd.to_datetime(-1323.4),
+                pd.NaT
+            ],
+            [
+                None,
+                pd.to_datetime('12/24/22'),
+                pd.NaT,
+                pd.to_datetime('12-24-2022'),
+                pd.to_datetime(-232342.322),
+                pd.NaT
+            ],
+            [
+                dt(2022, 10, 31),
+                pd.to_datetime('10/31/22'),
+                pd.NaT,
+                pd.to_datetime('10.31.2022'),
+                pd.to_datetime(21.432),
+                pd.NaT
+            ],
+            [
+                dt(2022, 6, 27),
+                pd.NaT,
+                pd.NaT,
+                pd.to_datetime('6/27/2022'),
+                pd.to_datetime(324212),
+                pd.NaT
+            ],
+            [
+                dt(2022, 3, 8),
+                pd.to_datetime('03/08/22'),
+                pd.NaT,
+                pd.to_datetime('3/8/2022'),
+                pd.to_datetime(-9830),
+                pd.NaT
+            ]
+        ], columns=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ])
+        action = dict(
+            action_type='reformat',
+            action_arguments=[
+            'date1',
+            'date2',
+            'notdate',
+            'mostlydate',
+            'date5',
+            'boolean'
+        ],
+            axis='column',
+            action_options = {
+                'reformat': 'date_format_conversion',
+            },
+            action_variables = {
+                'date1': {
+                    'feature' : {
+                        'column_type': 'datetime',
+                        'uuid': 'date1'
+                    },
+                    'type': 'feature'
+                },
+                'date2': {
+                    'feature' : {
+                        'column_type': 'datetime',
+                        'uuid': 'date2'
+                    },
+                    'type': 'feature'
+                },
+                'notdate': {
+                    'feature' : {
+                        'column_type': 'text',
+                        'uuid': 'notdate'
+                    },
+                    'type': 'feature'
+                },
+                'mostlydate': {
+                    'feature' : {
+                        'column_type': 'category_high_cardinality',
+                        'uuid': 'mostlydate'
+                    },
+                    'type': 'feature'
+                },
+                'date5': {
+                    'feature' : {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'date5'
+                    },
+                    'type': 'feature'
+                },
+                'boolean': {
+                    'feature' : {
+                        'column_type': 'true_or_false',
+                        'uuid': 'boolean'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        df_new = reformat(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, expected_df)
 
     def test_select(self):
         df = pd.DataFrame([
