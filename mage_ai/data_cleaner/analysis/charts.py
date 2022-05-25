@@ -14,7 +14,6 @@ from data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
-import dateutil.parser
 import math
 import numpy as np
 import pandas as pd
@@ -146,16 +145,13 @@ def build_time_series_data(df, feature, datetime_column, column_type):
 
     # print(feature, datetime_column)
 
-    datetimes = clean_series(df[datetime_column], DATETIME)
+    datetimes = pd.to_datetime(clean_series(df[datetime_column], DATETIME), errors='coerce')
     if datetimes.size <= 1:
         return
 
-    try:
-        min_value_datetime = datetimes.min().timestamp()
-        max_value_datetime = datetimes.max().timestamp()
-    except AttributeError:
-        min_value_datetime = dateutil.parser.parse(datetimes.min()).timestamp()
-        max_value_datetime = dateutil.parser.parse(datetimes.max()).timestamp()
+    min_value_datetime = datetimes.min().timestamp()
+    max_value_datetime = datetimes.max().timestamp()
+
 
     buckets, bucket_interval = build_buckets(
         min_value_datetime,
@@ -168,9 +164,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
     y = []
 
     df_copy = df.copy()
-
-    df_copy[datetime_column] = \
-        pd.to_datetime(df[datetime_column]).apply(lambda x: x if pd.isnull(x) else x.timestamp())
+    df_copy[datetime_column] = datetimes.apply(lambda x: x if pd.isnull(x) else x.timestamp())
 
     for bucket in buckets:
         max_value = bucket['max_value']
@@ -250,8 +244,7 @@ def build_overview_data(df, datetime_features):
         if clean_series(df_copy[datetime_column], DATETIME).size <= 1:
             continue
 
-        df_copy[datetime_column] = \
-            pd.to_datetime(df[datetime_column]).apply(lambda x: x if pd.isnull(x) else x.timestamp())
+        df_copy[datetime_column] = __parse_datetime(df, datetime_column)
 
         min_value1 = df_copy[datetime_column].min()
         max_value1 = df_copy[datetime_column].max()
@@ -296,3 +289,8 @@ def build_overview_data(df, datetime_features):
     return {
         DATA_KEY_TIME_SERIES: time_series,
     }
+
+def __parse_datetime(df, columns):
+    return pd.to_datetime(df[columns], errors='coerce').apply(
+        lambda x: x if pd.isnull(x) else x.timestamp()
+    )
