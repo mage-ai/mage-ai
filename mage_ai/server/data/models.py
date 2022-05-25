@@ -17,10 +17,10 @@ class FeatureSet(Model):
 
         try:
             metadata = self.metadata
-        except:
+        except Exception:
             self.metadata = {}
             metadata = self.metadata
-        
+
         if name is not None:
             metadata['name'] = name
 
@@ -123,7 +123,8 @@ class FeatureSet(Model):
                 suggestions=self.suggestions,
             ))
         return obj
-        
+
+
 class Pipeline(Model):
     def __init__(self, id=None, pipeline=None):
         super().__init__(id)

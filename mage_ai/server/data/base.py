@@ -7,6 +7,7 @@ import os.path
 # This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
+
 class Model():
     def __init__(self, id=None):
         # TODO: figure out a good directory to store the files
@@ -33,7 +34,7 @@ class Model():
     def read_json_file(self, file_name):
         file_path = os.path.join(self.dir, file_name)
         if not os.path.exists(file_path):
-            return None
+            return {}
         with open(os.path.join(self.dir, file_path)) as file:
             return json.load(file)
 
@@ -54,8 +55,11 @@ class Model():
 
     @classmethod
     def objects(cls):
-        try:
-            dirs = [name for name in os.listdir(cls.path_name())]
-            return [cls(id=id) for id in dirs]
-        except:
-            return []
+        arr = []
+        dirs = [name for name in os.listdir(cls.path_name())]
+        for id in dirs:
+            try:
+                arr.append(cls(id=id))
+            except Exception:
+                print(f'Fail to load {cls.__name__} with id {id}')
+        return arr
