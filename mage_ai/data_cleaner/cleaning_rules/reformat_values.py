@@ -48,27 +48,14 @@ class ReformatValuesSubRule():
         """
         return self.clean_column_cache.setdefault(column, self.df[column].dropna(axis=0))
 
-    def construct_action_variables(self, columns):
-        """
-        Constructs action variable set for action payload
-        """
-        variable_set = {}
-        for column_name in columns:
-            variable_set[column_name] = {
-                'feature': {
-                    'column_type': self.column_types[column_name],
-                    'uuid': column_name,
-                },
-                'type': 'feature',
-            }
-        return variable_set
-
     def evaluate(self, column):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
     
     def get_suggestions(self):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
 
+
+# TODO: how do we detect pattern like capitalizing the first letter in the sentence or word?
 class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     UPPERCASE_PATTERN = r'^[^a-z]*$'
     LOWERCASE_PATTERN = r'^[^A-Z]*$'
@@ -167,7 +154,6 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                         'reformat': 'caps_standardization',
                         'capitalization': case
                     },
-                    action_variables = self.construct_action_variables(payloads[case])
                 ))
         return suggestions
 
@@ -219,7 +205,6 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
                 action_options = {
                     'reformat': 'currency_to_num',
                 },
-                action_variables = self.construct_action_variables(self.matches)
             ))
         return suggestions
 
@@ -262,7 +247,6 @@ class ReformatDateSubRule(ReformatValuesSubRule):
                 action_options = {
                     'reformat': 'date_format_conversion',
                 },
-                action_variables = self.construct_action_variables(self.matches)
             ))
         return suggestions
 

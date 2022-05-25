@@ -79,15 +79,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                         'reformat': 'caps_standardization',
                         'capitalization': 'uppercase'
                     },
-                    action_variables = {
-                        'location': {
-                            'feature' : {
-                                'column_type': 'category',
-                                'uuid': 'location'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -105,22 +97,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                         'reformat': 'caps_standardization',
                         'capitalization': 'lowercase'
                     },
-                    action_variables = {
-                        'company_name': {
-                            'feature' : {
-                                'column_type': 'category_high_cardinality',
-                                'uuid': 'company_name'
-                            },
-                            'type': 'feature'
-                        },
-                        'name': {
-                            'feature' : {
-                                'column_type': 'text',
-                                'uuid': 'name'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -175,15 +152,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_options = {
                         'reformat': 'currency_to_num',
                     },
-                    action_variables = {
-                        'value': {
-                            'feature' : {
-                                'column_type': 'number_with_decimals',
-                                'uuid': 'value'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -226,15 +195,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_options = {
                         'reformat': 'currency_to_num',
                     },
-                    action_variables = {
-                        'column': {
-                            'feature' : {
-                                'column_type': 'number_with_decimals',
-                                'uuid': 'column'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -288,22 +249,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                         'reformat': 'caps_standardization',
                         'capitalization': 'lowercase'
                     },
-                    action_variables = {
-                        'date3': {
-                            'feature' : {
-                                'column_type': 'category',
-                                'uuid': 'date3'
-                            },
-                            'type': 'feature'
-                        },
-                        'date4': {
-                            'feature' : {
-                                'column_type': 'category',
-                                'uuid': 'date4'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -320,36 +266,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_options = {
                         'reformat': 'date_format_conversion',
                     },
-                    action_variables = {
-                        'date2': {
-                            'feature' : {
-                                'column_type': 'datetime',
-                                'uuid': 'date2'
-                            },
-                            'type': 'feature'
-                        },
-                        'date3': {
-                            'feature' : {
-                                'column_type': 'category',
-                                'uuid': 'date3'
-                            },
-                            'type': 'feature'
-                        },
-                        'date4': {
-                            'feature' : {
-                                'column_type': 'category',
-                                'uuid': 'date4'
-                            },
-                            'type': 'feature'
-                        },
-                        'date5': {
-                            'feature' : {
-                                'column_type': 'text',
-                                'uuid': 'date5'
-                            },
-                            'type': 'feature'
-                        }
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -407,15 +324,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                         'reformat': 'caps_standardization',
                         'capitalization': 'lowercase'
                     },
-                    action_variables = {
-                        'notdate': {
-                            'feature' : {
-                                'column_type': 'text',
-                                'uuid': 'notdate'
-                            },
-                            'type': 'feature'
-                        },
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
@@ -432,22 +341,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                     action_options = {
                         'reformat': 'date_format_conversion',
                     },
-                    action_variables = {
-                        'date2': {
-                            'feature' : {
-                                'column_type': 'datetime',
-                                'uuid': 'date2'
-                            },
-                            'type': 'feature'
-                        },
-                        'mostlydate': {
-                            'feature' : {
-                                'column_type': 'category_high_cardinality',
-                                'uuid': 'mostlydate'
-                            },
-                            'type': 'feature'
-                        },
-                    },
+                    action_variables = {},
                     action_code = '',
                     outputs = [],
                 )
