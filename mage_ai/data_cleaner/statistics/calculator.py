@@ -148,6 +148,7 @@ class StatisticsCalculator():
             f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
             f'{col}/null_value_rate': 0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
             f'{col}/null_value_count': series_cleaned.isnull().sum(),
+            f'{col}/max_null_seq': self.get_longest_null_seq(series)
         }
 
         if len(series_non_null) > 0:
