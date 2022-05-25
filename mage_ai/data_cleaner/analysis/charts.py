@@ -150,8 +150,12 @@ def build_time_series_data(df, feature, datetime_column, column_type):
     if datetimes.size <= 1:
         return
 
-    min_value_datetime = dateutil.parser.parse(datetimes.min()).timestamp()
-    max_value_datetime = dateutil.parser.parse(datetimes.max()).timestamp()
+    try:
+        min_value_datetime = datetimes.min().timestamp()
+        max_value_datetime = datetimes.max().timestamp()
+    except AttributeError:
+        min_value_datetime = dateutil.parser.parse(datetimes.min()).timestamp()
+        max_value_datetime = dateutil.parser.parse(datetimes.max()).timestamp()
 
     buckets, bucket_interval = build_buckets(
         min_value_datetime,
