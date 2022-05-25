@@ -1252,10 +1252,10 @@ class ColumnTests(TestCase):
         from data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
             ['2020-01-01', 1000, '       ', 800],
-            ['2020-01-02', '', 1200, 700],
-            ['2020-01-03', 1200, np.NaN, 900],
-            ['2020-01-04', np.NaN, '  ', 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', '', 1200, 700],
+            ['2020-01-05', 1200, np.NaN, 900],
+            ['2020-01-02', np.NaN, '  ', 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1321,7 +1321,8 @@ class ColumnTests(TestCase):
         action6 = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
-                'strategy': 'sequential'
+                'strategy': 'sequential',
+                'timeseries_cols': ['date']
             },
         )
         action7 = dict(
@@ -1347,16 +1348,16 @@ class ColumnTests(TestCase):
         df_new3 = impute(df.copy(), action3)
         df_new4 = impute(df.copy(), action4)
         df_new5 = impute(df.copy(), action5)
-        df_new6 = impute(df.copy(), action6)
+        df_new6 = impute(df.copy(), action6).reset_index(drop=True)
         df_new7 = impute(df.copy(), action7)
         df_new8 = impute(df.copy(), action8)
 
         df_expected1 = pd.DataFrame([
             ['2020-01-01', 1000, 0, 800],
-            ['2020-01-02', 0, 1200, 700],
-            ['2020-01-03', 1200, 0, 900],
-            ['2020-01-04', 0, 0, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', 0, 1200, 700],
+            ['2020-01-05', 1200, 0, 900],
+            ['2020-01-02', 0, 0, 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1365,10 +1366,10 @@ class ColumnTests(TestCase):
         ])
         df_expected2 = pd.DataFrame([
             ['2020-01-01', 1000, '       ', 800],
-            ['2020-01-02', 0, 1200, 700],
-            ['2020-01-03', 1200, np.nan, 900],
-            ['2020-01-04', 0, '  ', 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', 0, 1200, 700],
+            ['2020-01-05', 1200, np.nan, 900],
+            ['2020-01-02', 0, '  ', 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1377,10 +1378,10 @@ class ColumnTests(TestCase):
         ])
         df_expected3 = pd.DataFrame([
             ['2020-01-01', 1000, 1250, 800],
-            ['2020-01-02', 1300, 1200, 700],
-            ['2020-01-03', 1200, 1250, 900],
-            ['2020-01-04', 1300, 1250, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', 1300, 1200, 700],
+            ['2020-01-05', 1200, 1250, 900],
+            ['2020-01-02', 1300, 1250, 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1389,10 +1390,10 @@ class ColumnTests(TestCase):
         ])
         df_expected4 = pd.DataFrame([
             ['2020-01-01', 1000, 1250, 800],
-            ['2020-01-02', 1200, 1200, 700],
-            ['2020-01-03', 1200, 1250, 900],
-            ['2020-01-04', 1200, 1250, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', 1200, 1200, 700],
+            ['2020-01-05', 1200, 1250, 900],
+            ['2020-01-02', 1200, 1250, 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1401,10 +1402,10 @@ class ColumnTests(TestCase):
         ])
         df_expected5 = pd.DataFrame([
             ['2020-01-01', 1000, 800, 800],
-            ['2020-01-02', 700, 1200, 700],
-            ['2020-01-03', 1200, 900, 900],
-            ['2020-01-04', 700, 700, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-03', 700, 1200, 700],
+            ['2020-01-05', 1200, 900, 900],
+            ['2020-01-02', 700, 700, 700],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1413,10 +1414,10 @@ class ColumnTests(TestCase):
         ])
         df_expected6 = pd.DataFrame([
             ['2020-01-01', 1000, None, 800],
-            ['2020-01-02', 1000, 1200, 700],
-            ['2020-01-03', 1200, 1200, 900],
-            ['2020-01-04', 1200, 1200, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-02', 1000, None, 700],
+            ['2020-01-03', 1000, 1200, 700],
+            ['2020-01-04', 1700, 1300, 800],
+            ['2020-01-05', 1200, 1300, 900],
         ], columns=[
             'date',
             'sold',
@@ -1425,10 +1426,10 @@ class ColumnTests(TestCase):
         ])
         df_expected8 = pd.DataFrame([
             ['2020-01-01', 1000, 1200, 800],
+            ['2020-01-03', 1000, 1200, 700],
+            ['2020-01-05', 1200, 1200, 900],
             ['2020-01-02', 1000, 1200, 700],
-            ['2020-01-03', 1200, 1200, 900],
-            ['2020-01-04', 1000, 1200, 700],
-            ['2020-01-05', 1700, 1300, 800],
+            ['2020-01-04', 1700, 1300, 800],
         ], columns=[
             'date',
             'sold',
@@ -1485,6 +1486,49 @@ class ColumnTests(TestCase):
         )
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action)
+
+    def test_impute_sequential_two_idx(self):
+        from data_cleaner.transformer_actions.column import impute
+        df = pd.DataFrame([
+            [1, 1000, '2021-10-01', '2021-09-01', 2],
+            [1, None, '2021-10-01', '2021-08-01', np.nan],
+            [np.nan, 1100, '2021-10-01', '2021-01-01', 2],
+            [2, None, '2021-09-01', '2021-08-01', 2],
+            [2, 1200, '2021-09-01', '2021-08-16', np.nan],
+            [2, 1250, '2021-09-01', '2021-08-14', 2],
+        ], columns=[
+            'group_id',
+            'order_id',
+            'group_churned_at',
+            'order_created_at',
+            'order_count',
+        ])
+        action = dict(
+            action_arguments=['group_id', 'order_id', 'order_count'],
+            action_options={
+                'strategy': 'sequential',
+                'timeseries_cols': ['group_churned_at', 'order_created_at']
+            },
+        )
+        df_expected = pd.DataFrame([
+            [2, None, '2021-09-01', '2021-08-01', 2],
+            [2, 1250, '2021-09-01', '2021-08-14', 2],
+            [2, 1200, '2021-09-01', '2021-08-16', 2],
+            [2, 1100, '2021-10-01', '2021-01-01', 2],
+            [1, 1100, '2021-10-01', '2021-08-01', 2],
+            [1, 1000, '2021-10-01', '2021-09-01', 2],
+        ], columns=[
+            'group_id',
+            'order_id',
+            'group_churned_at',
+            'order_created_at',
+            'order_count',
+        ])
+        df_new = impute(df, action).reset_index(drop=True)
+        df_new['group_id'] = df_new['group_id'].astype(int)
+        df_new['order_count'] = df_new['order_count'].astype(int)
+        assert_frame_equal(df_new, df_expected)
+
 
     def test_last_column(self):
         df = pd.DataFrame([

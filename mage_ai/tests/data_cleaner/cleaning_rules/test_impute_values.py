@@ -206,7 +206,11 @@ class ImputeValuesTest(TestCase):
             'company': 'category',
             'industry': 'zip_code'
         }
-        statistics = {}
+        statistics = {
+            'profit/null_value_rate': 3/8,
+            'company/null_value_rate': 3/8,
+            'industry/null_value_rate': 3/8
+        }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
@@ -413,12 +417,12 @@ class ImputeValuesTest(TestCase):
                 ['NY', '10001', '12-25-2022'],
                 [None, '', None],
                 ['CA', '', '12-28-2022'],
-                ['', None, ''],
                 [None, '', '12-30-2022'],
                 ['CA', None, '12-30-2022'],
                 ['MA', '12214', '12-31-2022'],
                 ['PA', '', '1-2-2023'],
-                ['TX', '75001', '1-2-2023']
+                ['TX', '75001', '1-2-2023'],
+                ['', None, '']
             ],
             columns=['state', 'location', 'timestamp']
         )
@@ -430,6 +434,7 @@ class ImputeValuesTest(TestCase):
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
+            'timestamp/null_value_rate': 1/10
         }
         expected_suggestions = [
             dict(
@@ -443,7 +448,8 @@ class ImputeValuesTest(TestCase):
                     action_type='impute',
                     action_arguments=['state', 'location', 'timestamp'],
                     action_options=dict(
-                        strategy='sequential'
+                        strategy='sequential',
+                        timeseries_index=['timestamp']
                     ),
                     action_variables=dict(
                         state=dict(
@@ -484,16 +490,16 @@ class ImputeValuesTest(TestCase):
     def test_seq_edge(self):
         df = pd.DataFrame(
             [
-                ['CT', '06902', '12-24-2022'],
-                ['NY', '10001', '12-25-2022'],
                 [None, '', '12-26-2022'],
                 ['CA', '', '12-28-2022'],
                 ['', None, '12-28-2022'],
-                [None, '', '12-30-2022'],
-                ['CA', None, '12-30-2022'],
                 ['MA', '12214', '12-31-2022'],
                 ['PA', '', '1-2-2023'],
-                ['TX', '75001', '1-2-2023']
+                ['TX', '75001', '1-2-2023'],
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022']
             ],
             columns=['state', 'location', 'timestamp']
         )
@@ -505,6 +511,7 @@ class ImputeValuesTest(TestCase):
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
+            'timestamp/null_value_rate': 0
         }
         expected_suggestions = [
             dict(
@@ -517,7 +524,8 @@ class ImputeValuesTest(TestCase):
                     action_type='impute',
                     action_arguments=['state', 'location'],
                     action_options=dict(
-                        strategy='sequential'
+                        strategy='sequential',
+                        timeseries_index=['timestamp']
                     ),
                     action_variables=dict(
                         state=dict(

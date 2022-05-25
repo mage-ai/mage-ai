@@ -87,6 +87,8 @@ def impute(df, action, **kwargs):
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
     elif strategy == ImputationStrategy.SEQ:
+        timeseries_cols = action_options.get('timeseries_cols')
+        df = df.sort_values(by=timeseries_cols, axis=0)
         df[columns] = df[columns].fillna(method='ffill')
     elif strategy == ImputationStrategy.RANDOM:
         for column in columns:
