@@ -152,6 +152,6 @@ class StatisticsCalculator():
             data[f'{col}/mode'] = mode
 
         # Detect mismatched formats for some column types
-        data[f'{col}/mismatched_count'] = get_mismatched_row_count(series, column_type)
+        data[f'{col}/mismatched_count'] = get_mismatched_row_count(series_non_null, column_type)
 
         return data
