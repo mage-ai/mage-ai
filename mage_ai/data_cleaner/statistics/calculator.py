@@ -58,6 +58,22 @@ class StatisticsCalculator():
             for d in dicts:
                 data.update(d)
 
+            # Aggregated stats
+            column_count = len(df.columns)
+            data['avg_null_value_count'] = \
+                sum(data[f'{col}/null_value_count'] for col in df.columns) / column_count
+            data['avg_invalid_value_count'] = \
+                sum(data.get(f'{col}/invalid_value_count', 0) for col in df.columns) / column_count
+            data['completeness'] = \
+                1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
+            data['validity'] = \
+                data['completeness'] - data['avg_invalid_value_count'] / data['count'] \
+                if data['count'] > 0 else 0
+            df_dedupe = df.drop_duplicates()
+            data['duplicate_row_count'] = df.shape[0] - df_dedupe.shape[0]
+            data['empty_column_count'] = \
+                len([col for col in df.columns if data[f'{col}/count'] == 0])
+
             # object_key = s3_paths.path_statistics_overview(self.object_key_prefix)
             # s3_data.upload_json_sorted(self.s3_client, object_key, data)
 
@@ -166,6 +182,6 @@ class StatisticsCalculator():
         data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
 
         # Detect mismatched formats for some column types
-        data[f'{col}/mismatched_count'] = get_mismatched_row_count(series_non_null, column_type)
+        data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
 
         return data
