@@ -13,6 +13,8 @@ import {
   TableStyle,
   TextStyle,
 } from './index.style';
+import { Check } from '@oracle/icons';
+import Spacing from '@oracle/elements/Spacing';
 
 export type OnClickRowProps = {
   rowGroupIndex: number;
@@ -20,8 +22,13 @@ export type OnClickRowProps = {
   uuid: string;
 };
 
+type ColumnHeaderType = {
+  Icon?: any;
+  label: string;
+};
+
 type RowGroupDataType = {
-  title: string;
+  title?: string;
   rowData: {
     columnValues: (string | number | any)[];
     uuid: string | number;
@@ -30,7 +37,7 @@ type RowGroupDataType = {
 
 type SimpleDataTableProps = {
   columnFlexNumbers: number[];
-  columnHeaders: string[];
+  columnHeaders: ColumnHeaderType[];
   height?: number;
   isTextSelectionRequired?: boolean;
   onClickRow?: (opts: OnClickRowProps) => void;
@@ -66,32 +73,38 @@ function SimpleDataTable({
       scrollbarBorderRadiusLarge
     >
       <ColumnHeaderRowStyle>
-      {columnHeaders.map(({
-            label,
-          }: any, idx: number) => {
         <FlexContainer alignItems="center">
+          {columnHeaders.map(({
+            Icon,
+            label,
+          }: ColumnHeaderType, idx: number) => {
+            const key = label;
 
             return (
               <Flex
                 flex={columnFlexNumbers[idx]}
-                key={label}
+                key={key}
               >
                 <ColumnHeaderCellStyle
                   first={idx === 0}
                   small={small}
                 >
                   <FlexContainer alignItems="center">
+                    {Icon && (
+                      <Check />
+                    )}
+                    {Icon && <Spacing mr={1} />}
                     <Text
                       bold
                     >
-                      { label }
+                      {key}
                     </Text>
                   </FlexContainer>
                 </ColumnHeaderCellStyle>
               </Flex>
             );
+          })}
         </FlexContainer>
-        })}
       </ColumnHeaderRowStyle>
 
       {rowGroupData.map(({

@@ -32,15 +32,12 @@ export const ColumnHeaderRowStyle = styled.div<any>`
   z-index: 2;
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).dark};
+    background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 `;
 
 export const ColumnHeaderCellStyle = styled.div<any>`
-  ${props => !props.first && `
-    border-left: 1px solid transparent;
-  `}
-
   ${props => !props.small && `
     padding: ${UNIT * PADDING_SIZE_UNITS}px;
   `}
@@ -52,8 +49,8 @@ export const ColumnHeaderCellStyle = styled.div<any>`
 
 export const RowTitleStyle = styled.div<any>`
   ${props => `
-    background-color: ${(props.theme.background || light.background).page};
-    border-bottom: 1px solid ${(props.theme.background || light.background).header};
+    background-color: ${(props.theme.background || light.background).header};
+    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 
   ${props => !props.small && `
@@ -70,12 +67,13 @@ export const RowStyle = styled.div<any>`
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
-    border-bottom: 1px solid ${(props.theme.background || light.background).header};
+    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-top: none;
   `}
 
 
   ${props => !props.finalRow && `
-    border-bottom: 1px solid ${(props.theme.background || light.background).header};
+    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.finalRow && `
