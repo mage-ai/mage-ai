@@ -1,4 +1,3 @@
-from ipaddress import collapse_addresses
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import (
     CATEGORICAL_TYPES,
