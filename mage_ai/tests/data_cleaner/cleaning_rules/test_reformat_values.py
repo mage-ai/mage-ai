@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-class ReformatValuesCleaningRule(TestCase):
+class ReformatValuesCleaningRuleTests(TestCase):
     def setUp(self):
         self.rng = np.random.default_rng(42)
         return super().setUp()
@@ -49,12 +49,19 @@ class ReformatValuesCleaningRule(TestCase):
         }
         statistics = {
             'userid/count': 13,
+            'userid/null_value_rate': 4/17,
             'location/count': 13,
+            'location/null_value_rate': 4/17,
             'company_name/count': 15,
+            'company_name/null_value_rate': 2/17,
             'number_of_creators/count': 14,
+            'number_of_creators/null_value_rate': 3/17,
             'name/count': 12,
+            'name/null_value_rate': 5/17,
             'losses/count': 16,
+            'losses/null_value_rate': 1/17,
             'number_of_advertisers/count': 16,
+            'number_of_advertisers/null_value_rate': 1/17,
         }
         rule = ReformatValues(df, column_types, statistics)
         results = rule.evaluate()
@@ -130,7 +137,7 @@ class ReformatValuesCleaningRule(TestCase):
             ['€', '€ 123.34', 'dresden stock exchange', '€:1234', 2.34],
             ['₹', '₹        10000', np.nan, '₹:FDSA', -7.80],
             ['Rs', 'Rs 10000', '', '₹:ASDF', 4.44],
-            ['', '元10000', 'stock exchange china', '元:ASDF', 1.02],
+            ['', '10000元', 'stock exchange china', '元:ASDF', 1.02],
             [None, None, 'stock exchange san jose', None, -2.01],
         ], columns=[
             'native_currency',
@@ -183,6 +190,58 @@ class ReformatValuesCleaningRule(TestCase):
             ),
         ]
         self.assertEqual(results, expected_results)
+
+    def test_currency_conversion_test_all_formatting(self):
+        values = [
+            '  $ 10000',
+            '- ¥ 22.324523',
+            'Rs 100000.23   ',
+            '  € 12.23425',
+            'CAD     12423      ',
+            '£ .0927503',
+            '-₹ 0',
+            ' 10000 元   ',
+            ' 0.42 €',
+            ' -  3.42032 CAD'
+        ]
+
+        df = pd.DataFrame({'column': values})
+        column_types = {'column': 'number_with_decimals'}
+        statistics = {
+            'column/count': 10,
+            'column/count_distinct': 10,
+            'column/null_value_rate': 0,
+        }
+        results = ReformatValues(df, column_types, statistics).evaluate()
+        expected_results = [
+            dict(
+                title='Reformat values',
+                message='The following columns have currency type values: '
+                        '[\'column\']. '
+                        'Reformat these columns as numbers to improve data quality.',
+                action_payload=dict(
+                    action_type='reformat',
+                    action_arguments=['column'],
+                    axis='column',
+                    action_options = {
+                        'reformat': 'currency_to_num',
+                    },
+                    action_variables = {
+                        'column': {
+                            'feature' : {
+                                'column_type': 'number_with_decimals',
+                                'uuid': 'column'
+                            },
+                            'type': 'feature'
+                        }
+                    },
+                    action_code = '',
+                    outputs = [],
+                )
+            ),
+        ]
+        self.assertEqual(results, expected_results)
+        
 
     def test_datetime_conversion(self):
         df = pd.DataFrame([
@@ -320,7 +379,18 @@ class ReformatValuesCleaningRule(TestCase):
             'mostlydate': 'category_high_cardinality',
             'date5': 'number'
         }
-        statistics = {}
+        statistics = {
+            'date1/count': 5,
+            'date2/count': 4,
+            'notdate/count': 5,
+            'mostlydate/count': 6,
+            'date5/count': 6,
+            'date1/null_value_rate': 1/6,
+            'date2/null_value_rate': 2/6,
+            'notdate/null_value_rate': 1/6,
+            'mostlydate/null_value_rate': 0/6,
+            'date5/null_value_rate': 0/6,
+        }
         rule = ReformatValues(df, column_types, statistics)
         results = rule.evaluate()
         expected_results = [

@@ -1,4 +1,3 @@
-from argparse import Action
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.transformer_actions.constants import (
     ActionType,
@@ -14,6 +13,7 @@ from data_cleaner.column_type_detector import (
     TEXT,
 )
 import pandas as pd
+import re
 
 
 class ReformatValuesSubRule():
@@ -65,21 +65,6 @@ class ReformatValuesSubRule():
 
     def evaluate(self, column):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
-
-    def get_statistics(self, column, statistic):
-        """
-        Gets the statistic requested. If not found, the statistic is calculated and cached
-        """
-        value = self.statistics.get(f'{column}/{statistic}')
-        if value is None:
-            if statistic == 'count':
-                value = self.df[column].count()
-            elif statistic == 'count_distinct':
-                value = self.df[column].nunique()
-            elif statistic == 'null_value_rate':
-                value = 1 - self.df[column].count() / len(self.cleaned_df[column])
-            self.statistics[f'{column}/{statistic}'] = value
-        return value
     
     def get_suggestions(self):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
@@ -135,7 +120,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         5a. If most alphabetical entries are mixedcase, suggest conversion to lowercase
         """
         dtype = self.column_types[column]
-        if not dtype in self.ALPHABETICAL_TYPES:
+        if dtype not in self.ALPHABETICAL_TYPES:
             return
 
         clean_col = self.clean_column(column)
@@ -143,7 +128,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
             return
 
         non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
-        unfiltered_length =  self.get_statistics(column, 'count')
+        unfiltered_length =  self.statistics[f'{column}/count']
         clean_col = clean_col[non_alpha_ratio <= self.NON_ALPH_UB]
         new_length = clean_col.count()
         if new_length / unfiltered_length <= self.ALPH_RATIO_LB:
@@ -153,9 +138,9 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         lowercase, clean_col = self.filter_column_regex(clean_col, self.LOWERCASE_PATTERN)
         mixedcase = clean_col.count()
 
-        uppercase_ratio = uppercase/new_length
-        lowercase_ratio = lowercase/new_length
-        mixedcase_ratio = mixedcase/new_length
+        uppercase_ratio = uppercase / new_length
+        lowercase_ratio = lowercase / new_length
+        mixedcase_ratio = mixedcase / new_length
 
         if (uppercase_ratio != 1 and lowercase_ratio != 1):
             max_case_style = max(uppercase_ratio, lowercase_ratio, mixedcase_ratio)
@@ -167,7 +152,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
 
     def get_suggestions(self):
         suggestions = []
-        payloads = {"uppercase": self.uppercase, "lowercase": self.lowercase}
+        payloads = {'uppercase': self.uppercase, 'lowercase': self.lowercase}
         for case in payloads:
             if len(payloads[case]) != 0:
                 suggestions.append(self.action_builder(
@@ -188,7 +173,11 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
 
 
 class ConvertCurrencySubRule(ReformatValuesSubRule):
-    CURRENCY_PATTERN = r'^(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))[\s\t]*[0-9]*\.{0,1}[0-9]+$'
+    CURR_PREFIX = r'(?:[\$\€\¥\₹\£]|(?:Rs)|(?:CAD))'
+    CURR_SUFFIX = r'(?:[\元\€\$]|(?:CAD))'
+    NUMBER_PATTERN = r'[0-9]*\.{0,1}[0-9]+'
+    CURRENCY_BODY = rf'(?:{CURR_PREFIX}\s*{NUMBER_PATTERN}|{NUMBER_PATTERN}\s*{CURR_SUFFIX})'
+    CURRENCY_PATTERN = re.compile(rf'^\s*(?:\-*\s*{CURRENCY_BODY}|{CURRENCY_BODY}\s*)\s*$')
     CURRENCY_TYPES = frozenset((
         CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS
     ))
@@ -212,7 +201,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             count = currency_pattern_mask.value_counts()[True]
         except KeyError:
             count = 0
-        if count / self.get_statistics(column, 'count') == 1:
+        if count / self.statistics[f'{column}/count'] == 1:
             self.matches.append(column)
                 
 
@@ -255,7 +244,8 @@ class ReformatDateSubRule(ReformatValuesSubRule):
             return
         clean_col = self.strip_column_for_date_parsing(column)
         clean_col = pd.to_datetime(clean_col, infer_datetime_format=True, errors='coerce')
-        if clean_col.count() / len(clean_col) >= self.DATE_MATCHES_LB:
+        notnull_value_rate = clean_col.count() / len(clean_col)
+        if notnull_value_rate >= self.DATE_MATCHES_LB:
             self.matches.append(column)
 
     def get_suggestions(self):

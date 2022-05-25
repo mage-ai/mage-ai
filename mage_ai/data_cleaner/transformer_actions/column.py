@@ -108,17 +108,18 @@ def reformat(df, action, **kwargs):
     clean_cols = df[columns].replace('^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
-        capitalization = options["capitalization"]
+        capitalization = options['capitalization']
         for column in columns:
-            if capitalization == "uppercase":
+            if capitalization == 'uppercase':
                 df[column] = clean_cols[column].str.upper()
             else:
                 df[column] = clean_cols[column].str.lower()
     elif reformat_action == 'currency_to_num':
         currency_symbols = r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))'
-        df[columns] = clean_cols.replace(currency_symbols, '', regex=True)
-        df[columns] = df[columns].replace('^\s*$', np.nan, regex=True)
-        df[columns] = df[columns].astype(float)
+        clean_cols = clean_cols.replace(currency_symbols, '', regex=True)
+        clean_cols = clean_cols.replace('\s', '', regex=True)
+        clean_cols = clean_cols.replace('^\s*$', np.nan, regex=True)
+        df[columns] = clean_cols.astype(float)
     elif reformat_action == 'date_format_conversion':
         for column in columns:
             clean_col = clean_cols[column]

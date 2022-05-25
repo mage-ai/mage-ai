@@ -1693,6 +1693,57 @@ class ColumnTests(TestCase):
         df_new = reformat(df_currency, action_currency)
         assert_frame_equal(df_new, df_expected)
 
+    def test_currency_conversion_test_all_formatting(self):
+        from data_cleaner.transformer_actions.column import reformat
+        values = [
+            '  $ 10000',
+            '- ¥ 22.324523',
+            'Rs 100000.23   ',
+            '  € 12.23425',
+            'CAD     12423      ',
+            '£ .0927503',
+            '-₹ 0',
+            ' 10000 元   ',
+            ' 0.42 €',
+            ' -  3.42032 CAD'
+        ]
+        expected_values = [
+            10000,
+            -22.324523,
+            100000.23,
+            12.23425,
+            12423,
+            0.0927503,
+            -0.0,
+            10000,
+            0.42,
+            -3.42032
+        ]
+
+        df = pd.DataFrame({'column': values})
+        expected_df = pd.DataFrame({'column': expected_values})
+        action = dict(
+            action_type='reformat',
+            action_arguments=['column'],
+            axis='column',
+            action_options = {
+                'reformat': 'currency_to_num',
+            },
+            action_variables = {
+                'column': {
+                    'feature' : {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'column'
+                    },
+                    'type': 'feature'
+                }
+            },
+            action_code = '',
+            outputs = [],
+        )
+        new_df = reformat(df, action)
+        assert_frame_equal(new_df, expected_df)
+
     def test_reformat_time(self):
         from data_cleaner.transformer_actions.column import reformat
         df = pd.DataFrame([
