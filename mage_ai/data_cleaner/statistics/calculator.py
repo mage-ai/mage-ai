@@ -41,12 +41,12 @@ class StatisticsCalculator():
 
     def calculate_statistics_overview(self, df):
         increment(
-            'lambda.transformer_actions.calculate_statistics_overview.start',
+            'statistics.calculate_statistics_overview.start',
             self.data_tags,
         )
 
         with timer(
-            'lambda.transformer_actions.calculate_statistics_overview.time',
+            'statistics.calculate_statistics_overview.time',
                 self.data_tags):
             data = dict(count=len(df.index))
 
@@ -62,7 +62,7 @@ class StatisticsCalculator():
             # s3_data.upload_json_sorted(self.s3_client, object_key, data)
 
         increment(
-            'lambda.transformer_actions.calculate_statistics_overview.success',
+            'statistics.calculate_statistics_overview.success',
             self.data_tags,
         )
 
@@ -73,7 +73,7 @@ class StatisticsCalculator():
             return self.__statistics_overview(series, col)
         except Exception as err:
             increment(
-                'lambda.transformer_actions.calculate_statistics_overview.column.failed',
+                'statistics.calculate_statistics_overview.column.failed',
                 merge_dict(self.data_tags, {
                     'col': col,
                     'error': err.__class__.__name__,
