@@ -10,6 +10,8 @@ import styled from "styled-components";
 import { useState } from "react";
 import Spacing from "@oracle/elements/Spacing";
 import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
+import { UNIT } from "@oracle/styles/units/spacing";
+import Flex from "@oracle/components/Flex";
 
 function Data() {
 
@@ -169,12 +171,13 @@ function Data() {
     Router.push(`${pathname}/features`)
   };
 
+
   const headEl = (
-    <FlexContainer alignItems="right" justifyContent="space-between">
+    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
       <Button 
         onClick={viewColumns}
       >
-        Change View
+        <Text bold> Column view </Text>
       </Button>
     </FlexContainer>
   );
@@ -197,29 +200,38 @@ function Data() {
 
   const statsEl = (
     <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
+      columnFlexNumbers={[1, 1, 1]}
       columnHeaders={[{label:'Statistics',},]}
       rowGroupData={[statSample]}
     />
   );
 
+  const reportsEl = (
+    <FlexContainer justifyContent={'center'}>
+      <Flex flex={1}>
+        {statsEl}
+      </Flex>
+      <Spacing ml={UNIT} />
+      <Flex flex={1}>
+        {metricsEl}
+      </Flex>
+    </FlexContainer>
+  )
+
   const tabsEl = (
-      <Tabs 
+      <Tabs
+        bold
         defaultKey={tab}
         noBottomBorder={false}
         onChange={key => setTab(key)}
       >
         <Tab label="Data" key="data">
-          <Spacing pb={3} pt={3}>
-            {dataEl}
-          </Spacing>
+        <Spacing mb={3} mt={3}></Spacing>
+          {dataEl}
         </Tab>
         <Tab label="Report" key="reports">
-          <Spacing pb={3} pt={3}>
-            <Text large bold> Reports go here </Text> 
-            {metricsEl}
-          </Spacing>
-          {statsEl}
+        <Spacing mb={3} mt={3}></Spacing>
+            {reportsEl}
         </Tab>
         <Tab label="Visualization" key="visualizations"> </Tab>
       </Tabs>
@@ -227,10 +239,11 @@ function Data() {
 
   return (
     <Layout
-      header={ headEl }
-      // footer={ tabsEl }
+      centerAlign
     >
-      <Text> Current tab is {tab} </Text>
+      <Spacing mt={UNIT} />
+      { headEl }
+      <Spacing mt={UNIT} />
       { tabsEl }
     </Layout>
   );
