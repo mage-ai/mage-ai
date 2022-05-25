@@ -16,7 +16,7 @@ export type BadgeProps = {
   small?: boolean;
 };
 
-const BadgeStyle = styled.p<BadgeProps>`
+const BadgeStyle = styled.p<BadgeProps>`a
   border-radius: ${BORDER_RADIUS_SMALL}px;
   font-family: ${MONO_FONT_FAMILY_REGULAR};
   font-size: ${REGULAR};
@@ -47,7 +47,7 @@ const BadgeStyle = styled.p<BadgeProps>`
     padding: ${UNIT * 1}px ${UNIT * 1.25}px;
   `};
 
-  ${props => `
+  ${props => !props.disabled && `
     background-color: ${props.theme.feature.active};
     color: ${props.theme.monotone.purple};
   `}
