@@ -7,9 +7,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 
 export type BadgeProps = {
-  block?: boolean;
   children?: any;
-  compact?: boolean;
   disabled?: boolean;
   quantifier?: boolean;
   regular?: boolean;
@@ -18,13 +16,10 @@ export type BadgeProps = {
 
 const BadgeStyle = styled.p<BadgeProps>`a
   border-radius: ${BORDER_RADIUS_SMALL}px;
+  display: inline;
   font-family: ${MONO_FONT_FAMILY_REGULAR};
   font-size: ${REGULAR};
   margin: 0;
-
-  ${props => !props.block && `
-    display: inline;
-  `}
 
   ${props => props.regular && `
     ${REGULAR};
@@ -34,13 +29,8 @@ const BadgeStyle = styled.p<BadgeProps>`a
     ${SMALL};
   `}
 
-  ${props => !props.compact && !props.regular && `
+  ${props => !props.regular && `
     padding: 2px 4px;
-  `};
-
-  ${props => props.compact && !props.regular && `
-    line-height: ${UNIT * 1.5}px;
-    padding: ${UNIT * 0.25}px ${UNIT * 0.5}px;
   `};
 
   ${props => props.regular && `
