@@ -68,6 +68,17 @@ class StatisticsCalculator():
 
         return data
 
+    def get_longest_null_seq(self, series):
+        longest_sequence = 0
+        curr_sequence = 0
+        for is_null in series.isna():
+            if is_null:
+                curr_sequence += 1
+            else:
+                longest_sequence = max(longest_sequence, curr_sequence)
+                curr_sequence = 0
+        return longest_sequence
+
     def statistics_overview(self, series, col):
         try:
             return self.__statistics_overview(series, col)
@@ -150,6 +161,9 @@ class StatisticsCalculator():
                 mode = mode.isoformat()
 
             data[f'{col}/mode'] = mode
+            data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
+
+        data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
 
         # Detect mismatched formats for some column types
         data[f'{col}/mismatched_count'] = get_mismatched_row_count(series_non_null, column_type)

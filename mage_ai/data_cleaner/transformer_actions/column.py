@@ -1,5 +1,6 @@
 from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
+from data_cleaner.transformer_actions.constants import ImputationStrategy
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
@@ -75,13 +76,30 @@ def impute(df, action, **kwargs):
     empty_string_pattern = r'^\s*$'
     df[columns] = df[columns].replace(empty_string_pattern, np.nan, regex=True)
 
-    if strategy == 'average':
+    if strategy == ImputationStrategy.AVERAGE:
         df[columns] = df[columns].fillna(df[columns].astype(float).mean(axis=0))
-    elif strategy == 'median':
+    elif strategy == ImputationStrategy.MEDIAN:
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
-    elif strategy == 'column':
+    elif strategy == ImputationStrategy.MODE:
+        df[columns] = df[columns].fillna(df[columns].astype(float).mode(axis=0).iloc[0])
+    elif strategy == ImputationStrategy.COLUMN:
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
+    elif strategy == ImputationStrategy.SEQ:
+        timeseries_cols = action_options.get('timeseries_index')
+        df = df.sort_values(by=timeseries_cols, axis=0)
+        df[columns] = df[columns].fillna(method='ffill')
+    elif strategy == ImputationStrategy.RANDOM:
+        for column in columns:
+            invalid_idx = df[df[column].isna()].index
+            valid_idx = df[df[column].notna()].index
+            if len(invalid_idx) == len(df[column]):
+                raise Exception(
+                    f'Random impute has no values to sample from in column \'{column}\''
+                )
+            sample = df.loc[valid_idx, column].sample(len(invalid_idx), replace=True)
+            sample.index = invalid_idx
+            df.loc[invalid_idx, column] = sample
     elif value is not None:
         df[columns] = df[columns].fillna(value)
     else:

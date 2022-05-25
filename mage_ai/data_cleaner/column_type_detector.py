@@ -17,11 +17,11 @@ TEXT = 'text'
 TRUE_OR_FALSE = 'true_or_false'
 ZIP_CODE = 'zip_code'
 
-NUMBER_TYPES = [NUMBER, NUMBER_WITH_DECIMALS]
+CATEGORICAL_TYPES = frozenset([CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE])
+NUMBER_TYPES = frozenset([NUMBER, NUMBER_WITH_DECIMALS])
+STRING_TYPES = frozenset([EMAIL, PHONE_NUMBER, TEXT, ZIP_CODE])
 
-STRING_TYPES = [EMAIL, PHONE_NUMBER, TEXT, ZIP_CODE]
-
-COLUMN_TYPES = [
+COLUMN_TYPES = frozenset([
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,
@@ -32,7 +32,8 @@ COLUMN_TYPES = [
     TEXT,
     TRUE_OR_FALSE,
     ZIP_CODE,
-]
+])
+
 REGEX_DATETIME_PATTERN = r'^[\d]{2,4}-[\d]{1,2}-[\d]{1,2}$|^[\d]{2,4}-[\d]{1,2}-[\d]{1,2}[Tt ]{1}[\d]{1,2}:[\d]{1,2}[:]{0,1}[\d]{1,2}[\.]{0,1}[\d]*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)

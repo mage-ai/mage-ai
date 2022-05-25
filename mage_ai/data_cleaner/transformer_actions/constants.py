@@ -52,3 +52,13 @@ class Operator():
     GREATER_THAN_OR_EQUALS = '>='
     LESS_THAN = '<'
     LESS_THAN_OR_EQUALS = '<='
+
+class ImputationStrategy():
+    AVERAGE = 'average'
+    COLUMN = 'column'
+    MEDIAN = 'median'
+    MODE = 'mode'
+    NOOP = 'no_action'
+    RANDOM = 'random'
+    ROW_RM = 'remove_rows'
+    SEQ = 'sequential'
