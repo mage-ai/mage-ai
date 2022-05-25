@@ -38,6 +38,7 @@ const Chip = ({
         <Flex>
           {children}
           <Spacing mr={2} />
+          {/* FIXME: icon is not vertically centered */}
           <Check />
         </Flex>
       </Badge>
