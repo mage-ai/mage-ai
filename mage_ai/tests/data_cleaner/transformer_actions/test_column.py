@@ -1322,7 +1322,7 @@ class ColumnTests(TestCase):
             action_arguments=['sold', 'curr_profit'],
             action_options={
                 'strategy': 'sequential',
-                'timeseries_cols': ['date']
+                'timeseries_index': ['date']
             },
         )
         action7 = dict(
@@ -1507,7 +1507,7 @@ class ColumnTests(TestCase):
             action_arguments=['group_id', 'order_id', 'order_count'],
             action_options={
                 'strategy': 'sequential',
-                'timeseries_cols': ['group_churned_at', 'order_created_at']
+                'timeseries_index': ['group_churned_at', 'order_created_at']
             },
         )
         df_expected = pd.DataFrame([

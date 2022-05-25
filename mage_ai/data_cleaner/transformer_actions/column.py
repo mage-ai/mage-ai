@@ -8,7 +8,6 @@ from data_cleaner.transformer_actions.helpers import (
 )
 from data_cleaner.transformer_actions.udf.base import execute_udf
 from keyword import iskeyword
-from random import randint
 import pandas as pd
 import numpy as np
 import re
@@ -87,7 +86,7 @@ def impute(df, action, **kwargs):
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
     elif strategy == ImputationStrategy.SEQ:
-        timeseries_cols = action_options.get('timeseries_cols')
+        timeseries_cols = action_options.get('timeseries_index')
         df = df.sort_values(by=timeseries_cols, axis=0)
         df[columns] = df[columns].fillna(method='ffill')
     elif strategy == ImputationStrategy.RANDOM:
