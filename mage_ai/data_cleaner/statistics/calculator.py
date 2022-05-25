@@ -71,6 +71,8 @@ class StatisticsCalculator():
                 if data['count'] > 0 else 0
             df_dedupe = df.drop_duplicates()
             data['duplicate_row_count'] = df.shape[0] - df_dedupe.shape[0]
+            data['empty_column_count'] = \
+                len([col for col in df.columns if data[f'{col}/count'] == 0])
 
             # object_key = s3_paths.path_statistics_overview(self.object_key_prefix)
             # s3_data.upload_json_sorted(self.s3_client, object_key, data)
