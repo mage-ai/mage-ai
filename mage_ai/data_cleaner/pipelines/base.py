@@ -1,4 +1,9 @@
 from data_cleaner.cleaning_rules.base import STATUS_COMPLETED
+from data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
+from data_cleaner.cleaning_rules.impute_values import ImputeValues
+from data_cleaner.cleaning_rules.reformat_values import ReformatValues
+from data_cleaner.cleaning_rules.remove_collinear_columns \
+    import RemoveCollinearColumns
 from data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
     import RemoveColumnsWithHighEmptyRate
 from data_cleaner.cleaning_rules.remove_columns_with_single_value \
@@ -8,6 +13,10 @@ from data_cleaner.cleaning_rules.remove_duplicate_rows \
 from data_cleaner.transformer_actions.base import BaseAction
 
 DEFAULT_RULES = [
+    CleanColumnNames,
+    ImputeValues,
+    ReformatValues,
+    RemoveCollinearColumns,
     RemoveColumnsWithHighEmptyRate,
     RemoveColumnsWithSingleValue,
     RemoveDuplicateRows,

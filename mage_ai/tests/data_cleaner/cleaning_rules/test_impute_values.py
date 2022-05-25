@@ -59,7 +59,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -117,7 +118,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -177,7 +179,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -250,7 +253,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -350,7 +354,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -413,7 +418,8 @@ class ImputeValuesTest(TestCase):
                     action_code='state != null and location != null',
                     axis='row',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -493,7 +499,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
@@ -565,7 +572,8 @@ class ImputeValuesTest(TestCase):
                     action_code='',
                     axis='column',
                     outputs=[]
-                )
+                ),
+                status='not_applied'
             )
         ]
         suggestions = ImputeValues(
