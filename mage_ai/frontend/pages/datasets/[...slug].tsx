@@ -14,6 +14,7 @@ import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
 function Data() {
 
   // TODO: Replace with API Call during Integration
+  // Datatable
   const ColumnHeaderSample = [
     {
       label: "Number of purchases",
@@ -74,14 +75,37 @@ function Data() {
         ],
         uuid: 'Row 7',
       },
-
     ],
   };
-  
+
+  // Statistics (Quality Metrics)
+  const StatSample = {
+    rowData: [
+      {
+        columnValues: [
+          "Validity", "0.6"
+        ],
+        uuid: "Validity"
+      },
+      {
+        columnValues: [
+          "Completeness", "0.5"
+        ],
+        uuid: "Completeness"
+      },
+      {
+        columnValues: [
+          "Uniformity", "1"
+        ],
+        uuid: "Uniformity"
+      },
+    ],
+  };
+
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
+    const pathname = window?.location?.pathname;
     e.preventDefault()
-    const pathname = window.location.pathname;
     Router.push(`${pathname}/features`)
   };
 
@@ -101,7 +125,16 @@ function Data() {
       columnHeaders={ColumnHeaderSample} 
       rowGroupData={[rowGroupDataSample]}
     />
-  )
+  );
+
+  const statsEl = (
+    <SimpleDataTable>
+      columnFlexNumbers={[1, 1]}
+      columnHeaders={[{label:'Quality Metrics',},]}
+      rowGroupData={[StatSample]}
+    </SimpleDataTable>
+  );
+
   const tabsEl = (
       <Tabs 
         defaultKey={tab}
@@ -115,7 +148,10 @@ function Data() {
           </Spacing>
         </Tab>
         <Tab label="Report" key="reports">
+          <Spacing pb={3} pt={3}>
             <Text large bold> Reports go here </Text> 
+            {statsEl}
+          </Spacing>
         </Tab>
         <Tab label="Visualization" key="visualizations"> </Tab>
       </Tabs>
