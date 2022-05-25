@@ -207,9 +207,16 @@ class ImputeValuesTest(TestCase):
             'industry': 'zip_code'
         }
         statistics = {
+            'profit/count': 5,
             'profit/null_value_rate': 3/8,
+            'company/count': 5,
             'company/null_value_rate': 3/8,
-            'industry/null_value_rate': 3/8
+            'company/mode': 'one',
+            'company/mode_ratio': 4/5,
+            'industry/count': 5,
+            'industry/null_value_rate': 3/8,
+            'industry/mode': 34934,
+            'industry/mode_ratio': 3/5
         }
         expected_suggestions = [
             dict(
@@ -309,9 +316,15 @@ class ImputeValuesTest(TestCase):
             'source/count': cleaned_df['source'].count(),
             'source/count_distinct': len(cleaned_df['source'].value_counts().index)-1,
             'source/null_value_rate': 1 - cleaned_df['source'].count()/len(df),
+            'source/mode': cleaned_df['source'].mode(),
+            'source/mode_ratio': cleaned_df['source'].value_counts().max() / 
+                                 cleaned_df['source'].count(),
             'dest/count': cleaned_df['dest'].count(),
             'dest/count_distinct': len(cleaned_df['dest'].value_counts().index)-1,
             'dest/null_value_rate': 1 - cleaned_df['dest'].count()/len(df),
+            'dest/mode': cleaned_df['dest'].mode(),
+            'dest/mode_ratio': cleaned_df['dest'].value_counts().max()  / 
+                               cleaned_df['dest'].count(),
         }
         expected_suggestions = [
             dict(
@@ -431,10 +444,13 @@ class ImputeValuesTest(TestCase):
             'state/count': 7,
             'state/count_distinct': 6,
             'state/null_value_rate': 0.4,
+            'state/max_null_seq': 1,
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
-            'timestamp/null_value_rate': 1/10
+            'location/max_null_seq': 4,
+            'timestamp/null_value_rate': 1/10,
+            'timestamp/max_null_seq': 1,
         }
         expected_suggestions = [
             dict(
@@ -508,10 +524,13 @@ class ImputeValuesTest(TestCase):
             'state/count': 7,
             'state/count_distinct': 6,
             'state/null_value_rate': 0.4,
+            'state/max_null_seq': 1,
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
-            'timestamp/null_value_rate': 0
+            'location/max_null_seq': 3,
+            'timestamp/null_value_rate': 0,
+            'timestamp/max_null_seq': 0,
         }
         expected_suggestions = [
             dict(

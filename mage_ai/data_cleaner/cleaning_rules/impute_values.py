@@ -55,44 +55,6 @@ class TypeImputeSubRule():
             'Children of TypeImputeSubRule must override \'evaluate()\''
         )
 
-    def get_longest_null_seq(self, column):
-        """
-        Gets the length of the longest consecutive sequence of null values observed in
-        the column
-        """
-        longest_sequence = 0
-        curr_sequence = 0
-        for is_null in self.df[column].isna():
-            if is_null:
-                curr_sequence += 1
-            else:
-                longest_sequence = max(longest_sequence, curr_sequence)
-                curr_sequence = 0
-        return longest_sequence
-
-    def get_statistics(self, column, statistic):
-        """
-        Gets the statistic requested. If not found, the statistic is calculated and cached
-        for the next call
-        """
-        value = self.statistics.get(f'{column}/{statistic}')
-        if value is None:
-            if statistic == 'count':
-                value = self.df[column].count()
-            elif statistic == 'count_distinct':
-                value = self.df[column].nunique()
-            elif statistic == 'null_value_rate':
-                value = 1 - self.df[column].count() / len(self.df[column])
-            elif statistic == 'mode':
-                value = self.df[column].value_counts().index[0]
-            elif statistic == 'mode_ratio':
-                value_counts = self.df[column].value_counts()
-                value = value_counts.max() / value_counts.sum()
-            elif statistic == 'max_null_seq':
-                value = self.get_longest_null_seq(column)
-            self.statistics[f'{column}/{statistic}'] = value
-        return value
-
 
 class NumericalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = NUMBER_TYPES
@@ -117,17 +79,17 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         3b. If null value rate is less that AVG_OR_MED_EMPTY_UB and skew is less than SKEW_UB
            suggest imputing with mean value; else impute with median value
         """
-        if self.get_statistics(column, 'null_value_rate') == 0:
+        if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
         else:
-            if self.get_statistics(column, 'count') <= self.DATA_SM_UB:
+            if self.statistics[f'{column}/count']  <= self.DATA_SM_UB:
                 avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
             else:
                 avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['large']
-            if self.get_statistics(column, 'null_value_rate') <= avg_or_med_empty_ub:
+            if self.statistics[f'{column}/null_value_rate']  <= avg_or_med_empty_ub:
                 if abs(self.df[column].skew()) < self.SKEW_UB:
                     return ImputationStrategy.AVERAGE
                 else:
@@ -153,14 +115,14 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
-        if self.get_statistics(column, 'null_value_rate') == 0:
+        if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
-        elif self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB:
+        elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
-        elif self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB:
+        elif self.statistics[f'{column}/null_value_rate'] <= self.RAND_EMPTY_UB:
             return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
 
@@ -178,9 +140,9 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else suggest no imputation (no good fit)
         """
-        if self.get_statistics(column, 'null_value_rate') == 0:
+        if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH:
+        elif self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH:
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
@@ -205,11 +167,11 @@ class StringImputeSubRule(TypeImputeSubRule):
         5. Else suggest no imputation (no good fit)
         """
         if (self.is_timeseries and 
-            self.get_statistics(column, 'max_null_seq') <= self.MAX_NULL_SEQ_LENGTH):
+            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
-        elif(self.get_statistics(column, 'mode_ratio') >= self.MODE_PROP_LB):
+        elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
-        elif(self.get_statistics(column, 'null_value_rate') <= self.RAND_EMPTY_UB):
+        elif self.statistics[f'{column}/null_value_rate']  <= self.RAND_EMPTY_UB:
             return ImputationStrategy.RANDOM
         return ImputationStrategy.NOOP
 
