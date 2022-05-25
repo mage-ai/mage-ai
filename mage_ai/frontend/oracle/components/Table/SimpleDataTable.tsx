@@ -63,7 +63,7 @@ function SimpleDataTable({
   selectedRowIndexes,
   small,
   flex,
-}: SimpleDataTableProps) {
+}: any) {
   const numberOfRowGroups = useMemo(() => rowGroupData.length, [rowGroupData]);
 
   return (
