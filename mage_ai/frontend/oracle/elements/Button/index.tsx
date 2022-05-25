@@ -30,6 +30,7 @@ export type ButtonProps = {
   small?: boolean;
   selected?: boolean;
   target?: string;
+  transparent?: boolean;
   width?: number;
 };
 
@@ -80,6 +81,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => !props.iconOnly && props.small && `
     ${SMALL}
+  `}
+
+  ${props => props.transparent && `
+    background-color: transparent; !important
   `}
 
   ${props => !props.disabled && `

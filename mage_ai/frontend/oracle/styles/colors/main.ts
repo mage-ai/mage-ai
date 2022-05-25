@@ -9,6 +9,7 @@ export const NAVY = '#0045F3';
 export const PURPLE = '#7F4FEB';
 export const PURPLE_ALT = '#F7F4FE';
 export const PURPLE_HIGHLIGHT = '#FAF8FE';
+export const PURPLE_DISABLED = 'rgba(201, 206, 218, 0.12)';
 export const RED = '#FF0505';
 export const RED_HIGHLIGHT = '#FFF0F0';
 export const GRAY_LINES = '#D8DCE3';
