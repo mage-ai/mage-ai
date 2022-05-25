@@ -41,8 +41,11 @@ const data = [
 ];
 
 const Dashboard: NextPage = () => (
-  <Layout centerAlign>
-    <Tabs defaultKey="datasets" bold>
+  <Layout
+    centerAlign
+    header={<Spacing m={2} />}
+  >
+    <Tabs defaultKey="datasets" bold large>
       <Tab key="datasets" label="Datasets">
         <Spacing pb={3} pt={3}>
           <RowDataTable
@@ -53,10 +56,13 @@ const Dashboard: NextPage = () => (
             }
           >
           {
-            data.length
+            data.length > 0
               ?
               data.map(n => (
-                <RowCard key={n.id} columnFlexNumbers={[4, 1, 1, 1]}>
+                <RowCard
+                  key={n.id}
+                  columnFlexNumbers={[4, 1, 1, 1]}
+                >
                   <FlexContainer alignItems="center">
                     <Copy primary />&nbsp;
                     <Text>{n.metadata.name}</Text>

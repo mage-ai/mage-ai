@@ -7,6 +7,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import TabEl, { TabArgsProps } from './Tab';
+import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
@@ -19,6 +20,7 @@ export type TabsProps = {
   containerWidthPercentage?: number;
   defaultKey?: string;
   fullWidth?: boolean;
+  large?: boolean;
   noBottomBorder?: boolean;
   onChange?: any;
 };
@@ -78,6 +80,7 @@ function Tabs({
   containerWidthPercentage,
   defaultKey,
   fullWidth,
+  large,
   noBottomBorder,
   onChange,
 }: TabsProps) {
@@ -108,6 +111,7 @@ function Tabs({
                   default={!active}
                   disabled={props.disabled}
                   flex={1}
+                  large={large}
                   noHoverUnderline
                   noOutline
                   onClick={() => {
@@ -128,6 +132,7 @@ function Tabs({
                       bold={bold && active}
                       disabled={props.disabled}
                       fullWidth={fullWidth}
+                      large={large}
                     >
                       {props.beforeChildren && React.cloneElement(props.beforeChildren, childProps)}
 
@@ -135,7 +140,9 @@ function Tabs({
                         ml={props.beforeChildren ? 1 : 0}
                         mr={props.afterChildren ? 1 : 0}
                       >
-                        {props.label}
+                        <Text bold={bold} large={large}>
+                          {props.label}
+                        </Text>
                       </Spacing>
 
                       {props.afterChildren && React.cloneElement(props.afterChildren, childProps)}
