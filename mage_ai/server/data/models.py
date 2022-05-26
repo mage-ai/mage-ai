@@ -15,6 +15,7 @@ class FeatureSet(Model):
     def __init__(self, id=None, df=None, name=None):
         super().__init__(id)
 
+        # Update metadata
         try:
             metadata = self.metadata
         except Exception:
@@ -25,14 +26,16 @@ class FeatureSet(Model):
             metadata['name'] = name
 
         if self.pipeline is None:
-            pipeline = Pipeline()
+            pipeline = Pipeline(feature_set_id=self.id)
             metadata['pipeline_id'] = pipeline.id
-            self.metadata = metadata
+        self.metadata = metadata
 
         if df is None:
-            self._data = pd.read_parquet(os.path.join(self.dir, 'data.parquet'), engine='pyarrow')
+            self._data = self.read_parquet_file('data.parquet')
+            self._data_orig = self.read_parquet_file('data_orig.parquet')
         else:
             self.data = df
+            self.data_orig = df
 
     @property
     def data(self):
@@ -43,6 +46,15 @@ class FeatureSet(Model):
         df.to_parquet(os.path.join(self.dir, 'data.parquet'))
         self._data = df
     
+    @property
+    def data_orig(self):
+        return self._data_orig
+
+    @data_orig.setter
+    def data_orig(self, df):
+        df.to_parquet(os.path.join(self.dir, 'data_orig.parquet'))
+        self._data_orig = df
+
     @property
     def metadata(self):
         return self.read_json_file('metadata.json')
@@ -89,7 +101,7 @@ class FeatureSet(Model):
             sample_size = len(self._data) 
         return self._data.sample(n=sample_size)
 
-    def write_files(self, obj):
+    def write_files(self, obj, write_orig_data=False):
         if 'df' in obj:
             self.data = obj['df']
         if 'metadata' in obj:
@@ -100,6 +112,18 @@ class FeatureSet(Model):
             self.statistics = obj['statistics']
         if 'insights' in obj:
             self.insights = obj['insights']
+        if write_orig_data and 'df' in obj:
+            self.data_orig = obj['df']
+        # Update metadata
+        metadata = self.metadata
+        if 'column_types' in obj:
+            metadata['column_types'] = obj['column_types']
+        if 'statistics' in obj:
+            metadata['statistics'] = dict(
+                count=obj['statistics']['count'],
+                quality='Good' if obj['statistics']['validity'] >= 0.8 else 'Bad',
+            )
+        self.metadata = metadata
 
     # def column(self, column):
     #     column_dict = dict()
@@ -126,13 +150,31 @@ class FeatureSet(Model):
 
 
 class Pipeline(Model):
-    def __init__(self, id=None, pipeline=None):
+    def __init__(self, id=None, feature_set_id=None, pipeline=None):
         super().__init__(id)
+
+        # Update metadata
+        try:
+            metadata = self.metadata
+        except Exception:
+            self.metadata = {}
+            metadata = self.metadata
+
+        if feature_set_id is not None:
+            metadata['feature_set_id'] = feature_set_id
+        self.metadata = metadata
+
         if pipeline is not None:
             self.pipeline = pipeline
-        else:
-            self.pipeline = BasePipeline()
+
+    @property
+    def metadata(self):
+        return self.read_json_file('metadata.json')
     
+    @metadata.setter
+    def metadata(self, metadata):
+        return self.write_json_file('metadata.json', metadata)
+
     @property
     def pipeline(self):
         actions = self.read_json_file('pipeline.json')

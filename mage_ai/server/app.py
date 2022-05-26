@@ -13,6 +13,7 @@ app = Flask(__name__,
             static_folder="../frontend/out",
             template_folder="../frontend/out")
 
+
 @app.route("/")
 def index():
     return render_template('index.html')
@@ -186,7 +187,18 @@ def update_pipeline(id):
     """
     request_data = request.json
     pipeline = Pipeline(id=id)
-    pipeline.pipeline = BasePipeline(request_data.get('actions', []))
+    actions = request_data.get('actions', [])
+    clean_pipeline = BasePipeline(actions=actions)
+    pipeline.pipeline = clean_pipeline
+    # # 1. Transform the data
+    # # 2. Recalculate stats and suggestions
+    feature_set_id = pipeline.metadata.get('feature_set_id')
+    if feature_set_id is not None:
+        feature_set = FeatureSet(id=feature_set_id)
+        df_transformed = clean_pipeline.transform(feature_set.data_orig)
+        result = clean_data(df_transformed, transform=False)
+        feature_set.write_files(result)
+
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -208,11 +220,6 @@ def clean_df(df, name, pipeline_uuid=None):
     result = clean_data(df)
 
     feature_set.write_files(result)
-
-    column_types = result['column_types']
-    metadata['column_types'] = column_types
-
-    feature_set.metadata = metadata
     return (feature_set, result['df'])
 
 
@@ -223,15 +230,7 @@ def connect_df(df, name):
 
     result = clean_data(df, transform=False)
 
-    feature_set.write_files(result)
-
-    column_types = result['column_types']
-    metadata['column_types'] = column_types
-    metadata['statistics'] = dict(
-        count=result['statistics']['count'],
-        quality='Good' if result['statistics']['validity'] >= 0.8 else 'Bad',
-    )
-    feature_set.metadata = metadata
+    feature_set.write_files(result, write_orig_data=True)
     return (feature_set, df)
 
 

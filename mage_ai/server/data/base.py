@@ -1,8 +1,8 @@
 from numpyencoder import NumpyEncoder
-
 import json
 import os
 import os.path
+import pandas as pd
 
 # This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
@@ -35,12 +35,21 @@ class Model():
         file_path = os.path.join(self.dir, file_name)
         if not os.path.exists(file_path):
             return {}
-        with open(os.path.join(self.dir, file_path)) as file:
+        with open(file_path) as file:
             return json.load(file)
 
     def write_json_file(self, file_name, obj={}):
         with open(os.path.join(self.dir, file_name), 'w') as file:
             json.dump(obj, file, cls=NumpyEncoder)
+
+    def read_parquet_file(self, file_name):
+        file_path = os.path.join(self.dir, file_name)
+        if not os.path.exists(file_path):
+            return pd.DataFrame()
+        return pd.read_parquet(file_path, engine='pyarrow',)
+
+    def write_parquet_file(self, file_name, df):
+        df.to_parquet(os.path.join(self.dir, file_name))
 
     def to_dict(self, detailed):
         pass
