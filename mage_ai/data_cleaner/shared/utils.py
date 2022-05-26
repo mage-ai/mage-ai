@@ -15,24 +15,19 @@ def clean_series(series, column_type, dropna=True):
     if dropna:
         series_cleaned = series_cleaned.dropna()
 
+    first_item = series_cleaned.dropna().iloc[0]
     if column_type == NUMBER:
-        try:
+        if type(first_item) is str:
             series_cleaned = series_cleaned.str.replace(',', '')
-        except AttributeError:
-            # must be a float -> already cleaned
-            return series_cleaned
         try:
             series_cleaned = series_cleaned.astype(float).astype(int)
         except ValueError:
             series_cleaned = series_cleaned.astype(float)
     elif column_type == NUMBER_WITH_DECIMALS:
-        try:
+        if type(first_item) is str:
             series_cleaned = series_cleaned.str.replace(',', '')
-        except AttributeError:
-            # must be a float -> already cleaned
-            return series_cleaned
         series_cleaned = series_cleaned.astype(float)
-    elif column_type == DATETIME:
+    elif column_type == DATETIME and type(first_item) is str:
         series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors='coerce')
 
     return series_cleaned
