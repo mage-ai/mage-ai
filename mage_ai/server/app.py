@@ -221,7 +221,7 @@ def connect_df(df, name):
 
     metadata = feature_set.metadata
 
-    result = analyze(df)
+    result = clean_data(df, transform=False)
 
     feature_set.write_files(result)
 
