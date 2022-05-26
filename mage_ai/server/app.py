@@ -1,13 +1,17 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
 from data_cleaner.pipelines.base import BasePipeline
-from flask import render_template, request
+from flask import Flask, render_template, request
 from numpyencoder import NumpyEncoder
 from server.data.models import FeatureSet, Pipeline
-from server import app
+
 import json
 import simplejson
 import threading
 
+app = Flask(__name__,
+            static_url_path='',
+            static_folder="../frontend/out",
+            template_folder="../frontend/out")
 
 @app.route("/")
 def index():
