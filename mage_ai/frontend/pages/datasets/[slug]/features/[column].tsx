@@ -128,7 +128,7 @@ function Feature() {
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
     e.preventDefault()
-    Router.push(`${pathname}/features`)
+    Router.push(`/datasets`)
   };
 
 
@@ -137,7 +137,7 @@ function Feature() {
       <Button 
         onClick={viewColumns}
       >
-        <Text bold> Column view </Text>
+        <Text bold> Datasets view </Text>
       </Button>
     </FlexContainer>
   );
