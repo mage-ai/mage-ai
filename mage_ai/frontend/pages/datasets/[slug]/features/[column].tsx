@@ -1,17 +1,15 @@
-import Button from "@oracle/elements/Button";
-import Layout from "@oracle/components/Layout";
-import Text from "@oracle/elements/Text";
-
 import Router from 'next/router';
-import FlexContainer from "@oracle/components/FlexContainer";
-import Tabs, { Tab } from "@oracle/components/Tabs";
-import Panel from "@oracle/components/Panel";
-import styled from "styled-components";
 import { useState } from "react";
-import Spacing from "@oracle/elements/Spacing";
-import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
-import { UNIT } from "@oracle/styles/units/spacing";
+
+import Button from "@oracle/elements/Button";
 import Flex from "@oracle/components/Flex";
+import FlexContainer from "@oracle/components/FlexContainer";
+import Layout from "@oracle/components/Layout";
+import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
+import Spacing from "@oracle/elements/Spacing";
+import Tabs, { Tab } from "@oracle/components/Tabs";
+import Text from "@oracle/elements/Text";
+import { UNIT } from "@oracle/styles/units/spacing";
 
 function Feature() {
 
@@ -126,9 +124,8 @@ function Feature() {
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
-    const pathname = window?.location?.pathname;
-    e.preventDefault()
-    Router.push(`/datasets`)
+    e.preventDefault();
+    Router.push(`/datasets`);
   };
 
 
@@ -216,9 +213,9 @@ function Feature() {
       centerAlign
     >
       <Spacing mt={UNIT} />
-      { headEl }
+      {headEl}
       <Spacing mt={UNIT} />
-      { tabsEl }
+      {tabsEl}
     </Layout>
   );
 }
