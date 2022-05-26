@@ -11,6 +11,7 @@ export type BaseIconProps = {
   muted?: boolean;
   opacity?: number;
   primary?: boolean;
+  secondary?: boolean;
   size?: number;
   stroke?: string;
   style?: any;
@@ -85,6 +86,14 @@ export const SHARED_STYLES = css<any>`
 
   ${props => !props.useStroke && !props.disabled && props.primary && `
     fill: ${(props.theme.interactive || light.interactive).linkPrimary};
+  `}
+
+  ${props => props.useStroke && !props.disabled && props.secondary && `
+    stroke: ${(props.theme.interactive || light.interactive).linkSecondary};
+  `}
+
+  ${props => !props.useStroke && !props.disabled && props.secondary && `
+    fill: ${(props.theme.interactive || light.interactive).linkSecondary};
   `}
 
 `;
