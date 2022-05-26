@@ -16,9 +16,7 @@ const ColumnView: NextPage = () => {
   const column_id = DATASET_PAYLOAD.id;
   const column_types = Object.entries(DATASET_PAYLOAD.metadata.column_types);
 
-  const viewDataset = (e) => {
-    Router.push(`/datasets/${column_id}`);
-  };
+  const viewDataset = () => Router.push(`/datasets/${column_id}`);
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
