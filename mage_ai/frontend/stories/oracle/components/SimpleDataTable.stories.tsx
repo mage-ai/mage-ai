@@ -42,7 +42,6 @@ const ColumnHeaderSample = [
   },
 ]
 
-// eslint-disable-next-line react/prop-types
 const TemplateWithTheme = ({ children, ...props }) => (
   <ThemeBlock>
     <SimpleDataTable 

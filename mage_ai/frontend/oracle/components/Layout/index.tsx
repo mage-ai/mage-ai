@@ -4,6 +4,7 @@ import styled, { css } from 'styled-components';
 import { BREAKPOINT_X_LARGE } from '@styles/theme';
 import { UNIT } from '@oracle/styles/units/spacing';
 import light from '@oracle/styles/themes/light';
+import Spacing from '@oracle/elements/Spacing';
 
 export type AsideProps = {
   after?: React.ReactNode;
@@ -88,7 +89,11 @@ function Layout({
             {children}
           </MainContentStyle>
         </MainStyle>
-        {after}
+         { after && 
+          <Spacing ml={UNIT}>
+            {after}
+          </Spacing>
+         }
       </LayoutContainerStyle>
       {footer}
     </WrapperStyle>
