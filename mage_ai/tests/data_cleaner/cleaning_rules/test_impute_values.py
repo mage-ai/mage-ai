@@ -1,5 +1,5 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
-from data_cleaner.shared.utils import clean_df
+from data_cleaner.shared.utils import clean_dataframe
 from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
@@ -365,8 +365,9 @@ class ImputeValuesTest(TestCase):
                 status='not_applied'
             )
         ]
+        df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
-            clean_df(df),
+            df,
             column_types,
             statistics,
         ).evaluate()
@@ -523,7 +524,7 @@ class ImputeValuesTest(TestCase):
     def test_seq_edge(self):
         df = pd.DataFrame(
             [
-                [None, '', '12-26-2022'],
+                ['MI', '32453', '12-26-2022'],
                 ['CA', '', '12-28-2022'],
                 ['', None, '12-28-2022'],
                 ['MA', '12214', '12-31-2022'],
@@ -542,12 +543,15 @@ class ImputeValuesTest(TestCase):
             'state/count_distinct': 6,
             'state/null_value_rate': 0.4,
             'state/max_null_seq': 1,
+            'state/mode_ratio': 2/7,
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
             'location/max_null_seq': 3,
+            'location/mode_ratio': 1/4,
             'timestamp/null_value_rate': 0,
             'timestamp/max_null_seq': 0,
+            'timestamp/mode_ratio': 1/10,
             'is_timeseries': True,
             'timeseries_index': ['timestamp']
         }
@@ -588,8 +592,9 @@ class ImputeValuesTest(TestCase):
                 status='not_applied'
             )
         ]
+        df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
-            clean_df(df),
+            df,
             column_types,
             statistics,
         ).evaluate()
