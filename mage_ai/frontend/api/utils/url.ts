@@ -7,7 +7,7 @@ export function buildUrl(
   childId: string = null,
   query: any = {},
 ): string {
-  let path: string = `${process.env.NEXT_PUBLIC_API_ENDPOINT}/${resource}`;
+  let path: string = `http://localhost:5000/${resource}`;
   if (id) {
     path = `${path}/${id}`;
   }
