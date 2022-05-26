@@ -145,14 +145,14 @@ function Feature() {
   const colEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics',},]}
+      columnHeaders={[{label:'Column values',},]}
       rowGroupData={[colSample]}
     />
   )
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics',},]}
+      columnHeaders={[{label:'Column summary',},]}
       rowGroupData={[metricSample]}
     />
   );
@@ -160,7 +160,7 @@ function Feature() {
   const warnEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics',},]}
+      columnHeaders={[{label:'Warnings',},]}
       rowGroupData={[warningSample]}
     />
   );
