@@ -1,3 +1,4 @@
+from collections import deque
 from data_cleaner.cleaning_rules.base import STATUS_COMPLETED
 from data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
@@ -11,7 +12,8 @@ from data_cleaner.cleaning_rules.remove_columns_with_single_value \
 from data_cleaner.cleaning_rules.remove_duplicate_rows \
     import RemoveDuplicateRows
 from data_cleaner.transformer_actions.base import BaseAction
-from data_cleaner.transformer_actions.constants import ActionType
+from data_cleaner.statistics.calculator import StatisticsCalculator
+from mage_ai.data_cleaner.column_type_detector import infer_column_types
 
 DEFAULT_RULES = [
     CleanColumnNames,
@@ -28,13 +30,15 @@ class BasePipeline():
     def __init__(self, actions=[]):
         self.actions = actions
         self.rules = DEFAULT_RULES
+        
 
     def create_actions(self, df, column_types, statistics):
+        self.calculator = StatisticsCalculator(column_types)
         self.column_types = column_types
-        self.statistics = statistics
+        self.statistics = self.calculator.calculate_statistics_overview(df)
         all_suggestions = []
         for rule in self.rules:
-            suggestions = rule(df, column_types, statistics).evaluate()
+            suggestions = rule(df, column_types, self.statistics).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions
@@ -44,26 +48,19 @@ class BasePipeline():
         if len(self.actions) == 0:
             print('Pipeline is empty.')
             return df
-        if self.actions[0]['action_payload']['action_type'] == ActionType.CLEAN_COLUMN_NAME:
-            action = self.actions[0]
-            df_transformed = BaseAction(action['action_payload']).execute(df)
-            action['status'] = STATUS_COMPLETED
-            new_column_types = {}
-            new_statistics = {}
-            new_statistics['timeseries_index'] = []
-            for old_key, new_key in zip(df.columns, df_transformed.columns):
-                new_column_types[new_key] = self.column_types[old_key]
-                search_term = old_key + '/'
-                for key in filter(lambda x: x.startswith(search_term), self.statistics):
-                    new_statistics[key.replace(old_key, new_key)] = self.statistics[key]
-                if old_key in self.statistics['timeseries_index']:
-                    new_statistics['timeseries_index'].append(new_key)
-            new_statistics['is_timeseries'] = self.statistics['is_timeseries']
-            new_statistics['count'] = self.statistics['count']
-            self.actions = self.create_actions(df_transformed, new_column_types, new_statistics)
-            self.statistics = new_statistics
-            self.column_types = new_column_types
-        for action in self.actions:
+        action_queue = deque(self.actions)
+        completed_queue = []
+        df_transformed = df
+        while len(action_queue) != 0:
+            action = action_queue.popleft()
             df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
+            completed_queue.append(action)
+            action_queue = deque(self.update_suggestions(df_transformed))
+        self.actions = completed_queue
         return df_transformed
+
+    def update_suggestions(self, df_transformed):
+        new_statistics = {}
+        new_column_types = infer_column_types(df_transformed)
+        return self.create_actions(df_transformed, new_column_types, new_statistics)

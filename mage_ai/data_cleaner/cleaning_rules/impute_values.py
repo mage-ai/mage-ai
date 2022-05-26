@@ -166,6 +166,8 @@ class StringImputeSubRule(TypeImputeSubRule):
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
+        if self.statistics[f'{column}/null_value_rate']  == 0:
+            return ImputationStrategy.NOOP
         if (self.is_timeseries and 
             self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH):
             return ImputationStrategy.SEQ
