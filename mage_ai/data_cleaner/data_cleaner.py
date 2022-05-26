@@ -11,9 +11,9 @@ def analyze(df):
     return cleaner.analyze(df)
 
 
-def clean(df):
+def clean(df, transform=True):
     cleaner = DataCleaner()
-    return cleaner.clean(df)
+    return cleaner.clean(df, transform=transform)
 
 
 class DataCleaner():
@@ -35,7 +35,7 @@ class DataCleaner():
             statistics=statistics,
         )
 
-    def clean(self, df):
+    def clean(self, df, transform=True):
         df_stats = self.analyze(df)
         pipeline = BasePipeline()
         with timer('data_cleaner.create_suggested_actions'):
@@ -44,10 +44,13 @@ class DataCleaner():
                 df_stats['column_types'],
                 df_stats['statistics'],
             )
-        with timer('data_cleaner.transform_data'):
-            df_cleaned = pipeline.transform(df)
+        if transform:
+            with timer('data_cleaner.transform_data'):
+                df_transformed = pipeline.transform(df)
+        else:
+            df_transformed = df
         return merge_dict(df_stats, dict(
-            df=df_cleaned,
+            df=df_transformed,
             suggestions=suggested_actions,
             pipeline=pipeline,
         ))
