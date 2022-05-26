@@ -1,4 +1,4 @@
-from server.routes import clean_df, connect_df, launch as launch_flask
+from server.app import clean_df, connect_df, launch as launch_flask
 
 def launch():
     launch_flask()
