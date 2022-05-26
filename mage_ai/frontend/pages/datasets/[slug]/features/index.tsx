@@ -13,10 +13,10 @@ import { DATASET_PAYLOAD, isBadQuality } from '@components/utils'
 import { UNIT } from '@oracle/styles/units/spacing'
 
 const ColumnView: NextPage = () => {
-  const column_id = DATASET_PAYLOAD.id;
-  const column_types = Object.entries(DATASET_PAYLOAD.metadata.column_types);
+  const columnID = DATASET_PAYLOAD.id;
+  const columnTypes = Object.entries(DATASET_PAYLOAD.metadata.column_types);
 
-  const viewDataset = () => Router.push(`/datasets/${column_id}`);
+  const viewDataset = () => Router.push(`/datasets/${columnID}`);
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
@@ -39,7 +39,7 @@ const ColumnView: NextPage = () => {
       headerTitle="columns"
     >
     {
-      column_types.map(([colName, colType], i) => {
+      columnTypes.map(([colName, colType], i) => {
         const quality = DATASET_PAYLOAD.statistics[`${colName}/quality`];
 
         return (
