@@ -159,7 +159,7 @@ class StatisticsCalculator():
         #     return {}
 
         column_type = self.column_types.get(col)
-        series_non_null = series.dropna().copy()
+        series_non_null = series.dropna()
 
 
         count_unique = len(df_value_counts.index)
@@ -198,12 +198,12 @@ class StatisticsCalculator():
                 data[f'{col}/mode'] = mode
                 data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
 
-            data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
+            data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series)
 
         # Detect mismatched formats for some column types
         data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
-        data[f'{col}/invalid_value_rate'] = 0 if series_cleaned.size == 0 else \
-            data[f'{col}/invalid_value_count'] / series_cleaned.size
+        data[f'{col}/invalid_value_rate'] = 0 if series.size == 0 else \
+            data[f'{col}/invalid_value_count'] / series.size
 
         # Calculate quality metrics
         data[f'{col}/completeness'] = 1 - data[f'{col}/null_value_rate']
