@@ -78,5 +78,5 @@ class RemoveCollinearColumns(BaseRule):
         sum_sq_model = np.sum(predictions * predictions)
         sum_sq_to = np.sum(responses * responses)
 
-        r_sq = sum_sq_model / sum_sq_to
+        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
         return 1 / (1 - r_sq + self.EPSILON)
