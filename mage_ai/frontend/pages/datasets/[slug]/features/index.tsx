@@ -29,46 +29,46 @@ const ColumnView: NextPage = () => {
   );
 
   return (
-  <Layout
-    centerAlign
-    header={<Spacing mt={UNIT} />}
-  >
-    {headEl}
-    <Spacing pb={3} pt={3}>
-    <RowDataTable
-      headerTitle="columns"
+    <Layout
+      centerAlign
+      header={<Spacing mt={UNIT} />}
     >
-    {
-      columnTypes.map(([colName, colType], i) => {
-        const quality = DATASET_PAYLOAD.statistics[`${colName}/quality`];
+      {headEl}
+      <Spacing pb={3} pt={3}>
+      <RowDataTable
+        headerTitle="columns"
+      >
+      {
+        columnTypes.map(([colName, colType], i) => {
+          const quality = DATASET_PAYLOAD.statistics[`${colName}/quality`];
 
-        return (
-        <RowCard
-          key={`${colName}-${i}`}
-          columnFlexNumbers={[1, 9, 2]}
-        >
-          <FlexContainer alignItems="center">
-            {/* no icons for column types? */}
-            <Text>{i+1}</Text>
-            <Spacing mr={4} />
-            <Column secondary />
-            <Spacing mr={1} />
-            <Text>{colName}</Text>
-          </FlexContainer>
-          <Spacing mr={8} />
-          <Text
-            bold={isBadQuality(quality)}
-            danger={isBadQuality(quality)}
+          return (
+          <RowCard
+            key={`${colName}-${i}`}
+            columnFlexNumbers={[1, 9, 2]}
           >
-            {quality}
-          </Text>
-        </RowCard>
-        );
-      })
-    }
-    </RowDataTable>
-    </Spacing>
-  </Layout>
+            <FlexContainer alignItems="center">
+              {/* no icons for column types? */}
+              <Text>{i+1}</Text>
+              <Spacing mr={4} />
+              <Column secondary />
+              <Spacing mr={1} />
+              <Text>{colName}</Text>
+            </FlexContainer>
+            <Spacing mr={8} />
+            <Text
+              bold={isBadQuality(quality)}
+              danger={isBadQuality(quality)}
+            >
+              {quality}
+            </Text>
+          </RowCard>
+          );
+        })
+      }
+      </RowDataTable>
+      </Spacing>
+    </Layout>
   )
 }
 
