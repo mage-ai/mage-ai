@@ -201,7 +201,6 @@ class ImputeValues(BaseRule):
             self._build_transformer_action_suggestion
         )
         # TODO Clean dataframe once to remove empty strings and replace with np.nan
-        self.cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},
@@ -239,8 +238,8 @@ class ImputeValues(BaseRule):
     def evaluate(self):
         if self.df.empty:
             return []
-        null_mask = self.cleaned_df.isna().any(axis=1)
-        ratio_rows_kept = len(self.cleaned_df[~null_mask]) / len(self.df)
+        null_mask = self.df.isna().any(axis=1)
+        ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
         if ratio_rows_kept == 1:
             self.strategy_cache[ImputationStrategy.NOOP]['entries'].extend(self.df_columns)
         elif ratio_rows_kept >= self.ROW_KEPT_LB:
@@ -255,7 +254,7 @@ class ImputeValues(BaseRule):
 
     def get_exact_dtypes(self):
         def _get_exact_dtype(column):
-            dropped = self.cleaned_df[column].dropna(axis=0)
+            dropped = self.df[column].dropna(axis=0)
             try:
                 return type(dropped.iloc[0])
             except IndexError:
@@ -267,7 +266,7 @@ class ImputeValues(BaseRule):
         self.rules = list(
             map(
                 lambda x: x(
-                    self.cleaned_df,
+                    self.df,
                     self.column_types,
                     self.statistics,
                     self.is_timeseries

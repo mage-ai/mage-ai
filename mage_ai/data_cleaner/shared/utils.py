@@ -2,8 +2,11 @@ from data_cleaner.column_type_detector import (
     NUMBER,
     NUMBER_WITH_DECIMALS,
 )
+import pandas as pd
 import numpy as np
 import time
+
+from mage_ai.data_cleaner.column_type_detector import DATETIME, infer_column_types
 
 
 def clean_series(series, column_type, dropna=True):
@@ -15,11 +18,23 @@ def clean_series(series, column_type, dropna=True):
 
     if column_type == NUMBER:
         try:
+            series_cleaned = series_cleaned.str.replace(',', '')
+        except AttributeError:
+            # must be a float -> already cleaned
+            return series_cleaned
+        try:
             series_cleaned = series_cleaned.astype(float).astype(int)
         except ValueError:
             series_cleaned = series_cleaned.astype(float)
     elif column_type == NUMBER_WITH_DECIMALS:
+        try:
+            series_cleaned = series_cleaned.str.replace(',', '')
+        except AttributeError:
+            # must be a float -> already cleaned
+            return series_cleaned
         series_cleaned = series_cleaned.astype(float)
+    elif column_type == DATETIME:
+        series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors = 'coerce')
 
     return series_cleaned
 

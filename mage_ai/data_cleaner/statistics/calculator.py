@@ -159,12 +159,8 @@ class StatisticsCalculator():
         #     return {}
 
         column_type = self.column_types.get(col)
-        series_non_null = series.dropna()
+        series_non_null = series.dropna().copy()
 
-        if column_type == NUMBER:
-            series_non_null = series_non_null.astype(float).astype(int)
-        elif column_type == NUMBER_WITH_DECIMALS:
-            series_non_null = series_non_null.astype(float)
 
         count_unique = len(df_value_counts.index)
         data = {

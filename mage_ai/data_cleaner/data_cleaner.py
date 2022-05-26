@@ -2,7 +2,7 @@ from data_cleaner import column_type_detector
 from data_cleaner.analysis.calculator import AnalysisCalculator
 from data_cleaner.pipelines.base import BasePipeline
 from data_cleaner.shared.hash import merge_dict
-from data_cleaner.shared.utils import timer
+from data_cleaner.shared.utils import timer, clean_series
 from data_cleaner.statistics.calculator import StatisticsCalculator
 
 
@@ -25,7 +25,11 @@ class DataCleaner():
         """
         with timer('data_cleaner.infer_column_types'):
             column_types = column_type_detector.infer_column_types(df)
-        with timer('data_cleaner.calcualte_statistics'):
+        with timer('data_cleaner.clean_series'):
+            df = df.transform(
+                lambda col: clean_series(col, column_types[col.name], dropna=False), axis=0
+            )
+        with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types).process(df)
         with timer('data_cleaner.calculate_insights'):
             analysis = AnalysisCalculator(df, column_types).process(df)
@@ -37,6 +41,10 @@ class DataCleaner():
 
     def clean(self, df, transform=True):
         df_stats = self.analyze(df)
+        df = df.apply(
+            lambda col: clean_series(col, df_stats["column_types"][col.name], dropna=False), 
+            axis=0
+        )
         pipeline = BasePipeline()
         with timer('data_cleaner.create_suggested_actions'):
             suggested_actions = pipeline.create_actions(
