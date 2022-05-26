@@ -131,10 +131,10 @@ class RemoveCollinearColumnsTests(TestCase):
         df = pd.DataFrame([
             [1000, 'US', 30000, '10', 'cute animal #1', 100, '30'],
             ['500', 'CA', 10000, '20', 'intro to regression', 3000, '20'],
-            [200, '', np.nan, 50, 'daily news #1', None, '75'],
-            [250, 'CA', 7500, 25, 'machine learning seminar', 8000, '20'],
+            [200, '', np.nan, '50', 'daily news #1', None, '75'],
+            [250, 'CA', 7500, '25', 'machine learning seminar', 8000, '20'],
             ['1000', 'MX', 45003, '20', 'cute animal #4', 90, '40'],
-            [1500, 'MX', 75000, '30', '', 70, 25],
+            [1500, 'MX', 75000, '30', '', 70, '25'],
             [1500, 'US', 75000, np.nan, 'daily news #3', 70, '25'],
             [None, 'US', 75000, '30', 'tutorial: how to start a startup', 70, np.nan],
             [1250, 'US', 60000, '50', 'cute animal #3', 80, '20'],
@@ -184,7 +184,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        df = clean_dataframe(df, column_types, dropna=False)
+        df = clean_dataframe(df, column_types)
         rule = RemoveCollinearColumns(df, column_types, statistics)
         assert_frame_equal(cleaned_df, rule.numeric_df.reset_index(drop=True))
         results = rule.evaluate()
