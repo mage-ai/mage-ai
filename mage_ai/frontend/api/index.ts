@@ -21,10 +21,9 @@ export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 
 const REFRESH_INTERVAL_MS: number = 30000;
 
+// Update this as routes get added
 const RESOURCES: any[][] = [
-  [FEATURE_SET_VERSIONS, FEATURE_SETS],
-  [FEATURES],
-  [TRANSFORMER_ACTIONS, FEATURE_SET_VERSIONS, { refreshInterval: REFRESH_INTERVAL_MS }],
+  [FEATURE_SETS],
 ];
 
 const apis: any = {};

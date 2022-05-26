@@ -17,7 +17,7 @@ import { pluralize } from '@utils/string'
 // TODO replace with API call to backend
 const data = [
   {
-     "id":"0",
+     "id":"1",
      "metadata":{
         "name":"test_data_2",
         "pipeline_id": 6,

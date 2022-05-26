@@ -1,4 +1,4 @@
-import Router from 'next/router';
+import Router, { useRouter } from 'next/router';
 import { useState } from "react";
 
 import Button from "@oracle/elements/Button";
@@ -10,11 +10,20 @@ import Spacing from "@oracle/elements/Spacing";
 import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
 import { UNIT } from "@oracle/styles/units/spacing";
+import api from '@api';
 
 function Data() {
 
+  const router = useRouter()
+  const { slug } = router.query
+  console.log("Dataset ID from page:", slug);
+
   // TODO: Replace with API Call during Integration
+
   // Datatable
+  const datatable_values = api.feature_sets.detail(slug);
+  console.log("Response from backend", datatable_values);
+
   const columnHeaderSample = [
     {
       label: "Number of purchases",
