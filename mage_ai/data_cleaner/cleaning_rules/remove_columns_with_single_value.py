@@ -17,7 +17,7 @@ class RemoveColumnsWithSingleValue(BaseRule):
             if feature_count_distinct == 1:
                 columns_with_single_value.append(c)
         suggestions = []
-        if len(columns_with_single_value) == 0:
+        if len(columns_with_single_value) != 0:
             suggestions.append(self._build_transformer_action_suggestion(
                 'Remove columns with single value',
                 f'The following columns have single value in all rows: {columns_with_single_value}.'\

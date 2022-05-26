@@ -82,7 +82,8 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         else:
             if self.statistics[f'{column}/count']  <= self.DATA_SM_UB:
@@ -118,7 +119,8 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
@@ -142,7 +144,9 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         """
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH:
+        elif (self.is_timeseries and
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
@@ -169,7 +173,8 @@ class StringImputeSubRule(TypeImputeSubRule):
         if self.statistics[f'{column}/null_value_rate']  == 0:
             return ImputationStrategy.NOOP
         if (self.is_timeseries and 
-            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH):
+            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH and 
+            self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
