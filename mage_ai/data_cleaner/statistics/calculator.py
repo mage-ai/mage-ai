@@ -39,7 +39,7 @@ class StatisticsCalculator():
     def process(self, df):
         return self.calculate_statistics_overview(df)
 
-    def calculate_statistics_overview(self, df):
+    def calculate_statistics_overview(self, df, is_clean=True):
         increment(
             'statistics.calculate_statistics_overview.start',
             self.data_tags,
@@ -48,7 +48,7 @@ class StatisticsCalculator():
         with timer(
             'statistics.calculate_statistics_overview.time',
                 self.data_tags):
-            df, timeseries_metadata = self.__process_df(df)
+            df, timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
                 is_timeseries=timeseries_metadata['is_timeseries'],
@@ -57,8 +57,9 @@ class StatisticsCalculator():
 
             arr_args_1 = [df[col] for col in df.columns],
             arr_args_2 = [col for col in df.columns],
+            arr_args_3 = [is_clean] * len(arr_args_1)
 
-            dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2)
+            dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2, arr_args_3)
 
             for d in dicts:
                 data.update(d)
@@ -101,9 +102,9 @@ class StatisticsCalculator():
         longest_sequence = max(longest_sequence, curr_sequence)
         return longest_sequence
 
-    def statistics_overview(self, series, col):
+    def statistics_overview(self, series, col, is_clean):
         try:
-            return self.__statistics_overview(series, col)
+            return self.__statistics_overview(series, col, is_clean)
         except Exception as err:
             increment(
                 'statistics.calculate_statistics_overview.column.failed',
@@ -115,9 +116,7 @@ class StatisticsCalculator():
             traceback.print_exc()
             return {}
 
-    def __process_df(self, df):
-        df = df.applymap(lambda x: x if (not isinstance(x, str) or
-                        (len(x) > 0 and not x.isspace())) else np.nan)
+    def __evaluate_timeseries(self, df):
         indices = []
         for column in df.columns:
             dtype = self.column_types[column]
@@ -135,7 +134,10 @@ class StatisticsCalculator():
             'timeseries_index': indices
         }
 
-    def __statistics_overview(self, series, col):
+    def __statistics_overview(self, series, col, is_clean):
+        if not is_clean:
+            series = series.map(lambda x: x if (not isinstance(x, str) or
+                                (len(x) > 0 and not x.isspace())) else np.nan)
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
         df_value_counts = series.value_counts(dropna=False)

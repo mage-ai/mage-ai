@@ -200,7 +200,6 @@ class ImputeValues(BaseRule):
             self.column_types, 
             self._build_transformer_action_suggestion
         )
-        # TODO Clean dataframe once to remove empty strings and replace with np.nan
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},

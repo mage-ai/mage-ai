@@ -51,7 +51,7 @@ class DataCleaner():
             )
         if transform:
             with timer('data_cleaner.transform_data'):
-                df_transformed = pipeline.transform(df)
+                df_transformed = pipeline.transform(df, auto=True)
         else:
             df_transformed = df
         return merge_dict(df_stats, dict(

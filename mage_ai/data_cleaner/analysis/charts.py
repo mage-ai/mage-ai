@@ -198,7 +198,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
             else:
                 average = series_non_null.sum() / len(series_non_null)
             y_data.update(dict(
-                average=series_non_null.sum() / len(series_non_null) if len(series_non_null) else 0,
+                average=average,
                 max=series_non_null.max(),
                 median=series_non_null.quantile(0.5),
                 min=series_non_null.min(),
@@ -244,7 +244,9 @@ def build_overview_data(df, datetime_features):
         if clean_series(df_copy[datetime_column], DATETIME).size <= 1:
             continue
 
-        df_copy[datetime_column] = __parse_datetime(df, datetime_column)
+        df_copy[datetime_column] = pd.to_datetime(df[datetime_column], errors='coerce').apply(
+            lambda x: x if pd.isnull(x) else x.timestamp()
+        )
 
         min_value1 = df_copy[datetime_column].min()
         max_value1 = df_copy[datetime_column].max()
@@ -289,8 +291,3 @@ def build_overview_data(df, datetime_features):
     return {
         DATA_KEY_TIME_SERIES: time_series,
     }
-
-def __parse_datetime(df, columns):
-    return pd.to_datetime(df[columns], errors='coerce').apply(
-        lambda x: x if pd.isnull(x) else x.timestamp()
-    )

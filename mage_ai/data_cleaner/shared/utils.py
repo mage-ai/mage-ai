@@ -33,7 +33,7 @@ def clean_series(series, column_type, dropna=True):
             return series_cleaned
         series_cleaned = series_cleaned.astype(float)
     elif column_type == DATETIME:
-        series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors = 'coerce')
+        series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors='coerce')
 
     return series_cleaned
 
