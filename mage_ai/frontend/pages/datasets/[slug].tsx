@@ -229,6 +229,7 @@ function Data() {
       <Tabs
         bold
         defaultKey={tab}
+        large
         noBottomBorder={false}
         onChange={key => setTab(key)}
       >
