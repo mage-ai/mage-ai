@@ -26,11 +26,9 @@ class DataCleaner():
         with timer('data_cleaner.infer_column_types'):
             column_types = column_type_detector.infer_column_types(df)
         with timer('data_cleaner.clean_series'):
-            df = df.transform(
-                lambda col: clean_series(col, column_types[col.name], dropna=False), axis=0
-            )
+            df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
-            statistics = StatisticsCalculator(column_types).process(df)
+            statistics = StatisticsCalculator(column_types).process(df, True)
         with timer('data_cleaner.calculate_insights'):
             analysis = AnalysisCalculator(df, column_types).process(df)
         return dict(

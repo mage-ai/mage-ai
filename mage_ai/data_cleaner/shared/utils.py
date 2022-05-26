@@ -17,7 +17,7 @@ def clean_series(series, column_type, dropna=True):
 
     if column_type == NUMBER:
         try:
-            series_cleaned = series_cleaned.replace(',', '')
+            series_cleaned = series_cleaned.str.replace(',', '')
         except AttributeError:
             # must be a float -> already cleaned
             return series_cleaned
@@ -27,7 +27,7 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned = series_cleaned.astype(float)
     elif column_type == NUMBER_WITH_DECIMALS:
         try:
-            series_cleaned = series_cleaned.replace(',', '')
+            series_cleaned = series_cleaned.str.replace(',', '')
         except AttributeError:
             # must be a float -> already cleaned
             return series_cleaned

@@ -36,8 +36,8 @@ class StatisticsCalculator():
     def data_tags(self):
         return dict()
 
-    def process(self, df):
-        return self.calculate_statistics_overview(df)
+    def process(self, df, is_clean=True):
+        return self.calculate_statistics_overview(df, is_clean)
 
     def calculate_statistics_overview(self, df, is_clean=True):
         increment(
@@ -48,6 +48,9 @@ class StatisticsCalculator():
         with timer(
             'statistics.calculate_statistics_overview.time',
                 self.data_tags):
+            if not is_clean:
+                df = df.applymap(lambda x: x if (not isinstance(x, str) or
+                                (len(x) > 0 and not x.isspace())) else np.nan)
             df, timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
@@ -57,9 +60,8 @@ class StatisticsCalculator():
 
             arr_args_1 = [df[col] for col in df.columns],
             arr_args_2 = [col for col in df.columns],
-            arr_args_3 = [is_clean] * len(arr_args_1)
 
-            dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2, arr_args_3)
+            dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2)
 
             for d in dicts:
                 data.update(d)
@@ -102,9 +104,9 @@ class StatisticsCalculator():
         longest_sequence = max(longest_sequence, curr_sequence)
         return longest_sequence
 
-    def statistics_overview(self, series, col, is_clean):
+    def statistics_overview(self, series, col):
         try:
-            return self.__statistics_overview(series, col, is_clean)
+            return self.__statistics_overview(series, col)
         except Exception as err:
             increment(
                 'statistics.calculate_statistics_overview.column.failed',
@@ -134,10 +136,7 @@ class StatisticsCalculator():
             'timeseries_index': indices
         }
 
-    def __statistics_overview(self, series, col, is_clean):
-        if not is_clean:
-            series = series.map(lambda x: x if (not isinstance(x, str) or
-                                (len(x) > 0 and not x.isspace())) else np.nan)
+    def __statistics_overview(self, series, col):
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
         df_value_counts = series.value_counts(dropna=False)

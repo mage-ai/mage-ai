@@ -33,12 +33,12 @@ class BasePipeline():
 
     def create_actions(self, df, column_types, statistics):
         if not statistics or len(statistics) == 0:
-            self.calculator = StatisticsCalculator(column_types)
-            self.statistics = self.calculator.calculate_statistics_overview(df)
+            calculator = StatisticsCalculator(column_types)
+            statistics = calculator.calculate_statistics_overview(df, True)
         self.column_types = column_types
         all_suggestions = []
         for rule in self.rules:
-            suggestions = rule(df, column_types, self.statistics).evaluate()
+            suggestions = rule(df, column_types, statistics).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions
