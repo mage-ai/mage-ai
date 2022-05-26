@@ -150,38 +150,43 @@ class StatisticsCalculator():
             f'{col}/null_value_count': series_cleaned.isnull().sum(),
         }
 
-        if len(series_non_null) == 0:
-            return data
+        if len(series_non_null) > 0:
+            dates = None
+            if column_type in NUMBER_TYPES:
+                data[f'{col}/average'] = series_non_null.sum() / len(series_non_null)
+                data[f'{col}/max'] = series_non_null.max()
+                data[f'{col}/median'] = series_non_null.quantile(0.5)
+                data[f'{col}/min'] = series_non_null.min()
+                data[f'{col}/sum'] = series_non_null.sum()
+            elif column_type == DATETIME:
+                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
+                data[f'{col}/max'] = dates.max().isoformat()
+                data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
+                data[f'{col}/min'] = dates.min().isoformat()
 
-        dates = None
-        if column_type in NUMBER_TYPES:
-            data[f'{col}/average'] = series_non_null.sum() / len(series_non_null)
-            data[f'{col}/max'] = series_non_null.max()
-            data[f'{col}/median'] = series_non_null.quantile(0.5)
-            data[f'{col}/min'] = series_non_null.min()
-            data[f'{col}/sum'] = series_non_null.sum()
-        elif column_type == DATETIME:
-            dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
-            data[f'{col}/max'] = dates.max().isoformat()
-            data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
-            data[f'{col}/min'] = dates.min().isoformat()
+            if column_type not in NUMBER_TYPES:
+                if dates is not None:
+                    value_counts = dates.value_counts()
+                else:
+                    value_counts = series_non_null.value_counts()
 
-        if column_type not in NUMBER_TYPES:
-            if dates is not None:
-                value_counts = dates.value_counts()
-            else:
-                value_counts = series_non_null.value_counts()
+                mode = value_counts.index[0]
+                if column_type == DATETIME:
+                    mode = mode.isoformat()
 
-            mode = value_counts.index[0]
-            if column_type == DATETIME:
-                mode = mode.isoformat()
+                data[f'{col}/mode'] = mode
+                data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
 
-            data[f'{col}/mode'] = mode
-            data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
-
-        data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
+            data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
 
         # Detect mismatched formats for some column types
         data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
+        data[f'{col}/invalid_value_rate'] = 0 if series_cleaned.size == 0 else \
+            data[f'{col}/invalid_value_count'] / series_cleaned.size
+
+        # Calculate quality metrics
+        data[f'{col}/completeness'] = 1 - data[f'{col}/null_value_rate']
+        data[f'{col}/validity'] = data[f'{col}/completeness'] - data[f'{col}/invalid_value_rate']
+        data[f'{col}/quality'] = 'Good' if data[f'{col}/validity'] >= 0.8 else 'Bad'
 
         return data

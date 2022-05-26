@@ -48,6 +48,8 @@ REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
 
 
 def get_mismatched_row_count(series, column_type):
+    if len(series) == 0:
+        return 0
     mismatched_rows = 0
     if column_type == EMAIL:
         mismatched_rows = len(
