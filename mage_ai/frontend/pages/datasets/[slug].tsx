@@ -242,9 +242,9 @@ function Data() {
       centerAlign
     >
       <Spacing mt={UNIT} />
-      { headEl }
+      {headEl}
       <Spacing mt={UNIT} />
-      { tabsEl }
+      {tabsEl}
     </Layout>
   );
 }
