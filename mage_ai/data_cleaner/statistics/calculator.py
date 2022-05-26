@@ -98,6 +98,7 @@ class StatisticsCalculator():
             else:
                 longest_sequence = max(longest_sequence, curr_sequence)
                 curr_sequence = 0
+        longest_sequence = max(longest_sequence, curr_sequence)
         return longest_sequence
 
     def statistics_overview(self, series, col):
