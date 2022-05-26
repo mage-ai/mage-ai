@@ -1,23 +1,27 @@
 import type { NextPage } from 'next'
-import RowDataTable from '@oracle/components/RowDataTable'
-import RowCard from '@oracle/components/RowCard'
-import Text from '@oracle/elements/Text'
-import FlexContainer from '@oracle/components/FlexContainer'
-import { Copy } from '@oracle/icons'
-import Tab from '@oracle/components/Tabs/Tab'
-import Layout from '@oracle/components/Layout'
-import Tabs from '@oracle/components/Tabs'
-import Spacing from '@oracle/elements/Spacing'
 
+import FlexContainer from '@oracle/components/FlexContainer'
+import Layout from '@oracle/components/Layout'
+import RowCard from '@oracle/components/RowCard'
+import RowDataTable from '@oracle/components/RowDataTable'
+import Spacing from '@oracle/elements/Spacing'
+import Tab from '@oracle/components/Tabs/Tab'
+import Tabs from '@oracle/components/Tabs'
+import Text from '@oracle/elements/Text'
+import { Copy } from '@oracle/icons'
+import { isBadQuality } from '@components/utils'
+import { pluralize } from '@utils/string'
+
+// TODO replace with API call to backend
 const data = [
   {
      "id":"0",
      "metadata":{
         "name":"test_data_2",
-        "pipeline_id":6,
+        "pipeline_id": 6,
         "statistics": {
-           "count": 100, // row count
-           "quality": "Good", // "Good", "Bad" 
+           "count": 100,
+           "quality": "Good",
         },
         "column_types":{
            "order_id":"category",
@@ -50,36 +54,47 @@ const Dashboard: NextPage = () => (
         <Spacing pb={3} pt={3}>
           <RowDataTable
             headerTitle="datasets"
-            headerDetails={
-              (data.length + ' dataset')
-              + (data.length !== 1 ? 's' : '')
-            }
+            headerDetails={pluralize("dataset", data.length)}
           >
           {
             data.length > 0
               ?
-              data.map(n => (
-                <RowCard
-                  key={n.id}
-                  columnFlexNumbers={[4, 1, 1, 1]}
-                >
-                  <FlexContainer alignItems="center">
-                    <Copy primary />&nbsp;
-                    <Text>{n.metadata.name}</Text>
-                  </FlexContainer>
-                  <Text>
-                    {Object.keys(n.metadata.column_types).length} features
-                  </Text>
-                  <Text>
-                    {n.metadata.statistics.count} rows
-                  </Text>
-                  <Text bold danger={
-                    ["Bad","Worse","Worst"].includes(n.metadata.statistics.quality)
-                  }>
-                    {n.metadata.statistics.quality}
-                  </Text>
-                </RowCard>
-              ))
+              data.map(dataset => {
+
+                const {
+                  id,
+                  metadata: {
+                    column_types,
+                    name,
+                    statistics: {
+                      count,
+                      quality
+                    }
+                  }
+                } = dataset;
+
+                const num_features = Object.keys(column_types).length;
+
+                return (
+                  <RowCard
+                    key={id}
+                    columnFlexNumbers={[4, 1, 1, 1]}
+                  >
+                    <FlexContainer alignItems="center">
+                      <Copy primary />&nbsp;
+                      <Text>{name}</Text>
+                    </FlexContainer>
+                    <Text>{num_features} features</Text>
+                    <Text>{count} rows</Text>
+                    <Text
+                      bold
+                      danger={isBadQuality(quality)}
+                    >
+                      {quality}
+                    </Text>
+                  </RowCard>
+                );
+              })
               : 
               <Spacing p={2}>
                 <Text>
