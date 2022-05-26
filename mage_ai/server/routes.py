@@ -4,8 +4,8 @@ from flask import render_template, request
 from numpyencoder import NumpyEncoder
 from server.data.models import FeatureSet, Pipeline
 from server import app
-
 import json
+import simplejson
 import threading
 
 
@@ -56,7 +56,7 @@ def process():
     feature_set.metadata = metadata
 
     response = app.response_class(
-        response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
+        response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
         status=200,
         mimetype='application/json'
     )
@@ -75,7 +75,7 @@ def feature_sets():
     """
     feature_sets = list(map(lambda fs: fs.to_dict(False), FeatureSet.objects()))
     response = app.response_class(
-        response=json.dumps(feature_sets, cls=NumpyEncoder),
+        response=simplejson.dumps(feature_sets, ignore_nan=True),
         status=200,
         mimetype='application/json'
     )
@@ -94,7 +94,7 @@ def feature_set(id):
     """
     feature_set = FeatureSet(id=id)
     response = app.response_class(
-        response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
+        response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
         status=200,
         mimetype='application/json'
     )
@@ -125,7 +125,7 @@ def update_feature_set(id):
     feature_set = FeatureSet(id=id)
     feature_set.write_files(request_data)
     response = app.response_class(
-        response=json.dumps(feature_set.to_dict(), cls=NumpyEncoder),
+        response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
         status=200,
         mimetype='application/json'
     )
@@ -209,7 +209,7 @@ def clean_df(df, name, pipeline_uuid=None):
     metadata['column_types'] = column_types
 
     feature_set.metadata = metadata
-    return (feature_set, result['df_cleaned'])
+    return (feature_set, result['df'])
 
 
 def connect_df(df, name):
