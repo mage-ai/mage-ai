@@ -7,7 +7,7 @@ import FeatureType, {
 import {
   LabelTypeEnum,
 } from '@interfaces/InsightsType';
-import { roundNumber } from '@utils/string.js';
+import { roundNumber } from '@utils/string';
 import { sortByKey, standardDeviation, sum } from '@utils/array';
 
 export function buildCorrelationsRowData(correlations, correlationThreshold = null) {
