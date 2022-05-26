@@ -7,6 +7,7 @@ export function buildUrl(
   childId: string = null,
   query: any = {},
 ): string {
+  // TODO: Update URL as the endpoint for the backend changes.
   let path: string = `http://localhost:5000/${resource}`;
   if (id) {
     path = `${path}/${id}`;
