@@ -2,11 +2,10 @@ from data_cleaner.column_type_detector import (
     NUMBER,
     NUMBER_WITH_DECIMALS,
 )
+from mage_ai.data_cleaner.column_type_detector import DATETIME
 import pandas as pd
 import numpy as np
 import time
-
-from mage_ai.data_cleaner.column_type_detector import DATETIME, infer_column_types
 
 
 def clean_series(series, column_type, dropna=True):
@@ -37,6 +36,13 @@ def clean_series(series, column_type, dropna=True):
         series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors = 'coerce')
 
     return series_cleaned
+
+
+def clean_dataframe(df, column_types, dropna=True):
+    return df.apply(
+        lambda col: clean_series(col, column_types[col.name], dropna=dropna), 
+        axis=0
+    )
 
 
 class timer(object):

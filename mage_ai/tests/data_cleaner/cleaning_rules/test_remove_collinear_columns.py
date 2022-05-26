@@ -1,4 +1,5 @@
 from data_cleaner.cleaning_rules.remove_collinear_columns import RemoveCollinearColumns
+from data_cleaner.shared.utils import clean_dataframe
 from tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
 import numpy as np
@@ -29,7 +30,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'order_created_at': 'datetime'
         }
         statistics = {}
-        result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
+        result = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics).evaluate()
         self.assertEqual(result, [])
 
     def test_clean_removes_all_data_frame(self):
@@ -51,7 +52,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'order_created_at': 'datetime'
         }
         statistics = {}
-        result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
+        result = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics).evaluate()
         self.assertEqual(result, [])
 
     def test_collinear_no_results(self):
@@ -68,7 +69,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'losses': 'number',
         }
         statistics = {}
-        result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
+        result = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics).evaluate()
         self.assertEqual(result, [])
 
     def test_evaluate(self):
@@ -99,7 +100,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        rule = RemoveCollinearColumns(df, column_types, statistics)
+        rule = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics)
         results = rule.evaluate()
         expected_results = [
             dict(
@@ -179,7 +180,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        rule = RemoveCollinearColumns(df, column_types, statistics)
+        rule = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics)
         assert_frame_equal(cleaned_df, rule.numeric_df.reset_index(drop=True))
         results = rule.evaluate()
         expected_results = [
@@ -256,7 +257,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        rule = RemoveCollinearColumns(df, column_types, statistics)
+        rule = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics)
         assert_frame_equal(cleaned_df, rule.numeric_df.reset_index(drop=True))
         results = rule.evaluate()
         expected_results = [
@@ -337,7 +338,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        rule = RemoveCollinearColumns(df, column_types, statistics)
+        rule = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics)
         assert_frame_equal(cleaned_df, rule.numeric_df.reset_index(drop=True))
         results = rule.evaluate()
         expected_results = [
@@ -379,7 +380,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'losses': 'number',
         }
         statistics = {}
-        result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
+        result = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics).evaluate()
         expected_results = [
             dict(
                 title='Remove collinear columns',
@@ -430,7 +431,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_advertisers': 'number'
         }
         statistics = {}
-        rule = RemoveCollinearColumns(df, column_types, statistics)
+        rule = RemoveCollinearColumns(clean_dataframe(df), column_types, statistics)
         expected_vifs_no_remove = (
             59.32817701051733,
             26.10502642724925,

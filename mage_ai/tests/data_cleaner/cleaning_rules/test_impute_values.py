@@ -1,4 +1,5 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
+from data_cleaner.shared.utils import clean_df
 from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
@@ -365,7 +366,7 @@ class ImputeValuesTest(TestCase):
             )
         ]
         suggestions = ImputeValues(
-            df,
+            clean_df(df),
             column_types,
             statistics,
         ).evaluate()
@@ -588,7 +589,7 @@ class ImputeValuesTest(TestCase):
             )
         ]
         suggestions = ImputeValues(
-            df,
+            clean_df(df),
             column_types,
             statistics,
         ).evaluate()
