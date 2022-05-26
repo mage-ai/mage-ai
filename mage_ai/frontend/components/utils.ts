@@ -8,5 +8,5 @@ export const isBadQuality = (quality: string) => (
 export const isGoodQuality = (quality: string) => !isBadQuality(quality);
 
 export const pluralize = (word: string, num: number) => (
-    num === 1 ? word : num + 's'
+    num === 1 ? word : word + 's'
 );
