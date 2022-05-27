@@ -21,8 +21,12 @@ function Data() {
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
 
-  const datasets = useMemo(() => datasetResponse?.sample_data || [], [
-    datasetResponse?.sample_data,
+  const columns = useMemo(() => datasetResponse?.sample_data?.columns || [], [
+    datasetResponse?.sample_data?.columns,
+  ]);
+
+  const rows = useMemo(() => datasetResponse?.sample_data?.rows || [], [
+    datasetResponse?.sample_data?.rows,
   ]);
 
   const statistics = useMemo(() => datasetResponse?.statistics || [], [
@@ -30,7 +34,7 @@ function Data() {
   ]);
 
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
-  // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
+  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
   const [metricSample, setMetricSample] = useState({});
   
   // TODO: Move to const file 
@@ -44,20 +48,34 @@ function Data() {
     "validity",
   ];
 
-
   // Fetch column Headers
   useEffect( () => {
-      const headers = Object.keys(datasets);
-      const headerJSON = [];
-      headers.forEach(function (val) {
-        const column = {
-          label: val,
-        } || {};
-        headerJSON.push(column);
-      });
-      setColumnHeaderSample(headerJSON);
-    }, [datasetResponse, datasets]);
+    const headerJSON = [];
+    for (const element of columns) {
+      const column = {
+        label: element,
+      } || {};
+      headerJSON.push(column);
+    }
+    setColumnHeaderSample(headerJSON);
+  }, [columns]);
 
+  // Fetch Row values
+  useEffect( () => {
+    const rowGroupData = {
+      rowData: [],
+    };
+    const cells = [];
+    rows.forEach(function (rowGroup) {
+      const row = {
+        columnValues: rowGroup,
+      } || {};
+      cells.push(row);
+    });
+
+    rowGroupData.rowData = cells;
+    setRowGroupDataSample(rowGroupData);
+  }, [rows]);
 
   // Calculates metrics
   useEffect( () => {
@@ -79,56 +97,8 @@ function Data() {
 
     metricGroupData.rowData = metricRows;
     setMetricSample(metricGroupData);
-    }, [datasetResponse, metricsKeys, statistics]);
-
-  console.log(setMetricSample);
-
-  const rowGroupDataSample = {
-    rowData: [
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-      },
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-        uuid: 'Row 2',
-      },
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-        uuid: 'Row 3',
-      },
-      {
-        columnValues: [
-          "11", "2", "3", "4",
-        ],
-        uuid: 'Row 4',
-      },
-      {
-        columnValues: [
-          "13", "2", "3", "4",
-        ],
-        uuid: 'Row 5',
-      },
-      {
-        columnValues: [
-          "1000001", "2", "3", "4",
-        ],
-        uuid: 'Row 6',
-      },
-      {
-        columnValues: [
-          "5", "4", "3", "2",
-        ],
-        uuid: 'Row 7',
-      },
-    ],
-  };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statistics]);
   // Report (Quality Metrics)
 
   /* Given a payload of 
