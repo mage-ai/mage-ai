@@ -1,5 +1,5 @@
 import Router, { useRouter } from 'next/router';
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Button from "@oracle/elements/Button";
 import Flex from "@oracle/components/Flex";
@@ -9,77 +9,120 @@ import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
 import Spacing from "@oracle/elements/Spacing";
 import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
-import { UNIT } from "@oracle/styles/units/spacing";
 import api from '@api';
+import { UNIT } from "@oracle/styles/units/spacing";
+
 
 function Data() {
 
   const router = useRouter()
   const { slug } = router.query
-  console.log("Dataset ID from page:", slug);
-
-  // TODO: Replace with API Call during Integration
 
   // Datatable
-  const datatable_values = api.feature_sets.detail(slug);
-  console.log("Response from backend", datatable_values);
+  const { data: datasetResponse } = api.feature_sets.detail(slug);
 
-  const columnHeaderSample = [
-    {
-      label: "Number of purchases",
-    },
-    {
-      Icon: true,
-      label: "Customer_ID",   
-    },
-    {
-      label: "Product_ID",
-    },
-    {
-      label: "Rating",
-    },
-  ];
+  const datasets = useMemo(() => datasetResponse?.sample_data || [], [
+    datasetResponse?.sample_data,
+  ]);
+
+  const statistics = useMemo(() => datasetResponse?.statistics || [], [
+    datasetResponse?.statistics,
+  ]);
+
+  const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
+  // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
+  const [metricSample, setMetricSample] = useState({});
   
+  // TODO: Move to const file 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const metricsKeys = [
+    "count",
+    "avg_null_value_count",
+    "avg_invalid_value_count",
+    "duplicate_row_count",
+    "completeness",
+    "validity",
+  ];
+
+
+  // Fetch column Headers
+  useEffect( () => {
+      const headers = Object.keys(datasets);
+      const headerJSON = [];
+      headers.forEach(function (val) {
+        const column = {
+          label: val,
+        } || {};
+        headerJSON.push(column);
+      });
+      setColumnHeaderSample(headerJSON);
+    }, [datasetResponse, datasets]);
+
+
+  // Calculates metrics
+  useEffect( () => {
+    const stats = Object.keys(statistics);
+    const metricGroupData = {
+      rowData: [],
+    };
+
+    const metricRows = []
+    stats.forEach(function (val) {
+      const statpair = [val, statistics[val]]
+      const values = {
+        columnValues: statpair,
+      }
+      if (metricsKeys.includes(val)) {
+        metricRows.push(values);
+      }
+    });
+
+    metricGroupData.rowData = metricRows;
+    setMetricSample(metricGroupData);
+    }, [datasetResponse, metricsKeys, statistics]);
+
+  console.log(setMetricSample);
+
   const rowGroupDataSample = {
     rowData: [
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
       },
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
         uuid: 'Row 2',
       },
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
         uuid: 'Row 3',
       },
       {
         columnValues: [
-          "11", "2", "3", "4"
+          "11", "2", "3", "4",
         ],
         uuid: 'Row 4',
       },
       {
         columnValues: [
-          "13", "2", "3", "4"
+          "13", "2", "3", "4",
         ],
         uuid: 'Row 5',
       },
       {
         columnValues: [
-          "1000001", "2", "3", "4"
+          "1000001", "2", "3", "4",
         ],
         uuid: 'Row 6',
       },
       {
         columnValues: [
-          "5", "4", "3", "2"
+          "5", "4", "3", "2",
         ],
         uuid: 'Row 7',
       },
@@ -89,82 +132,50 @@ function Data() {
   // Report (Quality Metrics)
 
   /* Given a payload of 
-  statistics: {
+    "count": 100,
     "avg_null_value_count": 10,
     "avg_invalid_value_count": 10,
-    "duplicate_row_count": 20, 
-    "completeness": 0.9,
+		"duplicate_row_count": 20, 
+		"completeness": 0.9,
     "validity": 0.8,
-  }
-  */
 
   /* Turn each key value into a list of tuples. 
   Inside an object called ColumnValues, that's inside RowData (list of Json) */
 
-  // TODO: map keys to text (P2)
+  // TODO: map keys to text (P1) but for now we'll reuse the string.
 
-  // This first statistics portion will contain the missing values, invalid values, duplicate values, and show validity and completeness.
-  const metricSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Validity", "0.8"
-        ],
-      },
-      {
-        columnValues: [
-          "Completeness", "0.9"
-        ],
-      },
-      {
-        columnValues: [
-          "Missing values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Invalid values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Duplicate values", "20"
-        ],
-      },
-    ],
-  };
 
   // Report (Statistics)
   const statSample = {
     rowData: [
       {
         columnValues: [
-          "Column count", "100"
+          "Column count", "100",
         ],
       },
       {
         columnValues: [
-          "Empty columns", "5 (5%)"
+          "Empty columns", "5 (5%)",
         ],
       },
       {
         columnValues: [
-          "Categorical values", "10 (10%)"
+          "Categorical values", "10 (10%)",
         ],
       },
       {
         columnValues: [
-          "Numerical values", "20 (20%)"
+          "Numerical values", "20 (20%)",
         ],
       },
       {
         columnValues: [
-          "Time values", "55 (55%)"
+          "Time values", "55 (55%)",
         ],
       },
       {
         columnValues: [
-          "Empty rows", "10 (10%)"
+          "Empty rows", "10 (10%)",
         ],
       },
     ],
@@ -216,11 +227,11 @@ function Data() {
   const reportsEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {statsEl}
+        {metricsEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        {metricsEl}
+        {statsEl}
       </Flex>
     </FlexContainer>
   )
@@ -233,15 +244,15 @@ function Data() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab label="Data" key="data">
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab label="Report" key="reports">
+      <Tab key="reports" label="Report">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab label="Visualization" key="visualizations"> </Tab>
+      <Tab key="visualizations" label="Visualization"> </Tab>
     </Tabs>
   )
 
