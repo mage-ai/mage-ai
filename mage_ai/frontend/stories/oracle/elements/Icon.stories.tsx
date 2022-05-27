@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Check,
   Close,
+  Code,
   Column,
   Copy,
   Cursor,
@@ -21,7 +22,6 @@ import {
   Report,
   Search,
   Sort,
-  // ViewCode,
 } from '@oracle/icons';
 const ICONS = [
   AlertCircle,
@@ -30,6 +30,7 @@ const ICONS = [
   ArrowRight,
   Check,
   Close,
+  Code,
   Column,
   Copy,
   Cursor,
@@ -42,7 +43,6 @@ const ICONS = [
   Report,
   Search,
   Sort,
-  // ViewCode,
 ]
 
 const Icons = () => (
