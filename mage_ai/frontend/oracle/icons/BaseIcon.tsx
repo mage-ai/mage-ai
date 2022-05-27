@@ -44,10 +44,6 @@ export const SHARED_STYLES = css<any>`
     stroke: ${(props.theme.content || light.content).active};
   `}
 
-  ${props => !props.useStroke && props.inverted && !props.disabled && `
-    fill: ${(props.theme.content || light.content).inverted};
-  `}
-
   ${props => !props.useStroke && props.muted && !props.disabled && `
     fill: ${(props.theme.monotone || light.monotone).gray};
   `}
