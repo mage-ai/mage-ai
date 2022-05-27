@@ -192,6 +192,7 @@ class ImputeValues(BaseRule):
     )
     ROW_KEPT_LB = 0.7
     TIMESERIES_NULL_RATIO_MAX = 0.1
+    STRATEGY_BLACKLIST = ([ImputationStrategy.NOOP, ImputationStrategy.ROW_RM])
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
@@ -220,7 +221,7 @@ class ImputeValues(BaseRule):
 
     def build_suggestions(self):
         suggestions = []
-        if len(self.strategy_cache[ImputationStrategy.ROW_RM]['entries']) != 0:
+        if self.strategy_cache[ImputationStrategy.ROW_RM].get('num_missing'):
             strategy_cache_entry = self.strategy_cache[ImputationStrategy.ROW_RM]
             suggestions.append(
                 self.action_constructor(ImputationStrategy.ROW_RM, strategy_cache_entry)
@@ -228,7 +229,8 @@ class ImputeValues(BaseRule):
         else:
             for strategy in self.strategy_cache:
                 strategy_cache_entry = self.strategy_cache[strategy]
-                if strategy != ImputationStrategy.NOOP and len(strategy_cache_entry['entries']) != 0:
+                if (strategy not in self.STRATEGY_BLACKLIST 
+                   and len(strategy_cache_entry['entries']) != 0):
                     suggestions.append(
                         self.action_constructor(strategy, strategy_cache_entry)
                     )
@@ -237,13 +239,12 @@ class ImputeValues(BaseRule):
     def evaluate(self):
         if self.df.empty:
             return []
-        null_mask = self.df.isna().any(axis=1)
-        ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
+        non_null_rows = self.df.notna().all(axis=1).sum()
+        ratio_rows_kept = non_null_rows / len(self.df)
         if ratio_rows_kept == 1:
             self.strategy_cache[ImputationStrategy.NOOP]['entries'].extend(self.df_columns)
         elif ratio_rows_kept >= self.ROW_KEPT_LB:
-            indices = self.df[null_mask].index
-            self.strategy_cache[ImputationStrategy.ROW_RM]['entries'].extend(indices)
+            self.strategy_cache[ImputationStrategy.ROW_RM]['num_missing'] = len(self.df) - non_null_rows
         else:
             for column in self.df_columns:
                 dtype = self.column_types[column]
@@ -350,9 +351,9 @@ class ImputeActionConstructor():
             action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.ROW_RM:
+            num_missing = strategy_cache_entry['num_missing']
             title = 'Remove rows with missing entries'
-            message = 'The rows at the following indices have null values: '\
-                      f'{strategy_cache_entry["entries"]}. ' \
+            message = f'There are {num_missing} rows containing null values. '\
                       'Suggested: remove these rows to remove null values from the dataset.'
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
