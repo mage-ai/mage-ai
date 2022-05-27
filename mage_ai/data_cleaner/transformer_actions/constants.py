@@ -67,3 +67,14 @@ class ImputationStrategy():
     RANDOM = 'random'
     ROW_RM = 'remove_rows'
     SEQ = 'sequential'
+
+class NameConventionPatterns():
+    SNAKE = re.compile(r'^[a-z]+(?:\_[a-z0-9]+)*$')
+    CAMEL = re.compile(r'^[a-z]+(?:[A-Z][a-z]*)*$')
+    CAMEL_COMPONENT = re.compile(r'^[a-z]+')
+    PASCAL = re.compile(r'^(?:[A-Z][a-z]*)+$')
+    PASCAL_COMPONENT = re.compile(r'[A-Z][a-z]*')
+    UPPERCASE = re.compile(r'^[A-Z0-9]+$')
+    NON_ALNUM = re.compile(r'[^a-zA-Z\_0-9]')
+    CONNECTORS = re.compile(r'[\s\-\.]')
+    LOWERCASE = re.compile(r'^[a-z0-9\_]+$')
