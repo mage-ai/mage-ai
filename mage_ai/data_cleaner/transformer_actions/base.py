@@ -14,7 +14,7 @@ FUNCTION_MAPPING = {
     Axis.COLUMN: {
         ActionType.ADD: column.add_column,
         ActionType.AVERAGE: column.average,
-        ActionType.CLEAN_COLUMN_NAME: column.clean_column_name,
+        ActionType.CLEAN_COLUMN_NAME: column.clean_column_names,
         ActionType.COUNT: column.count,
         ActionType.COUNT_DISTINCT: column.count_distinct,
         ActionType.DIFF: column.diff,

@@ -1,35 +1,37 @@
 from data_cleaner.cleaning_rules.base import BaseRule
 from data_cleaner.column_type_detector import REGEX_NUMBER
-from data_cleaner.transformer_actions.constants import ActionType
+from data_cleaner.transformer_actions.constants import ActionType, NameConventionPatterns
 from keyword import iskeyword
-import re
 
 
 class CleanColumnNames(BaseRule):
-    INVALID_COLUMN_CHARS = re.compile(r'([^a-z\_0-9])')
-    UPPERCASE_PATTERN = re.compile(r'[A-Z]')
+    def is_dirty(self, name):
+        if NameConventionPatterns.NON_ALNUM.search(name):
+            return True
+        if REGEX_NUMBER.match(name) != None:
+            return True
+
+        name = name.strip()
+        if iskeyword(name):
+            return True
+        if NameConventionPatterns.SNAKE.match(name):
+            return False
+        if NameConventionPatterns.LOWERCASE.match(name):
+            return False
+        return True
+                
+
     def evaluate(self):
         """
         Rule:
-        1. If column name contains an invalid character, suggest cleaning (remove all characters)
-        2. If column name is a reserved python keyword, suggest cleaning (pad with symbols)
-        3. If column is of mixedcase, suggest cleaning (convert to lowercase)
-        4. If column contains only numbers, suggest cleaning (pad with letters)
-        5. If column contains dashes, convert to underscore
+        1. If column name contains an nonalphanumeric character (except _), 
+           suggest cleaning (remove all characters)
+        2. If the column name is a number, suggest cleaning (prefix with 'number_')
+        3. If the column name is a reseved keyword, suggest cleaning (postfix with '_')
+        4. If the column name is not snake_case, suggest cleaning 
+           (convert to snakecase from pascal case, camel case, uppercase)
         """
-        matches = []
-        for column in self.df_columns:
-            if self.INVALID_COLUMN_CHARS.search(column) != None:
-                matches.append(column)
-            elif REGEX_NUMBER.search(column) != None:
-                matches.append(column)
-            else:
-                column = column.lower().strip()
-                if column == 'true' or column == 'false':
-                    matches.append(column)
-                elif iskeyword(column):
-                    matches.append(column)
-        
+        matches = list(filter(self.is_dirty, self.df_columns))
         suggestions = []
         if len(matches) != 0:
             suggestions.append(self._build_transformer_action_suggestion(
