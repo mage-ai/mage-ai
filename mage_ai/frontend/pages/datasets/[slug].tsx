@@ -1,5 +1,5 @@
 import Router, { useRouter } from 'next/router';
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Button from "@oracle/elements/Button";
 import Flex from "@oracle/components/Flex";
@@ -16,29 +16,33 @@ function Data() {
 
   const router = useRouter()
   const { slug } = router.query
-  console.log("Dataset ID from page:", slug);
 
   // TODO: Replace with API Call during Integration
 
   // Datatable
-  const datatable_values = api.feature_sets.detail(slug);
-  console.log("Response from backend", datatable_values);
+  const { data: datasetResponse } = api.feature_sets.detail(slug);
 
-  const columnHeaderSample = [
-    {
-      label: "Number of purchases",
-    },
-    {
-      Icon: true,
-      label: "Customer_ID",   
-    },
-    {
-      label: "Product_ID",
-    },
-    {
-      label: "Rating",
-    },
-  ];
+  const datasets = useMemo(() => datasetResponse?.sample_data || [], [
+    datasetResponse?.sample_data,
+  ]);
+
+  const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
+  
+  // TODO: Move to const file 
+  const fixedHeaders = 'label';
+
+
+  useEffect( () => {
+      const headers = Object.keys(datasets);
+      var headerJSON = [];
+      headers.forEach(function (val) {
+        var column = {
+          label: val,
+        } 
+        headerJSON.push(column);
+      });
+      setColumnHeaderSample(headerJSON);
+    }, [datasetResponse]);
   
   const rowGroupDataSample = {
     rowData: [
