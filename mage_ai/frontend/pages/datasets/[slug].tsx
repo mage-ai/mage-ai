@@ -43,6 +43,8 @@ function Data() {
     "validity",
   ];
 
+  const percentageKeys = ["completeness", "validity"];
+
   // Map text and display priotities to backend keys.
   const humanReadableMapping = {
     "avg_invalid_value_count":[3, "Invalid values"],
@@ -76,8 +78,15 @@ function Data() {
     const metricRows = Array(metricsKeys.length).fill(0);
     stats.forEach(function (key) {
       if (metricsKeys.includes(key)) {
+        let value;
         const order = humanReadableMapping[key];
-        const statpair = [order[1], statistics[key]] ;
+        if (percentageKeys.includes(key)){
+          value = statistics[key] * 100;
+          value = value + '%';
+        } else {
+          value = statistics[key];
+        }
+        const statpair = [order[1], value];
         const values = {
           columnValues: statpair,
         }

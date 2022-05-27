@@ -137,7 +137,7 @@ function SimpleDataTable({
             && selectedRowIndexes?.[1] === rowIndex;
           const cells = [];
 
-          columnValues.forEach((value: any, cellIndex: number) => {
+          columnValues?.forEach((value: any, cellIndex: number) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
 
             cells.push(
