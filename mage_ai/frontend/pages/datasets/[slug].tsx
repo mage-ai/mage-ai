@@ -26,7 +26,14 @@ function Data() {
     datasetResponse?.sample_data,
   ]);
 
+  const statistics = useMemo(() => datasetResponse?.statistics || [], [
+    datasetResponse?.statistics,
+  ]);
+
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
+  // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
+  const [metricSample, setMetricSample] = useState({});
+
   
   // TODO: Move to const file 
   const fixedHeaders = 'label';
@@ -44,6 +51,43 @@ function Data() {
       setColumnHeaderSample(headerJSON);
     }, [datasetResponse]);
   
+  // Populate Metrics & Stats
+
+  /* 
+  { 
+    rowData: [
+      {
+        columnValues: [
+          "Validity", "0.8"
+        ],
+      },
+    ]
+  }
+
+  */
+  useEffect( () => {
+    const stats = Object.keys(statistics);
+    var metricGroupData = {
+      rowData: [],
+    };
+    // For each stat, add it to a row
+    var rows = [] // List of JSON
+
+    // Make the JSON a key of list values.
+    stats.forEach(function (val, i) {
+      var statpair = [val, statistics[val]]
+      var values = {
+        columnValues: statpair,
+      }
+      rows.push(values);
+    });
+
+     metricGroupData.rowData = rows;
+    setMetricSample(metricGroupData);
+    }, [datasetResponse]);
+
+  console.log(setMetricSample);
+
   const rowGroupDataSample = {
     rowData: [
       {
@@ -93,50 +137,48 @@ function Data() {
   // Report (Quality Metrics)
 
   /* Given a payload of 
-  statistics: {
+    "count": 100,
     "avg_null_value_count": 10,
     "avg_invalid_value_count": 10,
-    "duplicate_row_count": 20, 
-    "completeness": 0.9,
+		"duplicate_row_count": 20, 
+		"completeness": 0.9,
     "validity": 0.8,
-  }
-  */
 
   /* Turn each key value into a list of tuples. 
   Inside an object called ColumnValues, that's inside RowData (list of Json) */
 
-  // TODO: map keys to text (P2)
+  // TODO: map keys to text (P1) but for now we'll reuse the string.
 
   // This first statistics portion will contain the missing values, invalid values, duplicate values, and show validity and completeness.
-  const metricSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Validity", "0.8"
-        ],
-      },
-      {
-        columnValues: [
-          "Completeness", "0.9"
-        ],
-      },
-      {
-        columnValues: [
-          "Missing values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Invalid values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Duplicate values", "20"
-        ],
-      },
-    ],
-  };
+  // const metricSample = {
+  //   rowData: [
+  //     {
+  //       columnValues: [
+  //         "Validity", "0.8"
+  //       ],
+  //     },
+  //     {
+  //       columnValues: [
+  //         "Completeness", "0.9"
+  //       ],
+  //     },
+  //     {
+  //       columnValues: [
+  //         "Missing values", "20"
+  //       ],
+  //     },
+  //     {
+  //       columnValues: [
+  //         "Invalid values", "20"
+  //       ],
+  //     },
+  //     {
+  //       columnValues: [
+  //         "Duplicate values", "20"
+  //       ],
+  //     },
+  //   ],
+  // };
 
   // Report (Statistics)
   const statSample = {
