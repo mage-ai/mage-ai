@@ -45,16 +45,16 @@ class RemoveCollinearColumns(BaseRule):
         return suggestions
 
     def filter_numeric_types(self):
-        cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
         numeric_columns = []
+        numeric_df = self.df.copy()
         for column in self.df_columns:
             if self.column_types[column] in NUMBER_TYPES:
-                cleaned_df[column] = cleaned_df[column].astype(float)
+                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
                 numeric_columns.append(column)
             else:
-                cleaned_df.drop(column, axis=1, inplace=True)
-        cleaned_df = cleaned_df.dropna(axis=0)
-        return cleaned_df, numeric_columns
+                numeric_df.drop(column, axis=1, inplace=True)
+        numeric_df = numeric_df.dropna(axis=0)
+        return numeric_df, numeric_columns
 
     def get_variance_inflation_factor(self, column):
         """
@@ -78,5 +78,5 @@ class RemoveCollinearColumns(BaseRule):
         sum_sq_model = np.sum(predictions * predictions)
         sum_sq_to = np.sum(responses * responses)
 
-        r_sq = sum_sq_model / sum_sq_to
+        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
         return 1 / (1 - r_sq + self.EPSILON)

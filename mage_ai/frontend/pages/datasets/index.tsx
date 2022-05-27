@@ -11,7 +11,7 @@ import Tab from '@oracle/components/Tabs/Tab'
 import Tabs from '@oracle/components/Tabs'
 import Text from '@oracle/elements/Text'
 import { File } from '@oracle/icons'
-import { isBadQuality } from '@components/utils'
+import { isBadQuality, DATASETS_PAYLOAD } from '@components/utils'
 import { pluralize } from '@utils/string'
 
 // TODO replace with API call to backend
@@ -45,72 +45,74 @@ const data = [
      }
   }
 ];
+import { UNIT } from '@oracle/styles/units/spacing'
 
 const Dashboard: NextPage = () => (
   <Layout
     centerAlign
-    header={<Spacing m={2} />}
+    header={<Spacing mt={UNIT} />}
   >
     <Tabs defaultKey="datasets" bold large>
       <Tab key="datasets" label="Datasets">
         <Spacing pb={3} pt={3}>
           <RowDataTable
             headerTitle="datasets"
-            headerDetails={pluralize("dataset", data.length)}
+            headerDetails={pluralize("dataset", DATASETS_PAYLOAD.length)}
           >
-          {
-            data.length > 0
-              ?
-              data.map(dataset => {
+            {
+              DATASETS_PAYLOAD.length > 0
+                ?
+                DATASETS_PAYLOAD.map(dataset => {
 
-                const {
-                  id,
-                  metadata: {
-                    column_types,
-                    name,
-                    statistics: {
-                      count,
-                      quality
+                  const {
+                    id,
+                    metadata: {
+                      column_types,
+                      name,
+                      statistics: {
+                        count,
+                        quality
+                      }
                     }
-                  }
-                } = dataset;
+                  } = dataset;
 
-                const num_features = Object.keys(column_types).length;
+                  const num_features = Object.keys(column_types).length;
 
-                return (
-                  <RowCard
-                    key={id}
-                    columnFlexNumbers={[4, 1, 1, 1]}
-                  >
-                    <FlexContainer alignItems="center">
-                      <File />&nbsp;
-                      <Link
-                        noHoverUnderline
-                        onClick={() => Router.push(`datasets/${id}`)}
-                        sameColorAsText
-                      >
-                        {name}
-                      </Link>
-                    </FlexContainer>
-                    <Text>{num_features} features</Text>
-                    <Text>{count} rows</Text>
-                    <Text
-                      bold
-                      danger={isBadQuality(quality)}
+                  return (
+                    <RowCard
+                      key={id}
+                      columnFlexNumbers={[4, 1, 1, 1]}
                     >
-                      {quality}
-                    </Text>
-                  </RowCard>
-                );
-              })
-              : 
-              <Spacing p={2}>
-                <Text>
-                  {/* TODO: add link to README or something here? */}
-                  No datasets available. Add one to get started.
-                </Text>
-              </Spacing>
-          }
+                      <FlexContainer alignItems="center">
+                        <File secondary />
+                        <Spacing mr={1} />
+                        <Link
+                          noHoverUnderline
+                          onClick={() => Router.push(`datasets/${id}`)}
+                          sameColorAsText
+                        >
+                          {name}
+                        </Link>
+                      </FlexContainer>
+                      <Text>{num_features} features</Text>
+                      <Text>{count} rows</Text>
+                      <Text
+                        bold={isBadQuality(quality)}
+                        danger={isBadQuality(quality)}
+                      >
+                        {quality}
+                      </Text>
+                    </RowCard>
+                  );
+                })
+                : 
+                <Spacing p={2}>
+                  <Text>
+                    {/* TODO: add link to README or something here? */}
+                    No datasets available. Add one to get started.
+                  </Text>
+                </Spacing>
+            }
           </RowDataTable>
         </Spacing>
       </Tab>

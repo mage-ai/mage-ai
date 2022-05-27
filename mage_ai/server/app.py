@@ -1,12 +1,17 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
 from data_cleaner.pipelines.base import BasePipeline
-from flask import render_template, request
+from flask import Flask, render_template, request
 from numpyencoder import NumpyEncoder
 from server.data.models import FeatureSet, Pipeline
-from server import app
+
 import json
 import simplejson
 import threading
+
+app = Flask(__name__,
+            static_url_path='',
+            static_folder="../frontend/out",
+            template_folder="../frontend/out")
 
 
 @app.route("/")
@@ -182,7 +187,18 @@ def update_pipeline(id):
     """
     request_data = request.json
     pipeline = Pipeline(id=id)
-    pipeline.pipeline = BasePipeline(request_data.get('actions', []))
+    actions = request_data.get('actions', [])
+    clean_pipeline = BasePipeline(actions=actions)
+    pipeline.pipeline = clean_pipeline
+    # # 1. Transform the data
+    # # 2. Recalculate stats and suggestions
+    feature_set_id = pipeline.metadata.get('feature_set_id')
+    if feature_set_id is not None:
+        feature_set = FeatureSet(id=feature_set_id)
+        df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
+        result = clean_data(df_transformed, transform=False)
+        feature_set.write_files(result)
+
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -199,35 +215,18 @@ def update_pipeline(id):
 def clean_df(df, name, pipeline_uuid=None):
     feature_set = FeatureSet(df=df, name=name)
 
-    metadata = feature_set.metadata
-
     result = clean_data(df)
 
     feature_set.write_files(result)
-
-    column_types = result['column_types']
-    metadata['column_types'] = column_types
-
-    feature_set.metadata = metadata
     return (feature_set, result['df'])
 
 
 def connect_df(df, name):
     feature_set = FeatureSet(df=df, name=name)
 
-    metadata = feature_set.metadata
+    result = clean_data(df, transform=False)
 
-    result = analyze(df)
-
-    feature_set.write_files(result)
-
-    column_types = result['column_types']
-    metadata['column_types'] = column_types
-    metadata['statistics'] = dict(
-        count=result['statistics']['count'],
-        quality='Good' if result['statistics']['validity'] >= 0.8 else 'Bad',
-    )
-    feature_set.metadata = metadata
+    feature_set.write_files(result, write_orig_data=True)
     return (feature_set, df)
 
 

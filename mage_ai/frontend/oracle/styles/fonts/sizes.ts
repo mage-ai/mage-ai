@@ -2,6 +2,11 @@ export const SMALL_FONT_SIZE: number = 12;
 export const XSMALL_FONT_SIZE: number = 10;
 export const XXSMALL_FONT_SIZE: number = 8;
 
+export const XSMALL = `
+  font-size: 12px;
+  line-height: 12px;
+`;
+
 export const SMALL = `
   font-size: 12px;
   line-height: 17px;

@@ -4,7 +4,7 @@ import { Meta, Story } from '@storybook/react';
 import Button, { ButtonProps } from '@oracle/elements/Button';
 import Spacing from '@oracle/elements/Spacing';
 import ThemeBlock from 'stories/ThemeBlock';
-import { Add } from '@oracle/icons';
+import { ArrowRight } from '@oracle/icons';
 
 export default {
   component: Button,
@@ -55,17 +55,17 @@ All.args = {
     <Button small>
       Small
     </Button>,
-    <Button beforeIcon={<Add />}>
+    <Button beforeIcon={<ArrowRight />}>
       Before Icon
     </Button>,
-    <Button afterIcon={<Add />}>
+    <Button afterIcon={<ArrowRight />}>
       After Icon
     </Button>,
     <Button iconOnly>
-      <Add />
+      <ArrowRight />
     </Button>,
     <Button basic iconOnly padding="0px">
-      <Add />
+      <ArrowRight />
     </Button>
   ],
 };
@@ -91,21 +91,21 @@ Primary.args = {
 export const BeforeIcon = Template.bind({});
 BeforeIcon.args = {
   ...Regular.args,
-  beforeIcon: <Add />,
+  beforeIcon: <ArrowRight />,
   children: 'Button',
 };
 
 export const AfterIcon = Template.bind({});
 AfterIcon.args = {
   ...Regular.args,
-  afterIcon: <Add />,
+  afterIcon: <ArrowRight />,
   children: 'Button',
 };
 
 export const IconOnly = Template.bind({});
 IconOnly.args = {
   ...Regular.args,
-  children: <Add />,
+  children: <ArrowRight />,
   iconOnly: true,
 };
 

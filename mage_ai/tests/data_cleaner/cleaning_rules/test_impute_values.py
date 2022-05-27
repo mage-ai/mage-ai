@@ -1,4 +1,5 @@
 from data_cleaner.cleaning_rules.impute_values import ImputeValues
+from data_cleaner.shared.utils import clean_dataframe
 from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
@@ -33,6 +34,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 4,
             'number_of_years/count_distinct': 4,
             'number_of_years/null_value_rate': 6/10,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -92,6 +94,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/null_value_rate': (
                 1 - df['number_of_years'].count() / len(df['number_of_years'])
             ),
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -153,6 +156,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 0.6,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -219,7 +223,8 @@ class ImputeValuesTest(TestCase):
             'industry/count': 5,
             'industry/null_value_rate': 3/8,
             'industry/mode': 34934,
-            'industry/mode_ratio': 3/5
+            'industry/mode_ratio': 3/5,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -286,6 +291,7 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 6/8,
+            'is_timeseries': False
         }
         expected_suggestions = []
         suggestions = ImputeValues(
@@ -329,6 +335,7 @@ class ImputeValuesTest(TestCase):
             'dest/mode': cleaned_df['dest'].mode(),
             'dest/mode_ratio': cleaned_df['dest'].value_counts().max()  / 
                                cleaned_df['dest'].count(),
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -358,6 +365,7 @@ class ImputeValuesTest(TestCase):
                 status='not_applied'
             )
         ]
+        df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
             df,
             column_types,
@@ -389,6 +397,7 @@ class ImputeValuesTest(TestCase):
             'location/count': 8,
             'location/count_distinct': 8,
             'location/null_value_rate': 0.2,
+            'is_timeseries': False
         }
         expected_suggestions = [
             dict(
@@ -457,6 +466,8 @@ class ImputeValuesTest(TestCase):
             'location/max_null_seq': 4,
             'timestamp/null_value_rate': 1/10,
             'timestamp/max_null_seq': 1,
+            'is_timeseries': True,
+            'timeseries_index': ['timestamp']
         }
         expected_suggestions = [
             dict(
@@ -513,7 +524,7 @@ class ImputeValuesTest(TestCase):
     def test_seq_edge(self):
         df = pd.DataFrame(
             [
-                [None, '', '12-26-2022'],
+                ['MI', '32453', '12-26-2022'],
                 ['CA', '', '12-28-2022'],
                 ['', None, '12-28-2022'],
                 ['MA', '12214', '12-31-2022'],
@@ -532,12 +543,17 @@ class ImputeValuesTest(TestCase):
             'state/count_distinct': 6,
             'state/null_value_rate': 0.4,
             'state/max_null_seq': 1,
+            'state/mode_ratio': 2/7,
             'location/count': 4,
             'location/count_distinct': 4,
             'location/null_value_rate': 0.6,
             'location/max_null_seq': 3,
+            'location/mode_ratio': 1/4,
             'timestamp/null_value_rate': 0,
             'timestamp/max_null_seq': 0,
+            'timestamp/mode_ratio': 1/10,
+            'is_timeseries': True,
+            'timeseries_index': ['timestamp']
         }
         expected_suggestions = [
             dict(
@@ -576,6 +592,7 @@ class ImputeValuesTest(TestCase):
                 status='not_applied'
             )
         ]
+        df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
             df,
             column_types,

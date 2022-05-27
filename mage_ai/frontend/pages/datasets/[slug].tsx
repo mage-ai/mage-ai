@@ -11,13 +11,13 @@ import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
 import api from '@api';
 import { UNIT } from "@oracle/styles/units/spacing";
+import api from '@api';
 
 
 function Data() {
 
   const router = useRouter()
   const { slug } = router.query
-  // TODO: Replace with API Call during Integration
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
@@ -70,9 +70,7 @@ function Data() {
       rowData: [],
     };
 
-    var metricRows = [] // List of JSON
-
-    // Make the JSON a key of list values.
+    var metricRows = []
     stats.forEach(function (val, i) {
       var statpair = [val, statistics[val]]
       var values = {

@@ -17,12 +17,13 @@ class RemoveColumnsWithSingleValue(BaseRule):
             if feature_count_distinct == 1:
                 columns_with_single_value.append(c)
         suggestions = []
-        suggestions.append(self._build_transformer_action_suggestion(
-            'Remove columns with single value',
-            f'The following columns have single value in all rows: {columns_with_single_value}.'\
-            ' Suggest to remove them.',
-            ActionType.REMOVE,
-            action_arguments=columns_with_single_value,
-            axis=Axis.COLUMN,
-        ))
+        if len(columns_with_single_value) != 0:
+            suggestions.append(self._build_transformer_action_suggestion(
+                'Remove columns with single value',
+                f'The following columns have single value in all rows: {columns_with_single_value}.'\
+                ' Suggest to remove them.',
+                ActionType.REMOVE,
+                action_arguments=columns_with_single_value,
+                axis=Axis.COLUMN,
+            ))
         return suggestions
