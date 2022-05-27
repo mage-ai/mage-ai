@@ -59,60 +59,60 @@ const Dashboard: NextPage = () => (
             headerTitle="datasets"
             headerDetails={pluralize("dataset", DATASETS_PAYLOAD.length)}
           >
-          {
-            DATASETS_PAYLOAD.length > 0
-              ?
-              DATASETS_PAYLOAD.map(dataset => {
+            {
+              DATASETS_PAYLOAD.length > 0
+                ?
+                DATASETS_PAYLOAD.map(dataset => {
 
-                const {
-                  id,
-                  metadata: {
-                    column_types,
-                    name,
-                    statistics: {
-                      count,
-                      quality
+                  const {
+                    id,
+                    metadata: {
+                      column_types,
+                      name,
+                      statistics: {
+                        count,
+                        quality
+                      }
                     }
-                  }
-                } = dataset;
+                  } = dataset;
 
-                const num_features = Object.keys(column_types).length;
+                  const num_features = Object.keys(column_types).length;
 
-                return (
-                  <RowCard
-                    key={id}
-                    columnFlexNumbers={[4, 1, 1, 1]}
-                  >
-                    <FlexContainer alignItems="center">
-                      <File secondary />
-                      <Spacing mr={1} />
-                      <Link
-                        noHoverUnderline
-                        onClick={() => Router.push(`datasets/${id}`)}
-                        sameColorAsText
-                      >
-                        {name}
-                      </Link>
-                    </FlexContainer>
-                    <Text>{num_features} features</Text>
-                    <Text>{count} rows</Text>
-                    <Text
-                      bold={isBadQuality(quality)}
-                      danger={isBadQuality(quality)}
+                  return (
+                    <RowCard
+                      key={id}
+                      columnFlexNumbers={[4, 1, 1, 1]}
                     >
-                      {quality}
-                    </Text>
-                  </RowCard>
-                );
-              })
-              : 
-              <Spacing p={2}>
-                <Text>
-                  {/* TODO: add link to README or something here? */}
-                  No datasets available. Add one to get started.
-                </Text>
-              </Spacing>
-          }
+                      <FlexContainer alignItems="center">
+                        <File secondary />
+                        <Spacing mr={1} />
+                        <Link
+                          noHoverUnderline
+                          onClick={() => Router.push(`datasets/${id}`)}
+                          sameColorAsText
+                        >
+                          {name}
+                        </Link>
+                      </FlexContainer>
+                      <Text>{num_features} features</Text>
+                      <Text>{count} rows</Text>
+                      <Text
+                        bold={isBadQuality(quality)}
+                        danger={isBadQuality(quality)}
+                      >
+                        {quality}
+                      </Text>
+                    </RowCard>
+                  );
+                })
+                : 
+                <Spacing p={2}>
+                  <Text>
+                    {/* TODO: add link to README or something here? */}
+                    No datasets available. Add one to get started.
+                  </Text>
+                </Spacing>
+            }
           </RowDataTable>
         </Spacing>
       </Tab>

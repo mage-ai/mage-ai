@@ -50,8 +50,7 @@ type BarStackHorizontalProps = {
   width: number;
 } & SharedProps;
 
-export type BarStackHorizontalContainerProps = {
-} & SharedProps;
+export type BarStackHorizontalContainerProps = SharedProps;
 
 const MAX_FIELDS_DISPLAYED: number = 200;
 

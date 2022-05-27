@@ -22,6 +22,8 @@ const ArrowDownEl = (
 
 const SelectStyle = styled.select<SelectProps>`
   ${SHARED_INPUT_STYLES}
+  background-image: url('data:image/svg+xml;utf8,${renderToString(ArrowDownEl)}');
+  background-repeat: no-repeat;
 
   &:hover {
     cursor: pointer;
@@ -29,12 +31,6 @@ const SelectStyle = styled.select<SelectProps>`
 
   ${(props) => !props.hasContent && !props.showPlaceholder && `
     color: ${(props.theme.content || light.content).muted};
-  `}
-
-  ${props => `
-    background-color: red;
-    background-image: url("data:image/svg+xml;utf8,${renderToString(ArrowDownEl)}");
-    background-repeat: no-repeat;
   `}
 
   ${props => props.backgroundColor && `
