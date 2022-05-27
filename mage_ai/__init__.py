@@ -9,9 +9,10 @@ def launch():
 
 def connect_data(df, name):
     if df.shape[0] > MAX_NUM_OF_ROWS:
-        connect_df(df.sample(MAX_NUM_OF_ROWS), name)
+        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name)
     else:
-        connect_df(df, name)
+        feature_set, _ = connect_df(df, name)
+    return feature_set
 
 
 def clean(df, pipeline_uuid=None):
