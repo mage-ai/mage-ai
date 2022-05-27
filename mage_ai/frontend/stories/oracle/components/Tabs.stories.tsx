@@ -6,7 +6,7 @@ import Tab from '@oracle/components/Tabs/Tab';
 import Tabs, { TabsProps } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import ThemeBlock from 'stories/ThemeBlock';
-import { Remove } from '@oracle/icons';
+import { ArrowRight } from '@oracle/icons';
 
 export default {
   component: Tabs,
@@ -27,14 +27,14 @@ const Template: Story<TabsProps> = (args) => <TemplateWithTheme {...args} />;
 export const Regular = Template.bind({});
 Regular.args = {
   children: [
-    <Tab beforeChildren={<Remove />} key="Tab 1" label="Before icon">
+    <Tab beforeChildren={<ArrowRight />} key="Tab 1" label="Before icon">
       <Spacing pb={3} pt={3}>
         <Text>
           Before Icon
         </Text>
       </Spacing>
     </Tab>,
-    <Tab afterChildren={<Remove />} key="Tab 2" label="After Icon">
+    <Tab afterChildren={<ArrowRight />} key="Tab 2" label="After Icon">
       <Spacing pb={3} pt={3}>
         <Text>
           After Icon
@@ -49,7 +49,7 @@ Regular.args = {
       </Spacing>
     </Tab>,
     <Tab
-      beforeChildren={<Remove />}
+      beforeChildren={<ArrowRight />}
       disabled
       key="Tab 4"
       label="Disabled"
