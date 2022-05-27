@@ -4,7 +4,7 @@ import { Meta, Story } from '@storybook/react';
 import Button from '@oracle/elements/Button';
 import ButtonGroup, { ButtonGroupProps } from '@oracle/elements/Button/ButtonGroup';
 import ThemeBlock from 'stories/ThemeBlock';
-import { ArrowDown, Sort, Graph, ApplyAction, Check } from '@oracle/icons';
+import { ArrowDown, Sort, Graph, Check } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export default {

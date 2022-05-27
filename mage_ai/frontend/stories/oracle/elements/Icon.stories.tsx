@@ -3,8 +3,8 @@ import { Meta, Story } from '@storybook/react';
 import ThemeBlock from 'stories/ThemeBlock';
 
 import {
+  Action,
   AlertCircle,
-  ApplyAction,
   ArrowDown,
   ArrowRight,
   Check,
@@ -17,15 +17,15 @@ import {
   File,
   Graph,
   Pipeline,
-  // PreviewOpen,
-  // PreviewHidden,
+  PreviewHidden,
+  PreviewOpen,
   Report,
   Search,
   Sort,
 } from '@oracle/icons';
 const ICONS = [
   AlertCircle,
-  ApplyAction,
+  Action,
   ArrowDown,
   ArrowRight,
   Check,
@@ -38,8 +38,8 @@ const ICONS = [
   File,
   Graph,
   Pipeline,
-  // PreviewOpen,
-  // PreviewHidden,
+  PreviewHidden,
+  PreviewOpen,
   Report,
   Search,
   Sort,
