@@ -1,23 +1,34 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import FlexContainer from '@oracle/components/FlexContainer';
-import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import Text from '@oracle/elements/Text';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
-import { indexBy, maxInArray, sortByKey } from '@utils/array';
 import FeatureType from '@interfaces/FeatureType';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { formatPercent, numberWithCommas } from '@utils/string';
-import { buildDistributionData, hasHighDistribution } from '@components/charts/utils/data';
-import { NULL_VALUE_HIGH_THRESHOLD, NULL_VALUE_LOW_THRESHOLD, UNIQUE_VALUE_HIGH_THRESHOLD, UNIQUE_VALUE_LOW_THRESHOLD, UNUSUAL_ROW_VOLUME_FACTOR } from './constants';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Histogram from '@components/charts/Histogram';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import light from '@oracle/styles/themes/light';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { GRAY_LINES, SILVER } from '@oracle/styles/colors/main';
+import {
+  NULL_VALUE_HIGH_THRESHOLD,
+  NULL_VALUE_LOW_THRESHOLD,
+  UNIQUE_VALUE_HIGH_THRESHOLD,
+  UNIQUE_VALUE_LOW_THRESHOLD,
+  UNUSUAL_ROW_VOLUME_FACTOR,
+} from './constants';
+import { PADDING, UNIT } from '@oracle/styles/units/spacing';
+import {
+  buildDistributionData,
+  hasHighDistribution,
+} from '@components/datasets/Insights/utils/data';
+import { formatPercent, numberWithCommas } from '@utils/string';
+import { indexBy, maxInArray, sortByKey } from '@utils/array';
 
 export const ChartStyle = styled.div`
-  border: 1px solid gray;
-  height: 400px;
+  border: 1px solid ${GRAY_LINES};
+  border-radius: ${BORDER_RADIUS_LARGE}px;
 `;
 
 export const ChartHeaderStyle = styled.div`
@@ -25,16 +36,24 @@ export const ChartHeaderStyle = styled.div`
 `;
 
 export const HeaderStyle = styled.div`
-  ${props => `
-    background: ${(props.theme.monotone || light.monotone).gray}
+  background: ${SILVER};
+  padding: ${PADDING}px;
+  border-bottom: 1px solid ${GRAY_LINES};
+  border-top-left-radius: ${BORDER_RADIUS_LARGE}px;
+  border-top-right-radius: ${BORDER_RADIUS_LARGE}px;
+`;
+
+export const BodyStyle = styled.div<any>`
+  ${props => !props.noPadding && `
+    padding: ${PADDING}px;
   `}
-  border: 1px solid gray;
-  border-top-left-radius: ${BORDER_RADIUS_LARGE};
-  border-top-right-radius: ${BORDER_RADIUS_LARGE};
+  border-bottom-left-radius: ${BORDER_RADIUS_LARGE}px;
+  border-bottom-right-radius: ${BORDER_RADIUS_LARGE}px;
 `;
 
 type ChartContainerProps = {
   children: any;
+  noPadding?: boolean;
   title: string;
 };
 
@@ -44,8 +63,9 @@ type OverviewProps = {
   statistics: any;
 };
 
-function ChartContainer({
+export function ChartContainer({
   children,
+  noPadding = false,
   title,
 }: ChartContainerProps) {
   return (
@@ -53,12 +73,44 @@ function ChartContainer({
       <FlexContainer flexDirection="column">
         <HeaderStyle>
           <Text bold>
-            Data Completion
+            {title}
           </Text>
         </HeaderStyle>
-        {children}
+        <BodyStyle noPadding={noPadding}>
+          {children}
+        </BodyStyle>
       </FlexContainer>
     </ChartStyle>
+  )
+}
+
+export function ChartRow({
+  left,
+  right
+}: {
+  left: any,
+  right?: any,
+}) {
+  return (
+    <Spacing mb={4}>
+      <FlexContainer>
+        <FlexContainer flex={1}>
+          <div style={{ width: '100%', height: '100%'}}>
+            {left}
+          </div>
+        </FlexContainer>
+        {right && (
+          <>
+            <Spacing mr={4} />
+            <FlexContainer flex={1}>
+              <div style={{ width: '100%', height: '100%'}}>
+                {right}
+              </div>
+            </FlexContainer>
+          </>
+        )}
+      </FlexContainer>
+    </Spacing>
   )
 }
 
@@ -148,11 +200,9 @@ function Overview({
           Dates: {xLabelMin} - {xLabelMax}
         </Text>
       )}
-      showAxisLabels
       showYAxisLabels
       showZeroes
       sortData={d => sortByKey(d, '[4]')}
-      width={400}
     />
   ));
 
@@ -214,228 +264,54 @@ function Overview({
   const columnsWithDistribution = allColumns.filter(({ distributionPercentage }) => distributionPercentage);
 
   return (
-    <>
-      <Text bold large>Hi there!</Text>
-      <FlexContainer>
-        <ChartContainer
-          title="Data completion"
-        >
-          <BarGraphHorizontal
-            data={sortByKey(allColumnsWithNullValues, 'value').map(({ feature, value }) => ({
-              x: value,
-              y: feature.uuid,
-            }))}
-            height={Math.max(3 * allColumnsWithNullValues.length * UNIT, UNIT * 50)}
-            renderTooltipContent={({ x }) => `${formatPercent(x)} of rows have a value`}
-            xNumTicks={2}
-            ySerialize={({ y }) => y}
-          />
-        </ChartContainer>
-        <ChartContainer
-          title="Columns with a lot of missing values"
-        >
-          {columnsWithHighNullValues.length === 0 && (
-            <Text>
-              All columns have a healthy amount of values.
-            </Text>
-          )}
-
-          {columnsWithHighNullValues.length >= 1 && (
-            <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[
-                {
-                  label: 'Column',
-                },
-                {
-                  label: '% missing values',
-                },
-              ]}
-              rowGroupData={[
-                {
-                  rowData: sortByKey(columnsWithHighNullValues.slice(0, 12), 'value').map(({ feature, value }) => ({
-                    columnValues: [feature.uuid, formatPercent(1 - value)],
-                    uuid: feature.uuid,
-                  })),
-                },
-              ]}
-              small
-            />
-          )}
-        </ChartContainer>
-      </FlexContainer>
-      {timeSeriesHistograms.length >= 1 &&
-        timeSeriesHistograms.map((chart, idx) => {
-          const uuid = timeSeries[idx]?.x_metadata?.label;
-          const unusualDates = datesWithUnusualNumberOfRows[idx];
-
-          return (
-            <FlexContainer>
-              <ChartContainer
-                key={uuid}
-                title={`Column: ${uuid}`}
-              >
-                {chart}
-              </ChartContainer>
-              {unusualDates.length === 0 && (
-                <Text>
-                  There are no unusual dates.
-                </Text>
-              )}
-
-              {unusualDates.length >= 1 && (
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[
-                    {
-                      label: 'Start date',
-                    },
-                    {
-                      label: 'End date',
-                    },
-                    {
-                      label: 'Rows',
-                    },
-                  ]}
-                  rowGroupData={[
-                    {
-                      rowData: unusualDates.slice(0, 12).map(({ xLabelMax, xLabelMin, y }) => ({
-                        columnValues: [
-                          xLabelMin,
-                          xLabelMax,
-                          numberWithCommas(y.count),
-                        ],
-                        uuid: '',
-                      })),
-                    },
-                  ]}
-                  small
-                />
-              )}
-            </FlexContainer>
-          );
-        })
-      }
-      <FlexContainer>
-        <ChartContainer
-          title="Number of unique values"
-        >
-          <BarGraphHorizontal
-            data={sortByKey(allColumns, 'uniqueValues').map(({ feature, uniqueValues }) => ({
-              x: uniqueValues,
-              y: feature.uuid,
-            }))}
-            height={Math.max(3 * allColumns.length * UNIT, UNIT * 50)}
-            renderTooltipContent={({ x }) => `${numberWithCommas(x)} unique values`}
-            xNumTicks={2}
-            ySerialize={({ y }) => y}
-          />
-        </ChartContainer>
-        <ChartContainer
-          title=""
-        >
-          {columnsWithHighUniqueValues.length === 0 && (
-            <Text>
-              All columns have a good amount of variation in the data.
-            </Text>
-          )}
-
-          {columnsWithHighUniqueValues.length >= 1 && (
-            <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[
-                {
-                  label: 'Column',
-                },
-                {
-                  label: '% unique values',
-                },
-              ]}
-              rowGroupData={[
-                {
-                  rowData: sortByKey(
-                    columnsWithHighUniqueValues.slice(0, 12),
-                    'uniquePercentage',
-                    { ascending: false },
-                  ).map(({ feature, uniquePercentage }) => ({
-                    columnValues: [feature.uuid, formatPercent(uniquePercentage)],
-                    uuid: feature.uuid,
-                  })),
-                },
-              ]}
-              small
-            />
-          )}
-        </ChartContainer>
-      </FlexContainer>
-      {columnsWithDistribution.length >= 1 && (
-        <FlexContainer>
+    <FlexContainer
+      flexDirection="column"
+      fullWidth
+      justifyContent="center"
+    >
+      <ChartRow
+        left={
           <ChartContainer
-            title="Distribution of values"
+            title="Data completion"
           >
             <BarGraphHorizontal
-              data={sortByKey(
-                columnsWithDistribution,
-                'distributionPercentage',
-              ).map(({
-                feature,
-                distributionFeatureUUID,
-                distributionPercentage,
-              }) => ({
-                distributionFeatureUUID,
-                x: distributionPercentage,
+              data={sortByKey(allColumnsWithNullValues, 'value').map(({ feature, value }) => ({
+                x: value,
                 y: feature.uuid,
               }))}
-              height={Math.max(3 * columnsWithDistribution.length * UNIT, UNIT * 50)}
-              renderTooltipContent={({
-                distributionFeatureUUID,
-                x,
-              }) =>
-                `${distributionFeatureUUID} is ${formatPercent(x)} of all rows`
-              }
+              height={Math.max(3 * allColumnsWithNullValues.length * UNIT, UNIT * 50)}
+              renderTooltipContent={({ x, y }) => `${formatPercent(x)} of rows have a value`}
               xNumTicks={2}
               ySerialize={({ y }) => y}
             />
           </ChartContainer>
+        }
+        right={
           <ChartContainer
-            title="Columns with imbalanced distribution"
+            noPadding={columnsWithHighNullValues.length >= 1}
+            title="Columns with a lot of missing values"
           >
-            {columnsWithHighDistribution.length === 0 && (
+            {columnsWithHighNullValues.length === 0 && (
               <Text>
-                All columns have an even distribution of its values.
+                All columns have a healthy amount of values.
               </Text>
             )}
 
-            {columnsWithHighDistribution.length >= 1 && (
+            {columnsWithHighNullValues.length >= 1 && (
               <SimpleDataTable
-                columnFlexNumbers={[2, 2, 1]}
+                columnFlexNumbers={[1, 1]}
                 columnHeaders={[
                   {
                     label: 'Column',
                   },
                   {
-                    label: 'Most frequent value',
-                  },
-                  {
-                    label: '% of rows',
+                    label: '% missing values',
                   },
                 ]}
                 rowGroupData={[
                   {
-                    rowData: sortByKey(
-                      columnsWithHighDistribution.slice(0, 12),
-                      'distributionPercentage',
-                      { ascending: false },
-                    ).map(({
-                      feature,
-                      distributionFeatureUUID,
-                      distributionPercentage,
-                    }) => ({
-                      columnValues: [
-                        feature.uuid,
-                        distributionFeatureUUID,
-                        formatPercent(distributionPercentage),
-                      ],
+                    rowData: sortByKey(columnsWithHighNullValues.slice(0, 12), 'value').map(({ feature, value }) => ({
+                      columnValues: [feature.uuid, formatPercent(1 - value)],
                       uuid: feature.uuid,
                     })),
                   },
@@ -444,9 +320,208 @@ function Overview({
               />
             )}
           </ChartContainer>
-        </FlexContainer>
+        }
+      />
+      {timeSeriesHistograms.length >= 1 &&
+        timeSeriesHistograms.map((chart, idx) => {
+          const uuid = timeSeries[idx]?.x_metadata?.label;
+          const unusualDates = datesWithUnusualNumberOfRows[idx];
+
+          return (
+            <ChartRow
+              left={
+                <ChartContainer
+                  title={`Number of rows by date, column: ${uuid}`}
+                >
+                  {chart}
+                </ChartContainer>
+              }
+              right={
+                <ChartContainer
+                  noPadding={unusualDates.length >= 1}
+                  title="Dates with unusual number of rows"
+                >
+                  {unusualDates.length === 0 && (
+                    <Text>
+                      There are no unusual dates.
+                    </Text>
+                  )}
+                  {unusualDates.length >= 1 && (
+                    <SimpleDataTable
+                      columnFlexNumbers={[1, 1, 1]}
+                      columnHeaders={[
+                        {
+                          label: 'Start date',
+                        },
+                        {
+                          label: 'End date',
+                        },
+                        {
+                          label: 'Rows',
+                        },
+                      ]}
+                      rowGroupData={[
+                        {
+                          rowData: unusualDates.slice(0, 12).map(({ xLabelMax, xLabelMin, y }) => ({
+                            columnValues: [
+                              xLabelMin,
+                              xLabelMax,
+                              numberWithCommas(y.count),
+                            ],
+                            uuid: '',
+                          })),
+                        },
+                      ]}
+                      small
+                    />
+                  )}
+                </ChartContainer>
+              }
+            />
+          );
+        })
+      }
+      <ChartRow
+        left={
+          <ChartContainer
+            title="Number of unique values"
+          >
+            <BarGraphHorizontal
+              data={sortByKey(allColumns, 'uniqueValues').map(({ feature, uniqueValues }) => ({
+                x: uniqueValues,
+                y: feature.uuid,
+              }))}
+              height={Math.max(3 * allColumns.length * UNIT, UNIT * 50)}
+              renderTooltipContent={({ x }) => `${numberWithCommas(x)} unique values`}
+              xNumTicks={2}
+              ySerialize={({ y }) => y}
+            />
+          </ChartContainer>
+        }
+        right={
+          <ChartContainer
+            noPadding={columnsWithHighUniqueValues.length >= 1}
+            title="Columns with a lot of unique values"
+          >
+            {columnsWithHighUniqueValues.length === 0 && (
+              <Text>
+                All columns have a good amount of variation in the data.
+              </Text>
+            )}
+
+            {columnsWithHighUniqueValues.length >= 1 && (
+              <SimpleDataTable
+                columnFlexNumbers={[1, 1]}
+                columnHeaders={[
+                  {
+                    label: 'Column',
+                  },
+                  {
+                    label: '% unique values',
+                  },
+                ]}
+                rowGroupData={[
+                  {
+                    rowData: sortByKey(
+                      columnsWithHighUniqueValues.slice(0, 12),
+                      'uniquePercentage',
+                      { ascending: false },
+                    ).map(({ feature, uniquePercentage }) => ({
+                      columnValues: [feature.uuid, formatPercent(uniquePercentage)],
+                      uuid: feature.uuid,
+                    })),
+                  },
+                ]}
+                small
+              />
+            )}
+          </ChartContainer>
+        }
+      />
+      {columnsWithDistribution.length >= 1 && (
+        <ChartRow
+          left={
+            <ChartContainer
+              title="Distribution of values"
+            >
+              <BarGraphHorizontal
+                data={sortByKey(
+                  columnsWithDistribution,
+                  'distributionPercentage',
+                ).map(({
+                  feature,
+                  distributionFeatureUUID,
+                  distributionPercentage,
+                }) => ({
+                  distributionFeatureUUID,
+                  x: distributionPercentage,
+                  y: feature.uuid,
+                }))}
+                height={Math.max(3 * columnsWithDistribution.length * UNIT, UNIT * 50)}
+                renderTooltipContent={({
+                  distributionFeatureUUID,
+                  x,
+                }) =>
+                  `${distributionFeatureUUID} is ${formatPercent(x)} of all rows`
+                }
+                xNumTicks={2}
+                ySerialize={({ y }) => y}
+              />
+            </ChartContainer>
+          }
+          right={
+            <ChartContainer
+              noPadding={columnsWithHighDistribution.length >= 1}
+              title="Columns with imbalanced distribution"
+            >
+              {columnsWithHighDistribution.length === 0 && (
+                <Text>
+                  All columns have an even distribution of its values.
+                </Text>
+              )}
+
+              {columnsWithHighDistribution.length >= 1 && (
+                <SimpleDataTable
+                  columnFlexNumbers={[2, 2, 1]}
+                  columnHeaders={[
+                    {
+                      label: 'Column',
+                    },
+                    {
+                      label: 'Most frequent value',
+                    },
+                    {
+                      label: '% of rows',
+                    },
+                  ]}
+                  rowGroupData={[
+                    {
+                      rowData: sortByKey(
+                        columnsWithHighDistribution.slice(0, 12),
+                        'distributionPercentage',
+                        { ascending: false },
+                      ).map(({
+                        feature,
+                        distributionFeatureUUID,
+                        distributionPercentage,
+                      }) => ({
+                        columnValues: [
+                          feature.uuid,
+                          distributionFeatureUUID,
+                          formatPercent(distributionPercentage),
+                        ],
+                        uuid: feature.uuid,
+                      })),
+                    },
+                  ]}
+                  small
+                />
+              )}
+            </ChartContainer>
+          }
+        />
       )}
-    </>
+    </FlexContainer>
   )
 }
 
