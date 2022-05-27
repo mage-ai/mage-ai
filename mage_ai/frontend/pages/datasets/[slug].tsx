@@ -33,10 +33,19 @@ function Data() {
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
   const [metricSample, setMetricSample] = useState({});
+  const [statSample, setStatSample] = useState({});
 
   
   // TODO: Move to const file 
   const fixedHeaders = 'label';
+  const metricsKeys =  [
+    "count",
+    "avg_null_value_count",
+    "avg_invalid_value_count",
+    "duplicate_row_count",
+    "completeness",
+    "validity",
+  ]
 
 
   useEffect( () => {
@@ -50,28 +59,20 @@ function Data() {
       });
       setColumnHeaderSample(headerJSON);
     }, [datasetResponse]);
-  
-  // Populate Metrics & Stats
 
-  /* 
-  { 
-    rowData: [
-      {
-        columnValues: [
-          "Validity", "0.8"
-        ],
-      },
-    ]
-  }
 
-  */
   useEffect( () => {
     const stats = Object.keys(statistics);
     var metricGroupData = {
       rowData: [],
     };
-    // For each stat, add it to a row
-    var rows = [] // List of JSON
+
+    var statGroupData = {
+      rowData: [],
+    };
+
+    var statRows = []
+    var metricRows = [] // List of JSON
 
     // Make the JSON a key of list values.
     stats.forEach(function (val, i) {
@@ -79,11 +80,17 @@ function Data() {
       var values = {
         columnValues: statpair,
       }
-      rows.push(values);
+      if (metricsKeys.includes(val)) {
+        metricRows.push(values);
+      } else {
+        statRows.push(values)
+      }
     });
 
-     metricGroupData.rowData = rows;
+    metricGroupData.rowData = metricRows;
     setMetricSample(metricGroupData);
+    statGroupData.rowData = statRows;
+    setStatSample(statGroupData);
     }, [datasetResponse]);
 
   console.log(setMetricSample);
@@ -149,72 +156,42 @@ function Data() {
 
   // TODO: map keys to text (P1) but for now we'll reuse the string.
 
-  // This first statistics portion will contain the missing values, invalid values, duplicate values, and show validity and completeness.
-  // const metricSample = {
+
+  // Report (Statistics)
+  // const statSample = {
   //   rowData: [
   //     {
   //       columnValues: [
-  //         "Validity", "0.8"
+  //         "Column count", "100"
   //       ],
   //     },
   //     {
   //       columnValues: [
-  //         "Completeness", "0.9"
+  //         "Empty columns", "5 (5%)"
   //       ],
   //     },
   //     {
   //       columnValues: [
-  //         "Missing values", "20"
+  //         "Categorical values", "10 (10%)"
   //       ],
   //     },
   //     {
   //       columnValues: [
-  //         "Invalid values", "20"
+  //         "Numerical values", "20 (20%)"
   //       ],
   //     },
   //     {
   //       columnValues: [
-  //         "Duplicate values", "20"
+  //         "Time values", "55 (55%)"
+  //       ],
+  //     },
+  //     {
+  //       columnValues: [
+  //         "Empty rows", "10 (10%)"
   //       ],
   //     },
   //   ],
   // };
-
-  // Report (Statistics)
-  const statSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Column count", "100"
-        ],
-      },
-      {
-        columnValues: [
-          "Empty columns", "5 (5%)"
-        ],
-      },
-      {
-        columnValues: [
-          "Categorical values", "10 (10%)"
-        ],
-      },
-      {
-        columnValues: [
-          "Numerical values", "20 (20%)"
-        ],
-      },
-      {
-        columnValues: [
-          "Time values", "55 (55%)"
-        ],
-      },
-      {
-        columnValues: [
-          "Empty rows", "10 (10%)"
-        ],
-      },
-    ],
-  };
 
 
   const [tab, setTab] = useState('data');
