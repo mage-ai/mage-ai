@@ -1,8 +1,8 @@
 from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
 from data_cleaner.transformer_actions.constants import (
-    ImputationStrategy,
-    CURRENCY_SYMBOLS
+    CURRENCY_SYMBOLS,
+    ImputationStrategy
 )
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,

@@ -15,8 +15,11 @@ def clean_series(series, column_type, dropna=True):
     )
     if dropna:
         series_cleaned = series_cleaned.dropna()
-
-    first_item = series_cleaned.dropna().iloc[0] if series_cleaned.count() != 0 else None
+    
+    if series_cleaned.count() == 0:
+        return series_cleaned
+    
+    first_item = series_cleaned.dropna().iloc[0]
     if column_type == NUMBER:
         if type(first_item) is str:
             series_cleaned = series_cleaned.str.replace(',', '')
