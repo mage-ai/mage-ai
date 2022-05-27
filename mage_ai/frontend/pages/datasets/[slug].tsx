@@ -36,7 +36,6 @@ function Data() {
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
-    "count",
     "avg_null_value_count",
     "avg_invalid_value_count",
     "duplicate_row_count",
@@ -44,6 +43,14 @@ function Data() {
     "validity",
   ];
 
+  // Map text and display priotities to backend keys.
+  const humanReadableMapping = {
+    "avg_invalid_value_count":[3, "Invalid values"],
+    "avg_null_value_count":[2, "Missing values"],
+    "completeness":[1, "Completeness"],
+    "duplicate_row_count":[4, "Duplicate values"],
+    "validity":[0, "Validity"],   
+  } || {};
 
   // Fetch column Headers
   useEffect( () => {
@@ -66,14 +73,15 @@ function Data() {
       rowData: [],
     };
 
-    const metricRows = []
-    stats.forEach(function (val) {
-      const statpair = [val, statistics[val]]
-      const values = {
-        columnValues: statpair,
-      }
-      if (metricsKeys.includes(val)) {
-        metricRows.push(values);
+    const metricRows = Array(metricsKeys.length).fill(0);
+    stats.forEach(function (key) {
+      if (metricsKeys.includes(key)) {
+        const order = humanReadableMapping[key];
+        const statpair = [order[1], statistics[key]] ;
+        const values = {
+          columnValues: statpair,
+        }
+        metricRows[order[0]] = values;
       }
     });
 
