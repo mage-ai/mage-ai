@@ -2,6 +2,8 @@ from data_cleaner.column_type_detector import (
     NUMBER,
     NUMBER_WITH_DECIMALS,
 )
+from data_cleaner.column_type_detector import DATETIME
+import pandas as pd
 import numpy as np
 import time
 
@@ -13,15 +15,29 @@ def clean_series(series, column_type, dropna=True):
     if dropna:
         series_cleaned = series_cleaned.dropna()
 
+    first_item = series_cleaned.dropna().iloc[0]
     if column_type == NUMBER:
+        if type(first_item) is str:
+            series_cleaned = series_cleaned.str.replace(',', '')
         try:
             series_cleaned = series_cleaned.astype(float).astype(int)
         except ValueError:
             series_cleaned = series_cleaned.astype(float)
     elif column_type == NUMBER_WITH_DECIMALS:
+        if type(first_item) is str:
+            series_cleaned = series_cleaned.str.replace(',', '')
         series_cleaned = series_cleaned.astype(float)
+    elif column_type == DATETIME and type(first_item) is str:
+        series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors='coerce')
 
     return series_cleaned
+
+
+def clean_dataframe(df, column_types, dropna=True):
+    return df.apply(
+        lambda col: clean_series(col, column_types[col.name], dropna=dropna), 
+        axis=0
+    )
 
 
 class timer(object):

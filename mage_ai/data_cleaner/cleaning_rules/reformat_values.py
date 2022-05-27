@@ -269,7 +269,6 @@ class ReformatValues(BaseRule):
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
         # TODO Clean dataframe prior to giving to rule
-        self.cleaned_df = self.df.replace('^\s*$', None, regex=True)
         self.clean_column_cache = {}
         self.exact_dtypes = self.infer_exact_dtypes()
 
@@ -280,7 +279,7 @@ class ReformatValues(BaseRule):
                     self._build_transformer_action_suggestion,
                     self.clean_column_cache,
                     self.column_types,
-                    self.cleaned_df,
+                    self.df,
                     self.exact_dtypes,
                     self.statistics,
                 ),
@@ -301,7 +300,7 @@ class ReformatValues(BaseRule):
     def infer_exact_dtypes(self):
         exact_dtypes = {}
         for column in self.df_columns:
-            clean_col = self.cleaned_df[column].dropna(axis=0)
+            clean_col = self.df[column].dropna(axis=0)
             try:
                 dtype = type(clean_col.iloc[0])
             except IndexError:

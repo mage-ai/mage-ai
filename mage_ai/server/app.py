@@ -195,7 +195,7 @@ def update_pipeline(id):
     feature_set_id = pipeline.metadata.get('feature_set_id')
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
-        df_transformed = clean_pipeline.transform(feature_set.data_orig)
+        df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
         result = clean_data(df_transformed, transform=False)
         feature_set.write_files(result)
 

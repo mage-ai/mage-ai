@@ -60,8 +60,9 @@ def get_mismatched_row_count(series, column_type):
             series[~series.str.contains(REGEX_PHONE_NUMBER)].index,
         )
     elif column_type == ZIP_CODE:
+        str_series = series.astype(str)
         mismatched_rows = len(
-            series[~series.str.contains(REGEX_ZIP_CODE)].index,
+            series[~str_series.str.contains(REGEX_ZIP_CODE)].index,
         )
     return mismatched_rows
 

@@ -36,10 +36,10 @@ class StatisticsCalculator():
     def data_tags(self):
         return dict()
 
-    def process(self, df):
-        return self.calculate_statistics_overview(df)
+    def process(self, df, is_clean=True):
+        return self.calculate_statistics_overview(df, is_clean)
 
-    def calculate_statistics_overview(self, df):
+    def calculate_statistics_overview(self, df, is_clean=True):
         increment(
             'statistics.calculate_statistics_overview.start',
             self.data_tags,
@@ -48,7 +48,15 @@ class StatisticsCalculator():
         with timer(
             'statistics.calculate_statistics_overview.time',
                 self.data_tags):
-            data = dict(count=len(df.index))
+            if not is_clean:
+                df = df.applymap(lambda x: x if (not isinstance(x, str) or
+                                (len(x) > 0 and not x.isspace())) else np.nan)
+            df, timeseries_metadata = self.__evaluate_timeseries(df)
+            data = dict(
+                count=len(df.index),
+                is_timeseries=timeseries_metadata['is_timeseries'],
+                timeseries_index=timeseries_metadata['timeseries_index']
+            )
 
             arr_args_1 = [df[col] for col in df.columns],
             arr_args_2 = [col for col in df.columns],
@@ -93,6 +101,7 @@ class StatisticsCalculator():
             else:
                 longest_sequence = max(longest_sequence, curr_sequence)
                 curr_sequence = 0
+        longest_sequence = max(longest_sequence, curr_sequence)
         return longest_sequence
 
     def statistics_overview(self, series, col):
@@ -109,12 +118,28 @@ class StatisticsCalculator():
             traceback.print_exc()
             return {}
 
+    def __evaluate_timeseries(self, df):
+        indices = []
+        for column in df.columns:
+            dtype = self.column_types[column]
+            if dtype == DATETIME:
+                null_value_rate = df[column].isnull().sum() / df[column].size
+                if null_value_rate <= 0.1 and dtype == DATETIME:
+                    indices.append(column)
+        if len(indices) != 0:
+            df = df.sort_values(by=indices, axis=0)
+            is_timeseries = True
+        else:
+            is_timeseries = False
+        return df, {
+            'is_timeseries': is_timeseries,
+            'timeseries_index': indices
+        }
+
     def __statistics_overview(self, series, col):
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
-        series_cleaned = series.map(lambda x: x if (not isinstance(x, str) or
-                                    (len(x) > 0 and not x.isspace())) else np.nan)
-        df_value_counts = series_cleaned.value_counts(dropna=False)
+        df_value_counts = series.value_counts(dropna=False)
         df = df_value_counts.reset_index()
         df.columns = [col, 'count']
 
@@ -135,19 +160,16 @@ class StatisticsCalculator():
         #     return {}
 
         column_type = self.column_types.get(col)
-        series_non_null = series_cleaned.dropna()
+        series_non_null = series.dropna()
 
-        if column_type == NUMBER:
-            series_non_null = series_non_null.astype(float).astype(int)
-        elif column_type == NUMBER_WITH_DECIMALS:
-            series_non_null = series_non_null.astype(float)
 
         count_unique = len(df_value_counts.index)
         data = {
             f'{col}/count': series_non_null.size,
             f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
-            f'{col}/null_value_rate': 0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
-            f'{col}/null_value_count': series_cleaned.isnull().sum(),
+            f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
+            f'{col}/null_value_count': series.isnull().sum(),
+            f'{col}/max_null_seq': self.get_longest_null_seq(series)
         }
 
         if len(series_non_null) > 0:
@@ -177,12 +199,12 @@ class StatisticsCalculator():
                 data[f'{col}/mode'] = mode
                 data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
 
-            data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series_cleaned)
+            data[f'{col}/max_null_seq'] = self.get_longest_null_seq(series)
 
         # Detect mismatched formats for some column types
         data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
-        data[f'{col}/invalid_value_rate'] = 0 if series_cleaned.size == 0 else \
-            data[f'{col}/invalid_value_count'] / series_cleaned.size
+        data[f'{col}/invalid_value_rate'] = 0 if series.size == 0 else \
+            data[f'{col}/invalid_value_count'] / series.size
 
         # Calculate quality metrics
         data[f'{col}/completeness'] = 1 - data[f'{col}/null_value_rate']

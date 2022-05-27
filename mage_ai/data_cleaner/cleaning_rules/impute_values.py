@@ -82,7 +82,8 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         else:
             if self.statistics[f'{column}/count']  <= self.DATA_SM_UB:
@@ -118,7 +119,8 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
         elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH):
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
@@ -142,7 +144,9 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         """
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH:
+        elif (self.is_timeseries and
+              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
+              self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         else:
             return ImputationStrategy.NOOP
@@ -166,8 +170,11 @@ class StringImputeSubRule(TypeImputeSubRule):
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
+        if self.statistics[f'{column}/null_value_rate']  == 0:
+            return ImputationStrategy.NOOP
         if (self.is_timeseries and 
-            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH):
+            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH and 
+            self.df[column].notna().iloc[0]):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
@@ -193,8 +200,6 @@ class ImputeValues(BaseRule):
             self.column_types, 
             self._build_transformer_action_suggestion
         )
-        # TODO Clean dataframe once to remove empty strings and replace with np.nan
-        self.cleaned_df = self.df.replace('^\s*$', np.nan, regex=True)
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},
@@ -205,10 +210,10 @@ class ImputeValues(BaseRule):
             ImputationStrategy.ROW_RM: {'entries': []},
             ImputationStrategy.SEQ: {'entries': []}
         }
-        timeseries_index = self.get_timeseries_index()
-        if len(timeseries_index) != 0:
+        if self.statistics['is_timeseries']:
             self.is_timeseries = True
-            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index'] = timeseries_index
+            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index']\
+                = self.statistics['timeseries_index']
         else:
             self.is_timeseries = False
         self.hydrate_rules()
@@ -232,8 +237,8 @@ class ImputeValues(BaseRule):
     def evaluate(self):
         if self.df.empty:
             return []
-        null_mask = self.cleaned_df.isna().any(axis=1)
-        ratio_rows_kept = len(self.cleaned_df[~null_mask]) / len(self.df)
+        null_mask = self.df.isna().any(axis=1)
+        ratio_rows_kept = len(self.df[~null_mask]) / len(self.df)
         if ratio_rows_kept == 1:
             self.strategy_cache[ImputationStrategy.NOOP]['entries'].extend(self.df_columns)
         elif ratio_rows_kept >= self.ROW_KEPT_LB:
@@ -248,7 +253,7 @@ class ImputeValues(BaseRule):
 
     def get_exact_dtypes(self):
         def _get_exact_dtype(column):
-            dropped = self.cleaned_df[column].dropna(axis=0)
+            dropped = self.df[column].dropna(axis=0)
             try:
                 return type(dropped.iloc[0])
             except IndexError:
@@ -260,7 +265,7 @@ class ImputeValues(BaseRule):
         self.rules = list(
             map(
                 lambda x: x(
-                    self.cleaned_df,
+                    self.df,
                     self.column_types,
                     self.statistics,
                     self.is_timeseries
@@ -279,20 +284,6 @@ class ImputeValues(BaseRule):
                 except StopIteration:
                     raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
             self.rule_map[dtype] = curr_rule
-
-    def get_timeseries_index(self):
-        indices = []
-        for column in self.df_columns:
-            dtype = self.column_types[column]
-            exact_dtype = self.exact_dtypes[column]
-            null_value_rate = self.statistics[f'{column}/null_value_rate']
-            if null_value_rate <= self.TIMESERIES_NULL_RATIO_MAX:
-                if dtype == DATETIME:
-                    indices.append(column)
-                elif exact_dtype is np.datetime64 or exact_dtype is pd.Timestamp:
-                    indices.append(column)
-        return indices
-
 
 class ImputeActionConstructor():
     def __init__(self, df, column_types, action_builder):
