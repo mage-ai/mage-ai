@@ -204,11 +204,11 @@ def __clean_column_name(name):
         name = name.lower()
     elif pascal_group:
         components = NameConventionPatterns.PASCAL_COMPONENT.findall(name)
-        name = "_".join(components)
+        name = '_'.join(components)
     elif camel_group:
         components = NameConventionPatterns.CAMEL_COMPONENT.findall(name)
         components += NameConventionPatterns.PASCAL_COMPONENT.findall(name)
-        name = "_".join(components)
+        name = '_'.join(components)
     return name.lower()
 
 # Filter by timestamp_feature_a - window <= timestamp_feature_b <= timestamp_feature_a
