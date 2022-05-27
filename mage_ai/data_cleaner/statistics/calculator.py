@@ -51,7 +51,7 @@ class StatisticsCalculator():
             if not is_clean:
                 df = df.applymap(lambda x: x if (not isinstance(x, str) or
                                 (len(x) > 0 and not x.isspace())) else np.nan)
-            df, timeseries_metadata = self.__evaluate_timeseries(df)
+            timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
                 is_timeseries=timeseries_metadata['is_timeseries'],
@@ -126,13 +126,8 @@ class StatisticsCalculator():
                 null_value_rate = df[column].isnull().sum() / df[column].size
                 if null_value_rate <= 0.1 and dtype == DATETIME:
                     indices.append(column)
-        if len(indices) != 0:
-            df = df.sort_values(by=indices, axis=0)
-            is_timeseries = True
-        else:
-            is_timeseries = False
-        return df, {
-            'is_timeseries': is_timeseries,
+        return {
+            'is_timeseries': len(indices) != 0,
             'timeseries_index': indices
         }
 

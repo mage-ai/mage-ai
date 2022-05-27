@@ -41,6 +41,8 @@ class DataCleaner():
         df_stats = self.analyze(df)
         df = clean_dataframe(df, df_stats['column_types'])
         pipeline = BasePipeline()
+        if df_stats['statistics']['is_timeseries']:
+            df = df.sort_values(by=df_stats['statistics']['timeseries_index'], axis=0)
         with timer('data_cleaner.create_suggested_actions'):
             suggested_actions = pipeline.create_actions(
                 df,

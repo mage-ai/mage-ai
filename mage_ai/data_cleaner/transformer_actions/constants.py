@@ -1,3 +1,8 @@
+import re
+
+CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
+
+
 class ActionType():
     ADD = 'add'
     AVERAGE = 'average'

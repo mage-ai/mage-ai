@@ -1,6 +1,9 @@
 from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
-from data_cleaner.transformer_actions.constants import ImputationStrategy
+from data_cleaner.transformer_actions.constants import (
+    CURRENCY_SYMBOLS,
+    ImputationStrategy
+)
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
@@ -133,8 +136,7 @@ def reformat(df, action, **kwargs):
             else:
                 df.loc[:, column] = df[columns][column].str.lower()
     elif reformat_action == 'currency_to_num':
-        currency_symbols = r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))'
-        clean_cols = df[columns].replace(currency_symbols, '', regex=True)
+        clean_cols = df[columns].replace(CURRENCY_SYMBOLS, '', regex=True)
         clean_cols = clean_cols.replace('\s', '', regex=True)
         clean_cols = clean_cols.replace('^\s*$', np.nan, regex=True)
         df.loc[:, columns] = clean_cols.astype(float)

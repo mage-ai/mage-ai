@@ -1,5 +1,6 @@
 from data_cleaner.shared.array import subtract
 import numpy as np
+import pandas as pd
 import re
 import warnings
 
@@ -152,11 +153,10 @@ def infer_column_types(df, **kwargs):
         if df_drop_na.empty:
             text_feature_names.append(col_name)
         else:
-            matches = df_drop_na.astype(str).str.contains(REGEX_DATETIME_PATTERN)
-            matches = matches.where(matches == True).dropna()
+            matches = pd.to_datetime(df_drop_na, infer_datetime_format=True, errors='coerce')
             if type(df_drop_na.iloc[0]) is list:
                 text_feature_names.append(col_name)
-            elif len(df_drop_na[matches.index]) / len(df_drop_na) >= DATETIME_MATCHES_THRESHOLD:
+            elif matches.count() / len(matches) >= DATETIME_MATCHES_THRESHOLD:
                 datetime_feature_names.append(col_name)
             elif df_drop_na.nunique() / len(df_drop_na) >= 0.8:
                 text_feature_names.append(col_name)
