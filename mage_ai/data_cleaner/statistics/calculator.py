@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import traceback
 
-
+OUTLIER_ZSCORE_THRESHOLD = 3
 VALUE_COUNT_LIMIT = 255
 
 
@@ -180,6 +180,14 @@ class StatisticsCalculator():
                 data[f'{col}/median'] = series_non_null.quantile(0.5)
                 data[f'{col}/min'] = series_non_null.min()
                 data[f'{col}/sum'] = series_non_null.sum()
+                data[f'{col}/skew'] = series_non_null.skew()
+                # detect outliers
+                std = series_non_null.std()
+                if std == 0:
+                    data[f'{col}/outlier_count'] = 0
+                else:
+                    series_z_score = ((series_non_null - data[f'{col}/average']) / std).abs()
+                    data[f'{col}/outlier_count'] = (series_z_score >= OUTLIER_ZSCORE_THRESHOLD).sum()
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()

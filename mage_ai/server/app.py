@@ -215,8 +215,6 @@ def update_pipeline(id):
 def clean_df(df, name, pipeline_uuid=None):
     feature_set = FeatureSet(df=df, name=name)
 
-    metadata = feature_set.metadata
-
     result = clean_data(df)
 
     feature_set.write_files(result)
@@ -225,8 +223,6 @@ def clean_df(df, name, pipeline_uuid=None):
 
 def connect_df(df, name):
     feature_set = FeatureSet(df=df, name=name)
-
-    metadata = feature_set.metadata
 
     result = clean_data(df, transform=False)
 
