@@ -9,8 +9,9 @@ import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
 import Spacing from "@oracle/elements/Spacing";
 import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
-import { UNIT } from "@oracle/styles/units/spacing";
 import api from '@api';
+import { UNIT } from "@oracle/styles/units/spacing";
+
 
 function Data() {
 
@@ -33,11 +34,8 @@ function Data() {
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
   const [metricSample, setMetricSample] = useState({});
-  const [statSample, setStatSample] = useState({});
-
   
   // TODO: Move to const file 
-  const fixedHeaders = 'label';
   const metricsKeys =  [
     "count",
     "avg_null_value_count",
@@ -45,22 +43,24 @@ function Data() {
     "duplicate_row_count",
     "completeness",
     "validity",
-  ]
+  ];
 
 
+  // Fetch column Headers
   useEffect( () => {
       const headers = Object.keys(datasets);
       var headerJSON = [];
       headers.forEach(function (val) {
         var column = {
           label: val,
-        } 
+        } || {};
         headerJSON.push(column);
       });
       setColumnHeaderSample(headerJSON);
     }, [datasetResponse]);
 
 
+  // Calculates metrics
   useEffect( () => {
     const stats = Object.keys(statistics);
     var metricGroupData = {
@@ -71,7 +71,6 @@ function Data() {
       rowData: [],
     };
 
-    var statRows = []
     var metricRows = [] // List of JSON
 
     // Make the JSON a key of list values.
@@ -82,15 +81,11 @@ function Data() {
       }
       if (metricsKeys.includes(val)) {
         metricRows.push(values);
-      } else {
-        statRows.push(values)
       }
     });
 
     metricGroupData.rowData = metricRows;
     setMetricSample(metricGroupData);
-    statGroupData.rowData = statRows;
-    setStatSample(statGroupData);
     }, [datasetResponse]);
 
   console.log(setMetricSample);
@@ -158,40 +153,40 @@ function Data() {
 
 
   // Report (Statistics)
-  // const statSample = {
-  //   rowData: [
-  //     {
-  //       columnValues: [
-  //         "Column count", "100"
-  //       ],
-  //     },
-  //     {
-  //       columnValues: [
-  //         "Empty columns", "5 (5%)"
-  //       ],
-  //     },
-  //     {
-  //       columnValues: [
-  //         "Categorical values", "10 (10%)"
-  //       ],
-  //     },
-  //     {
-  //       columnValues: [
-  //         "Numerical values", "20 (20%)"
-  //       ],
-  //     },
-  //     {
-  //       columnValues: [
-  //         "Time values", "55 (55%)"
-  //       ],
-  //     },
-  //     {
-  //       columnValues: [
-  //         "Empty rows", "10 (10%)"
-  //       ],
-  //     },
-  //   ],
-  // };
+  const statSample = {
+    rowData: [
+      {
+        columnValues: [
+          "Column count", "100"
+        ],
+      },
+      {
+        columnValues: [
+          "Empty columns", "5 (5%)"
+        ],
+      },
+      {
+        columnValues: [
+          "Categorical values", "10 (10%)"
+        ],
+      },
+      {
+        columnValues: [
+          "Numerical values", "20 (20%)"
+        ],
+      },
+      {
+        columnValues: [
+          "Time values", "55 (55%)"
+        ],
+      },
+      {
+        columnValues: [
+          "Empty rows", "10 (10%)"
+        ],
+      },
+    ],
+  };
 
 
   const [tab, setTab] = useState('data');
@@ -239,11 +234,11 @@ function Data() {
   const reportsEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {statsEl}
+        {metricsEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        {metricsEl}
+        {statsEl}
       </Flex>
     </FlexContainer>
   )
