@@ -134,3 +134,6 @@ mage_ai/server/data/files/**
 
 # test notebook
 test.ipynb
+
+# test files
+testfiles/

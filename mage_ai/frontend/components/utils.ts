@@ -11,37 +11,6 @@ export const pluralize = (word: string, num: number) => (
   num === 1 ? word : word + 's'
 );
 
-export const DATASETS_PAYLOAD = [
-  {
-    "id": "0",
-    "metadata": {
-      "name": "test_data_2",
-      "pipeline_id": 6,
-      "statistics": {
-        "count": 100,
-        "quality": "Good",
-      },
-      "column_types": {
-        "order_id": "category",
-        "price_unit": "category",
-        "price_subtotal_incl": "category",
-        "price_subtotal": "category",
-        "product_id": "category",
-        "attribute_ids": "category",
-        "display_name": "category",
-        "qty": "category",
-        "default_code": "category",
-        "location_id": "category",
-        "create_date": "datetime",
-        "write_date": "datetime",
-        "xStudioFieldK5gaz": "number_with_decimals",
-        "x_studio_UPC_Individual": "number_with_decimals",
-        "lines_id": "text"
-      }
-    }
-  }
-];
-
 export const DATASET_PAYLOAD = {
   "id": "7",
   "metadata": {
