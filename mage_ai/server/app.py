@@ -2,8 +2,8 @@ from data_cleaner.data_cleaner import analyze, clean as clean_data
 from data_cleaner.pipelines.base import BasePipeline
 from flask import Flask, render_template, request
 from numpyencoder import NumpyEncoder
+from server.constants import SERVER_PORT
 from server.data.models import FeatureSet, Pipeline
-
 import json
 import simplejson
 import threading
@@ -231,6 +231,6 @@ def connect_df(df, name):
 
 
 def launch() -> None:
-    app_kwargs = {"port": 5000, "host": "localhost", "debug": False}
+    app_kwargs = {"port": SERVER_PORT, "host": "localhost", "debug": False}
     thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
