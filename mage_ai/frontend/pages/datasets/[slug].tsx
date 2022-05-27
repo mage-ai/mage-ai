@@ -11,7 +11,6 @@ import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
 import api from '@api';
 import { UNIT } from "@oracle/styles/units/spacing";
-import api from '@api';
 
 
 function Data() {
@@ -35,7 +34,8 @@ function Data() {
   const [metricSample, setMetricSample] = useState({});
   
   // TODO: Move to const file 
-  const metricsKeys =  [
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const metricsKeys = [
     "count",
     "avg_null_value_count",
     "avg_invalid_value_count",
@@ -48,32 +48,28 @@ function Data() {
   // Fetch column Headers
   useEffect( () => {
       const headers = Object.keys(datasets);
-      var headerJSON = [];
+      const headerJSON = [];
       headers.forEach(function (val) {
-        var column = {
+        const column = {
           label: val,
         } || {};
         headerJSON.push(column);
       });
       setColumnHeaderSample(headerJSON);
-    }, [datasetResponse]);
+    }, [datasetResponse, datasets]);
 
 
   // Calculates metrics
   useEffect( () => {
     const stats = Object.keys(statistics);
-    var metricGroupData = {
+    const metricGroupData = {
       rowData: [],
     };
 
-    var statGroupData = {
-      rowData: [],
-    };
-
-    var metricRows = []
-    stats.forEach(function (val, i) {
-      var statpair = [val, statistics[val]]
-      var values = {
+    const metricRows = []
+    stats.forEach(function (val) {
+      const statpair = [val, statistics[val]]
+      const values = {
         columnValues: statpair,
       }
       if (metricsKeys.includes(val)) {
@@ -83,7 +79,7 @@ function Data() {
 
     metricGroupData.rowData = metricRows;
     setMetricSample(metricGroupData);
-    }, [datasetResponse]);
+    }, [datasetResponse, metricsKeys, statistics]);
 
   console.log(setMetricSample);
 
@@ -91,42 +87,42 @@ function Data() {
     rowData: [
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
       },
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
         uuid: 'Row 2',
       },
       {
         columnValues: [
-          "1", "2", "3", "4"
+          "1", "2", "3", "4",
         ],
         uuid: 'Row 3',
       },
       {
         columnValues: [
-          "11", "2", "3", "4"
+          "11", "2", "3", "4",
         ],
         uuid: 'Row 4',
       },
       {
         columnValues: [
-          "13", "2", "3", "4"
+          "13", "2", "3", "4",
         ],
         uuid: 'Row 5',
       },
       {
         columnValues: [
-          "1000001", "2", "3", "4"
+          "1000001", "2", "3", "4",
         ],
         uuid: 'Row 6',
       },
       {
         columnValues: [
-          "5", "4", "3", "2"
+          "5", "4", "3", "2",
         ],
         uuid: 'Row 7',
       },
@@ -154,32 +150,32 @@ function Data() {
     rowData: [
       {
         columnValues: [
-          "Column count", "100"
+          "Column count", "100",
         ],
       },
       {
         columnValues: [
-          "Empty columns", "5 (5%)"
+          "Empty columns", "5 (5%)",
         ],
       },
       {
         columnValues: [
-          "Categorical values", "10 (10%)"
+          "Categorical values", "10 (10%)",
         ],
       },
       {
         columnValues: [
-          "Numerical values", "20 (20%)"
+          "Numerical values", "20 (20%)",
         ],
       },
       {
         columnValues: [
-          "Time values", "55 (55%)"
+          "Time values", "55 (55%)",
         ],
       },
       {
         columnValues: [
-          "Empty rows", "10 (10%)"
+          "Empty rows", "10 (10%)",
         ],
       },
     ],
@@ -248,15 +244,15 @@ function Data() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab label="Data" key="data">
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab label="Report" key="reports">
+      <Tab key="reports" label="Report">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab label="Visualization" key="visualizations"> </Tab>
+      <Tab key="visualizations" label="Visualization"> </Tab>
     </Tabs>
   )
 
