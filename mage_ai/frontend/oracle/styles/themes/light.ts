@@ -71,7 +71,7 @@ export default {
   content: {
     active: BLACK,
     default: WHITE,
-    disabled: GRAY,
+    disabled: GRAY_LINES,
     muted: GRAY,
   },
   elevation: {

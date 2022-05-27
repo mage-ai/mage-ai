@@ -140,8 +140,8 @@ const LineSeries = withTooltip<LineSeriesProps>(({
     ? (increasedXTicks ? 20 : 10)
     : (increasedXTicks ? 10 : 5);
 
-  let strokeColors = COLORS;
-  let axisStrokeColor = text;
+  const strokeColors = COLORS;
+  const axisStrokeColor = text;
   const linePathProps = strokeColors.map(color => ({ stroke: color }));
 
   const lineLegendScale = scaleOrdinal({

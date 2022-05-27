@@ -1,15 +1,14 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import { UNIT } from '@oracle/styles/units/spacing';
 import ThemeBlock from 'stories/ThemeBlock';
 
 import {
-  Add,
   AlertCircle,
   ApplyAction,
   ArrowDown,
   ArrowRight,
   Check,
+  Close,
   Column,
   Copy,
   Cursor,
@@ -19,18 +18,18 @@ import {
   Pipeline,
   // PreviewOpen,
   // PreviewHidden,
-  Remove,
   Report,
+  Search,
   Sort,
   // ViewCode,
 } from '@oracle/icons';
 const ICONS = [
-  Add,
   AlertCircle,
   ApplyAction,
   ArrowDown,
   ArrowRight,
   Check,
+  Close,
   Column,
   Copy,
   Cursor,
@@ -40,8 +39,8 @@ const ICONS = [
   Pipeline,
   // PreviewOpen,
   // PreviewHidden,
-  Remove,
   Report,
+  Search,
   Sort,
   // ViewCode,
 ]

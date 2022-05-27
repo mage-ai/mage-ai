@@ -15,6 +15,7 @@ import {
   REGULAR,
   SMALL,
   XLARGE,
+  XSMALL,
 } from '@oracle/styles/fonts/sizes';
 
 export type TextProps = {
@@ -60,12 +61,17 @@ export type TextProps = {
   width?: number;
   wordBreak?: boolean;
   xlarge?: boolean;
+  xsmall?: boolean;
 };
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
 
-  ${props => !props.large && !props.small && !props.xlarge && `
+  ${props => !props.xsmall && !props.small && !props.large && !props.xlarge && `
     ${REGULAR}
+  `}
+
+  ${props => props.xsmall && `
+    ${XSMALL}
   `}
 
   ${props => props.small && `
