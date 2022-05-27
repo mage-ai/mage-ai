@@ -56,7 +56,7 @@ function Data() {
         headerJSON.push(column);
       });
       setColumnHeaderSample(headerJSON);
-    }, [datasetResponse, datasets]);
+    }, [datasets]);
 
 
   // Calculates metrics
@@ -79,9 +79,8 @@ function Data() {
 
     metricGroupData.rowData = metricRows;
     setMetricSample(metricGroupData);
-    }, [datasetResponse, metricsKeys, statistics]);
-
-  console.log(setMetricSample);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statistics]);
 
   const rowGroupDataSample = {
     rowData: [
