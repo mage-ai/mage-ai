@@ -402,8 +402,8 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Remove rows with missing entries',
-                message='The rows at the following indices have null values: [4, 5, 6]. '
-                      'Suggested: remove these rows to remove null values from the dataset.',
+                message='There are 3 rows containing null values. '
+                        'Suggested: remove these rows to remove null values from the dataset.',
                 action_payload=dict(
                     action_type='filter',
                     action_arguments=['state', 'location'],
