@@ -17,7 +17,6 @@ function Data() {
 
   const router = useRouter()
   const { slug } = router.query
-
   // TODO: Replace with API Call during Integration
 
   // Datatable
@@ -244,22 +243,23 @@ function Data() {
   )
 
   const tabsEl = (
-      <Tabs
-        bold
-        defaultKey={tab}
-        noBottomBorder={false}
-        onChange={key => setTab(key)}
-      >
-        <Tab label="Data" key="data">
-        <Spacing mb={3} mt={3}></Spacing>
-          {dataEl}
-        </Tab>
-        <Tab label="Report" key="reports">
-        <Spacing mb={3} mt={3}></Spacing>
-          {reportsEl}
-        </Tab>
-        <Tab label="Visualization" key="visualizations"> </Tab>
-      </Tabs>
+    <Tabs
+      bold
+      defaultKey={tab}
+      large
+      noBottomBorder={false}
+      onChange={key => setTab(key)}
+    >
+      <Tab label="Data" key="data">
+        <Spacing mb={3} mt={3} />
+        {dataEl}
+      </Tab>
+      <Tab label="Report" key="reports">
+        <Spacing mb={3} mt={3} />
+        {reportsEl}
+      </Tab>
+      <Tab label="Visualization" key="visualizations"> </Tab>
+    </Tabs>
   )
 
   return (
