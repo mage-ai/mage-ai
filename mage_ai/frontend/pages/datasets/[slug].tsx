@@ -59,7 +59,7 @@ function Data() {
 
   // structured as [ {uuid, suggestion_data} ]
   const [actions, setActions] = useState([]);
-  const removedSuggestions = useMemo(() => new Set(), []);
+  const [removedSuggestions, setRemovedSuggestions] = useState([]);
   
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,7 +154,8 @@ function Data() {
   // useEffect(() => setSuggestions(suggestionsMemo), [suggestionsMemo]);
 
   useEffect(() => {
-    const filteredSuggestions = suggestionsMemo.filter((x, i) => !removedSuggestions.has(i));
+    const filteredSuggestions = [...suggestionsMemo];
+    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
     actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
     setSuggestions(filteredSuggestions);
   }, [
@@ -163,25 +164,19 @@ function Data() {
     removedSuggestions,
   ]);
 
-  // TODO: replace with UUID
   const addAction = i => {
     setActions(actions.concat({ i, suggestions: suggestions[i] }));
   };
 
-  // TODO: replace with UUID
   const removeAction = i => {
     setActions(actions.filter((x, idx) => i !== idx));
   }
 
-  // TODO: replace with UUID
   const removeSuggestion = i => {
-    removedSuggestions.add(i);
-    // TODO: filter based on UUID
-    setSuggestions(suggestionsMemo.filter((x, i) => !removedSuggestions.has(i)));
+    setRemovedSuggestions(removedSuggestions.concat(i));
   };
 
   useEffect(() => {
-    // TODO: payload structure does not match backend bc of index; replace with UUID to fix
     api.pipelines.useUpdate(slug)({ actions });
   }, [
     actions,
@@ -266,28 +261,28 @@ function Data() {
         const numFeatures = action_arguments.length;
 
         return (
-            <RowCard key={i} columnFlexNumbers={[0.5, 11.5]}>
-              <Text>{i+1}</Text>
-              <FlexContainer>
-                <Text>{title},</Text>
-                <Spacing mr={1} />
-                <Text secondary>{pluralize("feature", numFeatures)}</Text>
-              </FlexContainer>
-              <FlexContainer>
-                {/* TODO: add View Code & Preview here */}
-                <Button
-                  basic
-                  iconOnly
-                  onClick={
-                    /* TODO: replace with UUID */
-                    () => removeAction(i)
-                  }
-                  transparent
-                  padding="0px">
-                  <Close muted />
-                </Button>
-              </FlexContainer>
-            </RowCard>
+          <RowCard key={`${i}-${title}`} columnFlexNumbers={[0.5, 11.5]}>
+            <Text>{i+1}</Text>
+            <FlexContainer>
+              <Text>{title},</Text>
+              <Spacing mr={1} />
+              <Text secondary>{pluralize("feature", numFeatures)}</Text>
+            </FlexContainer>
+            <FlexContainer>
+              {/* TODO: add View Code & Preview here */}
+              <Button
+                basic
+                iconOnly
+                onClick={
+                  /* TODO: replace with UUID */
+                  () => removeAction(i)
+                }
+                transparent
+                padding="0px">
+                <Close muted />
+              </Button>
+            </FlexContainer>
+          </RowCard>
         );
       })
   );
