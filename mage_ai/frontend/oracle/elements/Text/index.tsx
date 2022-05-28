@@ -51,6 +51,7 @@ export type TextProps = {
   primary?: boolean;
   raw?: boolean;
   rightAligned?: boolean;
+  secondary?: boolean;
   small?: boolean;
   textOverflow?: boolean;
   title?: string;
@@ -178,6 +179,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.primary && `
     color: ${(props.theme.interactive || light.interactive).linkPrimary};
+  `}
+
+  ${props => props.secondary && `
+    color: ${(props.theme.interactive || light.interactive).linkSecondary};
   `}
 
   ${props => props.danger && `
