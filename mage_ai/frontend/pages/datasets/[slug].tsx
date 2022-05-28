@@ -1,23 +1,22 @@
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from "@oracle/elements/Button";
 import Flex from "@oracle/components/Flex";
 import FlexContainer from "@oracle/components/FlexContainer";
 import Layout from "@oracle/components/Layout";
+import Link from '@oracle/elements/Link';
+import RowCard from '@oracle/components/RowCard';
 import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
 import Spacing from "@oracle/elements/Spacing";
 import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
 import api from '@api';
+import { Close } from '@oracle/icons';
 import { UNIT } from "@oracle/styles/units/spacing";
-import RowDataTable from '@oracle/components/RowDataTable';
-import RowCard from '@oracle/components/RowCard';
-import Link from '@oracle/elements/Link';
 import { pluralize } from '@utils/string';
-import { Close, PreviewOpen } from '@oracle/icons';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
-import Accordion from '@oracle/components/Accordion';
 
 
 function Data() {
@@ -57,8 +56,10 @@ function Data() {
 
   const [suggestions, setSuggestions] = useState([]);
 
-  // structured as [ {uuid, suggestion_data} ]
+  // structured as [{ idx, action_data }]
   const [actions, setActions] = useState([]);
+
+  // contains indices to be removed from suggestionsMemo
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
   
   // TODO: Move to const file 
@@ -151,8 +152,7 @@ function Data() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
-  // useEffect(() => setSuggestions(suggestionsMemo), [suggestionsMemo]);
-
+  // updates suggestions and filters any removed or applied actions
   useEffect(() => {
     const filteredSuggestions = [...suggestionsMemo];
     removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
@@ -176,14 +176,13 @@ function Data() {
     setRemovedSuggestions(removedSuggestions.concat(i));
   };
 
+  // update pipeline on backend
   useEffect(() => {
     api.pipelines.useUpdate(slug)({ actions });
   }, [
     actions,
     slug,
   ]);
-
-  useEffect(() => console.log({ suggestions, suggestionsMemo, removedSuggestions, actions }));
 
   // Report (Quality Metrics)
 
@@ -245,46 +244,85 @@ function Data() {
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewColumns}
-      >
+      <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
     </FlexContainer>
   );
 
-  const actionsEl = (
-      actions.map((action, i) => {
-        // /* TODO: = action.action -> = action when action structure is updated w/ UUID
-        console.log(action);
-        const { suggestions: { title, action_payload: { action_arguments }}} = action;
-        const numFeatures = action_arguments.length;
+  type ActionProps = {
+    idx: number;
+    link?: () => void;
+    name: string;
+    numFeatures: number;
+    onClose: () => void;
+    showIdx?: boolean;
+  }
 
-        return (
-          <RowCard key={`${i}-${title}`} columnFlexNumbers={[0.5, 11.5]}>
-            <Text>{i+1}</Text>
-            <FlexContainer>
-              <Text>{title},</Text>
-              <Spacing mr={1} />
-              <Text secondary>{pluralize("feature", numFeatures)}</Text>
-            </FlexContainer>
-            <FlexContainer>
-              {/* TODO: add View Code & Preview here */}
-              <Button
-                basic
-                iconOnly
-                onClick={
-                  /* TODO: replace with UUID */
-                  () => removeAction(i)
-                }
-                transparent
-                padding="0px">
-                <Close muted />
-              </Button>
-            </FlexContainer>
-          </RowCard>
-        );
-      })
+  const Action = ({
+    idx,
+    link,
+    name,
+    numFeatures,
+    onClose,
+    showIdx,
+  }: ActionProps) => (
+    <RowCard
+      columnFlexNumbers={[0.5, 0.5, 12]}
+    >
+      {link &&
+        <Link
+          bold
+          noHoverUnderline
+          onClick={link}
+        >
+          Apply
+        </Link>
+      }
+      {showIdx && <Text>{idx+1}</Text>}
+      <FlexContainer>
+        <Text>{name},</Text>
+        <Spacing mr={1} />
+        <Text secondary>{pluralize("feature", numFeatures)}</Text>
+      </FlexContainer>
+      <FlexContainer>
+        {/* TODO: add View Code & Preview here */}
+        <Button
+          basic
+          iconOnly
+          onClick={onClose}
+          padding="0px"
+          transparent
+        >
+          <Close muted />
+        </Button>
+      </FlexContainer>
+    </RowCard>
+  );
+
+  const actionsEl = (
+    actions.map((action, idx) => {
+      const {
+        suggestions: {
+          title,
+          action_payload: {
+            action_arguments,
+          },
+        },
+      } = action;
+      const numFeatures = action_arguments.length;
+
+      return (
+        <Action
+          idx={idx}
+          key={`${idx}-${title}`}
+          name={title}
+          numFeatures={numFeatures}
+          onClose={() => removeAction(idx)}
+          showIdx
+        />
+      );
+    })
   );
 
   const suggestionsEl = (
@@ -297,45 +335,19 @@ function Data() {
         {
           suggestions.length > 0
           ?
-          suggestions.map((suggestion, i) => {
+          suggestions.map((suggestion, idx) => {
             const { action_payload: { action_arguments }} = suggestion;
             const numFeatures = action_arguments.length;
 
             return (
-              <RowCard
-                columnFlexNumbers={[0.5, 11.5]}
-                key={/* TODO: replace with UUID */`${i}-${suggestion.title}`}
-              >
-                <Link
-                  bold
-                  noHoverUnderline
-                  onClick={
-                    /* TODO: replace with UUID */
-                    () => addAction(i)
-                  }
-                >
-                  Apply
-                </Link>
-                <FlexContainer>
-                  <Text>{suggestion.title},</Text>
-                  <Spacing mr={1} />
-                  <Text secondary>{pluralize("feature", numFeatures)}</Text>
-                </FlexContainer>
-                <FlexContainer>
-                  {/* TODO: add View Code & Preview here */}
-                  <Button
-                    basic
-                    iconOnly
-                    onClick={
-                      /* TODO: replace with UUID */
-                      () => removeSuggestion(i)
-                    }
-                    transparent
-                    padding="0px">
-                    <Close muted />
-                  </Button>
-                </FlexContainer>
-              </RowCard>
+              <Action
+                idx={idx}
+                key={`${idx}-${suggestion.title}`}
+                link={() => addAction(idx)}
+                name={suggestion.title}
+                numFeatures={numFeatures}
+                onClose={() => removeSuggestion(idx)}
+              />
             )
           })
           :
