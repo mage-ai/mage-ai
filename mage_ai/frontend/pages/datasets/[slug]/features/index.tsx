@@ -1,5 +1,6 @@
-import Router from 'next/router'
+import Router, { useRouter } from 'next/router'
 import type { NextPage } from 'next'
+import { useEffect, useMemo, useState } from 'react'
 
 import Button from '@oracle/elements/Button'
 import FlexContainer from '@oracle/components/FlexContainer'
@@ -8,9 +9,10 @@ import RowCard from '@oracle/components/RowCard'
 import RowDataTable from '@oracle/components/RowDataTable'
 import Spacing from '@oracle/elements/Spacing'
 import Text from '@oracle/elements/Text'
+import api from '@api'
 import { Column } from '@oracle/icons'
-import { DATASET_PAYLOAD, isBadQuality } from '@components/utils'
 import { UNIT } from '@oracle/styles/units/spacing'
+import { isBadQuality } from '@components/utils'
 
 const ColumnView: NextPage = () => {
   const columnTypes = Object.entries(DATASET_PAYLOAD.metadata.column_types);
@@ -39,22 +41,20 @@ const ColumnView: NextPage = () => {
         >
           {
             columnTypes.map(([colName, colType], i) => {
-              const quality = DATASET_PAYLOAD.statistics[`${colName}/quality`];
+              const quality = featureSet.statistics[`${colName}/quality`];
 
               return (
                 <RowCard
                   key={`${colName}-${i}`}
-                  columnFlexNumbers={[1, 9, 2]}
+                  columnFlexNumbers={[0.5, 0.2, 9, 2]}
+                  secondary={i % 2 === 1}
                 >
-                  <FlexContainer alignItems="center">
-                    {/* no icons for column types? */}
-                    <Text>{i+1}</Text>
-                    <Spacing mr={4} />
-                    <Column secondary />
-                    <Spacing mr={1} />
-                    <Text>{colName}</Text>
-                  </FlexContainer>
-                  <Spacing mr={8} />
+                  <Text>{i+1}</Text>
+                  <Column secondary />
+                  <Text maxWidth={UNIT*50} overflowWrap>
+                    {colName}
+                  </Text>
+
                   <Text
                     bold={isBadQuality(quality)}
                     danger={isBadQuality(quality)}
