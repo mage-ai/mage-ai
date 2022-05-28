@@ -11,8 +11,8 @@ import threading
 
 app = Flask(__name__,
             static_url_path='',
-            static_folder="../frontend/out",
-            template_folder="../frontend/out")
+            static_folder="frontend_dist",
+            template_folder="frontend_dist")
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
