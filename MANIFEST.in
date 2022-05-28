@@ -1,0 +1,1 @@
+recursive-include mage_ai/server/frontend_dist *
