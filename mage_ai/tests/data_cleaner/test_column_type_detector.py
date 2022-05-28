@@ -1,4 +1,5 @@
-from data_cleaner.column_type_detector import (
+from faker import Faker
+from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,
@@ -13,8 +14,7 @@ from data_cleaner.column_type_detector import (
     get_mismatched_row_count,
     infer_column_types,
 )
-from tests.base_test import TestCase
-from faker import Faker
+from mage_ai.tests.base_test import TestCase
 import pandas as pd
 
 fake = Faker()

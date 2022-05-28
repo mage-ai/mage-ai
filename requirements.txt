@@ -3,6 +3,7 @@ Faker==4.14.0
 Flask==2.1.2
 flask-cors==3.0.10
 importlib-metadata==4.11.3
+ipython
 itsdangerous==2.1.2
 Jinja2==3.1.2
 MarkupSafe==2.1.1

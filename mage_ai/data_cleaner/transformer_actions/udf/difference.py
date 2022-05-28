@@ -1,5 +1,5 @@
-from data_cleaner.column_type_detector import DATETIME
-from data_cleaner.transformer_actions.udf.base import BaseUDF
+from mage_ai.data_cleaner.column_type_detector import DATETIME
+from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
 import numpy as np
 import pandas as pd
 

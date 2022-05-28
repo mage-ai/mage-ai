@@ -1,5 +1,6 @@
-from data_cleaner.transformer_actions.action_code import query_with_action_code
-from data_cleaner.transformer_actions.udf.base import BaseUDF
+from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
+from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
+
 
 class IfElse(BaseUDF):
     def execute(self):
