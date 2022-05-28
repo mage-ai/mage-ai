@@ -1,4 +1,4 @@
-from data_cleaner.transformer_actions.constants import VariableType
+from mage_ai.data_cleaner.transformer_actions.constants import VariableType
 import re
 
 

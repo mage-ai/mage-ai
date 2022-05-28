@@ -1,5 +1,5 @@
-from data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, TEXT
-from data_cleaner.transformer_actions.constants import ActionType, Operator, VariableType
+from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, TEXT
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Operator, VariableType
 import numpy as np
 import re
 

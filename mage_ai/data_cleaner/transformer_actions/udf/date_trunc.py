@@ -1,6 +1,7 @@
-from data_cleaner.transformer_actions.udf.base import BaseUDF
+from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
 import numpy as np
 import pandas as pd
+
 
 class DateTrunc(BaseUDF):
     def execute(self):

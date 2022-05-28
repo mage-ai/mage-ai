@@ -1,4 +1,5 @@
-from data_cleaner.transformer_actions.column import (
+from datetime import datetime as dt
+from mage_ai.data_cleaner.transformer_actions.column import (
     add_column,
     count,
     count_distinct,
@@ -12,10 +13,9 @@ from data_cleaner.transformer_actions.column import (
     shift_down,
     shift_up,
 )
-from datetime import datetime as dt
+from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
 from random import seed
-from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 
@@ -826,7 +826,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, df_expected)
 
     def test_average(self):
-        from data_cleaner.transformer_actions.column import average
+        from mage_ai.data_cleaner.transformer_actions.column import average
         action = self.__groupby_agg_action('average_amount')
         df_new = average(TEST_DATAFRAME.copy(), action)
         df_expected = pd.DataFrame([
@@ -1254,7 +1254,7 @@ class ColumnTests(TestCase):
         ])
 
     def test_impute(self):
-        from data_cleaner.transformer_actions.column import impute
+        from mage_ai.data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
             ['2020-01-01', 1000, '       ', 800],
             ['2020-01-03', '', 1200, 700],
@@ -1470,7 +1470,7 @@ class ColumnTests(TestCase):
             _ = impute(df.copy(), action_invalid)
 
     def test_impute_random_edge(self):
-        from data_cleaner.transformer_actions.column import impute
+        from mage_ai.data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
             ['2020-01-01', 1000, '       ', 800],
             ['2020-01-02', '', None, 700],
@@ -1493,7 +1493,7 @@ class ColumnTests(TestCase):
             _ = impute(df.copy(), action)
 
     def test_impute_sequential_two_idx(self):
-        from data_cleaner.transformer_actions.column import impute
+        from mage_ai.data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
             [1, 1000, '2021-10-01', '2021-09-01', 2],
             [1, None, '2021-10-01', '2021-08-01', np.nan],
@@ -1579,7 +1579,7 @@ class ColumnTests(TestCase):
         ])
 
     def test_max(self):
-        from data_cleaner.transformer_actions.column import max
+        from mage_ai.data_cleaner.transformer_actions.column import max
         action = self.__groupby_agg_action('max_amount')
         df_new = max(TEST_DATAFRAME.copy(), action)
         df_expected = pd.DataFrame([
@@ -1615,7 +1615,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new2, df_expected2)
 
     def test_median(self):
-        from data_cleaner.transformer_actions.column import median
+        from mage_ai.data_cleaner.transformer_actions.column import median
         action = self.__groupby_agg_action('median_amount')
         df = pd.DataFrame([
             [1, 1000],
@@ -1642,7 +1642,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, df_expected)
 
     def test_min(self):
-        from data_cleaner.transformer_actions.column import min
+        from mage_ai.data_cleaner.transformer_actions.column import min
         action = self.__groupby_agg_action('min_amount')
         df_new = min(TEST_DATAFRAME.copy(), action)
         df_expected = pd.DataFrame([
@@ -1658,7 +1658,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, df_expected)
 
     def test_reformat_capitalization(self):
-        from data_cleaner.transformer_actions.column import reformat
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
         df = pd.DataFrame([
             [None, 'us', 30000, 'Funny Video Corp','cute animal #1', 100, 30],
             ['500', 'CA', 10000, 'Machine Learning 4 U', 'intro to regression', 3000, 20],
@@ -1765,7 +1765,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, df_expected)
 
     def test_reformat_currency(self):
-        from data_cleaner.transformer_actions.column import reformat
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
         df_currency = pd.DataFrame([
             ['$', '$    10000', 'stock exchange america', '$:MAGE', 5.34],
             ['£', '£200', 'huddersfield stock exchange', '£:XYZA', -1.34],
@@ -1823,7 +1823,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, df_expected)
 
     def test_currency_conversion_test_all_formatting(self):
-        from data_cleaner.transformer_actions.column import reformat
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
         values = [
             '  $ 10000',
             '- ¥ 22.324523',
@@ -1874,7 +1874,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(new_df, expected_df)
 
     def test_reformat_time(self):
-        from data_cleaner.transformer_actions.column import reformat
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
         df = pd.DataFrame([
             [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
             [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
@@ -1976,7 +1976,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new, expected_df)
 
     def test_reformat_time_bad_inputs(self):
-        from data_cleaner.transformer_actions.column import reformat
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
         df = pd.DataFrame([
             [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', np.nan, True],
             [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', -1323.4, False],
@@ -2246,7 +2246,7 @@ class ColumnTests(TestCase):
         ])
 
     def test_sum(self):
-        from data_cleaner.transformer_actions.column import sum
+        from mage_ai.data_cleaner.transformer_actions.column import sum
         action = self.__groupby_agg_action('total_amount')
         df_new = sum(TEST_DATAFRAME.copy(), action)
         self.assertEqual(df_new.to_dict(orient='records'), [

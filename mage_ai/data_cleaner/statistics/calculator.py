@@ -1,7 +1,7 @@
-from data_cleaner.shared.hash import merge_dict
-from data_cleaner.shared.multi import run_parallel
-from data_cleaner.shared.utils import timer
-from data_cleaner.column_type_detector import (
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.shared.multi import run_parallel
+from mage_ai.data_cleaner.shared.utils import timer
+from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER,
     NUMBER_TYPES,

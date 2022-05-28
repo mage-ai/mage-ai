@@ -1,18 +1,16 @@
-from data_cleaner.cleaning_rules.base import BaseRule
-from data_cleaner.column_type_detector import (
+from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.column_type_detector import (
     CATEGORICAL_TYPES,
     COLUMN_TYPES,
     DATETIME,
     NUMBER_TYPES,
     STRING_TYPES
 )
-from data_cleaner.transformer_actions.constants import (
+from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
     ImputationStrategy
 )
-import numpy as np
-import pandas as pd
 
 
 class TypeImputeSubRule():
@@ -20,11 +18,11 @@ class TypeImputeSubRule():
     MAX_NULL_SEQ_LENGTH = 4
 
     def __init__(self,
-        df,
-        column_types,
-        statistics,
-        is_timeseries=False
-    ):
+                 df,
+                 column_types,
+                 statistics,
+                 is_timeseries=False
+                 ):
         """
         Assumptions of TypeImputeSubRule
         1. df will not contain any empty strings - all empty strings are converted to null types.

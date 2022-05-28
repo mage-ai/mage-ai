@@ -1,6 +1,6 @@
-from data_cleaner.cleaning_rules.remove_columns_with_single_value \
+from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value \
     import RemoveColumnsWithSingleValue
-from tests.base_test import TestCase
+from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np
 

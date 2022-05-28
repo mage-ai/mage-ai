@@ -1,12 +1,12 @@
-from data_cleaner.analysis.constants import (
+from mage_ai.data_cleaner.analysis.constants import (
     CHART_TYPE_BAR_HORIZONTAL,
     CHART_TYPE_LINE_CHART,
     CHART_TYPE_HISTOGRAM,
     DATA_KEY_TIME_SERIES,
     LABEL_TYPE_RANGE,
 )
-from data_cleaner.shared.utils import clean_series
-from data_cleaner.column_type_detector import (
+from mage_ai.data_cleaner.shared.utils import clean_series
+from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,

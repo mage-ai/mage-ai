@@ -1,5 +1,5 @@
-from data_cleaner.transformer_actions.helpers import extract_join_feature_set_version_id
-from tests.base_test import TestCase
+from mage_ai.data_cleaner.transformer_actions.helpers import extract_join_feature_set_version_id
+from mage_ai.tests.base_test import TestCase
 
 
 class ColumnTests(TestCase):

@@ -1,12 +1,12 @@
-from data_cleaner.transformer_actions.base import BaseAction
-from data_cleaner.transformer_actions.row import (
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.row import (
     drop_duplicates,
     # explode,
     filter_rows,
     sort_rows,
 )
+from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
-from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

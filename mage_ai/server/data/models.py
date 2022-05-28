@@ -1,7 +1,7 @@
-from data_cleaner.pipelines.base import BasePipeline
-from data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.server.data.base import Model
 from numpyencoder import NumpyEncoder
-from server.data.base import Model
 
 import json
 import os

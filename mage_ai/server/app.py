@@ -1,10 +1,10 @@
-from data_cleaner.data_cleaner import analyze, clean as clean_data
-from data_cleaner.pipelines.base import BasePipeline
 from flask import Flask, render_template, request
 from flask_cors import CORS
+from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
+from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.server.constants import SERVER_PORT
+from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
-from server.constants import SERVER_PORT
-from server.data.models import FeatureSet, Pipeline
 import json
 import simplejson
 import threading

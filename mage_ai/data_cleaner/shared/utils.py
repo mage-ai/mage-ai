@@ -1,9 +1,9 @@
-from data_cleaner.column_type_detector import (
+from mage_ai.data_cleaner.column_type_detector import (
     NUMBER,
     NUMBER_WITH_DECIMALS,
     DATETIME
 )
-from data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
 import time

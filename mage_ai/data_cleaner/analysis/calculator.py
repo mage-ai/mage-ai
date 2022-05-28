@@ -1,14 +1,14 @@
-from data_cleaner.analysis import charts
-from data_cleaner.analysis.constants import (
+from mage_ai.data_cleaner.analysis import charts
+from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_CHARTS,
     DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
 )
-from data_cleaner.shared.utils import clean_series
-from data_cleaner.shared.hash import merge_dict
-from data_cleaner.shared.multi import run_parallel
-from data_cleaner.transformer_actions import constants
-from data_cleaner.column_type_detector import (
+from mage_ai.data_cleaner.shared.utils import clean_series
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.shared.multi import run_parallel
+from mage_ai.data_cleaner.transformer_actions import constants
+from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,

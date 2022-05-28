@@ -1,6 +1,9 @@
-from data_cleaner.transformer_actions.variable_replacer import interpolate, replace_true_false
-from tests.base_test import TestCase
-from tests.data_cleaner.transformer_actions.shared import TEST_ACTION
+from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
+    interpolate,
+    replace_true_false,
+)
+from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.data_cleaner.transformer_actions.shared import TEST_ACTION
 
 
 class VariableReplacerTests(TestCase):

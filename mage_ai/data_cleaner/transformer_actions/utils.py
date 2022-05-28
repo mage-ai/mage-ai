@@ -1,4 +1,4 @@
-from data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 
 
 def columns_to_remove(transformer_actions):
