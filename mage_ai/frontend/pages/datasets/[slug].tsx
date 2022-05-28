@@ -45,14 +45,23 @@ function Data() {
 
   const percentageKeys = ["completeness", "validity"];
 
-  // Map text and display priotities to backend keys.
+  // Map text 
   const humanReadableMapping = {
-    "avg_invalid_value_count":[3, "Invalid values"],
-    "avg_null_value_count":[2, "Missing values"],
-    "completeness":[1, "Completeness"],
-    "duplicate_row_count":[4, "Duplicate values"],
-    "validity":[0, "Validity"],   
-  } || {};
+    "avg_invalid_value_count":"Invalid values",
+    "avg_null_value_count":"Missing values",
+    "completeness":"Completeness",
+    "duplicate_row_count":"Duplicate values",
+    "validity":"Validity",
+  };
+
+  // Display priotities to backend keys.
+  const metricsSortedMapping = {
+    "avg_invalid_value_count":3,
+    "avg_null_value_count":2,
+    "completeness":1,
+    "duplicate_row_count":4,
+    "validity":0,
+  }
 
   // Fetch column Headers
   useEffect( () => {
@@ -71,33 +80,28 @@ function Data() {
   // Calculates metrics
   useEffect( () => {
     const stats = Object.keys(statistics);
-    const metricGroupData = {
-      rowData: [],
-    };
-
     const metricRows = Array(metricsKeys.length).fill(0);
-    stats.forEach(function (key) {
+    stats.map( (key) => {
       if (metricsKeys.includes(key)) {
         let value;
         const order = humanReadableMapping[key];
-        if (percentageKeys.includes(key)){
+        const index = metricsSortedMapping[key];
+        if (percentageKeys.includes(key)) {
           value = statistics[key] * 100;
-          value = value + '%';
+          value = `${value}%`;
         } else {
           value = statistics[key];
         }
-        const statpair = [order[1], value];
-        const values = {
-          columnValues: statpair,
-        }
-        metricRows[order[0]] = values;
+        metricRows[index] = {
+          columnValues: [order, value],
+        };
       }
     });
-
-    metricGroupData.rowData = metricRows;
-    setMetricSample(metricGroupData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statistics]);
+    setMetricSample({
+      rowData: metricRows,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statistics]);
 
   const rowGroupDataSample = {
     rowData: [
