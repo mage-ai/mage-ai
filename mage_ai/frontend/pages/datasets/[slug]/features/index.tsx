@@ -13,10 +13,9 @@ import { DATASET_PAYLOAD, isBadQuality } from '@components/utils'
 import { UNIT } from '@oracle/styles/units/spacing'
 
 const ColumnView: NextPage = () => {
-  const columnID = DATASET_PAYLOAD.id;
   const columnTypes = Object.entries(DATASET_PAYLOAD.metadata.column_types);
 
-  const viewDataset = () => Router.push(`/datasets/${columnID}`);
+  const viewDataset = () => Router.push(`/datasets`);
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
