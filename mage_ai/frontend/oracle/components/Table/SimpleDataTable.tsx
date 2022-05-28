@@ -125,8 +125,8 @@ function SimpleDataTable({
           );
         }
 
-        const numberOfRows = rowData.length;
-        rowData.forEach(({
+        const numberOfRows = rowData?.length;
+        rowData?.forEach(({
           columnValues,
           uuid,
         }: {
