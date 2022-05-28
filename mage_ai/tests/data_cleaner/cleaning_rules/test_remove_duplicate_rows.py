@@ -1,7 +1,6 @@
-from data_cleaner.cleaning_rules.remove_duplicate_rows \
+from mage_ai.data_cleaner.cleaning_rules.remove_duplicate_rows \
     import RemoveDuplicateRows
-from tests.base_test import TestCase
-import numpy as np
+from mage_ai.tests.base_test import TestCase
 import pandas as pd
 
 

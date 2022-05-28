@@ -1,4 +1,4 @@
-from data_cleaner.shared.array import subtract
+from mage_ai.data_cleaner.shared.array import subtract
 import numpy as np
 import pandas as pd
 import re

@@ -1,16 +1,16 @@
-from data_cleaner.column_type_detector import REGEX_NUMBER
-from data_cleaner.transformer_actions.action_code import query_with_action_code
-from data_cleaner.transformer_actions.constants import (
+from mage_ai.data_cleaner.column_type_detector import REGEX_NUMBER
+from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
+from mage_ai.data_cleaner.transformer_actions.constants import (
     CURRENCY_SYMBOLS,
     ImputationStrategy,
     NameConventionPatterns
 )
-from data_cleaner.transformer_actions.helpers import (
+from mage_ai.data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
     get_time_window_str,
 )
-from data_cleaner.transformer_actions.udf.base import execute_udf
+from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
 from keyword import iskeyword
 import pandas as pd
 import numpy as np

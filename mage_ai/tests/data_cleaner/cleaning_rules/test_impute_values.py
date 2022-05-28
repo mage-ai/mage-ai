@@ -1,6 +1,6 @@
-from data_cleaner.cleaning_rules.impute_values import ImputeValues
-from data_cleaner.shared.utils import clean_dataframe
-from tests.base_test import TestCase
+from mage_ai.data_cleaner.cleaning_rules.impute_values import ImputeValues
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
+from mage_ai.tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

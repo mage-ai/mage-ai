@@ -1,7 +1,7 @@
-from data_cleaner.transformer_actions.base import BaseAction
-from data_cleaner.shared.hash import merge_dict
-from tests.base_test import TestCase
-from tests.data_cleaner.transformer_actions.shared import TEST_ACTION
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.tests.base_test import TestCase
+from mage_ai.tests.data_cleaner.transformer_actions.shared import TEST_ACTION
 import numpy as np
 import pandas as pd
 

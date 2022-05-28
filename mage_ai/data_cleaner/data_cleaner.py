@@ -1,9 +1,9 @@
-from data_cleaner import column_type_detector
-from data_cleaner.analysis.calculator import AnalysisCalculator
-from data_cleaner.pipelines.base import BasePipeline
-from data_cleaner.shared.hash import merge_dict
-from data_cleaner.shared.utils import timer, clean_series, clean_dataframe
-from data_cleaner.statistics.calculator import StatisticsCalculator
+from mage_ai.data_cleaner import column_type_detector
+from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
+from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.shared.utils import timer, clean_series, clean_dataframe
+from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 
 def analyze(df):

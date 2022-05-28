@@ -1,4 +1,5 @@
-from data_cleaner.transformer_actions.column import (
+from datetime import datetime as dt
+from mage_ai.data_cleaner.transformer_actions.column import (
     add_column,
     count,
     count_distinct,
@@ -12,10 +13,9 @@ from data_cleaner.transformer_actions.column import (
     shift_down,
     shift_up,
 )
-from datetime import datetime as dt
+from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
 from random import seed
-from tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

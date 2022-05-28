@@ -1,6 +1,6 @@
-from data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
-from data_cleaner.transformer_actions.constants import ActionType
-from tests.base_test import TestCase
+from mage_ai.data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType
+from mage_ai.tests.base_test import TestCase
 import pandas as pd
 
 

@@ -1,6 +1,6 @@
-from data_cleaner.cleaning_rules.base import BaseRule
-from data_cleaner.column_type_detector import REGEX_NUMBER
-from data_cleaner.transformer_actions.constants import ActionType, NameConventionPatterns
+from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.column_type_detector import REGEX_NUMBER
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, NameConventionPatterns
 from keyword import iskeyword
 
 

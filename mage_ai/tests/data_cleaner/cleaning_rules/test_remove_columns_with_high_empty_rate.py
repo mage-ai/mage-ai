@@ -1,6 +1,6 @@
-from data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
+from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
     import RemoveColumnsWithHighEmptyRate
-from tests.base_test import TestCase
+from mage_ai.tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 

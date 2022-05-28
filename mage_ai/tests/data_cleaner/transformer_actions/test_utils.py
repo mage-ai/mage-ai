@@ -1,6 +1,6 @@
-from data_cleaner.transformer_actions.constants import ActionType, Axis
-from data_cleaner.transformer_actions.utils import columns_to_remove
-from tests.base_test import TestCase
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import columns_to_remove
+from mage_ai.tests.base_test import TestCase
 
 
 class UtilsTests(TestCase):
