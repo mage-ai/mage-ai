@@ -51,12 +51,12 @@ function Data() {
   // Fetch column Headers
   useEffect( () => {
     const headerJSON = [];
-    for (const element of columns) {
+    columns.forEach( (header:any) => {
       const column = {
-        label: element,
+        label: header,
       } || {};
       headerJSON.push(column);
-    }
+    });
     setColumnHeaderSample(headerJSON);
   }, [columns]);
 
@@ -66,7 +66,7 @@ function Data() {
       rowData: [],
     };
     const cells = [];
-    rows.forEach(function (rowGroup) {
+    rows.forEach( (rowGroup:any) => {
       const row = {
         columnValues: rowGroup,
       } || {};
