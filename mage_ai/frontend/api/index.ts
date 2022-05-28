@@ -17,6 +17,7 @@ import { handle } from '@api/utils/response';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
 export const FEATURES: 'features' = 'features';
+export const PIPELINES: 'pipelines' = 'pipelines';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 
 const REFRESH_INTERVAL_MS: number = 30000;
@@ -24,6 +25,7 @@ const REFRESH_INTERVAL_MS: number = 30000;
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [FEATURE_SETS],
+  [PIPELINES],
 ];
 
 const apis: any = {};
