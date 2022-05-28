@@ -15,29 +15,9 @@ import { UNIT } from '@oracle/styles/units/spacing'
 import { isBadQuality } from '@components/utils'
 
 const ColumnView: NextPage = () => {
-  const router = useRouter();
-  const { slug } = router.query;
+  const columnTypes = Object.entries(DATASET_PAYLOAD.metadata.column_types);
 
-  const viewDataset = () => Router.push(`/datasets/${slug}`);
-
-  const { data: featureSetData } = api.feature_sets.detail(slug);
-  const featureSetMemo = useMemo(() => featureSetData, [
-    featureSetData,
-  ]);
-
-  const [featureSet, setFeatureSet] = useState({
-    id: slug,
-    metadata: {
-      column_types: {},
-    },
-    statistics: {},
-  });
-
-  useEffect(() => setFeatureSet(featureSetMemo), [
-    featureSetMemo,
-  ]);
-
-  const columnTypes = Object.entries(featureSet.metadata.column_types);
+  const viewDataset = () => Router.push(`/datasets`);
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >

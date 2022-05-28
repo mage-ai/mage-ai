@@ -29,6 +29,10 @@ function Data() {
     datasetResponse?.sample_data?.rows,
   ]);
 
+  const colTypes = useMemo(() => datasetResponse?.metadata?.column_types || [], [
+    datasetResponse?.metadata?.column_types,
+  ]);
+
   const statistics = useMemo(() => datasetResponse?.statistics || [], [
     datasetResponse?.statistics,
   ]);
@@ -36,6 +40,7 @@ function Data() {
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
   const [metricSample, setMetricSample] = useState({});
+  const [statSample, setStatSample] = useState({});
   
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,6 +52,14 @@ function Data() {
     "validity",
   ];
 
+  const statKeys = [
+    'count', 'empty_column_count',
+  ];
+
+  const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
+  const DATE_TYPES = ['datetime']
+  const NUMBER_TYPES = ['number', 'number_with_decimals']
+  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ["completeness", "validity"];
 
   // Map text 
@@ -54,7 +67,9 @@ function Data() {
     "avg_invalid_value_count":"Invalid values",
     "avg_null_value_count":"Missing values",
     "completeness":"Completeness",
+    "count":"Row count",
     "duplicate_row_count":"Duplicate values",
+    "empty_column_count":"Empty features",
     "validity":"Validity",
   };
 
@@ -65,7 +80,7 @@ function Data() {
     "completeness":1,
     "duplicate_row_count":4,
     "validity":0,
-  }
+  };
 
   // Fetch column Headers
   useEffect( () => {
@@ -116,56 +131,55 @@ function Data() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
-  // Report (Quality Metrics)
 
-  /* Given a payload of 
-    "count": 100,
-    "avg_null_value_count": 10,
-    "avg_invalid_value_count": 10,
-		"duplicate_row_count": 20, 
-		"completeness": 0.9,
-    "validity": 0.8,
-
-  /* Turn each key value into a list of tuples. 
-  Inside an object called ColumnValues, that's inside RowData (list of Json) */
-
-  // TODO: map keys to text (P1) but for now we'll reuse the string.
+  // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
-  const statSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Column count", "100",
-        ],
-      },
-      {
-        columnValues: [
-          "Empty columns", "5 (5%)",
-        ],
-      },
-      {
-        columnValues: [
-          "Categorical values", "10 (10%)",
-        ],
-      },
-      {
-        columnValues: [
-          "Numerical values", "20 (20%)",
-        ],
-      },
-      {
-        columnValues: [
-          "Time values", "55 (55%)",
-        ],
-      },
-      {
-        columnValues: [
-          "Empty rows", "10 (10%)",
-        ],
-      },
-    ],
-  };
+  useEffect( () => {
+    const stats = Object.keys(statistics);
+    const types = Object.values(colTypes);
+    const rowData = [];
+
+    rowData.push({
+      columnValues: ["Column count", types.length],
+    })
+    // Part one is the keys from metrics
+    stats.map( (key) => {
+      if (statKeys.includes(key)) {
+        const name = humanReadableMapping[key];
+        rowData.push({
+          columnValues: [name, statistics[key]],
+        });
+      }
+    });
+
+    // Part two is the count of data types
+    let countCategory = 0;
+    let countNumerical = 0;
+    let countTimeseries = 0;
+
+    types.map( (val :string) => {
+      if (CATEGORICAL_TYPES.includes(val)) {
+        countCategory += 1;
+      }
+      else if (NUMBER_TYPES.includes(val)) {
+        countNumerical += 1;
+      } else if (DATE_TYPES.includes(val)) {
+        countTimeseries += 1;
+      }
+    });
+
+    rowData.push({
+      columnValues: ["Categorical Features", countCategory],
+    },{
+      columnValues: ["Numerical Features", countNumerical],
+    },{
+      columnValues: ["Time series Features", countTimeseries],
+    });
+    
+    setStatSample({rowData});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statistics]);
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
