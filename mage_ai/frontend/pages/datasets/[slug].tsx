@@ -51,30 +51,25 @@ function Data() {
   // Fetch column Headers
   useEffect( () => {
     const headerJSON = [];
-    columns.forEach( (header:any) => {
-      const column = {
+    columns.map( (header:any) => {
+      headerJSON.push({
         label: header,
-      } || {};
-      headerJSON.push(column);
+      });
     });
     setColumnHeaderSample(headerJSON);
   }, [columns]);
 
   // Fetch Row values
   useEffect( () => {
-    const rowGroupData = {
-      rowData: [],
-    };
     const cells = [];
-    rows.forEach( (rowGroup:any) => {
-      const row = {
+    rows.map( (rowGroup:any) => { 
+      cells.push({
         columnValues: rowGroup,
-      } || {};
-      cells.push(row);
+      });
     });
-
-    rowGroupData.rowData = cells;
-    setRowGroupDataSample(rowGroupData);
+    setRowGroupDataSample({
+      rowData: cells,
+    });
   }, [rows]);
 
   // Calculates metrics
