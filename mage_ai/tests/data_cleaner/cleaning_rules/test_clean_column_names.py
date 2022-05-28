@@ -7,7 +7,7 @@ import pandas as pd
 class CleanColumnNameTests(TestCase):
     def test_evaluate(self):
         df = pd.DataFrame([
-            ['', '', '', '', '', '', '' , '', ''], 
+            ['', '', '', '', '', '', '' , '', '', '', ''], 
         ], columns=[
             'good_name',
             'Bad Case',
@@ -15,9 +15,11 @@ class CleanColumnNameTests(TestCase):
             'yield',
             '12342',
             '1234.    23',
-            'true',
             'true_crime',
-            '@#f$%&*o$*(%^&r*$%&'
+            '@#f$%&*o$*(%^&r*$%&',
+            'PascalCaseTitle',
+            'camelCaseName',
+            'lowercase9234'
             ]
         )
         result = CleanColumnNames(
@@ -31,7 +33,8 @@ class CleanColumnNameTests(TestCase):
                 title='Clean dirty column names',
                 message='The following columns have unclean naming conventions: '
                 '[\'Bad Case\', \'%@#342%34@@#342\', \'yield\','
-                ' \'12342\', \'1234.    23\', \'true\', \'@#f$%&*o$*(%^&r*$%&\']'
+                ' \'12342\', \'1234.    23\', \'@#f$%&*o$*(%^&r*$%&\', '
+                '\'PascalCaseTitle\', \'camelCaseName\']'
                 '. Making these names lowercase and alphanumeric may improve'
                 'ease of dataset access and reduce security risks.',
                 status='not_applied',
@@ -43,8 +46,9 @@ class CleanColumnNameTests(TestCase):
                         'yield',
                         '12342',
                         '1234.    23',
-                        'true',
-                        '@#f$%&*o$*(%^&r*$%&'
+                        '@#f$%&*o$*(%^&r*$%&',
+                        'PascalCaseTitle',
+                        'camelCaseName'
                     ],
                     action_code='',
                     action_options={},

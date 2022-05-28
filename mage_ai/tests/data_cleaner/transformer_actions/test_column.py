@@ -2,7 +2,7 @@ from data_cleaner.transformer_actions.column import (
     add_column,
     count,
     count_distinct,
-    clean_column_name,
+    clean_column_names,
     diff,
     # expand_column,
     first,
@@ -1027,7 +1027,7 @@ class ColumnTests(TestCase):
 
     def test_clean_column_name(self):
         df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '']
+            ['', '', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
             'Bad Case',
@@ -1035,13 +1035,14 @@ class ColumnTests(TestCase):
             'yield',
             '12342',
             '1234.  23',
-            'true',
             'true_crime',
-            '@#f$%&*o$*(%^&r*$%&'
+            '@#f$%&*o$*(%^&r*$%&',
+            'PascalCaseColumn',
+            'camelCaseText',
             ]
         )
         expected_df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '']
+            ['', '', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
             'bad_case',
@@ -1049,9 +1050,10 @@ class ColumnTests(TestCase):
             'yield_',
             'number_12342',
             '1234___23',
-            'true_',
             'true_crime',
-            'for_'
+            'for_',
+            'pascal_case_column',
+            'camel_case_text',
             ]
         )
         action = dict(
@@ -1063,7 +1065,9 @@ class ColumnTests(TestCase):
                 '12342',
                 '1234.  23',
                 'true',
-                '@#f$%&*o$*(%^&r*$%&'
+                '@#f$%&*o$*(%^&r*$%&',
+                'PascalCaseColumn',
+                'camelCaseText',
             ],
             action_code='',
             action_options={},
@@ -1071,7 +1075,7 @@ class ColumnTests(TestCase):
             axis='column',
             outputs=[],
         )
-        new_df = clean_column_name(df, action)
+        new_df = clean_column_names(df, action)
         assert_frame_equal(new_df, expected_df)
 
     def test_diff(self):

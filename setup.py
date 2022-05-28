@@ -15,6 +15,7 @@ setuptools.setup(
     author_email="sales@mage.ai",
     description='Mage data cleaning tool',
     url='https://github.com/mage-ai/mage-ai',
+    package_dir={"": "mage_ai"},
     packages=setuptools.find_packages('./mage_ai'),
     include_package_data=True,
     classifiers=[

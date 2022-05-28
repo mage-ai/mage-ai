@@ -1,6 +1,7 @@
 from data_cleaner.data_cleaner import analyze, clean as clean_data
 from data_cleaner.pipelines.base import BasePipeline
 from flask import Flask, render_template, request
+from flask_cors import CORS
 from numpyencoder import NumpyEncoder
 from server.constants import SERVER_PORT
 from server.data.models import FeatureSet, Pipeline
@@ -13,6 +14,7 @@ app = Flask(__name__,
             static_folder="../frontend/out",
             template_folder="../frontend/out")
 
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/")
 def index():

@@ -21,8 +21,12 @@ function Data() {
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
 
-  const datasets = useMemo(() => datasetResponse?.sample_data || [], [
-    datasetResponse?.sample_data,
+  const columns = useMemo(() => datasetResponse?.sample_data?.columns || [], [
+    datasetResponse?.sample_data?.columns,
+  ]);
+
+  const rows = useMemo(() => datasetResponse?.sample_data?.rows || [], [
+    datasetResponse?.sample_data?.rows,
   ]);
 
   const statistics = useMemo(() => datasetResponse?.statistics || [], [
@@ -30,7 +34,7 @@ function Data() {
   ]);
 
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
-  // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
+  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
   const [metricSample, setMetricSample] = useState({});
   
   // TODO: Move to const file 
@@ -54,7 +58,7 @@ function Data() {
     "validity":"Validity",
   };
 
-  // Display priotities to backend keys.
+  // Display priorities to backend keys.
   const metricsSortedMapping = {
     "avg_invalid_value_count":3,
     "avg_null_value_count":2,
@@ -65,17 +69,27 @@ function Data() {
 
   // Fetch column Headers
   useEffect( () => {
-      const headers = Object.keys(datasets);
-      const headerJSON = [];
-      headers.forEach(function (val) {
-        const column = {
-          label: val,
-        } || {};
-        headerJSON.push(column);
+    const headerJSON = [];
+    columns.map( (header:any) => {
+      headerJSON.push({
+        label: header,
       });
-      setColumnHeaderSample(headerJSON);
-    }, [datasets]);
+    });
+    setColumnHeaderSample(headerJSON);
+  }, [columns]);
 
+  // Fetch Row values
+  useEffect( () => {
+    const cells = [];
+    rows.map( (rowGroup:any) => { 
+      cells.push({
+        columnValues: rowGroup,
+      });
+    });
+    setRowGroupDataSample({
+      rowData: cells,
+    });
+  }, [rows]);
 
   // Calculates metrics
   useEffect( () => {
@@ -102,53 +116,6 @@ function Data() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
-
-  const rowGroupDataSample = {
-    rowData: [
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-      },
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-        uuid: 'Row 2',
-      },
-      {
-        columnValues: [
-          "1", "2", "3", "4",
-        ],
-        uuid: 'Row 3',
-      },
-      {
-        columnValues: [
-          "11", "2", "3", "4",
-        ],
-        uuid: 'Row 4',
-      },
-      {
-        columnValues: [
-          "13", "2", "3", "4",
-        ],
-        uuid: 'Row 5',
-      },
-      {
-        columnValues: [
-          "1000001", "2", "3", "4",
-        ],
-        uuid: 'Row 6',
-      },
-      {
-        columnValues: [
-          "5", "4", "3", "2",
-        ],
-        uuid: 'Row 7',
-      },
-    ],
-  };
-
   // Report (Quality Metrics)
 
   /* Given a payload of 
@@ -163,7 +130,6 @@ function Data() {
   Inside an object called ColumnValues, that's inside RowData (list of Json) */
 
   // TODO: map keys to text (P1) but for now we'll reuse the string.
-
 
   // Report (Statistics)
   const statSample = {
@@ -201,14 +167,12 @@ function Data() {
     ],
   };
 
-
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
     e.preventDefault()
     Router.push(`${pathname}/features`)
   };
-
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >

@@ -2,7 +2,8 @@ from data_cleaner.column_type_detector import REGEX_NUMBER
 from data_cleaner.transformer_actions.action_code import query_with_action_code
 from data_cleaner.transformer_actions.constants import (
     CURRENCY_SYMBOLS,
-    ImputationStrategy
+    ImputationStrategy,
+    NameConventionPatterns
 )
 from data_cleaner.transformer_actions.helpers import (
     convert_col_type,
@@ -13,7 +14,6 @@ from data_cleaner.transformer_actions.udf.base import execute_udf
 from keyword import iskeyword
 import pandas as pd
 import numpy as np
-import re
 
 
 def add_column(df, action, **kwargs):
@@ -43,23 +43,9 @@ def count(df, action, **kwargs):
 def count_distinct(df, action, **kwargs):
     return __groupby_agg(df, action, 'nunique')
 
-def clean_column_name(df, action, **kwargs):
+def clean_column_names(df, action, **kwargs):
     columns = action['action_arguments']
-    mapping = {}
-    for column in columns:
-        orig_name = column
-        if iskeyword(column):
-            column = f'{column}_'
-        column = column.lower()
-        column = re.sub(r'[\s\t\-\.]', '_', column)
-        column = re.sub(r'[^a-z0-9\_]', '', column)
-        column = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', column)
-        if column == 'true' or column == 'false':
-            column = f'{column}_'
-        if iskeyword(column):
-            # check second time if a keyword appears after removing nonalphanum
-            column = f'{column}_'
-        mapping[orig_name] = column
+    mapping = {col : __clean_column_name(col) for col in columns}
     return df.rename(columns=mapping)
 
 def diff(df, action, **kwargs):
@@ -202,6 +188,28 @@ def __agg(df, action, agg_method):
 
 def __column_mapping(action):
     return dict(zip(action['action_arguments'], [o['uuid'] for o in action['outputs']]))
+
+def __clean_column_name(name):
+    if iskeyword(name):
+        name = f'{name}_'
+    name = NameConventionPatterns.CONNECTORS.sub('_', name)
+    name = NameConventionPatterns.NON_ALNUM.sub('', name)
+    name = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', name)
+    if iskeyword(name):
+        name = f'{name}_'
+    uppercase_group = NameConventionPatterns.UPPERCASE.match(name)
+    pascal_group = NameConventionPatterns.PASCAL.match(name)
+    camel_group = NameConventionPatterns.CAMEL.match(name)
+    if uppercase_group:
+        name = name.lower()
+    elif pascal_group:
+        components = NameConventionPatterns.PASCAL_COMPONENT.findall(name)
+        name = '_'.join(components)
+    elif camel_group:
+        components = NameConventionPatterns.CAMEL_COMPONENT.findall(name)
+        components += NameConventionPatterns.PASCAL_COMPONENT.findall(name)
+        name = '_'.join(components)
+    return name.lower()
 
 # Filter by timestamp_feature_a - window <= timestamp_feature_b <= timestamp_feature_a
 def __filter_df_with_time_window(df, action):
