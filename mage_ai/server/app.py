@@ -16,6 +16,7 @@ app = Flask(__name__,
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+
 @app.route("/")
 def index():
     return render_template('index.html')
@@ -80,7 +81,7 @@ def feature_sets():
         }
     ]
     """
-    feature_sets = list(map(lambda fs: fs.to_dict(False), FeatureSet.objects()))
+    feature_sets = list(map(lambda fs: fs.to_dict(detailed=False), FeatureSet.objects()))
     response = app.response_class(
         response=simplejson.dumps(feature_sets, ignore_nan=True),
         status=200,
@@ -100,8 +101,9 @@ def feature_set(id):
     ]
     """
     feature_set = FeatureSet(id=id)
+    query_column = request.args.get('column')
     response = app.response_class(
-        response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
+        response=simplejson.dumps(feature_set.to_dict(column=query_column), ignore_nan=True),
         status=200,
         mimetype='application/json'
     )
@@ -149,7 +151,7 @@ def pipelines():
         }
     ]
     """
-    pipelines = list(map(lambda p: p.to_dict(False), Pipeline.objects()))
+    pipelines = list(map(lambda p: p.to_dict(detailed=False), Pipeline.objects()))
     response = app.response_class(
         response=json.dumps(pipelines, cls=NumpyEncoder),
         status=200,

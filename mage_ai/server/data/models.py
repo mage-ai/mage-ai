@@ -133,7 +133,7 @@ class FeatureSet(Model):
     #         column_dict['insights'] = json.load(column_insights)
     #     return column_dict
 
-    def to_dict(self, detailed=True):
+    def to_dict(self, column=None, detailed=True):
         obj = dict(
             id=self.id,
             metadata=self.metadata,
@@ -142,10 +142,13 @@ class FeatureSet(Model):
             sample_data = self.sample_data
             datetime_cols = sample_data.select_dtypes(include=['datetime64']).columns.tolist()
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
-            sample_data_dict = dict(
-                columns=sample_data.columns.tolist(),
-                rows=sample_data.to_numpy().tolist(),
-            )
+            if column is not None:
+                sample_data_dict = sample_data[[column]].to_dict('list')
+            else:
+                sample_data_dict = dict(
+                    columns=sample_data.columns.tolist(),
+                    rows=sample_data.to_numpy().tolist(),
+                )
             obj = merge_dict(obj, dict(
                 pipeline=self.pipeline.to_dict(),
                 sample_data=sample_data_dict,
