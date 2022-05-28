@@ -40,13 +40,32 @@ function Data() {
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
-    "count",
     "avg_null_value_count",
     "avg_invalid_value_count",
     "duplicate_row_count",
     "completeness",
     "validity",
   ];
+
+  const percentageKeys = ["completeness", "validity"];
+
+  // Map text 
+  const humanReadableMapping = {
+    "avg_invalid_value_count":"Invalid values",
+    "avg_null_value_count":"Missing values",
+    "completeness":"Completeness",
+    "duplicate_row_count":"Duplicate values",
+    "validity":"Validity",
+  };
+
+  // Display priorities to backend keys.
+  const metricsSortedMapping = {
+    "avg_invalid_value_count":3,
+    "avg_null_value_count":2,
+    "completeness":1,
+    "duplicate_row_count":4,
+    "validity":0,
+  }
 
   // Fetch column Headers
   useEffect( () => {
@@ -75,25 +94,28 @@ function Data() {
   // Calculates metrics
   useEffect( () => {
     const stats = Object.keys(statistics);
-    const metricGroupData = {
-      rowData: [],
-    };
-
-    const metricRows = []
-    stats.forEach(function (val) {
-      const statpair = [val, statistics[val]]
-      const values = {
-        columnValues: statpair,
-      }
-      if (metricsKeys.includes(val)) {
-        metricRows.push(values);
+    const metricRows = Array(metricsKeys.length).fill(0);
+    stats.map( (key) => {
+      if (metricsKeys.includes(key)) {
+        let value;
+        const order = humanReadableMapping[key];
+        const index = metricsSortedMapping[key];
+        if (percentageKeys.includes(key)) {
+          value = statistics[key] * 100;
+          value = `${value}%`;
+        } else {
+          value = statistics[key];
+        }
+        metricRows[index] = {
+          columnValues: [order, value],
+        };
       }
     });
-
-    metricGroupData.rowData = metricRows;
-    setMetricSample(metricGroupData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [statistics]);
+    setMetricSample({
+      rowData: metricRows,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statistics]);
   // Report (Quality Metrics)
 
   /* Given a payload of 
@@ -108,7 +130,6 @@ function Data() {
   Inside an object called ColumnValues, that's inside RowData (list of Json) */
 
   // TODO: map keys to text (P1) but for now we'll reuse the string.
-
 
   // Report (Statistics)
   const statSample = {
@@ -146,14 +167,12 @@ function Data() {
     ],
   };
 
-
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
     e.preventDefault()
     Router.push(`${pathname}/features`)
   };
-
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
