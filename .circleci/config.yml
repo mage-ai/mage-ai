@@ -16,7 +16,7 @@ jobs:
       - python/install-packages:
           pkg-manager: pip
       - run:
-          command: cd mage_ai && python3 -m unittest discover
+          command: python3 -m unittest discover
           name: Unit tests
 
 workflows:
