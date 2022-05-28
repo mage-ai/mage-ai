@@ -55,17 +55,11 @@ function Data() {
   const statKeys = [
     'count', 'empty_column_count',
   ];
-  
-  // Calculate on your own.
-  // Categorical features,
-  // Numerical features
-  // Time series features
 
   const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
-  const NUMBER_TYPES = ['number', 'number_with_decimals']
-  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have for future.
   const DATE_TYPES = ['datetime']
-
+  const NUMBER_TYPES = ['number', 'number_with_decimals']
+  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ["completeness", "validity"];
 
   // Map text 
@@ -86,11 +80,6 @@ function Data() {
     "completeness":1,
     "duplicate_row_count":4,
     "validity":0,
-  };
-
-  const statsSortedMapping = {
-    "count": 1,
-    "empty_column_count": 1,    
   };
 
   // Fetch column Headers
@@ -149,10 +138,10 @@ function Data() {
   useEffect( () => {
     const stats = Object.keys(statistics);
     const types = Object.values(colTypes);
-    const rowData = []
+    const rowData = [];
 
     rowData.push({
-      columnValues: ["Column count",types.length],
+      columnValues: ["Column count", types.length],
     })
     // Part one is the keys from metrics
     stats.map( (key) => {
@@ -162,7 +151,7 @@ function Data() {
           columnValues: [name, statistics[key]],
         });
       }
-    })
+    });
 
     // Part two is the count of data types
     let countCategory = 0;
@@ -178,7 +167,7 @@ function Data() {
       } else if (DATE_TYPES.includes(val)) {
         countTimeseries += 1;
       }
-    })
+    });
 
     rowData.push({
       columnValues: ["Categorical Features", countCategory],
@@ -186,7 +175,7 @@ function Data() {
       columnValues: ["Numerical Features", countNumerical],
     },{
       columnValues: ["Time series Features", countTimeseries],
-    })
+    });
     
     setStatSample({rowData});
   // eslint-disable-next-line react-hooks/exhaustive-deps
