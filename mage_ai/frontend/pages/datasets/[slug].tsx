@@ -21,13 +21,8 @@ function Data() {
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
 
-  const datasets = useMemo(() => datasetResponse?.sample_data || [], [
-    datasetResponse?.sample_data,
-  ]);
-
-  const statistics = useMemo(() => datasetResponse?.statistics || [], [
-    datasetResponse?.statistics,
-  ]);
+  const datasets = datasetResponse?.sample_data || {};
+  const statistics = datasetResponse?.statistics || {};
 
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   // const [rowGroupDataSample, setRowGroupDataSample] = useState({}); //TODO
@@ -46,42 +41,28 @@ function Data() {
 
 
   // Fetch column Headers
-  useEffect( () => {
-      const headers = Object.keys(datasets);
-      const headerJSON = [];
-      headers.forEach(function (val) {
-        const column = {
-          label: val,
-        } || {};
-        headerJSON.push(column);
-      });
-      setColumnHeaderSample(headerJSON);
-    }, [datasetResponse, datasets]);
+  useEffect(() => {
+    const headerJSON = Object.keys(datasets).map(header => ({
+      label: header,
+    }));
+    setColumnHeaderSample(headerJSON);
+  }, []);
 
 
   // Calculates metrics
-  useEffect( () => {
-    const stats = Object.keys(statistics);
-    const metricGroupData = {
-      rowData: [],
-    };
-
+  useEffect(() => {
     const metricRows = []
-    stats.forEach(function (val) {
-      const statpair = [val, statistics[val]]
-      const values = {
-        columnValues: statpair,
-      }
-      if (metricsKeys.includes(val)) {
-        metricRows.push(values);
+    Object.entries(statistics).forEach(([k, v]) => {
+      if (metricsKeys.includes(k)) {
+        metricRows.push({
+          columnValues: [k, v],
+        });
       }
     });
-
-    metricGroupData.rowData = metricRows;
-    setMetricSample(metricGroupData);
-    }, [datasetResponse, metricsKeys, statistics]);
-
-  console.log(setMetricSample);
+    setMetricSample({
+      rowData: metricRows,
+    });
+  }, []);
 
   const rowGroupDataSample = {
     rowData: [
