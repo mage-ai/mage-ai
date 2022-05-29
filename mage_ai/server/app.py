@@ -5,9 +5,13 @@ from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
+import logging
 import json
 import simplejson
 import threading
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__,
             static_url_path='',

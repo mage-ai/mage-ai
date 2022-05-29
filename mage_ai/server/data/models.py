@@ -99,7 +99,7 @@ class FeatureSet(Model):
         sample_size = SAMPLE_SIZE
         if self._data.size < sample_size:
             sample_size = len(self._data) 
-        return self._data.sample(n=sample_size)
+        return self._data.head(sample_size)
 
     def write_files(self, obj, write_orig_data=False):
         if 'df' in obj:
