@@ -19,6 +19,6 @@ pip install git+https://github.com/mage-ai/mage-ai.git
 ```python
 import mage_ai
 df = pd.read_csv('/path_to_your_dataset')
-feature_set = mage_ai.connect_df(df, name='test_data')
+feature_set = mage_ai.connect_data(df, name='test_data')
 mage_ai.launch()
 ```
