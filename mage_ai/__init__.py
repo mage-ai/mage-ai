@@ -14,7 +14,7 @@ def launch():
 
 def display_inline_iframe():
     path_to_local_server = f'http://localhost:{SERVER_PORT}'
-    if type(get_ipython()).__module__.startswith("google.colab"):
+    if type(get_ipython()).__module__.startswith('google.colab'):
         display(Javascript("""
             (async ()=>{
                 fm = document.createElement('iframe')
