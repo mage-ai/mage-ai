@@ -83,6 +83,7 @@ export default {
     disabled: PURPLE_DISABLED,
   },
   interactive: {
+    activeBorder: BLACK,
     dangerBorder: RED,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,

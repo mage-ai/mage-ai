@@ -44,15 +44,3 @@ WithBeforeIcon.args = {
   ...Regular.args,
   beforeIcon: <Check />,
 };
-
-export const Compact = Template.bind({});
-Compact.args = {
-  ...Regular.args,
-  compact: true,
-};
-
-export const CompactWithBeforeIcon = Template.bind({});
-CompactWithBeforeIcon.args = {
-  ...WithBeforeIcon.args,
-  ...Compact.args,
-};
