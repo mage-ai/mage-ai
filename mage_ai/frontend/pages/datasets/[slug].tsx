@@ -1,16 +1,22 @@
 import Router, { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from "@oracle/elements/Button";
 import Flex from "@oracle/components/Flex";
 import FlexContainer from "@oracle/components/FlexContainer";
 import Layout from "@oracle/components/Layout";
+import Link from '@oracle/elements/Link';
+import RowCard from '@oracle/components/RowCard';
 import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
 import Spacing from "@oracle/elements/Spacing";
 import Tabs, { Tab } from "@oracle/components/Tabs";
 import Text from "@oracle/elements/Text";
 import api from '@api';
+import { Close } from '@oracle/icons';
 import { UNIT } from "@oracle/styles/units/spacing";
+import { pluralize } from '@utils/string';
 
 
 function Data() {
@@ -37,10 +43,24 @@ function Data() {
     datasetResponse?.statistics,
   ]);
 
+  const suggestionsMemo = useMemo(() => (
+    (datasetResponse?.suggestions || [])
+  ), [
+    datasetResponse?.suggestions,
+  ]);
+
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
   const [metricSample, setMetricSample] = useState({});
   const [statSample, setStatSample] = useState({});
+
+  const [suggestions, setSuggestions] = useState([]);
+
+  // structured as [{ idx, action_data }]
+  const [actions, setActions] = useState([]);
+
+  // contains indices to be removed from suggestionsMemo
+  const [removedSuggestions, setRemovedSuggestions] = useState([]);
   
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +127,7 @@ function Data() {
   }, [rows]);
 
   // Calculates metrics
-  useEffect( () => {
+  useEffect(() => {
     const stats = Object.keys(statistics);
     const metricRows = Array(metricsKeys.length).fill(0);
     stats.map( (key) => {
@@ -131,6 +151,40 @@ function Data() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
+
+  // updates suggestions and filters any removed or applied actions
+  useEffect(() => {
+    const filteredSuggestions = [...suggestionsMemo];
+    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
+    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
+    setSuggestions(filteredSuggestions);
+  }, [
+    actions,
+    suggestionsMemo,
+    removedSuggestions,
+  ]);
+
+  const addAction = i => {
+    setActions(actions.concat({ i, suggestions: suggestions[i] }));
+  };
+
+  const removeAction = i => {
+    setActions(actions.filter((x, idx) => i !== idx));
+  }
+
+  const removeSuggestion = i => {
+    setRemovedSuggestions(removedSuggestions.concat(i));
+  };
+
+  // update pipeline on backend
+  useEffect(() => {
+    api.pipelines.useUpdate(slug)({ actions });
+  }, [
+    actions,
+    slug,
+  ]);
+
+  // Report (Quality Metrics)
 
   // TODO: p1 add percentages to statisics as a ratio.
 
@@ -158,7 +212,7 @@ function Data() {
     let countNumerical = 0;
     let countTimeseries = 0;
 
-    types.map( (val :string) => {
+    types.map((val: string) => {
       if (CATEGORICAL_TYPES.includes(val)) {
         countCategory += 1;
       }
@@ -190,12 +244,117 @@ function Data() {
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewColumns}
-      >
+      <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
     </FlexContainer>
+  );
+
+  type ActionProps = {
+    idx: number;
+    link?: () => void;
+    name: string;
+    numFeatures: number;
+    onClose: () => void;
+    showIdx?: boolean;
+  }
+
+  const Action = ({
+    idx,
+    link,
+    name,
+    numFeatures,
+    onClose,
+    showIdx,
+  }: ActionProps) => (
+    <RowCard
+      columnFlexNumbers={[0.5, 0.5, 12]}
+    >
+      {link &&
+        <Link
+          bold
+          noHoverUnderline
+          onClick={link}
+        >
+          Apply
+        </Link>
+      }
+      {showIdx && <Text>{idx+1}</Text>}
+      <FlexContainer>
+        <Text>{name},</Text>
+        <Spacing mr={1} />
+        <Text secondary>{pluralize("feature", numFeatures)}</Text>
+      </FlexContainer>
+      <FlexContainer>
+        {/* TODO: add View Code & Preview here */}
+        <Button
+          basic
+          iconOnly
+          onClick={onClose}
+          padding="0px"
+          transparent
+        >
+          <Close muted />
+        </Button>
+      </FlexContainer>
+    </RowCard>
+  );
+
+  const actionsEl = (
+    actions.map((action, idx) => {
+      const {
+        suggestions: {
+          title,
+          action_payload: {
+            action_arguments,
+          },
+        },
+      } = action;
+      const numFeatures = action_arguments.length;
+
+      return (
+        <Action
+          idx={idx}
+          key={`${idx}-${title}`}
+          name={title}
+          numFeatures={numFeatures}
+          onClose={() => removeAction(idx)}
+          showIdx
+        />
+      );
+    })
+  );
+
+  const suggestionsEl = (
+    <Accordion>
+      <AccordionPanel
+        noBackground
+        noPaddingContent
+        title={`${suggestions.length} suggested actions`}
+      >
+        {
+          suggestions.length > 0
+          ?
+          suggestions.map((suggestion, idx) => {
+            const { action_payload: { action_arguments }} = suggestion;
+            const numFeatures = action_arguments.length;
+
+            return (
+              <Action
+                idx={idx}
+                key={`${idx}-${suggestion.title}`}
+                link={() => addAction(idx)}
+                name={suggestion.title}
+                numFeatures={numFeatures}
+                onClose={() => removeSuggestion(idx)}
+              />
+            )
+          })
+          :
+          <>{/* TODO: what do we render when no suggestions exist? */}</>
+        }
+      </AccordionPanel>
+    </Accordion>
   );
 
   const dataEl = (
@@ -250,7 +409,7 @@ function Data() {
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualization"> </Tab>
+      <Tab key="visualizations" label="Visualization"></Tab>
     </Tabs>
   )
 
@@ -260,7 +419,11 @@ function Data() {
     >
       <Spacing mt={UNIT} />
       {headEl}
-      <Spacing mt={UNIT} />
+      <Spacing mt={2} />
+      {actionsEl}
+      <Spacing mt={2} />
+      {suggestionsEl}
+      <Spacing mt={2} />
       {tabsEl}
     </Layout>
   );
