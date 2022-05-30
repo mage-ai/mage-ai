@@ -40,7 +40,7 @@ REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
 REGEX_INTEGER_PATTERN = r'^[\-]{0,1}[\$]{0,1}[0-9,]+$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
-REGEX_NUMBER_PATTERN = r'^[\-]{0,1}[\$]{0,1}[0-9,]+\.[0-9]*%{0,1}$|^[\-]{0,1}[\$]{0,1}[0-9,]+%{0,1}$'
+REGEX_NUMBER_PATTERN = r'^[\-]{0,1}(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD)){0,1}[0-9,]+\.[0-9]*%{0,1}$|^[\-]{0,1}(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD)){0,1}[0-9,]+%{0,1}$'
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
 REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
 REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
@@ -54,19 +54,23 @@ def get_mismatched_row_count(series, column_type):
     mismatched_rows = 0
     if column_type == EMAIL:
         mismatched_rows = len(
-            series[~series.str.contains(REGEX_EMAIL)].index,
+            series[~series.str.match(REGEX_EMAIL)].index,
         )
     elif column_type == PHONE_NUMBER:
         mismatched_rows = len(
-            series[~series.str.contains(REGEX_PHONE_NUMBER)].index,
+            series[~series.str.match(REGEX_PHONE_NUMBER)].index,
         )
     elif column_type == ZIP_CODE:
         str_series = series.astype(str)
         mismatched_rows = len(
-            series[~str_series.str.contains(REGEX_ZIP_CODE)].index,
+            series[~str_series.str.match(REGEX_ZIP_CODE)].index,
         )
     return mismatched_rows
 
+def clean_whitespace(series):
+    return series.map(
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
+    )
 
 def infer_column_types(df, **kwargs):
     binary_feature_names = []
@@ -85,48 +89,41 @@ def infer_column_types(df, **kwargs):
         if 'datetime64' in str(col_type):
             datetime_feature_names.append(col_name)
         elif col_type == 'object':
-            df_sub = df[col_name].copy()
-            df_sub = df_sub.replace('^\s+$', np.nan, regex=True)
+            df_sub = clean_whitespace(df[col_name].copy())
             df_sub = df_sub.dropna()
             df_sub = df_sub.apply(lambda x: x.strip() if type(x) is str else x)
             if df_sub.empty:
                 non_number_feature_names.append(col_name)
             else:
-                first_item = df_sub.iloc[0]
-                if type(first_item) is list:
+                exact_dtype = type(df_sub.iloc[0])
+                if exact_dtype is list:
                     text_feature_names.append(col_name)
-                elif type(first_item) is bool or type(first_item) is np.bool_:
-                    if len(df[col_name].unique()) <= 2:
+                elif np.issubdtype(exact_dtype, np.bool_):
+                    if df[col_name].nunique() <= 2:
                         binary_feature_names.append(col_name)
                     else:
                         category_feature_names.append(col_name)
-                elif len(df[col_name].unique()) <= 2:
+                elif df[col_name].nunique() <= 2:
                     binary_feature_names.append(col_name)
                 else:
                     df_sub = df_sub.astype(str)
-                    incorrect_emails = len(
-                        df_sub[~df_sub.str.contains(REGEX_EMAIL)].index,
-                    )
-                    warnings.filterwarnings('ignore', 'This pattern has match groups')
-                    incorrect_phone_numbers = len(
-                        df_sub[~df_sub.str.contains(REGEX_PHONE_NUMBER)].index,
-                    )
-                    incorrect_zip_codes = len(
-                        df_sub[~df_sub.str.contains(REGEX_ZIP_CODE)].index,
-                    )
-
-                    if all(df_sub.str.contains(REGEX_INTEGER)):
+                    if all(df_sub.str.match(REGEX_INTEGER)):
                         integer_feature_names.append(col_name)
-                    elif all(df_sub.str.contains(REGEX_NUMBER)):
+                    elif all(df_sub.str.match(REGEX_NUMBER)):
                         float_feature_names.append(col_name)
-                    elif incorrect_emails / len(df_sub.index) <= 0.99:
-                        email_features.append(col_name)
-                    elif incorrect_phone_numbers / len(df_sub.index) <= 0.99:
-                        phone_number_feature_names.append(col_name)
-                    elif incorrect_zip_codes / len(df_sub.index) <= 0.99:
-                        zip_code_feature_names.append(col_name)
                     else:
-                        non_number_feature_names.append(col_name)
+                        length = len(df_sub)
+                        correct_emails = df_sub.str.match(REGEX_EMAIL).sum()
+                        correct_phone_nums = df_sub.str.match(REGEX_PHONE_NUMBER).sum()
+                        correct_zip_codes = df_sub.str.match(REGEX_ZIP_CODE).sum()
+                        if correct_emails/length > 0.01:
+                            email_features.append(col_name)
+                        elif correct_phone_nums/length > 0.01:
+                            phone_number_feature_names.append(col_name)
+                        elif correct_zip_codes/length > 0.01:
+                            zip_code_feature_names.append(col_name)
+                        else:
+                            non_number_feature_names.append(col_name)
         elif col_type == 'bool':
             binary_feature_names.append(col_name)
         elif np.issubdtype(col_type, np.floating):
@@ -153,7 +150,12 @@ def infer_column_types(df, **kwargs):
         if df_drop_na.empty:
             text_feature_names.append(col_name)
         else:
+<<<<<<< HEAD
             matches = pd.to_datetime(df_drop_na, infer_datetime_format=True, errors='coerce')
+=======
+            matches = df_drop_na.astype(str).str.match(REGEX_DATETIME_PATTERN)
+            matches = matches.where(matches == True).dropna()
+>>>>>>> [sk] Performance update on column type inference
             if type(df_drop_na.iloc[0]) is list:
                 text_feature_names.append(col_name)
             elif matches.count() / len(matches) >= DATETIME_MATCHES_THRESHOLD:
@@ -161,8 +163,7 @@ def infer_column_types(df, **kwargs):
             elif df_drop_na.nunique() / len(df_drop_na) >= 0.8:
                 text_feature_names.append(col_name)
             else:
-                word_count, _ = \
-                    df[col_name].dropna().map(lambda x: (len(str(x).split(' ')), str(x))).max()
+                word_count = df_drop_na.map(lambda x: len(str(x).split(' '))).max()
                 if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
                     text_feature_names.append(col_name)
                 else:
