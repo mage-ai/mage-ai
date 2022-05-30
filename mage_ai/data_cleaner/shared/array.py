@@ -10,8 +10,7 @@ def batch(iterable, n=1):
 def difference(li1, li2):
     li1_lookup = set(li1)
     li2_lookup = set(li2)
-    li_dif = [i for i in li1 + li2 if i not in li1_lookup or i not in li2_lookup]
-    return li_dif
+    return [i for i in li1 + li2 if i not in li1_lookup or i not in li2_lookup]
 
 
 def flatten(arr):
@@ -31,4 +30,4 @@ def sample(arr):
 
 def subtract(arr1, arr2):
     arr2_lookup = set(arr2)
-    return [i for i in arr1 if i not in arr2_lookup]
+    yield from (i for i in arr1 if i not in arr2_lookup)

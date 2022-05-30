@@ -69,7 +69,7 @@ def get_mismatched_row_count(series, column_type):
 
 def clean_whitespace(series):
     return series.map(
-        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
+        lambda x: x if (not isinstance(x, str) or (x != "" and not x.isspace())) else np.nan,
     )
 
 def infer_column_types(df, **kwargs):
@@ -90,7 +90,6 @@ def infer_column_types(df, **kwargs):
             datetime_feature_names.append(col_name)
         elif col_type == 'object':
             df_sub = clean_whitespace(df[col_name].copy())
-            df_sub = df_sub.dropna()
             df_sub = df_sub.apply(lambda x: x.strip() if type(x) is str else x)
             if df_sub.empty:
                 non_number_feature_names.append(col_name)
@@ -147,9 +146,11 @@ def infer_column_types(df, **kwargs):
 
     for col_name in subtract(non_number_feature_names, binary_feature_names):
         df_drop_na = df[col_name].dropna()
+        length = len(df_drop_na)
         if df_drop_na.empty:
             text_feature_names.append(col_name)
         else:
+<<<<<<< HEAD
 <<<<<<< HEAD
             matches = pd.to_datetime(df_drop_na, infer_datetime_format=True, errors='coerce')
 =======
@@ -159,8 +160,14 @@ def infer_column_types(df, **kwargs):
             if type(df_drop_na.iloc[0]) is list:
                 text_feature_names.append(col_name)
             elif matches.count() / len(matches) >= DATETIME_MATCHES_THRESHOLD:
+=======
+            matches = df_drop_na.astype(str).str.match(REGEX_DATETIME_PATTERN).sum()
+            if type(df_drop_na.iloc[0]) is list:
+                text_feature_names.append(col_name)
+            elif matches / length >= DATETIME_MATCHES_THRESHOLD:
+>>>>>>> [sk] More performance updates on column type inference
                 datetime_feature_names.append(col_name)
-            elif df_drop_na.nunique() / len(df_drop_na) >= 0.8:
+            elif df_drop_na.nunique() / length >= 0.8:
                 text_feature_names.append(col_name)
             else:
                 word_count = df_drop_na.map(lambda x: len(str(x).split(' '))).max()
