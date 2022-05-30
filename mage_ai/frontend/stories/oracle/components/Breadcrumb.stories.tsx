@@ -6,7 +6,7 @@ import ThemeBlock from 'stories/ThemeBlock';
 
 export default {
   component: Breadcrumb,
-  title: 'Oracle/Components/Breadcrumb',
+  title: 'Oracle/Components/Breadcrumbs/Breadcrumb',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
