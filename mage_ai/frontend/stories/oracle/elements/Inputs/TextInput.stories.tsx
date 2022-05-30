@@ -32,7 +32,10 @@ Disabled.args = {
 export const Danger = Template.bind({});
 Danger.args = {
   ...Regular.args,
-  danger: true,
+  meta: {
+    error: 'This field is required.',
+    touched: true,
+  },
 };
 
 export const WithBeforeIcon = Template.bind({});
