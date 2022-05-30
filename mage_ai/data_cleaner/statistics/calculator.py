@@ -50,7 +50,7 @@ class StatisticsCalculator():
                 self.data_tags):
             if not is_clean:
                 df = df.applymap(lambda x: x if (not isinstance(x, str) or
-                                (len(x) > 0 and not x.isspace())) else np.nan)
+                                 (len(x) > 0 and not x.isspace())) else np.nan)
             timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
