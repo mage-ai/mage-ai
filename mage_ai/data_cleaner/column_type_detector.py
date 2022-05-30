@@ -106,10 +106,11 @@ def infer_column_types(df, **kwargs):
                     binary_feature_names.append(col_name)
                 else:
                     df_sub = df_sub.astype(str)
-                    if all(df_sub.str.match(REGEX_INTEGER)):
-                        integer_feature_names.append(col_name)
-                    elif all(df_sub.str.match(REGEX_NUMBER)):
-                        float_feature_names.append(col_name)
+                    if all(df_sub.str.match(REGEX_NUMBER)):
+                        if df_sub.str.contains(r'[\.\%]').sum() != 0:
+                            float_feature_names.append(col_name)
+                        else:
+                            integer_feature_names.append(col_name)
                     else:
                         length = len(df_sub)
                         correct_emails = df_sub.str.match(REGEX_EMAIL).sum()
