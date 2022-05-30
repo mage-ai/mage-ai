@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.shared.array import subtract
+from data_cleaner.shared.array import subtract
 import numpy as np
 import pandas as pd
 import re
@@ -150,22 +150,10 @@ def infer_column_types(df, **kwargs):
         if df_drop_na.empty:
             text_feature_names.append(col_name)
         else:
-<<<<<<< HEAD
-<<<<<<< HEAD
-            matches = pd.to_datetime(df_drop_na, infer_datetime_format=True, errors='coerce')
-=======
-            matches = df_drop_na.astype(str).str.match(REGEX_DATETIME_PATTERN)
-            matches = matches.where(matches == True).dropna()
->>>>>>> [sk] Performance update on column type inference
-            if type(df_drop_na.iloc[0]) is list:
-                text_feature_names.append(col_name)
-            elif matches.count() / len(matches) >= DATETIME_MATCHES_THRESHOLD:
-=======
             matches = df_drop_na.astype(str).str.match(REGEX_DATETIME_PATTERN).sum()
             if type(df_drop_na.iloc[0]) is list:
                 text_feature_names.append(col_name)
             elif matches / length >= DATETIME_MATCHES_THRESHOLD:
->>>>>>> [sk] More performance updates on column type inference
                 datetime_feature_names.append(col_name)
             elif df_drop_na.nunique() / length >= 0.8:
                 text_feature_names.append(col_name)
