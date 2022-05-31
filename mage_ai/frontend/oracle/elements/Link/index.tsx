@@ -257,41 +257,39 @@ const Link = ({
   ...props
 }: {
   children: any;
-} & LinkProps) => 
-   (
-    <LinkStyle
-      {...props}
-      {...({})}
-      disabled={disabled}
-      href={href}
-      muted={muted}
-      onClick={(e) => {
-        if (disabled || preventDefault) {
-          e.preventDefault();
-        }
-        if (onClick && !disabled) {
-          onClick(e);
-        }
-      }}
-      onContextMenu={(e) => {
-        if (disabled || preventDefault) {
-          e.preventDefault();
-        }
-        if (onContextMenuClick && !disabled) {
-          onContextMenuClick(e);
-        }
-      }}
-      onFocus={e => onFocus?.(e)}
-      preventDefault={preventDefault}
-      sameColorAsText={sameColorAsText}
-      selected={selected}
-      target={target || (openNewWindow ? '_blank noopener noreferrer' : null)}
-      transparentBorder={transparentBorder}
-      weightStyle={weightStyle}
-    >
-      {children}      
-    </LinkStyle>
-  )
-;
+} & LinkProps) => (
+  <LinkStyle
+    {...props}
+    {...({})}
+    disabled={disabled}
+    href={href}
+    muted={muted}
+    onClick={(e) => {
+      if (disabled || preventDefault) {
+        e.preventDefault();
+      }
+      if (onClick && !disabled) {
+        onClick(e);
+      }
+    }}
+    onContextMenu={(e) => {
+      if (disabled || preventDefault) {
+        e.preventDefault();
+      }
+      if (onContextMenuClick && !disabled) {
+        onContextMenuClick(e);
+      }
+    }}
+    onFocus={e => onFocus?.(e)}
+    preventDefault={preventDefault}
+    sameColorAsText={sameColorAsText}
+    selected={selected}
+    target={target || (openNewWindow ? '_blank noopener noreferrer' : null)}
+    transparentBorder={transparentBorder}
+    weightStyle={weightStyle}
+  >
+    {children}      
+  </LinkStyle>
+);
 
-export default React.forwardRef(Link);
+export default Link;
