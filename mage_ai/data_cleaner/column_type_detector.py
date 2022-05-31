@@ -1,11 +1,11 @@
-from data_cleaner.shared.array import subtract
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
-import pandas as pd
 import re
-import warnings
 
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
+MAX_WORKERS = 16
+MULTITHREAD_MAX_NUM_ENTRIES = 50000
 
 CATEGORY = 'category'
 CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
@@ -35,14 +35,16 @@ COLUMN_TYPES = frozenset([
     ZIP_CODE,
 ])
 
-REGEX_DATETIME_PATTERN = r'^[\d]{2,4}-[\d]{1,2}-[\d]{1,2}$|^[\d]{2,4}-[\d]{1,2}-[\d]{1,2}[Tt ]{1}[\d]{1,2}:[\d]{1,2}[:]{0,1}[\d]{1,2}[\.]{0,1}[\d]*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
-REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
+REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
+REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9\_\.\+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+$"
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
-REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$\€\¥\₹\£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[\元\€\$]|CAD){0,1})$'
+REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€\$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
-REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$\€\¥\₹\£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[\元\€\$]|CAD){0,1})\s*\%{0,1}$'
+REGEX_FLOAT_NEW_SYM = re.compile(r'[\.\%]')
+REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€\$]|CAD){0,1})\s*\%{0,1}$'
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
-REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
+REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[\-\. \(]*(\d{3})[\-\. \)]*(\d{3})[\-\. ]*(\d{4})(?: *x(\d+))?\s*$'
 REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
 REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
@@ -69,125 +71,101 @@ def get_mismatched_row_count(series, column_type):
 
 def clean_whitespace(series):
     return series.map(
-        lambda x: x if (not isinstance(x, str) or (x != "" and not x.isspace())) else np.nan,
+        lambda x: x if (not isinstance(x, str) or x != '') else np.nan,
     )
 
-def infer_column_types(df, **kwargs):
-    binary_feature_names = []
-    category_feature_names = []
-    datetime_feature_names = []
-    email_features = []
-    float_feature_names = []
-    integer_feature_names = []
-    non_number_feature_names = []
-    phone_number_feature_names = []
-    text_feature_names = []
-    zip_code_feature_names = []
+def infer_object_type(series, kwargs):
+    clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
+    clean_series = clean_whitespace(clean_series)
+    clean_series = clean_series.dropna()
 
-    for idx, col_type in enumerate(df.dtypes):
-        col_name = df.columns[idx]
-        if 'datetime64' in str(col_type):
-            datetime_feature_names.append(col_name)
-        elif col_type == 'object':
-            df_sub = clean_whitespace(df[col_name].copy())
-            df_sub = df_sub.apply(lambda x: x.strip() if type(x) is str else x)
-            if df_sub.empty:
-                non_number_feature_names.append(col_name)
-            else:
-                exact_dtype = type(df_sub.iloc[0])
-                if exact_dtype is list:
-                    text_feature_names.append(col_name)
-                elif np.issubdtype(exact_dtype, np.bool_):
-                    if df[col_name].nunique() <= 2:
-                        binary_feature_names.append(col_name)
-                    else:
-                        category_feature_names.append(col_name)
-                elif df[col_name].nunique() <= 2:
-                    binary_feature_names.append(col_name)
-                else:
-                    df_sub = df_sub.astype(str)
-                    if all(df_sub.str.match(REGEX_NUMBER)):
-                        if df_sub.str.contains(r'[\.\%]').sum() != 0:
-                            float_feature_names.append(col_name)
-                        else:
-                            integer_feature_names.append(col_name)
-                    else:
-                        length = len(df_sub)
-                        correct_emails = df_sub.str.match(REGEX_EMAIL).sum()
-                        correct_phone_nums = df_sub.str.match(REGEX_PHONE_NUMBER).sum()
-                        correct_zip_codes = df_sub.str.match(REGEX_ZIP_CODE).sum()
-                        if correct_emails/length > 0.01:
-                            email_features.append(col_name)
-                        elif correct_phone_nums/length > 0.01:
-                            phone_number_feature_names.append(col_name)
-                        elif correct_zip_codes/length > 0.01:
-                            zip_code_feature_names.append(col_name)
-                        else:
-                            non_number_feature_names.append(col_name)
-        elif col_type == 'bool':
-            binary_feature_names.append(col_name)
-        elif np.issubdtype(col_type, np.floating):
-            float_feature_names.append(col_name)
-        elif np.issubdtype(col_type, np.integer):
-            df_sub = df[col_name].copy()
-            df_sub = df_sub.dropna()
-            if df_sub.min() >= 100 and df_sub.max() <= 99999 and 'zip' in col_name.lower():
-                zip_code_feature_names.append(col_name)
-            else:
-                integer_feature_names.append(col_name)
-
-    number_feature_names = float_feature_names + integer_feature_names
-    binary_feature_names += \
-        [col for col in number_feature_names if df[col].nunique(dropna=False) == 2]
-    binary_feature_names += \
-        [col for col in non_number_feature_names if df[col].nunique(dropna=False) == 2]
-    float_feature_names = [col for col in float_feature_names if col not in binary_feature_names]
-    integer_feature_names = \
-        [col for col in integer_feature_names if col not in binary_feature_names]
-
-    for col_name in subtract(non_number_feature_names, binary_feature_names):
-        df_drop_na = df[col_name].dropna()
-        length = len(df_drop_na)
-        if df_drop_na.empty:
-            text_feature_names.append(col_name)
+    exact_dtype = type(clean_series.iloc[0])
+    if exact_dtype is list:
+        mdtype = TEXT
+    elif np.issubdtype(exact_dtype, np.bool_):
+        if clean_series.nunique() <= 2:
+            mdtype = TRUE_OR_FALSE
         else:
-            matches = df_drop_na.astype(str).str.match(REGEX_DATETIME_PATTERN).sum()
-            if type(df_drop_na.iloc[0]) is list:
-                text_feature_names.append(col_name)
-            elif matches / length >= DATETIME_MATCHES_THRESHOLD:
-                datetime_feature_names.append(col_name)
-            elif df_drop_na.nunique() / length >= 0.8:
-                text_feature_names.append(col_name)
+            mdtype = CATEGORY
+    elif clean_series.nunique() <= 2:
+        mdtype = TRUE_OR_FALSE
+    else:
+        series_unique = series.nunique(dropna=False)
+        clean_series_unique = clean_series.nunique()
+        if all(clean_series.str.match(REGEX_NUMBER)):
+            if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
+                mdtype = NUMBER_WITH_DECIMALS
             else:
-                word_count = df_drop_na.map(lambda x: len(str(x).split(' '))).max()
-                if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
-                    text_feature_names.append(col_name)
+                mdtype = NUMBER
+        else:
+            length = len(clean_series)
+            matches = clean_series.astype(str).str.match(REGEX_DATETIME).sum()
+            if matches/length >= DATETIME_MATCHES_THRESHOLD:
+                mdtype = DATETIME
+            else:
+                correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
+                correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
+                correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+                if correct_emails/length >= 0.99:
+                    mdtype = EMAIL
+                elif correct_phone_nums/length >= 0.99:
+                    mdtype = PHONE_NUMBER
+                elif correct_zip_codes/length >= 0.99:
+                    mdtype = ZIP_CODE
+                elif series_unique == 2:
+                    mdtype = TRUE_OR_FALSE
                 else:
-                    category_feature_names.append(col_name)
+                    if type(exact_dtype) is list:
+                        mdtype = TEXT
+                    elif clean_series_unique / length >= 0.8:
+                        mdtype = TEXT
+                    else:
+                        word_count = clean_series.map(lambda x: len(x.split(' '))).max()
+                        if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
+                            mdtype = TEXT
+                        else:
+                            if (clean_series_unique <= kwargs.get(
+                                'category_cardinality_threshold', 255)):
+                                mdtype =  CATEGORY
+                            else:
+                                mdtype = CATEGORY_HIGH_CARDINALITY
+    return mdtype
 
-    low_cardinality_category_feature_names = \
-        [col for col in category_feature_names if df[col].nunique() <= kwargs.get(
-            'category_cardinality_threshold',
-            255,
-        )]
-    high_cardinality_category_feature_names = \
-        [col for col in category_feature_names if col not in low_cardinality_category_feature_names]
+def infer_column_type(series, column_name, dtype, kwargs):
+    mdtype = None
+    if 'datetime64' in str(dtype):
+        mdtype = DATETIME
+    elif dtype == 'object':
+        mdtype = infer_object_type(series, kwargs)
+    elif dtype == 'bool':
+        mdtype = TRUE_OR_FALSE
+    elif np.issubdtype(dtype, np.integer):
+        clean_series = series.dropna()
+        if (clean_series.min() >= 100 and clean_series.max() <= 99999 
+            and 'zip' in column_name.lower()):
+            mdtype = ZIP_CODE
+        else:
+            mdtype = NUMBER
+    elif np.issubdtype(dtype, np.floating):
+        mdtype = NUMBER_WITH_DECIMALS
 
-    column_types = {}
-    array_types_mapping = {
-        CATEGORY: low_cardinality_category_feature_names,
-        CATEGORY_HIGH_CARDINALITY: high_cardinality_category_feature_names,
-        DATETIME: datetime_feature_names,
-        EMAIL: email_features,
-        NUMBER: integer_feature_names,
-        NUMBER_WITH_DECIMALS: float_feature_names,
-        PHONE_NUMBER: phone_number_feature_names,
-        TEXT: text_feature_names,
-        TRUE_OR_FALSE: binary_feature_names,
-        ZIP_CODE: zip_code_feature_names,
-    }
-    for col_type, arr in array_types_mapping.items():
-        for col in arr:
-            column_types[col] = col_type
+    if mdtype in NUMBER_TYPES and series.nunique(dropna=False) == 2:
+        mdtype = TRUE_OR_FALSE
 
-    return column_types
+    return mdtype
+
+def infer_column_types(df, **kwargs):
+    columns = [df[col] for col in df.columns]
+    column_names = list(df.columns)
+    dtypes = list(df.dtypes)
+    kwarg_list = [kwargs] * len(columns)
+    ctypes = {}
+    num_entries = len(df)
+    if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            types = pool.map(infer_column_type, columns, column_names, dtypes, kwarg_list)
+    else:
+        types = map(infer_column_type, columns, column_names, dtypes, kwarg_list)
+    for col, dtype in zip(column_names, types):
+        ctypes[col] = dtype
+    return ctypes
