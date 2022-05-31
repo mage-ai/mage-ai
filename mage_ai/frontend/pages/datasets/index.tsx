@@ -51,7 +51,7 @@ const Dashboard: NextPage = () => {
                   } = dataset || {};
                   const {
                     column_types = {},
-                    name,
+                    name = `dataset_${id}`,
                     statistics,
                   } = metadata || {};
                   const {
