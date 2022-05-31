@@ -17,7 +17,6 @@ import {
   XLARGE,
   XSMALL,
 } from '@oracle/styles/fonts/sizes';
-import { background, backgroundColor } from 'styled-system';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type TextProps = {

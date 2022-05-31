@@ -27,7 +27,7 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
         const arr = x
           .map(({ label }, idx) => [label, y[idx].value])
           .filter(([, value]) => correlationThreshold === null
-            || Math.abs(Number(value)) >= correlationThreshold
+            || Math.abs(Number(value)) >= correlationThreshold,
           );
 
         arr.forEach(([label, value]) => {

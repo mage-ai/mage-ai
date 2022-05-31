@@ -103,7 +103,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const border = 'rgba(255, 255, 255, 0.3)';
   const purplePastel = light.brand.wind200;
   const text = light.monotone.white;
-  const { black, white } = light.monotone;
+  const { white } = light.monotone;
 
   const xValues = data.map(d => Number(getX(d)));
 
@@ -440,7 +440,12 @@ function LineSeriesContainer({
   ...props
 }: LineSeriesContainerProps) {
   // Left margin is larger because it has the y-axis ticks
-  const defaultMargin = { top: 3 * unit, right: 3 * unit, bottom: 3 * unit, left: 5 * unit };
+  const defaultMargin = {
+    bottom: 3 * unit,
+    left: 5 * unit,
+    right: 3 * unit,
+    top: 3 * unit,
+  };
   const margin = {
     ...defaultMargin,
     ...marginArgs,
@@ -448,7 +453,7 @@ function LineSeriesContainer({
 
   return (
     <>
-      <div style={{ height: parentHeight, display: 'flex', width: '100%' }}>
+      <div style={{ display: 'flex', height: parentHeight, width: '100%' }}>
         {yAxisLabel && (
           <div style={{ marginRight: 1 * unit, width: 28 }}>
             <FlexContainer alignItems="center" justifyContent="center">

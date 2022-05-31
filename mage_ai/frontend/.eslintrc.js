@@ -62,7 +62,7 @@ module.exports = {
     'no-prototype-builtins': 'off',
     'object-curly-spacing': 'off',
     'operator-linebreak': 'off',
-    'quotes': ['warn', 'single'],
+    'quotes': ['error', 'single'],
     'radix': 'off',
     'react/display-name': 'off',
     'react-hooks/rules-of-hooks': 'warn',

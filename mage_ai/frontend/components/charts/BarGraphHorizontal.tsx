@@ -160,7 +160,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
 
     return width < 10 ? null : (
       <div>
-        <svg width={width} height={height}>
+        <svg height={height} width={width}>
           {/* <rect width={width} height={height} fill="gray" /> */}
 
           <Bar
@@ -196,8 +196,8 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                     <g key={`barstack-horizontal-${barStack.index}-${bar.index}`}>
                       <LinearGradient
                         from={colors.gradientFrom}
-                        to={colors.gradientTo}
                         id="bar-linear-gradient"
+                        to={colors.gradientTo}
                         vertical={false}
                       />
                       <rect
@@ -223,10 +223,10 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
                 fontSize,
-                textAnchor: 'end',
                 style: {
                   width: '10px',
                 },
+                textAnchor: 'end',
               })}
               tickStroke={colors.muted}
               tickValues={tickValues}
