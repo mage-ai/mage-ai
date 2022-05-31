@@ -24,22 +24,23 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
-import { formatPercent, numberWithCommas, roundNumber } from '@utils/string.js';
+import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import {
   groupBy,
   indexBy,
   sortByKey,
 } from '@utils/array';
+import Spacing from '@oracle/elements/Spacing';
 
 type ColumnAnalysisProps = {
   column: string;
   features: FeatureType[]; 
   insights: any;
-  // statisticsByColumn: {
-  //   [key: string]: number;
-  // };
+  statisticsByColumn: {
+    [key: string]: number;
+  };
   statisticsOverview: {
-    [key: string]: string | number;
+    [key: string]: any;
   };
 };
 
@@ -47,7 +48,7 @@ function ColumnAnalysis({
   column,
   features,
   insights,
-  // statisticsByColumn,
+  statisticsByColumn,
   statisticsOverview: statisticsOverviewProp,
 }: ColumnAnalysisProps) {
   const refContainer = useRef(null);
@@ -63,10 +64,12 @@ function ColumnAnalysis({
   const statisticsOverview = statisticsOverviewProp || {};
   const numberOfRows = statisticsOverview?.count;
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-  const featuresByColumnType = groupBy(features, ({ column_type: ct }) => ct);
+  const featuresByColumnType = groupBy(features, ({ columnType: ct }) => ct);
   const feature = featuresByUUID[column] || {};
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
+
+  console.log('feature:', feature)
 
   const statsRowData = [
     {
@@ -83,12 +86,12 @@ function ColumnAnalysis({
     },
   ];
 
-  const isBooleanType = COLUMN_TYPE_TRUE_OR_FALSE === feature.column_type;
-  const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.column_type);
+  const isBooleanType = COLUMN_TYPE_TRUE_OR_FALSE === feature.columnType;
+  const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
   const isCategoricalType = [
     COLUMN_TYPE_CATEGORY,
     COLUMN_TYPE_CATEGORY_HIGH_CARDINALITY,
-  ].includes(feature.column_type);
+  ].includes(feature.columnType);
 
   if (isNumberType) {
     statsRowData.push(...[
@@ -156,6 +159,11 @@ function ColumnAnalysis({
     )
     : {};
 
+  const statisticsByColumnArray = Object.entries(statisticsByColumn || {}).map(([columnValue, uniqueValueCount]) => ({
+    x: uniqueValueCount,
+    y: columnValue,
+  }));
+
   let distributionChart = null;
   if (distribution) {
     distributionChart = (
@@ -204,28 +212,28 @@ function ColumnAnalysis({
       />
     );
   }
-  // else if (isCategoricalType) {
-  //   const data = sortByKey(statisticsByColumnArray, 'x');
+  else if (isCategoricalType) {
+    const data = sortByKey(statisticsByColumnArray, 'x');
 
-  //   distributionChart = (
-  //     <BarGraphHorizontal
-  //       data={data}
-  //       height={Math.max(3 * data.length * UNIT, UNIT * 50)}
-  //       renderTooltipContent={({ x, y }) => `${y} appears ${numberWithCommas(x)} times`}
-  //       xNumTicks={2}
-  //       ySerialize={({ y }) => numberWithCommas(y)}
-  //     />
-  //   );
-  // } else if (isBooleanType && statisticsByColumn) {
-  //   distributionChart = (
-  //     <PieChart
-  //       data={Object.entries(statisticsByColumn)}
-  //       getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
-  //       getY={([, value]) => value}
-  //       height={60 * UNIT}
-  //     />
-  //   );
-  // }
+    distributionChart = (
+      <BarGraphHorizontal
+        data={data}
+        height={Math.max(3 * data.length * UNIT, UNIT * 50)}
+        renderTooltipContent={({ x, y }) => `${y} appears ${numberWithCommas(x)} times`}
+        xNumTicks={2}
+        ySerialize={({ y }) => numberWithCommas(y)}
+      />
+    );
+  } else if (isBooleanType && statisticsByColumn) {
+    distributionChart = (
+      <PieChart
+        data={Object.entries(statisticsByColumn)}
+        getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
+        getY={([, value]) => value}
+        height={60 * UNIT}
+      />
+    );
+  }
 
   let unusualDistributionTable;
   if (rangedWithUnusualDistribution?.length >= 1) {
@@ -285,48 +293,48 @@ function ColumnAnalysis({
       />
     );
   }
-  // else if (isCategoricalType) {
-  //   const rowData = statisticsByColumnArray.reduce((acc, { x, y }) => {
-  //     if (hasHighDistribution(x, numberOfValues, numberOfUniqueValues)) {
-  //       acc.push({
-  //         x,
-  //         y,
-  //       });
-  //     }
+  else if (isCategoricalType) {
+    const rowData = statisticsByColumnArray.reduce((acc, { x, y }) => {
+      if (hasHighDistribution(x, numberOfValues, numberOfUniqueValues)) {
+        acc.push({
+          x,
+          y,
+        });
+      }
 
-  //     return acc;
-  //   }, []);
+      return acc;
+    }, []);
 
-  //   if (rowData.length >= 1) {
-  //     unusualDistributionTable = (
-  //       <SimpleDataTable
-  //         columnFlexNumbers={[1, 1]}
-  //         columnHeaders={[
-  //           {
-  //             label: 'Value',
-  //           },
-  //           {
-  //             label: 'Rows',
-  //           },
-  //         ]}
-  //         rowGroupData={[
-  //           {
-  //             rowData: sortByKey(rowData, 'x', {
-  //               ascending: false,
-  //             }).map(({ x, y }) => ({
-  //               columnValues: [
-  //                 y,
-  //                 x,
-  //               ],
-  //               uuid: '',
-  //             })),
-  //           },
-  //         ]}
-  //         small
-  //       />
-  //     );
-  //   }
-  // }
+    if (rowData.length >= 1) {
+      unusualDistributionTable = (
+        <SimpleDataTable
+          columnFlexNumbers={[1, 1]}
+          columnHeaders={[
+            {
+              label: 'Value',
+            },
+            {
+              label: 'Rows',
+            },
+          ]}
+          rowGroupData={[
+            {
+              rowData: sortByKey(rowData, 'x', {
+                ascending: false,
+              }).map(({ x, y }) => ({
+                columnValues: [
+                  y,
+                  x,
+                ],
+                uuid: '',
+              })),
+            },
+          ]}
+          small
+        />
+      );
+    }
+  }
 
   const buildLineSeriesChart = ({
     legendNames,
@@ -354,7 +362,7 @@ function ColumnAnalysis({
         height={60 * UNIT}
         lineLegendNames={legendNames}
         margin={{
-          bottom: UNIT * 10,
+          bottom: 10 * UNIT,
         }}
         noCurve
         renderXTooltipContent={({ index }) => {
@@ -484,7 +492,7 @@ function ColumnAnalysis({
               noPadding={isBooleanType || !!unusualDistributionTable}
               title="Distribution data"
             >
-              {/* {isBooleanType && (
+              {isBooleanType && (
                 <SimpleDataTable
                   columnFlexNumbers={[1, 1, 1]}
                   columnHeaders={[
@@ -516,14 +524,18 @@ function ColumnAnalysis({
                   ]}
                   small
                 />
-              )} */}
-              {!unusualDistributionTable && (
-                <Text>
-                  There is no unusual distribution.
-                </Text>
               )}
+              {!isBooleanType && (
+                <>
+                  {!unusualDistributionTable && (
+                    <Text>
+                      There is no unusual distribution.
+                    </Text>
+                  )}
 
-              {unusualDistributionTable}
+                  {unusualDistributionTable}
+                </>
+              )}
             </ChartContainer>
           }
         />
@@ -543,7 +555,14 @@ function ColumnAnalysis({
                   <ChartContainer
                     title={`Statistics by date, column: ${datetimeColumn}`}
                   >
-                    {chart}
+                    {timeseriesChart.map(({
+                      chart,
+                      metric,
+                    }) => (
+                      <Spacing mb={4}>
+                        {chart}
+                      </Spacing>
+                    ))}
                   </ChartContainer>
                 }
               />

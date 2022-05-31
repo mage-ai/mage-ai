@@ -14,6 +14,8 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
   const correlatedColumnsSeen = {};
   const correlationsRowData = [];
 
+  console.log('correlations:', correlations);
+
   correlations?.forEach(({
     correlations: correlations2,
     feature,
@@ -21,8 +23,8 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
     const { uuid } = feature;
     if (!correlatedColumnsSeen[uuid]) {
       correlations2?.forEach(({
-        x,
-        y,
+        x = [],
+        y = [],
       }) => {
         const arr = x
           .map(({ label }, idx) => [label, y[idx].value])
@@ -77,7 +79,7 @@ export function buildDistributionData(chartData, featuresByUUID, opts: {
   const yValuesAverage = yValuesSum / Math.max(1, yValues.length);
 
   const feature = featuresByUUID[featureUUID] || featureProp;
-  const columnType = feature?.column_type;
+  const columnType = feature?.columnType;
   const isDatetime = COLUMN_TYPE_DATETIME === columnType;
   const unusualRange = [];
   const unusualValues = [];

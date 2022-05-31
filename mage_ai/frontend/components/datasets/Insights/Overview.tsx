@@ -127,6 +127,8 @@ function Overview({
   const timeSeriesData = []
   const datesWithUnusualNumberOfRows = []
 
+  console.log('time series:', timeSeries);
+
   timeSeries?.forEach((chart) => {
     const {
       distribution,
@@ -167,6 +169,8 @@ function Overview({
       allColumnsWithNullValues.push(data);
     }
   });
+
+  console.log('time series data:', timeSeriesData);
 
   const timeSeriesHistograms = timeSeriesData.map(({
     data,
