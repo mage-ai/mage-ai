@@ -4,10 +4,10 @@ from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
 )
-from mage_ai.data_cleaner.shared.utils import clean_dataframe, timer
+from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.multi import run_parallel
-from mage_ai.data_cleaner.transformer_actions import constants
 from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
@@ -44,12 +44,11 @@ class AnalysisCalculator():
 
         if not is_clean:
             df_clean = clean_dataframe(df, self.column_types, dropna=False)
-
         else:
             df_clean = df
 
-        arr_args_1 = [df_clean for _ in features_to_use],
-        arr_args_2 = features_to_use,
+        arr_args_1 = [df_clean for _ in features_to_use]
+        arr_args_2 = features_to_use
 
         data_for_columns = \
             [d for d in run_parallel(self.calculate_column, arr_args_1, arr_args_2)]
