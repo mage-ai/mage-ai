@@ -47,8 +47,8 @@ class AnalysisCalculator():
         else:
             df_clean = df
 
-        arr_args_1 = [df_clean for _ in features_to_use]
-        arr_args_2 = features_to_use
+        arr_args_1 = [df_clean for _ in features_to_use],
+        arr_args_2 = features_to_use,
 
         data_for_columns = \
             [d for d in run_parallel(self.calculate_column, arr_args_1, arr_args_2)]
