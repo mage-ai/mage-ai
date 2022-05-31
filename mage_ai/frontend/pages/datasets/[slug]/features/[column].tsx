@@ -1,131 +1,99 @@
-import Router from 'next/router';
-import { useState } from "react";
+import Router, { useRouter } from 'next/router';
+import { useState } from 'react';
 
-import Button from "@oracle/elements/Button";
-import Flex from "@oracle/components/Flex";
-import FlexContainer from "@oracle/components/FlexContainer";
-import Layout from "@oracle/components/Layout";
-import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
-import Spacing from "@oracle/elements/Spacing";
-import Tabs, { Tab } from "@oracle/components/Tabs";
-import Text from "@oracle/elements/Text";
-import { UNIT } from "@oracle/styles/units/spacing";
+import Button from '@oracle/elements/Button';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Layout from '@oracle/components/Layout';
+import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Tabs, { Tab } from '@oracle/components/Tabs';
+import Text from '@oracle/elements/Text';
+import api from 'api';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getPercentage } from '@utils/number';
 
 function Feature() {
+  const router = useRouter();
+  const {
+    slug: featureSetId,
+    column: featureId,
+  } = router.query;
 
-  // TODO: Replace with API Call during Integration
+  const { data: featureSet } = api.feature_sets.detail(featureSetId);
+  const featureMapping = getFeatureMapping(featureSet)
+  const featureIndex = +featureId;
 
+  // Get individual column data
+  const featureData = featureMapping[featureIndex];
+  const featureUUID = featureData?.uuid;
+  const columnType = featureData?.column_type;
+  const sampleRowData = featureSet?.sample_data?.rows?.map(row => ({
+    columnValues: [row[featureIndex]],
+  }));
 
-  // Column Summary (Quality Metrics)
-
-  /* Given a payload of 
-  statistics: {
-    "avg_null_value_count": 10,
-    "avg_invalid_value_count": 10,
-    "duplicate_row_count": 20, 
-    "completeness": 0.9,
-    "validity": 0.8,
-  }
-  */
-
-  /* Turn each key value into a list of tuples. 
-  Inside an object called ColumnValues, that's inside RowData (list of Json) */
-
-  // TODO: map keys to text (P2)
-
-  // This first statistics portion will contain the missing values, invalid values, duplicate values, and show validity and completeness.
-  const metricSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Validity", "0.8"
-        ],
-      },
-      {
-        columnValues: [
-          "Completeness", "0.9"
-        ],
-      },
-      {
-        columnValues: [
-          "Missing values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Invalid values", "20"
-        ],
-      },
-      {
-        columnValues: [
-          "Duplicate values", "20"
-        ],
-      },
-    ],
-  };
-
-  // Columns (Statistics)
-  const colSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Sophie Jung"
-        ],
-      },
-      {
-        columnValues: [
-          "Lena Perrin"
-        ],
-      },
-      {
-        columnValues: [
-          "Dennis Thompson"
-        ],
-      },
-      {
-        columnValues: [
-          "Dennis Thompson"
-        ],
-      },
-      {
-        columnValues: [
-          "Joseph Gauthier"
-        ],
-      },
-      {
-        columnValues: [
-          "Alexis Rolland"
-        ],
-      },
-    ],
-    title: "Users",
-  };
-
-  const warningSample = {
-    rowData: [
-      {
-        columnValues: [
-          "Outliers", "100"
-        ],
-      },
-      {
-        columnValues: [
-          "Anomalies", "5 (5%)"
-        ],
-      },
-      {
-        columnValues: [
-          "Skewed", "10 (10%)"
-        ],
-      },
-    ],
-  };
-
+  // Get individual column statistics
+  const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
+  const {
+    completeness,
+    count,
+    count_distinct: countDistinct,
+    invalid_value_count: invalidValueCount,
+    null_value_count: nullValueCount,
+    outlier_count: outlierCount,
+    skew,
+    validity,
+  } = featureSetStats;
+  const qualityMetrics = [
+    {
+      columnValues: [
+        'Validity', getPercentage(validity),
+      ],
+    },
+    {
+      columnValues: [
+        'Completeness', getPercentage(completeness),
+      ],
+    },
+    {
+      columnValues: [
+        'Total values', count,
+      ],
+    },
+    {
+      columnValues: [
+        'Unique values', countDistinct,
+      ],
+    },
+    {
+      columnValues: [
+        'Missing values', nullValueCount,
+      ],
+    },
+    {
+      columnValues: [
+        'Invalid values', invalidValueCount,
+      ],
+    },
+  ];
+  const warningMetrics = [
+    {
+      columnValues: [
+        'Outliers', outlierCount,
+      ],
+    },
+    {
+      columnValues: [
+        'Skewed', skew.toFixed(3),
+      ],
+    },
+  ];
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     e.preventDefault();
-    Router.push(`/datasets`);
+    Router.push('/datasets');
   };
 
 
@@ -139,38 +107,44 @@ function Feature() {
     </FlexContainer>
   );
 
-  const colEl = (
+  const columnValuesTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Column values',},]}
-      rowGroupData={[colSample]}
+      columnHeaders={[{ label: 'Column values' }]}
+      rowGroupData={[{
+        rowData: sampleRowData,
+        title: `${featureUUID} (${columnType})`,
+      }]}
     />
   )
-  const metricsEl = (
+  const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Column summary',},]}
-      rowGroupData={[metricSample]}
+      columnHeaders={[{ label: 'Column summary' }]}
+      rowGroupData={[{
+        rowData: qualityMetrics,
+      }]}
     />
   );
 
   const warnEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Warnings',},]}
-      rowGroupData={[warningSample]}
+      columnHeaders={[{ label: 'Warnings' }]}
+      rowGroupData={[{
+        rowData: warningMetrics,
+      }]}
     />
   );
 
-  // Column Data and Metrics 
   const dataEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {colEl}
+        {columnValuesTableEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        {metricsEl}
+        {metricsTableEl}
       </Flex>
     </FlexContainer>
   );
@@ -180,7 +154,7 @@ function Feature() {
   const reportsEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {metricsEl}
+        {metricsTableEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
@@ -196,15 +170,15 @@ function Feature() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab label="Data" key="data">
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab label="Report" key="reports">
+      <Tab  key="reports" label="Reports">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab label="Visualization" key="visualizations"> </Tab>
+      <Tab key="visualizations" label="Visualizations"> </Tab>
     </Tabs>
   )
 

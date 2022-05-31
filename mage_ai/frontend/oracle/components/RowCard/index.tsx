@@ -2,14 +2,13 @@ import React from 'react';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import { RowStyle } from '@oracle/components/RowDataTable/index.style';
 
 export type RowCardProps = {
   children: any;
   columnFlexNumbers: number[];
   last?: boolean;
+  noHorizontalPadding?: boolean;
   secondary?: boolean;
 };
 
@@ -17,11 +16,13 @@ function RowCard({
   children,
   columnFlexNumbers,
   last,
+  noHorizontalPadding,
   secondary,
 }: RowCardProps) {
   return (
     <RowStyle
       last={last}
+      noHorizontalPadding={noHorizontalPadding}
       secondary={secondary}
     >
       <FlexContainer alignItems="center">

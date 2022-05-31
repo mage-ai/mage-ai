@@ -38,8 +38,8 @@ const Dashboard: NextPage = () => {
         <Tab key="datasets" label="Datasets">
           <Spacing pb={3} pt={3}>
             <RowDataTable
-              headerTitle="datasets"
               headerDetails={pluralize("dataset", featureSets?.length)}
+              headerTitle="datasets"
             >
               {
               featureSets?.length > 0
@@ -47,22 +47,24 @@ const Dashboard: NextPage = () => {
                 featureSets?.map(dataset => {
                   const {
                     id,
-                    metadata: {
-                      column_types,
-                      name,
-                      statistics: {
-                        count,
-                        quality,
-                      },
-                    },
-                  } = dataset;
+                    metadata,
+                  } = dataset || {};
+                  const {
+                    column_types = {},
+                    name = `dataset_${id}`,
+                    statistics,
+                  } = metadata || {};
+                  const {
+                    count,
+                    quality,
+                  } = statistics || {};
 
                   const num_features = Object.keys(column_types).length;
 
                   return (
                     <RowCard
-                      key={id}
                       columnFlexNumbers={[4, 1, 1, 1]}
+                      key={id}
                     >
                       <FlexContainer alignItems="center">
                         <File secondary />

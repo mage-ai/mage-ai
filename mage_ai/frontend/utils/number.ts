@@ -21,3 +21,11 @@ export function formatDollarAmountFromCents(value) {
 export function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
+
+export function getPercentage(number) {
+  const percentage = (number === 1 || number === 0)
+    ? (number * 100)
+    : (number * 100).toFixed(2);
+
+  return `${percentage}%`;
+}
