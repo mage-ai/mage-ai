@@ -12,6 +12,7 @@ import Text from '@oracle/elements/Text';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getPercentage } from '@utils/number';
 
 function Feature() {
   const router = useRouter();
@@ -45,12 +46,12 @@ function Feature() {
   const qualityMetrics = [
     {
       columnValues: [
-        'Validity', validity,
+        'Validity', getPercentage(validity),
       ],
     },
     {
       columnValues: [
-        'Completeness', completeness,
+        'Completeness', getPercentage(completeness),
       ],
     },
     {
