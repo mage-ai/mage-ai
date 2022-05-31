@@ -31,14 +31,16 @@ class FeatureSet(Model):
         self.metadata = metadata
 
         if df is None:
-            self._data = self.read_parquet_file('data.parquet')
-            self._data_orig = self.read_parquet_file('data_orig.parquet')
+            self._data = None
+            self._data_orig = None
         else:
             self.data = df
             self.data_orig = df
 
     @property
     def data(self):
+        if self._data is None:
+            self._data = self.read_parquet_file('data.parquet')
         return self._data
 
     @data.setter
@@ -48,6 +50,8 @@ class FeatureSet(Model):
     
     @property
     def data_orig(self):
+        if self._data_orig is None:
+            self._data_orig = self.read_parquet_file('data_orig.parquet')
         return self._data_orig
 
     @data_orig.setter
@@ -97,9 +101,9 @@ class FeatureSet(Model):
     @property
     def sample_data(self):
         sample_size = SAMPLE_SIZE
-        if self._data.size < sample_size:
-            sample_size = len(self._data) 
-        return self._data.head(sample_size)
+        if self.data.size < sample_size:
+            sample_size = len(self.data)
+        return self.data.head(sample_size)
 
     def write_files(self, obj, write_orig_data=False):
         if 'df' in obj:
