@@ -88,28 +88,28 @@ function Data() {
 
   // Map text 
   const humanReadableMapping = {
-    'avg_invalid_value_count':'Invalid values',
-    'avg_null_value_count':'Missing values',
-    'completeness':'Completeness',
-    'count':'Row count',
-    'duplicate_row_count':'Duplicate values',
-    'empty_column_count':'Empty features',
-    'validity':'Validity',
+    'avg_invalid_value_count': 'Invalid values',
+    'avg_null_value_count': 'Missing values',
+    'completeness': 'Completeness',
+    'count': 'Row count',
+    'duplicate_row_count': 'Duplicate values',
+    'empty_column_count': 'Empty features',
+    'validity': 'Validity',
   };
 
   // Display priorities to backend keys.
   const metricsSortedMapping = {
-    'avg_invalid_value_count':3,
-    'avg_null_value_count':2,
-    'completeness':1,
-    'duplicate_row_count':4,
-    'validity':0,
+    'avg_invalid_value_count': 3,
+    'avg_null_value_count': 2,
+    'completeness': 1,
+    'duplicate_row_count': 4,
+    'validity': 0,
   };
 
   // Fetch column Headers
-  useEffect( () => {
+  useEffect(() => {
     const headerJSON = [];
-    columns.map( (header:any) => {
+    columns.map((header:any) => {
       headerJSON.push({
         label: header,
       });
@@ -118,9 +118,9 @@ function Data() {
   }, [columns]);
 
   // Fetch Row values
-  useEffect( () => {
+  useEffect(() => {
     const cells = [];
-    rows.map( (rowGroup:any) => { 
+    rows.map((rowGroup:any) => { 
       cells.push({
         columnValues: rowGroup,
       });
@@ -134,7 +134,7 @@ function Data() {
   useEffect(() => {
     const stats = Object.keys(statistics);
     const metricRows = Array(metricsKeys.length).fill(0);
-    stats.map( (key) => {
+    stats.map((key) => {
       if (metricsKeys.includes(key)) {
         let value = statistics[key].toPrecision(2);
         const order = humanReadableMapping[key];
@@ -191,7 +191,7 @@ function Data() {
   // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
-  useEffect( () => {
+  useEffect(() => {
     const stats = Object.keys(statistics);
     const types = Object.values(colTypes);
     const rowData = [];
@@ -200,7 +200,7 @@ function Data() {
       columnValues: ['Column count', types.length],
     })
     // Part one is the keys from metrics
-    stats.map( (key) => {
+    stats.map((key) => {
       if (statKeys.includes(key)) {
         const name = humanReadableMapping[key];
         rowData.push({
@@ -233,7 +233,7 @@ function Data() {
       columnValues: ['Time series Features', countTimeseries],
     });
     
-    setStatSample({rowData});
+    setStatSample({ rowData });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
@@ -245,7 +245,7 @@ function Data() {
   };
 
   const headEl = (
-    <FlexContainer alignItems='justify-right' flexDirection='row-reverse' >
+    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
@@ -293,7 +293,7 @@ function Data() {
           basic
           iconOnly
           onClick={onClose}
-          padding='0px'
+          padding="0px"
           transparent
         >
           <Close muted />
@@ -338,7 +338,7 @@ function Data() {
           suggestions.length > 0
           ?
           suggestions.map((suggestion, idx) => {
-            const { action_payload: { action_arguments }} = suggestion;
+            const { action_payload: { action_arguments } } = suggestion;
             const numFeatures = action_arguments.length;
 
             return (
@@ -371,7 +371,7 @@ function Data() {
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics',},]}
+      columnHeaders={[{ label: 'Quality Metrics' }]}
       rowGroupData={[metricSample]}
     />
   );
@@ -380,7 +380,7 @@ function Data() {
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{label:'Statistics',},]}
+      columnHeaders={[{ label: 'Statistics' }]}
       rowGroupData={[statSample]}
     />
   );
@@ -413,15 +413,15 @@ function Data() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab key='data' label='Data'>
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab key='reports' label='Report'>
+      <Tab key="reports" label="Report">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key='visualizations' label='Visualization'></Tab>
+      <Tab key="visualizations" label="Visualization"></Tab>
     </Tabs>
   )
 

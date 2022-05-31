@@ -1,7 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import FeatureType, { COLUMN_TYPE_DATETIME, COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
+import FeatureType, {
+  COLUMN_TYPE_DATETIME,
+  COLUMN_TYPE_HUMAN_READABLE_MAPPING,
+  COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE,
+} from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
@@ -64,7 +68,7 @@ function FeatureProfile({
 }: FeatureProfileProps) {
   const {
     columnType,
-    uuid
+    uuid,
   } = feature;
 
   const numberOfValues = statistics?.[`${uuid}/count`];
@@ -105,7 +109,7 @@ function FeatureProfile({
         typeof minValue === 'string' ? minValue: roundNumber(minValue, 3),
         typeof maxValue === 'string' ? maxValue: roundNumber(maxValue, 3),
         numberOfInvalidValues,
-      ]
+      ],
     ]
   } else {
     entries = [
@@ -128,7 +132,7 @@ function FeatureProfile({
         numberOfNullValues,
         modeValue,
         numberOfInvalidValues,
-      ]
+      ],
     ]
   }
 
@@ -145,7 +149,7 @@ function FeatureProfile({
         <>
           <Flex flex={1} flexDirection="column">
             {values.map((label, idx) => (
-              <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT}>
+              <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
                 <Text>
                   {label}
                 </Text>
@@ -170,8 +174,8 @@ function FeatureProfiles({
         </Text>
       </HeaderStyle>
       <BodyStyle>
-        {features.map(feature => (
-          <FeatureProfileStyle>
+        {features.map((feature, idx) => (
+          <FeatureProfileStyle key={idx}>
             <FeatureProfile
               feature={feature}
               statistics={statistics}

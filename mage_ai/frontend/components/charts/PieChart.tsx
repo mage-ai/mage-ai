@@ -167,7 +167,7 @@ function PieChart({
               getKey={({ data }) => getX(data)}
               onClickDatum={({ data }) => animate &&
                 setSelectedData(
-                  selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data
+                  selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data,
                 )
               }
             />

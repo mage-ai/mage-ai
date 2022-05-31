@@ -34,11 +34,11 @@ const Dashboard: NextPage = () => {
       centerAlign
       header={<Spacing mt={UNIT} />}
     >
-      <Tabs defaultKey="datasets" bold large>
+      <Tabs bold defaultKey="datasets" large>
         <Tab key="datasets" label="Datasets">
           <Spacing pb={3} pt={3}>
             <RowDataTable
-              headerDetails={pluralize("dataset", featureSets?.length)}
+              headerDetails={pluralize('dataset', featureSets?.length)}
               headerTitle="datasets"
             >
               {

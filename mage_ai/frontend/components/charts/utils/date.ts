@@ -1,5 +1,5 @@
 import {
-  coerceNumber, scaleUtc
+  coerceNumber, scaleUtc,
 } from '@visx/scale';
 
 export const formatDateAxisLabel = (date: Date) => date.toISOString().slice(0, 10);
@@ -34,7 +34,7 @@ export const getXScalePadding = (dataSampleCount: number, width: number, isDateT
 
 export const getXScaleDate = (
   data: [string, any][],
-  xMax: number
+  xMax: number,
 ) => {
   const dateValues = data
     .map(dateTuple => new Date(dateTuple[0]))

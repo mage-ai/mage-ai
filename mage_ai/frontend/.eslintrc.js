@@ -29,6 +29,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/no-shadow': 'off',
+    '@typescript-eslint/object-curly-spacing': ['error', 'always'],
     '@typescript-eslint/prefer-as-const': 'off',
     'anchor-is-valid': 'off',
     'array-callback-return': 'off',
@@ -44,6 +45,10 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'jsx-a11y/anchor-is-valid': 'off',
     'jsx-a11y/control-has-associated-label': 'off',
+    'jsx-quotes': ['error', 'prefer-double'],
+    'key-spacing': ['error', {
+      mode: 'strict',
+    }],
     'max-len': [
       'warn',
       {
@@ -55,8 +60,9 @@ module.exports = {
     'no-nested-ternary': 'off',
     'no-param-reassign': 'off',
     'no-prototype-builtins': 'off',
+    'object-curly-spacing': 'off',
     'operator-linebreak': 'off',
-    'quotes': ['warn', 'single'],
+    'quotes': ['error', 'single'],
     'radix': 'off',
     'react/display-name': 'off',
     'react-hooks/rules-of-hooks': 'warn',
@@ -72,6 +78,7 @@ module.exports = {
     'react/jsx-wrap-multilines': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/require-default-props': 'off',
+    'space-in-parens': ['error', 'never'],
     'sort-keys': ['warn', 'asc', {'caseSensitive': true, 'natural': false, 'minKeys': 2}],
     'comma-dangle': ['warn', 'always-multiline']
   }

@@ -20,8 +20,6 @@ export const FEATURES: 'features' = 'features';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 
-const REFRESH_INTERVAL_MS: number = 30000;
-
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [FEATURE_SETS],
