@@ -1,19 +1,28 @@
-import Router from 'next/router';
-import { useState } from "react";
+import Router, { useRouter } from 'next/router';
+import { useState } from 'react';
 
-import Button from "@oracle/elements/Button";
-import Flex from "@oracle/components/Flex";
-import FlexContainer from "@oracle/components/FlexContainer";
-import Layout from "@oracle/components/Layout";
-import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
-import Spacing from "@oracle/elements/Spacing";
-import Tabs, { Tab } from "@oracle/components/Tabs";
-import Text from "@oracle/elements/Text";
-import { UNIT } from "@oracle/styles/units/spacing";
+import Button from '@oracle/elements/Button';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Layout from '@oracle/components/Layout';
+import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Tabs, { Tab } from '@oracle/components/Tabs';
+import Text from '@oracle/elements/Text';
+import api from 'api';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { getFeatureMapping } from '@utils/models/featureSet';
 
 function Feature() {
+  const router = useRouter();
+  const {
+    slug: featureSetId,
+    column: featureId,
+  } = router.query;
 
-  // TODO: Replace with API Call during Integration
+  const { data: featureSet } = api.feature_sets.detail(featureSetId);
+  const featureMapping = getFeatureMapping(featureSet)
+  const featureUUID = featureMapping[+featureId];
 
 
   // Column Summary (Quality Metrics)
@@ -38,27 +47,27 @@ function Feature() {
     rowData: [
       {
         columnValues: [
-          "Validity", "0.8"
+          'Validity', '0.8',
         ],
       },
       {
         columnValues: [
-          "Completeness", "0.9"
+          'Completeness', '0.9',
         ],
       },
       {
         columnValues: [
-          "Missing values", "20"
+          'Missing values', '20',
         ],
       },
       {
         columnValues: [
-          "Invalid values", "20"
+          'Invalid values', '20',
         ],
       },
       {
         columnValues: [
-          "Duplicate values", "20"
+          'Duplicate values', '20',
         ],
       },
     ],
@@ -69,53 +78,53 @@ function Feature() {
     rowData: [
       {
         columnValues: [
-          "Sophie Jung"
+          'Sophie Jung',
         ],
       },
       {
         columnValues: [
-          "Lena Perrin"
+          'Lena Perrin',
         ],
       },
       {
         columnValues: [
-          "Dennis Thompson"
+          'Dennis Thompson',
         ],
       },
       {
         columnValues: [
-          "Dennis Thompson"
+          'Dennis Thompson',
         ],
       },
       {
         columnValues: [
-          "Joseph Gauthier"
+          'Joseph Gauthier',
         ],
       },
       {
         columnValues: [
-          "Alexis Rolland"
+          'Alexis Rolland',
         ],
       },
     ],
-    title: "Users",
+    title: 'Users',
   };
 
   const warningSample = {
     rowData: [
       {
         columnValues: [
-          "Outliers", "100"
+          'Outliers', '100',
         ],
       },
       {
         columnValues: [
-          "Anomalies", "5 (5%)"
+          'Anomalies', '5 (5%)',
         ],
       },
       {
         columnValues: [
-          "Skewed", "10 (10%)"
+          'Skewed', '10 (10%)',
         ],
       },
     ],
@@ -125,7 +134,7 @@ function Feature() {
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     e.preventDefault();
-    Router.push(`/datasets`);
+    Router.push('/datasets');
   };
 
 
@@ -142,14 +151,14 @@ function Feature() {
   const colEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Column values',},]}
+      columnHeaders={[{ label: 'Column values' }]}
       rowGroupData={[colSample]}
     />
   )
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Column summary',},]}
+      columnHeaders={[{ label: 'Column summary' }]}
       rowGroupData={[metricSample]}
     />
   );
@@ -157,7 +166,7 @@ function Feature() {
   const warnEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Warnings',},]}
+      columnHeaders={[{ label: 'Warnings' }]}
       rowGroupData={[warningSample]}
     />
   );
