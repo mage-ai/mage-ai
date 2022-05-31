@@ -1,6 +1,6 @@
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.multi import run_parallel
-from mage_ai.data_cleaner.shared.utils import timer
+from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER,
@@ -50,7 +50,7 @@ class StatisticsCalculator():
                 self.data_tags):
             if not is_clean:
                 df = df.applymap(lambda x: x if (not isinstance(x, str) or
-                                (len(x) > 0 and not x.isspace())) else np.nan)
+                                 (len(x) > 0 and not x.isspace())) else np.nan)
             timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),

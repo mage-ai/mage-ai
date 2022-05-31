@@ -2,7 +2,8 @@ from mage_ai.data_cleaner import column_type_detector
 from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.utils import timer, clean_series, clean_dataframe
+from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.utils import clean_series, clean_dataframe
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 
@@ -28,9 +29,9 @@ class DataCleaner():
         with timer('data_cleaner.clean_series'):
             df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
-            statistics = StatisticsCalculator(column_types).process(df, True)
+            statistics = StatisticsCalculator(column_types).process(df, is_clean=True)
         with timer('data_cleaner.calculate_insights'):
-            analysis = AnalysisCalculator(df, column_types).process(df)
+            analysis = AnalysisCalculator(df, column_types).process(df, is_clean=True)
         return dict(
             insights=analysis,
             column_types=column_types,

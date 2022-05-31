@@ -86,8 +86,10 @@ def feature_sets():
     ]
     """
     feature_sets = list(map(lambda fs: fs.to_dict(detailed=False), FeatureSet.objects()))
+    valid_feture_sets = [f for f in feature_sets
+                         if set(['column_types', 'statistics']).issubset(f['metadata'].keys())]
     response = app.response_class(
-        response=simplejson.dumps(feature_sets, ignore_nan=True),
+        response=simplejson.dumps(valid_feture_sets, ignore_nan=True),
         status=200,
         mimetype='application/json'
     )

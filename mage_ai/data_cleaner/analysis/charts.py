@@ -107,11 +107,11 @@ def build_correlation_data(df, col1, features):
     y = []
 
     df_copy = df.copy()
-    for feature in features:
-        col2 = feature['uuid']
-        column_type = feature['column_type']
-        series = df_copy[col2]
-        df_copy[col2] = clean_series(series, column_type, dropna=False)
+    # for feature in features:
+    #     col2 = feature['uuid']
+    #     column_type = feature['column_type']
+    #     series = df_copy[col2]
+    #     df_copy[col2] = clean_series(series, column_type, dropna=False)
 
     corr = df_copy.corr()
     for feature in features:
@@ -151,7 +151,6 @@ def build_time_series_data(df, feature, datetime_column, column_type):
 
     min_value_datetime = datetimes.min().timestamp()
     max_value_datetime = datetimes.max().timestamp()
-
 
     buckets, bucket_interval = build_buckets(
         min_value_datetime,

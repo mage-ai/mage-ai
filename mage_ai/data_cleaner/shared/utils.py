@@ -6,7 +6,6 @@ from mage_ai.data_cleaner.column_type_detector import (
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
-import time
 
 
 def clean_series(series, column_type, dropna=True):
@@ -46,23 +45,3 @@ def clean_dataframe(df, column_types, dropna=True):
         lambda col: clean_series(col, column_types[col.name], dropna=dropna), 
         axis=0
     )
-
-
-class timer(object):
-    """
-    with timer('metric.metric', tags={ 'key': 'value' }):
-        function()
-    """
-    def __init__(self, metric, tags={}):
-        self.metric = metric
-        self.start = None
-        self.tags = tags
-
-    def __enter__(self):
-        self.start = time.time()
-
-    def __exit__(self, type, value, traceback):
-        # Must convert to milliseconds, see details in
-        # https://statsd.readthedocs.io/en/v3.1/timing.html
-        dt = int((time.time() - self.start) * 1000)
-        print(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')
