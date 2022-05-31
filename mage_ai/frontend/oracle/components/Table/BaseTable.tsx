@@ -13,8 +13,8 @@ import { DataTableColumn, DataTableRow } from './types';
 
   function BaseTable({
     children,
-    columns,
-    data,
+    columnHeaders,
+    rowGroupData,
   }: any) {
   
   const dataSample = useMemo(
@@ -39,7 +39,7 @@ import { DataTableColumn, DataTableRow } from './types';
     () => [
       {
         Header: 'Column 1',
-        accessor: 'col1', // accessor is the "key" in the data
+        accessor: 'col1',
       },
       {
         Header: 'Column 2',
@@ -48,14 +48,6 @@ import { DataTableColumn, DataTableRow } from './types';
     ],
     [],
   );
-
-  // Parse into the form
-  const column = columns.map(({
-    Icon,
-    label,
-  }: any, idx: number) => {
-    const key = label;
-  });
     
   const {
     getTableProps,
@@ -63,7 +55,7 @@ import { DataTableColumn, DataTableRow } from './types';
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columnSample, dataSample })
+  } = useTable({ columns:columnSample, data:dataSample })
 
   return (
     <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
