@@ -135,12 +135,10 @@ class StatisticsCalculator():
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
         df_value_counts = series.value_counts(dropna=False)
-        df = df_value_counts.reset_index()
-        df.columns = [col, 'count']
 
-        df_top_value_counts = df
-        if df.shape[0] > VALUE_COUNT_LIMIT:
-            df_top_value_counts = df.head(VALUE_COUNT_LIMIT)
+        df_top_value_counts = df_value_counts
+        if df_top_value_counts.shape[0] > VALUE_COUNT_LIMIT:
+            df_top_value_counts = df_top_value_counts.head(VALUE_COUNT_LIMIT)
 
         # TODO: remove duplicate data for distinct values
         # object_key_distinct_values = s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
@@ -157,6 +155,9 @@ class StatisticsCalculator():
         column_type = self.column_types.get(col)
         series_non_null = series.dropna()
 
+        # Fix json serialization issue
+        if column_type == DATETIME:
+            df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
         count_unique = len(df_value_counts.index)
         data = {
