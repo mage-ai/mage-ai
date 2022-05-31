@@ -233,7 +233,7 @@ function Data() {
       columnValues: ['Time series Features', countTimeseries],
     });
     
-    setStatSample({rowData});
+    setStatSample({ rowData });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
@@ -338,7 +338,7 @@ function Data() {
           suggestions.length > 0
           ?
           suggestions.map((suggestion, idx) => {
-            const { action_payload: { action_arguments }} = suggestion;
+            const { action_payload: { action_arguments } } = suggestion;
             const numFeatures = action_arguments.length;
 
             return (
@@ -371,7 +371,7 @@ function Data() {
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label: 'Quality Metrics'}]}
+      columnHeaders={[{ label: 'Quality Metrics' }]}
       rowGroupData={[metricSample]}
     />
   );
@@ -380,7 +380,7 @@ function Data() {
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{label: 'Statistics'}]}
+      columnHeaders={[{ label: 'Statistics' }]}
       rowGroupData={[statSample]}
     />
   );
