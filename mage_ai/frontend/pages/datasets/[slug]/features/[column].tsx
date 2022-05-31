@@ -41,6 +41,8 @@ function Feature() {
     count_distinct: countDistinct,
     invalid_value_count: invalidValueCount,
     null_value_count: nullValueCount,
+    outlier_count: outlierCount,
+    skew,
     validity,
   } = featureSetStats;
   const qualityMetrics = [
@@ -75,28 +77,18 @@ function Feature() {
       ],
     },
   ];
-
-  // Sample mock data
-  const warningSample = {
-    rowData: [
-      {
-        columnValues: [
-          'Outliers', '100',
-        ],
-      },
-      {
-        columnValues: [
-          'Anomalies', '5 (5%)',
-        ],
-      },
-      {
-        columnValues: [
-          'Skewed', '10 (10%)',
-        ],
-      },
-    ],
-  };
-
+  const warningMetrics = [
+    {
+      columnValues: [
+        'Outliers', outlierCount,
+      ],
+    },
+    {
+      columnValues: [
+        'Skewed', skew.toFixed(3),
+      ],
+    },
+  ];
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
@@ -139,7 +131,9 @@ function Feature() {
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
       columnHeaders={[{ label: 'Warnings' }]}
-      rowGroupData={[warningSample]}
+      rowGroupData={[{
+        rowData: warningMetrics,
+      }]}
     />
   );
 
@@ -176,15 +170,15 @@ function Feature() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab label="Data" key="data">
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab label="Report" key="reports">
+      <Tab  key="reports" label="Reports">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab label="Visualization" key="visualizations"> </Tab>
+      <Tab key="visualizations" label="Visualizations"> </Tab>
     </Tabs>
   )
 
