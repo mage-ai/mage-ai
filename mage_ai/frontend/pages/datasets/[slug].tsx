@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import Button from "@oracle/elements/Button";
+import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from "@oracle/components/Flex";
 import FlexContainer from "@oracle/components/FlexContainer";
 import Layout from "@oracle/components/Layout";
@@ -48,6 +49,9 @@ function Data() {
   ), [
     datasetResponse?.suggestions,
   ]);
+  
+  const features = Object.entries(datasetResponse?.metadata?.column_types || {})
+    .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
@@ -382,15 +386,23 @@ function Data() {
   );
 
   const reportsEl = (
-    <FlexContainer justifyContent={'center'}>
-      <Flex flex={1}>
-        {metricsEl}
-      </Flex>
-      <Spacing ml={UNIT} />
-      <Flex flex={1}>
-        {statsEl}
-      </Flex>
-    </FlexContainer>
+    <>
+      <FlexContainer justifyContent={'center'}>
+        <Flex flex={1}>
+          {metricsEl}
+        </Flex>
+        <Spacing ml={8} />
+        <Flex flex={1}>
+          {statsEl}
+        </Flex>
+      </FlexContainer>
+      <Spacing my={8}>
+        <FeatureProfiles
+          features={features}
+          statistics={statistics}
+        />
+      </Spacing>
+    </>
   )
 
   const tabsEl = (

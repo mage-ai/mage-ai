@@ -17,8 +17,11 @@ import {
   XLARGE,
   XSMALL,
 } from '@oracle/styles/fonts/sizes';
+import { background, backgroundColor } from 'styled-system';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type TextProps = {
+  backgroundColor?: string;
   bold?: boolean;
   black?: boolean;
   breakAll?: boolean;
@@ -148,6 +151,11 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.breakSpaces && `
     white-space: break-spaces;
+  `}
+
+  ${props => props.backgroundColor && `
+    background-color: ${props.backgroundColor};
+    padding: 0 ${UNIT / 2}px;
   `}
 `;
 
