@@ -88,22 +88,22 @@ function Data() {
 
   // Map text 
   const humanReadableMapping = {
-    'avg_invalid_value_count':'Invalid values',
-    'avg_null_value_count':'Missing values',
-    'completeness':'Completeness',
-    'count':'Row count',
-    'duplicate_row_count':'Duplicate values',
-    'empty_column_count':'Empty features',
-    'validity':'Validity',
+    'avg_invalid_value_count': 'Invalid values',
+    'avg_null_value_count': 'Missing values',
+    'completeness': 'Completeness',
+    'count': 'Row count',
+    'duplicate_row_count': 'Duplicate values',
+    'empty_column_count': 'Empty features',
+    'validity': 'Validity',
   };
 
   // Display priorities to backend keys.
   const metricsSortedMapping = {
-    'avg_invalid_value_count':3,
-    'avg_null_value_count':2,
-    'completeness':1,
-    'duplicate_row_count':4,
-    'validity':0,
+    'avg_invalid_value_count': 3,
+    'avg_null_value_count': 2,
+    'completeness': 1,
+    'duplicate_row_count': 4,
+    'validity': 0,
   };
 
   // Fetch column Headers
@@ -371,7 +371,7 @@ function Data() {
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics',},]}
+      columnHeaders={[{label: 'Quality Metrics'}]}
       rowGroupData={[metricSample]}
     />
   );
@@ -380,7 +380,7 @@ function Data() {
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{label:'Statistics',},]}
+      columnHeaders={[{label: 'Statistics'}]}
       rowGroupData={[statSample]}
     />
   );

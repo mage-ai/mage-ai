@@ -45,6 +45,9 @@ module.exports = {
     'jsx-a11y/anchor-is-valid': 'off',
     'jsx-a11y/control-has-associated-label': 'off',
     'jsx-quotes': ['error', 'prefer-double'],
+    'key-spacing': ['error', {
+      mode: 'strict',
+    }],
     'max-len': [
       'warn',
       {
