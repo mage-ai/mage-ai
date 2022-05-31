@@ -44,6 +44,7 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'jsx-a11y/anchor-is-valid': 'off',
     'jsx-a11y/control-has-associated-label': 'off',
+    'jsx-quotes': ['error', 'prefer-double'],
     'max-len': [
       'warn',
       {
@@ -72,6 +73,7 @@ module.exports = {
     'react/jsx-wrap-multilines': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/require-default-props': 'off',
+    'space-in-parens': ['error', 'never'],
     'sort-keys': ['warn', 'asc', {'caseSensitive': true, 'natural': false, 'minKeys': 2}],
     'comma-dangle': ['warn', 'always-multiline']
   }

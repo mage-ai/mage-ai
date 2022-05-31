@@ -107,9 +107,9 @@ function Data() {
   };
 
   // Fetch column Headers
-  useEffect( () => {
+  useEffect(() => {
     const headerJSON = [];
-    columns.map( (header:any) => {
+    columns.map((header:any) => {
       headerJSON.push({
         label: header,
       });
@@ -118,9 +118,9 @@ function Data() {
   }, [columns]);
 
   // Fetch Row values
-  useEffect( () => {
+  useEffect(() => {
     const cells = [];
-    rows.map( (rowGroup:any) => { 
+    rows.map((rowGroup:any) => { 
       cells.push({
         columnValues: rowGroup,
       });
@@ -134,7 +134,7 @@ function Data() {
   useEffect(() => {
     const stats = Object.keys(statistics);
     const metricRows = Array(metricsKeys.length).fill(0);
-    stats.map( (key) => {
+    stats.map((key) => {
       if (metricsKeys.includes(key)) {
         let value = statistics[key].toPrecision(2);
         const order = humanReadableMapping[key];
@@ -191,7 +191,7 @@ function Data() {
   // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
-  useEffect( () => {
+  useEffect(() => {
     const stats = Object.keys(statistics);
     const types = Object.values(colTypes);
     const rowData = [];
@@ -200,7 +200,7 @@ function Data() {
       columnValues: ['Column count', types.length],
     })
     // Part one is the keys from metrics
-    stats.map( (key) => {
+    stats.map((key) => {
       if (statKeys.includes(key)) {
         const name = humanReadableMapping[key];
         rowData.push({
@@ -245,7 +245,7 @@ function Data() {
   };
 
   const headEl = (
-    <FlexContainer alignItems='justify-right' flexDirection='row-reverse' >
+    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
@@ -293,7 +293,7 @@ function Data() {
           basic
           iconOnly
           onClick={onClose}
-          padding='0px'
+          padding="0px"
           transparent
         >
           <Close muted />
@@ -413,15 +413,15 @@ function Data() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab key='data' label='Data'>
+      <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab key='reports' label='Report'>
+      <Tab key="reports" label="Report">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key='visualizations' label='Visualization'></Tab>
+      <Tab key="visualizations" label="Visualization"></Tab>
     </Tabs>
   )
 
