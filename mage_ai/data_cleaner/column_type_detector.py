@@ -37,7 +37,7 @@ COLUMN_TYPES = frozenset([
 
 REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
-REGEX_EMAIL_PATTERN = r"^[a-zA-Z0-9\_\.\+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+$"
+REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9\_\.\+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
 REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€\$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
@@ -73,6 +73,29 @@ def clean_whitespace(series):
     return series.map(
         lambda x: x if (not isinstance(x, str) or x != '') else np.nan,
     )
+
+def infer_column_type(series, column_name, dtype, kwargs):
+    mdtype = None
+    if 'datetime64' in str(dtype):
+        mdtype = DATETIME
+    elif dtype == 'object':
+        mdtype = infer_object_type(series, kwargs)
+    elif dtype == 'bool':
+        mdtype = TRUE_OR_FALSE
+    elif np.issubdtype(dtype, np.integer):
+        clean_series = series.dropna()
+        if (clean_series.min() >= 100 and clean_series.max() <= 99999 
+            and 'zip' in column_name.lower()):
+            mdtype = ZIP_CODE
+        else:
+            mdtype = NUMBER
+    elif np.issubdtype(dtype, np.floating):
+        mdtype = NUMBER_WITH_DECIMALS
+
+    if mdtype in NUMBER_TYPES and series.nunique(dropna=False) == 2:
+        mdtype = TRUE_OR_FALSE
+
+    return mdtype
 
 def infer_object_type(series, kwargs):
     clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
@@ -130,29 +153,6 @@ def infer_object_type(series, kwargs):
                                 mdtype =  CATEGORY
                             else:
                                 mdtype = CATEGORY_HIGH_CARDINALITY
-    return mdtype
-
-def infer_column_type(series, column_name, dtype, kwargs):
-    mdtype = None
-    if 'datetime64' in str(dtype):
-        mdtype = DATETIME
-    elif dtype == 'object':
-        mdtype = infer_object_type(series, kwargs)
-    elif dtype == 'bool':
-        mdtype = TRUE_OR_FALSE
-    elif np.issubdtype(dtype, np.integer):
-        clean_series = series.dropna()
-        if (clean_series.min() >= 100 and clean_series.max() <= 99999 
-            and 'zip' in column_name.lower()):
-            mdtype = ZIP_CODE
-        else:
-            mdtype = NUMBER
-    elif np.issubdtype(dtype, np.floating):
-        mdtype = NUMBER_WITH_DECIMALS
-
-    if mdtype in NUMBER_TYPES and series.nunique(dropna=False) == 2:
-        mdtype = TRUE_OR_FALSE
-
     return mdtype
 
 def infer_column_types(df, **kwargs):
