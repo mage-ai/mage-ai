@@ -1,9 +1,23 @@
 /* eslint-disable react/jsx-key */
 import React, { useMemo } from 'react'
 import { useTable } from 'react-table'
- 
- function BaseTable() {
-  const data = useMemo(
+
+
+import { DataTableColumn, DataTableRow } from './types';
+
+  export type DataTableProps = {
+    children?: any;
+    columns: DataTableColumn[]
+    data: DataTableRow<any>[]
+  };
+
+  function BaseTable({
+    children,
+    columns,
+    data,
+  }: any) {
+  
+  const dataSample = useMemo(
     () => [
       {
         col1: 'Hello',
@@ -21,7 +35,7 @@ import { useTable } from 'react-table'
     [],
   );
 
-  const columns = useMemo(
+  const columnSample = useMemo(
     () => [
       {
         Header: 'Column 1',
@@ -34,13 +48,22 @@ import { useTable } from 'react-table'
     ],
     [],
   );
+
+  // Parse into the form
+  const column = columns.map(({
+    Icon,
+    label,
+  }: any, idx: number) => {
+    const key = label;
+  });
+    
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns, data })
+  } = useTable({ columnSample, dataSample })
 
   return (
     <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
@@ -87,6 +110,6 @@ import { useTable } from 'react-table'
       </tbody>
     </table>
   );
- }
+}
 
- export default BaseTable
+export default BaseTable;
