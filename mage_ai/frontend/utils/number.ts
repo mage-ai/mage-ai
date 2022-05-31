@@ -23,6 +23,10 @@ export function getRandomInt(max) {
 }
 
 export function getPercentage(number) {
+  if (number === undefined) {
+    return '';
+  }
+
   const percentage = (number === 1 || number === 0)
     ? (number * 100)
     : (number * 100).toFixed(2);
