@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
 import ActionForm from '@components/ActionForm';
+import BaseTable from '@oracle/components/Table/BaseTable'; 
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
@@ -20,8 +21,8 @@ import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
-  const router = useRouter()
-  const { slug } = router.query
+  const router = useRouter();
+  const { slug } = router.query;
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
@@ -40,6 +41,12 @@ function Data() {
 
   const statistics = useMemo(() => datasetResponse?.statistics || [], [
     datasetResponse?.statistics,
+  ]);
+
+  const suggestionsMemo = useMemo(() => (
+    (datasetResponse?.suggestions || [])
+  ), [
+    datasetResponse?.suggestions,
   ]);
   
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
@@ -64,9 +71,9 @@ function Data() {
   ];
 
   const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
-  const DATE_TYPES = ['datetime']
-  const NUMBER_TYPES = ['number', 'number_with_decimals']
-  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
+  const DATE_TYPES = ['datetime'];
+  const NUMBER_TYPES = ['number', 'number_with_decimals'];
+  // const STRING_TYPES = ["email", "phone_number", "text", "zip_code"]; // We aren"t counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
   // Map text
@@ -136,10 +143,7 @@ function Data() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
-
   // Report (Quality Metrics)
-
-  // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
   useEffect(() => {
@@ -149,7 +153,7 @@ function Data() {
 
     rowData.push({
       columnValues: ['Column count', types.length],
-    })
+    });
     // Part one is the keys from metrics
     stats.map((key) => {
       if (statKeys.includes(key)) {
@@ -183,7 +187,6 @@ function Data() {
     },{
       columnValues: ['Time series Features', countTimeseries],
     });
-
     setStatSample({ rowData });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
@@ -191,8 +194,8 @@ function Data() {
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
-    e.preventDefault()
-    Router.push(`${pathname}/features`)
+    e.preventDefault();
+    Router.push(`${pathname}/features`);
   };
 
   const headEl = (
@@ -204,10 +207,10 @@ function Data() {
   );
 
   const dataEl = (
-    <SimpleDataTable
-      columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
-      columnHeaders={columnHeaderSample} 
-      rowGroupData={[rowGroupDataSample]}
+    <BaseTable
+      columnHeaders={columnHeaderSample}
+      columnTitles={columns}
+      rowGroupData={rows}
     />
   );
 
@@ -233,19 +236,11 @@ function Data() {
     <>
       <FlexContainer justifyContent={'center'}>
         <Flex flex={1}>
-          <SimpleDataTable
-            columnFlexNumbers={[1, 1]}
-            columnHeaders={[{ label: 'Quality Metrics' }]}
-            rowGroupData={metricSample && [metricSample]}
-          />
+          {metricsEl}
         </Flex>
         <Spacing ml={8} />
         <Flex flex={1}>
-          <SimpleDataTable
-            columnFlexNumbers={[1, 1, 1]}
-            columnHeaders={[{ label: 'Statistics' }]}
-            rowGroupData={statSample && [statSample]}
-          />
+          {statsEl}
         </Flex>
       </FlexContainer>
       <Spacing my={8}>
@@ -255,8 +250,7 @@ function Data() {
         />
       </Spacing>
     </>
-  )
-
+  );
   const insightsOverview = datasetResponse?.['insights']?.[1] || {}
 
   const tabsEl = (
@@ -269,13 +263,9 @@ function Data() {
     >
       <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
-        <SimpleDataTable
-          columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
-          columnHeaders={columnHeaderSample}
-          rowGroupData={rowGroupDataSample && [rowGroupDataSample]}
-        />
+        {dataEl}
       </Tab>
-      <Tab key="reports" label="Reports">
+      <Tab key="reports" label="Report">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
