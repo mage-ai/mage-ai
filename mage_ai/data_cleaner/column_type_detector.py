@@ -79,19 +79,20 @@ def infer_object_type(series, kwargs):
     clean_series = clean_whitespace(clean_series)
     clean_series = clean_series.dropna()
 
+    series_unique = series.nunique(dropna=False)
+    clean_series_unique = clean_series.nunique()
+
     exact_dtype = type(clean_series.iloc[0])
     if exact_dtype is list:
         mdtype = TEXT
     elif np.issubdtype(exact_dtype, np.bool_):
-        if clean_series.nunique() <= 2:
+        if clean_series_unique <= 2:
             mdtype = TRUE_OR_FALSE
         else:
             mdtype = CATEGORY
-    elif clean_series.nunique() <= 2:
+    elif clean_series_unique <= 2:
         mdtype = TRUE_OR_FALSE
     else:
-        series_unique = series.nunique(dropna=False)
-        clean_series_unique = clean_series.nunique()
         if all(clean_series.str.match(REGEX_NUMBER)):
             if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
                 mdtype = NUMBER_WITH_DECIMALS
@@ -99,18 +100,18 @@ def infer_object_type(series, kwargs):
                 mdtype = NUMBER
         else:
             length = len(clean_series)
-            matches = clean_series.astype(str).str.match(REGEX_DATETIME).sum()
+            matches = clean_series.str.match(REGEX_DATETIME).sum()
             if matches/length >= DATETIME_MATCHES_THRESHOLD:
                 mdtype = DATETIME
             else:
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_emails/length >= 0.99:
+                if correct_emails/length >= 0.90:
                     mdtype = EMAIL
-                elif correct_phone_nums/length >= 0.99:
+                elif correct_phone_nums/length >= 0.90:
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes/length >= 0.99:
+                elif correct_zip_codes/length >= 0.90:
                     mdtype = ZIP_CODE
                 elif series_unique == 2:
                     mdtype = TRUE_OR_FALSE
@@ -120,7 +121,7 @@ def infer_object_type(series, kwargs):
                     elif clean_series_unique / length >= 0.8:
                         mdtype = TEXT
                     else:
-                        word_count = clean_series.map(lambda x: len(x.split(' '))).max()
+                        word_count = clean_series.map(lambda x: len(str(x).split(' '))).max()
                         if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
                             mdtype = TEXT
                         else:
