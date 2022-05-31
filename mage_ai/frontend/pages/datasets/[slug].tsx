@@ -136,14 +136,12 @@ function Data() {
     const metricRows = Array(metricsKeys.length).fill(0);
     stats.map( (key) => {
       if (metricsKeys.includes(key)) {
-        let value;
+        let value = statistics[key].toPrecision(2);
         const order = humanReadableMapping[key];
         const index = metricsSortedMapping[key];
         if (percentageKeys.includes(key)) {
-          value = statistics[key] * 100;
+          value *= 100;
           value = `${value}%`;
-        } else {
-          value = statistics[key];
         }
         metricRows[index] = {
           columnValues: [order, value],
@@ -369,6 +367,7 @@ function Data() {
     />
   );
 
+  // Old app used [2, 1, 1]
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -377,6 +376,7 @@ function Data() {
     />
   );
 
+  // Old app used: [1, 5]
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
@@ -428,6 +428,7 @@ function Data() {
   return (
     <Layout
       centerAlign
+      footer={<Spacing mt={UNIT} />}
     >
       <Spacing mt={UNIT} />
       {headEl}
