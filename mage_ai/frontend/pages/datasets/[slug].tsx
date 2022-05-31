@@ -1,22 +1,22 @@
 import Router, { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
-import Button from "@oracle/elements/Button";
+import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
-import Flex from "@oracle/components/Flex";
-import FlexContainer from "@oracle/components/FlexContainer";
-import Layout from "@oracle/components/Layout";
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
 import RowCard from '@oracle/components/RowCard';
-import SimpleDataTable from "@oracle/components/Table/SimpleDataTable";
-import Spacing from "@oracle/elements/Spacing";
-import Tabs, { Tab } from "@oracle/components/Tabs";
-import Text from "@oracle/elements/Text";
+import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Tabs, { Tab } from '@oracle/components/Tabs';
+import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Close } from '@oracle/icons';
-import { UNIT } from "@oracle/styles/units/spacing";
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pluralize } from '@utils/string';
 
 
@@ -69,11 +69,11 @@ function Data() {
   // TODO: Move to const file 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
-    "avg_null_value_count",
-    "avg_invalid_value_count",
-    "duplicate_row_count",
-    "completeness",
-    "validity",
+    'avg_null_value_count',
+    'avg_invalid_value_count',
+    'duplicate_row_count',
+    'completeness',
+    'validity',
   ];
 
   const statKeys = [
@@ -84,26 +84,26 @@ function Data() {
   const DATE_TYPES = ['datetime']
   const NUMBER_TYPES = ['number', 'number_with_decimals']
   // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
-  const percentageKeys = ["completeness", "validity"];
+  const percentageKeys = ['completeness', 'validity'];
 
   // Map text 
   const humanReadableMapping = {
-    "avg_invalid_value_count":"Invalid values",
-    "avg_null_value_count":"Missing values",
-    "completeness":"Completeness",
-    "count":"Row count",
-    "duplicate_row_count":"Duplicate values",
-    "empty_column_count":"Empty features",
-    "validity":"Validity",
+    'avg_invalid_value_count':'Invalid values',
+    'avg_null_value_count':'Missing values',
+    'completeness':'Completeness',
+    'count':'Row count',
+    'duplicate_row_count':'Duplicate values',
+    'empty_column_count':'Empty features',
+    'validity':'Validity',
   };
 
   // Display priorities to backend keys.
   const metricsSortedMapping = {
-    "avg_invalid_value_count":3,
-    "avg_null_value_count":2,
-    "completeness":1,
-    "duplicate_row_count":4,
-    "validity":0,
+    'avg_invalid_value_count':3,
+    'avg_null_value_count':2,
+    'completeness':1,
+    'duplicate_row_count':4,
+    'validity':0,
   };
 
   // Fetch column Headers
@@ -136,14 +136,12 @@ function Data() {
     const metricRows = Array(metricsKeys.length).fill(0);
     stats.map( (key) => {
       if (metricsKeys.includes(key)) {
-        let value;
+        let value = statistics[key].toPrecision(2);
         const order = humanReadableMapping[key];
         const index = metricsSortedMapping[key];
         if (percentageKeys.includes(key)) {
-          value = statistics[key] * 100;
+          value *= 100;
           value = `${value}%`;
-        } else {
-          value = statistics[key];
         }
         metricRows[index] = {
           columnValues: [order, value],
@@ -199,7 +197,7 @@ function Data() {
     const rowData = [];
 
     rowData.push({
-      columnValues: ["Column count", types.length],
+      columnValues: ['Column count', types.length],
     })
     // Part one is the keys from metrics
     stats.map( (key) => {
@@ -228,11 +226,11 @@ function Data() {
     });
 
     rowData.push({
-      columnValues: ["Categorical Features", countCategory],
+      columnValues: ['Categorical Features', countCategory],
     },{
-      columnValues: ["Numerical Features", countNumerical],
+      columnValues: ['Numerical Features', countNumerical],
     },{
-      columnValues: ["Time series Features", countTimeseries],
+      columnValues: ['Time series Features', countTimeseries],
     });
     
     setStatSample({rowData});
@@ -247,7 +245,7 @@ function Data() {
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+    <FlexContainer alignItems='justify-right' flexDirection='row-reverse' >
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
@@ -287,7 +285,7 @@ function Data() {
       <FlexContainer>
         <Text>{name},</Text>
         <Spacing mr={1} />
-        <Text secondary>{pluralize("feature", numFeatures)}</Text>
+        <Text secondary>{pluralize('feature', numFeatures)}</Text>
       </FlexContainer>
       <FlexContainer>
         {/* TODO: add View Code & Preview here */}
@@ -295,7 +293,7 @@ function Data() {
           basic
           iconOnly
           onClick={onClose}
-          padding="0px"
+          padding='0px'
           transparent
         >
           <Close muted />
@@ -369,6 +367,7 @@ function Data() {
     />
   );
 
+  // Old app used [2, 1, 1]
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -377,6 +376,7 @@ function Data() {
     />
   );
 
+  // Old app used: [1, 5]
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
@@ -413,21 +413,22 @@ function Data() {
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
-      <Tab key="data" label="Data">
+      <Tab key='data' label='Data'>
         <Spacing mb={3} mt={3} />
         {dataEl}
       </Tab>
-      <Tab key="reports" label="Report">
+      <Tab key='reports' label='Report'>
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualization"></Tab>
+      <Tab key='visualizations' label='Visualization'></Tab>
     </Tabs>
   )
 
   return (
     <Layout
       centerAlign
+      footer={<Spacing mt={UNIT} />}
     >
       <Spacing mt={UNIT} />
       {headEl}
