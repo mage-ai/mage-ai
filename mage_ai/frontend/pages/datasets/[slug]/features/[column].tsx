@@ -11,7 +11,7 @@ import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getFeatureMapping } from '@utils/models/featureSet';
+import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 
 function Feature() {
   const router = useRouter();
@@ -22,94 +22,60 @@ function Feature() {
 
   const { data: featureSet } = api.feature_sets.detail(featureSetId);
   const featureMapping = getFeatureMapping(featureSet)
-  const featureUUID = featureMapping[+featureId];
+  const featureIndex = +featureId;
 
+  // Get individual column data
+  const featureData = featureMapping[featureIndex];
+  const featureUUID = featureData?.uuid;
+  const columnType = featureData?.column_type;
+  const sampleRowData = featureSet?.sample_data?.rows?.map(row => ({
+    columnValues: [row[featureIndex]],
+  }));
 
-  // Column Summary (Quality Metrics)
+  // Get individual column statistics
+  const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
+  const {
+    completeness,
+    count,
+    count_distinct: countDistinct,
+    invalid_value_count: invalidValueCount,
+    null_value_count: nullValueCount,
+    validity,
+  } = featureSetStats;
+  const qualityMetrics = [
+    {
+      columnValues: [
+        'Validity', validity,
+      ],
+    },
+    {
+      columnValues: [
+        'Completeness', completeness,
+      ],
+    },
+    {
+      columnValues: [
+        'Total values', count,
+      ],
+    },
+    {
+      columnValues: [
+        'Unique values', countDistinct,
+      ],
+    },
+    {
+      columnValues: [
+        'Missing values', nullValueCount,
+      ],
+    },
+    {
+      columnValues: [
+        'Invalid values', invalidValueCount,
+      ],
+    },
+  ];
 
-  /* Given a payload of 
-  statistics: {
-    "avg_null_value_count": 10,
-    "avg_invalid_value_count": 10,
-    "duplicate_row_count": 20, 
-    "completeness": 0.9,
-    "validity": 0.8,
-  }
-  */
-
-  /* Turn each key value into a list of tuples. 
-  Inside an object called ColumnValues, that's inside RowData (list of Json) */
-
-  // TODO: map keys to text (P2)
-
-  // This first statistics portion will contain the missing values, invalid values, duplicate values, and show validity and completeness.
-  const metricSample = {
-    rowData: [
-      {
-        columnValues: [
-          'Validity', '0.8',
-        ],
-      },
-      {
-        columnValues: [
-          'Completeness', '0.9',
-        ],
-      },
-      {
-        columnValues: [
-          'Missing values', '20',
-        ],
-      },
-      {
-        columnValues: [
-          'Invalid values', '20',
-        ],
-      },
-      {
-        columnValues: [
-          'Duplicate values', '20',
-        ],
-      },
-    ],
-  };
-
-  // Columns (Statistics)
-  const colSample = {
-    rowData: [
-      {
-        columnValues: [
-          'Sophie Jung',
-        ],
-      },
-      {
-        columnValues: [
-          'Lena Perrin',
-        ],
-      },
-      {
-        columnValues: [
-          'Dennis Thompson',
-        ],
-      },
-      {
-        columnValues: [
-          'Dennis Thompson',
-        ],
-      },
-      {
-        columnValues: [
-          'Joseph Gauthier',
-        ],
-      },
-      {
-        columnValues: [
-          'Alexis Rolland',
-        ],
-      },
-    ],
-    title: 'Users',
-  };
-
+  // Sample mock data
   const warningSample = {
     rowData: [
       {
@@ -148,18 +114,23 @@ function Feature() {
     </FlexContainer>
   );
 
-  const colEl = (
+  const columnValuesTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
       columnHeaders={[{ label: 'Column values' }]}
-      rowGroupData={[colSample]}
+      rowGroupData={[{
+        rowData: sampleRowData,
+        title: `${featureUUID} (${columnType})`,
+      }]}
     />
   )
-  const metricsEl = (
+  const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
       columnHeaders={[{ label: 'Column summary' }]}
-      rowGroupData={[metricSample]}
+      rowGroupData={[{
+        rowData: qualityMetrics,
+      }]}
     />
   );
 
@@ -171,15 +142,14 @@ function Feature() {
     />
   );
 
-  // Column Data and Metrics 
   const dataEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {colEl}
+        {columnValuesTableEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        {metricsEl}
+        {metricsTableEl}
       </Flex>
     </FlexContainer>
   );
@@ -189,7 +159,7 @@ function Feature() {
   const reportsEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {metricsEl}
+        {metricsTableEl}
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
