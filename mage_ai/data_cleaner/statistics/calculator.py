@@ -14,7 +14,7 @@ import pandas as pd
 import traceback
 
 OUTLIER_ZSCORE_THRESHOLD = 3
-VALUE_COUNT_LIMIT = 255
+VALUE_COUNT_LIMIT = 20
 
 
 def increment(metric, tags):
@@ -164,7 +164,8 @@ class StatisticsCalculator():
             f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
             f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
             f'{col}/null_value_count': series.isnull().sum(),
-            f'{col}/max_null_seq': self.get_longest_null_seq(series)
+            f'{col}/max_null_seq': self.get_longest_null_seq(series),
+            f'{col}/value_counts': df_top_value_counts.to_dict(),
         }
 
         if len(series_non_null) > 0:
