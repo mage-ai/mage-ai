@@ -1,5 +1,8 @@
 import { queryString } from '@utils/url';
 
+const LOCALHOST = 'localhost';
+const PORT = 5000;
+
 export function buildUrl(
   resource: string,
   id: string = null,
@@ -7,8 +10,16 @@ export function buildUrl(
   childId: string = null,
   query: any = {},
 ): string {
-  // TODO: Update URL as the endpoint for the backend changes.
-  let path: string = `http://localhost:5000/${resource}`;
+  let host = LOCALHOST;
+  let protocol = 'http://';
+  if (typeof window !== 'undefined') {
+    host = window.location.hostname;
+  }
+  if (host !== LOCALHOST) {
+    protocol = 'https://';
+  }
+  let path: string = `${protocol}${host}:${PORT}/${resource}`;
+
   if (id) {
     path = `${path}/${id}`;
   }
