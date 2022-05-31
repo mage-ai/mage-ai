@@ -2,8 +2,6 @@ import React from 'react';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import { RowStyle } from '@oracle/components/RowDataTable/index.style';
 
 export type RowCardProps = {

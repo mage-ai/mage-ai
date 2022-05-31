@@ -38,7 +38,7 @@ const ColumnView: NextPage = () => {
     featureSetMemo,
   ]);
 
-  const columnTypes = Object.entries(featureSet.metadata.column_types);
+  const columnTypes = Object.entries(featureSet?.metadata?.column_types || {});
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
