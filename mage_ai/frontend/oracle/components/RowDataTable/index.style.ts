@@ -18,7 +18,10 @@ type RowContainerStyleProps = {
   scrollable?: boolean;
 };
 
-type RowStyleProps = Pick<RowCardProps, 'last' | 'secondary'>;
+type RowStyleProps = Pick<
+  RowCardProps,
+  'last' | 'secondary' | 'noHorizontalPadding'
+>;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
   border-bottom-left-radius: ${BORDER_RADIUS}px;
@@ -57,6 +60,11 @@ export const TitleStyle = styled.div`
 
 export const RowStyle = styled.div<RowStyleProps>`
   padding: ${PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
+
+  ${props => props.noHorizontalPadding && `
+    padding-left: 0;
+    padding-right: 0;
+  `}
 
   ${props => !props.secondary && `
     background-color: ${(props.theme.background || light.background).page};

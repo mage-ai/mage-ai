@@ -3,6 +3,7 @@ import type { NextPage } from 'next'
 import { useEffect, useMemo, useState } from 'react'
 
 import Button from '@oracle/elements/Button'
+import Flex from '@oracle/components/Flex'
 import FlexContainer from '@oracle/components/FlexContainer'
 import Layout from '@oracle/components/Layout'
 import RowCard from '@oracle/components/RowCard'
@@ -65,11 +66,14 @@ const ColumnView: NextPage = () => {
 
               return (
                 <RowCard
-                  key={`${colName}-${i}`}
                   columnFlexNumbers={[0.5, 0.2, 9, 2]}
+                  key={`${colName}-${i}`}
+                  noHorizontalPadding
                   secondary={i % 2 === 1}
                 >
-                  <Text>{i+1}</Text>
+                  <FlexContainer fullWidth justifyContent="center">
+                    <Text>{i+1}</Text>
+                  </FlexContainer>
                   <Column secondary />
                   <Text maxWidth={UNIT*50} overflowWrap>
                     {colName}

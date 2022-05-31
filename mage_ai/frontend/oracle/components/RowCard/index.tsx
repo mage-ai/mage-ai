@@ -10,6 +10,7 @@ export type RowCardProps = {
   children: any;
   columnFlexNumbers: number[];
   last?: boolean;
+  noHorizontalPadding?: boolean;
   secondary?: boolean;
 };
 
@@ -17,11 +18,13 @@ function RowCard({
   children,
   columnFlexNumbers,
   last,
+  noHorizontalPadding,
   secondary,
 }: RowCardProps) {
   return (
     <RowStyle
       last={last}
+      noHorizontalPadding={noHorizontalPadding}
       secondary={secondary}
     >
       <FlexContainer alignItems="center">
