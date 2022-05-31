@@ -45,8 +45,8 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
       formData.set(
         'json_root_body',
         JSON.stringify({
-          [key]: body[key],
           api_key: process.env.NEXT_PUBLIC_API_KEY,
+          [key]: body[key],
         }),
       );
       formData.append('file', file);
@@ -68,11 +68,15 @@ function preprocess(url: string, opts: FetcherOptionsType = {}) {
 
   data.headers = new Headers(headers);
 
-  const queryString = Object.entries({
+  const queryObj = {
     ...queryFromUrl(url),
     ...query,
-    api_key: process.env.NEXT_PUBLIC_API_KEY,
-  }).reduce((arr, [k, v]) => arr.concat(`${k}=${v}`), []).join('&');
+  };
+  if (process.env.NEXT_PUBLIC_API_KEY) {
+    queryObj.api_key = process.env.NEXT_PUBLIC_API_KEY;
+  }
+   const queryString = Object.entries(queryObj)
+    .reduce((arr, [k, v]) => arr.concat(`${k}=${v}`), []).join('&');
 
   return {
     data,
@@ -90,7 +94,9 @@ export function buildFetch(urlArg: string, opts: FetcherOptionsType = {}) {
     url,
   } = preprocess(urlArg, opts);
 
-  return fetch(`${url}?${queryString}`, data);
+  const finalUrl = queryString ? `${url}?${queryString}` : url;
+
+  return fetch(finalUrl, data);
 }
 
 export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
@@ -102,12 +108,14 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
     url,
   } = preprocess(urlArg, opts);
 
+  const finalUrl = queryString ? `${url}?${queryString}` : url;
+
   return axios.request({
     data: data.body,
     headers,
     method,
     onUploadProgress: opts?.onUploadProgress,
-    url: `${url}?${queryString}`,
+    url: finalUrl,
   });
 }
 
