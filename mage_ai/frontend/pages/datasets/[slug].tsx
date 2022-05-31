@@ -11,6 +11,7 @@ import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
 import RowCard from '@oracle/components/RowCard';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import BaseTable from '@oracle/components/Table/BaseTable'; 
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
@@ -360,11 +361,14 @@ function Data() {
   );
 
   const dataEl = (
-    <SimpleDataTable
-      columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
-      columnHeaders={columnHeaderSample} 
-      rowGroupData={[rowGroupDataSample]}
-    />
+    <>
+      <SimpleDataTable
+        columnFlexNumbers={Array(columnHeaderSample.length).fill(1)}
+        columnHeaders={columnHeaderSample}
+        rowGroupData={[rowGroupDataSample]}
+      />
+      <BaseTable />
+    </>
   );
 
   // Old app used [2, 1, 1]
