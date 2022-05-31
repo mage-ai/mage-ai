@@ -1,20 +1,20 @@
-import Router, { useRouter } from 'next/router'
-import type { NextPage } from 'next'
-import { useEffect, useMemo, useState } from 'react'
+import Router, { useRouter } from 'next/router';
+import type { NextPage } from 'next';
+import { useEffect, useMemo, useState } from 'react';
 
-import Button from '@oracle/elements/Button'
-import FlexContainer from '@oracle/components/FlexContainer'
-import Layout from '@oracle/components/Layout'
-import Link from '@oracle/elements/Link'
-import RowCard from '@oracle/components/RowCard'
-import RowDataTable from '@oracle/components/RowDataTable'
-import Spacing from '@oracle/elements/Spacing'
-import Text from '@oracle/elements/Text'
-import api from '@api'
-import { Column } from '@oracle/icons'
-import { UNIT } from '@oracle/styles/units/spacing'
+import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Layout from '@oracle/components/Layout';
+import Link from '@oracle/elements/Link';
+import RowCard from '@oracle/components/RowCard';
+import RowDataTable from '@oracle/components/RowDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import api from '@api';
+import { Column } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
-import { isBadQuality } from '@components/utils'
+import { isBadQuality } from '@components/utils';
 
 const ColumnView: NextPage = () => {
   const router = useRouter();
@@ -72,6 +72,7 @@ const ColumnView: NextPage = () => {
                   block
                   key={`${colName}-${i}`}
                   noHoverUnderline
+                  noOutline
                   onClick={() => {
                     Router.push(
                       '/datasets/[slug]/features/[column]',

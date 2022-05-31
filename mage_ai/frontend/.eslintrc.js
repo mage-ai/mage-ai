@@ -56,6 +56,7 @@ module.exports = {
     'no-param-reassign': 'off',
     'no-prototype-builtins': 'off',
     'operator-linebreak': 'off',
+    'quotes': ['warn', 'single'],
     'radix': 'off',
     'react/display-name': 'off',
     'react-hooks/rules-of-hooks': 'warn',

@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
-import { BORDER_STYLE, BORDER_WIDTH, BORDER_RADIUS, OUTLINE_WIDTH } from '@oracle/styles/units/borders';
+import { BORDER_STYLE, BORDER_WIDTH, BORDER_RADIUS, OUTLINE_OFFSET } from '@oracle/styles/units/borders';
 import { SHARED_TEXT_STYLES } from '@oracle/elements/Text';
 import { transition } from '@oracle/styles/mixins';
 
@@ -109,7 +109,7 @@ export const SHARED_LINK_STYLES = css<any>`
 
   ${props => props.selected && `
     background: ${(props.theme.interactive || light.monotone.black)};
-    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).grey};
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).focusBorder};
   `}
 
   ${props => props.transparentBorder && `
@@ -137,7 +137,7 @@ export const SHARED_LINK_STYLES = css<any>`
 
   ${props => !props.disabled && !props.noOutline && !props.selected && `
     &:focus {
-      box-shadow: 0 0 0 ${OUTLINE_WIDTH}px ${(props.theme.interactive || light.interactive).focusBorder};
+      box-shadow: 0 0 0 ${OUTLINE_OFFSET}px ${(props.theme.interactive || light.interactive).focusBorder};
     }
   `}
 
