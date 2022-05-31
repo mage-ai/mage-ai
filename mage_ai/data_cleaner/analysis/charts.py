@@ -145,7 +145,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
 
     # print(feature, datetime_column)
 
-    datetimes = pd.to_datetime(clean_series(df[datetime_column], DATETIME), errors='coerce')
+    datetimes = df[datetime_column].dropna()
     if datetimes.size <= 1:
         return
 
@@ -180,7 +180,8 @@ def build_time_series_data(df, feature, datetime_column, column_type):
             min=min_value,
         ))
 
-        series_cleaned = clean_series(series, column_type, dropna=False)
+        # series_cleaned = clean_series(series, column_type, dropna=False)
+        series_cleaned = series
         df_value_counts = series_cleaned.value_counts(dropna=False)
         series_non_null = series_cleaned.dropna()
         count_unique = len(df_value_counts.index)
@@ -240,10 +241,10 @@ def build_overview_data(df, datetime_features):
         tags = dict(datetime_column=datetime_column)
         increment(f'{DD_KEY}.build_overview_time_series.start', tags)
 
-        if clean_series(df_copy[datetime_column], DATETIME).size <= 1:
+        if df_copy[datetime_column].count() <= 1:
             continue
 
-        df_copy[datetime_column] = pd.to_datetime(df[datetime_column], errors='coerce').apply(
+        df_copy[datetime_column] = df[datetime_column].apply(
             lambda x: x if pd.isnull(x) else x.timestamp()
         )
 
