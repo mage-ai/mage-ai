@@ -99,7 +99,7 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
       columns: column || columnSample,
       data: row || dataSample,
     },
-    // useBlockLayout,
+    useBlockLayout,
     );
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
