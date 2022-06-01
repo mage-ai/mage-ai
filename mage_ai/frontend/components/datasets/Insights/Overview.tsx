@@ -81,7 +81,7 @@ export function ChartContainer({
         </BodyStyle>
       </FlexContainer>
     </ChartStyle>
-  )
+  );
 }
 
 export function ChartRow({
@@ -95,7 +95,7 @@ export function ChartRow({
     <Spacing mb={4}>
       <FlexContainer>
         <FlexContainer flex={1}>
-          <div style={{ width: '100%', height: '100%'}}>
+          <div style={{ width: '100%', height: '100%' }}>
             {left}
           </div>
         </FlexContainer>
@@ -103,7 +103,7 @@ export function ChartRow({
           <>
             <Spacing mr={4} />
             <FlexContainer flex={1}>
-              <div style={{ width: '100%', height: '100%'}}>
+              <div style={{ width: '100%', height: '100%' }}>
                 {right}
               </div>
             </FlexContainer>
@@ -111,7 +111,7 @@ export function ChartRow({
         )}
       </FlexContainer>
     </Spacing>
-  )
+  );
 }
 
 function Overview({
@@ -120,14 +120,12 @@ function Overview({
   statistics,
 }: OverviewProps) {
   const {
-    time_series: timeSeries
+    time_series: timeSeries,
   } = insightsOverview;
 
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-  const timeSeriesData = []
-  const datesWithUnusualNumberOfRows = []
-
-  console.log('time series:', timeSeries);
+  const timeSeriesData = [];
+  const datesWithUnusualNumberOfRows = [];
 
   timeSeries?.forEach((chart) => {
     const {
@@ -150,9 +148,9 @@ function Overview({
     datesWithUnusualNumberOfRows.push(rangedWithUnusualDistribution);
   });
 
-  const allColumnsWithNullValues = []
-  const columnsWithLowNullValues = []
-  const columnsWithHighNullValues = []
+  const allColumnsWithNullValues = [];
+  const columnsWithLowNullValues = [];
+  const columnsWithHighNullValues = [];
   features.forEach((feature: FeatureType) => {
     const { uuid } = feature;
     const value = statistics[`${uuid}/null_value_rate`];
@@ -169,8 +167,6 @@ function Overview({
       allColumnsWithNullValues.push(data);
     }
   });
-
-  console.log('time series data:', timeSeriesData);
 
   const timeSeriesHistograms = timeSeriesData.map(({
     data,
@@ -333,6 +329,7 @@ function Overview({
 
           return (
             <ChartRow
+              key={uuid}
               left={
                 <ChartContainer
                   title={`Number of rows by date, column: ${uuid}`}
@@ -526,7 +523,7 @@ function Overview({
         />
       )}
     </FlexContainer>
-  )
+  );
 }
 
 export default Overview;
