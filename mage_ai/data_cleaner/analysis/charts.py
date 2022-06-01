@@ -246,7 +246,11 @@ def build_overview_data(df, datetime_features):
         if df_copy[datetime_column].count() <= 1:
             continue
 
-        df_copy[datetime_column] = pd.to_datetime(df[datetime_column], infer_datetime_format=True, errors='coerce')
+        df_copy[datetime_column] = pd.to_datetime(
+            df[datetime_column],
+            infer_datetime_format=True,
+            errors='coerce'
+        )
         df_copy[datetime_column] = df_copy[datetime_column].apply(
             lambda x: x if pd.isnull(x) else x.timestamp()
         )

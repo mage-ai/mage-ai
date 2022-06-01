@@ -18,7 +18,8 @@ TEXT = 'text'
 TRUE_OR_FALSE = 'true_or_false'
 ZIP_CODE = 'zip_code'
 
-CATEGORICAL_TYPES = frozenset([CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE])
+CATEGORICAL_TYPES = frozenset(
+    [CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE])
 NUMBER_TYPES = frozenset([NUMBER, NUMBER_WITH_DECIMALS])
 STRING_TYPES = frozenset([EMAIL, PHONE_NUMBER, TEXT, ZIP_CODE])
 
@@ -55,18 +56,12 @@ def get_mismatched_row_count(series, column_type):
         return 0
     mismatched_rows = 0
     if column_type == EMAIL:
-        mismatched_rows = len(
-            series[~series.str.match(REGEX_EMAIL)].index,
-        )
+        mismatched_rows = len(series[~series.str.match(REGEX_EMAIL)].index)
     elif column_type == PHONE_NUMBER:
-        mismatched_rows = len(
-            series[~series.str.match(REGEX_PHONE_NUMBER)].index,
-        )
+        mismatched_rows = len(series[~series.str.match(REGEX_PHONE_NUMBER)].index)
     elif column_type == ZIP_CODE:
         str_series = series.astype(str)
-        mismatched_rows = len(
-            series[~str_series.str.match(REGEX_ZIP_CODE)].index,
-        )
+        mismatched_rows = len(series[~str_series.str.match(REGEX_ZIP_CODE)].index)
     return mismatched_rows
 
 def infer_column_type(series, column_name, dtype, kwargs):
@@ -79,7 +74,7 @@ def infer_column_type(series, column_name, dtype, kwargs):
         mdtype = TRUE_OR_FALSE
     elif np.issubdtype(dtype, np.integer):
         clean_series = series.dropna()
-        if (clean_series.min() >= 100 and clean_series.max() <= 99999 
+        if (clean_series.min() >= 100 and clean_series.max() <= 99999
             and 'zip' in column_name.lower()):
             mdtype = ZIP_CODE
         else:
@@ -95,7 +90,7 @@ def infer_column_type(series, column_name, dtype, kwargs):
 def infer_object_type(series, kwargs):
     clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
     clean_series = clean_series.map(
-        lambda x: x if (not isinstance(x, str) or x != '') else np.nan,
+        lambda x: x if (not isinstance(x, str) or x != '') else np.nan
     )
     clean_series = clean_series.dropna()
 
@@ -127,11 +122,11 @@ def infer_object_type(series, kwargs):
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_emails / length >= 0.90:
+                if correct_emails / length >= 0.30:
                     mdtype = EMAIL
-                elif correct_phone_nums / length >= 0.90:
+                elif correct_phone_nums / length >= 0.30:
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes / length >= 0.90:
+                elif correct_zip_codes / length >= 0.30:
                     mdtype = ZIP_CODE
                 elif series_nunique == 2:
                     mdtype = TRUE_OR_FALSE
@@ -159,10 +154,10 @@ def infer_column_types(df, **kwargs):
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
         types = run_parallel_multiple_args(
-            infer_column_type,
+            infer_column_type, 
             columns,
-            df.columns,
-            df.dtypes,
+            df.columns, 
+            df.dtypes, 
             kwarg_list
         )
     else:
