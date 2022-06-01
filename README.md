@@ -11,10 +11,11 @@ Mage AI cleans your data using a single Python library.
 
 ## Introduction
 Mage AI aims to simplify data pre-processing. With a few lines of code, you can:
+- Display feature-specific statistics and visualizations.
+- Easily detect "holes" and anomalies in your data.
+- Automatically generate cleaning suggestions in your local notebook.
 - Create a data cleaning pipeline and clean your data with a few clicks.
-- Automatically generate cleaning suggestions in your local notebook
-- Display feature-specific statistics and visualizations
-- Easily detect "holes" and anomalies in your data
+
 
 Coming soon:
 - Export data cleaning pipeline and integrate into your production data pipelines.
@@ -24,7 +25,7 @@ Coming soon:
 
 ## Installation
 
-You can install the latest version from Github
+You can install the latest version from Github:
 ```
 pip install git+https://github.com/mage-ai/mage-ai.git
 ```
@@ -44,7 +45,7 @@ An example dashboard connected to purchasing data shows `Suggested actions` and 
 
 ![image](https://user-images.githubusercontent.com/99209078/171302101-1c0de1a6-6c40-46cc-9563-73734e7fe2f5.png)
 
-In `Suggested actions`, you can edit and apply suggested data cleaning actions. `Reports` provides feature-specific reports statistics that make it obvious if there are missing, duplicates, or anomalies in your data.
+In `Suggested actions`, you can edit and apply suggested data cleaning actions. `Reports` provides feature-specific reports statistics that make it obvious if there are missing values, duplicates, or anomalies in your data.
 
 In addition, the dashboard displays column-specific summaries, further suggestions, and `Visualizations`. These help you identify correlations between your features, which sometimes leads to data leakage. Since Mage is open source, these charts and visualizations are customizable. 😉
 
