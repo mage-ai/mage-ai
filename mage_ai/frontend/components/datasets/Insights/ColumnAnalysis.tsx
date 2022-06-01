@@ -543,31 +543,24 @@ function ColumnAnalysis({
       {timeSeriesChartsByDatetimeColumn.length >= 1 &&
         timeSeriesChartsByDatetimeColumn.map(({
           column: datetimeColumn,
-          charts: timeseriesChart,
+          charts: timeseriesCharts,
         }) => (
-          <>
-            {timeseriesChart.map(({
-              chart,
-              metric,
-            }) => (
-              <ChartRow
-                left={
-                  <ChartContainer
-                    title={`Statistics by date, column: ${datetimeColumn}`}
-                  >
-                    {timeseriesChart.map(({
-                      chart,
-                      metric,
-                    }) => (
-                      <Spacing mb={4}>
-                        {chart}
-                      </Spacing>
-                    ))}
-                  </ChartContainer>
-                }
-              />
-            ))}
-          </>
+            <ChartRow
+              left={
+                <ChartContainer
+                  title={`Statistics by date, column: ${datetimeColumn}`}
+                >
+                  {timeseriesCharts.map(({
+                    chart,
+                    metric,
+                  }) => (
+                    <Spacing mb={4}>
+                      {chart}
+                    </Spacing>
+                  ))}
+                </ChartContainer>
+              }
+            />
         ))
       }
     </FlexContainer>
