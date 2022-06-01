@@ -12,7 +12,7 @@ import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
 import Overview from '@components/datasets/Insights/Overview';
 import RowCard from '@oracle/components/RowCard';
-import Select from "@oracle/elements/Inputs/Select";
+import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
@@ -24,7 +24,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { pluralize } from '@utils/string';
 
 function Data() {
-
   const router = useRouter()
   const { slug } = router.query
 
@@ -70,7 +69,6 @@ function Data() {
 
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
     'avg_null_value_count',
     'avg_invalid_value_count',
@@ -188,10 +186,6 @@ function Data() {
     actions,
     slug,
   ]);
-
-  // Report (Quality Metrics)
-
-  // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
   useEffect(() => {
@@ -362,41 +356,23 @@ function Data() {
     </Accordion>
   );
 
-  const dataEl = (
-    <SimpleDataTable
-      columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
-      columnHeaders={columnHeaderSample}
-      rowGroupData={[rowGroupDataSample]}
-    />
-  );
-
-  // Old app used [2, 1, 1]
-  const metricsEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Quality Metrics' }]}
-      rowGroupData={[metricSample]}
-    />
-  );
-
-  // Old app used: [1, 5]
-  const statsEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{ label: 'Statistics' }]}
-      rowGroupData={[statSample]}
-    />
-  );
-
   const reportsEl = (
     <>
       <FlexContainer justifyContent={'center'}>
         <Flex flex={1}>
-          {metricsEl}
+          <SimpleDataTable
+            columnFlexNumbers={[1, 1]}
+            columnHeaders={[{ label: 'Quality Metrics' }]}
+            rowGroupData={[metricSample]}
+          />
         </Flex>
         <Spacing ml={8} />
         <Flex flex={1}>
-          {statsEl}
+          <SimpleDataTable
+            columnFlexNumbers={[1, 1, 1]}
+            columnHeaders={[{ label: 'Statistics' }]}
+            rowGroupData={[statSample]}
+          />
         </Flex>
       </FlexContainer>
       <Spacing my={8}>
@@ -410,13 +386,6 @@ function Data() {
 
   const insightsOverview = datasetResponse?.['insights']?.[1] || {}
 
-  const visualizationEl = (
-    <Overview
-      features={features}
-      insightsOverview={insightsOverview}
-      statistics={statistics}
-    />
-  )
 
   const tabsEl = (
     <Tabs
@@ -428,15 +397,23 @@ function Data() {
     >
       <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
-        {dataEl}
+        <SimpleDataTable
+          columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
+          columnHeaders={columnHeaderSample}
+          rowGroupData={[rowGroupDataSample]}
+        />
       </Tab>
-      <Tab key="reports" label="Report">
+      <Tab key="reports" label="Reports">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualization">
+      <Tab key="visualizations" label="Visualizations">
         <Spacing mb={3} mt={3} />
-        {visualizationEl}
+        <Overview
+          features={features}
+          insightsOverview={insightsOverview}
+          statistics={statistics}
+        />
       </Tab>
     </Tabs>
   );

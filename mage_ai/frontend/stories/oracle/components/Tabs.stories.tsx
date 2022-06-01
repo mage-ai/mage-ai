@@ -1,6 +1,7 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
 
+import Button from '@oracle/elements/Button';
 import Spacing from '@oracle/elements/Spacing';
 import Tab from '@oracle/components/Tabs/Tab';
 import Tabs, { TabsProps } from '@oracle/components/Tabs';
@@ -68,4 +69,10 @@ export const Stretched = Template.bind({});
 Stretched.args = {
   ...Regular.args,
   fullWidth: true,
+};
+
+export const WithAction = Template.bind({});
+WithAction.args = {
+  ...Regular.args,
+  actionEl: <Button primary>New action</Button>,
 };
