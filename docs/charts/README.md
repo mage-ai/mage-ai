@@ -1,1 +1,2 @@
-# [WIP] Charts
+# Charts
+WIP

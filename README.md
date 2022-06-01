@@ -59,8 +59,15 @@ mage_ai.clean(df, pipeline_uuid='name_of_cleaning_pipeline') #=> returns cleaned
 
 # Features
 
+1. [Data visualizations](#data-visualizations)
+1. [Reports](#reports)
+1. [Cleaning actions](#cleaning-actions)
+1. [Data cleaning suggestions](#data-cleaning-suggestions)
+
 ### Data visualizations
 Inspect your data using different charts (e.g. time series, bar chart, box plot, etc.).
+
+Here’s a list of available [charts](docs/charts/README.md).
 
 <img
   alt="dataset visualizations"
@@ -68,10 +75,10 @@ Inspect your data using different charts (e.g. time series, bar chart, box plot,
   style="border: 1px solid gray; border-radius: 8px;"
 />
 
-Here’s a list of available [charts](docs/charts/README.md).
-
 ### Reports
 Quickly diagnose data quality issues with summary reports.
+
+Here’s a list of available [reports](docs/reports/README.md).
 
 <img
   alt="dataset reports"
@@ -84,6 +91,9 @@ Easily add common cleaning functions to your pipeline with a few clicks.
 Cleaning actions include imputing missing values, reformatting strings, removing duplicates,
 and many more.
 
+If a cleaning action you need doesn’t exist in the library,
+you can write and save custom cleaning functions in the UI.
+
 Here’s a list of available [cleaning actions](docs/actions/README.md).
 
 <img
@@ -92,11 +102,26 @@ Here’s a list of available [cleaning actions](docs/actions/README.md).
   style="border: 1px solid gray; border-radius: 8px;"
 />
 
-### Suggestions
-WIP
+### Data cleaning suggestions
+The tool will automatically suggest different ways to clean your data and improve quality metrics.
+
+Here’s a list of available [suggestions](docs/suggestions/README.md).
+
+<img
+  alt="suggested cleaning actions"
+  src="media/dataset-overview.png"
+  style="border: 1px solid gray; border-radius: 8px;"
+/>
 
 # Roadmap
-WIP
+Big features being worked on or in the design phase.
+
+1. Encoding actions (e.g. one-hot encoding, label hasher, ordinal encoding, embeddings, etc.)
+1. Data quality monitoring and alerting
+1. Apply cleaning actions to columns and values that match a condition
+
+Here’s a detailed list of [features and bugs](https://airtable.com/shrE1pn6fRsVlniOV)
+that are in progress or upcoming.
 
 # Contributing
 WIP
