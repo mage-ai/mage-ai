@@ -1,0 +1,51 @@
+export const FEATURE_ATTRIBUTE_COLUMN_TYPE = 'column_type';
+
+export const VALUES_TYPE_COLUMNS = 'columns';
+export const VALUES_TYPE_USER_INPUT = 'user_input';
+
+export const OPERATOR_CONTAINS = 'contains';
+export const OPERATOR_EQUAL = '==';
+export const OPERATOR_GREATER_THAN = '>';
+export const OPERATOR_GREATER_THAN_OR_EQUAL_TO = '>=';
+export const OPERATOR_LESS_THAN = '<';
+export const OPERATOR_LESS_THAN_OR_EQUAL = '<=';
+export const OPERATOR_NOT_EQUAL = '!=';
+
+export interface ConditionType {
+  feature_attribute?: typeof FEATURE_ATTRIBUTE_COLUMN_TYPE;
+  operator: (typeof OPERATOR_CONTAINS
+    | typeof OPERATOR_EQUAL
+    | typeof OPERATOR_GREATER_THAN
+    | typeof OPERATOR_GREATER_THAN_OR_EQUAL_TO
+    | typeof OPERATOR_LESS_THAN
+    | typeof OPERATOR_LESS_THAN_OR_EQUAL
+    | typeof OPERATOR_NOT_EQUAL
+  );
+  options_key?: string;
+  value: string | number | string[] | number[];
+}
+
+interface ArgumentsType {
+  condition?: ConditionType;
+  description?: string;
+  values: OptionType[] | (typeof VALUES_TYPE_COLUMNS
+    | typeof VALUES_TYPE_USER_INPUT
+  );
+}
+
+interface OptionType {
+  condition?: ConditionType;
+  description?: string;
+  value: string;
+}
+
+export interface FormConfigType {
+  arguments?: ArgumentsType;
+  code?: ArgumentsType;
+  description?: string;
+  multiColumns?: boolean;
+  options?: {
+    [key: string]: ArgumentsType;
+  };
+  title: string;
+}

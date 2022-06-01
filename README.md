@@ -1,24 +1,70 @@
-# Mage AI
+## TLDR
+Mage is an open-source data management platform
+that helps you
+<span style="text-decoration: underline"><b>clean data</b></span> and
+prepare it for training AI/ML models.
 
-## Table of Contents
-1. [Introduction](#introduction)
-1. [Installation](#installation)
-1. [Getting Started](#getting-started)
+## What does this do?
+The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
+can be hosted in your own cloud environment.
 
-## Introduction
-Mage AI is a Python library for data cleaning.
+## Why should I use it?
+Using a data cleaning tool enables you to quickly visualize data quality issues,
+easily fix them, and create repeatable data cleaning pipelines that can be used in
+production environments (e.g. online re-training, inference, etc).
 
-## Installation
+## Quick start
 
-You can install the latest version from Github
+#### Install library
+```bash
+$ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
-pip install git+https://github.com/mage-ai/mage-ai.git
-```
 
-## Getting Started
+#### Launch tool
+Load your data, connect it to Mage, and launch the tool locally.
+
+
+From anywhere you can execute Python code (e.g. terminal, Jupyter notebook, etc.),
+run the following:
+
 ```python
 import mage_ai
-df = pd.read_csv('/path_to_your_dataset')
-feature_set = mage_ai.connect_data(df, name='test_data')
+import pandas as pd
+
+
+df = pd.read_csv('/path_to_data')
+mage_ai.connect_data(df, name='name_of_dataset')
 mage_ai.launch()
 ```
+
+Open [http://localhost:5000](http://localhost:5000) in your browser to access the tool locally.
+
+#### More resources
+
+- Here is a [step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
+- Check out the [tutorials](docs/tutorials/README.md) to quickly become a master of magic.
+
+## [WIP] Features
+
+- [WIP] Cleaning actions
+- [WIP] Charts
+
+## [WIP] Contributing
+
+#### [WIP] Development environment
+
+## Community
+We love the community of Magers (`/ˈmājər/`);
+a group of mages who help each other realize their full potential!
+
+To live chat with the Mage team and community,
+please join the free Mage [Slack](https://www.mage.ai/chat) channel.
+
+For real-time news and fun memes, check out the Mage [Twitter](https://twitter.com/mage_ai).
+
+To report bugs or add your awesome code for others to enjoy,
+visit [GitHub](https://github.com/mage-ai/mage-ai).
+
+## [WIP] Roadmap
+
+## [WIP] License

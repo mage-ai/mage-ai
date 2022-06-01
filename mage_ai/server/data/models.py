@@ -31,14 +31,16 @@ class FeatureSet(Model):
         self.metadata = metadata
 
         if df is None:
-            self._data = self.read_parquet_file('data.parquet')
-            self._data_orig = self.read_parquet_file('data_orig.parquet')
+            self._data = None
+            self._data_orig = None
         else:
             self.data = df
             self.data_orig = df
 
     @property
     def data(self):
+        if self._data is None:
+            self._data = self.read_parquet_file('data.parquet')
         return self._data
 
     @data.setter
@@ -48,6 +50,8 @@ class FeatureSet(Model):
     
     @property
     def data_orig(self):
+        if self._data_orig is None:
+            self._data_orig = self.read_parquet_file('data_orig.parquet')
         return self._data_orig
 
     @data_orig.setter
@@ -97,9 +101,9 @@ class FeatureSet(Model):
     @property
     def sample_data(self):
         sample_size = SAMPLE_SIZE
-        if self._data.size < sample_size:
-            sample_size = len(self._data) 
-        return self._data.head(sample_size)
+        if self.data.size < sample_size:
+            sample_size = len(self.data)
+        return self.data.head(sample_size)
 
     def write_files(self, obj, write_orig_data=False):
         if 'df' in obj:
@@ -142,6 +146,7 @@ class FeatureSet(Model):
             sample_data = self.sample_data
             datetime_cols = sample_data.select_dtypes(include=['datetime64']).columns.tolist()
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
+            # Filter sample data
             if column is not None:
                 sample_data_dict = sample_data[[column]].to_dict('list')
             else:
@@ -149,12 +154,19 @@ class FeatureSet(Model):
                     columns=sample_data.columns.tolist(),
                     rows=sample_data.to_numpy().tolist(),
                 )
+            # Filter suggestions
+            suggestions = self.suggestions
+            if column is not None:
+                suggestions = [s for s in suggestions
+                               if column in s['action_payload']['action_arguments']]
+                for s in suggestions:
+                    s['action_payload']['action_arguments'] = [column]
             obj = merge_dict(obj, dict(
                 pipeline=self.pipeline.to_dict(),
                 sample_data=sample_data_dict,
                 statistics=self.statistics,
                 insights=self.insights,
-                suggestions=self.suggestions,
+                suggestions=suggestions,
             ))
         return obj
 

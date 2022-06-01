@@ -14,6 +14,7 @@ import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
 export type TabsProps = {
+  actionEl?: JSX.Element;
   active?: boolean;
   bold?: boolean;
   children: any;
@@ -75,6 +76,7 @@ const LinkStyle = styled.div<LinkProps>`
 `;
 
 function Tabs({
+  actionEl,
   bold,
   children: childrenArg,
   containerWidthPercentage,
@@ -96,6 +98,11 @@ function Tabs({
     <>
       <TabHeaderContainerStyle containerWidthPercentage={containerWidthPercentage}>
         <FlexContainer justifyContent={fullWidth ? 'center' : null}>
+          {actionEl &&
+            <Flex flex="1">
+              {actionEl}
+            </Flex>
+          }
           {React.Children.map(children, ({ key, props }: TabArgsProps) => {
             const active: boolean = currentTab === key;
             const childProps = {

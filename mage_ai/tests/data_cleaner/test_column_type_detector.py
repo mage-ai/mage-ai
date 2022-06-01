@@ -13,6 +13,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     ZIP_CODE,
     get_mismatched_row_count,
     infer_column_types,
+    REGEX_NUMBER
 )
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
@@ -37,6 +38,42 @@ class ColumnTypeDetectorTests(TestCase):
         self.assertEqual(count2, 2)
         self.assertEqual(count3, 1)
 
+    def test_number_pattern_matching(self):
+        good_number_patterns = [
+            '3123452',
+            '23.234232',
+            '-23,245,234.93',
+            '.934',
+            '-0.000002',
+            '$ 0.043',
+            '-€ 23,456,789.00092',
+            '¥ 21345634',
+            '- Rs   345.23423523',
+            'CAD 2,345,234,345.23423',
+            '234.23423423 $',
+            '-8907987 CAD',
+            '3239458734 元',
+            '234,2342,2343.823034234%',
+            '234.3433   %'
+        ]
+        bad_number_patterns = [
+            'this is not a number',
+            'NOTCURR 23423933',
+            '0.000.00.000.000',
+            '1-111-111-111',
+            ',2343234203',
+            'ksjh&A(*2jnkj&#$#$'
+        ]
+
+        for good in good_number_patterns:
+            print(good)
+            match = REGEX_NUMBER.match(good)
+            self.assertIsNotNone(match)
+        
+        for bad in bad_number_patterns:
+            match = REGEX_NUMBER.match(bad)
+            self.assertIsNone(match)
+
     def test_infer_column_types(self):
         columns = [
             'true_or_false',
@@ -58,11 +95,11 @@ class ColumnTypeDetectorTests(TestCase):
         table = [
             [
                 '1',
-                3,
+                '3',
                 'male',
                 '2020-1-1',
                 '1.0',
-                1,
+                '1',
                 3,
                 '30%',
                 '10128-1213',
@@ -75,12 +112,12 @@ class ColumnTypeDetectorTests(TestCase):
             ],
             [
                 '1',
-                12.0,
+                '12.0',
                 'female',
                 '2020-07-13',
                 ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                2,
-                '$4',
+                '2',
+                '€4',
                 '12.32%',
                 12345,
                 1234,
@@ -92,12 +129,12 @@ class ColumnTypeDetectorTests(TestCase):
             ],
             [
                 '1',
-                0,
+                '0',
                 'machine',
                 '2020-06-25 01:02',
                 ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                3,
-                '$5,000',
+                '3',
+                '¥5,000',
                 '50%',
                 '12345',
                 12345,
@@ -113,8 +150,8 @@ class ColumnTypeDetectorTests(TestCase):
                 'mutant',
                 '2020-12-25 01:02:03',
                 ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                4,
-                '$5,000.01',
+                '4',
+                'Rs 5,000.01',
                 '20%',
                 '12345',
                 12345,
@@ -130,8 +167,8 @@ class ColumnTypeDetectorTests(TestCase):
                 'alien',
                 '2020-12-25T01:02:03.000Z',
                 ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                4,
-                '-$10128,121.3123',
+                '4',
+                '-10128,121.3123元',
                 '18%',
                 '01234',
                 12345,

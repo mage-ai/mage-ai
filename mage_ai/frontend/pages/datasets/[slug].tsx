@@ -1,8 +1,9 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import ActionForm from '@components/ActionForm';
 import BaseTable from '@oracle/components/Table/BaseTable'; 
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -15,16 +16,15 @@ import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import RowCard from '@oracle/components/RowCard';
+import SuggestionsList from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
+import TransformerActionType from '@interfaces/TransformerActionType';
+import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
-import { Close } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { pluralize } from '@utils/string';
-
 
 function Data() {
-
   const router = useRouter();
   const { slug } = router.query;
 
@@ -52,25 +52,30 @@ function Data() {
   ), [
     datasetResponse?.suggestions,
   ]);
+
+  const actionsMemo = useMemo(() => (
+    (datasetResponse?.pipeline?.actions || [])
+  ), [
+    datasetResponse?.pipeline?.actions,
+  ]);
   
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
-  const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
-  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
-  const [metricSample, setMetricSample] = useState({});
-  const [statSample, setStatSample] = useState({});
+  const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
+  const [metricSample, setMetricSample] = useState<RowGroupDataType>();
+  const [statSample, setStatSample] = useState<RowGroupDataType>();
 
   const [suggestions, setSuggestions] = useState([]);
 
   // structured as [{ idx, action_data }]
-  const [actions, setActions] = useState([]);
+  const [actions, setActions] = useState(actionsMemo);
 
   // contains indices to be removed from suggestionsMemo
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
-  
-  // TODO: Move to const file 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  const [rowGroupDataSample, setRowGroupDataSample] = useState<RowGroupDataType>();
+
   const metricsKeys = [
     'avg_null_value_count',
     'avg_invalid_value_count',
@@ -89,7 +94,7 @@ function Data() {
   // const STRING_TYPES = ["email", "phone_number", "text", "zip_code"]; // We aren"t counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
-  // Map text 
+  // Map text
   const humanReadableMapping = {
     'avg_invalid_value_count': 'Invalid values',
     'avg_null_value_count': 'Missing values',
@@ -112,7 +117,7 @@ function Data() {
   // Fetch column Headers
   useEffect(() => {
     const headerJSON = [];
-    columns.map( (header:any) => {
+    columns.map((header:any) => {
       headerJSON.push({
         label: header,
       });
@@ -123,7 +128,7 @@ function Data() {
   // Fetch Row values
   useEffect(() => {
     const cells = [];
-    rows.map( (rowGroup:any) => { 
+    rows.map((rowGroup:any) => {
       cells.push({
         columnValues: rowGroup,
       });
@@ -156,38 +161,6 @@ function Data() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
-
-  // updates suggestions and filters any removed or applied actions
-  useEffect(() => {
-    const filteredSuggestions = [...suggestionsMemo];
-    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
-    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
-    setSuggestions(filteredSuggestions);
-  }, [
-    actions,
-    suggestionsMemo,
-    removedSuggestions,
-  ]);
-
-  const addAction = i => {
-    setActions(actions.concat({ i, suggestions: suggestions[i] }));
-  };
-
-  const removeAction = i => {
-    setActions(actions.filter((x, idx) => i !== idx));
-  }
-
-  const removeSuggestion = i => {
-    setRemovedSuggestions(removedSuggestions.concat(i));
-  };
-
-  // update pipeline on backend
-  useEffect(() => {
-    api.pipelines.useUpdate(slug)({ actions });
-  }, [
-    actions,
-    slug,
-  ]);
 
   // Report (Quality Metrics)
 
@@ -235,8 +208,8 @@ function Data() {
     },{
       columnValues: ['Time series Features', countTimeseries],
     });
-    
-    setStatSample({rowData});
+
+    setStatSample({ rowData });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
@@ -374,7 +347,7 @@ function Data() {
   const metricsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
-      columnHeaders={[{label:'Quality Metrics'}]}
+      columnHeaders={[{ label: 'Quality Metrics' }]}
       rowGroupData={[metricSample]}
     />
   );
@@ -383,7 +356,7 @@ function Data() {
   const statsEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{label:'Statistics'}]}
+      columnHeaders={[{ label: 'Statistics' }]}
       rowGroupData={[statSample]}
     />
   );
@@ -392,11 +365,19 @@ function Data() {
     <>
       <FlexContainer justifyContent={'center'}>
         <Flex flex={1}>
-          {metricsEl}
+          <SimpleDataTable
+            columnFlexNumbers={[1, 1]}
+            columnHeaders={[{ label: 'Quality Metrics' }]}
+            rowGroupData={metricSample && [metricSample]}
+          />
         </Flex>
         <Spacing ml={8} />
         <Flex flex={1}>
-          {statsEl}
+          <SimpleDataTable
+            columnFlexNumbers={[1, 1, 1]}
+            columnHeaders={[{ label: 'Statistics' }]}
+            rowGroupData={statSample && [statSample]}
+          />
         </Flex>
       </FlexContainer>
       <Spacing my={8}>
@@ -408,6 +389,8 @@ function Data() {
     </>
   )
 
+  const insightsOverview = datasetResponse?.['insights']?.[1] || {}
+
   const tabsEl = (
     <Tabs
       bold
@@ -418,28 +401,103 @@ function Data() {
     >
       <Tab key="data" label="Data">
         <Spacing mb={3} mt={3} />
-        {dataEl}
+        <SimpleDataTable
+          columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
+          columnHeaders={columnHeaderSample}
+          rowGroupData={rowGroupDataSample && [rowGroupDataSample]}
+        />
       </Tab>
-      <Tab key="reports" label="Report">
+      <Tab key="reports" label="Reports">
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualization"></Tab>
+      <Tab key="visualizations" label="Visualizations">
+        <Spacing mb={3} mt={3} />
+        <Overview
+          features={features}
+          insightsOverview={insightsOverview}
+          statistics={statistics}
+        />
+      </Tab>
     </Tabs>
-  )
+  );
+
+  const [actionPayload, setActionPayload] = useState<TransformerActionType>();
+  const actionType = actionPayload?.action_type;
+  const saveAction = (data) => {
+    const updatedAction = {
+      action_payload: {
+        ...data,
+        action_type: actionType,
+      },
+    };
+    alert(JSON.stringify(updatedAction));
+  };
 
   return (
     <Layout
       centerAlign
       footer={<Spacing mt={UNIT} />}
     >
+      <Spacing mt={UNIT}>
+        {actionType && (
+          <ActionForm
+            actionType={actionType}
+            axis={actionPayload?.axis}
+            features={columns.map(col => ({ uuid: col }))}
+            onSave={() => saveAction(actionPayload)}
+            payload={actionPayload}
+            setPayload={setActionPayload}
+          />
+        )}
+
+        <Spacing mt={5}>
+          <Select
+            // @ts-ignore
+            compact
+            onChange={e => setActionPayload(JSON.parse(e.target.value))}
+            value={actionType}
+            width={UNIT * 20}
+          >
+            <option value="">
+              New action
+            </option>
+
+            {Object.entries(actionsConfig.rows).map(([k, v]) => (
+              <option
+                key={k}
+                value={JSON.stringify({
+                  action_type: k,
+                  axis: 'row',
+                })}
+              >
+                {v.title}
+              </option>
+            ))}
+
+            {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
+              <option
+                key={k}
+                value={JSON.stringify({
+                  action_type: k,
+                  axis: 'column',
+                })}
+              >
+                {v.title}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+      </Spacing>
+
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      {actionsEl}
-      <Spacing mt={2} />
-      {suggestionsEl}
-      <Spacing mt={2} />
+      <SuggestionsList
+        featureSet={datasetResponse}
+        featureSetId={slug}
+      />
+      <Spacing mt={4} />
       {tabsEl}
     </Layout>
   );

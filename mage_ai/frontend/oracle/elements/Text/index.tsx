@@ -17,7 +17,6 @@ import {
   XLARGE,
   XSMALL,
 } from '@oracle/styles/fonts/sizes';
-import { background, backgroundColor } from 'styled-system';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type TextProps = {
@@ -166,6 +165,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => !(props.default && props.disabled  && props.muted) && !props.noColor && `
     color: ${(props.theme.content || light.content).active};
+  `}
+
+  ${props => props.muted && `
+    color: ${(props.theme.monotone || light.monotone).grey400};
   `}
 
   ${props => props.noColor && `

@@ -1,0 +1,8 @@
+export const CORRELATION_THRESHOLD = 0.5;
+export const NULL_VALUE_HIGH_THRESHOLD = 0.5;
+export const NULL_VALUE_LOW_THRESHOLD = 0.1;
+export const UNIQUE_VALUE_HIGH_THRESHOLD = 0.5;
+export const UNIQUE_VALUE_LOW_THRESHOLD = 0.05;
+export const UNUSUAL_ROW_VOLUME_FACTOR = 1.5;
+
+export const DATE_FORMAT = 'M/D/YYYY';

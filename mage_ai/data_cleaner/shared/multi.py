@@ -33,3 +33,7 @@ def run_parallel_threads(list_of_funcs_and_args_or_kwargs):
 def run_parallel(func, arr_args_1, arr_args_2):
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
         return pool.map(func, *arr_args_1, *arr_args_2)
+
+def run_parallel_multiple_args(func, *args):
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        return pool.map(func, *args)

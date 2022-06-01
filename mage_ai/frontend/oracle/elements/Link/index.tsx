@@ -2,7 +2,12 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
-import { BORDER_STYLE, BORDER_WIDTH, BORDER_RADIUS, OUTLINE_OFFSET } from '@oracle/styles/units/borders';
+import {
+  BORDER_STYLE,
+  BORDER_WIDTH,
+  BORDER_RADIUS_SMALL,
+  OUTLINE_OFFSET,
+} from '@oracle/styles/units/borders';
 import { SHARED_TEXT_STYLES } from '@oracle/elements/Text';
 import { transition } from '@oracle/styles/mixins';
 
@@ -30,7 +35,6 @@ export type LinkProps = {
   noHoverUnderline?: boolean;
   noOutline?: boolean;
   onClick?: (event: any) => void;
-  onContextMenuClick?: (event: any) => void;
   onFocus?: (event: any) => void;
   openNewWindow?: boolean;
   overflow?: string;
@@ -87,7 +91,7 @@ export const SHARED_LINK_STYLES = css<any>`
     display: inline-flex;
   `}
   ${props => props.centerAlign && `
-  text-align: center;
+    text-align: center;
   `}
 
   ${props => props.danger && `
@@ -234,7 +238,7 @@ const LinkStyle = styled.a`
   ${SHARED_LINK_STYLES}
   ${SHARED_TEXT_STYLES}
 
-  border-radius: ${BORDER_RADIUS}px;
+  border-radius: ${BORDER_RADIUS_SMALL}px;
   position: relative;
   z-index: 1;
 `;
@@ -245,7 +249,6 @@ const Link = ({
   href = '#',
   muted,
   onClick,
-  onContextMenuClick,
   onFocus,
   openNewWindow,
   preventDefault,
@@ -270,14 +273,6 @@ const Link = ({
       }
       if (onClick && !disabled) {
         onClick(e);
-      }
-    }}
-    onContextMenu={(e) => {
-      if (disabled || preventDefault) {
-        e.preventDefault();
-      }
-      if (onContextMenuClick && !disabled) {
-        onContextMenuClick(e);
       }
     }}
     onFocus={e => onFocus?.(e)}

@@ -1,0 +1,38 @@
+import React from 'react';
+import styled from 'styled-components';
+
+import light from '@oracle/styles/themes/light';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { transition } from '@oracle/styles/mixins';
+
+export const ContainerStyle = styled.div`
+  border-radius: ${BORDER_RADIUS}px;
+
+  ${props => `
+    border: 1px solid ${(props.theme.brand || light.brand).water300};
+  `}
+`;
+
+type OptionProps = {
+  selected?: boolean;
+};
+
+export const OptionStyle = styled.div<OptionProps>`
+  ${transition()}
+
+  border-radius: ${BORDER_RADIUS_SMALL}px;
+  padding: ${UNIT * 0.5}px;
+
+  ${props => `
+    border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+
+    &:hover {
+      background-color: ${(props.theme.monotone || light.monotone).grey100};
+    }
+  `}
+
+  ${props => props.selected && `
+    border-color: ${(props.theme.brand || light.brand).earth500};
+  `}
+`;

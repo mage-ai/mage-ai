@@ -7,7 +7,7 @@ import FeatureType, {
 import {
   LabelTypeEnum,
 } from '@interfaces/InsightsType';
-import { roundNumber } from '@utils/string.js';
+import { roundNumber } from '@utils/string';
 import { sortByKey, standardDeviation, sum } from '@utils/array';
 
 export function buildCorrelationsRowData(correlations, correlationThreshold = null) {
@@ -21,13 +21,13 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
     const { uuid } = feature;
     if (!correlatedColumnsSeen[uuid]) {
       correlations2?.forEach(({
-        x,
-        y,
+        x = [],
+        y = [],
       }) => {
         const arr = x
           .map(({ label }, idx) => [label, y[idx].value])
           .filter(([, value]) => correlationThreshold === null
-            || Math.abs(Number(value)) >= correlationThreshold
+            || Math.abs(Number(value)) >= correlationThreshold,
           );
 
         arr.forEach(([label, value]) => {
@@ -77,7 +77,7 @@ export function buildDistributionData(chartData, featuresByUUID, opts: {
   const yValuesAverage = yValuesSum / Math.max(1, yValues.length);
 
   const feature = featuresByUUID[featureUUID] || featureProp;
-  const columnType = feature?.column_type;
+  const columnType = feature?.columnType;
   const isDatetime = COLUMN_TYPE_DATETIME === columnType;
   const unusualRange = [];
   const unusualValues = [];

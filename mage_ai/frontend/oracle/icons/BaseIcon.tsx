@@ -7,6 +7,7 @@ export type BaseIconProps = {
   black?: boolean;
   default?: boolean;
   disabled?: boolean;
+  earth?: boolean;
   fill?: string;
   muted?: boolean;
   opacity?: number;
@@ -92,6 +93,9 @@ export const SHARED_STYLES = css<any>`
     fill: ${(props.theme.interactive || light.interactive).linkSecondary};
   `}
 
+  ${props => !props.disabled && props.earth && `
+    fill: ${(props.theme.brand || light.brand).earth500};
+  `}
 `;
 
 export const CircleStyle = styled.circle`

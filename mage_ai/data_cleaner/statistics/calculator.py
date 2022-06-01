@@ -14,7 +14,7 @@ import pandas as pd
 import traceback
 
 OUTLIER_ZSCORE_THRESHOLD = 3
-VALUE_COUNT_LIMIT = 255
+VALUE_COUNT_LIMIT = 20
 
 
 def increment(metric, tags):
@@ -135,12 +135,10 @@ class StatisticsCalculator():
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
         df_value_counts = series.value_counts(dropna=False)
-        df = df_value_counts.reset_index()
-        df.columns = [col, 'count']
 
-        df_top_value_counts = df
-        if df.shape[0] > VALUE_COUNT_LIMIT:
-            df_top_value_counts = df.head(VALUE_COUNT_LIMIT)
+        df_top_value_counts = df_value_counts
+        if df_top_value_counts.shape[0] > VALUE_COUNT_LIMIT:
+            df_top_value_counts = df_top_value_counts.head(VALUE_COUNT_LIMIT)
 
         # TODO: remove duplicate data for distinct values
         # object_key_distinct_values = s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
@@ -157,6 +155,9 @@ class StatisticsCalculator():
         column_type = self.column_types.get(col)
         series_non_null = series.dropna()
 
+        # Fix json serialization issue
+        if column_type == DATETIME:
+            df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
         count_unique = len(df_value_counts.index)
         data = {
@@ -164,7 +165,8 @@ class StatisticsCalculator():
             f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
             f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
             f'{col}/null_value_count': series.isnull().sum(),
-            f'{col}/max_null_seq': self.get_longest_null_seq(series)
+            f'{col}/max_null_seq': self.get_longest_null_seq(series),
+            f'{col}/value_counts': df_top_value_counts.to_dict(),
         }
 
         if len(series_non_null) > 0:
