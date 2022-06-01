@@ -1,17 +1,24 @@
-# TLDR
+# Intro
 Mage is an open-source data management platform
 that helps you
 <span style="text-decoration: underline"><b>clean data</b></span> and
 prepare it for training AI/ML models.
 
-# What does this do?
+### What does this do?
 The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
 can be hosted in your own cloud environment.
 
-# Why should I use it?
+### Why should I use it?
 Using a data cleaning tool enables you to quickly visualize data quality issues,
 easily fix them, and create repeatable data cleaning pipelines that can be used in
 production environments (e.g. online re-training, inference, etc).
+
+# Table of contents
+1. [Quick start](#quick-start)
+1. [Features](#features)
+1. [Roadmap](#roadmap)
+1. [Contributing](#contributing)
+1. [Community](#community)
 
 # Quick start
 
@@ -38,6 +45,8 @@ mage_ai.launch()
 ```
 
 Open [http://localhost:5000](http://localhost:5000) in your browser to access the tool locally.
+
+To stop the tool, run this command: `TBD`
 
 ### Cleaning data
 After building a data cleaning pipeline from the UI,
@@ -124,10 +133,17 @@ Here’s a detailed list of [features and bugs](https://airtable.com/shrE1pn6fRs
 that are in progress or upcoming.
 
 # Contributing
-WIP
+We welcome all contributions to Mage;
+from small UI enhancements to brand new cleaning actions.
+We love seeing community members level up and give people power-ups!
 
-### Development environment
-WIP
+Check out the [contributing guide](/docs/contributing/README.md) to get started
+by setting up your development environment and
+exploring the code base.
+
+Got questions? Live chat with us in [Slack](https://www.mage.ai/chat).
+
+Anything you contribute, the Mage team and community will maintain. We’re in it together!
 
 # Community
 We love the community of Magers (`/ˈmājər/`);
