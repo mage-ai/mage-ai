@@ -1,1 +1,2 @@
-# [WIP] Frequently asked questions
+# Frequently asked questions
+WIP
