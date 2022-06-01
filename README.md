@@ -11,14 +11,14 @@ Mage AI cleans your data using a single Python library.
 
 ## Introduction
 Mage AI aims to simplify data pre-processing. With a few lines of code, you can:
-- Generate data cleaning suggestions in your local notebook
-- Display feature-specific statistics and visualizations
-- Easily detect "holes" and anomalies in your data
+- Generate data cleaning suggestions in your local notebook.
+- Display feature-specific statistics and visualizations.
+- Easily detect "holes" and anomalies in your data.
 
 Coming soon:
-- Access faster data analysis and cleaning using Mage's public cloud server
-- Perform no-code data transformations within the UI
-- Export cleaned data into your ML pipeline
+- Access faster data analysis and cleaning using Mage's public cloud server.
+- Perform no-code data transformations within the UI.
+- Export cleaned data into your ML pipeline.
 
 ## Installation
 
@@ -44,14 +44,13 @@ An example dashboard connected to purchasing data shows `Suggested actions` and 
 
 At a glance, `Reports` provides feature-specific statistics that make it obvious if there are missing, duplicates, or anomalies in your data.
 
-In addition to data transformations, the dashboard display `Visualizations` and correlations between your features, helping you locate data leakage. Since Mage is open source, these charts and visualizations are customizable 😉
+In addition to data transformations, the dashboard display `Visualizations` and correlations between your features, helping you locate data leakage. Since Mage is open source, these charts and visualizations are customizable. 😉
 
 <img width="752" alt="Screen Shot 2022-05-31 at 3 14 52 PM" src="https://user-images.githubusercontent.com/99209078/171302044-fedd4633-3a8c-42ac-87d4-f18dd48994d9.png">
 
 ## To Contribute
 We would be overjoyed by your help! Ways to contribute to our community ✨:
-- Adding issues 🪲 and helping us verify the 🔧 fixes we push
-- Review source code changes
-- Add PRs using the format `[initials] what you contributed`
-- Engage with other Mage users in our [Slack channel](mage.ai/chat)
-- And share [user feedback and experiences](mage.ai/chat) 
+- Adding issues 🪲 and helping us verify the 🔧 fixes we push.
+- Review source code changes.
+- Engage with other Mage users in our [Slack channel](https://mage.ai/chat)
+- And share [user feedback and experiences](https://mage.ai/chat)!
