@@ -43,3 +43,28 @@ Open [http://localhost:5000](http://localhost:5000) in your browser to access th
 
 - Here is a [step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 - Check out the [tutorials](docs/tutorials/README.md) to quickly become a master of magic.
+
+## [WIP] Features
+
+- [WIP] Cleaning actions
+- [WIP] Charts
+
+## [WIP] Contributing
+
+#### [WIP] Development environment
+
+## Community
+We love the community of Magers (`/ˈmājər/`);
+a group of mages who help each other realize their full potential!
+
+To live chat with the Mage team and community,
+please join the free Mage [Slack](https://www.mage.ai/chat) channel.
+
+For real-time news and fun memes, check out the Mage [Twitter](https://twitter.com/mage_ai).
+
+To report bugs or add your awesome code for others to enjoy,
+visit [GitHub](https://github.com/mage-ai/mage-ai).
+
+## [WIP] Roadmap
+
+## [WIP] License
