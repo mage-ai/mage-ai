@@ -19,16 +19,18 @@ import { range } from 'lodash';
 import { scaleLinear, scaleOrdinal } from '@visx/scale';
 
 import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+import { BLUE } from '@oracle/styles/colors/main';
 import { COLORS } from './constants';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
-import { UNIT as unit } from '@oracle/styles/units/spacing';
+import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  backgroundColor: light.background.navigation,
   border: 'none',
 };
 
@@ -102,8 +104,8 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
   const border = 'rgba(255, 255, 255, 0.3)';
   const purplePastel = light.brand.wind200;
-  const text = light.monotone.white;
-  const { white } = light.monotone;
+  const text = light.monotone.gray;
+  const { black, gray } = light.monotone;
 
   const xValues = data.map(d => Number(getX(d)));
 
@@ -343,7 +345,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             <Line
               from={{ x: tooltipLeft, y: margin.top }}
               pointerEvents="none"
-              stroke="rgba(255, 255, 255, 0.7)"
+              stroke={BLUE}
               strokeDasharray="5,2"
               strokeWidth={1}
               to={{ x: tooltipLeft, y: yMax + margin.top }}
@@ -357,7 +359,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
                 key={idx}
                 pointerEvents="none"
                 r={4}
-                stroke={white}
+                stroke={gray}
                 strokeOpacity={0.1}
                 strokeWidth={1}
               />
@@ -453,18 +455,18 @@ function LineSeriesContainer({
 
   return (
     <>
-      <div style={{ display: 'flex', height: parentHeight, width: '100%' }}>
+      <div style={{ display: 'flex', height: parentHeight, width: '100%', marginBottom: UNIT }}>
         {yAxisLabel && (
-          <div style={{ marginRight: 1 * unit, width: 28 }}>
-            <FlexContainer alignItems="center" justifyContent="center">
-              <YAxisLabelContainer>
-                <Text center muted small>
-                  {yAxisLabel}
-                </Text>
-              </YAxisLabelContainer>
-            </FlexContainer>
-          </div>
+          <FlexContainer alignItems="center" justifyContent="center" fullHeight width={28}>
+            <YAxisLabelContainer>
+              <Text center muted small>
+                {yAxisLabel}
+              </Text>
+            </YAxisLabelContainer>
+          </FlexContainer>
         )}
+
+        <Spacing mr={1} />
 
         <div style={{ height: parentHeight, width: '100%' }}>
           <ParentSize>
@@ -488,10 +490,6 @@ function LineSeriesContainer({
       {xAxisLabel && (
         <div
           style={{
-            marginBottom: margin?.bottom,
-            marginLeft: margin?.left,
-            marginRight: margin?.right,
-            marginTop: margin?.top,
             // This is to account for the width of the y-axis label
             paddingLeft: 28 + 8,
           }}

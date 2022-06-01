@@ -1,5 +1,5 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
@@ -9,6 +9,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
+import Overview from '@components/datasets/Insights/Overview';
 import RowCard from '@oracle/components/RowCard';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -18,7 +19,6 @@ import api from '@api';
 import { Close } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { pluralize } from '@utils/string';
-
 
 function Data() {
 
@@ -405,6 +405,16 @@ function Data() {
     </>
   )
 
+  const insightsOverview = datasetResponse?.['insights']?.[1] || {}
+
+  const visualizationEl = (
+    <Overview
+      features={features}
+      insightsOverview={insightsOverview}
+      statistics={statistics}
+    />
+  )
+
   const tabsEl = (
     <Tabs
       bold
@@ -421,7 +431,10 @@ function Data() {
         <Spacing mb={3} mt={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualization"></Tab>
+      <Tab key="visualizations" label="Visualization">
+        <Spacing mb={3} mt={3} />
+        {visualizationEl}
+      </Tab>
     </Tabs>
   )
 

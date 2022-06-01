@@ -13,6 +13,7 @@ import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
+import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 
 function Feature() {
   const router = useRouter();
@@ -22,6 +23,8 @@ function Feature() {
   } = router.query;
 
   const { data: featureSet } = api.feature_sets.detail(featureSetId);
+  const features = Object.entries(featureSet?.metadata?.column_types || {})
+    .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet)
   const featureIndex = +featureId;
 
@@ -32,6 +35,9 @@ function Feature() {
   const sampleRowData = featureSet?.sample_data?.rows?.map(row => ({
     columnValues: [row[featureIndex]],
   }));
+
+  const insightsColumn = (featureSet?.['insights']?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
+  const statisticsOverview = featureSet?.['statistics'] || {}
 
   // Get individual column statistics
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
@@ -149,6 +155,15 @@ function Feature() {
     </FlexContainer>
   );
 
+  const visualizationEl = (
+    <ColumnAnalysis
+      column={featureUUID}
+      features={features}
+      insights={insightsColumn}
+      statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+      statisticsOverview={statisticsOverview}
+    />
+  )
 
   // Metrics and Warnings
   const reportsEl = (
@@ -171,14 +186,17 @@ function Feature() {
       onChange={key => setTab(key)}
     >
       <Tab key="data" label="Data">
-        <Spacing mb={3} mt={3} />
+        <Spacing my={3} />
         {dataEl}
       </Tab>
       <Tab  key="reports" label="Reports">
-        <Spacing mb={3} mt={3} />
+        <Spacing my={3} />
         {reportsEl}
       </Tab>
-      <Tab key="visualizations" label="Visualizations"> </Tab>
+      <Tab key="visualizations" label="Visualizations">
+        <Spacing my={3} />
+        {visualizationEl}
+      </Tab>
     </Tabs>
   )
 
