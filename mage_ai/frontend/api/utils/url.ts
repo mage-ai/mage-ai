@@ -15,10 +15,12 @@ export function buildUrl(
   if (typeof window !== 'undefined') {
     host = window.location.hostname;
   }
-  if (host !== LOCALHOST) {
+  if (host === LOCALHOST) {
+    host = `${host}:${PORT}`;
+  } else {
     protocol = 'https://';
   }
-  let path: string = `${protocol}${host}:${PORT}/${resource}`;
+  let path: string = `${protocol}${host}/${resource}`;
 
   if (id) {
     path = `${path}/${id}`;
