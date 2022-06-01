@@ -8,7 +8,7 @@ import api from '@api';
 export type SuggestionsListProps = {
   featureSet: any;
   featureSetId: string | string[];
-}
+};
 
 function SuggestionsList({
   featureSet,
@@ -27,7 +27,7 @@ function SuggestionsList({
     featureSet?.pipeline?.actions,
   ]);
 
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState(suggestionsMemo);
   const [actions, setActions] = useState(actionsMemo);
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
 
@@ -56,7 +56,7 @@ function SuggestionsList({
 
   const removeAction = i => {
     setActions(actions.filter((x, idx) => i !== idx));
-  }
+  };
 
   const removeSuggestion = i => {
     setRemovedSuggestions(removedSuggestions.concat(i));
@@ -64,12 +64,15 @@ function SuggestionsList({
 
   // update pipeline on backend
   useEffect(() => {
-    if (featureSet) api.pipelines.useUpdate(featureSetId)({ actions });
+    if (featureSet) {
+      api.pipelines.useUpdate(`${featureSet.metadata.pipeline_id}`)({ actions });
+    }
   }, [
     actions,
     featureSet,
-    featureSetId,
   ]);
+
+  useEffect(() => console.log({ featureSet, actions, actionsMemo, suggestions, suggestionsMemo, removedSuggestions }));
 
   return (
     <>
@@ -118,7 +121,7 @@ function SuggestionsList({
                   numFeatures={numFeatures}
                   onClose={() => removeSuggestion(idx)}
                 />
-              )
+              );
             })
             :
             <>{/* TODO: what do we render when no suggestions exist? */}</>
