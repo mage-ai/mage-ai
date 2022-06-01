@@ -1,9 +1,30 @@
-/* eslint-disable react/jsx-key */
-import React, { useMemo } from 'react'
-import { useTable } from 'react-table'
- 
- function BaseTable() {
-  const data = useMemo(
+import React, { useEffect, useMemo, useState} from 'react'
+import { useBlockLayout, useTable } from 'react-table'
+import { TextStyle } from './index.style';
+import Text from '@oracle/elements/Text';
+
+import { DataTableColumn, DataTableRow } from './types';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
+
+  export type DataTableProps = {
+    children?: any;
+    columns: DataTableColumn[]
+    data: DataTableRow<any>[]
+  };
+
+  function BaseTable({
+    children,
+    columnHeaders,
+    rowGroupData,
+    columnTitles,
+  }: any) {
+
+  const [column, setColumn] = useState([]);
+  const [row, setRow] = useState([]);
+
+  // Keep these samples in due to undefined errors.
+  const dataSample = useMemo(
     () => [
       {
         col1: 'Hello',
@@ -21,11 +42,11 @@ import { useTable } from 'react-table'
     [],
   );
 
-  const columns = useMemo(
+  const columnSample = useMemo(
     () => [
       {
         Header: 'Column 1',
-        accessor: 'col1', // accessor is the "key" in the data
+        accessor: 'col1',
       },
       {
         Header: 'Column 2',
@@ -34,59 +55,126 @@ import { useTable } from 'react-table'
     ],
     [],
   );
+
+  useEffect(() => {
+    if (columnHeaders) {
+      const headers = [];
+      columnHeaders.map(({label='none'}: any, i: string | number) => {
+        const rowValues =
+          {
+            Header: label,
+            accessor: columnTitles[i],
+          }
+        headers.push(rowValues);
+      });
+      setColumn(headers);
+    }
+  }, [columnHeaders, columnTitles]);
+
+    useEffect(() => {
+      if (rowGroupData) {
+        const values = [];
+        rowGroupData.map((rows) => {
+          const rowValues = {};
+          rows.map((cell, j) => {
+            const key = columnTitles[j];
+            !(key in rowValues) && (rowValues.key = {})
+            rowValues[key] = cell;
+          });
+          values.push(rowValues);
+        });
+        setRow(values);
+      }
+    }, [columnTitles, rowGroupData]);
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns, data })
+  } = useTable(
+    { 
+      columns: column || columnSample,
+      data: row || dataSample,
+    },
+    // useBlockLayout,
+    );
 
+  // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
-    <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
-      <thead>
-        {
-        headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th
-                {...column.getHeaderProps()}
-                style={{
-                  background: 'aliceblue',
-                  borderBottom: 'solid 3px red',
-                  color: 'black',
-                  fontWeight: 'bold',
-                }}
-              >
-                {column.render('Header')}
-              </th>
+    // Table: Relative, no overflow, outline in silver
+    <TableStyle>
+      <table 
+          {...getTableProps()}
+          style={{
+            border: 'solid 1px #D8DCE3',
+            borderRadius: `${BORDER_RADIUS_LARGE}px`,
+            width: '100%',
+          }}
+        >
+        {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
+        <thead>
+          { headerGroups.map(headerGroup => (
+            // eslint-disable-next-line react/jsx-key
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                // eslint-disable-next-line react/jsx-key
+                <th
+                  {...column.getHeaderProps()}
+                  style={{
+                    background: '#F9FAFC',
+                    border: 'solid 1px #D8DCE3',
+                  }}
+                >
+                  <RowCellStyle>
+                    <TextStyle>
+                      <Text bold>
+                        {column.render('Header')}
+                      </Text>
+                    </TextStyle>
+                  </RowCellStyle>
+                </th>
+                  ))}
+            </tr>
             ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
-           prepareRow(row)
-           return (
-             <tr {...row.getRowProps()}>
-               {row.cells.map(cell => (
-                 <td
-                     {...cell.getCellProps()}
-                     style={{
-                      background: 'papayawhip',
-                      border: 'solid 1px gray',
-                      padding: '10px',
-                     }}
-                   >
-                   {cell.render('Cell')}
-                 </td>
-                 ))}
-             </tr>
-           )
-         })}
-      </tbody>
-    </table>
-  );
- }
 
- export default BaseTable
+        </thead>
+        {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
+        <tbody {...getTableBodyProps()}>
+          {rows.map(row => {
+              prepareRow(row)
+              return (
+                // eslint-disable-next-line react/jsx-key
+                <tr {...row.getRowProps()}>
+                  {row.cells.map(cell => (
+                    // eslint-disable-next-line react/jsx-key
+                    <td
+                      {...cell.getCellProps()}
+                      style={{
+                        background: '#FBFCFD',
+                        border: 'solid 1px #FBFCFD',
+                        borderLeft: 'none',
+                        borderRight: 'none',
+                        padding: '10px',
+                      }}
+                    >
+                      <CellStyled>
+                        <TextStyle>
+                          <Text>
+                            {cell.render('Cell')}
+                          </Text>
+                        </TextStyle>
+                      </CellStyled>
+                    </td>
+                    ))}
+                </tr>
+              )
+            })}
+        </tbody>
+      </table>
+    </TableStyle>
+  );
+}
+
+export default BaseTable;
