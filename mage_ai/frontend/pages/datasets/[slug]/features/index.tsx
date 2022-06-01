@@ -108,7 +108,7 @@ const ColumnView: NextPage = () => {
         </RowDataTable>
       </Spacing>
     </Layout>
-  )
-}
+  );
+};
 
-export default ColumnView
+export default ColumnView;
