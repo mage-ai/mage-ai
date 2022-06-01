@@ -149,6 +149,8 @@ def build_time_series_data(df, feature, datetime_column, column_type):
     if datetimes.size <= 1:
         return
 
+    datetimes = pd.to_datetime(datetimes, infer_datetime_format=True, errors='coerce')
+
     min_value_datetime = datetimes.min().timestamp()
     max_value_datetime = datetimes.max().timestamp()
 
@@ -244,7 +246,12 @@ def build_overview_data(df, datetime_features):
         if df_copy[datetime_column].count() <= 1:
             continue
 
-        df_copy[datetime_column] = df[datetime_column].apply(
+        df_copy[datetime_column] = pd.to_datetime(
+            df[datetime_column],
+            infer_datetime_format=True,
+            errors='coerce'
+        )
+        df_copy[datetime_column] = df_copy[datetime_column].apply(
             lambda x: x if pd.isnull(x) else x.timestamp()
         )
 

@@ -44,6 +44,7 @@ class DataCleaner():
         pipeline = BasePipeline()
         if df_stats['statistics']['is_timeseries']:
             df = df.sort_values(by=df_stats['statistics']['timeseries_index'], axis=0)
+        # TODO: Pass in both cleaned and uncleaned versions of dataset
         with timer('data_cleaner.create_suggested_actions'):
             suggested_actions = pipeline.create_actions(
                 df,
