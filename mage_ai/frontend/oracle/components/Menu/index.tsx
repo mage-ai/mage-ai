@@ -8,9 +8,6 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import MenuContainer from './MenuContainer';
 import { capitalize } from '@utils/string';
-import { UNIT } from '@oracle/styles/units/spacing';
-
-export const CONTEXT_MENU_ITEM_UNIT = UNIT * 6.5;
 
 type LinkType = {
   afterElement?: any;
@@ -92,9 +89,8 @@ function Menu({
                 sameColorAsText
               >
                 <Spacing
-                  pl={2}
-                  pr={afterElement ? 1 : 2}
-                  py={2}
+                  px="4px"
+                  py={1}
                 >
                   {text}
                 </Spacing>
@@ -125,8 +121,7 @@ function Menu({
                   </Flex>
 
                   <Spacing
-                    px={1}
-                    py={2}
+                    py={1}
                   >
                     {afterElement}
                   </Spacing>

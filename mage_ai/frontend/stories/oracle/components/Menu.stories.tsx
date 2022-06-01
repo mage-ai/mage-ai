@@ -3,6 +3,7 @@ import { Meta, Story } from '@storybook/react';
 
 import Menu, { MenuProps } from '@oracle/components/Menu';
 import ThemeBlock from 'stories/ThemeBlock';
+import { ArrowRight } from '@oracle/icons';
 
 export default {
   component: Menu,
@@ -23,6 +24,7 @@ Regular.args = {
     {
       links: [
         {
+          afterElement: <ArrowRight fill="gray" />,
           label: 'Filter rows',
           uuid: 'filter_rows',
         },
