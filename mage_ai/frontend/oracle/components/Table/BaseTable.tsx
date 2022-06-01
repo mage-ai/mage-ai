@@ -17,6 +17,7 @@ import Text from '@oracle/elements/Text';
     children,
     columnHeaders,
     rowGroupData,
+    columnTitles,
   }: any) {
 
   const [column, setColumn] = useState();
@@ -55,18 +56,14 @@ import Text from '@oracle/elements/Text';
   // Parse into the form 
   useEffect(() => {
     if (columnHeaders) {
-      const column = ['col1', 'col2']; // Fill with real columns from uuid (if it exists)
       const headers = [];
       columnHeaders.map(({label='none'}, i=0) => {
         const rowValues =
           {
             Header: label,
-            accessor: column[i],
+            accessor: columnTitles[i],
           }
         headers.push(rowValues);
-        if (i <= columnHeaders.length) {
-          i++;
-        }
       });
       setColumn(headers);
       console.log('Parsed:', headers);

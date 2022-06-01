@@ -369,6 +369,7 @@ function Data() {
       />
       <BaseTable
         columnHeaders={columnHeaderSample}
+        columnTitles={columns}
         rowGroupData={[rowGroupDataSample]}
       />
     </>
