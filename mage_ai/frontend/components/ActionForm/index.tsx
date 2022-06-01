@@ -28,7 +28,7 @@ type ActionFormProps = {
   actionType: string;
   axis: string;
   currentFeature?: FeatureType;
-  features: FeatureType[];
+  features?: FeatureType[];
   onSave: () => void;
   payload: TransformerActionType;
   setPayload: (payload: TransformerActionType) => void;
@@ -220,6 +220,7 @@ function ActionForm({
                       key={value}
                       mr={1}
                       mt={1}
+                      // @ts-ignore
                       title={description}
                     >
                       <Link

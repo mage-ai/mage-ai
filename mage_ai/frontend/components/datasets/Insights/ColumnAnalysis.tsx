@@ -162,7 +162,7 @@ function ColumnAnalysis({
     y: columnValue,
   }));
 
-  let distributionChart = null;
+  let distributionChart;
   if (distribution) {
     distributionChart = (
       <Histogram
