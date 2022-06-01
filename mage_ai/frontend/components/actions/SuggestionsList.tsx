@@ -4,15 +4,15 @@ import Spacing from '@oracle/elements/Spacing';
 import { useMemo, useState, useEffect } from 'react';
 import SuggestionRow from './SuggestionRow';
 
-export type SuggestionsTableProps = {
+export type SuggestionsListProps = {
   featureSet: any;
   featureSetId: any;
 }
 
-const SuggestionsTable = ({
+const SuggestionsList = ({
   featureSet,
   featureSetId,
-}: SuggestionsTableProps) => {
+}: SuggestionsListProps) => {
 
   const suggestionsMemo = useMemo(() => (
     (featureSet?.suggestions || [])
@@ -134,4 +134,4 @@ const SuggestionsTable = ({
   );
 }
 
-export default SuggestionsTable;
+export default SuggestionsList;

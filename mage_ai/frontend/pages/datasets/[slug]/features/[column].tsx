@@ -1,5 +1,5 @@
 import Router, { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import ActionForm from '@components/ActionForm';
 import Button from '@oracle/elements/Button';
@@ -11,6 +11,7 @@ import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionsTable from '@components/actions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
@@ -18,7 +19,6 @@ import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
-import SuggestionsTable from '@components/actions/SuggestionsTable';
 
 function Feature() {
   const router = useRouter();

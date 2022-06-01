@@ -11,12 +11,12 @@ import Overview from '@components/datasets/Insights/Overview';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionsList from '@components/actions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
-import SuggestionsTable from '@components/actions/SuggestionsTable';
 
 function Data() {
   const router = useRouter()
@@ -379,7 +379,7 @@ function Data() {
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      <SuggestionsTable
+      <SuggestionsList
         featureSet={datasetResponse}
         featureSetId={slug}
       />
