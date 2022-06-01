@@ -1,5 +1,10 @@
 # Contributing guide
 
+- [WIP] How to add a chart for visualization
+- [WIP] How to add a report
+- [WIP] How to add a cleaning action
+- [WIP] How to add a suggested cleaning action
+
 ## Development environment
 
 ### Setting up the front-end UI
