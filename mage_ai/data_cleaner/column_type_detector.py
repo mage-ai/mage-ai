@@ -156,14 +156,11 @@ def infer_object_type(series, kwargs):
                                 mdtype = CATEGORY_HIGH_CARDINALITY
     return mdtype
 
-def gen(iterable):
-    yield from iterable
-
 def infer_column_types(df, **kwargs):
-    columns = (df[col] for col in df.columns)
-    column_names = gen(df.columns)
-    dtypes = gen(df.dtypes)
-    kwarg_list = gen([kwargs] * len(df.columns))
+    columns = [df[col] for col in df.columns]
+    column_names = [df.columns]
+    dtypes = [df.dtypes]
+    kwarg_list = [kwargs] * len(df.columns)
     ctypes = {}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
