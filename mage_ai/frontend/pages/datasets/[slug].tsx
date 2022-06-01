@@ -64,8 +64,8 @@ function Data() {
   ];
 
   const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
-  const DATE_TYPES = ['datetime']
-  const NUMBER_TYPES = ['number', 'number_with_decimals']
+  const DATE_TYPES = ['datetime'];
+  const NUMBER_TYPES = ['number', 'number_with_decimals'];
   // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
@@ -149,7 +149,7 @@ function Data() {
 
     rowData.push({
       columnValues: ['Column count', types.length],
-    })
+    });
     // Part one is the keys from metrics
     stats.map((key) => {
       if (statKeys.includes(key)) {
@@ -191,8 +191,8 @@ function Data() {
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
-    e.preventDefault()
-    Router.push(`${pathname}/features`)
+    e.preventDefault();
+    Router.push(`${pathname}/features`);
   };
 
   const headEl = (
@@ -255,9 +255,9 @@ function Data() {
         />
       </Spacing>
     </>
-  )
+  );
 
-  const insightsOverview = datasetResponse?.['insights']?.[1] || {}
+  const insightsOverview = datasetResponse?.['insights']?.[1] || {};
 
   const tabsEl = (
     <Tabs

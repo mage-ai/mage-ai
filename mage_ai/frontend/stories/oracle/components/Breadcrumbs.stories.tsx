@@ -45,16 +45,13 @@ SelectThreeLarge.args = {
   breadcrumbs: [
     {
       label: 'columns',
-      xlarge: true,
     },
     {
       label: 'features',
-      xlarge: true,
     },
     {
       label: 'dataset.csv',
       selected: true,
-      xlarge: true,
     },
   ],
   large: true,
