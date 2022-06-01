@@ -1,21 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
-import Accordion from '@oracle/components/Accordion';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import ActionForm from '@components/ActionForm';
-import BaseTable from '@oracle/components/Table/BaseTable'; 
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
-import Link from '@oracle/elements/Link';
 import Overview from '@components/datasets/Insights/Overview';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import RowCard from '@oracle/components/RowCard';
 import SuggestionsList from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
@@ -25,8 +20,8 @@ import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
-  const router = useRouter();
-  const { slug } = router.query;
+  const router = useRouter()
+  const { slug } = router.query
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
@@ -71,7 +66,7 @@ function Data() {
   const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
   const DATE_TYPES = ['datetime']
   const NUMBER_TYPES = ['number', 'number_with_decimals']
-  // const STRING_TYPES = ["email", "phone_number", "text", "zip_code"]; // We aren"t counting this but good to have.
+  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
   // Map text
@@ -208,118 +203,11 @@ function Data() {
     </FlexContainer>
   );
 
-  type ActionProps = {
-    idx: number;
-    link?: () => void;
-    name: string;
-    numFeatures: number;
-    onClose: () => void;
-    showIdx?: boolean;
-  }
-
-  const Action = ({
-    idx,
-    link,
-    name,
-    numFeatures,
-    onClose,
-    showIdx,
-  }: ActionProps) => (
-    <RowCard
-      columnFlexNumbers={[0.5, 0.5, 12]}
-    >
-      {link &&
-        <Link
-          bold
-          noHoverUnderline
-          onClick={link}
-        >
-          Apply
-        </Link>
-      }
-      {showIdx && <Text>{idx+1}</Text>}
-      <FlexContainer>
-        <Text>{name},</Text>
-        <Spacing mr={1} />
-        <Text secondary>{pluralize('feature', numFeatures)}</Text>
-      </FlexContainer>
-      <FlexContainer>
-        {/* TODO: add View Code & Preview here */}
-        <Button
-          basic
-          iconOnly
-          onClick={onClose}
-          padding="0px"
-          transparent
-        >
-          <Close muted />
-        </Button>
-      </FlexContainer>
-    </RowCard>
-  );
-
-  const actionsEl = (
-    actions.map((action, idx) => {
-      const {
-        suggestions: {
-          title,
-          action_payload: {
-            action_arguments,
-          },
-        },
-      } = action;
-      const numFeatures = action_arguments.length;
-
-      return (
-        <Action
-          idx={idx}
-          key={`${idx}-${title}`}
-          name={title}
-          numFeatures={numFeatures}
-          onClose={() => removeAction(idx)}
-          showIdx
-        />
-      );
-    })
-  );
-
-  const suggestionsEl = (
-    <Accordion>
-      <AccordionPanel
-        noBackground
-        noPaddingContent
-        title={`${suggestions.length} suggested actions`}
-      >
-        {
-          suggestions.length > 0
-          ?
-          suggestions.map((suggestion, idx) => {
-            const { action_payload: { action_arguments }} = suggestion;
-            const numFeatures = action_arguments.length;
-
-            return (
-              <Action
-                idx={idx}
-                key={`${idx}-${suggestion.title}`}
-                link={() => addAction(idx)}
-                name={suggestion.title}
-                numFeatures={numFeatures}
-                onClose={() => removeSuggestion(idx)}
-              />
-            )
-          })
-          :
-          <>{/* TODO: what do we render when no suggestions exist? */}</>
-        }
-      </AccordionPanel>
-    </Accordion>
-  );
-
   const dataEl = (
-    <BaseTable
-      columnHeaders={columnHeaderSample}
-      columnTitles={columns}
-      rowGroupData={rows}
+    <SimpleDataTable
+      columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
+      columnHeaders={columnHeaderSample} 
+      rowGroupData={[rowGroupDataSample]}
     />
   );
 

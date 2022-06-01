@@ -14,13 +14,13 @@ const rowGroupDataSample = {
   rowData: [
     {
       columnValues: [
-        '1', '2', '3', '4', '5',
+        "1", "2", "3", "4", "5",
       ],
       uuid: 'Row 1',
     },
     {
       columnValues: [
-        '1', '2', '3', '4', '5',
+        "1", "2", "3", "4", "5",
       ],
       uuid: 'Row 2',
     },
@@ -30,15 +30,15 @@ const rowGroupDataSample = {
 const ColumnHeaderSample = [
   {
     Icon: true,
-    label: 'Feature 1',
+    label: "Feature 1",
   },
   {
     Icon: true,
-    label: 'Feature 2',   
+    label: "Feature 2",   
   },
   {
     Icon: true,
-    label: 'Feature 3',
+    label: "Feature 3",
   },
 ]
 
