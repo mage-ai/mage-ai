@@ -1,9 +1,11 @@
 /* eslint-disable react/jsx-key */
-import React, { useMemo } from 'react'
-import { useTable } from 'react-table'
+import React, { useEffect, useMemo, useState} from 'react'
+
+import { useBlockLayout, useTable } from 'react-table'
 
 
 import { DataTableColumn, DataTableRow } from './types';
+import Text from '@oracle/elements/Text';
 
   export type DataTableProps = {
     children?: any;
@@ -16,7 +18,8 @@ import { DataTableColumn, DataTableRow } from './types';
     columnHeaders,
     rowGroupData,
   }: any) {
-  
+
+  const [column, setColumn] = useState();
   const dataSample = useMemo(
     () => [
       {
@@ -48,14 +51,43 @@ import { DataTableColumn, DataTableRow } from './types';
     ],
     [],
   );
-    
+
+  // Parse into the form 
+  useEffect(() => {
+    if (columnHeaders) {
+      const column = ['col1', 'col2']; // Fill with real columns from uuid (if it exists)
+      const headers = [];
+      columnHeaders.map(({label='none'}, i=0) => {
+        const rowValues =
+          {
+            Header: label,
+            accessor: column[i],
+          }
+        headers.push(rowValues);
+        if (i <= columnHeaders.length) {
+          i++;
+        }
+      });
+      setColumn(headers);
+      console.log('Parsed:', headers);
+    }
+  }, [columnHeaders]);
+
+  console.log('Sample:', columnSample);
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
-  } = useTable({ columns:columnSample, data:dataSample })
+  } = useTable(
+    { 
+      columns: column || columnSample,
+      data: dataSample,
+    },
+    // useBlockLayout,
+    );
 
   return (
     <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>

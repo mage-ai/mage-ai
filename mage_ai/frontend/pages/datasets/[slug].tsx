@@ -135,7 +135,7 @@ function Data() {
   useEffect(() => {
     const stats = Object.keys(statistics);
     const metricRows = Array(metricsKeys.length).fill(0);
-    stats.map( (key) => {
+    stats.map((key) => {
       if (metricsKeys.includes(key)) {
         let value = statistics[key].toPrecision(2);
         const order = humanReadableMapping[key];
