@@ -12,24 +12,24 @@ export const OPERATOR_LESS_THAN_OR_EQUAL = '<=';
 export const OPERATOR_NOT_EQUAL = '!=';
 
 export interface ConditionType {
-  feature_attribute?: FEATURE_ATTRIBUTE_COLUMN_TYPE;
-  operator: (OPERATOR_CONTAINS
-    | OPERATOR_EQUAL
-    | OPERATOR_GREATER_THAN
-    | OPERATOR_GREATER_THAN_OR_EQUAL_TO
-    | OPERATOR_LESS_THAN
-    | OPERATOR_LESS_THAN_OR_EQUAL
-    | OPERATOR_NOT_EQUAL
+  feature_attribute?: typeof FEATURE_ATTRIBUTE_COLUMN_TYPE;
+  operator: (typeof OPERATOR_CONTAINS
+    | typeof OPERATOR_EQUAL
+    | typeof OPERATOR_GREATER_THAN
+    | typeof OPERATOR_GREATER_THAN_OR_EQUAL_TO
+    | typeof OPERATOR_LESS_THAN
+    | typeof OPERATOR_LESS_THAN_OR_EQUAL
+    | typeof OPERATOR_NOT_EQUAL
   );
   options_key?: string;
-  value: string;
+  value: string | number | string[] | number[];
 }
 
 interface ArgumentsType {
   condition?: ConditionType;
   description?: string;
-  values: OptionType[] | (VALUES_TYPE_COLUMNS
-    | VALUES_TYPE_USER_INPUT
+  values: OptionType[] | (typeof VALUES_TYPE_COLUMNS
+    | typeof VALUES_TYPE_USER_INPUT
   );
 }
 

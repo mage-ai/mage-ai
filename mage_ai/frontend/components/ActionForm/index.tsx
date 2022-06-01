@@ -184,6 +184,7 @@ function ActionForm({
           } else if (VALUES_TYPE_USER_INPUT === values) {
             valuesEl = (
               <TextInput
+                // @ts-ignore
                 compact
                 onChange={e => updatePayload({
                   action_options: {
