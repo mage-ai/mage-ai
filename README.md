@@ -1,21 +1,24 @@
 ![MageLogo](https://user-images.githubusercontent.com/99209078/171298628-d8f34d5b-9771-404d-947c-f446ce083215.png)
 # Mage AI
-Mage AI handles data cleaning using a single Python library.
+Mage AI cleans your data using a single Python library.
 
 ## Table of Contents
 1. [Introduction](#introduction)
 1. [Installation](#installation)
 1. [Getting Started](#getting-started)
+2. [Usage](#usage)
+3. [Contribute](#to-contribute)
 
 ## Introduction
 Mage AI aims to simplify data pre-processing. With a few lines of code, you can:
-- Generate data cleaning suggestions
+- Generate data cleaning suggestions in your local notebook
 - Display feature-specific statistics and visualizations
 - Easily detect "holes" and anomalies in your data
 
 Coming soon:
 - Access faster data analysis and cleaning using Mage's public cloud server
 - Perform no-code data transformations within the UI
+- Export cleaned data into your ML pipeline
 
 ## Installation
 
@@ -25,6 +28,7 @@ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
 
 ## Getting Started
+Within your [Jupyter Notebook](https://jupyter.org/install) or [Google Colaboratory](https://colab.research.google.com/), the following 4 lines of code connects Mage with your data to generate data cleaning suggestions and data insights.
 ```python
 import mage_ai
 
@@ -33,13 +37,21 @@ feature_set = mage_ai.connect_data(df, name='test_data')
 mage_ai.launch()
 ```
 
-An example dashboard connected to purchasing data shows `Suggested actions` and `Reports`
+## Usage
+An example dashboard connected to purchasing data shows `Suggested actions` and `Reports`.
 
-Reports tell u if there are missing, duplicates, or anomalies in your data 
+![image](https://user-images.githubusercontent.com/99209078/171302101-1c0de1a6-6c40-46cc-9563-73734e7fe2f5.png)
 
-In addition to data transformations, `Visualizations` display correlations between your features, helping locate data leakage. Since Mage is open source, these charts and visualizations are customizable 😉
+At a glance, `Reports` provides feature-specific statistics that make it obvious if there are missing, duplicates, or anomalies in your data.
 
-## Contribute
-- slack channel
-- Add issues 🪲
-- 
+In addition to data transformations, the dashboard display `Visualizations` and correlations between your features, helping you locate data leakage. Since Mage is open source, these charts and visualizations are customizable 😉
+
+<img width="752" alt="Screen Shot 2022-05-31 at 3 14 52 PM" src="https://user-images.githubusercontent.com/99209078/171302044-fedd4633-3a8c-42ac-87d4-f18dd48994d9.png">
+
+## To Contribute
+We would be overjoyed by your help! Ways to contribute to our community ✨:
+- Adding issues 🪲 and helping us verify the 🔧 fixes we push
+- Review source code changes
+- Add PRs using the format `[initials] what you contributed`
+- Engage with other Mage users in our [Slack channel](mage.ai/chat)
+- And share [user feedback and experiences](mage.ai/chat) 
