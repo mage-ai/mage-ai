@@ -1,10 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
+from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 import numpy as np
+import pandas as pd
 import re
 
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
-MAX_WORKERS = 16
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
 
 CATEGORY = 'category'
@@ -37,14 +38,14 @@ COLUMN_TYPES = frozenset([
 
 REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
-REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9\_\.\+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+$'
+REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
-REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€\$]|CAD){0,1})$'
+REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
 REGEX_FLOAT_NEW_SYM = re.compile(r'[\.\%]')
-REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[\$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€\$]|CAD){0,1})\s*\%{0,1}$'
+REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$'
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
-REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[\-\. \(]*(\d{3})[\-\. \)]*(\d{3})[\-\. ]*(\d{4})(?: *x(\d+))?\s*$'
+REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
 REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
 REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
@@ -150,21 +151,23 @@ def infer_object_type(series, kwargs):
                         else:
                             if (clean_series_unique <= kwargs.get(
                                 'category_cardinality_threshold', 255)):
-                                mdtype =  CATEGORY
+                                mdtype = CATEGORY
                             else:
                                 mdtype = CATEGORY_HIGH_CARDINALITY
     return mdtype
 
+def gen(iterable):
+    yield from iterable
+
 def infer_column_types(df, **kwargs):
-    columns = [df[col] for col in df.columns]
-    column_names = list(df.columns)
-    dtypes = list(df.dtypes)
-    kwarg_list = [kwargs] * len(columns)
+    columns = (df[col] for col in df.columns)
+    column_names = gen(df.columns)
+    dtypes = gen(df.dtypes)
+    kwarg_list = gen([kwargs] * len(df.columns))
     ctypes = {}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            types = pool.map(infer_column_type, columns, column_names, dtypes, kwarg_list)
+        types = run_parallel_multiple_args(infer_column_type, columns, column_names, dtypes, kwarg_list)
     else:
         types = map(infer_column_type, columns, column_names, dtypes, kwarg_list)
     for col, dtype in zip(column_names, types):
