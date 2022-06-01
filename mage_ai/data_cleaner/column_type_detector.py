@@ -6,6 +6,7 @@ import re
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
+STRING_TYPE_THRESHOLD = 0.3
 
 CATEGORY = 'category'
 CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
@@ -121,11 +122,11 @@ def infer_object_type(series, kwargs):
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_emails / length >= 0.30:
+                if correct_emails / length >= STRING_TYPE_THRESHOLD:
                     mdtype = EMAIL
-                elif correct_phone_nums / length >= 0.30:
+                elif correct_phone_nums / length >= STRING_TYPE_THRESHOLD:
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes / length >= 0.30:
+                elif correct_zip_codes / length >= STRING_TYPE_THRESHOLD:
                     mdtype = ZIP_CODE
                 elif series_nunique == 2:
                     mdtype = TRUE_OR_FALSE
@@ -153,10 +154,10 @@ def infer_column_types(df, **kwargs):
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
         types = run_parallel_multiple_args(
-            infer_column_type, 
+            infer_column_type,
             columns,
-            df.columns, 
-            df.dtypes, 
+            df.columns,
+            df.dtypes,
             kwarg_list
         )
     else:
