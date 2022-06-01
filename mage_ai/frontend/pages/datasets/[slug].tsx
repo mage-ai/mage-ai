@@ -52,6 +52,12 @@ function Data() {
     datasetResponse?.suggestions,
   ]);
 
+  const actionsMemo = useMemo(() => (
+    (datasetResponse?.pipeline?.actions || [])
+  ), [
+    datasetResponse?.pipeline?.actions,
+  ]);
+  
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
@@ -62,7 +68,7 @@ function Data() {
   const [suggestions, setSuggestions] = useState([]);
 
   // structured as [{ idx, action_data }]
-  const [actions, setActions] = useState([]);
+  const [actions, setActions] = useState(actionsMemo);
 
   // contains indices to be removed from suggestionsMemo
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
@@ -155,6 +161,13 @@ function Data() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
+  // initialize actions from backend on page load
+  useEffect(() => {
+    if (actionsMemo.length > 0) setActions(actionsMemo);
+  }, [
+    actionsMemo,
+  ]);
+
   // updates suggestions and filters any removed or applied actions
   useEffect(() => {
     const filteredSuggestions = [...suggestionsMemo];
@@ -168,7 +181,7 @@ function Data() {
   ]);
 
   const addAction = i => {
-    setActions(actions.concat({ i, suggestions: suggestions[i] }));
+    setActions(actions.concat({ i, ...suggestions[i] }));
   };
 
   const removeAction = i => {
@@ -181,7 +194,7 @@ function Data() {
 
   // update pipeline on backend
   useEffect(() => {
-    api.pipelines.useUpdate(slug)({ actions });
+    if (datasetResponse) api.pipelines.useUpdate(slug)({ actions });
   }, [
     actions,
     slug,
@@ -302,11 +315,9 @@ function Data() {
   const actionsEl = (
     actions.map((action, idx) => {
       const {
-        suggestions: {
-          title,
-          action_payload: {
-            action_arguments,
-          },
+        title,
+        action_payload: {
+          action_arguments,
         },
       } = action;
       const numFeatures = action_arguments.length;
