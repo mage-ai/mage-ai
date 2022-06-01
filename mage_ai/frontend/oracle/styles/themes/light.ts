@@ -99,7 +99,13 @@ export default {
   },
   monotone: {
     black: BLACK,
+    blackTransparent: 'rgba(0, 0, 0, 0.6)',
     gray: GRAY,
+    grey100: '#F2F2F2',
+    grey200: '#D5D7DC',
+    grey300: '#B4B8C0',
+    grey400: '#70747C',
+    grey500: '#28292C',
     purple: PURPLE,
     white: WHITE,
   },

@@ -28,7 +28,7 @@ const DividerContainerStyle = styled.div<DividerProps>`
 
 const DividerStyle = styled.div<DividerProps>`
   height: 1px;
-  background-color: ${light.monotone.black};
+  background-color: ${light.monotone.grey200};
 `;
 
 const Divider = ({ short, ...props }: DividerProps) => (
