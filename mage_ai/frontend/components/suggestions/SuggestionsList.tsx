@@ -1,18 +1,19 @@
-import api from '@api';
+import { useMemo, useState, useEffect } from 'react';
+
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
 import Spacing from '@oracle/elements/Spacing';
-import { useMemo, useState, useEffect } from 'react';
 import SuggestionRow from './SuggestionRow';
+import api from '@api';
 
 export type SuggestionsListProps = {
   featureSet: any;
-  featureSetId: any;
+  featureSetId: string | string[];
 }
 
-const SuggestionsList = ({
+function SuggestionsList({
   featureSet,
   featureSetId,
-}: SuggestionsListProps) => {
+}: SuggestionsListProps) {
 
   const suggestionsMemo = useMemo(() => (
     (featureSet?.suggestions || [])
@@ -70,66 +71,60 @@ const SuggestionsList = ({
     featureSetId,
   ]);
 
-  const actionsEl = (
-    actions.map((action, idx) => {
-      const {
-        title,
-        action_payload: {
-          action_arguments,
-        },
-      } = action;
-      const numFeatures = action_arguments.length;
-
-      return (
-        <SuggestionRow
-          idx={idx}
-          key={`${idx}-${title}`}
-          name={title}
-          numFeatures={numFeatures}
-          onClose={() => removeAction(idx)}
-          showIdx
-        />
-      );
-    })
-  );
-
-  const suggestionsEl = (
-    <Accordion>
-      <AccordionPanel
-        noBackground
-        noPaddingContent
-        title={`${suggestions.length} suggested actions`}
-      >
-        {
-          suggestions.length > 0
-          ?
-          suggestions.map((suggestion, idx) => {
-            const { action_payload: { action_arguments } } = suggestion;
-            const numFeatures = action_arguments.length;
-
-            return (
-              <SuggestionRow
-                idx={idx}
-                key={`${idx}-${suggestion.title}`}
-                link={() => addAction(idx)}
-                name={suggestion.title}
-                numFeatures={numFeatures}
-                onClose={() => removeSuggestion(idx)}
-              />
-            )
-          })
-          :
-          <>{/* TODO: what do we render when no suggestions exist? */}</>
-        }
-      </AccordionPanel>
-    </Accordion>
-  );
-
   return (
     <>
-      {actionsEl}
+      {
+        actions.map((action, idx) => {
+          const {
+            title,
+            action_payload: {
+              action_arguments,
+            },
+          } = action;
+          const numFeatures = action_arguments.length;
+
+          return (
+            <SuggestionRow
+              idx={idx}
+              key={`${idx}-${title}`}
+              name={title}
+              numFeatures={numFeatures}
+              onClose={() => removeAction(idx)}
+              showIdx
+            />
+          );
+        })
+      }
       <Spacing mt={2} />
-      {suggestionsEl}
+      <Accordion>
+        <AccordionPanel
+          noBackground
+          noPaddingContent
+          title={`${suggestions.length} suggested actions`}
+        >
+          {
+            suggestions.length > 0
+            ?
+            suggestions.map((suggestion, idx) => {
+              const { action_payload: { action_arguments } } = suggestion;
+              const numFeatures = action_arguments.length;
+
+              return (
+                <SuggestionRow
+                  idx={idx}
+                  key={`${idx}-${suggestion.title}`}
+                  link={() => addAction(idx)}
+                  name={suggestion.title}
+                  numFeatures={numFeatures}
+                  onClose={() => removeSuggestion(idx)}
+                />
+              )
+            })
+            :
+            <>{/* TODO: what do we render when no suggestions exist? */}</>
+          }
+        </AccordionPanel>
+      </Accordion>
     </>
   );
 }
