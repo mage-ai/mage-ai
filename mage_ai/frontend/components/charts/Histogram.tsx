@@ -131,6 +131,13 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       ...marginOverride,
     };
 
+    if (showAxisLabels) {
+      margin = {
+        ...margin,
+        left: margin.left + UNIT,
+      }
+    }
+
     const dataSortedByCountDesc = sortData
       ? sortData(data)
       : data.sort((a, b) => b[1] - a[1]);
@@ -141,7 +148,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         .filter((dateTuple: any) => !!dateTuple[0])
       : dataSortedByCountDesc.slice(0, maxBarCount);
 
-    const xMax = width;
+    const xMax = width - margin.right;
     const yMax = height - margin.top;
 
     const xScaleDate = isDateType ? getXScaleDate(dataSample, xMax) : null;
@@ -269,7 +276,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       <div>
         <svg
           height={height + (margin.bottom * (isDateType ? 7.5 : 3))}
-          width={width + (showAxisLabels ? (margin.left + UNIT) : 0)}
+          width={width + (showAxisLabels ? (margin.left) : 0)}
         >
           <Group left={showAxisLabels ? margin.left : 0} top={margin.top + yAxisLabelOffset}>
             {dataSample.reduce((acc, tuple) => {
@@ -376,7 +383,7 @@ function HistogramContainer({
 
         {!loading && (
           <ParentSize>
-            {({ width, height }) => (
+            {({ height, width }) => (
               <Histogram
                 {...props}
                 height={height}

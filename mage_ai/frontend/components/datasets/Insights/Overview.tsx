@@ -46,6 +46,7 @@ export const HeaderStyle = styled.div`
 export const BodyStyle = styled.div<any>`
   ${props => !props.noPadding && `
     padding: ${PADDING}px;
+    padding-bottom: ${2 * PADDING}px;
   `}
   border-bottom-left-radius: ${BORDER_RADIUS_LARGE}px;
   border-bottom-right-radius: ${BORDER_RADIUS_LARGE}px;

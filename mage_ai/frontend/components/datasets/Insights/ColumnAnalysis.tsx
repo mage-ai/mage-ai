@@ -184,6 +184,9 @@ function ColumnAnalysis({
         height={UNIT * 50}
         key={column}
         large
+        margin={{
+          right: 2 * UNIT,
+        }}
         noPadding
         renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
           <Text small>
@@ -207,6 +210,7 @@ function ColumnAnalysis({
         showYAxisLabels
         showZeroes
         sortData={d => sortByKey(d, '[2]')}
+        width={600}
       />
     );
   }
