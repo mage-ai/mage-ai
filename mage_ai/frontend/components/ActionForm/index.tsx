@@ -77,6 +77,7 @@ function ActionForm({
   const {
     arguments: configArguments,
     description,
+    multiColumns,
     options,
     title,
   } = config;
@@ -86,6 +87,8 @@ function ActionForm({
     description: argumentsDescription,
     values: argumentsValues,
   } = configArguments || {};
+
+  const showColumns = !currentFeature && multiColumns;
 
   return (
     <ContainerStyle>
@@ -104,10 +107,10 @@ function ActionForm({
       <Divider />
 
       <Spacing p={2}>
-        {configArguments && (
+        {(configArguments || showColumns) && (
           <Spacing mb={3}>
             <Text monospace>
-              arguments
+              {showColumns ? 'columns' : 'arguments'}
             </Text>
 
             {argumentsDescription && (
@@ -116,7 +119,7 @@ function ActionForm({
               </Text>
             )}
 
-            {VALUES_TYPE_COLUMNS === argumentsValues && (
+            {(VALUES_TYPE_COLUMNS === argumentsValues || showColumns) && (
               <FlexContainer flexWrap="wrap">
                 {features.map(({
                   uuid,
@@ -252,7 +255,7 @@ function ActionForm({
           );
         })}
 
-        <Spacing mt={5}>
+        <Spacing mt={(configArguments || showColumns || options) ? 3 : 0}>
           <Button onClick={onSave}>
             Apply
           </Button>

@@ -15,6 +15,7 @@ const columns: {
   [key: string]: FormConfigType;
 } = {
   clean_column_name: {
+    multiColumns: true,
     title: 'Clean column name',
     description: 'TBD',
   },
@@ -79,13 +80,12 @@ const columns: {
     },
   },
   remove: {
+    multiColumns: true,
     title: 'Remove column',
     description: 'TBD',
-    arguments: {
-      values: COLUMNS,
-    },
   },
   reformat: {
+    multiColumns: true,
     title: 'Reformat values',
     description: 'TBD',
     options: {
