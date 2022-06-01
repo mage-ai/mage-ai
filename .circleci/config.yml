@@ -5,8 +5,21 @@ version: 2.1
 orbs:
   python: circleci/python@1.3.2
   docker: circleci/docker@1.5.0
+  node: circleci/node@5.0.2
 
 jobs:
+  build:
+    docker:
+      - image: 'cimg/base:stable'
+    steps:
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '14.19.1'
+      - run: yarn install
+      - run: yarn build
+
+
   test:
     docker:
       - image: cimg/python:3.8
