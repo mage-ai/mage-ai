@@ -361,18 +361,11 @@ function Data() {
   );
 
   const dataEl = (
-    <>
-      <SimpleDataTable
-        columnFlexNumbers={Array(columnHeaderSample.length).fill(1)}
-        columnHeaders={columnHeaderSample}
-        rowGroupData={[rowGroupDataSample]}
-      />
-      <BaseTable
-        columnHeaders={columnHeaderSample}
-        columnTitles={columns}
-        rowGroupData={rows}
-      />
-    </>
+    <BaseTable
+      columnHeaders={columnHeaderSample}
+      columnTitles={columns}
+      rowGroupData={rows}
+    />
   );
 
   // Old app used [2, 1, 1]
