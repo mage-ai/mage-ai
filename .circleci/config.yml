@@ -8,7 +8,7 @@ orbs:
   node: circleci/node@5.0.2
 
 jobs:
-  build:
+  build_frontend:
     docker:
       - image: 'cimg/base:stable'
     steps:
@@ -17,8 +17,30 @@ jobs:
           install-yarn: true
           node-version: '14.19.1'
       - run: yarn install
-      - run: yarn build
+      - run: yarn export
 
+  export_frontend:
+    docker:
+      - image: 'cimg/base:stable'
+    steps: 
+      - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '14.19.1'
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:jJQCK2XAG9o4fA+HBb4h/O/6JOL+PlCU+NjTIwLqwas ci@mage.ai"
+      - run: yarn install
+      - run: yarn export_prod
+      - run:
+          name: Update frontend build
+          command: |
+            git config user.email "ci@mage.ai"
+            git config user.name "Circle CI"
+            git checkout master
+            git add mage_ai/server/frontend_dist
+            git commit -m "[CI] Update production build"
+            git push origin master
 
   test:
     docker:
@@ -36,3 +58,9 @@ workflows:
   build_and_test:
     jobs:
       - test
+      - build_frontend
+      - export_frontend:
+          filters:
+            branches:
+              only:
+                - master
