@@ -158,15 +158,13 @@ def infer_object_type(series, kwargs):
 
 def infer_column_types(df, **kwargs):
     columns = [df[col] for col in df.columns]
-    column_names = [df.columns]
-    dtypes = [df.dtypes]
     kwarg_list = [kwargs] * len(df.columns)
     ctypes = {}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
-        types = run_parallel_multiple_args(infer_column_type, columns, column_names, dtypes, kwarg_list)
+        types = run_parallel_multiple_args(infer_column_type, columns, df.columns, df.dtypes, kwarg_list)
     else:
-        types = map(infer_column_type, columns, column_names, dtypes, kwarg_list)
-    for col, dtype in zip(column_names, types):
+        types = map(infer_column_type, columns, df.columns, df.dtypes, kwarg_list)
+    for col, dtype in zip(df.columns, types):
         ctypes[col] = dtype
     return ctypes
