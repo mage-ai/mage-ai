@@ -7,7 +7,7 @@ Mage AI cleans your data using a single Python library.
 1. [Installation](#installation)
 1. [Getting Started](#getting-started)
 2. [Usage](#usage)
-3. [Contribute](#to-contribute)
+3. [To Contribute](#to-contribute)
 
 ## Introduction
 Mage AI aims to simplify data pre-processing. With a few lines of code, you can:
