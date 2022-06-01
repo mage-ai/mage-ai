@@ -11,6 +11,7 @@ import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionsTable from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
@@ -109,6 +110,26 @@ function Feature() {
     Router.push('/datasets');
   };
 
+  const headEl = (
+    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+      <Button 
+        onClick={viewColumns}
+      >
+        <Text bold> Datasets view </Text>
+      </Button>
+    </FlexContainer>
+  );
+
+  const columnValuesTableEl = (
+    <SimpleDataTable
+      columnFlexNumbers={[1, 1]}
+      columnHeaders={[{ label: 'Column values' }]}
+      rowGroupData={[{
+        rowData: sampleRowData,
+        title: `${featureUUID} (${columnType})`,
+      }]}
+    />
+  )
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -167,6 +188,7 @@ function Feature() {
     <Tabs
       bold
       defaultKey={tab}
+      large
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
@@ -251,14 +273,12 @@ function Feature() {
       </Spacing>
 
       <Spacing mt={UNIT} />
-      <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-        <Button
-          onClick={viewColumns}
-        >
-          <Text bold>Datasets view</Text>
-        </Button>
-      </FlexContainer>
-      <Spacing mt={UNIT} />
+      {headEl}
+      <SuggestionsTable
+        featureSet={featureSet}
+        featureSetId={featureSetId}
+      />
+      <Spacing mt={4} />
       {tabsEl}
     </Layout>
   );
