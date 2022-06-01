@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
-import Accordion from '@oracle/components/Accordion';
-import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import ActionForm from '@components/ActionForm';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -13,12 +11,12 @@ import Overview from '@components/datasets/Insights/Overview';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import SuggestionRow from '@components/actions/SuggestionRow';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
+import SuggestionsTable from '@components/actions/SuggestionsTable';
 
 function Data() {
   const router = useRouter()
@@ -259,61 +257,30 @@ function Data() {
     </FlexContainer>
   );
 
-
-
-  const actionsEl = (
-    actions.map((action, idx) => {
-      const {
-        title,
-        action_payload: {
-          action_arguments,
-        },
-      } = action;
-      const numFeatures = action_arguments.length;
-
-      return (
-        <SuggestionRow
-          idx={idx}
-          key={`${idx}-${title}`}
-          name={title}
-          numFeatures={numFeatures}
-          onClose={() => removeAction(idx)}
-          showIdx
-        />
-      );
-    })
+  const dataEl = (
+    <SimpleDataTable
+      columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
+      columnHeaders={columnHeaderSample} 
+      rowGroupData={[rowGroupDataSample]}
+    />
   );
 
-  const suggestionsEl = (
-    <Accordion>
-      <AccordionPanel
-        noBackground
-        noPaddingContent
-        title={`${suggestions.length} suggested actions`}
-      >
-        {
-          suggestions.length > 0
-          ?
-          suggestions.map((suggestion, idx) => {
-            const { action_payload: { action_arguments } } = suggestion;
-            const numFeatures = action_arguments.length;
+  // Old app used [2, 1, 1]
+  const metricsEl = (
+    <SimpleDataTable
+      columnFlexNumbers={[1, 1]}
+      columnHeaders={[{ label: 'Quality Metrics' }]}
+      rowGroupData={[metricSample]}
+    />
+  );
 
-            return (
-              <SuggestionRow
-                idx={idx}
-                key={`${idx}-${suggestion.title}`}
-                link={() => addAction(idx)}
-                name={suggestion.title}
-                numFeatures={numFeatures}
-                onClose={() => removeSuggestion(idx)}
-              />
-            )
-          })
-          :
-          <>{/* TODO: what do we render when no suggestions exist? */}</>
-        }
-      </AccordionPanel>
-    </Accordion>
+  // Old app used: [1, 5]
+  const statsEl = (
+    <SimpleDataTable
+      columnFlexNumbers={[1, 1, 1]}
+      columnHeaders={[{ label: 'Statistics' }]}
+      rowGroupData={[statSample]}
+    />
   );
 
   const reportsEl = (
@@ -447,9 +414,13 @@ function Data() {
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      {actionsEl}
-      <Spacing mt={2} />
-      {suggestionsEl}
+      <SuggestionsTable
+        actions={actions}
+        onAddAction={addAction}
+        onRemoveAction={removeAction}
+        onRemoveSuggestion={removeSuggestion}
+        suggestions={suggestions}
+      />
       <Spacing mt={2} />
       {tabsEl}
     </Layout>
