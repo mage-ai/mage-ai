@@ -6,7 +6,7 @@ import re
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
-STRING_TYPE_THRESHOLD = 0.3
+STRING_TYPE_MATCHES_THRESHOLD = 0.3
 
 CATEGORY = 'category'
 CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
@@ -122,11 +122,11 @@ def infer_object_type(series, kwargs):
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_emails / length >= STRING_TYPE_THRESHOLD:
+                if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
                     mdtype = EMAIL
-                elif correct_phone_nums / length >= STRING_TYPE_THRESHOLD:
+                elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD:
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes / length >= STRING_TYPE_THRESHOLD:
+                elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD:
                     mdtype = ZIP_CODE
                 elif series_nunique == 2:
                     mdtype = TRUE_OR_FALSE
