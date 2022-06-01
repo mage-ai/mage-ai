@@ -17,7 +17,6 @@ export type BreadcrumbType = {
   linkProps?: LinkProps;
   onClick?: () => void;
   selected?: boolean;
-  xlarge?: boolean;
 };
 
 function Breadcrumb({
@@ -31,7 +30,6 @@ function Breadcrumb({
   linkProps,
   onClick,
   selected,
-  xlarge,
 }: BreadcrumbType) {
   const buildEl = (textOnly: boolean = false) => (
     <FlexContainer alignItems="center">
@@ -40,7 +38,7 @@ function Breadcrumb({
           {!textOnly && label}
 
           {textOnly && (
-            <Text bold primary={!selected} xlarge={xlarge}>
+            <Text bold primary={!selected} xlarge={large}>
               {label}
             </Text>
           )}
@@ -58,8 +56,8 @@ function Breadcrumb({
     ...linkProps,
     block: true,
     bold: bold || selected,
-    large,
     sameColorAsText: !highlighted,
+    xlarge: large,
   };
 
   return (
