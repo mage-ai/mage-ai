@@ -1,11 +1,9 @@
 /* eslint-disable react/jsx-key */
 import React, { useEffect, useMemo, useState} from 'react'
-
 import { useBlockLayout, useTable } from 'react-table'
 
 
 import { DataTableColumn, DataTableRow } from './types';
-import Text from '@oracle/elements/Text';
 
   export type DataTableProps = {
     children?: any;
@@ -68,7 +66,6 @@ import Text from '@oracle/elements/Text';
         headers.push(rowValues);
       });
       setColumn(headers);
-      console.log('Parsed:', headers);
     }
   }, [columnHeaders, columnTitles]);
 
@@ -85,12 +82,8 @@ import Text from '@oracle/elements/Text';
           values.push(rowValues);
         });
         setRow(values);
-        console.log('Parsed Rows:', values);
       }
     }, [columnTitles, rowGroupData]);
-
-  console.log('Sample:', columnSample);
-  console.log('Row group data', rowGroupData)
 
   const {
     getTableProps,
@@ -103,7 +96,7 @@ import Text from '@oracle/elements/Text';
       columns: column || columnSample,
       data: row || dataSample,
     },
-    useBlockLayout,
+    // useBlockLayout,
     );
 
   // TODO: Base template, add styling later.

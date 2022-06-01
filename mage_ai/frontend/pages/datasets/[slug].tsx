@@ -367,7 +367,6 @@ function Data() {
         columnHeaders={columnHeaderSample}
         rowGroupData={[rowGroupDataSample]}
       />
-      console.log(rowGroupDataSample)
       <BaseTable
         columnHeaders={columnHeaderSample}
         columnTitles={columns}
