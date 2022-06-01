@@ -20,7 +20,10 @@ import Text from '@oracle/elements/Text';
     columnTitles,
   }: any) {
 
-  const [column, setColumn] = useState();
+  const [column, setColumn] = useState([]);
+  const [row, setRow] = useState();
+
+  // Keep these samples in due to undefined errors.
   const dataSample = useMemo(
     () => [
       {
@@ -53,11 +56,10 @@ import Text from '@oracle/elements/Text';
     [],
   );
 
-  // Parse into the form 
   useEffect(() => {
     if (columnHeaders) {
       const headers = [];
-      columnHeaders.map(({label='none'}, i=0) => {
+      columnHeaders.map(({label='none'}, i) => {
         const rowValues =
           {
             Header: label,
@@ -68,9 +70,27 @@ import Text from '@oracle/elements/Text';
       setColumn(headers);
       console.log('Parsed:', headers);
     }
-  }, [columnHeaders]);
+  }, [columnHeaders, columnTitles]);
+
+    useEffect(() => {
+      if (rowGroupData) {
+        const values = [];
+        rowGroupData.map((rows) => {
+          const rowValues = {};
+          rows.map((cell, j) => {
+            const key = columnTitles[j];
+            !(key in rowValues) && (rowValues.key = {})
+            rowValues[key] = cell;
+          });
+          values.push(rowValues);
+        });
+        setRow(values);
+        console.log('Parsed Rows:', values);
+      }
+    }, [columnTitles, rowGroupData]);
 
   console.log('Sample:', columnSample);
+  console.log('Row group data', rowGroupData)
 
   const {
     getTableProps,
@@ -81,11 +101,12 @@ import Text from '@oracle/elements/Text';
   } = useTable(
     { 
       columns: column || columnSample,
-      data: dataSample,
+      data: row || dataSample,
     },
-    // useBlockLayout,
+    useBlockLayout,
     );
 
+  // TODO: Base template, add styling later.
   return (
     <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
       <thead>

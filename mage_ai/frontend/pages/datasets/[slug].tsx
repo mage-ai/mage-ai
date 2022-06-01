@@ -23,8 +23,8 @@ import { pluralize } from '@utils/string';
 
 function Data() {
 
-  const router = useRouter()
-  const { slug } = router.query
+  const router = useRouter();
+  const { slug } = router.query;
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
@@ -367,10 +367,11 @@ function Data() {
         columnHeaders={columnHeaderSample}
         rowGroupData={[rowGroupDataSample]}
       />
+      console.log(rowGroupDataSample)
       <BaseTable
         columnHeaders={columnHeaderSample}
         columnTitles={columns}
-        rowGroupData={[rowGroupDataSample]}
+        rowGroupData={rows}
       />
     </>
   );
