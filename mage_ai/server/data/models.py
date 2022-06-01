@@ -146,6 +146,7 @@ class FeatureSet(Model):
             sample_data = self.sample_data
             datetime_cols = sample_data.select_dtypes(include=['datetime64']).columns.tolist()
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
+            # Filter sample data
             if column is not None:
                 sample_data_dict = sample_data[[column]].to_dict('list')
             else:
@@ -153,12 +154,19 @@ class FeatureSet(Model):
                     columns=sample_data.columns.tolist(),
                     rows=sample_data.to_numpy().tolist(),
                 )
+            # Filter suggestions
+            suggestions = self.suggestions
+            if column is not None:
+                suggestions = [s for s in suggestions
+                               if column in s['action_payload']['action_arguments']]
+                for s in suggestions:
+                    s['action_payload']['action_arguments'] = [column]
             obj = merge_dict(obj, dict(
                 pipeline=self.pipeline.to_dict(),
                 sample_data=sample_data_dict,
                 statistics=self.statistics,
                 insights=self.insights,
-                suggestions=self.suggestions,
+                suggestions=suggestions,
             ))
         return obj
 
