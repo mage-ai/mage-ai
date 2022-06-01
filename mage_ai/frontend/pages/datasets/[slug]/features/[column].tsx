@@ -273,13 +273,6 @@ function Feature() {
       </Spacing>
 
       <Spacing mt={UNIT} />
-      <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-        <Button
-          onClick={viewColumns}
-        >
-          <Text bold>Datasets view</Text>
-        </Button>
-      </FlexContainer>
       {headEl}
       <SuggestionsTable
         featureSet={featureSet}
