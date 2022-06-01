@@ -1,4 +1,4 @@
-![MageLogo](https://user-images.githubusercontent.com/99209078/171298628-d8f34d5b-9771-404d-947c-f446ce083215.png)
+![Mage Purple](https://user-images.githubusercontent.com/99209078/171309703-6bbd25c4-9afb-437e-9c5b-363be5ea09b2.png)
 # Mage AI
 Mage AI cleans your data using a single Python library.
 
@@ -11,14 +11,16 @@ Mage AI cleans your data using a single Python library.
 
 ## Introduction
 Mage AI aims to simplify data pre-processing. With a few lines of code, you can:
-- Generate data cleaning suggestions in your local notebook.
-- Display feature-specific statistics and visualizations.
-- Easily detect "holes" and anomalies in your data.
+- Create a data cleaning pipeline and clean your data with a few clicks.
+- Automatically generate cleaning suggestions in your local notebook
+- Display feature-specific statistics and visualizations
+- Easily detect "holes" and anomalies in your data
 
 Coming soon:
+- Export data cleaning pipeline and integrate into your production data pipelines.
 - Access faster data analysis and cleaning using Mage's public cloud server.
+- Support user defined cleaning functions within the UI.
 - Perform no-code data transformations within the UI.
-- Export cleaned data into your ML pipeline.
 
 ## Installation
 
@@ -42,9 +44,9 @@ An example dashboard connected to purchasing data shows `Suggested actions` and 
 
 ![image](https://user-images.githubusercontent.com/99209078/171302101-1c0de1a6-6c40-46cc-9563-73734e7fe2f5.png)
 
-At a glance, `Reports` provides feature-specific statistics that make it obvious if there are missing, duplicates, or anomalies in your data.
+In `Suggested actions`, you can edit and apply suggested data cleaning actions. `Reports` provides feature-specific reports statistics that make it obvious if there are missing, duplicates, or anomalies in your data.
 
-In addition to data transformations, the dashboard display `Visualizations` and correlations between your features, helping you locate data leakage. Since Mage is open source, these charts and visualizations are customizable. 😉
+In addition, the dashboard displays column-specific summaries, further suggestions, and `Visualizations`. These help you identify correlations between your features, which sometimes leads to data leakage. Since Mage is open source, these charts and visualizations are customizable. 😉
 
 <img width="752" alt="Screen Shot 2022-05-31 at 3 14 52 PM" src="https://user-images.githubusercontent.com/99209078/171302044-fedd4633-3a8c-42ac-87d4-f18dd48994d9.png">
 
