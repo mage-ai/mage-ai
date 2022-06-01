@@ -59,7 +59,7 @@ class ReformatValuesSubRule():
 class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     UPPERCASE_PATTERN = r'^[^a-z]*$'
     LOWERCASE_PATTERN = r'^[^A-Z]*$'
-    NON_ALPH_PATTERN = r'[^A-Za-z\s\t\n\r]'
+    NON_ALPH_PATTERN = r'[^A-Za-z]'
     ALPHABETICAL_TYPES = frozenset((CATEGORY_HIGH_CARDINALITY, CATEGORY, TEXT, EMAIL))
     NON_ALPH_UB = 0.4
     ALPH_RATIO_LB = 0.6

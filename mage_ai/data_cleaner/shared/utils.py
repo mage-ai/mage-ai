@@ -10,7 +10,8 @@ import numpy as np
 
 
 def clean_series(series, column_type, dropna=True):
-    series_cleaned = series.map(
+    series_cleaned = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
+    series_cleaned = series_cleaned.map(
         lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
     )
     if dropna:
@@ -36,9 +37,6 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned = series_cleaned.astype(float)
         if is_percent:
             series_cleaned /= 100
-    elif column_type == DATETIME and type(first_item) is str:
-        series_cleaned = pd.to_datetime(series, infer_datetime_format=True, errors='coerce')
-
     return series_cleaned
 
 

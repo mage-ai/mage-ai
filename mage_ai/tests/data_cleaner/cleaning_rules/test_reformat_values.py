@@ -242,25 +242,6 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have mixed capitalization formats: '
-                        '[\'date3\', \'date4\']. '
-                        'Reformat these columns with fully lowercase text to improve data quality.',
-                action_payload=dict(
-                    action_type='reformat',
-                    action_arguments=['date3', 'date4'],
-                    axis='column',
-                    action_options = {
-                        'reformat': 'caps_standardization',
-                        'capitalization': 'lowercase'
-                    },
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                ),
-                status='not_applied',
-            ),
-            dict(
-                title='Reformat values',
                 message='The following columns have date values: '
                         '[\'date2\', \'date3\', \'date4\', \'date5\']. '
                         'Reformat these columns as datetime objects to improve data quality.',

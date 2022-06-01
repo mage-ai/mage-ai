@@ -30,4 +30,4 @@ def sample(arr):
 
 def subtract(arr1, arr2):
     arr2_lookup = set(arr2)
-    yield from (i for i in arr1 if i not in arr2_lookup)
+    return [i for i in arr1 if i not in arr2_lookup]
