@@ -196,7 +196,7 @@ function Data() {
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+    <FlexContainer justifyContent="flex-end" >
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
