@@ -1,5 +1,5 @@
 import Router, { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import ActionForm from '@components/ActionForm';
 import Button from '@oracle/elements/Button';
@@ -18,6 +18,7 @@ import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
+import SuggestionsTable from '@components/actions/SuggestionsTable';
 
 function Feature() {
   const router = useRouter();
@@ -109,6 +110,82 @@ function Feature() {
     Router.push('/datasets');
   };
 
+  const suggestionsMemo = useMemo(() => (
+    (featureSet?.suggestions || [])
+  ), [
+    featureSet?.suggestions,
+  ]);
+
+  const actionsMemo = useMemo(() => (
+    (featureSet?.pipeline?.actions || [])
+  ), [
+    featureSet?.pipeline?.actions,
+  ]);
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [actions, setActions] = useState(actionsMemo);
+  const [removedSuggestions, setRemovedSuggestions] = useState([]);
+
+  // initialize actions from backend on page load
+  useEffect(() => {
+    if (actionsMemo.length > 0) setActions(actionsMemo);
+  }, [
+    actionsMemo,
+  ]);
+
+  // updates suggestions and filters any removed or applied actions
+  useEffect(() => {
+    const filteredSuggestions = [...suggestionsMemo];
+    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
+    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
+    setSuggestions(filteredSuggestions);
+  }, [
+    actions,
+    suggestionsMemo,
+    removedSuggestions,
+  ]);
+
+  const addAction = i => {
+    setActions(actions.concat({ i, ...suggestions[i] }));
+  };
+
+  const removeAction = i => {
+    setActions(actions.filter((x, idx) => i !== idx));
+  }
+
+  const removeSuggestion = i => {
+    setRemovedSuggestions(removedSuggestions.concat(i));
+  };
+
+  // update pipeline on backend
+  useEffect(() => {
+    if (featureSet) api.pipelines.useUpdate(featureSetId)({ actions });
+  }, [
+    actions,
+    featureSet,
+    featureSetId,
+  ]);
+
+  const headEl = (
+    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+      <Button 
+        onClick={viewColumns}
+      >
+        <Text bold> Datasets view </Text>
+      </Button>
+    </FlexContainer>
+  );
+
+  const columnValuesTableEl = (
+    <SimpleDataTable
+      columnFlexNumbers={[1, 1]}
+      columnHeaders={[{ label: 'Column values' }]}
+      rowGroupData={[{
+        rowData: sampleRowData,
+        title: `${featureUUID} (${columnType})`,
+      }]}
+    />
+  )
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -258,6 +335,14 @@ function Feature() {
           <Text bold>Datasets view</Text>
         </Button>
       </FlexContainer>
+      {headEl}
+      <SuggestionsTable
+        actions={actions}
+        onAddAction={addAction}
+        onRemoveAction={removeAction}
+        onRemoveSuggestion={removeSuggestion}
+        suggestions={suggestions}
+      />
       <Spacing mt={UNIT} />
       {tabsEl}
     </Layout>
