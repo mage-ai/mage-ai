@@ -22,16 +22,16 @@ export type OnClickRowProps = {
   uuid: string;
 };
 
-type ColumnHeaderType = {
+export type ColumnHeaderType = {
   Icon?: any;
   label: string;
 };
 
-type RowGroupDataType = {
+export type RowGroupDataType = {
   title?: string;
   rowData: {
     columnValues: (string | number | any)[];
-    uuid: string | number;
+    uuid?: string | number;
   }[];
 };
 
@@ -59,7 +59,7 @@ function SimpleDataTable({
   onClickRow,
   onHoverRow,
   renderRowCellByIndex,
-  rowGroupData,
+  rowGroupData = [],
   selectedRowIndexes,
   small,
   flex,
@@ -107,7 +107,7 @@ function SimpleDataTable({
         </FlexContainer>
       </ColumnHeaderRowStyle>
 
-      {rowGroupData.map(({
+      {rowGroupData && rowGroupData.map(({
         title,
         rowData,
       }: any, rowGroupIndex: number) => {

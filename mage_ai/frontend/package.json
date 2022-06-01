@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build && next export",
+    "build": "next build",
+    "export": "next build && next export",
+    "export_prod": "next build && next export -o ../server/frontend_dist",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",

@@ -48,9 +48,8 @@ const TemplateWithTheme = ({ children, ...props }) => (
       columnFlexNumbers={[1,1,1,1,1]}
       columnHeaders={ColumnHeaderSample}
       rowGroupData={[rowGroupDataSample]} 
-      {...props}>
-      {children}
-    </SimpleDataTable>
+      {...props}
+    />
   </ThemeBlock>
 );
 

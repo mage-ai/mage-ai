@@ -9,11 +9,12 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Overview from '@components/datasets/Insights/Overview';
 import Select from '@oracle/elements/Inputs/Select';
-import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionsList from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
+import TransformerActionType from '@interfaces/TransformerActionType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -56,9 +57,9 @@ function Data() {
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
-  const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
-  const [metricSample, setMetricSample] = useState({});
-  const [statSample, setStatSample] = useState({});
+  const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
+  const [metricSample, setMetricSample] = useState<RowGroupDataType>();
+  const [statSample, setStatSample] = useState<RowGroupDataType>();
 
   const [suggestions, setSuggestions] = useState([]);
 
@@ -68,7 +69,7 @@ function Data() {
   // contains indices to be removed from suggestionsMemo
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
 
-  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
+  const [rowGroupDataSample, setRowGroupDataSample] = useState<RowGroupDataType>();
 
   const metricsKeys = [
     'avg_null_value_count',
@@ -255,7 +256,7 @@ function Data() {
           <SimpleDataTable
             columnFlexNumbers={[1, 1]}
             columnHeaders={[{ label: 'Quality Metrics' }]}
-            rowGroupData={[metricSample]}
+            rowGroupData={metricSample && [metricSample]}
           />
         </Flex>
         <Spacing ml={8} />
@@ -263,7 +264,7 @@ function Data() {
           <SimpleDataTable
             columnFlexNumbers={[1, 1, 1]}
             columnHeaders={[{ label: 'Statistics' }]}
-            rowGroupData={[statSample]}
+            rowGroupData={statSample && [statSample]}
           />
         </Flex>
       </FlexContainer>
@@ -291,7 +292,7 @@ function Data() {
         <SimpleDataTable
           columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
           columnHeaders={columnHeaderSample}
-          rowGroupData={[rowGroupDataSample]}
+          rowGroupData={rowGroupDataSample && [rowGroupDataSample]}
         />
       </Tab>
       <Tab key="reports" label="Reports">
@@ -309,7 +310,7 @@ function Data() {
     </Tabs>
   );
 
-  const [actionPayload, setActionPayload] = useState({});
+  const [actionPayload, setActionPayload] = useState<TransformerActionType>();
   const actionType = actionPayload?.action_type;
   const saveAction = (data) => {
     const updatedAction = {
@@ -340,6 +341,7 @@ function Data() {
 
         <Spacing mt={5}>
           <Select
+            // @ts-ignore
             compact
             onChange={e => setActionPayload(JSON.parse(e.target.value))}
             value={actionType}
