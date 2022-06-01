@@ -110,62 +110,6 @@ function Feature() {
     Router.push('/datasets');
   };
 
-  const suggestionsMemo = useMemo(() => (
-    (featureSet?.suggestions || [])
-  ), [
-    featureSet?.suggestions,
-  ]);
-
-  const actionsMemo = useMemo(() => (
-    (featureSet?.pipeline?.actions || [])
-  ), [
-    featureSet?.pipeline?.actions,
-  ]);
-
-  const [suggestions, setSuggestions] = useState([]);
-  const [actions, setActions] = useState(actionsMemo);
-  const [removedSuggestions, setRemovedSuggestions] = useState([]);
-
-  // initialize actions from backend on page load
-  useEffect(() => {
-    if (actionsMemo.length > 0) setActions(actionsMemo);
-  }, [
-    actionsMemo,
-  ]);
-
-  // updates suggestions and filters any removed or applied actions
-  useEffect(() => {
-    const filteredSuggestions = [...suggestionsMemo];
-    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
-    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
-    setSuggestions(filteredSuggestions);
-  }, [
-    actions,
-    suggestionsMemo,
-    removedSuggestions,
-  ]);
-
-  const addAction = i => {
-    setActions(actions.concat({ i, ...suggestions[i] }));
-  };
-
-  const removeAction = i => {
-    setActions(actions.filter((x, idx) => i !== idx));
-  }
-
-  const removeSuggestion = i => {
-    setRemovedSuggestions(removedSuggestions.concat(i));
-  };
-
-  // update pipeline on backend
-  useEffect(() => {
-    if (featureSet) api.pipelines.useUpdate(featureSetId)({ actions });
-  }, [
-    actions,
-    featureSet,
-    featureSetId,
-  ]);
-
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
       <Button 
@@ -244,6 +188,7 @@ function Feature() {
     <Tabs
       bold
       defaultKey={tab}
+      large
       noBottomBorder={false}
       onChange={key => setTab(key)}
     >
@@ -337,13 +282,10 @@ function Feature() {
       </FlexContainer>
       {headEl}
       <SuggestionsTable
-        actions={actions}
-        onAddAction={addAction}
-        onRemoveAction={removeAction}
-        onRemoveSuggestion={removeSuggestion}
-        suggestions={suggestions}
+        featureSet={featureSet}
+        featureSetId={featureSetId}
       />
-      <Spacing mt={UNIT} />
+      <Spacing mt={4} />
       {tabsEl}
     </Layout>
   );

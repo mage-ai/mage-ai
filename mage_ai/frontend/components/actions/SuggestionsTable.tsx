@@ -1,22 +1,74 @@
+import api from '@api';
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
 import Spacing from '@oracle/elements/Spacing';
+import { useMemo, useState, useEffect } from 'react';
 import SuggestionRow from './SuggestionRow';
 
 export type SuggestionsTableProps = {
-  actions: any[];
-  onAddAction: (idx: number) => void;
-  onRemoveAction: (idx: number) => void;
-  onRemoveSuggestion: (idx: number) => void;
-  suggestions: any[];
+  featureSet: any;
+  featureSetId: any;
 }
 
 const SuggestionsTable = ({
-  actions,
-  suggestions,
-  onAddAction,
-  onRemoveAction,
-  onRemoveSuggestion,
+  featureSet,
+  featureSetId,
 }: SuggestionsTableProps) => {
+
+  const suggestionsMemo = useMemo(() => (
+    (featureSet?.suggestions || [])
+  ), [
+    featureSet?.suggestions,
+  ]);
+
+  const actionsMemo = useMemo(() => (
+    (featureSet?.pipeline?.actions || [])
+  ), [
+    featureSet?.pipeline?.actions,
+  ]);
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [actions, setActions] = useState(actionsMemo);
+  const [removedSuggestions, setRemovedSuggestions] = useState([]);
+
+  // initialize actions from backend on page load
+  useEffect(() => {
+    if (actionsMemo.length > 0) setActions(actionsMemo);
+  }, [
+    actionsMemo,
+  ]);
+
+  // updates suggestions and filters any removed or applied actions
+  useEffect(() => {
+    const filteredSuggestions = [...suggestionsMemo];
+    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
+    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
+    setSuggestions(filteredSuggestions);
+  }, [
+    actions,
+    suggestionsMemo,
+    removedSuggestions,
+  ]);
+
+  const addAction = i => {
+    setActions(actions.concat({ i, ...suggestions[i] }));
+  };
+
+  const removeAction = i => {
+    setActions(actions.filter((x, idx) => i !== idx));
+  }
+
+  const removeSuggestion = i => {
+    setRemovedSuggestions(removedSuggestions.concat(i));
+  };
+
+  // update pipeline on backend
+  useEffect(() => {
+    if (featureSet) api.pipelines.useUpdate(featureSetId)({ actions });
+  }, [
+    actions,
+    featureSet,
+    featureSetId,
+  ]);
 
   const actionsEl = (
     actions.map((action, idx) => {
@@ -34,7 +86,7 @@ const SuggestionsTable = ({
           key={`${idx}-${title}`}
           name={title}
           numFeatures={numFeatures}
-          onClose={() => onRemoveAction(idx)}
+          onClose={() => removeAction(idx)}
           showIdx
         />
       );
@@ -59,10 +111,10 @@ const SuggestionsTable = ({
               <SuggestionRow
                 idx={idx}
                 key={`${idx}-${suggestion.title}`}
-                link={() => onAddAction(idx)}
+                link={() => addAction(idx)}
                 name={suggestion.title}
                 numFeatures={numFeatures}
-                onClose={() => onRemoveSuggestion(idx)}
+                onClose={() => removeSuggestion(idx)}
               />
             )
           })

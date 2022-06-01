@@ -156,44 +156,9 @@ function Data() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
 
-  // initialize actions from backend on page load
-  useEffect(() => {
-    if (actionsMemo.length > 0) setActions(actionsMemo);
-  }, [
-    actionsMemo,
-  ]);
+  // Report (Quality Metrics)
 
-  // updates suggestions and filters any removed or applied actions
-  useEffect(() => {
-    const filteredSuggestions = [...suggestionsMemo];
-    removedSuggestions.forEach(i => filteredSuggestions.splice(i, 1));
-    actions.forEach(({ i }) => filteredSuggestions.splice(i, 1));
-    setSuggestions(filteredSuggestions);
-  }, [
-    actions,
-    suggestionsMemo,
-    removedSuggestions,
-  ]);
-
-  const addAction = i => {
-    setActions(actions.concat({ i, ...suggestions[i] }));
-  };
-
-  const removeAction = i => {
-    setActions(actions.filter((x, idx) => i !== idx));
-  }
-
-  const removeSuggestion = i => {
-    setRemovedSuggestions(removedSuggestions.concat(i));
-  };
-
-  // update pipeline on backend
-  useEffect(() => {
-    if (datasetResponse) api.pipelines.useUpdate(slug)({ actions });
-  }, [
-    actions,
-    slug,
-  ]);
+  // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
   useEffect(() => {
@@ -415,13 +380,10 @@ function Data() {
       {headEl}
       <Spacing mt={2} />
       <SuggestionsTable
-        actions={actions}
-        onAddAction={addAction}
-        onRemoveAction={removeAction}
-        onRemoveSuggestion={removeSuggestion}
-        suggestions={suggestions}
+        featureSet={datasetResponse}
+        featureSetId={slug}
       />
-      <Spacing mt={2} />
+      <Spacing mt={4} />
       {tabsEl}
     </Layout>
   );
