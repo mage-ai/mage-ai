@@ -46,18 +46,6 @@ function Data() {
   const statistics = useMemo(() => datasetResponse?.statistics || [], [
     datasetResponse?.statistics,
   ]);
-
-  const suggestionsMemo = useMemo(() => (
-    (datasetResponse?.suggestions || [])
-  ), [
-    datasetResponse?.suggestions,
-  ]);
-
-  const actionsMemo = useMemo(() => (
-    (datasetResponse?.pipeline?.actions || [])
-  ), [
-    datasetResponse?.pipeline?.actions,
-  ]);
   
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
@@ -65,14 +53,6 @@ function Data() {
   const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
   const [metricSample, setMetricSample] = useState<RowGroupDataType>();
   const [statSample, setStatSample] = useState<RowGroupDataType>();
-
-  const [suggestions, setSuggestions] = useState([]);
-
-  // structured as [{ idx, action_data }]
-  const [actions, setActions] = useState(actionsMemo);
-
-  // contains indices to be removed from suggestionsMemo
-  const [removedSuggestions, setRemovedSuggestions] = useState([]);
 
   const [rowGroupDataSample, setRowGroupDataSample] = useState<RowGroupDataType>();
 
