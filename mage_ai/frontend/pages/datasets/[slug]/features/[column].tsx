@@ -7,7 +7,8 @@ import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
-import Select from "@oracle/elements/Inputs/Select";
+import Panel from '@oracle/components/Panel';
+import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
@@ -98,6 +99,9 @@ function Feature() {
       ],
     },
   ];
+  const noWarningMetrics = warningMetrics.every(
+    ({ columnValues }) => (typeof columnValues[1] === 'undefined'),
+  );
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
@@ -105,27 +109,6 @@ function Feature() {
     Router.push('/datasets');
   };
 
-
-  const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button
-        onClick={viewColumns}
-      >
-        <Text bold> Datasets view </Text>
-      </Button>
-    </FlexContainer>
-  );
-
-  const columnValuesTableEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Column values' }]}
-      rowGroupData={[{
-        rowData: sampleRowData,
-        title: `${featureUUID} (${columnType})`,
-      }]}
-    />
-  )
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -136,20 +119,17 @@ function Feature() {
     />
   );
 
-  const warnEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Warnings' }]}
-      rowGroupData={[{
-        rowData: warningMetrics,
-      }]}
-    />
-  );
-
   const dataEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {columnValuesTableEl}
+        <SimpleDataTable
+          columnFlexNumbers={[1, 1]}
+          columnHeaders={[{ label: 'Column values' }]}
+          rowGroupData={[{
+            rowData: sampleRowData,
+            title: `${featureUUID} (${columnType})`,
+          }]}
+        />
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
@@ -158,17 +138,6 @@ function Feature() {
     </FlexContainer>
   );
 
-  const visualizationEl = (
-    <ColumnAnalysis
-      column={featureUUID}
-      features={features}
-      insights={insightsColumn}
-      statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-      statisticsOverview={statisticsOverview}
-    />
-  )
-
-  // Metrics and Warnings
   const reportsEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
@@ -176,7 +145,20 @@ function Feature() {
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        {warnEl}
+        {noWarningMetrics
+          ?
+            <Panel fullHeight={false} headerTitle="Warnings">
+              <Text>There are no warnings.</Text>
+            </Panel>
+          :
+            <SimpleDataTable
+              columnFlexNumbers={[1, 1]}
+              columnHeaders={[{ label: 'Warnings' }]}
+              rowGroupData={[{
+                rowData: warningMetrics,
+              }]}
+            />
+        }
       </Flex>
     </FlexContainer>
   )
@@ -198,7 +180,13 @@ function Feature() {
       </Tab>
       <Tab key="visualizations" label="Visualizations">
         <Spacing my={3} />
-        {visualizationEl}
+        <ColumnAnalysis
+          column={featureUUID}
+          features={features}
+          insights={insightsColumn}
+          statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+          statisticsOverview={statisticsOverview}
+        />
       </Tab>
     </Tabs>
   )
@@ -239,7 +227,6 @@ function Feature() {
 
         <Spacing mt={5}>
           <Select
-            compact
             onChange={e => setActionPayload(JSON.parse(e.target.value))}
             value={actionType}
             width={UNIT * 20}
@@ -264,7 +251,13 @@ function Feature() {
       </Spacing>
 
       <Spacing mt={UNIT} />
-      {headEl}
+      <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+        <Button
+          onClick={viewColumns}
+        >
+          <Text bold>Datasets view</Text>
+        </Button>
+      </FlexContainer>
       <Spacing mt={UNIT} />
       {tabsEl}
     </Layout>

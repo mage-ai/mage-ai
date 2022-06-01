@@ -69,8 +69,6 @@ function ColumnAnalysis({
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
 
-  console.log('feature:', feature)
-
   const statsRowData = [
     {
       columnValues: ['Number of values', numberWithCommas(numberOfValues)],

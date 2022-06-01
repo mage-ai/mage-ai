@@ -14,8 +14,6 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
   const correlatedColumnsSeen = {};
   const correlationsRowData = [];
 
-  console.log('correlations:', correlations);
-
   correlations?.forEach(({
     correlations: correlations2,
     feature,

@@ -386,7 +386,6 @@ function Data() {
 
   const insightsOverview = datasetResponse?.['insights']?.[1] || {}
 
-
   const tabsEl = (
     <Tabs
       bold

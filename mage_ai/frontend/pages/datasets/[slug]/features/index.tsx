@@ -82,16 +82,22 @@ const ColumnView: NextPage = () => {
                   preventDefault
                 >
                   <RowCard
-                    columnFlexNumbers={[0.5, 0.2, 9, 2]}
+                    columnFlexNumbers={[0.5, 0.2, 9, 2, 1]}
                     noHorizontalPadding
                     secondary={i % 2 === 1}
                   >
                     <FlexContainer fullWidth justifyContent="center">
                       <Text>{i+1}</Text>
                     </FlexContainer>
+
                     <Column secondary />
-                    <Text maxWidth={UNIT*50} overflowWrap>
+
+                    <Text maxWidth={UNIT * 50} overflowWrap>
                       {colName}
+                    </Text>
+
+                    <Text maxWidth={UNIT * 20}>
+                      {colType}
                     </Text>
 
                     <Text
@@ -108,7 +114,7 @@ const ColumnView: NextPage = () => {
         </RowDataTable>
       </Spacing>
     </Layout>
-  )
-}
+  );
+};
 
-export default ColumnView
+export default ColumnView;

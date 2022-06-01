@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
