@@ -9,19 +9,16 @@ import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
-import Link from '@oracle/elements/Link';
 import Overview from '@components/datasets/Insights/Overview';
-import RowCard from '@oracle/components/RowCard';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionRow from '@components/actions/SuggestionRow';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
-import { Close } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { pluralize } from '@utils/string';
 
 function Data() {
   const router = useRouter()
@@ -262,55 +259,7 @@ function Data() {
     </FlexContainer>
   );
 
-  type ActionProps = {
-    idx: number;
-    link?: () => void;
-    name: string;
-    numFeatures: number;
-    onClose: () => void;
-    showIdx?: boolean;
-  }
 
-  const Action = ({
-    idx,
-    link,
-    name,
-    numFeatures,
-    onClose,
-    showIdx,
-  }: ActionProps) => (
-    <RowCard
-      columnFlexNumbers={[0.5, 0.5, 12]}
-    >
-      {link &&
-        <Link
-          bold
-          noHoverUnderline
-          onClick={link}
-        >
-          Apply
-        </Link>
-      }
-      {showIdx && <Text>{idx+1}</Text>}
-      <FlexContainer>
-        <Text>{name},</Text>
-        <Spacing mr={1} />
-        <Text secondary>{pluralize('feature', numFeatures)}</Text>
-      </FlexContainer>
-      <FlexContainer>
-        {/* TODO: add View Code & Preview here */}
-        <Button
-          basic
-          iconOnly
-          onClick={onClose}
-          padding="0px"
-          transparent
-        >
-          <Close muted />
-        </Button>
-      </FlexContainer>
-    </RowCard>
-  );
 
   const actionsEl = (
     actions.map((action, idx) => {
@@ -323,7 +272,7 @@ function Data() {
       const numFeatures = action_arguments.length;
 
       return (
-        <Action
+        <SuggestionRow
           idx={idx}
           key={`${idx}-${title}`}
           name={title}
@@ -350,7 +299,7 @@ function Data() {
             const numFeatures = action_arguments.length;
 
             return (
-              <Action
+              <SuggestionRow
                 idx={idx}
                 key={`${idx}-${suggestion.title}`}
                 link={() => addAction(idx)}
