@@ -59,7 +59,9 @@ const Dashboard: NextPage = () => {
                     quality,
                   } = statistics || {};
 
-                  const num_features = Object.keys(column_types).length;
+                  const num_features = column_types
+                    ? Object.keys(column_types).length
+                    : 0;
 
                   return (
                     <RowCard
@@ -88,7 +90,7 @@ const Dashboard: NextPage = () => {
                     </RowCard>
                   );
                 })
-                : 
+                :
                 <Spacing p={2}>
                   <Text>
                     {/* TODO: add link to README or something here? */}

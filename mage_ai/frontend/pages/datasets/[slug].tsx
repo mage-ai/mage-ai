@@ -3,6 +3,7 @@ import Router, { useRouter } from 'next/router';
 
 import Accordion from '@oracle/components/Accordion';
 import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
+import ActionForm from '@components/ActionForm';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
@@ -11,10 +12,12 @@ import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
 import Overview from '@components/datasets/Insights/Overview';
 import RowCard from '@oracle/components/RowCard';
+import Select from "@oracle/elements/Inputs/Select";
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
+import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { Close } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -44,17 +47,19 @@ function Data() {
     datasetResponse?.statistics,
   ]);
 
+  const [actionPayload, setActionPayload] = useState({});
+  const actionType = actionPayload?.action_type;
+
   const suggestionsMemo = useMemo(() => (
     (datasetResponse?.suggestions || [])
   ), [
     datasetResponse?.suggestions,
   ]);
-  
+
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
   const [columnHeaderSample, setColumnHeaderSample] = useState([{}]);
-  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
   const [metricSample, setMetricSample] = useState({});
   const [statSample, setStatSample] = useState({});
 
@@ -65,8 +70,20 @@ function Data() {
 
   // contains indices to be removed from suggestionsMemo
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
-  
-  // TODO: Move to const file 
+
+  const [rowGroupDataSample, setRowGroupDataSample] = useState({});
+
+  const saveAction = (data) => {
+    const updatedAction = {
+      action_payload: {
+        ...data,
+        action_type: actionType,
+        axis: 'row',
+      },
+    };
+    alert(JSON.stringify(updatedAction));
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
     'avg_null_value_count',
@@ -86,7 +103,7 @@ function Data() {
   // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
-  // Map text 
+  // Map text
   const humanReadableMapping = {
     'avg_invalid_value_count': 'Invalid values',
     'avg_null_value_count': 'Missing values',
@@ -120,7 +137,7 @@ function Data() {
   // Fetch Row values
   useEffect(() => {
     const cells = [];
-    rows.map((rowGroup:any) => { 
+    rows.map((rowGroup:any) => {
       cells.push({
         columnValues: rowGroup,
       });
@@ -232,7 +249,7 @@ function Data() {
     },{
       columnValues: ['Time series Features', countTimeseries],
     });
-    
+
     setStatSample({ rowData });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statistics]);
@@ -362,7 +379,7 @@ function Data() {
   const dataEl = (
     <SimpleDataTable
       columnFlexNumbers={ Array(columnHeaderSample.length).fill(1)}
-      columnHeaders={columnHeaderSample} 
+      columnHeaders={columnHeaderSample}
       rowGroupData={[rowGroupDataSample]}
     />
   );
@@ -436,13 +453,50 @@ function Data() {
         {visualizationEl}
       </Tab>
     </Tabs>
-  )
+  );
 
   return (
     <Layout
       centerAlign
       footer={<Spacing mt={UNIT} />}
     >
+      <Spacing mt={UNIT}>
+        {actionType && (
+          <ActionForm
+            actionType={actionType}
+            axis="row"
+            features={columns.map(col => ({ uuid: col }))}
+            onSave={() => saveAction(actionPayload)}
+            payload={actionPayload}
+            setPayload={setActionPayload}
+          />
+        )}
+
+        <Spacing mt={5}>
+          <Select
+            compact
+            onChange={e => setActionPayload({
+              action_type: e.target.value,
+            })}
+            value={actionType}
+            width={UNIT * 20}
+          >
+            <option value="">
+              New action
+            </option>
+
+            {Object.entries(actionsConfig.rows).map(([k, v]) => (
+              <option
+                key={k}
+                value={k}
+              >
+                {v.title}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+      </Spacing>
+
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
