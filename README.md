@@ -1,26 +1,26 @@
-## TLDR
+# TLDR
 Mage is an open-source data management platform
 that helps you
 <span style="text-decoration: underline"><b>clean data</b></span> and
 prepare it for training AI/ML models.
 
-## What does this do?
+# What does this do?
 The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
 can be hosted in your own cloud environment.
 
-## Why should I use it?
+# Why should I use it?
 Using a data cleaning tool enables you to quickly visualize data quality issues,
 easily fix them, and create repeatable data cleaning pipelines that can be used in
 production environments (e.g. online re-training, inference, etc).
 
-## Quick start
+# Quick start
 
-#### Install library
+### Install library
 ```bash
 $ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
 
-#### Launch tool
+### Launch tool
 Load your data, connect it to Mage, and launch the tool locally.
 
 
@@ -39,21 +39,72 @@ mage_ai.launch()
 
 Open [http://localhost:5000](http://localhost:5000) in your browser to access the tool locally.
 
-#### More resources
+### Cleaning data
+After building a data cleaning pipeline from the UI,
+you can clean your data anywhere you can execute Python code:
+
+```python
+import mage_ai
+import pandas as pd
+
+
+df = pd.read_csv('/path_to_data')
+mage_ai.clean(df, pipeline_uuid='name_of_cleaning_pipeline') #=> returns cleaned dataframe
+```
+
+### More resources
 
 - Here is a [step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 - Check out the [tutorials](docs/tutorials/README.md) to quickly become a master of magic.
 
-## [WIP] Features
+# Features
 
-- [WIP] Cleaning actions
-- [WIP] Charts
+### Data visualizations
+Inspect your data using different charts (e.g. time series, bar chart, box plot, etc.).
 
-## [WIP] Contributing
+<img
+  alt="dataset visualizations"
+  src="media/dataset-overview-visualizations.png"
+  style="border: 1px solid gray; border-radius: 8px;"
+/>
 
-#### [WIP] Development environment
+Here’s a list of available [charts](docs/charts/README.md).
 
-## Community
+### Reports
+Quickly diagnose data quality issues with summary reports.
+
+<img
+  alt="dataset reports"
+  src="media/dataset-overview-reports.png"
+  style="border: 1px solid gray; border-radius: 8px;"
+/>
+
+### Cleaning actions
+Easily add common cleaning functions to your pipeline with a few clicks.
+Cleaning actions include imputing missing values, reformatting strings, removing duplicates,
+and many more.
+
+Here’s a list of available [cleaning actions](docs/actions/README.md).
+
+<img
+  alt="cleaning actions"
+  src="media/dataset-overview-actions-preview.png"
+  style="border: 1px solid gray; border-radius: 8px;"
+/>
+
+### Suggestions
+WIP
+
+# Roadmap
+WIP
+
+# Contributing
+WIP
+
+### Development environment
+WIP
+
+# Community
 We love the community of Magers (`/ˈmājər/`);
 a group of mages who help each other realize their full potential!
 
@@ -65,6 +116,5 @@ For real-time news and fun memes, check out the Mage [Twitter](https://twitter.c
 To report bugs or add your awesome code for others to enjoy,
 visit [GitHub](https://github.com/mage-ai/mage-ai).
 
-## [WIP] Roadmap
-
-## [WIP] License
+# License
+WIP
