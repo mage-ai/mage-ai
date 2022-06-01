@@ -1,12 +1,11 @@
-/* eslint-disable react/jsx-key */
-import React, { useEffect, useMemo, useState} from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useBlockLayout, useTable } from 'react-table'
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Table.style';
+import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
 
   export type DataTableProps = {
     children?: any;
@@ -15,7 +14,6 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
   };
 
   function BaseTable({
-    children,
     columnHeaders,
     rowGroupData,
     columnTitles,
@@ -60,7 +58,7 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
   useEffect(() => {
     if (columnHeaders) {
       const headers = [];
-      columnHeaders.map(({label='none'}, i) => {
+      columnHeaders.map(({ label='none' }: any, i: string | number) => {
         const rowValues =
           {
             Header: label,
@@ -79,7 +77,7 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
           const rowValues = {};
           rows.map((cell, j) => {
             const key = columnTitles[j];
-            !(key in rowValues) && (rowValues.key = {})
+            !(key in rowValues) && (rowValues.key = {});
             rowValues[key] = cell;
           });
           values.push(rowValues);
@@ -104,7 +102,6 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
-    // Table: Relative, no overflow, outline in silver
     <TableStyle>
       <table 
           {...getTableProps()}
@@ -117,8 +114,10 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
         <thead>
           { headerGroups.map(headerGroup => (
+            // eslint-disable-next-line react/jsx-key
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
+                // eslint-disable-next-line react/jsx-key
                 <th
                   {...column.getHeaderProps()}
                   style={{
@@ -140,13 +139,14 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
 
         </thead>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
-        {/* <RowCellStyle> */}
         <tbody {...getTableBodyProps()}>
           {rows.map(row => {
-              prepareRow(row)
+              prepareRow(row);
               return (
+                // eslint-disable-next-line react/jsx-key
                 <tr {...row.getRowProps()}>
                   {row.cells.map(cell => (
+                    // eslint-disable-next-line react/jsx-key
                     <td
                       {...cell.getCellProps()}
                       style={{
@@ -167,10 +167,9 @@ import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Ta
                     </td>
                     ))}
                 </tr>
-              )
+              );
             })}
         </tbody>
-        {/* </RowCellStyle> */}
       </table>
     </TableStyle>
   );

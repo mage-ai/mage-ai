@@ -13,13 +13,10 @@ export const TableStyle = styled.div<any>`
   max-width: 100vw;
   height: 100%;
   max-height: 100vh;
-  // display: inline-block;
   overflow: auto;
 
   ${props => props.table &&`
     background-color: ${(props.theme.background || light.background).page};
-    // border-radius: ${BORDER_RADIUS_LARGE}px;
-    // border: 'solid 1px ${light.interactive.defaultBorder};  
   `}
 
   ${props => props.height && `
