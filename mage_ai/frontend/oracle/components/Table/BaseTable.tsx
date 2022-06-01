@@ -6,7 +6,7 @@ import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-// import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Table.style';
+import { TableStyle, ColumnHeaderRowStyle, RowCellStyle, CellStyled } from './Table.style';
 
   export type DataTableProps = {
     children?: any;
@@ -105,70 +105,74 @@ import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
     // Table: Relative, no overflow, outline in silver
-    // <TableStyle>
-    <table 
-        {...getTableProps()}
-        style={{
-          border: 'solid 1px #D8DCE3',
-          borderRadius: `${BORDER_RADIUS_LARGE}px`,
-        }}
-      >
-      {/* <ColumnHeaderRowStyle> */}
-      {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
-      <thead>
-        { headerGroups.map(headerGroup => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map(column => (
-              <th
-                    {...column.getHeaderProps()}
-                    style={{
-                      background: '#F9FAFC',
-                      border: 'solid 1px #D8DCE3',
-                    }}
-                  >
-                <TextStyle>
-                  <Text bold>
-                    {column.render('Header')}
-                  </Text> 
-                </TextStyle>
-              </th>
-                ))}
-          </tr>
-          ))}
-      </thead>
-      {/* </ColumnHeaderRowStyle> */}
-      {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
-      {/* <RowCellStyle> */}
-      <tbody {...getTableBodyProps()}>
-        {rows.map(row => {
-            prepareRow(row)
-            return (
-              <tr {...row.getRowProps()}>
-                {row.cells.map(cell => (
-                  <td
-                    {...cell.getCellProps()}
-                    style={{
-                      background: '#FBFCFD',
-                      border: 'solid 1px #FBFCFD',
-                      borderLeft: 'none',
-                      borderRight: 'none',
-                      padding: '10px',
-                     }}
-                  >
+    <TableStyle>
+      <table 
+          {...getTableProps()}
+          style={{
+            border: 'solid 1px #D8DCE3',
+            borderRadius: `${BORDER_RADIUS_LARGE}px`,
+            width: '100%',
+          }}
+        >
+        {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
+        <thead>
+          { headerGroups.map(headerGroup => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map(column => (
+                <th
+                  {...column.getHeaderProps()}
+                  style={{
+                    background: '#F9FAFC',
+                    border: 'solid 1px #D8DCE3',
+                  }}
+                >
+                  <RowCellStyle>
                     <TextStyle>
-                      <Text>
-                        {cell.render('Cell')}
+                      <Text bold>
+                        {column.render('Header')}
                       </Text>
                     </TextStyle>
-                  </td>
+                  </RowCellStyle>
+                </th>
                   ))}
-              </tr>
-            )
-          })}
-      </tbody>
-      {/* </RowCellStyle> */}
-    </table>
-    // </TableStyle>
+            </tr>
+            ))}
+
+        </thead>
+        {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
+        {/* <RowCellStyle> */}
+        <tbody {...getTableBodyProps()}>
+          {rows.map(row => {
+              prepareRow(row)
+              return (
+                <tr {...row.getRowProps()}>
+                  {row.cells.map(cell => (
+                    <td
+                      {...cell.getCellProps()}
+                      style={{
+                        background: '#FBFCFD',
+                        border: 'solid 1px #FBFCFD',
+                        borderLeft: 'none',
+                        borderRight: 'none',
+                        padding: '10px',
+                      }}
+                    >
+                      <CellStyled>
+                        <TextStyle>
+                          <Text>
+                            {cell.render('Cell')}
+                          </Text>
+                        </TextStyle>
+                      </CellStyled>
+                    </td>
+                    ))}
+                </tr>
+              )
+            })}
+        </tbody>
+        {/* </RowCellStyle> */}
+      </table>
+    </TableStyle>
   );
 }
 

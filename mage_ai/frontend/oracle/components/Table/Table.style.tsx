@@ -8,18 +8,18 @@ import { transition } from '@oracle/styles/mixins';
 export const PADDING_SIZE_UNITS = 2;
 
 export const TableStyle = styled.div<any>`
-  border-radius: ${BORDER_RADIUS_LARGE}px;
   position: relative;
   width: 100%;
-  display: inline-block;
+  max-width: 100vw;
   height: 100%;
   max-height: 100vh;
-  white-space: nowrap;
+  // display: inline-block;
   overflow: auto;
 
-
-  ${props => `
+  ${props => props.table &&`
     background-color: ${(props.theme.background || light.background).page};
+    // border-radius: ${BORDER_RADIUS_LARGE}px;
+    // border: 'solid 1px ${light.interactive.defaultBorder};  
   `}
 
   ${props => props.height && `
@@ -31,10 +31,10 @@ export const TableStyle = styled.div<any>`
 `;
 
 export const ColumnHeaderRowStyle = styled.div<any>`
-  position: sticky;
-  top: 0;
-  width: 100%;
+  position: relative;
   z-index: 2;
+  min-width: 44px;
+  min-height: 20px;
 
   ${props => `
     background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
@@ -43,6 +43,8 @@ export const ColumnHeaderRowStyle = styled.div<any>`
 `;
 
 export const ColumnHeaderCellStyle = styled.div<any>`
+  max-width: 44px;
+  max-height: 44px;
   ${props => !props.small && `
     padding: ${UNIT * PADDING_SIZE_UNITS}px;
   `}
@@ -52,9 +54,12 @@ export const ColumnHeaderCellStyle = styled.div<any>`
   `}
 `;
 
-
+// TODO: Update these hardcoded values
 export const RowCellStyle = styled.div<any>`
-  width: 100%;
+  min-width: 250px;
+  max-height: 80px;
+  flex-shrink: 0;
+
 
   ${props => !props.first && `
     border-left: 1px solid ${(props.theme.background || light.background).page};
@@ -74,13 +79,10 @@ export const CellStyled = styled.div`
   flex-shrink: 0;
   margin: 0;
   position: relative;
-  z-index: 0;
+  z-index: 3;
   white-space: nowrap;
   * { color: var(--cell-text-color) }
   // perf: add padding to cell instead of rendering <spacing> element
 
   padding: ${UNIT * 2}px;
-
-  border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ;
-  border-right: ${BORDER_WIDTH}px ${BORDER_STYLE} ;
 `;
