@@ -69,8 +69,6 @@ function Data() {
 
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
 
-  // TODO: Move to const file
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
     'avg_null_value_count',
     'avg_invalid_value_count',
@@ -188,10 +186,6 @@ function Data() {
     actions,
     slug,
   ]);
-
-  // Report (Quality Metrics)
-
-  // TODO: p1 add percentages to statisics as a ratio.
 
   // Report (Statistics)
   useEffect(() => {
