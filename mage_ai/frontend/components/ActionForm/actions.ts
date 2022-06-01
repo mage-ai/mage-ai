@@ -150,6 +150,7 @@ const rows: {
   },
   filter: {
     title: 'Filter',
+    description: 'TBD',
     code: {
       values: USER_INPUT,
     },
