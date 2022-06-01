@@ -7,6 +7,7 @@ import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -98,6 +99,9 @@ function Feature() {
       ],
     },
   ];
+  const noWarningMetrics = warningMetrics.every(
+    ({ columnValues }) => (typeof columnValues[1] === 'undefined'),
+  );
 
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
@@ -141,13 +145,20 @@ function Feature() {
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
-        <SimpleDataTable
-          columnFlexNumbers={[1, 1]}
-          columnHeaders={[{ label: 'Warnings' }]}
-          rowGroupData={[{
-            rowData: warningMetrics,
-          }]}
-        />
+        {noWarningMetrics
+          ?
+            <Panel fullHeight={false} headerTitle="Warnings">
+              <Text>There are no warnings.</Text>
+            </Panel>
+          :
+            <SimpleDataTable
+              columnFlexNumbers={[1, 1]}
+              columnHeaders={[{ label: 'Warnings' }]}
+              rowGroupData={[{
+                rowData: warningMetrics,
+              }]}
+            />
+        }
       </Flex>
     </FlexContainer>
   )
@@ -216,7 +227,6 @@ function Feature() {
 
         <Spacing mt={5}>
           <Select
-            compact
             onChange={e => setActionPayload(JSON.parse(e.target.value))}
             value={actionType}
             width={UNIT * 20}

@@ -10,8 +10,7 @@ import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/
 
 const HEADERS_HEIGHT_OFFSET = 14;
 const HEADER_PADDING_Y_UNITS = 2;
-const FOOTER_PADDING_UNITS = 2;
-const PADDING_UNITS = 3;
+const PADDING_UNITS = 1.75;
 
 const HEADER_STYLES = css`
   padding: ${PADDING_UNITS * UNIT}px;
@@ -25,8 +24,12 @@ const PanelStyle = styled.div<any>`
   width: 100%;
   
   ${props => `
-    background-color: ${(props.theme.background || light.background).header};
+    background-color: ${(props.theme.background || light.background).page};
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+  `}
+
+  ${props => !props.fullHeight && `
+    height: fit-content;
   `}
   
   ${props =>  props.borderless &&`
@@ -59,7 +62,7 @@ const ContentStyle = styled.div<any>`
 export const FooterStyle = styled.div`
   border-style: ${BORDER_STYLE};
   border-top-width: ${BORDER_WIDTH}px;
-  padding: ${FOOTER_PADDING_UNITS * UNIT}px;
+  padding: ${PADDING_UNITS * UNIT}px;
 `;
 
 export type PanelProps = {
@@ -104,7 +107,7 @@ function Panel({
   }
 
   return (
-    <PanelStyle ref={containerRef} borderless={borderless}>
+    <PanelStyle borderless={borderless} fullHeight={fullHeight} ref={containerRef}>
       {(header || headerTitle) &&
         <HeaderStyle height={headerHeight}>
           {header && header}
@@ -135,7 +138,7 @@ function Panel({
           }
         </HeaderStyle>
       }
-      <ContentStyle height={fullHeight && contentSectionHeight} ref={contentContainerRef}>
+      <ContentStyle height={fullHeight ? contentSectionHeight : null} ref={contentContainerRef}>
         {children}
       </ContentStyle>
       {footer &&
