@@ -1,19 +1,22 @@
 import Router, { useRouter } from 'next/router';
 import { useState } from 'react';
 
+import ActionForm from '@components/ActionForm';
 import Button from '@oracle/elements/Button';
+import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import Select from "@oracle/elements/Inputs/Select";
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
+import actionsConfig from '@components/ActionForm/actions';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
-import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 
 function Feature() {
   const router = useRouter();
@@ -105,7 +108,7 @@ function Feature() {
 
   const headEl = (
     <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
+      <Button
         onClick={viewColumns}
       >
         <Text bold> Datasets view </Text>
@@ -200,10 +203,66 @@ function Feature() {
     </Tabs>
   )
 
+  const [actionPayload, setActionPayload] = useState({});
+  const actionType = actionPayload?.action_type;
+  const saveAction = (data) => {
+    const updatedAction = {
+      action_arguments: [
+        featureUUID,
+      ],
+      action_payload: {
+        ...data,
+        action_type: actionType,
+      },
+    };
+    alert(JSON.stringify(updatedAction));
+  };
+
   return (
     <Layout
       centerAlign
     >
+      <Spacing mt={UNIT}>
+        {actionType && (
+          <ActionForm
+            actionType={actionType}
+            axis={actionPayload?.axis}
+            currentFeature={{
+              column_type: columnType,
+              uuid: featureUUID,
+            }}
+            onSave={() => saveAction(actionPayload)}
+            payload={actionPayload}
+            setPayload={setActionPayload}
+          />
+        )}
+
+        <Spacing mt={5}>
+          <Select
+            compact
+            onChange={e => setActionPayload(JSON.parse(e.target.value))}
+            value={actionType}
+            width={UNIT * 20}
+          >
+            <option value="">
+              New action
+            </option>
+
+            {Object.entries(actionsConfig.columns).map(([k, v]) => (
+              <option
+                key={k}
+                value={JSON.stringify({
+                  action_type: k,
+                  axis: 'column',
+                })}
+              >
+                {v.title}
+              </option>
+            ))}
+          </Select>
+        </Spacing>
+      </Spacing>
+
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={UNIT} />

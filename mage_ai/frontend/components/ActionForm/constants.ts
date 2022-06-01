@@ -43,6 +43,7 @@ export interface FormConfigType {
   arguments?: ArgumentsType;
   code?: ArgumentsType;
   description: string;
+  multiColumns?: boolean;
   options?: {
     [key: string]: ArgumentsType;
   };

@@ -47,9 +47,6 @@ function Data() {
     datasetResponse?.statistics,
   ]);
 
-  const [actionPayload, setActionPayload] = useState({});
-  const actionType = actionPayload?.action_type;
-
   const suggestionsMemo = useMemo(() => (
     (datasetResponse?.suggestions || [])
   ), [
@@ -72,17 +69,6 @@ function Data() {
   const [removedSuggestions, setRemovedSuggestions] = useState([]);
 
   const [rowGroupDataSample, setRowGroupDataSample] = useState({});
-
-  const saveAction = (data) => {
-    const updatedAction = {
-      action_payload: {
-        ...data,
-        action_type: actionType,
-        axis: 'row',
-      },
-    };
-    alert(JSON.stringify(updatedAction));
-  };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const metricsKeys = [
@@ -455,6 +441,18 @@ function Data() {
     </Tabs>
   );
 
+  const [actionPayload, setActionPayload] = useState({});
+  const actionType = actionPayload?.action_type;
+  const saveAction = (data) => {
+    const updatedAction = {
+      action_payload: {
+        ...data,
+        action_type: actionType,
+      },
+    };
+    alert(JSON.stringify(updatedAction));
+  };
+
   return (
     <Layout
       centerAlign
@@ -464,7 +462,7 @@ function Data() {
         {actionType && (
           <ActionForm
             actionType={actionType}
-            axis="row"
+            axis={actionPayload?.axis}
             features={columns.map(col => ({ uuid: col }))}
             onSave={() => saveAction(actionPayload)}
             payload={actionPayload}
@@ -475,9 +473,7 @@ function Data() {
         <Spacing mt={5}>
           <Select
             compact
-            onChange={e => setActionPayload({
-              action_type: e.target.value,
-            })}
+            onChange={e => setActionPayload(JSON.parse(e.target.value))}
             value={actionType}
             width={UNIT * 20}
           >
@@ -488,7 +484,22 @@ function Data() {
             {Object.entries(actionsConfig.rows).map(([k, v]) => (
               <option
                 key={k}
-                value={k}
+                value={JSON.stringify({
+                  action_type: k,
+                  axis: 'row',
+                })}
+              >
+                {v.title}
+              </option>
+            ))}
+
+            {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
+              <option
+                key={k}
+                value={JSON.stringify({
+                  action_type: k,
+                  axis: 'column',
+                })}
               >
                 {v.title}
               </option>
