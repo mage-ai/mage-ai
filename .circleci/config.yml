@@ -16,24 +16,9 @@ jobs:
       - node/install:
           install-yarn: true
           node-version: '14.19.1'
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:jJQCK2XAG9o4fA+HBb4h/O/6JOL+PlCU+NjTIwLqwas ci@mage.ai"
-      - run:
-          name: Checkout to master branch
-          command: |
-            git config user.email "ci@mage.ai"
-            git config user.name "Circle CI"
-            git checkout master
       - run:
           name: Build and export
-          command: ( cd mage_ai/frontend && yarn install && yarn export_prod )
-      - run:
-          name: Test frontend build
-          command: |
-            git branch
-            git add mage_ai/server/frontend_dist
-            git commit -m "[CI] Update production build"
+          command: ( cd mage_ai/frontend && yarn install && yarn export )
 
   export_frontend:
     docker:
@@ -47,14 +32,17 @@ jobs:
           fingerprints:
             - "SHA256:jJQCK2XAG9o4fA+HBb4h/O/6JOL+PlCU+NjTIwLqwas ci@mage.ai"
       - run:
+          name: Checkout to master branch
+          command: |
+            git config user.email "ci@mage.ai"
+            git config user.name "Circle CI"
+            git checkout master
+      - run:
           name: Build and export
           command: ( cd mage_ai/frontend && yarn install && yarn export_prod )
       - run:
           name: Update frontend build
           command: |
-            git config user.email "ci@mage.ai"
-            git config user.name "Circle CI"
-            git checkout master
             git add mage_ai/server/frontend_dist
             git commit -m "[CI] Update production build"
             git push origin master
@@ -77,6 +65,9 @@ workflows:
       - test
       - build_frontend
       - export_frontend:
+          type: approval
+          requires:
+            - build_frontend
           filters:
             branches:
               only:
