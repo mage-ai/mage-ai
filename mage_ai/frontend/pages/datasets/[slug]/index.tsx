@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
 import ActionForm from '@components/ActionForm';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -13,12 +14,21 @@ import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import SuggestionsList from '@components/suggestions/SuggestionsList';
+import Suggestions from '@components/suggestions';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
+import {
+  CATEGORICAL_TYPES,
+  DATE_TYPES,
+  HUMAN_READABLE_MAPPING,
+  METRICS_KEYS,
+  METRICS_SORTED_MAPPING,
+  NUMBER_TYPES,
+  PERCENTAGE_KEYS,
+  STAT_KEYS,
+} from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
@@ -26,68 +36,30 @@ function Data() {
   const { slug } = router.query;
 
   // Datatable
-  const { data: datasetResponse } = api.feature_sets.detail(slug);
+  const { data: featureSet } = api.feature_sets.detail(slug);
 
-  const columns = useMemo(() => datasetResponse?.sample_data?.columns || [], [
-    datasetResponse?.sample_data?.columns,
+  const columns = useMemo(() => featureSet?.sample_data?.columns || [], [
+    featureSet?.sample_data?.columns,
   ]);
 
-  const rows = useMemo(() => datasetResponse?.sample_data?.rows || [], [
-    datasetResponse?.sample_data?.rows,
+  const rows = useMemo(() => featureSet?.sample_data?.rows || [], [
+    featureSet?.sample_data?.rows,
   ]);
 
-  const colTypes = useMemo(() => datasetResponse?.metadata?.column_types || [], [
-    datasetResponse?.metadata?.column_types,
+  const colTypes = useMemo(() => featureSet?.metadata?.column_types || [], [
+    featureSet?.metadata?.column_types,
   ]);
 
-  const statistics = useMemo(() => datasetResponse?.statistics || [], [
-    datasetResponse?.statistics,
+  const statistics = useMemo(() => featureSet?.statistics || [], [
+    featureSet?.statistics,
   ]);
 
-  const features = Object.entries(datasetResponse?.metadata?.column_types || {})
+  const features = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
   const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
   const [metricSample, setMetricSample] = useState<RowGroupDataType>();
   const [statSample, setStatSample] = useState<RowGroupDataType>();
-
-  const metricsKeys = [
-    'avg_null_value_count',
-    'avg_invalid_value_count',
-    'duplicate_row_count',
-    'completeness',
-    'validity',
-  ];
-
-  const statKeys = [
-    'count', 'empty_column_count',
-  ];
-
-  const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
-  const DATE_TYPES = ['datetime'];
-  const NUMBER_TYPES = ['number', 'number_with_decimals'];
-  // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
-  const percentageKeys = ['completeness', 'validity'];
-
-  // Map text
-  const humanReadableMapping = {
-    'avg_invalid_value_count': 'Invalid values',
-    'avg_null_value_count': 'Missing values',
-    'completeness': 'Completeness',
-    'count': 'Row count',
-    'duplicate_row_count': 'Duplicate values',
-    'empty_column_count': 'Empty features',
-    'validity': 'Validity',
-  };
-
-  // Display priorities to backend keys.
-  const metricsSortedMapping = {
-    'avg_invalid_value_count': 3,
-    'avg_null_value_count': 2,
-    'completeness': 1,
-    'duplicate_row_count': 4,
-    'validity': 0,
-  };
 
   // Fetch column Headers
   useEffect(() => {
@@ -103,13 +75,13 @@ function Data() {
   // Calculates metrics
   useEffect(() => {
     const stats = Object.keys(statistics);
-    const metricRows = Array(metricsKeys.length).fill(0);
+    const metricRows = Array(METRICS_KEYS.length).fill(0);
     stats.map((key) => {
-      if (metricsKeys.includes(key)) {
+      if (METRICS_KEYS.includes(key)) {
         let value = statistics[key].toPrecision(2);
-        const order = humanReadableMapping[key];
-        const index = metricsSortedMapping[key];
-        if (percentageKeys.includes(key)) {
+        const order = HUMAN_READABLE_MAPPING[key];
+        const index = METRICS_SORTED_MAPPING[key];
+        if (PERCENTAGE_KEYS.includes(key)) {
           value *= 100;
           value = `${value}%`;
         }
@@ -136,8 +108,8 @@ function Data() {
     });
     // Part one is the keys from metrics
     stats.map((key) => {
-      if (statKeys.includes(key)) {
-        const name = humanReadableMapping[key];
+      if (STAT_KEYS.includes(key)) {
+        const name = HUMAN_READABLE_MAPPING[key];
         rowData.push({
           columnValues: [name, statistics[key]],
         });
@@ -180,14 +152,14 @@ function Data() {
 
   const headEl = (
     <FlexContainer alignItems="center" justifyContent="space-between">
-      <PageBreadcrumbs featureSet={datasetResponse} />
+      <PageBreadcrumbs featureSet={featureSet} />
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
     </FlexContainer>
   );
 
-  const insightsOverview = datasetResponse?.['insights']?.[1] || {};
+  const insightsOverview = featureSet?.['insights']?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
@@ -260,10 +232,16 @@ function Data() {
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      <SuggestionsList
-        featureSet={datasetResponse}
-        featureSetId={slug}
-      />
+
+      {featureSet && (
+        <Suggestions
+          addAction={(action) => console.log(action)}
+          featureSet={featureSet}
+          removeAction={(action) => console.log(action)}
+          removeSuggestion={(action) => console.log(action)}
+        />
+      )}
+
       <Spacing mt={4} />
       <Tabs
         bold
