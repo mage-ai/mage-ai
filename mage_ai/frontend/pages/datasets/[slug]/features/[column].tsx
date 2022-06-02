@@ -39,7 +39,7 @@ function Feature() {
   const featureData = featureMapping[featureIndex];
   const featureUUID = featureData?.uuid;
   const columnType = featureData?.column_type;
-  const sampleRowData = featureSet?.sample_data?.rows?.map((row: any[]) => ({
+  const sampleRowData = featureSet?.sample_data?.rows?.map(row => ({
     columnValues: [row[featureIndex]],
   }));
 
@@ -110,16 +110,15 @@ function Feature() {
   );
 
   const [tab, setTab] = useState('data');
-  const viewDataset = (e: { preventDefault: () => void; }) => {
+  const viewColumns = (e) => {
     e.preventDefault();
-    Router.push(`/datasets/${featureSetId}`);
+    Router.push('/datasets');
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewDataset}
-      >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={featureSet} />
+      <Button onClick={viewColumns}>
         <Text bold> Datasets view </Text>
       </Button>
     </FlexContainer>
@@ -148,7 +147,14 @@ function Feature() {
   const dataEl = (
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
-        {columnValuesTableEl}
+        <SimpleDataTable
+          columnFlexNumbers={[1, 1]}
+          columnHeaders={[{ label: 'Column values' }]}
+          rowGroupData={[{
+            rowData: sampleRowData,
+            title: `${featureUUID} (${columnType})`,
+          }]}
+        />
       </Flex>
       <Spacing ml={UNIT} />
       <Flex flex={1}>
@@ -213,7 +219,7 @@ function Feature() {
 
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
-  const saveAction = (data: TransformerActionType) => {
+  const saveAction = (data) => {
     const updatedAction = {
       action_arguments: [
         featureUUID,
