@@ -16,7 +16,7 @@ export type SuggestionRowProps = {
   link?: () => void;
   // name: string;
   // numFeatures: number;
-  onClose: () => void;
+  onClose?: () => void;
   showIdx?: boolean;
 };
 
@@ -52,6 +52,7 @@ const SuggestionRow = ({
             bold
             noHoverUnderline
             onClick={link}
+            preventDefault
           >
             Apply
           </Link>
@@ -83,15 +84,20 @@ const SuggestionRow = ({
 
       <FlexContainer>
         {/* TODO: add View Code & Preview here */}
-        <Button
-          basic
-          iconOnly
-          onClick={onClose}
-          padding="0px"
-          transparent
-        >
-          <Close muted />
-        </Button>
+        {onClose && (
+          <Button
+            basic
+            iconOnly
+            onClick={onClose}
+            padding="0px"
+            transparent
+          >
+            <Close muted />
+          </Button>
+        )}
+        {!onClose && (
+          <Spacing p={1} />
+        )}
       </FlexContainer>
     </RowCard>
   );

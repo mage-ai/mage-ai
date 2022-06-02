@@ -1,3 +1,5 @@
+import TransformerActionType from '@interfaces/TransformerActionType';
+
 export function getFeatureIdMapping(featureSet) {
   if (!featureSet) {
     return {};
@@ -53,4 +55,24 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     sum: statistics[`${featureUUID}/sum`],
     validity: statistics[`${featureUUID}/validity`],
   }
+}
+
+export function deserializeFeatureSet(featureSet: any) {
+  const {
+    pipeline = {},
+  } = featureSet;
+  const actions = Array.isArray(pipeline?.actions)
+    ? pipeline.actions.map((action: TransformerActionType, idx: number) => ({
+      ...action,
+      id: idx + 1,
+    }))
+    : [];
+
+  return {
+    ...featureSet,
+    pipeline: {
+      ...pipeline,
+      actions,
+    },
+  };
 }

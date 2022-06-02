@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -32,17 +32,21 @@ import {
   STAT_KEYS,
 } from '../constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { onSuccess } from '@api/utils/response';
+import { removeAtIndex } from '@utils/array';
 import { useGlobalState } from '@storage/state';
 
 function Data({ slug }) {
   const [apiReloads, setApiReloads] = useGlobalState('apiReloads');
 
-  const { data: featureSet } = api.feature_sets.detail(slug);
+  const { data: featureSetRaw } = api.feature_sets.detail(slug);
+  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
     pipeline,
     statistics,
   } = featureSet || {};
+  const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
 
   const {
     columns,
@@ -187,9 +191,18 @@ function Data({ slug }) {
     commitAction({
       ...pipeline,
       actions: [
-        ...(Array.isArray(pipeline?.actions) ? pipeline?.actions : []),
+        ...pipelineActions,
         newActionData,
       ],
+    });
+  };
+  const removeAction = (existingActionData: TransformerActionType) => {
+    const idx =
+      pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
+
+    commitAction({
+      ...pipeline,
+      actions: removeAtIndex(pipelineActions, idx),
     });
   };
 
@@ -262,7 +275,7 @@ function Data({ slug }) {
         <Suggestions
           addAction={saveAction}
           featureSet={featureSet}
-          removeAction={(action) => console.log(action)}
+          removeAction={removeAction}
           removeSuggestion={(action) => console.log(action)}
         />
       )}

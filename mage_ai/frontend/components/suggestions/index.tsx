@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
@@ -23,6 +25,7 @@ function Suggestions({
   const {
     actions,
   } = pipeline || {};
+  const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
 
   return (
     <>
@@ -44,7 +47,10 @@ function Suggestions({
                 action={action}
                 border
                 idx={idx}
-                onClose={() => removeAction(action)}
+                onClose={numberOfActions - 1 === idx
+                  ? () => removeAction(action)
+                  : null
+                }
                 showIdx
               />
             </Spacing>
@@ -72,7 +78,6 @@ function Suggestions({
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}
-                    onClose={() => removeSuggestion(suggestion)}
                   />
                 );
               })}
