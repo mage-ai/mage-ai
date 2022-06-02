@@ -47,7 +47,7 @@ export function evaluateCondition(
   if (optionsKey) {
     a = payload?.action_options?.[optionsKey];
   } else if (feature && featureAttribute) {
-    a = feature?.[featureAttribute]
+    a = feature?.[featureAttribute];
   }
 
   return buildOperatorPredicate(operator)(a, value);

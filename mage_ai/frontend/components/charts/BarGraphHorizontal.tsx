@@ -11,7 +11,7 @@ import { localPoint } from '@visx/event';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light'
+import light from '@oracle/styles/themes/light';
 import { BLUE, RED } from '@oracle/styles/colors/main';
 import { REGULAR, SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
