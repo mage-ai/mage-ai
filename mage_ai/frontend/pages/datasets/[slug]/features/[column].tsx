@@ -13,7 +13,6 @@ import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import SuggestionsTable from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
@@ -279,10 +278,7 @@ function Feature() {
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      <SuggestionsTable
-        featureSet={featureSet}
-        featureSetId={featureSetId}
-      />
+
       <Spacing mt={4} />
       {tabsEl}
     </Layout>
