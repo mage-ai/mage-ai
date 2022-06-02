@@ -455,9 +455,9 @@ function LineSeriesContainer({
 
   return (
     <>
-      <div style={{ display: 'flex', height: parentHeight, width: '100%', marginBottom: UNIT }}>
+      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
         {yAxisLabel && (
-          <FlexContainer alignItems="center" justifyContent="center" fullHeight width={28}>
+          <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
             <YAxisLabelContainer>
               <Text center muted small>
                 {yAxisLabel}

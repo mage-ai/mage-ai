@@ -36,3 +36,6 @@ export const METRICS_SORTED_MAPPING = {
   'duplicate_row_count': 4,
   'validity': 0,
 };
+
+// eslint-disable-next-line import/no-anonymous-default-export
+export default {};

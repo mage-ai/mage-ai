@@ -95,6 +95,6 @@ const SuggestionRow = ({
       </FlexContainer>
     </RowCard>
   );
-}
+};
 
 export default SuggestionRow;

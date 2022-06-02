@@ -8,7 +8,7 @@ type SuggestionsProps = {
   featureSet: any;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion: (action: TransformerActionType) => void;
-}
+};
 
 function Suggestions({
   addAction,
