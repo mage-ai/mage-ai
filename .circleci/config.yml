@@ -64,10 +64,17 @@ workflows:
     jobs:
       - test
       - build_frontend
-      - export_frontend:
+      - hold:
           type: approval
           requires:
             - build_frontend
+          filters:
+            branches:
+              only:
+                - master
+      - export_frontend:
+          requires:
+            - hold
           filters:
             branches:
               only:
