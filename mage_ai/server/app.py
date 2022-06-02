@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
@@ -201,6 +202,7 @@ def update_pipeline(id):
     request_data = request.json
     pipeline = Pipeline(id=id)
     actions = request_data.get('actions', [])
+    actions = generate_action_titles(actions)
     clean_pipeline = BasePipeline(actions=actions)
     pipeline.pipeline = clean_pipeline
     # 1. Transform the data
