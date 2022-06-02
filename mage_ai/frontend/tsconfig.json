@@ -17,6 +17,9 @@
       "@oracle/*": [
         "oracle/*"
       ],
+      "@storage/*": [
+        "storage/*"
+      ],
       "@styles/*": [
         "styles/*"
       ],
