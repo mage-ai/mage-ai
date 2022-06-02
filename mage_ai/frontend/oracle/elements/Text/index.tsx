@@ -60,6 +60,7 @@ export type TextProps = {
   underline?: boolean;
   uppercase?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  wind?: boolean;
   whiteSpaceNormal?: boolean;
   width?: number;
   wordBreak?: boolean;
@@ -68,7 +69,6 @@ export type TextProps = {
 };
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
-
   ${props => !props.xsmall && !props.small && !props.large && !props.xlarge && `
     ${REGULAR}
   `}
@@ -155,6 +155,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
   ${props => props.backgroundColor && `
     background-color: ${props.backgroundColor};
     padding: 0 ${UNIT / 2}px;
+  `}
+
+  ${props => props.wind && !props.disabled && `
+    color: ${(props.theme.brand || light.brand).wind500} !important;
   `}
 `;
 

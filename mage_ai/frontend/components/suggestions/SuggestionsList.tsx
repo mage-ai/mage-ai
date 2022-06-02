@@ -97,7 +97,10 @@ function SuggestionsList({
         })
       }
       <Spacing mt={2} />
-      <Accordion>
+      <Accordion
+        highlighted
+        visibleMapping={{ 0: true }}
+      >
         <AccordionPanel
           noBackground
           noPaddingContent

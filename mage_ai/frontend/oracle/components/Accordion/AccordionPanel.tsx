@@ -17,6 +17,7 @@ export type AccordionPanelProps = {
   beforeTitleElement?: any;
   contentOverflowVisible?: boolean;
   first?: boolean;
+  highlighted?: boolean;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
@@ -180,6 +181,7 @@ const AccordionPanel = ({
   children,
   contentOverflowVisible,
   first,
+  highlighted,
   last,
   maxHeight = 1000,
   noBackground,
@@ -239,6 +241,7 @@ const AccordionPanel = ({
             <Text
               bold
               default={!visible}
+              wind={highlighted}
             >
               {title}
             </Text>
