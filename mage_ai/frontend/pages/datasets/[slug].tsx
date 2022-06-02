@@ -43,20 +43,12 @@ function Data() {
     datasetResponse?.statistics,
   ]);
 
-  const suggestionsMemo = useMemo(() => (
-    (datasetResponse?.suggestions || [])
-  ), [
-    datasetResponse?.suggestions,
-  ]);
-  
   const features = Object.entries(datasetResponse?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
   const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
   const [metricSample, setMetricSample] = useState<RowGroupDataType>();
   const [statSample, setStatSample] = useState<RowGroupDataType>();
-
-  const [rowGroupDataSample, setRowGroupDataSample] = useState<RowGroupDataType>();
 
   const metricsKeys = [
     'avg_null_value_count',
@@ -106,19 +98,6 @@ function Data() {
     });
     setColumnHeaderSample(headerJSON);
   }, [columns]);
-
-  // Fetch Row values
-  useEffect(() => {
-    const cells = [];
-    rows.map((rowGroup:any) => {
-      cells.push({
-        columnValues: rowGroup,
-      });
-    });
-    setRowGroupDataSample({
-      rowData: cells,
-    });
-  }, [rows]);
 
   // Calculates metrics
   useEffect(() => {
@@ -204,85 +183,18 @@ function Data() {
         <Text bold> Column view </Text>
       </Button>
     </FlexContainer>
-  );
-
-  const dataEl = (
-    <BaseTable
-      columnHeaders={columnHeaderSample}
-      columnTitles={columns}
-      rowGroupData={rows}
-    />
-  );
-
-  // Old app used [2, 1, 1]
-  const metricsEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Quality Metrics' }]}
-      rowGroupData={[metricSample]}
-    />
-  );
-
-  // Old app used: [1, 5]
-  const statsEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1, 1]}
-      columnHeaders={[{ label: 'Statistics' }]}
-      rowGroupData={[statSample]}
-    />
-  );
+  ); 
 
   const reportsEl = (
     <>
-      <FlexContainer justifyContent={'center'}>
-        <Flex flex={1}>
-          {metricsEl}
-        </Flex>
-        <Spacing ml={8} />
-        <Flex flex={1}>
-          {statsEl}
-        </Flex>
-      </FlexContainer>
-      <Spacing my={8}>
-        <FeatureProfiles
-          features={features}
-          statistics={statistics}
-        />
-      </Spacing>
+      
     </>
   );
-  const insightsOverview = datasetResponse?.['insights']?.[1] || {}
-
-  const tabsEl = (
-    <Tabs
-      bold
-      defaultKey={tab}
-      large
-      noBottomBorder={false}
-      onChange={key => setTab(key)}
-    >
-      <Tab key="data" label="Data">
-        <Spacing mb={3} mt={3} />
-        {dataEl}
-      </Tab>
-      <Tab key="reports" label="Report">
-        <Spacing mb={3} mt={3} />
-        {reportsEl}
-      </Tab>
-      <Tab key="visualizations" label="Visualizations">
-        <Spacing mb={3} mt={3} />
-        <Overview
-          features={features}
-          insightsOverview={insightsOverview}
-          statistics={statistics}
-        />
-      </Tab>
-    </Tabs>
-  );
+  const insightsOverview = datasetResponse?.['insights']?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<TransformerActionType>();
   const actionType = actionPayload?.action_type;
-  const saveAction = (data) => {
+  const saveAction = (data: TransformerActionType) => {
     const updatedAction = {
       action_payload: {
         ...data,
@@ -302,7 +214,7 @@ function Data() {
           <ActionForm
             actionType={actionType}
             axis={actionPayload?.axis}
-            features={columns.map(col => ({ uuid: col }))}
+            features={columns.map((col: any) => ({ uuid: col }))}
             onSave={() => saveAction(actionPayload)}
             payload={actionPayload}
             setPayload={setActionPayload}
@@ -356,7 +268,58 @@ function Data() {
         featureSetId={slug}
       />
       <Spacing mt={4} />
-      {tabsEl}
+      <Tabs
+        bold
+        defaultKey={tab}
+        large
+        noBottomBorder={false}
+        onChange={key => setTab(key)}
+      >
+        <Tab key="data" label="Data">
+          <Spacing mb={3} mt={3} />
+          <BaseTable
+            columnHeaders={columnHeaderSample}
+            columnTitles={columns}
+            rowGroupData={rows}
+          />
+        </Tab>
+        <Tab key="reports" label="Reports">
+          <Spacing mb={3} mt={3} />
+          <FlexContainer justifyContent={'center'}>
+            <Flex flex={1}>
+              {/* Old app used [2, 1, 1] */}
+              <SimpleDataTable
+              columnFlexNumbers={[1, 1]}
+              columnHeaders={[{ label: 'Quality Metrics' }]}
+              rowGroupData={[metricSample]}
+            />
+            </Flex>
+            <Spacing ml={8} />
+            <Flex flex={1}>
+              {/* Old app used: [1, 5] */}
+              <SimpleDataTable
+              columnFlexNumbers={[1, 1, 1]}
+              columnHeaders={[{ label: 'Statistics' }]}
+              rowGroupData={[statSample]}
+            />
+            </Flex>
+          </FlexContainer>
+          <Spacing my={8}>
+            <FeatureProfiles
+            features={features}
+            statistics={statistics}
+          />
+          </Spacing>
+        </Tab>
+        <Tab key="visualizations" label="Visualizations">
+          <Spacing mb={3} mt={3} />
+          <Overview
+            features={features}
+            insightsOverview={insightsOverview}
+            statistics={statistics}
+          />
+        </Tab>
+      </Tabs>
     </Layout>
   );
 }

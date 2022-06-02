@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState} from 'react'
-import { useBlockLayout, useTable } from 'react-table'
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
@@ -9,12 +9,15 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
 
   export type DataTableProps = {
     children?: any;
-    columns: DataTableColumn[]
-    data: DataTableRow<any>[]
+    columns: DataTableColumn[];
+    data: DataTableRow<any>[];
+  };
+
+  export type rowMapping = {
+    [key: string]: any;
   };
 
   function BaseTable({
-    children,
     columnHeaders,
     rowGroupData,
     columnTitles,
@@ -59,12 +62,12 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
   useEffect(() => {
     if (columnHeaders) {
       const headers = [];
-      columnHeaders.map(({label='none'}: any, i: string | number) => {
+      columnHeaders.map(({ label='none' }: any, i: string | number) => {
         const rowValues =
           {
             Header: label,
             accessor: columnTitles[i],
-          }
+          };
         headers.push(rowValues);
       });
       setColumn(headers);
@@ -74,11 +77,13 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
     useEffect(() => {
       if (rowGroupData) {
         const values = [];
-        rowGroupData.map((rows) => {
-          const rowValues = {};
+        rowGroupData.map((rows: any[]) => {
+
+          const rowValues:rowMapping = {};
+          
           rows.map((cell, j) => {
             const key = columnTitles[j];
-            !(key in rowValues) && (rowValues.key = {})
+            !(key in rowValues) && (rowValues.key = {});
             rowValues[key] = cell;
           });
           values.push(rowValues);
@@ -143,7 +148,7 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <tbody {...getTableBodyProps()}>
           {rows.map(row => {
-              prepareRow(row)
+              prepareRow(row);
               return (
                 // eslint-disable-next-line react/jsx-key
                 <tr {...row.getRowProps()}>
@@ -169,7 +174,7 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
                     </td>
                     ))}
                 </tr>
-              )
+              );
             })}
         </tbody>
       </table>
