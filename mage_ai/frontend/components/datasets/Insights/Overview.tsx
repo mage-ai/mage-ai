@@ -31,6 +31,10 @@ export const ChartStyle = styled.div`
   border-radius: ${BORDER_RADIUS_LARGE}px;
 `;
 
+export const ChartHeaderStyle = styled.div`
+  background:
+`;
+
 export const HeaderStyle = styled.div`
   background: ${SILVER};
   padding: ${PADDING}px;
@@ -116,6 +120,7 @@ function Overview({
   insightsOverview,
   statistics,
 }: OverviewProps) {
+  console.log(statistics)
   const {
     time_series: timeSeries,
   } = insightsOverview;
