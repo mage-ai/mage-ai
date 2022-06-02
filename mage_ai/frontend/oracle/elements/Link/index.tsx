@@ -259,7 +259,7 @@ const Link = ({
   ...props
 }: {
   children: any;
-} & LinkProps) => (
+} & LinkProps, ref) => (
   <LinkStyle
     {...props}
     {...({})}
@@ -276,14 +276,15 @@ const Link = ({
     }}
     onFocus={e => onFocus?.(e)}
     preventDefault={preventDefault}
+    ref={ref}
     sameColorAsText={sameColorAsText}
     selected={selected}
     target={target || (openNewWindow ? '_blank noopener noreferrer' : null)}
     transparentBorder={transparentBorder}
     weightStyle={weightStyle}
   >
-    {children}      
+    {children}
   </LinkStyle>
 );
 
-export default Link;
+export default React.forwardRef(Link);

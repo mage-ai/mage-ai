@@ -103,8 +103,6 @@ function SuggestionsList({
         })
       }
 
-      {console.log(suggestions)}
-
       {suggestions.length >= 1 && (
         <Spacing mt={2}>
           <Accordion
