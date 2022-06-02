@@ -36,3 +36,8 @@ export const METRICS_SORTED_MAPPING = {
   'duplicate_row_count': 4,
   'validity': 0,
 };
+
+export default {
+  HUMAN_READABLE_MAPPING,
+  METRICS_SORTED_MAPPING,
+};
