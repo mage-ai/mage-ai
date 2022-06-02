@@ -5,6 +5,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import { RowStyle } from '@oracle/components/RowDataTable/index.style';
 
 export type RowCardProps = {
+  border?: boolean;
   children: any;
   columnFlexNumbers: number[];
   last?: boolean;
@@ -13,6 +14,7 @@ export type RowCardProps = {
 };
 
 function RowCard({
+  border,
   children,
   columnFlexNumbers,
   last,
@@ -21,6 +23,7 @@ function RowCard({
 }: RowCardProps) {
   return (
     <RowStyle
+      border={border}
       last={last}
       noHorizontalPadding={noHorizontalPadding}
       secondary={secondary}

@@ -8,6 +8,7 @@ import { Close } from '@oracle/icons';
 import { pluralize } from '@utils/string';
 
 export type SuggestionRowProps = {
+  border?: boolean;
   idx: number;
   link?: () => void;
   name: string;
@@ -17,6 +18,7 @@ export type SuggestionRowProps = {
 };
 
 const SuggestionRow = ({
+  border,
   idx,
   link,
   name,
@@ -25,6 +27,7 @@ const SuggestionRow = ({
   showIdx,
 }: SuggestionRowProps) => (
   <RowCard
+    border={border}
     columnFlexNumbers={[0.5, 0.5, 12]}
   >
     {link &&
