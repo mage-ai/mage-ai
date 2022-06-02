@@ -28,7 +28,7 @@ import {
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
   STAT_KEYS,
-} from './constants';
+} from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
