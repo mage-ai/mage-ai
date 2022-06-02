@@ -547,7 +547,8 @@ function ColumnAnalysis({
           column: datetimeColumn,
           charts: timeseriesCharts,
         }) => (
-            <ChartRow
+          // eslint-disable-next-line react/jsx-key
+          <ChartRow
               left={
                 <ChartContainer
                   title={`Statistics by date, column: ${datetimeColumn}`}
@@ -556,6 +557,7 @@ function ColumnAnalysis({
                     chart,
                     metric,
                   }) => (
+                    // eslint-disable-next-line react/jsx-key
                     <Spacing mb={4}>
                       {chart}
                     </Spacing>

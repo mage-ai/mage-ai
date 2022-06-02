@@ -21,31 +21,10 @@ export const TableStyle = styled.div<any>`
   `}
 `;
 
-export const ColumnHeaderRowStyle = styled.div<any>`
-  position: relative;
-  z-index: 2;
-  min-width: 44px;
-  min-height: 20px;
-  ${props => `
-    background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
-    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
-  `}
-`;
-
-export const ColumnHeaderCellStyle = styled.div<any>`
-  max-width: 44px;
-  max-height: 44px;
-  ${props => !props.small && `
-    padding: ${UNIT * PADDING_UNITS}px;
-  `}
-  ${props => props.small && `
-    padding: ${UNIT * 1.5}px;
-  `}
-`;
 
 // TODO: Update these hardcoded values
 export const RowCellStyle = styled.div<any>`
-  min-width: 250px;
+  
   max-height: 80px;
   flex-shrink: 0;
   ${props => !props.first && `
@@ -56,6 +35,10 @@ export const RowCellStyle = styled.div<any>`
   `}
   ${props => props.small && `
     padding: ${UNIT * 1.5}px;
+  `}
+
+  ${props => !props.width && `
+    max-width: ${props.width}px;
   `}
 `;
 
