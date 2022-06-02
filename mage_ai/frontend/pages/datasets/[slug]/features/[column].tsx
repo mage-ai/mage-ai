@@ -15,7 +15,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionsTable from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import TransformerActionType from '@interfaces/TransformerActionType';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -217,7 +217,7 @@ function Feature() {
     </Tabs>
   );
 
-  const [actionPayload, setActionPayload] = useState<TransformerActionType>();
+  const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
   const saveAction = (data) => {
     const updatedAction = {

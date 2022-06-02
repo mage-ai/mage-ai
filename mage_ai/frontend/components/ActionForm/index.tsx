@@ -8,7 +8,7 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import TransformerActionType from '@interfaces/TransformerActionType';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import actions from './actions';
 import { Check } from '@oracle/icons';
 import {
@@ -30,8 +30,8 @@ type ActionFormProps = {
   currentFeature?: FeatureType;
   features?: FeatureType[];
   onSave: () => void;
-  payload: TransformerActionType;
-  setPayload: (payload: TransformerActionType) => void;
+  payload: ActionPayloadType;
+  setPayload: (payload: ActionPayloadType) => void;
 };
 
 function ActionForm({

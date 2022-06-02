@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
 import ActionForm from '@components/ActionForm';
-import BaseTable from '@oracle/components/Table/BaseTable'; 
+import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
@@ -16,7 +16,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionsList from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import TransformerActionType from '@interfaces/TransformerActionType';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -189,9 +189,9 @@ function Data() {
 
   const insightsOverview = datasetResponse?.['insights']?.[1] || {};
 
-  const [actionPayload, setActionPayload] = useState<TransformerActionType>();
+  const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
-  const saveAction = (data: TransformerActionType) => {
+  const saveAction = (data: ActionPayloadType) => {
     const updatedAction = {
       action_payload: {
         ...data,
