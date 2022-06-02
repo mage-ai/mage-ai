@@ -75,17 +75,20 @@ def impute(df, action, **kwargs):
     if strategy == ImputationStrategy.AVERAGE:
         df[columns] = df[columns].fillna(df[columns].astype(float).mean(axis=0))
     elif strategy == ImputationStrategy.CONSTANT:
-        col_by_type = {}
-        for column in columns:
-            dtype = action_variables[column]['feature']['column_type']
-            key = 'object'
-            if dtype == DATETIME:
-                key = 'datetime'
-            elif dtype in NUMBER_TYPES:
-                key = 'number'
-            col_by_type.setdefault(key, []).append(column)
-        for key, column_set in col_by_type.items():
-            df[column_set] = df[column_set].fillna(CONSTANT_IMPUTATION_DEFAULTS[key])
+        if value is None:
+            col_by_type = {}
+            for column in columns:
+                dtype = action_variables[column]['feature']['column_type']
+                key = 'object'
+                if dtype == DATETIME:
+                    key = 'datetime'
+                elif dtype in NUMBER_TYPES:
+                    key = 'number'
+                col_by_type.setdefault(key, []).append(column)
+            for key, column_set in col_by_type.items():
+                df[column_set] = df[column_set].fillna(CONSTANT_IMPUTATION_DEFAULTS[key])
+        else:
+            df[columns] = df[columns].fillna(value)
     elif strategy == ImputationStrategy.MEDIAN:
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
     elif strategy == ImputationStrategy.MODE:

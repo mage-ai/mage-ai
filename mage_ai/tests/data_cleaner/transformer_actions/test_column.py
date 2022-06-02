@@ -1695,6 +1695,52 @@ class ColumnTests(TestCase):
         df_new['group_churned_at'] = df_new['group_churned_at'].astype(np.datetime64)
         assert_frame_equal(df_new, df_expected)
 
+    def test_impute_constant_with_value(self):
+        from mage_ai.data_cleaner.transformer_actions.column import impute
+        df = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, None, '2021-10-01', 'Store 2', np.nan],
+            [np.nan, 1100, '', '', 90233],
+            [2, None, None, 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', None, np.nan],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833]
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        action = dict(
+            action_arguments=['group_id',
+                'price',
+                'group_churned_at',
+                'store',
+                'zip_code'
+            ],
+            action_options={
+                'strategy': 'constant',
+                'value': 'test'
+            },
+            action_variables={},
+        )
+        df_expected = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, 'test', '2021-10-01', 'Store 2', 'test'],
+            ['test', 1100, 'test', 'test', 90233],
+            [2, 'test', 'test', 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', 'test', 'test'],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833],
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        df_new = impute(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, df_expected)
+
     def test_impute_sequential_two_idx(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
