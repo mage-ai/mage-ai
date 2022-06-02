@@ -30,7 +30,7 @@ jobs:
           node-version: '14.19.1'
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:jJQCK2XAG9o4fA+HBb4h/O/6JOL+PlCU+NjTIwLqwas ci@mage.ai"
+            - "50:0e:ac:20:b8:b0:c0:65:80:77:5b:43:9b:b4:50:a1"
       - run:
           name: Checkout to master branch
           command: |
