@@ -183,7 +183,7 @@ class Pipeline(Model):
             metadata = self.metadata
 
         if feature_set_id is not None:
-            metadata['feature_set_id'] = feature_set_id
+            metadata['feature_set_id'] = int(feature_set_id)
             self.metadata = metadata
 
         if pipeline is not None:
