@@ -7,10 +7,6 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_TYPES,
     get_mismatched_row_count,
 )
-from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.multi import run_parallel
-from mage_ai.data_cleaner.shared.logger import timer
-from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
 import pandas as pd
