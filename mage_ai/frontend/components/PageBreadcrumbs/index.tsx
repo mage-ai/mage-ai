@@ -15,6 +15,8 @@ type PageBreadcrumbsProps = {
   featureSet: any;
 };
 
+const MAX_CHARS = 35;
+
 function PageBreadcrumbs({
   featureSet,
 }: PageBreadcrumbsProps) {
@@ -31,14 +33,19 @@ function PageBreadcrumbs({
       let label: PageEnum | string = PageEnum.DATASETS;
       let href = `/${PageEnum.DATASETS}`;
       if (idx === 1) {
-        label = datasetName;
+        label = datasetName.length > MAX_CHARS
+          ? `${datasetName.slice(0, MAX_CHARS)}...`
+          : datasetName;
         href = `/${PageEnum.DATASETS}/${slug}`;
       } else if (idx === 2) {
         label = 'columns';
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}`;
       } else if (idx === 3) {
         const featureIndex = +column;
-        label = getFeatureUUID(featureSet, featureIndex);
+        const featureUUID = getFeatureUUID(featureSet, featureIndex);
+        label = featureUUID.length > MAX_CHARS
+          ? `${featureUUID.slice(0, MAX_CHARS)}...`
+          : featureUUID;
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}/${column}`;
       }
 
