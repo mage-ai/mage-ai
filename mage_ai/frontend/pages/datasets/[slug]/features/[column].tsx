@@ -278,6 +278,7 @@ function Feature() {
 
       <Spacing mt={UNIT} />
       {headEl}
+      <Spacing mt={2} />
       <SuggestionsTable
         featureSet={featureSet}
         featureSetId={featureSetId}
