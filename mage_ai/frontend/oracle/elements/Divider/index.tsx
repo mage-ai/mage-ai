@@ -8,6 +8,7 @@ import { ThemeType } from '../../styles/themes/constants';
 
 export type DividerProps = {
   black?: boolean;
+  border?: boolean;
   dark?: boolean;
   muted?: boolean;
   prominent?: boolean;
