@@ -12,3 +12,29 @@ def columns_to_remove(transformer_actions):
         columns += transformer_action['action_arguments']
 
     return columns
+
+
+def generate_action_titles(transformer_actions):
+    for a in transformer_actions:
+        if not a.get('title'):
+            a['title'] = generate_action_title(a)
+    return transformer_actions
+
+
+def generate_action_title(action):
+    payload = action['action_payload']
+    action_type = payload['action_type']
+    title = ''
+    if action_type == ActionType.REMOVE:
+        title = 'Remove columns'
+    elif action_type == ActionType.FILTER:
+        title = 'Filter rows'
+    elif action_type == ActionType.DROP_DUPLICATE:
+        title = 'Drop duplicate rows'
+    elif action_type == ActionType.REFORMAT:
+        title = 'Reformat values'
+    elif action_type == ActionType.IMPUTE:
+        title = 'Fill in missing values'
+    elif action_type == ActionType.CLEAN_COLUMN_NAME:
+        title = 'Clean dirty column names'
+    return title
