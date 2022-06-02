@@ -80,6 +80,7 @@ function Tabs({
   bold,
   children: childrenArg,
   containerWidthPercentage,
+  currentTab: currentTabProp,
   defaultKey,
   fullWidth,
   large,
@@ -88,7 +89,8 @@ function Tabs({
 }: TabsProps) {
   const children = Array.isArray(childrenArg) ? childrenArg.filter(x => !!x) : [childrenArg];
   const tabKeys = React.Children.map(children, tab => tab.key);
-  const [currentTab, setCurrentTab] = useState(defaultKey || tabKeys[0]);
+  const [currentTabState, setCurrentTab] = useState(defaultKey || tabKeys[0]);
+  const currentTab = currentTabProp || currentTabState;
 
   useEffect(() => {
     setCurrentTab(defaultKey);
