@@ -1678,8 +1678,8 @@ class ColumnTests(TestCase):
         df_expected = pd.DataFrame([
             [1, 1.000, '2021-10-01', 'Store 1', 23023],
             [1, 0.0, '2021-10-01', 'Store 2', 'missing'],
-            [0, 1100, pd.NaT, 'missing', 90233],
-            [2, 0.0, pd.NaT, 'Store 1', 23920],
+            [0, 1100, pd.Timestamp.min, 'missing', 90233],
+            [2, 0.0, pd.Timestamp.min, 'Store 1', 23920],
             [2, 12.00, '2021-09-01', 'missing', 'missing'],
             [2, 125.0, '2021-09-01', 'Store 3', 49833],
         ], columns=[
