@@ -7,6 +7,7 @@ import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
@@ -115,10 +116,9 @@ function Feature() {
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewColumns}
-      >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={featureSet} />
+      <Button onClick={viewColumns}>
         <Text bold> Datasets view </Text>
       </Button>
     </FlexContainer>

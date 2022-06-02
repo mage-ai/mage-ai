@@ -32,7 +32,7 @@ function PageBreadcrumbs({
       let href = `/${PageEnum.DATASETS}`;
       if (idx === 1) {
         label = datasetName;
-        href = `/${PageEnum.DATASETS}/slug'`;
+        href = `/${PageEnum.DATASETS}/${slug}`;
       } else if (idx === 2) {
         label = 'columns';
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}`;
