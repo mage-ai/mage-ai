@@ -14,7 +14,7 @@ export type SuggestionRowProps = {
   numFeatures: number;
   onClose: () => void;
   showIdx?: boolean;
-}
+};
 
 const SuggestionRow = ({
   idx,

@@ -135,7 +135,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       margin = {
         ...margin,
         left: margin.left + UNIT,
-      }
+      };
     }
 
     const dataSortedByCountDesc = sortData

@@ -6,6 +6,7 @@ import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
+import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -43,10 +44,9 @@ const ColumnView: NextPage = () => {
   const columnTypes = Object.entries(featureSet?.metadata?.column_types || {});
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewDataset}
-      >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={featureSet} />
+      <Button onClick={viewDataset}>
         <Text bold> Dataset view </Text>
       </Button>
     </FlexContainer>

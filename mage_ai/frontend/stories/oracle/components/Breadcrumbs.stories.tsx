@@ -6,7 +6,7 @@ import ThemeBlock from 'stories/ThemeBlock';
 
 export default {
   component: BreadCrumbs,
-  title: 'Oracle/Components/Breadcrumbs/Breadcrumbs',
+  title: 'Oracle/Components/Breadcrumbs',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
@@ -21,7 +21,7 @@ export const Select = Template.bind({});
 Select.args = {
   breadcrumbs: [
     {
-      label: "Stories",
+      label: 'Stories',
       selected: true,
     },
   ],
@@ -31,30 +31,28 @@ export const SelectTwo = Template.bind({});
 SelectTwo.args = {
   breadcrumbs: [
     {
-      label: "Stories",
+      label: 'Stories',
     },
     {
-      label: "Oracle",
+      label: 'Oracle',
       selected: true,
     },
   ],
 };
 
-export const SelectThreeXL = Template.bind({});
-SelectThreeXL.args = {
+export const SelectThreeLarge = Template.bind({});
+SelectThreeLarge.args = {
   breadcrumbs: [
     {
-      label: "dataset.csv",
-      xlarge: true,
+      label: 'columns',
     },
     {
-      label: "columns",
-      xlarge: true,
+      label: 'features',
     },
     {
-      label: "features",
+      label: 'dataset.csv',
       selected: true,
-      xlarge: true,
     },
   ],
+  large: true,
 };

@@ -72,8 +72,6 @@ function SuggestionsList({
     featureSet,
   ]);
 
-  useEffect(() => console.log({ featureSet, actions, actionsMemo, suggestions, suggestionsMemo, removedSuggestions }));
-
   return (
     <>
       {

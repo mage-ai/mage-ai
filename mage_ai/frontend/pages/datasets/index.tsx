@@ -1,21 +1,21 @@
-import Router from 'next/router'
-import type { NextPage } from 'next'
-import { useEffect, useMemo, useState } from 'react'
+import Router from 'next/router';
+import type { NextPage } from 'next';
+import { useEffect, useMemo, useState } from 'react';
 
-import FlexContainer from '@oracle/components/FlexContainer'
-import Layout from '@oracle/components/Layout'
-import Link from '@oracle/elements/Link'
-import RowCard from '@oracle/components/RowCard'
-import RowDataTable from '@oracle/components/RowDataTable'
-import Spacing from '@oracle/elements/Spacing'
-import Tab from '@oracle/components/Tabs/Tab'
-import Tabs from '@oracle/components/Tabs'
-import Text from '@oracle/elements/Text'
-import api from '@api'
-import { File } from '@oracle/icons'
-import { UNIT } from '@oracle/styles/units/spacing'
-import { isBadQuality } from '@components/utils'
-import { pluralize } from '@utils/string'
+import FlexContainer from '@oracle/components/FlexContainer';
+import Layout from '@oracle/components/Layout';
+import Link from '@oracle/elements/Link';
+import RowCard from '@oracle/components/RowCard';
+import RowDataTable from '@oracle/components/RowDataTable';
+import Spacing from '@oracle/elements/Spacing';
+import Tab from '@oracle/components/Tabs/Tab';
+import Tabs from '@oracle/components/Tabs';
+import Text from '@oracle/elements/Text';
+import api from '@api';
+import { File } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { isBadQuality } from '@components/utils';
+import { pluralize } from '@utils/string';
 
 
 const Dashboard: NextPage = () => {
@@ -74,6 +74,7 @@ const Dashboard: NextPage = () => {
                         <Link
                           noHoverUnderline
                           onClick={() => Router.push(`datasets/${id}`)}
+                          preventDefault
                           sameColorAsText
                         >
                           {name}
@@ -103,7 +104,7 @@ const Dashboard: NextPage = () => {
         </Tab>
       </Tabs>
     </Layout>
-  )
+  );
 };
 
-export default Dashboard
+export default Dashboard;
