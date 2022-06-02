@@ -8,6 +8,7 @@ from numpyencoder import NumpyEncoder
 import logging
 import json
 import simplejson
+import sys
 import threading
 
 log = logging.getLogger('werkzeug')
@@ -15,18 +16,21 @@ log.setLevel(logging.ERROR)
 
 app = Flask(__name__,
             static_url_path='',
-            static_folder="frontend_dist",
-            template_folder="frontend_dist")
+            static_folder='frontend_dist',
+            template_folder='frontend_dist')
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r'/*': {'origins': '*'}})
+
+print('setting thread to None')
+thread = None
 
 
-@app.route("/")
+@app.route('/')
 def index():
     return render_template('index.html')
 
 
-@app.route("/process", methods=["POST"])
+@app.route('/process', methods=['POST'])
 def process():
     """
     request: {
@@ -75,7 +79,7 @@ def process():
     return response
 
 
-@app.route("/feature_sets")
+@app.route('/feature_sets')
 def feature_sets():
     """
     response: [
@@ -96,7 +100,7 @@ def feature_sets():
     return response
 
 
-@app.route("/feature_sets/<id>")
+@app.route('/feature_sets/<id>')
 def feature_set(id):
     """
     response: [
@@ -116,7 +120,7 @@ def feature_set(id):
     return response
 
 
-@app.route("/feature_sets/<id>", methods=["PUT"])
+@app.route('/feature_sets/<id>', methods=['PUT'])
 def update_feature_set(id):
     """
     request: {
@@ -147,7 +151,7 @@ def update_feature_set(id):
     return response
 
 
-@app.route("/pipelines")
+@app.route('/pipelines')
 def pipelines():
     """
     response: [
@@ -166,7 +170,7 @@ def pipelines():
     return response
 
 
-@app.route("/pipelines/<id>")
+@app.route('/pipelines/<id>')
 def pipeline(id):
     """
     response: {
@@ -183,7 +187,7 @@ def pipeline(id):
     return response
 
 
-@app.route("/pipelines/<id>", methods=["PUT"])
+@app.route('/pipelines/<id>', methods=['PUT'])
 def update_pipeline(id):
     """
     request: {
@@ -240,7 +244,48 @@ def connect_df(df, name):
     return (feature_set, df)
 
 
+class ThreadWithTrace(threading.Thread):
+    def __init__(self, *args, **keywords):
+        threading.Thread.__init__(self, *args, **keywords)
+        self.killed = False
+
+    def start(self):
+        self.__run_backup = self.run
+        self.run = self.__run
+        threading.Thread.start(self)
+
+    def __run(self):
+        sys.settrace(self.globaltrace)
+        self.__run_backup()
+        self.run = self.__run_backup
+
+    def globaltrace(self, frame, event, arg):
+        if event == 'call':
+            return self.localtrace
+        else:
+            return None
+
+    def localtrace(self, frame, event, arg):
+        if self.killed:
+            if event == 'line':
+                raise SystemExit()
+        return self.localtrace
+
+    def kill(self):
+        self.killed = True
+
+
 def launch() -> None:
-    app_kwargs = {"port": SERVER_PORT, "host": "localhost", "debug": False}
-    thread = threading.Thread(target=app.run, kwargs=app_kwargs, daemon=True)
+    global thread
+    app_kwargs = {'port': SERVER_PORT, 'host': 'localhost', 'debug': False}
+    thread = ThreadWithTrace(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
+    return thread
+
+
+def kill():
+    if thread is not None:
+        thread.kill()
+        thread.join()
+        if not thread.isAlive():
+            print('Flask server is terminated')

@@ -1,6 +1,11 @@
 from IPython import get_ipython
 from IPython.display import IFrame, Javascript, display
-from mage_ai.server.app import clean_df, connect_df, launch as launch_flask
+from mage_ai.server.app import (
+    clean_df,
+    connect_df,
+    kill as kill_flask,
+    launch as launch_flask,
+)
 from mage_ai.server.constants import SERVER_PORT
 
 IFRAME_HEIGHT = 1000
@@ -8,8 +13,13 @@ MAX_NUM_OF_ROWS = 100_000
 
 
 def launch():
-    launch_flask()
+    thread = launch_flask()
     display_inline_iframe()
+    return thread
+
+
+def kill():
+    kill_flask()
 
 
 def display_inline_iframe():
