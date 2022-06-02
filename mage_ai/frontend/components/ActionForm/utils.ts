@@ -1,5 +1,5 @@
 import FeatureType from '@interfaces/FeatureType';
-import TransformerActionType from '@interfaces/TransformerActionType';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import {
   ConditionType,
   OPERATOR_CONTAINS,
@@ -33,7 +33,7 @@ function buildOperatorPredicate(operator) {
 
 export function evaluateCondition(
   condition: ConditionType,
-  payload: TransformerActionType,
+  payload: ActionPayloadType,
   feature: FeatureType = null,
 ): boolean {
   const {
