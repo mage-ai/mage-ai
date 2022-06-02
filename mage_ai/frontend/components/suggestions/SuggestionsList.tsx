@@ -90,11 +90,11 @@ function SuggestionsList({
               mt={idx >= 1 ? 1 : 0}
             >
               <SuggestionRow
+                action={action}
                 border
                 idx={idx}
-
-                name={title}
-                numFeatures={numFeatures}
+                // name={title}
+                // numFeatures={numFeatures}
                 onClose={() => removeAction(idx)}
                 showIdx
               />
@@ -102,6 +102,8 @@ function SuggestionsList({
           );
         })
       }
+
+      {console.log(suggestions)}
 
       {suggestions.length >= 1 && (
         <Spacing mt={2}>
@@ -120,11 +122,12 @@ function SuggestionsList({
 
                 return (
                   <SuggestionRow
+                    action={suggestion}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(idx)}
-                    name={suggestion.title}
-                    numFeatures={numFeatures}
+                    // name={suggestion.title}
+                    // numFeatures={numFeatures}
                     onClose={() => removeSuggestion(idx)}
                   />
                 );
