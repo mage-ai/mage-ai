@@ -178,12 +178,13 @@ class StatisticsCalculator():
                 data[f'{col}/min'] = series_non_null.min()
                 data[f'{col}/sum'] = series_non_null.sum()
                 data[f'{col}/skew'] = series_non_null.skew()
+                data[f'{col}/std'] = series_non_null.std()
+
                 # detect outliers
-                std = series_non_null.std()
-                if std == 0:
+                if data[f'{col}/std'] == 0:
                     data[f'{col}/outlier_count'] = 0
                 else:
-                    series_z_score = ((series_non_null - data[f'{col}/average']) / std).abs()
+                    series_z_score = ((series_non_null - data[f'{col}/average']) / data[f'{col}/std']).abs()
                     data[f'{col}/outlier_count'] = (series_z_score >= OUTLIER_ZSCORE_THRESHOLD).sum()
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
