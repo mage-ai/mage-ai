@@ -123,16 +123,6 @@ function Feature() {
     </FlexContainer>
   );
 
-  const columnValuesTableEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Column values' }]}
-      rowGroupData={[{
-        rowData: sampleRowData,
-        title: `${featureUUID} (${columnType})`,
-      }]}
-    />
-  );
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}

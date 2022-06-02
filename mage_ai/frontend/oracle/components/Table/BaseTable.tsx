@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTable } from 'react-table';
+import { useAbsoluteLayout, useBlockLayout, useFlexLayout, useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
+import { cutTextSize, getColumnWidth } from './helpers';
 
   export type DataTableProps = {
     children?: any;
@@ -65,7 +66,7 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
       columnHeaders.map(({ label='none' }: any, i: string | number) => {
         const rowValues =
           {
-            Header: label,
+            Header: cutTextSize(label),
             accessor: columnTitles[i],
           };
         headers.push(rowValues);
@@ -80,11 +81,10 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
         rowGroupData.map((rows: any[]) => {
 
           const rowValues:rowMapping = {};
-          
           rows.map((cell, j) => {
             const key = columnTitles[j];
             !(key in rowValues) && (rowValues.key = {});
-            rowValues[key] = cell;
+            rowValues[key] = cutTextSize(cell);
           });
           values.push(rowValues);
         });
@@ -98,12 +98,13 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
     headerGroups,
     rows,
     prepareRow,
+    totalColumnsWidth,
   } = useTable(
-    { 
+    {
       columns: column || columnSample,
       data: row || dataSample,
     },
-    // useBlockLayout,
+    useAbsoluteLayout,
     );
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
@@ -115,7 +116,7 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
           style={{
             border: 'solid 1px #D8DCE3',
             borderRadius: `${BORDER_RADIUS_LARGE}px`,
-            width: '100%',
+            width: totalColumnsWidth,
           }}
         >
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
@@ -130,15 +131,18 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
+                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
+                    minWidth: column.minWidth,
+                    padding: '14px',
                   }}
                 >
-                  <RowCellStyle>
-                    <TextStyle>
-                      <Text bold>
-                        {column.render('Header')}
-                      </Text>
-                    </TextStyle>
-                  </RowCellStyle>
+                  {/* <RowCellStyle width={totalColumnsWidth}> */}
+                  <TextStyle>
+                    <Text bold>
+                      {column.render('Header')}
+                    </Text>
+                  </TextStyle>
+                  {/* </RowCellStyle> */}
                 </th>
                   ))}
             </tr>
@@ -161,16 +165,18 @@ import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
                         border: 'solid 1px #FBFCFD',
                         borderLeft: 'none',
                         borderRight: 'none',
-                        padding: '10px',
+                        maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
+                        minWidth: cell.column.width,
+                        padding: '14px',
                       }}
                     >
-                      <CellStyled>
-                        <TextStyle>
-                          <Text>
-                            {cell.render('Cell')}
-                          </Text>
-                        </TextStyle>
-                      </CellStyled>
+                      {/* <CellStyled> */}
+                      <TextStyle>
+                        <Text>
+                          {cell.render('Cell')}
+                        </Text>
+                      </TextStyle>
+                      {/* </CellStyled> */}
                     </td>
                     ))}
                 </tr>

@@ -87,7 +87,7 @@ export function ChartContainer({
 
 export function ChartRow({
   left,
-  right
+  right,
 }: {
   left: any,
   right?: any,
