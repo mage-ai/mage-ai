@@ -194,8 +194,7 @@ class StatisticsCalculator():
                     data[f'{col}/outlier_count'] = (series_z_score >=
                                                     OUTLIER_ZSCORE_THRESHOLD).sum()
             elif column_type == DATETIME:
-                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce',
-                                       unit='ns').dropna()
+                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
                 data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) /
                                                                             2)].isoformat()
