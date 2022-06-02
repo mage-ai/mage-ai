@@ -1,7 +1,11 @@
+import ActionType from './ActionType';
+import FeatureType from './FeatureType';
+import SuggestionType from './SuggestionType';
+
 export default interface FeatureSetType {
   id: number;
   insights: {
-    feature: any;
+    feature: FeatureType;
     charts: any[];
     correlations: any[];
     time_series: any[];
@@ -19,7 +23,7 @@ export default interface FeatureSetType {
   };
   pipeline?: {
     id: number;
-    actions: any[];
+    actions: ActionType[];
   };
   sample_data?: {
     columns: string[];
@@ -28,5 +32,5 @@ export default interface FeatureSetType {
   statistics: {
     [key: string]: any;
   };
-  suggestions: any;
+  suggestions: SuggestionType[];
 }
