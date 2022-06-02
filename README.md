@@ -46,7 +46,7 @@ mage_ai.launch()
 
 Open [http://localhost:5000](http://localhost:5000) in your browser to access the tool locally.
 
-To stop the tool, run this command: `TBD`
+To stop the tool, run this command: `mage_ai.kill()`
 
 ### Cleaning data
 After building a data cleaning pipeline from the UI,
