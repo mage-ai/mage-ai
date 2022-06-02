@@ -1,13 +1,12 @@
+from mage_ai.data_cleaner.column_type_detector import (
+    DATETIME,
+    NUMBER_TYPES,
+    get_mismatched_row_count,
+)
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.multi import run_parallel
 from mage_ai.data_cleaner.shared.logger import timer
-from mage_ai.data_cleaner.column_type_detector import (
-    DATETIME,
-    NUMBER,
-    NUMBER_TYPES,
-    NUMBER_WITH_DECIMALS,
-    get_mismatched_row_count,
-)
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
 import pandas as pd
@@ -49,8 +48,7 @@ class StatisticsCalculator():
             'statistics.calculate_statistics_overview.time',
                 self.data_tags):
             if not is_clean:
-                df = df.applymap(lambda x: x if (not isinstance(x, str) or
-                                 (len(x) > 0 and not x.isspace())) else np.nan)
+                df = clean_dataframe(df, self.column_types)
             timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
@@ -156,13 +154,15 @@ class StatisticsCalculator():
         series_non_null = series.dropna()
 
         # Fix json serialization issue
+        df_top_value_counts_raw = df_top_value_counts.copy()
         if column_type == DATETIME:
             df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
         count_unique = len(df_value_counts.index)
+
         data = {
             f'{col}/count': series_non_null.size,
-            f'{col}/count_distinct': count_unique - 1 if np.nan in df_value_counts else count_unique,
+            f'{col}/count_distinct': count_unique - 1 if np.nan in df_top_value_counts_raw else count_unique,
             f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
             f'{col}/null_value_count': series.isnull().sum(),
             f'{col}/max_null_seq': self.get_longest_null_seq(series),
