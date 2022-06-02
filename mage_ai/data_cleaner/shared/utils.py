@@ -26,9 +26,12 @@ def clean_series(series, column_type, dropna=True):
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace('%', '')
             series_cleaned = series_cleaned.str.replace(' ', '')
-        try:
-            series_cleaned = series_cleaned.astype(float).astype(int)
-        except ValueError:
+        if column_type == NUMBER:
+            try:
+                series_cleaned = series_cleaned.astype(int)
+            except ValueError:
+                series_cleaned = series_cleaned.astype(float)
+        else:
             series_cleaned = series_cleaned.astype(float)
         if is_percent:
             series_cleaned /= 100
