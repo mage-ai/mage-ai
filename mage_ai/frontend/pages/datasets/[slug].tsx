@@ -185,11 +185,6 @@ function Data() {
     </FlexContainer>
   ); 
 
-  const reportsEl = (
-    <>
-      
-    </>
-  );
   const insightsOverview = datasetResponse?.['insights']?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<TransformerActionType>();
