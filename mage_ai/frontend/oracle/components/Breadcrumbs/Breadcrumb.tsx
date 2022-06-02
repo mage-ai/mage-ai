@@ -10,7 +10,6 @@ export type BreadcrumbType = {
   as?: string;
   bold?: boolean;
   hideIcon?: boolean;
-  highlighted?: boolean;
   href?: string;
   label: string;
   large?: boolean;
@@ -23,7 +22,6 @@ function Breadcrumb({
   as,
   bold,
   hideIcon,
-  highlighted,
   href,
   label,
   large,
@@ -56,7 +54,6 @@ function Breadcrumb({
     ...linkProps,
     block: true,
     bold: bold || selected,
-    sameColorAsText: !highlighted,
     xlarge: large,
   };
 

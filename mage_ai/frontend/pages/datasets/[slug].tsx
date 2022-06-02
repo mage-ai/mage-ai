@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Router, { useRouter } from 'next/router';
 
 import ActionForm from '@components/ActionForm';
+import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import Flex from '@oracle/components/Flex';
@@ -196,7 +197,8 @@ function Data() {
   };
 
   const headEl = (
-    <FlexContainer justifyContent="flex-end" >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={datasetResponse} />
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>

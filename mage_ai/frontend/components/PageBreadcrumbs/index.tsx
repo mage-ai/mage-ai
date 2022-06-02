@@ -13,7 +13,6 @@ enum PageEnum {
 
 type PageBreadcrumbsProps = {
   featureSet: any;
-  page: PageEnum;
 };
 
 function PageBreadcrumbs({
@@ -25,8 +24,6 @@ function PageBreadcrumbs({
   const pathParts = pathname?.split('/').slice(1) || [];
 
   const datasetName = featureSet?.metadata?.name || 'dataset';
-  const featureIndex = +column;
-  const featureUUID = getFeatureUUID(featureSet, featureIndex);
   let breadcrumbs: BreadcrumbType[] = [];
 
   if (pathParts.length > 0) {
@@ -40,16 +37,19 @@ function PageBreadcrumbs({
         label = 'columns';
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}`;
       } else if (idx === 3) {
-        label = featureUUID;
+        const featureIndex = +column;
+        label = getFeatureUUID(featureSet, featureIndex);
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}/${column}`;
       }
 
       const breadcrumb: BreadcrumbType = {
+        bold: true,
         href,
         label,
       };
       if (idx === pathParts.length - 1) {
         breadcrumb.selected = true;
+        breadcrumb.href = null;
       }
 
       return breadcrumb;
@@ -60,6 +60,9 @@ function PageBreadcrumbs({
     <Breadcrumbs
       breadcrumbs={breadcrumbs}
       large
+      linkProps={{
+        noHoverUnderline: true,
+      }}
     />
   );
 }
