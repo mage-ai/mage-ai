@@ -94,7 +94,7 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   padding: ${UNIT * 2.5}px ${UNIT * 2}px;
   z-index: 1;
 
-  ${props => !(props.last && !props.visible) && `
+  ${props => !props.last && props.visible && `
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 

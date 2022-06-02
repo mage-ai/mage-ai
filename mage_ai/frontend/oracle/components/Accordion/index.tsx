@@ -28,7 +28,8 @@ type AccordionPanelContainerProps = {
 };
 
 const AccordionStyle = styled.div<AccordionProps>`
-  border-radius: ${BORDER_RADIUS}px; 
+  border-radius: ${BORDER_RADIUS}px;
+  overflow: hidden;
 
   ${props => `
     border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
