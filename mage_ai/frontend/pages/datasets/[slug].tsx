@@ -20,8 +20,8 @@ import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
-  const router = useRouter()
-  const { slug } = router.query
+  const router = useRouter();
+  const { slug } = router.query;
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);

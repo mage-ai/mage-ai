@@ -22,6 +22,12 @@ export function getFeatureMapping(featureSet) {
   }, {});
 }
 
+export function getFeatureUUID(featureSet, featureIndex) {
+  const featureMapping = getFeatureMapping(featureSet);
+  const featureData = featureMapping[featureIndex];
+  return featureData?.uuid;
+}
+
 export function getFeatureSetStatistics(featureSet, featureUUID) {
   if (!featureSet) {
     return {};

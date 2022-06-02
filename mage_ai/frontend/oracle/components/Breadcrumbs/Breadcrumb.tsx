@@ -46,7 +46,7 @@ function Breadcrumb({
       </Flex>
       {!hideIcon && (
         <Flex>
-          <Text disabled> / </Text>
+          <Text large={large} muted> / </Text>
         </Flex>
       )}
     </FlexContainer>
