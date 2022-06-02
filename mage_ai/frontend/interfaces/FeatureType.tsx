@@ -68,9 +68,10 @@ export const COLUMN_TYPE_HUMAN_READABLE_MAPPING = {
   [COLUMN_TYPE_TRUE_OR_FALSE]: 'Boolean',
   [COLUMN_TYPE_UUID]: 'UUID',
   [COLUMN_TYPE_ZIP_CODE]: 'Zip code',
-}
+};
 
 export default interface FeatureType {
-  columnType: string;
+  columnType?: string;
+  column_type?: string;
   uuid: string;
 }

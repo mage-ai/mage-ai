@@ -546,25 +546,24 @@ function ColumnAnalysis({
         timeSeriesChartsByDatetimeColumn.map(({
           column: datetimeColumn,
           charts: timeseriesCharts,
-        }) => (
-          // eslint-disable-next-line react/jsx-key
+        }, idx) => (
           <ChartRow
-              left={
-                <ChartContainer
-                  title={`Statistics by date, column: ${datetimeColumn}`}
-                >
-                  {timeseriesCharts.map(({
-                    chart,
-                    metric,
-                  }) => (
-                    // eslint-disable-next-line react/jsx-key
-                    <Spacing mb={4}>
-                      {chart}
-                    </Spacing>
-                  ))}
-                </ChartContainer>
-              }
-            />
+            key={idx}
+            left={
+              <ChartContainer
+                title={`Statistics by date, column: ${datetimeColumn}`}
+              >
+                {timeseriesCharts.map(({
+                  chart,
+                  metric,
+                }, idx) => (
+                  <Spacing key={idx} mb={4}>
+                    {chart}
+                  </Spacing>
+                ))}
+              </ChartContainer>
+            }
+          />
         ))
       }
     </FlexContainer>

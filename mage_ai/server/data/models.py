@@ -183,8 +183,8 @@ class Pipeline(Model):
             metadata = self.metadata
 
         if feature_set_id is not None:
-            metadata['feature_set_id'] = feature_set_id
-        self.metadata = metadata
+            metadata['feature_set_id'] = int(feature_set_id)
+            self.metadata = metadata
 
         if pipeline is not None:
             self.pipeline = pipeline
@@ -199,7 +199,7 @@ class Pipeline(Model):
 
     @property
     def pipeline(self):
-        actions = self.read_json_file('pipeline.json')
+        actions = self.read_json_file('pipeline.json', [])
         return BasePipeline(actions=actions)
 
     @pipeline.setter
