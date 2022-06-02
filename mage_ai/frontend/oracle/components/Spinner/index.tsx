@@ -46,6 +46,7 @@ const Spinner = ({
   if (bodyHeight && bodyWidth) {
     const bodyHeightAdjusted: number = bodyHeight - (PADDING);
     const loadingEl = (
+      // @ts-ignore
       <ReactLoading
         color={
           (themeContext.loader || light.loader).color

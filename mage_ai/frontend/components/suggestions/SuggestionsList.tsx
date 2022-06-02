@@ -85,47 +85,54 @@ function SuggestionsList({
           const numFeatures = action_arguments.length;
 
           return (
-            <SuggestionRow
-              idx={idx}
+            <Spacing
               key={`${idx}-${title}`}
-              name={title}
-              numFeatures={numFeatures}
-              onClose={() => removeAction(idx)}
-              showIdx
-            />
+              mt={idx >= 1 ? 1 : 0}
+            >
+              <SuggestionRow
+                border
+                idx={idx}
+
+                name={title}
+                numFeatures={numFeatures}
+                onClose={() => removeAction(idx)}
+                showIdx
+              />
+            </Spacing>
           );
         })
       }
-      <Spacing mt={2} />
-      <Accordion>
-        <AccordionPanel
-          noBackground
-          noPaddingContent
-          title={`${suggestions.length} suggested actions`}
-        >
-          {
-            suggestions.length > 0
-            ?
-            suggestions.map((suggestion, idx) => {
-              const { action_payload: { action_arguments } } = suggestion;
-              const numFeatures = action_arguments.length;
 
-              return (
-                <SuggestionRow
-                  idx={idx}
-                  key={`${idx}-${suggestion.title}`}
-                  link={() => addAction(idx)}
-                  name={suggestion.title}
-                  numFeatures={numFeatures}
-                  onClose={() => removeSuggestion(idx)}
-                />
-              );
-            })
-            :
-            <>{/* TODO: what do we render when no suggestions exist? */}</>
-          }
-        </AccordionPanel>
-      </Accordion>
+      {suggestions.length >= 1 && (
+        <Spacing mt={2}>
+          <Accordion
+            highlighted
+            visibleMapping={{ 0: true }}
+          >
+            <AccordionPanel
+              noBackground
+              noPaddingContent
+              title={`${suggestions.length} suggested actions`}
+            >
+              {suggestions.map((suggestion, idx) => {
+                const { action_payload: { action_arguments } } = suggestion;
+                const numFeatures = action_arguments.length;
+
+                return (
+                  <SuggestionRow
+                    idx={idx}
+                    key={`${idx}-${suggestion.title}`}
+                    link={() => addAction(idx)}
+                    name={suggestion.title}
+                    numFeatures={numFeatures}
+                    onClose={() => removeSuggestion(idx)}
+                  />
+                );
+              })}
+            </AccordionPanel>
+          </Accordion>
+        </Spacing>
+      )}
     </>
   );
 }

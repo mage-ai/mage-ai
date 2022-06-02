@@ -20,7 +20,7 @@ type RowContainerStyleProps = {
 
 type RowStyleProps = Pick<
   RowCardProps,
-  'last' | 'secondary' | 'noHorizontalPadding'
+  'border' | 'last' | 'secondary' | 'noHorizontalPadding'
 >;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
@@ -39,8 +39,8 @@ export const RowContainerStyle = styled.div<RowContainerStyleProps>`
   `}
 
   ${props => props.scrollable && `
-    margin-bottom: ${UNIT}px;  
-    overflow-y: auto; 
+    margin-bottom: ${UNIT}px;
+    overflow-y: auto;
     padding-top: ${SCROLL_PADDING_SIZE}px;
     padding-left: ${SCROLL_PADDING_SIZE}px;
     padding-right: ${SCROLL_PADDING_SIZE}px;
@@ -77,5 +77,10 @@ export const RowStyle = styled.div<RowStyleProps>`
   ${props => props.last && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.border && `
+    border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+    border-radius: ${BORDER_RADIUS}px;
   `}
 `;

@@ -30,9 +30,15 @@ type AccordionPanelContainerProps = {
 const AccordionStyle = styled.div<AccordionProps>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
+  border-width: 1px;
+  border-style: solid;
 
-  ${props => `
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+  ${props => !props.highlighted && `
+    border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
+  `}
+
+  ${props => props.highlighted && `
+    border-color: ${(props.theme.brand || light.brand).wind400};
   `}
 `;
 

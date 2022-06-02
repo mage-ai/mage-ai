@@ -36,6 +36,7 @@ function MyApp(props: MyAppProps & AppProps) {
         themeProps?.currentTheme || currentTheme,
       )}
     >
+      {/* @ts-ignore */}
       <Component {...pageProps} />
     </ThemeProvider>
   );
