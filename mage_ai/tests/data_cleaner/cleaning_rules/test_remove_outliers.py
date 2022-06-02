@@ -39,7 +39,7 @@ class RemoveOutliersTests(TestCase):
 
         self.assertEqual(result, [
             dict(
-                title='Remove outliers in column \'number3\'',
+                title='Remove outliers',
                 message='There\'re 1 outliers in column \'number3\'. Suggest to remove them.',
                 status='not_applied',
                 action_payload=dict(

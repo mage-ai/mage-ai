@@ -28,6 +28,7 @@ class StatisticsCalculatorTest(TestCase):
         data = calculator.calculate_statistics_overview(df, is_clean=False)
 
         self.assertEqual(data['count'], 7)
+        self.assertEqual(data['total_null_value_count'], 5)
 
         self.assertEqual(data['age/average'], 8 / 5)
         self.assertEqual(data['age/count'], 5)
