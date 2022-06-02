@@ -6,7 +6,7 @@ import Text from '@oracle/elements/Text';
 import { DataTableColumn, DataTableRow } from './types';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
-import { getColumnWidth } from './helpers';
+import { cutTextSize, getColumnWidth } from './helpers';
 
   export type DataTableProps = {
     children?: any;
@@ -26,7 +26,6 @@ import { getColumnWidth } from './helpers';
 
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
-  const [cellWidth, setCellWidth] = useState(44);
 
   // Keep these samples in due to undefined errors.
   const dataSample = useMemo(
@@ -67,7 +66,7 @@ import { getColumnWidth } from './helpers';
       columnHeaders.map(({ label='none' }: any, i: string | number) => {
         const rowValues =
           {
-            Header: label,
+            Header: cutTextSize(label),
             accessor: columnTitles[i],
           };
         headers.push(rowValues);
@@ -85,7 +84,7 @@ import { getColumnWidth } from './helpers';
           rows.map((cell, j) => {
             const key = columnTitles[j];
             !(key in rowValues) && (rowValues.key = {});
-            rowValues[key] = cell;
+            rowValues[key] = cutTextSize(cell);
           });
           values.push(rowValues);
         });
@@ -105,7 +104,7 @@ import { getColumnWidth } from './helpers';
       columns: column || columnSample,
       data: row || dataSample,
     },
-    // useBlockLayout,
+    useAbsoluteLayout,
     );
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
@@ -132,7 +131,7 @@ import { getColumnWidth } from './helpers';
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
-                    maxWidth: `${getColumnWidth(rows, column.id) * 2}px`,
+                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
                     minWidth: column.minWidth,
                     padding: '14px',
                   }}
