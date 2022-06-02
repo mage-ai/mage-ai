@@ -19,6 +19,7 @@ export type TabsProps = {
   bold?: boolean;
   children: any;
   containerWidthPercentage?: number;
+  currentTab?: string;
   defaultKey?: string;
   fullWidth?: boolean;
   large?: boolean;
@@ -33,7 +34,6 @@ const TabHeaderContainerStyle = styled.div<TabsProps>`
 `;
 
 const TabHeader = styled.div<TabsProps>`
-
   border-top-left-radius: ${BORDER_RADIUS_SMALL}px;
   border-top-right-radius: ${BORDER_RADIUS_SMALL}px;
   margin-right: ${UNIT * 6}px;
