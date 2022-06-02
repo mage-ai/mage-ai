@@ -8,6 +8,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Overview from '@components/datasets/Insights/Overview';
+import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -20,8 +21,8 @@ import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 function Data() {
-  const router = useRouter()
-  const { slug } = router.query
+  const router = useRouter();
+  const { slug } = router.query;
 
   // Datatable
   const { data: datasetResponse } = api.feature_sets.detail(slug);
@@ -64,8 +65,8 @@ function Data() {
   ];
 
   const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
-  const DATE_TYPES = ['datetime']
-  const NUMBER_TYPES = ['number', 'number_with_decimals']
+  const DATE_TYPES = ['datetime'];
+  const NUMBER_TYPES = ['number', 'number_with_decimals'];
   // const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
   const percentageKeys = ['completeness', 'validity'];
 
@@ -149,7 +150,7 @@ function Data() {
 
     rowData.push({
       columnValues: ['Column count', types.length],
-    })
+    });
     // Part one is the keys from metrics
     stats.map((key) => {
       if (statKeys.includes(key)) {
@@ -191,12 +192,13 @@ function Data() {
   const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
-    e.preventDefault()
-    Router.push(`${pathname}/features`)
+    e.preventDefault();
+    Router.push(`${pathname}/features`);
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={datasetResponse} />
       <Button onClick={viewColumns}>
         <Text bold> Column view </Text>
       </Button>
@@ -255,9 +257,9 @@ function Data() {
         />
       </Spacing>
     </>
-  )
+  );
 
-  const insightsOverview = datasetResponse?.['insights']?.[1] || {}
+  const insightsOverview = datasetResponse?.['insights']?.[1] || {};
 
   const tabsEl = (
     <Tabs

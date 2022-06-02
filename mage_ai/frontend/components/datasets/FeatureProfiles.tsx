@@ -82,7 +82,7 @@ function FeatureProfile({
   const modeValue = statistics?.[`${uuid}/mode`];
   const numberOfInvalidValues = statistics?.[`${uuid}/invalid_value_count`];
 
-  let entries = []
+  let entries = [];
   
   if (COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE.includes(columnType)) {
     entries = [
@@ -110,7 +110,7 @@ function FeatureProfile({
         typeof maxValue === 'string' ? maxValue: roundNumber(maxValue, 3),
         numberOfInvalidValues,
       ],
-    ]
+    ];
   } else {
     entries = [
       [
@@ -133,7 +133,7 @@ function FeatureProfile({
         modeValue,
         numberOfInvalidValues,
       ],
-    ]
+    ];
   }
 
   return (
@@ -159,7 +159,7 @@ function FeatureProfile({
         </>
       ))}
     </FlexContainer>
-  )
+  );
 }
 
 function FeatureProfiles({
@@ -184,7 +184,7 @@ function FeatureProfiles({
         ))}
       </BodyStyle>
     </ContainerStyle>
-  )
+  );
 }
 
 export default FeatureProfiles;

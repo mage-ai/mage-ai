@@ -37,6 +37,7 @@ module.exports = {
     'arrow-body-style': 'warn',
     'arrow-parens': 'off',
     'consistent-return': 'off',
+    'eol-last': 'error',
     'function-paren-newline': 'off',
     'implicit-arrow-linebreak': 'off',
     'import/no-cycle': 'off',

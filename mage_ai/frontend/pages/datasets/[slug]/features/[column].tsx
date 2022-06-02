@@ -7,6 +7,7 @@ import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
 import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
@@ -31,7 +32,7 @@ function Feature() {
   const { data: featureSet } = api.feature_sets.detail(featureSetId);
   const features = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
-  const featureMapping = getFeatureMapping(featureSet)
+  const featureMapping = getFeatureMapping(featureSet);
   const featureIndex = +featureId;
 
   // Get individual column data
@@ -43,7 +44,7 @@ function Feature() {
   }));
 
   const insightsColumn = (featureSet?.['insights']?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
-  const statisticsOverview = featureSet?.['statistics'] || {}
+  const statisticsOverview = featureSet?.['statistics'] || {};
 
   // Get individual column statistics
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
@@ -115,10 +116,9 @@ function Feature() {
   };
 
   const headEl = (
-    <FlexContainer alignItems="justify-right" flexDirection="row-reverse" >
-      <Button 
-        onClick={viewColumns}
-      >
+    <FlexContainer alignItems="center" justifyContent="space-between">
+      <PageBreadcrumbs featureSet={featureSet} />
+      <Button onClick={viewColumns}>
         <Text bold> Datasets view </Text>
       </Button>
     </FlexContainer>
@@ -133,7 +133,7 @@ function Feature() {
         title: `${featureUUID} (${columnType})`,
       }]}
     />
-  )
+  );
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -186,7 +186,7 @@ function Feature() {
         }
       </Flex>
     </FlexContainer>
-  )
+  );
 
   const tabsEl = (
     <Tabs
@@ -215,7 +215,7 @@ function Feature() {
         />
       </Tab>
     </Tabs>
-  )
+  );
 
   const [actionPayload, setActionPayload] = useState<TransformerActionType>();
   const actionType = actionPayload?.action_type;
