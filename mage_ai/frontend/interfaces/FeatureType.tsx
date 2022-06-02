@@ -71,6 +71,7 @@ export const COLUMN_TYPE_HUMAN_READABLE_MAPPING = {
 };
 
 export default interface FeatureType {
-  column_type: string;
+  columnType?: string;
+  column_type?: string;
   uuid: string;
 }
