@@ -22,12 +22,12 @@ function Suggestions({
   } = featureSet;
   const {
     actions,
-  } = pipeline;
+  } = pipeline || {};
 
   return (
     <>
       {
-        actions.map((action, idx) => {
+        Array.isArray(actions) && actions?.map((action, idx) => {
           const {
             title,
             action_payload: {
@@ -52,7 +52,7 @@ function Suggestions({
         })
       }
 
-      {suggestions.length >= 1 && (
+      {suggestions?.length >= 1 && (
         <Spacing mt={2}>
           <Accordion
             highlighted

@@ -8,7 +8,6 @@ import { ThemeType } from '../../styles/themes/constants';
 
 export type DividerProps = {
   black?: boolean;
-  border?: boolean;
   dark?: boolean;
   muted?: boolean;
   prominent?: boolean;
@@ -30,7 +29,7 @@ const DividerContainerStyle = styled.div<DividerProps>`
 const DividerStyle = styled.div<DividerProps>`
   height: 1px;
 
-  ${props => props.border && `
+  ${props => `
     background-color: ${(props.theme.monotone || light.monotone).grey200};
   `}
 `;
