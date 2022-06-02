@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import AccordionPanelImport, { AccordionPanelProps } from './AccordionPanel';
 import Divider from '@oracle/elements/Divider';
-import light from '@oracle/styles/themes/light'
+import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 
 export type AccordionProps = {
