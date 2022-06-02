@@ -52,6 +52,7 @@ const SuggestionRow = ({
             bold
             noHoverUnderline
             onClick={link}
+            preventDefault
           >
             Apply
           </Link>
