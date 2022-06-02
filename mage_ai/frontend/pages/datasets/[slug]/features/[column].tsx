@@ -2,6 +2,7 @@ import Router, { useRouter } from 'next/router';
 import { useState } from 'react';
 
 import ActionForm from '@components/ActionForm';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import Flex from '@oracle/components/Flex';
@@ -15,7 +16,6 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionsTable from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import TransformerActionType from '@interfaces/TransformerActionType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
