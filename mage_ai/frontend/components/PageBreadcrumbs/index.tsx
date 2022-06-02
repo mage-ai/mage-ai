@@ -43,7 +43,7 @@ function PageBreadcrumbs({
       } else if (idx === 3) {
         const featureIndex = +column;
         const featureUUID = getFeatureUUID(featureSet, featureIndex);
-        label = featureUUID.length > MAX_CHARS
+        label = featureUUID && featureUUID.length > MAX_CHARS
           ? `${featureUUID.slice(0, MAX_CHARS)}...`
           : featureUUID;
         href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}/${column}`;
