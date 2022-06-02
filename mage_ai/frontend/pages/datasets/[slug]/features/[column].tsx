@@ -15,7 +15,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionsTable from '@components/suggestions/SuggestionsList';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import TransformerActionType from '@interfaces/TransformerActionType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from 'api';
 import { UNIT } from '@oracle/styles/units/spacing';
