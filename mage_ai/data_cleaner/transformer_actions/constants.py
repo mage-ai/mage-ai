@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 
-CONSTANT_IMPUTATION_DEFAULTS = dict(object='missing', datetime=pd.NaT, number=0)
+CONSTANT_IMPUTATION_DEFAULTS = dict(object='missing', datetime=pd.Timestamp.min, number=0)
 CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
 
 

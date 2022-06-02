@@ -1,3 +1,7 @@
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.shared.multi import run_parallel
+from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER_TYPES,
@@ -21,6 +25,7 @@ def increment(metric, tags):
 
 
 class StatisticsCalculator():
+
     def __init__(
         self,
         # s3_client,
@@ -44,17 +49,13 @@ class StatisticsCalculator():
             self.data_tags,
         )
 
-        with timer(
-            'statistics.calculate_statistics_overview.time',
-                self.data_tags):
+        with timer('statistics.calculate_statistics_overview.time', self.data_tags):
             if not is_clean:
-                df = clean_dataframe(df, self.column_types)
+                df = clean_dataframe(df, self.column_types, dropna=False)
             timeseries_metadata = self.__evaluate_timeseries(df)
-            data = dict(
-                count=len(df.index),
-                is_timeseries=timeseries_metadata['is_timeseries'],
-                timeseries_index=timeseries_metadata['timeseries_index']
-            )
+            data = dict(count=len(df.index),
+                        is_timeseries=timeseries_metadata['is_timeseries'],
+                        timeseries_index=timeseries_metadata['timeseries_index'])
 
             arr_args_1 = [df[col] for col in df.columns],
             arr_args_2 = [col for col in df.columns],
@@ -125,10 +126,7 @@ class StatisticsCalculator():
                 null_value_rate = df[column].isnull().sum() / df[column].size
                 if null_value_rate <= 0.1 and dtype == DATETIME:
                     indices.append(column)
-        return {
-            'is_timeseries': len(indices) != 0,
-            'timeseries_index': indices
-        }
+        return {'is_timeseries': len(indices) != 0, 'timeseries_index': indices}
 
     def __statistics_overview(self, series, col):
         # The following regex based replace has high overheads
@@ -162,12 +160,18 @@ class StatisticsCalculator():
         count_unique = len(df_value_counts.index)
 
         data = {
-            f'{col}/count': series_non_null.size,
-            f'{col}/count_distinct': count_unique - 1 if np.nan in df_top_value_counts_raw else count_unique,
-            f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
-            f'{col}/null_value_count': series.isnull().sum(),
-            f'{col}/max_null_seq': self.get_longest_null_seq(series),
-            f'{col}/value_counts': df_top_value_counts.to_dict(),
+            f'{col}/count':
+                series_non_null.size,
+            f'{col}/count_distinct':
+                count_unique - 1 if np.nan in df_value_counts else count_unique,
+            f'{col}/null_value_rate':
+                0 if series.size == 0 else series.isnull().sum() / series.size,
+            f'{col}/null_value_count':
+                series.isnull().sum(),
+            f'{col}/max_null_seq':
+                self.get_longest_null_seq(series),
+            f'{col}/value_counts':
+                df_top_value_counts.to_dict(),
         }
 
         if len(series_non_null) > 0:
@@ -185,12 +189,16 @@ class StatisticsCalculator():
                 if data[f'{col}/std'] == 0:
                     data[f'{col}/outlier_count'] = 0
                 else:
-                    series_z_score = ((series_non_null - data[f'{col}/average']) / data[f'{col}/std']).abs()
-                    data[f'{col}/outlier_count'] = (series_z_score >= OUTLIER_ZSCORE_THRESHOLD).sum()
+                    series_z_score = ((series_non_null - data[f'{col}/average']) /
+                                      data[f'{col}/std']).abs()
+                    data[f'{col}/outlier_count'] = (series_z_score >=
+                                                    OUTLIER_ZSCORE_THRESHOLD).sum()
             elif column_type == DATETIME:
-                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
+                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce',
+                                       unit='ns').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
-                data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
+                data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) /
+                                                                            2)].isoformat()
                 data[f'{col}/min'] = dates.min().isoformat()
 
             if column_type not in NUMBER_TYPES:

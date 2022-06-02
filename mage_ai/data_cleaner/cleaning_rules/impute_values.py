@@ -91,7 +91,7 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
-           imputation with mode 
+           imputation with mode
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
@@ -144,7 +144,7 @@ class StringImputeSubRule(TypeImputeSubRule):
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
-           imputation with mode 
+           imputation with mode
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
