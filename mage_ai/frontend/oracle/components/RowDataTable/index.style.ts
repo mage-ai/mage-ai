@@ -20,7 +20,7 @@ type RowContainerStyleProps = {
 
 type RowStyleProps = Pick<
   RowCardProps,
-  'last' | 'secondary' | 'noHorizontalPadding'
+  'border' | 'last' | 'secondary' | 'noHorizontalPadding'
 >;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
