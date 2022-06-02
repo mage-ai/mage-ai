@@ -21,7 +21,7 @@ class RemoveOutliers(BaseRule):
             lower = avg - 3 * std
 
             suggestions.append(self._build_transformer_action_suggestion(
-                f'Remove outliers in column \'{c}\'',
+                'Remove outliers',
                 f'There\'re {outlier_count} outliers in column \'{c}\'. Suggest to remove them.',
                 ActionType.FILTER,
                 action_arguments=[c],

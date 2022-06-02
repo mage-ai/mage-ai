@@ -203,8 +203,8 @@ def update_pipeline(id):
     actions = request_data.get('actions', [])
     clean_pipeline = BasePipeline(actions=actions)
     pipeline.pipeline = clean_pipeline
-    # # 1. Transform the data
-    # # 2. Recalculate stats and suggestions
+    # 1. Transform the data
+    # 2. Recalculate stats and suggestions
     feature_set_id = pipeline.metadata.get('feature_set_id')
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)

@@ -66,8 +66,9 @@ class StatisticsCalculator():
 
             # Aggregated stats
             column_count = len(df.columns)
-            data['avg_null_value_count'] = \
-                sum(data[f'{col}/null_value_count'] for col in df.columns) / column_count
+            data['total_null_value_count'] = \
+                sum(data[f'{col}/null_value_count'] for col in df.columns)
+            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
             data['avg_invalid_value_count'] = \
                 sum(data.get(f'{col}/invalid_value_count', 0) for col in df.columns) / column_count
             data['completeness'] = \

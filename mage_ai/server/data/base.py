@@ -31,10 +31,10 @@ class Model():
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
 
-    def read_json_file(self, file_name):
+    def read_json_file(self, file_name, default_value={}):
         file_path = os.path.join(self.dir, file_name)
         if not os.path.exists(file_path):
-            return {}
+            return default_value
         with open(file_path) as file:
             return json.load(file)
 
