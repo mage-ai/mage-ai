@@ -21,7 +21,6 @@ app = Flask(__name__,
 
 CORS(app, resources={r'/*': {'origins': '*'}})
 
-print('setting thread to None')
 thread = None
 
 
