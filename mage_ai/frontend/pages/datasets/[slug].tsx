@@ -20,7 +20,6 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
-import ApiReloader from '@components/ApiReloader';
 
 function Data() {
   const router = useRouter();
@@ -261,14 +260,10 @@ function Data() {
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
-      <ApiReloader
-        uuid="pipelines.useUpdate"
-      >
-        <SuggestionsList
-          featureSet={datasetResponse}
-          featureSetId={slug}
-        />
-      </ApiReloader>
+      <SuggestionsList
+        featureSet={datasetResponse}
+        featureSetId={slug}
+      />
       <Spacing mt={4} />
       <Tabs
         bold
