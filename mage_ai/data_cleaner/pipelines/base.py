@@ -11,6 +11,8 @@ from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value \
     import RemoveColumnsWithSingleValue
 from mage_ai.data_cleaner.cleaning_rules.remove_duplicate_rows \
     import RemoveDuplicateRows
+from mage_ai.data_cleaner.cleaning_rules.remove_outliers \
+    import RemoveOutliers
 from mage_ai.data_cleaner.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
@@ -23,6 +25,7 @@ DEFAULT_RULES = [
     RemoveColumnsWithHighEmptyRate,
     RemoveColumnsWithSingleValue,
     RemoveDuplicateRows,
+    RemoveOutliers,
 ]
 
 
