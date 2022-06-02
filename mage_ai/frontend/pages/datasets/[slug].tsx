@@ -262,10 +262,7 @@ function Data() {
       {headEl}
       <Spacing mt={2} />
       <ApiReloader
-        uuids={[
-          'feature_sets.detail',
-          'pipelines.useUpdate',
-        ]}
+        uuid="pipelines.useUpdate"
       >
         <SuggestionsList
           featureSet={datasetResponse}
