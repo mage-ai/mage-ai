@@ -9,6 +9,7 @@ function DatasetDetail() {
   const router = useRouter();
   const { slug } = router.query;
 
+  // @ts-ignore
   const [featureSetId, _, featureId] = slug;
 
   let el;
