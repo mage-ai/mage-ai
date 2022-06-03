@@ -7,6 +7,7 @@ import FeatureType, {
   COLUMN_TYPE_HUMAN_READABLE_MAPPING,
   COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE,
 } from '@interfaces/FeatureType';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -21,6 +22,7 @@ import {
   WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
+import { getFeatureIdMapping } from '@utils/models/featureSet';
 import { roundNumber } from '@utils/string';
 
 export const ContainerStyle = styled.div`
@@ -56,16 +58,19 @@ export const CellStyle = styled.div<any>`
 
 type FeatureProfileProps = {
   feature: FeatureType,
+  featureSet: FeatureSetType,
   statistics: any,
 };
 
 type FeatureProfilesProps = {
   features: FeatureType[],
+  featureSet: FeatureSetType,
   statistics: any,
 };
 
 function FeatureProfile({
   feature,
+  featureSet,
   statistics,
 }: FeatureProfileProps) {
   const {
@@ -138,17 +143,26 @@ function FeatureProfile({
     ];
   }
 
+  const featureSetId = featureSet.id;
+  const featureUuid = feature?.uuid;
+  const featureId = getFeatureIdMapping(featureSet)[featureUuid]
+
   return (
     <FlexContainer>
       <Flex flex={1}>
         <CellStyle>
-          <Link
-
+          <NextLink
+            as={`/datasets/${featureSetId}/features/${featureId}`}
+            href="/datasets/[...slug]"
+            key={featureUuid}
+            passHref
           >
-            <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
-              {uuid}
-            </Text>
-          </Link>
+            <Link inline>
+              <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
+                {uuid}
+              </Text>
+            </Link>
+          </NextLink>
         </CellStyle>
       </Flex>
       {entries.map((values, idx) => (
@@ -168,6 +182,7 @@ function FeatureProfile({
 
 function FeatureProfiles({
   features,
+  featureSet,
   statistics,
 }: FeatureProfilesProps) {
   return (
@@ -182,6 +197,7 @@ function FeatureProfiles({
           <FeatureProfileStyle key={idx}>
             <FeatureProfile
               feature={feature}
+              featureSet={featureSet}
               statistics={statistics}
             />
           </FeatureProfileStyle>

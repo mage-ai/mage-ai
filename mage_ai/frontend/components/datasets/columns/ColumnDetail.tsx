@@ -193,13 +193,15 @@ function Feature({
       </Tab>
       <Tab key="visualizations" label="Visualizations">
         <Spacing my={3} />
-        <ColumnAnalysis
-          column={featureUUID}
-          features={features}
-          insights={insightsColumn}
-          statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-          statisticsOverview={statisticsOverview}
-        />
+        {count > 0 && (
+          <ColumnAnalysis
+            column={featureUUID}
+            features={features}
+            insights={insightsColumn}
+            statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+            statisticsOverview={statisticsOverview}
+          />
+        )}
       </Tab>
     </Tabs>
   );
