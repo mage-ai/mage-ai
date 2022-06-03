@@ -61,7 +61,7 @@ class FeatureSet(Model):
 
     @property
     def metadata(self):
-        return self.read_json_file('metadata.json')
+        return self.read_json_file('metadata.json', {})
     
     @metadata.setter
     def metadata(self, metadata):
@@ -69,7 +69,7 @@ class FeatureSet(Model):
 
     @property
     def statistics(self):
-        return self.read_json_file('statistics.json')
+        return self.read_json_file('statistics.json', {})
     
     @statistics.setter
     def statistics(self, metadata):
@@ -77,7 +77,7 @@ class FeatureSet(Model):
 
     @property
     def insights(self):
-        return self.read_json_file('insights.json')
+        return self.read_json_file('insights.json', [])
 
     @insights.setter
     def insights(self, metadata):
@@ -85,7 +85,7 @@ class FeatureSet(Model):
 
     @property
     def suggestions(self):
-        return self.read_json_file('suggestions.json')
+        return self.read_json_file('suggestions.json', [])
 
     @suggestions.setter
     def suggestions(self, metadata):
@@ -191,7 +191,7 @@ class Pipeline(Model):
 
     @property
     def metadata(self):
-        return self.read_json_file('metadata.json')
+        return self.read_json_file('metadata.json', {})
     
     @metadata.setter
     def metadata(self, metadata):
