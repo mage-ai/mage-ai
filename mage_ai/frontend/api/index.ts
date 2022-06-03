@@ -176,7 +176,7 @@ export function useCustomFetchRequest({
             if (!Array.isArray(res) && typeof res === 'object' && res.code && res.code >= 400) {
               console.error(errorMessage);
             } else {
-              console.log(successMessage);
+              // console.log(successMessage);
             }
           },
         },
