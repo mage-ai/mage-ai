@@ -5,6 +5,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -72,6 +73,7 @@ function Suggestions({
             visibleMapping={{ 0: true }}
           >
             <AccordionPanel
+              maxHeight={UNIT*50}
               noBackground
               noPaddingContent
               title={`${suggestions.length} suggested actions`}
