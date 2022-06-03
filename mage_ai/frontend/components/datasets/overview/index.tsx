@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -44,7 +44,15 @@ function DatasetOverview({
   fetchFeatureSet,
 }: DatasetOverviewProps) {
   const { tab: tabFromUrl } = queryFromUrl();
-  const currentTab = tabFromUrl || 'reports';
+  const [currentTab, setCurrentTab] = useState();
+  useEffect(() => {
+    if (tabFromUrl) {
+      setCurrentTab(tabFromUrl);
+    } else {
+      // @ts-ignore
+      setCurrentTab('reports');
+    }
+  }, [currentTab, tabFromUrl]);
 
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {

@@ -29,6 +29,10 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
     height: calc(100% - ${props.offsetHeight || 0}px);
   `}
 
+  ${props => props.fullHeight && !props.verticalHeight && `
+    height: calc(100% - ${props.offsetHeight || 0}px);
+  `}
+
   ${props => props.fullWidth && `
     width: 100%;
   `}

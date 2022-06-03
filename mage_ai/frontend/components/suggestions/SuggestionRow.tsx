@@ -49,7 +49,7 @@ const SuggestionRow = ({
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
     let el;
 
-    if (featureIdMapping[col]) {
+    if (featureIdMapping?.[col]) {
       el = (
         <NextLink
           href="/datasets/[...slug]"

@@ -290,14 +290,21 @@ const SpanStyle = styled.span<TextProps>`
 
 const Text = ({
   children,
+  muted: mutedProp,
   raw,
   ...props
 }: TextProps) => {
+  let muted = false;
+
+  if (mutedProp === true) {
+    muted = true;
+  }
   const El = props?.inline ? SpanStyle : TextStyle;
 
   const combinedProps = {
     ...props,
     ...({}),
+    muted,
   };
 
   if (raw) {

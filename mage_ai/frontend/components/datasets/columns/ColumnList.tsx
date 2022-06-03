@@ -75,12 +75,11 @@ const ColumnList = ({
                 <NextLink
                   as={`/datasets/${featureSetId}/features/${featureId}`}
                   href="/datasets/[...slug]"
-                  key={`${colName}_${i}`}
+                  key={colName}
                   passHref
                 >
                   <Link
                     block
-                    key={`${colName}-${i}`}
                     noHoverUnderline
                     noOutline
                   >

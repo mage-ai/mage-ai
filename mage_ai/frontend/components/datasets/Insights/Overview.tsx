@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import HeatMap from '@components/charts/HeatMap';
 import Histogram from '@components/charts/Histogram';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -23,12 +24,15 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
-import { formatPercent, numberWithCommas } from '@utils/string';
+import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
 
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
   border-radius: ${BORDER_RADIUS_LARGE}px;
+`;
+
+export const ChartHeaderStyle = styled.div`
 `;
 
 export const HeaderStyle = styled.div`
@@ -117,8 +121,24 @@ function Overview({
   statistics,
 }: OverviewProps) {
   const {
+    correlations,
     time_series: timeSeries,
   } = insightsOverview;
+
+  const xyLabels = [];
+  const heatmapData = correlations?.map(({
+    correlations: c,
+    feature: {
+      uuid,
+    },
+  }, idx: number) => {
+    xyLabels.push(uuid);
+
+    const arr = c[0].y.map(({ value }) => roundNumber(value));
+    arr.splice(idx, 0, 1);
+
+    return arr;
+  });
 
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
   const timeSeriesData = [];
@@ -324,6 +344,7 @@ function Overview({
           </ChartContainer>
         }
       />
+
       {timeSeriesHistograms.length >= 1 &&
         timeSeriesHistograms.map((chart, idx) => {
           const uuid = timeSeries[idx]?.x_metadata?.label;
@@ -384,6 +405,7 @@ function Overview({
           );
         })
       }
+
       <ChartRow
         left={
           <ChartContainer
@@ -441,6 +463,7 @@ function Overview({
           </ChartContainer>
         }
       />
+
       {columnsWithDistribution.length >= 1 && (
         <ChartRow
           left={
@@ -520,6 +543,21 @@ function Overview({
                   small
                 />
               )}
+            </ChartContainer>
+          }
+        />
+      )}
+
+      {heatmapData && (
+        <ChartRow
+          left={
+            <ChartContainer title="Correlations">
+              <HeatMap
+                data={heatmapData}
+                height={UNIT * 8 * xyLabels.length}
+                xLabels={xyLabels}
+                yLabels={xyLabels}
+              />
             </ChartContainer>
           }
         />
