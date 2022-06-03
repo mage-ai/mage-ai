@@ -1,4 +1,3 @@
-from argparse import Action
 from mage_ai.data_cleaner.transformer_actions import column, row
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, VariableType
 from mage_ai.data_cleaner.transformer_actions.dependency_resolution import (
@@ -10,9 +9,9 @@ from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
     interpolate,
     replace_true_false,
 )
+import json
 
 # from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
-import json
 
 COLUMN_TYPE_PIPELINE_MAPPING = {}
 DEPENDENCIES = {ActionType.FILTER: resolve_filter_action}
@@ -77,7 +76,7 @@ class BaseAction:
         dependency = DEPENDENCIES.get(action_type, default_resolution)
         dependencies_met, msg = dependency(df)
         if not dependencies_met:
-            raise RuntimeError('Dependencies of this cleaning action are not completed: f{msg}')
+            raise RuntimeError(f'Dependencies of this cleaning action are not completed: {msg}')
 
         self.hydrate_action()
         self.action['action_code'] = replace_true_false(self.action['action_code'])
