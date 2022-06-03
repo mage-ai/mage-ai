@@ -1027,22 +1027,23 @@ class ColumnTests(TestCase):
 
     def test_clean_column_name(self):
         df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '', '']
+            ['', '', '', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
-            'Bad Case',
+            '  Bad Case   ',
             '%@#342%34@@#342',
-            'yield',
-            '12342',
+            ' yield  ',
+            '12342   ',
             '1234.  23',
-            'true_crime',
+            '   true_crime',
             '@#f$%&*o$*(%^&r*$%&',
             'PascalCaseColumn',
             'camelCaseText',
+            '___weird_snake_case___'
             ]
         )
         expected_df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '', '']
+            ['', '', '', '', '', '', '', '', '', '', '']
         ], columns=[
             'good_name',
             'bad_case',
@@ -1054,20 +1055,23 @@ class ColumnTests(TestCase):
             'for_',
             'pascal_case_column',
             'camel_case_text',
+            'weird_snake_case'
             ]
         )
         action = dict(
             action_type='clean_column_name',
             action_arguments=[
-                'Bad Case',
+                'good_name',
+                '  Bad Case   ',
                 '%@#342%34@@#342',
-                'yield',
-                '12342',
+                ' yield  ',
+                '12342   ',
                 '1234.  23',
-                'true',
+                '   true_crime',
                 '@#f$%&*o$*(%^&r*$%&',
                 'PascalCaseColumn',
                 'camelCaseText',
+                '___weird_snake_case___'
             ],
             action_code='',
             action_options={},

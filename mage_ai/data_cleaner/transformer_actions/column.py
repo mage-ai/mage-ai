@@ -226,6 +226,7 @@ def __column_mapping(action):
 def __clean_column_name(name):
     if iskeyword(name):
         name = f'{name}_'
+    name = name.strip(' \'\"_-')
     name = NameConventionPatterns.CONNECTORS.sub('_', name)
     name = NameConventionPatterns.NON_ALNUM.sub('', name)
     name = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', name)
@@ -278,9 +279,9 @@ def __groupby_agg(df, action, agg_method):
     if action_code is not None and action_code != '':
         df_filtered = query_with_action_code(df_filtered, action_code, {'original_df': df_filtered})
     action_options = action['action_options']
-    df_agg = df_filtered.groupby(action_options['groupby_columns'])[action['action_arguments']].agg(
-        agg_method
-    )
+    df_agg = df_filtered.groupby(action_options['groupby_columns'],)[
+        action['action_arguments']
+    ].agg(agg_method)
     return df.merge(
         df_agg.rename(columns=__column_mapping(action)),
         on=action_options['groupby_columns'],

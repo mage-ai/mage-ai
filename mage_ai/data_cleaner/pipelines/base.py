@@ -1,4 +1,3 @@
-from collections import deque
 from mage_ai.data_cleaner.cleaning_rules.base import STATUS_COMPLETED
 from mage_ai.data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
 from mage_ai.data_cleaner.cleaning_rules.impute_values import ImputeValues
@@ -52,16 +51,16 @@ class BasePipeline():
         if len(self.actions) == 0:
             print('Pipeline is empty.')
             return df
-        action_queue = deque(self.actions)
+        action_queue = self.actions
         completed_queue = []
         df_transformed = df
         while len(action_queue) != 0:
-            action = action_queue.popleft()
+            action = action_queue[0]
             df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
             completed_queue.append(action)
             if auto:
-                action_queue = deque(self.update_suggestions(df_transformed))
+                action_queue = self.update_suggestions(df_transformed)
         self.actions = completed_queue
         return df_transformed
 

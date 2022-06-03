@@ -36,7 +36,7 @@ COLUMN_TYPES = frozenset([
     ZIP_CODE,
 ])
 
-REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
+REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,2}$|^\d{1,2}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
 REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
@@ -64,6 +64,7 @@ def get_mismatched_row_count(series, column_type):
         mismatched_rows = len(series[~str_series.str.match(REGEX_ZIP_CODE)].index)
     return mismatched_rows
 
+
 def infer_column_type(series, column_name, dtype, kwargs):
     mdtype = None
     if 'datetime64' in str(dtype):
@@ -74,8 +75,8 @@ def infer_column_type(series, column_name, dtype, kwargs):
         mdtype = TRUE_OR_FALSE
     elif np.issubdtype(dtype, np.integer):
         clean_series = series.dropna()
-        if (clean_series.min() >= 100 and clean_series.max() <= 99999
-            and 'zip' in column_name.lower()):
+        if (clean_series.min() >= 100 and clean_series.max() <= 99999 and
+                'zip' in column_name.lower()):
             mdtype = ZIP_CODE
         else:
             mdtype = NUMBER
@@ -87,11 +88,10 @@ def infer_column_type(series, column_name, dtype, kwargs):
 
     return mdtype
 
+
 def infer_object_type(series, kwargs):
     clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
-    clean_series = clean_series.map(
-        lambda x: x if (not isinstance(x, str) or x != '') else np.nan
-    )
+    clean_series = clean_series.map(lambda x: x if (not isinstance(x, str) or x != '') else np.nan)
     clean_series = clean_series.dropna()
 
     series_nunique = series.nunique(dropna=False)
@@ -140,12 +140,13 @@ def infer_object_type(series, kwargs):
                         if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
                             mdtype = TEXT
                         else:
-                            if (clean_series_nunique <= kwargs.get(
-                                'category_cardinality_threshold', 255)):
+                            if (clean_series_nunique <= kwargs.get('category_cardinality_threshold',
+                                                                   255)):
                                 mdtype = CATEGORY
                             else:
                                 mdtype = CATEGORY_HIGH_CARDINALITY
     return mdtype
+
 
 def infer_column_types(df, **kwargs):
     columns = [df[col] for col in df.columns]
@@ -153,13 +154,8 @@ def infer_column_types(df, **kwargs):
     ctypes = {}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
-        types = run_parallel_multiple_args(
-            infer_column_type,
-            columns,
-            df.columns,
-            df.dtypes,
-            kwarg_list
-        )
+        types = run_parallel_multiple_args(infer_column_type, columns, df.columns, df.dtypes,
+                                           kwarg_list)
     else:
         types = map(infer_column_type, columns, df.columns, df.dtypes, kwarg_list)
     for col, dtype in zip(df.columns, types):

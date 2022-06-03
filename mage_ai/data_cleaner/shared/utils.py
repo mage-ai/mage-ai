@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.column_type_detector import (NUMBER, NUMBER_WITH_DECIMALS, DATETIME)
+from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, DATETIME
 from mage_ai.data_cleaner.column_type_detector import DATETIME
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
@@ -8,7 +8,8 @@ import numpy as np
 def clean_series(series, column_type, dropna=True):
     series_cleaned = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
     series_cleaned = series_cleaned.map(
-        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,)
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan
+    )
     if dropna:
         series_cleaned = series_cleaned.dropna()
 
@@ -26,14 +27,17 @@ def clean_series(series, column_type, dropna=True):
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace('%', '')
             series_cleaned = series_cleaned.str.replace(' ', '')
-        try:
-            series_cleaned = series_cleaned.astype(float).astype(int)
-        except ValueError:
+        if column_type == NUMBER:
+            try:
+                series_cleaned = series_cleaned.astype(int)
+            except ValueError:
+                series_cleaned = series_cleaned.astype(float)
+        else:
             series_cleaned = series_cleaned.astype(float)
         if is_percent:
             series_cleaned /= 100
-    if column_type == DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, infer_datetime_format=True, errors='coerce')
+    elif column_type == DATETIME:
+        series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
     return series_cleaned
 
 
