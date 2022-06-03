@@ -1,7 +1,6 @@
 import React from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import styled from 'styled-components';
-import { Bin, Bins } from '@visx/mock-data/lib/generators/genBins';
 import { Group } from '@visx/group';
 import { HeatmapRect } from '@visx/heatmap';
 import { scaleLinear } from '@visx/scale';
@@ -38,8 +37,8 @@ function min<Datum>(data: Datum[], value: (d: Datum) => number): number {
   return Math.min(...data.map(value));
 }
 
-const bins = (d: Bins) => d.bins;
-const count = (d: Bin) => d.count;
+const bins = (d: any) => d.bins;
+const count = (d: any) => d.count;
 
 export type HeatmapProps = {
   data: number[][] | string[][];
