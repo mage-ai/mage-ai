@@ -1,8 +1,8 @@
-import ActionPayloadType from './ActionPayloadType';
+import ActionPayloadType, { ActionStatusEnum } from './ActionPayloadType';
 
 export default interface SuggestionType {
   action_payload: ActionPayloadType;
   message: string;
-  status: string;
+  status: ActionStatusEnum;
   title: string;
 }

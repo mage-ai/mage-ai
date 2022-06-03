@@ -1,3 +1,5 @@
+import { ColumnTypeEnum } from './FeatureType';
+
 export enum FeatureSetQualityEnum {
   GOOD = 'Good',
   BAD = 'Bad',
@@ -5,7 +7,7 @@ export enum FeatureSetQualityEnum {
 
 export default interface MetadataType {
   column_types: {
-    [key: string]: string;
+    [key: string]: ColumnTypeEnum;
   };
   name: string;
   pipeline_id: number;

@@ -1,16 +1,11 @@
 import ActionType from './ActionType';
-import FeatureType from './FeatureType';
+import InsightsType from './InsightsType';
 import MetadataType from './MetadataType';
 import SuggestionType from './SuggestionType';
 
 export default interface FeatureSetType {
   id: number;
-  insights: {
-    feature: FeatureType;
-    charts: any[];
-    correlations: any[];
-    time_series: any[];
-  }[];
+  insights: InsightsType[];
   metadata: MetadataType;
   pipeline?: {
     id: number;

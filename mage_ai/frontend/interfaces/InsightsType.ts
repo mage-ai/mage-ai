@@ -40,5 +40,6 @@ export interface InsightsOverviewType {
 export default interface InsightsType {
   charts: ChartType[];
   correlations: ChartType[];
+  feature?: FeatureType;
   time_series: ChartType[];
 }
