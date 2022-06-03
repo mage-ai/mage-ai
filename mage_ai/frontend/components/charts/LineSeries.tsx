@@ -103,7 +103,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const getX = getXProp || (d => d?.x);
   const getY = getYProp || ((d, idx = 0) => d?.y[idx]);
 
-  const border = 'rgba(255, 255, 255, 0.3)';
+  const border = light.monotone.gray;
   const purplePastel = light.brand.wind200;
   const text = light.monotone.gray;
   const { black, gray } = light.monotone;
@@ -251,7 +251,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             scale={yScale}
             stroke={border}
             strokeDasharray="3,3"
-            strokeOpacity={0.7}
+            strokeOpacity={0.4}
             width={xMax}
           />
 
@@ -261,7 +261,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             scale={xScale}
             stroke={border}
             strokeDasharray="3,3"
-            strokeOpacity={0.7}
+            strokeOpacity={0.4}
             width={xMax}
           />
 
