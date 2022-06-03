@@ -20,8 +20,6 @@ export type SuggestionRowProps = {
   featureSetId?: string;
   idx: number;
   link?: () => void;
-  // name: string;
-  // numFeatures: number;
   onClose?: () => void;
   showIdx?: boolean;
 };
@@ -33,20 +31,20 @@ const SuggestionRow = ({
   featureSetId,
   idx,
   link,
-  // name,
-  // numFeatures,
   onClose,
   showIdx,
 }: SuggestionRowProps) => {
   const {
     action_payload: {
       action_arguments: actionArguments,
+      action_options: actionOptions,
     },
     message,
     title,
   } = action;
 
   const numFeatures = actionArguments?.length || 0;
+  const numOptions = actionOptions ? Object.keys(actionOptions).length : 0;
 
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
     let el;
@@ -81,7 +79,6 @@ const SuggestionRow = ({
   return (
     <RowCard
       border={border}
-      // columnFlexNumbers={[0.5, 0.5, 12]}
       flexStart
     >
       {link &&
@@ -115,9 +112,19 @@ const SuggestionRow = ({
           </Text>
         </div>
 
-        <Text muted small>
-          {message}
-        </Text>
+        {message && (
+          <Text muted small>
+            {message}
+          </Text>
+        )}
+
+        <FlexContainer>
+          {!message && actionOptions && Object.entries(actionOptions).map(([k, v], idx: number) => (
+            <Text key={k} inline muted small>
+              <Text inline monospace muted small>{k}</Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
+            </Text>
+          ))}
+        </FlexContainer>
       </Flex>
 
       <FlexContainer>
