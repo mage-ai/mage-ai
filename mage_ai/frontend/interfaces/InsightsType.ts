@@ -1,4 +1,4 @@
-import FeatureType from '@interfaces/FeatureType';
+import FeatureType, { FeatureResponseType } from '@interfaces/FeatureType';
 
 export enum LabelTypeEnum {
   RANGE = 'range',
@@ -40,6 +40,6 @@ export interface InsightsOverviewType {
 export default interface InsightsType {
   charts?: ChartType[];
   correlations: ChartType[];
-  feature?: FeatureType;
+  feature?: FeatureResponseType;
   time_series: ChartType[];
 }

@@ -40,7 +40,7 @@ function Feature({
     columnValues: [row[featureIndex]],
   }));
 
-  const insightsColumn = (featureSet?.['insights']?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
+  const insightsColumn = (featureSet?.insights?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
   const statisticsOverview = featureSet?.['statistics'] || {};
 
   // Get individual column statistics

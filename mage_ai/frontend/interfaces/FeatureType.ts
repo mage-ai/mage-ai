@@ -66,9 +66,11 @@ export const COLUMN_TYPE_HUMAN_READABLE_MAPPING = {
   [ColumnTypeEnum.ZIP_CODE]: 'Zip code',
 };
 
-export default interface FeatureType {
-  // Both the camel-cased and snake-cased column type properties are used.
-  columnType?: ColumnTypeEnum;
+export interface FeatureResponseType {
   column_type?: ColumnTypeEnum;
+  uuid: string;
+}
+export default interface FeatureType {
+  columnType: ColumnTypeEnum;
   uuid: string;
 }
