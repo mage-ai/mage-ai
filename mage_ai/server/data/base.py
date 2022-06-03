@@ -70,7 +70,8 @@ class Model:
     @classmethod
     def objects(cls):
         arr = []
-        for id in Model.gen_integer_dir_list(cls.path_name()):
+        dirs = sorted(Model.gen_integer_dir_list(cls.path_name()), reverse=True)
+        for id in dirs:
             try:
                 arr.append(cls(id=id))
             except Exception:
