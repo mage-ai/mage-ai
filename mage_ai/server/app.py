@@ -227,13 +227,19 @@ def update_pipeline(id):
 #     return feature_set.column(column_name)
 
 
-def clean_df(df, name, pipeline_uuid=None):
+def clean_df(df, name):
     feature_set = FeatureSet(df=df, name=name)
 
     result = clean_data(df)
 
     feature_set.write_files(result)
     return (feature_set, result['df'])
+
+
+def clean_df_with_pipeline(df, pipeline_uuid):
+    pipeline = Pipeline(id=pipeline_uuid)
+
+    return pipeline.pipeline.transform(df, auto=False)
 
 
 def connect_df(df, name):
