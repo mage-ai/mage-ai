@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
 
+import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
@@ -58,27 +59,29 @@ function Breadcrumb({
   };
 
   return (
-    <Spacing mr={{ xs: 1 }}>
-      {!href && !onClick && buildEl(true)}
+    <ClientOnly>
+      <Spacing mr={{ xs: 1 }}>
+        {!href && !onClick && buildEl(true)}
 
-      {href && !onClick && (
-        <NextLink as={as} href={href} passHref>
+        {href && !onClick && (
+          <NextLink as={as} href={href} passHref>
+            <Link
+              {...sharedLinkProps}
+            >
+              {buildEl()}
+            </Link>
+          </NextLink>
+        )}
+        {!href && onClick && (
           <Link
             {...sharedLinkProps}
+            onClick={onClick}
           >
             {buildEl()}
           </Link>
-        </NextLink>
-      )}
-      {!href && onClick && (
-        <Link
-          {...sharedLinkProps}
-          onClick={onClick}
-        >
-          {buildEl()}
-        </Link>
-      )}
-    </Spacing>
+        )}
+      </Spacing>
+    </ClientOnly>
   );
 }
 
