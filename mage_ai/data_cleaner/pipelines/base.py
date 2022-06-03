@@ -30,6 +30,7 @@ DEFAULT_RULES = [
 
 
 class BasePipeline():
+
     def __init__(self, actions=[]):
         self.actions = actions
         self.rules = DEFAULT_RULES
@@ -37,7 +38,7 @@ class BasePipeline():
     def create_actions(self, df, column_types, statistics):
         if not statistics or len(statistics) == 0:
             calculator = StatisticsCalculator(column_types)
-            statistics = calculator.calculate_statistics_overview(df, True)
+            statistics = calculator.calculate_statistics_overview(df, False)
         self.column_types = column_types
         all_suggestions = []
         for rule in self.rules:

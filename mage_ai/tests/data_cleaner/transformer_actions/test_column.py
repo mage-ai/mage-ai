@@ -1273,14 +1273,14 @@ class ColumnTests(TestCase):
                 'value': '0',
             },
             action_variables={
-                '0': {
+                'sold': {
                     'feature': {
                         'column_type': 'number',
                         'uuid': 'sold',
                     },
                     'type': 'feature',
                 },
-                '1': {
+                'curr_profit': {
                     'feature': {
                         'column_type': 'number',
                         'uuid': 'curr_profit',
@@ -1295,10 +1295,17 @@ class ColumnTests(TestCase):
                 'value': '0',
             },
             action_variables={
-                '0': {
+                'sold': {
                     'feature': {
                         'column_type': 'number',
                         'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
                     },
                     'type': 'feature',
                 },
@@ -1309,11 +1316,43 @@ class ColumnTests(TestCase):
             action_options={
                 'strategy': 'average',
             },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
+            },
         )
         action4 = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
                 'strategy': 'median',
+            },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
             },
         )
         action5 = dict(
@@ -1322,6 +1361,22 @@ class ColumnTests(TestCase):
                 'strategy': 'column',
                 'value': 'prev_sold',
             },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
+            },
         )
         action6 = dict(
             action_arguments=['sold', 'curr_profit'],
@@ -1329,11 +1384,43 @@ class ColumnTests(TestCase):
                 'strategy': 'sequential',
                 'timeseries_index': ['date']
             },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
+            },
         )
         action7 = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
                 'strategy': 'random'
+            },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
             },
         )
         action8 = dict(
@@ -1341,11 +1428,43 @@ class ColumnTests(TestCase):
             action_options={
                 'strategy': 'mode'
             },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
+            },
         )
         action_invalid = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
                 'strategy': 'knn',
+            },
+            action_variables={
+                'sold': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'sold',
+                    },
+                    'type': 'feature',
+                },
+                'curr_profit': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'curr_profit',
+                    },
+                    'type': 'feature',
+                },
             },
         )
         df_new1 = impute(df.copy(), action1)
@@ -1418,8 +1537,8 @@ class ColumnTests(TestCase):
             'prev_sold',
         ])
         df_expected6 = pd.DataFrame([
-            ['2020-01-01', 1000, None, 800],
-            ['2020-01-02', 1000, None, 700],
+            ['2020-01-01', 1000, 0, 800],
+            ['2020-01-02', 1000, 0, 700],
             ['2020-01-03', 1000, 1200, 700],
             ['2020-01-04', 1700, 1300, 800],
             ['2020-01-05', 1200, 1300, 900],
@@ -1441,7 +1560,7 @@ class ColumnTests(TestCase):
             'curr_profit',
             'prev_sold',
         ])
-        
+
         df_new1['sold'] = df_new1['sold'].astype(int)
         df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
         df_new2['sold'] = df_new2['sold'].astype(int)
@@ -1465,7 +1584,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new6, df_expected6)
         assert_frame_equal(df_new7, df_new7.dropna(axis=0))
         assert_frame_equal(df_new8, df_expected8)
-        
+
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action_invalid)
 
@@ -1492,6 +1611,136 @@ class ColumnTests(TestCase):
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action)
 
+    def test_impute_constant(self):
+        from mage_ai.data_cleaner.transformer_actions.column import impute
+        df = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, None, '2021-10-01', 'Store 2', np.nan],
+            [np.nan, 1100, '', '', 90233],
+            [2, None, None, 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', None, np.nan],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833]
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        action = dict(
+            action_arguments=['group_id',
+                'price',
+                'group_churned_at',
+                'store',
+                'zip_code'
+            ],
+            action_options={
+                'strategy': 'constant',
+            },
+            action_variables={
+                'group_id': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'group_id',
+                    },
+                    'type': 'feature',
+                },
+                'price': {
+                    'feature': {
+                        'column_type': 'number_with_decimals',
+                        'uuid': 'price',
+                    },
+                    'type': 'feature',
+                },
+                'group_churned_at': {
+                    'feature': {
+                        'column_type': 'datetime',
+                        'uuid': 'group_churned_at',
+                    },
+                    'type': 'feature',
+                },
+                'store': {
+                    'feature': {
+                        'column_type': 'category',
+                        'uuid': 'store',
+                    },
+                    'type': 'feature',
+                },
+                'zip_code': {
+                    'feature': {
+                        'column_type': 'zip_code',
+                        'uuid': 'zip_code',
+                    },
+                    'type': 'feature',
+                },
+            },
+        )
+        df_expected = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, 0.0, '2021-10-01', 'Store 2', 'missing'],
+            [0, 1100, pd.Timestamp.min, 'missing', 90233],
+            [2, 0.0, pd.Timestamp.min, 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', 'missing', 'missing'],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833],
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        df_new = impute(df, action).reset_index(drop=True)
+        df_new['group_id'] = df_new['group_id'].astype(int)
+        df_new['price'] = df_new['price'].astype(float)
+        df_new['group_churned_at'] = df_new['group_churned_at'].astype(np.datetime64)
+        assert_frame_equal(df_new, df_expected)
+
+    def test_impute_constant_with_value(self):
+        from mage_ai.data_cleaner.transformer_actions.column import impute
+        df = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, None, '2021-10-01', 'Store 2', np.nan],
+            [np.nan, 1100, '', '', 90233],
+            [2, None, None, 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', None, np.nan],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833]
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        action = dict(
+            action_arguments=['group_id',
+                'price',
+                'group_churned_at',
+                'store',
+                'zip_code'
+            ],
+            action_options={
+                'strategy': 'constant',
+                'value': 'test'
+            },
+            action_variables={},
+        )
+        df_expected = pd.DataFrame([
+            [1, 1.000, '2021-10-01', 'Store 1', 23023],
+            [1, 'test', '2021-10-01', 'Store 2', 'test'],
+            ['test', 1100, 'test', 'test', 90233],
+            [2, 'test', 'test', 'Store 1', 23920],
+            [2, 12.00, '2021-09-01', 'test', 'test'],
+            [2, 125.0, '2021-09-01', 'Store 3', 49833],
+        ], columns=[
+            'group_id',
+            'price',
+            'group_churned_at',
+            'store',
+            'zip_code',
+        ])
+        df_new = impute(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, df_expected)
+
     def test_impute_sequential_two_idx(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
         df = pd.DataFrame([
@@ -1514,9 +1763,46 @@ class ColumnTests(TestCase):
                 'strategy': 'sequential',
                 'timeseries_index': ['group_churned_at', 'order_created_at']
             },
+            action_variables={
+                'group_id': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'group_id',
+                    },
+                    'type': 'feature',
+                },
+                'order_id': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'order_id',
+                    },
+                    'type': 'feature',
+                },
+                'group_churned_at': {
+                    'feature': {
+                        'column_type': 'datetime',
+                        'uuid': 'group_churned_at',
+                    },
+                    'type': 'feature',
+                },
+                'order_created_at': {
+                    'feature': {
+                        'column_type': 'datetime',
+                        'uuid': 'order_created_at',
+                    },
+                    'type': 'feature',
+                },
+                'order_count': {
+                    'feature': {
+                        'column_type': 'number',
+                        'uuid': 'order_count',
+                    },
+                    'type': 'feature',
+                },
+            },
         )
         df_expected = pd.DataFrame([
-            [2, None, '2021-09-01', '2021-08-01', 2],
+            [2, 0, '2021-09-01', '2021-08-01', 2],
             [2, 1250, '2021-09-01', '2021-08-14', 2],
             [2, 1200, '2021-09-01', '2021-08-16', 2],
             [2, 1100, '2021-10-01', '2021-01-01', 2],

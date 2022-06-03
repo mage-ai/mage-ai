@@ -1,12 +1,12 @@
+from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.data_cleaner.shared.multi import run_parallel
+from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER_TYPES,
     get_mismatched_row_count,
 )
-from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.multi import run_parallel
-from mage_ai.data_cleaner.shared.logger import timer
-from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
 import pandas as pd
@@ -20,7 +20,7 @@ def increment(metric, tags):
     pass
 
 
-class StatisticsCalculator():
+class StatisticsCalculator:
     def __init__(
         self,
         # s3_client,
@@ -44,20 +44,18 @@ class StatisticsCalculator():
             self.data_tags,
         )
 
-        with timer(
-            'statistics.calculate_statistics_overview.time',
-                self.data_tags):
+        with timer('statistics.calculate_statistics_overview.time', self.data_tags):
             if not is_clean:
-                df = clean_dataframe(df, self.column_types)
+                df = clean_dataframe(df, self.column_types, dropna=False)
             timeseries_metadata = self.__evaluate_timeseries(df)
             data = dict(
                 count=len(df.index),
                 is_timeseries=timeseries_metadata['is_timeseries'],
-                timeseries_index=timeseries_metadata['timeseries_index']
+                timeseries_index=timeseries_metadata['timeseries_index'],
             )
 
-            arr_args_1 = [df[col] for col in df.columns],
-            arr_args_2 = [col for col in df.columns],
+            arr_args_1 = ([df[col] for col in df.columns],)
+            arr_args_2 = ([col for col in df.columns],)
 
             dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2)
 
@@ -66,20 +64,26 @@ class StatisticsCalculator():
 
             # Aggregated stats
             column_count = len(df.columns)
-            data['total_null_value_count'] = \
-                sum(data[f'{col}/null_value_count'] for col in df.columns)
+            data['total_null_value_count'] = sum(
+                data[f'{col}/null_value_count'] for col in df.columns
+            )
             data['avg_null_value_count'] = data['total_null_value_count'] / column_count
-            data['avg_invalid_value_count'] = \
+            data['avg_invalid_value_count'] = (
                 sum(data.get(f'{col}/invalid_value_count', 0) for col in df.columns) / column_count
-            data['completeness'] = \
+            )
+            data['completeness'] = (
                 1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
-            data['validity'] = \
-                data['completeness'] - data['avg_invalid_value_count'] / data['count'] \
-                if data['count'] > 0 else 0
+            )
+            data['validity'] = (
+                data['completeness'] - data['avg_invalid_value_count'] / data['count']
+                if data['count'] > 0
+                else 0
+            )
             df_dedupe = df.drop_duplicates()
             data['duplicate_row_count'] = df.shape[0] - df_dedupe.shape[0]
-            data['empty_column_count'] = \
-                len([col for col in df.columns if data[f'{col}/count'] == 0])
+            data['empty_column_count'] = len(
+                [col for col in df.columns if data[f'{col}/count'] == 0]
+            )
 
             # object_key = s3_paths.path_statistics_overview(self.object_key_prefix)
             # s3_data.upload_json_sorted(self.s3_client, object_key, data)
@@ -109,10 +113,13 @@ class StatisticsCalculator():
         except Exception as err:
             increment(
                 'statistics.calculate_statistics_overview.column.failed',
-                merge_dict(self.data_tags, {
-                    'col': col,
-                    'error': err.__class__.__name__,
-                }),
+                merge_dict(
+                    self.data_tags,
+                    {
+                        'col': col,
+                        'error': err.__class__.__name__,
+                    },
+                ),
             )
             traceback.print_exc()
             return {}
@@ -125,10 +132,7 @@ class StatisticsCalculator():
                 null_value_rate = df[column].isnull().sum() / df[column].size
                 if null_value_rate <= 0.1 and dtype == DATETIME:
                     indices.append(column)
-        return {
-            'is_timeseries': len(indices) != 0,
-            'timeseries_index': indices
-        }
+        return {'is_timeseries': len(indices) != 0, 'timeseries_index': indices}
 
     def __statistics_overview(self, series, col):
         # The following regex based replace has high overheads
@@ -163,8 +167,12 @@ class StatisticsCalculator():
 
         data = {
             f'{col}/count': series_non_null.size,
-            f'{col}/count_distinct': count_unique - 1 if np.nan in df_top_value_counts_raw else count_unique,
-            f'{col}/null_value_rate': 0 if series.size == 0 else series.isnull().sum() / series.size,
+            f'{col}/count_distinct': count_unique - 1
+            if np.nan in df_top_value_counts_raw
+            else count_unique,
+            f'{col}/null_value_rate': 0
+            if series.size == 0
+            else series.isnull().sum() / series.size,
             f'{col}/null_value_count': series.isnull().sum(),
             f'{col}/max_null_seq': self.get_longest_null_seq(series),
             f'{col}/value_counts': df_top_value_counts.to_dict(),
@@ -185,12 +193,18 @@ class StatisticsCalculator():
                 if data[f'{col}/std'] == 0:
                     data[f'{col}/outlier_count'] = 0
                 else:
-                    series_z_score = ((series_non_null - data[f'{col}/average']) / data[f'{col}/std']).abs()
-                    data[f'{col}/outlier_count'] = (series_z_score >= OUTLIER_ZSCORE_THRESHOLD).sum()
+                    series_z_score = (
+                        (series_non_null - data[f'{col}/average']) / data[f'{col}/std']
+                    ).abs()
+                    data[f'{col}/outlier_count'] = (
+                        series_z_score >= OUTLIER_ZSCORE_THRESHOLD
+                    ).sum()
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
-                data[f'{col}/median'] = dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
+                data[f'{col}/median'] = (
+                    dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
+                )
                 data[f'{col}/min'] = dates.min().isoformat()
 
             if column_type not in NUMBER_TYPES:
@@ -210,8 +224,9 @@ class StatisticsCalculator():
 
         # Detect mismatched formats for some column types
         data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
-        data[f'{col}/invalid_value_rate'] = 0 if series.size == 0 else \
-            data[f'{col}/invalid_value_count'] / series.size
+        data[f'{col}/invalid_value_rate'] = (
+            0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
+        )
 
         # Calculate quality metrics
         data[f'{col}/completeness'] = 1 - data[f'{col}/null_value_rate']

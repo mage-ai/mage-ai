@@ -4,25 +4,20 @@ from mage_ai.data_cleaner.column_type_detector import (
     COLUMN_TYPES,
     DATETIME,
     NUMBER_TYPES,
-    STRING_TYPES
+    STRING_TYPES,
 )
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
-    ImputationStrategy
+    ImputationStrategy,
 )
 
 
-class TypeImputeSubRule():
+class TypeImputeSubRule:
     DATA_SM_UB = 100
     MAX_NULL_SEQ_LENGTH = 4
 
-    def __init__(self,
-                 df,
-                 column_types,
-                 statistics,
-                 is_timeseries=False
-                 ):
+    def __init__(self, df, column_types, statistics, is_timeseries=False):
         """
         Assumptions of TypeImputeSubRule
         1. df will not contain any empty strings - all empty strings are converted to null types.
@@ -49,22 +44,17 @@ class TypeImputeSubRule():
         """
         Gets the imputation strategy for the given column
         """
-        raise NotImplementedError(
-            'Children of TypeImputeSubRule must override \'evaluate()\''
-        )
+        raise NotImplementedError('Children of TypeImputeSubRule must override \'evaluate()\'')
 
 
 class NumericalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = NUMBER_TYPES
     SKEW_UB = 0.7
-    AVG_OR_MED_EMPTY_UB = {
-        'small': 0.3,
-        'large': 0.5
-    }
+    AVG_OR_MED_EMPTY_UB = {'small': 0.3, 'large': 0.5}
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
-    
+
     def evaluate(self, column):
         """
         Rule:
@@ -79,28 +69,30 @@ class NumericalImputeSubRule(TypeImputeSubRule):
         """
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
-              self.df[column].notna().iloc[0]):
+        elif (
+            self.is_timeseries
+            and self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH
+            and self.df[column].notna().iloc[0]
+        ):
             return ImputationStrategy.SEQ
         else:
-            if self.statistics[f'{column}/count']  <= self.DATA_SM_UB:
+            if self.statistics[f'{column}/count'] <= self.DATA_SM_UB:
                 avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['small']
             else:
                 avg_or_med_empty_ub = self.AVG_OR_MED_EMPTY_UB['large']
-            if self.statistics[f'{column}/null_value_rate']  <= avg_or_med_empty_ub:
+            if self.statistics[f'{column}/null_value_rate'] <= avg_or_med_empty_ub:
                 if abs(self.df[column].skew()) < self.SKEW_UB:
                     return ImputationStrategy.AVERAGE
                 else:
                     return ImputationStrategy.MEDIAN
-        return ImputationStrategy.NOOP
+        return ImputationStrategy.CONSTANT
 
 
 class CategoricalImputeSubRule(TypeImputeSubRule):
     ACCEPTED_DTYPES = CATEGORICAL_TYPES
     RAND_EMPTY_UB = 0.3
     MODE_PROP_LB = 0.4
-    
+
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
 
@@ -110,21 +102,23 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
-           imputation with mode 
+           imputation with mode
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif (self.is_timeseries and 
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
-              self.df[column].notna().iloc[0]):
+        elif (
+            self.is_timeseries
+            and self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH
+            and self.df[column].notna().iloc[0]
+        ):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
         elif self.statistics[f'{column}/null_value_rate'] <= self.RAND_EMPTY_UB:
             return ImputationStrategy.RANDOM
-        return ImputationStrategy.NOOP
+        return ImputationStrategy.CONSTANT
 
 
 class DateTimeImputeSubRule(TypeImputeSubRule):
@@ -132,7 +126,7 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
-    
+
     def evaluate(self, column):
         """
         Rule:
@@ -142,12 +136,13 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         """
         if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        elif (self.is_timeseries and
-              self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH and 
-              self.df[column].notna().iloc[0]):
+        elif (
+            self.is_timeseries
+            and self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH
+            and self.df[column].notna().iloc[0]
+        ):
             return ImputationStrategy.SEQ
-        else:
-            return ImputationStrategy.NOOP
+        return ImputationStrategy.CONSTANT
 
 
 class StringImputeSubRule(TypeImputeSubRule):
@@ -157,28 +152,30 @@ class StringImputeSubRule(TypeImputeSubRule):
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
-    
+
     def evaluate(self, column):
         """
         Rule:
         1. If there are no null entries, no suggestion
         2. If the dataset was identified as timeseries, suggest sequential imputation
         3. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
-           imputation with mode 
+           imputation with mode
         4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
         5. Else suggest no imputation (no good fit)
         """
-        if self.statistics[f'{column}/null_value_rate']  == 0:
+        if self.statistics[f'{column}/null_value_rate'] == 0:
             return ImputationStrategy.NOOP
-        if (self.is_timeseries and 
-            self.statistics[f'{column}/max_null_seq']  <= self.MAX_NULL_SEQ_LENGTH and 
-            self.df[column].notna().iloc[0]):
+        if (
+            self.is_timeseries
+            and self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH
+            and self.df[column].notna().iloc[0]
+        ):
             return ImputationStrategy.SEQ
         elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
             return ImputationStrategy.MODE
-        elif self.statistics[f'{column}/null_value_rate']  <= self.RAND_EMPTY_UB:
+        elif self.statistics[f'{column}/null_value_rate'] <= self.RAND_EMPTY_UB:
             return ImputationStrategy.RANDOM
-        return ImputationStrategy.NOOP
+        return ImputationStrategy.CONSTANT
 
 
 class ImputeValues(BaseRule):
@@ -186,33 +183,33 @@ class ImputeValues(BaseRule):
         CategoricalImputeSubRule,
         DateTimeImputeSubRule,
         NumericalImputeSubRule,
-        StringImputeSubRule
+        StringImputeSubRule,
     )
     ROW_KEPT_LB = 0.7
     TIMESERIES_NULL_RATIO_MAX = 0.1
-    STRATEGY_BLACKLIST = ([ImputationStrategy.NOOP, ImputationStrategy.ROW_RM])
+    STRATEGY_BLACKLIST = [ImputationStrategy.NOOP, ImputationStrategy.ROW_RM]
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
         self.action_constructor = ImputeActionConstructor(
-            self.df, 
-            self.column_types, 
-            self._build_transformer_action_suggestion
+            self.df, self.column_types, self._build_transformer_action_suggestion
         )
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},
+            ImputationStrategy.CONSTANT: {'entries': []},
             ImputationStrategy.MEDIAN: {'entries': []},
             ImputationStrategy.MODE: {'entries': []},
             ImputationStrategy.NOOP: {'entries': []},
             ImputationStrategy.RANDOM: {'entries': []},
             ImputationStrategy.ROW_RM: {'entries': []},
-            ImputationStrategy.SEQ: {'entries': []}
+            ImputationStrategy.SEQ: {'entries': []},
         }
         if self.statistics['is_timeseries']:
             self.is_timeseries = True
-            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index']\
-                = self.statistics['timeseries_index']
+            self.strategy_cache[ImputationStrategy.SEQ]['timeseries_index'] = self.statistics[
+                'timeseries_index'
+            ]
         else:
             self.is_timeseries = False
         self.hydrate_rules()
@@ -227,11 +224,11 @@ class ImputeValues(BaseRule):
         else:
             for strategy in self.strategy_cache:
                 strategy_cache_entry = self.strategy_cache[strategy]
-                if (strategy not in self.STRATEGY_BLACKLIST 
-                   and len(strategy_cache_entry['entries']) != 0):
-                    suggestions.append(
-                        self.action_constructor(strategy, strategy_cache_entry)
-                    )
+                if (
+                    strategy not in self.STRATEGY_BLACKLIST
+                    and len(strategy_cache_entry['entries']) != 0
+                ):
+                    suggestions.append(self.action_constructor(strategy, strategy_cache_entry))
         return suggestions
 
     def evaluate(self):
@@ -242,7 +239,9 @@ class ImputeValues(BaseRule):
         if ratio_rows_kept == 1:
             self.strategy_cache[ImputationStrategy.NOOP]['entries'].extend(self.df_columns)
         elif ratio_rows_kept >= self.ROW_KEPT_LB:
-            self.strategy_cache[ImputationStrategy.ROW_RM]['num_missing'] = len(self.df) - non_null_rows
+            self.strategy_cache[ImputationStrategy.ROW_RM]['num_missing'] = (
+                len(self.df) - non_null_rows
+            )
         else:
             for column in self.df_columns:
                 dtype = self.column_types[column]
@@ -257,19 +256,15 @@ class ImputeValues(BaseRule):
                 return type(dropped.iloc[0])
             except IndexError:
                 return None
-        exact_dtypes = {column : _get_exact_dtype(column) for column in self.df_columns}
+
+        exact_dtypes = {column: _get_exact_dtype(column) for column in self.df_columns}
         return exact_dtypes
 
     def hydrate_rules(self):
         self.rules = list(
             map(
-                lambda x: x(
-                    self.df,
-                    self.column_types,
-                    self.statistics,
-                    self.is_timeseries
-                ),
-                self.RULESET
+                lambda x: x(self.df, self.column_types, self.statistics, self.is_timeseries),
+                self.RULESET,
             )
         )
 
@@ -279,12 +274,13 @@ class ImputeValues(BaseRule):
             curr_rule = next(rule_iterator)
             while dtype not in curr_rule.accepted_dtypes():
                 try:
-                   curr_rule = next(rule_iterator)
+                    curr_rule = next(rule_iterator)
                 except StopIteration:
                     raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
             self.rule_map[dtype] = curr_rule
 
-class ImputeActionConstructor():
+
+class ImputeActionConstructor:
     def __init__(self, df, column_types, action_builder):
         self.df = df
         self.df_columns = df.columns.tolist()
@@ -294,11 +290,7 @@ class ImputeActionConstructor():
     def __call__(self, strategy, strategy_cache_entry):
         return self.construct_suggestion_from_strategy(strategy, strategy_cache_entry)
 
-    def construct_suggestion_from_strategy(
-        self,
-        strategy,
-        strategy_cache_entry
-    ):
+    def construct_suggestion_from_strategy(self, strategy, strategy_cache_entry):
         title = 'Fill in missing values'
         message = ''
         action_type = None
@@ -310,39 +302,60 @@ class ImputeActionConstructor():
         outputs = []
 
         if strategy == ImputationStrategy.AVERAGE:
-            message = 'The following columns have null-valued entries and '\
-                      'the distribution of remaining values is approximately symmetric: '\
-                      f'{strategy_cache_entry["entries"]}. ' \
-                      'Suggested: fill null values with the average value from each column.'
+            message = (
+                'The following columns have null-valued entries and '
+                'the distribution of remaining values is approximately symmetric: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with the average value from each column.'
+            )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.CONSTANT:
+            message = (
+                'The following columns have many missing entries: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with a placeholder to mark them as missing'
+            )
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {
+                'strategy': strategy,
+            }
+            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.MEDIAN:
-            message = 'The following columns have null-valued entries and '\
-                      'the distribution of remaining values is skewed: ' \
-                      f'{strategy_cache_entry["entries"]}. ' \
-                      'Suggested: fill null values with the median value from each column.'
+            message = (
+                'The following columns have null-valued entries and '
+                'the distribution of remaining values is skewed: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with the median value from each column.'
+            )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.MODE:
-            message = 'The following columns have null valued entries and '\
-                      'a large proportion of entries are a single value: '\
-                      f'{strategy_cache_entry["entries"]}. ' \
-                      'Suggested: fill null values with this most frequent value.'
+            message = (
+                'The following columns have null valued entries and '
+                'a large proportion of entries are a single value: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with this most frequent value.'
+            )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': 'mode'}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.RANDOM:
-            message = 'The following columns have null-valued entries and are categorical: '\
-                      f'{strategy_cache_entry["entries"]}. ' \
-                      'Suggested: fill null values with a randomly sampled not null value.'
+            message = (
+                'The following columns have null-valued entries and are categorical: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with a randomly sampled not null value.'
+            )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
@@ -351,24 +364,28 @@ class ImputeActionConstructor():
         elif strategy == ImputationStrategy.ROW_RM:
             num_missing = strategy_cache_entry['num_missing']
             title = 'Remove rows with missing entries'
-            message = f'There are {num_missing} rows containing null values. '\
-                      'Suggested: remove these rows to remove null values from the dataset.'
+            message = (
+                f'There are {num_missing} rows containing null values. '
+                'Suggested: remove these rows to remove null values from the dataset.'
+            )
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
             axis = Axis.ROW
             action_variables = self.__construct_action_variables(self.df_columns)
             action_code = ' and '.join(map(lambda name: f'{name} != null', self.df_columns))
         elif strategy == ImputationStrategy.SEQ:
-            message = 'The following columns have null-valued entries which '\
-                      'may be part of timeseries data: '\
-                      f'{strategy_cache_entry["entries"]}. ' \
-                      'Suggested: fill null values with previously occurring value in timeseries.'
+            message = (
+                'The following columns have null-valued entries which '
+                'may be part of timeseries data: '
+                f'{strategy_cache_entry["entries"]}. '
+                'Suggested: fill null values with previously occurring value in timeseries.'
+            )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {
                 'strategy': strategy,
-                'timeseries_index': strategy_cache_entry['timeseries_index']
+                'timeseries_index': strategy_cache_entry['timeseries_index'],
             }
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
 
@@ -381,7 +398,7 @@ class ImputeActionConstructor():
             action_options,
             action_variables,
             axis,
-            outputs
+            outputs,
         )
 
     def __construct_action_variables(self, columns):

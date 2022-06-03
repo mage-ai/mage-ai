@@ -1,5 +1,7 @@
+import pandas as pd
 import re
 
+CONSTANT_IMPUTATION_DEFAULTS = dict(object='missing', datetime=pd.Timestamp.min, number=0)
 CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
 
 
@@ -58,15 +60,18 @@ class Operator():
     LESS_THAN = '<'
     LESS_THAN_OR_EQUALS = '<='
 
+
 class ImputationStrategy():
     AVERAGE = 'average'
     COLUMN = 'column'
+    CONSTANT = 'constant'
     MEDIAN = 'median'
     MODE = 'mode'
     NOOP = 'no_action'
     RANDOM = 'random'
     ROW_RM = 'remove_rows'
     SEQ = 'sequential'
+
 
 class NameConventionPatterns():
     SNAKE = re.compile(r'^[a-z]+(?:\_[a-z0-9]+)*$')
