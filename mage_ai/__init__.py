@@ -2,6 +2,7 @@ from IPython import get_ipython
 from IPython.display import IFrame, Javascript, display
 from mage_ai.server.app import (
     clean_df,
+    clean_df_with_pipeline,
     connect_df,
     kill as kill_flask,
     launch as launch_flask,
@@ -47,9 +48,13 @@ def connect_data(df, name):
     return feature_set
 
 
-def clean(df, pipeline_uuid=None):
-    _, df_clean = clean_df(df, pipeline_uuid)
+def clean(df):
+    _, df_clean = clean_df(df)
     return df_clean
+
+
+def clean_with_pipeline(df, pipeline_uuid):
+    return clean_df_with_pipeline(df, pipeline_uuid)
 
 
 def init(api_key):
