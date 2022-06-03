@@ -77,7 +77,7 @@ class BaseAction:
         dependency = DEPENDENCIES.get(action_type, default_resolution)
         dependencies_met, msg = dependency(df)
         if not dependencies_met:
-            raise RuntimeError('Dependencies of this cleaning action are not completed: ' f'{msg}')
+            raise RuntimeError('Dependencies of this cleaning action are not completed: f{msg}')
 
         self.hydrate_action()
         self.action['action_code'] = replace_true_false(self.action['action_code'])
