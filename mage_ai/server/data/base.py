@@ -65,7 +65,8 @@ class Model():
     @classmethod
     def objects(cls):
         arr = []
-        dirs = sorted([int(name) for name in os.listdir(cls.path_name())], reverse=True)
+        dirs = sorted([int(name) for name in os.listdir(cls.path_name()) if name.isnumeric()],
+                      reverse=True)
         for id in dirs:
             try:
                 arr.append(cls(id=id))
