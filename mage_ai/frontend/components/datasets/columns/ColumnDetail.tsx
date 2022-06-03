@@ -1,4 +1,4 @@
-import Router, { useRouter } from 'next/router';
+import Router from 'next/router';
 import { useState } from 'react';
 
 import ActionForm from '@components/ActionForm';
@@ -22,11 +22,17 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
 
-function Feature({
+type ColumnDetailProps = {
+  featureId: string;
+  featureSet: FeatureSetType;
+  featureSetId: string;
+};
+
+function ColumnDetail({
+  featureSet,
   featureSetId,
   featureId,
-}) {
-  const { data: featureSet }: { data: FeatureSetType } = api.feature_sets.detail(featureSetId);
+}: ColumnDetailProps) {
   const features = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet);
@@ -273,4 +279,4 @@ function Feature({
   );
 }
 
-export default Feature;
+export default ColumnDetail;

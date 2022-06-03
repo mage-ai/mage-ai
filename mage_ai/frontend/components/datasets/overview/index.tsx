@@ -7,6 +7,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -34,13 +35,18 @@ import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
 import { useGlobalState } from '@storage/state';
 
-function Data({ slug }) {
+type DatasetOverviewProps = {
+  featureSet: FeatureSetType;
+};
+
+function DatasetOverview({
+  featureSet: featureSetRaw,
+}: DatasetOverviewProps) {
   const { tab: tabFromUrl } = queryFromUrl();
   const currentTab = tabFromUrl || 'reports';
 
   const [apiReloads, setApiReloads] = useGlobalState('apiReloads');
 
-  const { data: featureSetRaw } = api.feature_sets.detail(slug);
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
     pipeline,
@@ -261,4 +267,4 @@ function Data({ slug }) {
   );
 }
 
-export default Data;
+export default DatasetOverview;
