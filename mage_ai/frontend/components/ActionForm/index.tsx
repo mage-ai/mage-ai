@@ -38,6 +38,8 @@ type ActionFormProps = {
   axis: string;
   currentFeature?: FeatureType;
   features?: FeatureType[];
+  noBorder?: boolean;
+  noHeader?: boolean;
   onSave: () => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
@@ -55,6 +57,8 @@ function ActionForm({
   axis,
   features = [],
   currentFeature,
+  noBorder,
+  noHeader,
   onSave,
   payload,
   setPayload,
@@ -123,20 +127,24 @@ function ActionForm({
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
 
   return (
-    <ContainerStyle>
-      <Spacing p={2}>
-        <Text>
-          {title}
-        </Text>
+    <ContainerStyle noBorder={noBorder}>
+      {!noHeader && 
+        <>
+          <Spacing p={2}>
+            <Text>
+              {title}
+            </Text>
 
-        {description && (
-          <Text muted small>
-            {description}
-          </Text>
-        )}
-      </Spacing>
+            {description && (
+              <Text muted small>
+                {description}
+              </Text>
+            )}
+          </Spacing>
 
-      <Divider />
+          <Divider />
+        </>
+      }
 
       <Spacing p={2}>
         {code && (

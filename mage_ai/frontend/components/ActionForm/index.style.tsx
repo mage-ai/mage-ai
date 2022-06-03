@@ -6,10 +6,14 @@ import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
-export const ContainerStyle = styled.div`
-  border-radius: ${BORDER_RADIUS}px;
+type ContainerProps = {
+  noBorder?: boolean;
+};
 
-  ${props => `
+export const ContainerStyle = styled.div<ContainerProps>`
+
+  ${(props: any) => !props.noBorder && `
+    border-radius: ${BORDER_RADIUS}px;
     border: 1px solid ${(props.theme.brand || light.brand).water300};
   `}
 `;
