@@ -52,6 +52,7 @@ export function useDetail(
   const {
     data,
     error,
+    mutate,
   } = useSWR(
     id ? buildUrl(resource, id) : null,
     url => fetcher(url, {
@@ -64,6 +65,7 @@ export function useDetail(
   return {
     data,
     error,
+    mutate,
   };
 }
 
@@ -78,6 +80,7 @@ export function useDetailWithParent(
   const {
     data,
     error,
+    mutate,
   } = useSWR(
     id && parentId ? buildUrl(
       parentResource,
@@ -93,6 +96,7 @@ export function useDetailWithParent(
   return {
     data,
     error,
+    mutate,
   };
 }
 
@@ -108,6 +112,7 @@ export function useList(
   const {
     data,
     error,
+    mutate,
   } = useSWR(
     buildUrl(resource, null, null, null, query),
     url => fetcher(url),
@@ -118,6 +123,7 @@ export function useList(
     data,
     error,
     loading: !data && !error,
+    mutate,
   };
 }
 
@@ -132,6 +138,7 @@ export function useListWithParent(
   const {
     data,
     error,
+    mutate,
   } = useSWR(
     parentId ? buildUrl(parentResource, parentId, resource, null, query) : null,
     url => fetcher(url),
@@ -142,6 +149,7 @@ export function useListWithParent(
     data,
     error,
     loading: !data && !error,
+    mutate,
   };
 }
 
