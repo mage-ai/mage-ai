@@ -8,6 +8,7 @@ export const TableStyle = styled.div<any>`
   width: 100%;
   max-width: 100vw;
   overflow: auto;
+  padding: 4px;
   ${props => props.table &&`
     background-color: ${(props.theme.background || light.background).page};
   `}
