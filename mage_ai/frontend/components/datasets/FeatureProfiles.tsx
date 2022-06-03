@@ -1,4 +1,5 @@
 import React from 'react';
+import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import FeatureType, {
@@ -6,8 +7,10 @@ import FeatureType, {
   COLUMN_TYPE_HUMAN_READABLE_MAPPING,
   COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE,
 } from '@interfaces/FeatureType';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
 import Text from '@oracle/elements/Text';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import {
@@ -19,6 +22,7 @@ import {
   WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
+import { getFeatureIdMapping } from '@utils/models/featureSet';
 import { roundNumber } from '@utils/string';
 
 export const ContainerStyle = styled.div`
@@ -54,16 +58,19 @@ export const CellStyle = styled.div<any>`
 
 type FeatureProfileProps = {
   feature: FeatureType,
+  featureSet: FeatureSetType,
   statistics: any,
 };
 
 type FeatureProfilesProps = {
   features: FeatureType[],
+  featureSet: FeatureSetType,
   statistics: any,
 };
 
 function FeatureProfile({
   feature,
+  featureSet,
   statistics,
 }: FeatureProfileProps) {
   const {
@@ -136,27 +143,38 @@ function FeatureProfile({
     ];
   }
 
+  const featureSetId = featureSet.id;
+  const featureUuid = feature?.uuid;
+  const featureId = getFeatureIdMapping(featureSet)[featureUuid]
+
   return (
     <FlexContainer>
       <Flex flex={1}>
         <CellStyle>
-          <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
-            {uuid}
-          </Text>
+          <NextLink
+            as={`/datasets/${featureSetId}/features/${featureId}`}
+            href="/datasets/[...slug]"
+            key={featureUuid}
+            passHref
+          >
+            <Link inline>
+              <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
+                {uuid}
+              </Text>
+            </Link>
+          </NextLink>
         </CellStyle>
       </Flex>
-      {entries.map((values) => (
-        <>
-          <Flex flex={1} flexDirection="column">
-            {values.map((label, idx) => (
-              <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
-                <Text>
-                  {label}
-                </Text>
-              </CellStyle>
-            ))}
-          </Flex>
-        </>
+      {entries.map((values, idx) => (
+        <Flex flex={1} flexDirection="column" key={`column-${idx}`}>
+          {values.map((label, idx) => (
+            <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
+              <Text>
+                {label}
+              </Text>
+            </CellStyle>
+          ))}
+        </Flex>
       ))}
     </FlexContainer>
   );
@@ -164,6 +182,7 @@ function FeatureProfile({
 
 function FeatureProfiles({
   features,
+  featureSet,
   statistics,
 }: FeatureProfilesProps) {
   return (
@@ -178,6 +197,7 @@ function FeatureProfiles({
           <FeatureProfileStyle key={idx}>
             <FeatureProfile
               feature={feature}
+              featureSet={featureSet}
               statistics={statistics}
             />
           </FeatureProfileStyle>

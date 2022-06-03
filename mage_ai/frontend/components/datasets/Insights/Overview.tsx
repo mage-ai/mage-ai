@@ -31,10 +31,6 @@ export const ChartStyle = styled.div`
   border-radius: ${BORDER_RADIUS_LARGE}px;
 `;
 
-export const ChartHeaderStyle = styled.div`
-  background: 
-`;
-
 export const HeaderStyle = styled.div`
   background: ${SILVER};
   padding: ${PADDING}px;
@@ -194,6 +190,9 @@ function Overview({
       height={UNIT * 50}
       key={featureUUID}
       large
+      margin={{
+        right: 4 * UNIT,
+      }}
       renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
         <Text small>
           Rows: {count}
@@ -201,9 +200,11 @@ function Overview({
           Dates: {xLabelMin} - {xLabelMax}
         </Text>
       )}
+      showAxisLabels
       showYAxisLabels
       showZeroes
       sortData={d => sortByKey(d, '[4]')}
+      width={550}
     />
   ));
 

@@ -252,6 +252,7 @@ function DatasetOverview({
           <Spacing mt={8}>
             <FeatureProfiles
               features={features}
+              featureSet={featureSet}
               statistics={statistics}
             />
           </Spacing>
