@@ -293,11 +293,17 @@ const Text = ({
   raw,
   ...props
 }: TextProps) => {
+  let muted = false;
+
+  if (mutedProp === true) {
+    muted = true;
+  }
   const El = props?.inline ? SpanStyle : TextStyle;
 
   const combinedProps = {
     ...props,
     ...({}),
+    muted,
   };
 
   if (raw) {

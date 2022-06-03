@@ -32,7 +32,6 @@ export const ChartStyle = styled.div`
 `;
 
 export const ChartHeaderStyle = styled.div`
-  background:
 `;
 
 export const HeaderStyle = styled.div`
@@ -120,10 +119,12 @@ function Overview({
   insightsOverview,
   statistics,
 }: OverviewProps) {
-  console.log(statistics)
   const {
+    correlations,
     time_series: timeSeries,
   } = insightsOverview;
+
+  console.log(correlations)
 
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
   const timeSeriesData = [];
