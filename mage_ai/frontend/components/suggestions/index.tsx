@@ -28,7 +28,6 @@ function Suggestions({
   } = pipeline || {};
   const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
   const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
-  console.log(featureIdMapping)
 
   return (
     <>

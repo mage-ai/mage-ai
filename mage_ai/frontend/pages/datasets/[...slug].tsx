@@ -24,6 +24,8 @@ function DatasetDetail() {
         featureSetId={featureSetId}
       />
     );
+  } else {
+    el = <div />;
   }
 
   return (
