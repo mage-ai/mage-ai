@@ -49,10 +49,10 @@ const SuggestionRow = ({
   const numFeatures = actionArguments?.length || 0;
 
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
-    return (
-      <span
-        key={col}
-      >
+    let el;
+
+    if (featureIdMapping[col]) {
+      el = (
         <NextLink
           href="/datasets/[...slug]"
           as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
@@ -63,7 +63,17 @@ const SuggestionRow = ({
           >
             {col}
           </Link>
-        </NextLink>{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
+        </NextLink>
+      );
+    } else {
+      el = col;
+    }
+
+    return (
+      <span
+        key={col}
+      >
+        {el}{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
       </span>
     );
   });

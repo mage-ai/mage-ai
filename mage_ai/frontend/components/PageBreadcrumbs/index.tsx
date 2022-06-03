@@ -22,8 +22,11 @@ function PageBreadcrumbs({
 }: PageBreadcrumbsProps) {
   const router = useRouter();
   const { pathname } = router || {};
-  const { slug, column } = router.query;
-  const pathParts = pathname?.split('/').slice(1) || [];
+  const { slug = [] } = router.query;
+
+  // @ts-ignore
+  const [featureSetId, _, featureId] = slug;
+  const pathParts = ['datasets'].concat(slug);
 
   const datasetName = featureSet?.metadata?.name || 'dataset';
   let breadcrumbs: BreadcrumbType[] = [];
@@ -36,17 +39,17 @@ function PageBreadcrumbs({
         label = datasetName.length > MAX_CHARS
           ? `${datasetName.slice(0, MAX_CHARS)}...`
           : datasetName;
-        href = `/${PageEnum.DATASETS}/${slug}`;
+        href = `/${PageEnum.DATASETS}/${featureSetId}`;
       } else if (idx === 2) {
         label = 'columns';
-        href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}`;
+        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.COLUMNS}`;
       } else if (idx === 3) {
-        const featureIndex = +column;
+        const featureIndex = +featureId;
         const featureUUID = getFeatureUUID(featureSet, featureIndex);
         label = featureUUID && featureUUID.length > MAX_CHARS
           ? `${featureUUID.slice(0, MAX_CHARS)}...`
           : featureUUID;
-        href = `/${PageEnum.DATASETS}/${slug}/${PageEnum.COLUMNS}/${column}`;
+        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.COLUMNS}/${featureId}`;
       }
 
       const breadcrumb: BreadcrumbType = {
