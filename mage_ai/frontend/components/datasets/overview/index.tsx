@@ -6,6 +6,7 @@ import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
+import ClientOnly from '@hocs/ClientOnly';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
@@ -198,114 +199,116 @@ function DatasetOverview({
   );
 
   return (
-    <Layout
-      centerAlign
-      footer={<Spacing mt={UNIT} />}
-    >
-      <Spacing mt={UNIT} />
-      {headEl}
-      <Spacing mt={2} />
-
-      {featureSet && (
-        <Suggestions
-          addAction={saveAction}
-          featureSet={featureSet}
-          removeAction={removeAction}
-          removeSuggestion={(action) => console.log(action)}
-        />
-      )}
-
-      {actionType && (
-        <Spacing mt={2}>
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            features={features}
-            onSave={() => saveAction({
-              action_payload: {
-                ...actionPayload,
-                action_type: actionType,
-              },
-            })}
-            payload={actionPayload}
-            setPayload={setActionPayload}
-          />
-        </Spacing>
-      )}
-
-      {errorMessages?.length >= 1 && (
-        <Spacing mt={3}>
-          <Text bold>
-            Errors
-          </Text>
-          {errorMessages?.map((msg: string) => (
-            <Text key={msg} monospace xsmall>
-              {msg}
-            </Text>
-          ))}
-        </Spacing>
-      )}
-
-      <Spacing mt={4} />
-      <Tabs
-        actionEl={selectActionEl}
-        bold
-        currentTab={currentTab}
-        large
-        noBottomBorder={false}
-        onChange={key => setTab(key)}
+    <ClientOnly>
+      <Layout
+        centerAlign
+        footer={<Spacing mt={UNIT} />}
       >
-        <Tab key="data" label="Data">
-          <Spacing mb={3} mt={3} />
-          <BaseTable
-            columns={columnHeaderSample}
-            data={rows}
-            datatype={headerTypes}
-            titles={columns}
+        <Spacing mt={UNIT} />
+        {headEl}
+        <Spacing mt={2} />
+
+        {featureSet && (
+          <Suggestions
+            addAction={saveAction}
+            featureSet={featureSet}
+            removeAction={removeAction}
+            removeSuggestion={(action) => console.log(action)}
           />
-        </Tab>
-        <Tab key="reports" label="Reports">
-          <Spacing mb={3} mt={3} />
-          <FlexContainer justifyContent={'center'}>
-            <Flex flex={1}>
-              {metricSample && (
-                <SimpleDataTable
-                  columnFlexNumbers={[2, 1, 2 ]}
-                  columnHeaders={[{ label: 'Quality Metrics' }]}
-                  rowGroupData={[metricSample]}
-                />
-              )}
-            </Flex>
-            <Spacing ml={8} />
-            <Flex flex={1}>
-              {statSample && (
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[{ label: 'Statistics' }]}
-                  rowGroupData={[statSample]}
-                />
-              )}
-            </Flex>
-          </FlexContainer>
-          <Spacing mt={8}>
-            <FeatureProfiles
+        )}
+
+        {errorMessages?.length >= 1 && (
+          <Spacing mt={3}>
+            <Text bold>
+              Errors
+            </Text>
+            {errorMessages?.map((msg: string) => (
+              <Text key={msg} monospace xsmall>
+                {msg}
+              </Text>
+            ))}
+          </Spacing>
+        )}
+
+        {actionType && (
+          <Spacing mt={2}>
+            <ActionForm
+              actionType={actionType}
+              axis={actionPayload?.axis}
               features={features}
-              featureSet={featureSet}
-              statistics={statistics}
+              onSave={() => saveAction({
+                action_payload: {
+                  ...actionPayload,
+                  action_type: actionType,
+                },
+              })}
+              payload={actionPayload}
+              setPayload={setActionPayload}
             />
           </Spacing>
-        </Tab>
+        )}
 
-        <Tab key="visualizations" label="Visualizations">
-          <Spacing mb={3} mt={3} />
-          <Overview
-            features={features}
-            insightsOverview={insightsOverview}
-            statistics={statistics}
-          />
-        </Tab>
-      </Tabs>
-    </Layout>
+        <Spacing mt={4} />
+        <Tabs
+          actionEl={selectActionEl}
+          bold
+          currentTab={currentTab}
+          large
+          noBottomBorder={false}
+          onChange={key => setTab(key)}
+        >
+          <Tab key="data" label="Data">
+            <Spacing mb={3} mt={3} />
+            <BaseTable
+              columns={columnHeaderSample}
+              data={rows}
+              datatype={headerTypes}
+              titles={columns}
+            />
+          </Tab>
+          <Tab key="reports" label="Reports">
+            <Spacing mb={3} mt={3} />
+            <FlexContainer justifyContent={'center'}>
+              <Flex flex={1}>
+                {metricSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1]}
+                    columnHeaders={[{ label: 'Quality Metrics' }]}
+                    rowGroupData={[metricSample]}
+                  />
+                )}
+              </Flex>
+              <Spacing ml={8} />
+              <Flex flex={1}>
+                {statSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[{ label: 'Statistics' }]}
+                    rowGroupData={[statSample]}
+                  />
+                )}
+              </Flex>
+            </FlexContainer>
+            <Spacing mt={8}>
+              <FeatureProfiles
+                features={features}
+                featureSet={featureSet}
+                statistics={statistics}
+              />
+            </Spacing>
+          </Tab>
+
+          <Tab key="visualizations" label="Visualizations">
+            <Spacing mb={3} mt={3} />
+            <Overview
+              features={features}
+              insightsOverview={insightsOverview}
+              statistics={statistics}
+            />
+          </Tab>
+        </Tabs>
+      </Layout>
+    </ClientOnly>
   );
 }
 
