@@ -36,7 +36,7 @@ import { removeAtIndex } from '@utils/array';
 
 type DatasetOverviewProps = {
   featureSet: FeatureSetType;
-  fetchFeatureSet: () => void;
+  fetchFeatureSet: (arg: any) => void;
 };
 
 function DatasetOverview({
