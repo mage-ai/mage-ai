@@ -21,6 +21,7 @@
     "@visx/gradient": "^2.10.0",
     "@visx/grid": "^2.10.0",
     "@visx/group": "^2.10.0",
+    "@visx/heatmap": "^1.0.0",
     "@visx/legend": "^2.10.0",
     "@visx/responsive": "^2.10.0",
     "@visx/scale": "^2.2.2",
