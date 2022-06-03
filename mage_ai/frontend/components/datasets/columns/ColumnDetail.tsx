@@ -5,6 +5,7 @@ import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
@@ -25,9 +26,9 @@ function Feature({
   featureSetId,
   featureId,
 }) {
-  const { data: featureSet } = api.feature_sets.detail(featureSetId);
+  const { data: featureSet }: { data: FeatureSetType } = api.feature_sets.detail(featureSetId);
   const features = Object.entries(featureSet?.metadata?.column_types || {})
-    .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
+    .map(([k, v]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet);
   const featureIndex = +featureId;
 
@@ -39,7 +40,7 @@ function Feature({
     columnValues: [row[featureIndex]],
   }));
 
-  const insightsColumn = (featureSet?.['insights']?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
+  const insightsColumn = (featureSet?.insights?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
   const statisticsOverview = featureSet?.['statistics'] || {};
 
   // Get individual column statistics

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -7,13 +7,14 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
+import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Overview from '@components/datasets/Insights/Overview';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Select from '@oracle/elements/Inputs/Select';
-import SimpleDataTable, { ColumnHeaderType, RowGroupDataType } from '@oracle/components/Table/SimpleDataTable';
+import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Suggestions from '@components/suggestions';
 import Tabs, { Tab } from '@oracle/components/Tabs';
@@ -21,16 +22,6 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
-import {
-  CATEGORICAL_TYPES,
-  DATE_TYPES,
-  HUMAN_READABLE_MAPPING,
-  METRICS_KEYS,
-  METRICS_SORTED_MAPPING,
-  NUMBER_TYPES,
-  PERCENTAGE_KEYS,
-  STAT_KEYS,
-} from '../constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   createMetricsSample,
@@ -65,8 +56,8 @@ function Data({ slug }) {
     column_types: colTypes,
   } = featureSet?.metadata || {};
 
-  const features = Object.entries(featureSet?.metadata?.column_types || {})
-    .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
+  const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
+    .map(([k, v]: [string, ColumnTypeEnum]) => ({ columnType: v, uuid: k }));
 
   const columnHeaderSample = columns?.map((header:any) => ({
     label: header,
@@ -254,9 +245,9 @@ function Data({ slug }) {
           </FlexContainer>
           <Spacing my={8}>
             <FeatureProfiles
-            features={features}
-            statistics={statistics}
-          />
+              features={features}
+              statistics={statistics}
+            />
           </Spacing>
         </Tab>
 

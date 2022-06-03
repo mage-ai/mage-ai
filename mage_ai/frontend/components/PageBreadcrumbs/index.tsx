@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 
 import Breadcrumbs from '@oracle/components/Breadcrumbs';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import { BreadcrumbType } from '@oracle/components/Breadcrumbs/Breadcrumb';
 import { getFeatureUUID } from '@utils/models/featureSet';
 
@@ -12,7 +13,7 @@ enum PageEnum {
 }
 
 type PageBreadcrumbsProps = {
-  featureSet: any;
+  featureSet: FeatureSetType;
 };
 
 const MAX_CHARS = 35;

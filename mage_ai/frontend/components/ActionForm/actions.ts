@@ -1,6 +1,5 @@
 import {
-  COLUMN_TYPE_NUMBER,
-  COLUMN_TYPE_NUMBER_WITH_DECIMALS,
+  ColumnTypeEnum,
 } from '@interfaces/FeatureType';
 import {
   FEATURE_ATTRIBUTE_COLUMN_TYPE as COLUMN_TYPE,
@@ -32,8 +31,8 @@ const columns: {
               feature_attribute: COLUMN_TYPE,
               operator: CONTAINS,
               value: [
-                COLUMN_TYPE_NUMBER,
-                COLUMN_TYPE_NUMBER_WITH_DECIMALS,
+                ColumnTypeEnum.NUMBER,
+                ColumnTypeEnum.NUMBER_WITH_DECIMALS,
               ],
             },
             value: 'average',
@@ -44,8 +43,8 @@ const columns: {
               feature_attribute: COLUMN_TYPE,
               operator: CONTAINS,
               value: [
-                COLUMN_TYPE_NUMBER,
-                COLUMN_TYPE_NUMBER_WITH_DECIMALS,
+                ColumnTypeEnum.NUMBER,
+                ColumnTypeEnum.NUMBER_WITH_DECIMALS,
               ],
             },
             value: 'median',

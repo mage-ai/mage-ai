@@ -1,8 +1,7 @@
 import moment from 'moment';
 
 import FeatureType, {
-  COLUMN_TYPE_DATETIME,
-  COLUMN_TYPE_NUMBER,
+  ColumnTypeEnum,
 } from '@interfaces/FeatureType';
 import {
   LabelTypeEnum,
@@ -78,7 +77,7 @@ export function buildDistributionData(chartData, featuresByUUID, opts: {
 
   const feature = featuresByUUID[featureUUID] || featureProp;
   const columnType = feature?.columnType;
-  const isDatetime = COLUMN_TYPE_DATETIME === columnType;
+  const isDatetime = ColumnTypeEnum.DATETIME === columnType;
   const unusualRange = [];
   const unusualValues = [];
   let interval;
@@ -102,7 +101,7 @@ export function buildDistributionData(chartData, featuresByUUID, opts: {
         interval = max - min;
       }
 
-      hideRange = COLUMN_TYPE_NUMBER === columnType && interval <= numberOfBuckets;
+      hideRange = ColumnTypeEnum.NUMBER === columnType && interval <= numberOfBuckets;
       if (hideRange) {
         xLabel = Number(min);
       } else {
