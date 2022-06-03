@@ -55,7 +55,7 @@ class BasePipeline():
         completed_queue = []
         df_transformed = df
         while len(action_queue) != 0:
-            action = action_queue[0]
+            action = action_queue.pop(0)
             df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
             completed_queue.append(action)
