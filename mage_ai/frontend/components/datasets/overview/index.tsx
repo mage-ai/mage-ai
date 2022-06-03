@@ -160,6 +160,8 @@ function DatasetOverview({
     });
   };
 
+  const closeAction = () => setActionPayload({} as ActionPayloadType);
+
   const selectActionEl = (
     <Select
       // @ts-ignore
@@ -236,13 +238,16 @@ function DatasetOverview({
               actionType={actionType}
               axis={actionPayload?.axis}
               features={features}
-              onClose={() => setActionPayload({} as ActionPayloadType)}
-              onSave={() => saveAction({
-                action_payload: {
-                  ...actionPayload,
-                  action_type: actionType,
-                },
-              })}
+              onClose={closeAction}
+              onSave={() => {
+                saveAction({
+                  action_payload: {
+                    ...actionPayload,
+                    action_type: actionType,
+                  },
+                });
+                closeAction();
+              }}
               payload={actionPayload}
               setPayload={setActionPayload}
             />
