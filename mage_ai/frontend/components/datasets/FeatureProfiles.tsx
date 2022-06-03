@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 import FeatureType, {
-  COLUMN_TYPE_DATETIME,
+  ColumnTypeEnum,
   COLUMN_TYPE_HUMAN_READABLE_MAPPING,
   COLUMN_TYPE_NUMBERICAL_WITH_DATETIME_LIKE,
 } from '@interfaces/FeatureType';
@@ -99,13 +99,13 @@ function FeatureProfile({
         numberOfNullValues,
       ],
       [
-        columnType === COLUMN_TYPE_DATETIME ? 'Median' : 'Mean',
+        columnType === ColumnTypeEnum.DATETIME ? 'Median' : 'Mean',
         'Minimum',
         'Maximum',
         'Invalid',
       ],
       [
-        columnType === COLUMN_TYPE_DATETIME ? medianValue : roundNumber(meanValue, 3),
+        columnType === ColumnTypeEnum.DATETIME ? medianValue : roundNumber(meanValue, 3),
         typeof minValue === 'string' ? minValue: roundNumber(minValue, 3),
         typeof maxValue === 'string' ? maxValue: roundNumber(maxValue, 3),
         numberOfInvalidValues,

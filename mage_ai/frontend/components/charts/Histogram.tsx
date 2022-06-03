@@ -17,9 +17,7 @@ import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { BLACK } from '@oracle/styles/colors/main';
 import {
-  COLUMN_TYPE_DATETIME,
-  COLUMN_TYPE_NUMBER,
-  COLUMN_TYPE_NUMBER_WITH_DECIMALS,
+  ColumnTypeEnum,
 } from '@interfaces/FeatureType';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import {
@@ -125,7 +123,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
     }, [getYValue]);
 
     const themeContext: ThemeType = useContext(ThemeContext);
-    const isDateType: boolean = columnType === COLUMN_TYPE_DATETIME;
+    const isDateType: boolean = columnType === ColumnTypeEnum.DATETIME;
     let margin = {
       ...defaultMargin,
       ...marginOverride,
@@ -231,8 +229,8 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
     const yAxisLabelOffset = isDateType ? 2.25 : 0;
 
     const showYAxisLabels: boolean = (dataSampleCount < 10
-      || columnType === COLUMN_TYPE_NUMBER
-      || columnType === COLUMN_TYPE_NUMBER_WITH_DECIMALS
+      || columnType === ColumnTypeEnum.NUMBER
+      || columnType === ColumnTypeEnum.NUMBER_WITH_DECIMALS
       || isDateType) || showYAxisLabelsProp;
 
     const handleTooltip = useCallback(

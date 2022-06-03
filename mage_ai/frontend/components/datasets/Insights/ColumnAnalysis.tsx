@@ -3,10 +3,8 @@ import moment from 'moment';
 
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType, {
-  COLUMN_TYPE_CATEGORY,
-  COLUMN_TYPE_CATEGORY_HIGH_CARDINALITY,
+  ColumnTypeEnum,
   COLUMN_TYPE_NUMBERS,
-  COLUMN_TYPE_TRUE_OR_FALSE,
 } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Histogram from '@components/charts/Histogram';
@@ -84,11 +82,11 @@ function ColumnAnalysis({
     },
   ];
 
-  const isBooleanType = COLUMN_TYPE_TRUE_OR_FALSE === feature.columnType;
+  const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
   const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
   const isCategoricalType = [
-    COLUMN_TYPE_CATEGORY,
-    COLUMN_TYPE_CATEGORY_HIGH_CARDINALITY,
+    ColumnTypeEnum.CATEGORY,
+    ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
   ].includes(feature.columnType);
 
   if (isNumberType) {
