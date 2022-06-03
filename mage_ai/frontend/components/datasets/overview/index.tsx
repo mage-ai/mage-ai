@@ -32,12 +32,21 @@ import {
   STAT_KEYS,
 } from '../constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import {
+  createMetricsSample,
+  createStatisticsSample,
+} from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
+import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
 import { useGlobalState } from '@storage/state';
 
 function Data({ slug }) {
+  const { tab: tabFromUrl } = queryFromUrl();
+  const currentTab = tabFromUrl || 'reports';
+
   const [apiReloads, setApiReloads] = useGlobalState('apiReloads');
 
   const { data: featureSetRaw } = api.feature_sets.detail(slug);
@@ -59,97 +68,18 @@ function Data({ slug }) {
   const features = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
 
-  const [columnHeaderSample, setColumnHeaderSample] = useState<ColumnHeaderType[]>([]);
-  const [metricSample, setMetricSample] = useState<RowGroupDataType>();
-  const [statSample, setStatSample] = useState<RowGroupDataType>();
+  const columnHeaderSample = columns?.map((header:any) => ({
+    label: header,
+  }));
+  const metricSample = statistics ? createMetricsSample(statistics) : null;
+  const statSample = (statistics && colTypes) ? createStatisticsSample(statistics, colTypes) : null;
 
-  // Fetch column Headers
-  useEffect(() => {
-    const headerJSON = [];
-    columns?.map((header:any) => {
-      headerJSON.push({
-        label: header,
-      });
+  const setTab = (newTab: string) => {
+    goToWithQuery({
+      tab: newTab,
     });
-    setColumnHeaderSample(headerJSON);
-  }, [columns]);
+  };
 
-  // Calculates metrics
-  useEffect(() => {
-    if (statistics) {
-      const stats = Object.keys(statistics);
-      const metricRows = Array(METRICS_KEYS.length).fill(0);
-      stats.map((key) => {
-        if (METRICS_KEYS.includes(key)) {
-          let value = statistics[key].toPrecision(2);
-          const order = HUMAN_READABLE_MAPPING[key];
-          const index = METRICS_SORTED_MAPPING[key];
-          if (PERCENTAGE_KEYS.includes(key)) {
-            value *= 100;
-            value = `${value}%`;
-          }
-          metricRows[index] = {
-            columnValues: [order, value],
-          };
-        }
-      });
-      setMetricSample({
-        rowData: metricRows,
-      });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statistics]);
-  // Report (Quality Metrics)
-
-  // Report (Statistics)
-  useEffect(() => {
-    if (statistics && colTypes) {
-      const stats = Object.keys(statistics);
-      const types = Object.values(colTypes);
-      const rowData = [];
-
-      rowData.push({
-        columnValues: ['Column count', types.length],
-      });
-      // Part one is the keys from metrics
-      stats.map((key) => {
-        if (STAT_KEYS.includes(key)) {
-          const name = HUMAN_READABLE_MAPPING[key];
-          rowData.push({
-            columnValues: [name, statistics[key]],
-          });
-        }
-      });
-
-      // Part two is the count of data types
-      let countCategory = 0;
-      let countNumerical = 0;
-      let countTimeseries = 0;
-
-      types.map((val: string) => {
-        if (CATEGORICAL_TYPES.includes(val)) {
-          countCategory += 1;
-        }
-        else if (NUMBER_TYPES.includes(val)) {
-          countNumerical += 1;
-        } else if (DATE_TYPES.includes(val)) {
-          countTimeseries += 1;
-        }
-      });
-
-      rowData.push({
-        columnValues: ['Categorical Features', countCategory],
-      },{
-        columnValues: ['Numerical Features', countNumerical],
-      },{
-        columnValues: ['Time series Features', countTimeseries],
-      });
-      setStatSample({ rowData });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statistics]);
-
-  const [tab, setTab] = useState('data');
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
     e.preventDefault();
@@ -283,7 +213,7 @@ function Data({ slug }) {
       <Spacing mt={4} />
       <Tabs
         bold
-        defaultKey={tab}
+        currentTab={currentTab}
         large
         noBottomBorder={false}
         onChange={key => setTab(key)}
@@ -301,20 +231,25 @@ function Data({ slug }) {
           <FlexContainer justifyContent={'center'}>
             <Flex flex={1}>
               {/* Old app used [2, 1, 1] */}
-              <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[{ label: 'Quality Metrics' }]}
-              rowGroupData={[metricSample]}
-            />
+
+              {metricSample && (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1]}
+                  columnHeaders={[{ label: 'Quality Metrics' }]}
+                  rowGroupData={[metricSample]}
+                />
+              )}
             </Flex>
             <Spacing ml={8} />
             <Flex flex={1}>
               {/* Old app used: [1, 5] */}
-              <SimpleDataTable
-              columnFlexNumbers={[1, 1, 1]}
-              columnHeaders={[{ label: 'Statistics' }]}
-              rowGroupData={[statSample]}
-            />
+              {statSample && (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1, 1]}
+                  columnHeaders={[{ label: 'Statistics' }]}
+                  rowGroupData={[statSample]}
+                />
+              )}
             </Flex>
           </FlexContainer>
           <Spacing my={8}>

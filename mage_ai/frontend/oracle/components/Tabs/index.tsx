@@ -19,6 +19,7 @@ export type TabsProps = {
   bold?: boolean;
   children: any;
   containerWidthPercentage?: number;
+  currentTab?: string;
   defaultKey?: string;
   fullWidth?: boolean;
   large?: boolean;
@@ -33,7 +34,6 @@ const TabHeaderContainerStyle = styled.div<TabsProps>`
 `;
 
 const TabHeader = styled.div<TabsProps>`
-
   border-top-left-radius: ${BORDER_RADIUS_SMALL}px;
   border-top-right-radius: ${BORDER_RADIUS_SMALL}px;
   margin-right: ${UNIT * 6}px;
@@ -80,6 +80,7 @@ function Tabs({
   bold,
   children: childrenArg,
   containerWidthPercentage,
+  currentTab: currentTabProp,
   defaultKey,
   fullWidth,
   large,
@@ -88,7 +89,8 @@ function Tabs({
 }: TabsProps) {
   const children = Array.isArray(childrenArg) ? childrenArg.filter(x => !!x) : [childrenArg];
   const tabKeys = React.Children.map(children, tab => tab.key);
-  const [currentTab, setCurrentTab] = useState(defaultKey || tabKeys[0]);
+  const [currentTabState, setCurrentTab] = useState(defaultKey || tabKeys[0]);
+  const currentTab = currentTabProp || currentTabState;
 
   useEffect(() => {
     setCurrentTab(defaultKey);
