@@ -60,6 +60,15 @@ class Model:
         return cls.__name__
 
     @classmethod
+    def is_valid_id(cls, id):
+        try:
+            opts = os.listdir(cls.path_name())
+            if id not in opts:
+                raise RuntimeError(f'Unknown feature set id: {id}')
+        except OSError:
+            pass
+
+    @classmethod
     def path_name(cls):
         return os.path.join(DATA_PATH, cls.folder_name())
 
@@ -80,8 +89,5 @@ class Model:
             try:
                 dirs.append(int(dirname))
             except ValueError:
-                raise RuntimeError(
-                    f'Invalid ID generated for model: {os.path.abspath(pathname) + "/" + dirname}. '
-                    'Remove this folder and restart the application.'
-                )
+                continue
         return dirs

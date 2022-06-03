@@ -115,13 +115,8 @@ def feature_set(id):
         }
     ]
     """
-    path = RESOURCE_PATH + '/FeatureSet'
-    try:
-        opts = os.listdir(path)
-        if id not in opts:
-            raise RuntimeError(f'Unknown feature set id: {id}')
-    except OSError:
-        pass
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
     feature_set = FeatureSet(id=id)
     query_column = request.args.get('column')
     response = app.response_class(
@@ -188,13 +183,8 @@ def pipeline(id):
         actions,
     }
     """
-    path = RESOURCE_PATH + '/Pipelines'
-    try:
-        opts = os.listdir(path)
-        if id not in opts:
-            raise RuntimeError(f'Unknown pipeline id: {id}')
-    except OSError:
-        pass
+    if not Pipeline.is_valid_id(id):
+        raise RuntimeError(f'Unknown pipeline id: {id}')
     pipeline = Pipeline(id=id)
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
