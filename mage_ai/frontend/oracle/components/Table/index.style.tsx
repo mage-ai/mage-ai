@@ -1,14 +1,14 @@
 import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
 export const PADDING_SIZE_UNITS = 2;
 
 export const TableStyle = styled.div<any>`
-  border-radius: ${BORDER_RADIUS_LARGE}px;
+  border-radius: ${BORDER_RADIUS}px;
   overflow-y: auto;
   position: relative;
   width: 100%;
@@ -26,6 +26,8 @@ export const TableStyle = styled.div<any>`
 `;
 
 export const ColumnHeaderRowStyle = styled.div<any>`
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
   position: sticky;
   top: 0;
   width: 100%;
@@ -77,8 +79,8 @@ export const RowStyle = styled.div<any>`
   `}
 
   ${props => props.finalRow && `
-    border-bottom-left-radius: ${BORDER_RADIUS_LARGE}px;
-    border-bottom-right-radius: ${BORDER_RADIUS_LARGE}px;
+    border-bottom-left-radius: ${BORDER_RADIUS}px;
+    border-bottom-right-radius: ${BORDER_RADIUS}px;
   `}
 
 `;
