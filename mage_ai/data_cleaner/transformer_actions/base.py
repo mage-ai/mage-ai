@@ -1,15 +1,20 @@
 from mage_ai.data_cleaner.transformer_actions import column, row
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, VariableType
+from mage_ai.data_cleaner.transformer_actions.dependency_resolution import (
+    default_resolution,
+    resolve_filter_action,
+)
 from mage_ai.data_cleaner.transformer_actions.helpers import drop_na
 from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
     interpolate,
     replace_true_false,
 )
-# from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
 import json
 
-COLUMN_TYPE_PIPELINE_MAPPING = {}
+# from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
 
+COLUMN_TYPE_PIPELINE_MAPPING = {}
+DEPENDENCIES = {ActionType.FILTER: resolve_filter_action}
 FUNCTION_MAPPING = {
     Axis.COLUMN: {
         ActionType.ADD: column.add_column,
@@ -38,11 +43,10 @@ FUNCTION_MAPPING = {
         ActionType.FILTER: row.filter_rows,
         ActionType.SORT: row.sort_rows,
     },
-
 }
 
 
-class BaseAction():
+class BaseAction:
     def __init__(self, action):
         self.action = action
 
@@ -68,6 +72,12 @@ class BaseAction():
         return self.action['axis']
 
     def execute(self, df, **kwargs):
+        action_type = self.action['action_type']
+        dependency = DEPENDENCIES.get(action_type, default_resolution)
+        dependencies_met, msg = dependency(df)
+        if not dependencies_met:
+            raise RuntimeError(f'Dependencies of this cleaning action are not completed: {msg}')
+
         self.hydrate_action()
 
         if self.action.get('action_code'):
@@ -114,7 +124,9 @@ class BaseAction():
             return pdf
 
         groupby_columns = action['action_arguments']
-        return df.groupby(groupby_columns).apply(lambda x: __transform_partition(x, action['child_actions']))
+        return df.groupby(groupby_columns).apply(
+            lambda x: __transform_partition(x, action['child_actions'])
+        )
 
     def hydrate_action(self):
         for k, v in self.action['action_variables'].items():
@@ -136,11 +148,14 @@ class BaseAction():
                 self.action['action_code'] = interpolate(self.action['action_code'], k, v)
 
             if self.action.get('action_arguments'):
-                self.action['action_arguments'] = [interpolate(
-                    args_text,
-                    k,
-                    v,
-                ) for args_text in self.action['action_arguments']]
+                self.action['action_arguments'] = [
+                    interpolate(
+                        args_text,
+                        k,
+                        v,
+                    )
+                    for args_text in self.action['action_arguments']
+                ]
 
             if self.action.get('action_options'):
                 action_options_json = json.dumps(self.action['action_options'])
@@ -159,7 +174,8 @@ class BaseAction():
 
         if action.get('outputs') is not None:
             feature_rename_mapping = {
-                f['source_feature']['uuid']:f['uuid'] for f in action['outputs']
+                f['source_feature']['uuid']: f['uuid']
+                for f in action['outputs']
                 if f.get('source_feature') is not None
             }
             df_to_join_renamed = df_to_join.rename(columns=feature_rename_mapping)

@@ -13,23 +13,32 @@ import pandas as pd
 
 class RowTests(TestCase):
     def test_drop_duplicates(self):
-        df = pd.DataFrame([
-            [0, False, 'a'],
-            [1, True, 'b'],
-            [1, True, 'c'],
-            [0, True, 'd'],
-            [1, True, 'b'],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+                [1, True, 'c'],
+                [0, True, 'd'],
+                [1, True, 'b'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         test_cases = [
             (dict(action_arguments=['integer']), df.iloc[[3, 4]]),
-            (dict(action_arguments=['integer'], action_options=dict(keep='first')), df.iloc[[0, 1]]),
+            (
+                dict(action_arguments=['integer'], action_options=dict(keep='first')),
+                df.iloc[[0, 1]],
+            ),
             (dict(action_arguments=['boolean']), df.iloc[[0, 4]]),
-            (dict(action_arguments=['boolean'], action_options=dict(keep='first')), df.iloc[[0, 1]]),
+            (
+                dict(action_arguments=['boolean'], action_options=dict(keep='first')),
+                df.iloc[[0, 1]],
+            ),
             (dict(action_arguments=['integer', 'boolean']), df.iloc[[0, 3, 4]]),
             (dict(action_arguments=[]), df.iloc[[0, 2, 3, 4]]),
         ]
@@ -69,14 +78,17 @@ class RowTests(TestCase):
     #     assert_frame_equal(df_new.reset_index(drop=True), df_expected)
 
     def test_filter_rows(self):
-        df = pd.DataFrame([
-            [0, False, 'a'],
-            [1, True, 'b'],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         test_cases = [
             ([0, False, 'a'], 'integer == 0'),
@@ -94,21 +106,24 @@ class RowTests(TestCase):
             )
 
     def test_filter_rows_is_null(self):
-        df = pd.DataFrame([
-            [None, False, 'a'],
-            [2, True, 'b'],
-            [3, False, 'c'],
-            [1, None, 'a'],
-            [2, True, 'b'],
-            [3, '', 'c'],
-            [1, False, None],
-            [2, True, 'b'],
-            [3, False, ''],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [None, False, 'a'],
+                [2, True, 'b'],
+                [3, False, 'c'],
+                [1, None, 'a'],
+                [2, True, 'b'],
+                [3, '', 'c'],
+                [1, False, None],
+                [2, True, 'b'],
+                [3, False, ''],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         integer_rows = filter_rows(
             df,
@@ -146,77 +161,92 @@ class RowTests(TestCase):
         self.assertEqual(string_rows[1][2], '')
 
     def test_filter_rows_is_not_null(self):
-        df = pd.DataFrame([
-            [None, False, 'a'],
-            [2, True, 'b'],
-            [3, False, 'c'],
-            [1, None, 'a'],
-            [2, True, 'b'],
-            [3, '', 'c'],
-            [1, False, None],
-            [2, True, 'b'],
-            [3, False, ''],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [None, False, 'a'],
+                [2, True, 'b'],
+                [3, False, 'c'],
+                [1, None, 'a'],
+                [2, True, 'b'],
+                [3, '', 'c'],
+                [1, False, None],
+                [2, True, 'b'],
+                [3, False, ''],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
         integer_rows = filter_rows(
             df,
             dict(action_code='integer != null'),
             original_df=df,
         )['integer'].values.tolist()
-        self.assertEqual(integer_rows, [
-            2,
-            3,
-            1,
-            2,
-            3,
-            1,
-            2,
-            3,
-        ])
+        self.assertEqual(
+            integer_rows,
+            [
+                2,
+                3,
+                1,
+                2,
+                3,
+                1,
+                2,
+                3,
+            ],
+        )
 
         boolean_rows = filter_rows(
             df,
             dict(action_code='boolean != null'),
             original_df=df,
         )['boolean'].values.tolist()
-        self.assertEqual(boolean_rows, [
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-        ])
+        self.assertEqual(
+            boolean_rows,
+            [
+                False,
+                True,
+                False,
+                True,
+                False,
+                True,
+                False,
+            ],
+        )
 
         string_rows = filter_rows(
             df,
             dict(action_code='string != null'),
             original_df=df,
         )['string'].values.tolist()
-        self.assertEqual(string_rows, [
-            'a',
-            'b',
-            'c',
-            'a',
-            'b',
-            'c',
-            'b',
-        ])
+        self.assertEqual(
+            string_rows,
+            [
+                'a',
+                'b',
+                'c',
+                'a',
+                'b',
+                'c',
+                'b',
+            ],
+        )
 
     def test_filter_row_contains_string(self):
-        df = pd.DataFrame([
-            ['fsdijfosidjfiosfj'],
-            ['abc@123.com'],
-            [np.NaN],
-            ['fsdfsdfdsfdsf'],
-            ['xyz@456.com'],
-        ], columns=[
-            'id',
-        ])
+        df = pd.DataFrame(
+            [
+                ['fsdijfosidjfiosfj'],
+                ['abc@123.com'],
+                [np.NaN],
+                ['fsdfsdfdsfdsf'],
+                ['xyz@456.com'],
+            ],
+            columns=[
+                'id',
+            ],
+        )
         action = dict(
             action_code='id contains @',
         )
@@ -225,27 +255,30 @@ class RowTests(TestCase):
         )
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
         df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
-        df_expected = pd.DataFrame([
-            ['abc@123.com'],
-            ['xyz@456.com'],
-        ], columns=[
-            'id',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['abc@123.com'],
+                ['xyz@456.com'],
+            ],
+            columns=[
+                'id',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
         assert_frame_equal(df_new2, df_expected)
 
     def test_filter_row_not_contains_string(self):
-        df = pd.DataFrame([
-            [np.NaN, False],
-            ['sfc@mailnet.com', True],
-            ['fdss@emailserver.net', True],
-            ['fsdfsdfdsfdsf', False],
-            ['xyz@mailnet.com', False],
-            ['eeeeasdf', True]
-        ], columns=[
-            'email',
-            'subscription'
-        ])
+        df = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['sfc@mailnet.com', True],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['xyz@mailnet.com', False],
+                ['eeeeasdf', True],
+            ],
+            columns=['email', 'subscription'],
+        )
         action = dict(
             action_code='email not contains mailnet',
         )
@@ -253,45 +286,39 @@ class RowTests(TestCase):
             action_code='email not contains \'mailnet\'',
         )
         action3 = dict(
-            action_code = 'email not contains @',
+            action_code='email not contains @',
         )
         action4 = dict(
-            action_code = 'email not contains \'^e+\w\'',
+            action_code='email not contains \'^e+\w\'',
         )
-        action_invalid = dict(
-            action_code='subscription not contains False'
-        ) 
+        action_invalid = dict(action_code='subscription not contains False')
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
         df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
         df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
         df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
-        df_expected1 = pd.DataFrame([
-            [np.NaN, False],
-            ['fdss@emailserver.net', True],
-            ['fsdfsdfdsfdsf', False],
-            ['eeeeasdf', True]
-        ], columns=[
-            'email',
-            'subscription'
-        ])
-        df_expected2 = pd.DataFrame([
-            [np.NaN, False],
-            ['fsdfsdfdsfdsf', False],
-            ['eeeeasdf', True]
-        ], columns=[
-            'email',
-            'subscription'
-        ])
-        df_expected3 = pd.DataFrame([
-            [np.NaN, False],
-            ['sfc@mailnet.com', True],
-            ['fdss@emailserver.net', True],
-            ['fsdfsdfdsfdsf', False],
-            ['xyz@mailnet.com', False]
-        ], columns=[
-            'email',
-            'subscription'
-        ])
+        df_expected1 = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['eeeeasdf', True],
+            ],
+            columns=['email', 'subscription'],
+        )
+        df_expected2 = pd.DataFrame(
+            [[np.NaN, False], ['fsdfsdfdsfdsf', False], ['eeeeasdf', True]],
+            columns=['email', 'subscription'],
+        )
+        df_expected3 = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['sfc@mailnet.com', True],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['xyz@mailnet.com', False],
+            ],
+            columns=['email', 'subscription'],
+        )
         assert_frame_equal(df_new, df_expected1)
         assert_frame_equal(df_new2, df_expected1)
         assert_frame_equal(df_new3, df_expected2)
@@ -310,18 +337,18 @@ class RowTests(TestCase):
                 [75, '', '', 80],
                 [None, 'company3', False, 23],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         action = dict(action_code='(value < 110 and value >= 50) and (value != null)')
         action2 = dict(action_code='brand contains brand and inventory != null')
         action3 = dict(action_code='(brand != null and value > 60) or (discounted == null)')
         action4 = dict(
             action_code='(discounted == True and inventory > 15)'
-                        ' or (discounted == False and value != null)'
+            ' or (discounted == False and value != null)'
         )
         action5 = dict(
             action_code='(brand not contains company and value == 75 and inventory <= 80)'
-                        ' or (discounted != null)'
+            ' or (discounted != null)'
         )
         df_expected = pd.DataFrame(
             [
@@ -329,14 +356,14 @@ class RowTests(TestCase):
                 [50, 'brand1', True, 13],
                 [75, '', '', 80],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_expected2 = pd.DataFrame(
             [
                 [np.NaN, 'brand2', None, 18],
                 [50, 'brand1', True, 13],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_expected3 = pd.DataFrame(
             [
@@ -345,13 +372,13 @@ class RowTests(TestCase):
                 [np.NaN, 'brand2', None, 18],
                 [75, '', '', 80],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_expected4 = pd.DataFrame(
             [
                 [250, 'brand1', False, np.NaN],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_expected5 = pd.DataFrame(
             [
@@ -360,7 +387,7 @@ class RowTests(TestCase):
                 [75, '', '', 80],
                 [None, 'company3', False, 23],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
         df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
@@ -391,7 +418,7 @@ class RowTests(TestCase):
                 [75, '', '', 80],
                 [None, 'company3', False, 23],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         action_payload = {
             'action_type': 'filter',
@@ -403,13 +430,10 @@ class RowTests(TestCase):
                 '1': {
                     'id': 'value',
                     'type': 'feature',
-                    'feature': {
-                        'column_type': 'number',
-                        'uuid': 'value'
-                    }  
+                    'feature': {'column_type': 'number', 'uuid': 'value'},
                 },
             },
-            'outputs': []
+            'outputs': [],
         }
         action = BaseAction(action_payload)
         df_new = action.execute(df).reset_index(drop=True)
@@ -420,92 +444,146 @@ class RowTests(TestCase):
                 [50, 'brand1', True, 13],
                 [75, '', '', 80],
             ],
-            columns=['value', 'brand', 'discounted', 'inventory']
+            columns=['value', 'brand', 'discounted', 'inventory'],
         )
         df_new['value'] = df_new['value'].astype(int)
         assert_frame_equal(df_expected, df_new)
 
+    def test_filter_row_bad_deps(self):
+        df = pd.DataFrame(
+            [
+                [100, None, '', 10],
+                [250, 'brand1', False, np.NaN],
+                [np.NaN, 'brand2', None, 18],
+                [50, 'brand1', True, 13],
+                [75, '', '', 80],
+                [None, 'company3', False, 23],
+            ],
+            columns=['value   ', 'bra  nd', 'disc ounted', 'inve ntory'],
+        )
+        action_payload = {
+            'action_type': 'filter',
+            'action_code': '%{1} != null',
+            'action_arguments': [],
+            'action_options': {},
+            'axis': 'row',
+            'action_variables': {
+                '1': {
+                    'id': 'value',
+                    'type': 'feature',
+                    'feature': {'column_type': 'number', 'uuid': 'value'},
+                },
+            },
+            'outputs': [],
+        }
+        action = BaseAction(action_payload)
+        with self.assertRaises(RuntimeError):
+            df_new = action.execute(df)
+
     def test_original_df_column_name_padding(self):
         # tests edge cases for when columns with the special prefixes "orig_" and "tf_" are given as input
-        df = pd.DataFrame([
-            [0,1, None],
-            [1,2, np.NaN],
-            [np.NaN, 3, 4],
-            [3, None, 5]
-        ], columns=[
-            'col',
-            'orig_col',
-            'tf_col'
-        ])
-        df_expected = pd.DataFrame([
-            [0,1, None],
-            [1,2, np.NaN],
-        ], columns=[
-            'col',
-            'orig_col',
-            'tf_col'
-        ])
+        df = pd.DataFrame(
+            [[0, 1, None], [1, 2, np.NaN], [np.NaN, 3, 4], [3, None, 5]],
+            columns=['col', 'orig_col', 'tf_col'],
+        )
+        df_expected = pd.DataFrame(
+            [
+                [0, 1, None],
+                [1, 2, np.NaN],
+            ],
+            columns=['col', 'orig_col', 'tf_col'],
+        )
         action = dict(action_code='(col != null) and (orig_col != null)')
-        df_new = filter_rows(df, action, original_df = df)
+        df_new = filter_rows(df, action, original_df=df)
         df_new['col'] = df_new['col'].astype(int)
         df_new['orig_col'] = df_new['orig_col'].astype(int)
         assert_frame_equal(df_new, df_expected)
 
     def test_sort_rows(self):
-        df = pd.DataFrame([
-            [0, False, 'a'],
-            [1, True, 'b'],
-            [1, True, 'c'],
-            [0, True, 'd'],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+                [1, True, 'c'],
+                [0, True, 'd'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         test_cases = [
             (dict(action_arguments=['integer']), df.iloc[[0, 3, 1, 2]]),
-            (dict(action_arguments=['integer'], action_options=dict(ascending=False)), df.iloc[[1, 2, 0, 3]]),
+            (
+                dict(action_arguments=['integer'], action_options=dict(ascending=False)),
+                df.iloc[[1, 2, 0, 3]],
+            ),
             (dict(action_arguments=['string']), df.iloc[[0, 1, 2, 3]]),
-            (dict(action_arguments=['string'], action_options=dict(ascending=False)), df.iloc[[3, 2, 1, 0]]),
+            (
+                dict(action_arguments=['string'], action_options=dict(ascending=False)),
+                df.iloc[[3, 2, 1, 0]],
+            ),
         ]
 
         for action, val in test_cases:
             self.assertTrue(sort_rows(df, action).equals(val))
 
     def test_sort_rows_with_multiple_columns(self):
-        df = pd.DataFrame([
-            [0, False, 'a'],
-            [1, True, 'b'],
-            [1, True, 'c'],
-            [0, True, 'd'],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+                [1, True, 'c'],
+                [0, True, 'd'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         test_cases = [
             (dict(action_arguments=['integer', 'string']), df.iloc[[0, 3, 1, 2]]),
-            (dict(action_arguments=['integer', 'string'], action_options=dict(ascendings=[False, False])), df.iloc[[2, 1, 3, 0]]),
-            (dict(action_arguments=['integer', 'string'], action_options=dict(ascendings=[True, False])), df.iloc[[3, 0, 2, 1]]),
-            (dict(action_arguments=['string', 'integer'], action_options=dict(ascending=False)), df.iloc[[3, 2, 1, 0]]),
+            (
+                dict(
+                    action_arguments=['integer', 'string'],
+                    action_options=dict(ascendings=[False, False]),
+                ),
+                df.iloc[[2, 1, 3, 0]],
+            ),
+            (
+                dict(
+                    action_arguments=['integer', 'string'],
+                    action_options=dict(ascendings=[True, False]),
+                ),
+                df.iloc[[3, 0, 2, 1]],
+            ),
+            (
+                dict(action_arguments=['string', 'integer'], action_options=dict(ascending=False)),
+                df.iloc[[3, 2, 1, 0]],
+            ),
         ]
 
         for action, val in test_cases:
             self.assertTrue(sort_rows(df, action).equals(val))
 
     def test_sort_rows_with_number_and_empty_strings(self):
-        df = pd.DataFrame([
-            [0],
-            [None],
-            [3],
-            [''],
-            [1],
-            [2],
-        ], columns=[
-            'integer',
-        ])
+        df = pd.DataFrame(
+            [
+                [0],
+                [None],
+                [3],
+                [''],
+                [1],
+                [2],
+            ],
+            columns=[
+                'integer',
+            ],
+        )
 
         test_cases = [
             (dict(ascending=True), df.iloc[[1, 3, 0, 4, 5, 2]]),
