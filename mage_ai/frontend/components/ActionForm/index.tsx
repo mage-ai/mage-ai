@@ -13,8 +13,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
-import light from '@oracle/styles/themes/light';
-import { Check } from '@oracle/icons';
+import { Check, Close } from '@oracle/icons';
 import {
   ContainerStyle,
   OptionStyle,
@@ -40,6 +39,7 @@ type ActionFormProps = {
   features?: FeatureType[];
   noBorder?: boolean;
   noHeader?: boolean;
+  onClose?: () => void;
   onSave: () => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
@@ -59,6 +59,7 @@ function ActionForm({
   currentFeature,
   noBorder,
   noHeader,
+  onClose,
   onSave,
   payload,
   setPayload,
@@ -130,18 +131,31 @@ function ActionForm({
     <ContainerStyle noBorder={noBorder}>
       {!noHeader && 
         <>
-          <Spacing p={2}>
-            <Text>
-              {title}
-            </Text>
-
-            {description && (
-              <Text muted small>
-                {description}
+          <FlexContainer justifyContent={'space-between'}>
+            <Spacing p={2}>
+              <Text>
+                {title}
               </Text>
-            )}
-          </Spacing>
 
+              {description && (
+                <Text muted small>
+                  {description}
+                </Text>
+              )}
+            </Spacing>
+
+            <Spacing p={2}>
+              <Button
+                basic
+                iconOnly
+                onClick={onClose}
+                padding="0px"
+                transparent
+              >
+                <Close muted />
+              </Button>
+            </Spacing>
+          </FlexContainer>
           <Divider />
         </>
       }

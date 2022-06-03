@@ -236,6 +236,7 @@ function DatasetOverview({
               actionType={actionType}
               axis={actionPayload?.axis}
               features={features}
+              onClose={() => setActionPayload({} as ActionPayloadType)}
               onSave={() => saveAction({
                 action_payload: {
                   ...actionPayload,
