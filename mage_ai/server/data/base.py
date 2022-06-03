@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from numpyencoder import NumpyEncoder
 import json
 import os
@@ -8,7 +9,7 @@ import pandas as pd
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 
-class Model():
+class Model:
     def __init__(self, id=None):
         # TODO: figure out a good directory to store the files
         if not os.path.isdir(DATA_PATH):
@@ -26,7 +27,7 @@ class Model():
             self.id = max_id + 1
         else:
             self.id = id
-        
+
         self.dir = os.path.join(self.path, str(self.id))
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
@@ -46,14 +47,14 @@ class Model():
         file_path = os.path.join(self.dir, file_name)
         if not os.path.exists(file_path):
             return pd.DataFrame()
-        return pd.read_parquet(file_path, engine='pyarrow',)
+        return pd.read_parquet(file_path, engine='pyarrow')
 
     def write_parquet_file(self, file_name, df):
         df.to_parquet(os.path.join(self.dir, file_name))
 
     def to_dict(self, detailed):
         pass
-    
+
     @classmethod
     def folder_name(cls):
         return cls.__name__
@@ -65,8 +66,14 @@ class Model():
     @classmethod
     def objects(cls):
         arr = []
-        dirs = sorted([int(name) for name in os.listdir(cls.path_name()) if name.isnumeric()],
-                      reverse=True)
+        string_dirs = [int(name) for name in os.listdir(cls.path_name())]
+        dirs = []
+        for dirname in string_dirs:
+            try:
+                dirs.append(int(dirname))
+            except ValueError:
+                raise ValueError(f'Invalid id generated for model: {dirname}')
+        dirs = sorted([int(name) for name in os.listdir(cls.path_name())], reverse=True)
         for id in dirs:
             try:
                 arr.append(cls(id=id))
