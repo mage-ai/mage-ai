@@ -17,7 +17,12 @@ function DatasetDetail() {
   } else if (slug.length === 2) {
     el = <ColumnList featureSetId={featureSetId} />;
   } else if (slug.length === 3) {
-    el = <ColumnDetail featureId={featureId} featureSetId={featureSetId} />;
+    el = (
+      <ColumnDetail
+        featureId={featureId}
+        featureSetId={featureSetId}
+      />
+    );
   }
 
   return (
