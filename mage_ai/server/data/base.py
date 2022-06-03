@@ -20,10 +20,10 @@ class Model:
             os.mkdir(self.path)
 
         if id is None:
-            dirs = [name for name in os.listdir(self.path)]
-            max_id = 0
+            dirs = Model.gen_integer_dir_list(self.path)
+            max_id = -1
             if len(dirs) > 0:
-                max_id = sorted([int(dir) for dir in dirs], reverse=True)[0]
+                max_id = sorted(dirs, reverse=True)[0]
             self.id = max_id + 1
         else:
             self.id = id
@@ -66,17 +66,22 @@ class Model:
     @classmethod
     def objects(cls):
         arr = []
-        string_dirs = [int(name) for name in os.listdir(cls.path_name())]
-        dirs = []
-        for dirname in string_dirs:
-            try:
-                dirs.append(int(dirname))
-            except ValueError:
-                raise ValueError(f'Invalid id generated for model: {dirname}')
-        dirs = sorted([int(name) for name in os.listdir(cls.path_name())], reverse=True)
-        for id in dirs:
+        for id in Model.gen_integer_dir_list(cls.path_name()):
             try:
                 arr.append(cls(id=id))
             except Exception:
                 print(f'Fail to load {cls.__name__} with id {id}')
         return arr
+
+    @staticmethod
+    def gen_integer_dir_list(pathname):
+        dirs = []
+        for dirname in os.listdir(pathname):
+            try:
+                dirs.append(int(dirname))
+            except ValueError:
+                raise RuntimeError(
+                    f'Invalid ID generated for model: {dirname}. '
+                    'Remove this folder and restarting the application.'
+                )
+        return dirs
