@@ -1,7 +1,7 @@
 import { UNIT } from '@oracle/styles/units/spacing';
 import { DataTableRow } from './types';
 // TODO: Update with official numbers and import from units/spacing.ts
-export const WIDTH_OF_SINGLE_CHARACTER = 2;
+export const WIDTH_OF_SINGLE_CHARACTER = 10;
 export const CHARACTER_LIMIT = 45;
 
 export const cutTextSize = (

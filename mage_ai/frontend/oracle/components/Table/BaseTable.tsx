@@ -138,7 +138,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
                 >
                   {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
-                    <Text bold>
+                    <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
