@@ -549,20 +549,18 @@ function Overview({
       )}
 
       {heatmapData && (
-        <Spacing mt={5}>
-          <Spacing mb={3}>
-            <Text bold>
-              Correlations
-            </Text>
-          </Spacing>
-
-          <HeatMap
-            data={heatmapData}
-            height={UNIT * 8 * xyLabels.length}
-            xLabels={xyLabels}
-            yLabels={xyLabels}
-          />
-        </Spacing>
+        <ChartRow
+          left={
+            <ChartContainer title="Correlations">
+              <HeatMap
+                data={heatmapData}
+                height={UNIT * 8 * xyLabels.length}
+                xLabels={xyLabels}
+                yLabels={xyLabels}
+              />
+            </ChartContainer>
+          }
+        />
       )}
     </FlexContainer>
   );
