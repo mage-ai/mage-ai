@@ -98,7 +98,7 @@ function Feature({
     },
     {
       columnValues: [
-        'Skewed', skew?.toFixed(3),
+        'Skewness', skew?.toFixed(3),
       ],
     },
   ];

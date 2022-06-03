@@ -221,8 +221,6 @@ function Data({ slug }) {
           <Spacing mb={3} mt={3} />
           <FlexContainer justifyContent={'center'}>
             <Flex flex={1}>
-              {/* Old app used [2, 1, 1] */}
-
               {metricSample && (
                 <SimpleDataTable
                   columnFlexNumbers={[1, 1]}
@@ -233,7 +231,6 @@ function Data({ slug }) {
             </Flex>
             <Spacing ml={8} />
             <Flex flex={1}>
-              {/* Old app used: [1, 5] */}
               {statSample && (
                 <SimpleDataTable
                   columnFlexNumbers={[1, 1, 1]}
@@ -243,7 +240,7 @@ function Data({ slug }) {
               )}
             </Flex>
           </FlexContainer>
-          <Spacing my={8}>
+          <Spacing mt={8}>
             <FeatureProfiles
               features={features}
               statistics={statistics}

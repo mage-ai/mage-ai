@@ -44,7 +44,7 @@ const Dashboard: NextPage = () => {
               {
               featureSets?.length > 0
                 ?
-                featureSets?.map(dataset => {
+                featureSets?.map((dataset, idx) => {
                   const {
                     id,
                     metadata,
@@ -67,6 +67,7 @@ const Dashboard: NextPage = () => {
                     <RowCard
                       columnFlexNumbers={[4, 1, 1, 1]}
                       key={id}
+                      last={idx === featureSets.length - 1}
                     >
                       <FlexContainer alignItems="center">
                         <File secondary />

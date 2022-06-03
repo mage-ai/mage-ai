@@ -24,9 +24,12 @@ export type MainContentProps = {
   headerPadding?: boolean;
   centerAlign?: boolean;
   fluid?: boolean;
-}
+};
+
 const WrapperStyle = styled.div<LayoutProps>`
-  background-color: ${light.monotone.white}
+  background-color: ${light.monotone.white};
+  margin-bottom: ${UNIT * 4}px;
+
   ${props => props.minHeight && `
     min-height: ${props.minHeight};
   `}
@@ -89,7 +92,7 @@ function Layout({
             {children}
           </MainContentStyle>
         </MainStyle>
-         { after && 
+        {after &&
           <Spacing ml={UNIT}>
             {after}
           </Spacing>

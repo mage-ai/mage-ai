@@ -55,7 +55,7 @@ const ColumnList = ({ featureSetId }) => {
       header={<Spacing mt={UNIT} />}
     >
       {headEl}
-      <Spacing pb={3} pt={3}>
+      <Spacing pt={3}>
         <RowDataTable
           headerTitle="columns"
         >
@@ -68,6 +68,7 @@ const ColumnList = ({ featureSetId }) => {
                 <NextLink
                   as={`/datasets/${featureSetId}/features/${featureId}`}
                   href="/datasets/[...slug]"
+                  key={`${colName}_${i}`}
                   passHref
                 >
                   <Link
@@ -78,6 +79,7 @@ const ColumnList = ({ featureSetId }) => {
                   >
                     <RowCard
                       columnFlexNumbers={[0.5, 0.2, 9, 2, 1]}
+                      last={i === columnTypes.length - 1}
                       noHorizontalPadding
                       secondary={i % 2 === 1}
                     >
