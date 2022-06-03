@@ -1,11 +1,12 @@
 import Router from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import FeatureSetType from '@interfaces/FeatureSetType';
+import FeatureType from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
@@ -17,10 +18,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import actionsConfig from '@components/ActionForm/actions';
-import api from 'api';
+
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getHost } from '@api/utils/url';
 import { getPercentage } from '@utils/number';
+import { useCustomFetchRequest } from '@api';
 
 type ColumnDetailProps = {
   featureId: string;
@@ -33,23 +36,36 @@ function ColumnDetail({
   featureSetId,
   featureId,
 }: ColumnDetailProps) {
-  const features = Object.entries(featureSet?.metadata?.column_types || {})
+  const [sampleRowData, setSampleRowData] = useState<any>(null);
+  const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet);
   const featureIndex = +featureId;
 
-  // Get individual column data
+  // Individual column data
   const featureData = featureMapping[featureIndex];
   const featureUUID = featureData?.uuid;
   const columnType = featureData?.column_type;
-  const sampleRowData = featureSet?.sample_data?.rows?.map(row => ({
-    columnValues: [row[featureIndex]],
-  }));
 
+  const [fetchColumnData, isLoadingColumnData] = useCustomFetchRequest({
+    endpoint: `${getHost()}/feature_sets/${featureSetId}?column=${encodeURIComponent(featureUUID)}`,
+    method: 'GET',
+    onSuccessCallback: (res) => {
+      setSampleRowData(res?.sample_data?.[featureUUID]?.map(value => ({
+        columnValues: [value],
+      })));
+    },
+  });
+
+  useEffect(() => {
+    if (featureUUID) {
+      fetchColumnData();
+    }
+  }, [featureUUID]);
+
+  // Column statistics
   const insightsColumn = (featureSet?.insights?.[0] || []).find(({ feature }) => feature.uuid === featureUUID);
-  const statisticsOverview = featureSet?.['statistics'] || {};
-
-  // Get individual column statistics
+  const statisticsOverview = featureSet?.statistics || {};
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
   const {
     completeness,

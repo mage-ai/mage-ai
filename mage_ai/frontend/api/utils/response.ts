@@ -60,6 +60,7 @@ function parseErrorFromResponse(res, opts: OptsProps = {}) {
   }
 
   // Replace with some error notification
+  // console.error(msgs.join(' '));
   // toast.error(msgs.join(' '), {
   //   position: toast.POSITION.BOTTOM_RIGHT,
   //   toastId: code,
@@ -81,6 +82,7 @@ export function errorOrSuccess(response, opts: OptsProps = {}) {
     return onErrorCallback?.(response);
   } else {
     // Replace with some success notification
+    // console.log(successMessage);
     // if (successMessage) {
     //   toast.success(successMessage, {
     //     position: toast.POSITION.BOTTOM_RIGHT,

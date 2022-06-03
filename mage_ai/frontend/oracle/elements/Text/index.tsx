@@ -290,14 +290,11 @@ const SpanStyle = styled.span<TextProps>`
 
 const Text = ({
   children,
-  muted: mutedProp,
   raw,
   ...props
 }: TextProps) => {
-  const muted = typeof mutedProp === 'undefined' ? false : mutedProp;
   const El = props?.inline ? SpanStyle : TextStyle;
 
-  // const { sharedProps } = useModelThemeContext();
   const combinedProps = {
     ...props,
     ...({}),
@@ -308,13 +305,12 @@ const Text = ({
       <El
         {...combinedProps}
         dangerouslySetInnerHTML={{ __html: children }}
-        muted={muted}
       />
     );
   }
 
   return (
-    <El {...combinedProps} muted={muted}>
+    <El {...combinedProps}>
       {children}
     </El>
   );

@@ -94,9 +94,7 @@ function SimpleDataTable({
                       <Check />
                     )}
                     {Icon && <Spacing mr={1} />}
-                    <Text
-                      bold
-                    >
+                    <Text bold>
                       {key}
                     </Text>
                   </FlexContainer>
@@ -118,7 +116,7 @@ function SimpleDataTable({
         if (title) {
           titleEl = (
             <RowTitleStyle small={small}>
-              <Text bold default>
+              <Text bold>
                 {title}
               </Text>
             </RowTitleStyle>
@@ -144,6 +142,7 @@ function SimpleDataTable({
               <Cell
                 cellIndex={cellIndex}
                 flex={columnFlexNumbers[cellIndex]}
+                key={cellIndex}
                 render={renderFunc}
                 rowGroupIndex={rowGroupIndex}
                 rowIndex={rowIndex}
@@ -162,7 +161,7 @@ function SimpleDataTable({
 
           rowsEls.push(
             <RowStyle
-              finalRow={numberOfRowGroups - 1 === rowGroupIndex && numberOfRows - 1 === rowIndex}
+              finalRow={(numberOfRowGroups - 1 === rowGroupIndex) && (numberOfRows - 1 === rowIndex)}
               hasHover={!!onHoverRow}
               key={`row-group-${key}-row-${rowIndex}`}
               onMouseEnter={() => onHoverRow?.({

@@ -1,3 +1,5 @@
+import { useMutation } from 'react-query';
+
 import {
   fetchCreate,
   fetchCreateWithParent,
@@ -13,6 +15,7 @@ import {
   useUpdate,
 } from './utils/use';
 import { handle } from '@api/utils/response';
+import { onError, onSuccess } from '@api/utils/response';
 
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
@@ -134,5 +137,54 @@ RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
     });
   }
 });
+
+export function useCustomFetchRequest({
+  endpoint,
+  method,
+  onSuccessCallback,
+}: {
+  endpoint: string,
+  method: string,
+  onSuccessCallback?: (any) => void,
+}): [(payload?: any) => void, boolean] {
+  const errorMessage = 'Request failed.';
+  const successMessage = 'Request successful.';
+
+  const [fetchData, { isLoading }] = useMutation(
+    async (payload: any) => fetch(
+      `${endpoint}`,
+      {
+        body: (method === 'GET' || method === 'DELETE')
+          ? null
+          : JSON.stringify({
+            ...payload,
+          }),
+        method,
+      },
+    ),
+    {
+      onError: (error) => onError(
+        error, {
+          errorMessage,
+        },
+      ),
+      onSuccess: (response: any) => onSuccess(
+        response,
+        {
+          callback: (res) => {
+            onSuccessCallback(res);
+            if (!Array.isArray(res) && typeof res === 'object' && res.code && res.code >= 400) {
+              console.error(errorMessage);
+            } else {
+              // console.log(successMessage);
+            }
+          },
+        },
+      ),
+    },
+  );
+
+  return [fetchData, isLoading];
+}
 
 export default apis;
