@@ -16,6 +16,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
+from pandas.api.types import is_numeric_dtype
 
 DD_KEY = 'lambda.analysis_calculator'
 
@@ -112,7 +113,7 @@ class AnalysisCalculator():
         correlation = []
         time_series = []
 
-        if column_type in [NUMBER, NUMBER_WITH_DECIMALS]:
+        if column_type in [NUMBER, NUMBER_WITH_DECIMALS] or is_numeric_dtype(df[col]):
             with timer(
                 'analysis.calculate_column.build_histogram_data',
                 dict(feature=feature),
