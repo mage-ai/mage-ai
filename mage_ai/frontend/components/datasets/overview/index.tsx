@@ -71,8 +71,8 @@ function Data({ slug }) {
   const columnHeaderSample = columns?.map((header:any) => ({
     label: header,
   }));
-  const metricSample = statistics ? createMetricsSample(statistics) : {};
-  const statSample = (statistics && colTypes) ? createStatisticsSample(statistics, colTypes) : {};
+  const metricSample = statistics ? createMetricsSample(statistics) : null;
+  const statSample = (statistics && colTypes) ? createStatisticsSample(statistics, colTypes) : null;
 
   const setTab = (newTab: string) => {
     goToWithQuery({
@@ -231,20 +231,25 @@ function Data({ slug }) {
           <FlexContainer justifyContent={'center'}>
             <Flex flex={1}>
               {/* Old app used [2, 1, 1] */}
-              <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[{ label: 'Quality Metrics' }]}
-              rowGroupData={[metricSample]}
-            />
+
+              {metricSample && (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1]}
+                  columnHeaders={[{ label: 'Quality Metrics' }]}
+                  rowGroupData={[metricSample]}
+                />
+              )}
             </Flex>
             <Spacing ml={8} />
             <Flex flex={1}>
               {/* Old app used: [1, 5] */}
-              <SimpleDataTable
-              columnFlexNumbers={[1, 1, 1]}
-              columnHeaders={[{ label: 'Statistics' }]}
-              rowGroupData={[statSample]}
-            />
+              {statSample && (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1, 1]}
+                  columnHeaders={[{ label: 'Statistics' }]}
+                  rowGroupData={[statSample]}
+                />
+              )}
             </Flex>
           </FlexContainer>
           <Spacing my={8}>
