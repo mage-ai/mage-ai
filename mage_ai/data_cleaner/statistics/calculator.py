@@ -68,10 +68,11 @@ class StatisticsCalculator:
             data['total_null_value_count'] = sum(
                 data[f'{col}/null_value_count'] for col in df.columns
             )
-            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
-            data['avg_invalid_value_count'] = (
-                sum(data.get(f'{col}/invalid_value_count', 0) for col in df.columns) / column_count
+            data['total_invalid_value_count'] = sum(
+                data[f'{col}/invalid_value_count'] for col in df.columns
             )
+            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
+            data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
             data['completeness'] = (
                 1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
             )
