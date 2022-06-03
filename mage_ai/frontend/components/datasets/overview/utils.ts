@@ -15,11 +15,12 @@ export function createMetricsSample(statistics) {
 
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
-      let value = statistics[key].toPrecision(2);
       let bar = [false];
+      let value = statistics[key];
       const order = HUMAN_READABLE_MAPPING[key];
       const index = METRICS_SORTED_MAPPING[key];
       if (PERCENTAGE_KEYS.includes(key)) {
+        value = value.toPrecision(2);
         value *= 100;
         bar = [true, value];
         value = `${value}%`;

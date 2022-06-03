@@ -1,8 +1,9 @@
+// TODO: Update to use total instead of average
 export const METRICS_KEYS = [
-  'avg_null_value_count',
   'avg_invalid_value_count',
   'duplicate_row_count',
   'completeness',
+  'total_null_value_count',
   'validity',
 ];
 
@@ -21,19 +22,19 @@ export const PERCENTAGE_KEYS = ['completeness', 'validity'];
 
 export const HUMAN_READABLE_MAPPING = {
   'avg_invalid_value_count': 'Invalid values',
-  'avg_null_value_count': 'Missing values',
   'completeness': 'Completeness',
   'count': 'Row count',
   'duplicate_row_count': 'Duplicate values',
   'empty_column_count': 'Empty features',
+  'total_null_value_count': 'Total missing values',
   'validity': 'Validity',
 };
 
 export const METRICS_SORTED_MAPPING = {
   'avg_invalid_value_count': 3,
-  'avg_null_value_count': 2,
   'completeness': 1,
   'duplicate_row_count': 4,
+  'total_null_value_count': 2,
   'validity': 0,
 };
 
