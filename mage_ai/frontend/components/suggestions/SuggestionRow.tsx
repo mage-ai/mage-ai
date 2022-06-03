@@ -32,7 +32,6 @@ export type SuggestionRowProps = {
   idx: number;
   link?: () => void;
   onClose?: () => void;
-  onEdit?: () => void;
   saveAction?: (ActionPayloadType) => void;
   showIdx?: boolean;
 };
@@ -53,7 +52,6 @@ const SuggestionRow = ({
   idx,
   link,
   onClose,
-  onEdit,
   saveAction,
   showIdx,
 }: SuggestionRowProps) => {
