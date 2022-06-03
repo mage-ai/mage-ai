@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import traceback
 
+OUTLIER_SAMPLE_COUNT = 100
 OUTLIER_ZSCORE_THRESHOLD = 3
 VALUE_COUNT_LIMIT = 20
 
@@ -67,10 +68,11 @@ class StatisticsCalculator:
             data['total_null_value_count'] = sum(
                 data[f'{col}/null_value_count'] for col in df.columns
             )
-            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
-            data['avg_invalid_value_count'] = (
-                sum(data.get(f'{col}/invalid_value_count', 0) for col in df.columns) / column_count
+            data['total_invalid_value_count'] = sum(
+                data[f'{col}/invalid_value_count'] for col in df.columns
             )
+            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
+            data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
             data['completeness'] = (
                 1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
             )
@@ -196,9 +198,9 @@ class StatisticsCalculator:
                     series_z_score = (
                         (series_non_null - data[f'{col}/average']) / data[f'{col}/std']
                     ).abs()
-                    data[f'{col}/outlier_count'] = (
-                        series_z_score >= OUTLIER_ZSCORE_THRESHOLD
-                    ).sum()
+                    series_outliers = series_z_score[series_z_score >= OUTLIER_ZSCORE_THRESHOLD]
+                    data[f'{col}/outlier_count'] = series_outliers.count()
+                    data[f'{col}/outliers'] = series_outliers.iloc[:OUTLIER_SAMPLE_COUNT].tolist()
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
