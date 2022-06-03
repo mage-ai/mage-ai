@@ -1,8 +1,8 @@
 from mage_ai.data_cleaner.transformer_actions import column, row
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, VariableType
 from mage_ai.data_cleaner.transformer_actions.dependency_resolution import (
-    resolve_filter_action,
     default_resolution,
+    resolve_filter_action,
 )
 from mage_ai.data_cleaner.transformer_actions.helpers import drop_na
 from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
