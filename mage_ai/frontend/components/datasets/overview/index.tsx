@@ -49,6 +49,7 @@ function DatasetOverview({
 
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
+    metadata,
     pipeline,
     statistics,
   } = featureSet || {};
@@ -59,8 +60,8 @@ function DatasetOverview({
     rows,
   } = featureSet?.sample_data || {};
   const {
-    column_types: colTypes,
-  } = featureSet?.metadata || {};
+    column_types: columnTypes,
+  } = metadata || {};
   const {
     header_types: headerTypes,
   } = featureSet?.metadata?.column_types || {};
@@ -71,7 +72,7 @@ function DatasetOverview({
     label: header,
   }));
   const metricSample = statistics ? createMetricsSample(statistics) : null;
-  const statSample = (statistics && colTypes) ? createStatisticsSample(statistics, colTypes) : null;
+  const statSample = (statistics && columnTypes) ? createStatisticsSample(statistics, columnTypes) : null;
 
   const setTab = (newTab: string) => {
     goToWithQuery({
@@ -145,7 +146,7 @@ function DatasetOverview({
           <ActionForm
             actionType={actionType}
             axis={actionPayload?.axis}
-            features={columns.map((col: any) => ({ uuid: col }))}
+            features={features}
             onSave={() => saveAction({
               action_payload: {
                 ...actionPayload,

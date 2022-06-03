@@ -8,7 +8,7 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
 import { Check } from '@oracle/icons';
 import {
@@ -22,7 +22,10 @@ import {
 } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
-import { removeAtIndex } from '@utils/array';
+import {
+  indexBy,
+  removeAtIndex,
+} from '@utils/array';
 
 type ActionFormProps = {
   actionType: string;
@@ -46,6 +49,7 @@ function ActionForm({
   const {
     action_arguments: actionArguments,
     action_options: actionOptions,
+    action_variables: actionVariables,
   } = payload;
 
   const updatePayload = data => setPayload({
@@ -90,6 +94,10 @@ function ActionForm({
 
   const showColumns = !currentFeature && multiColumns;
 
+  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
+
+  console.log(featuresByUUID)
+
   return (
     <ContainerStyle>
       <Spacing p={2}>
@@ -123,39 +131,59 @@ function ActionForm({
               <FlexContainer flexWrap="wrap">
                 {features.map(({
                   uuid,
-                }) => (
-                  <Spacing
-                    key={uuid}
-                    mr={1}
-                    mt={1}
-                  >
-                    <Link
-                      block
-                      noHoverUnderline
-                      noOutline
-                      onClick={() => updatePayload({
-                        action_arguments: [
-                          ...(actionArguments?.includes(uuid)
-                            ? removeAtIndex(actionArguments || [], actionArguments?.indexOf(uuid))
-                            : [...(actionArguments || []), uuid]),
-                        ],
-                      })}
-                      preventDefault
+                }) => {
+                  const alreadyInArguments = actionArguments?.includes(uuid);
+
+                  return (
+                    <Spacing
+                      key={uuid}
+                      mr={1}
+                      mt={1}
                     >
-                      <OptionStyle selected={actionArguments?.includes(uuid)}>
-                        <FlexContainer alignItems="center">
-                          <Text>
-                            {uuid}
-                          </Text>
+                      <Link
+                        block
+                        noHoverUnderline
+                        noOutline
+                        onClick={() => {
+                          const av = { ...actionVariables };
+                          if (alreadyInArguments) {
+                            delete av[uuid];
+                          } else {
+                            av[uuid] = {
+                              [ActionVariableTypeEnum.FEATURE]: {
+                                column_type: featuresByUUID[uuid]?.columnType,
+                                uuid,
+                              },
+                              type: ActionVariableTypeEnum.FEATURE,
+                            };
+                          }
 
-                          <Spacing mr={1} />
+                          updatePayload({
+                            action_arguments: [
+                              ...(alreadyInArguments
+                                ? removeAtIndex(actionArguments || [], actionArguments?.indexOf(uuid))
+                                : [...(actionArguments || []), uuid]),
+                            ],
+                            action_variables: av,
+                          });
+                        }}
+                        preventDefault
+                      >
+                        <OptionStyle selected={alreadyInArguments}>
+                          <FlexContainer alignItems="center">
+                            <Text>
+                              {uuid}
+                            </Text>
 
-                          {actionArguments?.includes(uuid) && <Check earth />}
-                        </FlexContainer>
-                      </OptionStyle>
-                    </Link>
-                  </Spacing>
-                ))}
+                            <Spacing mr={1} />
+
+                            {alreadyInArguments && <Check earth />}
+                          </FlexContainer>
+                        </OptionStyle>
+                      </Link>
+                    </Spacing>
+                  );
+                })}
               </FlexContainer>
             )}
           </Spacing>

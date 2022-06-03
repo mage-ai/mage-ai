@@ -69,7 +69,9 @@ class BaseAction():
 
     def execute(self, df, **kwargs):
         self.hydrate_action()
-        self.action['action_code'] = replace_true_false(self.action['action_code'])
+
+        if self.action.get('action_code'):
+            self.action['action_code'] = replace_true_false(self.action['action_code'])
 
         if df.empty:
             return df

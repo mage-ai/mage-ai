@@ -54,3 +54,7 @@ export default interface ActionPayloadType {
   priority?: number;
   status?: ActionStatusEnum;
 }
+
+export enum ActionVariableTypeEnum {
+  FEATURE = 'feature',
+}

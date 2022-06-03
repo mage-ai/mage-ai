@@ -33,6 +33,9 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
     bucket_interval = total_interval / max_buckets
     number_of_buckets = max_buckets
 
+    if diff < 0.0001:
+        diff = 0
+
     is_integer = False
     parts = str(diff).split('.')
     if len(parts) == 1:
