@@ -47,7 +47,7 @@ class FeatureSet(Model):
     def data(self, df):
         df.to_parquet(os.path.join(self.dir, 'data.parquet'))
         self._data = df
-    
+
     @property
     def data_orig(self):
         if self._data_orig is None:
@@ -62,7 +62,7 @@ class FeatureSet(Model):
     @property
     def metadata(self):
         return self.read_json_file('metadata.json', {})
-    
+
     @metadata.setter
     def metadata(self, metadata):
         return self.write_json_file('metadata.json', metadata)
@@ -70,7 +70,7 @@ class FeatureSet(Model):
     @property
     def statistics(self):
         return self.read_json_file('statistics.json', {})
-    
+
     @statistics.setter
     def statistics(self, metadata):
         return self.write_json_file('statistics.json', metadata)
@@ -90,7 +90,7 @@ class FeatureSet(Model):
     @suggestions.setter
     def suggestions(self, metadata):
         return self.write_json_file('suggestions.json', metadata)
-    
+
     @property
     def pipeline(self):
         pipeline_id = self.metadata.get('pipeline_id')
@@ -157,17 +157,21 @@ class FeatureSet(Model):
             # Filter suggestions
             suggestions = self.suggestions
             if column is not None:
-                suggestions = [s for s in suggestions
-                               if column in s['action_payload']['action_arguments']]
+                suggestions = [
+                    s for s in suggestions if column in s['action_payload']['action_arguments']
+                ]
                 for s in suggestions:
                     s['action_payload']['action_arguments'] = [column]
-            obj = merge_dict(obj, dict(
-                pipeline=self.pipeline.to_dict(),
-                sample_data=sample_data_dict,
-                statistics=self.statistics,
-                insights=self.insights,
-                suggestions=suggestions,
-            ))
+            obj = merge_dict(
+                obj,
+                dict(
+                    pipeline=self.pipeline.to_dict(),
+                    sample_data=sample_data_dict,
+                    statistics=self.statistics,
+                    insights=self.insights,
+                    suggestions=suggestions,
+                ),
+            )
         return obj
 
 
@@ -192,7 +196,7 @@ class Pipeline(Model):
     @property
     def metadata(self):
         return self.read_json_file('metadata.json', {})
-    
+
     @metadata.setter
     def metadata(self, metadata):
         return self.write_json_file('metadata.json', metadata)
