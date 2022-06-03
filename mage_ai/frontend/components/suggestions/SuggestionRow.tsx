@@ -48,19 +48,23 @@ const SuggestionRow = ({
 
   const numFeatures = actionArguments?.length || 0;
 
-  const featureLinks = actionArguments?.map((col: string) => {
+  const featureLinks = actionArguments?.map((col: string, idx: number) => {
     return (
-      <NextLink
-        href="/datasets/[...slug]"
-        as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
-        passHref
+      <span
+        key={col}
       >
-        <Link
-          underline
+        <NextLink
+          href="/datasets/[...slug]"
+          as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
+          passHref
         >
-          {col}
-        </Link>
-      </NextLink>
+          <Link
+            underline
+          >
+            {col}
+          </Link>
+        </NextLink>{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
+      </span>
     );
   });
 
@@ -97,8 +101,7 @@ const SuggestionRow = ({
           <Text>
             <Text bold inline>
               {title}
-            </Text>{actionArguments?.length && `: ${actionArguments.join(', ')}`}
-            {featureLinks}
+            </Text>{actionArguments?.length && ': '}{featureLinks}
           </Text>
         </div>
 

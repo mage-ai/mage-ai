@@ -7,7 +7,7 @@ import DatasetOverview from '@components/datasets/overview';
 
 function DatasetDetail() {
   const router = useRouter();
-  const { slug } = router.query;
+  const { slug = [] } = router.query;
 
   // @ts-ignore
   const [featureSetId, _, featureId] = slug;
