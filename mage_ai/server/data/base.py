@@ -81,7 +81,7 @@ class Model:
                 dirs.append(int(dirname))
             except ValueError:
                 raise RuntimeError(
-                    f'Invalid ID generated for model: {dirname}. '
+                    f'Invalid ID generated for model: {os.path.abspath(pathname) + "/" + dirname}. '
                     'Remove this folder and restart the application.'
                 )
         return dirs
