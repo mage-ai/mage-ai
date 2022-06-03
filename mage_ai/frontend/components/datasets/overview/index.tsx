@@ -159,80 +159,49 @@ function DatasetOverview({
     });
   };
 
+  const selectActionEl = (
+    <Select
+      // @ts-ignore
+      compact
+      onChange={e => setActionPayload(JSON.parse(e.target.value))}
+      value={actionType}
+      width={UNIT * 20}
+    >
+      <option value="">
+        New action
+      </option>
+
+      {Object.entries(actionsConfig.rows).map(([k, v]) => (
+        <option
+          key={k}
+          value={JSON.stringify({
+            action_type: k,
+            axis: 'row',
+          })}
+        >
+          {v.title}
+        </option>
+      ))}
+
+      {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
+        <option
+          key={k}
+          value={JSON.stringify({
+            action_type: k,
+            axis: 'column',
+          })}
+        >
+          {v.title}
+        </option>
+      ))}
+    </Select>
+  );
+
   return (
     <Layout
       centerAlign
       footer={<Spacing mt={UNIT} />}
     >
-      <Spacing mt={UNIT}>
-        {actionType && (
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            features={features}
-            onSave={() => saveAction({
-              action_payload: {
-                ...actionPayload,
-                action_type: actionType,
-              },
-            })}
-            payload={actionPayload}
-            setPayload={setActionPayload}
-          />
-        )}
-
-        {errorMessages?.length >= 1 && (
-          <Spacing mt={3}>
-            <Text bold>
-              Errors
-            </Text>
-            {errorMessages?.map((msg: string) => (
-              <Text key={msg} monospace xsmall>
-                {msg}
-              </Text>
-            ))}
-          </Spacing>
-        )}
-
-        <Spacing mt={5}>
-          <Select
-            // @ts-ignore
-            compact
-            onChange={e => setActionPayload(JSON.parse(e.target.value))}
-            value={actionType}
-            width={UNIT * 20}
-          >
-            <option value="">
-              New action
-            </option>
-
-            {Object.entries(actionsConfig.rows).map(([k, v]) => (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'row',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-
-            {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'column',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-          </Select>
-        </Spacing>
-      </Spacing>
-
       <Spacing mt={UNIT} />
       {headEl}
       <Spacing mt={2} />
@@ -246,8 +215,40 @@ function DatasetOverview({
         />
       )}
 
+      {actionType && (
+        <Spacing mt={2}>
+          <ActionForm
+            actionType={actionType}
+            axis={actionPayload?.axis}
+            features={features}
+            onSave={() => saveAction({
+              action_payload: {
+                ...actionPayload,
+                action_type: actionType,
+              },
+            })}
+            payload={actionPayload}
+            setPayload={setActionPayload}
+          />
+        </Spacing>
+      )}
+
+      {errorMessages?.length >= 1 && (
+        <Spacing mt={3}>
+          <Text bold>
+            Errors
+          </Text>
+          {errorMessages?.map((msg: string) => (
+            <Text key={msg} monospace xsmall>
+              {msg}
+            </Text>
+          ))}
+        </Spacing>
+      )}
+
       <Spacing mt={4} />
       <Tabs
+        actionEl={selectActionEl}
         bold
         currentTab={currentTab}
         large

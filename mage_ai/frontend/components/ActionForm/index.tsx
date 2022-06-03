@@ -84,7 +84,7 @@ function ActionForm({
       action_code: newCode,
       action_variables: av,
     });
-  }
+  };
 
   const config: FormConfigType =
     (axis === 'row' ? actions.rows : actions.columns)?.[actionType];
