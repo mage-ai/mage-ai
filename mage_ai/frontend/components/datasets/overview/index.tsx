@@ -49,6 +49,7 @@ function DatasetOverview({
     if (tabFromUrl) {
       setCurrentTab(tabFromUrl);
     } else {
+      // @ts-ignore
       setCurrentTab('reports');
     }
   }, [currentTab, tabFromUrl]);

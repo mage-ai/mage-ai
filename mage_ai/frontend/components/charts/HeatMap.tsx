@@ -217,7 +217,7 @@ function HeatMapContainer({
                 {/* @ts-ignore */}
                 {xLabels.map(label => (
                   <Flex flex="1" key={label} justifyContent="center">
-                    <Text center inverted minWidth={70} title={label}>
+                    <Text center minWidth={70} title={label}>
                       {displayLabel(label)}
                     </Text>
                   </Flex>
@@ -249,7 +249,7 @@ function HeatMapContainer({
               {/* @ts-ignore */}
               {yLabels.map(label => (
                 <Flex alignItems="center" flex="1" key={label}>
-                  <Text center inverted title={label}>
+                  <Text center title={label}>
                     {displayLabel(label)}
                   </Text>
                 </Flex>

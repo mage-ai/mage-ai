@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Heatmap from '@components/charts/Heatmap';
+import HeatMap from '@components/charts/HeatMap';
 import Histogram from '@components/charts/Histogram';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -291,17 +291,6 @@ function Overview({
       fullWidth
       justifyContent="center"
     >
-      {heatmapData && (
-        <Spacing mb={5}>
-          <Heatmap
-            data={heatmapData}
-            height={UNIT * 8 * xyLabels.length}
-            xLabels={xyLabels}
-            yLabels={xyLabels}
-          />
-        </Spacing>
-      )}
-
       <ChartRow
         left={
           <ChartContainer
@@ -355,6 +344,7 @@ function Overview({
           </ChartContainer>
         }
       />
+
       {timeSeriesHistograms.length >= 1 &&
         timeSeriesHistograms.map((chart, idx) => {
           const uuid = timeSeries[idx]?.x_metadata?.label;
@@ -415,6 +405,7 @@ function Overview({
           );
         })
       }
+
       <ChartRow
         left={
           <ChartContainer
@@ -472,6 +463,7 @@ function Overview({
           </ChartContainer>
         }
       />
+
       {columnsWithDistribution.length >= 1 && (
         <ChartRow
           left={
@@ -554,6 +546,23 @@ function Overview({
             </ChartContainer>
           }
         />
+      )}
+
+      {heatmapData && (
+        <Spacing mt={5}>
+          <Spacing mb={3}>
+            <Text bold>
+              Correlations
+            </Text>
+          </Spacing>
+
+          <HeatMap
+            data={heatmapData}
+            height={UNIT * 8 * xyLabels.length}
+            xLabels={xyLabels}
+            yLabels={xyLabels}
+          />
+        </Spacing>
       )}
     </FlexContainer>
   );

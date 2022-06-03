@@ -74,9 +74,8 @@ const ColumnList = ({
               return (
                 <NextLink
                   as={`/datasets/${featureSetId}/features/${featureId}`}
-                  key={colName}
                   href="/datasets/[...slug]"
-                  key={`${colName}_${i}`}
+                  key={colName}
                   passHref
                 >
                   <Link
