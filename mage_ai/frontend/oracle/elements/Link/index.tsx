@@ -246,7 +246,6 @@ const Link = ({
   children,
   disabled,
   href = '#',
-  muted,
   onClick,
   onFocus,
   openNewWindow,
@@ -265,7 +264,6 @@ const Link = ({
     {...({})}
     disabled={disabled}
     href={href}
-    muted={muted}
     onClick={(e) => {
       if (disabled || preventDefault) {
         e.preventDefault();
