@@ -42,6 +42,7 @@ class AnalysisCalculator():
         df_columns = df.columns
         features_to_use = self.features
         datetime_features_to_use = [f for f in self.datetime_features if f['uuid'] in df_columns]
+        numeric_features_to_use = self.numeric_features
 
         if not is_clean:
             df_clean = clean_dataframe(df, self.column_types, dropna=False)
@@ -57,6 +58,7 @@ class AnalysisCalculator():
         overview = charts.build_overview_data(
             df,
             datetime_features_to_use,
+            numeric_features_to_use,
         )
 
         correlation_overview = []
@@ -85,6 +87,12 @@ class AnalysisCalculator():
     @property
     def datetime_features(self):
         return [f for f in self.features if f['column_type'] == DATETIME]
+
+    @property
+    def numeric_features(self):
+        return [f['uuid'] for f in self.features
+                if f['column_type'] in [NUMBER, NUMBER_WITH_DECIMALS]
+                or is_numeric_dtype(self.df[f['uuid']])]
 
     @property
     def tags(self):
