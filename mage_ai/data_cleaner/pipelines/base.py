@@ -18,11 +18,11 @@ from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 DEFAULT_RULES = [
     CleanColumnNames,
+    RemoveColumnsWithHighEmptyRate,
+    RemoveColumnsWithSingleValue,
     ReformatValues,
     ImputeValues,
     RemoveCollinearColumns,
-    RemoveColumnsWithHighEmptyRate,
-    RemoveColumnsWithSingleValue,
     RemoveDuplicateRows,
     RemoveOutliers,
 ]
