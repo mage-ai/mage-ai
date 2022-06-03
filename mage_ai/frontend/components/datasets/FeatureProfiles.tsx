@@ -1,4 +1,5 @@
 import React from 'react';
+import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import FeatureType, {
@@ -8,6 +9,7 @@ import FeatureType, {
 } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
 import Text from '@oracle/elements/Text';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import {
@@ -140,23 +142,25 @@ function FeatureProfile({
     <FlexContainer>
       <Flex flex={1}>
         <CellStyle>
-          <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
-            {uuid}
-          </Text>
+          <Link
+
+          >
+            <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace>
+              {uuid}
+            </Text>
+          </Link>
         </CellStyle>
       </Flex>
-      {entries.map((values) => (
-        <>
-          <Flex flex={1} flexDirection="column">
-            {values.map((label, idx) => (
-              <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
-                <Text>
-                  {label}
-                </Text>
-              </CellStyle>
-            ))}
-          </Flex>
-        </>
+      {entries.map((values, idx) => (
+        <Flex flex={1} flexDirection="column" key={`column-${idx}`}>
+          {values.map((label, idx) => (
+            <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
+              <Text>
+                {label}
+              </Text>
+            </CellStyle>
+          ))}
+        </Flex>
       ))}
     </FlexContainer>
   );
