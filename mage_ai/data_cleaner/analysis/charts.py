@@ -2,6 +2,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     CHART_TYPE_BAR_HORIZONTAL,
     CHART_TYPE_LINE_CHART,
     CHART_TYPE_HISTOGRAM,
+    DATA_KEY_SCATTER_PLOT,
     DATA_KEY_TIME_SERIES,
     LABEL_TYPE_RANGE,
 )
@@ -20,6 +21,7 @@ import pandas as pd
 
 DD_KEY = 'lambda.analysis_charts'
 BUCKETS = 40
+SCATTER_PLOT_SAMPLE_COUNT = 100
 TIME_SERIES_BUCKETS = 40
 
 
@@ -234,7 +236,7 @@ def build_time_series_data(df, feature, datetime_column, column_type):
     )
 
 
-def build_overview_data(df, datetime_features):
+def build_overview_data(df, datetime_features, numeric_features):
     increment(f'{DD_KEY}.build_overview_data.start')
 
     time_series = []
@@ -296,8 +298,15 @@ def build_overview_data(df, datetime_features):
 
         increment(f'{DD_KEY}.build_overview_time_series.succeeded', tags)
 
+    if df.shape[0] > SCATTER_PLOT_SAMPLE_COUNT:
+        df_sample = df.sample(SCATTER_PLOT_SAMPLE_COUNT).copy()
+    else:
+        df_sample = df.copy()
+    df_sample = df_sample[numeric_features]
+
     increment(f'{DD_KEY}.build_overview_data.succeeded')
 
     return {
         DATA_KEY_TIME_SERIES: time_series,
+        DATA_KEY_SCATTER_PLOT: df_sample.to_dict('list'),
     }

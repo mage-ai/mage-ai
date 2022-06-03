@@ -20,7 +20,7 @@ class Model():
 
         if id is None:
             dirs = [name for name in os.listdir(self.path)]
-            max_id = -1
+            max_id = 0
             if len(dirs) > 0:
                 max_id = sorted([int(dir) for dir in dirs], reverse=True)[0]
             self.id = max_id + 1
