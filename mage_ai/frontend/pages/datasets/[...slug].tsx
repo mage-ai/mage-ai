@@ -1,21 +1,19 @@
+import { useRouter } from 'next/router';
+
 import ApiReloader from '@components/ApiReloader';
 import ColumnDetail from '@components/datasets/columns/ColumnDetail';
 import ColumnList from '@components/datasets/columns/ColumnList';
 import DatasetOverview from '@components/datasets/overview';
-import FeatureSetType from '@interfaces/FeatureSetType';
 import api from '@api';
 
-type DatasetDetailProps = {
-  featureSet: FeatureSetType;
-  slug: string[];
-};
+function DatasetDetail() {
+  const router = useRouter();
+  const { slug = [] } = router.query;
 
-function DatasetDetail({
-  featureSet,
-  slug = [],
-}: DatasetDetailProps) {
+
   // @ts-ignore
   const [featureSetId, _, featureId] = slug;
+  const { data: featureSet } = api.feature_sets.detail(featureSetId);
 
   const sharedProps = {
     featureSet,
@@ -52,18 +50,5 @@ function DatasetDetail({
     </ApiReloader>
   );
 }
-
-DatasetDetail.getInitialProps = async (ctx: any) => {
-  const { slug: slugArr }: { slug: string[] } = ctx.query;
-  const featureSetId = (slugArr || [])[0];
-  const response = await api.feature_sets.detailAsync(ctx, featureSetId);
-
-  return {
-    featureSet: {
-      ...response,
-    },
-    slug: slugArr,
-  };
-};
 
 export default DatasetDetail;
