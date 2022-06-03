@@ -1,9 +1,11 @@
 from mage_ai.data_cleaner.column_type_detector import DATETIME, NUMBER_TYPES, REGEX_NUMBER
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
-from mage_ai.data_cleaner.transformer_actions.constants import (CONSTANT_IMPUTATION_DEFAULTS,
-                                                                CURRENCY_SYMBOLS,
-                                                                ImputationStrategy,
-                                                                NameConventionPatterns)
+from mage_ai.data_cleaner.transformer_actions.constants import (
+    CONSTANT_IMPUTATION_DEFAULTS,
+    CURRENCY_SYMBOLS,
+    ImputationStrategy,
+    NameConventionPatterns,
+)
 from mage_ai.data_cleaner.transformer_actions.helpers import (
     convert_col_type,
     get_column_type,
@@ -106,7 +108,8 @@ def impute(df, action, **kwargs):
             valid_idx = df[df[column].notna()].index
             if len(invalid_idx) == len(df[column]):
                 raise Exception(
-                    f'Random impute has no values to sample from in column \'{column}\'')
+                    f'Random impute has no values to sample from in column \'{column}\''
+                )
             sample = df.loc[valid_idx, column].sample(len(invalid_idx), replace=True)
             sample.index = invalid_idx
             df.loc[invalid_idx, column] = sample
@@ -158,12 +161,13 @@ def reformat(df, action, **kwargs):
             exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
             if exact_dtype is str:
                 clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
-                clean_col = clean_col.str.replace(r'\s*([\/\\\-\.]+)\s*',
-                                                  lambda group: group.group(1)[0])
+                clean_col = clean_col.str.replace(
+                    r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0]
+                )
                 clean_col = clean_col.str.lower()
-            df.loc[:, column] = pd.to_datetime(clean_col,
-                                               infer_datetime_format=True,
-                                               errors='coerce')
+            df.loc[:, column] = pd.to_datetime(
+                clean_col, infer_datetime_format=True, errors='coerce'
+            )
 
     return df
 
@@ -248,15 +252,18 @@ def __filter_df_with_time_window(df, action):
     time_window_keys = ['timestamp_feature_a', 'timestamp_feature_b', 'window']
     if all(k in action_options for k in time_window_keys):
         window_in_seconds = action_options['window']
-        df_time_diff = \
-            (pd.to_datetime(df[action_options['timestamp_feature_a']], utc=True) - \
-                pd.to_datetime(df[action_options['timestamp_feature_b']], utc=True)).dt.total_seconds()
+        df_time_diff = (
+            pd.to_datetime(df[action_options['timestamp_feature_a']], utc=True)
+            - pd.to_datetime(df[action_options['timestamp_feature_b']], utc=True)
+        ).dt.total_seconds()
         if window_in_seconds > 0:
-            df_time_diff_filtered = \
-                df_time_diff[(df_time_diff <= window_in_seconds) & (df_time_diff >= 0)]
+            df_time_diff_filtered = df_time_diff[
+                (df_time_diff <= window_in_seconds) & (df_time_diff >= 0)
+            ]
         else:
-            df_time_diff_filtered = \
-                df_time_diff[(df_time_diff >= window_in_seconds) & (df_time_diff <= 0)]
+            df_time_diff_filtered = df_time_diff[
+                (df_time_diff >= window_in_seconds) & (df_time_diff <= 0)
+            ]
         df_filtered = df.loc[df_time_diff_filtered.index]
         time_window = get_time_window_str(window_in_seconds)
     else:
@@ -269,12 +276,11 @@ def __groupby_agg(df, action, agg_method):
     df_filtered, _ = __filter_df_with_time_window(df, action)
     action_code = action.get('action_code')
     if action_code is not None and action_code != '':
-        df_filtered = query_with_action_code(df_filtered, action_code, {
-            'original_df': df_filtered,
-        })
+        df_filtered = query_with_action_code(df_filtered, action_code, {'original_df': df_filtered})
     action_options = action['action_options']
-    df_agg = df_filtered.groupby(
-        action_options['groupby_columns'],)[action['action_arguments']].agg(agg_method)
+    df_agg = df_filtered.groupby(action_options['groupby_columns'])[action['action_arguments']].agg(
+        agg_method
+    )
     return df.merge(
         df_agg.rename(columns=__column_mapping(action)),
         on=action_options['groupby_columns'],

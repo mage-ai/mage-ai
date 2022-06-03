@@ -4,26 +4,29 @@ import pandas as pd
 
 
 class StatisticsCalculatorTest(TestCase):
-
     def test_calculate_statistics_overview(self):
-        calculator = StatisticsCalculator(column_types=dict(
-            age='number',
-            country='category',
-            date_joined='datetime',
-            id='number',
-            cancelled='true_or_false',
-        ),)
+        calculator = StatisticsCalculator(
+            column_types=dict(
+                age='number',
+                country='category',
+                date_joined='datetime',
+                id='number',
+                cancelled='true_or_false',
+            )
+        )
 
-        df = pd.DataFrame([
-            [1, 'JP', '2000-01-01', '1', False],
-            [2, 'KO', '2000-12-01', '2', False],
-            [1, 'US', '2000-07-01 00:00:00+00:00', '3', False],
-            [' ', 'US', '2000-07-01 00:00:00+00:00', '4', False],
-            [1, None, '2000-07-01 00:00:00+00:00', '5', False],
-            ['', None, '899-07-01 00:00:00+00:00', '6', False],
-            [3, 'US', None, '7', True],
-        ],
-                          columns=['age', 'country', 'date_joined', 'id', 'cancelled'])
+        df = pd.DataFrame(
+            [
+                [1, 'JP', '2000-01-01', '1', False],
+                [2, 'KO', '2000-12-01', '2', False],
+                [1, 'US', '2000-07-01 00:00:00+00:00', '3', False],
+                [' ', 'US', '2000-07-01 00:00:00+00:00', '4', False],
+                [1, None, '2000-07-01 00:00:00+00:00', '5', False],
+                ['', None, '899-07-01 00:00:00+00:00', '6', False],
+                [3, 'US', None, '7', True],
+            ],
+            columns=['age', 'country', 'date_joined', 'id', 'cancelled'],
+        )
 
         data = calculator.calculate_statistics_overview(df, is_clean=False)
 
@@ -70,7 +73,7 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['cancelled/quality'], 'Good')
 
     def test_calculate_statistics_overview_divide_by_zero(self):
-        calculator = StatisticsCalculator(column_types=dict(age='number',),)
+        calculator = StatisticsCalculator(column_types=dict(age='number'))
 
         df = pd.DataFrame([], columns=['age'])
         data = calculator.calculate_statistics_overview(df, is_clean=False)
