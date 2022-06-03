@@ -240,7 +240,7 @@ function Data({ slug }) {
               )}
             </Flex>
           </FlexContainer>
-          <Spacing my={8}>
+          <Spacing mt={8}>
             <FeatureProfiles
               features={features}
               statistics={statistics}
