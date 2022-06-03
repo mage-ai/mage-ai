@@ -49,7 +49,7 @@ const SuggestionRow = ({
   const numFeatures = actionArguments?.length || 0;
 
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
-    let el = col;
+    let el;
 
     if (featureIdMapping[col]) {
       el = (
@@ -65,6 +65,8 @@ const SuggestionRow = ({
           </Link>
         </NextLink>
       );
+    } else {
+      el = col;
     }
 
     return (

@@ -22,11 +22,11 @@ function PageBreadcrumbs({
 }: PageBreadcrumbsProps) {
   const router = useRouter();
   const { pathname } = router || {};
-  const { slug, column } = router.query;
+  const { slug = [] } = router.query;
 
+  // @ts-ignore
   const [featureSetId, _, featureId] = slug;
   const pathParts = ['datasets'].concat(slug);
-
 
   const datasetName = featureSet?.metadata?.name || 'dataset';
   let breadcrumbs: BreadcrumbType[] = [];
