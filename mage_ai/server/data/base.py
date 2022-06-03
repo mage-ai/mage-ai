@@ -8,7 +8,7 @@ import pandas as pd
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 
-class Model():
+class Model:
     def __init__(self, id=None):
         # TODO: figure out a good directory to store the files
         if not os.path.isdir(DATA_PATH):
@@ -19,14 +19,14 @@ class Model():
             os.mkdir(self.path)
 
         if id is None:
-            dirs = [name for name in os.listdir(self.path)]
+            dirs = Model.gen_integer_dir_list(self.path)
             max_id = 0
             if len(dirs) > 0:
-                max_id = sorted([int(dir) for dir in dirs], reverse=True)[0]
+                max_id = sorted(dirs, reverse=True)[0]
             self.id = max_id + 1
         else:
             self.id = id
-        
+
         self.dir = os.path.join(self.path, str(self.id))
         if not os.path.isdir(self.dir):
             os.mkdir(self.dir)
@@ -46,17 +46,22 @@ class Model():
         file_path = os.path.join(self.dir, file_name)
         if not os.path.exists(file_path):
             return pd.DataFrame()
-        return pd.read_parquet(file_path, engine='pyarrow',)
+        return pd.read_parquet(file_path, engine='pyarrow')
 
     def write_parquet_file(self, file_name, df):
         df.to_parquet(os.path.join(self.dir, file_name))
 
     def to_dict(self, detailed):
         pass
-    
+
     @classmethod
     def folder_name(cls):
         return cls.__name__
+
+    @classmethod
+    def is_valid_id(cls, id):
+        opts = Model.gen_integer_dir_list(cls.path_name())
+        return int(id) in opts
 
     @classmethod
     def path_name(cls):
@@ -65,11 +70,19 @@ class Model():
     @classmethod
     def objects(cls):
         arr = []
-        dirs = sorted([int(name) for name in os.listdir(cls.path_name()) if name.isnumeric()],
-                      reverse=True)
-        for id in dirs:
+        for id in Model.gen_integer_dir_list(cls.path_name()):
             try:
                 arr.append(cls(id=id))
             except Exception:
                 print(f'Fail to load {cls.__name__} with id {id}')
         return arr
+
+    @staticmethod
+    def gen_integer_dir_list(pathname):
+        dirs = []
+        for dirname in os.listdir(pathname):
+            try:
+                dirs.append(int(dirname))
+            except ValueError:
+                continue
+        return dirs

@@ -12,13 +12,13 @@ import simplejson
 import sys
 import threading
 
+
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-app = Flask(__name__,
-            static_url_path='',
-            static_folder='frontend_dist',
-            template_folder='frontend_dist')
+app = Flask(
+    __name__, static_url_path='', static_folder='frontend_dist', template_folder='frontend_dist'
+)
 
 CORS(app, resources={r'/*': {'origins': '*'}})
 
@@ -65,7 +65,7 @@ def process():
         result = analyze(df)
 
     feature_set.write_files(result)
-    
+
     column_types = result['column_types']
     metadata['column_types'] = column_types
 
@@ -74,7 +74,7 @@ def process():
     response = app.response_class(
         response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
 
@@ -90,12 +90,15 @@ def feature_sets():
     ]
     """
     feature_sets = list(map(lambda fs: fs.to_dict(detailed=False), FeatureSet.objects()))
-    valid_feture_sets = [f for f in feature_sets
-                         if set(['column_types', 'statistics']).issubset(f['metadata'].keys())]
+    valid_feature_sets = [
+        f
+        for f in feature_sets
+        if set(['column_types', 'statistics']).issubset(f['metadata'].keys())
+    ]
     response = app.response_class(
-        response=simplejson.dumps(valid_feture_sets, ignore_nan=True),
+        response=simplejson.dumps(valid_feature_sets, ignore_nan=True),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
 
@@ -110,12 +113,14 @@ def feature_set(id):
         }
     ]
     """
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
     feature_set = FeatureSet(id=id)
     query_column = request.args.get('column')
     response = app.response_class(
         response=simplejson.dumps(feature_set.to_dict(column=query_column), ignore_nan=True),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
 
@@ -146,7 +151,7 @@ def update_feature_set(id):
     response = app.response_class(
         response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
 
@@ -163,9 +168,7 @@ def pipelines():
     """
     pipelines = list(map(lambda p: p.to_dict(detailed=False), Pipeline.objects()))
     response = app.response_class(
-        response=json.dumps(pipelines, cls=NumpyEncoder),
-        status=200,
-        mimetype='application/json'
+        response=json.dumps(pipelines, cls=NumpyEncoder), status=200, mimetype='application/json'
     )
     return response
 
@@ -178,11 +181,13 @@ def pipeline(id):
         actions,
     }
     """
+    if not Pipeline.is_valid_id(id):
+        raise RuntimeError(f'Unknown pipeline id: {id}')
     pipeline = Pipeline(id=id)
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
 
@@ -217,9 +222,10 @@ def update_pipeline(id):
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
-        mimetype='application/json'
+        mimetype='application/json',
     )
     return response
+
 
 # @app.route("/feature_sets/<id>/columns/<column_name>")
 # def feature_set_column(id, column_name):
