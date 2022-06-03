@@ -7,8 +7,20 @@ export const COLUMN_TYPE_NUMBER_WITH_DECIMALS = 'number_with_decimals';
 export const COLUMN_TYPE_PHONE_NUMBER = 'phone_number';
 export const COLUMN_TYPE_TEXT = 'text';
 export const COLUMN_TYPE_TRUE_OR_FALSE = 'true_or_false';
-export const COLUMN_TYPE_UUID = 'uuid';
 export const COLUMN_TYPE_ZIP_CODE = 'zip_code';
+
+export enum ColumnTypeEnum {
+  CATEGORY = 'category',
+  CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality',
+  DATETIME = 'datetime',
+  EMAIL = 'email',
+  NUMBER = 'number',
+  NUMBER_WITH_DECIMALS = 'number_with_decimals',
+  PHONE_NUMBER = 'phone_number',
+  TEXT = 'text',
+  TRUE_OR_FALSE = 'true_or_false',
+  ZIP_CODE = 'zip_code',
+}
 
 export const COLUMN_TYPE_NUMBERS = [
   COLUMN_TYPE_NUMBER,
@@ -16,8 +28,6 @@ export const COLUMN_TYPE_NUMBERS = [
 ];
 
 export const COLUMN_TYPE_NUMBERICAL_LIKE = [
-  // TODO (dangerous): enable this once we can convert datetime into an integer when training
-  // COLUMN_TYPE_DATETIME,
   COLUMN_TYPE_NUMBER,
   COLUMN_TYPE_NUMBER_WITH_DECIMALS,
 ];
@@ -36,7 +46,6 @@ export const COLUMN_TYPE_WITH_STRINGS = [
   COLUMN_TYPE_PHONE_NUMBER,
   COLUMN_TYPE_TEXT,
   COLUMN_TYPE_TRUE_OR_FALSE,
-  COLUMN_TYPE_UUID,
 ];
 
 export const COLUMN_TYPE_STRING_LIKE = [
@@ -46,7 +55,6 @@ export const COLUMN_TYPE_STRING_LIKE = [
   COLUMN_TYPE_EMAIL,
   COLUMN_TYPE_PHONE_NUMBER,
   COLUMN_TYPE_TEXT,
-  COLUMN_TYPE_UUID,
 ];
 
 export const COLUMN_TYPE_CATEGORY_VALUES = [
@@ -66,7 +74,6 @@ export const COLUMN_TYPE_HUMAN_READABLE_MAPPING = {
   [COLUMN_TYPE_PHONE_NUMBER]: 'Phone number',
   [COLUMN_TYPE_TEXT]: 'Text',
   [COLUMN_TYPE_TRUE_OR_FALSE]: 'Boolean',
-  [COLUMN_TYPE_UUID]: 'UUID',
   [COLUMN_TYPE_ZIP_CODE]: 'Zip code',
 };
 
