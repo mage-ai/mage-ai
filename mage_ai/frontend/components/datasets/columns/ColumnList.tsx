@@ -3,6 +3,7 @@ import Router from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
@@ -11,16 +12,22 @@ import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 import { Column } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 import { isBadQuality } from '@components/utils';
 
-const ColumnList = ({ featureSetId }) => {
+type ColumnListProps = {
+  featureSet: FeatureSetType;
+  featureSetId: string;
+};
+
+const ColumnList = ({
+  featureSet: featureSetData,
+  featureSetId,
+ }: ColumnListProps) => {
   const viewDataset = () => Router.push(`/datasets/${featureSetId}`);
 
-  const { data: featureSetData } = api.feature_sets.detail(featureSetId);
   const featureSetMemo = useMemo(() => featureSetData, [
     featureSetData,
   ]);
