@@ -190,16 +190,18 @@ const SuggestionRow = ({
       </Flex>
 
       <FlexContainer>
-        {/* TODO: add View Code & Preview here */}
-        <Button
-          basic
-          iconOnly
-          onClick={() => setEditing(!editing)}
-          padding="0px"
-          transparent
-        >
-          <Code muted size={16} />
-        </Button>
+        {/* TODO: add Preview here */}
+        {saveAction && (
+          <Button
+            basic
+            iconOnly
+            onClick={() => setEditing(!editing)}
+            padding="0px"
+            transparent
+          >
+            <Code muted size={16} />
+          </Button>
+        )}
         {onClose && (
           <>
             <Spacing mr={1} />
@@ -213,9 +215,6 @@ const SuggestionRow = ({
               <Close muted />
             </Button>
           </>
-        )}
-        {!onClose && (
-          <Spacing p={1} />
         )}
       </FlexContainer>
     </RowCard>

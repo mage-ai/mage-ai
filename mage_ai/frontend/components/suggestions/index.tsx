@@ -49,7 +49,6 @@ function Suggestions({
             >
               <SuggestionRow
                 action={action}
-                saveAction={addAction}
                 border
                 columns={columns}
                 featureSetId={featureSet?.id}
