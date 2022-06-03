@@ -82,6 +82,6 @@ class Model:
             except ValueError:
                 raise RuntimeError(
                     f'Invalid ID generated for model: {dirname}. '
-                    'Remove this folder and restarting the application.'
+                    'Remove this folder and restart the application.'
                 )
         return dirs
