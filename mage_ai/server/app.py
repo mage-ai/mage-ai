@@ -8,12 +8,10 @@ from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import logging
 import json
-import os
 import simplejson
 import sys
 import threading
 
-RESOURCE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data/files'))
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -92,13 +90,13 @@ def feature_sets():
     ]
     """
     feature_sets = list(map(lambda fs: fs.to_dict(detailed=False), FeatureSet.objects()))
-    valid_feture_sets = [
+    valid_feature_sets = [
         f
         for f in feature_sets
         if set(['column_types', 'statistics']).issubset(f['metadata'].keys())
     ]
     response = app.response_class(
-        response=simplejson.dumps(valid_feture_sets, ignore_nan=True),
+        response=simplejson.dumps(valid_feature_sets, ignore_nan=True),
         status=200,
         mimetype='application/json',
     )

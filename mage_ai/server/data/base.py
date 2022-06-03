@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from numpyencoder import NumpyEncoder
 import json
 import os
@@ -61,8 +60,8 @@ class Model:
 
     @classmethod
     def is_valid_id(cls, id):
-        opts = os.listdir(cls.path_name())
-        return id in opts
+        opts = Model.gen_integer_dir_list(cls.path_name())
+        return int(id) in opts
 
     @classmethod
     def path_name(cls):
