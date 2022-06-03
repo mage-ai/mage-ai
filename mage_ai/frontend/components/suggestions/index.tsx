@@ -17,12 +17,14 @@ function Suggestions({
   addAction,
   featureSet,
   removeAction,
-  removeSuggestion,
 }: SuggestionsProps) {
   const {
     pipeline,
     suggestions,
-  } = featureSet;
+    sample_data: {
+      columns = [],
+    } = {},
+  } = featureSet || {};
   const {
     actions,
   } = pipeline || {};
@@ -47,7 +49,9 @@ function Suggestions({
             >
               <SuggestionRow
                 action={action}
+                saveAction={addAction}
                 border
+                columns={columns}
                 featureSetId={featureSet?.id}
                 featureIdMapping={featureIdMapping}
                 idx={idx}
@@ -79,11 +83,13 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
+                    columns={columns}
                     featureSetId={featureSet?.id}
                     featureIdMapping={featureIdMapping}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}
+                    saveAction={addAction}
                   />
                 );
               })}
