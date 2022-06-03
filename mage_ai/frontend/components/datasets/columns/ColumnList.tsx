@@ -1,5 +1,5 @@
-import Router, { useRouter } from 'next/router';
-import type { NextPage } from 'next';
+import NextLink from 'next/link';
+import Router from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
@@ -17,10 +17,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 import { isBadQuality } from '@components/utils';
 
-const ColumnView: NextPage = () => {
-  const router = useRouter();
-  const { slug: featureSetId } = router.query;
-
+const ColumnList = ({ featureSetId }) => {
   const viewDataset = () => Router.push(`/datasets/${featureSetId}`);
 
   const { data: featureSetData } = api.feature_sets.detail(featureSetId);
@@ -68,46 +65,45 @@ const ColumnView: NextPage = () => {
               const featureId = featureIdMapping[colName];
 
               return (
-                <Link
-                  block
-                  key={`${colName}-${i}`}
-                  noHoverUnderline
-                  noOutline
-                  onClick={() => {
-                    Router.push(
-                      '/datasets/[slug]/features/[column]',
-                      `/datasets/${featureSetId}/features/${featureId}`,
-                    );
-                  }}
-                  preventDefault
+                <NextLink
+                  as={`/datasets/${featureSetId}/features/${featureId}`}
+                  href="/datasets/[...slug]"
+                  passHref
                 >
-                  <RowCard
-                    columnFlexNumbers={[0.5, 0.2, 9, 2, 1]}
-                    noHorizontalPadding
-                    secondary={i % 2 === 1}
+                  <Link
+                    block
+                    key={`${colName}-${i}`}
+                    noHoverUnderline
+                    noOutline
                   >
-                    <FlexContainer fullWidth justifyContent="center">
-                      <Text>{i+1}</Text>
-                    </FlexContainer>
-
-                    <Column secondary />
-
-                    <Text maxWidth={UNIT * 50} overflowWrap>
-                      {colName}
-                    </Text>
-
-                    <Text maxWidth={UNIT * 20}>
-                      {colType}
-                    </Text>
-
-                    <Text
-                      bold={isBadQuality(quality)}
-                      danger={isBadQuality(quality)}
+                    <RowCard
+                      columnFlexNumbers={[0.5, 0.2, 9, 2, 1]}
+                      noHorizontalPadding
+                      secondary={i % 2 === 1}
                     >
-                      {quality}
-                    </Text>
-                  </RowCard>
-                </Link>
+                      <FlexContainer fullWidth justifyContent="center">
+                        <Text>{i+1}</Text>
+                      </FlexContainer>
+
+                      <Column secondary />
+
+                      <Text maxWidth={UNIT * 50} overflowWrap>
+                        {colName}
+                      </Text>
+
+                      <Text maxWidth={UNIT * 20}>
+                        {colType}
+                      </Text>
+
+                      <Text
+                        bold={isBadQuality(quality)}
+                        danger={isBadQuality(quality)}
+                      >
+                        {quality}
+                      </Text>
+                    </RowCard>
+                  </Link>
+                </NextLink>
               );
             })
           }
@@ -117,4 +113,4 @@ const ColumnView: NextPage = () => {
   );
 };
 
-export default ColumnView;
+export default ColumnList;

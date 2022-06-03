@@ -4,6 +4,7 @@ import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import TransformerActionType from '@interfaces/TransformerActionType';
+import { getFeatureIdMapping } from '@utils/models/featureSet';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -26,6 +27,7 @@ function Suggestions({
     actions,
   } = pipeline || {};
   const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
+  const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
 
   return (
     <>
@@ -46,6 +48,8 @@ function Suggestions({
               <SuggestionRow
                 action={action}
                 border
+                featureSetId={featureSet?.id}
+                featureIdMapping={featureIdMapping}
                 idx={idx}
                 onClose={numberOfActions - 1 === idx
                   ? () => removeAction(action)
@@ -75,6 +79,8 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
+                    featureSetId={featureSet?.id}
+                    featureIdMapping={featureIdMapping}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}

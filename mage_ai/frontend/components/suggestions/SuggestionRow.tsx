@@ -1,3 +1,5 @@
+import NextLink from 'next/link';
+
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,6 +14,10 @@ import { pluralize } from '@utils/string';
 export type SuggestionRowProps = {
   action: TransformerActionType;
   border?: boolean;
+  featureIdMapping: {
+    [key: string]: number;
+  };
+  featureSetId?: string;
   idx: number;
   link?: () => void;
   // name: string;
@@ -23,6 +29,8 @@ export type SuggestionRowProps = {
 const SuggestionRow = ({
   action,
   border,
+  featureIdMapping,
+  featureSetId,
   idx,
   link,
   // name,
@@ -39,6 +47,26 @@ const SuggestionRow = ({
   } = action;
 
   const numFeatures = actionArguments?.length || 0;
+
+  const featureLinks = actionArguments?.map((col: string, idx: number) => {
+    return (
+      <span
+        key={col}
+      >
+        <NextLink
+          href="/datasets/[...slug]"
+          as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
+          passHref
+        >
+          <Link
+            underline
+          >
+            {col}
+          </Link>
+        </NextLink>{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
+      </span>
+    );
+  });
 
   return (
     <RowCard
@@ -73,7 +101,7 @@ const SuggestionRow = ({
           <Text>
             <Text bold inline>
               {title}
-            </Text>{actionArguments?.length && `: ${actionArguments.join(', ')}`}
+            </Text>{actionArguments?.length && ': '}{featureLinks}
           </Text>
         </div>
 

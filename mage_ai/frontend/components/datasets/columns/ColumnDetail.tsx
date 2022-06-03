@@ -21,13 +21,10 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage } from '@utils/number';
 
-function Feature() {
-  const router = useRouter();
-  const {
-    slug: featureSetId,
-    column: featureId,
-  } = router.query;
-
+function Feature({
+  featureSetId,
+  featureId,
+}) {
   const { data: featureSet } = api.feature_sets.detail(featureSetId);
   const features = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, string]) => ({ columnType: v, uuid: k }));
