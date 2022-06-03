@@ -1,3 +1,4 @@
+import { getPercentage } from '@utils/number';
 import {
   CATEGORICAL_TYPES,
   DATE_TYPES,
@@ -23,7 +24,7 @@ export function createMetricsSample(statistics) {
         value = value.toPrecision(2);
         value *= 100;
         bar = [true, value];
-        value = `${value}%`;
+        value = getPercentage(value);
       }
       metricRows[index] = {
         columnValues: [order, value, bar],
