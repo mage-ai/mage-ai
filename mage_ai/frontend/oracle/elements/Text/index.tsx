@@ -290,6 +290,7 @@ const SpanStyle = styled.span<TextProps>`
 
 const Text = ({
   children,
+  muted: mutedProp,
   raw,
   ...props
 }: TextProps) => {
