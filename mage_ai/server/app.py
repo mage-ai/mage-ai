@@ -44,6 +44,7 @@ def rescue_errors(endpoint):
                 status=200,
                 mimetype='application/json',
             )
+            log.error(exception)
             return response
 
     return handler
