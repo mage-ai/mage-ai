@@ -61,12 +61,8 @@ class Model:
 
     @classmethod
     def is_valid_id(cls, id):
-        try:
-            opts = os.listdir(cls.path_name())
-            if id not in opts:
-                raise RuntimeError(f'Unknown feature set id: {id}')
-        except OSError:
-            pass
+        opts = os.listdir(cls.path_name())
+        return id in opts
 
     @classmethod
     def path_name(cls):
