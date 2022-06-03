@@ -29,7 +29,6 @@ import { cutTextSize, getColumnWidth } from './helpers';
 
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
-  let stripes = true;
 
   // Keep these samples in due to undefined errors.
   const dataSample = useMemo(
@@ -156,9 +155,8 @@ import { cutTextSize, getColumnWidth } from './helpers';
         </thead>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <tbody {...getTableBodyProps()}>
-          { rows.map(row => {
+          {rows.map((row, i) => {
               prepareRow(row);
-              stripes = !stripes;
               return (
                 // eslint-disable-next-line react/jsx-key
                 <tr {...row.getRowProps()}>
@@ -167,7 +165,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
                     <td
                       {...cell.getCellProps()}
                       style={{
-                        background: stripes ? '#F9FAFC' : '#FBFCFD',
+                        background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
                         border: 'solid 1px #FBFCFD',
                         borderLeft: 'none',
                         borderRight: 'none',
