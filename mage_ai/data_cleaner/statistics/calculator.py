@@ -168,7 +168,7 @@ class StatisticsCalculator:
         data = {
             f'{col}/count': series_non_null.size,
             f'{col}/count_distinct': count_unique - 1
-            if np.nan in df_value_counts
+            if np.nan in df_top_value_counts_raw
             else count_unique,
             f'{col}/null_value_rate': 0
             if series.size == 0
