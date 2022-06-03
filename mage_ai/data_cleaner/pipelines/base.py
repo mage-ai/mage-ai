@@ -14,6 +14,7 @@ from mage_ai.data_cleaner.cleaning_rules.remove_outliers \
     import RemoveOutliers
 from mage_ai.data_cleaner.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 DEFAULT_RULES = [
@@ -41,7 +42,8 @@ class BasePipeline():
         self.column_types = column_types
         all_suggestions = []
         for rule in self.rules:
-            suggestions = rule(df, column_types, statistics).evaluate()
+            with timer('pipeline.evaluate_cleaning_rule', dict(rule=rule.__name__)):
+                suggestions = rule(df, column_types, statistics).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions

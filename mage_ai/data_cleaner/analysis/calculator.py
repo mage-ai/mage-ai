@@ -17,6 +17,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     TRUE_OR_FALSE,
 )
 from pandas.api.types import is_numeric_dtype
+import traceback
 
 DD_KEY = 'lambda.analysis_calculator'
 
@@ -100,7 +101,17 @@ class AnalysisCalculator():
 
     def calculate_column(self, df, feature):
         with timer('analysis.calculate_column', dict(feature=feature), verbose=False):
-            return self.calculate_column_internal(df, feature)
+            try:
+                return self.calculate_column_internal(df, feature)
+            except Exception:
+                print(f'Failed to calculate stats for column {feature}')
+                traceback.print_exc()
+                return {
+                    'feature': feature,
+                    DATA_KEY_CHARTS: [],
+                    DATA_KEY_CORRELATION: [],
+                    DATA_KEY_TIME_SERIES: [],
+                }
 
     def calculate_column_internal(self, df, feature):
         df_columns = df.columns
