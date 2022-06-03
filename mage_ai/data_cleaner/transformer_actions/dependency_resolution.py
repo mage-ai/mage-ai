@@ -1,6 +1,5 @@
-import re
-
 from pandas import DataFrame
+import re
 
 """
 Resolves any dependencies and requirements before
@@ -19,6 +18,7 @@ def resolve_filter_action(df: DataFrame) -> tuple[bool, str]:
         if re.search('\s', name):
             return (
                 False,
-                'Column name contains whitespace or newline characters which cannot be used in filter actions',
+                'Column name contains whitespace or newline '
+                'characters which cannot be used in filter actions',
             )
     return True, None
