@@ -12,6 +12,8 @@ import { cutTextSize, getColumnWidth } from './helpers';
     children?: any;
     columns: DataTableColumn[];
     data: DataTableRow<any>[];
+    titles: string[];
+    datatype: string[];
   };
 
   export type rowMapping = {
@@ -19,9 +21,10 @@ import { cutTextSize, getColumnWidth } from './helpers';
   };
 
   function BaseTable({
-    columnHeaders,
-    rowGroupData,
-    columnTitles,
+    columns,
+    data,
+    titles,
+    datatype,
   }: any) {
 
   const [column, setColumn] = useState([]);
@@ -61,28 +64,28 @@ import { cutTextSize, getColumnWidth } from './helpers';
   );
 
   useEffect(() => {
-    if (columnHeaders) {
+    if (columns) {
       const headers = [];
-      columnHeaders.map(({ label='none' }: any, i: string | number) => {
+      columns.map(({ label='none' }: any, i: string | number) => {
         const rowValues =
           {
-            Header: cutTextSize(label),
-            accessor: columnTitles[i],
+            Header: (datatype) ? `${cutTextSize(label)} (${datatype[i]})` : cutTextSize(label),
+            accessor: titles[i],
           };
         headers.push(rowValues);
       });
       setColumn(headers);
     }
-  }, [columnHeaders, columnTitles]);
+  }, [columns, titles, datatype]);
 
     useEffect(() => {
-      if (rowGroupData) {
+      if (data) {
         const values = [];
-        rowGroupData.map((rows: any[]) => {
+        data.map((rows: any[]) => {
 
           const rowValues:rowMapping = {};
           rows.map((cell, j) => {
-            const key = columnTitles[j];
+            const key = titles[j];
             !(key in rowValues) && (rowValues.key = {});
             rowValues[key] = cutTextSize(cell);
           });
@@ -90,7 +93,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
         });
         setRow(values);
       }
-    }, [columnTitles, rowGroupData]);
+    }, [titles, data]);
 
   const {
     getTableProps,
@@ -134,11 +137,12 @@ import { cutTextSize, getColumnWidth } from './helpers';
                     maxWidth: `${getColumnWidth(rows, column.id)}px`,
                     minWidth: column.minWidth,
                     padding: '14px',
+                    position: 'sticky',
                   }}
                 >
                   {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
-                    <Text bold>
+                    <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
@@ -151,7 +155,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
         </thead>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <tbody {...getTableBodyProps()}>
-          {rows.map(row => {
+          {rows.map((row, i) => {
               prepareRow(row);
               return (
                 // eslint-disable-next-line react/jsx-key
@@ -161,7 +165,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
                     <td
                       {...cell.getCellProps()}
                       style={{
-                        background: '#FBFCFD',
+                        background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
                         border: 'solid 1px #FBFCFD',
                         borderLeft: 'none',
                         borderRight: 'none',

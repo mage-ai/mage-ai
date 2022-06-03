@@ -61,7 +61,9 @@ function DatasetOverview({
   const {
     column_types: colTypes,
   } = featureSet?.metadata || {};
-
+  const {
+    header_types: headerTypes,
+  } = featureSet?.metadata?.column_types || {};
   const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, ColumnTypeEnum]) => ({ columnType: v, uuid: k }));
 
@@ -218,9 +220,10 @@ function DatasetOverview({
         <Tab key="data" label="Data">
           <Spacing mb={3} mt={3} />
           <BaseTable
-            columnHeaders={columnHeaderSample}
-            columnTitles={columns}
-            rowGroupData={rows}
+            columns={columnHeaderSample}
+            data={rows}
+            datatype={headerTypes}
+            titles={columns}
           />
         </Tab>
         <Tab key="reports" label="Reports">
