@@ -1,5 +1,6 @@
 import ActionType from './ActionType';
 import FeatureType from './FeatureType';
+import MetadataType from './MetadataType';
 import SuggestionType from './SuggestionType';
 
 export default interface FeatureSetType {
@@ -10,17 +11,7 @@ export default interface FeatureSetType {
     correlations: any[];
     time_series: any[];
   }[];
-  metadata: {
-    column_types: {
-      [key: string]: string;
-    };
-    name: string;
-    pipeline_id: number;
-    statistics: {
-      count: number;
-      quality: string;
-    };
-  };
+  metadata: MetadataType;
   pipeline?: {
     id: number;
     actions: ActionType[];

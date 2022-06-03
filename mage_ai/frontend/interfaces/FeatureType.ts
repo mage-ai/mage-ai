@@ -16,8 +16,6 @@ export const COLUMN_TYPE_NUMBERS = [
 ];
 
 export const COLUMN_TYPE_NUMBERICAL_LIKE = [
-  // TODO (dangerous): enable this once we can convert datetime into an integer when training
-  // COLUMN_TYPE_DATETIME,
   COLUMN_TYPE_NUMBER,
   COLUMN_TYPE_NUMBER_WITH_DECIMALS,
 ];
