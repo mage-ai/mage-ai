@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Heatmap from '@components/charts/Heatmap';
 import Histogram from '@components/charts/Histogram';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -23,7 +24,7 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
-import { formatPercent, numberWithCommas } from '@utils/string';
+import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
 
 export const ChartStyle = styled.div`
@@ -124,7 +125,20 @@ function Overview({
     time_series: timeSeries,
   } = insightsOverview;
 
-  console.log(correlations)
+  const xyLabels = [];
+  const heatmapData = correlations?.map(({
+    correlations: c,
+    feature: {
+      uuid,
+    },
+  }, idx: number) => {
+    xyLabels.push(uuid);
+
+    const arr = c[0].y.map(({ value }) => roundNumber(value));
+    arr.splice(idx, 0, 1);
+
+    return arr;
+  });
 
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
   const timeSeriesData = [];
@@ -277,6 +291,17 @@ function Overview({
       fullWidth
       justifyContent="center"
     >
+      {heatmapData && (
+        <Spacing mb={5}>
+          <Heatmap
+            data={heatmapData}
+            height={UNIT * 8 * xyLabels.length}
+            xLabels={xyLabels}
+            yLabels={xyLabels}
+          />
+        </Spacing>
+      )}
+
       <ChartRow
         left={
           <ChartContainer

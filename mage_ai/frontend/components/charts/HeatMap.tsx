@@ -19,7 +19,7 @@ const purple = light.brand.wind400;
 const text = light.monotone.black;
 const white = light.monotone.white;
 
-const title1Size = 32;
+const title1Size = 14;
 
 const YAxisLabelContainer = styled.div`
   -webkit-transform: rotate(-90deg);
@@ -178,7 +178,18 @@ function HeatMapContainer({
   yAxisLabel,
   yLabels,
 }: HeatMapContainerProps) {
-  const displayLabel = (label: string): string => label.length > 7 ? `${label.substring(0, 4)}...` : label;
+  const displayLabel = (label: string): string => label.length > 10 ? `${label.substring(0, 10)}...` : label;
+  const yAxisLabelWidth = unit * 4;
+  const yLabelsWidth = unit * 8;
+
+  let paddingLeft = 0;
+  if (yAxisLabel) {
+    paddingLeft += yAxisLabelWidth + (unit * 1);
+  }
+  if (yLabels) {
+    paddingLeft += yLabelsWidth + (unit * 1);
+  }
+
   return (
     <>
       {(xAxisLabel || xLabels) && (
@@ -189,15 +200,18 @@ function HeatMapContainer({
             marginRight: margin?.right,
             marginTop: margin?.top,
             // This is to account for the width of the y-axis label
-            paddingLeft: (28 + 8) * 2,
+            paddingLeft,
           }}
         >
           <Spacing mb={{ xs: 1 }}>
             {xAxisLabel && (
-              <Text center muted small>
-                {xAxisLabel}
-              </Text>
+              <Spacing mb={1}>
+                <Text center muted xsmall>
+                  {xAxisLabel}
+                </Text>
+              </Spacing>
             )}
+
             {xLabels && (
               <FlexContainer>
                 {/* @ts-ignore */}
@@ -215,10 +229,10 @@ function HeatMapContainer({
       )}
       <div style={{ height: parentHeight, display: 'flex', width: '100%' }}>
         {yAxisLabel && (
-          <div style={{ marginRight: 1 * unit, width: 28 }}>
+          <div style={{ marginRight: 1 * unit, width: yAxisLabelWidth }}>
             <FlexContainer alignItems="center" justifyContent="center">
               <YAxisLabelContainer>
-                <Text center muted small>
+                <Text center muted xsmall>
                   {yAxisLabel}
                 </Text>
               </YAxisLabelContainer>
@@ -226,8 +240,12 @@ function HeatMapContainer({
           </div>
         )}
         {yLabels && (
-          <div style={{ marginRight: 1 * unit, width: 40 }}>
-            <FlexContainer alignItems="center" flexDirection="column" width={40}>
+          <div style={{ marginRight: 1 * unit }}>
+            <FlexContainer
+              alignItems="center"
+              flexDirection="column"
+              width={yLabelsWidth}
+            >
               {/* @ts-ignore */}
               {yLabels.map(label => (
                 <Flex alignItems="center" flex="1" key={label}>
