@@ -33,19 +33,18 @@ import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
-import { useGlobalState } from '@storage/state';
 
 type DatasetOverviewProps = {
   featureSet: FeatureSetType;
+  fetchFeatureSet: (arg: any) => void;
 };
 
 function DatasetOverview({
   featureSet: featureSetRaw,
+  fetchFeatureSet,
 }: DatasetOverviewProps) {
   const { tab: tabFromUrl } = queryFromUrl();
   const currentTab = tabFromUrl || 'reports';
-
-  const [apiReloads, setApiReloads] = useGlobalState('apiReloads');
 
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
@@ -100,19 +99,15 @@ function DatasetOverview({
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
 
-  const commitActionCallback = (response: any) => {
-    setApiReloads({
-      ...apiReloads,
-      'feature_sets.detail': Number(new Date()),
-    });
-  };
   const [commitAction, { isLoading: isLoadingCommitAction }] = useMutation(
     api.pipelines.useUpdate(pipeline?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: commitActionCallback,
-          successMessage: 'yay',
+          callback: (response) => fetchFeatureSet({
+            ...featureSet,
+            pipeline: response,
+          }),
         },
       ),
     },

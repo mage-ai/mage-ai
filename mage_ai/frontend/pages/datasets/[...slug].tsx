@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router';
 
-import ApiReloader from '@components/ApiReloader';
 import ColumnDetail from '@components/datasets/columns/ColumnDetail';
 import ColumnList from '@components/datasets/columns/ColumnList';
 import DatasetOverview from '@components/datasets/overview';
@@ -13,7 +12,7 @@ function DatasetDetail() {
 
   // @ts-ignore
   const [featureSetId, _, featureId] = slug;
-  const { data: featureSet } = api.feature_sets.detail(featureSetId);
+  const { data: featureSet, mutate } = api.feature_sets.detail(featureSetId);
 
   const sharedProps = {
     featureSet,
@@ -25,6 +24,7 @@ function DatasetDetail() {
     el = (
       <DatasetOverview
         featureSet={featureSet}
+        fetchFeatureSet={mutate}
       />
     );
   } else if (slug.length === 2) {
@@ -44,11 +44,7 @@ function DatasetDetail() {
     el = <div />;
   }
 
-  return (
-    <ApiReloader uuid="feature_sets.detail">
-      {el}
-    </ApiReloader>
-  );
+  return el;
 }
 
 export default DatasetDetail;
