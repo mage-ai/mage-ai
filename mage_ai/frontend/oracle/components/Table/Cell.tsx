@@ -6,6 +6,7 @@ import { ArrowDown, ArrowRight } from '@oracle/icons';
 import { RowCellStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import ProgressBar from '../ProgressBar';
+import FlexContainer from '../FlexContainer';
 
 type CellProps = {
   cellIndex: number;
@@ -83,7 +84,9 @@ function Cell({
     );
   } else if (showProgress) {
     cellEl = (
-      <ProgressBar danger={value < 75} progress={value} />
+      <FlexContainer alignItems={'center'}>
+        <ProgressBar danger={value < 75} progress={value} />
+      </FlexContainer>
     );
   }
   else {
