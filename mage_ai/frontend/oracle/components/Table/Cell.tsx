@@ -15,7 +15,7 @@ type CellProps = {
   rowIndex: number;
   selected: boolean;
   small: boolean;
-  showProgress
+  showProgress?: boolean;
   value: any;
 };
 
