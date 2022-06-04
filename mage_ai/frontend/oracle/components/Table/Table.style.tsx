@@ -2,15 +2,19 @@ import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
 import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 
 export const TableStyle = styled.div<any>`
   position: relative;
-  height: 80%;
-  max-height: 80vh;
+  text-align: left;
+  position: relative;
+  border: solid 1px #D8DCE3;
+  border-collapse: collapse;
+  border-radius: ${BORDER_RADIUS_LARGE}px;
+  max-height: 50vh;
   width: 100%;
   max-width: 100vw;
   overflow: auto;
-  padding: 4px;
   ${props => props.table &&`
     background-color: ${(props.theme.background || light.background).page};
   `}
@@ -25,7 +29,6 @@ export const TableStyle = styled.div<any>`
 
 // TODO: Update these hardcoded values
 export const RowCellStyle = styled.div<any>`
-  
   max-height: 80px;
   flex-shrink: 0;
   ${props => !props.first && `

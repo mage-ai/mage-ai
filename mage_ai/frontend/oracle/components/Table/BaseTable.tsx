@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAbsoluteLayout, useBlockLayout, useFlexLayout, useTable } from 'react-table';
+import { useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
-import { cutTextSize, getColumnWidth } from './helpers';
+import { TableStyle} from './Table.style';
+import { cutTextSize } from './helpers';
 
   export type DataTableProps = {
     children?: any;
@@ -29,7 +28,6 @@ import { cutTextSize, getColumnWidth } from './helpers';
 
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
-  let lengths = [];
 
   // Keep these samples in due to undefined errors.
   const dataSample = useMemo(
@@ -102,51 +100,43 @@ import { cutTextSize, getColumnWidth } from './helpers';
     headerGroups,
     rows,
     prepareRow,
-    totalColumnsWidth,
   } = useTable(
     {
       columns: column || columnSample,
       data: row || dataSample,
     },
-    useAbsoluteLayout,
     );
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
     // Table: Relative, no overflow, outline in silver
     <TableStyle>
-      <table 
+      <table
           {...getTableProps()}
-          style={{
-            // border: 'solid 1px #D8DCE3',
-            borderRadius: `${BORDER_RADIUS_LARGE}px`,
-            width: totalColumnsWidth,
-          }}
         >
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
         <thead>
           { headerGroups.map(headerGroup => (
             // eslint-disable-next-line react/jsx-key
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
+              {headerGroup.headers.map((column, i, cols) => (
                 // eslint-disable-next-line react/jsx-key
                 <th
                   {...column.getHeaderProps()}
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
-                    // width: `${getColumnWidth(rows, column.id)}px`,
+                    borderLeft: (i === 0) && 'none',
+                    borderRight: (i === cols.length - 1) && 'none',
+                    borderTop: 'none',
                     padding: '14px',
-                    // minWidth: `${column.width}px`,
                   }}
                 >
-                  {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
                     <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
-                  {/* </RowCellStyle> */}
                 </th>
                   ))}
             </tr>
@@ -160,27 +150,21 @@ import { cutTextSize, getColumnWidth } from './helpers';
               return (
                 // eslint-disable-next-line react/jsx-key
                 <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => (
+                  {row.cells.map((cell) => (
                     // eslint-disable-next-line react/jsx-key
                     <td
                       {...cell.getCellProps()}
                       style={{
                         background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
-                        border: 'solid 1px #FBFCFD',
-                        borderLeft: 'none',
-                        borderRight: 'none',
-                        // maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
-                        minWidth: cell.column.width,
+                        borderSpacing: 0,
                         padding: '14px',
                       }}
                     >
-                      {/* <CellStyled> */}
                       <TextStyle>
                         <Text>
                           {cell.render('Cell')}
                         </Text>
                       </TextStyle>
-                      {/* </CellStyled> */}
                     </td>
                     ))}
                 </tr>
