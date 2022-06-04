@@ -148,11 +148,14 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                         'Reformat values',
                         'The following columns have entries with mixed capitalization formats: '
                         f'{payloads[case]}. '
-                        f'Reformat these columns as fully {case} text to improve data quality.',
+                        f'Reformat these entries as fully {case} text to improve data quality.',
                         ActionType.REFORMAT,
                         action_arguments=payloads[case],
                         axis=Axis.COLUMN,
-                        action_options={'reformat': 'caps_standardization', 'capitalization': case},
+                        action_options={
+                            'reformat': 'caps_standardization',
+                            'capitalization': case,
+                        },
                     )
                 )
         return suggestions

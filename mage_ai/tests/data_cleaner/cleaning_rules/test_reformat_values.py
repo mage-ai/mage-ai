@@ -73,7 +73,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                 title='Reformat values',
                 message='The following columns have entries with mixed capitalization formats: '
                 '[\'location\']. '
-                'Reformat these columns as fully uppercase text to improve data quality.',
+                'Reformat these entries as fully uppercase text to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['location'],
@@ -92,7 +92,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                 title='Reformat values',
                 message='The following columns have entries with mixed capitalization formats: '
                 '[\'company_name\', \'name\']. '
-                'Reformat these columns as fully lowercase text to improve data quality.',
+                'Reformat these entries as fully lowercase text to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['company_name', 'name'],
@@ -325,7 +325,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                 title='Reformat values',
                 message='The following columns have entries with mixed capitalization formats: '
                 '[\'notdate\']. '
-                'Reformat these columns as fully lowercase text to improve data quality.',
+                'Reformat these entries as fully lowercase text to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['notdate'],

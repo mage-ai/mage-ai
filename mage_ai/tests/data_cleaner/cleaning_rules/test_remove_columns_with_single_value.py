@@ -35,7 +35,8 @@ class RemoveColumnWithSingleValueTests(TestCase):
             [
                 dict(
                     title='Remove columns with single value',
-                    message='The following columns have single value in all rows: [\'is_active\']. '
+                    message='The following columns have a single value in all rows:'
+                    ' [\'is_active\']. '
                     'Removing these columns can reduce the amount of redundant data.',
                     status='not_applied',
                     action_payload=dict(

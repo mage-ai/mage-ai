@@ -21,7 +21,8 @@ class RemoveColumnsWithSingleValue(BaseRule):
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     'Remove columns with single value',
-                    f'The following columns have single value in all rows: {columns_with_single_value}. '
+                    'The following columns have a single value in all rows: '
+                    f'{columns_with_single_value}. '
                     'Removing these columns can reduce the amount of redundant data.',
                     ActionType.REMOVE,
                     action_arguments=columns_with_single_value,
