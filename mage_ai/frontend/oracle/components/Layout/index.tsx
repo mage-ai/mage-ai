@@ -5,6 +5,7 @@ import { BREAKPOINT_X_LARGE } from '@styles/theme';
 import { UNIT } from '@oracle/styles/units/spacing';
 import light from '@oracle/styles/themes/light';
 import Spacing from '@oracle/elements/Spacing';
+import Head from '@oracle/elements/Head';
 
 export type AsideProps = {
   after?: React.ReactNode;
@@ -18,6 +19,7 @@ export type LayoutProps = {
   footer?: React.ReactNode;
   header?: any;
   minHeight?: number | string;
+  pageTitle?: string;
 };
 
 export type MainContentProps = {
@@ -75,11 +77,13 @@ function Layout({
   footer,
   header,
   minHeight,
+  pageTitle,
 }: LayoutProps & AsideProps) {
   return (
     <WrapperStyle
       minHeight={minHeight}
     >
+      <Head title={pageTitle} />
       {header}
       <LayoutContainerStyle>
         {before}

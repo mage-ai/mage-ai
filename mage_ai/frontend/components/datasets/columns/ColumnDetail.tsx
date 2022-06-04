@@ -251,6 +251,7 @@ function ColumnDetail({
   return (
     <Layout
       centerAlign
+      pageTitle="Column Details"
     >
       <Spacing mt={UNIT}>
         {actionType && (

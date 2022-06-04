@@ -60,6 +60,7 @@ const ColumnList = ({
     <Layout
       centerAlign
       header={<Spacing mt={UNIT} />}
+      pageTitle="Column List"
     >
       {headEl}
       <Spacing pt={3}>
