@@ -330,6 +330,7 @@ function Overview({
                     label: '% missing values',
                   },
                 ]}
+                noBorder
                 rowGroupData={[
                   {
                     rowData: sortByKey(columnsWithHighNullValues.slice(0, 12), 'value').map(({ feature, value }) => ({
@@ -384,6 +385,7 @@ function Overview({
                           label: 'Rows',
                         },
                       ]}
+                      noBorder
                       rowGroupData={[
                         {
                           rowData: unusualDates.slice(0, 12).map(({ xLabelMax, xLabelMin, y }) => ({
@@ -445,6 +447,7 @@ function Overview({
                     label: '% unique values',
                   },
                 ]}
+                noBorder
                 rowGroupData={[
                   {
                     rowData: sortByKey(
@@ -520,6 +523,7 @@ function Overview({
                       label: '% of rows',
                     },
                   ]}
+                  noBorder
                   rowGroupData={[
                     {
                       rowData: sortByKey(

@@ -35,6 +35,9 @@ export const ColumnHeaderRowStyle = styled.div<any>`
 
   ${props => `
     background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+  `}
+
+  ${props => !props.noBorder && `
     border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 `;
@@ -69,8 +72,11 @@ export const RowStyle = styled.div<any>`
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
     border-top: none;
+  `}
+
+  ${props => !props.noBorder && `
+    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
 

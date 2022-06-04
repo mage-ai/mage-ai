@@ -40,6 +40,7 @@ type SimpleDataTableProps = {
   columnHeaders: ColumnHeaderType[];
   height?: number;
   isTextSelectionRequired?: boolean;
+  noBorder?: boolean;
   onClickRow?: (opts: OnClickRowProps) => void;
   onHoverRow?: (opts: OnClickRowProps) => void;
   renderRowCellByIndex?: {
@@ -56,6 +57,7 @@ function SimpleDataTable({
   columnHeaders,
   height,
   isTextSelectionRequired,
+  noBorder,
   onClickRow,
   onHoverRow,
   renderRowCellByIndex,
@@ -72,7 +74,7 @@ function SimpleDataTable({
       height={height}
       scrollbarBorderRadiusLarge
     >
-      <ColumnHeaderRowStyle>
+      <ColumnHeaderRowStyle noBorder={noBorder}>
         <FlexContainer alignItems="center">
           {columnHeaders.map(({
             Icon,
@@ -164,6 +166,7 @@ function SimpleDataTable({
               finalRow={(numberOfRowGroups - 1 === rowGroupIndex) && (numberOfRows - 1 === rowIndex)}
               hasHover={!!onHoverRow}
               key={`row-group-${key}-row-${rowIndex}`}
+              noBorder={noBorder}
               onMouseEnter={() => onHoverRow?.({
                 rowGroupIndex,
                 rowIndex,
