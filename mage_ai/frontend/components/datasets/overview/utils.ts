@@ -45,21 +45,13 @@ export function createStatisticsSample(statistics, colTypes) {
   rowData.push({
     columnValues: ['Column count', types.length],
   });
-  // Part one is the keys from metrics
-  stats.map((key) => {
-    if (STAT_KEYS.includes(key)) {
-      const name = HUMAN_READABLE_MAPPING[key];
-      rowData.push({
-        columnValues: [name, statistics[key]],
-      });
-    }
-  });
+  
 
-  // Part two is the count of data types
+  // First count to get totals
   let countCategory = 0;
   let countNumerical = 0;
   let countTimeseries = 0;
-
+  
   types.map((val: string) => {
     if (CATEGORICAL_TYPES.includes(val)) {
       countCategory += 1;
@@ -71,12 +63,30 @@ export function createStatisticsSample(statistics, colTypes) {
     }
   });
 
+  const total = countCategory + countNumerical + countTimeseries;
+
+  // First push is the keys from metrics to sort it.
+  stats.map((key) => {
+    if (STAT_KEYS.includes(key)) {
+      const name = HUMAN_READABLE_MAPPING[key];
+      let value = statistics[key];
+      console.log(value);
+      if (key == 'empty_column_count' && value !== 0) {
+        console.log('Emprty value count', value);
+        value = `${value} (${getPercentage(value / total)})`;
+      }
+      rowData.push({
+        columnValues: [name, value],
+      });
+    }
+  });
+
   rowData.push({
-    columnValues: ['Categorical Features', countCategory],
+    columnValues: ['Categorical Features', `${countCategory} (${getPercentage(countCategory / total)})`],
   },{
-    columnValues: ['Numerical Features', countNumerical],
+    columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
   },{
-    columnValues: ['Time series Features', countTimeseries],
+    columnValues: ['Time series Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
   });
 
   return { rowData };
