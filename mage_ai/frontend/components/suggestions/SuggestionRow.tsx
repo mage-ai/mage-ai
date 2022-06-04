@@ -147,10 +147,10 @@ const SuggestionRow = ({
 
         {actionCode && (
           <CodeEditor
+            // @ts-ignore
             disabled
+            // @ts-ignore
             language="python"
-            // minHeight={code.multiline ? UNIT * 12 : null}
-            // onChange={e => updatePayload({ action_code: e.target.value })}
             padding={UNIT * 1}
             style={{
               backgroundColor: themeContext.monotone.grey100,

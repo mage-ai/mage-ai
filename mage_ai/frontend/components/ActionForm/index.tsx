@@ -74,11 +74,11 @@ function ActionForm({
   });
 
   const updateActionCode = (newCode) => {
-    const av = { ...actionVariables };
+    const av = actionVariables ? { ...actionVariables } : {};
 
     updatePayload({
       action_code: newCode,
-      action_variables: {},
+      action_variables: av,
     });
   }
 
@@ -143,6 +143,7 @@ function ActionForm({
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
+                // @ts-ignore
                 language="python"
                 minHeight={code.multiline ? UNIT * 12 : null}
                 onChange={e => updateActionCode(e.target.value)}
