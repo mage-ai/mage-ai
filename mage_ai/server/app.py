@@ -209,7 +209,6 @@ def update_pipeline(id):
     actions = request_data.get('actions', [])
     actions = generate_action_titles(actions)
     clean_pipeline = BasePipeline(actions=actions)
-    pipeline.pipeline = clean_pipeline
     # 1. Transform the data
     # 2. Recalculate stats and suggestions
     feature_set_id = pipeline.metadata.get('feature_set_id')
@@ -217,7 +216,10 @@ def update_pipeline(id):
         feature_set = FeatureSet(id=feature_set_id)
         df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
         result = clean_data(df_transformed, transform=False)
+        pipeline.pipeline = clean_pipeline
         feature_set.write_files(result)
+    else:
+        pipeline.pipeline = clean_pipeline
 
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
