@@ -29,23 +29,22 @@ thread = None
 def rescue_errors(endpoint):
     def handler(*args, **kwargs):
         try:
-            return endpoint(*args, **kwargs)
+            response = endpoint(*args, **kwargs)
         except Exception as err:
             exception = traceback.format_exc()
-            stack_trace = traceback.format_stack()
             response_obj = {
                 'error_code': 500,
                 'error_msg': str(err),
                 'error_stack_trace': exception,
-                'full_stack_trace': stack_trace,
+                'full_stack_trace': traceback.format_stack(),
             }
             response = app.response_class(
-                response=simplejson.dumps(response_obj),
+                response=json.dumps(response_obj),
                 status=200,
                 mimetype='application/json',
             )
             log.error(exception)
-            return response
+        return response
 
     return handler
 
