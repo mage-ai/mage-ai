@@ -6,7 +6,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
 
 
 class RemoveOutliers(BaseRule):
-
     def evaluate(self):
         suggestions = []
         for c in self.df_columns:
@@ -20,12 +19,15 @@ class RemoveOutliers(BaseRule):
             upper = avg + 3 * std
             lower = avg - 3 * std
 
-            suggestions.append(self._build_transformer_action_suggestion(
-                'Remove outliers',
-                f'There\'re {outlier_count} outliers in column \'{c}\'. Suggest to remove them.',
-                ActionType.FILTER,
-                action_arguments=[c],
-                action_code=f'{c} <= {upper} and {c} >= {lower}',
-                axis=Axis.ROW,
-            ))
+            suggestions.append(
+                self._build_transformer_action_suggestion(
+                    'Remove outliers',
+                    f'There are {outlier_count} outlier(s) in column \'{c}\'. '
+                    'Removing them can reduce the amount of noise in the data.',
+                    ActionType.FILTER,
+                    action_arguments=[c],
+                    action_code=f'{c} <= {upper} and {c} >= {lower}',
+                    axis=Axis.ROW,
+                )
+            )
         return suggestions

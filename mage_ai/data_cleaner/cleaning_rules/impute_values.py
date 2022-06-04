@@ -306,7 +306,7 @@ class ImputeActionConstructor:
                 'The following columns have null-valued entries and '
                 'the distribution of remaining values is approximately symmetric: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with the average value from each column.'
+                'Fill the null values in each of these columns with their average value.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -315,9 +315,9 @@ class ImputeActionConstructor:
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.CONSTANT:
             message = (
-                'The following columns have many missing entries: '
+                'The following columns have many null-valued entries: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with a placeholder to mark them as missing'
+                'Fill the null values in these columns with a placeholder to mark them as missing.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -331,7 +331,7 @@ class ImputeActionConstructor:
                 'The following columns have null-valued entries and '
                 'the distribution of remaining values is skewed: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with the median value from each column.'
+                'Fill the null values in each of these columns with their median value.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -343,7 +343,7 @@ class ImputeActionConstructor:
                 'The following columns have null valued entries and '
                 'a large proportion of entries are a single value: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with this most frequent value.'
+                'Fill the null values in each of these columns with their most frequent value.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -354,7 +354,8 @@ class ImputeActionConstructor:
             message = (
                 'The following columns have null-valued entries and are categorical: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with a randomly sampled not null value.'
+                'Fill the null values in these columns with randomly sampled non-null values '
+                'from the same column.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -366,7 +367,7 @@ class ImputeActionConstructor:
             title = 'Remove rows with missing entries'
             message = (
                 f'There are {num_missing} rows containing null values. '
-                'Suggested: remove these rows to remove null values from the dataset.'
+                'Remove these rows to remove null values from the dataset.'
             )
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
@@ -378,7 +379,8 @@ class ImputeActionConstructor:
                 'The following columns have null-valued entries which '
                 'may be part of timeseries data: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Suggested: fill null values with previously occurring value in timeseries.'
+                'Fill the null values in these columns with the previously '
+                'occurring value in the timeseries.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE

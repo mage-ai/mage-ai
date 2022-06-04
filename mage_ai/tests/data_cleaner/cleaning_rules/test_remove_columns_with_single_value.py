@@ -1,5 +1,6 @@
-from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value \
-    import RemoveColumnsWithSingleValue
+from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value import (
+    RemoveColumnsWithSingleValue,
+)
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np
@@ -7,13 +8,16 @@ import numpy as np
 
 class RemoveColumnWithSingleValueTests(TestCase):
     def test_evaluate(self):
-        df = pd.DataFrame([
-            [1, '2022-01-01', True],
-            [2, '2022-01-02', True],
-            [3, np.NaN, True],
-            [4, np.NaN, True],
-            [5, np.NaN, True],
-        ], columns=['id', 'deleted_at', 'is_active'])
+        df = pd.DataFrame(
+            [
+                [1, '2022-01-01', True],
+                [2, '2022-01-02', True],
+                [3, np.NaN, True],
+                [4, np.NaN, True],
+                [5, np.NaN, True],
+            ],
+            columns=['id', 'deleted_at', 'is_active'],
+        )
         column_types = {
             'id': 'number',
             'deleted_at': 'datetime',
@@ -26,20 +30,24 @@ class RemoveColumnWithSingleValueTests(TestCase):
         }
         result = RemoveColumnsWithSingleValue(df, column_types, statistics).evaluate()
 
-        self.assertEqual(result, [
-            dict(
-                title='Remove columns with single value',
-                message='The following columns have single value in all rows: [\'is_active\'].'
-                        ' Suggest to remove them.',
-                status='not_applied',
-                action_payload=dict(
-                    action_type='remove',
-                    action_arguments=['is_active'],
-                    action_code='',
-                    action_options={},
-                    action_variables={},
-                    axis='column',
-                    outputs=[],
-                ),
-            )
-        ])
+        self.assertEqual(
+            result,
+            [
+                dict(
+                    title='Remove columns with single value',
+                    message='The following columns have a single value in all rows:'
+                    ' [\'is_active\']. '
+                    'Removing these columns can reduce the amount of redundant data.',
+                    status='not_applied',
+                    action_payload=dict(
+                        action_type='remove',
+                        action_arguments=['is_active'],
+                        action_code='',
+                        action_options={},
+                        action_variables={},
+                        axis='column',
+                        outputs=[],
+                    ),
+                )
+            ],
+        )

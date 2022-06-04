@@ -3,8 +3,8 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
 )
-from mage_ai.data_cleaner.column_type_detector import (  
-    CATEGORY, 
+from mage_ai.data_cleaner.column_type_detector import (
+    CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,
     EMAIL,
@@ -16,7 +16,7 @@ import pandas as pd
 import re
 
 
-class ReformatValuesSubRule():
+class ReformatValuesSubRule:
     """
     Assumptions of ReformatValuesSubRule
     1. df will not contain any empty strings - all empty strings are converted to null types.
@@ -25,6 +25,7 @@ class ReformatValuesSubRule():
     3. Every column in df is of dtype object and the entries must be used to infer type.
     This is not always the case, but this assumption simplifies code
     """
+
     def __init__(
         self,
         action_builder,
@@ -32,7 +33,7 @@ class ReformatValuesSubRule():
         column_types,
         df,
         exact_dtypes,
-        statistics
+        statistics,
     ):
         self.df = df
         self.column_types = column_types
@@ -50,7 +51,7 @@ class ReformatValuesSubRule():
 
     def evaluate(self, column):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
-    
+
     def get_suggestions(self):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
 
@@ -71,7 +72,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         column_types,
         df,
         exact_dtypes,
-        statistics
+        statistics,
     ):
         super().__init__(
             action_builder,
@@ -79,7 +80,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
             column_types,
             df,
             exact_dtypes,
-            statistics
+            statistics,
         )
         self.uppercase = []
         self.lowercase = []
@@ -96,13 +97,13 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
 
     def evaluate(self, column):
         """
-        Rule: 
+        Rule:
         1. If column is not a category/string type which may have alphabet, no suggestion
         2. If non-null entries are not string, no suggestion
         3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority alphabetical
            == ALPH_RATIO_LB of all chars are alphabet
         4. If all entries are same case, no suggestion
-        5. Suggest the more prevalent occurrence (e.g., if most alphabetical entries are lowercase 
+        5. Suggest the more prevalent occurrence (e.g., if most alphabetical entries are lowercase
         text but some mixedcase and uppercase text, suggest conversion to lowercase)
         5a. If most alphabetical entries are mixedcase, suggest conversion to lowercase
         """
@@ -115,12 +116,12 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
             return
 
         non_alpha_ratio = clean_col.str.count(self.NON_ALPH_PATTERN) / clean_col.str.len()
-        unfiltered_length =  self.statistics[f'{column}/count']
+        unfiltered_length = self.statistics[f'{column}/count']
         clean_col = clean_col[non_alpha_ratio <= self.NON_ALPH_UB]
         new_length = clean_col.count()
         if new_length / unfiltered_length <= self.ALPH_RATIO_LB:
             return
-        
+
         uppercase, clean_col = self.filter_column_regex(clean_col, self.UPPERCASE_PATTERN)
         lowercase, clean_col = self.filter_column_regex(clean_col, self.LOWERCASE_PATTERN)
         mixedcase = clean_col.count()
@@ -129,7 +130,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         lowercase_ratio = lowercase / new_length
         mixedcase_ratio = mixedcase / new_length
 
-        if (uppercase_ratio != 1 and lowercase_ratio != 1):
+        if uppercase_ratio != 1 and lowercase_ratio != 1:
             max_case_style = max(uppercase_ratio, lowercase_ratio, mixedcase_ratio)
             if max_case_style == uppercase_ratio:
                 self.uppercase.append(column)
@@ -142,19 +143,21 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         payloads = {'uppercase': self.uppercase, 'lowercase': self.lowercase}
         for case in payloads:
             if len(payloads[case]) != 0:
-                suggestions.append(self.action_builder(
-                    'Reformat values',
-                    'The following columns have mixed capitalization formats: '
-                    f'{payloads[case]}. '
-                    f'Reformat these columns with fully {case} text to improve data quality.',
-                    ActionType.REFORMAT,
-                    action_arguments=payloads[case],
-                    axis=Axis.COLUMN,
-                    action_options = {
-                        'reformat': 'caps_standardization',
-                        'capitalization': case
-                    },
-                ))
+                suggestions.append(
+                    self.action_builder(
+                        'Reformat values',
+                        'The following columns have entries with mixed capitalization formats: '
+                        f'{payloads[case]}. '
+                        f'Reformat these entries as fully {case} text to improve data quality.',
+                        ActionType.REFORMAT,
+                        action_arguments=payloads[case],
+                        axis=Axis.COLUMN,
+                        action_options={
+                            'reformat': 'caps_standardization',
+                            'capitalization': case,
+                        },
+                    )
+                )
         return suggestions
 
 
@@ -164,16 +167,16 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
     NUMBER_PATTERN = r'[0-9]*\.{0,1}[0-9]+'
     CURRENCY_BODY = rf'(?:{CURR_PREFIX}\s*{NUMBER_PATTERN}|{NUMBER_PATTERN}\s*{CURR_SUFFIX})'
     CURRENCY_PATTERN = re.compile(rf'^\s*(?:\-*\s*{CURRENCY_BODY}|{CURRENCY_BODY}\s*)\s*$')
-    CURRENCY_TYPES = frozenset((
-        CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS
-    ))
+    CURRENCY_TYPES = frozenset(
+        (CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS)
+    )
 
     def evaluate(self, column):
         """
         Rule:
         1. If the column is not a text, number, or category type, no suggestion
         2. If the column is not a string type, it can't contain currency symbol, no suggestion
-        3. If all entries are of currency type (currency symbol followed by number), 
+        3. If all entries are of currency type (currency symbol followed by number),
            suggest conversion to number_with_decimal; else don't
         """
         dtype = self.column_types[column]
@@ -189,37 +192,38 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             count = 0
         if count / self.statistics[f'{column}/count'] == 1:
             self.matches.append(column)
-                
 
     def get_suggestions(self):
         suggestions = []
         if len(self.matches) != 0:
-            suggestions.append(self.action_builder(
-                'Reformat values',
-                'The following columns have currency type values: '
-                f'{self.matches}. '
-                'Reformat these columns as numbers to improve data quality.',
-                ActionType.REFORMAT,
-                action_arguments=self.matches,
-                axis=Axis.COLUMN,
-                action_options = {
-                    'reformat': 'currency_to_num',
-                },
-            ))
+            suggestions.append(
+                self.action_builder(
+                    'Reformat values',
+                    'The following columns have currency type values: '
+                    f'{self.matches}. '
+                    'Reformat these columns as numbers to improve data quality.',
+                    ActionType.REFORMAT,
+                    action_arguments=self.matches,
+                    axis=Axis.COLUMN,
+                    action_options={
+                        'reformat': 'currency_to_num',
+                    },
+                )
+            )
         return suggestions
 
 
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
     DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
-    
+
     def evaluate(self, column):
         """
-        Rule: 
+        Rule:
         1. If column is not of dtype category or text, no suggestion
         2. If column does not contain string types, no suggestion
-        3. Try use Pandas datetime parse to convert from string to datetime. 
-           If more than DATE_MATCHES_LB entries are succesfully converted, suggest 
+        3. Try use Pandas datetime parse to convert from string to datetime.
+           If more than DATE_MATCHES_LB entries are succesfully converted, suggest
            conversion to datetime type
         """
         dtype = self.column_types[column]
@@ -236,27 +240,26 @@ class ReformatDateSubRule(ReformatValuesSubRule):
     def get_suggestions(self):
         suggestions = []
         if len(self.matches) != 0:
-            suggestions.append(self.action_builder(
-                'Reformat values',
-                'The following columns have date values: '
-                f'{self.matches}. '
-                'Reformat these columns as datetime objects to improve data quality.',
-                ActionType.REFORMAT,
-                action_arguments=self.matches,
-                axis=Axis.COLUMN,
-                action_options = {
-                    'reformat': 'date_format_conversion',
-                },
-            ))
+            suggestions.append(
+                self.action_builder(
+                    'Reformat values',
+                    'The following columns have date values: '
+                    f'{self.matches}. '
+                    'Reformat these columns as datetime objects to improve data quality.',
+                    ActionType.REFORMAT,
+                    action_arguments=self.matches,
+                    axis=Axis.COLUMN,
+                    action_options={
+                        'reformat': 'date_format_conversion',
+                    },
+                )
+            )
         return suggestions
 
     def strip_column_for_date_parsing(self, column):
         clean_col = self.clean_column(column)
         clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
-        clean_col = clean_col.str.replace(
-            r'\s*([\/\\\-\.]+)\s*',
-            lambda group: group.group(1)[0]
-        )
+        clean_col = clean_col.str.replace(r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0])
         return clean_col.str.lower()
 
 
@@ -264,8 +267,9 @@ class ReformatValues(BaseRule):
     RULE_LIST = [
         StandardizeCapitalizationSubRule,
         ConvertCurrencySubRule,
-        ReformatDateSubRule
+        ReformatDateSubRule,
     ]
+
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
         # TODO Clean dataframe prior to giving to rule
@@ -283,7 +287,7 @@ class ReformatValues(BaseRule):
                     self.exact_dtypes,
                     self.statistics,
                 ),
-                self.RULE_LIST
+                self.RULE_LIST,
             )
         )
 

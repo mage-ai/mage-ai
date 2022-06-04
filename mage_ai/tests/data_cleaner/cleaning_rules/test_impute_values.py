@@ -6,25 +6,26 @@ import pandas as pd
 
 
 class ImputeValuesTest(TestCase):
-
     def setUp(self):
         self.rng = np.random.default_rng(42)
         return super().setUp()
 
     def test_mean(self):
-        df = pd.DataFrame([
-            [10, 3],
-            [None, None],
-            [21, None],
-            [25, None],
-            [None, None],
-            [np.NaN, None],
-            [31, None],
-            [25, 9],
-            [21, 99],
-            [10, 2],
-        ],
-                          columns=['age', 'number_of_years'])
+        df = pd.DataFrame(
+            [
+                [10, 3],
+                [None, None],
+                [21, None],
+                [25, None],
+                [None, None],
+                [np.NaN, None],
+                [31, None],
+                [25, 9],
+                [21, 99],
+                [10, 2],
+            ],
+            columns=['age', 'number_of_years'],
+        )
         column_types = {'age': 'number', 'number_of_years': 'number'}
         statistics = {
             'age/count': 7,
@@ -33,61 +34,49 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 4,
             'number_of_years/count_distinct': 4,
             'number_of_years/null_value_rate': 6 / 10,
-            'is_timeseries': False
+            'is_timeseries': False,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
                 message='The following columns have null-valued entries and '
-                      'the distribution of remaining values is approximately symmetric: '
-                      '[\'age\']. '
-                      'Suggested: fill null values with the average value from each column.',
+                'the distribution of remaining values is approximately symmetric: '
+                '[\'age\']. '
+                'Fill the null values in each of these columns with their average value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['age'],
-                    action_options=dict(
-                        strategy='average'
-                    ),
+                    action_options=dict(strategy='average'),
                     action_variables=dict(
-                        age=dict(
-                            feature=dict(
-                                column_type='number',
-                                uuid='age'
-                            ),
-                            type='feature'
-                        )
+                        age=dict(feature=dict(column_type='number', uuid='age'), type='feature')
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'number_of_years\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+                message='The following columns have many null-valued entries: '
+                '[\'number_of_years\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         number_of_years=dict(
-                            feature=dict(
-                                column_type='number',
-                                uuid='number_of_years'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='number', uuid='number_of_years'),
+                            type='feature',
                         )
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
         ]
         suggestions = ImputeValues(
@@ -114,50 +103,52 @@ class ImputeValuesTest(TestCase):
             'age/null_value_rate': 1 - df['age'].count() / len(df['age']),
             'number_of_years/count': df['number_of_years'].count(),
             'number_of_years/count_distinct': df['number_of_years'].nunique(),
-            'number_of_years/null_value_rate':
-                (1 - df['number_of_years'].count() / len(df['number_of_years'])),
-            'is_timeseries': False
+            'number_of_years/null_value_rate': (
+                1 - df['number_of_years'].count() / len(df['number_of_years'])
+            ),
+            'is_timeseries': False,
         }
         expected_suggestions = [
-            dict(title='Fill in missing values',
-                 message='The following columns have null-valued entries and '
-                 'the distribution of remaining values is approximately symmetric: '
-                 '[\'age\']. '
-                 'Suggested: fill null values with the average value from each column.',
-                 action_payload=dict(
-                     action_type='impute',
-                     action_arguments=['age'],
-                     action_options=dict(strategy='average'),
-                     action_variables=dict(
-                         age=dict(feature=dict(column_type='number', uuid='age'), type='feature')),
-                     action_code='',
-                     axis='column',
-                     outputs=[]),
-                 status='not_applied'),
-            dict(title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'number_of_years\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null-valued entries and '
+                'the distribution of remaining values is approximately symmetric: '
+                '[\'age\']. '
+                'Fill the null values in each of these columns with their average value.',
+                action_payload=dict(
+                    action_type='impute',
+                    action_arguments=['age'],
+                    action_options=dict(strategy='average'),
+                    action_variables=dict(
+                        age=dict(feature=dict(column_type='number', uuid='age'), type='feature')
+                    ),
+                    action_code='',
+                    axis='column',
+                    outputs=[],
+                ),
+                status='not_applied',
+            ),
+            dict(
+                title='Fill in missing values',
+                message='The following columns have many null-valued entries: '
+                '[\'number_of_years\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         number_of_years=dict(
-                            feature=dict(
-                                column_type='number',
-                                uuid='number_of_years'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='number', uuid='number_of_years'),
+                            type='feature',
                         )
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
         ]
         suggestions = ImputeValues(
@@ -168,19 +159,21 @@ class ImputeValuesTest(TestCase):
         self.assertEqual(expected_suggestions, suggestions)
 
     def test_median(self):
-        df = pd.DataFrame([
-            [90.5, 3],
-            [None, None],
-            [52.3, None],
-            [-2.3, None],
-            [None, None],
-            [np.NaN, None],
-            [-1.4, None],
-            [-1.6, 9],
-            [-4.3, 9],
-            [-3.4, 9],
-        ],
-                          columns=['profit', 'number_of_years'])
+        df = pd.DataFrame(
+            [
+                [90.5, 3],
+                [None, None],
+                [52.3, None],
+                [-2.3, None],
+                [None, None],
+                [np.NaN, None],
+                [-1.4, None],
+                [-1.6, 9],
+                [-4.3, 9],
+                [-3.4, 9],
+            ],
+            columns=['profit', 'number_of_years'],
+        )
         column_types = {'profit': 'number_with_decimals', 'number_of_years': 'number'}
         statistics = {
             'profit/count': 7,
@@ -189,52 +182,53 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 0.6,
-            'is_timeseries': False
+            'is_timeseries': False,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'number_of_years\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+                message='The following columns have many null-valued entries: '
+                '[\'number_of_years\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         number_of_years=dict(
-                            feature=dict(
-                                column_type='number',
-                                uuid='number_of_years'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='number', uuid='number_of_years'),
+                            type='feature',
                         )
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
             dict(
                 title='Fill in missing values',
                 message='The following columns have null-valued entries and '
                 'the distribution of remaining values is skewed: '
                 '[\'profit\']. '
-                'Suggested: fill null values with the median value from each column.',
+                'Fill the null values in each of these columns with their median value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit'],
                     action_options=dict(strategy='median'),
                     action_variables=dict(
-                        profit=dict(feature=dict(column_type='number_with_decimals', uuid='profit'),
-                                    type='feature')),
+                        profit=dict(
+                            feature=dict(column_type='number_with_decimals', uuid='profit'),
+                            type='feature',
+                        )
+                    ),
                     action_code='',
                     axis='column',
-                    outputs=[]),
-                status='not_applied'),
+                    outputs=[],
+                ),
+                status='not_applied',
+            ),
         ]
         suggestions = ImputeValues(
             df,
@@ -244,21 +238,23 @@ class ImputeValuesTest(TestCase):
         self.assertEqual(expected_suggestions, suggestions)
 
     def test_mode(self):
-        df = pd.DataFrame([
-            [90.5, 'one', 34934],
-            [np.nan, None, np.nan],
-            [667, 'one', 10010],
-            [np.nan, 'one', 34934],
-            [-234, None, np.nan],
-            [np.nan, None, 34934],
-            [-1.4, 'one', np.nan],
-            [-1.6, 'None', 10010],
-        ],
-                          columns=['profit', 'company', 'industry'])
+        df = pd.DataFrame(
+            [
+                [90.5, 'one', 34934],
+                [np.nan, None, np.nan],
+                [667, 'one', 10010],
+                [np.nan, 'one', 34934],
+                [-234, None, np.nan],
+                [np.nan, None, 34934],
+                [-1.4, 'one', np.nan],
+                [-1.6, 'None', 10010],
+            ],
+            columns=['profit', 'company', 'industry'],
+        )
         column_types = {
             'profit': 'number_with_decimals',
             'company': 'category',
-            'industry': 'zip_code'
+            'industry': 'zip_code',
         }
         statistics = {
             'profit/count': 5,
@@ -271,55 +267,54 @@ class ImputeValuesTest(TestCase):
             'industry/null_value_rate': 3 / 8,
             'industry/mode': 34934,
             'industry/mode_ratio': 3 / 5,
-            'is_timeseries': False
+            'is_timeseries': False,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'profit\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+                message='The following columns have many null-valued entries: '
+                '[\'profit\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         profit=dict(
-                            feature=dict(
-                                column_type='number_with_decimals',
-                                uuid='profit'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='number_with_decimals', uuid='profit'),
+                            type='feature',
                         )
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
-            dict(title='Fill in missing values',
-                 message='The following columns have null valued entries and '
-                 'a large proportion of entries are a single value: '
-                 '[\'company\', \'industry\']. '
-                 'Suggested: fill null values with this most frequent value.',
-                 action_payload=dict(
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null valued entries and '
+                'a large proportion of entries are a single value: '
+                '[\'company\', \'industry\']. '
+                'Fill the null values in each of these columns with their most frequent value.',
+                action_payload=dict(
                     action_type='impute',
                     action_arguments=['company', 'industry'],
                     action_options=dict(strategy='mode'),
                     action_variables=dict(
-                        company=dict(feature=dict(column_type='category',
-                                                uuid='company'),
-                                    type='feature'),
-                        industry=dict(feature=dict(column_type='zip_code',
-                                                uuid='industry'),
-                                    type='feature')),
+                        company=dict(
+                            feature=dict(column_type='category', uuid='company'), type='feature'
+                        ),
+                        industry=dict(
+                            feature=dict(column_type='zip_code', uuid='industry'), type='feature'
+                        ),
+                    ),
                     action_code='',
                     axis='column',
-                    outputs=[]),
-                 status='not_applied'
+                    outputs=[],
+                ),
+                status='not_applied',
             ),
         ]
         suggestions = ImputeValues(
@@ -330,17 +325,19 @@ class ImputeValuesTest(TestCase):
         self.assertEqual(expected_suggestions, suggestions)
 
     def test_no_numerical(self):
-        df = pd.DataFrame([
-            [90.5, 3],
-            [None, ''],
-            ['', None],
-            [np.NaN, None],
-            [None, None],
-            [np.NaN, None],
-            [-1.4, None],
-            [-1.6, 9],
-        ],
-                          columns=['profit', 'number_of_years'])
+        df = pd.DataFrame(
+            [
+                [90.5, 3],
+                [None, ''],
+                ['', None],
+                [np.NaN, None],
+                [None, None],
+                [np.NaN, None],
+                [-1.4, None],
+                [-1.6, 9],
+            ],
+            columns=['profit', 'number_of_years'],
+        )
         column_types = {'profit': 'number_with_decimals', 'number_of_years': 'number'}
         statistics = {
             'profit/count': 3,
@@ -349,41 +346,34 @@ class ImputeValuesTest(TestCase):
             'number_of_years/count': 2,
             'number_of_years/count_distinct': 2,
             'number_of_years/null_value_rate': 6 / 8,
-            'is_timeseries': False
+            'is_timeseries': False,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'profit\', \'number_of_years\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+                message='The following columns have many null-valued entries: '
+                '[\'profit\', \'number_of_years\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit', 'number_of_years'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         profit=dict(
-                            feature=dict(
-                                column_type='number_with_decimals',
-                                uuid='profit'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='number_with_decimals', uuid='profit'),
+                            type='feature',
                         ),
                         number_of_years=dict(
-                            feature=dict(
-                                column_type='number',
-                                uuid='number_of_years'
-                            ),
-                            type='feature'
-                        )
+                            feature=dict(column_type='number', uuid='number_of_years'),
+                            type='feature',
+                        ),
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
         ]
         suggestions = ImputeValues(
@@ -395,85 +385,82 @@ class ImputeValuesTest(TestCase):
 
     def test_random(self):
         source_ids = np.concatenate(
-            [self.rng.integers(10000, 99999, size=(20,)).astype(str) for _ in range(10)])
+            [self.rng.integers(10000, 99999, size=(20,)).astype(str) for _ in range(10)]
+        )
         source_idxs = self.rng.integers(0, 100, size=(60,))
         source_ids[source_idxs] = ''
         dest_ids = np.concatenate(
-            [self.rng.integers(10000, 99999, size=(20,)).astype(str) for _ in range(10)])
+            [self.rng.integers(10000, 99999, size=(20,)).astype(str) for _ in range(10)]
+        )
         dest_idxs_seq = np.arange(0, 199, 8)
         dest_idxs_rand = self.rng.integers(0, 99, size=(70))
         dest_ids[dest_idxs_seq] = ''
         dest_ids[dest_idxs_rand] = ''
         df = pd.DataFrame({'source': source_ids, 'dest': dest_ids})
-        cleaned_df = df.applymap(lambda x: x if (not isinstance(x, str) or
-                                                 (len(x) > 0 and not x.isspace())) else np.nan)
+        cleaned_df = df.applymap(
+            lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan
+        )
 
         column_types = {'source': 'category_high_cardinality', 'dest': 'category_high_cardinality'}
         statistics = {
-            'source/count':
-                cleaned_df['source'].count(),
-            'source/count_distinct':
-                len(cleaned_df['source'].value_counts().index) - 1,
-            'source/null_value_rate':
-                1 - cleaned_df['source'].count() / len(df),
-            'source/mode':
-                cleaned_df['source'].mode(),
-            'source/mode_ratio':
-                cleaned_df['source'].value_counts().max() / cleaned_df['source'].count(),
-            'dest/count':
-                cleaned_df['dest'].count(),
-            'dest/count_distinct':
-                len(cleaned_df['dest'].value_counts().index) - 1,
-            'dest/null_value_rate':
-                1 - cleaned_df['dest'].count() / len(df),
-            'dest/mode':
-                cleaned_df['dest'].mode(),
-            'dest/mode_ratio':
-                cleaned_df['dest'].value_counts().max() / cleaned_df['dest'].count(),
-            'is_timeseries':
-                False
+            'source/count': cleaned_df['source'].count(),
+            'source/count_distinct': len(cleaned_df['source'].value_counts().index) - 1,
+            'source/null_value_rate': 1 - cleaned_df['source'].count() / len(df),
+            'source/mode': cleaned_df['source'].mode(),
+            'source/mode_ratio': cleaned_df['source'].value_counts().max()
+            / cleaned_df['source'].count(),
+            'dest/count': cleaned_df['dest'].count(),
+            'dest/count_distinct': len(cleaned_df['dest'].value_counts().index) - 1,
+            'dest/null_value_rate': 1 - cleaned_df['dest'].count() / len(df),
+            'dest/mode': cleaned_df['dest'].mode(),
+            'dest/mode_ratio': cleaned_df['dest'].value_counts().max() / cleaned_df['dest'].count(),
+            'is_timeseries': False,
         }
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many missing entries: '\
-                      '[\'dest\']. ' \
-                      'Suggested: fill null values with a placeholder to mark them as missing',
+                message='The following columns have many null-valued entries: '
+                '[\'dest\']. '
+                'Fill the null values in these columns with a placeholder '
+                'to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['dest'],
-                    action_options=dict(
-                        strategy='constant'
-                    ),
+                    action_options=dict(strategy='constant'),
                     action_variables=dict(
                         dest=dict(
-                            feature=dict(
-                                column_type='category_high_cardinality',
-                                uuid='dest'
-                            ),
-                            type='feature'
+                            feature=dict(column_type='category_high_cardinality', uuid='dest'),
+                            type='feature',
                         ),
                     ),
                     action_code='',
                     axis='column',
-                    outputs=[]
+                    outputs=[],
                 ),
-                status='not_applied'
+                status='not_applied',
             ),
-            dict(title='Fill in missing values',
-                 message='The following columns have null-valued entries and are categorical: '
-                 '[\'source\']. '
-                 'Suggested: fill null values with a randomly sampled not null value.',
-                 action_payload=dict(action_type='impute',
-                                     action_arguments=['source'],
-                                     action_options=dict(strategy='random'),
-                                     action_variables=dict(source=dict(feature=dict(
-                                         column_type='category_high_cardinality', uuid='source'),
-                                                                       type='feature')),
-                                     action_code='',
-                                     axis='column',
-                                     outputs=[]),
-                 status='not_applied'),
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null-valued entries and are categorical: '
+                '[\'source\']. '
+                'Fill the null values in these columns with randomly sampled non-null values '
+                'from the same column.',
+                action_payload=dict(
+                    action_type='impute',
+                    action_arguments=['source'],
+                    action_options=dict(strategy='random'),
+                    action_variables=dict(
+                        source=dict(
+                            feature=dict(column_type='category_high_cardinality', uuid='source'),
+                            type='feature',
+                        )
+                    ),
+                    action_code='',
+                    axis='column',
+                    outputs=[],
+                ),
+                status='not_applied',
+            ),
         ]
         df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
@@ -485,9 +472,20 @@ class ImputeValuesTest(TestCase):
 
     def test_row_rm(self):
         df = pd.DataFrame(
-            [['CT', '06902'], ['NY', '10001'], ['MI', '48841'], ['CA', '95001'], ['', None],
-             [None, '23456'], ['CA', None], ['MA', '12214'], ['PA', '37821'], ['TX', '75001']],
-            columns=['state', 'location'])
+            [
+                ['CT', '06902'],
+                ['NY', '10001'],
+                ['MI', '48841'],
+                ['CA', '95001'],
+                ['', None],
+                [None, '23456'],
+                ['CA', None],
+                ['MA', '12214'],
+                ['PA', '37821'],
+                ['TX', '75001'],
+            ],
+            columns=['state', 'location'],
+        )
         column_types = {'state': 'category', 'location': 'zip_code'}
         statistics = {
             'state/count': 8,
@@ -496,27 +494,31 @@ class ImputeValuesTest(TestCase):
             'location/count': 8,
             'location/count_distinct': 8,
             'location/null_value_rate': 0.2,
-            'is_timeseries': False
+            'is_timeseries': False,
         }
         expected_suggestions = [
-            dict(title='Remove rows with missing entries',
-                 message='There are 3 rows containing null values. '
-                 'Suggested: remove these rows to remove null values from the dataset.',
-                 action_payload=dict(action_type='filter',
-                                     action_arguments=['state', 'location'],
-                                     action_options={},
-                                     action_variables=dict(
-                                         state=dict(feature=dict(column_type='category',
-                                                                 uuid='state'),
-                                                    type='feature'),
-                                         location=dict(feature=dict(column_type='zip_code',
-                                                                    uuid='location'),
-                                                       type='feature'),
-                                     ),
-                                     action_code='state != null and location != null',
-                                     axis='row',
-                                     outputs=[]),
-                 status='not_applied')
+            dict(
+                title='Remove rows with missing entries',
+                message='There are 3 rows containing null values. '
+                'Remove these rows to remove null values from the dataset.',
+                action_payload=dict(
+                    action_type='filter',
+                    action_arguments=['state', 'location'],
+                    action_options={},
+                    action_variables=dict(
+                        state=dict(
+                            feature=dict(column_type='category', uuid='state'), type='feature'
+                        ),
+                        location=dict(
+                            feature=dict(column_type='zip_code', uuid='location'), type='feature'
+                        ),
+                    ),
+                    action_code='state != null and location != null',
+                    axis='row',
+                    outputs=[],
+                ),
+                status='not_applied',
+            )
         ]
         suggestions = ImputeValues(
             df,
@@ -526,11 +528,21 @@ class ImputeValuesTest(TestCase):
         self.assertEqual(expected_suggestions, suggestions)
 
     def test_seq(self):
-        df = pd.DataFrame([['CT', '06902', '12-24-2022'], ['NY', '10001', '12-25-2022'],
-                           [None, '', None], ['CA', '', '12-28-2022'], [None, '', '12-30-2022'],
-                           ['CA', None, '12-30-2022'], ['MA', '12214', '12-31-2022'],
-                           ['PA', '', '1-2-2023'], ['TX', '75001', '1-2-2023'], ['', None, '']],
-                          columns=['state', 'location', 'timestamp'])
+        df = pd.DataFrame(
+            [
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                [None, '', None],
+                ['CA', '', '12-28-2022'],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+                ['', None, ''],
+            ],
+            columns=['state', 'location', 'timestamp'],
+        )
         column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
         statistics = {
             'state/count': 7,
@@ -544,33 +556,37 @@ class ImputeValuesTest(TestCase):
             'timestamp/null_value_rate': 1 / 10,
             'timestamp/max_null_seq': 1,
             'is_timeseries': True,
-            'timeseries_index': ['timestamp']
+            'timeseries_index': ['timestamp'],
         }
         expected_suggestions = [
-            dict(title='Fill in missing values',
-                 message='The following columns have null-valued entries which '
-                 'may be part of timeseries data: '
-                 '[\'state\', \'location\', \'timestamp\']. '
-                 'Suggested: fill null values with previously occurring '
-                 'value in timeseries.',
-                 action_payload=dict(action_type='impute',
-                                     action_arguments=['state', 'location', 'timestamp'],
-                                     action_options=dict(strategy='sequential',
-                                                         timeseries_index=['timestamp']),
-                                     action_variables=dict(
-                                         state=dict(feature=dict(column_type='category',
-                                                                 uuid='state'),
-                                                    type='feature'),
-                                         location=dict(feature=dict(column_type='zip_code',
-                                                                    uuid='location'),
-                                                       type='feature'),
-                                         timestamp=dict(feature=dict(column_type='datetime',
-                                                                     uuid='timestamp'),
-                                                        type='feature')),
-                                     action_code='',
-                                     axis='column',
-                                     outputs=[]),
-                 status='not_applied')
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null-valued entries which '
+                'may be part of timeseries data: '
+                '[\'state\', \'location\', \'timestamp\']. '
+                'Fill the null values in these columns with the previously occurring '
+                'value in the timeseries.',
+                action_payload=dict(
+                    action_type='impute',
+                    action_arguments=['state', 'location', 'timestamp'],
+                    action_options=dict(strategy='sequential', timeseries_index=['timestamp']),
+                    action_variables=dict(
+                        state=dict(
+                            feature=dict(column_type='category', uuid='state'), type='feature'
+                        ),
+                        location=dict(
+                            feature=dict(column_type='zip_code', uuid='location'), type='feature'
+                        ),
+                        timestamp=dict(
+                            feature=dict(column_type='datetime', uuid='timestamp'), type='feature'
+                        ),
+                    ),
+                    action_code='',
+                    axis='column',
+                    outputs=[],
+                ),
+                status='not_applied',
+            )
         ]
         suggestions = ImputeValues(
             df,
@@ -581,11 +597,20 @@ class ImputeValuesTest(TestCase):
 
     def test_seq_edge(self):
         df = pd.DataFrame(
-            [['MI', '32453', '12-26-2022'], ['CA', '', '12-28-2022'], ['', None, '12-28-2022'],
-             ['MA', '12214', '12-31-2022'], ['PA', '', '1-2-2023'], ['TX', '75001', '1-2-2023'],
-             ['CT', '06902', '12-24-2022'], ['NY', '10001', '12-25-2022'], [None, '', '12-30-2022'],
-             ['CA', None, '12-30-2022']],
-            columns=['state', 'location', 'timestamp'])
+            [
+                ['MI', '32453', '12-26-2022'],
+                ['CA', '', '12-28-2022'],
+                ['', None, '12-28-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022'],
+            ],
+            columns=['state', 'location', 'timestamp'],
+        )
         column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
         statistics = {
             'state/count': 7,
@@ -602,29 +627,33 @@ class ImputeValuesTest(TestCase):
             'timestamp/max_null_seq': 0,
             'timestamp/mode_ratio': 1 / 10,
             'is_timeseries': True,
-            'timeseries_index': ['timestamp']
+            'timeseries_index': ['timestamp'],
         }
         expected_suggestions = [
-            dict(title='Fill in missing values',
-                 message='The following columns have null-valued entries which '
-                 'may be part of timeseries data: [\'state\', \'location\']. '
-                 'Suggested: fill null values with previously occurring '
-                 'value in timeseries.',
-                 action_payload=dict(action_type='impute',
-                                     action_arguments=['state', 'location'],
-                                     action_options=dict(strategy='sequential',
-                                                         timeseries_index=['timestamp']),
-                                     action_variables=dict(
-                                         state=dict(feature=dict(column_type='category',
-                                                                 uuid='state'),
-                                                    type='feature'),
-                                         location=dict(feature=dict(column_type='zip_code',
-                                                                    uuid='location'),
-                                                       type='feature')),
-                                     action_code='',
-                                     axis='column',
-                                     outputs=[]),
-                 status='not_applied')
+            dict(
+                title='Fill in missing values',
+                message='The following columns have null-valued entries which '
+                'may be part of timeseries data: [\'state\', \'location\']. '
+                'Fill the null values in these columns with the previously occurring '
+                'value in the timeseries.',
+                action_payload=dict(
+                    action_type='impute',
+                    action_arguments=['state', 'location'],
+                    action_options=dict(strategy='sequential', timeseries_index=['timestamp']),
+                    action_variables=dict(
+                        state=dict(
+                            feature=dict(column_type='category', uuid='state'), type='feature'
+                        ),
+                        location=dict(
+                            feature=dict(column_type='zip_code', uuid='location'), type='feature'
+                        ),
+                    ),
+                    action_code='',
+                    axis='column',
+                    outputs=[],
+                ),
+                status='not_applied',
+            )
         ]
         df = clean_dataframe(df, column_types, dropna=False)
         suggestions = ImputeValues(
