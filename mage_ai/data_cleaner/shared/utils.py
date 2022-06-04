@@ -1,5 +1,4 @@
 from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, DATETIME
-from mage_ai.data_cleaner.column_type_detector import DATETIME
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -43,3 +42,10 @@ def clean_series(series, column_type, dropna=True):
 
 def clean_dataframe(df, column_types, dropna=True):
     return df.apply(lambda col: clean_series(col, column_types[col.name], dropna=dropna), axis=0)
+
+
+def is_numeric_dtype(df, column, column_type):
+    return (
+        column_type in [NUMBER, NUMBER_WITH_DECIMALS] or
+        issubclass(df[column].dtype.type, np.number)
+    )
