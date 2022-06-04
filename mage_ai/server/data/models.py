@@ -144,7 +144,8 @@ class FeatureSet(Model):
         )
         if detailed:
             sample_data = self.sample_data
-            datetime_cols = sample_data.select_dtypes(include=['datetime64']).columns.tolist()
+            datetime_cols = [col for col in sample_data.columns
+                             if 'datetime64' in str(sample_data[col])]
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
             # Filter sample data
             if column is not None:

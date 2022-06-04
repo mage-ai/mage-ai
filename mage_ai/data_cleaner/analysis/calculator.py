@@ -5,7 +5,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_TIME_SERIES,
 )
 from mage_ai.data_cleaner.shared.logger import timer
-from mage_ai.data_cleaner.shared.utils import clean_dataframe
+from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.multi import run_parallel
 from mage_ai.data_cleaner.column_type_detector import (
@@ -16,7 +16,8 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
-from pandas.api.types import is_numeric_dtype
+import numpy as np
+import traceback
 
 DD_KEY = 'lambda.analysis_calculator'
 
@@ -91,8 +92,7 @@ class AnalysisCalculator():
     @property
     def numeric_features(self):
         return [f['uuid'] for f in self.features
-                if f['column_type'] in [NUMBER, NUMBER_WITH_DECIMALS]
-                or is_numeric_dtype(self.df[f['uuid']])]
+                if is_numeric_dtype(self.df, f['uuid'], f['column_type'])]
 
     @property
     def tags(self):
@@ -100,7 +100,17 @@ class AnalysisCalculator():
 
     def calculate_column(self, df, feature):
         with timer('analysis.calculate_column', dict(feature=feature), verbose=False):
-            return self.calculate_column_internal(df, feature)
+            try:
+                return self.calculate_column_internal(df, feature)
+            except Exception:
+                print(f'Failed to calculate stats for column {feature}')
+                traceback.print_exc()
+                return {
+                    'feature': feature,
+                    DATA_KEY_CHARTS: [],
+                    DATA_KEY_CORRELATION: [],
+                    DATA_KEY_TIME_SERIES: [],
+                }
 
     def calculate_column_internal(self, df, feature):
         df_columns = df.columns
@@ -121,7 +131,7 @@ class AnalysisCalculator():
         correlation = []
         time_series = []
 
-        if column_type in [NUMBER, NUMBER_WITH_DECIMALS] or is_numeric_dtype(df[col]):
+        if is_numeric_dtype(df, col, column_type):
             with timer(
                 'analysis.calculate_column.build_histogram_data',
                 dict(feature=feature),
