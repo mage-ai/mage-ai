@@ -557,8 +557,10 @@ function Overview({
           left={
             <ChartContainer title="Correlations">
               <HeatMap
+                countMidpoint={0}
                 data={heatmapData}
                 height={UNIT * 8 * xyLabels.length}
+                minCount={-1}
                 xLabels={xyLabels}
                 yLabels={xyLabels}
               />

@@ -76,12 +76,9 @@ export const RowStyle = styled.div<any>`
   `}
 
   ${props => !props.noBorder && `
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
-  `}
-
-
-  ${props => !props.finalRow && `
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-left: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-right: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.finalRow && `

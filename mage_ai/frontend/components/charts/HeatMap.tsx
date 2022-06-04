@@ -40,32 +40,35 @@ function min<Datum>(data: Datum[], value: (d: Datum) => number): number {
 const bins = (d: any) => d.bins;
 const count = (d: any) => d.count;
 
-export type HeatmapProps = {
+type HeatMapSharedProps = {
+  countMidpoint?: number;
   data: number[][] | string[][];
-  events?: boolean;
   height: number;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
-  width: number;
+  minCount?: number;
   yLabels?: number[] | string[];
 };
 
+export type HeatmapProps = {
+  events?: boolean;
+  width: number;
+} & HeatMapSharedProps;
+
 type HeatMapContainerProps = {
-  data: number[][] | string[][];
-  height: number;
-  margin?: { top?: number; right?: number; bottom?: number; left?: number };
   xAxisLabel?: string;
   xLabels?: number[] | string[];
   yAxisLabel?: string;
-  yLabels?: number[] | string[];
-};
+} & HeatMapSharedProps;
 
 const defaultMargin = { top: 0, left: 0, right: 0, bottom: 0 };
 
 function HeatMap ({
+  countMidpoint,
   data,
   events = false,
   height,
   margin: marginArgs = {},
+  minCount,
   width,
   yLabels,
 }: HeatmapProps) {
@@ -88,7 +91,11 @@ function HeatMap ({
     });
   });
   const colorMax = max(binData, d => max(bins(d), count));
+  const colorMin = min(binData, d => min(bins(d), count));
   const bucketSizeMax = max(binData, d => bins(d).length);
+
+  const zeroOrOtherNumber = typeof countMidpoint !== 'undefined' ? countMidpoint : 0;
+  const minCountValue = typeof minCount !== 'undefined' ? minCount : colorMin;
 
   // scales
   const xScale = scaleLinear<number>({
@@ -97,20 +104,29 @@ function HeatMap ({
   const yScale = scaleLinear<number>({
     domain: [0, bucketSizeMax],
   });
+
   const rectColorScale = scaleLinear<string>({
     range: [border, purple],
-    domain: [0, colorMax],
+    domain: [zeroOrOtherNumber, colorMax],
   });
   const opacityScale = scaleLinear<number>({
     range: [0.1, 1],
-    domain: [0, colorMax],
+    domain: [zeroOrOtherNumber, colorMax],
+  });
+  const rectColorScaleNegative = scaleLinear<string>({
+    range: [border, purple],
+    domain: [minCountValue, zeroOrOtherNumber],
+  });
+  const opacityScaleNegative = scaleLinear<number>({
+    range: [1, 0.1],
+    domain: [minCountValue, zeroOrOtherNumber],
   });
 
   const xMax = width - (margin.left + margin.right);
   const yMax = height - (margin.bottom + margin.top);
 
   const binWidth = xMax / binData.length;
-  const binHeight = yMax / binData.length;
+  const binHeight = yMax / bucketSizeMax;
 
   xScale.range([0, xMax]);
   yScale.range([yMax, 0]);
@@ -131,34 +147,44 @@ function HeatMap ({
           >
             {heatmap =>
               heatmap.map(heatmapBins =>
-                heatmapBins.map(bin => (
-                  <svg
-                    height={binHeight}
-                    key={`heatmap-rect-${bin.row}-${bin.column}`}
-                    width={binWidth}
-                    x={bin.x}
-                    y={bin.y - binHeight}
-                  >
-                    <rect
-                      className="visx-heatmap-rect"
-                      fill={bin.color}
-                      fillOpacity={bin.opacity}
+                heatmapBins.map((bin) => {
+                  let opacity = bin.opacity;
+                  let color = bin.color;
+
+                  if (typeof countMidpoint !== 'undefined' && bin.count < countMidpoint) {
+                    opacity = opacityScaleNegative(bin.count);
+                    color = rectColorScaleNegative(bin.count);
+                  }
+
+                  return (
+                    <svg
                       height={binHeight}
+                      key={`heatmap-rect-${bin.row}-${bin.column}`}
                       width={binWidth}
-                    />
-                    <text
-                      alignmentBaseline="middle"
-                      fill={bin.count >= 0.8 * colorMax ? white : text}
-                      fontFamily={fontFamily}
-                      fontSize={title1Size}
-                      textAnchor="middle"
-                      x="50%"
-                      y="50%"
+                      x={bin.x}
+                      y={bin.y - binHeight}
                     >
-                      {bin.count}
-                    </text>
-                  </svg>
-                )),
+                      <rect
+                        className="visx-heatmap-rect"
+                        fill={color}
+                        fillOpacity={opacity}
+                        height={binHeight}
+                        width={binWidth}
+                      />
+                      <text
+                        alignmentBaseline="middle"
+                        fill={bin.count >= 0.8 * colorMax ? white : text}
+                        fontFamily={fontFamily}
+                        fontSize={title1Size}
+                        textAnchor="middle"
+                        x="50%"
+                        y="50%"
+                      >
+                        {bin.count}
+                      </text>
+                    </svg>
+                  );
+                }),
               )
             }
           </HeatmapRect>
@@ -169,9 +195,11 @@ function HeatMap ({
 };
 
 function HeatMapContainer({
+  countMidpoint,
   data,
   height: parentHeight,
   margin,
+  minCount,
   xAxisLabel,
   xLabels,
   yAxisLabel,
@@ -260,9 +288,11 @@ function HeatMapContainer({
           <ParentSize>
             {({ width, height }) => (
               <HeatMap
+                countMidpoint={countMidpoint}
                 data={data}
                 height={height}
                 margin={margin}
+                minCount={minCount}
                 width={width}
                 yLabels={yLabels}
               />

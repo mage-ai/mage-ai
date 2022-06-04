@@ -7,6 +7,7 @@ import FeatureType, {
   COLUMN_TYPE_NUMBERS,
 } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
+import HeatMap from '@components/charts/HeatMap';
 import Histogram from '@components/charts/Histogram';
 import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
@@ -32,7 +33,7 @@ import Spacing from '@oracle/elements/Spacing';
 
 type ColumnAnalysisProps = {
   column: string;
-  features: FeatureType[]; 
+  features: FeatureType[];
   insights: any;
   statisticsByColumn: {
     [key: string]: number;
@@ -132,6 +133,12 @@ function ColumnAnalysis({
     correlations,
     feature,
   }]);
+  const yLabels = [column];
+  const heatmapData = [[1]];
+  correlationsRowData?.map(([, col, r], idx: number) => {
+    yLabels.push(col);
+    heatmapData.push([roundNumber(r)]);
+  });
 
   const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
 
@@ -251,6 +258,7 @@ function ColumnAnalysis({
             label: 'Rows',
           },
         ]}
+        noBorder
         rowGroupData={[
           {
             rowData: rangedWithUnusualDistribution.map(({ x, y }) => ({
@@ -278,6 +286,7 @@ function ColumnAnalysis({
             label: 'Rows',
           },
         ]}
+        noBorder
         rowGroupData={[
           {
             rowData: unusualDistribution.map(({ x, y }) => ({
@@ -317,6 +326,7 @@ function ColumnAnalysis({
               label: 'Rows',
             },
           ]}
+          noBorder
           rowGroupData={[
             {
               rowData: sortByKey(rowData, 'x', {
@@ -490,7 +500,7 @@ function ColumnAnalysis({
           right={
             <ChartContainer
               noPadding={isBooleanType || !!unusualDistributionTable}
-              title="Distribution data"
+              title="Values with unusual distribution"
             >
               {isBooleanType && (
                 <SimpleDataTable
@@ -506,6 +516,7 @@ function ColumnAnalysis({
                       label: '% of rows',
                     },
                   ]}
+                  noBorder
                   rowGroupData={[
                     {
                       rowData: sortByKey(
@@ -540,6 +551,7 @@ function ColumnAnalysis({
           }
         />
       )}
+
       {timeSeriesChartsByDatetimeColumn.length >= 1 &&
         timeSeriesChartsByDatetimeColumn.map(({
           column: datetimeColumn,
@@ -564,6 +576,26 @@ function ColumnAnalysis({
           />
         ))
       }
+
+      {correlationsRowData?.length >= 1 && (
+        <ChartRow
+          left={
+            <ChartContainer
+              title="Correlations"
+            >
+              <HeatMap
+                countMidpoint={0}
+                data={heatmapData}
+                height={UNIT * 8 * yLabels.length}
+                minCount={-1}
+                xLabels={[column]}
+                yLabels={yLabels}
+              />
+            </ChartContainer>
+          }
+          right={<div />}
+        />
+      )}
     </FlexContainer>
   );
 }
