@@ -71,7 +71,6 @@ export function createStatisticsSample(statistics, colTypes) {
     if (STAT_KEYS.includes(key)) {
       const name = HUMAN_READABLE_MAPPING[key];
       let value = statistics[key];
-      console.log(value);
       if (WARN_KEYS.includes(key)) {
         value = `${value} (${getPercentage(value / total)})`;
       }

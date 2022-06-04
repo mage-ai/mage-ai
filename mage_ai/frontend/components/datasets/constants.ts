@@ -30,8 +30,8 @@ export const HUMAN_READABLE_MAPPING = {
   'count': 'Row count',
   'duplicate_row_count': 'Duplicate rows',
   'empty_column_count': 'Empty columns',
-  'total_invalid_value_count': 'Invalid rows',
-  'total_null_value_count': 'Missing rows',
+  'total_invalid_value_count': 'Invalid cells',
+  'total_null_value_count': 'Missing cells',
   'validity': 'Validity',
 };
 
