@@ -3,8 +3,8 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
 )
-from mage_ai.data_cleaner.column_type_detector import (  
-    CATEGORY, 
+from mage_ai.data_cleaner.column_type_detector import (
+    CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
     DATETIME,
     EMAIL,
@@ -50,7 +50,7 @@ class ReformatValuesSubRule():
 
     def evaluate(self, column):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
-    
+
     def get_suggestions(self):
         raise NotImplementedError('Children of ReformatValuesSubRule must override this method.')
 
@@ -120,7 +120,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         new_length = clean_col.count()
         if new_length / unfiltered_length <= self.ALPH_RATIO_LB:
             return
-        
+
         uppercase, clean_col = self.filter_column_regex(clean_col, self.UPPERCASE_PATTERN)
         lowercase, clean_col = self.filter_column_regex(clean_col, self.LOWERCASE_PATTERN)
         mixedcase = clean_col.count()
@@ -146,7 +146,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                     'Reformat values',
                     'The following columns have mixed capitalization formats: '
                     f'{payloads[case]}. '
-                    f'Reformat these columns with fully {case} text to improve data quality.',
+                    f'Reformat these columns as fully {case} text to improve data quality.',
                     ActionType.REFORMAT,
                     action_arguments=payloads[case],
                     axis=Axis.COLUMN,
@@ -189,7 +189,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             count = 0
         if count / self.statistics[f'{column}/count'] == 1:
             self.matches.append(column)
-                
+
 
     def get_suggestions(self):
         suggestions = []
@@ -212,10 +212,10 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
     DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
-    
+
     def evaluate(self, column):
         """
-        Rule: 
+        Rule:
         1. If column is not of dtype category or text, no suggestion
         2. If column does not contain string types, no suggestion
         3. Try use Pandas datetime parse to convert from string to datetime. 

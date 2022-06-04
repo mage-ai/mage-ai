@@ -5,7 +5,6 @@ from keyword import iskeyword
 
 
 class CleanColumnNames(BaseRule):
-
     def is_dirty(self, name):
         if NameConventionPatterns.NON_ALNUM.search(name):
             return True
@@ -38,10 +37,12 @@ class CleanColumnNames(BaseRule):
                     'Clean dirty column names',
                     'The following columns have unclean naming conventions: '
                     f'{matches}. '
-                    'Making these names lowercase and alphanumeric may improve'
+                    'Cleaning these names to be lowercase and alphanumeric can improve '
                     'ease of dataset access and reduce security risks.',
                     action_type=ActionType.CLEAN_COLUMN_NAME,
                     action_arguments=matches,
-                    axis='column'))
+                    axis='column',
+                )
+            )
 
         return suggestions
