@@ -150,7 +150,7 @@ import { cutTextSize } from './helpers';
               return (
                 // eslint-disable-next-line react/jsx-key
                 <tr {...row.getRowProps()}>
-                  {row.cells.map((cell) => (
+                  {row.cells.map(cell => (
                     // eslint-disable-next-line react/jsx-key
                     <td
                       {...cell.getCellProps()}

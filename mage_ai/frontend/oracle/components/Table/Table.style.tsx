@@ -5,17 +5,17 @@ import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 
 export const TableStyle = styled.div<any>`
-  position: relative;
-  text-align: left;
-  position: relative;
-  border: solid 1px #D8DCE3;
-  border-collapse: collapse;
-  border-radius: ${BORDER_RADIUS_LARGE}px;
   max-height: 50vh;
-  width: 100%;
   max-width: 100vw;
   overflow: auto;
-  ${props => props.table &&`
+  position: relative;
+
+  ${props => props && `
+    border: solid 1px ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-collapse: collapse;
+    border-radius: ${BORDER_RADIUS_LARGE}px;
+  `}
+  ${props => props.table && `
     background-color: ${(props.theme.background || light.background).page};
   `}
   ${props => props.height && `
