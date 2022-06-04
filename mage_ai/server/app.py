@@ -218,6 +218,8 @@ def update_pipeline(id):
         result = clean_data(df_transformed, transform=False)
         pipeline.pipeline = clean_pipeline
         feature_set.write_files(result)
+    else:
+        pipeline.pipeline = clean_pipeline
 
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
