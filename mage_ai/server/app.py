@@ -26,14 +26,14 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 thread = None
 
 
-def rescue_errors(endpoint):
+def rescue_errors(endpoint, error_code=500):
     def handler(*args, **kwargs):
         try:
             response = endpoint(*args, **kwargs)
         except Exception as err:
             exception = traceback.format_exc()
             response_obj = {
-                'error_code': 500,
+                'error_code': error_code,
                 'error_msg': str(err),
                 'error_stack_trace': exception,
                 'full_stack_trace': traceback.format_stack(),
@@ -43,6 +43,7 @@ def rescue_errors(endpoint):
                 status=200,
                 mimetype='application/json',
             )
+            log.error('An error was caught and reported to the client: ')
             log.error(exception)
         return response
 
