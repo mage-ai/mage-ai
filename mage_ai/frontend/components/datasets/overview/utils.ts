@@ -16,14 +16,16 @@ export function createMetricsSample(statistics) {
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
       let value = statistics[key].toPrecision(2);
+      let bar = [false];
       const order = HUMAN_READABLE_MAPPING[key];
       const index = METRICS_SORTED_MAPPING[key];
       if (PERCENTAGE_KEYS.includes(key)) {
         value *= 100;
+        bar = [true, value];
         value = `${value}%`;
       }
       metricRows[index] = {
-        columnValues: [order, value],
+        columnValues: [order, value, bar],
       };
     }
   });

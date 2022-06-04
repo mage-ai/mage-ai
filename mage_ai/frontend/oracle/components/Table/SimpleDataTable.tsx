@@ -30,7 +30,7 @@ export type ColumnHeaderType = {
 export type RowGroupDataType = {
   title?: string;
   rowData: {
-    columnValues: (string | number | any)[];
+    columnValues: (string | number | boolean | any)[];
     uuid?: string | number;
   }[];
 };
@@ -139,20 +139,36 @@ function SimpleDataTable({
 
           columnValues?.forEach((value: any, cellIndex: number) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
-
-            cells.push(
-              <Cell
-                cellIndex={cellIndex}
-                flex={columnFlexNumbers[cellIndex]}
-                key={cellIndex}
-                render={renderFunc}
-                rowGroupIndex={rowGroupIndex}
-                rowIndex={rowIndex}
-                selected={isSelected}
-                small={small}
-                value={value}
-              />,
-            );
+            if (Array.isArray(value)) {
+              cells.push(
+                <Cell
+                  cellIndex={cellIndex}
+                  flex={columnFlexNumbers[cellIndex]}
+                  key={cellIndex}
+                  render={renderFunc}
+                  rowGroupIndex={rowGroupIndex}
+                  rowIndex={rowIndex}
+                  selected={isSelected}
+                  showProgress={value[0]}
+                  small={small}
+                  value={value[1]}
+                />,
+              );
+            } else {
+              cells.push(
+                <Cell
+                  cellIndex={cellIndex}
+                  flex={columnFlexNumbers[cellIndex]}
+                  key={cellIndex}
+                  render={renderFunc}
+                  rowGroupIndex={rowGroupIndex}
+                  rowIndex={rowIndex}
+                  selected={isSelected}
+                  small={small}
+                  value={value}
+                />,
+              );
+            }
           });
 
           const cellEls = (
