@@ -5,6 +5,8 @@ import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 export const TableStyle = styled.div<any>`
   position: relative;
+  height: 80%;
+  max-height: 80vh;
   width: 100%;
   max-width: 100vw;
   overflow: auto;

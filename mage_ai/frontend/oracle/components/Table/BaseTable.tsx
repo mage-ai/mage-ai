@@ -29,6 +29,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
 
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
+  let lengths = [];
 
   // Keep these samples in due to undefined errors.
   const dataSample = useMemo(
@@ -117,7 +118,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
       <table 
           {...getTableProps()}
           style={{
-            border: 'solid 1px #D8DCE3',
+            // border: 'solid 1px #D8DCE3',
             borderRadius: `${BORDER_RADIUS_LARGE}px`,
             width: totalColumnsWidth,
           }}
@@ -134,10 +135,9 @@ import { cutTextSize, getColumnWidth } from './helpers';
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
-                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
-                    minWidth: column.minWidth,
+                    // width: `${getColumnWidth(rows, column.id)}px`,
                     padding: '14px',
-                    position: 'sticky',
+                    // minWidth: `${column.width}px`,
                   }}
                 >
                   {/* <RowCellStyle width={totalColumnsWidth}> */}
@@ -169,7 +169,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
                         border: 'solid 1px #FBFCFD',
                         borderLeft: 'none',
                         borderRight: 'none',
-                        maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
+                        // maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
                         minWidth: cell.column.width,
                         padding: '14px',
                       }}

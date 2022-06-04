@@ -1,8 +1,8 @@
 import { UNIT } from '@oracle/styles/units/spacing';
 import { DataTableRow } from './types';
 // TODO: Update with official numbers and import from units/spacing.ts
-export const WIDTH_OF_SINGLE_CHARACTER = 10;
-export const CHARACTER_LIMIT = 45;
+export const WIDTH_OF_SINGLE_CHARACTER = 8;
+export const CHARACTER_LIMIT = 20;
 
 export const cutTextSize = (
   label: string,
@@ -12,13 +12,17 @@ export const getColumnWidth = (
   rows: DataTableRow<any>[],
   headerText: string,
 ) => {
-  const toFieldLength = (row: any) => (row?.toString() ?? '').length;
+  const toFieldLength = (row: any) => {
+    (row?.toString() ?? '').length;
+  };
 
   // Use the largest length between the rows and columns.
+  console.log("Rows:", ...rows);
   const cellLength = Math.max(
     // TODO: could short circuit here if a single item length > MAX_COL_WIDTH
     ...rows.map(toFieldLength),
     headerText.length,
   );
-  return cellLength * WIDTH_OF_SINGLE_CHARACTER;
+  // console.log(Math.max(...rows.map(toFieldLength)), headerText.length, headerText);
+  return (cellLength)  * WIDTH_OF_SINGLE_CHARACTER;
 };

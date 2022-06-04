@@ -15,6 +15,8 @@ import {
 } from './index.style';
 import { Check } from '@oracle/icons';
 import Spacing from '@oracle/elements/Spacing';
+import ProgressBar from '../ProgressBar';
+import { PERCENTAGE_KEYS } from '@components/datasets/constants';
 
 export type OnClickRowProps = {
   rowGroupIndex: number;
@@ -25,6 +27,7 @@ export type OnClickRowProps = {
 export type ColumnHeaderType = {
   Icon?: any;
   label: string;
+  progress?: number;
 };
 
 export type RowGroupDataType = {
