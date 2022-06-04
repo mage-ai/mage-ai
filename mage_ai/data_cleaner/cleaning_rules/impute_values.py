@@ -317,7 +317,7 @@ class ImputeActionConstructor:
             message = (
                 'The following columns have many null-valued entries: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in these columns with a placeholder to mark them as missing'
+                'Fill the null values in these columns with a placeholder to mark them as missing.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
@@ -343,7 +343,7 @@ class ImputeActionConstructor:
                 'The following columns have null valued entries and '
                 'a large proportion of entries are a single value: '
                 f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in each of these columns with their most frequent value'
+                'Fill the null values in each of these columns with their most frequent value.'
             )
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE

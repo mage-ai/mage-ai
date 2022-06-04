@@ -5,20 +5,23 @@ import pandas as pd
 
 class RemoveOutliersTests(TestCase):
     def test_evaluate(self):
-        df = pd.DataFrame([
-            [1, 1, 1],
-            [1, 2, 997],
-            [1, 3, 998],
-            [1, 4, 999],
-            [1, 5, 1000],
-            [1, 6, 997],
-            [1, 7, 998],
-            [1, 8, 999],
-            [1, 9, 1000],
-            [1, 10, 997],
-            [1, 11, 998],
-            [1, 12, 999],
-        ], columns=['number1', 'number2', 'number3'])
+        df = pd.DataFrame(
+            [
+                [1, 1, 1],
+                [1, 2, 997],
+                [1, 3, 998],
+                [1, 4, 999],
+                [1, 5, 1000],
+                [1, 6, 997],
+                [1, 7, 998],
+                [1, 8, 999],
+                [1, 9, 1000],
+                [1, 10, 997],
+                [1, 11, 998],
+                [1, 12, 999],
+            ],
+            columns=['number1', 'number2', 'number3'],
+        )
         column_types = {
             'number1': 'number',
             'number2': 'number',
@@ -37,19 +40,23 @@ class RemoveOutliersTests(TestCase):
         }
         result = RemoveOutliers(df, column_types, statistics).evaluate()
 
-        self.assertEqual(result, [
-            dict(
-                title='Remove outliers',
-                message='There\'re 1 outliers in column \'number3\'. Suggest to remove them.',
-                status='not_applied',
-                action_payload=dict(
-                    action_type='filter',
-                    action_arguments=['number3'],
-                    action_code='number3 <= 1779.01 and number3 >= 51.49000000000001',
-                    action_options={},
-                    action_variables={},
-                    axis='row',
-                    outputs=[],
-                ),
-            )
-        ])
+        self.assertEqual(
+            result,
+            [
+                dict(
+                    title='Remove outliers',
+                    message='There are 1 outlier(s) in column \'number3\'. '
+                    'Removing them can reduce the amount of noise in the data.',
+                    status='not_applied',
+                    action_payload=dict(
+                        action_type='filter',
+                        action_arguments=['number3'],
+                        action_code='number3 <= 1779.01 and number3 >= 51.49000000000001',
+                        action_options={},
+                        action_variables={},
+                        axis='row',
+                        outputs=[],
+                    ),
+                )
+            ],
+        )

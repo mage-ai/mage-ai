@@ -15,7 +15,7 @@ class RemoveDuplicateRows(BaseRule):
                 self._build_transformer_action_suggestion(
                     'Remove duplicate rows',
                     f'There are {duplicate_row_count} duplicate rows in the dataset. '
-                    'Removing these rows can reduce the amount of redundant data',
+                    'Removing these rows can reduce the amount of redundant data.',
                     ActionType.DROP_DUPLICATE,
                     action_arguments=[],
                     axis=Axis.ROW,
