@@ -5,7 +5,6 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Text from '@oracle/elements/Text';
-import { PERCENTAGE_KEYS } from '@components/datasets/constants';
 import {
   ColumnHeaderCellStyle,
   ColumnHeaderRowStyle,
@@ -152,9 +151,9 @@ function SimpleDataTable({
                   selected={isSelected}
                   showProgress={value[0]}
                   small={small}
-                  value={value[1]}  
+                  value={value[1]}
                 />,
-              );  
+              );
             } else {
               cells.push(
                 <Cell
