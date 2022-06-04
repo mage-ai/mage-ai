@@ -1,4 +1,8 @@
+import React, { useContext } from 'react';
+import '@uiw/react-textarea-code-editor/dist.css';
 import NextLink from 'next/link';
+import dynamic from 'next/dynamic';
+import { ThemeContext } from 'styled-components';
 
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
@@ -9,6 +13,9 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { Close } from '@oracle/icons';
+import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pluralize } from '@utils/string';
 
 export type SuggestionRowProps = {
@@ -24,6 +31,13 @@ export type SuggestionRowProps = {
   showIdx?: boolean;
 };
 
+const CodeEditor = dynamic(
+  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  {
+    ssr: false,
+  },
+);
+
 const SuggestionRow = ({
   action,
   border,
@@ -34,9 +48,12 @@ const SuggestionRow = ({
   onClose,
   showIdx,
 }: SuggestionRowProps) => {
+  const themeContext = useContext(ThemeContext);
+
   const {
     action_payload: {
       action_arguments: actionArguments,
+      action_code: actionCode,
       action_options: actionOptions,
     },
     message,
@@ -118,13 +135,32 @@ const SuggestionRow = ({
           </Text>
         )}
 
-        <FlexContainer>
-          {!message && actionOptions && Object.entries(actionOptions).map(([k, v], idx: number) => (
-            <Text key={k} inline muted small>
-              <Text inline monospace muted small>{k}</Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
-            </Text>
-          ))}
-        </FlexContainer>
+        {!message && actionOptions && (
+          <FlexContainer>
+            {Object.entries(actionOptions).map(([k, v], idx: number) => (
+              <Text key={k} inline muted small>
+                <Text inline monospace muted small>{k}</Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
+              </Text>
+            ))}
+          </FlexContainer>
+        )}
+
+        {actionCode && (
+          <CodeEditor
+            // @ts-ignore
+            disabled
+            // @ts-ignore
+            language="python"
+            padding={UNIT * 1}
+            style={{
+              backgroundColor: themeContext.monotone.grey100,
+              fontFamily: MONO_FONT_FAMILY_REGULAR,
+              fontSize: REGULAR_FONT_SIZE,
+              tabSize: 4,
+            }}
+            value={actionCode}
+          />
+        )}
       </Flex>
 
       <FlexContainer>

@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import dynamic from 'next/dynamic';
+import { ThemeContext } from 'styled-components';
+import '@uiw/react-textarea-code-editor/dist.css';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
@@ -10,6 +13,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
+import light from '@oracle/styles/themes/light';
 import { Check } from '@oracle/icons';
 import {
   ContainerStyle,
@@ -20,6 +24,8 @@ import {
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
 } from './constants';
+import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import {
@@ -37,6 +43,13 @@ type ActionFormProps = {
   setPayload: (payload: ActionPayloadType) => void;
 };
 
+const CodeEditor = dynamic(
+  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  {
+    ssr: false,
+  },
+);
+
 function ActionForm({
   actionType,
   axis,
@@ -46,8 +59,11 @@ function ActionForm({
   payload,
   setPayload,
 }: ActionFormProps) {
+  const themeContext = useContext(ThemeContext);
+
   const {
     action_arguments: actionArguments,
+    action_code: actionCode,
     action_options: actionOptions,
     action_variables: actionVariables,
   } = payload;
@@ -57,8 +73,26 @@ function ActionForm({
     ...data,
   });
 
+  const updateActionCode = (newCode) => {
+    const av = actionVariables ? { ...actionVariables } : {};
+
+    updatePayload({
+      action_code: newCode,
+      action_variables: av,
+    });
+  }
+
   const config: FormConfigType =
     (axis === 'row' ? actions.rows : actions.columns)?.[actionType];
+
+  const {
+    arguments: configArguments,
+    code,
+    description,
+    multiColumns,
+    options,
+    title,
+  } = config || {};
 
   if (!config) {
     return (
@@ -79,14 +113,6 @@ function ActionForm({
   }
 
   const {
-    arguments: configArguments,
-    description,
-    multiColumns,
-    options,
-    title,
-  } = config;
-
-  const {
     condition: argumentsCondition,
     description: argumentsDescription,
     values: argumentsValues,
@@ -95,8 +121,6 @@ function ActionForm({
   const showColumns = !currentFeature && multiColumns;
 
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-
-  console.log(featuresByUUID)
 
   return (
     <ContainerStyle>
@@ -115,6 +139,27 @@ function ActionForm({
       <Divider />
 
       <Spacing p={2}>
+        {code && (
+          <Spacing mb={3}>
+            {code.values === VALUES_TYPE_USER_INPUT && (
+              <CodeEditor
+                // @ts-ignore
+                language="python"
+                minHeight={code.multiline ? UNIT * 12 : null}
+                onChange={e => updateActionCode(e.target.value)}
+                padding={UNIT * 2}
+                style={{
+                  backgroundColor: themeContext.monotone.grey100,
+                  fontFamily: MONO_FONT_FAMILY_REGULAR,
+                  fontSize: REGULAR_FONT_SIZE,
+                  tabSize: 4,
+                }}
+                value={actionCode}
+              />
+            )}
+          </Spacing>
+        )}
+
         {(configArguments || showColumns) && (
           <Spacing mb={3}>
             <Text monospace>

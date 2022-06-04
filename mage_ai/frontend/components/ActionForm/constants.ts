@@ -39,9 +39,15 @@ interface OptionType {
   value: string;
 }
 
+interface CodeType {
+  multiline?: boolean;
+  value?: string;
+  values?: typeof VALUES_TYPE_USER_INPUT
+}
+
 export interface FormConfigType {
   arguments?: ArgumentsType;
-  code?: ArgumentsType;
+  code?: CodeType;
   description?: string;
   multiColumns?: boolean;
   options?: {
