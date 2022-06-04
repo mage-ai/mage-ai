@@ -5,6 +5,7 @@ import Text from '@oracle/elements/Text';
 import { ArrowDown, ArrowRight } from '@oracle/icons';
 import { RowCellStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import ProgressBar from '../ProgressBar';
 
 type CellProps = {
   cellIndex: number;
@@ -14,6 +15,7 @@ type CellProps = {
   rowIndex: number;
   selected: boolean;
   small: boolean;
+  showProgress
   value: any;
 };
 
@@ -25,6 +27,7 @@ function Cell({
   rowIndex,
   selected,
   small,
+  showProgress,
   value,
 }: CellProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -78,7 +81,12 @@ function Cell({
         </Link>
       </Flex>
     );
-  } else {
+  } else if (showProgress) {
+    cellEl = (
+      <ProgressBar danger={value < 75} progress={value} />
+    );
+  }
+  else {
     cellEl = (
       <Text
         small={small}

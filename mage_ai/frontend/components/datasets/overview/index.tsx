@@ -236,7 +236,7 @@ function DatasetOverview({
             <Flex flex={1}>
               {metricSample && (
                 <SimpleDataTable
-                  columnFlexNumbers={[1, 1]}
+                  columnFlexNumbers={[2, 1, 2 ]}
                   columnHeaders={[{ label: 'Quality Metrics' }]}
                   rowGroupData={[metricSample]}
                 />
