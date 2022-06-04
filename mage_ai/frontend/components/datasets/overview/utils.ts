@@ -8,6 +8,7 @@ import {
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
   STAT_KEYS,
+  WARN_KEYS,
 } from '../constants';
 
 export function createMetricsSample(statistics) {
@@ -71,8 +72,7 @@ export function createStatisticsSample(statistics, colTypes) {
       const name = HUMAN_READABLE_MAPPING[key];
       let value = statistics[key];
       console.log(value);
-      if (key == 'empty_column_count' && value !== 0) {
-        console.log('Emprty value count', value);
+      if (WARN_KEYS.includes(key)) {
         value = `${value} (${getPercentage(value / total)})`;
       }
       rowData.push({

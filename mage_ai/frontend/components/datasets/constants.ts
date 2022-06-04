@@ -12,6 +12,10 @@ export const STAT_KEYS = [
   'empty_column_count',
 ];
 
+export const WARN_KEYS = [
+  'empty_column_count',
+  'empty_row_count',
+];
 
 export const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
 export const DATE_TYPES = ['datetime'];
