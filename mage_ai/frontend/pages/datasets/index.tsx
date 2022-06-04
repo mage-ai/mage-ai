@@ -16,18 +16,13 @@ import { File } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { isBadQuality } from '@components/utils';
 import { pluralize } from '@utils/string';
-
+import { sortByKey } from '@utils/array';
 
 const Dashboard: NextPage = () => {
   const { data: featureSetsData } = api.feature_sets.list();
-  const featureSetsMemo = useMemo(() => featureSetsData, [
-    featureSetsData,
-  ]);
-
-  const [featureSets, setFeatureSets] = useState([]);
-  useEffect(() => setFeatureSets(featureSetsMemo), [
-    featureSetsMemo,
-  ]);
+  const featureSets = featureSetsData
+    ? sortByKey(featureSetsData, ({ id }) => id, { ascending: false })
+    : [];
 
   return (
     <Layout

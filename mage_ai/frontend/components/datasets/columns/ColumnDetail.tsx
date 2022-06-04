@@ -6,7 +6,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType from '@interfaces/FeatureType';
+import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
@@ -81,6 +81,12 @@ function ColumnDetail({
     columnValues: (string | number | any)[];
     uuid?: string | number;
   }[] = [
+    {
+      columnValues: [
+        'Column type',
+        COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
+      ],
+    },
     {
       columnValues: [
         'Validity', getPercentage(validity),
@@ -158,10 +164,9 @@ function ColumnDetail({
       <Flex flex={1}>
         <SimpleDataTable
           columnFlexNumbers={[1, 1]}
-          columnHeaders={[{ label: 'Column values' }]}
+          columnHeaders={[{ label: featureUUID }]}
           rowGroupData={[{
             rowData: sampleRowData,
-            title: `${featureUUID} (${columnType})`,
           }]}
         />
       </Flex>
