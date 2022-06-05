@@ -53,7 +53,6 @@ class StatisticsCalculator:
             arr_args_1 = ([df[col] for col in df.columns],)
             arr_args_2 = ([col for col in df.columns],)
 
-            # dicts = run_parallel(self.statistics_overview, arr_args_1, arr_args_2)
             dicts = map(self.statistics_overview, *arr_args_1, *arr_args_2)
 
             for d in dicts:
