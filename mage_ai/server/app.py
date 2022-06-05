@@ -11,6 +11,7 @@ import json
 import simplejson
 import sys
 import threading
+import traceback
 
 
 log = logging.getLogger('werkzeug')
@@ -25,12 +26,38 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 thread = None
 
 
-@app.route('/')
+def rescue_errors(endpoint, error_code=500):
+    def handler(*args, **kwargs):
+        try:
+            response = endpoint(*args, **kwargs)
+        except Exception as err:
+            exception = traceback.format_exc()
+            response_obj = {
+                'error_code': error_code,
+                'error_msg': str(err),
+                'error_stack_trace': exception,
+                'full_stack_trace': traceback.format_stack(),
+            }
+            response = app.response_class(
+                response=json.dumps(response_obj),
+                status=200,
+                mimetype='application/json',
+            )
+            log.error('An error was caught and reported to the client: ')
+            log.error(exception)
+        return response
+
+    return handler
+
+
+@app.route('/', endpoint='index')
+@rescue_errors
 def index():
     return render_template('index.html')
 
 
-@app.route('/process', methods=['POST'])
+@app.route('/process', methods=['POST'], endpoint='process')
+@rescue_errors
 def process():
     """
     request: {
@@ -79,7 +106,8 @@ def process():
     return response
 
 
-@app.route('/feature_sets')
+@app.route('/feature_sets', endpoint='feature_sets')
+@rescue_errors
 def feature_sets():
     """
     response: [
@@ -103,7 +131,8 @@ def feature_sets():
     return response
 
 
-@app.route('/feature_sets/<id>')
+@app.route('/feature_sets/<id>', endpoint='feature_sets_get')
+@rescue_errors
 def feature_set(id):
     """
     response: [
@@ -125,7 +154,8 @@ def feature_set(id):
     return response
 
 
-@app.route('/feature_sets/<id>', methods=['PUT'])
+@app.route('/feature_sets/<id>', methods=['PUT'], endpoint='feature_sets_put')
+@rescue_errors
 def update_feature_set(id):
     """
     request: {
@@ -156,7 +186,8 @@ def update_feature_set(id):
     return response
 
 
-@app.route('/pipelines')
+@app.route('/pipelines', endpoint='pipelines')
+@rescue_errors
 def pipelines():
     """
     response: [
@@ -173,7 +204,8 @@ def pipelines():
     return response
 
 
-@app.route('/pipelines/<id>')
+@app.route('/pipelines/<id>', endpoint='piplines_get')
+@rescue_errors
 def pipeline(id):
     """
     response: {
@@ -192,7 +224,8 @@ def pipeline(id):
     return response
 
 
-@app.route('/pipelines/<id>', methods=['PUT'])
+@app.route('/pipelines/<id>', methods=['PUT'], endpoint='pipelines_put')
+@rescue_errors
 def update_pipeline(id):
     """
     request: {

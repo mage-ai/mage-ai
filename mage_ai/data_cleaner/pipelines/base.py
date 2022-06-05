@@ -2,16 +2,15 @@ from mage_ai.data_cleaner.cleaning_rules.base import STATUS_COMPLETED
 from mage_ai.data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
 from mage_ai.data_cleaner.cleaning_rules.impute_values import ImputeValues
 from mage_ai.data_cleaner.cleaning_rules.reformat_values import ReformatValues
-from mage_ai.data_cleaner.cleaning_rules.remove_collinear_columns \
-    import RemoveCollinearColumns
-from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate \
-    import RemoveColumnsWithHighEmptyRate
-from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value \
-    import RemoveColumnsWithSingleValue
-from mage_ai.data_cleaner.cleaning_rules.remove_duplicate_rows \
-    import RemoveDuplicateRows
-from mage_ai.data_cleaner.cleaning_rules.remove_outliers \
-    import RemoveOutliers
+from mage_ai.data_cleaner.cleaning_rules.remove_collinear_columns import RemoveCollinearColumns
+from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_high_empty_rate import (
+    RemoveColumnsWithHighEmptyRate,
+)
+from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value import (
+    RemoveColumnsWithSingleValue,
+)
+from mage_ai.data_cleaner.cleaning_rules.remove_duplicate_rows import RemoveDuplicateRows
+from mage_ai.data_cleaner.cleaning_rules.remove_outliers import RemoveOutliers
 from mage_ai.data_cleaner.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.shared.logger import timer
@@ -29,8 +28,7 @@ DEFAULT_RULES = [
 ]
 
 
-class BasePipeline():
-
+class BasePipeline:
     def __init__(self, actions=[]):
         self.actions = actions
         self.rules = DEFAULT_RULES
