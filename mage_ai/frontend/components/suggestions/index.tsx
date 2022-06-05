@@ -84,7 +84,7 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
-                    columns={columns}
+                    columns={columns.map((col: any) => ({ uuid: col }))}
                     featureSetId={featureSet?.id}
                     featureIdMapping={featureIdMapping}
                     idx={idx}
