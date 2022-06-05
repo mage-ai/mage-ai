@@ -177,7 +177,7 @@ const SuggestionRow = ({
           <ActionForm
             actionType={actionPayload?.action_type}
             axis={actionPayload?.axis}
-            features={columns.map((col: any) => ({ uuid: col }))}
+            features={columns}
             noBorder
             noHeader
             onSave={() => saveAction({ action_payload: actionPayload })}
