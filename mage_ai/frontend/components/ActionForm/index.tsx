@@ -53,7 +53,7 @@ const CodeEditor = dynamic(
 function ActionForm({
   actionType,
   axis,
-  features,
+  features = [],
   currentFeature,
   onSave,
   payload,
