@@ -18,6 +18,14 @@ const columns: {
     title: 'Clean column name',
     description: 'TBD',
   },
+  custom: {
+    title: 'Custom code',
+    description: 'TBD',
+    code: {
+      multiline: true,
+      values: USER_INPUT,
+    },
+  },
   impute: {
     title: 'Impute',
     description: 'Fill in missing values.',
@@ -126,6 +134,14 @@ const columns: {
 const rows: {
   [key: string]: FormConfigType;
 } = {
+  custom: {
+    title: 'Custom code',
+    description: 'TBD',
+    code: {
+      multiline: true,
+      values: USER_INPUT,
+    },
+  },
   drop_duplicate: {
     title: 'Drop duplicates',
     description: 'Remove rows that have repeat values from 1 or more columns.',
