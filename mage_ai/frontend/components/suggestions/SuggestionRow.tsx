@@ -156,7 +156,7 @@ const SuggestionRow = ({
           </FlexContainer>
         )}
 
-        {actionCode && (
+        {actionCode && !editing && (
           <CodeEditor
             // @ts-ignore
             disabled
