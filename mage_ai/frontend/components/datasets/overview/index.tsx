@@ -43,6 +43,7 @@ function DatasetOverview({
   featureSet: featureSetRaw,
   fetchFeatureSet,
 }: DatasetOverviewProps) {
+  const [errorMessages, setErrorMessages] = useState(null);
   const { tab: tabFromUrl } = queryFromUrl();
   const [currentTab, setCurrentTab] = useState();
   useEffect(() => {
@@ -116,11 +117,29 @@ function DatasetOverview({
             ...featureSet,
             pipeline: response,
           }),
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            const arr = [];
+            if (message) {
+              arr.push(...message.split('\n'));
+            }
+            if (errors) {
+              arr.push(...errors);
+            }
+            if (arr.length >= 1) {
+              setErrorMessages(arr);
+            }
+          },
         },
       ),
     },
   );
   const saveAction = (newActionData: TransformerActionType) => {
+    setErrorMessages(null);
     commitAction({
       ...pipeline,
       actions: [
@@ -133,6 +152,7 @@ function DatasetOverview({
     const idx =
       pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
 
+    setErrorMessages(null);
     commitAction({
       ...pipeline,
       actions: removeAtIndex(pipelineActions, idx),
@@ -159,6 +179,19 @@ function DatasetOverview({
             payload={actionPayload}
             setPayload={setActionPayload}
           />
+        )}
+
+        {errorMessages?.length >= 1 && (
+          <Spacing mt={3}>
+            <Text bold>
+              Errors
+            </Text>
+            {errorMessages?.map((msg: string) => (
+              <Text key={msg} monospace xsmall>
+                {msg}
+              </Text>
+            ))}
+          </Spacing>
         )}
 
         <Spacing mt={5}>
