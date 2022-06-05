@@ -31,13 +31,16 @@ def rescue_errors(endpoint, error_code=500):
         try:
             response = endpoint(*args, **kwargs)
         except Exception as err:
-            exception = traceback.format_exc()
-            response_obj = {
-                'error_code': error_code,
-                'error_msg': str(err),
-                'error_stack_trace': exception,
-                'full_stack_trace': traceback.format_stack(),
-            }
+            exception = str(err)
+            response_obj = dict(
+                error=dict(
+                    code=error_code,
+                    errors=traceback.format_stack(),
+                    exception=exception,
+                    message=traceback.format_exc(),
+                    type=None,
+                ),
+            )
             response = app.response_class(
                 response=json.dumps(response_obj),
                 status=200,
