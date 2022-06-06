@@ -7,7 +7,7 @@ import { ThemeContext } from 'styled-components';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
-import FeatureType from '@interfaces/FeatureType';
+import { FeatureResponseType } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -24,11 +24,11 @@ import { useState } from 'react';
 export type SuggestionRowProps = {
   action: TransformerActionType;
   border?: boolean;
-  columns?: FeatureType[];
+  features?: FeatureResponseType[];
   featureIdMapping: {
     [key: string]: number;
   };
-  featureSetId?: string;
+  featureSetId?: string | number;
   idx: number;
   link?: () => void;
   onClose?: () => void;
@@ -46,7 +46,7 @@ const CodeEditor = dynamic(
 const SuggestionRow = ({
   action,
   border,
-  columns,
+  features,
   featureIdMapping,
   featureSetId,
   idx,
@@ -80,8 +80,8 @@ const SuggestionRow = ({
     if (featureIdMapping?.[col]) {
       el = (
         <NextLink
-          href="/datasets/[...slug]"
           as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
+          href="/datasets/[...slug]"
           passHref
         >
           <Link
@@ -177,7 +177,7 @@ const SuggestionRow = ({
           <ActionForm
             actionType={actionPayload?.action_type}
             axis={actionPayload?.axis}
-            features={columns}
+            features={features}
             noBorder
             noHeader
             onSave={() => saveAction({ action_payload: actionPayload })}

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
+import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType, { AxisEnum } from '@interfaces/ActionPayloadType';
+import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
@@ -15,15 +16,14 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import Overview from '@components/datasets/Insights/Overview';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
-import Select from '@oracle/elements/Inputs/Select';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Suggestions from '@components/suggestions';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import actionsConfig from '@components/ActionForm/actions';
 import api from '@api';
+
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   createMetricsSample,
@@ -163,41 +163,10 @@ function DatasetOverview({
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
   const selectActionEl = (
-    <Select
-      // @ts-ignore
-      compact
-      onChange={e => setActionPayload(JSON.parse(e.target.value))}
-      value={actionType}
-      width={UNIT * 20}
-    >
-      <option value="">
-        New action
-      </option>
-
-      {Object.entries(actionsConfig.rows).map(([k, v]) => (
-        <option
-          key={k}
-          value={JSON.stringify({
-            action_type: k,
-            axis: AxisEnum.ROW,
-          })}
-        >
-          {v.title}
-        </option>
-      ))}
-
-      {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
-        <option
-          key={k}
-          value={JSON.stringify({
-            action_type: k,
-            axis: 'column',
-          })}
-        >
-          {v.title}
-        </option>
-      ))}
-    </Select>
+    <ActionDropdown
+      actionType={actionType}
+      setActionPayload={setActionPayload}
+    />
   );
 
   return (

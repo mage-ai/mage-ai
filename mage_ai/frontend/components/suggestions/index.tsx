@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
+import FeatureSetType from '@interfaces/FeatureSetType';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import TransformerActionType from '@interfaces/TransformerActionType';
@@ -9,7 +10,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
-  featureSet: any;
+  featureSet: FeatureSetType;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion: (action: TransformerActionType) => void;
 };
@@ -20,15 +21,14 @@ function Suggestions({
   removeAction,
 }: SuggestionsProps) {
   const {
+    insights,
     pipeline,
     suggestions,
-    sample_data: {
-      columns = [],
-    } = {},
   } = featureSet || {};
   const {
     actions,
   } = pipeline || {};
+  const features = insights?.[0]?.map(({ feature }) => feature) || [];
   const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
   const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
 
@@ -51,9 +51,9 @@ function Suggestions({
               <SuggestionRow
                 action={action}
                 border
-                columns={columns}
-                featureSetId={featureSet?.id}
                 featureIdMapping={featureIdMapping}
+                featureSetId={featureSet?.id}
+                features={features}
                 idx={idx}
                 onClose={numberOfActions - 1 === idx
                   ? () => removeAction(action)
@@ -84,9 +84,9 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
-                    columns={columns.map((col: any) => ({ uuid: col }))}
-                    featureSetId={featureSet?.id}
                     featureIdMapping={featureIdMapping}
+                    featureSetId={featureSet?.id}
+                    features={features}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}
