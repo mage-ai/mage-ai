@@ -39,10 +39,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries and '
-                'the distribution of remaining values is approximately symmetric: '
-                '[\'age\']. '
-                'Fill the null values in each of these columns with their average value.',
+                message='For each column, fill missing entries with the average value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['age'],
@@ -58,10 +55,7 @@ class ImputeValuesTest(TestCase):
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'number_of_years\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
@@ -111,10 +105,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries and '
-                'the distribution of remaining values is approximately symmetric: '
-                '[\'age\']. '
-                'Fill the null values in each of these columns with their average value.',
+                message='For each column, fill missing entries with the average value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['age'],
@@ -130,10 +121,7 @@ class ImputeValuesTest(TestCase):
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'number_of_years\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
@@ -187,10 +175,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'number_of_years\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['number_of_years'],
@@ -209,10 +194,7 @@ class ImputeValuesTest(TestCase):
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries and '
-                'the distribution of remaining values is skewed: '
-                '[\'profit\']. '
-                'Fill the null values in each of these columns with their median value.',
+                message='For each column, fill missing entries with the median value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit'],
@@ -272,10 +254,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'profit\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit'],
@@ -294,10 +273,7 @@ class ImputeValuesTest(TestCase):
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have null valued entries and '
-                'a large proportion of entries are a single value: '
-                '[\'company\', \'industry\']. '
-                'Fill the null values in each of these columns with their most frequent value.',
+                message='For each column, fill missing entries with the most frequent value.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['company', 'industry'],
@@ -351,10 +327,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'profit\', \'number_of_years\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['profit', 'number_of_years'],
@@ -419,10 +392,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have many null-valued entries: '
-                '[\'dest\']. '
-                'Fill the null values in these columns with a placeholder '
-                'to mark them as missing.',
+                message='Fill missing values with a placeholder to mark them as missing.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['dest'],
@@ -441,10 +411,7 @@ class ImputeValuesTest(TestCase):
             ),
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries and are categorical: '
-                '[\'source\']. '
-                'Fill the null values in these columns with randomly sampled non-null values '
-                'from the same column.',
+                message='For each column, fill missing entries with randomly sampled values.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['source'],
@@ -499,8 +466,7 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Remove rows with missing entries',
-                message='There are 3 rows containing null values. '
-                'Remove these rows to remove null values from the dataset.',
+                message='Delete 3 rows to remove all missing values from the dataset.',
                 action_payload=dict(
                     action_type='filter',
                     action_arguments=['state', 'location'],
@@ -561,11 +527,8 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries which '
-                'may be part of timeseries data: '
-                '[\'state\', \'location\', \'timestamp\']. '
-                'Fill the null values in these columns with the previously occurring '
-                'value in the timeseries.',
+                message='Fill missing entries using the previously occurring '
+                'entry in the timeseries.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['state', 'location', 'timestamp'],
@@ -632,10 +595,8 @@ class ImputeValuesTest(TestCase):
         expected_suggestions = [
             dict(
                 title='Fill in missing values',
-                message='The following columns have null-valued entries which '
-                'may be part of timeseries data: [\'state\', \'location\']. '
-                'Fill the null values in these columns with the previously occurring '
-                'value in the timeseries.',
+                message='Fill missing entries using the previously occurring '
+                'entry in the timeseries.',
                 action_payload=dict(
                     action_type='impute',
                     action_arguments=['state', 'location'],

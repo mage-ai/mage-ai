@@ -32,8 +32,7 @@ class RemoveDuplicateRowsTests(TestCase):
             [
                 dict(
                     title='Remove duplicate rows',
-                    message='There are 2 duplicate rows in the dataset. '
-                    'Removing these rows can reduce the amount of redundant data.',
+                    message='Remove 2 duplicated row(s) to reduce the amount of redundant data.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='drop_duplicate',

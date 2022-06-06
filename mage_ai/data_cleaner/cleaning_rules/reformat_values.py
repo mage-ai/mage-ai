@@ -146,9 +146,7 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
                 suggestions.append(
                     self.action_builder(
                         'Reformat values',
-                        'The following columns have entries with mixed capitalization formats: '
-                        f'{payloads[case]}. '
-                        f'Reformat these entries as fully {case} text to improve data quality.',
+                        f'Format entries in these columns as fully {case} to improve data quality.',
                         ActionType.REFORMAT,
                         action_arguments=payloads[case],
                         axis=Axis.COLUMN,
@@ -199,9 +197,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
             suggestions.append(
                 self.action_builder(
                     'Reformat values',
-                    'The following columns have currency type values: '
-                    f'{self.matches}. '
-                    'Reformat these columns as numbers to improve data quality.',
+                    'Format entries in these columns as numbers to improve data quality.',
                     ActionType.REFORMAT,
                     action_arguments=self.matches,
                     axis=Axis.COLUMN,
@@ -243,9 +239,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
             suggestions.append(
                 self.action_builder(
                     'Reformat values',
-                    'The following columns have date values: '
-                    f'{self.matches}. '
-                    'Reformat these columns as datetime objects to improve data quality.',
+                    'Format entries in these columns as datetime objects to improve data quality.',
                     ActionType.REFORMAT,
                     action_arguments=self.matches,
                     axis=Axis.COLUMN,

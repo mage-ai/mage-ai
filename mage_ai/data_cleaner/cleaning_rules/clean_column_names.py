@@ -35,10 +35,8 @@ class CleanColumnNames(BaseRule):
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     'Clean dirty column names',
-                    'The following columns have unclean naming conventions: '
-                    f'{matches}. '
-                    'Cleaning these names to be lowercase and alphanumeric can improve '
-                    'ease of dataset access and reduce security risks.',
+                    'Format these column names as lowercase and alphanumeric to improve '
+                    'accessibility and security.',
                     action_type=ActionType.CLEAN_COLUMN_NAME,
                     action_arguments=matches,
                     axis='column',

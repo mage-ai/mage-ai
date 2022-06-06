@@ -72,9 +72,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have entries with mixed capitalization formats: '
-                '[\'location\']. '
-                'Reformat these entries as fully uppercase text to improve data quality.',
+                message='Format entries in these columns as fully uppercase to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['location'],
@@ -91,9 +89,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             ),
             dict(
                 title='Reformat values',
-                message='The following columns have entries with mixed capitalization formats: '
-                '[\'company_name\', \'name\']. '
-                'Reformat these entries as fully lowercase text to improve data quality.',
+                message='Format entries in these columns as fully lowercase to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['company_name', 'name'],
@@ -151,9 +147,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have currency type values: '
-                '[\'value\']. '
-                'Reformat these columns as numbers to improve data quality.',
+                message='Format entries in these columns as numbers to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['value'],
@@ -195,9 +189,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have currency type values: '
-                '[\'column\']. '
-                'Reformat these columns as numbers to improve data quality.',
+                message='Format entries in these columns as numbers to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['column'],
@@ -260,9 +252,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have date values: '
-                '[\'date2\', \'date5\']. '
-                'Reformat these columns as datetime objects to improve data quality.',
+                message='Format entries in these columns as datetime objects to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['date2', 'date5'],
@@ -315,9 +305,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
         expected_results = [
             dict(
                 title='Reformat values',
-                message='The following columns have entries with mixed capitalization formats: '
-                '[\'notdate\']. '
-                'Reformat these entries as fully lowercase text to improve data quality.',
+                message='Format entries in these columns as fully lowercase to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['notdate'],
@@ -334,9 +322,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
             ),
             dict(
                 title='Reformat values',
-                message='The following columns have date values: '
-                '[\'date2\', \'mostlydate\']. '
-                'Reformat these columns as datetime objects to improve data quality.',
+                message='Format entries in these columns as datetime objects to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
                     action_arguments=['date2', 'mostlydate'],

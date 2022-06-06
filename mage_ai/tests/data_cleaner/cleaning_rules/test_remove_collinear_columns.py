@@ -12,22 +12,25 @@ class RemoveCollinearColumnsTests(TestCase):
         return super().setUp()
 
     def test_categorical_data_frame(self):
-        df = pd.DataFrame([
+        df = pd.DataFrame(
+            [
                 [1, 1000, '2021-10-01', '2021-09-01'],
                 [1, 1050, '2021-10-01', '2021-08-01'],
                 [1, 1100, '2021-10-01', '2021-01-01'],
                 [2, 1150, '2021-09-01', '2021-08-01'],
-            ], columns=[
+            ],
+            columns=[
                 'group_id',
                 'order_id',
                 'group_churned_at',
                 'order_created_at',
-            ])
+            ],
+        )
         column_types = {
             'group_id': 'category',
             'order_id': 'category',
             'group_churned_at': 'datetime',
-            'order_created_at': 'datetime'
+            'order_created_at': 'datetime',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -35,22 +38,25 @@ class RemoveCollinearColumnsTests(TestCase):
         self.assertEqual(result, [])
 
     def test_clean_removes_all_data_frame(self):
-        df = pd.DataFrame([
+        df = pd.DataFrame(
+            [
                 [None, 1000, '2021-10-01', '2021-09-01'],
                 [1, None, '2021-10-01', '2021-08-01'],
                 [np.nan, 1100, '2021-10-01', '2021-01-01'],
                 [None, 1150, '2021-09-01', '2021-08-01'],
-            ], columns=[
+            ],
+            columns=[
                 'group_id',
                 'order_id',
                 'group_churned_at',
                 'order_created_at',
-            ])
+            ],
+        )
         column_types = {
             'group_id': 'number',
             'order_id': 'number',
             'group_churned_at': 'datetime',
-            'order_created_at': 'datetime'
+            'order_created_at': 'datetime',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -58,12 +64,10 @@ class RemoveCollinearColumnsTests(TestCase):
         self.assertEqual(result, [])
 
     def test_collinear_no_results(self):
-        df = pd.DataFrame([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ], columns=['number_of_users', 'views', 'revenue', 'losses'])
+        df = pd.DataFrame(
+            [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
+            columns=['number_of_users', 'views', 'revenue', 'losses'],
+        )
         column_types = {
             'number_of_users': 'number',
             'views': 'number',
@@ -76,31 +80,34 @@ class RemoveCollinearColumnsTests(TestCase):
         self.assertEqual(result, [])
 
     def test_evaluate(self):
-        df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [700, 11750, 20, 2750, 55],
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ])
+        df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [700, 11750, 20, 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
         column_types = {
             'number_of_users': 'number',
             'views': 'number',
             'number_of_creators': 'number',
             'losses': 'number',
-            'number_of_advertisers': 'number'
+            'number_of_advertisers': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -109,71 +116,74 @@ class RemoveCollinearColumnsTests(TestCase):
         expected_results = [
             dict(
                 title='Remove collinear columns',
-                message='The following columns are strongly correlated '
-                        'with other columns in the dataset: [\'number_of_users\']. '
-                        'Removing these columns may increase data quality '
-                        'by removing redundant and closely related data.',
+                message='Delete these columns to remove redundant data and increase data quality.',
                 status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
                     axis='column',
-                    action_options = {},
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                )
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
             )
         ]
         self.assertEqual(results, expected_results)
 
     def test_evaluate_bad_dtypes(self):
-        df = pd.DataFrame([
-            [1000, 'US', 30000, '10', 'cute animal #1', 100, '30'],
-            ['500', 'CA', 10000, '20', 'intro to regression', 3000, '20'],
-            [200, '', np.nan, '50', 'daily news #1', None, '75'],
-            [250, 'CA', 7500, '25', 'machine learning seminar', 8000, '20'],
-            ['1000', 'MX', 45003, '20', 'cute animal #4', 90, '40'],
-            [1500, 'MX', 75000, '30', '', 70, '25'],
-            [1500, 'US', 75000, np.nan, 'daily news #3', 70, '25'],
-            [None, 'US', 75000, '30', 'tutorial: how to start a startup', 70, np.nan],
-            [1250, 'US', 60000, '50', 'cute animal #3', 80, '20'],
-            ['200', 'CA', 5000, '30', '', 10000, '30'],
-            [800, 'US', 12050, '40', 'meme compilation', 2000, '45'],
-            ['600', 'CA', 11000, '50', 'daily news #2', 3000, '50'],
-            [600, 'CA', '', 50, '', 3000, None], 
-            ['700', 'MX', 11750, '20', 'cute animal #2', 2750, '55'],
-            [700, '', None, 20, '', None, '55'], 
-            [700, 'MX', 11750, '', '', 2750, '55'], 
-            [1200, 'MX', 52000, '10', 'vc funding strats', 75, '60']
-        ], columns=[
-            'number_of_users',
-            'location',
-            'views',
-            'number_of_creators',
-            'name',
-            'losses',
-            'number_of_advertisers'
-        ])
-        cleaned_df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [700, 11750, 20, 2750, 55],
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ]).astype(float)
+        df = pd.DataFrame(
+            [
+                [1000, 'US', 30000, '10', 'cute animal #1', 100, '30'],
+                ['500', 'CA', 10000, '20', 'intro to regression', 3000, '20'],
+                [200, '', np.nan, '50', 'daily news #1', None, '75'],
+                [250, 'CA', 7500, '25', 'machine learning seminar', 8000, '20'],
+                ['1000', 'MX', 45003, '20', 'cute animal #4', 90, '40'],
+                [1500, 'MX', 75000, '30', '', 70, '25'],
+                [1500, 'US', 75000, np.nan, 'daily news #3', 70, '25'],
+                [None, 'US', 75000, '30', 'tutorial: how to start a startup', 70, np.nan],
+                [1250, 'US', 60000, '50', 'cute animal #3', 80, '20'],
+                ['200', 'CA', 5000, '30', '', 10000, '30'],
+                [800, 'US', 12050, '40', 'meme compilation', 2000, '45'],
+                ['600', 'CA', 11000, '50', 'daily news #2', 3000, '50'],
+                [600, 'CA', '', 50, '', 3000, None],
+                ['700', 'MX', 11750, '20', 'cute animal #2', 2750, '55'],
+                [700, '', None, 20, '', None, '55'],
+                [700, 'MX', 11750, '', '', 2750, '55'],
+                [1200, 'MX', 52000, '10', 'vc funding strats', 75, '60'],
+            ],
+            columns=[
+                'number_of_users',
+                'location',
+                'views',
+                'number_of_creators',
+                'name',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+        cleaned_df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [700, 11750, 20, 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        ).astype(float)
         column_types = {
             'number_of_users': 'number',
             'location': 'category',
@@ -181,7 +191,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_creators': 'number',
             'name': 'text',
             'losses': 'number',
-            'number_of_advertisers': 'number'
+            'number_of_advertisers': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types)
@@ -191,75 +201,78 @@ class RemoveCollinearColumnsTests(TestCase):
         expected_results = [
             dict(
                 title='Remove collinear columns',
-                message='The following columns are strongly correlated '
-                        'with other columns in the dataset: [\'number_of_users\']. '
-                        'Removing these columns may increase data quality '
-                        'by removing redundant and closely related data.',
+                message='Delete these columns to remove redundant data and increase data quality.',
                 status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
                     axis='column',
-                    action_options = {},
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                )
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
             )
         ]
         self.assertEqual(results, expected_results)
 
     def test_evaluate_dirty(self):
-        df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [200, np.nan, 50, None, 75], 
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1500, 75000, np.nan, 70, 25], 
-            [None, 75000, 30, 70, np.nan], 
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [600, '', 50, 3000, None], 
-            [700, 11750, 20, 2750, 55],
-            [700, None, 20, None, 55], 
-            [700, 11750, '', 2750, 55], 
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ])
-        cleaned_df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [700, 11750, 20, 2750, 55],
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ]).astype(float)
+        df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [200, np.nan, 50, None, 75],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1500, 75000, np.nan, 70, 25],
+                [None, 75000, 30, 70, np.nan],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [600, '', 50, 3000, None],
+                [700, 11750, 20, 2750, 55],
+                [700, None, 20, None, 55],
+                [700, 11750, '', 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+        cleaned_df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [700, 11750, 20, 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        ).astype(float)
         column_types = {
             'number_of_users': 'number',
             'views': 'number',
             'number_of_creators': 'number',
             'losses': 'number',
-            'number_of_advertisers': 'number'
+            'number_of_advertisers': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -269,71 +282,74 @@ class RemoveCollinearColumnsTests(TestCase):
         expected_results = [
             dict(
                 title='Remove collinear columns',
-                message='The following columns are strongly correlated '
-                        'with other columns in the dataset: [\'number_of_users\']. '
-                        'Removing these columns may increase data quality '
-                        'by removing redundant and closely related data.',
+                message='Delete these columns to remove redundant data and increase data quality.',
                 status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
                     axis='column',
-                    action_options = {},
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                )
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
             )
         ]
         self.assertEqual(results, expected_results)
 
     def test_evaluate_non_numeric(self):
-        df = pd.DataFrame([
-            [1000, 'US', 30000, 10, 'cute animal #1', 100, 30],
-            [500, 'CA', 10000, 20, 'intro to regression', 3000, 20],
-            [200, '', np.nan, 50, 'daily news #1', None, 75],
-            [250, 'CA', 7500, 25, 'machine learning seminar', 8000, 20],
-            [1000, 'MX', 45003, 20, 'cute animal #4', 90, 40],
-            [1500, 'MX', 75000, 30, '', 70, 25],
-            [1500, 'US', 75000, np.nan, 'daily news #3', 70, 25],
-            [None, 'US', 75000, 30, 'tutorial: how to start a startup', 70, np.nan],
-            [1250, 'US', 60000, 50, 'cute animal #3', 80, 20],
-            [200, 'CA', 5000, 30, '', 10000, 30],
-            [800, 'US', 12050, 40, 'meme compilation', 2000, 45],
-            [600, 'CA', 11000, 50, 'daily news #2', 3000, 50],
-            [600, 'CA', '', 50, '', 3000, None], 
-            [700, 'MX', 11750, 20, 'cute animal #2', 2750, 55],
-            [700, '', None, 20, '', None, 55], 
-            [700, 'MX', 11750, '', '', 2750, 55], 
-            [1200, 'MX', 52000, 10, 'vc funding strats', 75, 60]
-        ], columns=[
-            'number_of_users',
-            'location',
-            'views',
-            'number_of_creators',
-            'name',
-            'losses',
-            'number_of_advertisers'
-        ])
-        cleaned_df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [700, 11750, 20, 2750, 55],
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ]).astype(float)
+        df = pd.DataFrame(
+            [
+                [1000, 'US', 30000, 10, 'cute animal #1', 100, 30],
+                [500, 'CA', 10000, 20, 'intro to regression', 3000, 20],
+                [200, '', np.nan, 50, 'daily news #1', None, 75],
+                [250, 'CA', 7500, 25, 'machine learning seminar', 8000, 20],
+                [1000, 'MX', 45003, 20, 'cute animal #4', 90, 40],
+                [1500, 'MX', 75000, 30, '', 70, 25],
+                [1500, 'US', 75000, np.nan, 'daily news #3', 70, 25],
+                [None, 'US', 75000, 30, 'tutorial: how to start a startup', 70, np.nan],
+                [1250, 'US', 60000, 50, 'cute animal #3', 80, 20],
+                [200, 'CA', 5000, 30, '', 10000, 30],
+                [800, 'US', 12050, 40, 'meme compilation', 2000, 45],
+                [600, 'CA', 11000, 50, 'daily news #2', 3000, 50],
+                [600, 'CA', '', 50, '', 3000, None],
+                [700, 'MX', 11750, 20, 'cute animal #2', 2750, 55],
+                [700, '', None, 20, '', None, 55],
+                [700, 'MX', 11750, '', '', 2750, 55],
+                [1200, 'MX', 52000, 10, 'vc funding strats', 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'location',
+                'views',
+                'number_of_creators',
+                'name',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+        cleaned_df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [700, 11750, 20, 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        ).astype(float)
         column_types = {
             'number_of_users': 'number',
             'location': 'category',
@@ -341,7 +357,7 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_creators': 'number',
             'name': 'text',
             'losses': 'number',
-            'number_of_advertisers': 'number'
+            'number_of_advertisers': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -351,20 +367,17 @@ class RemoveCollinearColumnsTests(TestCase):
         expected_results = [
             dict(
                 title='Remove collinear columns',
-                message='The following columns are strongly correlated '
-                        'with other columns in the dataset: [\'number_of_users\']. '
-                        'Removing these columns may increase data quality '
-                        'by removing redundant and closely related data.',
+                message='Delete these columns to remove redundant data and increase data quality.',
                 status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users'],
                     axis='column',
-                    action_options = {},
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                )
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
             )
         ]
         self.assertEqual(results, expected_results)
@@ -374,12 +387,14 @@ class RemoveCollinearColumnsTests(TestCase):
         views = number_of_users * 300
         revenue = 2 * views - number_of_users
         losses = revenue / views + number_of_users
-        df = pd.DataFrame({
-            'number_of_users':number_of_users, 
-            'views': views, 
-            'revenue': revenue, 
-            'losses': losses
-        })
+        df = pd.DataFrame(
+            {
+                'number_of_users': number_of_users,
+                'views': views,
+                'revenue': revenue,
+                'losses': losses,
+            }
+        )
         column_types = {
             'number_of_users': 'number',
             'views': 'number',
@@ -392,51 +407,50 @@ class RemoveCollinearColumnsTests(TestCase):
         expected_results = [
             dict(
                 title='Remove collinear columns',
-                message='The following columns are strongly correlated '
-                        'with other columns in the dataset:'
-                        ' [\'number_of_users\', \'views\', \'revenue\']. '
-                        'Removing these columns may increase data quality '
-                        'by removing redundant and closely related data.',
+                message='Delete these columns to remove redundant data and increase data quality.',
                 status='not_applied',
                 action_payload=dict(
                     action_type='remove',
                     action_arguments=['number_of_users', 'views', 'revenue'],
                     axis='column',
-                    action_options = {},
-                    action_variables = {},
-                    action_code = '',
-                    outputs = [],
-                )
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
             )
         ]
         self.assertEqual(result, expected_results)
 
     def test_vif_calcuation(self):
-        df = pd.DataFrame([
-            [1000, 30000, 10, 100, 30],
-            [500, 10000, 20, 3000, 20],
-            [250, 7500, 25, 8000, 20],
-            [1000, 45003, 20, 90, 40],
-            [1500, 75000, 30, 70, 25],
-            [1250, 60000, 50, 80, 20],
-            [200, 5000, 30, 10000, 30],
-            [800, 12050, 40, 2000, 45],
-            [600, 11000, 50, 3000, 50],
-            [700, 11750, 20, 2750, 55],
-            [1200, 52000, 10, 75, 60]
-        ], columns=[
-            'number_of_users',
-            'views',
-            'number_of_creators',
-            'losses',
-            'number_of_advertisers'
-        ])
+        df = pd.DataFrame(
+            [
+                [1000, 30000, 10, 100, 30],
+                [500, 10000, 20, 3000, 20],
+                [250, 7500, 25, 8000, 20],
+                [1000, 45003, 20, 90, 40],
+                [1500, 75000, 30, 70, 25],
+                [1250, 60000, 50, 80, 20],
+                [200, 5000, 30, 10000, 30],
+                [800, 12050, 40, 2000, 45],
+                [600, 11000, 50, 3000, 50],
+                [700, 11750, 20, 2750, 55],
+                [1200, 52000, 10, 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'views',
+                'number_of_creators',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
         column_types = {
             'number_of_users': 'number',
             'views': 'number',
             'number_of_creators': 'number',
             'losses': 'number',
-            'number_of_advertisers': 'number'
+            'number_of_advertisers': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
@@ -446,13 +460,13 @@ class RemoveCollinearColumnsTests(TestCase):
             26.10502642724925,
             5.6541251174451315,
             2.6033835916281176,
-            10.735934980453335
+            10.735934980453335,
         )
         expected_vifs_remove = (
             59.32817701051733,
             2.941751614824833,
             3.4216357503903243,
-            1.370441833599666
+            1.370441833599666,
         )
         for column, expected_vif in zip(rule.numeric_columns, expected_vifs_no_remove):
             vif = rule.get_variance_inflation_factor(column)
