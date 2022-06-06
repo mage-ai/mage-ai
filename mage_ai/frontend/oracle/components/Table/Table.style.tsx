@@ -57,6 +57,12 @@ export const TableBodyStyle = styled.tbody`
   td {
     padding: ${UNIT * 0.5}px;
   }
+
+  td:not(:first-child) {
+    ${props => `
+    border-left: 1px solid  ${(props.theme.interactive || light.interactive).defaultBorder};
+  `}
+  }
 `;
 
 type TableRowProps = {
