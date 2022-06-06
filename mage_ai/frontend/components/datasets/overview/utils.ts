@@ -17,13 +17,12 @@ export function createMetricsSample(statistics) {
 
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
-      let bar = [false, 0];
+      let bar: any[] = [false];
       let value = statistics[key];
       const order = HUMAN_READABLE_MAPPING[key];
       const index = METRICS_SORTED_MAPPING[key];
       if (PERCENTAGE_KEYS.includes(key)) {
-        value = value.toPrecision(2);
-        bar = [true, (value * 100)];
+        bar = [true, value * 100];
         value = getPercentage(value);
       }
       metricRows[index] = {
