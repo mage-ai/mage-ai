@@ -21,6 +21,7 @@ function Suggestions({
   removeAction,
 }: SuggestionsProps) {
   const {
+    insights,
     pipeline,
     suggestions,
     sample_data: {
@@ -30,6 +31,7 @@ function Suggestions({
   const {
     actions,
   } = pipeline || {};
+  const features = insights?.[0]?.map(({ feature }) => feature) || [];
   const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
   const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
 
@@ -52,9 +54,9 @@ function Suggestions({
               <SuggestionRow
                 action={action}
                 border
-                columns={columns}
                 featureIdMapping={featureIdMapping}
                 featureSetId={featureSet?.id}
+                features={features}
                 idx={idx}
                 onClose={numberOfActions - 1 === idx
                   ? () => removeAction(action)
@@ -85,9 +87,9 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
-                    columns={columns.map((col: any) => ({ uuid: col }))}
-                    featureSetId={featureSet?.id}
                     featureIdMapping={featureIdMapping}
+                    featureSetId={featureSet?.id}
+                    features={features}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}

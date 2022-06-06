@@ -5,7 +5,7 @@ import '@uiw/react-textarea-code-editor/dist.css';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
-import FeatureType from '@interfaces/FeatureType';
+import FeatureType, { FeatureResponseType } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
@@ -28,7 +28,6 @@ import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import {
-  indexBy,
   removeAtIndex,
 } from '@utils/array';
 
@@ -36,7 +35,7 @@ type ActionFormProps = {
   actionType: string;
   axis: string;
   currentFeature?: FeatureType;
-  features?: FeatureType[];
+  features?: FeatureResponseType[];
   noBorder?: boolean;
   noHeader?: boolean;
   onClose?: () => void;
@@ -125,8 +124,6 @@ function ActionForm({
 
   const showColumns = !currentFeature && multiColumns;
 
-  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-
   return (
     <ContainerStyle noBorder={noBorder}>
       {!noHeader && 
@@ -197,6 +194,7 @@ function ActionForm({
             {(VALUES_TYPE_COLUMNS === argumentsValues || showColumns) && (
               <FlexContainer flexWrap="wrap">
                 {features.map(({
+                  column_type,
                   uuid,
                 }) => {
                   const alreadyInArguments = actionArguments?.includes(uuid);
@@ -218,7 +216,7 @@ function ActionForm({
                           } else {
                             av[uuid] = {
                               [ActionVariableTypeEnum.FEATURE]: {
-                                column_type: featuresByUUID[uuid]?.columnType,
+                                column_type,
                                 uuid,
                               },
                               type: ActionVariableTypeEnum.FEATURE,
