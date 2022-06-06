@@ -29,7 +29,6 @@ export function createMetricsSample(statistics, colTypes) {
         value = getPercentage(value);
       } else if (RATIO_KEYS.includes(key)) {
         value = `${value} (${getPercentage(value / total_cells)})`;
-        console.log(key, order, value, total_cells);
       }
       metricRows[index] = {
         columnValues: [order, value, bar],
