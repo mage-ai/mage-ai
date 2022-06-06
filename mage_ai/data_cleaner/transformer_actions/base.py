@@ -22,6 +22,7 @@ FUNCTION_MAPPING = {
         ActionType.CLEAN_COLUMN_NAME: column.clean_column_names,
         ActionType.COUNT: column.count,
         ActionType.COUNT_DISTINCT: column.count_distinct,
+        ActionType.CUSTOM: column.custom,
         ActionType.DIFF: column.diff,
         # ActionType.EXPAND_COLUMN: column.expand_column,
         ActionType.FIRST: column.first,
@@ -38,6 +39,7 @@ FUNCTION_MAPPING = {
         ActionType.SUM: column.sum,
     },
     Axis.ROW: {
+        ActionType.CUSTOM: row.custom,
         ActionType.DROP_DUPLICATE: row.drop_duplicates,
         # ActionType.EXPLODE: row.explode,
         ActionType.FILTER: row.filter_rows,

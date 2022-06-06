@@ -1,7 +1,12 @@
+from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.column_type_detector import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.constants import VariableType
-from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
+from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 import pandas as pd
+
+
+def custom(df, action, **kwargs):
+    return execute_custom_action(df, action, **kwargs)
 
 
 def drop_duplicates(df, action, **kwargs):
@@ -52,22 +57,31 @@ def sort_rows(df, action, **kwargs):
     if na_indexes is not None:
         bad_df = df.index.isin(na_indexes)
 
-    index = (df[~bad_df] if bad_df is not None else df).astype(as_types).sort_values(
-        by=action['action_arguments'],
-        ascending=ascendings if len(ascendings) > 0 else ascending,
-    ).index
+    index = (
+        (df[~bad_df] if bad_df is not None else df)
+        .astype(as_types)
+        .sort_values(
+            by=action['action_arguments'],
+            ascending=ascendings if len(ascendings) > 0 else ascending,
+        )
+        .index
+    )
 
     df_final = df.loc[index]
     if bad_df is not None:
         if ascending:
-            return pd.concat([
-                df.iloc[bad_df],
-                df_final,
-            ])
+            return pd.concat(
+                [
+                    df.iloc[bad_df],
+                    df_final,
+                ]
+            )
 
-        return pd.concat([
+        return pd.concat(
+            [
                 df_final,
                 df.iloc[bad_df],
-        ])
+            ]
+        )
 
     return df_final

@@ -11,6 +11,7 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_column_type,
     get_time_window_str,
 )
+from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
 from keyword import iskeyword
 import pandas as pd
@@ -52,6 +53,10 @@ def clean_column_names(df, action, **kwargs):
     columns = action['action_arguments']
     mapping = {col: __clean_column_name(col) for col in columns}
     return df.rename(columns=mapping)
+
+
+def custom(df, action, **kwargs):
+    return execute_custom_action(df, action, **kwargs)
 
 
 def diff(df, action, **kwargs):
