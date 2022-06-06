@@ -45,7 +45,7 @@ class FeatureSet(Model):
 
     @data.setter
     def data(self, df):
-        df.to_parquet(os.path.join(self.dir, 'data.parquet'))
+        self.write_parquet_file(os.path.join(self.dir, 'data.parquet'), df)
         self._data = df
 
     @property
@@ -56,7 +56,7 @@ class FeatureSet(Model):
 
     @data_orig.setter
     def data_orig(self, df):
-        df.to_parquet(os.path.join(self.dir, 'data_orig.parquet'))
+        self.write_parquet_file(os.path.join(self.dir, 'data_orig.parquet'), df)
         self._data_orig = df
 
     @property
