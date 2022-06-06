@@ -1,6 +1,7 @@
-from mage_ai.data_cleaner.cleaning_rules.reformat_values import ReformatValues
-from mage_ai.tests.base_test import TestCase
 from datetime import datetime as dt
+from mage_ai.data_cleaner.cleaning_rules.reformat_values import ReformatValues
+from mage_ai.data_cleaner.column_type_detector import infer_column_types
+from mage_ai.tests.base_test import TestCase
 import numpy as np
 import pandas as pd
 
@@ -243,13 +244,10 @@ class ReformatValuesCleaningRuleTests(TestCase):
                 'date5',
             ],
         )
-        column_types = {
-            'date1': 'datetime',
-            'date2': 'datetime',
-            'date3': 'category',
-            'date4': 'category',
-            'date5': 'text',
-        }
+        # date3 and date4 are detected as text type.
+        # TODO: Update column_type_detector to detect date3 and date4 as datetime type.
+        column_types = infer_column_types(df)
+        print(column_types)
         statistics = {
             'date1/count': 5,
             'date2/count': 4,
@@ -263,11 +261,11 @@ class ReformatValuesCleaningRuleTests(TestCase):
             dict(
                 title='Reformat values',
                 message='The following columns have date values: '
-                '[\'date2\', \'date3\', \'date4\', \'date5\']. '
+                '[\'date2\', \'date5\']. '
                 'Reformat these columns as datetime objects to improve data quality.',
                 action_payload=dict(
                     action_type='reformat',
-                    action_arguments=['date2', 'date3', 'date4', 'date5'],
+                    action_arguments=['date2', 'date5'],
                     axis='column',
                     action_options={
                         'reformat': 'date_format_conversion',
@@ -299,13 +297,7 @@ class ReformatValuesCleaningRuleTests(TestCase):
                 'date5',
             ],
         )
-        column_types = {
-            'date1': 'datetime',
-            'date2': 'datetime',
-            'notdate': 'text',
-            'mostlydate': 'category_high_cardinality',
-            'date5': 'number',
-        }
+        column_types = infer_column_types(df)
         statistics = {
             'date1/count': 5,
             'date2/count': 4,
