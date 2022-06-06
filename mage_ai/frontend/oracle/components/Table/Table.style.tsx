@@ -7,11 +7,12 @@ import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 export const TableStyle = styled.div<any>`
   border-radius: ${BORDER_RADIUS_LARGE}px;
   max-width: 100vw;
+  max-height: 80vh;
   overflow: auto;
   position: relative;
 
   ${props => `
-    border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.table &&`
@@ -40,14 +41,14 @@ export const TableHeadStyle = styled.thead`
     padding: ${UNIT * 0.5}px;
 
     ${props => `
-      border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
-      background-color: ${(props.theme.monotone || light.monotone).grey100};
+      border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+      background-color: ${(props.theme.background || light.background).header};
     `}
   }
 
   th:not(:first-child) {
     ${props => `
-      border-left: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+      border-left: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
     `}
   }
 `;
@@ -56,19 +57,24 @@ export const TableBodyStyle = styled.tbody`
   td {
     padding: ${UNIT * 0.5}px;
   }
+
+  td:not(:first-child) {
+    ${props => `
+    border-left: 1px solid  ${(props.theme.interactive || light.interactive).defaultBorder};
+  `}
+  }
 `;
 
 type TableRowProps = {
   showBackground?: boolean;
 };
 
-export const TaleRowStyle = styled.tr<TableRowProps>`
+export const TableRowStyle = styled.tr<TableRowProps>`
   ${props => props.showBackground && `
-    background-color: ${(props.theme.monotone || light.monotone).grey100};
+    background-color: ${(props.theme.background || light.background).row};
   `}
 `;
 
-// TODO: Update these hardcoded values
 export const RowCellStyle = styled.div<any>`
   flex-shrink: 0;
   max-height: 80px;

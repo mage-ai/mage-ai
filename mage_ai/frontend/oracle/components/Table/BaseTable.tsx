@@ -1,16 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAbsoluteLayout, useBlockLayout, useFlexLayout, useTable } from 'react-table';
+import { useAbsoluteLayout, useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import {
-  CellStyled,
-  RowCellStyle,
   TableBodyStyle,
   TableHeadStyle,
-  TaleRowStyle,
+  TableRowStyle,
   TableStyle,
 } from './Table.style';
 import { cutTextSize, getColumnWidth } from './helpers';
@@ -124,15 +121,12 @@ function BaseTable({
     ? widthProp
     : totalColumnsWidthInitial - (offsetWidth || 0);
 
-  // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
     // Table: Relative, no overflow, outline in silver
     <TableStyle width={(widthProp || offsetWidth) ? totalColumnsWidth : null}>
       <table
           {...getTableProps()}
           style={{
-            // border: 'solid 1px #D8DCE3',
-            // borderRadius: `${BORDER_RADIUS_LARGE}px`,
             width: totalColumnsWidth,
           }}
         >
@@ -146,20 +140,15 @@ function BaseTable({
                 <th
                   {...column.getHeaderProps()}
                   style={{
-                    // background: '#F9FAFC',
                     maxWidth: `${getColumnWidth(rows, column.id)}px`,
                     minWidth: column.minWidth,
-                    // padding: '14px',
-                    // position: 'sticky',
                   }}
                 >
-                  {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
                     <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
-                  {/* </RowCellStyle> */}
                 </th>
                   ))}
             </tr>
@@ -173,7 +162,7 @@ function BaseTable({
 
             return (
               // @ts-ignore
-              <TaleRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
+              <TableRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
                 {row.cells.map(cell => {
                   const { value: cellValue } = cell;
                   console.log(cellValue)
@@ -187,7 +176,7 @@ function BaseTable({
                       }}
                     >
                       <TextStyle>
-                        <Text>
+                        <Text wordBreak>
                           {cellValue === true && 'true'}
                           {cellValue === false && 'false'}
                           {(cellValue === null || cellValue === 'null') && 'null'}
@@ -202,7 +191,7 @@ function BaseTable({
                     </td>
                   );
                 })}
-              </TaleRowStyle>
+              </TableRowStyle>
             );
           })}
         </TableBodyStyle>
