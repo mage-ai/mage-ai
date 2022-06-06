@@ -1,6 +1,7 @@
 import Router from 'next/router';
 import { useEffect, useState } from 'react';
 
+import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
@@ -140,15 +141,6 @@ function ColumnDetail({
     Router.push('/datasets');
   };
 
-  const headEl = (
-    <FlexContainer alignItems="center" justifyContent="space-between">
-      <PageBreadcrumbs featureSet={featureSet} />
-      <Button onClick={viewColumns}>
-        <Text bold> Datasets view </Text>
-      </Button>
-    </FlexContainer>
-  );
-
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -202,37 +194,6 @@ function ColumnDetail({
     </FlexContainer>
   );
 
-  const tabsEl = (
-    <Tabs
-      bold
-      defaultKey={tab}
-      large
-      noBottomBorder={false}
-      onChange={key => setTab(key)}
-    >
-      <Tab key="data" label="Data">
-        <Spacing my={3} />
-        {dataEl}
-      </Tab>
-      <Tab  key="reports" label="Reports">
-        <Spacing my={3} />
-        {reportsEl}
-      </Tab>
-      <Tab key="visualizations" label="Visualizations">
-        <Spacing my={3} />
-        {count > 0 && (
-          <ColumnAnalysis
-            column={featureUUID}
-            features={features}
-            insights={insightsColumn}
-            statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-            statisticsOverview={statisticsOverview}
-          />
-        )}
-      </Tab>
-    </Tabs>
-  );
-
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
   const saveAction = (data) => {
@@ -253,52 +214,66 @@ function ColumnDetail({
       centerAlign
       pageTitle="Column Details"
     >
-      <Spacing mt={UNIT}>
-        {actionType && (
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            currentFeature={{
-              columnType: columnType,
-              uuid: featureUUID,
-            }}
-            onSave={() => saveAction(actionPayload)}
-            payload={actionPayload}
-            setPayload={setActionPayload}
-          />
-        )}
+      <Spacing mt={8} />
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        <PageBreadcrumbs featureSet={featureSet} />
+        <Button onClick={viewColumns}>
+          <Text bold> Datasets view </Text>
+        </Button>
+      </FlexContainer>
 
-        <Spacing mt={5}>
-          <Select
-            onChange={e => setActionPayload(JSON.parse(e.target.value))}
-            value={actionType}
-            width={UNIT * 20}
-          >
-            <option value="">
-              New action
-            </option>
-
-            {Object.entries(actionsConfig.columns).map(([k, v]) => (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'column',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-          </Select>
-        </Spacing>
-      </Spacing>
-
-      <Spacing mt={UNIT} />
-      {headEl}
       <Spacing mt={2} />
 
+      {actionType && (
+        <ActionForm
+          actionType={actionType}
+          axis={actionPayload?.axis}
+          currentFeature={{
+            columnType: columnType,
+            uuid: featureUUID,
+          }}
+          onSave={() => saveAction(actionPayload)}
+          payload={actionPayload}
+          setPayload={setActionPayload}
+        />
+      )}
+
       <Spacing mt={4} />
-      {tabsEl}
+      <Tabs
+        actionEl={
+          <ActionDropdown
+            actionType={actionType}
+            columnOnly
+            setActionPayload={setActionPayload}
+          />
+        }
+        bold
+        defaultKey={tab}
+        large
+        noBottomBorder={false}
+        onChange={key => setTab(key)}
+      >
+        <Tab key="data" label="Data">
+          <Spacing my={3} />
+          {dataEl}
+        </Tab>
+        <Tab  key="reports" label="Reports">
+          <Spacing my={3} />
+          {reportsEl}
+        </Tab>
+        <Tab key="visualizations" label="Visualizations">
+          <Spacing my={3} />
+          {count > 0 && (
+            <ColumnAnalysis
+              column={featureUUID}
+              features={features}
+              insights={insightsColumn}
+              statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+              statisticsOverview={statisticsOverview}
+            />
+          )}
+        </Tab>
+      </Tabs>
     </Layout>
   );
 }

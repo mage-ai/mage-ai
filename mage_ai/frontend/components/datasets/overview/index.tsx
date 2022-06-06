@@ -176,7 +176,7 @@ function DatasetOverview({
         footer={<Spacing mt={UNIT} />}
         pageTitle="Dataset Overview"
       >
-        <Spacing mt={UNIT} />
+        <Spacing mt={8} />
         {headEl}
         <Spacing mt={2} />
 
