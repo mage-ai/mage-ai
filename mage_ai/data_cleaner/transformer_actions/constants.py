@@ -5,12 +5,13 @@ CONSTANT_IMPUTATION_DEFAULTS = dict(object='missing', datetime=pd.Timestamp.min,
 CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
 
 
-class ActionType():
+class ActionType:
     ADD = 'add'
     AVERAGE = 'average'
     CLEAN_COLUMN_NAME = 'clean_column_name'
     COUNT = 'count'
     COUNT_DISTINCT = 'count_distinct'
+    CUSTOM = 'custom'
     DIFF = 'diff'
     DROP_DUPLICATE = 'drop_duplicate'
     EXPAND_COLUMN = 'expand_column'
@@ -39,18 +40,18 @@ class ActionType():
     UPDATE_VALUE = 'update_value'
 
 
-class Axis():
+class Axis:
     COLUMN = 'column'
     ROW = 'row'
 
 
-class VariableType():
+class VariableType:
     FEATURE = 'feature'
     FEATURE_SET = 'feature_set'
     FEATURE_SET_VERSION = 'feature_set_version'
 
 
-class Operator():
+class Operator:
     CONTAINS = 'contains'
     NOT_CONTAINS = 'not contains'
     EQUALS = '=='
@@ -61,7 +62,7 @@ class Operator():
     LESS_THAN_OR_EQUALS = '<='
 
 
-class ImputationStrategy():
+class ImputationStrategy:
     AVERAGE = 'average'
     COLUMN = 'column'
     CONSTANT = 'constant'
@@ -73,7 +74,7 @@ class ImputationStrategy():
     SEQ = 'sequential'
 
 
-class NameConventionPatterns():
+class NameConventionPatterns:
     SNAKE = re.compile(r'^[a-z]+(?:\_[a-z0-9]+)*$')
     CAMEL = re.compile(r'^[a-z]+(?:[A-Z][a-z]*)*$')
     CAMEL_COMPONENT = re.compile(r'^[a-z]+')
