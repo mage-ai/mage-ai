@@ -215,7 +215,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
-    DATE_TYPES = frozenset((DATETIME, CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT))
+    DATE_TYPES = frozenset((DATETIME,))
 
     def evaluate(self, column):
         """
