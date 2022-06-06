@@ -576,7 +576,7 @@ function Overview({
           }
         />
       )}
-      {heatmapData && (
+      {correlations && heatmapData?.length >= 1 && (
         <ChartRow
           left={
             <ChartContainer title="Correlations">
