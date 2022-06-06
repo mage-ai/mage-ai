@@ -69,7 +69,11 @@ export function createStatisticsSample(statistics, colTypes) {
       const name = HUMAN_READABLE_MAPPING[key];
       let value = statistics[key];
       if (WARN_KEYS.includes(key)) {
-        value = `${value} (${getPercentage(value / total)})`;
+        if (total !== 0) {
+          value = `${value} (${getPercentage(value / total)})`;
+        } else {
+          value = '0 (0%)';
+        }
       }
       rowData.push({
         columnValues: [name, value],
@@ -77,13 +81,22 @@ export function createStatisticsSample(statistics, colTypes) {
     }
   });
 
-  rowData.push({
-    columnValues: ['Categorical Features', `${countCategory} (${getPercentage(countCategory / total)})`],
-  },{
-    columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
-  },{
-    columnValues: ['Time series Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
-  });
-
+  if (total !== 0) {
+    rowData.push({
+      columnValues: ['Categorical Features', `${countCategory} (${getPercentage(countCategory / total)})`],
+    },{
+      columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
+    },{
+      columnValues: ['Time series Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
+    });
+  } else {
+    rowData.push({
+      columnValues: ['Categorical Features', '0 (0%)'],
+    },{
+      columnValues: ['Numerical Features', '0 (0%)'],
+    },{
+      columnValues: ['Time series Features', '0 (0%)'],
+    });
+  }
   return { rowData };
 }
