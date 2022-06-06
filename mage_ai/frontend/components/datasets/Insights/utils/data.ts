@@ -49,11 +49,15 @@ export function buildCorrelationsRowData(correlations, correlationThreshold = nu
   return correlationsRowData;
 }
 
-export function buildDistributionData(chartData, featuresByUUID, opts: {
-  calculateAnomaly?: any;
-  feature?: FeatureType;
-  getYValue?: any;
-} = {}) {
+export function buildDistributionData(
+  chartData,
+  featuresByUUID,
+  opts: {
+    calculateAnomaly?: any;
+    feature?: FeatureType;
+    getYValue?: any;
+  } = {}
+) {
   const {
     calculateAnomaly,
     feature: featureProp,

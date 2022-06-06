@@ -146,8 +146,8 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         .filter((dateTuple: any) => !!dateTuple[0])
       : dataSortedByCountDesc.slice(0, maxBarCount);
 
-    const xMax = width - margin.right;
-    const yMax = height - margin.top;
+    const xMax = width - margin.left - margin.right;
+    const yMax = height - margin.bottom - margin.top;
 
     const xScaleDate = isDateType ? getXScaleDate(dataSample, xMax) : null;
     const dateFrequencyByRange = getDateFrequencyByRange(dataSample, xScaleDate);
@@ -236,7 +236,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
     const handleTooltip = useCallback(
       (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
         const { x, y } = localPoint(event) || { x: 0, y: 0 };
-        const percent = (x - (showAxisLabels ? margin.left : 0)) / width;
+        const percent = (x - (showAxisLabels ? margin.left : 0)) / xMax;
         const index = Math.floor(dataSampleCount * percent);
         let tuple = dataSample[index];
         if (typeof (tuple) === 'undefined') {
@@ -269,6 +269,11 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         width,
       ],
     );
+
+    const numberFormat = Intl.NumberFormat('en-US', {
+      notation: "compact",
+      maximumFractionDigits: 1
+    })
 
     return (width < 10 || !data.length) ? null : (
       <div>
@@ -312,7 +317,9 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
                 left={margin.left}
                 scale={yScale}
                 stroke={colors.muted}
-                tickFormat={label => label.toString()}
+                tickFormat={
+                  label => (label.valueOf() >= 10000 ? numberFormat.format(label.valueOf()) : label.toString())
+                }
                 tickLabelProps={() => ({
                   fill: colors.muted,
                   fontFamily: FONT_FAMILY_REGULAR,

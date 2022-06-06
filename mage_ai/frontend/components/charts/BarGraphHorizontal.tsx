@@ -52,7 +52,8 @@ type BarStackHorizontalProps = {
 
 export type BarStackHorizontalContainerProps = SharedProps;
 
-const MAX_FIELDS_DISPLAYED: number = 200;
+const MAX_FIELDS_DISPLAYED: number = 50;
+const MAX_LABEL_LENGTH: number = 20;
 
 const defaultMargin = {
   bottom: 5 * UNIT,
@@ -80,9 +81,19 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     width,
     xAxisLabel,
     xNumTicks,
-    yLabelFormat,
+    yLabelFormat: yLabelFormatProp,
     ySerialize,
   }: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
+    let yLabelFormat = yLabelFormatProp;
+    if (!yLabelFormat) {
+      yLabelFormat = (label) => {
+        if (label.length > MAX_LABEL_LENGTH) {
+          return `${label.substring(0, MAX_LABEL_LENGTH)}...`
+        } else {
+          return label
+        }
+      }
+    }
     const fontSize = large ? REGULAR : SMALL_FONT_SIZE;
     const themeContext: ThemeType = useContext(ThemeContext);
     const margin = {
@@ -218,7 +229,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
               hideTicks
               scale={yScale}
               stroke={colors.muted}
-              tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
+              tickFormat={label => yLabelFormat(label)}
               tickLabelProps={() => ({
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
