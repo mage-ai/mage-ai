@@ -131,7 +131,8 @@ class AnalysisCalculator():
         correlation = []
         time_series = []
 
-        if is_numeric_dtype(df, col, column_type):
+        is_numeric_col = is_numeric_dtype(df, col, column_type)
+        if is_numeric_col:
             with timer(
                 'analysis.calculate_column.build_histogram_data',
                 dict(feature=feature),
@@ -140,6 +141,8 @@ class AnalysisCalculator():
                 histogram_data = charts.build_histogram_data(col, series_cleaned, column_type)
                 if histogram_data:
                     chart_data.append(histogram_data)
+
+        if is_numeric_col or df[col].dtype == 'bool':
             with timer(
                 'analysis.calculate_column.build_correlation_data',
                 dict(feature=feature),
