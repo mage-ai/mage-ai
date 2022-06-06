@@ -81,6 +81,8 @@ class Model:
     @staticmethod
     def gen_integer_dir_list(pathname):
         dirs = []
+        if not os.path.isdir(pathname):
+            return []
         for dirname in os.listdir(pathname):
             try:
                 dirs.append(int(dirname))
