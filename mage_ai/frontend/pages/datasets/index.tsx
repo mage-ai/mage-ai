@@ -28,6 +28,7 @@ const Dashboard: NextPage = () => {
     <Layout
       centerAlign
       header={<Spacing mt={UNIT} />}
+      pageTitle="Dataset Dashboard"
     >
       <Tabs bold defaultKey="datasets" large>
         <Tab key="datasets" label="Datasets">

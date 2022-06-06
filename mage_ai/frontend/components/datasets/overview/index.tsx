@@ -205,6 +205,7 @@ function DatasetOverview({
       <Layout
         centerAlign
         footer={<Spacing mt={UNIT} />}
+        pageTitle="Dataset Overview"
       >
         <Spacing mt={UNIT} />
         {headEl}
