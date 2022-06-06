@@ -11,10 +11,9 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionVariableTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
-import light from '@oracle/styles/themes/light';
-import { Check } from '@oracle/icons';
+import { Check, Close } from '@oracle/icons';
 import {
   ContainerStyle,
   OptionStyle,
@@ -38,6 +37,9 @@ type ActionFormProps = {
   axis: string;
   currentFeature?: FeatureType;
   features?: FeatureType[];
+  noBorder?: boolean;
+  noHeader?: boolean;
+  onClose?: () => void;
   onSave: () => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
@@ -55,6 +57,9 @@ function ActionForm({
   axis,
   features = [],
   currentFeature,
+  noBorder,
+  noHeader,
+  onClose,
   onSave,
   payload,
   setPayload,
@@ -80,10 +85,10 @@ function ActionForm({
       action_code: newCode,
       action_variables: av,
     });
-  }
+  };
 
   const config: FormConfigType =
-    (axis === 'row' ? actions.rows : actions.columns)?.[actionType];
+    (axis === AxisEnum.ROW ? actions.rows : actions.columns)?.[actionType];
 
   const {
     arguments: configArguments,
@@ -123,20 +128,37 @@ function ActionForm({
   const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
 
   return (
-    <ContainerStyle>
-      <Spacing p={2}>
-        <Text>
-          {title}
-        </Text>
+    <ContainerStyle noBorder={noBorder}>
+      {!noHeader && 
+        <>
+          <FlexContainer justifyContent={'space-between'}>
+            <Spacing p={2}>
+              <Text>
+                {title}
+              </Text>
 
-        {description && (
-          <Text muted small>
-            {description}
-          </Text>
-        )}
-      </Spacing>
+              {description && (
+                <Text muted small>
+                  {description}
+                </Text>
+              )}
+            </Spacing>
 
-      <Divider />
+            <Spacing p={2}>
+              <Button
+                basic
+                iconOnly
+                onClick={onClose}
+                padding="0px"
+                transparent
+              >
+                <Close muted />
+              </Button>
+            </Spacing>
+          </FlexContainer>
+          <Divider />
+        </>
+      }
 
       <Spacing p={2}>
         {code && (

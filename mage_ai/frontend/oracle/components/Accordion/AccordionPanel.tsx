@@ -17,6 +17,7 @@ export type AccordionPanelProps = {
   beforeTitleElement?: any;
   contentOverflowVisible?: boolean;
   first?: boolean;
+  hideScrollbar?: boolean;
   highlighted?: boolean;
   last?: boolean;
   maxHeight?: number;
@@ -142,9 +143,11 @@ const ContentStyle = styled.div<AccordionPanelProps>`
   padding-left: ${UNIT * 2}px;
   padding-right: ${UNIT * 2}px;
 
-  ::-webkit-scrollbar {
-    display: none;
-  }
+  ${props => props.hideScrollbar && `
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  `}
 
   ${props => !props.visible && `
     display: none;
@@ -181,6 +184,7 @@ const AccordionPanel = ({
   children,
   contentOverflowVisible,
   first,
+  hideScrollbar,
   highlighted,
   last,
   maxHeight = 1000,
@@ -259,6 +263,7 @@ const AccordionPanel = ({
     >
       <ContentStyle
         contentOverflowVisible={contentOverflowVisible}
+        hideScrollbar={hideScrollbar}
         maxHeight={maxHeight}
         noBackground={noBackground}
         noPaddingContent={noPaddingContent}

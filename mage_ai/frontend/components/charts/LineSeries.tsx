@@ -28,6 +28,7 @@ import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary'
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
+import { AxisEnum } from '@interfaces/ActionPayloadType';
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: light.background.navigation,
@@ -201,7 +202,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
         >
           <LegendOrdinal labelFormat={label => label} scale={lineLegendScale}>
             {labels => (
-              <div style={{ display: 'flex', flexDirection: 'row' }}>
+              <div style={{ display: 'flex', flexDirection: AxisEnum.ROW }}>
                 {labels.map((label, i) => (
                   <LegendItem
                     key={`legend-quantile-${i}`}

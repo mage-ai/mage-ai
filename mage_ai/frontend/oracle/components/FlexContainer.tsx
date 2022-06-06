@@ -7,6 +7,7 @@ type FlexContainerProps = {
   fullHeight?: boolean;
   fullScreenHeight?: boolean;
   fullWidth?: boolean;
+  justifyContent?: string;
   offsetHeight?: number;
   relative?: boolean;
   textOverflow?: boolean;
@@ -43,6 +44,10 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
 
   ${props => props.fullScreenHeight && props.offsetHeight && `
     min-height: calc(100vh - ${props.offsetHeight}px);
+  `}
+
+  ${props => props.justifyContent && `
+    justify-content: ${props.justifyContent};
   `}
 
   ${props => props.width && `

@@ -3,9 +3,10 @@ import Router from 'next/router';
 import { useMutation } from 'react-query';
 
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { AxisEnum } from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
+import ClientOnly from '@hocs/ClientOnly';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
@@ -159,25 +160,62 @@ function DatasetOverview({
     });
   };
 
-  return (
-    <Layout
-      centerAlign
-      footer={<Spacing mt={UNIT} />}
+  const closeAction = () => setActionPayload({} as ActionPayloadType);
+
+  const selectActionEl = (
+    <Select
+      // @ts-ignore
+      compact
+      onChange={e => setActionPayload(JSON.parse(e.target.value))}
+      value={actionType}
+      width={UNIT * 20}
     >
-      <Spacing mt={UNIT}>
-        {actionType && (
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            features={features}
-            onSave={() => saveAction({
-              action_payload: {
-                ...actionPayload,
-                action_type: actionType,
-              },
-            })}
-            payload={actionPayload}
-            setPayload={setActionPayload}
+      <option value="">
+        New action
+      </option>
+
+      {Object.entries(actionsConfig.rows).map(([k, v]) => (
+        <option
+          key={k}
+          value={JSON.stringify({
+            action_type: k,
+            axis: AxisEnum.ROW,
+          })}
+        >
+          {v.title}
+        </option>
+      ))}
+
+      {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
+        <option
+          key={k}
+          value={JSON.stringify({
+            action_type: k,
+            axis: 'column',
+          })}
+        >
+          {v.title}
+        </option>
+      ))}
+    </Select>
+  );
+
+  return (
+    <ClientOnly>
+      <Layout
+        centerAlign
+        footer={<Spacing mt={UNIT} />}
+      >
+        <Spacing mt={UNIT} />
+        {headEl}
+        <Spacing mt={2} />
+
+        {featureSet && (
+          <Suggestions
+            addAction={saveAction}
+            featureSet={featureSet}
+            removeAction={removeAction}
+            removeSuggestion={(action) => console.log(action)}
           />
         )}
 
@@ -194,117 +232,89 @@ function DatasetOverview({
           </Spacing>
         )}
 
-        <Spacing mt={5}>
-          <Select
-            // @ts-ignore
-            compact
-            onChange={e => setActionPayload(JSON.parse(e.target.value))}
-            value={actionType}
-            width={UNIT * 20}
-          >
-            <option value="">
-              New action
-            </option>
-
-            {Object.entries(actionsConfig.rows).map(([k, v]) => (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'row',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-
-            {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'column',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-          </Select>
-        </Spacing>
-      </Spacing>
-
-      <Spacing mt={UNIT} />
-      {headEl}
-      <Spacing mt={2} />
-
-      {featureSet && (
-        <Suggestions
-          addAction={saveAction}
-          featureSet={featureSet}
-          removeAction={removeAction}
-          removeSuggestion={(action) => console.log(action)}
-        />
-      )}
-
-      <Spacing mt={4} />
-      <Tabs
-        bold
-        currentTab={currentTab}
-        large
-        noBottomBorder={false}
-        onChange={key => setTab(key)}
-      >
-        <Tab key="data" label="Data">
-          <Spacing mb={3} mt={3} />
-          <BaseTable
-            columns={columnHeaderSample}
-            data={rows}
-            datatype={headerTypes}
-            titles={columns}
-          />
-        </Tab>
-        <Tab key="reports" label="Reports">
-          <Spacing mb={3} mt={3} />
-          <FlexContainer justifyContent={'center'}>
-            <Flex flex={1}>
-              {metricSample && (
-                <SimpleDataTable
-                  columnFlexNumbers={[2, 1, 2 ]}
-                  columnHeaders={[{ label: 'Quality Metrics' }]}
-                  rowGroupData={[metricSample]}
-                />
-              )}
-            </Flex>
-            <Spacing ml={8} />
-            <Flex flex={1}>
-              {statSample && (
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[{ label: 'Statistics' }]}
-                  rowGroupData={[statSample]}
-                />
-              )}
-            </Flex>
-          </FlexContainer>
-          <Spacing mt={8}>
-            <FeatureProfiles
+        {actionType && (
+          <Spacing mt={2}>
+            <ActionForm
+              actionType={actionType}
+              axis={actionPayload?.axis}
               features={features}
-              featureSet={featureSet}
-              statistics={statistics}
+              onClose={closeAction}
+              onSave={() => {
+                saveAction({
+                  action_payload: {
+                    ...actionPayload,
+                    action_type: actionType,
+                  },
+                });
+                closeAction();
+              }}
+              payload={actionPayload}
+              setPayload={setActionPayload}
             />
           </Spacing>
-        </Tab>
+        )}
 
-        <Tab key="visualizations" label="Visualizations">
-          <Spacing mb={3} mt={3} />
-          <Overview
-            features={features}
-            insightsOverview={insightsOverview}
-            statistics={statistics}
-          />
-        </Tab>
-      </Tabs>
-    </Layout>
+        <Spacing mt={4} />
+        <Tabs
+          actionEl={selectActionEl}
+          bold
+          currentTab={currentTab}
+          large
+          noBottomBorder={false}
+          onChange={key => setTab(key)}
+        >
+          <Tab key="data" label="Data">
+            <Spacing mb={3} mt={3} />
+            <BaseTable
+              columns={columnHeaderSample}
+              data={rows}
+              datatype={headerTypes}
+              titles={columns}
+            />
+          </Tab>
+          <Tab key="reports" label="Reports">
+            <Spacing mb={3} mt={3} />
+            <FlexContainer justifyContent={'center'}>
+              <Flex flex={1}>
+                {metricSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1]}
+                    columnHeaders={[{ label: 'Quality Metrics' }]}
+                    rowGroupData={[metricSample]}
+                  />
+                )}
+              </Flex>
+              <Spacing ml={8} />
+              <Flex flex={1}>
+                {statSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[{ label: 'Statistics' }]}
+                    rowGroupData={[statSample]}
+                  />
+                )}
+              </Flex>
+            </FlexContainer>
+            <Spacing mt={8}>
+              <FeatureProfiles
+                features={features}
+                featureSet={featureSet}
+                statistics={statistics}
+              />
+            </Spacing>
+          </Tab>
+
+          <Tab key="visualizations" label="Visualizations">
+            <Spacing mb={3} mt={3} />
+            <Overview
+              features={features}
+              insightsOverview={insightsOverview}
+              statistics={statistics}
+            />
+          </Tab>
+        </Tabs>
+      </Layout>
+    </ClientOnly>
   );
 }
 

@@ -5,6 +5,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -17,12 +18,14 @@ function Suggestions({
   addAction,
   featureSet,
   removeAction,
-  removeSuggestion,
 }: SuggestionsProps) {
   const {
     pipeline,
     suggestions,
-  } = featureSet;
+    sample_data: {
+      columns = [],
+    } = {},
+  } = featureSet || {};
   const {
     actions,
   } = pipeline || {};
@@ -48,6 +51,7 @@ function Suggestions({
               <SuggestionRow
                 action={action}
                 border
+                columns={columns}
                 featureSetId={featureSet?.id}
                 featureIdMapping={featureIdMapping}
                 idx={idx}
@@ -69,6 +73,7 @@ function Suggestions({
             visibleMapping={{ 0: true }}
           >
             <AccordionPanel
+              maxHeight={UNIT * 50}
               noBackground
               noPaddingContent
               title={`${suggestions.length} suggested actions`}
@@ -79,11 +84,13 @@ function Suggestions({
                 return (
                   <SuggestionRow
                     action={suggestion}
+                    columns={columns.map((col: any) => ({ uuid: col }))}
                     featureSetId={featureSet?.id}
                     featureIdMapping={featureIdMapping}
                     idx={idx}
                     key={`${idx}-${suggestion.title}`}
                     link={() => addAction(suggestion)}
+                    saveAction={addAction}
                   />
                 );
               })}
