@@ -303,6 +303,7 @@ def build_overview_data(df, datetime_features, numeric_features):
     else:
         df_sample = df.copy()
     df_sample = df_sample[numeric_features]
+    df_sample = df_sample.dropna(axis=1, how='all')
 
     increment(f'{DD_KEY}.build_overview_data.succeeded')
 
