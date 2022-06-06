@@ -127,7 +127,10 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     };
 
     const tickValues: string[] = data.map(ySerialize);
-    const maxTickValueCharacterLength: number = Math.max(...tickValues.map(s => s.length));
+    const maxTickValueCharacterLength: number =
+      Math.min(
+        Math.max(...tickValues.map(s => s.length)),
+        MAX_LABEL_LENGTH);
     if (maxTickValueCharacterLength * 6 > margin.right * 2) {
       margin.right += maxTickValueCharacterLength * 5.5;
     } else if (maxTickValueCharacterLength * 6 >= margin.right) {

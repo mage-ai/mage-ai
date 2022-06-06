@@ -228,7 +228,7 @@ function ColumnAnalysis({
         height={Math.max(3 * data.length * UNIT, UNIT * 50)}
         renderTooltipContent={({ x, y }) => `${y} appears ${numberWithCommas(x)} times`}
         xNumTicks={2}
-        ySerialize={({ y }) => numberWithCommas(y)}
+        ySerialize={({ y }) => y}
       />
     );
   } else if (isBooleanType && statisticsByColumn) {
