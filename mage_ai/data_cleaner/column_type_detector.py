@@ -6,6 +6,7 @@ import re
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
+NUMBER_TYPE_MATCHES_THRESHOLD = 0.8
 STRING_TYPE_MATCHES_THRESHOLD = 0.3
 
 CATEGORY = 'category'
@@ -23,18 +24,20 @@ CATEGORICAL_TYPES = frozenset([CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALS
 NUMBER_TYPES = frozenset([NUMBER, NUMBER_WITH_DECIMALS])
 STRING_TYPES = frozenset([EMAIL, PHONE_NUMBER, TEXT, ZIP_CODE])
 
-COLUMN_TYPES = frozenset([
-    CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
-    DATETIME,
-    EMAIL,
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    PHONE_NUMBER,
-    TEXT,
-    TRUE_OR_FALSE,
-    ZIP_CODE,
-])
+COLUMN_TYPES = frozenset(
+    [
+        CATEGORY,
+        CATEGORY_HIGH_CARDINALITY,
+        DATETIME,
+        EMAIL,
+        NUMBER,
+        NUMBER_WITH_DECIMALS,
+        PHONE_NUMBER,
+        TEXT,
+        TRUE_OR_FALSE,
+        ZIP_CODE,
+    ]
+)
 
 REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,2}$|^\d{1,2}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
@@ -45,7 +48,9 @@ REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
 REGEX_FLOAT_NEW_SYM = re.compile(r'[\.\%]')
 REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$'
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
-REGEX_PHONE_NUMBER_PATTERN = r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
+REGEX_PHONE_NUMBER_PATTERN = (
+    r'^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$'
+)
 REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
 REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
@@ -65,6 +70,35 @@ def get_mismatched_row_count(series, column_type):
     return mismatched_rows
 
 
+def infer_number_type(series, column_name, dtype):
+    clean_series = series.dropna()
+    length = len(clean_series)
+    if length == 0:
+        mdtype = NUMBER_WITH_DECIMALS
+    else:
+        correct_phone_nums = (
+            (clean_series >= 1e9) & (clean_series < 1e12) & (np.floor(clean_series) == clean_series)
+        ).sum()
+        if (
+            correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
+            and 'phone' in column_name.lower()
+        ):
+            mdtype = PHONE_NUMBER
+        else:
+            if np.issubdtype(dtype, np.integer):
+                if (
+                    clean_series.min() >= 100
+                    and clean_series.max() <= 99999
+                    and 'zip' in column_name.lower()
+                ):
+                    mdtype = ZIP_CODE
+                else:
+                    mdtype = NUMBER
+            elif np.issubdtype(dtype, np.floating):
+                mdtype = NUMBER_WITH_DECIMALS
+    return mdtype
+
+
 def infer_column_type(series, column_name, dtype, kwargs):
     mdtype = None
     if 'datetime64' in str(dtype):
@@ -73,16 +107,8 @@ def infer_column_type(series, column_name, dtype, kwargs):
         mdtype = infer_object_type(series, kwargs)
     elif dtype == 'bool':
         mdtype = TRUE_OR_FALSE
-    elif np.issubdtype(dtype, np.integer):
-        clean_series = series.dropna()
-        if (clean_series.min() >= 100 and clean_series.max() <= 99999 and
-                'zip' in column_name.lower()):
-            mdtype = ZIP_CODE
-        else:
-            mdtype = NUMBER
-    elif np.issubdtype(dtype, np.floating):
-        mdtype = NUMBER_WITH_DECIMALS
-
+    elif np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer):
+        mdtype = infer_number_type(series, column_name, dtype)
     if mdtype in NUMBER_TYPES and series.nunique(dropna=False) == 2:
         mdtype = TRUE_OR_FALSE
 
@@ -108,13 +134,20 @@ def infer_object_type(series, kwargs):
     elif clean_series_nunique <= 2:
         mdtype = TRUE_OR_FALSE
     else:
+        length = len(clean_series)
         if all(clean_series.str.match(REGEX_NUMBER)):
             if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
                 mdtype = NUMBER_WITH_DECIMALS
             else:
-                mdtype = NUMBER
+                correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
+                correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+                if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD:
+                    mdtype = PHONE_NUMBER
+                elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD:
+                    mdtype = ZIP_CODE
+                else:
+                    mdtype = NUMBER
         else:
-            length = len(clean_series)
             matches = clean_series.str.match(REGEX_DATETIME).sum()
             if matches / length >= DATETIME_MATCHES_THRESHOLD:
                 mdtype = DATETIME
@@ -140,8 +173,9 @@ def infer_object_type(series, kwargs):
                         if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
                             mdtype = TEXT
                         else:
-                            if (clean_series_nunique <= kwargs.get('category_cardinality_threshold',
-                                                                   255)):
+                            if clean_series_nunique <= kwargs.get(
+                                'category_cardinality_threshold', 255
+                            ):
                                 mdtype = CATEGORY
                             else:
                                 mdtype = CATEGORY_HIGH_CARDINALITY
@@ -154,8 +188,9 @@ def infer_column_types(df, **kwargs):
     ctypes = {}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
-        types = run_parallel_multiple_args(infer_column_type, columns, df.columns, df.dtypes,
-                                           kwarg_list)
+        types = run_parallel_multiple_args(
+            infer_column_type, columns, df.columns, df.dtypes, kwarg_list
+        )
     else:
         types = map(infer_column_type, columns, df.columns, df.dtypes, kwarg_list)
     for col, dtype in zip(df.columns, types):

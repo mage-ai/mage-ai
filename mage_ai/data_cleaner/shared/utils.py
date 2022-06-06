@@ -1,4 +1,9 @@
-from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, DATETIME
+from mage_ai.data_cleaner.column_type_detector import (
+    NUMBER,
+    NUMBER_WITH_DECIMALS,
+    DATETIME,
+    PHONE_NUMBER,
+)
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -15,10 +20,10 @@ def clean_series(series, column_type, dropna=True):
     if series_cleaned.count() == 0:
         return series_cleaned
 
-    first_item = series_cleaned.dropna().iloc[0]
+    dtype = type(series_cleaned.dropna().iloc[0])
     if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
         is_percent = False
-        if type(first_item) is str:
+        if dtype is str:
             series_cleaned = series_cleaned.str.replace(',', '')
             if series_cleaned.str.count(CURRENCY_SYMBOLS).sum() != 0:
                 series_cleaned = series_cleaned.str.replace(CURRENCY_SYMBOLS, '')
@@ -37,6 +42,9 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned /= 100
     elif column_type == DATETIME:
         series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
+    elif column_type == PHONE_NUMBER and dtype is not str:
+        series_cleaned = series_cleaned.astype(str)
+        series_cleaned = series_cleaned.str.replace(r'\.\d*', '')
     return series_cleaned
 
 
@@ -45,7 +53,6 @@ def clean_dataframe(df, column_types, dropna=True):
 
 
 def is_numeric_dtype(df, column, column_type):
-    return (
-        column_type in [NUMBER, NUMBER_WITH_DECIMALS] or
-        issubclass(df[column].dtype.type, np.number)
+    return column_type in [NUMBER, NUMBER_WITH_DECIMALS] or issubclass(
+        df[column].dtype.type, np.number
     )
