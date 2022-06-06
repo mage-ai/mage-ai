@@ -12,16 +12,26 @@ def build_custom_action_decorator(action_list):
 def execute_custom_action(df, action, **kwargs):
     """
     Handles custom action generation and execution. Custom actions are currently supported in two different ways:
-    - **`custom_action` decorator**: any function decorated with `@custom_action` will be executed afterwards as a custom action.
-    All functions must accept a Pandas dataframe and return a Pandas dataframe. The example below shows an expected function signature:
+    - `custom_action` decorator: any function decorated with `@custom_action` will be executed afterwards as a custom action.
+    All functions must accept a Pandas dataframe and return a Pandas dataframe. Functions decorated with `@custom_action` are
+    executed in the order of their definition.
 
-    - **Script style**: entering a script into the action code menu will execute the script. The script will have access to the dataframe through the
+    - Script style: entering a script into the action code menu will execute the script. The script will have access to the dataframe through the
     `df` variable and must mutate it before completion in order to apply the correct action.
 
-    Below is an example of a transformation function that could be given
-    ```
+    If both custom actions and scripts are provided, the scripts will be executed before the custom actions.
+
+    Below is an example of a user defined custom transformer action
+    ```python
     @custom_action
     def transform(df: pandas.DataFrame) -> pandas.DataFrame:
+        df['total'] = df.sum(axis=0)
+        return df
+    ```
+
+    Below is a python script performing the same function that can be run by this function:
+    ```python
+    df['total'] = df.sum(axis=0)
     ```
     """
     custom_actions = deque()
