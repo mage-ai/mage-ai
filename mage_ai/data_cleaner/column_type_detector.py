@@ -72,26 +72,30 @@ def get_mismatched_row_count(series, column_type):
 
 def infer_number_type(series, column_name, dtype):
     clean_series = series.dropna()
-    correct_phone_nums = (
-        (clean_series >= 1e9) & (clean_series < 1e12) & (np.floor(clean_series) == clean_series)
-    ).sum()
-    if (
-        correct_phone_nums / len(clean_series) >= NUMBER_TYPE_MATCHES_THRESHOLD
-        and 'phone' in column_name.lower()
-    ):
-        mdtype = PHONE_NUMBER
+    length = len(clean_series)
+    if length == 0:
+        mdtype = NUMBER_WITH_DECIMALS
     else:
-        if np.issubdtype(dtype, np.integer):
-            if (
-                clean_series.min() >= 100
-                and clean_series.max() <= 99999
-                and 'zip' in column_name.lower()
-            ):
-                mdtype = ZIP_CODE
-            else:
-                mdtype = NUMBER
-        elif np.issubdtype(dtype, np.floating):
-            mdtype = NUMBER_WITH_DECIMALS
+        correct_phone_nums = (
+            (clean_series >= 1e9) & (clean_series < 1e12) & (np.floor(clean_series) == clean_series)
+        ).sum()
+        if (
+            correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
+            and 'phone' in column_name.lower()
+        ):
+            mdtype = PHONE_NUMBER
+        else:
+            if np.issubdtype(dtype, np.integer):
+                if (
+                    clean_series.min() >= 100
+                    and clean_series.max() <= 99999
+                    and 'zip' in column_name.lower()
+                ):
+                    mdtype = ZIP_CODE
+                else:
+                    mdtype = NUMBER
+            elif np.issubdtype(dtype, np.floating):
+                mdtype = NUMBER_WITH_DECIMALS
     return mdtype
 
 
