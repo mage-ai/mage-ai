@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
+import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType, { AxisEnum } from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
@@ -163,41 +164,10 @@ function DatasetOverview({
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
   const selectActionEl = (
-    <Select
-      // @ts-ignore
-      compact
-      onChange={e => setActionPayload(JSON.parse(e.target.value))}
-      value={actionType}
-      width={UNIT * 20}
-    >
-      <option value="">
-        New action
-      </option>
-
-      {Object.entries(actionsConfig.rows).map(([k, v]) => (
-        <option
-          key={k}
-          value={JSON.stringify({
-            action_type: k,
-            axis: AxisEnum.ROW,
-          })}
-        >
-          {v.title}
-        </option>
-      ))}
-
-      {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
-        <option
-          key={k}
-          value={JSON.stringify({
-            action_type: k,
-            axis: 'column',
-          })}
-        >
-          {v.title}
-        </option>
-      ))}
-    </Select>
+    <ActionDropdown
+      actionType={actionType}
+      setActionPayload={setActionPayload}
+    />
   );
 
   return (
