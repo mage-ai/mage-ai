@@ -169,12 +169,16 @@ function BaseTable({
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <TableBodyStyle {...getTableBodyProps()}>
           {rows.map((row, i) => {
-              prepareRow(row);
-              return (
-                // @ts-ignore
-                <TaleRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
-                  {row.cells.map(cell => (
-                    // @ts-ignore
+            prepareRow(row);
+
+            return (
+              // @ts-ignore
+              <TaleRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
+                {row.cells.map(cell => {
+                  const { value: cellValue } = cell;
+                  console.log(cellValue)
+
+                  return (
                     <td
                       {...cell.getCellProps()}
                       style={{
@@ -182,18 +186,25 @@ function BaseTable({
                         minWidth: cell.column.width,
                       }}
                     >
-                      {/* <CellStyled> */}
                       <TextStyle>
                         <Text>
-                          {cell.render('Cell')}
+                          {cellValue === true && 'true'}
+                          {cellValue === false && 'false'}
+                          {(cellValue === null || cellValue === 'null') && 'null'}
+                          {cellValue !== true
+                            && cellValue !== false
+                            && cellValue !== null
+                            && cellValue !== 'null'
+                            && cellValue
+                          }
                         </Text>
                       </TextStyle>
-                      {/* </CellStyled> */}
                     </td>
-                    ))}
-                </TaleRowStyle>
-              );
-            })}
+                  );
+                })}
+              </TaleRowStyle>
+            );
+          })}
         </TableBodyStyle>
       </table>
     </TableStyle>
