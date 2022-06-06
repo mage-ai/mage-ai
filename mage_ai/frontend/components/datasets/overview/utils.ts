@@ -16,7 +16,7 @@ export function createMetricsSample(statistics, colTypes) {
   const stats = Object.keys(statistics);
   const types = Object.values(colTypes);
   const metricRows = Array(METRICS_KEYS.length).fill(0);
-  const total_cells = (statistics?.count === 0 || types?.length === 0)
+  const totalCells = (statistics?.count === 0 || types?.length === 0)
     ? 1 : statistics?.count * types?.length;
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
@@ -28,7 +28,7 @@ export function createMetricsSample(statistics, colTypes) {
         bar = [true, value * 100];
         value = getPercentage(value);
       } else if (RATIO_KEYS.includes(key)) {
-        value = `${value} (${getPercentage(value / total_cells)})`;
+        value = `${value} (${getPercentage(value / totalCells)})`;
       }
       metricRows[index] = {
         columnValues: [order, value, bar],
