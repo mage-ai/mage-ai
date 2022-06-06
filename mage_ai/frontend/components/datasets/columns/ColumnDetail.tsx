@@ -235,6 +235,10 @@ function ColumnDetail({
     setErrorMessages(null);
     const updatedAction: TransformerActionType = {
       action_payload: {
+        action_code: '',
+        action_options: {},
+        action_variables: {},
+        outputs: [],
         ...data,
         action_arguments: [
           featureUUID,
