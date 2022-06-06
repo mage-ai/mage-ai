@@ -49,7 +49,20 @@ class Model:
         return pd.read_parquet(file_path, engine='pyarrow')
 
     def write_parquet_file(self, file_name, df):
-        df.to_parquet(os.path.join(self.dir, file_name))
+        df_output = df.copy()
+        # Clean up data types since parquet doesn't support mixed data types
+        for c in df_output.columns:
+            try:
+                coltype = type(df_output[c].dropna().iloc[0])
+            except IndexError:
+                # Column is composed on only invalid values
+                coltype = str
+            try:
+                df_output[c] = df_output[c].astype(coltype)
+            except Exception:
+                # Fall back to convert to string
+                df_output[c] = df_output[c].astype(str)
+        df_output.to_parquet(os.path.join(self.dir, file_name))
 
     def to_dict(self, detailed):
         pass
