@@ -35,69 +35,74 @@ class CustomActionTests(TestCase):
             ],
             columns=['group_id', 'price', 'group_churned_at', 'store', 'zip_code', 'new_col'],
         )
-        action = {
-            'action_type': 'custom',
-            'axis': 'row',
-            'action_code': 'from mage_ai.data_cleaner.column_type_detector import NUMBER,'
-            ' NUMBER_WITH_DECIMALS, DATETIME, infer_column_types\n'
-            'from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS\n'
-            'import pandas as pd\n'
-            'import numpy as np\n\n\n'
-            'def clean_series(series, column_type, dropna=True):\n'
-            '    series_cleaned = series.apply(lambda x: x.strip(" \\\'\\\"") '
-            'if type(x) is str else x)\n'
-            '    series_cleaned = series_cleaned.map(\n'
-            '        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and'
-            ' not x.isspace())) else np.nan\n '
-            '   )\n'
-            '    if dropna:\n'
-            '        series_cleaned = series_cleaned.dropna()\n\n'
-            '    if series_cleaned.count() == 0:\n'
-            '        return series_cleaned\n\n'
-            '    first_item = series_cleaned.dropna().iloc[0]\n'
-            '    if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:\n'
-            '        is_percent = False\n        if type(first_item) is str:\n'
-            '            series_cleaned = series_cleaned.str.replace(",", "")\n'
-            '            if series_cleaned.str.count(CURRENCY_SYMBOLS).sum() != 0:\n'
-            '                series_cleaned = series_cleaned.str.replace(CURRENCY_SYMBOLS, "")\n'
-            '            elif series_cleaned.str.contains("%").sum() != 0:\n'
-            '                is_percent = True\n'
-            '                series_cleaned = series_cleaned.str.replace("%", "")\n'
-            '            series_cleaned = series_cleaned.str.replace(" ", "")\n'
-            '        if column_type == NUMBER:\n'
-            '           try:\n'
-            '                series_cleaned = series_cleaned.astype(int)\n'
-            '           except ValueError:\n'
-            '                series_cleaned = series_cleaned.astype(float)\n'
-            '        else:\n            series_cleaned = series_cleaned.astype(float)\n'
-            '        if is_percent:\n'
-            '            series_cleaned /= 100\n'
-            '    elif column_type == DATETIME:\n'
-            '        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce",'
-            ' infer_datetime_format=True)\n'
-            '    return series_cleaned\n'
-            '   \n\n@custom_action\ndef clean_df(df):\n'
-            '    ctypes = infer_column_types(df)\n'
-            '    for col in df.columns:\n'
-            '        df[col] = clean_series(df[col], ctypes, dropna=False)\n'
-            '    return df\n\n'
-            '@custom_action  \n'
-            'def print_df(df):\n'
-            '    print(df)\n'
-            '    return df\n'
-            '    \n'
-            '@custom_action\n'
-            'def print_df_dtypes(df):\n'
-            '    print(df.dtypes)\n'
-            '    return df\n'
-            '    \n'
-            '@custom_action\n'
-            'def add_column(df):\n'
-            '    columns = list(df.columns)\n'
-            '    df["new_col"] = df[columns[0]]\n'
-            '    return df',
-            'action_variables': {},
-        }
+        action = dict(
+            action_type='custom',
+            axis='row',
+            action_code='''from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, DATETIME, infer_column_types
+from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+import pandas as pd
+import numpy as np
+
+def clean_series(series, column_type, dropna=True):
+    series_cleaned = series.apply(lambda x: x.strip(" \\\'\\\"")
+if type(x) is str else x)
+    series_cleaned = series_cleaned.map(
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and
+    not x.isspace())) else np.nan
+    )
+    if dropna:
+        series_cleaned = series_cleaned.dropna()
+    if series_cleaned.count() == 0:
+        return series_cleaned
+    first_item = series_cleaned.dropna().iloc[0]
+    if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
+        is_percent = False
+        if type(first_item) is str:
+            series_cleaned = series_cleaned.str.replace(",", "")
+            if series_cleaned.str.count(CURRENCY_SYMBOLS).sum() != 0:
+                series_cleaned = series_cleaned.str.replace(CURRENCY_SYMBOLS, "")
+            elif series_cleaned.str.contains("%").sum() != 0:
+                is_percent = True
+                series_cleaned = series_cleaned.str.replace("%", "")
+            series_cleaned = series_cleaned.str.replace(" ", "")
+            if column_type == NUMBER:
+                try:
+                    series_cleaned = series_cleaned.astype(int)
+                except ValueError:
+                    series_cleaned = series_cleaned.astype(float)
+            else:
+                series_cleaned = series_cleaned.astype(float)
+            if is_percent:
+                series_cleaned /= 100
+    elif column_type == DATETIME:
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+    return series_cleaned
+
+@transformer_action
+def clean_df(df):
+    ctypes = infer_column_types(df)
+    for col in df.columns:
+        df[col] = clean_series(df[col], ctypes, dropna=False)
+    return df
+
+@transformer_action
+def print_df(df):
+    print(df)
+    return df
+
+@transformer_action
+def print_df_dtypes(df):
+    print(df.dtypes)
+    return df
+
+@transformer_action
+def add_column(df):
+    columns = list(df.columns)
+    df["new_col"] = df[columns[0]]
+    return df
+            ''',
+            action_variables={},
+        )
         new_df = execute_custom_action(df, action)
         new_df['group_id'] = new_df['group_id'].astype(float)
         new_df['new_col'] = new_df['new_col'].astype(float)
@@ -132,57 +137,59 @@ class CustomActionTests(TestCase):
             ],
             columns=['group_id', 'price', 'group_churned_at', 'store', 'zip_code', 'new_col'],
         )
-        action = {
-            'action_type': 'custom',
-            'axis': 'row',
-            'action_code': 'from mage_ai.data_cleaner.column_type_detector import NUMBER,'
-            ' NUMBER_WITH_DECIMALS, DATETIME, infer_column_types\n'
-            'from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS\n'
-            'import pandas as pd\n'
-            'import numpy as np\n\n\n'
-            'def clean_series(series, column_type, dropna=True):\n'
-            '    series_cleaned = series.apply(lambda x: x.strip(" \\\'\\\"") '
-            'if type(x) is str else x)\n'
-            '    series_cleaned = series_cleaned.map(\n'
-            '        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and'
-            ' not x.isspace())) else np.nan\n '
-            '   )\n'
-            '    if dropna:\n'
-            '        series_cleaned = series_cleaned.dropna()\n\n'
-            '    if series_cleaned.count() == 0:\n'
-            '        return series_cleaned\n\n'
-            '    first_item = series_cleaned.dropna().iloc[0]\n'
-            '    if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:\n'
-            '        is_percent = False\n        if type(first_item) is str:\n'
-            '            series_cleaned = series_cleaned.str.replace(",", "")\n'
-            '            if series_cleaned.str.count(CURRENCY_SYMBOLS).sum() != 0:\n'
-            '                series_cleaned = series_cleaned.str.replace(CURRENCY_SYMBOLS, "")\n'
-            '            elif series_cleaned.str.contains("%").sum() != 0:\n'
-            '                is_percent = True\n'
-            '                series_cleaned = series_cleaned.str.replace("%", "")\n'
-            '            series_cleaned = series_cleaned.str.replace(" ", "")\n'
-            '        if column_type == NUMBER:\n'
-            '           try:\n'
-            '                series_cleaned = series_cleaned.astype(int)\n'
-            '           except ValueError:\n'
-            '                series_cleaned = series_cleaned.astype(float)\n'
-            '        else:\n            series_cleaned = series_cleaned.astype(float)\n'
-            '        if is_percent:\n'
-            '            series_cleaned /= 100\n'
-            '    elif column_type == DATETIME:\n'
-            '        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce",'
-            ' infer_datetime_format=True)\n'
-            '    return series_cleaned\n'
-            '   \n\n'
-            'ctypes = infer_column_types(df)\n'
-            'for col in df.columns:\n'
-            '    df[col] = clean_series(df[col], ctypes, dropna=False)\n'
-            'print(df)\n'
-            'print(df.dtypes)\n'
-            'columns = list(df.columns)\n'
-            'df["new_col"] = df[columns[0]]\n',
-            'action_variables': {},
-        }
+        action = dict(
+            action_type='custom',
+            axis='row',
+            action_code='''from mage_ai.data_cleaner.column_type_detector import NUMBER, NUMBER_WITH_DECIMALS, DATETIME, infer_column_types
+from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+import pandas as pd
+import numpy as np
+
+def clean_series(series, column_type, dropna=True):
+    series_cleaned = series.apply(lambda x: x.strip(" \\\'\\\"")
+if type(x) is str else x)
+    series_cleaned = series_cleaned.map(
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and
+    not x.isspace())) else np.nan
+    )
+    if dropna:
+        series_cleaned = series_cleaned.dropna()
+    if series_cleaned.count() == 0:
+        return series_cleaned
+    first_item = series_cleaned.dropna().iloc[0]
+    if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
+        is_percent = False
+        if type(first_item) is str:
+            series_cleaned = series_cleaned.str.replace(",", "")
+            if series_cleaned.str.count(CURRENCY_SYMBOLS).sum() != 0:
+                series_cleaned = series_cleaned.str.replace(CURRENCY_SYMBOLS, "")
+            elif series_cleaned.str.contains("%").sum() != 0:
+                is_percent = True
+                series_cleaned = series_cleaned.str.replace("%", "")
+            series_cleaned = series_cleaned.str.replace(" ", "")
+            if column_type == NUMBER:
+                try:
+                    series_cleaned = series_cleaned.astype(int)
+                except ValueError:
+                    series_cleaned = series_cleaned.astype(float)
+            else:
+                series_cleaned = series_cleaned.astype(float)
+            if is_percent:
+                series_cleaned /= 100
+    elif column_type == DATETIME:
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+    return series_cleaned
+
+ctypes = infer_column_types(df)
+for col in df.columns:
+    df[col] = clean_series(df[col], ctypes, dropna=False)
+print(df)
+print(df.dtypes)
+columns = list(df.columns)
+df["new_col"] = df[columns[0]]
+            ''',
+            action_variables={},
+        )
         new_df = execute_custom_action(df, action)
         new_df['group_id'] = new_df['group_id'].astype(float)
         new_df['new_col'] = new_df['new_col'].astype(float)
