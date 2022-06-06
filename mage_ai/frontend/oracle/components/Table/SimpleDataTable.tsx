@@ -25,6 +25,7 @@ export type OnClickRowProps = {
 export type ColumnHeaderType = {
   Icon?: any;
   label: string;
+  progress?: number;
 };
 
 export type RowGroupDataType = {

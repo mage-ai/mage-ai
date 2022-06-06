@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAbsoluteLayout, useBlockLayout, useFlexLayout, useTable } from 'react-table';
+import { useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import { TableStyle, RowCellStyle, CellStyled } from './Table.style';
-import { cutTextSize, getColumnWidth } from './helpers';
+import { TableStyle} from './Table.style';
+import { cutTextSize } from './helpers';
 
   export type DataTableProps = {
     children?: any;
@@ -101,26 +100,19 @@ import { cutTextSize, getColumnWidth } from './helpers';
     headerGroups,
     rows,
     prepareRow,
-    totalColumnsWidth,
   } = useTable(
     {
       columns: column || columnSample,
       data: row || dataSample,
     },
-    useAbsoluteLayout,
     );
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
     // Table: Relative, no overflow, outline in silver
     <TableStyle>
-      <table 
+      <table
           {...getTableProps()}
-          style={{
-            border: 'solid 1px #D8DCE3',
-            borderRadius: `${BORDER_RADIUS_LARGE}px`,
-            width: totalColumnsWidth,
-          }}
         >
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
         <thead>
@@ -134,19 +126,14 @@ import { cutTextSize, getColumnWidth } from './helpers';
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
-                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
-                    minWidth: column.minWidth,
-                    padding: '14px',
-                    position: 'sticky',
+                    padding: '4px',
                   }}
                 >
-                  {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
                     <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
-                  {/* </RowCellStyle> */}
                 </th>
                   ))}
             </tr>
@@ -155,7 +142,7 @@ import { cutTextSize, getColumnWidth } from './helpers';
         </thead>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <tbody {...getTableBodyProps()}>
-          {rows.map((row, i) => {
+          {rows.map((row, i, arr) => {
               prepareRow(row);
               return (
                 // eslint-disable-next-line react/jsx-key
@@ -166,21 +153,19 @@ import { cutTextSize, getColumnWidth } from './helpers';
                       {...cell.getCellProps()}
                       style={{
                         background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
-                        border: 'solid 1px #FBFCFD',
-                        borderLeft: 'none',
-                        borderRight: 'none',
-                        maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
-                        minWidth: cell.column.width,
-                        padding: '14px',
+                        borderBottom: (i === arr.length - 1) ? 'solid 1px #D8DCE3' : 'none',
+                        borderLeft: 'solid 1px #D8DCE3',
+                        borderRight: 'solid 1px #D8DCE3',
+                        borderSpacing: 0,
+                        borderTop: 'none',
+                        padding: '4px',
                       }}
                     >
-                      {/* <CellStyled> */}
                       <TextStyle>
                         <Text>
                           {cell.render('Cell')}
                         </Text>
                       </TextStyle>
-                      {/* </CellStyled> */}
                     </td>
                     ))}
                 </tr>

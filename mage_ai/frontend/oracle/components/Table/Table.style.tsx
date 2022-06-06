@@ -4,12 +4,15 @@ import light from '@oracle/styles/themes/light';
 import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 
 export const TableStyle = styled.div<any>`
-  position: relative;
-  width: 100%;
+  max-height: 50vh;
   max-width: 100vw;
   overflow: auto;
-  padding: 4px;
-  ${props => props.table &&`
+  position: relative;
+
+  ${props => props && `
+    border-collapse: collapse;
+  `}
+  ${props => props.table && `
     background-color: ${(props.theme.background || light.background).page};
   `}
   ${props => props.height && `
@@ -23,7 +26,6 @@ export const TableStyle = styled.div<any>`
 
 // TODO: Update these hardcoded values
 export const RowCellStyle = styled.div<any>`
-  
   max-height: 80px;
   flex-shrink: 0;
   ${props => !props.first && `
