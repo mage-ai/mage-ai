@@ -1,16 +1,13 @@
-import ActionType from './ActionType';
 import InsightsType from './InsightsType';
 import MetadataType from './MetadataType';
+import PipelineType from './PipelineType';
 import SuggestionType from './SuggestionType';
 
 export default interface FeatureSetType {
   id: string | number;
   insights: InsightsType[][];
   metadata: MetadataType;
-  pipeline?: {
-    id: number;
-    actions: ActionType[];
-  };
+  pipeline?: PipelineType;
   sample_data?: {
     columns: string[];
     rows: string[][];

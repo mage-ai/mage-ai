@@ -10,7 +10,7 @@ import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
@@ -76,6 +76,10 @@ function DatasetOverview({
   } = featureSet?.metadata?.column_types || {};
   const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, ColumnTypeEnum]) => ({ columnType: v, uuid: k }));
+  const featuresWithAltColType: FeatureResponseType[] = features.map(({ columnType, uuid }) => ({
+    column_type: columnType,
+    uuid,
+  }));
 
   const columnHeaderSample = columns?.map((header:any) => ({
     label: header,
@@ -141,6 +145,7 @@ function DatasetOverview({
   );
   const saveAction = (newActionData: TransformerActionType) => {
     setErrorMessages(null);
+    console.log('newActionData:', newActionData);
     commitAction({
       ...pipeline,
       actions: [
@@ -176,7 +181,7 @@ function DatasetOverview({
         footer={<Spacing mt={UNIT} />}
         pageTitle="Dataset Overview"
       >
-        <Spacing mt={UNIT} />
+        <Spacing mt={8} />
         {headEl}
         <Spacing mt={2} />
 
@@ -207,7 +212,7 @@ function DatasetOverview({
             <ActionForm
               actionType={actionType}
               axis={actionPayload?.axis}
-              features={features}
+              features={featuresWithAltColType}
               onClose={closeAction}
               onSave={() => {
                 saveAction({

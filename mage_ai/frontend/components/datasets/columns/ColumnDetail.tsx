@@ -1,8 +1,11 @@
 import Router from 'next/router';
 import { useEffect, useState } from 'react';
+import { useMutation } from 'react-query';
 
+import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
+import TransformerActionType from '@interfaces/TransformerActionType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -12,17 +15,18 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
-import Select from '@oracle/elements/Inputs/Select';
+import PipelineType from '@interfaces/PipelineType';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import actionsConfig from '@components/ActionForm/actions';
+import api from '@api';
 
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getHost } from '@api/utils/url';
 import { getPercentage } from '@utils/number';
+import { onSuccess } from '@api/utils/response';
 import { useCustomFetchRequest } from '@api';
 
 type ColumnDetailProps = {
@@ -36,7 +40,11 @@ function ColumnDetail({
   featureSetId,
   featureId,
 }: ColumnDetailProps) {
+  const [errorMessages, setErrorMessages] = useState(null);
   const [sampleRowData, setSampleRowData] = useState<any>(null);
+
+  const pipeline: PipelineType = featureSet?.pipeline;
+  const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
   const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet);
@@ -140,15 +148,6 @@ function ColumnDetail({
     Router.push('/datasets');
   };
 
-  const headEl = (
-    <FlexContainer alignItems="center" justifyContent="space-between">
-      <PageBreadcrumbs featureSet={featureSet} />
-      <Button onClick={viewColumns}>
-        <Text bold> Datasets view </Text>
-      </Button>
-    </FlexContainer>
-  );
-
   const metricsTableEl = (
     <SimpleDataTable
       columnFlexNumbers={[1, 1]}
@@ -202,103 +201,145 @@ function ColumnDetail({
     </FlexContainer>
   );
 
-  const tabsEl = (
-    <Tabs
-      bold
-      defaultKey={tab}
-      large
-      noBottomBorder={false}
-      onChange={key => setTab(key)}
-    >
-      <Tab key="data" label="Data">
-        <Spacing my={3} />
-        {dataEl}
-      </Tab>
-      <Tab  key="reports" label="Reports">
-        <Spacing my={3} />
-        {reportsEl}
-      </Tab>
-      <Tab key="visualizations" label="Visualizations">
-        <Spacing my={3} />
-        {count > 0 && (
-          <ColumnAnalysis
-            column={featureUUID}
-            features={features}
-            insights={insightsColumn}
-            statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-            statisticsOverview={statisticsOverview}
-          />
-        )}
-      </Tab>
-    </Tabs>
-  );
-
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
+
+  const [commitAction, { isLoading: isLoadingCommitAction }]: any = useMutation(
+    api.pipelines.useUpdate(pipeline?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => fetchColumnData(),
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            const arr = [];
+            if (message) {
+              arr.push(...message.split('\n'));
+            }
+            if (errors) {
+              arr.push(...errors);
+            }
+            if (arr.length >= 1) {
+              setErrorMessages(arr);
+            }
+          },
+        },
+      ),
+    },
+  );
   const saveAction = (data) => {
-    const updatedAction = {
-      action_arguments: [
-        featureUUID,
-      ],
+    setErrorMessages(null);
+    const updatedAction: TransformerActionType = {
       action_payload: {
+        action_code: '',
+        action_options: {},
+        action_variables: {},
+        outputs: [],
         ...data,
+        action_arguments: [
+          featureUUID,
+        ],
         action_type: actionType,
       },
     };
-    alert(JSON.stringify(updatedAction));
+
+    commitAction({
+      ...pipeline,
+      actions: [
+        ...pipelineActions,
+        updatedAction,
+      ],
+    });
   };
+
+  const closeAction = () => setActionPayload({} as ActionPayloadType);
 
   return (
     <Layout
       centerAlign
       pageTitle="Column Details"
     >
-      <Spacing mt={UNIT}>
-        {actionType && (
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            currentFeature={{
-              columnType: columnType,
-              uuid: featureUUID,
-            }}
-            onSave={() => saveAction(actionPayload)}
-            payload={actionPayload}
-            setPayload={setActionPayload}
-          />
-        )}
+      <Spacing mt={8} />
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        <PageBreadcrumbs featureSet={featureSet} />
+        <Button onClick={viewColumns}>
+          <Text bold> Datasets view </Text>
+        </Button>
+      </FlexContainer>
 
-        <Spacing mt={5}>
-          <Select
-            onChange={e => setActionPayload(JSON.parse(e.target.value))}
-            value={actionType}
-            width={UNIT * 20}
-          >
-            <option value="">
-              New action
-            </option>
-
-            {Object.entries(actionsConfig.columns).map(([k, v]) => (
-              <option
-                key={k}
-                value={JSON.stringify({
-                  action_type: k,
-                  axis: 'column',
-                })}
-              >
-                {v.title}
-              </option>
-            ))}
-          </Select>
-        </Spacing>
-      </Spacing>
-
-      <Spacing mt={UNIT} />
-      {headEl}
       <Spacing mt={2} />
 
+      {errorMessages?.length >= 1 && (
+        <Spacing mt={3}>
+          <Text bold>
+            Errors
+          </Text>
+          {errorMessages?.map((msg: string) => (
+            <Text key={msg} monospace xsmall>
+              {msg}
+            </Text>
+          ))}
+        </Spacing>
+      )}
+
+      {actionType && (
+        <ActionForm
+          actionType={actionType}
+          axis={actionPayload?.axis}
+          currentFeature={{
+            columnType: columnType,
+            uuid: featureUUID,
+          }}
+          onClose={closeAction}
+          onSave={() => {
+            saveAction(actionPayload);
+            closeAction();
+          }}
+          payload={actionPayload}
+          setPayload={setActionPayload}
+        />
+      )}
+
       <Spacing mt={4} />
-      {tabsEl}
+      <Tabs
+        actionEl={
+          <ActionDropdown
+            actionType={actionType}
+            columnOnly
+            setActionPayload={setActionPayload}
+          />
+        }
+        bold
+        defaultKey={tab}
+        large
+        noBottomBorder={false}
+        onChange={key => setTab(key)}
+      >
+        <Tab key="data" label="Data">
+          <Spacing my={3} />
+          {dataEl}
+        </Tab>
+        <Tab  key="reports" label="Reports">
+          <Spacing my={3} />
+          {reportsEl}
+        </Tab>
+        <Tab key="visualizations" label="Visualizations">
+          <Spacing my={3} />
+          {count > 0 && (
+            <ColumnAnalysis
+              column={featureUUID}
+              features={features}
+              insights={insightsColumn}
+              statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+              statisticsOverview={statisticsOverview}
+            />
+          )}
+        </Tab>
+      </Tabs>
     </Layout>
   );
 }

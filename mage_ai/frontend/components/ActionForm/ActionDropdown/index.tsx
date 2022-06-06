@@ -5,11 +5,13 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type ActionDropdownProps = {
   actionType: ActionTypeEnum;
+  columnOnly?: boolean;
   setActionPayload: (payload: ActionPayloadType) => void;
 };
 
 function ActionDropdown({
   actionType,
+  columnOnly,
   setActionPayload,
 }: ActionDropdownProps) {
   return (
@@ -22,7 +24,7 @@ function ActionDropdown({
         New action
       </option>
 
-      {Object.entries(actionsConfig.rows).map(([k, v]) => (
+      {!columnOnly && Object.entries(actionsConfig.rows).map(([k, v]) => (
         <option
           key={k}
           value={JSON.stringify({
@@ -34,16 +36,17 @@ function ActionDropdown({
         </option>
       ))}
 
-      {Object.entries(actionsConfig.columns).map(([k, v]) => v.multiColumns && (
-        <option
-          key={k}
-          value={JSON.stringify({
-            action_type: k,
-            axis: AxisEnum.COLUMN,
-          })}
-        >
-          {v.title}
-        </option>
+      {Object.entries(actionsConfig.columns).map(([k, v]) =>
+        (columnOnly ? true : v.multiColumns) && (
+          <option
+            key={k}
+            value={JSON.stringify({
+              action_type: k,
+              axis: AxisEnum.COLUMN,
+            })}
+          >
+            {v.title}
+          </option>
       ))}
     </Select>
   );

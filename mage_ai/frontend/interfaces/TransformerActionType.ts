@@ -1,8 +1,5 @@
-import ActionPayloadType from './ActionPayloadType';
+import SuggestionType from './SuggestionType';
 
-export default interface TransformerActionType {
-  action_payload: ActionPayloadType;
+export default interface TransformerActionType extends SuggestionType {
   id?: number;
-  message?: string;
-  title?: string;
 }
