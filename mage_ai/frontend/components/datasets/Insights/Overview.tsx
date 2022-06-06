@@ -122,7 +122,7 @@ function Overview({
   statistics,
 }: OverviewProps) {
   const {
-    correlations,
+    correlations = [],
     time_series: timeSeries,
     scatter_plot: scatterPlot,
   } = insightsOverview;

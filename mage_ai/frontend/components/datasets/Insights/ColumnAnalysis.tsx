@@ -125,20 +125,24 @@ function ColumnAnalysis({
 
   const {
     charts,
-    correlations,
+    correlations = [],
     time_series: timeSeries,
   } = insights || {};
 
-  const correlationsRowData = buildCorrelationsRowData([{
-    correlations,
-    feature,
-  }]);
+  const correlationsRowData = correlations?.length >= 1
+    ? buildCorrelationsRowData([{
+      correlations,
+      feature,
+    }])
+    : null;
   const yLabels = [column];
   const heatmapData = [[1]];
-  correlationsRowData?.map(([, col, r], idx: number) => {
-    yLabels.push(col);
-    heatmapData.push([roundNumber(r)]);
-  });
+  if (correlationsRowData) {
+    correlationsRowData?.map(([, col, r], idx: number) => {
+      yLabels.push(col);
+      heatmapData.push([roundNumber(r)]);
+    });
+  }
 
   const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
 
