@@ -24,9 +24,6 @@ function Suggestions({
     insights,
     pipeline,
     suggestions,
-    sample_data: {
-      columns = [],
-    } = {},
   } = featureSet || {};
   const {
     actions,
