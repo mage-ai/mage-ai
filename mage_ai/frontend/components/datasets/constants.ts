@@ -17,6 +17,11 @@ export const WARN_KEYS = [
   'empty_row_count',
 ];
 
+export const RATIO_KEYS = [
+  'total_invalid_value_count',
+  'total_null_value_count',
+];
+
 export const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
 export const DATE_TYPES = ['datetime'];
 export const NUMBER_TYPES = ['number', 'number_with_decimals'];

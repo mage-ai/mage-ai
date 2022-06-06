@@ -7,14 +7,17 @@ import {
   METRICS_SORTED_MAPPING,
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
+  RATIO_KEYS,
   STAT_KEYS,
   WARN_KEYS,
 } from '../constants';
 
-export function createMetricsSample(statistics) {
+export function createMetricsSample(statistics, colTypes) {
   const stats = Object.keys(statistics);
+  const types = Object.values(colTypes);
   const metricRows = Array(METRICS_KEYS.length).fill(0);
-
+  const totalCells = (statistics?.count === 0 || types?.length === 0)
+    ? 1 : statistics?.count * types?.length;
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
       let bar: any[] = [false];
@@ -24,6 +27,8 @@ export function createMetricsSample(statistics) {
       if (PERCENTAGE_KEYS.includes(key)) {
         bar = [true, value * 100];
         value = getPercentage(value);
+      } else if (RATIO_KEYS.includes(key)) {
+        value = `${value} (${getPercentage(value / totalCells)})`;
       }
       metricRows[index] = {
         columnValues: [order, value, bar],
