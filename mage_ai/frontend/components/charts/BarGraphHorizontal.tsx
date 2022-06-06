@@ -52,7 +52,8 @@ type BarStackHorizontalProps = {
 
 export type BarStackHorizontalContainerProps = SharedProps;
 
-const MAX_FIELDS_DISPLAYED: number = 200;
+const MAX_FIELDS_DISPLAYED: number = 50;
+const MAX_LABEL_LENGTH: number = 20;
 
 const defaultMargin = {
   bottom: 5 * UNIT,
@@ -80,9 +81,19 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     width,
     xAxisLabel,
     xNumTicks,
-    yLabelFormat,
+    yLabelFormat: yLabelFormatProp,
     ySerialize,
   }: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
+    let yLabelFormat = yLabelFormatProp;
+    if (!yLabelFormat) {
+      yLabelFormat = (label) => {
+        if (label.length > MAX_LABEL_LENGTH) {
+          return `${label.substring(0, MAX_LABEL_LENGTH)}...`
+        } else {
+          return label
+        }
+      }
+    }
     const fontSize = large ? REGULAR : SMALL_FONT_SIZE;
     const themeContext: ThemeType = useContext(ThemeContext);
     const margin = {
@@ -116,7 +127,10 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     };
 
     const tickValues: string[] = data.map(ySerialize);
-    const maxTickValueCharacterLength: number = Math.max(...tickValues.map(s => s.length));
+    const maxTickValueCharacterLength: number =
+      Math.min(
+        Math.max(...tickValues.map(s => s.length)),
+        MAX_LABEL_LENGTH);
     if (maxTickValueCharacterLength * 6 > margin.right * 2) {
       margin.right += maxTickValueCharacterLength * 5.5;
     } else if (maxTickValueCharacterLength * 6 >= margin.right) {
@@ -218,7 +232,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
               hideTicks
               scale={yScale}
               stroke={colors.muted}
-              tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
+              tickFormat={label => yLabelFormat(label)}
               tickLabelProps={() => ({
                 fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
