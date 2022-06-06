@@ -119,17 +119,14 @@ import { cutTextSize } from './helpers';
           { headerGroups.map(headerGroup => (
             // eslint-disable-next-line react/jsx-key
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column, i, cols) => (
+              {headerGroup.headers.map(column => (
                 // eslint-disable-next-line react/jsx-key
                 <th
                   {...column.getHeaderProps()}
                   style={{
                     background: '#F9FAFC',
                     border: 'solid 1px #D8DCE3',
-                    borderLeft: (i === 0) && 'none',
-                    borderRight: (i === cols.length - 1) && 'none',
-                    borderTop: 'none',
-                    padding: '14px',
+                    padding: '4px',
                   }}
                 >
                   <TextStyle>
@@ -145,7 +142,7 @@ import { cutTextSize } from './helpers';
         </thead>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
         <tbody {...getTableBodyProps()}>
-          {rows.map((row, i) => {
+          {rows.map((row, i, arr) => {
               prepareRow(row);
               return (
                 // eslint-disable-next-line react/jsx-key
@@ -156,8 +153,12 @@ import { cutTextSize } from './helpers';
                       {...cell.getCellProps()}
                       style={{
                         background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
+                        borderBottom: (i === arr.length - 1) ? 'solid 1px #D8DCE3' : 'none',
+                        borderLeft: 'solid 1px #D8DCE3',
+                        borderRight: 'solid 1px #D8DCE3',
                         borderSpacing: 0,
-                        padding: '14px',
+                        borderTop: 'none',
+                        padding: '4px',
                       }}
                     >
                       <TextStyle>

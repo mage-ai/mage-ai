@@ -2,7 +2,6 @@ import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
 import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 
 export const TableStyle = styled.div<any>`
   max-height: 50vh;
@@ -11,9 +10,7 @@ export const TableStyle = styled.div<any>`
   position: relative;
 
   ${props => props && `
-    border: solid 1px ${(props.theme.interactive || light.interactive).defaultBorder};
     border-collapse: collapse;
-    border-radius: ${BORDER_RADIUS_LARGE}px;
   `}
   ${props => props.table && `
     background-color: ${(props.theme.background || light.background).page};
