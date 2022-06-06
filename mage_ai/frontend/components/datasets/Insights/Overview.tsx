@@ -7,6 +7,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import HeatMap from '@components/charts/HeatMap';
 import Histogram from '@components/charts/Histogram';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import ScatterPlot from '@components/charts/ScatterPlot';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
@@ -123,6 +124,7 @@ function Overview({
   const {
     correlations,
     time_series: timeSeries,
+    scatter_plot: scatterPlot,
   } = insightsOverview;
 
   const xyLabels = [];
@@ -284,6 +286,11 @@ function Overview({
   });
 
   const columnsWithDistribution = allColumns.filter(({ distributionPercentage }) => distributionPercentage);
+
+  const numberFormat = Intl.NumberFormat('en-US', {
+    notation: "compact",
+    maximumFractionDigits: 1
+  })
 
   return (
     <FlexContainer
@@ -551,7 +558,24 @@ function Overview({
           }
         />
       )}
-
+      {scatterPlot && (
+        <ChartRow
+          left={
+            <ChartContainer
+              title="Scatterplot"
+            >
+              <ScatterPlot
+                scatterPlotOverview={scatterPlot}
+                height={UNIT * 50}
+                margin={{
+                  left: 5 * UNIT,
+                }}
+                yLabelFormat={y => (y >= 10000 ? numberFormat.format(y) : y)}
+              />
+            </ChartContainer>
+          }
+        />
+      )}
       {heatmapData && (
         <ChartRow
           left={
