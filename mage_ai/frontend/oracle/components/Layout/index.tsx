@@ -17,15 +17,17 @@ export type LayoutProps = {
   children: any;
   fluid?: boolean;
   footer?: React.ReactNode;
+  fullWidth?: boolean;
   header?: any;
   minHeight?: number | string;
   pageTitle?: string;
 };
 
 export type MainContentProps = {
-  headerPadding?: boolean;
   centerAlign?: boolean;
   fluid?: boolean;
+  fullWidth?: boolean;
+  headerPadding?: boolean;
 };
 
 const WrapperStyle = styled.div<LayoutProps>`
@@ -52,8 +54,15 @@ const MainStyle = styled.main`
 `;
 
 const MainContentStyle = styled.div<MainContentProps>`
-  max-width: ${BREAKPOINT_X_LARGE}px;
   position: relative;
+
+  ${props => props.fullWidth && `
+    width: 100%;
+  `}
+
+  ${props => !props.fullWidth && `
+    max-width: ${BREAKPOINT_X_LARGE}px;
+  `}
 
   ${props => props.headerPadding && `
     margin-top: ${UNIT * 2}px;
@@ -75,6 +84,7 @@ function Layout({
   children,
   fluid,
   footer,
+  fullWidth,
   header,
   minHeight,
   pageTitle,
@@ -85,12 +95,14 @@ function Layout({
     >
       <Head title={pageTitle} />
       {header}
+
       <LayoutContainerStyle>
         {before}
         <MainStyle role="main">
           <MainContentStyle
             centerAlign={centerAlign}
             fluid={fluid}
+            fullWidth={fullWidth}
             headerPadding={header && header?.props?.fluid !== false}
           >
             {children}

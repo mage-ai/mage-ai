@@ -1,31 +1,42 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTable } from 'react-table';
+import { useAbsoluteLayout, useBlockLayout, useFlexLayout, useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
-import { TableStyle } from './Table.style';
-import { cutTextSize } from './helpers';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import {
+  CellStyled,
+  RowCellStyle,
+  TableBodyStyle,
+  TableHeadStyle,
+  TaleRowStyle,
+  TableStyle,
+} from './Table.style';
+import { cutTextSize, getColumnWidth } from './helpers';
 
-  export type DataTableProps = {
-    children?: any;
-    columns: DataTableColumn[];
-    data: DataTableRow<any>[];
-    titles: string[];
-    datatype: string[];
-  };
+export type DataTableProps = {
+  children?: any;
+  columns: DataTableColumn[];
+  data: DataTableRow<any>[];
+  datatype: string[];
+  offsetWidth?: number;
+  titles: string[];
+  width?: number;
+};
 
-  export type rowMapping = {
-    [key: string]: any;
-  };
+export type rowMapping = {
+  [key: string]: any;
+};
 
-  function BaseTable({
-    columns,
-    data,
-    titles,
-    datatype,
-  }: any) {
-
+function BaseTable({
+  columns,
+  data,
+  datatype,
+  offsetWidth,
+  titles,
+  width: widthProp,
+}: any) {
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
 
@@ -100,22 +111,33 @@ import { cutTextSize } from './helpers';
     headerGroups,
     rows,
     prepareRow,
+    totalColumnsWidth: totalColumnsWidthInitial,
   } = useTable(
     {
       columns: column || columnSample,
       data: row || dataSample,
     },
+    useAbsoluteLayout,
     );
+
+  const totalColumnsWidth = widthProp
+    ? widthProp
+    : totalColumnsWidthInitial - (offsetWidth || 0);
 
   // TODO: Base template, add styling later. Cell styling is only for selected. Skip for now.
   return (
     // Table: Relative, no overflow, outline in silver
-    <TableStyle>
+    <TableStyle width={(widthProp || offsetWidth) ? totalColumnsWidth : null}>
       <table
           {...getTableProps()}
+          style={{
+            // border: 'solid 1px #D8DCE3',
+            // borderRadius: `${BORDER_RADIUS_LARGE}px`,
+            width: totalColumnsWidth,
+          }}
         >
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
-        <thead>
+        <TableHeadStyle>
           { headerGroups.map(headerGroup => (
             // eslint-disable-next-line react/jsx-key
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -124,54 +146,55 @@ import { cutTextSize } from './helpers';
                 <th
                   {...column.getHeaderProps()}
                   style={{
-                    background: '#F9FAFC',
-                    border: 'solid 1px #D8DCE3',
-                    padding: '4px',
+                    // background: '#F9FAFC',
+                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
+                    minWidth: column.minWidth,
+                    // padding: '14px',
+                    // position: 'sticky',
                   }}
                 >
+                  {/* <RowCellStyle width={totalColumnsWidth}> */}
                   <TextStyle>
                     <Text bold leftAligned>
                       {column.render('Header')}
                     </Text>
                   </TextStyle>
+                  {/* </RowCellStyle> */}
                 </th>
                   ))}
             </tr>
             ))}
 
-        </thead>
+        </TableHeadStyle>
         {/* Rows: relative, overflow, black text, borders on everything but bottom except for last, skip bg */}
-        <tbody {...getTableBodyProps()}>
-          {rows.map((row, i, arr) => {
+        <TableBodyStyle {...getTableBodyProps()}>
+          {rows.map((row, i) => {
               prepareRow(row);
               return (
-                // eslint-disable-next-line react/jsx-key
-                <tr {...row.getRowProps()}>
+                // @ts-ignore
+                <TaleRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
                   {row.cells.map(cell => (
-                    // eslint-disable-next-line react/jsx-key
+                    // @ts-ignore
                     <td
                       {...cell.getCellProps()}
                       style={{
-                        background: (i % 2 === 1) ? '#F9FAFC' : '#FBFCFD',
-                        borderBottom: (i === arr.length - 1) ? 'solid 1px #D8DCE3' : 'none',
-                        borderLeft: 'solid 1px #D8DCE3',
-                        borderRight: 'solid 1px #D8DCE3',
-                        borderSpacing: 0,
-                        borderTop: 'none',
-                        padding: '4px',
+                        maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
+                        minWidth: cell.column.width,
                       }}
                     >
+                      {/* <CellStyled> */}
                       <TextStyle>
                         <Text>
                           {cell.render('Cell')}
                         </Text>
                       </TextStyle>
+                      {/* </CellStyled> */}
                     </td>
                     ))}
-                </tr>
+                </TaleRowStyle>
               );
             })}
-        </tbody>
+        </TableBodyStyle>
       </table>
     </TableStyle>
   );

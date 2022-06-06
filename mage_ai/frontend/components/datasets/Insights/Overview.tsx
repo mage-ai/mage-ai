@@ -122,7 +122,7 @@ function Overview({
   statistics,
 }: OverviewProps) {
   const {
-    correlations,
+    correlations = [],
     time_series: timeSeries,
     scatter_plot: scatterPlot,
   } = insightsOverview;
@@ -576,7 +576,7 @@ function Overview({
           }
         />
       )}
-      {heatmapData && (
+      {correlations && heatmapData?.length >= 1 && (
         <ChartRow
           left={
             <ChartContainer title="Correlations">
