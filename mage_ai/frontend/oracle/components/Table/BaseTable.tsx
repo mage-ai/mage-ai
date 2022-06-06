@@ -4,7 +4,7 @@ import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
 
 import { DataTableColumn, DataTableRow } from './types';
-import { TableStyle} from './Table.style';
+import { TableStyle } from './Table.style';
 import { cutTextSize } from './helpers';
 
   export type DataTableProps = {
