@@ -7,6 +7,8 @@ import { UNIT } from '../../styles/units/spacing';
 
 export type SelectProps = {
   backgroundColor?: string;
+  beforeIcon?: any;
+  color?: string;
   cyan?: boolean;
   children?: any;
   hasContent?: boolean;
@@ -38,12 +40,17 @@ const SelectStyle = styled.select<SelectProps>`
     background-color: ${props.backgroundColor};
   `}
 
+  ${props => props.color && `
+    color: ${props.color};
+  `}
+
   ${props => props.showPlaceholder && `
     color: ${(props.theme.content || light.content).inverted};
   `}
 `;
 
 const Select = ({
+  beforeIcon,
   children,
   label,
   placeholder,
@@ -51,6 +58,7 @@ const Select = ({
 }: SelectProps, ref) => (
   <InputWrapper
     {...props}
+    beforeIcon={beforeIcon}
     input={
       <SelectStyle {...props}>
         {(label || placeholder) && (

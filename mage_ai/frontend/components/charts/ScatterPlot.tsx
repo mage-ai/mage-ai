@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import styled from 'styled-components';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Bar, Circle } from '@visx/shape';
 import { GridColumns, GridRows } from '@visx/grid';
@@ -19,6 +20,10 @@ import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary'
 import { PURPLE, RED } from '@oracle/styles/colors/main';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
+
+const BeforeTextStyle = styled.div`
+  margin-left: ${UNIT / 2}px;
+`;
 
 type DataProps = {
   x: number,
@@ -283,12 +288,16 @@ function ScatterPlotContainer({
       >
         <FlexContainer>
           <Select
+            beforeIcon={
+              <BeforeTextStyle>
+                <Text>X</Text>
+              </BeforeTextStyle>
+            }
+            color={PURPLE}
+            label="Feature"
             onChange={e => setXFeature(e.target.value)}
             value={xFeature}
           >
-            <option value="">
-              X Feature
-            </option>
             {features.map(feature => (
               <option
                 key={feature}
@@ -300,12 +309,16 @@ function ScatterPlotContainer({
           </Select>
           <Spacing mr={2} />
           <Select
+            beforeIcon={
+              <BeforeTextStyle>
+                <Text>Y</Text>
+              </BeforeTextStyle>
+            }
+            color={PURPLE}
+            label="Feature"
             onChange={e => setYFeature(e.target.value)}
             value={yFeature}
           >
-            <option value="">
-              Y Feature
-            </option>
             {features.map(feature => (
               <option
                 key={feature}

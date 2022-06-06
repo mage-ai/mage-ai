@@ -89,6 +89,7 @@ type InputWrapperInternalProps = {
 
 type IconContainerProps = {
   compact?: boolean;
+  divider?: boolean;
   right?: boolean;
   top?: boolean;
 };
@@ -157,6 +158,10 @@ const IconContainerStyle = styled.div<IconContainerProps>`
 
   ${props => props.right && `
     right: 0;
+  `}
+
+  ${props => props.divider && `
+    border-right: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 `;
 
@@ -450,7 +455,7 @@ const InputWrapper = ({
       )}
 
       {beforeIcon && (
-        <IconContainerStyle top={topPosition}>
+        <IconContainerStyle top={topPosition} compact divider>
           {React.cloneElement(beforeIcon, iconProps)}
         </IconContainerStyle>
       )}
