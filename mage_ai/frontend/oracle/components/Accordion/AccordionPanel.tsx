@@ -17,13 +17,13 @@ export type AccordionPanelProps = {
   beforeTitleElement?: any;
   contentOverflowVisible?: boolean;
   first?: boolean;
+  hideScrollbar?: boolean;
   highlighted?: boolean;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
-  hideScrollbar?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
   visible?: boolean;

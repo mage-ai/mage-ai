@@ -11,7 +11,7 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionVariableTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
 import { Check, Close } from '@oracle/icons';
 import {
@@ -88,7 +88,7 @@ function ActionForm({
   };
 
   const config: FormConfigType =
-    (axis === 'row' ? actions.rows : actions.columns)?.[actionType];
+    (axis === AxisEnum.ROW ? actions.rows : actions.columns)?.[actionType];
 
   const {
     arguments: configArguments,

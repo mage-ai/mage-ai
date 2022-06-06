@@ -3,7 +3,7 @@ import Router from 'next/router';
 import { useMutation } from 'react-query';
 
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { AxisEnum } from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
@@ -179,7 +179,7 @@ function DatasetOverview({
           key={k}
           value={JSON.stringify({
             action_type: k,
-            axis: 'row',
+            axis: AxisEnum.ROW,
           })}
         >
           {v.title}
