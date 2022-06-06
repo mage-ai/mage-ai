@@ -90,7 +90,7 @@ function DatasetOverview({
   const columnHeaderSample = columns?.map((header:any) => ({
     label: header,
   }));
-  const metricSample = statistics ? createMetricsSample(statistics) : null;
+  const metricSample = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes) ? createStatisticsSample(statistics, columnTypes) : null;
 
   const setTab = (newTab: string) => {
