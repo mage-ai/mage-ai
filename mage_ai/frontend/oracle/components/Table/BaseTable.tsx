@@ -171,10 +171,10 @@ function BaseTable({
           {rows.map((row, i) => {
               prepareRow(row);
               return (
-                // eslint-disable-next-line react/jsx-key
+                // @ts-ignore
                 <TaleRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
                   {row.cells.map(cell => (
-                    // eslint-disable-next-line react/jsx-key
+                    // @ts-ignore
                     <td
                       {...cell.getCellProps()}
                       style={{

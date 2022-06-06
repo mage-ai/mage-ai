@@ -58,7 +58,11 @@ export const TableBodyStyle = styled.tbody`
   }
 `;
 
-export const TaleRowStyle = styled.tr`
+type TableRowProps = {
+  showBackground?: boolean;
+};
+
+export const TaleRowStyle = styled.tr<TableRowProps>`
   ${props => props.showBackground && `
     background-color: ${(props.theme.monotone || light.monotone).grey100};
   `}

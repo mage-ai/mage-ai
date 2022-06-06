@@ -17,16 +17,17 @@ export type LayoutProps = {
   children: any;
   fluid?: boolean;
   footer?: React.ReactNode;
+  fullWidth?: boolean;
   header?: any;
   minHeight?: number | string;
   pageTitle?: string;
 };
 
 export type MainContentProps = {
-  headerPadding?: boolean;
   centerAlign?: boolean;
   fluid?: boolean;
   fullWidth?: boolean;
+  headerPadding?: boolean;
 };
 
 const WrapperStyle = styled.div<LayoutProps>`
