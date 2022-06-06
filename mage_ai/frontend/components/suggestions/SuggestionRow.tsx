@@ -28,7 +28,7 @@ export type SuggestionRowProps = {
   featureIdMapping: {
     [key: string]: number;
   };
-  featureSetId?: string;
+  featureSetId?: string | number;
   idx: number;
   link?: () => void;
   onClose?: () => void;

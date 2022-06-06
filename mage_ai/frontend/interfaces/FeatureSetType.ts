@@ -4,7 +4,7 @@ import MetadataType from './MetadataType';
 import SuggestionType from './SuggestionType';
 
 export default interface FeatureSetType {
-  id: number;
+  id: string | number;
   insights: InsightsType[][];
   metadata: MetadataType;
   pipeline?: {
