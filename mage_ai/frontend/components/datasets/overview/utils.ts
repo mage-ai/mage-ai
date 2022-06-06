@@ -1,3 +1,4 @@
+import { getPercentage } from '@utils/number';
 import {
   CATEGORICAL_TYPES,
   DATE_TYPES,
@@ -7,6 +8,7 @@ import {
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
   STAT_KEYS,
+  WARN_KEYS,
 } from '../constants';
 
 export function createMetricsSample(statistics) {
@@ -15,14 +17,14 @@ export function createMetricsSample(statistics) {
 
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
-      let value = statistics[key].toPrecision(2);
-      let bar = [false];
+      let bar = [false, 0];
+      let value = statistics[key];
       const order = HUMAN_READABLE_MAPPING[key];
       const index = METRICS_SORTED_MAPPING[key];
       if (PERCENTAGE_KEYS.includes(key)) {
-        value *= 100;
-        bar = [true, value];
-        value = `${value}%`;
+        value = value.toPrecision(2);
+        bar = [true, (value * 100)];
+        value = getPercentage(value);
       }
       metricRows[index] = {
         columnValues: [order, value, bar],
@@ -43,17 +45,8 @@ export function createStatisticsSample(statistics, colTypes) {
   rowData.push({
     columnValues: ['Column count', types.length],
   });
-  // Part one is the keys from metrics
-  stats.map((key) => {
-    if (STAT_KEYS.includes(key)) {
-      const name = HUMAN_READABLE_MAPPING[key];
-      rowData.push({
-        columnValues: [name, statistics[key]],
-      });
-    }
-  });
 
-  // Part two is the count of data types
+  // First count to get totals
   let countCategory = 0;
   let countNumerical = 0;
   let countTimeseries = 0;
@@ -69,12 +62,28 @@ export function createStatisticsSample(statistics, colTypes) {
     }
   });
 
+  const total = countCategory + countNumerical + countTimeseries;
+
+  // First push is the keys from metrics to sort it.
+  stats.map((key) => {
+    if (STAT_KEYS.includes(key)) {
+      const name = HUMAN_READABLE_MAPPING[key];
+      let value = statistics[key];
+      if (WARN_KEYS.includes(key)) {
+        value = `${value} (${getPercentage(value / total)})`;
+      }
+      rowData.push({
+        columnValues: [name, value],
+      });
+    }
+  });
+
   rowData.push({
-    columnValues: ['Categorical Features', countCategory],
+    columnValues: ['Categorical Features', `${countCategory} (${getPercentage(countCategory / total)})`],
   },{
-    columnValues: ['Numerical Features', countNumerical],
+    columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
   },{
-    columnValues: ['Time series Features', countTimeseries],
+    columnValues: ['Time series Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
   });
 
   return { rowData };
