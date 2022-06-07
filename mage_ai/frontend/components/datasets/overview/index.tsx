@@ -178,54 +178,63 @@ function DatasetOverview({
       centerAlign
       footer={<Spacing mt={UNIT} />}
       fullWidth
-      pageTitle="Dataset Overview"
+      pageTitle={metadata?.name || 'Dataset Overview'}
     >
       <MultiColumn
-        after={featureSet && (
-          <Suggestions
-            addAction={saveAction}
-            featureSet={featureSet}
-            removeAction={removeAction}
-            removeSuggestion={(action) => console.log(action)}
-          />
-        )}
+        after={
+          <>
+            <Spacing mb={PADDING_UNITS}>
+              {selectActionEl}
+            </Spacing>
+
+            {actionType && (
+              <Spacing mb={PADDING_UNITS}>
+                <ActionForm
+                  actionType={actionType}
+                  axis={actionPayload?.axis}
+                  features={featuresWithAltColType}
+                  onClose={closeAction}
+                  onSave={() => {
+                    saveAction({
+                      action_payload: {
+                        ...actionPayload,
+                        action_type: actionType,
+                      },
+                    });
+                    closeAction();
+                  }}
+                  payload={actionPayload}
+                  setPayload={setActionPayload}
+                />
+              </Spacing>
+            )}
+
+            {errorMessages?.length >= 1 && (
+              <Spacing mb={PADDING_UNITS}>
+                <Text bold>
+                  Errors
+                </Text>
+                {errorMessages?.map((msg: string) => (
+                  <Text key={msg} monospace xsmall>
+                    {msg}
+                  </Text>
+                ))}
+              </Spacing>
+            )}
+
+            {featureSet && (
+              <Suggestions
+                addAction={saveAction}
+                featureSet={featureSet}
+                removeAction={removeAction}
+                removeSuggestion={(action) => console.log(action)}
+              />
+            )}
+          </>
+        }
         header={headEl}
       >
-        {actionType && (
-          <ActionForm
-            actionType={actionType}
-            axis={actionPayload?.axis}
-            features={featuresWithAltColType}
-            onClose={closeAction}
-            onSave={() => {
-              saveAction({
-                action_payload: {
-                  ...actionPayload,
-                  action_type: actionType,
-                },
-              });
-              closeAction();
-            }}
-            payload={actionPayload}
-            setPayload={setActionPayload}
-          />
-        )}
-
-        {errorMessages?.length >= 1 && (
-          <Spacing my={PADDING_UNITS}>
-            <Text bold>
-              Errors
-            </Text>
-            {errorMessages?.map((msg: string) => (
-              <Text key={msg} monospace xsmall>
-                {msg}
-              </Text>
-            ))}
-          </Spacing>
-        )}
-
         <Tabs
-          actionEl={selectActionEl}
           bold
           currentTab={currentTab}
           large
