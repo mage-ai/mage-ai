@@ -7,6 +7,7 @@ import { transition } from '@oracle/styles/mixins';
 
 type ContainerProps = {
   noBorder?: boolean;
+  shadow?: boolean;
 };
 
 export const ContainerStyle = styled.div<ContainerProps>`
@@ -17,6 +18,9 @@ export const ContainerStyle = styled.div<ContainerProps>`
 
   ${props => `
     background-color: ${(props.theme.monotone || light.monotone).white};
+  `}
+
+  ${props => props.shadow && `
     box-shadow: ${(props.theme.shadow || light.shadow).popup};
   `}
 `;

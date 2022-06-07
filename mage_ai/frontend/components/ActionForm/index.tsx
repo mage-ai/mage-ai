@@ -47,6 +47,7 @@ type ActionFormProps = {
   onSave: (actionPayloadOverride?: ActionPayloadOverrideType) => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
+  shadow?: boolean;
 };
 
 const CodeEditor = dynamic(
@@ -67,6 +68,7 @@ function ActionForm({
   onSave,
   payload,
   setPayload,
+  shadow,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
   const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
@@ -135,7 +137,10 @@ function ActionForm({
   const showColumns = !currentFeature && multiColumns;
 
   return (
-    <ContainerStyle noBorder={noBorder}>
+    <ContainerStyle
+      noBorder={noBorder}
+      shadow={shadow}
+    >
       {!noHeader &&
         <>
           <FlexContainer justifyContent={'space-between'}>
