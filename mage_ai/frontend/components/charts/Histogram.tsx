@@ -182,6 +182,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
     });
 
     const colors = {
+      active: themeContext?.content.active || light.content.active,
       default: themeContext?.elevation.visualizationAccentAlt || light.elevation.visualizationAccentAlt,
       muted: themeContext?.monotone.gray || light.monotone.gray,
       selected: themeContext?.elevation.visualizationAccent || light.elevation.visualizationAccent,
@@ -279,7 +280,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       <div>
         <svg
           height={height + (margin.bottom * (isDateType ? 7.5 : 3))}
-          width={width + (showAxisLabels ? (margin.left) : 0)}
+          width={width}
         >
           <Group left={showAxisLabels ? margin.left : 0} top={margin.top + yAxisLabelOffset}>
             {dataSample.reduce((acc, tuple) => {
@@ -321,7 +322,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
                   label => (label.valueOf() >= 10000 ? numberFormat.format(label.valueOf()) : label.toString())
                 }
                 tickLabelProps={() => ({
-                  fill: colors.muted,
+                  fill: colors.active,
                   fontFamily: FONT_FAMILY_REGULAR,
                   fontSize,
                   textAnchor: 'end',
@@ -340,7 +341,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
                 stroke={colors.muted}
                 tickFormat={isDateType ? formatDateAxisLabel : undefined}
                 tickLabelProps={(val: any) => ({
-                  fill: showYAxisLabels ? colors.muted : 'transparent',
+                  fill: showYAxisLabels ? colors.active : 'transparent',
                   fontFamily: FONT_FAMILY_REGULAR,
                   fontSize,
                   textAnchor: 'middle',
@@ -378,12 +379,12 @@ function HistogramContainer({
   height,
   loading,
   selected,
-  width,
+  // width: parentWidth,
   ...props
 }: HistogramContainerProps) {
   return (
     <>
-      <div style={{ height, width }}>
+      <div style={{ height, width: '100%' }}>
         {loading && <Spinner />}
 
         {!loading && (

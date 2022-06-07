@@ -227,7 +227,6 @@ function Overview({
       showYAxisLabels
       showZeroes
       sortData={d => sortByKey(d, '[4]')}
-      width={550}
     />
   ));
 
@@ -290,7 +289,7 @@ function Overview({
 
   const numberFormat = Intl.NumberFormat('en-US', {
     notation: "compact",
-    maximumFractionDigits: 1
+    maximumFractionDigits: 2,
   })
 
   return (
