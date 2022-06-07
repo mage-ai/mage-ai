@@ -10,9 +10,13 @@ from mage_ai.data_cleaner.cleaning_rules.remove_columns_with_single_value import
     RemoveColumnsWithSingleValue,
 )
 from mage_ai.data_cleaner.cleaning_rules.remove_duplicate_rows import RemoveDuplicateRows
-from mage_ai.data_cleaner.cleaning_rules.remove_outliers import RemoveOutliers
+from mage_ai.data_cleaner.cleaning_rules.remove_outliers import (
+    RemoveOutliers,
+    REMOVE_OUTLIERS_TITLE,
+)
 from mage_ai.data_cleaner.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.shared.array import flatten
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
@@ -67,3 +71,14 @@ class BasePipeline:
     def update_suggestions(self, df_transformed):
         new_column_types = infer_column_types(df_transformed)
         return self.create_actions(df_transformed, new_column_types, {})
+
+    @classmethod
+    def deduplicate_suggestions(self, actions, suggestions):
+        columns_with_outlier_removed = \
+            set(flatten([a['action_payload']['action_arguments']
+                         for a in actions if a['title'] == REMOVE_OUTLIERS_TITLE]))
+        suggestions_filtered = \
+            [s for s in suggestions
+             if s['title'] != REMOVE_OUTLIERS_TITLE
+             or s['action_payload']['action_arguments'][0] not in columns_with_outlier_removed]
+        return suggestions_filtered

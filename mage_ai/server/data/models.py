@@ -168,14 +168,19 @@ class FeatureSet(Model):
                 ]
                 for s in suggestions:
                     s['action_payload']['action_arguments'] = [column]
+
+            # Deduplicate outlier removal suggestions
+            pipeline_dict = self.pipeline.to_dict()
+            suggestions_filtered = \
+                BasePipeline.deduplicate_suggestions(pipeline_dict['actions'], suggestions)
             obj = merge_dict(
                 obj,
                 dict(
-                    pipeline=self.pipeline.to_dict(),
+                    pipeline=pipeline_dict,
                     sample_data=sample_data_dict,
                     statistics=self.statistics,
                     insights=self.insights,
-                    suggestions=suggestions,
+                    suggestions=suggestions_filtered,
                 ),
             )
         return obj

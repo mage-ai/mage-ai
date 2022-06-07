@@ -4,6 +4,8 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     Axis,
 )
 
+REMOVE_OUTLIERS_TITLE = 'Remove outliers'
+
 
 class RemoveOutliers(BaseRule):
     def evaluate(self):
@@ -21,7 +23,7 @@ class RemoveOutliers(BaseRule):
 
             suggestions.append(
                 self._build_transformer_action_suggestion(
-                    'Remove outliers',
+                    REMOVE_OUTLIERS_TITLE,
                     f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
                     ActionType.FILTER,
                     action_arguments=[c],
