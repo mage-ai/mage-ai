@@ -4,6 +4,7 @@ import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
 import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
+import SuggestionType from '@interfaces/SuggestionType';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 
@@ -12,6 +13,7 @@ type SuggestionsProps = {
   featureSet: FeatureSetType | ColumnFeatureSetType;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion?: (action: TransformerActionType) => void;
+  suggestions: SuggestionType[];
 };
 
 function Suggestions({
@@ -19,11 +21,11 @@ function Suggestions({
   featureSet,
   removeAction,
   removeSuggestion,
+  suggestions,
 }: SuggestionsProps) {
   const {
     insights,
     pipeline,
-    suggestions,
   } = featureSet || {};
   const {
     actions,

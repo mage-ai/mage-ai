@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -10,6 +10,7 @@ import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
+import ColumnReports from '@components/datasets/columns/ColumnReports';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -52,17 +53,13 @@ const TABS_IN_ORDER = [
 ];
 
 type DatasetOverviewProps = {
-  columnData?: FeatureSetType;
   featureSet: FeatureSetType;
-  fetchColumnData: (arg: any) => void;
   fetchFeatureSet: (arg: any) => void;
   selectedColumn?: string;
 };
 
 function DatasetOverview({
-  columnData,
   featureSet: featureSetRaw,
-  fetchColumnData,
   fetchFeatureSet,
   selectedColumn: columnFromUrl,
 }: DatasetOverviewProps) {
@@ -89,22 +86,57 @@ function DatasetOverview({
     }
   }, [setTabs, tabsFromUrl]);
 
-  const featureSetAllColumns = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
-  const featureSet = columnFromUrl
-    ? columnData ? deserializeFeatureSet(columnData) : {}
-    : featureSetAllColumns;
+  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
     insights,
     metadata,
     pipeline,
     statistics,
+    suggestions: suggestionsInit,
   } = featureSet || {};
   const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
+  const suggestions = useMemo(
+    () => columnFromUrl
+      ? suggestionsInit?.reduce((acc, s) => {
+        const { action_payload: { action_arguments: aa } } = s;
+
+        if (aa?.includes(columnFromUrl)) {
+          acc.push({
+            ...s,
+            action_payload: {
+              ...s.action_payload,
+              action_arguments: [columnFromUrl],
+            },
+          });
+        }
+
+        return acc;
+      }, [])
+      : suggestionsInit,
+    [
+      columnFromUrl,
+      suggestionsInit,
+    ],
+  );
 
   const {
-    columns,
-    rows,
+    columns: columnsAll,
+    rows: rowsAll,
   } = featureSet?.sample_data || {};
+  const columns = useMemo(() => columnFromUrl ? [columnFromUrl] : columnsAll, [
+    columnsAll,
+    columnFromUrl,
+  ]);
+  const indexOfValueForColumn = columnsAll?.indexOf(columnFromUrl);
+  const rows = useMemo(
+    () => columnFromUrl ? rowsAll?.map(row => [row[indexOfValueForColumn]]) : rowsAll,
+    [
+      columnFromUrl,
+      indexOfValueForColumn,
+      rowsAll,
+    ],
+  );
+
   const {
     column_types: columnTypes,
   } = metadata || {};
@@ -258,6 +290,7 @@ function DatasetOverview({
               <Suggestions
                 addAction={saveAction}
                 featureSet={featureSet}
+                suggestions={suggestions}
                 removeAction={removeAction}
                 removeSuggestion={(action) => console.log(action)}
               />
@@ -267,7 +300,7 @@ function DatasetOverview({
         before={columnsVisible && (
           <Spacing mt={PADDING_UNITS}>
             <ColumnListSidebar
-              featureSet={featureSetAllColumns}
+              featureSet={featureSet}
               onClickColumn={col => goToWithQuery({ column: col })}
               selectedColumn={columnFromUrl}
             />
@@ -310,37 +343,48 @@ function DatasetOverview({
         <Spacing p={PADDING_UNITS}>
           {tabsFromUrl?.includes(TAB_REPORTS) && (
             <>
-              <FlexContainer justifyContent={'center'}>
-                <Flex flex={1}>
-                  {metricSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[2, 1, 2 ]}
-                      columnHeaders={[{ label: 'Quality Metrics' }]}
-                      rowGroupData={[metricSample]}
-                    />
-                  )}
-                </Flex>
-
-                <Spacing ml={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  {statSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[1, 1, 1]}
-                      columnHeaders={[{ label: 'Statistics' }]}
-                      rowGroupData={[statSample]}
-                    />
-                  )}
-                </Flex>
-              </FlexContainer>
-
-              <Spacing mt={PADDING_UNITS}>
-                <FeatureProfiles
-                  features={features}
+              {columnFromUrl && (
+                <ColumnReports
+                  column={columnFromUrl}
                   featureSet={featureSet}
-                  statistics={statistics}
                 />
-              </Spacing>
+              )}
+
+              {!columnFromUrl && (
+                <>
+                  <FlexContainer justifyContent={'center'}>
+                    <Flex flex={1}>
+                      {metricSample && (
+                        <SimpleDataTable
+                          columnFlexNumbers={[2, 1, 2 ]}
+                          columnHeaders={[{ label: 'Quality Metrics' }]}
+                          rowGroupData={[metricSample]}
+                        />
+                      )}
+                    </Flex>
+
+                    <Spacing ml={PADDING_UNITS} />
+
+                    <Flex flex={1}>
+                      {statSample && (
+                        <SimpleDataTable
+                          columnFlexNumbers={[1, 1, 1]}
+                          columnHeaders={[{ label: 'Statistics' }]}
+                          rowGroupData={[statSample]}
+                        />
+                      )}
+                    </Flex>
+                  </FlexContainer>
+
+                  <Spacing mt={PADDING_UNITS}>
+                    <FeatureProfiles
+                      features={features}
+                      featureSet={featureSet}
+                      statistics={statistics}
+                    />
+                  </Spacing>
+                </>
+              )}
             </>
           )}
 
@@ -357,7 +401,7 @@ function DatasetOverview({
               )}
 
               {!columnFromUrl && (
-                  <Overview
+                <Overview
                   features={features}
                   insightsOverview={insightsOverview}
                   statistics={statistics}
