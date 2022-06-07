@@ -68,7 +68,7 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
 
 const FlexContainer = React.forwardRef(({
   children,
-  fullHeight = true,
+  fullHeight,
   verticalHeightOffset = 0,
   wrap,
   ...props

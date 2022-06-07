@@ -219,7 +219,7 @@ function DatasetOverview({
           )}
 
           {errorMessages?.length >= 1 && (
-            <Spacing mt={3}>
+            <Spacing my={PADDING_UNITS}>
               <Text bold>
                 Errors
               </Text>
@@ -230,8 +230,6 @@ function DatasetOverview({
               ))}
             </Spacing>
           )}
-
-          <Spacing mt={4} />
 
           <FlexContainer>
             <Flex flex={4} flexDirection="column">
@@ -265,7 +263,9 @@ function DatasetOverview({
                         />
                       )}
                     </Flex>
-                    <Spacing ml={8} />
+
+                    <Spacing ml={PADDING_UNITS} />
+
                     <Flex flex={1}>
                       {statSample && (
                         <SimpleDataTable
@@ -276,7 +276,8 @@ function DatasetOverview({
                       )}
                     </Flex>
                   </FlexContainer>
-                  <Spacing mt={8}>
+
+                  <Spacing mt={PADDING_UNITS}>
                     <FeatureProfiles
                       features={features}
                       featureSet={featureSet}
