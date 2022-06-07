@@ -176,14 +176,19 @@ class FeatureSet(Model):
 
             # Deduplicate outlier removal suggestions
             pipeline_dict = self.pipeline.to_dict()
-            suggestions_filtered = \
-                BasePipeline.deduplicate_suggestions(pipeline_dict['actions'], suggestions)
+            statistics = self.statistics
+            suggestions_filtered, statistics_updated = \
+                BasePipeline.deduplicate_suggestions(
+                    pipeline_dict['actions'],
+                    suggestions,
+                    statistics,
+                )
             obj = merge_dict(
                 obj,
                 dict(
                     pipeline=pipeline_dict,
                     sample_data=sample_data_dict,
-                    statistics=self.statistics,
+                    statistics=statistics_updated,
                     insights=self.insights,
                     suggestions=suggestions_filtered,
                 ),
