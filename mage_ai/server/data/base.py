@@ -52,16 +52,14 @@ class Model:
         df_output = df.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
-            try:
-                coltype = type(df_output[c].dropna().iloc[0])
-            except IndexError:
-                # Column is composed on only invalid values
-                coltype = str
-            try:
-                df_output[c] = df_output[c].astype(coltype)
-            except Exception:
-                # Fall back to convert to string
-                df_output[c] = df_output[c].astype(str)
+            series_non_null = df_output[c].dropna()
+            if len(series_non_null) > 0:
+                coltype = series_non_null.iloc[0]
+                try:
+                    df_output[c] = series_non_null.astype(coltype)
+                except Exception:
+                    # Fall back to convert to string
+                    df_output[c] = series_non_null.astype(str)
         df_output.to_parquet(os.path.join(self.dir, file_name))
 
     def to_dict(self, detailed):
