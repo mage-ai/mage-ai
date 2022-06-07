@@ -1,14 +1,11 @@
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.server.data.base import Model
-from numpyencoder import NumpyEncoder
-
-import json
 import os
 import os.path
-import pandas as pd
 
-SAMPLE_SIZE = 20
+SAMPLE_SIZE = 200
+
 
 # right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
