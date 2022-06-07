@@ -86,7 +86,7 @@ function Cell({
     );
   } else if (showProgress) {
     cellEl = (
-      <FlexContainer alignItems={'center'}>
+      <FlexContainer alignItems={'center'} fullHeight fullWidth>
         <ProgressBar danger={value < 75} progress={value} />
       </FlexContainer>
     );
