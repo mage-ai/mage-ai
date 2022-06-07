@@ -153,9 +153,9 @@ function FeatureProfile({
               <Text
                 backgroundColor={light.feature.active}
                 bold
-                color={light.interactive.linkSecondary}
                 maxWidth={25 * UNIT}
                 monospace
+                secondary
                 textOverflow
                 title={uuid}
               >
@@ -174,7 +174,7 @@ function FeatureProfile({
           <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
             <Text
               bold={shouldWarn}
-              color={shouldWarn && light.progress.negative}
+              danger={shouldWarn}
               textOverflow
             >
               {val}
