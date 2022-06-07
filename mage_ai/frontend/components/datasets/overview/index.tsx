@@ -1,4 +1,11 @@
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import LoadingBar from 'react-top-loading-bar';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -28,6 +35,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
+import light from '@oracle/styles/themes/light';
 import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -64,6 +72,8 @@ function DatasetOverview({
   fetchFeatureSet,
   selectedColumnIndex,
 }: DatasetOverviewProps) {
+  const refLoadingBar = useRef(null);
+
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
@@ -188,16 +198,22 @@ function DatasetOverview({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (response) => fetchFeatureSet({
-            ...featureSet,
-            pipeline: response,
-          }),
+          callback: (response) => {
+            refLoadingBar.current.complete();
+
+            return fetchFeatureSet({
+              ...featureSet,
+              pipeline: response,
+            });
+          },
           onErrorCallback: ({
             error: {
               errors,
               message,
             },
           }) => {
+            refLoadingBar.current.complete();
+
             const arr = [];
             if (message) {
               arr.push(...message.split('\n'));
@@ -213,8 +229,14 @@ function DatasetOverview({
       ),
     },
   );
-  const saveAction = (newActionData: TransformerActionType) => {
+
+  const beforeCommit = () => {
     setErrorMessages(null);
+    refLoadingBar.current.continuousStart();
+  };
+
+  const saveAction = (newActionData: TransformerActionType) => {
+    beforeCommit();
 
     const newActions = [...pipelineActions];
     if (!selectedColumn) {
@@ -246,10 +268,11 @@ function DatasetOverview({
     });
   };
   const removeAction = (existingActionData: TransformerActionType) => {
+    beforeCommit();
+
     const idx =
       pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
 
-    setErrorMessages(null);
     commitAction({
       ...pipeline,
       actions: removeAtIndex(pipelineActions, idx),
@@ -274,6 +297,7 @@ function DatasetOverview({
               <Suggestions
                 addAction={saveAction}
                 featureSet={featureSet}
+                isLoading={isLoadingCommitAction}
                 suggestions={suggestions}
                 removeAction={removeAction}
                 removeSuggestion={(action) => console.log(action)}
@@ -371,6 +395,16 @@ function DatasetOverview({
         tabs={TABS_IN_ORDER}
       >
         <Spacing p={PADDING_UNITS}>
+          <LoadingBar
+            className="loading-bar"
+            color={light.brand.fire500}
+            containerStyle={{
+              position: 'relative',
+            }}
+            shadow={false}
+            ref={refLoadingBar}
+          />
+
           {errorMessages?.length >= 1 && (
             <Spacing mb={5}>
               <Text bold>

@@ -11,6 +11,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import RowCard from '@oracle/components/RowCard';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { Close, Code } from '@oracle/icons';
@@ -29,6 +30,7 @@ export type SuggestionRowProps = {
   };
   featureSetId?: string | number;
   idx: number;
+  isLoading?: boolean;
   link?: () => void;
   onClose?: () => void;
   saveAction?: (ActionPayloadType) => void;
@@ -49,6 +51,7 @@ const SuggestionRow = ({
   featureIdMapping,
   featureSetId,
   idx,
+  isLoading,
   link,
   onClose,
   saveAction,
@@ -112,14 +115,18 @@ const SuggestionRow = ({
     >
       {link &&
         <Spacing mr={2}>
-          <Link
-            bold
-            noHoverUnderline
-            onClick={link}
-            preventDefault
-          >
-            Apply
-          </Link>
+          {isLoading && <Spinner small />}
+
+          {!isLoading && (
+            <Link
+              bold
+              noHoverUnderline
+              onClick={link}
+              preventDefault
+            >
+              Apply
+            </Link>
+          )}
         </Spacing>
       }
 
@@ -209,15 +216,20 @@ const SuggestionRow = ({
         {onClose && (
           <>
             <Spacing mr={1} />
-            <Button
-              basic
-              iconOnly
-              onClick={onClose}
-              padding="0px"
-              transparent
-            >
-              <Close muted />
-            </Button>
+
+            {isLoading && <Spinner small />}
+
+            {!isLoading && (
+              <Button
+                basic
+                iconOnly
+                onClick={onClose}
+                padding="0px"
+                transparent
+              >
+                <Close muted />
+              </Button>
+            )}
           </>
         )}
       </FlexContainer>
