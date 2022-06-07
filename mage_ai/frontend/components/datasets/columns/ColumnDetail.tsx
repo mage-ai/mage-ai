@@ -177,7 +177,7 @@ function ColumnDetail({
           }]}
         />
       </Flex>
-      <Spacing ml={UNIT} />
+      <Spacing ml={PADDING_UNITS} />
       <Flex flex={1}>
         {metricsTableEl}
       </Flex>
@@ -189,7 +189,7 @@ function ColumnDetail({
       <Flex flex={1}>
         {metricsTableEl}
       </Flex>
-      <Spacing ml={UNIT} />
+      <Spacing ml={PADDING_UNITS} />
       <Flex flex={1}>
         {noWarningMetrics
           ?
@@ -326,7 +326,7 @@ function ColumnDetail({
         </Spacing>
       )}
 
-      <Spacing mt={4} />
+      <Spacing mt={2} />
 
       <FlexContainer>
         <Flex flex="2" flexDirection="column">
@@ -345,15 +345,15 @@ function ColumnDetail({
             onChange={key => setTab(key)}
           >
             <Tab key="data" label="Data">
-              <Spacing my={3} />
+              <Spacing my={1} />
               {dataEl}
             </Tab>
             <Tab  key="reports" label="Reports">
-              <Spacing my={3} />
+              <Spacing my={1} />
               {reportsEl}
             </Tab>
             <Tab key="visualizations" label="Visualizations">
-              <Spacing my={3} />
+              <Spacing my={1} />
               {count > 0 && (
                 <ColumnAnalysis
                   column={featureUUID}
