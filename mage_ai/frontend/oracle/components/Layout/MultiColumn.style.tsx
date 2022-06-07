@@ -11,6 +11,7 @@ export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
 }>`
   position: fixed;
+  z-index: 2;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
@@ -56,6 +57,7 @@ export const BeforeStyle = styled.aside`
   left: 0;
   position: fixed;
   width: ${BEFORE_WIDTH}px;
+  z-index: 1;
 
   ${props => `
     background-color: ${(props.theme.monotone || light.monotone).grey100};
@@ -72,6 +74,7 @@ export const MainContentStyle = styled.div<{
   headerOffset?: number;
 }>`
   position: fixed;
+  z-index: 1;
 
   ${props => !props.beforeVisible && `
     width: calc(100% - ${AFTER_WIDTH}px);
@@ -99,6 +102,7 @@ export const AsideStyle = styled.aside<{
   right: 0;
   position: fixed;
   width: ${AFTER_WIDTH}px;
+  z-index: 1;
 
   ${props => props.headerOffset && `
     height: calc(100% - ${props.headerOffset}px);
@@ -109,4 +113,12 @@ export const AsideStyle = styled.aside<{
 export const AsideInnerStyle = styled.div`
   height: 100%;
   overflow: auto;
+`;
+
+export const AsidePopoutStyle = styled.div`
+  margin-top: ${PADDING_UNITS * UNIT}px;
+  position: fixed;
+  right: ${PADDING_UNITS * UNIT}px;
+  width: ${AFTER_WIDTH * 1.3}px;
+  z-index: 3;
 `;

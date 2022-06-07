@@ -1,3 +1,5 @@
+import React from 'react';
+
 import Select from '@oracle/elements/Inputs/Select';
 import actionsConfig from '@components/ActionForm/actions';
 import ActionPayloadType, { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
@@ -13,10 +15,11 @@ function ActionDropdown({
   actionType,
   columnOnly,
   setActionPayload,
-}: ActionDropdownProps) {
+}: ActionDropdownProps, ref) {
   return (
     <Select
       onChange={e => setActionPayload(JSON.parse(e.target.value))}
+      ref={ref}
       value={actionType}
       width={UNIT * 20}
     >
@@ -52,4 +55,4 @@ function ActionDropdown({
   );
 }
 
-export default ActionDropdown;
+export default React.forwardRef(ActionDropdown);
