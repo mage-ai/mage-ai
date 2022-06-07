@@ -10,6 +10,7 @@ import FlexContainer from '../FlexContainer';
 
 type CellProps = {
   cellIndex: number;
+  danger?: boolean;
   flex: number;
   render?: any;
   rowGroupIndex: number;
