@@ -10,6 +10,10 @@ export const AFTER_TOTAL_WIDTH = (UNIT * 40) + AFTER_MARGIN;
 export const HeaderStyle = styled.div`
   position: fixed;
   width: 100%;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+  `}
 `;
 
 export const MainContentStyle = styled.div<{
