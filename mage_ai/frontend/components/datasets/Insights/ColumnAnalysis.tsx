@@ -138,10 +138,22 @@ function ColumnAnalysis({
     : null;
   const yLabels = [column];
   const heatmapData = [[1]];
+  const highCorrelations = [];
   if (correlationsRowData) {
     correlationsRowData?.map(([, col, r], idx: number) => {
       yLabels.push(col);
       heatmapData.push([roundNumber(r)]);
+    });
+    correlationsRowData?.map((_, col, r) => {
+      if (Math.abs(r[col][2]) > 0.5) {
+        highCorrelations.push({
+          'columnValues': [
+            r[col][0]?.toString(),
+            r[col][1]?.toString(),
+            roundNumber(r[col][2])?.toString(),
+          ],
+        });
+      }
     });
   }
 
@@ -601,7 +613,51 @@ function ColumnAnalysis({
               />
             </ChartContainer>
           }
-          right={<div />}
+          right={
+            <ChartContainer
+              noPadding={!!correlationsRowData}
+              title="Values with high correlation"
+            >
+              { highCorrelations.length > 0 ? (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1, 1]}
+                  columnHeaders={[
+                    {
+                      label: 'Column',
+                    },
+                    {
+                      label: 'Related column',
+                    },
+                    {
+                      label: 'Correlation',
+                    },
+                  ]}
+                  noBorder
+                  rowGroupData={[
+                    {
+                      rowData: highCorrelations,
+                    },
+                  ]}
+                  small
+                />
+              ) : (
+                <>
+                  <Spacing mb={1} ml={1} mt={1}>
+                    <Text>
+                      There are no values with high correlation.
+                    </Text>
+                  </Spacing>
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[]}
+                    noBorder
+                    rowGroupData={[]}
+                    small
+                  />
+                </>
+              )}
+            </ChartContainer>
+          }
         />
       )}
     </FlexContainer>

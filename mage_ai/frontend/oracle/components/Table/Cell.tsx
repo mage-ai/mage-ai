@@ -17,6 +17,7 @@ type CellProps = {
   rowIndex: number;
   selected: boolean;
   small: boolean;
+  showBackground?: boolean;
   showProgress?: boolean;
   value: any;
 };
@@ -30,6 +31,7 @@ function Cell({
   rowIndex,
   selected,
   small,
+  showBackground,
   showProgress,
   value,
 }: CellProps) {
@@ -113,6 +115,7 @@ function Cell({
     >
       <RowCellStyle
         first={cellIndex === 0}
+        showBackground={showBackground}
         small={small}
       >
         {cellEl}

@@ -8,7 +8,6 @@ import { transition } from '@oracle/styles/mixins';
 export const PADDING_SIZE_UNITS = 1.5;
 
 export const TableStyle = styled.div<any>`
-  border-radius: ${BORDER_RADIUS}px;
   overflow-y: auto;
   position: relative;
   width: 100%;
@@ -39,6 +38,10 @@ export const ColumnHeaderRowStyle = styled.div<any>`
 
   ${props => !props.noBorder && `
     border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
+  `}
+
+  ${props => props.noBorder && `
+    border-radius: 0px 0px 0px 0px;
   `}
 `;
 
@@ -107,5 +110,9 @@ export const RowCellStyle = styled.div<any>`
 
   ${props => props.small && `
     padding: ${UNIT * 1.5}px;
+  `}
+
+  ${props => props.showBackground && `
+    background-color: ${(props.theme.background || light.background).row};
   `}
 `;
