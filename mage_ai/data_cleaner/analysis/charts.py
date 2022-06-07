@@ -324,7 +324,8 @@ def build_overview_data(
     non_numeric_features = list(set(df.columns) - set(numeric_features))
     non_numeric_nuniques = df_sample[non_numeric_features].nunique()
     non_numeric_nuniques_filtered = \
-        non_numeric_nuniques[non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT]
+        non_numeric_nuniques[(non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT) &
+                             (non_numeric_nuniques > 1)]
     non_numeric_counts = df_sample[non_numeric_features].count()
     non_numeric_counts_filtered = \
         non_numeric_counts[non_numeric_counts > SCATTER_PLOT_SAMPLE_COUNT / 2]
