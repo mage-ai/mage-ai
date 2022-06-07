@@ -156,6 +156,7 @@ function FeatureProfile({
                 maxWidth={25 * UNIT}
                 monospace
                 textOverflow
+                title={uuid}
               >
                 {uuid}
               </Text>
