@@ -434,18 +434,18 @@ function DatasetOverview({
                           columnHeaders={[{ label: 'Quality Metrics' }]}
                           rowGroupData={[metricSample]}
                           warnings={[{
+                            compare: lessThan,
                             name: 'Validity',
-                            compare: lessThan,
                             val: 80,
                           },
                           {
+                            compare: lessThan,
                             name: 'Completeness',
-                            compare: lessThan,
                             val: 80,
                           },
                           {
-                            name: 'Duplicate rows',
                             compare: greaterThan,
+                            name: 'Duplicate rows',
                             val: 0,
                           }]}
                         />
@@ -460,6 +460,13 @@ function DatasetOverview({
                           columnFlexNumbers={[1, 1, 1]}
                           columnHeaders={[{ label: 'Statistics' }]}
                           rowGroupData={[statSample]}
+                          warnings={[
+                            {
+                              compare: greaterThan,
+                              name: 'Empty columns',
+                              val: 0,  
+                            },
+                          ]}
                         />
                       )}
                     </Flex>
