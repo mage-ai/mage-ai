@@ -73,16 +73,18 @@ function DatasetOverview({
     ? Array.isArray(tabsFromUrlInit) ? tabsFromUrlInit : [tabsFromUrlInit]
     : [];
 
-  const setTabs = useCallback((newTab: string) => {
+  const setTabs = useCallback((newTab: string, pushHistory: boolean = true) => {
     goToWithQuery({
       'tabs[]': newTab,
+    }, {
+      pushHistory,
     });
   }, [tabsFromUrl]);
 
   useEffect(() => {
     if (tabsFromUrl.length === 0) {
       // @ts-ignore
-      setTabs(TAB_REPORTS);
+      setTabs(TAB_REPORTS, false);
     }
   }, [setTabs, tabsFromUrl]);
 
@@ -156,13 +158,9 @@ function DatasetOverview({
     label: header,
   }));
   const metricSample = statistics ? createMetricsSample(statistics, columnTypes) : null;
-  const statSample = (statistics && columnTypes) ? createStatisticsSample(statistics, columnTypes) : null;
-
-  const setTab = (newTab: string) => {
-    goToWithQuery({
-      tab: newTab,
-    });
-  };
+  const statSample = (statistics && columnTypes)
+    ? createStatisticsSample(statistics, columnTypes)
+    : null;
 
   const viewColumns = (e) => {
     const pathname = window?.location?.pathname;
@@ -340,6 +338,8 @@ function DatasetOverview({
               featureSet={featureSet}
               onClickColumn={col => goToWithQuery({
                 column: col === null ? null : columnsAll.indexOf(col),
+              }, {
+                pushHistory: true,
               })}
               selectedColumn={selectedColumn}
             />
