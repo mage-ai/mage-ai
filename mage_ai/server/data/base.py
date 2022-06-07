@@ -42,8 +42,14 @@ class Model:
         with open(file_path) as file:
             return json.load(file)
 
-    def write_json_file(self, file_name, obj={}):
-        with open(os.path.join(self.dir, file_name), 'w') as file:
+    def write_json_file(self, file_name, obj={}, subdir=None):
+        if subdir is None:
+            dir_path = self.dir
+        else:
+            dir_path = os.path.join(self.dir, subdir)
+            if not os.path.isdir(dir_path):
+                os.mkdir(dir_path)
+        with open(os.path.join(dir_path, file_name), 'w') as file:
             json.dump(obj, file, cls=NumpyEncoder)
 
     def read_parquet_file(self, file_name):

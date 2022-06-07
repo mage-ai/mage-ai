@@ -156,6 +156,28 @@ def feature_set(id):
     return response
 
 
+@app.route('/feature_sets/<id>/versions/<version>', endpoint='feature_set_versions_get')
+@rescue_errors
+def feature_set_version(id, version):
+    """
+    response: [
+        {
+            id,
+            metadata,
+        }
+    ]
+    """
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
+    feature_set = FeatureSet(id=id)
+    response = app.response_class(
+        response=simplejson.dumps(feature_set.to_dict(version=version), ignore_nan=True),
+        status=200,
+        mimetype='application/json',
+    )
+    return response
+
+
 @app.route('/feature_sets/<id>', methods=['PUT'], endpoint='feature_sets_put')
 @rescue_errors
 def update_feature_set(id):
@@ -251,8 +273,9 @@ def update_pipeline(id):
         feature_set = FeatureSet(id=feature_set_id)
         df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
         result = clean_data(df_transformed, transform=False)
+        prev_version = len(pipeline.pipeline.actions)
         pipeline.pipeline = clean_pipeline
-        feature_set.write_files(result)
+        feature_set.write_files(result, prev_version=prev_version)
     else:
         pipeline.pipeline = clean_pipeline
 

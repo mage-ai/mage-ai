@@ -107,7 +107,13 @@ class FeatureSet(Model):
             sample_size = len(self.data)
         return self.data.head(sample_size)
 
-    def write_files(self, obj, write_orig_data=False):
+    def version_snapshot(self, version):
+        return self.read_json_file(f'versions/{version}.json', {})
+
+    def write_files(self, obj, write_orig_data=False, prev_version=None):
+        if prev_version is not None:
+            # Save the old version as a snapshot
+            self.write_version_snapshot(prev_version)
         if 'df' in obj:
             self.data = obj['df']
         if 'metadata' in obj:
@@ -131,15 +137,14 @@ class FeatureSet(Model):
             )
         self.metadata = metadata
 
-    # def column(self, column):
-    #     column_dict = dict()
-    #     with open(os.path.join(self.dir, f'columns/{column}/statistics.json')) as column_stats:
-    #         column_dict['statistics'] = json.load(column_stats)
-    #     with open(os.path.join(self.dir, f'columns/{column}/insights.json')) as column_insights:
-    #         column_dict['insights'] = json.load(column_insights)
-    #     return column_dict
+    def write_version_snapshot(self, version):
+        version_snapshot = self.to_dict()
+        self.write_json_file(f'{version}.json', version_snapshot, subdir='versions')
+        return version_snapshot
 
-    def to_dict(self, column=None, detailed=True):
+    def to_dict(self, column=None, detailed=True, version=None):
+        if version is not None:
+            return self.version_snapshot(version)
         obj = dict(
             id=self.id,
             metadata=self.metadata,
