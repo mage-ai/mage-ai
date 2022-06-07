@@ -71,13 +71,13 @@ type FeatureProfilesProps = {
 
 const entryTypes = [
   'Type',
+  'Missing',
   'Unique',
+  'Min',
+  'Max',
   'Mean',
   'Median',
   'Mode',
-  'Min',
-  'Max',
-  'Missing',
   'Invalid',
   'Outliers',
   'Skewness',
@@ -121,13 +121,13 @@ function FeatureProfile({
 
   const entries = [
     columnType,
+    numberOfNullValues,
     numberOfUniqueValues,
+    minValue,
+    maxValue,
     meanValue,
     medianValue,
     modeValue,
-    minValue,
-    maxValue,
-    numberOfNullValues,
     numberOfInvalidValues,
     numberOfOutliers,
     skewness,
