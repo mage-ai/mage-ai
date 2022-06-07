@@ -151,7 +151,10 @@ class FeatureSet(Model):
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
             # Filter sample data
             if column is not None:
-                sample_data_dict = sample_data[[column]].to_dict('list')
+                sample_data_dict = dict(
+                    columns=[column],
+                    rows=[[v] for v in sample_data[column].to_numpy().tolist()],
+                )
             else:
                 sample_data_dict = dict(
                     columns=sample_data.columns.tolist(),

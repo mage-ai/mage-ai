@@ -67,6 +67,7 @@ function MultiColumn({
               <Link
                 block
                 bold={selectedTab === key}
+                key={key}
                 noHoverUnderline
                 noOutline
                 onClick={() => onTabClick(key)}
@@ -74,7 +75,6 @@ function MultiColumn({
               >
                 <TabStyle
                   first={idx === 0}
-                  key={key}
                   selected={selectedTab === key}
                 >
                   {key}

@@ -8,6 +8,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
+import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -34,10 +35,12 @@ import {
   createStatisticsSample,
 } from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
+import { getHost } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
+import { useCustomFetchRequest } from '@api';
 
 const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
@@ -49,18 +52,23 @@ const TABS_IN_ORDER = [
 ];
 
 type DatasetOverviewProps = {
+  columnData?: FeatureSetType;
   featureSet: FeatureSetType;
+  fetchColumnData: (arg: any) => void;
   fetchFeatureSet: (arg: any) => void;
+  selectedColumn?: string;
 };
 
 function DatasetOverview({
+  columnData,
   featureSet: featureSetRaw,
+  fetchColumnData,
   fetchFeatureSet,
+  selectedColumn: columnFromUrl,
 }: DatasetOverviewProps) {
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
-    column: columnFromUrl,
     show_columns: showColumnsFromUrl,
   } = qFromUrl;
   const tabsFromUrlInit = qFromUrl['tabs[]'];
@@ -81,8 +89,12 @@ function DatasetOverview({
     }
   }, [setTabs, tabsFromUrl]);
 
-  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
+  const featureSetAllColumns = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
+  const featureSet = columnFromUrl
+    ? columnData ? deserializeFeatureSet(columnData) : {}
+    : featureSetAllColumns;
   const {
+    insights,
     metadata,
     pipeline,
     statistics,
@@ -124,7 +136,9 @@ function DatasetOverview({
     Router.push(`${pathname}/features`);
   };
 
-  const insightsOverview = featureSet?.['insights']?.[1] || {};
+  const insightsOverview = columnFromUrl
+    ? (insights?.[0] || []).find(({ feature }) => feature.uuid === columnFromUrl)
+    : insights?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
@@ -253,7 +267,7 @@ function DatasetOverview({
         before={columnsVisible && (
           <Spacing mt={PADDING_UNITS}>
             <ColumnListSidebar
-              featureSet={featureSet}
+              featureSet={featureSetAllColumns}
               onClickColumn={col => goToWithQuery({ column: col })}
               selectedColumn={columnFromUrl}
             />
@@ -331,11 +345,23 @@ function DatasetOverview({
           )}
 
           {tabsFromUrl?.includes(TAB_VISUALIZATIONS) && (
-            <Overview
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
+            <>
+              {columnFromUrl && (
+                <ColumnAnalysis
+                  column={columnFromUrl}
+                  features={features}
+                  insights={insightsOverview}
+                  statisticsByColumn={statistics?.[`${columnFromUrl}/value_counts`] || {}}
+                  statisticsOverview={statistics}
+                />
+              )}
+
+              {/*<Overview
+                features={features}
+                insightsOverview={insightsOverview}
+                statistics={statistics}
+              />*/}
+            </>
           )}
 
           {tabsFromUrl?.includes(TAB_DATA) && (

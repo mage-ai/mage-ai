@@ -5,15 +5,24 @@ import ColumnDetail from '@components/datasets/columns/ColumnDetail';
 import ColumnList from '@components/datasets/columns/ColumnList';
 import DatasetOverview from '@components/datasets/overview';
 import api from '@api';
+import { queryFromUrl } from '@utils/url';
 
 function DatasetDetail() {
   const router = useRouter();
-  const { slug = [] } = router.query;
-
+  const {
+    slug = [],
+  } = router.query;
+  const {
+    column,
+  } = queryFromUrl();
 
   // @ts-ignore
   const [featureSetId, _, featureId] = slug;
   const { data: featureSet, mutate } = api.feature_sets.detail(featureSetId);
+  const {
+    data: columnData,
+    mutate: mutateColumnData,
+  } = api.columns.feature_sets.detail(featureSetId, column);
 
   const sharedProps = {
     featureSet,
@@ -25,8 +34,11 @@ function DatasetDetail() {
     el = (
       <ClientOnly>
         <DatasetOverview
+          columnData={columnData}
           featureSet={featureSet}
+          fetchColumnData={mutateColumnData}
           fetchFeatureSet={mutate}
+          selectedColumn={column}
         />
       </ClientOnly>
     );

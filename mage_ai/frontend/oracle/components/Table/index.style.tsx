@@ -88,8 +88,10 @@ export const RowStyle = styled.div<any>`
 
 `;
 
-export const TextStyle = styled.p`
-  cursor: pointer;
+export const TextStyle = styled.div`
+  p {
+    cursor: pointer;
+  }
 `;
 
 export const RowCellStyle = styled.div<any>`

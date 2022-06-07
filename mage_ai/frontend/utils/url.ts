@@ -10,7 +10,7 @@ export function queryFromUrl(url: string = null): any {
   }
 
   if (urlToTest) {
-    const params = new URLSearchParams(urlToTest.slice(1));
+    const params = new URLSearchParams(urlToTest.split('?').slice(1).join(''));
     // @ts-ignore
     Array.from(params.keys()).forEach(key => {
       // @ts-ignore
