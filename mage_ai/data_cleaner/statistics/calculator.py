@@ -154,8 +154,7 @@ class StatisticsCalculator:
 
         # Fix json serialization issue
         df_top_value_counts_raw = df_top_value_counts.copy()
-        if column_type == DATETIME:
-            df_top_value_counts.index = df_top_value_counts.index.astype(str)
+        df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
         count_unique = len(df_value_counts.index)
 
