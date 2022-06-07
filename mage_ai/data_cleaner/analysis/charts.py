@@ -318,7 +318,7 @@ def build_overview_data(
     df_sample_numeric = df_sample[numeric_features].dropna(axis=1, how='all')
     """
     Calculate low cardinality categorical features:
-    1. unique count <= SCATTER_PLOT_CATEGORY_LIMIT
+    1. unique count <= SCATTER_PLOT_CATEGORY_LIMIT and unique count > 1
     2. count > SCATTER_PLOT_SAMPLE_COUNT / 2
     """
     non_numeric_features = list(set(df.columns) - set(numeric_features))
