@@ -5,7 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
-export const PADDING_SIZE_UNITS = 2;
+export const PADDING_SIZE_UNITS = 1.5;
 
 export const TableStyle = styled.div<any>`
   border-radius: ${BORDER_RADIUS}px;
