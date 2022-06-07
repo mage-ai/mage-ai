@@ -28,7 +28,7 @@ const ColumnList = ({
     featureSetData,
   ]);
 
-  const featureSetId = featureSetMemo?.metadata?.id;
+  const featureSetId = featureSetMemo?.id;
 
   const viewDataset = () => Router.push(`/datasets/${featureSetId}`);
 

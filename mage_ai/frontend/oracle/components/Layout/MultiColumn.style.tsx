@@ -7,7 +7,9 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 const BEFORE_WIDTH = UNIT * 40;
 const AFTER_WIDTH = UNIT * 50;
 
-export const HeaderStyle = styled.div`
+export const HeaderStyle = styled.div<{
+  beforeVisible?: boolean;
+}>`
   position: fixed;
 
   ${props => `

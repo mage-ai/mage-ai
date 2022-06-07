@@ -251,11 +251,13 @@ function DatasetOverview({
           </Spacing>
         }
         before={columnsVisible && (
-          <ColumnListSidebar
-            featureSet={featureSet}
-            onClickColumn={col => goToWithQuery({ column: col })}
-            selectedColumn={columnFromUrl}
-          />
+          <Spacing mt={PADDING_UNITS}>
+            <ColumnListSidebar
+              featureSet={featureSet}
+              onClickColumn={col => goToWithQuery({ column: col })}
+              selectedColumn={columnFromUrl}
+            />
+          </Spacing>
         )}
         header={
           <Spacing p={PADDING_UNITS}>

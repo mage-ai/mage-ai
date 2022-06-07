@@ -72,7 +72,7 @@ function ColumnListSidebar({
                   <FlexContainer alignItems="center">
                     {!Icon && <Spacing mr={3} />}
 
-                    <Text bold inverted small>
+                    <Text bold small>
                       {kicker()}
                     </Text>
                   </FlexContainer>
@@ -83,7 +83,6 @@ function ColumnListSidebar({
                 {Icon && (
                   <div style={{ width: UNIT * 2 }}>
                     <Icon
-                      inverted
                       size={UNIT * 2}
                     />
                   </div>
@@ -91,7 +90,7 @@ function ColumnListSidebar({
 
                 {<Spacing mr={Icon ? 1 : 3} />}
 
-                <Text inverted>
+                <Text>
                   {label()}
                 </Text>
               </FlexContainer>

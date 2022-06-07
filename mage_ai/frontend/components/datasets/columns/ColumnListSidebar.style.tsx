@@ -2,7 +2,9 @@ import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
 
-export const ColumnRowStyle = styled.div`
+export const ColumnRowStyle = styled.div<{
+  selected: boolean;
+}>`
   ${props => !props.selected && `
     border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
 
