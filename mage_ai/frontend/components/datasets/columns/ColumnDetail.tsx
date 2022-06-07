@@ -284,12 +284,57 @@ function ColumnDetail({
       pageTitle="Column Details"
     >
       <MultiColumn
-        after={columnFeatureSet &&
-          <Suggestions
-            addAction={saveAction}
-            featureSet={columnFeatureSet}
-            removeAction={removeAction}
-          />
+        after={
+          <>
+            <Spacing mb={PADDING_UNITS}>
+              <ActionDropdown
+                actionType={actionType}
+                columnOnly
+                setActionPayload={setActionPayload}
+              />
+            </Spacing>
+
+            {actionType && (
+              <Spacing mb={2}>
+                <ActionForm
+                  actionType={actionType}
+                  axis={actionPayload?.axis}
+                  currentFeature={{
+                    columnType: columnType,
+                    uuid: featureUUID,
+                  }}
+                  onClose={closeAction}
+                  onSave={() => {
+                    saveAction({ action_payload: actionPayload });
+                    closeAction();
+                  }}
+                  payload={actionPayload}
+                  setPayload={setActionPayload}
+                />
+              </Spacing>
+            )}
+
+            {errorMessages?.length >= 1 && (
+              <Spacing mt={3}>
+                <Text bold>
+                  Errors
+                </Text>
+                {errorMessages?.map((msg: string) => (
+                  <Text key={msg} monospace xsmall>
+                    {msg}
+                  </Text>
+                ))}
+              </Spacing>
+            )}
+
+            {columnFeatureSet && (
+              <Suggestions
+                addAction={saveAction}
+                featureSet={columnFeatureSet}
+                removeAction={removeAction}
+              />
+            )}
+          </>
         }
         header={
           <FlexContainer alignItems="center" justifyContent="space-between">
@@ -300,49 +345,9 @@ function ColumnDetail({
           </FlexContainer>
         }
       >
-        {actionType && (
-          <Spacing mb={2}>
-            <ActionForm
-              actionType={actionType}
-              axis={actionPayload?.axis}
-              currentFeature={{
-                columnType: columnType,
-                uuid: featureUUID,
-              }}
-              onClose={closeAction}
-              onSave={() => {
-                saveAction({ action_payload: actionPayload });
-                closeAction();
-              }}
-              payload={actionPayload}
-              setPayload={setActionPayload}
-            />
-          </Spacing>
-        )}
-
-        {errorMessages?.length >= 1 && (
-          <Spacing mt={3}>
-            <Text bold>
-              Errors
-            </Text>
-            {errorMessages?.map((msg: string) => (
-              <Text key={msg} monospace xsmall>
-                {msg}
-              </Text>
-            ))}
-          </Spacing>
-        )}
-
         <FlexContainer>
           <Flex flex="2" flexDirection="column">
             <Tabs
-              actionEl={
-                <ActionDropdown
-                  actionType={actionType}
-                  columnOnly
-                  setActionPayload={setActionPayload}
-                />
-              }
               bold
               defaultKey={tab}
               large
