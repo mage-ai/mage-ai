@@ -145,6 +145,19 @@ function ColumnAnalysis({
     });
   }
 
+  const highCorrelations = [];
+  correlationsRowData?.map((_, col, r) => {
+    if (r[col][2] > 0.5) {
+      highCorrelations.push({
+        'columnValues': [
+          r[col][0]?.toString(),
+          r[col][1]?.toString(),
+          roundNumber(r[col][2])?.toString(),
+        ],
+      });
+    }
+  });
+
   const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
 
   const {
@@ -601,7 +614,33 @@ function ColumnAnalysis({
               />
             </ChartContainer>
           }
-          right={<div />}
+          right={
+            <ChartContainer
+              noPadding={!!correlationsRowData}
+              title="Values with high correlation"
+            >
+              <SimpleDataTable
+                columnFlexNumbers={[1, 1, 1]}
+                columnHeaders={[
+                  {
+                  label: 'Column',
+                  },
+                  {
+                  label: 'Related column',
+                  },
+                  {
+                  label: 'Correlation',
+                },]}
+                noBorder
+                rowGroupData={[
+                  {
+                    rowData: highCorrelations,
+                  },
+                ]}
+                small
+              />
+            </ChartContainer>
+          }
         />
       )}
     </FlexContainer>
