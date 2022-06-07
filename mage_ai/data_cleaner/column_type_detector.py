@@ -60,10 +60,7 @@ RESERVED_ZIP_CODE_WORDS = frozenset(['zip', 'postal', 'zipcode', 'postcode'])
 
 
 def str_in_set(string, string_set):
-    for entry in string_set:
-        if entry in string:
-            return True
-    return False
+    return any(entry in string for entry in string_set)
 
 
 def get_mismatched_row_count(series, column_type):
@@ -149,15 +146,15 @@ def infer_object_type(series, column_name, kwargs):
             if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
                 mdtype = NUMBER_WITH_DECIMALS
             else:
-                lower = column_name.lower()
+                lowercase_column_name = column_name.lower()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
                 if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lower, RESERVED_PHONE_NUMBER_WORDS
+                    lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
                 ):
                     mdtype = PHONE_NUMBER
                 elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lower, RESERVED_ZIP_CODE_WORDS
+                    lowercase_column_name, RESERVED_ZIP_CODE_WORDS
                 ):
                     mdtype = ZIP_CODE
                 else:
@@ -170,15 +167,15 @@ def infer_object_type(series, column_name, kwargs):
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                lower = column_name.lower()
+                lowercase_column_name = column_name.lower()
                 if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
                     mdtype = EMAIL
                 elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lower, RESERVED_PHONE_NUMBER_WORDS
+                    lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
                 ):
                     mdtype = PHONE_NUMBER
                 elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lower, RESERVED_ZIP_CODE_WORDS
+                    lowercase_column_name, RESERVED_ZIP_CODE_WORDS
                 ):
                     mdtype = ZIP_CODE
                 elif series_nunique == 2:
