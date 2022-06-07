@@ -50,11 +50,14 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     null_value_count: statistics[`${featureUUID}/null_value_count`],
     null_value_rate: statistics[`${featureUUID}/null_value_rate`],
     outlier_count: statistics[`${featureUUID}/outlier_count`],
+    outliers: statistics[`${featureUUID}/outliers`],
     quality: statistics[`${featureUUID}/quality`],
     skew: statistics[`${featureUUID}/skew`],
+    std: statistics[`${featureUUID}/std`],
     sum: statistics[`${featureUUID}/sum`],
     validity: statistics[`${featureUUID}/validity`],
-  }
+    value_counts: statistics[`${featureUUID}/value_counts`],
+  };
 }
 
 export function deserializeFeatureSet(featureSet: any) {

@@ -1,14 +1,16 @@
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel';
+import RowCard from '@oracle/components/RowCard';
+import RowDataTable from '@oracle/components/RowDataTable';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
-import { getPercentage } from '@utils/number';
+import { getPercentage, transformNumber } from '@utils/number';
 
 type ColumnReportsProps = {
   column: string;
@@ -21,7 +23,6 @@ function ColumnReports({
 }: ColumnReportsProps) {
   const {
     metadata,
-    statistics,
   } = featureSet;
   const columnTypesByFeatureUUID = metadata?.column_types || {};
   const columnType = columnTypesByFeatureUUID[featureUUID];
@@ -34,6 +35,7 @@ function ColumnReports({
     invalid_value_count: invalidValueCount,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
+    outliers,
     skew,
     validity,
   } = featureSetStats;
@@ -78,20 +80,16 @@ function ColumnReports({
         'Invalid values', invalidValueCount,
       ],
     },
-    {
-      columnValues: [
-        'Outliers', outlierCount,
-      ],
-    },
   ];
 
+  const showOutliers = outliers && outlierCount > 0;
   const warningMetrics = [
     {
       columnValues: [
         'Outliers',
         outlierCount,
       ],
-      danger: outlierCount > 0,
+      danger: showOutliers,
     },
     {
       columnValues: [
@@ -118,7 +116,7 @@ function ColumnReports({
 
       <Spacing ml={PADDING_UNITS} />
 
-      <Flex flex={1}>
+      <Flex flex={1} flexDirection="column">
         {noWarningMetrics
           ?
             <Panel fullHeight={false} headerTitle="Warnings">
@@ -132,6 +130,25 @@ function ColumnReports({
                 rowData: warningMetrics,
               }]}
             />
+        }
+        {showOutliers &&
+          <Spacing mt={PADDING_UNITS}>
+            <RowDataTable
+              headerTitle="Outliers"
+            >
+              {outliers?.map((outlier, idx) => (
+                <RowCard
+                  key={`outlier_${idx}`}
+                  last={idx === outliers.length - 1}
+                  secondary={idx % 2 === 1}
+                >
+                  <Text>
+                    {transformNumber(outlier, 2)}
+                  </Text>
+                </RowCard>
+              ))}
+            </RowDataTable>
+          </Spacing>
         }
       </Flex>
     </FlexContainer>
