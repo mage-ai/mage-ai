@@ -63,8 +63,6 @@ function DatasetOverview({
   fetchFeatureSet,
   selectedColumnIndex,
 }: DatasetOverviewProps) {
-  console.log('render/DatasetOverview');
-
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
@@ -338,8 +336,11 @@ function DatasetOverview({
         before={columnsVisible && (
           <Spacing mt={PADDING_UNITS}>
             <ColumnListSidebar
+              columns={columnsAll}
               featureSet={featureSet}
-              onClickColumn={col => goToWithQuery({ column: columnsAll.indexOf(col) })}
+              onClickColumn={col => goToWithQuery({
+                column: col === null ? null : columnsAll.indexOf(col),
+              })}
               selectedColumn={selectedColumn}
             />
           </Spacing>
