@@ -133,7 +133,7 @@ class StatisticsCalculator:
         # series = series.replace(r'^\s*$', np.nan, regex=True)
         df_value_counts = series.value_counts(dropna=False)
 
-        df_top_value_counts = df_value_counts
+        df_top_value_counts = df_value_counts.copy()
         if df_top_value_counts.shape[0] > VALUE_COUNT_LIMIT:
             df_top_value_counts = df_top_value_counts.head(VALUE_COUNT_LIMIT)
 
@@ -153,16 +153,14 @@ class StatisticsCalculator:
         series_non_null = series.dropna()
 
         # Fix json serialization issue
-        df_top_value_counts_raw = df_top_value_counts.copy()
-        if column_type == DATETIME:
-            df_top_value_counts.index = df_top_value_counts.index.astype(str)
+        df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
         count_unique = len(df_value_counts.index)
 
         data = {
             f'{col}/count': series_non_null.size,
             f'{col}/count_distinct': count_unique - 1
-            if np.nan in df_top_value_counts_raw
+            if np.nan in df_value_counts
             else count_unique,
             f'{col}/null_value_rate': 0
             if series.size == 0
