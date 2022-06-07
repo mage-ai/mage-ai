@@ -24,24 +24,23 @@ class RemoveCollinearColumns(BaseRule):
             variance_inflation_factor = self.get_variance_inflation_factor(column)
             if variance_inflation_factor > self.VIF_UB:
                 collinear_columns.append(column)
-                self.numeric_df.drop(column, axis=1, inplace=True) 
-        if len(collinear_columns) != len(self.numeric_columns)-1:
+                self.numeric_df.drop(column, axis=1, inplace=True)
+        if len(collinear_columns) != len(self.numeric_columns) - 1:
             # check the final column if and only if there are other columns to compare it to
             column = self.numeric_columns[-1]
             variance_inflation_factor = self.get_variance_inflation_factor(column)
             if variance_inflation_factor > self.VIF_UB:
                 collinear_columns.append(column)
         if len(collinear_columns) != 0:
-            suggestions.append(self._build_transformer_action_suggestion(
-                'Remove collinear columns',
-                'The following columns are strongly correlated '
-                f'with other columns in the dataset: {collinear_columns}. '
-                'Removing these columns may increase data quality '
-                'by removing redundant and closely related data.',
-                ActionType.REMOVE,
-                action_arguments=collinear_columns,
-                axis=Axis.COLUMN,
-            ))
+            suggestions.append(
+                self._build_transformer_action_suggestion(
+                    'Remove collinear columns',
+                    'Delete these columns to remove redundant data and increase data quality.',
+                    ActionType.REMOVE,
+                    action_arguments=collinear_columns,
+                    axis=Axis.COLUMN,
+                )
+            )
         return suggestions
 
     def filter_numeric_types(self):
@@ -59,8 +58,8 @@ class RemoveCollinearColumns(BaseRule):
     def get_variance_inflation_factor(self, column):
         """
         Variance Inflation Factor = 1 / (1 - <coefficient of determination on column k>)
-        Measures increase in regression model variance due to collinearity 
-        => column k is multicollinear with others if model predicting its value 
+        Measures increase in regression model variance due to collinearity
+        => column k is multicollinear with others if model predicting its value
         has this variance inflation greater than some amount
         """
         if self.numeric_df.empty:

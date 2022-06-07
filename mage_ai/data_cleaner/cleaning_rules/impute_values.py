@@ -302,23 +302,14 @@ class ImputeActionConstructor:
         outputs = []
 
         if strategy == ImputationStrategy.AVERAGE:
-            message = (
-                'The following columns have null-valued entries and '
-                'the distribution of remaining values is approximately symmetric: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in each of these columns with their average value.'
-            )
+            message = 'For each column, fill missing entries with the average value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.CONSTANT:
-            message = (
-                'The following columns have many null-valued entries: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in these columns with a placeholder to mark them as missing.'
-            )
+            message = 'Fill missing values with a placeholder to mark them as missing.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
@@ -327,36 +318,21 @@ class ImputeActionConstructor:
             }
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.MEDIAN:
-            message = (
-                'The following columns have null-valued entries and '
-                'the distribution of remaining values is skewed: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in each of these columns with their median value.'
-            )
+            message = 'For each column, fill missing entries with the median value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.MODE:
-            message = (
-                'The following columns have null valued entries and '
-                'a large proportion of entries are a single value: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in each of these columns with their most frequent value.'
-            )
+            message = 'For each column, fill missing entries with the most frequent value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': 'mode'}
             action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
         elif strategy == ImputationStrategy.RANDOM:
-            message = (
-                'The following columns have null-valued entries and are categorical: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in these columns with randomly sampled non-null values '
-                'from the same column.'
-            )
+            message = 'For each column, fill missing entries with randomly sampled values.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
@@ -365,23 +341,14 @@ class ImputeActionConstructor:
         elif strategy == ImputationStrategy.ROW_RM:
             num_missing = strategy_cache_entry['num_missing']
             title = 'Remove rows with missing entries'
-            message = (
-                f'There are {num_missing} rows containing null values. '
-                'Remove these rows to remove null values from the dataset.'
-            )
+            message = f'Delete {num_missing} rows to remove all missing values from the dataset.'
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
             axis = Axis.ROW
             action_variables = self.__construct_action_variables(self.df_columns)
             action_code = ' and '.join(map(lambda name: f'{name} != null', self.df_columns))
         elif strategy == ImputationStrategy.SEQ:
-            message = (
-                'The following columns have null-valued entries which '
-                'may be part of timeseries data: '
-                f'{strategy_cache_entry["entries"]}. '
-                'Fill the null values in these columns with the previously '
-                'occurring value in the timeseries.'
-            )
+            message = 'Fill missing entries using the previously occurring entry in the timeseries.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN

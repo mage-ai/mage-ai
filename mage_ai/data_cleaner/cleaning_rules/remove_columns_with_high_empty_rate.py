@@ -21,21 +21,23 @@ class RemoveColumnsWithHighEmptyRate(BaseRule):
 
         suggestions = []
         if len(columns_with_no_values) > 0:
-            suggestions.append(self._build_transformer_action_suggestion(
-                'Remove columns with no values',
-                f'The following columns have no values: {columns_with_no_values}.'\
-                ' Removing them may increase your data quality.',
-                ActionType.REMOVE,
-                action_arguments=columns_with_no_values,
-                axis=Axis.COLUMN,
-            ))
+            suggestions.append(
+                self._build_transformer_action_suggestion(
+                    'Remove columns with no values',
+                    'Remove columns with no values to increase data quality.',
+                    ActionType.REMOVE,
+                    action_arguments=columns_with_no_values,
+                    axis=Axis.COLUMN,
+                )
+            )
         if len(columns_with_missing_values) > 0:
-            suggestions.append(self._build_transformer_action_suggestion(
-                'Remove columns with high empty rate',
-                f'The following columns have high empty rate: {columns_with_missing_values}.'\
-                ' Removing them may increase your data quality.',
-                ActionType.REMOVE,
-                action_arguments=columns_with_missing_values,
-                axis=Axis.COLUMN,
-            ))
+            suggestions.append(
+                self._build_transformer_action_suggestion(
+                    'Remove columns with high empty rate',
+                    'Remove columns with many missing values may increase data quality.',
+                    ActionType.REMOVE,
+                    action_arguments=columns_with_missing_values,
+                    axis=Axis.COLUMN,
+                )
+            )
         return suggestions

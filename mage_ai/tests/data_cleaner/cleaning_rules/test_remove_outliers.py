@@ -45,8 +45,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='There are 1 outlier(s) in column \'number3\'. '
-                    'Removing them can reduce the amount of noise in the data.',
+                    message='Remove 1 outlier(s) to reduce the amount of noise in the data.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='filter',

@@ -35,12 +35,8 @@ class CleanColumnNameTests(TestCase):
             [
                 dict(
                     title='Clean dirty column names',
-                    message='The following columns have unclean naming conventions: '
-                    '[\'Bad Case\', \'%@#342%34@@#342\', \'yield\','
-                    ' \'12342\', \'1234.    23\', \'@#f$%&*o$*(%^&r*$%&\', '
-                    '\'PascalCaseTitle\', \'camelCaseName\']'
-                    '. Cleaning these names to be lowercase and alphanumeric can improve '
-                    'ease of dataset access and reduce security risks.',
+                    message='Format these column names as lowercase and alphanumeric to improve '
+                    'accessibility and security.',
                     status='not_applied',
                     action_payload=dict(
                         action_type=ActionType.CLEAN_COLUMN_NAME,

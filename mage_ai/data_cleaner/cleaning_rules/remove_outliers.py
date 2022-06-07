@@ -22,8 +22,7 @@ class RemoveOutliers(BaseRule):
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     'Remove outliers',
-                    f'There are {outlier_count} outlier(s) in column \'{c}\'. '
-                    'Removing them can reduce the amount of noise in the data.',
+                    f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
                     ActionType.FILTER,
                     action_arguments=[c],
                     action_code=f'{c} <= {upper} and {c} >= {lower}',
