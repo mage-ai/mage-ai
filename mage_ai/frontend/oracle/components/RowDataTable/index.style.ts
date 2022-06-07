@@ -10,6 +10,7 @@ import { RowCardProps } from '@oracle/components/RowCard';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const PADDING_SIZE = UNIT * 1.75;
+export const ROW_VERTICAL_PADDING_SIZE = UNIT * 1.5;
 export const SCROLL_PADDING_SIZE = 3;
 export const ROW_PADDING_HORIZONTAL_UNITS = 2;
 
@@ -59,7 +60,7 @@ export const TitleStyle = styled.div`
 `;
 
 export const RowStyle = styled.div<RowStyleProps>`
-  padding: ${PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
+  padding: ${ROW_VERTICAL_PADDING_SIZE}px ${ROW_PADDING_HORIZONTAL_UNITS * UNIT}px;
 
   ${props => props.noHorizontalPadding && `
     padding-left: 0;

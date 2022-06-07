@@ -1,4 +1,3 @@
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 
