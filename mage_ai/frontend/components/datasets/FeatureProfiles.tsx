@@ -77,14 +77,22 @@ const entryTypes = [
   'Mode',
   'Min',
   'Max',
-  'Null',
+  'Missing',
   'Invalid',
   'Outliers',
   'Skewness',
   'Std dev',
 ];
 
-const percentages = ['Null', 'Invalid', 'Unique'];
+const percentages = ['Missing', 'Invalid', 'Unique'];
+
+// % thresholds, above which we warn the user
+const warnings = {
+  'Missing': 0,
+  'Invalid': 0,
+  'Outliers': 0,
+  'Unique': 0.9,
+};
 
 function FeatureProfile({
   feature,
@@ -147,14 +155,23 @@ function FeatureProfile({
           </NextLink>
         </Spacing>
       </FeatureProfileStyle>
-      {entries.map((label = '-', idx) => (
-        <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
-          <Text textOverflow>
-            {!isNaN(label) ? roundNumber(label) : label}
-            {percentages.includes(entryTypes[idx]) && ` (${formatPercent(label/numberOfValues)})`}
-          </Text>
-        </CellStyle>
-      ))}
+      {entries.map((label = '-', idx) => {
+        const entry = entryTypes[idx];
+        const val = !isNaN(label) ? roundNumber(label) : label;
+        const shouldWarn = entry in warnings && (val/numberOfValues) > warnings[entry];
+
+        return (
+          <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
+            <Text
+              color={shouldWarn && 'red'}
+              textOverflow
+            >
+              {val}
+              {percentages.includes(entry) && ` (${formatPercent(label/numberOfValues)})`}
+            </Text>
+          </CellStyle>
+        );
+      })}
     </Flex>
   );
 }
