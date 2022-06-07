@@ -41,7 +41,7 @@ const ButtonStyle = styled.button<ButtonProps>`
   color: ${light.content.active};
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
-  
+
   padding: 7px 16px;
   position: relative;
   z-index: 0;
