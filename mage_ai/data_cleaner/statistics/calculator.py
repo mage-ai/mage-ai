@@ -1,17 +1,17 @@
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.multi import run_parallel
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER_TYPES,
-    get_mismatched_row_count,
+    get_mismatched_rows,
 )
 import math
 import numpy as np
 import pandas as pd
 import traceback
 
+INVALID_VALUE_SAMPLE_COUNT = 100
 OUTLIER_SAMPLE_COUNT = 100
 OUTLIER_ZSCORE_THRESHOLD = 3
 VALUE_COUNT_LIMIT = 20
@@ -224,7 +224,9 @@ class StatisticsCalculator:
                 data[f'{col}/mode_ratio'] = df_value_counts[mode].item() / df_value_counts.sum()
 
         # Detect mismatched formats for some column types
-        data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
+        invalid_rows = get_mismatched_rows(series_non_null, column_type)
+        data[f'{col}/invalid_value_count'] = len(invalid_rows)
+        data[f'{col}/invalid_values'] = invalid_rows[:INVALID_VALUE_SAMPLE_COUNT]
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )

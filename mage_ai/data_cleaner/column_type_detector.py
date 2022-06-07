@@ -63,17 +63,17 @@ def str_in_set(string, string_set):
     return any(entry in string for entry in string_set)
 
 
-def get_mismatched_row_count(series, column_type):
+def get_mismatched_rows(series, column_type):
     if len(series) == 0:
-        return 0
-    mismatched_rows = 0
+        return []
+    mismatched_rows = []
     if column_type == EMAIL:
-        mismatched_rows = len(series[~series.str.match(REGEX_EMAIL)].index)
+        mismatched_rows = series[~series.str.match(REGEX_EMAIL)].tolist()
     elif column_type == PHONE_NUMBER:
-        mismatched_rows = len(series[~series.str.match(REGEX_PHONE_NUMBER)].index)
+        mismatched_rows = series[~series.str.match(REGEX_PHONE_NUMBER)].tolist()
     elif column_type == ZIP_CODE:
         str_series = series.astype(str)
-        mismatched_rows = len(series[~str_series.str.match(REGEX_ZIP_CODE)].index)
+        mismatched_rows = series[~str_series.str.match(REGEX_ZIP_CODE)].tolist()
     return mismatched_rows
 
 
