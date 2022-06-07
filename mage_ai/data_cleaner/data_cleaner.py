@@ -3,7 +3,7 @@ from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
-from mage_ai.data_cleaner.shared.utils import clean_series, clean_dataframe
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 
