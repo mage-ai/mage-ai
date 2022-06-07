@@ -36,18 +36,24 @@ function MultiColumn({
   return (
     <>
       <HeaderStyle ref={refHeader}>
-        {header}
+        <Spacing p={PADDING_UNITS}>
+          {header}
+        </Spacing>
       </HeaderStyle>
 
       <MainContentStyle headerOffset={heightHeader}>
         <MainContentInnerStyle>
-          {children}
+          <Spacing p={PADDING_UNITS}>
+            {children}
+          </Spacing>
         </MainContentInnerStyle>
       </MainContentStyle>
 
       <AsideStyle headerOffset={heightHeader}>
         <AsideInnerStyle>
-          {after}
+          <Spacing p={PADDING_UNITS}>
+            {after}
+          </Spacing>
         </AsideInnerStyle>
       </AsideStyle>
     </>
