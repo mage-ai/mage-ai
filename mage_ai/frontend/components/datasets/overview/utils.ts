@@ -44,31 +44,13 @@ export function createMetricsSample(statistics, colTypes) {
 export function createStatisticsSample(statistics, colTypes) {
   const stats = Object.keys(statistics);
   const types = Object.values(colTypes);
+  const total = types.length;
   const rowData = [];
 
   rowData.push({
-    columnValues: ['Column count', types.length],
+    columnValues: ['Column count', total],
   });
 
-  // First count to get totals
-  let countCategory = 0;
-  let countNumerical = 0;
-  let countTimeseries = 0;
-
-  types.map((val: string) => {
-    if (CATEGORICAL_TYPES.includes(val)) {
-      countCategory += 1;
-    }
-    else if (NUMBER_TYPES.includes(val)) {
-      countNumerical += 1;
-    } else if (DATE_TYPES.includes(val)) {
-      countTimeseries += 1;
-    }
-  });
-
-  const total = countCategory + countNumerical + countTimeseries;
-
-  // First push is the keys from metrics to sort it.
   stats.map((key) => {
     if (STAT_KEYS.includes(key)) {
       const name = HUMAN_READABLE_MAPPING[key];
@@ -83,6 +65,21 @@ export function createStatisticsSample(statistics, colTypes) {
       rowData.push({
         columnValues: [name, value],
       });
+    }
+  });
+
+  let countCategory = 0;
+  let countNumerical = 0;
+  let countTimeseries = 0;
+
+  types.map((val: string) => {
+    if (CATEGORICAL_TYPES.includes(val)) {
+      countCategory += 1;
+    }
+    else if (NUMBER_TYPES.includes(val)) {
+      countNumerical += 1;
+    } else if (DATE_TYPES.includes(val)) {
+      countTimeseries += 1;
     }
   });
 
