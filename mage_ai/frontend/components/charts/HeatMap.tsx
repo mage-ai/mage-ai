@@ -271,6 +271,7 @@ function HeatMapContainer({
             <FlexContainer
               alignItems="center"
               flexDirection="column"
+              fullHeight
               width={yLabelsWidth}
             >
               {/* @ts-ignore */}
