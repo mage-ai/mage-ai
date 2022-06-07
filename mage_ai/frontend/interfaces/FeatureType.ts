@@ -8,6 +8,7 @@ export enum ColumnTypeEnum {
   PHONE_NUMBER = 'phone_number',
   TEXT = 'text',
   TRUE_OR_FALSE = 'true_or_false',
+  UUID = 'uuid',
   ZIP_CODE = 'zip_code',
 }
 
