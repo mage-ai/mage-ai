@@ -10,7 +10,8 @@ import {
   TableRowStyle,
   TableStyle,
 } from './Table.style';
-import { cutTextSize, getColumnWidth } from './helpers';
+import { cutTextSize } from './helpers';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type DataTableProps = {
   children?: any;
@@ -140,20 +141,16 @@ function BaseTable({
           { headerGroups.map(headerGroup => (
             // eslint-disable-next-line react/jsx-key
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map(column => (
+              {headerGroup.headers.map((column, i) => (
                 // eslint-disable-next-line react/jsx-key
-                <th
-                  {...column.getHeaderProps()}
-                  style={{
-                    // maxWidth: `${getColumnWidth(rows, column.id)}px`,
-                    // minWidth: column.minWidth,
-                  }}
-                >
-                  <TextStyle>
-                    <Text bold leftAligned>
-                      {column.render('Header')}
-                    </Text>
-                  </TextStyle>
+                <th {...column.getHeaderProps()} 
+                style={{
+                  // maxWidth: `${getColumnWidth(rows, column.id)}px`,
+                  // minWidth: column.minWidth,
+                }}>
+                  <Text bold leftAligned maxWidth={UNIT * 25} title={titles[i]}>
+                    {column.render('Header')}
+                  </Text>
                 </th>
                   ))}
             </tr>
@@ -166,32 +163,31 @@ function BaseTable({
             prepareRow(row);
 
             return (
-              // @ts-ignore
-              <TableRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
-                {row.cells.map(cell => {
+              // eslint-disable-next-line react/jsx-key
+              <TableRowStyle {...row.getRowProps()} showBackground={i % 2 === 1} >
+                {row.cells.map((cell, j) => {
                   const { value: cellValue } = cell;
 
                   return (
+                    // eslint-disable-next-line react/jsx-key
                     <td
                       {...cell.getCellProps()}
                       style={{
-                        // maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
-                        // minWidth: cell.column.width,
+                        // maxWidth: `${getColumnWidth(rows, column.id)}px`,
+                        // minWidth: column.minWidth,
                       }}
                     >
-                      <TextStyle>
-                        <Text wordBreak>
-                          {cellValue === true && 'true'}
-                          {cellValue === false && 'false'}
-                          {(cellValue === null || cellValue === 'null') && 'null'}
-                          {cellValue !== true
-                            && cellValue !== false
-                            && cellValue !== null
-                            && cellValue !== 'null'
-                            && cellValue
-                          }
-                        </Text>
-                      </TextStyle>
+                      <Text maxWidth={UNIT * 25} title={data[i][j]?.toString()} wordBreak>
+                        {cellValue === true && 'true'}
+                        {cellValue === false && 'false'}
+                        {(cellValue === null || cellValue === 'null') && 'null'}
+                        {cellValue !== true
+                          && cellValue !== false
+                          && cellValue !== null
+                          && cellValue !== 'null'
+                          && cellValue
+                        }
+                      </Text>
                     </td>
                   );
                 })}
