@@ -287,6 +287,15 @@ class ColumnTypeDetectorTests(TestCase):
                     8234592345,
                     np.nan,
                 ],
+                bad_column_name_one=[
+                    9999999999,
+                    np.nan,
+                    918328328322.0,
+                    33459830234,
+                    8234592345,
+                    np.nan,
+                ],
+                bad_column_name_two=[self.fake.phone_number() for _ in range(6)],
             )
         )
         ctypes = infer_column_types(df)
@@ -297,5 +306,68 @@ class ColumnTypeDetectorTests(TestCase):
             int_phone_nums='phone_number',
             float_phone_nums='phone_number',
             not_float_phone_nums='number_with_decimals',
+            bad_column_name_one='number_with_decimals',
+            bad_column_name_two='text',
+        )
+        self.assertEquals(ctypes, expected_ctypes)
+
+    def test_zip_code_recognition(self):
+        df = pd.DataFrame(
+            dict(
+                zip_code=[self.fake.postcode() for _ in range(6)],
+                postal_code=[self.fake.postcode() for _ in range(6)],
+                bad_column_name=[self.fake.postcode() for _ in range(6)],
+                string_zips=[
+                    '12345',
+                    '132',
+                    '234-3434',
+                    '765',
+                    '41324-2343',
+                    '12342',
+                ],
+                not_string_postal_zips=[
+                    '12',
+                    '13234523452',
+                    '23-3434',
+                    '765,23453',
+                    '41324-2343-23423',
+                    '12342',
+                ],
+                int_zips=[
+                    12345,
+                    53123,
+                    323,
+                    423,
+                    678,
+                    67896,
+                ],
+                not_int_zips=[
+                    12345,
+                    34553123,
+                    323343,
+                    423,
+                    67834534,
+                    67896,
+                ],
+                bad_column_name_two=[
+                    12345,
+                    53123,
+                    323,
+                    423,
+                    678,
+                    67896,
+                ],
+            )
+        )
+        ctypes = infer_column_types(df)
+        expected_ctypes = dict(
+            zip_code=ZIP_CODE,
+            postal_code=ZIP_CODE,
+            bad_column_name=NUMBER,
+            string_zips=ZIP_CODE,
+            not_string_postal_zips=TEXT,
+            int_zips=ZIP_CODE,
+            not_int_zips=NUMBER,
+            bad_column_name_two=NUMBER,
         )
         self.assertEquals(ctypes, expected_ctypes)

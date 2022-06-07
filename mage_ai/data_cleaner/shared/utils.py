@@ -3,6 +3,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     DATETIME,
     PHONE_NUMBER,
+    ZIP_CODE,
 )
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
@@ -45,6 +46,8 @@ def clean_series(series, column_type, dropna=True):
     elif column_type == PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
         series_cleaned = series_cleaned.str.replace(r'\.\d*', '')
+    elif column_type == ZIP_CODE and dtype is not str:
+        series_cleaned = series_cleaned.astype(str)
     return series_cleaned
 
 
