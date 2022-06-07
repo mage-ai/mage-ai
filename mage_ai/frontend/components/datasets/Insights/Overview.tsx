@@ -27,6 +27,7 @@ import {
 } from '@components/datasets/Insights/utils/data';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
+import { formatNumberLabel } from '@components/charts/utils/label';
 
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -286,11 +287,6 @@ function Overview({
   });
 
   const columnsWithDistribution = allColumns.filter(({ distributionPercentage }) => distributionPercentage);
-
-  const numberFormat = Intl.NumberFormat('en-US', {
-    notation: "compact",
-    maximumFractionDigits: 2,
-  })
 
   return (
     <FlexContainer
@@ -570,7 +566,7 @@ function Overview({
                 margin={{
                   left: 5 * UNIT,
                 }}
-                yLabelFormat={y => (y >= 10000 ? numberFormat.format(y) : y)}
+                yLabelFormat={formatNumberLabel}
               />
             </ChartContainer>
           }

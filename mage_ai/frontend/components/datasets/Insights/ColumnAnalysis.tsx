@@ -30,6 +30,7 @@ import {
   sortByKey,
 } from '@utils/array';
 import Spacing from '@oracle/elements/Spacing';
+import { formatNumberLabel } from '@components/charts/utils/label';
 
 type ColumnAnalysisProps = {
   column: string;
@@ -172,7 +173,7 @@ function ColumnAnalysis({
   }));
 
   let distributionChart;
-  if (distribution) {
+  if (distribution && !isBooleanType) {
     distributionChart = (
       <Histogram
         data={distribution.data.map(({
@@ -222,8 +223,7 @@ function ColumnAnalysis({
         width={600}
       />
     );
-  }
-  else if (isCategoricalType) {
+  } else if (isCategoricalType) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -370,6 +370,9 @@ function ColumnAnalysis({
       };
     });
 
+    console.log("legend names:", legendNames);
+    console.log("data:", data);
+
     return (
       <LineSeries
         data={data}
@@ -400,6 +403,7 @@ function ColumnAnalysis({
         xAxisLabel={xMetadata.label}
         xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
         yAxisLabel={yAxisLabel}
+        yLabelFormat={formatNumberLabel}
       />
     );
   };
@@ -446,10 +450,10 @@ function ColumnAnalysis({
             min: minValue,
             // sum,
           }) => [
-            minValue,
-            maxValue,
-            average,
-            median,
+            minValue || 0,
+            maxValue || 0,
+            average || 0,
+            median || 0,
             // sum,
           ],
           x,

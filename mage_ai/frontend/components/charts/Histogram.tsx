@@ -33,6 +33,7 @@ import {
   getXScaleDate,
   getXScalePadding,
 } from './utils/date';
+import { formatNumberLabel } from './utils/label';
 type TooltipData = {
   bar: any;
   color: string;
@@ -271,11 +272,6 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       ],
     );
 
-    const numberFormat = Intl.NumberFormat('en-US', {
-      notation: "compact",
-      maximumFractionDigits: 1
-    })
-
     return (width < 10 || !data.length) ? null : (
       <div>
         <svg
@@ -318,9 +314,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
                 left={margin.left}
                 scale={yScale}
                 stroke={colors.muted}
-                tickFormat={
-                  label => (label.valueOf() >= 10000 ? numberFormat.format(label.valueOf()) : label.toString())
-                }
+                tickFormat={formatNumberLabel}
                 tickLabelProps={() => ({
                   fill: colors.active,
                   fontFamily: FONT_FAMILY_REGULAR,
