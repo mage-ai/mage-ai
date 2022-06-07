@@ -19,13 +19,18 @@ class FeatureSet(Model):
             self.metadata = {}
             metadata = self.metadata
 
+        metadata_updated = False
         if name is not None:
             metadata['name'] = name
+            metadata_updated = True
 
         if self.pipeline is None:
             pipeline = Pipeline(feature_set_id=self.id)
             metadata['pipeline_id'] = pipeline.id
-        self.metadata = metadata
+            metadata_updated = True
+
+        if metadata_updated:
+            self.metadata = metadata
 
         if df is None:
             self._data = None
