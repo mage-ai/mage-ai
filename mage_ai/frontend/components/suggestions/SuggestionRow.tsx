@@ -1,6 +1,5 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import '@uiw/react-textarea-code-editor/dist.css';
-import NextLink from 'next/link';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
@@ -19,7 +18,7 @@ import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { useState } from 'react';
+import { goToWithQuery } from '@utils/routing';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -57,6 +56,8 @@ const SuggestionRow = ({
 }: SuggestionRowProps) => {
   const themeContext = useContext(ThemeContext);
 
+  const columns = useMemo(() => features.map(({ uuid }) => uuid), [ features]);
+
   const {
     action_payload,
     message,
@@ -79,17 +80,17 @@ const SuggestionRow = ({
 
     if (featureIdMapping?.[col]) {
       el = (
-        <NextLink
-          as={`/datasets/${featureSetId}/features/${featureIdMapping[col]}`}
-          href="/datasets/[...slug]"
-          passHref
+        <Link
+          onClick={() => goToWithQuery({
+            column: columns.indexOf(col),
+          }, {
+            pushHistory: true,
+          })}
+          preventDefault
+          underline
         >
-          <Link
-            underline
-          >
-            {col}
-          </Link>
-        </NextLink>
+          {col}
+        </Link>
       );
     } else {
       el = col;

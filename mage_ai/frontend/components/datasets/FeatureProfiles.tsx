@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import NextLink from 'next/link';
 import styled from 'styled-components';
 
-import FeatureType from '@interfaces/FeatureType';
 import FeatureSetType from '@interfaces/FeatureSetType';
+import FeatureType from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import {
   GRAY_LINES,
@@ -17,11 +20,9 @@ import {
   WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
-import { getFeatureIdMapping } from '@utils/models/featureSet';
-import Spacing from '@oracle/elements/Spacing';
 import { formatPercent, roundNumber } from '@utils/string';
-import FlexContainer from '@oracle/components/FlexContainer';
-import light from '@oracle/styles/themes/light';
+import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { goToWithQuery } from '@utils/routing';
 
 export const ContainerStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -60,6 +61,7 @@ export const CellStyle = styled.div<any>`
 `;
 
 type FeatureProfileProps = {
+  columns: string[];
   feature: FeatureType,
   featureSet: FeatureSetType,
   statistics: any,
@@ -97,6 +99,7 @@ const warnings = {
 };
 
 function FeatureProfile({
+  columns,
   feature,
   featureSet,
   statistics,
@@ -143,26 +146,27 @@ function FeatureProfile({
     <Flex flexDirection="column">
       <FeatureProfileStyle>
         <Spacing p={2}>
-          <NextLink
-            as={`/datasets/${featureSetId}/features/${featureId}`}
-            href="/datasets/[...slug]"
-            key={featureUuid}
-            passHref
+          <Link
+            inline
+            onClick={() => goToWithQuery({
+              column: columns.indexOf(uuid),
+            }, {
+              pushHistory: true,
+            })}
+            preventDefault
           >
-            <Link inline>
-              <Text
-                backgroundColor={light.feature.active}
-                bold
-                maxWidth={25 * UNIT}
-                monospace
-                secondary
-                textOverflow
-                title={uuid}
-              >
-                {uuid}
-              </Text>
-            </Link>
-          </NextLink>
+            <Text
+              backgroundColor={light.feature.active}
+              bold
+              maxWidth={25 * UNIT}
+              monospace
+              secondary
+              textOverflow
+              title={uuid}
+            >
+              {uuid}
+            </Text>
+          </Link>
         </Spacing>
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
@@ -192,6 +196,8 @@ function FeatureProfiles({
   featureSet,
   statistics,
 }: FeatureProfilesProps) {
+  const columns = useMemo(() => features.map(({ uuid }) => uuid), [features]);
+
   return (
     <ContainerStyle>
       <HeaderStyle>
@@ -214,6 +220,7 @@ function FeatureProfiles({
           {features.map((feature, idx) => (
             <FeatureProfileStyle key={`${feature}-${idx}`}>
               <FeatureProfile
+                columns={columns}
                 feature={feature}
                 featureSet={featureSet}
                 statistics={statistics}
