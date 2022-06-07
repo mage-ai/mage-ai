@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 import '@uiw/react-textarea-code-editor/dist.css';
@@ -64,6 +64,7 @@ function ActionForm({
   setPayload,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
+  const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
 
   const {
     action_arguments: actionArguments,
@@ -77,13 +78,17 @@ function ActionForm({
     ...data,
   });
 
-  const updateActionCode = (newCode) => {
+  const saveActionForm = () => {
     const av = actionVariables ? { ...actionVariables } : {};
-
-    updatePayload({
-      action_code: newCode,
+    const actionPayloadOverride = {
       action_variables: av,
-    });
+    };
+
+    if (actionCodeState) {
+      actionPayloadOverride.action_code = actionCodeState;
+    }
+
+    return onSave(actionPayloadOverride);
   };
 
   const config: FormConfigType =
@@ -165,7 +170,7 @@ function ActionForm({
                 // @ts-ignore
                 language="python"
                 minHeight={code.multiline ? UNIT * 12 : null}
-                onChange={e => updateActionCode(e.target.value)}
+                onChange={e => setActionCodeState(e.target.value)}
                 padding={UNIT * 2}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
@@ -351,7 +356,7 @@ function ActionForm({
         })}
 
         <Spacing mt={(configArguments || showColumns || options) ? 3 : 0}>
-          <Button onClick={onSave}>
+          <Button onClick={saveActionForm}>
             Apply
           </Button>
         </Spacing>

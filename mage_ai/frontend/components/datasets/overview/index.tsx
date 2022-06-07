@@ -63,6 +63,8 @@ function DatasetOverview({
   fetchFeatureSet,
   selectedColumnIndex,
 }: DatasetOverviewProps) {
+  console.log('render/DatasetOverview');
+
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
@@ -177,6 +179,13 @@ function DatasetOverview({
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
 
+  useEffect(() => {
+    setActionPayload();
+  }, [
+    selectedColumnIndex,
+    setActionPayload,
+  ]);
+
   const [commitAction, { isLoading: isLoadingCommitAction }] = useMutation(
     api.pipelines.useUpdate(pipeline?.id),
     {
@@ -209,8 +218,6 @@ function DatasetOverview({
   );
   const saveAction = (newActionData: TransformerActionType) => {
     setErrorMessages(null);
-
-    console.log(newActionData)
 
     const newActions = [...pipelineActions];
     if (!selectedColumn) {
@@ -288,10 +295,11 @@ function DatasetOverview({
                   }
                   features={selectedColumn ? null : featuresWithAltColType}
                   onClose={closeAction}
-                  onSave={() => {
+                  onSave={(actionPayloadOverride: ActionPayloadType) => {
                     saveAction({
                       action_payload: {
                         ...actionPayload,
+                        ...actionPayloadOverride,
                         action_type: actionType,
                       },
                     });

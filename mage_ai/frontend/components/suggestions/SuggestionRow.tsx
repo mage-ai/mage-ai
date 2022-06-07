@@ -7,7 +7,6 @@ import { ThemeContext } from 'styled-components';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
-import { FeatureResponseType } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -15,10 +14,11 @@ import RowCard from '@oracle/components/RowCard';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
+import { Close, Code } from '@oracle/icons';
+import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { Close, Code } from '@oracle/icons';
 import { useState } from 'react';
 
 export type SuggestionRowProps = {
@@ -180,7 +180,12 @@ const SuggestionRow = ({
             features={features}
             noBorder
             noHeader
-            onSave={() => saveAction({ action_payload: actionPayload })}
+            onSave={(actionPayloadOverride: ActionPayloadType) => saveAction({
+              action_payload: {
+                ...actionPayload,
+                ...actionPayloadOverride,
+              },
+            })}
             payload={actionPayload}
             setPayload={setActionPayload}
           />
