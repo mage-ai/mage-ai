@@ -8,7 +8,6 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
-import Divider from '@oracle/elements/Divider';
 import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
@@ -19,13 +18,11 @@ import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import Suggestions from '@components/suggestions';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 
-import { AsideStyle } from '../overview/index.style';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getHost } from '@api/utils/url';
 import { getPercentage } from '@utils/number';
@@ -157,59 +154,6 @@ function ColumnDetail({
     Router.push('/datasets');
   };
 
-  const metricsTableEl = (
-    <SimpleDataTable
-      columnFlexNumbers={[1, 1]}
-      columnHeaders={[{ label: 'Column summary' }]}
-      rowGroupData={[{
-        rowData: qualityMetrics,
-      }]}
-    />
-  );
-
-  const dataEl = (
-    <FlexContainer justifyContent={'center'}>
-      <Flex flex={1}>
-        <SimpleDataTable
-          columnFlexNumbers={[1, 1]}
-          columnHeaders={[{ label: featureUUID }]}
-          rowGroupData={[{
-            rowData: sampleRowData,
-          }]}
-        />
-      </Flex>
-      <Spacing ml={PADDING_UNITS} />
-      <Flex flex={1}>
-        {metricsTableEl}
-      </Flex>
-    </FlexContainer>
-  );
-
-  const reportsEl = (
-    <FlexContainer justifyContent={'center'}>
-      <Flex flex={1}>
-        {metricsTableEl}
-      </Flex>
-      <Spacing ml={PADDING_UNITS} />
-      <Flex flex={1}>
-        {noWarningMetrics
-          ?
-            <Panel fullHeight={false} headerTitle="Warnings">
-              <Text>There are no warnings.</Text>
-            </Panel>
-          :
-            <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[{ label: 'Warnings' }]}
-              rowGroupData={[{
-                rowData: warningMetrics,
-              }]}
-            />
-        }
-      </Flex>
-    </FlexContainer>
-  );
-
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
 
@@ -276,6 +220,16 @@ function ColumnDetail({
   };
 
   const closeAction = () => setActionPayload({} as ActionPayloadType);
+
+  const metricsTableEl = (
+    <SimpleDataTable
+      columnFlexNumbers={[1, 1]}
+      columnHeaders={[{ label: 'Column summary' }]}
+      rowGroupData={[{
+        rowData: qualityMetrics,
+      }]}
+    />
+  );
 
   return (
     <Layout
@@ -348,12 +302,49 @@ function ColumnDetail({
             >
               <Tab key="data" label="Data">
                 <Spacing my={1} />
-                {dataEl}
+                <FlexContainer justifyContent={'center'}>
+                  <Flex flex={1}>
+                    <SimpleDataTable
+                      columnFlexNumbers={[1, 1]}
+                      columnHeaders={[{ label: featureUUID }]}
+                      rowGroupData={[{
+                        rowData: sampleRowData,
+                      }]}
+                    />
+                  </Flex>
+                  <Spacing ml={PADDING_UNITS} />
+                  <Flex flex={1}>
+                    {metricsTableEl}
+                  </Flex>
+                </FlexContainer>
               </Tab>
+
               <Tab  key="reports" label="Reports">
                 <Spacing my={1} />
-                {reportsEl}
+                <FlexContainer justifyContent={'center'}>
+                  <Flex flex={1}>
+                    {metricsTableEl}
+                  </Flex>
+                  <Spacing ml={PADDING_UNITS} />
+                  <Flex flex={1}>
+                    {noWarningMetrics
+                      ?
+                        <Panel fullHeight={false} headerTitle="Warnings">
+                          <Text>There are no warnings.</Text>
+                        </Panel>
+                      :
+                        <SimpleDataTable
+                          columnFlexNumbers={[1, 1]}
+                          columnHeaders={[{ label: 'Warnings' }]}
+                          rowGroupData={[{
+                            rowData: warningMetrics,
+                          }]}
+                        />
+                    }
+                  </Flex>
+                </FlexContainer>
               </Tab>
+
               <Tab key="visualizations" label="Visualizations">
                 <Spacing my={1} />
                 {count > 0 && (
