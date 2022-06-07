@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import { BREAKPOINT_X_LARGE } from '@styles/theme';
 import { UNIT } from '@oracle/styles/units/spacing';

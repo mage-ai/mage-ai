@@ -14,6 +14,7 @@ import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/Fea
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import MultiColumn from '@oracle/components/Layout/MultiColumn';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
@@ -280,103 +281,98 @@ function ColumnDetail({
     <Layout
       centerAlign
       fullWidth
-      includeMargins
       pageTitle="Column Details"
     >
-      <Spacing mt={2} />
-      <FlexContainer alignItems="center" justifyContent="space-between">
-        <PageBreadcrumbs featureSet={featureSet} />
-        <Button onClick={viewColumns}>
-          <Text bold> Datasets view </Text>
-        </Button>
-      </FlexContainer>
-
-      <Spacing my={PADDING_UNITS}>
-        <Divider />
-      </Spacing>
-
-      {actionType && (
-        <ActionForm
-          actionType={actionType}
-          axis={actionPayload?.axis}
-          currentFeature={{
-            columnType: columnType,
-            uuid: featureUUID,
-          }}
-          onClose={closeAction}
-          onSave={() => {
-            saveAction({ action_payload: actionPayload });
-            closeAction();
-          }}
-          payload={actionPayload}
-          setPayload={setActionPayload}
-        />
-      )}
-
-      {errorMessages?.length >= 1 && (
-        <Spacing mt={3}>
-          <Text bold>
-            Errors
-          </Text>
-          {errorMessages?.map((msg: string) => (
-            <Text key={msg} monospace xsmall>
-              {msg}
-            </Text>
-          ))}
-        </Spacing>
-      )}
-
-      <Spacing mt={2} />
-
-      <FlexContainer>
-        <Flex flex="2" flexDirection="column">
-          <Tabs
-            actionEl={
-              <ActionDropdown
-                actionType={actionType}
-                columnOnly
-                setActionPayload={setActionPayload}
-              />
-            }
-            bold
-            defaultKey={tab}
-            large
-            noBottomBorder={false}
-            onChange={key => setTab(key)}
-          >
-            <Tab key="data" label="Data">
-              <Spacing my={1} />
-              {dataEl}
-            </Tab>
-            <Tab  key="reports" label="Reports">
-              <Spacing my={1} />
-              {reportsEl}
-            </Tab>
-            <Tab key="visualizations" label="Visualizations">
-              <Spacing my={1} />
-              {count > 0 && (
-                <ColumnAnalysis
-                  column={featureUUID}
-                  features={features}
-                  insights={insightsColumn}
-                  statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-                  statisticsOverview={statisticsOverview}
-                />
-              )}
-            </Tab>
-          </Tabs>
-        </Flex>
-
-        <Flex flex="1">
-          <AsideStyle fullWidth>
-            <Suggestions
-              addAction={saveAction}
-              featureSet={columnFeatureSet}
-              removeAction={removeAction}
+      <MultiColumn
+        after={columnFeatureSet &&
+          <Suggestions
+            addAction={saveAction}
+            featureSet={columnFeatureSet}
+            removeAction={removeAction}
+          />
+        }
+        header={
+          <FlexContainer alignItems="center" justifyContent="space-between">
+            <PageBreadcrumbs featureSet={featureSet} />
+            <Button onClick={viewColumns}>
+              <Text bold> Datasets view </Text>
+            </Button>
+          </FlexContainer>
+        }
+      >
+        {actionType && (
+          <Spacing mb={2}>
+            <ActionForm
+              actionType={actionType}
+              axis={actionPayload?.axis}
+              currentFeature={{
+                columnType: columnType,
+                uuid: featureUUID,
+              }}
+              onClose={closeAction}
+              onSave={() => {
+                saveAction({ action_payload: actionPayload });
+                closeAction();
+              }}
+              payload={actionPayload}
+              setPayload={setActionPayload}
             />
-          </AsideStyle>
-        </Flex>
-      </FlexContainer>
+          </Spacing>
+        )}
+
+        {errorMessages?.length >= 1 && (
+          <Spacing mt={3}>
+            <Text bold>
+              Errors
+            </Text>
+            {errorMessages?.map((msg: string) => (
+              <Text key={msg} monospace xsmall>
+                {msg}
+              </Text>
+            ))}
+          </Spacing>
+        )}
+
+        <FlexContainer>
+          <Flex flex="2" flexDirection="column">
+            <Tabs
+              actionEl={
+                <ActionDropdown
+                  actionType={actionType}
+                  columnOnly
+                  setActionPayload={setActionPayload}
+                />
+              }
+              bold
+              defaultKey={tab}
+              large
+              noBottomBorder={false}
+              onChange={key => setTab(key)}
+            >
+              <Tab key="data" label="Data">
+                <Spacing my={1} />
+                {dataEl}
+              </Tab>
+              <Tab  key="reports" label="Reports">
+                <Spacing my={1} />
+                {reportsEl}
+              </Tab>
+              <Tab key="visualizations" label="Visualizations">
+                <Spacing my={1} />
+                {count > 0 && (
+                  <ColumnAnalysis
+                    column={featureUUID}
+                    features={features}
+                    insights={insightsColumn}
+                    statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+                    statisticsOverview={statisticsOverview}
+                  />
+                )}
+              </Tab>
+            </Tabs>
+          </Flex>
+        </FlexContainer>
+      </MultiColumn>
     </Layout>
   );
 }
