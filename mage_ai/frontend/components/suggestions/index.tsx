@@ -68,6 +68,7 @@ function Suggestions({
             visibleMapping={{ 0: true }}
           >
             <AccordionPanel
+              maxHeight={99999}
               noBackground
               noPaddingContent
               title={`${suggestions.length} suggested actions`}

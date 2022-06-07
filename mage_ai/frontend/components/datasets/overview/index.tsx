@@ -34,10 +34,12 @@ import {
   createStatisticsSample,
 } from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
+import { getHost } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
+import { useCustomFetchRequest } from '@api';
 
 const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
@@ -49,18 +51,23 @@ const TABS_IN_ORDER = [
 ];
 
 type DatasetOverviewProps = {
+  columnData?: FeatureSetType;
   featureSet: FeatureSetType;
+  fetchColumnData: (arg: any) => void;
   fetchFeatureSet: (arg: any) => void;
+  selectedColumn?: string;
 };
 
 function DatasetOverview({
+  columnData,
   featureSet: featureSetRaw,
+  fetchColumnData,
   fetchFeatureSet,
+  selectedColumn: columnFromUrl,
 }: DatasetOverviewProps) {
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
-    column: columnFromUrl,
     show_columns: showColumnsFromUrl,
   } = qFromUrl;
   const tabsFromUrlInit = qFromUrl['tabs[]'];
@@ -81,7 +88,10 @@ function DatasetOverview({
     }
   }, [setTabs, tabsFromUrl]);
 
-  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
+  const featureSetAllColumns = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
+  const featureSet = columnFromUrl
+    ? columnData ? deserializeFeatureSet(columnData) : {}
+    : featureSetAllColumns;
   const {
     metadata,
     pipeline,
@@ -253,7 +263,7 @@ function DatasetOverview({
         before={columnsVisible && (
           <Spacing mt={PADDING_UNITS}>
             <ColumnListSidebar
-              featureSet={featureSet}
+              featureSet={featureSetAllColumns}
               onClickColumn={col => goToWithQuery({ column: col })}
               selectedColumn={columnFromUrl}
             />

@@ -17,6 +17,7 @@ import {
 import { handle } from '@api/utils/response';
 import { onError, onSuccess } from '@api/utils/response';
 
+export const COLUMNS: 'columns' = 'columns';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
 export const FEATURES: 'features' = 'features';
@@ -25,6 +26,7 @@ export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
+  [COLUMNS, FEATURE_SETS],
   [FEATURE_SETS],
   [PIPELINES],
 ];

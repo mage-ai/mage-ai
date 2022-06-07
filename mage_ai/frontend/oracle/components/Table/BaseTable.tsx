@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAbsoluteLayout, useTable } from 'react-table';
 import { TextStyle } from './index.style';
 import Text from '@oracle/elements/Text';
@@ -34,6 +34,7 @@ function BaseTable({
   titles,
   width: widthProp,
 }: any) {
+  const refTable = useRef(null);
   const [column, setColumn] = useState([]);
   const [row, setRow] = useState([]);
 
@@ -120,14 +121,18 @@ function BaseTable({
   const totalColumnsWidth = widthProp
     ? widthProp
     : totalColumnsWidthInitial - (offsetWidth || 0);
+  const tableContainerWidth = refTable?.current?.getBoundingClientRect?.()?.width || 0;
 
   return (
     // Table: Relative, no overflow, outline in silver
-    <TableStyle width={(widthProp || offsetWidth) ? totalColumnsWidth : null}>
+    <TableStyle
+      ref={refTable}
+      width={(widthProp || offsetWidth) ? totalColumnsWidth : null}
+    >
       <table
           {...getTableProps()}
           style={{
-            width: totalColumnsWidth,
+            width: Math.max(totalColumnsWidth, tableContainerWidth - 2),
           }}
         >
         {/* Column: sticky. overflow y only, bold, silver, borders on everything but bottom. Filled background */}
@@ -140,8 +145,8 @@ function BaseTable({
                 <th
                   {...column.getHeaderProps()}
                   style={{
-                    maxWidth: `${getColumnWidth(rows, column.id)}px`,
-                    minWidth: column.minWidth,
+                    // maxWidth: `${getColumnWidth(rows, column.id)}px`,
+                    // minWidth: column.minWidth,
                   }}
                 >
                   <TextStyle>
@@ -170,8 +175,8 @@ function BaseTable({
                     <td
                       {...cell.getCellProps()}
                       style={{
-                        maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
-                        minWidth: cell.column.width,
+                        // maxWidth: `${getColumnWidth(rows, cell.column.id)}px`,
+                        // minWidth: cell.column.width,
                       }}
                     >
                       <TextStyle>

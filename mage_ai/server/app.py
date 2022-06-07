@@ -157,6 +157,28 @@ def feature_set(id):
     return response
 
 
+@app.route('/feature_sets/<id>/columns/<column>', endpoint='feature_set_column_get')
+@rescue_errors
+def feature_set(id, column):
+    """
+    response: [
+        {
+            id,
+            metadata,
+        }
+    ]
+    """
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
+    feature_set = FeatureSet(id=id)
+    response = app.response_class(
+        response=simplejson.dumps(feature_set.to_dict(column=column), ignore_nan=True),
+        status=200,
+        mimetype='application/json',
+    )
+    return response
+
+
 @app.route('/feature_sets/<id>', methods=['PUT'], endpoint='feature_sets_put')
 @rescue_errors
 def update_feature_set(id):
