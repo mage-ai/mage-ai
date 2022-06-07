@@ -356,11 +356,13 @@ function DatasetOverview({
                 />
               )}
 
-              {/*<Overview
-                features={features}
-                insightsOverview={insightsOverview}
-                statistics={statistics}
-              />*/}
+              {!columnFromUrl && (
+                  <Overview
+                  features={features}
+                  insightsOverview={insightsOverview}
+                  statistics={statistics}
+                />
+              )}
             </>
           )}
 
