@@ -37,7 +37,7 @@ function ColumnListSidebar({
       label: () => 'All columns',
       uuid: null,
     },
-  ].concat(columns.sort().map((col: string) => {
+  ].concat(columns.map((col: string) => {
     const columnType = columnTypesByFeatureUUID[col];
 
     return {

@@ -126,7 +126,7 @@ function ActionForm({
 
   return (
     <ContainerStyle noBorder={noBorder}>
-      {!noHeader && 
+      {!noHeader &&
         <>
           <FlexContainer justifyContent={'space-between'}>
             <Spacing p={2}>
@@ -193,7 +193,7 @@ function ActionForm({
 
             {(VALUES_TYPE_COLUMNS === argumentsValues || showColumns) && (
               <FlexContainer flexWrap="wrap">
-                {features.map(({
+                {features?.map(({
                   column_type,
                   uuid,
                 }) => {

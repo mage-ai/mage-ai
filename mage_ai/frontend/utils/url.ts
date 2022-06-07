@@ -37,10 +37,10 @@ export function queryString(query: object = {}) {
           finalKey = `${finalKey}[]`;
         }
         // @ts-ignore
-        return acc.concat(value.map((val) => `${finalKey}=${val}`));
+        return acc.concat(value.map(val => `${finalKey}=${encodeURIComponent(val)}`));
       }
       // @ts-ignore
-      return acc.concat(`${key}=${value}`);
+      return acc.concat(`${key}=${encodeURIComponent(value)}`);
     }, [])
     .join('&');
 }

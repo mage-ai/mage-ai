@@ -13,7 +13,7 @@ function DatasetDetail() {
     slug = [],
   } = router.query;
   const {
-    column,
+    column: columnIndex,
   } = queryFromUrl();
 
   // @ts-ignore
@@ -32,7 +32,7 @@ function DatasetDetail() {
         <DatasetOverview
           featureSet={featureSet}
           fetchFeatureSet={mutate}
-          selectedColumn={column}
+          selectedColumnIndex={columnIndex}
         />
       </ClientOnly>
     );
