@@ -28,12 +28,15 @@ export type ColumnHeaderType = {
   progress?: number;
 };
 
+type RowDataType = {
+  columnValues: (string | number | boolean | any)[];
+  danger?: boolean;
+  uuid?: string | number;
+};
+
 export type RowGroupDataType = {
   title?: string;
-  rowData: {
-    columnValues: (string | number | boolean | any)[];
-    uuid?: string | number;
-  }[];
+  rowData: RowDataType[];
 };
 
 type SimpleDataTableProps = {
@@ -111,7 +114,7 @@ function SimpleDataTable({
       {rowGroupData && rowGroupData.map(({
         title,
         rowData,
-      }: any, rowGroupIndex: number) => {
+      }: RowGroupDataType, rowGroupIndex: number) => {
         const key = title || rowGroupIndex;
         const rowsEls = [];
         let titleEl;
@@ -129,9 +132,11 @@ function SimpleDataTable({
         const numberOfRows = rowData?.length;
         rowData?.forEach(({
           columnValues,
+          danger,
           uuid,
         }: {
           columnValues: (string | number | any)[];
+          danger: boolean;
           uuid: string;
         }, rowIndex: number) => {
           const isSelected = selectedRowIndexes?.[0] === rowGroupIndex
@@ -159,6 +164,7 @@ function SimpleDataTable({
               cells.push(
                 <Cell
                   cellIndex={cellIndex}
+                  danger={danger}
                   flex={columnFlexNumbers[cellIndex]}
                   key={cellIndex}
                   render={renderFunc}

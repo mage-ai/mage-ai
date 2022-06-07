@@ -10,6 +10,7 @@ import FlexContainer from '../FlexContainer';
 
 type CellProps = {
   cellIndex: number;
+  danger?: boolean;
   flex: number;
   render?: any;
   rowGroupIndex: number;
@@ -22,6 +23,7 @@ type CellProps = {
 
 function Cell({
   cellIndex,
+  danger,
   flex,
   render,
   rowGroupIndex,
@@ -92,6 +94,8 @@ function Cell({
   else {
     cellEl = (
       <Text
+        bold={danger}
+        danger={danger}
         small={small}
         textOverflow
         title={value}
