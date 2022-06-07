@@ -172,7 +172,9 @@ class StatisticsCalculator:
         }
 
         data[f'{col}/max_null_seq'] = (
-            max(self.null_seq_gen(series.isna().to_numpy())) if series.size else 0
+            max(self.null_seq_gen(series.isna().to_numpy()))
+            if data[f'{col}/count'] != 0
+            else len(series)
         )
 
         if len(series_non_null) > 0:
@@ -206,16 +208,22 @@ class StatisticsCalculator:
 
             if column_type not in NUMBER_TYPES:
                 if dates is not None:
-                    value_counts = dates.value_counts()
-                else:
-                    value_counts = series_non_null.value_counts()
+                    df_value_counts = dates.value_counts()
+                    data[f'{col}/value_counts'] = (
+                        df_value_counts.head(VALUE_COUNT_LIMIT).astype(str).to_dict()
+                    )
 
-                mode = value_counts.index[0]
-                if column_type == DATETIME:
+                mode, mode_idx = None, 0
+                while mode_idx < count_unique and pd.isna(df_value_counts.index[mode_idx]):
+                    mode_idx += 1
+                if mode_idx < count_unique:
+                    mode = df_value_counts.index[mode_idx]
+
+                if column_type == DATETIME and mode is not None:
                     mode = mode.isoformat()
 
                 data[f'{col}/mode'] = mode
-                data[f'{col}/mode_ratio'] = value_counts.max() / value_counts.sum()
+                data[f'{col}/mode_ratio'] = df_value_counts[mode] / df_value_counts.sum()
 
         # Detect mismatched formats for some column types
         data[f'{col}/invalid_value_count'] = get_mismatched_row_count(series_non_null, column_type)
