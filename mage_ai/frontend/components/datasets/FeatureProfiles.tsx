@@ -19,7 +19,7 @@ import {
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 import Spacing from '@oracle/elements/Spacing';
-import { roundNumber } from '@utils/string';
+import { formatPercent, roundNumber } from '@utils/string';
 
 export const ContainerStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -81,6 +81,8 @@ const entryTypes = [
   'Invalid',
 ];
 
+const percentages = ['Null', 'Invalid', 'Unique'];
+
 function FeatureProfile({
   feature,
   featureSet,
@@ -136,10 +138,11 @@ function FeatureProfile({
           </NextLink>
         </Spacing>
       </FeatureProfileStyle>
-      {Object.values(entries).map((label = '-', idx) => (
+      {entries.map((label = '-', idx) => (
         <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
-          <Text>
+          <Text textOverflow>
             {!isNaN(label) ? roundNumber(label) : label}
+            {percentages.includes(entryTypes[idx]) && ` (${formatPercent(label/numberOfValues)})`}
           </Text>
         </CellStyle>
       ))}
