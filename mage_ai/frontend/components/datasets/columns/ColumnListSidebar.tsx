@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FlexContainer from '@oracle/components/FlexContainer'
 import Link from '@oracle/elements/Link';
@@ -7,14 +9,17 @@ import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ColumnRowStyle } from './ColumnListSidebar.style';
 import { Insights } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { sortByKey } from '@utils/array';
 
 type ColumnListSidebarProps = {
+  columns: string[];
   featureSet: FeatureSetType;
   onClickColumn: (col: string) => void;
   selectedColumn?: string;
 };
 
 function ColumnListSidebar({
+  columns = [],
   featureSet,
   onClickColumn,
   selectedColumn,
@@ -24,9 +29,8 @@ function ColumnListSidebar({
     sample_data: sampleData,
   } = featureSet;
   const columnTypesByFeatureUUID = metadata?.column_types || {};
-  const columns = sampleData?.columns || [];
 
-  const rows: {
+  const rowsOrig: {
     Icon?: any;
     kicker?: () => string;
     label: () => string;
@@ -37,7 +41,7 @@ function ColumnListSidebar({
       label: () => 'All columns',
       uuid: null,
     },
-  ].concat(columns.map((col: string) => {
+  ].concat(columns?.map((col: string) => {
     const columnType = columnTypesByFeatureUUID[col];
 
     return {
@@ -46,6 +50,10 @@ function ColumnListSidebar({
       uuid: col,
     };
   }));
+
+  const rows = useMemo(() => sortByKey(rowsOrig, ({ uuid }) => uuid), [
+    rowsOrig,
+  ]);
 
   return (
     <FlexContainer flexDirection="column">
