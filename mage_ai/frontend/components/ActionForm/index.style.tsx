@@ -14,6 +14,11 @@ export const ContainerStyle = styled.div<ContainerProps>`
     border-radius: ${BORDER_RADIUS}px;
     border: 1px solid ${(props.theme.brand || light.brand).water300};
   `}
+
+  ${props => `
+    background-color: ${(props.theme.monotone || light.monotone).white};
+    box-shadow: ${(props.theme.shadow || light.shadow).popup};
+  `}
 `;
 
 type OptionProps = {

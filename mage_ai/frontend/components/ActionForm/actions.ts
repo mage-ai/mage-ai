@@ -16,7 +16,7 @@ const columns: {
   clean_column_name: {
     multiColumns: true,
     title: 'Clean column name',
-    description: 'TBD',
+    description: 'Lowercase the column name and replace special characters with an underscore.',
   },
   custom: {
     title: 'Custom code',

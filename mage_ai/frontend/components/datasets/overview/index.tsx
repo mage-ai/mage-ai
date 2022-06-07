@@ -28,6 +28,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
+import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
@@ -269,57 +270,6 @@ function DatasetOverview({
       <MultiColumn
         after={
           <Spacing p={PADDING_UNITS}>
-            <Spacing mb={PADDING_UNITS}>
-              <ActionDropdown
-                actionType={actionType}
-                columnOnly={!!selectedColumn}
-                setActionPayload={setActionPayload}
-              />
-            </Spacing>
-
-            {actionType && (
-              <Spacing mb={PADDING_UNITS}>
-                <ActionForm
-                  actionType={actionType}
-                  axis={actionPayload?.axis}
-                  currentFeature={selectedColumn
-                    ? {
-                      columnType: columnTypes[selectedColumn],
-                      uuid: selectedColumn,
-                    }
-                    : null
-                  }
-                  features={selectedColumn ? null : featuresWithAltColType}
-                  onClose={closeAction}
-                  onSave={(actionPayloadOverride: ActionPayloadType) => {
-                    saveAction({
-                      action_payload: {
-                        ...actionPayload,
-                        ...actionPayloadOverride,
-                        action_type: actionType,
-                      },
-                    });
-                    closeAction();
-                  }}
-                  payload={actionPayload}
-                  setPayload={setActionPayload}
-                />
-              </Spacing>
-            )}
-
-            {errorMessages?.length >= 1 && (
-              <Spacing mb={PADDING_UNITS}>
-                <Text bold>
-                  Errors
-                </Text>
-                {errorMessages?.map((msg: string) => (
-                  <Text key={msg} monospace xsmall>
-                    {msg}
-                  </Text>
-                ))}
-              </Spacing>
-            )}
-
             {featureSet && (
               <Suggestions
                 addAction={saveAction}
@@ -372,7 +322,47 @@ function DatasetOverview({
               </Link>
             </Spacing>
 
-            <PageBreadcrumbs featureSet={featureSet} />
+            <FlexContainer justifyContent="space-between">
+              <PageBreadcrumbs featureSet={featureSet} />
+
+              <div>
+                <ActionDropdown
+                  actionType={actionType}
+                  columnOnly={!!selectedColumn}
+                  setActionPayload={setActionPayload}
+                />
+
+                <AsidePopoutStyle>
+                  {actionType && (
+                    <ActionForm
+                      actionType={actionType}
+                      axis={actionPayload?.axis}
+                      currentFeature={selectedColumn
+                        ? {
+                          columnType: columnTypes[selectedColumn],
+                          uuid: selectedColumn,
+                        }
+                        : null
+                      }
+                      features={selectedColumn ? null : featuresWithAltColType}
+                      onClose={closeAction}
+                      onSave={(actionPayloadOverride: ActionPayloadType) => {
+                        saveAction({
+                          action_payload: {
+                            ...actionPayload,
+                            ...actionPayloadOverride,
+                            action_type: actionType,
+                          },
+                        });
+                        closeAction();
+                      }}
+                      payload={actionPayload}
+                      setPayload={setActionPayload}
+                    />
+                  )}
+                </AsidePopoutStyle>
+              </div>
+            </FlexContainer>
           </Spacing>
         }
         onTabClick={t => setTabs(t)}
@@ -380,6 +370,19 @@ function DatasetOverview({
         tabs={TABS_IN_ORDER}
       >
         <Spacing p={PADDING_UNITS}>
+          {errorMessages?.length >= 1 && (
+            <Spacing mb={5}>
+              <Text bold>
+                Errors
+              </Text>
+              {errorMessages?.map((msg: string) => (
+                <Text key={msg} monospace xsmall>
+                  {msg}
+                </Text>
+              ))}
+            </Spacing>
+          )}
+
           {tabsFromUrl?.includes(TAB_REPORTS) && (
             <>
               {selectedColumn && (
