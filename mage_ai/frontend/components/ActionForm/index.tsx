@@ -323,40 +323,58 @@ function ActionForm({
                     condition,
                     description,
                     value,
-                  }) => (
-                    <Spacing
-                      key={value}
-                      mr={1}
-                      mt={1}
-                      // @ts-ignore
-                      title={description}
-                    >
-                      <Link
-                        block
-                        noHoverUnderline
-                        noOutline
-                        onClick={() => updatePayload({
-                          action_options: {
-                            ...actionOptions,
-                            [optionKey]: optionValue === value ? null : value,
-                          },
-                        })}
-                        preventDefault
+                  }) => {
+                    let conditionMet = true;
+
+                    if (condition) {
+                      conditionMet = evaluateCondition(condition, payload, currentFeature);
+                    }
+
+                    return conditionMet && (
+                      <Spacing
+                        key={value}
+                        mr={1}
+                        mt={1}
+                        // @ts-ignore
+                        title={description}
                       >
-                        <OptionStyle selected={optionValue === value}>
-                          <FlexContainer alignItems="center">
-                            <Text>
-                              {value}
-                            </Text>
+                        <Link
+                          block
+                          noHoverUnderline
+                          noOutline
+                          onClick={() => updatePayload({
+                            action_options: {
+                              ...actionOptions,
+                              [optionKey]: optionValue === value ? null : value,
+                            },
+                          })}
+                          preventDefault
+                        >
+                          <OptionStyle selected={optionValue === value}>
+                            <FlexContainer alignItems="center">
+                              <Text>
+                                {value}
 
-                            <Spacing mr={1} />
+                                {description && (
+                                  <>
+                                    <br />
 
-                            {optionValue === value && <Check earth />}
-                          </FlexContainer>
-                        </OptionStyle>
-                      </Link>
-                    </Spacing>
-                  ))}
+                                    <Text inline muted xsmall>
+                                      {description}
+                                    </Text>
+                                  </>
+                                )}
+                              </Text>
+
+                              <Spacing mr={1} />
+
+                              {optionValue === value && <Check earth />}
+                            </FlexContainer>
+                          </OptionStyle>
+                        </Link>
+                      </Spacing>
+                    );
+                  })}
                 </FlexContainer>
               )}
 
