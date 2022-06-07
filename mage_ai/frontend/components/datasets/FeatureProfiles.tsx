@@ -79,6 +79,9 @@ const entryTypes = [
   'Max',
   'Null',
   'Invalid',
+  'Outliers',
+  'Skewness',
+  'Std dev',
 ];
 
 const percentages = ['Null', 'Invalid', 'Unique'];
@@ -103,6 +106,9 @@ function FeatureProfile({
   const medianValue = statistics?.[`${uuid}/median`];
   const modeValue = statistics?.[`${uuid}/mode`];
   const numberOfInvalidValues = statistics?.[`${uuid}/invalid_value_count`];
+  const numberOfOutliers = statistics?.[`${uuid}/outlier_count`];
+  const skewness = statistics?.[`${uuid}/skew`];
+  const stddev = statistics?.[`${uuid}/std`];
 
   const entries = [
     columnType,
@@ -114,6 +120,9 @@ function FeatureProfile({
     maxValue,
     numberOfNullValues,
     numberOfInvalidValues,
+    numberOfOutliers,
+    skewness,
+    stddev,
   ];
 
   const featureSetId = featureSet.id;
