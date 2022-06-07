@@ -58,7 +58,7 @@ import pandas as pd
 
 
 df = pd.read_csv('/path_to_data')
-mage_ai.clean(df, pipeline_uuid='name_of_cleaning_pipeline') #=> returns cleaned dataframe
+mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_dir') #=> returns cleaned dataframe
 ```
 
 ### More resources
