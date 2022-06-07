@@ -64,7 +64,7 @@ class Model:
         for c in df_output.columns:
             series_non_null = df_output[c].dropna()
             if len(series_non_null) > 0:
-                coltype = series_non_null.iloc[0]
+                coltype = type(series_non_null.iloc[0])
                 try:
                     df_output[c] = series_non_null.astype(coltype)
                 except Exception:
