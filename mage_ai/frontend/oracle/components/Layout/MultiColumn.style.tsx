@@ -4,7 +4,7 @@ import light from '@oracle/styles/themes/light';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 const AFTER_WIDTH = UNIT * 50;
-const AFTER_MARGIN = PADDING_UNITS * UNIT;;
+const AFTER_MARGIN = PADDING_UNITS * UNIT;
 export const AFTER_TOTAL_WIDTH = (UNIT * 40) + AFTER_MARGIN;
 
 export const HeaderStyle = styled.div`

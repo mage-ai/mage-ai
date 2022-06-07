@@ -17,3 +17,9 @@ export default interface FeatureSetType {
   };
   suggestions: SuggestionType[];
 }
+
+export interface ColumnFeatureSetType extends Omit<FeatureSetType, 'sample_data'> {
+  sample_data: {
+    [key: string]: string[];
+  }
+}

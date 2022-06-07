@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import { BREAKPOINT_X_LARGE } from '@styles/theme';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -19,6 +19,7 @@ export type LayoutProps = {
   footer?: React.ReactNode;
   fullWidth?: boolean;
   header?: any;
+  includeMargins?: boolean;
   minHeight?: number | string;
   pageTitle?: string;
 };
@@ -32,6 +33,11 @@ export type MainContentProps = {
 
 const WrapperStyle = styled.div<LayoutProps>`
   background-color: ${light.monotone.white};
+
+  ${props => props.includeMargins && `
+    margin: ${UNIT * 4}px;
+    margin-top: 0;
+  `}
 
   ${props => props.minHeight && `
     min-height: ${props.minHeight};
@@ -85,11 +91,13 @@ function Layout({
   footer,
   fullWidth,
   header,
+  includeMargins,
   minHeight,
   pageTitle,
 }: LayoutProps & AsideProps) {
   return (
     <WrapperStyle
+      includeMargins={includeMargins}
       minHeight={minHeight}
     >
       <Head title={pageTitle} />

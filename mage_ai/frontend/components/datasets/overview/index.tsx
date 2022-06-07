@@ -7,7 +7,6 @@ import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
-import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';

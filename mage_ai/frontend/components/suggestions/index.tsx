@@ -1,24 +1,24 @@
 import { useMemo } from 'react';
 
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
-import FeatureSetType from '@interfaces/FeatureSetType';
+import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
-import { UNIT } from '@oracle/styles/units/spacing';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
-  featureSet: FeatureSetType;
+  featureSet: FeatureSetType | ColumnFeatureSetType;
   removeAction: (action: TransformerActionType) => void;
-  removeSuggestion: (action: TransformerActionType) => void;
+  removeSuggestion?: (action: TransformerActionType) => void;
 };
 
 function Suggestions({
   addAction,
   featureSet,
   removeAction,
+  removeSuggestion,
 }: SuggestionsProps) {
   const {
     insights,
@@ -36,12 +36,7 @@ function Suggestions({
     <>
       {
         Array.isArray(actions) && actions?.map((action, idx) => {
-          const {
-            title,
-            action_payload: {
-              action_arguments,
-            },
-          } = action;
+          const { title } = action;
 
           return (
             <Spacing
@@ -77,22 +72,18 @@ function Suggestions({
               noPaddingContent
               title={`${suggestions.length} suggested actions`}
             >
-              {suggestions.map((suggestion, idx) => {
-                const { action_payload: { action_arguments } } = suggestion;
-
-                return (
-                  <SuggestionRow
-                    action={suggestion}
-                    featureIdMapping={featureIdMapping}
-                    featureSetId={featureSet?.id}
-                    features={features}
-                    idx={idx}
-                    key={`${idx}-${suggestion.title}`}
-                    link={() => addAction(suggestion)}
-                    saveAction={addAction}
-                  />
-                );
-              })}
+              {suggestions.map((suggestion, idx) => (
+                <SuggestionRow
+                  action={suggestion}
+                  featureIdMapping={featureIdMapping}
+                  featureSetId={featureSet?.id}
+                  features={features}
+                  idx={idx}
+                  key={`${idx}-${suggestion.title}`}
+                  link={() => addAction(suggestion)}
+                  saveAction={addAction}
+                />
+              ))}
             </AccordionPanel>
           </Accordion>
         </Spacing>

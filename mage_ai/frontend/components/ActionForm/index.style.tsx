@@ -1,4 +1,3 @@
-import React from 'react';
 import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
@@ -11,7 +10,6 @@ type ContainerProps = {
 };
 
 export const ContainerStyle = styled.div<ContainerProps>`
-
   ${(props: any) => !props.noBorder && `
     border-radius: ${BORDER_RADIUS}px;
     border: 1px solid ${(props.theme.brand || light.brand).water300};
