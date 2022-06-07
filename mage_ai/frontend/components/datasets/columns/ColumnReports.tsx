@@ -78,6 +78,11 @@ function ColumnReports({
         'Invalid values', invalidValueCount,
       ],
     },
+    {
+      columnValues: [
+        'Outliers', outlierCount,
+      ],
+    },
   ];
 
   const warningMetrics = [
@@ -86,6 +91,7 @@ function ColumnReports({
         'Outliers',
         outlierCount,
       ],
+      danger: outlierCount > 0,
     },
     {
       columnValues: [

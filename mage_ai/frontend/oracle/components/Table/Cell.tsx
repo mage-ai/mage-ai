@@ -22,6 +22,7 @@ type CellProps = {
 
 function Cell({
   cellIndex,
+  danger,
   flex,
   render,
   rowGroupIndex,
@@ -92,6 +93,8 @@ function Cell({
   else {
     cellEl = (
       <Text
+        bold={danger}
+        danger={danger}
         small={small}
         textOverflow
         title={value}
