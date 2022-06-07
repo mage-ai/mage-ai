@@ -177,7 +177,7 @@ function BaseTable({
                         // minWidth: column.minWidth,
                       }}
                     >
-                      <Text maxWidth={UNIT * 25} title={data[i][j].toString()} wordBreak>
+                      <Text maxWidth={UNIT * 25} title={data[i][j]?.toString()} wordBreak>
                         {cellValue === true && 'true'}
                         {cellValue === false && 'false'}
                         {(cellValue === null || cellValue === 'null') && 'null'}
