@@ -32,7 +32,6 @@ export type MainContentProps = {
 
 const WrapperStyle = styled.div<LayoutProps>`
   background-color: ${light.monotone.white};
-  margin-bottom: ${UNIT * 4}px;
 
   ${props => props.minHeight && `
     min-height: ${props.minHeight};

@@ -7,7 +7,6 @@ import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
-import ClientOnly from '@hocs/ClientOnly';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -15,6 +14,7 @@ import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/Fe
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import MultiColumn from '@oracle/components/Layout/MultiColumn';
 import Overview from '@components/datasets/Insights/Overview';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
@@ -24,10 +24,6 @@ import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
-import {
-  ASIDE_TOTAL_WIDTH,
-  AsideStyle,
-} from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   createMetricsSample,
@@ -38,7 +34,6 @@ import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
-import { useWindowSize } from '@utils/sizes';
 
 type DatasetOverviewProps = {
   featureSet: FeatureSetType;
@@ -49,7 +44,6 @@ function DatasetOverview({
   featureSet: featureSetRaw,
   fetchFeatureSet,
 }: DatasetOverviewProps) {
-  const { width: windowWidth } = useWindowSize();
   const [errorMessages, setErrorMessages] = useState(null);
   const { tab: tabFromUrl } = queryFromUrl();
   const [currentTab, setCurrentTab] = useState();
@@ -179,138 +173,122 @@ function DatasetOverview({
     />
   );
 
-  const tableWidth = windowWidth
-    ? windowWidth - (ASIDE_TOTAL_WIDTH + (PADDING_UNITS * UNIT * 2))
-    : null;
-
   return (
-    <ClientOnly>
-      <Layout
-        centerAlign
-        footer={<Spacing mt={UNIT} />}
-        fullWidth
-        pageTitle="Dataset Overview"
+    <Layout
+      centerAlign
+      footer={<Spacing mt={UNIT} />}
+      fullWidth
+      pageTitle="Dataset Overview"
+    >
+      <MultiColumn
+        after={featureSet && (
+          <Suggestions
+            addAction={saveAction}
+            featureSet={featureSet}
+            removeAction={removeAction}
+            removeSuggestion={(action) => console.log(action)}
+          />
+        )}
+        header={headEl}
       >
-        <Spacing p={PADDING_UNITS}>
-          {headEl}
+        {actionType && (
+          <ActionForm
+            actionType={actionType}
+            axis={actionPayload?.axis}
+            features={featuresWithAltColType}
+            onClose={closeAction}
+            onSave={() => {
+              saveAction({
+                action_payload: {
+                  ...actionPayload,
+                  action_type: actionType,
+                },
+              });
+              closeAction();
+            }}
+            payload={actionPayload}
+            setPayload={setActionPayload}
+          />
+        )}
 
+        {errorMessages?.length >= 1 && (
           <Spacing my={PADDING_UNITS}>
-            <Divider />
-          </Spacing>
-
-          {actionType && (
-            <ActionForm
-              actionType={actionType}
-              axis={actionPayload?.axis}
-              features={featuresWithAltColType}
-              onClose={closeAction}
-              onSave={() => {
-                saveAction({
-                  action_payload: {
-                    ...actionPayload,
-                    action_type: actionType,
-                  },
-                });
-                closeAction();
-              }}
-              payload={actionPayload}
-              setPayload={setActionPayload}
-            />
-          )}
-
-          {errorMessages?.length >= 1 && (
-            <Spacing my={PADDING_UNITS}>
-              <Text bold>
-                Errors
+            <Text bold>
+              Errors
+            </Text>
+            {errorMessages?.map((msg: string) => (
+              <Text key={msg} monospace xsmall>
+                {msg}
               </Text>
-              {errorMessages?.map((msg: string) => (
-                <Text key={msg} monospace xsmall>
-                  {msg}
-                </Text>
-              ))}
+            ))}
+          </Spacing>
+        )}
+
+        <Tabs
+          actionEl={selectActionEl}
+          bold
+          currentTab={currentTab}
+          large
+          noBottomBorder={false}
+          onChange={key => setTab(key)}
+        >
+          <Tab key="data" label="Data">
+            <Spacing mt={PADDING_UNITS} />
+
+            <BaseTable
+              columns={columnHeaderSample}
+              data={rows}
+              datatype={headerTypes}
+              titles={columns}
+            />
+          </Tab>
+
+          <Tab key="reports" label="Reports">
+            <Spacing mt={PADDING_UNITS} />
+            <FlexContainer justifyContent={'center'}>
+              <Flex flex={1}>
+                {metricSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[2, 1, 2 ]}
+                    columnHeaders={[{ label: 'Quality Metrics' }]}
+                    rowGroupData={[metricSample]}
+                  />
+                )}
+              </Flex>
+
+              <Spacing ml={PADDING_UNITS} />
+
+              <Flex flex={1}>
+                {statSample && (
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[{ label: 'Statistics' }]}
+                    rowGroupData={[statSample]}
+                  />
+                )}
+              </Flex>
+            </FlexContainer>
+
+            <Spacing mt={PADDING_UNITS}>
+              <FeatureProfiles
+                features={features}
+                featureSet={featureSet}
+                statistics={statistics}
+              />
             </Spacing>
-          )}
+          </Tab>
 
-          <FlexContainer>
-            <Flex flex={4} flexDirection="column">
-              <Tabs
-                actionEl={selectActionEl}
-                bold
-                currentTab={currentTab}
-                large
-                noBottomBorder={false}
-                onChange={key => setTab(key)}
-              >
-                <Tab key="data" label="Data">
-                  <Spacing mt={PADDING_UNITS} />
-                  <BaseTable
-                    columns={columnHeaderSample}
-                    data={rows}
-                    datatype={headerTypes}
-                    width={tableWidth}
-                    titles={columns}
-                  />
-                </Tab>
-                <Tab key="reports" label="Reports">
-                  <Spacing mt={PADDING_UNITS} />
-                  <FlexContainer justifyContent={'center'}>
-                    <Flex flex={1}>
-                      {metricSample && (
-                        <SimpleDataTable
-                          columnFlexNumbers={[2, 1, 2 ]}
-                          columnHeaders={[{ label: 'Quality Metrics' }]}
-                          rowGroupData={[metricSample]}
-                        />
-                      )}
-                    </Flex>
-
-                    <Spacing ml={PADDING_UNITS} />
-
-                    <Flex flex={1}>
-                      {statSample && (
-                        <SimpleDataTable
-                          columnFlexNumbers={[1, 1, 1]}
-                          columnHeaders={[{ label: 'Statistics' }]}
-                          rowGroupData={[statSample]}
-                        />
-                      )}
-                    </Flex>
-                  </FlexContainer>
-
-                  <Spacing mt={PADDING_UNITS}>
-                    <FeatureProfiles
-                      features={features}
-                      featureSet={featureSet}
-                      statistics={statistics}
-                    />
-                  </Spacing>
-                </Tab>
-
-                <Tab key="visualizations" label="Visualizations">
-                  <Spacing mt={PADDING_UNITS} />
-                  <Overview
-                    features={features}
-                    insightsOverview={insightsOverview}
-                    statistics={statistics}
-                  />
-                </Tab>
-              </Tabs>
-            </Flex>
-
-            <AsideStyle>
-              {featureSet && (
-                <Suggestions
-                  addAction={saveAction}
-                  featureSet={featureSet}
-                  removeAction={removeAction}
-                  removeSuggestion={(action) => console.log(action)}
-                />
-              )}
-            </AsideStyle>
-          </FlexContainer>
-        </Spacing>
-      </Layout>
-    </ClientOnly>
+          <Tab key="visualizations" label="Visualizations">
+            <Spacing mt={PADDING_UNITS} />
+            <Overview
+              features={features}
+              insightsOverview={insightsOverview}
+              statistics={statistics}
+            />
+          </Tab>
+        </Tabs>
+      </MultiColumn>
+    </Layout>
   );
 }
 
