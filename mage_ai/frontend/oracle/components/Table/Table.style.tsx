@@ -7,7 +7,6 @@ import { UNIT, PADDING_UNITS } from '@oracle/styles/units/spacing';
 export const TableStyle = styled.div<any>`
   border-radius: ${BORDER_RADIUS_LARGE}px;
   max-width: 100vw;
-  max-height: 80vh;
   overflow: auto;
   position: relative;
 
@@ -38,7 +37,7 @@ export const TableStyle = styled.div<any>`
 
 export const TableHeadStyle = styled.thead`
   th {
-    padding: ${UNIT * 0.5}px;
+    padding: ${UNIT * 1}px;
 
     ${props => `
       border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
@@ -55,7 +54,7 @@ export const TableHeadStyle = styled.thead`
 
 export const TableBodyStyle = styled.tbody`
   td {
-    padding: ${UNIT * 0.5}px;
+    padding: ${UNIT * 1}px;
   }
 
   td:not(:first-child) {

@@ -178,7 +178,7 @@ function DatasetOverview({
       centerAlign
       footer={<Spacing mt={UNIT} />}
       fullWidth
-      pageTitle="Dataset Overview"
+      pageTitle={metadata?.name || 'Dataset Overview'}
     >
       <MultiColumn
         after={
