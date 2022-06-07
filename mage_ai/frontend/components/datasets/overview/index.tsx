@@ -8,6 +8,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
+import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -25,6 +26,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
+import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 import {
@@ -57,6 +59,10 @@ function DatasetOverview({
 }: DatasetOverviewProps) {
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
+  const {
+    column: columnFromUrl,
+    show_columns: showColumnsFromUrl,
+  } = qFromUrl;
   const tabsFromUrlInit = qFromUrl['tabs[]'];
   const tabsFromUrl = tabsFromUrlInit
     ? Array.isArray(tabsFromUrlInit) ? tabsFromUrlInit : [tabsFromUrlInit]
@@ -183,6 +189,8 @@ function DatasetOverview({
     />
   );
 
+  const columnsVisible = Number(showColumnsFromUrl) === 1;
+
   return (
     <Layout
       centerAlign
@@ -242,15 +250,43 @@ function DatasetOverview({
             )}
           </Spacing>
         }
+        before={columnsVisible && (
+          <Spacing mt={PADDING_UNITS}>
+            <ColumnListSidebar
+              featureSet={featureSet}
+              onClickColumn={col => goToWithQuery({ column: col })}
+              selectedColumn={columnFromUrl}
+            />
+          </Spacing>
+        )}
         header={
           <Spacing p={PADDING_UNITS}>
-            <FlexContainer alignItems="center" justifyContent="space-between">
-              <PageBreadcrumbs featureSet={featureSet} />
+            <Spacing mb={2}>
+              <Link
+                block
+                noHoverUnderline
+                noOutline
+                onClick={() => goToWithQuery({
+                  show_columns: columnsVisible ? 0 : 1,
+                })}
+                preventDefault
+              >
+                <FlexContainer alignItems="center">
+                  <ColumnIcon
+                    primary={!columnsVisible}
+                    size={UNIT * 2}
+                  />
 
-              <Button onClick={viewColumns}>
-                <Text bold> Column view </Text>
-              </Button>
-            </FlexContainer>
+                  <Spacing mr={1} />
+
+                  <Text bold primary={!columnsVisible}>
+                    {columnsVisible ? 'Hide columns' : 'Show columns'}
+                  </Text>
+                </FlexContainer>
+              </Link>
+            </Spacing>
+
+            <PageBreadcrumbs featureSet={featureSet} />
           </Spacing>
         }
         onTabClick={t => setTabs(t)}

@@ -5,9 +5,10 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import {
-  AFTER_TOTAL_WIDTH as afterTotalWidth,
   AsideInnerStyle,
   AsideStyle,
+  BeforeInnerStyle,
+  BeforeStyle,
   HeaderStyle,
   MainContentInnerStyle,
   MainContentStyle,
@@ -16,10 +17,9 @@ import {
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 
-export const AFTER_TOTAL_WIDTH = afterTotalWidth;
-
 type MultiColumnProps = {
   after: any;
+  before?: any;
   children: any;
   header: any;
   onTabClick?: (tab: string) => void;
@@ -29,6 +29,7 @@ type MultiColumnProps = {
 
 function MultiColumn({
   after,
+  before,
   children,
   header,
   onTabClick,
@@ -44,7 +45,18 @@ function MultiColumn({
 
   return (
     <>
-      <HeaderStyle ref={refHeader}>
+      {before && (
+        <BeforeStyle>
+          <BeforeInnerStyle>
+            {before}
+          </BeforeInnerStyle>
+        </BeforeStyle>
+      )}
+
+      <HeaderStyle
+        beforeVisible={!!before}
+        ref={refHeader}
+      >
         {header}
 
         {tabs && (
@@ -74,7 +86,10 @@ function MultiColumn({
         )}
       </HeaderStyle>
 
-      <MainContentStyle headerOffset={heightHeader}>
+      <MainContentStyle
+        beforeVisible={!!before}
+        headerOffset={heightHeader}
+      >
         <MainContentInnerStyle>
           {children}
         </MainContentInnerStyle>

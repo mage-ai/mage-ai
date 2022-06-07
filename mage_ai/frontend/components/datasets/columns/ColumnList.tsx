@@ -19,18 +19,18 @@ import { isBadQuality } from '@components/utils';
 
 type ColumnListProps = {
   featureSet: FeatureSetType;
-  featureSetId: string;
 };
 
 const ColumnList = ({
   featureSet: featureSetData,
-  featureSetId,
  }: ColumnListProps) => {
-  const viewDataset = () => Router.push(`/datasets/${featureSetId}`);
-
   const featureSetMemo = useMemo(() => featureSetData, [
     featureSetData,
   ]);
+
+  const featureSetId = featureSetMemo?.id;
+
+  const viewDataset = () => Router.push(`/datasets/${featureSetId}`);
 
   const [featureSet, setFeatureSet] = useState<any>({
     id: featureSetId,

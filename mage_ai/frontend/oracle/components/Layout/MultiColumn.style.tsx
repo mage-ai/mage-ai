@@ -4,16 +4,25 @@ import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
+const BEFORE_WIDTH = UNIT * 40;
 const AFTER_WIDTH = UNIT * 50;
-const AFTER_MARGIN = PADDING_UNITS * UNIT;
-export const AFTER_TOTAL_WIDTH = (UNIT * 40) + AFTER_MARGIN;
 
-export const HeaderStyle = styled.div`
+export const HeaderStyle = styled.div<{
+  beforeVisible?: boolean;
+}>`
   position: fixed;
-  width: 100%;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+  `}
+
+  ${props => !props.beforeVisible && `
+    width: 100%;
+  `}
+
+  ${props => props.beforeVisible && `
+    left: ${BEFORE_WIDTH}px;
+    width: calc(100% - ${BEFORE_WIDTH}px);
   `}
 `;
 
@@ -42,11 +51,36 @@ export const TabStyle = styled.div<{
   `}
 `;
 
+export const BeforeStyle = styled.aside`
+  height: 100%;
+  left: 0;
+  position: fixed;
+  width: ${BEFORE_WIDTH}px;
+
+  ${props => `
+    background-color: ${(props.theme.monotone || light.monotone).grey100};
+  `}
+`;
+
+export const BeforeInnerStyle = styled.div`
+  height: 100%;
+  overflow: auto;
+`;
+
 export const MainContentStyle = styled.div<{
+  beforeVisible?: boolean;
   headerOffset?: number;
 }>`
   position: fixed;
-  width: calc(100% - ${AFTER_WIDTH}px);
+
+  ${props => !props.beforeVisible && `
+    width: calc(100% - ${AFTER_WIDTH}px);
+  `}
+
+  ${props => props.beforeVisible && `
+    left: ${BEFORE_WIDTH}px;
+    width: calc(100% - ${BEFORE_WIDTH + AFTER_WIDTH}px);
+  `}
 
   ${props => props.headerOffset && `
     height: calc(100% - ${props.headerOffset}px);
@@ -75,5 +109,4 @@ export const AsideStyle = styled.aside<{
 export const AsideInnerStyle = styled.div`
   height: 100%;
   overflow: auto;
-}
 `;
