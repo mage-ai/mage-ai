@@ -11,8 +11,6 @@ import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import {
   GRAY_LINES,
   LIGHT,
-  PURPLE,
-  PURPLE_HIGHLIGHT,
   SILVER,
   WHITE,
 } from '@oracle/styles/colors/main';
@@ -106,7 +104,8 @@ function FeatureProfile({
     uuid,
   } = feature;
 
-  const numberOfValues = statistics?.[`${uuid}/count`];
+  const rowCount = statistics?.['count'];
+  // const numberOfValues = statistics?.[`${uuid}/count`];
   const numberOfUniqueValues = statistics?.[`${uuid}/count_distinct`];
   const numberOfNullValues = statistics?.[`${uuid}/null_value_count`];
   // const nullValueRate = statistics?.[`${uuid}/null_value_rate`];
@@ -168,7 +167,7 @@ function FeatureProfile({
       {entries.map((label = '-', idx) => {
         const entry = entryTypes[idx];
         const val = !isNaN(label) ? roundNumber(label) : label;
-        const shouldWarn = entry in warnings && (val/numberOfValues) > warnings[entry];
+        const shouldWarn = entry in warnings && (val/rowCount) > warnings[entry];
 
         return (
           <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
@@ -178,7 +177,7 @@ function FeatureProfile({
               textOverflow
             >
               {val}
-              {percentages.includes(entry) && ` (${formatPercent(label/numberOfValues)})`}
+              {percentages.includes(entry) && ` (${formatPercent(label/rowCount)})`}
             </Text>
           </CellStyle>
         );
