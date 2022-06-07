@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
@@ -7,23 +7,26 @@ import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
+import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
+import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import Link from '@oracle/elements/Link';
 import MultiColumn from '@oracle/components/Layout/MultiColumn';
 import Overview from '@components/datasets/Insights/Overview';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Suggestions from '@components/suggestions';
-import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { capitalize } from '@utils/string';
 import {
   createMetricsSample,
   createStatisticsSample,
@@ -33,6 +36,15 @@ import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
+
+const TAB_REPORTS = 'Reports';
+const TAB_VISUALIZATIONS = 'Visualizations';
+const TAB_DATA = 'Data';
+const TABS_IN_ORDER = [
+  TAB_REPORTS,
+  TAB_VISUALIZATIONS,
+  TAB_DATA,
+];
 
 type DatasetOverviewProps = {
   featureSet: FeatureSetType;
@@ -44,16 +56,24 @@ function DatasetOverview({
   fetchFeatureSet,
 }: DatasetOverviewProps) {
   const [errorMessages, setErrorMessages] = useState(null);
-  const { tab: tabFromUrl } = queryFromUrl();
-  const [currentTab, setCurrentTab] = useState();
+  const qFromUrl = queryFromUrl();
+  const tabsFromUrlInit = qFromUrl['tabs[]'];
+  const tabsFromUrl = tabsFromUrlInit
+    ? Array.isArray(tabsFromUrlInit) ? tabsFromUrlInit : [tabsFromUrlInit]
+    : [];
+
+  const setTabs = useCallback((newTab: string) => {
+    goToWithQuery({
+      'tabs[]': newTab,
+    });
+  }, [tabsFromUrl]);
+
   useEffect(() => {
-    if (tabFromUrl) {
-      setCurrentTab(tabFromUrl);
-    } else {
+    if (tabsFromUrl.length === 0) {
       // @ts-ignore
-      setCurrentTab('reports');
+      setTabs(TAB_REPORTS);
     }
-  }, [currentTab, tabFromUrl]);
+  }, [setTabs, tabsFromUrl]);
 
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
@@ -97,15 +117,6 @@ function DatasetOverview({
     e.preventDefault();
     Router.push(`${pathname}/features`);
   };
-
-  const headEl = (
-    <FlexContainer alignItems="center" justifyContent="space-between">
-      <PageBreadcrumbs featureSet={featureSet} />
-      <Button onClick={viewColumns}>
-        <Text bold> Column view </Text>
-      </Button>
-    </FlexContainer>
-  );
 
   const insightsOverview = featureSet?.['insights']?.[1] || {};
 
@@ -181,7 +192,7 @@ function DatasetOverview({
     >
       <MultiColumn
         after={
-          <>
+          <Spacing p={PADDING_UNITS}>
             <Spacing mb={PADDING_UNITS}>
               {selectActionEl}
             </Spacing>
@@ -229,72 +240,77 @@ function DatasetOverview({
                 removeSuggestion={(action) => console.log(action)}
               />
             )}
-          </>
+          </Spacing>
         }
-        header={headEl}
-      >
-        <Tabs
-          bold
-          currentTab={currentTab}
-          large
-          noBottomBorder={false}
-          onChange={key => setTab(key)}
-        >
-          <Tab key="data" label="Data">
-            <Spacing mt={PADDING_UNITS} />
+        header={
+          <Spacing p={PADDING_UNITS}>
+            <FlexContainer alignItems="center" justifyContent="space-between">
+              <PageBreadcrumbs featureSet={featureSet} />
 
+              <Button onClick={viewColumns}>
+                <Text bold> Column view </Text>
+              </Button>
+            </FlexContainer>
+          </Spacing>
+        }
+        onTabClick={t => setTabs(t)}
+        selectedTab={tabsFromUrl?.[0]}
+        tabs={TABS_IN_ORDER}
+      >
+        <Spacing p={PADDING_UNITS}>
+          {tabsFromUrl?.includes(TAB_REPORTS) && (
+            <>
+              <FlexContainer justifyContent={'center'}>
+                <Flex flex={1}>
+                  {metricSample && (
+                    <SimpleDataTable
+                      columnFlexNumbers={[2, 1, 2 ]}
+                      columnHeaders={[{ label: 'Quality Metrics' }]}
+                      rowGroupData={[metricSample]}
+                    />
+                  )}
+                </Flex>
+
+                <Spacing ml={PADDING_UNITS} />
+
+                <Flex flex={1}>
+                  {statSample && (
+                    <SimpleDataTable
+                      columnFlexNumbers={[1, 1, 1]}
+                      columnHeaders={[{ label: 'Statistics' }]}
+                      rowGroupData={[statSample]}
+                    />
+                  )}
+                </Flex>
+              </FlexContainer>
+
+              <Spacing mt={PADDING_UNITS}>
+                <FeatureProfiles
+                  features={features}
+                  featureSet={featureSet}
+                  statistics={statistics}
+                />
+              </Spacing>
+            </>
+          )}
+
+          {tabsFromUrl?.includes(TAB_VISUALIZATIONS) && (
+            <Overview
+              features={features}
+              insightsOverview={insightsOverview}
+              statistics={statistics}
+            />
+          )}
+
+          {tabsFromUrl?.includes(TAB_DATA) && (
             <BaseTable
               columns={columnHeaderSample}
               data={rows}
               datatype={headerTypes}
               titles={columns}
             />
-          </Tab>
-
-          <Tab key="reports" label="Reports">
-            <Spacing mt={PADDING_UNITS} />
-            <FlexContainer justifyContent={'center'}>
-              <Flex flex={1}>
-                {metricSample && (
-                  <SimpleDataTable
-                    columnFlexNumbers={[2, 1, 2 ]}
-                    columnHeaders={[{ label: 'Quality Metrics' }]}
-                    rowGroupData={[metricSample]}
-                  />
-                )}
-              </Flex>
-
-              <Spacing ml={PADDING_UNITS} />
-
-              <Flex flex={1}>
-                {statSample && (
-                  <SimpleDataTable
-                    columnFlexNumbers={[1, 1, 1]}
-                    columnHeaders={[{ label: 'Statistics' }]}
-                    rowGroupData={[statSample]}
-                  />
-                )}
-              </Flex>
-            </FlexContainer>
-
-            <Spacing mt={PADDING_UNITS}>
-              <FeatureProfiles
-                features={features}
-                featureSet={featureSet}
-                statistics={statistics}
-              />
-            </Spacing>
-          </Tab>
-
-          <Tab key="visualizations" label="Visualizations">
-            <Spacing mt={PADDING_UNITS} />
-            <Overview
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
-          </Tab>
-        </Tabs>
+          )}
+        </Spacing>
       </MultiColumn>
     </Layout>
   );
