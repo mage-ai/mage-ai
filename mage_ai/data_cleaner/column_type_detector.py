@@ -56,7 +56,7 @@ REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
 
 RESERVED_PHONE_NUMBER_WORDS = frozenset(['phone', 'landline'])
-RESERVED_ZIP_CODE_WORDS = frozenset(['zip', 'postal'])
+RESERVED_ZIP_CODE_WORDS = frozenset(['zip', 'postal', 'zipcode', 'postcode'])
 
 
 def str_in_set(string, string_set):
