@@ -373,12 +373,12 @@ function HistogramContainer({
   height,
   loading,
   selected,
-  // width: parentWidth,
+  width,
   ...props
 }: HistogramContainerProps) {
   return (
     <>
-      <div style={{ height, width: '100%' }}>
+      <div style={{ height, width }}>
         {loading && <Spinner />}
 
         {!loading && (

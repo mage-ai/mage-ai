@@ -196,8 +196,6 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   if (!noCurve) {
     curveProps.curve = curveBasis;
   }
-  
-  console.log("tooltip data:", tooltipData);
 
   return (
     <>

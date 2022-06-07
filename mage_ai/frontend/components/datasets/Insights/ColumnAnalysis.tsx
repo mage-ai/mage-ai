@@ -12,6 +12,7 @@ import Histogram from '@components/charts/Histogram';
 import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
@@ -23,14 +24,13 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
+import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import {
   groupBy,
   indexBy,
   sortByKey,
 } from '@utils/array';
-import Spacing from '@oracle/elements/Spacing';
-import { formatNumberLabel } from '@components/charts/utils/label';
 
 type ColumnAnalysisProps = {
   column: string;

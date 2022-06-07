@@ -25,9 +25,9 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
+import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
-import { formatNumberLabel } from '@components/charts/utils/label';
 
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
