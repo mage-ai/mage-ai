@@ -143,7 +143,7 @@ function BaseTable({
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column, i) => (
                 // eslint-disable-next-line react/jsx-key
-                <th {...column.getHeaderProps()} 
+                <th {...column.getHeaderProps()}
                 style={{
                   // maxWidth: `${getColumnWidth(rows, column.id)}px`,
                   // minWidth: column.minWidth,
@@ -177,7 +177,7 @@ function BaseTable({
                         // minWidth: column.minWidth,
                       }}
                     >
-                      <Text maxWidth={UNIT * 25} title={data[i][j]?.toString()} wordBreak>
+                      <Text maxWidth={UNIT * 25} title={data?.[i]?.[j]?.toString()} wordBreak>
                         {cellValue === true && 'true'}
                         {cellValue === false && 'false'}
                         {(cellValue === null || cellValue === 'null') && 'null'}

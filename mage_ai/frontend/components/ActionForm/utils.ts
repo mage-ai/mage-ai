@@ -13,7 +13,7 @@ import {
 
 function buildOperatorPredicate(operator) {
   if (OPERATOR_CONTAINS === operator) {
-    return (a, b) => a.includes(b);
+    return (a, b) => b.includes(a);
   } else if (OPERATOR_EQUAL === operator) {
     return (a, b) => a === b;
   } else if (OPERATOR_GREATER_THAN === operator) {

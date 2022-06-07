@@ -20,7 +20,7 @@ const columns: {
   },
   custom: {
     title: 'Custom code',
-    description: 'TBD',
+    description: 'Write your own custom cleaning function.',
     code: {
       multiline: true,
       values: USER_INPUT,
@@ -34,7 +34,7 @@ const columns: {
         description: 'Select how you want missing values to be filled in.',
         values: [
           {
-            description: 'TBD',
+            description: 'Mean value',
             condition: {
               feature_attribute: COLUMN_TYPE,
               operator: CONTAINS,
@@ -46,7 +46,7 @@ const columns: {
             value: 'average',
           },
           {
-            description: 'TBD',
+            description: 'Median value',
             condition: {
               feature_attribute: COLUMN_TYPE,
               operator: CONTAINS,
@@ -58,19 +58,19 @@ const columns: {
             value: 'median',
           },
           {
-            description: 'TBD',
+            description: 'Most frequent value',
             value: 'mode',
           },
           {
-            description: 'TBD',
+            description: 'Use previously occurring entry in a timeseries',
             value: 'seq',
           },
           {
-            description: 'TBD',
+            description: 'Random value',
             value: 'random',
           },
           {
-            description: 'TBD',
+            description: 'Use a single value',
             value: 'constant',
           },
         ],
@@ -89,12 +89,12 @@ const columns: {
   remove: {
     multiColumns: true,
     title: 'Remove column',
-    description: 'TBD',
+    description: 'Drop 1 or more columns from the dataset.',
   },
   reformat: {
     multiColumns: true,
     title: 'Reformat values',
-    description: 'TBD',
+    description: 'Change the format of values to a consistent format.',
     options: {
       reformat: {
         values: [
@@ -107,7 +107,7 @@ const columns: {
             value: 'currency_to_num',
           },
           {
-            description: 'TBD',
+            description: 'Reformat the date and time to ISO format (YYYY-MM-DD HH:mm:SS).',
             value: 'date_format_conversion',
           },
         ],
@@ -136,7 +136,7 @@ const rows: {
 } = {
   custom: {
     title: 'Custom code',
-    description: 'TBD',
+    description: 'Write your own custom cleaning function.',
     code: {
       multiline: true,
       values: USER_INPUT,
@@ -165,7 +165,7 @@ const rows: {
   },
   filter: {
     title: 'Filter',
-    description: 'TBD',
+    description: 'Select which rows to keep. Use Python syntax for conditional statements. For example: col1 == 1 and (col2 == 3 or col3 is None)',
     code: {
       values: USER_INPUT,
     },
