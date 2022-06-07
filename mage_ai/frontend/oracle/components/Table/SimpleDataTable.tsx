@@ -155,6 +155,7 @@ function SimpleDataTable({
                   rowGroupIndex={rowGroupIndex}
                   rowIndex={rowIndex}
                   selected={isSelected}
+                  showBackground={rowIndex % 2 === 1}
                   showProgress={value[0]}
                   small={small}
                   value={value[1]}
@@ -171,6 +172,7 @@ function SimpleDataTable({
                   rowGroupIndex={rowGroupIndex}
                   rowIndex={rowIndex}
                   selected={isSelected}
+                  showBackground={rowIndex % 2 === 1}
                   small={small}
                   value={value}
                 />,

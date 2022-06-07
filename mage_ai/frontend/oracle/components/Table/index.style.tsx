@@ -111,4 +111,8 @@ export const RowCellStyle = styled.div<any>`
   ${props => props.small && `
     padding: ${UNIT * 1.5}px;
   `}
+
+  ${props => props.showBackground && `
+    background-color: ${(props.theme.background || light.background).row};
+  `}
 `;
