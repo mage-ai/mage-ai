@@ -9,7 +9,11 @@ DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 
 class Model:
-    def __init__(self, id=None):
+    def __init__(self, id=None, path=None):
+        if path is not None:
+            self.dir = path
+            return
+
         # TODO: figure out a good directory to store the files
         if not os.path.isdir(DATA_PATH):
             os.mkdir(DATA_PATH)

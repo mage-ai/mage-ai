@@ -279,9 +279,15 @@ def clean_df(df, name):
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, pipeline_uuid):
-    pipeline = Pipeline(id=pipeline_uuid)
-
+def clean_df_with_pipeline(df, id=None, path=None):
+    pipeline = None
+    if id is not None:
+        pipeline = Pipeline(id=id)
+    elif path is not None:
+        pipeline = Pipeline(path=path)
+    if pipeline is None:
+        print('Please provide a valid pipeline id or config path.')
+        return df
     return pipeline.pipeline.transform(df, auto=False)
 
 

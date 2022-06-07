@@ -187,8 +187,8 @@ class FeatureSet(Model):
 
 
 class Pipeline(Model):
-    def __init__(self, id=None, feature_set_id=None, pipeline=None):
-        super().__init__(id)
+    def __init__(self, id=None, path=None, feature_set_id=None, pipeline=None):
+        super().__init__(id=id, path=path)
 
         # Update metadata
         try:
