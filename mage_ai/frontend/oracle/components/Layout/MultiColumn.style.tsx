@@ -12,7 +12,9 @@ export const HeaderStyle = styled.div`
   width: 100%;
 `;
 
-export const MainContentStyle = styled.div`
+export const MainContentStyle = styled.div<{
+  headerOffset?: number;
+}>`
   position: fixed;
   width: calc(100% - ${AFTER_WIDTH}px);
 
@@ -27,7 +29,9 @@ export const MainContentInnerStyle = styled.div`
   overflow: auto;
 `;
 
-export const AsideStyle = styled.aside`
+export const AsideStyle = styled.aside<{
+  headerOffset?: number;
+}>`
   right: 0;
   position: fixed;
   width: ${AFTER_WIDTH}px;

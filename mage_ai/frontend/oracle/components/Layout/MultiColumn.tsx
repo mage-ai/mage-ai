@@ -9,7 +9,7 @@ import {
   HeaderStyle,
   MainContentInnerStyle,
   MainContentStyle,
-} from './MultiColumn.style.tsx';
+} from './MultiColumn.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 
