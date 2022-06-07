@@ -31,7 +31,7 @@ class DataCleaner():
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types).process(df, is_clean=True)
         with timer('data_cleaner.calculate_insights'):
-            analysis = AnalysisCalculator(df, column_types).process(df, is_clean=True)
+            analysis = AnalysisCalculator(df, column_types, statistics).process(df, is_clean=True)
         return dict(
             insights=analysis,
             column_types=column_types,
