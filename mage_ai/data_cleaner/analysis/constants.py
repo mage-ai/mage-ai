@@ -8,6 +8,7 @@ DATA_KEY_CHARTS = 'charts'
 DATA_KEY_CORRELATION = 'correlations'
 DATA_KEY_OVERVIEW = 'overview'
 DATA_KEY_SCATTER_PLOT = 'scatter_plot'
+DATA_KEY_SCATTER_PLOT_LABELS = 'scatter_plot_labels'
 DATA_KEY_TIME_SERIES = 'time_series'
 DATA_KEYS = [
     DATA_KEY_CHARTS,

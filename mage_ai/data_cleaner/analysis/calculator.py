@@ -31,6 +31,7 @@ class AnalysisCalculator():
         self,
         df,
         column_types,
+        statistics,
         **kwargs,
     ):
         self.df = df
