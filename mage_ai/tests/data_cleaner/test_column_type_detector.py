@@ -10,7 +10,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     TEXT,
     TRUE_OR_FALSE,
     ZIP_CODE,
-    get_mismatched_row_count,
+    get_mismatched_rows,
     infer_column_types,
     REGEX_NUMBER,
 )
@@ -37,9 +37,9 @@ class ColumnTypeDetectorTests(TestCase):
             ],
             columns=['id', 'email', 'zip_code'],
         )
-        rows1 = get_mismatched_row_count(df['id'], 'number')
-        rows2 = get_mismatched_row_count(df['email'], 'email')
-        rows3 = get_mismatched_row_count(df['zip_code'], 'zip_code')
+        rows1 = get_mismatched_rows(df['id'], 'number')
+        rows2 = get_mismatched_rows(df['email'], 'email')
+        rows3 = get_mismatched_rows(df['zip_code'], 'zip_code')
         self.assertEqual(rows1, [])
         self.assertEqual(rows2, ['test', 'abc12345@'])
         self.assertEqual(rows3, ['abcde'])
