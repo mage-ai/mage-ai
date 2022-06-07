@@ -358,6 +358,7 @@ function DatasetOverview({
                       }}
                       payload={actionPayload}
                       setPayload={setActionPayload}
+                      shadow
                     />
                   )}
                 </AsidePopoutStyle>
