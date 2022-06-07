@@ -55,6 +55,16 @@ REGEX_PHONE_NUMBER = re.compile(REGEX_PHONE_NUMBER_PATTERN)
 REGEX_ZIP_CODE_PATTERN = r'^\d{3,5}(?:[-\s]\d{4})?$'
 REGEX_ZIP_CODE = re.compile(REGEX_ZIP_CODE_PATTERN)
 
+RESERVED_PHONE_NUMBER_WORDS = frozenset(['phone', 'landline'])
+RESERVED_ZIP_CODE_WORDS = frozenset(['zip', 'postal'])
+
+
+def str_in_set(string, string_set):
+    for entry in string_set:
+        if entry in string:
+            return True
+    return False
+
 
 def get_mismatched_row_count(series, column_type):
     if len(series) == 0:
@@ -89,7 +99,7 @@ def infer_number_type(series, column_name, dtype):
                 if (
                     clean_series.min() >= 100
                     and clean_series.max() <= 99999
-                    and 'zip' in column_name.lower()
+                    and str_in_set(column_name.lower(), RESERVED_ZIP_CODE_WORDS)
                 ):
                     mdtype = ZIP_CODE
                 else:
@@ -104,7 +114,7 @@ def infer_column_type(series, column_name, dtype, kwargs):
     if 'datetime64' in str(dtype):
         mdtype = DATETIME
     elif dtype == 'object':
-        mdtype = infer_object_type(series, kwargs)
+        mdtype = infer_object_type(series, column_name, kwargs)
     elif dtype == 'bool':
         mdtype = TRUE_OR_FALSE
     elif np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer):
@@ -115,10 +125,10 @@ def infer_column_type(series, column_name, dtype, kwargs):
     return mdtype
 
 
-def infer_object_type(series, kwargs):
+def infer_object_type(series, column_name, kwargs):
     clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
     clean_series = clean_series.map(lambda x: x if (not isinstance(x, str) or x != '') else np.nan)
-    clean_series = clean_series.dropna()
+    clean_series = clean_series.dropna().astype(str)
 
     series_nunique = series.nunique(dropna=False)
     clean_series_nunique = clean_series.nunique()
@@ -139,11 +149,16 @@ def infer_object_type(series, kwargs):
             if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
                 mdtype = NUMBER_WITH_DECIMALS
             else:
+                lower = column_name.lower()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD:
+                if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                    lower, RESERVED_PHONE_NUMBER_WORDS
+                ):
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD:
+                elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                    lower, RESERVED_ZIP_CODE_WORDS
+                ):
                     mdtype = ZIP_CODE
                 else:
                     mdtype = NUMBER
@@ -155,11 +170,16 @@ def infer_object_type(series, kwargs):
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+                lower = column_name.lower()
                 if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
                     mdtype = EMAIL
-                elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD:
+                elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
+                    lower, RESERVED_PHONE_NUMBER_WORDS
+                ):
                     mdtype = PHONE_NUMBER
-                elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD:
+                elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
+                    lower, RESERVED_ZIP_CODE_WORDS
+                ):
                     mdtype = ZIP_CODE
                 elif series_nunique == 2:
                     mdtype = TRUE_OR_FALSE
