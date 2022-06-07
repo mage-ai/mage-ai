@@ -20,7 +20,7 @@ import {
   UNIQUE_VALUE_LOW_THRESHOLD,
   UNUSUAL_ROW_VOLUME_FACTOR,
 } from './constants';
-import { PADDING, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   buildDistributionData,
   hasHighDistribution,
@@ -94,7 +94,7 @@ export function ChartRow({
   right?: any,
 }) {
   return (
-    <Spacing mb={4}>
+    <Spacing mb={PADDING_UNITS}>
       <FlexContainer>
         <FlexContainer flex={1}>
           <div style={{ width: '100%', height: '100%' }}>
@@ -103,7 +103,8 @@ export function ChartRow({
         </FlexContainer>
         {right && (
           <>
-            <Spacing mr={4} />
+            <Spacing mr={PADDING_UNITS} />
+
             <FlexContainer flex={1}>
               <div style={{ width: '100%', height: '100%' }}>
                 {right}
