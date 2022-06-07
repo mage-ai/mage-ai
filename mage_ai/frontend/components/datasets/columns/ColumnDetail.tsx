@@ -8,6 +8,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
+import Divider from '@oracle/elements/Divider';
 import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
@@ -23,7 +24,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 
 import { AsideStyle } from '../overview/index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getHost } from '@api/utils/url';
 import { getPercentage } from '@utils/number';
@@ -278,9 +279,11 @@ function ColumnDetail({
   return (
     <Layout
       centerAlign
+      fullWidth
+      includeMargins
       pageTitle="Column Details"
     >
-      <Spacing mt={8} />
+      <Spacing mt={2} />
       <FlexContainer alignItems="center" justifyContent="space-between">
         <PageBreadcrumbs featureSet={featureSet} />
         <Button onClick={viewColumns}>
@@ -288,20 +291,9 @@ function ColumnDetail({
         </Button>
       </FlexContainer>
 
-      <Spacing mt={2} />
-
-      {errorMessages?.length >= 1 && (
-        <Spacing mt={3}>
-          <Text bold>
-            Errors
-          </Text>
-          {errorMessages?.map((msg: string) => (
-            <Text key={msg} monospace xsmall>
-              {msg}
-            </Text>
-          ))}
-        </Spacing>
-      )}
+      <Spacing my={PADDING_UNITS}>
+        <Divider />
+      </Spacing>
 
       {actionType && (
         <ActionForm
@@ -321,50 +313,70 @@ function ColumnDetail({
         />
       )}
 
-      <Spacing mt={4} />
-      <Tabs
-        actionEl={
-          <ActionDropdown
-            actionType={actionType}
-            columnOnly
-            setActionPayload={setActionPayload}
-          />
-        }
-        bold
-        defaultKey={tab}
-        large
-        noBottomBorder={false}
-        onChange={key => setTab(key)}
-      >
-        <Tab key="data" label="Data">
-          <Spacing my={3} />
-          {dataEl}
-        </Tab>
-        <Tab  key="reports" label="Reports">
-          <Spacing my={3} />
-          {reportsEl}
-        </Tab>
-        <Tab key="visualizations" label="Visualizations">
-          <Spacing my={3} />
-          {count > 0 && (
-            <ColumnAnalysis
-              column={featureUUID}
-              features={features}
-              insights={insightsColumn}
-              statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
-              statisticsOverview={statisticsOverview}
-            />
-          )}
-        </Tab>
-      </Tabs>
+      {errorMessages?.length >= 1 && (
+        <Spacing mt={3}>
+          <Text bold>
+            Errors
+          </Text>
+          {errorMessages?.map((msg: string) => (
+            <Text key={msg} monospace xsmall>
+              {msg}
+            </Text>
+          ))}
+        </Spacing>
+      )}
 
-      <AsideStyle>
-        <Suggestions
-          addAction={saveAction}
-          featureSet={columnFeatureSet}
-          removeAction={removeAction}
-        />
-      </AsideStyle>
+      <Spacing mt={4} />
+
+      <FlexContainer>
+        <Flex flex="2" flexDirection="column">
+          <Tabs
+            actionEl={
+              <ActionDropdown
+                actionType={actionType}
+                columnOnly
+                setActionPayload={setActionPayload}
+              />
+            }
+            bold
+            defaultKey={tab}
+            large
+            noBottomBorder={false}
+            onChange={key => setTab(key)}
+          >
+            <Tab key="data" label="Data">
+              <Spacing my={3} />
+              {dataEl}
+            </Tab>
+            <Tab  key="reports" label="Reports">
+              <Spacing my={3} />
+              {reportsEl}
+            </Tab>
+            <Tab key="visualizations" label="Visualizations">
+              <Spacing my={3} />
+              {count > 0 && (
+                <ColumnAnalysis
+                  column={featureUUID}
+                  features={features}
+                  insights={insightsColumn}
+                  statisticsByColumn={statisticsOverview[`${featureUUID}/value_counts`] || {}}
+                  statisticsOverview={statisticsOverview}
+                />
+              )}
+            </Tab>
+          </Tabs>
+        </Flex>
+
+        <Flex flex="1">
+          <AsideStyle fullWidth>
+            <Suggestions
+              addAction={saveAction}
+              featureSet={columnFeatureSet}
+              removeAction={removeAction}
+            />
+          </AsideStyle>
+        </Flex>
+      </FlexContainer>
     </Layout>
   );
 }
