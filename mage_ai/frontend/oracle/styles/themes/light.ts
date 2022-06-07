@@ -108,7 +108,7 @@ export default {
     linkSecondary: PURPLE,
   },
   loader: {
-    color: RED,
+    color: '#EB0032',
   },
   monotone: {
     black: BLACK,

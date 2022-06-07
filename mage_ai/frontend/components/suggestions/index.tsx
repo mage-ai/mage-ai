@@ -11,6 +11,7 @@ import { getFeatureIdMapping } from '@utils/models/featureSet';
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
   featureSet: FeatureSetType | ColumnFeatureSetType;
+  isLoading?: boolean;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion?: (action: TransformerActionType) => void;
   suggestions: SuggestionType[];
@@ -19,6 +20,7 @@ type SuggestionsProps = {
 function Suggestions({
   addAction,
   featureSet,
+  isLoading,
   removeAction,
   removeSuggestion,
   suggestions,
@@ -55,6 +57,7 @@ function Suggestions({
                   featureSetId={featureSet?.id}
                   features={features}
                   idx={idx}
+                  isLoading={isLoading}
                   onClose={numberOfActions - 1 === idx
                     ? () => removeAction(action)
                     : null
@@ -85,6 +88,7 @@ function Suggestions({
                 featureSetId={featureSet?.id}
                 features={features}
                 idx={idx}
+                isLoading={isLoading}
                 key={`${idx}-${suggestion.title}`}
                 link={() => addAction(suggestion)}
                 saveAction={addAction}
