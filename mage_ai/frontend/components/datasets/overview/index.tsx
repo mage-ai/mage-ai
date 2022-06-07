@@ -176,11 +176,11 @@ function DatasetOverview({
     ? (insights?.[0] || []).find(({ feature }) => feature.uuid === selectedColumn)
     : insights?.[1] || {};
 
-  const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
+  const [actionPayload, setActionPayload] = useState<ActionPayloadType>(null);
   const actionType = actionPayload?.action_type;
 
   useEffect(() => {
-    setActionPayload();
+    setActionPayload(null);
   }, [
     selectedColumnIndex,
     setActionPayload,

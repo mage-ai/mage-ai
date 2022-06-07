@@ -326,14 +326,6 @@ function ColumnDetail({
                 ))}
               </Spacing>
             )}
-
-            {columnFeatureSet && (
-              <Suggestions
-                addAction={saveAction}
-                featureSet={columnFeatureSet}
-                removeAction={removeAction}
-              />
-            )}
           </>
         }
         header={

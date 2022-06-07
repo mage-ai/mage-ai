@@ -3,6 +3,12 @@ import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 import '@uiw/react-textarea-code-editor/dist.css';
 
+import ActionPayloadType, {
+  ActionPayloadOverrideType,
+  ActionVariableTypeEnum,
+  ActionVariablesType,
+  AxisEnum,
+} from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FeatureType, { FeatureResponseType } from '@interfaces/FeatureType';
@@ -11,7 +17,6 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ActionPayloadType, { ActionVariableTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
 import { Check, Close } from '@oracle/icons';
 import {
@@ -39,7 +44,7 @@ type ActionFormProps = {
   noBorder?: boolean;
   noHeader?: boolean;
   onClose?: () => void;
-  onSave: () => void;
+  onSave: (actionPayloadOverride?: ActionPayloadOverrideType) => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
 };
@@ -80,7 +85,7 @@ function ActionForm({
 
   const saveActionForm = () => {
     const av = actionVariables ? { ...actionVariables } : {};
-    const actionPayloadOverride = {
+    const actionPayloadOverride: ActionPayloadOverrideType = {
       action_variables: av,
     };
 
