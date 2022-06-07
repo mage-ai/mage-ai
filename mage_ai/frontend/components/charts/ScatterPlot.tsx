@@ -85,7 +85,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const xLabelFormat = xLabelFormatProp || (x => x);
   const yLabelFormat = yLabelFormatProp || (y => y);
 
-  const data = dataProp.filter(d => getX(d) !== null && getY(d) !== null)
+  const data = dataProp.filter(d => !(getX(d) == null || getY(d) == null))
 
   const border = light.monotone.gray;
   const text = light.content.active;
@@ -116,8 +116,8 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const voronoiLayout = useMemo(
     () =>
       voronoi({
-        x: (d) => xScale(getX(d)) ?? 0,
-        y: (d) => yScale(getY(d)) ?? 0,
+        x: (d) => xScale(getX(d)),
+        y: (d) => yScale(getY(d)),
         width: xMax,
         height: yMax,
       })(data),
@@ -263,8 +263,8 @@ function ScatterPlotContainer({
   scatterPlotLabels = {},
   ...props
 }: ScatterPlotContainerProps) {
-  const [xFeature, setXFeature] = useState();
-  const [yFeature, setYFeature] = useState();
+  const [xFeature, setXFeature] = useState<string>();
+  const [yFeature, setYFeature] = useState<string>();
 
   const defaultMargin = {
     bottom: 3 * UNIT,
@@ -279,30 +279,27 @@ function ScatterPlotContainer({
 
   const features = Object.keys(scatterPlotOverview);
 
-  let data = [];
+  const xValues = useMemo(() => scatterPlotOverview[xFeature], [xFeature])
+  const yValues = useMemo(() => scatterPlotOverview[yFeature], [yFeature])
+
+  const data = useMemo(
+    () => xValues?.map((x, idx) => ({
+      x: x,
+      y: yValues?.[idx],
+    })),
+    [xValues, yValues],
+  );
 
   const extraProps = {};
-
-  if (xFeature && yFeature) {
-    const xValues = scatterPlotOverview[xFeature];
-    const yValues = scatterPlotOverview[yFeature];
-    data = xValues.map((x, idx) => ({
-      x: x,
-      y: yValues[idx],
-    }));
-
-    if (xFeature in scatterPlotLabels) {
-      extraProps['xLabelFormat'] = (label) => scatterPlotLabels[xFeature][label];
-      extraProps['numXTicks'] = scatterPlotLabels[xFeature].length;
-    }
-
-    if (yFeature in scatterPlotLabels) {
-      extraProps['yLabelFormat'] = (label) => scatterPlotLabels[yFeature][label];
-      extraProps['numYTicks'] = scatterPlotLabels[yFeature].length;
-    }
+  if (xFeature in scatterPlotLabels) {
+    extraProps['xLabelFormat'] = (label) => scatterPlotLabels[xFeature][label];
+    extraProps['numXTicks'] = scatterPlotLabels[xFeature].length;
   }
 
-  console.log("data:", data);
+  if (yFeature in scatterPlotLabels) {
+    extraProps['yLabelFormat'] = (label) => scatterPlotLabels[yFeature][label];
+    extraProps['numYTicks'] = scatterPlotLabels[yFeature].length;
+  }
 
   return (
     <>
@@ -365,7 +362,7 @@ function ScatterPlotContainer({
               <ScatterPlot
                 {...props}
                 {...extraProps}
-                data={data}
+                data={data || []}
                 height={parentHeight}
                 margin={margin}
                 width={width}
