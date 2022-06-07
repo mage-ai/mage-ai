@@ -149,7 +149,14 @@ function FeatureProfile({
             passHref
           >
             <Link inline>
-              <Text backgroundColor={PURPLE_HIGHLIGHT} bold color={PURPLE} monospace textOverflow maxWidth={25*UNIT}>
+              <Text
+                backgroundColor={PURPLE_HIGHLIGHT}
+                bold
+                color={PURPLE}
+                maxWidth={25 * UNIT}
+                monospace
+                textOverflow
+              >
                 {uuid}
               </Text>
             </Link>
