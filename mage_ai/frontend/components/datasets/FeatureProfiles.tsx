@@ -21,6 +21,7 @@ import { getFeatureIdMapping } from '@utils/models/featureSet';
 import Spacing from '@oracle/elements/Spacing';
 import { formatPercent, roundNumber } from '@utils/string';
 import FlexContainer from '@oracle/components/FlexContainer';
+import light from '@oracle/styles/themes/light';
 
 export const ContainerStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -150,9 +151,9 @@ function FeatureProfile({
           >
             <Link inline>
               <Text
-                backgroundColor={PURPLE_HIGHLIGHT}
+                backgroundColor={light.feature.active}
                 bold
-                color={PURPLE}
+                color={light.interactive.linkSecondary}
                 maxWidth={25 * UNIT}
                 monospace
                 textOverflow
@@ -172,7 +173,8 @@ function FeatureProfile({
         return (
           <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
             <Text
-              color={shouldWarn && 'red'}
+              bold={shouldWarn}
+              color={shouldWarn && light.progress.negative}
               textOverflow
             >
               {val}
