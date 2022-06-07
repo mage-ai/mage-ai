@@ -20,6 +20,7 @@ import { PADDING, UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 import Spacing from '@oracle/elements/Spacing';
 import { formatPercent, roundNumber } from '@utils/string';
+import FlexContainer from '@oracle/components/FlexContainer';
 
 export const ContainerStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -138,7 +139,7 @@ function FeatureProfile({
   const featureId = getFeatureIdMapping(featureSet)[featureUuid];
 
   return (
-    <Flex flex={1} flexDirection="column">
+    <Flex flexDirection="column">
       <FeatureProfileStyle>
         <Spacing p={2}>
           <NextLink
@@ -189,7 +190,7 @@ function FeatureProfiles({
         </Text>
       </HeaderStyle>
       <BodyStyle>
-        <Flex>
+        <FlexContainer>
           <ColumnProfileStyle>
             <Flex flex={1} flexDirection="column" style={{ background: '#F9FAFC' }} >
               <Spacing mr={1.25 * UNIT} mt={'52px'} />
@@ -209,7 +210,7 @@ function FeatureProfiles({
               />
             </FeatureProfileStyle>
           ))}
-        </Flex>
+        </FlexContainer>
       </BodyStyle>
     </ContainerStyle>
   );
