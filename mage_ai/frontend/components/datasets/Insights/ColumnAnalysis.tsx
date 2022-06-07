@@ -618,26 +618,43 @@ function ColumnAnalysis({
               noPadding={!!correlationsRowData}
               title="Values with high correlation"
             >
-              <SimpleDataTable
-                columnFlexNumbers={[1, 1, 1]}
-                columnHeaders={[
-                  {
-                  label: 'Column',
-                  },
-                  {
-                  label: 'Related column',
-                  },
-                  {
-                  label: 'Correlation',
-                }]}
-                noBorder
-                rowGroupData={[
-                  {
-                    rowData: highCorrelations,
-                  },
-                ]}
-                small
-              />
+              { highCorrelations.length > 0 ? (
+                <SimpleDataTable
+                  columnFlexNumbers={[1, 1, 1]}
+                  columnHeaders={[
+                    {
+                      label: 'Column',
+                    },
+                    {
+                      label: 'Related column',
+                    },
+                    {
+                      label: 'Correlation',
+                    },
+                  ]}
+                  noBorder
+                  rowGroupData={[
+                    {
+                      rowData: highCorrelations,
+                    },
+                  ]}
+                  small
+                />
+              ) : (
+                <>
+                  <Text>
+                    There are no values with high correlation.
+                  </Text>
+
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[]}
+                    noBorder
+                    rowGroupData={[]}
+                    small
+                  />
+                </>
+              )}
             </ChartContainer>
           }
         />
