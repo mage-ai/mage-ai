@@ -35,6 +35,7 @@ import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { removeAtIndex } from '@utils/array';
 
 const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
