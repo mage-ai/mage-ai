@@ -42,6 +42,8 @@ type SharedProps = {
 
 type ScatterPlotProps = {
   data: DataProps[],
+  numXTicks?: number,
+  numYTicks?: number,
   width: number,
   xAxisLabel?: string,
   yAxisLabel?: string,
@@ -51,29 +53,39 @@ type ScatterPlotContainerProps = {
   scatterPlotOverview: {
     [key: string]: number[],
   },
+  scatterPlotLabels?: {
+    [key: string]: string[],
+  }
 } & SharedProps;
 
 const ScatterPlot = withTooltip<ScatterPlotProps>(({
-  data,
+  data: dataProp,
   getX: getXProp,
   getY: getYProp,
   height,
   hideTooltip,
   increasedXTicks,
   margin,
+  numXTicks: numXTicksProp,
+  numYTicks,
   showTooltip,
   tooltipData,
   tooltipLeft,
   tooltipTop,
   width,
   xAxisLabel,
-  xLabelFormat,
+  xLabelFormat: xLabelFormatProp,
   yAxisLabel,
-  yLabelFormat,
+  yLabelFormat: yLabelFormatProp,
   // @ts-ignore
 }: ScatterPlotProps & WithTooltipProvidedProps) => {
   const getX = getXProp || (d => d?.x);
   const getY = getYProp || (d => d?.y);
+
+  const xLabelFormat = xLabelFormatProp || (x => x);
+  const yLabelFormat = yLabelFormatProp || (y => y);
+
+  const data = dataProp.filter(d => getX(d) !== null && getY(d) !== null)
 
   const border = light.monotone.gray;
   const text = light.content.active;
@@ -111,9 +123,10 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
       })(data),
     [xMax, yMax, xScale, yScale],
   );
-  const numXTicks = width > 520
-    ? (increasedXTicks ? 20 : 10)
-    : (increasedXTicks ? 10 : 5);
+  const numXTicks = numXTicksProp ||
+    (width > 520
+      ? (increasedXTicks ? 20 : 10)
+      : (increasedXTicks ? 10 : 5));
   
 
   const axisStrokeColor = border;
@@ -202,6 +215,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
 
           <AxisLeft
             hideTicks
+            numTicks={numYTicks}
             scale={yScale}
             stroke={axisStrokeColor}
             tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
@@ -229,12 +243,12 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
       </svg>
 
       {tooltipData && (
-        <Tooltip left={tooltipLeft + margin.left} top={tooltipTop}>
+        <Tooltip left={tooltipLeft} top={tooltipTop} offsetTop={margin.top + UNIT}>
           <Text center small>
-            {`${xAxisLabel}: ${getX(tooltipData)}`}
+            {`${xAxisLabel}: ${xLabelFormat(getX(tooltipData))}`}
           </Text>
           <Text center small>
-            {`${yAxisLabel}: ${getY(tooltipData)}`}
+            {`${yAxisLabel}: ${yLabelFormat(getY(tooltipData))}`}
           </Text>
         </Tooltip>
       )}
@@ -246,6 +260,7 @@ function ScatterPlotContainer({
   height: parentHeight,
   margin: marginArgs,
   scatterPlotOverview,
+  scatterPlotLabels = {},
   ...props
 }: ScatterPlotContainerProps) {
   const [xFeature, setXFeature] = useState();
@@ -266,6 +281,8 @@ function ScatterPlotContainer({
 
   let data = [];
 
+  const extraProps = {};
+
   if (xFeature && yFeature) {
     const xValues = scatterPlotOverview[xFeature];
     const yValues = scatterPlotOverview[yFeature];
@@ -273,7 +290,19 @@ function ScatterPlotContainer({
       x: x,
       y: yValues[idx],
     }));
+
+    if (xFeature in scatterPlotLabels) {
+      extraProps['xLabelFormat'] = (label) => scatterPlotLabels[xFeature][label];
+      extraProps['numXTicks'] = scatterPlotLabels[xFeature].length;
+    }
+
+    if (yFeature in scatterPlotLabels) {
+      extraProps['yLabelFormat'] = (label) => scatterPlotLabels[yFeature][label];
+      extraProps['numYTicks'] = scatterPlotLabels[yFeature].length;
+    }
   }
+
+  console.log("data:", data);
 
   return (
     <>
@@ -335,6 +364,7 @@ function ScatterPlotContainer({
             {({ width }) => (
               <ScatterPlot
                 {...props}
+                {...extraProps}
                 data={data}
                 height={parentHeight}
                 margin={margin}

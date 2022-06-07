@@ -3,6 +3,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     CHART_TYPE_LINE_CHART,
     CHART_TYPE_HISTOGRAM,
     DATA_KEY_SCATTER_PLOT,
+    DATA_KEY_SCATTER_PLOT_LABELS,
     DATA_KEY_TIME_SERIES,
     LABEL_TYPE_RANGE,
 )
@@ -15,6 +16,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
+from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
 import math
 import numpy as np
 import pandas as pd
@@ -22,6 +24,7 @@ import pandas as pd
 DD_KEY = 'lambda.analysis_charts'
 BUCKETS = 40
 SCATTER_PLOT_SAMPLE_COUNT = 100
+SCATTER_PLOT_CATEGORY_LIMIT = 10
 TIME_SERIES_BUCKETS = 40
 
 
@@ -236,7 +239,11 @@ def build_time_series_data(df, feature, datetime_column, column_type):
     )
 
 
-def build_overview_data(df, datetime_features, numeric_features):
+def build_overview_data(
+    df,
+    datetime_features,
+    numeric_features,
+):
     increment(f'{DD_KEY}.build_overview_data.start')
 
     time_series = []
@@ -298,16 +305,45 @@ def build_overview_data(df, datetime_features, numeric_features):
 
         increment(f'{DD_KEY}.build_overview_time_series.succeeded', tags)
 
+    """
+    Build sample data for scatter plot. Sample data consits of two parts:
+    1. Numeric features
+    2. Low cardinality categorical features
+    """    
     if df.shape[0] > SCATTER_PLOT_SAMPLE_COUNT:
         df_sample = df.sample(SCATTER_PLOT_SAMPLE_COUNT).copy()
     else:
         df_sample = df.copy()
-    df_sample = df_sample[numeric_features]
-    df_sample = df_sample.dropna(axis=1, how='all')
+
+    df_sample_numeric = df_sample[numeric_features].dropna(axis=1, how='all')
+    """
+    Calculate low cardinality categorical features:
+    1. unique count <= SCATTER_PLOT_CATEGORY_LIMIT and unique count > 1
+    2. count > SCATTER_PLOT_SAMPLE_COUNT / 2
+    """
+    non_numeric_features = list(set(df.columns) - set(numeric_features))
+    non_numeric_nuniques = df_sample[non_numeric_features].nunique()
+    non_numeric_nuniques_filtered = \
+        non_numeric_nuniques[(non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT) &
+                             (non_numeric_nuniques > 1)]
+    non_numeric_counts = df_sample[non_numeric_features].count()
+    non_numeric_counts_filtered = \
+        non_numeric_counts[non_numeric_counts > SCATTER_PLOT_SAMPLE_COUNT / 2]
+    eligible_category_features = \
+        set(non_numeric_nuniques_filtered.index) & set(non_numeric_counts_filtered.index)
+    if len(eligible_category_features) > 0:
+        encoder = MultipleColumnLabelEncoder(input_type=str)
+        df_sample_category = encoder.fit_transform(df_sample[eligible_category_features])
+        class_mappings = {k: list(e.label_classes()) for k, e in encoder.encoders.items()}
+        df_sample_filtered = pd.concat([df_sample_numeric, df_sample_category], axis=1)
+    else:
+        class_mappings = dict()
+        df_sample_filtered = df_sample_numeric
 
     increment(f'{DD_KEY}.build_overview_data.succeeded')
 
     return {
         DATA_KEY_TIME_SERIES: time_series,
-        DATA_KEY_SCATTER_PLOT: df_sample.to_dict('list'),
+        DATA_KEY_SCATTER_PLOT: df_sample_filtered.to_dict('list'),
+        DATA_KEY_SCATTER_PLOT_LABELS: class_mappings,
     }
