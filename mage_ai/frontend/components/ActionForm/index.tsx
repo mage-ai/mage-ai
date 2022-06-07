@@ -1,8 +1,14 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 import '@uiw/react-textarea-code-editor/dist.css';
 
+import ActionPayloadType, {
+  ActionPayloadOverrideType,
+  ActionVariableTypeEnum,
+  ActionVariablesType,
+  AxisEnum,
+} from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FeatureType, { FeatureResponseType } from '@interfaces/FeatureType';
@@ -11,7 +17,6 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ActionPayloadType, { ActionVariableTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import actions from './actions';
 import { Check, Close } from '@oracle/icons';
 import {
@@ -39,7 +44,7 @@ type ActionFormProps = {
   noBorder?: boolean;
   noHeader?: boolean;
   onClose?: () => void;
-  onSave: () => void;
+  onSave: (actionPayloadOverride?: ActionPayloadOverrideType) => void;
   payload: ActionPayloadType;
   setPayload: (payload: ActionPayloadType) => void;
 };
@@ -64,6 +69,7 @@ function ActionForm({
   setPayload,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
+  const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
 
   const {
     action_arguments: actionArguments,
@@ -77,13 +83,17 @@ function ActionForm({
     ...data,
   });
 
-  const updateActionCode = (newCode) => {
+  const saveActionForm = () => {
     const av = actionVariables ? { ...actionVariables } : {};
-
-    updatePayload({
-      action_code: newCode,
+    const actionPayloadOverride: ActionPayloadOverrideType = {
       action_variables: av,
-    });
+    };
+
+    if (actionCodeState) {
+      actionPayloadOverride.action_code = actionCodeState;
+    }
+
+    return onSave(actionPayloadOverride);
   };
 
   const config: FormConfigType =
@@ -126,7 +136,7 @@ function ActionForm({
 
   return (
     <ContainerStyle noBorder={noBorder}>
-      {!noHeader && 
+      {!noHeader &&
         <>
           <FlexContainer justifyContent={'space-between'}>
             <Spacing p={2}>
@@ -165,7 +175,7 @@ function ActionForm({
                 // @ts-ignore
                 language="python"
                 minHeight={code.multiline ? UNIT * 12 : null}
-                onChange={e => updateActionCode(e.target.value)}
+                onChange={e => setActionCodeState(e.target.value)}
                 padding={UNIT * 2}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
@@ -193,7 +203,7 @@ function ActionForm({
 
             {(VALUES_TYPE_COLUMNS === argumentsValues || showColumns) && (
               <FlexContainer flexWrap="wrap">
-                {features.map(({
+                {features?.map(({
                   column_type,
                   uuid,
                 }) => {
@@ -351,7 +361,7 @@ function ActionForm({
         })}
 
         <Spacing mt={(configArguments || showColumns || options) ? 3 : 0}>
-          <Button onClick={onSave}>
+          <Button onClick={saveActionForm}>
             Apply
           </Button>
         </Spacing>

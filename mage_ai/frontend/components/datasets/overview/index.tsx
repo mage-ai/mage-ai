@@ -1,15 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
 import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
+import ColumnReports from '@components/datasets/columns/ColumnReports';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -52,20 +53,18 @@ const TABS_IN_ORDER = [
 ];
 
 type DatasetOverviewProps = {
-  columnData?: FeatureSetType;
   featureSet: FeatureSetType;
-  fetchColumnData: (arg: any) => void;
   fetchFeatureSet: (arg: any) => void;
-  selectedColumn?: string;
+  selectedColumnIndex?: number;
 };
 
 function DatasetOverview({
-  columnData,
   featureSet: featureSetRaw,
-  fetchColumnData,
   fetchFeatureSet,
-  selectedColumn: columnFromUrl,
+  selectedColumnIndex,
 }: DatasetOverviewProps) {
+  console.log('render/DatasetOverview');
+
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
@@ -89,22 +88,59 @@ function DatasetOverview({
     }
   }, [setTabs, tabsFromUrl]);
 
-  const featureSetAllColumns = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
-  const featureSet = columnFromUrl
-    ? columnData ? deserializeFeatureSet(columnData) : {}
-    : featureSetAllColumns;
+  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
     insights,
     metadata,
     pipeline,
     statistics,
+    suggestions: suggestionsInit,
   } = featureSet || {};
-  const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
 
   const {
-    columns,
-    rows,
+    columns: columnsAll,
+    rows: rowsAll,
   } = featureSet?.sample_data || {};
+  const selectedColumn = columnsAll?.[Number(selectedColumnIndex)];
+  const columns = useMemo(() => selectedColumn ? [selectedColumn] : columnsAll, [
+    columnsAll,
+    selectedColumn,
+  ]);
+  const indexOfValueForColumn = columnsAll?.indexOf(selectedColumn);
+  const rows = useMemo(
+    () => selectedColumn ? rowsAll?.map(row => [row[indexOfValueForColumn]]) : rowsAll,
+    [
+      selectedColumn,
+      indexOfValueForColumn,
+      rowsAll,
+    ],
+  );
+
+  const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
+  const suggestions = useMemo(
+    () => selectedColumn
+      ? suggestionsInit?.reduce((acc, s) => {
+        const { action_payload: { action_arguments: aa } } = s;
+
+        if (aa?.includes(selectedColumn)) {
+          acc.push({
+            ...s,
+            action_payload: {
+              ...s.action_payload,
+              action_arguments: [selectedColumn],
+            },
+          });
+        }
+
+        return acc;
+      }, [])
+      : suggestionsInit,
+    [
+      selectedColumn,
+      suggestionsInit,
+    ],
+  );
+
   const {
     column_types: columnTypes,
   } = metadata || {};
@@ -136,12 +172,19 @@ function DatasetOverview({
     Router.push(`${pathname}/features`);
   };
 
-  const insightsOverview = columnFromUrl
-    ? (insights?.[0] || []).find(({ feature }) => feature.uuid === columnFromUrl)
+  const insightsOverview = selectedColumn
+    ? (insights?.[0] || []).find(({ feature }) => feature.uuid === selectedColumn)
     : insights?.[1] || {};
 
-  const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
+  const [actionPayload, setActionPayload] = useState<ActionPayloadType>(null);
   const actionType = actionPayload?.action_type;
+
+  useEffect(() => {
+    setActionPayload(null);
+  }, [
+    selectedColumnIndex,
+    setActionPayload,
+  ]);
 
   const [commitAction, { isLoading: isLoadingCommitAction }] = useMutation(
     api.pipelines.useUpdate(pipeline?.id),
@@ -175,12 +218,34 @@ function DatasetOverview({
   );
   const saveAction = (newActionData: TransformerActionType) => {
     setErrorMessages(null);
+
+    const newActions = [...pipelineActions];
+    if (!selectedColumn) {
+      newActions.push(newActionData);
+    } else {
+      newActions.push({
+        ...newActionData,
+        action_payload: {
+          ...newActionData.action_payload,
+          action_arguments: [
+            selectedColumn,
+          ],
+          action_variables: {
+            [selectedColumn]: {
+              [ActionVariableTypeEnum.FEATURE]: {
+                column_type: columnTypes[selectedColumn],
+                uuid: selectedColumn,
+              },
+              type: ActionVariableTypeEnum.FEATURE,
+            }
+          },
+        },
+      });
+    }
+
     commitAction({
       ...pipeline,
-      actions: [
-        ...pipelineActions,
-        newActionData,
-      ],
+      actions: newActions,
     });
   };
   const removeAction = (existingActionData: TransformerActionType) => {
@@ -196,13 +261,6 @@ function DatasetOverview({
 
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
-  const selectActionEl = (
-    <ActionDropdown
-      actionType={actionType}
-      setActionPayload={setActionPayload}
-    />
-  );
-
   const columnsVisible = Number(showColumnsFromUrl) === 1;
 
   return (
@@ -216,7 +274,11 @@ function DatasetOverview({
         after={
           <Spacing p={PADDING_UNITS}>
             <Spacing mb={PADDING_UNITS}>
-              {selectActionEl}
+              <ActionDropdown
+                actionType={actionType}
+                columnOnly={!!selectedColumn}
+                setActionPayload={setActionPayload}
+              />
             </Spacing>
 
             {actionType && (
@@ -224,12 +286,20 @@ function DatasetOverview({
                 <ActionForm
                   actionType={actionType}
                   axis={actionPayload?.axis}
-                  features={featuresWithAltColType}
+                  currentFeature={selectedColumn
+                    ? {
+                      columnType: columnTypes[selectedColumn],
+                      uuid: selectedColumn,
+                    }
+                    : null
+                  }
+                  features={selectedColumn ? null : featuresWithAltColType}
                   onClose={closeAction}
-                  onSave={() => {
+                  onSave={(actionPayloadOverride: ActionPayloadType) => {
                     saveAction({
                       action_payload: {
                         ...actionPayload,
+                        ...actionPayloadOverride,
                         action_type: actionType,
                       },
                     });
@@ -258,6 +328,7 @@ function DatasetOverview({
               <Suggestions
                 addAction={saveAction}
                 featureSet={featureSet}
+                suggestions={suggestions}
                 removeAction={removeAction}
                 removeSuggestion={(action) => console.log(action)}
               />
@@ -267,9 +338,9 @@ function DatasetOverview({
         before={columnsVisible && (
           <Spacing mt={PADDING_UNITS}>
             <ColumnListSidebar
-              featureSet={featureSetAllColumns}
-              onClickColumn={col => goToWithQuery({ column: col })}
-              selectedColumn={columnFromUrl}
+              featureSet={featureSet}
+              onClickColumn={col => goToWithQuery({ column: columnsAll.indexOf(col) })}
+              selectedColumn={selectedColumn}
             />
           </Spacing>
         )}
@@ -310,54 +381,65 @@ function DatasetOverview({
         <Spacing p={PADDING_UNITS}>
           {tabsFromUrl?.includes(TAB_REPORTS) && (
             <>
-              <FlexContainer justifyContent={'center'}>
-                <Flex flex={1}>
-                  {metricSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[2, 1, 2 ]}
-                      columnHeaders={[{ label: 'Quality Metrics' }]}
-                      rowGroupData={[metricSample]}
-                    />
-                  )}
-                </Flex>
-
-                <Spacing ml={PADDING_UNITS} />
-
-                <Flex flex={1}>
-                  {statSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[1, 1, 1]}
-                      columnHeaders={[{ label: 'Statistics' }]}
-                      rowGroupData={[statSample]}
-                    />
-                  )}
-                </Flex>
-              </FlexContainer>
-
-              <Spacing mt={PADDING_UNITS}>
-                <FeatureProfiles
-                  features={features}
+              {selectedColumn && (
+                <ColumnReports
+                  column={selectedColumn}
                   featureSet={featureSet}
-                  statistics={statistics}
                 />
-              </Spacing>
+              )}
+
+              {!selectedColumn && (
+                <>
+                  <FlexContainer justifyContent={'center'}>
+                    <Flex flex={1}>
+                      {metricSample && (
+                        <SimpleDataTable
+                          columnFlexNumbers={[2, 1, 2 ]}
+                          columnHeaders={[{ label: 'Quality Metrics' }]}
+                          rowGroupData={[metricSample]}
+                        />
+                      )}
+                    </Flex>
+
+                    <Spacing ml={PADDING_UNITS} />
+
+                    <Flex flex={1}>
+                      {statSample && (
+                        <SimpleDataTable
+                          columnFlexNumbers={[1, 1, 1]}
+                          columnHeaders={[{ label: 'Statistics' }]}
+                          rowGroupData={[statSample]}
+                        />
+                      )}
+                    </Flex>
+                  </FlexContainer>
+
+                  <Spacing mt={PADDING_UNITS}>
+                    <FeatureProfiles
+                      features={features}
+                      featureSet={featureSet}
+                      statistics={statistics}
+                    />
+                  </Spacing>
+                </>
+              )}
             </>
           )}
 
           {tabsFromUrl?.includes(TAB_VISUALIZATIONS) && (
             <>
-              {columnFromUrl && (
+              {selectedColumn && (
                 <ColumnAnalysis
-                  column={columnFromUrl}
+                  column={selectedColumn}
                   features={features}
                   insights={insightsOverview}
-                  statisticsByColumn={statistics?.[`${columnFromUrl}/value_counts`] || {}}
+                  statisticsByColumn={statistics?.[`${selectedColumn}/value_counts`] || {}}
                   statisticsOverview={statistics}
                 />
               )}
 
-              {!columnFromUrl && (
-                  <Overview
+              {!selectedColumn && (
+                <Overview
                   features={features}
                   insightsOverview={insightsOverview}
                   statistics={statistics}

@@ -13,16 +13,12 @@ function DatasetDetail() {
     slug = [],
   } = router.query;
   const {
-    column,
+    column: columnIndex,
   } = queryFromUrl();
 
   // @ts-ignore
   const [featureSetId, _, featureId] = slug;
   const { data: featureSet, mutate } = api.feature_sets.detail(featureSetId);
-  const {
-    data: columnData,
-    mutate: mutateColumnData,
-  } = api.columns.feature_sets.detail(featureSetId, column);
 
   const sharedProps = {
     featureSet,
@@ -34,11 +30,9 @@ function DatasetDetail() {
     el = (
       <ClientOnly>
         <DatasetOverview
-          columnData={columnData}
           featureSet={featureSet}
-          fetchColumnData={mutateColumnData}
           fetchFeatureSet={mutate}
-          selectedColumn={column}
+          selectedColumnIndex={columnIndex}
         />
       </ClientOnly>
     );

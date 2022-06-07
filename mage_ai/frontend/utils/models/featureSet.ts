@@ -31,7 +31,7 @@ export function getFeatureUUID(featureSet, featureIndex) {
 }
 
 export function getFeatureSetStatistics(featureSet, featureUUID) {
-  if (!featureSet) {
+  if (!featureSet || !featureSet.statistics) {
     return {};
   }
 

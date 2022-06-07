@@ -42,19 +42,34 @@ export enum ActionStatusEnum {
   COMPLETED = 'completed',
 }
 
+export enum ActionVariableTypeEnum {
+  FEATURE = 'feature',
+}
+
+export interface ActionVariablesType {
+  [column: string]: {
+    feature: {
+      column_type: string;
+      uuid: string;
+    };
+    type: typeof ActionVariableTypeEnum.FEATURE;
+  };
+}
+
+export interface ActionPayloadOverrideType {
+  action_code?: string;
+  action_variables?: ActionVariablesType;
+}
+
 export default interface ActionPayloadType {
   action_arguments?: any[];
   action_code?: string;
   action_options?: any;
   action_type: ActionTypeEnum;
-  action_variables?: any;
+  action_variables?: ActionVariablesType;
   axis: AxisEnum;
   metadata?: any;
   outputs?: any[];
   priority?: number;
   status?: ActionStatusEnum;
-}
-
-export enum ActionVariableTypeEnum {
-  FEATURE = 'feature',
 }
