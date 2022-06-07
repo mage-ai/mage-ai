@@ -22,7 +22,7 @@ function DatasetDetail() {
   const {
     data: columnData,
     mutate: mutateColumnData,
-  } = api.columns.feature_sets.detail(featureSetId, column ? encodeURIComponent(column) : null);
+  } = api.columns.feature_sets.detail(featureSetId, column);
 
   const sharedProps = {
     featureSet,

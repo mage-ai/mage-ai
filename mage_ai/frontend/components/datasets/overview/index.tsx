@@ -8,6 +8,7 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import Button from '@oracle/elements/Button';
 import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
+import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -93,6 +94,7 @@ function DatasetOverview({
     ? columnData ? deserializeFeatureSet(columnData) : {}
     : featureSetAllColumns;
   const {
+    insights,
     metadata,
     pipeline,
     statistics,
@@ -134,7 +136,9 @@ function DatasetOverview({
     Router.push(`${pathname}/features`);
   };
 
-  const insightsOverview = featureSet?.['insights']?.[1] || {};
+  const insightsOverview = columnFromUrl
+    ? (insights?.[0] || []).find(({ feature }) => feature.uuid === columnFromUrl)
+    : insights?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>();
   const actionType = actionPayload?.action_type;
@@ -341,11 +345,23 @@ function DatasetOverview({
           )}
 
           {tabsFromUrl?.includes(TAB_VISUALIZATIONS) && (
-            <Overview
-              features={features}
-              insightsOverview={insightsOverview}
-              statistics={statistics}
-            />
+            <>
+              {columnFromUrl && (
+                <ColumnAnalysis
+                  column={columnFromUrl}
+                  features={features}
+                  insights={insightsOverview}
+                  statisticsByColumn={statistics?.[`${columnFromUrl}/value_counts`] || {}}
+                  statisticsOverview={statistics}
+                />
+              )}
+
+              {/*<Overview
+                features={features}
+                insightsOverview={insightsOverview}
+                statistics={statistics}
+              />*/}
+            </>
           )}
 
           {tabsFromUrl?.includes(TAB_DATA) && (
