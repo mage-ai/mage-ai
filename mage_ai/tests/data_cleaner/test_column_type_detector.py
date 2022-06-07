@@ -1,8 +1,6 @@
 from faker import Faker
-from mage_ai.data_cleaner import column_type_detector
 from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
     DATETIME,
     EMAIL,
     MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES,
@@ -12,7 +10,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     TEXT,
     TRUE_OR_FALSE,
     ZIP_CODE,
-    get_mismatched_row_count,
+    get_mismatched_rows,
     infer_column_types,
     REGEX_NUMBER,
 )
@@ -27,7 +25,7 @@ class ColumnTypeDetectorTests(TestCase):
         self.fake = Faker()
         return super().setUp()
 
-    def test_get_mismatched_row_count(self):
+    def test_get_mismatched_rows(self):
         df = pd.DataFrame(
             [
                 [1, 'abc@xyz.com', '32132'],
@@ -39,12 +37,12 @@ class ColumnTypeDetectorTests(TestCase):
             ],
             columns=['id', 'email', 'zip_code'],
         )
-        count1 = get_mismatched_row_count(df['id'], 'number')
-        count2 = get_mismatched_row_count(df['email'], 'email')
-        count3 = get_mismatched_row_count(df['zip_code'], 'zip_code')
-        self.assertEqual(count1, 0)
-        self.assertEqual(count2, 2)
-        self.assertEqual(count3, 1)
+        rows1 = get_mismatched_rows(df['id'], 'number')
+        rows2 = get_mismatched_rows(df['email'], 'email')
+        rows3 = get_mismatched_rows(df['zip_code'], 'zip_code')
+        self.assertEqual(rows1, [])
+        self.assertEqual(rows2, ['test', 'abc12345@'])
+        self.assertEqual(rows3, ['abcde'])
 
     def test_number_pattern_matching(self):
         good_number_patterns = [
