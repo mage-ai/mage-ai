@@ -76,7 +76,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const getY = getYProp || (d => d?.y);
 
   const border = light.monotone.gray;
-  const text = light.monotone.gray;
+  const text = light.content.active;
 
   const xValues = data.map(d => Number(getX(d)));
   const yValues = data.map(d => Number(getY(d)));
@@ -116,7 +116,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
     : (increasedXTicks ? 10 : 5);
   
 
-  const axisStrokeColor = text;
+  const axisStrokeColor = border;
 
   const handleTooltip = useCallback(
     (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {

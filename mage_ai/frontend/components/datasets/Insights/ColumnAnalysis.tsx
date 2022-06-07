@@ -12,6 +12,7 @@ import Histogram from '@components/charts/Histogram';
 import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
@@ -23,13 +24,13 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
+import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import {
   groupBy,
   indexBy,
   sortByKey,
 } from '@utils/array';
-import Spacing from '@oracle/elements/Spacing';
 
 type ColumnAnalysisProps = {
   column: string;
@@ -172,7 +173,7 @@ function ColumnAnalysis({
   }));
 
   let distributionChart;
-  if (distribution) {
+  if (distribution && !isBooleanType) {
     distributionChart = (
       <Histogram
         data={distribution.data.map(({
@@ -222,8 +223,7 @@ function ColumnAnalysis({
         width={600}
       />
     );
-  }
-  else if (isCategoricalType) {
+  } else if (isCategoricalType) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -370,6 +370,9 @@ function ColumnAnalysis({
       };
     });
 
+    console.log("legend names:", legendNames);
+    console.log("data:", data);
+
     return (
       <LineSeries
         data={data}
@@ -400,6 +403,7 @@ function ColumnAnalysis({
         xAxisLabel={xMetadata.label}
         xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
         yAxisLabel={yAxisLabel}
+        yLabelFormat={formatNumberLabel}
       />
     );
   };
@@ -446,10 +450,10 @@ function ColumnAnalysis({
             min: minValue,
             // sum,
           }) => [
-            minValue,
-            maxValue,
-            average,
-            median,
+            minValue || 0,
+            maxValue || 0,
+            average || 0,
+            median || 0,
             // sum,
           ],
           x,

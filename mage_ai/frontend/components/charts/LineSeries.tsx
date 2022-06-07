@@ -157,12 +157,17 @@ const LineSeries = withTooltip<LineSeriesProps>(({
     (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
       const { x } = localPoint(event) || { x: 0 };
       const x0 = xScale.invert(x - margin.left);
-      const index = binarySearch(xValues, v => x0 >= v);
+      let index = binarySearch(xValues, v => x0 >= v);
       const d0 = data[index - 1];
       const d1 = data[index];
       let d = d0;
       if (d1) {
-        d = x0 - getX(d0) > getX(d1) - x0 ? d1 : d0;
+        if (x0 - getX(d0) > getX(d1) - x0) {
+          d = d1;
+        } else {
+          d = d0;
+          index = index - 1;
+        }
       }
 
       const tooltipTopData = range(0, maxNumberOfYValues).map(i => yScale(getY(d, i)));

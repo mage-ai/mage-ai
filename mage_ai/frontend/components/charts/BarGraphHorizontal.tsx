@@ -259,7 +259,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
               scale={xScale}
               stroke={colors.muted}
               tickLabelProps={() => ({
-                fill: colors.muted,
+                fill: colors.active,
                 fontFamily: FONT_FAMILY_REGULAR,
                 fontSize,
                 textAnchor: 'middle',

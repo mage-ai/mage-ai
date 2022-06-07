@@ -25,6 +25,7 @@ import {
   buildDistributionData,
   hasHighDistribution,
 } from '@components/datasets/Insights/utils/data';
+import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
 
@@ -227,7 +228,6 @@ function Overview({
       showYAxisLabels
       showZeroes
       sortData={d => sortByKey(d, '[4]')}
-      width={550}
     />
   ));
 
@@ -287,11 +287,6 @@ function Overview({
   });
 
   const columnsWithDistribution = allColumns.filter(({ distributionPercentage }) => distributionPercentage);
-
-  const numberFormat = Intl.NumberFormat('en-US', {
-    notation: "compact",
-    maximumFractionDigits: 1
-  })
 
   return (
     <FlexContainer
@@ -571,7 +566,7 @@ function Overview({
                 margin={{
                   left: 5 * UNIT,
                 }}
-                yLabelFormat={y => (y >= 10000 ? numberFormat.format(y) : y)}
+                yLabelFormat={formatNumberLabel}
               />
             </ChartContainer>
           }
