@@ -153,6 +153,14 @@ export function equals(a, b) {
   return a.map(i => String(i)).join() === b.map(i => String(i)).join();
 }
 
+export function greaterThan(a, b) {
+  return a > b;
+}
+
+export function lessThan(a, b) {
+  return a < b;
+}
+
 export function arrayIncludesArray(arr1, arr2) {
   const mapping = indexBy(arr2, val => val);
 

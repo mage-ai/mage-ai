@@ -42,9 +42,9 @@ import {
 } from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
+import { greaterThan, lessThan, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
-import { removeAtIndex } from '@utils/array';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -433,6 +433,21 @@ function DatasetOverview({
                           columnFlexNumbers={[2, 1, 2 ]}
                           columnHeaders={[{ label: 'Quality Metrics' }]}
                           rowGroupData={[metricSample]}
+                          warnings={[{
+                            name: 'Validity',
+                            compare: lessThan,
+                            val: 80,
+                          },
+                          {
+                            name: 'Completeness',
+                            compare: lessThan,
+                            val: 80,
+                          },
+                          {
+                            name: 'Duplicate rows',
+                            compare: greaterThan,
+                            val: 0,
+                          }]}
                         />
                       )}
                     </Flex>

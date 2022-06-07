@@ -4,6 +4,7 @@ import Cell from './Cell';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import {
   ColumnHeaderCellStyle,
@@ -14,7 +15,7 @@ import {
   TextStyle,
 } from './index.style';
 import { Check } from '@oracle/icons';
-import Spacing from '@oracle/elements/Spacing';
+import { isString, removePercent } from '@utils/string';
 
 export type OnClickRowProps = {
   rowGroupIndex: number;
@@ -39,6 +40,12 @@ export type RowGroupDataType = {
   rowData: RowDataType[];
 };
 
+type Warning = {
+  name: string;
+  compare: (a: number, b: number) => boolean;
+  val: number;
+};
+
 type SimpleDataTableProps = {
   columnFlexNumbers: number[];
   columnHeaders: ColumnHeaderType[];
@@ -54,6 +61,7 @@ type SimpleDataTableProps = {
   selectedRowIndexes?: number[];
   small?: boolean;
   flex?: boolean;
+  warnings?: Warning[];
 };
 
 function SimpleDataTable({
@@ -69,6 +77,7 @@ function SimpleDataTable({
   selectedRowIndexes,
   small,
   flex,
+  warnings = [],
 }: SimpleDataTableProps) {
   const numberOfRowGroups = useMemo(() => rowGroupData.length, [rowGroupData]);
 
@@ -143,6 +152,10 @@ function SimpleDataTable({
             && selectedRowIndexes?.[1] === rowIndex;
           const cells = [];
 
+          const warning = warnings.find(warn => warn.name === columnValues[0]);
+          const val = isString(columnValues[1]) ? removePercent(columnValues[1]) : columnValues[1];
+          const shouldWarn = warning && warning.compare(val, warning.val);
+
           columnValues?.forEach((value: any, cellIndex: number) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
             if (Array.isArray(value)) {
@@ -165,7 +178,7 @@ function SimpleDataTable({
               cells.push(
                 <Cell
                   cellIndex={cellIndex}
-                  danger={danger}
+                  danger={shouldWarn || danger}
                   flex={columnFlexNumbers[cellIndex]}
                   key={cellIndex}
                   render={renderFunc}
