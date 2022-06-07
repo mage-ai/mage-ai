@@ -82,7 +82,7 @@ def build_histogram_data(col1, series, column_type):
 
     for value in series.values:
         index = math.floor((value - min_value) / bucket_interval)
-        if value == max_value:
+        if index >= len(buckets):
             index = len(buckets) - 1
         buckets[index]['values'].append(value)
 
