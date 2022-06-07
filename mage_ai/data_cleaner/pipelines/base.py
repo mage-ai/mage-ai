@@ -73,7 +73,11 @@ class BasePipeline:
         return self.create_actions(df_transformed, new_column_types, {})
 
     @classmethod
-    def deduplicate_suggestions(self, actions, suggestions):
+    def deduplicate_suggestions(self, actions, suggestions, statistics):
+        """
+        Not show duplicate outlier removal suggestions due to column value distribution changes.
+        TODO: Figure out a better way to detect outliers.
+        """
         columns_with_outlier_removed = \
             set(flatten([a['action_payload']['action_arguments']
                          for a in actions if a['title'] == REMOVE_OUTLIERS_TITLE]))
@@ -81,4 +85,9 @@ class BasePipeline:
             [s for s in suggestions
              if s['title'] != REMOVE_OUTLIERS_TITLE
              or s['action_payload']['action_arguments'][0] not in columns_with_outlier_removed]
-        return suggestions_filtered
+        statistics_updated = statistics.copy()
+        for col in columns_with_outlier_removed:
+            if f'{col}/outlier_count' in statistics_updated:
+                statistics_updated[f'{col}/outlier_count'] = 0
+                statistics_updated[f'{col}/outliers'] = []
+        return suggestions_filtered, statistics_updated
