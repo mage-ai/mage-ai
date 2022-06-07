@@ -165,7 +165,6 @@ function BaseTable({
               <TableRowStyle {...row.getRowProps()} showBackground={i % 2 === 1}>
                 {row.cells.map(cell => {
                   const { value: cellValue } = cell;
-                  console.log(cellValue)
 
                   return (
                     <td

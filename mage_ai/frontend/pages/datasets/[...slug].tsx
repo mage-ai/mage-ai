@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 
+import ClientOnly from '@hocs/ClientOnly';
 import ColumnDetail from '@components/datasets/columns/ColumnDetail';
 import ColumnList from '@components/datasets/columns/ColumnList';
 import DatasetOverview from '@components/datasets/overview';
@@ -22,10 +23,12 @@ function DatasetDetail() {
   let el;
   if (slug.length === 1) {
     el = (
-      <DatasetOverview
-        featureSet={featureSet}
-        fetchFeatureSet={mutate}
-      />
+      <ClientOnly>
+        <DatasetOverview
+          featureSet={featureSet}
+          fetchFeatureSet={mutate}
+        />
+      </ClientOnly>
     );
   } else if (slug.length === 2) {
     el = (
