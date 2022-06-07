@@ -8,25 +8,27 @@ import ActionPayloadType from '@interfaces/ActionPayloadType';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
-import FeatureSetType from '@interfaces/FeatureSetType';
+import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import FeatureType, { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
 import Panel from '@oracle/components/Panel';
-import PipelineType from '@interfaces/PipelineType';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import Suggestions from '@components/suggestions';
 import Tabs, { Tab } from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 
+import { AsideStyle } from '../overview/index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFeatureMapping, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getHost } from '@api/utils/url';
 import { getPercentage } from '@utils/number';
 import { onSuccess } from '@api/utils/response';
+import { removeAtIndex } from '@utils/array';
 import { useCustomFetchRequest } from '@api';
 
 type ColumnDetailProps = {
@@ -41,10 +43,8 @@ function ColumnDetail({
   featureId,
 }: ColumnDetailProps) {
   const [errorMessages, setErrorMessages] = useState(null);
-  const [sampleRowData, setSampleRowData] = useState<any>(null);
+  const [columnFeatureSet, setColumnFeatureSet] = useState<ColumnFeatureSetType>(null);
 
-  const pipeline: PipelineType = featureSet?.pipeline;
-  const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
   const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]) => ({ columnType: v, uuid: k }));
   const featureMapping = getFeatureMapping(featureSet);
@@ -55,13 +55,20 @@ function ColumnDetail({
   const featureUUID = featureData?.uuid;
   const columnType = featureData?.column_type;
 
+  // Feature set data specific to column
+  const sampleRowData = columnFeatureSet?.sample_data?.[featureUUID]?.map(value => ({
+    columnValues: [value],
+  }));
+  const {
+    id: pipelineId,
+    actions: pipelineActions = [],
+  } = columnFeatureSet?.pipeline || {};
+
   const [fetchColumnData, isLoadingColumnData] = useCustomFetchRequest({
     endpoint: `${getHost()}/feature_sets/${featureSetId}?column=${encodeURIComponent(featureUUID)}`,
     method: 'GET',
-    onSuccessCallback: (res) => {
-      setSampleRowData(res?.sample_data?.[featureUUID]?.map(value => ({
-        columnValues: [value],
-      })));
+    onSuccessCallback: (response) => {
+      setColumnFeatureSet(response);
     },
   });
 
@@ -205,7 +212,7 @@ function ColumnDetail({
   const actionType = actionPayload?.action_type;
 
   const [commitAction, { isLoading: isLoadingCommitAction }]: any = useMutation(
-    api.pipelines.useUpdate(pipeline?.id),
+    api.pipelines.useUpdate(pipelineId),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -231,28 +238,38 @@ function ColumnDetail({
       ),
     },
   );
-  const saveAction = (data) => {
+  const saveAction = (serializedData) => {
+    const { action_payload: actionPayload } = serializedData;
     setErrorMessages(null);
     const updatedAction: TransformerActionType = {
       action_payload: {
-        action_code: '',
-        action_options: {},
-        action_variables: {},
-        outputs: [],
-        ...data,
         action_arguments: [
           featureUUID,
         ],
+        action_code: '',
+        action_options: {},
         action_type: actionType,
+        action_variables: {},
+        outputs: [],
+        ...actionPayload,
       },
     };
 
     commitAction({
-      ...pipeline,
       actions: [
         ...pipelineActions,
         updatedAction,
       ],
+    });
+  };
+  const removeAction = (existingActionData: TransformerActionType) => {
+    const actionIdx = pipelineActions.findIndex(
+      ({ id }: TransformerActionType) => id === existingActionData.id,
+    );
+
+    setErrorMessages(null);
+    commitAction({
+      actions: removeAtIndex(pipelineActions, actionIdx),
     });
   };
 
@@ -296,7 +313,7 @@ function ColumnDetail({
           }}
           onClose={closeAction}
           onSave={() => {
-            saveAction(actionPayload);
+            saveAction({ action_payload: actionPayload });
             closeAction();
           }}
           payload={actionPayload}
@@ -340,6 +357,14 @@ function ColumnDetail({
           )}
         </Tab>
       </Tabs>
+
+      <AsideStyle>
+        <Suggestions
+          addAction={saveAction}
+          featureSet={columnFeatureSet}
+          removeAction={removeAction}
+        />
+      </AsideStyle>
     </Layout>
   );
 }
