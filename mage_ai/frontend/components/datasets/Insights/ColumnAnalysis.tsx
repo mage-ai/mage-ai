@@ -642,10 +642,11 @@ function ColumnAnalysis({
                 />
               ) : (
                 <>
-                  <Text>
-                    There are no values with high correlation.
-                  </Text>
-
+                  <Spacing mb={1} ml={1} mt={1}>
+                    <Text>
+                      There are no values with high correlation.
+                    </Text>
+                  </Spacing>
                   <SimpleDataTable
                     columnFlexNumbers={[1, 1, 1]}
                     columnHeaders={[]}
