@@ -127,6 +127,7 @@ function Overview({
     correlations = [],
     time_series: timeSeries,
     scatter_plot: scatterPlot,
+    scatter_plot_labels: scatterPlotLabels,
   } = insightsOverview;
 
   const xyLabels = [];
@@ -561,6 +562,7 @@ function Overview({
               title="Scatterplot"
             >
               <ScatterPlot
+                scatterPlotLabels={scatterPlotLabels}
                 scatterPlotOverview={scatterPlot}
                 height={UNIT * 50}
                 margin={{
