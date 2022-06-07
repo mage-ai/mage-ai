@@ -138,25 +138,24 @@ function ColumnAnalysis({
     : null;
   const yLabels = [column];
   const heatmapData = [[1]];
+  const highCorrelations = [];
   if (correlationsRowData) {
     correlationsRowData?.map(([, col, r], idx: number) => {
       yLabels.push(col);
       heatmapData.push([roundNumber(r)]);
     });
+    correlationsRowData?.map((_, col, r) => {
+      if (Math.abs(r[col][2]) > 0.5) {
+        highCorrelations.push({
+          'columnValues': [
+            r[col][0]?.toString(),
+            r[col][1]?.toString(),
+            roundNumber(r[col][2])?.toString(),
+          ],
+        });
+      }
+    });
   }
-
-  const highCorrelations = [];
-  correlationsRowData?.map((_, col, r) => {
-    if (r[col][2] > 0.5) {
-      highCorrelations.push({
-        'columnValues': [
-          r[col][0]?.toString(),
-          r[col][1]?.toString(),
-          roundNumber(r[col][2])?.toString(),
-        ],
-      });
-    }
-  });
 
   const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
 
@@ -630,7 +629,7 @@ function ColumnAnalysis({
                   },
                   {
                   label: 'Correlation',
-                },]}
+                }]}
                 noBorder
                 rowGroupData={[
                   {
