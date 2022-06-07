@@ -34,62 +34,64 @@ function Suggestions({
   const numberOfActions = useMemo(() => Array.isArray(actions) ? actions?.length : 0, [actions]);
   const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
 
+  const hasActions = Array.isArray(actions) && actions?.length >= 1;
+
   return (
     <>
-      {
-        Array.isArray(actions) && actions?.map((action, idx) => {
-          const { title } = action;
+      {hasActions && (
+        <Spacing mb={2}>
+          {actions?.map((action, idx) => {
+            const { title } = action;
 
-          return (
-            <Spacing
-              key={`${idx}-${title}`}
-              mt={idx >= 1 ? 1 : 0}
-            >
-              <SuggestionRow
-                action={action}
-                border
-                featureIdMapping={featureIdMapping}
-                featureSetId={featureSet?.id}
-                features={features}
-                idx={idx}
-                onClose={numberOfActions - 1 === idx
-                  ? () => removeAction(action)
-                  : null
-                }
-                showIdx
-              />
-            </Spacing>
-          );
-        })
-      }
-
-      {suggestions?.length >= 1 && (
-        <Spacing mt={2}>
-          <Accordion
-            highlighted
-            visibleMapping={{ 0: true }}
-          >
-            <AccordionPanel
-              maxHeight={99999}
-              noBackground
-              noPaddingContent
-              title={`${suggestions.length} suggested actions`}
-            >
-              {suggestions.map((suggestion, idx) => (
+            return (
+              <Spacing
+                key={`${idx}-${title}`}
+                mt={idx >= 1 ? 1 : 0}
+              >
                 <SuggestionRow
-                  action={suggestion}
+                  action={action}
+                  border
                   featureIdMapping={featureIdMapping}
                   featureSetId={featureSet?.id}
                   features={features}
                   idx={idx}
-                  key={`${idx}-${suggestion.title}`}
-                  link={() => addAction(suggestion)}
-                  saveAction={addAction}
+                  onClose={numberOfActions - 1 === idx
+                    ? () => removeAction(action)
+                    : null
+                  }
+                  showIdx
                 />
-              ))}
-            </AccordionPanel>
-          </Accordion>
+              </Spacing>
+            );
+          })}
         </Spacing>
+      )}
+
+      {suggestions?.length >= 1 && (
+        <Accordion
+          highlighted
+          visibleMapping={{ 0: true }}
+        >
+          <AccordionPanel
+            maxHeight={99999}
+            noBackground
+            noPaddingContent
+            title={`${suggestions.length} suggested actions`}
+          >
+            {suggestions.map((suggestion, idx) => (
+              <SuggestionRow
+                action={suggestion}
+                featureIdMapping={featureIdMapping}
+                featureSetId={featureSet?.id}
+                features={features}
+                idx={idx}
+                key={`${idx}-${suggestion.title}`}
+                link={() => addAction(suggestion)}
+                saveAction={addAction}
+              />
+            ))}
+          </AccordionPanel>
+        </Accordion>
       )}
     </>
   );
