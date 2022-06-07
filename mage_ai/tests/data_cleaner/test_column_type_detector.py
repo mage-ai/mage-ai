@@ -371,3 +371,21 @@ class ColumnTypeDetectorTests(TestCase):
             bad_column_name_two=NUMBER,
         )
         self.assertEquals(ctypes, expected_ctypes)
+
+    def test_datetime_recognition(self):
+        df = pd.DataFrame(
+            dict(
+                dates=[self.fake.date() for _ in range(6)],
+                datetimes=[self.fake.date_time().strftime('%d-%m-%Y %H:%M:%S') for _ in range(6)],
+                datetimes_iso=[self.fake.date_time().isoformat() for _ in range(6)],
+                dates_w_slash=[self.fake.date_time().strftime('%m/%d/%Y') for _ in range(6)],
+                datetimes_w_slash=[
+                    self.fake.date_time().strftime('%m/%d/%Y %H:%M:%S') for _ in range(6)
+                ],
+            )
+        )
+        print(df)
+        ctypes = infer_column_types(df)
+        for col in ctypes:
+            print(col)
+            self.assertEqual(ctypes[col], DATETIME)
