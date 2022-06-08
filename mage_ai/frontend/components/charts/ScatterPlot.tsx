@@ -206,7 +206,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
           onTouchStart={handleTooltip}
           rx={14}
           // We add spacing on the right so the last tick label isn't covered up
-          width={width - (margin.left + margin.right)}
+          width={Math.max(width - (margin.left + margin.right), 0)}
           x={margin.left}
           y={0}
         />
@@ -378,7 +378,7 @@ function ScatterPlotContainer({
             onChange={e => setXFeature(e.target.value)}
             value={xFeature}
           >
-            {features.filter(feature => feature !== yFeature).map(feature => (
+            {features.map(feature => (
               <option
                 key={feature}
                 value={feature}
@@ -399,7 +399,7 @@ function ScatterPlotContainer({
             onChange={e => setYFeature(e.target.value)}
             value={yFeature}
           >
-            {features.filter(feature => feature !== xFeature).map(feature => (
+            {features.map(feature => (
               <option
                 key={feature}
                 value={feature}
