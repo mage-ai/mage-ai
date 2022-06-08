@@ -38,3 +38,14 @@ def generate_action_title(action):
     elif action_type == ActionType.CLEAN_COLUMN_NAME:
         title = 'Clean dirty column names'
     return title
+
+
+def generate_string_cols(df, columns):
+    for column in columns:
+        clean_col = df[column]
+        dropped = clean_col.dropna(axis=0)
+        exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
+        if exact_dtype is str:
+            yield column
+        else:
+            print(f'Attempted to perform string-only action on non-string column \'{column}\'')

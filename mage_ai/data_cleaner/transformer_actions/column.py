@@ -13,6 +13,7 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
+from mage_ai.data_cleaner.transformer_actions.utils import generate_string_cols
 from keyword import iskeyword
 import pandas as pd
 import numpy as np
@@ -149,19 +150,26 @@ def reformat(df, action, **kwargs):
 
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
-        for column in columns:
+        for column in generate_string_cols(df, columns):
             if capitalization == 'uppercase':
                 df.loc[:, column] = df[columns][column].str.upper()
             else:
                 df.loc[:, column] = df[columns][column].str.lower()
     elif reformat_action == 'currency_to_num':
-        clean_cols = df[columns].replace(CURRENCY_SYMBOLS, '', regex=True)
-        clean_cols = clean_cols.replace('\s', '', regex=True)
-        clean_cols = clean_cols.replace('^\s*$', np.nan, regex=True)
-        df.loc[:, columns] = clean_cols.astype(float)
+        for column in generate_string_cols(df, columns):
+            clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
+            clean_col = clean_col.replace('\s', '', regex=True)
+            clean_col = clean_col.replace('^\s*$', np.nan, regex=True)
+            try:
+                df.loc[:, column] = clean_col.astype(float)
+            except ValueError:
+                print(
+                    f'Currency conversion applied on non-numerical column \'{column}\''
+                    ': no action taken'
+                )
     elif reformat_action == 'date_format_conversion':
         for column in columns:
-            clean_col = df[columns][column]
+            clean_col = df[column]
             dropped = clean_col.dropna(axis=0)
             exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
             if exact_dtype is str:

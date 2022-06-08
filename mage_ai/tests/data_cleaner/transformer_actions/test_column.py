@@ -19,68 +19,83 @@ from random import seed
 import numpy as np
 import pandas as pd
 
-TEST_DATAFRAME = pd.DataFrame([
-    [1, 1000],
-    [2, 1050],
-    [1, 1100],
-    [2, 1150],
-], columns=[
-    'group_id',
-    'amount',
-])
+TEST_DATAFRAME = pd.DataFrame(
+    [
+        [1, 1000],
+        [2, 1050],
+        [1, 1100],
+        [2, 1150],
+    ],
+    columns=[
+        'group_id',
+        'amount',
+    ],
+)
 
 
 class ColumnTests(TestCase):
     def setUp(self):
         seed(42)
         return super().setUp()
-    
+
     def test_remove_column(self):
-        df = pd.DataFrame([
-            [0, False, 'a'],
-            [1, True, 'b'],
-        ], columns=[
-            'integer',
-            'boolean',
-            'string',
-        ])
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
 
         action = dict(action_arguments=['string'])
 
         df_new = remove_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                integer=0,
-                boolean=False,
-            ),
-            dict(
-                integer=1,
-                boolean=True,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    integer=0,
+                    boolean=False,
+                ),
+                dict(
+                    integer=1,
+                    boolean=True,
+                ),
+            ],
+        )
 
         action = dict(action_arguments=['integer', 'boolean'])
 
         df_new = remove_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                string='a',
-            ),
-            dict(
-                string='b',
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    string='a',
+                ),
+                dict(
+                    string='b',
+                ),
+            ],
+        )
 
     def test_add_column_addition(self):
-        df = pd.DataFrame([
-            [1, 3, 7, 9],
-            [4, 2, 9, 3],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 3, 7, 9],
+                [4, 2, 9, 3],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+            ],
+        )
         action1 = dict(
             action_arguments=[
                 'integer1',
@@ -131,27 +146,33 @@ class ColumnTests(TestCase):
             ),
             action3,
         )
-        df_expected = pd.DataFrame([
-            [1, 3, 7, 9, 11, 11, 20],
-            [4, 2, 9, 3, 15, 14, 17],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-            'integer_addition',
-            'integer_addition2',
-            'integer_addition3',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 3, 7, 9, 11, 11, 20],
+                [4, 2, 9, 3, 15, 14, 17],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+                'integer_addition',
+                'integer_addition2',
+                'integer_addition3',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_addition_days(self):
-        df = pd.DataFrame([
-            ['2021-08-31'],
-            ['2021-08-28'],
-        ], columns=[
-            'created_at',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2021-08-31'],
+                ['2021-08-28'],
+            ],
+            columns=[
+                'created_at',
+            ],
+        )
         action = dict(
             action_arguments=['created_at'],
             action_options=dict(
@@ -168,22 +189,25 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        df_expected = pd.DataFrame([
-            ['2021-08-31', '2021-09-03 00:00:00'],
-            ['2021-08-28', '2021-08-31 00:00:00'],
-        ], columns=[
-            'created_at',
-            '3d_after_creation'
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['2021-08-31', '2021-09-03 00:00:00'],
+                ['2021-08-28', '2021-08-31 00:00:00'],
+            ],
+            columns=['created_at', '3d_after_creation'],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_constant(self):
-        df = pd.DataFrame([
-            [False],
-            [True],
-        ], columns=[
-            'boolean',
-        ])
+        df = pd.DataFrame(
+            [
+                [False],
+                [True],
+            ],
+            columns=[
+                'boolean',
+            ],
+        )
         action = dict(
             action_arguments=[10],
             action_options=dict(
@@ -197,25 +221,31 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                boolean=False,
-                integer=10,
-            ),
-            dict(
-                boolean=True,
-                integer=10,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    boolean=False,
+                    integer=10,
+                ),
+                dict(
+                    boolean=True,
+                    integer=10,
+                ),
+            ],
+        )
 
     def test_add_column_date_trunc(self):
-        df = pd.DataFrame([
-            ['2021-08-31', False],
-            ['2021-08-28', True],
-        ], columns=[
-            'created_at',
-            'boolean',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2021-08-31', False],
+                ['2021-08-28', True],
+            ],
+            columns=[
+                'created_at',
+                'boolean',
+            ],
+        )
         action = dict(
             action_arguments=['created_at'],
             action_options=dict(
@@ -230,27 +260,33 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                created_at='2021-08-31',
-                boolean=False,
-                week_date='2021-08-30',
-            ),
-            dict(
-                created_at='2021-08-28',
-                boolean=True,
-                week_date='2021-08-23',
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    created_at='2021-08-31',
+                    boolean=False,
+                    week_date='2021-08-30',
+                ),
+                dict(
+                    created_at='2021-08-28',
+                    boolean=True,
+                    week_date='2021-08-23',
+                ),
+            ],
+        )
 
     def test_add_column_difference(self):
-        df = pd.DataFrame([
-            [1, 3],
-            [4, 2],
-        ], columns=[
-            'integer1',
-            'integer2',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 3],
+                [4, 2],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+            ],
+        )
         action1 = dict(
             action_arguments=['integer1', 'integer2'],
             action_options={
@@ -277,25 +313,26 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(add_column(df, action1), action2)
-        df_expected = pd.DataFrame([
-            [1, 3, -2, -9],
-            [4, 2, 2, -6],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer_difference',
-            'integer_difference2'
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 3, -2, -9],
+                [4, 2, 2, -6],
+            ],
+            columns=['integer1', 'integer2', 'integer_difference', 'integer_difference2'],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_difference_days(self):
-        df = pd.DataFrame([
-            ['2021-08-31', '2021-09-14'],
-            ['2021-08-28', '2021-09-03'],
-        ], columns=[
-            'created_at',
-            'converted_at',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2021-08-31', '2021-09-14'],
+                ['2021-08-28', '2021-09-03'],
+            ],
+            columns=[
+                'created_at',
+                'converted_at',
+            ],
+        )
         action = dict(
             action_arguments=['converted_at', 'created_at'],
             action_options=dict(
@@ -311,26 +348,32 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        df_expected = pd.DataFrame([
-            ['2021-08-31', '2021-09-14', 14],
-            ['2021-08-28', '2021-09-03', 6],
-        ], columns=[
-            'created_at',
-            'converted_at',
-            'days_diff',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['2021-08-31', '2021-09-14', 14],
+                ['2021-08-28', '2021-09-03', 6],
+            ],
+            columns=[
+                'created_at',
+                'converted_at',
+                'days_diff',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_distance_between(self):
-        df = pd.DataFrame([
-            [26.05308, -97.31838, 33.41939, -112.32606],
-            [39.71954, -84.13056, 33.41939, -112.32606],
-        ], columns=[
-            'lat1',
-            'lng1',
-            'lat2',
-            'lng2',
-        ])
+        df = pd.DataFrame(
+            [
+                [26.05308, -97.31838, 33.41939, -112.32606],
+                [39.71954, -84.13056, 33.41939, -112.32606],
+            ],
+            columns=[
+                'lat1',
+                'lng1',
+                'lat2',
+                'lng2',
+            ],
+        )
         action = dict(
             action_arguments=['lat1', 'lng1', 'lat2', 'lng2'],
             action_options=dict(
@@ -344,33 +387,39 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                lat1=26.05308,
-                lng1=-97.31838,
-                lat2=33.41939,
-                lng2=-112.32606,
-                distance=1661.8978520305657,
-            ),
-            dict(
-                lat1=39.71954,
-                lng1=-84.13056,
-                lat2=33.41939,
-                lng2=-112.32606,
-                distance=2601.5452571116184,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    lat1=26.05308,
+                    lng1=-97.31838,
+                    lat2=33.41939,
+                    lng2=-112.32606,
+                    distance=1661.8978520305657,
+                ),
+                dict(
+                    lat1=39.71954,
+                    lng1=-84.13056,
+                    lat2=33.41939,
+                    lng2=-112.32606,
+                    distance=2601.5452571116184,
+                ),
+            ],
+        )
 
     def test_add_column_divide(self):
-        df = pd.DataFrame([
-            [12, 3, 70, 9],
-            [4, 2, 90, 3],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-        ])
+        df = pd.DataFrame(
+            [
+                [12, 3, 70, 9],
+                [4, 2, 90, 3],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+            ],
+        )
         action1 = dict(
             action_arguments=[
                 'integer1',
@@ -400,17 +449,20 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(add_column(df, action1), action2)
-        df_expected = pd.DataFrame([
-            [12, 3, 70, 9, 4, 7],
-            [4, 2, 90, 3, 2, 9],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-            'integer_divide',
-            'integer_divide2'
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [12, 3, 70, 9, 4, 7],
+                [4, 2, 90, 3, 2, 9],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+                'integer_divide',
+                'integer_divide2',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     # def test_add_column_extract_dict_string(self):
@@ -558,13 +610,16 @@ class ColumnTests(TestCase):
     #     ])
 
     def test_add_column_formatted_date(self):
-        df = pd.DataFrame([
-            ['2019-04-10 08:20:58', False],
-            ['2019-03-05 03:30:30', True],
-        ], columns=[
-            'created_at',
-            'boolean',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2019-04-10 08:20:58', False],
+                ['2019-03-05 03:30:30', True],
+            ],
+            columns=[
+                'created_at',
+                'boolean',
+            ],
+        )
         action = dict(
             action_arguments=['created_at'],
             action_options=dict(
@@ -579,26 +634,30 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                created_at='2019-04-10 08:20:58',
-                boolean=False,
-                created_date='2019-04-10',
-            ),
-            dict(
-                created_at='2019-03-05 03:30:30',
-                boolean=True,
-                created_date='2019-03-05',
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    created_at='2019-04-10 08:20:58',
+                    boolean=False,
+                    created_date='2019-04-10',
+                ),
+                dict(
+                    created_at='2019-03-05 03:30:30',
+                    boolean=True,
+                    created_date='2019-03-05',
+                ),
+            ],
+        )
 
     def test_add_column_if_else(self):
-        df = pd.DataFrame([
-            ['2019-04-10 08:20:58'],
-            [None],
-        ], columns=[
-            'converted_at'
-        ])
+        df = pd.DataFrame(
+            [
+                ['2019-04-10 08:20:58'],
+                [None],
+            ],
+            columns=['converted_at'],
+        )
         action = dict(
             action_arguments=[False, True],
             action_code='converted_at == null',
@@ -613,25 +672,31 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action, original_df=df)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                converted_at='2019-04-10 08:20:58',
-                converted=True,
-            ),
-            dict(
-                converted_at=None,
-                converted=False,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    converted_at='2019-04-10 08:20:58',
+                    converted=True,
+                ),
+                dict(
+                    converted_at=None,
+                    converted=False,
+                ),
+            ],
+        )
 
     def test_add_column_if_else_with_column(self):
-        df = pd.DataFrame([
-            ['2019-04-10 08:20:58', 'test_user_id'],
-            [None, None],
-        ], columns=[
-            'converted_at',
-            'user_id',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2019-04-10 08:20:58', 'test_user_id'],
+                [None, None],
+            ],
+            columns=[
+                'converted_at',
+                'user_id',
+            ],
+        )
         action = dict(
             action_arguments=['unknown', 'user_id'],
             action_code='converted_at == null',
@@ -648,29 +713,35 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action, original_df=df)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                converted_at='2019-04-10 08:20:58',
-                user_id='test_user_id',
-                user_id_clean='test_user_id',
-            ),
-            dict(
-                converted_at=None,
-                user_id=None,
-                user_id_clean='unknown',
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    converted_at='2019-04-10 08:20:58',
+                    user_id='test_user_id',
+                    user_id_clean='test_user_id',
+                ),
+                dict(
+                    converted_at=None,
+                    user_id=None,
+                    user_id_clean='unknown',
+                ),
+            ],
+        )
 
     def test_add_column_multiply(self):
-        df = pd.DataFrame([
-            [1, 3, 7, 9],
-            [4, 2, 9, 3],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 3, 7, 9],
+                [4, 2, 9, 3],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+            ],
+        )
         action1 = dict(
             action_arguments=[
                 'integer1',
@@ -700,27 +771,33 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(add_column(df, action1), action2)
-        df_expected = pd.DataFrame([
-            [1, 3, 7, 9, 3, 70],
-            [4, 2, 9, 3, 8, 90],
-        ], columns=[
-            'integer1',
-            'integer2',
-            'integer3',
-            'integer4',
-            'integer_multiply',
-            'integer_multiply2'
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 3, 7, 9, 3, 70],
+                [4, 2, 9, 3, 8, 90],
+            ],
+            columns=[
+                'integer1',
+                'integer2',
+                'integer3',
+                'integer4',
+                'integer_multiply',
+                'integer_multiply2',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_string_replace(self):
-        df = pd.DataFrame([
-            ['$1000'],
-            ['$321.  '],
-            ['$4,321'],
-        ], columns=[
-            'amount',
-        ])
+        df = pd.DataFrame(
+            [
+                ['$1000'],
+                ['$321.  '],
+                ['$4,321'],
+            ],
+            columns=[
+                'amount',
+            ],
+        )
         action = dict(
             action_arguments=['amount'],
             action_options={
@@ -736,24 +813,30 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        df_expected = pd.DataFrame([
-            ['$1000', '1000'],
-            ['$321.  ', '321'],
-            ['$4,321', '4321'],
-        ], columns=[
-            'amount',
-            'amount_clean',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['$1000', '1000'],
+                ['$321.  ', '321'],
+                ['$4,321', '4321'],
+            ],
+            columns=[
+                'amount',
+                'amount_clean',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_string_split(self):
-        df = pd.DataFrame([
-            ['Street1, Long Beach, CA, '],
-            ['Street2,Vernon, CA, 123'],
-            ['Pacific Coast Highway, Los Angeles, CA, 111'],
-        ], columns=[
-            'location',
-        ])
+        df = pd.DataFrame(
+            [
+                ['Street1, Long Beach, CA, '],
+                ['Street2,Vernon, CA, 123'],
+                ['Pacific Coast Highway, Los Angeles, CA, 111'],
+            ],
+            columns=[
+                'location',
+            ],
+        )
         action = dict(
             action_arguments=['location'],
             action_options={
@@ -783,24 +866,30 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(add_column(df, action), action2)
-        df_expected = pd.DataFrame([
-            ['Street1, Long Beach, CA, ', 'Long Beach', 0],
-            ['Street2,Vernon, CA, 123', 'Vernon', 123],
-            ['Pacific Coast Highway, Los Angeles, CA, 111', 'Los Angeles', 111],
-        ], columns=[
-            'location',
-            'location_city',
-            'num',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['Street1, Long Beach, CA, ', 'Long Beach', 0],
+                ['Street2,Vernon, CA, 123', 'Vernon', 123],
+                ['Pacific Coast Highway, Los Angeles, CA, 111', 'Los Angeles', 111],
+            ],
+            columns=[
+                'location',
+                'location_city',
+                'num',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_add_column_substring(self):
-        df = pd.DataFrame([
-            ['$1000.0'],
-            ['$321.9'],
-        ], columns=[
-            'amount',
-        ])
+        df = pd.DataFrame(
+            [
+                ['$1000.0'],
+                ['$321.9'],
+            ],
+            columns=[
+                'amount',
+            ],
+        )
         action = dict(
             action_arguments=['amount'],
             action_options={
@@ -816,129 +905,143 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
-        df_expected = pd.DataFrame([
-            ['$1000.0', '1000'],
-            ['$321.9', '321'],
-        ], columns=[
-            'amount',
-            'amount_int',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                ['$1000.0', '1000'],
+                ['$321.9', '321'],
+            ],
+            columns=[
+                'amount',
+                'amount_int',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_average(self):
         from mage_ai.data_cleaner.transformer_actions.column import average
+
         action = self.__groupby_agg_action('average_amount')
         df_new = average(TEST_DATAFRAME.copy(), action)
-        df_expected = pd.DataFrame([
-            [1, 1000, 1050],
-            [2, 1050, 1100],
-            [1, 1100, 1050],
-            [2, 1150, 1100],
-        ], columns=[
-            'group_id',
-            'amount',
-            'average_amount'
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1000, 1050],
+                [2, 1050, 1100],
+                [1, 1100, 1050],
+                [2, 1150, 1100],
+            ],
+            columns=['group_id', 'amount', 'average_amount'],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_count(self):
-        df = pd.DataFrame([
-            [1, 1000],
-            [1, 1050],
-            [1, 1100],
-            [2, 1150],
-        ], columns=[
-            'group_id',
-            'order_id',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [1, 1050],
+                [1, 1100],
+                [2, 1150],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
-            action_options=dict(
-                groupby_columns=['group_id']
-            ),
+            action_options=dict(groupby_columns=['group_id']),
             outputs=[
                 dict(uuid='order_count'),
             ],
         )
         df_new = count(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                order_id=1000,
-                order_count=3,
-            ),
-            dict(
-                group_id=1,
-                order_id=1050,
-                order_count=3,
-            ),
-            dict(
-                group_id=1,
-                order_id=1100,
-                order_count=3,
-            ),
-            dict(
-                group_id=2,
-                order_id=1150,
-                order_count=1,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    order_count=3,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1050,
+                    order_count=3,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1100,
+                    order_count=3,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1150,
+                    order_count=1,
+                ),
+            ],
+        )
 
     def test_count_distinct(self):
-        df = pd.DataFrame([
-            [1, 1000],
-            [1, 1000],
-            [1, 1100],
-            [2, 1150],
-        ], columns=[
-            'group_id',
-            'order_id',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [1, 1000],
+                [1, 1100],
+                [2, 1150],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
-            action_options=dict(
-                groupby_columns=['group_id']
-            ),
+            action_options=dict(groupby_columns=['group_id']),
             outputs=[
                 dict(uuid='order_count'),
             ],
         )
         df_new = count_distinct(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                order_id=1000,
-                order_count=2,
-            ),
-            dict(
-                group_id=1,
-                order_id=1000,
-                order_count=2,
-            ),
-            dict(
-                group_id=1,
-                order_id=1100,
-                order_count=2,
-            ),
-            dict(
-                group_id=2,
-                order_id=1150,
-                order_count=1,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    order_count=2,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    order_count=2,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1100,
+                    order_count=2,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1150,
+                    order_count=1,
+                ),
+            ],
+        )
 
     def test_count_with_time_window(self):
-        df = pd.DataFrame([
-            [1, 1000, '2021-10-01', '2021-09-01'],
-            [1, 1050, '2021-10-01', '2021-08-01'],
-            [1, 1100, '2021-10-01', '2021-01-01'],
-            [2, 1150, '2021-09-01', '2021-08-01'],
-        ], columns=[
-            'group_id',
-            'order_id',
-            'group_churned_at',
-            'order_created_at',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000, '2021-10-01', '2021-09-01'],
+                [1, 1050, '2021-10-01', '2021-08-01'],
+                [1, 1100, '2021-10-01', '2021-01-01'],
+                [2, 1150, '2021-09-01', '2021-08-01'],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+                'group_churned_at',
+                'order_created_at',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
             action_code='',
@@ -946,58 +1049,64 @@ class ColumnTests(TestCase):
                 groupby_columns=['group_id'],
                 timestamp_feature_a='group_churned_at',
                 timestamp_feature_b='order_created_at',
-                window=90*24*3600,
+                window=90 * 24 * 3600,
             ),
             outputs=[
                 dict(uuid='order_count'),
             ],
         )
         df_new = count(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                order_id=1000,
-                group_churned_at='2021-10-01',
-                order_created_at='2021-09-01',
-                order_count=2,
-            ),
-            dict(
-                group_id=1,
-                order_id=1050,
-                group_churned_at='2021-10-01',
-                order_created_at='2021-08-01',
-                order_count=2,
-            ),
-            dict(
-                group_id=1,
-                order_id=1100,
-                group_churned_at='2021-10-01',
-                order_created_at='2021-01-01',
-                order_count=2,
-            ),
-            dict(
-                group_id=2,
-                order_id=1150,
-                group_churned_at='2021-09-01',
-                order_created_at='2021-08-01',
-                order_count=1,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    group_churned_at='2021-10-01',
+                    order_created_at='2021-09-01',
+                    order_count=2,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1050,
+                    group_churned_at='2021-10-01',
+                    order_created_at='2021-08-01',
+                    order_count=2,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1100,
+                    group_churned_at='2021-10-01',
+                    order_created_at='2021-01-01',
+                    order_count=2,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1150,
+                    group_churned_at='2021-09-01',
+                    order_created_at='2021-08-01',
+                    order_count=1,
+                ),
+            ],
+        )
 
     def test_count_with_filter(self):
-        df = pd.DataFrame([
-            [1, 1000, '2021-10-01', '2021-09-01'],
-            [1, 1050, '2021-10-01', '2021-08-01'],
-            [1, 1100, '2021-10-01', '2021-01-01'],
-            [2, 1150, '2021-09-01', '2021-08-01'],
-            [2, 1200, '2021-09-01', '2021-08-16'],
-            [2, 1250, '2021-09-01', '2021-08-14'],
-        ], columns=[
-            'group_id',
-            'order_id',
-            'group_churned_at',
-            'order_created_at',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000, '2021-10-01', '2021-09-01'],
+                [1, 1050, '2021-10-01', '2021-08-01'],
+                [1, 1100, '2021-10-01', '2021-01-01'],
+                [2, 1150, '2021-09-01', '2021-08-01'],
+                [2, 1200, '2021-09-01', '2021-08-16'],
+                [2, 1250, '2021-09-01', '2021-08-14'],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+                'group_churned_at',
+                'order_created_at',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
             action_code='order_created_at < \'2021-08-15\'',
@@ -1009,54 +1118,57 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = count(df, action)
-        df_expected = pd.DataFrame([
-            [1, 1000, '2021-10-01', '2021-09-01', 2],
-            [1, 1050, '2021-10-01', '2021-08-01', 2],
-            [1, 1100, '2021-10-01', '2021-01-01', 2],
-            [2, 1150, '2021-09-01', '2021-08-01', 2],
-            [2, 1200, '2021-09-01', '2021-08-16', 2],
-            [2, 1250, '2021-09-01', '2021-08-14', 2],
-        ], columns=[
-            'group_id',
-            'order_id',
-            'group_churned_at',
-            'order_created_at',
-            'order_count',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1000, '2021-10-01', '2021-09-01', 2],
+                [1, 1050, '2021-10-01', '2021-08-01', 2],
+                [1, 1100, '2021-10-01', '2021-01-01', 2],
+                [2, 1150, '2021-09-01', '2021-08-01', 2],
+                [2, 1200, '2021-09-01', '2021-08-16', 2],
+                [2, 1250, '2021-09-01', '2021-08-14', 2],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+                'group_churned_at',
+                'order_created_at',
+                'order_count',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_clean_column_name(self):
-        df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '', '', '']
-        ], columns=[
-            'good_name',
-            '  Bad Case   ',
-            '%@#342%34@@#342',
-            ' yield  ',
-            '12342   ',
-            '1234.  23',
-            '   true_crime',
-            '@#f$%&*o$*(%^&r*$%&',
-            'PascalCaseColumn',
-            'camelCaseText',
-            '___weird_snake_case___'
-            ]
+        df = pd.DataFrame(
+            [['', '', '', '', '', '', '', '', '', '', '']],
+            columns=[
+                'good_name',
+                '  Bad Case   ',
+                '%@#342%34@@#342',
+                ' yield  ',
+                '12342   ',
+                '1234.  23',
+                '   true_crime',
+                '@#f$%&*o$*(%^&r*$%&',
+                'PascalCaseColumn',
+                'camelCaseText',
+                '___weird_snake_case___',
+            ],
         )
-        expected_df = pd.DataFrame([
-            ['', '', '', '', '', '', '', '', '', '', '']
-        ], columns=[
-            'good_name',
-            'bad_case',
-            'number_34234342',
-            'yield_',
-            'number_12342',
-            '1234___23',
-            'true_crime',
-            'for_',
-            'pascal_case_column',
-            'camel_case_text',
-            'weird_snake_case'
-            ]
+        expected_df = pd.DataFrame(
+            [['', '', '', '', '', '', '', '', '', '', '']],
+            columns=[
+                'good_name',
+                'bad_case',
+                'number_34234342',
+                'yield_',
+                'number_12342',
+                '1234___23',
+                'true_crime',
+                'for_',
+                'pascal_case_column',
+                'camel_case_text',
+                'weird_snake_case',
+            ],
         )
         action = dict(
             action_type='clean_column_name',
@@ -1071,7 +1183,7 @@ class ColumnTests(TestCase):
                 '@#f$%&*o$*(%^&r*$%&',
                 'PascalCaseColumn',
                 'camelCaseText',
-                '___weird_snake_case___'
+                '___weird_snake_case___',
             ],
             action_code='',
             action_options={},
@@ -1083,15 +1195,18 @@ class ColumnTests(TestCase):
         assert_frame_equal(new_df, expected_df)
 
     def test_diff(self):
-        df = pd.DataFrame([
-            ['2020-01-01', 1000],
-            ['2020-01-02', 1050],
-            ['2020-01-03', 1200],
-            ['2020-01-04', 990],
-        ], columns=[
-            'date',
-            'sold',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2020-01-01', 1000],
+                ['2020-01-02', 1050],
+                ['2020-01-03', 1200],
+                ['2020-01-04', 990],
+            ],
+            columns=[
+                'date',
+                'sold',
+            ],
+        )
         action = dict(
             action_arguments=['sold'],
             outputs=[
@@ -1099,23 +1214,26 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = diff(df, action)
-        self.assertEqual(df_new.to_dict(orient='records')[1:], [
-            dict(
-                date='2020-01-02',
-                sold=1050,
-                sold_diff=50,
-            ),
-            dict(
-                date='2020-01-03',
-                sold=1200,
-                sold_diff=150,
-            ),
-            dict(
-                date='2020-01-04',
-                sold=990,
-                sold_diff=-210,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records')[1:],
+            [
+                dict(
+                    date='2020-01-02',
+                    sold=1050,
+                    sold_diff=50,
+                ),
+                dict(
+                    date='2020-01-03',
+                    sold=1200,
+                    sold_diff=150,
+                ),
+                dict(
+                    date='2020-01-04',
+                    sold=990,
+                    sold_diff=-210,
+                ),
+            ],
+        )
 
     # def test_expand_column(self):
     #     df = pd.DataFrame([
@@ -1215,62 +1333,70 @@ class ColumnTests(TestCase):
     #     assert_frame_equal(df_new, df_expected)
 
     def test_first_column(self):
-        df = pd.DataFrame([
-            [1, 1000],
-            [2, 1050],
-            [1, 1100],
-            [2, 1150],
-        ], columns=[
-            'group_id',
-            'order_id',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [2, 1050],
+                [1, 1100],
+                [2, 1150],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
-            action_options=dict(
-                groupby_columns=['group_id']
-            ),
+            action_options=dict(groupby_columns=['group_id']),
             outputs=[
                 dict(uuid='first_order'),
             ],
         )
         df_new = first(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                order_id=1000,
-                first_order=1000,
-            ),
-            dict(
-                group_id=2,
-                order_id=1050,
-                first_order=1050,
-            ),
-            dict(
-                group_id=1,
-                order_id=1100,
-                first_order=1000,
-            ),
-            dict(
-                group_id=2,
-                order_id=1150,
-                first_order=1050,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    first_order=1000,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1050,
+                    first_order=1050,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1100,
+                    first_order=1000,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1150,
+                    first_order=1050,
+                ),
+            ],
+        )
 
     def test_impute(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
-        df = pd.DataFrame([
-            ['2020-01-01', 1000, '       ', 800],
-            ['2020-01-03', '', 1200, 700],
-            ['2020-01-05', 1200, np.NaN, 900],
-            ['2020-01-02', np.NaN, '  ', 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
+
+        df = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, '       ', 800],
+                ['2020-01-03', '', 1200, 700],
+                ['2020-01-05', 1200, np.NaN, 900],
+                ['2020-01-02', np.NaN, '  ', 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
         action1 = dict(
             action_arguments=['sold', 'curr_profit'],
             action_options={
@@ -1384,10 +1510,7 @@ class ColumnTests(TestCase):
         )
         action6 = dict(
             action_arguments=['sold', 'curr_profit'],
-            action_options={
-                'strategy': 'sequential',
-                'timeseries_index': ['date']
-            },
+            action_options={'strategy': 'sequential', 'timeseries_index': ['date']},
             action_variables={
                 'sold': {
                     'feature': {
@@ -1407,9 +1530,7 @@ class ColumnTests(TestCase):
         )
         action7 = dict(
             action_arguments=['sold', 'curr_profit'],
-            action_options={
-                'strategy': 'random'
-            },
+            action_options={'strategy': 'random'},
             action_variables={
                 'sold': {
                     'feature': {
@@ -1429,9 +1550,7 @@ class ColumnTests(TestCase):
         )
         action8 = dict(
             action_arguments=['sold', 'curr_profit'],
-            action_options={
-                'strategy': 'mode'
-            },
+            action_options={'strategy': 'mode'},
             action_variables={
                 'sold': {
                     'feature': {
@@ -1480,90 +1599,111 @@ class ColumnTests(TestCase):
         df_new7 = impute(df.copy(), action7)
         df_new8 = impute(df.copy(), action8)
 
-        df_expected1 = pd.DataFrame([
-            ['2020-01-01', 1000, 0, 800],
-            ['2020-01-03', 0, 1200, 700],
-            ['2020-01-05', 1200, 0, 900],
-            ['2020-01-02', 0, 0, 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected2 = pd.DataFrame([
-            ['2020-01-01', 1000, '       ', 800],
-            ['2020-01-03', 0, 1200, 700],
-            ['2020-01-05', 1200, np.nan, 900],
-            ['2020-01-02', 0, '  ', 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected3 = pd.DataFrame([
-            ['2020-01-01', 1000, 1250, 800],
-            ['2020-01-03', 1300, 1200, 700],
-            ['2020-01-05', 1200, 1250, 900],
-            ['2020-01-02', 1300, 1250, 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected4 = pd.DataFrame([
-            ['2020-01-01', 1000, 1250, 800],
-            ['2020-01-03', 1200, 1200, 700],
-            ['2020-01-05', 1200, 1250, 900],
-            ['2020-01-02', 1200, 1250, 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected5 = pd.DataFrame([
-            ['2020-01-01', 1000, 800, 800],
-            ['2020-01-03', 700, 1200, 700],
-            ['2020-01-05', 1200, 900, 900],
-            ['2020-01-02', 700, 700, 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected6 = pd.DataFrame([
-            ['2020-01-01', 1000, 0, 800],
-            ['2020-01-02', 1000, 0, 700],
-            ['2020-01-03', 1000, 1200, 700],
-            ['2020-01-04', 1700, 1300, 800],
-            ['2020-01-05', 1200, 1300, 900],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
-        df_expected8 = pd.DataFrame([
-            ['2020-01-01', 1000, 1200, 800],
-            ['2020-01-03', 1000, 1200, 700],
-            ['2020-01-05', 1200, 1200, 900],
-            ['2020-01-02', 1000, 1200, 700],
-            ['2020-01-04', 1700, 1300, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
+        df_expected1 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 0, 800],
+                ['2020-01-03', 0, 1200, 700],
+                ['2020-01-05', 1200, 0, 900],
+                ['2020-01-02', 0, 0, 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected2 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, '       ', 800],
+                ['2020-01-03', 0, 1200, 700],
+                ['2020-01-05', 1200, np.nan, 900],
+                ['2020-01-02', 0, '  ', 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected3 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 1250, 800],
+                ['2020-01-03', 1300, 1200, 700],
+                ['2020-01-05', 1200, 1250, 900],
+                ['2020-01-02', 1300, 1250, 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected4 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 1250, 800],
+                ['2020-01-03', 1200, 1200, 700],
+                ['2020-01-05', 1200, 1250, 900],
+                ['2020-01-02', 1200, 1250, 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected5 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 800, 800],
+                ['2020-01-03', 700, 1200, 700],
+                ['2020-01-05', 1200, 900, 900],
+                ['2020-01-02', 700, 700, 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected6 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 0, 800],
+                ['2020-01-02', 1000, 0, 700],
+                ['2020-01-03', 1000, 1200, 700],
+                ['2020-01-04', 1700, 1300, 800],
+                ['2020-01-05', 1200, 1300, 900],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
+        df_expected8 = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, 1200, 800],
+                ['2020-01-03', 1000, 1200, 700],
+                ['2020-01-05', 1200, 1200, 900],
+                ['2020-01-02', 1000, 1200, 700],
+                ['2020-01-04', 1700, 1300, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
 
         df_new1['sold'] = df_new1['sold'].astype(int)
         df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
@@ -1594,50 +1734,51 @@ class ColumnTests(TestCase):
 
     def test_impute_random_edge(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
-        df = pd.DataFrame([
-            ['2020-01-01', 1000, '       ', 800],
-            ['2020-01-02', '', None, 700],
-            ['2020-01-03', 1200, np.NaN, 900],
-            ['2020-01-04', np.NaN, '  ', 700],
-            ['2020-01-05', 1700, np.NaN, 800],
-        ], columns=[
-            'date',
-            'sold',
-            'curr_profit',
-            'prev_sold',
-        ])
+
+        df = pd.DataFrame(
+            [
+                ['2020-01-01', 1000, '       ', 800],
+                ['2020-01-02', '', None, 700],
+                ['2020-01-03', 1200, np.NaN, 900],
+                ['2020-01-04', np.NaN, '  ', 700],
+                ['2020-01-05', 1700, np.NaN, 800],
+            ],
+            columns=[
+                'date',
+                'sold',
+                'curr_profit',
+                'prev_sold',
+            ],
+        )
         action = dict(
             action_arguments=['sold', 'curr_profit'],
-            action_options={
-                'strategy': 'random'
-            },
+            action_options={'strategy': 'random'},
         )
         with self.assertRaises(Exception):
             _ = impute(df.copy(), action)
 
     def test_impute_constant(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
-        df = pd.DataFrame([
-            [1, 1.000, '2021-10-01', 'Store 1', 23023],
-            [1, None, '2021-10-01', 'Store 2', np.nan],
-            [np.nan, 1100, '', '', 90233],
-            [2, None, None, 'Store 1', 23920],
-            [2, 12.00, '2021-09-01', None, np.nan],
-            [2, 125.0, '2021-09-01', 'Store 3', 49833]
-        ], columns=[
-            'group_id',
-            'price',
-            'group_churned_at',
-            'store',
-            'zip_code',
-        ])
-        action = dict(
-            action_arguments=['group_id',
+
+        df = pd.DataFrame(
+            [
+                [1, 1.000, '2021-10-01', 'Store 1', 23023],
+                [1, None, '2021-10-01', 'Store 2', np.nan],
+                [np.nan, 1100, '', '', 90233],
+                [2, None, None, 'Store 1', 23920],
+                [2, 12.00, '2021-09-01', None, np.nan],
+                [2, 125.0, '2021-09-01', 'Store 3', 49833],
+            ],
+            columns=[
+                'group_id',
                 'price',
                 'group_churned_at',
                 'store',
-                'zip_code'
+                'zip_code',
             ],
+        )
+        action = dict(
+            action_arguments=['group_id', 'price', 'group_churned_at', 'store', 'zip_code'],
             action_options={
                 'strategy': 'constant',
             },
@@ -1679,20 +1820,23 @@ class ColumnTests(TestCase):
                 },
             },
         )
-        df_expected = pd.DataFrame([
-            [1, 1.000, '2021-10-01', 'Store 1', 23023],
-            [1, 0.0, '2021-10-01', 'Store 2', 'missing'],
-            [0, 1100, pd.Timestamp.min, 'missing', 90233],
-            [2, 0.0, pd.Timestamp.min, 'Store 1', 23920],
-            [2, 12.00, '2021-09-01', 'missing', 'missing'],
-            [2, 125.0, '2021-09-01', 'Store 3', 49833],
-        ], columns=[
-            'group_id',
-            'price',
-            'group_churned_at',
-            'store',
-            'zip_code',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1.000, '2021-10-01', 'Store 1', 23023],
+                [1, 0.0, '2021-10-01', 'Store 2', 'missing'],
+                [0, 1100, pd.Timestamp.min, 'missing', 90233],
+                [2, 0.0, pd.Timestamp.min, 'Store 1', 23920],
+                [2, 12.00, '2021-09-01', 'missing', 'missing'],
+                [2, 125.0, '2021-09-01', 'Store 3', 49833],
+            ],
+            columns=[
+                'group_id',
+                'price',
+                'group_churned_at',
+                'store',
+                'zip_code',
+            ],
+        )
         df_new = impute(df, action).reset_index(drop=True)
         df_new['group_id'] = df_new['group_id'].astype(int)
         df_new['price'] = df_new['price'].astype(float)
@@ -1701,71 +1845,74 @@ class ColumnTests(TestCase):
 
     def test_impute_constant_with_value(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
-        df = pd.DataFrame([
-            [1, 1.000, '2021-10-01', 'Store 1', 23023],
-            [1, None, '2021-10-01', 'Store 2', np.nan],
-            [np.nan, 1100, '', '', 90233],
-            [2, None, None, 'Store 1', 23920],
-            [2, 12.00, '2021-09-01', None, np.nan],
-            [2, 125.0, '2021-09-01', 'Store 3', 49833]
-        ], columns=[
-            'group_id',
-            'price',
-            'group_churned_at',
-            'store',
-            'zip_code',
-        ])
-        action = dict(
-            action_arguments=['group_id',
+
+        df = pd.DataFrame(
+            [
+                [1, 1.000, '2021-10-01', 'Store 1', 23023],
+                [1, None, '2021-10-01', 'Store 2', np.nan],
+                [np.nan, 1100, '', '', 90233],
+                [2, None, None, 'Store 1', 23920],
+                [2, 12.00, '2021-09-01', None, np.nan],
+                [2, 125.0, '2021-09-01', 'Store 3', 49833],
+            ],
+            columns=[
+                'group_id',
                 'price',
                 'group_churned_at',
                 'store',
-                'zip_code'
+                'zip_code',
             ],
-            action_options={
-                'strategy': 'constant',
-                'value': 'test'
-            },
+        )
+        action = dict(
+            action_arguments=['group_id', 'price', 'group_churned_at', 'store', 'zip_code'],
+            action_options={'strategy': 'constant', 'value': 'test'},
             action_variables={},
         )
-        df_expected = pd.DataFrame([
-            [1, 1.000, '2021-10-01', 'Store 1', 23023],
-            [1, 'test', '2021-10-01', 'Store 2', 'test'],
-            ['test', 1100, 'test', 'test', 90233],
-            [2, 'test', 'test', 'Store 1', 23920],
-            [2, 12.00, '2021-09-01', 'test', 'test'],
-            [2, 125.0, '2021-09-01', 'Store 3', 49833],
-        ], columns=[
-            'group_id',
-            'price',
-            'group_churned_at',
-            'store',
-            'zip_code',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1.000, '2021-10-01', 'Store 1', 23023],
+                [1, 'test', '2021-10-01', 'Store 2', 'test'],
+                ['test', 1100, 'test', 'test', 90233],
+                [2, 'test', 'test', 'Store 1', 23920],
+                [2, 12.00, '2021-09-01', 'test', 'test'],
+                [2, 125.0, '2021-09-01', 'Store 3', 49833],
+            ],
+            columns=[
+                'group_id',
+                'price',
+                'group_churned_at',
+                'store',
+                'zip_code',
+            ],
+        )
         df_new = impute(df, action).reset_index(drop=True)
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_sequential_two_idx(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute
-        df = pd.DataFrame([
-            [1, 1000, '2021-10-01', '2021-09-01', 2],
-            [1, None, '2021-10-01', '2021-08-01', np.nan],
-            [np.nan, 1100, '2021-10-01', '2021-01-01', 2],
-            [2, None, '2021-09-01', '2021-08-01', 2],
-            [2, 1200, '2021-09-01', '2021-08-16', np.nan],
-            [2, 1250, '2021-09-01', '2021-08-14', 2],
-        ], columns=[
-            'group_id',
-            'order_id',
-            'group_churned_at',
-            'order_created_at',
-            'order_count',
-        ])
+
+        df = pd.DataFrame(
+            [
+                [1, 1000, '2021-10-01', '2021-09-01', 2],
+                [1, None, '2021-10-01', '2021-08-01', np.nan],
+                [np.nan, 1100, '2021-10-01', '2021-01-01', 2],
+                [2, None, '2021-09-01', '2021-08-01', 2],
+                [2, 1200, '2021-09-01', '2021-08-16', np.nan],
+                [2, 1250, '2021-09-01', '2021-08-14', 2],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+                'group_churned_at',
+                'order_created_at',
+                'order_count',
+            ],
+        )
         action = dict(
             action_arguments=['group_id', 'order_id', 'order_count'],
             action_options={
                 'strategy': 'sequential',
-                'timeseries_index': ['group_churned_at', 'order_created_at']
+                'timeseries_index': ['group_churned_at', 'order_created_at'],
             },
             action_variables={
                 'group_id': {
@@ -1805,86 +1952,96 @@ class ColumnTests(TestCase):
                 },
             },
         )
-        df_expected = pd.DataFrame([
-            [2, 0, '2021-09-01', '2021-08-01', 2],
-            [2, 1250, '2021-09-01', '2021-08-14', 2],
-            [2, 1200, '2021-09-01', '2021-08-16', 2],
-            [2, 1100, '2021-10-01', '2021-01-01', 2],
-            [1, 1100, '2021-10-01', '2021-08-01', 2],
-            [1, 1000, '2021-10-01', '2021-09-01', 2],
-        ], columns=[
-            'group_id',
-            'order_id',
-            'group_churned_at',
-            'order_created_at',
-            'order_count',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [2, 0, '2021-09-01', '2021-08-01', 2],
+                [2, 1250, '2021-09-01', '2021-08-14', 2],
+                [2, 1200, '2021-09-01', '2021-08-16', 2],
+                [2, 1100, '2021-10-01', '2021-01-01', 2],
+                [1, 1100, '2021-10-01', '2021-08-01', 2],
+                [1, 1000, '2021-10-01', '2021-09-01', 2],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+                'group_churned_at',
+                'order_created_at',
+                'order_count',
+            ],
+        )
         df_new = impute(df, action).reset_index(drop=True)
         df_new['group_id'] = df_new['group_id'].astype(int)
         df_new['order_count'] = df_new['order_count'].astype(int)
         assert_frame_equal(df_new, df_expected)
 
-
     def test_last_column(self):
-        df = pd.DataFrame([
-            [1, 1000],
-            [2, 1050],
-            [1, 1100],
-            [2, 1150],
-        ], columns=[
-            'group_id',
-            'order_id',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [2, 1050],
+                [1, 1100],
+                [2, 1150],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+            ],
+        )
         action = dict(
             action_arguments=['order_id'],
-            action_options=dict(
-                groupby_columns=['group_id']
-            ),
+            action_options=dict(groupby_columns=['group_id']),
             outputs=[
                 dict(uuid='last_order'),
             ],
         )
         df_new = last(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                order_id=1000,
-                last_order=1100,
-            ),
-            dict(
-                group_id=2,
-                order_id=1050,
-                last_order=1150,
-            ),
-            dict(
-                group_id=1,
-                order_id=1100,
-                last_order=1100,
-            ),
-            dict(
-                group_id=2,
-                order_id=1150,
-                last_order=1150,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    order_id=1000,
+                    last_order=1100,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1050,
+                    last_order=1150,
+                ),
+                dict(
+                    group_id=1,
+                    order_id=1100,
+                    last_order=1100,
+                ),
+                dict(
+                    group_id=2,
+                    order_id=1150,
+                    last_order=1150,
+                ),
+            ],
+        )
 
     def test_max(self):
         from mage_ai.data_cleaner.transformer_actions.column import max
+
         action = self.__groupby_agg_action('max_amount')
         df_new = max(TEST_DATAFRAME.copy(), action)
-        df_expected = pd.DataFrame([
-            [1, 1000, 1100],
-            [2, 1050, 1150],
-            [1, 1100, 1100],
-            [2, 1150, 1150],
-        ], columns=[
-            'group_id',
-            'amount',
-            'max_amount',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1000, 1100],
+                [2, 1050, 1150],
+                [1, 1100, 1100],
+                [2, 1150, 1150],
+            ],
+            columns=[
+                'group_id',
+                'amount',
+                'max_amount',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
-        action2 =  dict(
+        action2 = dict(
             action_arguments=['amount'],
             action_options=dict(),
             outputs=[
@@ -1892,163 +2049,166 @@ class ColumnTests(TestCase):
             ],
         )
         df_new2 = max(TEST_DATAFRAME.copy(), action2)
-        df_expected2 = pd.DataFrame([
-            [1, 1000, 1150],
-            [2, 1050, 1150],
-            [1, 1100, 1150],
-            [2, 1150, 1150],
-        ], columns=[
-            'group_id',
-            'amount',
-            'max_amount',
-        ])
+        df_expected2 = pd.DataFrame(
+            [
+                [1, 1000, 1150],
+                [2, 1050, 1150],
+                [1, 1100, 1150],
+                [2, 1150, 1150],
+            ],
+            columns=[
+                'group_id',
+                'amount',
+                'max_amount',
+            ],
+        )
         assert_frame_equal(df_new2, df_expected2)
 
     def test_median(self):
         from mage_ai.data_cleaner.transformer_actions.column import median
+
         action = self.__groupby_agg_action('median_amount')
-        df = pd.DataFrame([
-            [1, 1000],
-            [2, 1050],
-            [1, 1100],
-            [2, 1550],
-            [2, 1150],
-        ], columns=[
-            'group_id',
-            'amount',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [2, 1050],
+                [1, 1100],
+                [2, 1550],
+                [2, 1150],
+            ],
+            columns=[
+                'group_id',
+                'amount',
+            ],
+        )
         df_new = median(df, action)
-        df_expected = pd.DataFrame([
-            [1, 1000, 1050],
-            [2, 1050, 1150],
-            [1, 1100, 1050],
-            [2, 1550, 1150],
-            [2, 1150, 1150],
-        ], columns=[
-            'group_id',
-            'amount',
-            'median_amount',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1000, 1050],
+                [2, 1050, 1150],
+                [1, 1100, 1050],
+                [2, 1550, 1150],
+                [2, 1150, 1150],
+            ],
+            columns=[
+                'group_id',
+                'amount',
+                'median_amount',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_min(self):
         from mage_ai.data_cleaner.transformer_actions.column import min
+
         action = self.__groupby_agg_action('min_amount')
         df_new = min(TEST_DATAFRAME.copy(), action)
-        df_expected = pd.DataFrame([
-            [1, 1000, 1000],
-            [2, 1050, 1050],
-            [1, 1100, 1000],
-            [2, 1150, 1050],
-        ], columns=[
-            'group_id',
-            'amount',
-            'min_amount',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, 1000, 1000],
+                [2, 1050, 1050],
+                [1, 1100, 1000],
+                [2, 1150, 1050],
+            ],
+            columns=[
+                'group_id',
+                'amount',
+                'min_amount',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_reformat_capitalization(self):
         from mage_ai.data_cleaner.transformer_actions.column import reformat
-        df = pd.DataFrame([
-            [None, 'us', 30000, 'Funny Video Corp','cute animal #1', 100, 30],
-            ['500', 'CA', 10000, 'Machine Learning 4 U', 'intro to regression', 3000, 20],
-            ['', '', np.nan, 'News Inc', 'Daily news #1', None, 75],
-            ['250', 'CA', 7500, 'Machine Learning 4 U', 'MACHINE LEARNING SEMINAR', 8000, 20],
-            ['1000', 'mx', 45003, None, 'cute Animal #4', 90, 40],
-            ['1500', 'MX', 75000, 'Funny Video Corp', '', 70, 25],
-            ['1500', np.nan, 75000, 'News Inc', 'daily news #3', 70, 25],
-            [None, 'mx', 75000, 'Z Combinator', 'Tutorial: how to Start a startup', 70, np.nan],
-            ['1250', 'US', 60000, 'Funny Video Corp', 'cute animal #3', 80, 20],
-            ['', 'CA', 5000, '', '', 10000, 30],
-            ['800', None, 12050, 'Funny Video Corp', 'meme Compilation', 2000, 45],
-            ['600', 'CA', 11000, 'News Inc', 'daily news #2', 3000, 50],
-            ['600', 'ca', '', 'Funny Video Corp', '', 3000, None], 
-            ['700', 'MX', 11750, 'Funny Video Corp', 'cute animal #2', 2750, 55],
-            ['700', '', None, 'Funny Video Corp', '', None, 55], 
-            ['700', 'MX', 11750, 'Funny Video Corp', '', 2750, 55], 
-            ['1200', 'MX', 52000, 'Z Combinator', 'vc funding strats', 75, 60]
-        ], columns=[
-            'userid',
-            'location',
-            'number_of_creators',
-            'company_name',
-            'name',
-            'losses',
-            'number_of_advertisers'
-        ])
-        df_expected = pd.DataFrame([
-            [None, 'US', 30000, 'funny video corp','cute animal #1', 100, 30],
-            ['500', 'CA', 10000, 'machine learning 4 u', 'intro to regression', 3000, 20],
-            ['', None, np.nan, 'news inc', 'daily news #1', None, 75],
-            ['250', 'CA', 7500, 'machine learning 4 u', 'machine learning seminar', 8000, 20],
-            ['1000', 'MX', 45003, None, 'cute animal #4', 90, 40],
-            ['1500', 'MX', 75000, 'funny video corp', None, 70, 25],
-            ['1500', np.nan, 75000, 'news inc', 'daily news #3', 70, 25],
-            [None, 'MX', 75000, 'z combinator', 'tutorial: how to start a startup', 70, np.nan],
-            ['1250', 'US', 60000, 'funny video corp', 'cute animal #3', 80, 20],
-            ['', 'CA', 5000, None, None, 10000, 30],
-            ['800', None, 12050, 'funny video corp', 'meme compilation', 2000, 45],
-            ['600', 'CA', 11000, 'news inc', 'daily news #2', 3000, 50],
-            ['600', 'CA', '', 'funny video corp', None, 3000, None], 
-            ['700', 'MX', 11750, 'funny video corp', 'cute animal #2', 2750, 55],
-            ['700', None, None, 'funny video corp', None, None, 55], 
-            ['700', 'MX', 11750, 'funny video corp', None, 2750, 55], 
-            ['1200', 'MX', 52000, 'z combinator', 'vc funding strats', 75, 60]
-        ], columns=[
-            'userid',
-            'location',
-            'number_of_creators',
-            'company_name',
-            'name',
-            'losses',
-            'number_of_advertisers'
-        ])
-        action1 =dict(
+
+        df = pd.DataFrame(
+            [
+                [None, 'us', 30000, 'Funny Video Corp', 'cute animal #1', 100, 30],
+                ['500', 'CA', 10000, 'Machine Learning 4 U', 'intro to regression', 3000, 20],
+                ['', '', np.nan, 'News Inc', 'Daily news #1', None, 75],
+                ['250', 'CA', 7500, 'Machine Learning 4 U', 'MACHINE LEARNING SEMINAR', 8000, 20],
+                ['1000', 'mx', 45003, None, 'cute Animal #4', 90, 40],
+                ['1500', 'MX', 75000, 'Funny Video Corp', '', 70, 25],
+                ['1500', np.nan, 75000, 'News Inc', 'daily news #3', 70, 25],
+                [None, 'mx', 75000, 'Z Combinator', 'Tutorial: how to Start a startup', 70, np.nan],
+                ['1250', 'US', 60000, 'Funny Video Corp', 'cute animal #3', 80, 20],
+                ['', 'CA', 5000, '', '', 10000, 30],
+                ['800', None, 12050, 'Funny Video Corp', 'meme Compilation', 2000, 45],
+                ['600', 'CA', 11000, 'News Inc', 'daily news #2', 3000, 50],
+                ['600', 'ca', '', 'Funny Video Corp', '', 3000, None],
+                ['700', 'MX', 11750, 'Funny Video Corp', 'cute animal #2', 2750, 55],
+                ['700', '', None, 'Funny Video Corp', '', None, 55],
+                ['700', 'MX', 11750, 'Funny Video Corp', '', 2750, 55],
+                ['1200', 'MX', 52000, 'Z Combinator', 'vc funding strats', 75, 60],
+            ],
+            columns=[
+                'userid',
+                'location',
+                'number_of_creators',
+                'company_name',
+                'name',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+        df_expected = pd.DataFrame(
+            [
+                [None, 'US', 30000, 'funny video corp', 'cute animal #1', 100, 30],
+                ['500', 'CA', 10000, 'machine learning 4 u', 'intro to regression', 3000, 20],
+                ['', None, np.nan, 'news inc', 'daily news #1', None, 75],
+                ['250', 'CA', 7500, 'machine learning 4 u', 'machine learning seminar', 8000, 20],
+                ['1000', 'MX', 45003, None, 'cute animal #4', 90, 40],
+                ['1500', 'MX', 75000, 'funny video corp', None, 70, 25],
+                ['1500', np.nan, 75000, 'news inc', 'daily news #3', 70, 25],
+                [None, 'MX', 75000, 'z combinator', 'tutorial: how to start a startup', 70, np.nan],
+                ['1250', 'US', 60000, 'funny video corp', 'cute animal #3', 80, 20],
+                ['', 'CA', 5000, None, None, 10000, 30],
+                ['800', None, 12050, 'funny video corp', 'meme compilation', 2000, 45],
+                ['600', 'CA', 11000, 'news inc', 'daily news #2', 3000, 50],
+                ['600', 'CA', '', 'funny video corp', None, 3000, None],
+                ['700', 'MX', 11750, 'funny video corp', 'cute animal #2', 2750, 55],
+                ['700', None, None, 'funny video corp', None, None, 55],
+                ['700', 'MX', 11750, 'funny video corp', None, 2750, 55],
+                ['1200', 'MX', 52000, 'z combinator', 'vc funding strats', 75, 60],
+            ],
+            columns=[
+                'userid',
+                'location',
+                'number_of_creators',
+                'company_name',
+                'name',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+        action1 = dict(
             action_type='reformat',
             action_arguments=['location'],
             axis='column',
-            action_options = {
-                'reformat': 'caps_standardization',
-                'capitalization': 'uppercase'
-            },
-            action_variables = {
+            action_options={'reformat': 'caps_standardization', 'capitalization': 'uppercase'},
+            action_variables={
                 'location': {
-                    'feature' : {
-                        'column_type': 'category',
-                        'uuid': 'location'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'category', 'uuid': 'location'},
+                    'type': 'feature',
                 }
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         action2 = dict(
             action_type='reformat',
             action_arguments=['company_name', 'name'],
             axis='column',
-            action_options = {
-                'reformat': 'caps_standardization',
-                'capitalization': 'lowercase'
-            },
-            action_variables = {
+            action_options={'reformat': 'caps_standardization', 'capitalization': 'lowercase'},
+            action_variables={
                 'company_name': {
-                    'feature' : {
-                        'column_type': 'category_high_cardinality',
-                        'uuid': 'company_name'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'category_high_cardinality', 'uuid': 'company_name'},
+                    'type': 'feature',
                 },
-                'name': {
-                    'feature' : {
-                        'column_type': 'text',
-                        'uuid': 'name'
-                    },
-                    'type': 'feature'
-                }
+                'name': {'feature': {'column_type': 'text', 'uuid': 'name'}, 'type': 'feature'},
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         df_new = reformat(df, action1)
         df_new = reformat(df_new, action2)
@@ -2056,64 +2216,69 @@ class ColumnTests(TestCase):
 
     def test_reformat_currency(self):
         from mage_ai.data_cleaner.transformer_actions.column import reformat
-        df_currency = pd.DataFrame([
-            ['$', '$    10000', 'stock exchange america', '$:MAGE', 5.34],
-            ['£', '£200', 'huddersfield stock exchange', '£:XYZA', -1.34],
-            ['CAD', 'CAD 100', None, '', -0.89],
-            ['¥', '', 'stock exchange japan', '', 4.23],
-            ['€', '€ 123.34', 'dresden stock exchange', '€:1234', 2.34],
-            ['₹', '₹        10000', np.nan, '₹:FDSA', -7.80],
-            ['Rs', 'Rs 10000', '', '₹:ASDF', 4.44],
-            ['', '元10000', 'stock exchange china', '元:ASDF', 1.02],
-            [None, None, 'stock exchange san jose', None, -2.01],
-        ], columns=[
-            'native_currency',
-            'value',
-            'exchange',
-            'ticker',
-            'growth_rate',
-        ])
-        df_expected = pd.DataFrame([
-            ['$', 10000, 'stock exchange america', '$:MAGE', 5.34],
-            ['£', 200, 'huddersfield stock exchange', '£:XYZA', -1.34],
-            ['CAD', 100, None, '', -0.89],
-            ['¥', np.nan, 'stock exchange japan', '', 4.23],
-            ['€', 123.34, 'dresden stock exchange', '€:1234', 2.34],
-            ['₹', 10000, np.nan, '₹:FDSA', -7.80],
-            ['Rs', 10000, '', '₹:ASDF', 4.44],
-            ['', 10000, 'stock exchange china', '元:ASDF', 1.02],
-            [None, np.nan, 'stock exchange san jose', None, -2.01],
-        ], columns=[
-            'native_currency',
-            'value',
-            'exchange',
-            'ticker',
-            'growth_rate',
-        ])
+
+        df_currency = pd.DataFrame(
+            [
+                ['$', '$    10000', 'stock exchange america', '$:MAGE', 5.34],
+                ['£', '£200', 'huddersfield stock exchange', '£:XYZA', -1.34],
+                ['CAD', 'CAD 100', None, '', -0.89],
+                ['¥', '', 'stock exchange japan', '', 4.23],
+                ['€', '€ 123.34', 'dresden stock exchange', '€:1234', 2.34],
+                ['₹', '₹        10000', np.nan, '₹:FDSA', -7.80],
+                ['Rs', 'Rs 10000', '', '₹:ASDF', 4.44],
+                ['', '元10000', 'stock exchange china', '元:ASDF', 1.02],
+                [None, None, 'stock exchange san jose', None, -2.01],
+            ],
+            columns=[
+                'native_currency',
+                'value',
+                'exchange',
+                'ticker',
+                'growth_rate',
+            ],
+        )
+        df_expected = pd.DataFrame(
+            [
+                ['$', 10000, 'stock exchange america', '$:MAGE', 5.34],
+                ['£', 200, 'huddersfield stock exchange', '£:XYZA', -1.34],
+                ['CAD', 100, None, '', -0.89],
+                ['¥', np.nan, 'stock exchange japan', '', 4.23],
+                ['€', 123.34, 'dresden stock exchange', '€:1234', 2.34],
+                ['₹', 10000, np.nan, '₹:FDSA', -7.80],
+                ['Rs', 10000, '', '₹:ASDF', 4.44],
+                ['', 10000, 'stock exchange china', '元:ASDF', 1.02],
+                [None, np.nan, 'stock exchange san jose', None, -2.01],
+            ],
+            columns=[
+                'native_currency',
+                'value',
+                'exchange',
+                'ticker',
+                'growth_rate',
+            ],
+        )
         action_currency = dict(
             action_type='reformat',
             action_arguments=['value'],
             axis='column',
-            action_options = {
+            action_options={
                 'reformat': 'currency_to_num',
             },
-            action_variables = {
+            action_variables={
                 'value': {
-                    'feature' : {
-                        'column_type': 'number_with_decimals',
-                        'uuid': 'value'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'number_with_decimals', 'uuid': 'value'},
+                    'type': 'feature',
                 }
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         df_new = reformat(df_currency, action_currency)
         assert_frame_equal(df_new, df_expected)
 
     def test_currency_conversion_test_all_formatting(self):
         from mage_ai.data_cleaner.transformer_actions.column import reformat
+
         values = [
             '  $ 10000',
             '- ¥ 22.324523',
@@ -2124,7 +2289,7 @@ class ColumnTests(TestCase):
             '-₹ 0',
             ' 10000 元   ',
             ' 0.42 €',
-            ' -  3.42032 CAD'
+            ' -  3.42032 CAD',
         ]
         expected_values = [
             10000,
@@ -2136,7 +2301,7 @@ class ColumnTests(TestCase):
             -0.0,
             10000,
             0.42,
-            -3.42032
+            -3.42032,
         ]
 
         df = pd.DataFrame({'column': values})
@@ -2145,295 +2310,328 @@ class ColumnTests(TestCase):
             action_type='reformat',
             action_arguments=['column'],
             axis='column',
-            action_options = {
+            action_options={
                 'reformat': 'currency_to_num',
             },
-            action_variables = {
+            action_variables={
                 'column': {
-                    'feature' : {
-                        'column_type': 'number_with_decimals',
-                        'uuid': 'column'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'number_with_decimals', 'uuid': 'column'},
+                    'type': 'feature',
                 }
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         new_df = reformat(df, action)
         assert_frame_equal(new_df, expected_df)
 
     def test_reformat_time(self):
         from mage_ai.data_cleaner.transformer_actions.column import reformat
-        df = pd.DataFrame([
-            [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
-            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
-            [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
-            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
-            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212],
-            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', 2034]
-        ], columns=[
-            'date1',
-            'date2',
-            'notdate',
-            'mostlydate',
-            'date5',
-        ])
-        expected_df = pd.DataFrame([
+
+        df = pd.DataFrame(
             [
-                dt(2022, 8, 4),
-                pd.NaT,
-                'Action Movie #1',
-                pd.NaT,
-                pd.to_datetime(234)
+                [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
+                [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
+                [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
+                [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
+                [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212],
+                [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', 2034],
             ],
-            [
-                dt(2022, 1, 20),
-                pd.NaT,
-                'sportsball',
-                pd.to_datetime('1-20-2022'),
-                pd.to_datetime(13234)
+            columns=[
+                'date1',
+                'date2',
+                'notdate',
+                'mostlydate',
+                'date5',
             ],
+        )
+        expected_df = pd.DataFrame(
             [
-                None,
-                pd.to_datetime('12/24/22'),
-                'reality tv show',
-                pd.to_datetime('12-24-2022'),
-                pd.to_datetime(23234)
+                [dt(2022, 8, 4), pd.NaT, 'Action Movie #1', pd.NaT, pd.to_datetime(234)],
+                [
+                    dt(2022, 1, 20),
+                    pd.NaT,
+                    'sportsball',
+                    pd.to_datetime('1-20-2022'),
+                    pd.to_datetime(13234),
+                ],
+                [
+                    None,
+                    pd.to_datetime('12/24/22'),
+                    'reality tv show',
+                    pd.to_datetime('12-24-2022'),
+                    pd.to_datetime(23234),
+                ],
+                [
+                    dt(2022, 10, 31),
+                    pd.to_datetime('10/31/22'),
+                    '',
+                    pd.to_datetime('10.31.2022'),
+                    pd.to_datetime(21432),
+                ],
+                [
+                    dt(2022, 6, 27),
+                    pd.NaT,
+                    'action Movie #2',
+                    pd.to_datetime('6/27/2022'),
+                    pd.to_datetime(324212),
+                ],
+                [
+                    dt(2022, 3, 8),
+                    pd.to_datetime('03/08/22'),
+                    'game show',
+                    pd.to_datetime('3/8/2022'),
+                    pd.to_datetime(2034),
+                ],
             ],
-            [
-                dt(2022, 10, 31),
-                pd.to_datetime('10/31/22'),
-                '',
-                pd.to_datetime('10.31.2022'),
-                pd.to_datetime(21432)
+            columns=[
+                'date1',
+                'date2',
+                'notdate',
+                'mostlydate',
+                'date5',
             ],
-            [
-                dt(2022, 6, 27),
-                pd.NaT,
-                'action Movie #2',
-                pd.to_datetime('6/27/2022'),
-                pd.to_datetime(324212)
-            ],
-            [
-                dt(2022, 3, 8),
-                pd.to_datetime('03/08/22'),
-                'game show',
-                pd.to_datetime('3/8/2022'),
-                pd.to_datetime(2034)
-            ]
-        ], columns=[
-            'date1',
-            'date2',
-            'notdate',
-            'mostlydate',
-            'date5',
-        ])
+        )
         action = dict(
             action_type='reformat',
             action_arguments=['date2', 'mostlydate', 'date5'],
             axis='column',
-            action_options = {
+            action_options={
                 'reformat': 'date_format_conversion',
             },
-            action_variables = {
+            action_variables={
                 'date2': {
-                    'feature' : {
-                        'column_type': 'datetime',
-                        'uuid': 'date2'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'datetime', 'uuid': 'date2'},
+                    'type': 'feature',
                 },
                 'mostlydate': {
-                    'feature' : {
-                        'column_type': 'category_high_cardinality',
-                        'uuid': 'mostlydate'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'category_high_cardinality', 'uuid': 'mostlydate'},
+                    'type': 'feature',
                 },
-                'date5': {
-                    'feature' : {
-                        'column_type': 'number',
-                        'uuid': 'date5'
-                    },
-                    'type': 'feature'
-                }
+                'date5': {'feature': {'column_type': 'number', 'uuid': 'date5'}, 'type': 'feature'},
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         df_new = reformat(df, action).reset_index(drop=True)
         assert_frame_equal(df_new, expected_df)
 
     def test_reformat_time_bad_inputs(self):
         from mage_ai.data_cleaner.transformer_actions.column import reformat
-        df = pd.DataFrame([
-            [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', np.nan, True],
-            [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', -1323.4, False],
-            [None, '12/24/22', 'reality tv show', '12-24-2022', -232342.322, False],
-            [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21.432, None],
-            [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212, True],
-            [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', -9830, False]
-        ], columns=[
-            'date1',
-            'date2',
-            'notdate',
-            'mostlydate',
-            'date5',
-            'boolean'
-        ])
-        expected_df = pd.DataFrame([
+
+        df = pd.DataFrame(
             [
-                dt(2022, 8, 4),
-                pd.to_datetime('08/04/22'),
-                pd.NaT,
-                pd.NaT,
-                np.nan,
-                pd.NaT
+                [dt(2022, 8, 4), '08/04/22', 'Action Movie #1', 'not a date', np.nan, True],
+                [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', -1323.4, False],
+                [None, '12/24/22', 'reality tv show', '12-24-2022', -232342.322, False],
+                [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21.432, None],
+                [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212, True],
+                [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', -9830, False],
             ],
+            columns=['date1', 'date2', 'notdate', 'mostlydate', 'date5', 'boolean'],
+        )
+        expected_df = pd.DataFrame(
             [
-                dt(2022, 1, 20),
-                pd.NaT,
-                pd.NaT,
-                pd.to_datetime('1-20-2022'),
-                pd.to_datetime(-1323.4),
-                pd.NaT
+                [dt(2022, 8, 4), pd.to_datetime('08/04/22'), pd.NaT, pd.NaT, np.nan, pd.NaT],
+                [
+                    dt(2022, 1, 20),
+                    pd.NaT,
+                    pd.NaT,
+                    pd.to_datetime('1-20-2022'),
+                    pd.to_datetime(-1323.4),
+                    pd.NaT,
+                ],
+                [
+                    None,
+                    pd.to_datetime('12/24/22'),
+                    pd.NaT,
+                    pd.to_datetime('12-24-2022'),
+                    pd.to_datetime(-232342.322),
+                    pd.NaT,
+                ],
+                [
+                    dt(2022, 10, 31),
+                    pd.to_datetime('10/31/22'),
+                    pd.NaT,
+                    pd.to_datetime('10.31.2022'),
+                    pd.to_datetime(21.432),
+                    pd.NaT,
+                ],
+                [
+                    dt(2022, 6, 27),
+                    pd.NaT,
+                    pd.NaT,
+                    pd.to_datetime('6/27/2022'),
+                    pd.to_datetime(324212),
+                    pd.NaT,
+                ],
+                [
+                    dt(2022, 3, 8),
+                    pd.to_datetime('03/08/22'),
+                    pd.NaT,
+                    pd.to_datetime('3/8/2022'),
+                    pd.to_datetime(-9830),
+                    pd.NaT,
+                ],
             ],
-            [
-                None,
-                pd.to_datetime('12/24/22'),
-                pd.NaT,
-                pd.to_datetime('12-24-2022'),
-                pd.to_datetime(-232342.322),
-                pd.NaT
-            ],
-            [
-                dt(2022, 10, 31),
-                pd.to_datetime('10/31/22'),
-                pd.NaT,
-                pd.to_datetime('10.31.2022'),
-                pd.to_datetime(21.432),
-                pd.NaT
-            ],
-            [
-                dt(2022, 6, 27),
-                pd.NaT,
-                pd.NaT,
-                pd.to_datetime('6/27/2022'),
-                pd.to_datetime(324212),
-                pd.NaT
-            ],
-            [
-                dt(2022, 3, 8),
-                pd.to_datetime('03/08/22'),
-                pd.NaT,
-                pd.to_datetime('3/8/2022'),
-                pd.to_datetime(-9830),
-                pd.NaT
-            ]
-        ], columns=[
-            'date1',
-            'date2',
-            'notdate',
-            'mostlydate',
-            'date5',
-            'boolean'
-        ])
+            columns=['date1', 'date2', 'notdate', 'mostlydate', 'date5', 'boolean'],
+        )
         action = dict(
             action_type='reformat',
-            action_arguments=[
-            'date1',
-            'date2',
-            'notdate',
-            'mostlydate',
-            'date5',
-            'boolean'
-        ],
+            action_arguments=['date1', 'date2', 'notdate', 'mostlydate', 'date5', 'boolean'],
             axis='column',
-            action_options = {
+            action_options={
                 'reformat': 'date_format_conversion',
             },
-            action_variables = {
+            action_variables={
                 'date1': {
-                    'feature' : {
-                        'column_type': 'datetime',
-                        'uuid': 'date1'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'datetime', 'uuid': 'date1'},
+                    'type': 'feature',
                 },
                 'date2': {
-                    'feature' : {
-                        'column_type': 'datetime',
-                        'uuid': 'date2'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'datetime', 'uuid': 'date2'},
+                    'type': 'feature',
                 },
                 'notdate': {
-                    'feature' : {
-                        'column_type': 'text',
-                        'uuid': 'notdate'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'text', 'uuid': 'notdate'},
+                    'type': 'feature',
                 },
                 'mostlydate': {
-                    'feature' : {
-                        'column_type': 'category_high_cardinality',
-                        'uuid': 'mostlydate'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'category_high_cardinality', 'uuid': 'mostlydate'},
+                    'type': 'feature',
                 },
                 'date5': {
-                    'feature' : {
-                        'column_type': 'number_with_decimals',
-                        'uuid': 'date5'
-                    },
-                    'type': 'feature'
+                    'feature': {'column_type': 'number_with_decimals', 'uuid': 'date5'},
+                    'type': 'feature',
                 },
                 'boolean': {
-                    'feature' : {
-                        'column_type': 'true_or_false',
-                        'uuid': 'boolean'
-                    },
-                    'type': 'feature'
-                }
+                    'feature': {'column_type': 'true_or_false', 'uuid': 'boolean'},
+                    'type': 'feature',
+                },
             },
-            action_code = '',
-            outputs = [],
+            action_code='',
+            outputs=[],
         )
         df_new = reformat(df, action).reset_index(drop=True)
         assert_frame_equal(df_new, expected_df)
 
-    def test_select(self):
-        df = pd.DataFrame([
-            [1, 1000],
-            [2, 1050],
-        ], columns=[
-            'group_id',
-            'order_id',
-        ])
-        action = dict(
-            action_arguments=['group_id']
+    def test_reformat_bad_inputs(self):
+        from mage_ai.data_cleaner.transformer_actions.column import reformat
+
+        df = pd.DataFrame(
+            [
+                [dt(2022, 8, 4), None, 'Action Movie #1', 'not a date', 234],
+                [dt(2022, 1, 20), '', 'sportsball', '1-20-2022', 13234],
+                [None, '12/24/22', 'reality tv show', '12-24-2022', 23234],
+                [dt(2022, 10, 31), '10/31/22', '', '10.31.2022', 21432],
+                [dt(2022, 6, 27), None, 'action Movie #2', '6/27/2022', 324212],
+                [dt(2022, 3, 8), '03/08/    22', 'game show', '3/8/2022', 2034],
+            ],
+            columns=[
+                'date1',
+                'date2',
+                'notdate',
+                'mostlydate',
+                'date5',
+            ],
         )
+
+        expected_df = pd.DataFrame(
+            [
+                [dt(2022, 8, 4), None, pd.NaT, pd.NaT, 234],
+                [dt(2022, 1, 20), '', pd.NaT, pd.Timestamp('1-20-2022'), 13234],
+                [None, '12/24/22', pd.NaT, pd.Timestamp('12-24-2022'), 23234],
+                [dt(2022, 10, 31), '10/31/22', pd.NaT, pd.Timestamp('10.31.2022'), 21432],
+                [dt(2022, 6, 27), None, pd.NaT, pd.Timestamp('6/27/2022'), 324212],
+                [dt(2022, 3, 8), '03/08/    22', pd.NaT, pd.Timestamp('3/8/2022'), 2034],
+            ],
+            columns=[
+                'date1',
+                'date2',
+                'notdate',
+                'mostlydate',
+                'date5',
+            ],
+        )
+
+        action = dict(
+            action_type='reformat',
+            action_arguments=['date1', 'date5'],
+            axis='column',
+            action_options={'reformat': 'caps_standardization', 'capitalization': 'lowercase'},
+            action_variables={},
+            action_code='',
+            outputs=[],
+        )
+        action2 = dict(
+            action_type='reformat',
+            action_arguments=['date1', 'date5', 'notdate', 'mostlydate'],
+            axis='column',
+            action_options={
+                'reformat': 'currency_conversion',
+            },
+            action_variables={},
+            action_code='',
+            outputs=[],
+        )
+        action3 = dict(
+            action_type='reformat',
+            action_arguments=['notdate', 'mostlydate'],
+            axis='column',
+            action_options={
+                'reformat': 'date_format_conversion',
+            },
+            action_variables={},
+            action_code='',
+            outputs=[],
+        )
+        df_new = reformat(df, action).reset_index(drop=True)
+        assert_frame_equal(df_new, df)
+        df_new2 = reformat(df, action2).reset_index(drop=True)
+        assert_frame_equal(df_new2, df)
+        df_new3 = reformat(df, action3).reset_index(drop=True)
+        df_new3['notdate'] = df_new3['notdate'].astype(np.datetime64)
+        df_new3['mostlydate'] = df_new3['mostlydate'].astype(np.datetime64)
+        assert_frame_equal(df_new3, expected_df)
+
+    def test_select(self):
+        df = pd.DataFrame(
+            [
+                [1, 1000],
+                [2, 1050],
+            ],
+            columns=[
+                'group_id',
+                'order_id',
+            ],
+        )
+        action = dict(action_arguments=['group_id'])
         df_new = select(df, action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-            ),
-            dict(
-                group_id=2,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                ),
+                dict(
+                    group_id=2,
+                ),
+            ],
+        )
 
     def test_shift_down(self):
-        df = pd.DataFrame([
-            ['2020-01-01', 1000],
-            ['2020-01-02', 1050],
-            ['2020-01-03', 1200],
-            ['2020-01-04', 990],
-        ], columns=[
-            'date',
-            'sold',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2020-01-01', 1000],
+                ['2020-01-02', 1050],
+                ['2020-01-03', 1200],
+                ['2020-01-04', 990],
+            ],
+            columns=[
+                'date',
+                'sold',
+            ],
+        )
         action = dict(
             action_arguments=['sold'],
             outputs=[
@@ -2441,38 +2639,44 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = shift_down(df, action)
-        self.assertEqual(df_new.to_dict(orient='records')[1:], [
-            dict(
-                date='2020-01-02',
-                sold=1050,
-                prev_sold=1000,
-            ),
-            dict(
-                date='2020-01-03',
-                sold=1200,
-                prev_sold=1050,
-            ),
-            dict(
-                date='2020-01-04',
-                sold=990,
-                prev_sold=1200,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records')[1:],
+            [
+                dict(
+                    date='2020-01-02',
+                    sold=1050,
+                    prev_sold=1000,
+                ),
+                dict(
+                    date='2020-01-03',
+                    sold=1200,
+                    prev_sold=1050,
+                ),
+                dict(
+                    date='2020-01-04',
+                    sold=990,
+                    prev_sold=1200,
+                ),
+            ],
+        )
 
     def test_shift_down_with_groupby(self):
-        df = pd.DataFrame([
-            [1, '2020-01-01', 1000],
-            [1, '2020-01-02', 1050],
-            [2, '2020-01-03', 1200],
-            [1, '2020-01-04', 990],
-            [2, '2020-01-05', 980],
-            [2, '2020-01-06', 970],
-            [2, '2020-01-07', 960],
-        ], columns=[
-            'group_id',
-            'date',
-            'sold',
-        ])
+        df = pd.DataFrame(
+            [
+                [1, '2020-01-01', 1000],
+                [1, '2020-01-02', 1050],
+                [2, '2020-01-03', 1200],
+                [1, '2020-01-04', 990],
+                [2, '2020-01-05', 980],
+                [2, '2020-01-06', 970],
+                [2, '2020-01-07', 960],
+            ],
+            columns=[
+                'group_id',
+                'date',
+                'sold',
+            ],
+        )
         action = dict(
             action_arguments=['sold'],
             action_options=dict(
@@ -2484,32 +2688,38 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = shift_down(df, action)
-        df_expected = pd.DataFrame([
-            [1, '2020-01-01', 1000, None],
-            [1, '2020-01-02', 1050, None],
-            [2, '2020-01-03', 1200, None],
-            [1, '2020-01-04', 990, 1000],
-            [2, '2020-01-05', 980, None],
-            [2, '2020-01-06', 970, 1200],
-            [2, '2020-01-07', 960, 980],
-        ], columns=[
-            'group_id',
-            'date',
-            'sold',
-            'prev_sold',
-        ])
+        df_expected = pd.DataFrame(
+            [
+                [1, '2020-01-01', 1000, None],
+                [1, '2020-01-02', 1050, None],
+                [2, '2020-01-03', 1200, None],
+                [1, '2020-01-04', 990, 1000],
+                [2, '2020-01-05', 980, None],
+                [2, '2020-01-06', 970, 1200],
+                [2, '2020-01-07', 960, 980],
+            ],
+            columns=[
+                'group_id',
+                'date',
+                'sold',
+                'prev_sold',
+            ],
+        )
         assert_frame_equal(df_new, df_expected)
 
     def test_shift_up(self):
-        df = pd.DataFrame([
-            ['2020-01-01', 1000],
-            ['2020-01-02', 1050],
-            ['2020-01-03', 1200],
-            ['2020-01-04', 990],
-        ], columns=[
-            'date',
-            'sold',
-        ])
+        df = pd.DataFrame(
+            [
+                ['2020-01-01', 1000],
+                ['2020-01-02', 1050],
+                ['2020-01-03', 1200],
+                ['2020-01-04', 990],
+            ],
+            columns=[
+                'date',
+                'sold',
+            ],
+        )
         action = dict(
             action_arguments=['sold'],
             outputs=[
@@ -2517,57 +2727,62 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = shift_up(df, action)
-        self.assertEqual(df_new.to_dict(orient='records')[:-1], [
-            dict(
-                date='2020-01-01',
-                sold=1000,
-                next_sold=1050,
-            ),
-            dict(
-                date='2020-01-02',
-                sold=1050,
-                next_sold=1200,
-            ),
-            dict(
-                date='2020-01-03',
-                sold=1200,
-                next_sold=990,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records')[:-1],
+            [
+                dict(
+                    date='2020-01-01',
+                    sold=1000,
+                    next_sold=1050,
+                ),
+                dict(
+                    date='2020-01-02',
+                    sold=1050,
+                    next_sold=1200,
+                ),
+                dict(
+                    date='2020-01-03',
+                    sold=1200,
+                    next_sold=990,
+                ),
+            ],
+        )
 
     def test_sum(self):
         from mage_ai.data_cleaner.transformer_actions.column import sum
+
         action = self.__groupby_agg_action('total_amount')
         df_new = sum(TEST_DATAFRAME.copy(), action)
-        self.assertEqual(df_new.to_dict(orient='records'), [
-            dict(
-                group_id=1,
-                amount=1000,
-                total_amount=2100,
-            ),
-            dict(
-                group_id=2,
-                amount=1050,
-                total_amount=2200,
-            ),
-            dict(
-                group_id=1,
-                amount=1100,
-                total_amount=2100,
-            ),
-            dict(
-                group_id=2,
-                amount=1150,
-                total_amount=2200,
-            ),
-        ])
+        self.assertEqual(
+            df_new.to_dict(orient='records'),
+            [
+                dict(
+                    group_id=1,
+                    amount=1000,
+                    total_amount=2100,
+                ),
+                dict(
+                    group_id=2,
+                    amount=1050,
+                    total_amount=2200,
+                ),
+                dict(
+                    group_id=1,
+                    amount=1100,
+                    total_amount=2100,
+                ),
+                dict(
+                    group_id=2,
+                    amount=1150,
+                    total_amount=2200,
+                ),
+            ],
+        )
 
     def __groupby_agg_action(self, output_col):
         return dict(
             action_arguments=['amount'],
-            action_options=dict(
-                groupby_columns=['group_id']
-            ),
+            action_options=dict(groupby_columns=['group_id']),
             outputs=[
                 dict(uuid=output_col),
             ],
