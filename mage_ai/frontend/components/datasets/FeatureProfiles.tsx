@@ -58,6 +58,10 @@ export const CellStyle = styled.div<any>`
   padding: ${UNIT}px;
 `;
 
+export const ScrollOverflowStyle = styled.div`
+  overflow-x: scroll;
+`;
+
 type FeatureProfileProps = {
   columns: string[];
   feature: FeatureType,
@@ -216,16 +220,20 @@ function FeatureProfiles({
               ))}
             </Flex>
           </ColumnProfileStyle>
-          {features.map((feature, idx) => (
-            <FeatureProfileStyle key={`${feature}-${idx}`}>
-              <FeatureProfile
-                columns={columns}
-                feature={feature}
-                featureSet={featureSet}
-                statistics={statistics}
-              />
-            </FeatureProfileStyle>
-          ))}
+          <ScrollOverflowStyle>
+            <FlexContainer>
+              {features.map((feature, idx) => (
+                <FeatureProfileStyle key={`${feature}-${idx}`}>
+                  <FeatureProfile
+                    columns={columns}
+                    feature={feature}
+                    featureSet={featureSet}
+                    statistics={statistics}
+                  />
+                </FeatureProfileStyle>
+              ))}
+            </FlexContainer>
+          </ScrollOverflowStyle>
         </FlexContainer>
       </BodyStyle>
     </ContainerStyle>

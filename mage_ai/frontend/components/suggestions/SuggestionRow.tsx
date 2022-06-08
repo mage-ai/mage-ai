@@ -140,13 +140,11 @@ const SuggestionRow = ({
         flex={1}
         flexDirection="column"
       >
-        <div>
-          <Text>
-            <Text bold inline>
-              {title}
-            </Text>{actionArguments?.length && ': '}{featureLinks}
-          </Text>
-        </div>
+        <Text>
+          <Text bold inline>
+            {title}
+          </Text>{actionArguments?.length && ': '}{featureLinks}
+        </Text>
 
         {message && (
           <Text muted small>
@@ -170,7 +168,7 @@ const SuggestionRow = ({
             disabled
             // @ts-ignore
             language="python"
-            padding={UNIT * 1}
+            padding={UNIT}
             style={{
               backgroundColor: themeContext.monotone.grey100,
               fontFamily: MONO_FONT_FAMILY_REGULAR,
