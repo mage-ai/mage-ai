@@ -18,7 +18,7 @@ import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { DATE_FORMAT } from './constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
   buildDistributionData,
@@ -232,7 +232,6 @@ function ColumnAnalysis({
         showYAxisLabels
         showZeroes
         sortData={d => sortByKey(d, '[2]')}
-        width={600}
       />
     );
   } else if (isCategoricalType) {
@@ -515,71 +514,77 @@ function ColumnAnalysis({
           <Text bold large>
             No visualizations are currently available for this column. More visualization types will be coming soon!
           </Text>
-        )   
+        )
       }
 
       {distributionChart && (
-        <ChartRow
-          left={
-            <ChartContainer
-              title="Distribution of values"
-            >
-              {distributionChart}
-            </ChartContainer>
-          }
-          right={
-            <ChartContainer
-              noPadding={isBooleanType || !!unusualDistributionTable}
-              title="Values with unusual distribution"
-            >
-              {isBooleanType && (
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[
-                    {
-                      label: 'Value',
-                    },
-                    {
-                      label: 'Number of rows',
-                    },
-                    {
-                      label: '% of rows',
-                    },
-                  ]}
-                  noBorder
-                  rowGroupData={[
-                    {
-                      rowData: sortByKey(
-                        Object.entries(statisticsByColumn),
-                        ([, v]) => v,
-                        { ascending: false },
-                      ).map(([k, v]) => ({
-                        columnValues: [
-                          k,
-                          numberWithCommas(v),
-                          formatPercent(v / numberOfRows),
-                        ],
-                        uuid: v,
-                      })),
-                    },
-                  ]}
-                  small
-                />
-              )}
-              {!isBooleanType && (
-                <>
-                  {!unusualDistributionTable && (
-                    <Text>
-                      There is no unusual distribution.
-                    </Text>
-                  )}
+        <>
+          <ChartRow
+            left={
+              <ChartContainer
+                title="Distribution of values"
+              >
+                {distributionChart}
+              </ChartContainer>
+            }
+          />
 
+          {!isBooleanType && unusualDistributionTable && (
+            <ChartRow
+              left={
+                <ChartContainer
+                  noPadding={isBooleanType || !!unusualDistributionTable}
+                  title="Values with unusual distribution"
+                >
                   {unusualDistributionTable}
-                </>
-              )}
-            </ChartContainer>
-          }
-        />
+                </ChartContainer>
+              }
+            />
+          )}
+
+          {isBooleanType && (
+            <ChartRow
+              left={
+                <ChartContainer
+                  noPadding={isBooleanType || !!unusualDistributionTable}
+                >
+                  <SimpleDataTable
+                    columnFlexNumbers={[1, 1, 1]}
+                    columnHeaders={[
+                      {
+                        label: 'Value',
+                      },
+                      {
+                        label: 'Number of rows',
+                      },
+                      {
+                        label: '% of rows',
+                      },
+                    ]}
+                    noBorder
+                    rowGroupData={[
+                      {
+                        rowData: sortByKey(
+                          Object.entries(statisticsByColumn),
+                          ([, v]) => v,
+                          { ascending: false },
+                        ).map(([k, v]) => ({
+                          columnValues: [
+                            k,
+                            numberWithCommas(v),
+                            formatPercent(v / numberOfRows),
+                          ],
+                          uuid: v,
+                        })),
+                      },
+                    ]}
+                    small
+                  />
+                </ChartContainer>
+              }
+            />
+          )}
+        </>
       )}
 
       {timeSeriesChartsByDatetimeColumn.length >= 1 &&

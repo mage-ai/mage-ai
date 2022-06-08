@@ -57,7 +57,7 @@ export const BodyStyle = styled.div<any>`
 type ChartContainerProps = {
   children: any;
   noPadding?: boolean;
-  title: string;
+  title?: string;
 };
 
 type OverviewProps = {
@@ -74,11 +74,13 @@ export function ChartContainer({
   return (
     <ChartStyle>
       <FlexContainer flexDirection="column">
-        <HeaderStyle>
-          <Text bold>
-            {title}
-          </Text>
-        </HeaderStyle>
+        {title && (
+          <HeaderStyle>
+            <Text bold>
+              {title}
+            </Text>
+          </HeaderStyle>
+        )}
         <BodyStyle noPadding={noPadding}>
           {children}
         </BodyStyle>
