@@ -62,6 +62,8 @@ type ScatterPlotContainerProps = {
   },
 } & SharedProps;
 
+const getDataKey = (data) => `${data.x},${data.y}`;
+
 const ScatterPlot = withTooltip<ScatterPlotProps>(({
   data: dataProp,
   getX: getXProp,
@@ -89,7 +91,19 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const xLabelFormat = xLabelFormatProp || (x => x);
   const yLabelFormat = yLabelFormatProp || (y => y);
 
-  const data = dataProp.filter(d => !(getX(d) == null || getY(d) == null))
+  const data = [];
+  const dataDuplicateCount: {
+    [key: string]: number,
+  } = {};
+  dataProp.filter(d => !(getX(d) == null || getY(d) == null)).forEach(d => {
+    const key = getDataKey(d);
+    if (key in dataDuplicateCount) {
+      dataDuplicateCount[key] = dataDuplicateCount[key] + 1;
+    } else {
+      dataDuplicateCount[key] = 1;
+      data.push(d);
+    }
+  });
 
   const border = light.monotone.gray;
   const text = light.content.active;
@@ -113,7 +127,6 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
     xMax,
     xValues,
   ]);
-
   const yScale = useMemo(() => scaleLinear<number>({
     domain: [Math.min(...yValues) - yOffset, Math.max(...yValues) + yOffset],
     nice: true,
@@ -159,12 +172,8 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
       const neighborRadius = 100;
       const closest = voronoiLayout?.find(translatedPoint.x, translatedPoint.y, neighborRadius);
       if (closest) {
-        let numDuplicates = 0
-        data.forEach(d => {
-          if (closest.data['x'] === d.x && closest.data['y'] === d.y) {
-            numDuplicates = numDuplicates + 1;
-          }
-        })
+        const key = getDataKey(closest.data);
+        let numDuplicates = dataDuplicateCount[key];
         showTooltip({
           tooltipLeft: xScale(getX(closest.data)),
           tooltipTop: yScale(getY(closest.data)),
@@ -255,16 +264,21 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
             tickStroke={axisStrokeColor}
           />
 
-          {data.map((dataPoint, i) => (
-            <Circle
-              key={`point-${dataPoint[0]}-${i}`}
-              className="dot"
-              cx={xScale(getX(dataPoint))}
-              cy={yScale(getY(dataPoint))}
-              r={4}
-              fill={tooltipData?.point === dataPoint ? RED : PURPLE}
-            />
-          ))}
+          {data.map((dataPoint, i) => {
+            const key = getDataKey(dataPoint);
+            const size = Math.log(dataDuplicateCount[key]) + 3.5;
+
+            return (
+              <Circle
+                key={`point-${dataPoint[0]}-${i}`}
+                className="dot"
+                cx={xScale(getX(dataPoint))}
+                cy={yScale(getY(dataPoint))}
+                r={size}
+                fill={tooltipData?.point === dataPoint ? RED : PURPLE}
+              />
+            )
+          })}
         </Group>
       </svg>
 

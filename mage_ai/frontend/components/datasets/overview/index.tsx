@@ -6,20 +6,15 @@ import React, {
   useState,
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
-import NextLink from 'next/link';
-import Router from 'next/router';
-import { useMutation } from 'react-query';
 
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
 import DataTable from '@components/DataTable';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
-import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Link from '@oracle/elements/Link';
 import Overview from '@components/datasets/Insights/Overview';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
@@ -33,15 +28,14 @@ import {
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
-import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
+import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import {
   greaterThan,
   indexBy,
   lessThan,
-  removeAtIndex,
 } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
@@ -194,6 +188,11 @@ function DatasetOverview({
     statistics,
   ]);
 
+  const featureSetStats = getFeatureSetStatistics(featureSet, selectedColumn);
+  const {
+    count,
+  } = featureSetStats;
+
   return (
     <DatasetDetail
       setErrorMessages={setErrorMessages}
@@ -301,7 +300,7 @@ function DatasetOverview({
 
       {tabsFromUrl?.includes(TAB_VISUALIZATIONS) && (
         <>
-          {selectedColumn && (
+          {selectedColumn && count > 0 && (
             <ColumnAnalysis
               column={selectedColumn}
               features={features}
@@ -309,6 +308,12 @@ function DatasetOverview({
               statisticsByColumn={statistics?.[`${selectedColumn}/value_counts`] || {}}
               statisticsOverview={statistics}
             />
+          )}
+
+          {selectedColumn && count === 0 && (
+            <Text bold large>
+              There are no visualizations available because the column has no data
+            </Text>
           )}
 
           {!selectedColumn && (

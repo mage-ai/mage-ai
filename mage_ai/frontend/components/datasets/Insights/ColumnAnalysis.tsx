@@ -508,6 +508,16 @@ function ColumnAnalysis({
       fullWidth
       justifyContent="center"
     >
+      {!distributionChart
+        && timeSeriesChartsByDatetimeColumn.length === 0
+        && (correlationsRowData || []).length === 0
+        && (
+          <Text bold large>
+            No visualizations are currently available for this column. More visualization types will be coming soon!
+          </Text>
+        )   
+      }
+
       {distributionChart && (
         <ChartRow
           left={
