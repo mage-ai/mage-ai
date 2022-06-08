@@ -6,7 +6,6 @@ import '@uiw/react-textarea-code-editor/dist.css';
 import ActionPayloadType, {
   ActionPayloadOverrideType,
   ActionVariableTypeEnum,
-  ActionVariablesType,
   AxisEnum,
 } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
