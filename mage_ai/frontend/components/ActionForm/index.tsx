@@ -1,7 +1,14 @@
 import React, { useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
-import '@uiw/react-textarea-code-editor/dist.css';
+import AceEditor from 'react-ace';
+
+// Import the style and colors for Python code.
+import 'ace-builds/src-noconflict/ace';
+import 'ace-builds/src-noconflict/mode-python';
+// Extensions if we want to make our coding editor even better.
+import 'ace-builds/src-noconflict/ext-language_tools';
+import 'ace-builds/src-noconflict/ext-beautify';
 
 import ActionPayloadType, {
   ActionPayloadOverrideType,
@@ -52,7 +59,7 @@ type ActionFormProps = {
 };
 
 const CodeEditor = dynamic(
-  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  () => import('react-ace').then((mod) => mod.default),
   {
     ssr: false,
   },
@@ -180,24 +187,31 @@ function ActionForm({
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
                 // @ts-ignore
-                language="python"
+                fontSize={REGULAR_FONT_SIZE}
+                highlightActiveLine={true}
                 minHeight={code.multiline ? UNIT * 12 : null}
+                mode="python"
                 onChange={e => {
-                  setActionCodeState(e.target.value);
+                  setActionCodeState(e.target?.value);
                   setCustomCodeState({
                     actionType,
                     featureSetId,
-                    newValue: e.target.value,
+                    newValue: e.target?.value,
                   });
                 }}
                 padding={UNIT * 2}
+                setOptions={{
+                  showLineNumbers: true,
+                  tabSize: 4,
+                }}
+                showGutter={true}
+                showPrintMargin={true}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
                   maxHeight: `calc(100vh - ${UNIT * 42}px)`,
                   overflow: 'auto',
-                  tabSize: 4,
                 }}
                 value={actionCode
                   || (getCustomCodeState({ actionType, featureSetId }) || code.default)
