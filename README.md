@@ -28,8 +28,14 @@ production environments (e.g. online re-training, inference, etc).
 # Quick start
 
 ### Install library
+Install the most recent released version:
 ```bash
 $ pip install mage-ai
+```
+
+Or install the current build on GitHub:
+```bash
+$ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
 
 ### Launch tool
