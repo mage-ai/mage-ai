@@ -30,8 +30,6 @@ export type LinkProps = {
   href?: string;
   inline?: boolean;
   large?: boolean;
-  minWidth?: string | number;
-  maxWidth?: string | number;
   muted?: boolean;
   noColor?: boolean;
   noHoverUnderline?: boolean;
@@ -201,16 +199,6 @@ export const SHARED_LINK_STYLES = css<any>`
   ${props => props.textOverflow && `
     overflow: hidden;
     text-overflow: ${props.textOverflow};
-  `}
-
-  ${props => (props.minWidth || props.maxWidth) && `
-    display: block;
-    overflow: hidden;
-    ${props.minWidth ? `min-width: ${props.minWidth}px;` : ''}
-    ${props.maxWidth ? `max-width: ${props.maxWidth}px;` : ''}
-    text-overflow: ellipsis;
-    width: 100%;
-    white-space: nowrap;
   `}
 
   ${props => props.fullHeight && `
