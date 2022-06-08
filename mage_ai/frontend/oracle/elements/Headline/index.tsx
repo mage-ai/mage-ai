@@ -200,6 +200,11 @@ const SpanStyle = styled.span<HeadlineProps>`
     font-size: 24px;
     line-height: 32px;
   `}
+
+  ${props => props.level === 4 && `
+    font-size: 20px;
+    line-height: 28px;
+  `}
 `;
 
 const Headline = ({

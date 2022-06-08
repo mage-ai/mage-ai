@@ -32,12 +32,21 @@ function download(content, fileName, contentType) {
   a.click();
 }
 
+const SAMPLE_CLEAN_CODE_EXAMPLE_PIPELINE_ID = (id) => `import mage_ai
+import pandas as pd
+
+
+df = pd.read_csv('/datasets/training_data.csv') # Load the data
+mage_ai.clean(df, pipeline_uuid=${id})`;
+
 const SAMPLE_CLEAN_CODE_EXAMPLE = `import mage_ai
 import pandas as pd
 
 
 df = pd.read_csv('/datasets/training_data.csv') # Load the data
-mage_ai.clean(df, pipeline_config_path='/path_to_json_file.json')`;
+
+# The path to the JSON file can be absolute or relative
+mage_ai.clean(df, pipeline_path='/path_to_json_file.json')`;
 
 function Export({
   featureSet,
@@ -47,6 +56,7 @@ function Export({
 
   const {
     metadata,
+    pipeline,
   } = featureSet || {};
 
   return (
@@ -55,11 +65,11 @@ function Export({
       featureSet={featureSet}
     >
       <Spacing mb={5}>
-        <Headline level={1}>
+        <Headline level={2}>
           Export data pipeline for <Headline
             bold
             inline
-            level={2}
+            level={3}
             monospace
           >
             {metadata?.name}
@@ -71,8 +81,8 @@ function Export({
         containedWidth
         fullWidth
       >
-        <Headline level={2}>
-          Method 1: local JSON file
+        <Headline level={3}>
+          Method 1: using the pipeline in the same environment as the tool
         </Headline>
 
         <Spacing my={3}>
@@ -81,7 +91,71 @@ function Export({
 
         <Spacing mb={5}>
           <Spacing mb={1}>
-            <Headline>
+            <Headline level={4}>
+              Call the <Headline bold inline level={4} monospace>
+                clean
+              </Headline> method
+            </Headline>
+          </Spacing>
+          <Text>
+            Load your data as a Pandas dataframe, then
+            invoke the cleaning method by passing in the dataframe variable as the 1st argument
+            and referencing the pipeline’s UUID as a keyword argument.
+          </Text>
+
+          <Spacing mt={1} />
+
+          <Text>
+            The current pipeline UUID is <Text bold inline monospace>
+              {pipeline?.id}
+            </Text>.
+          </Text>
+
+          <Spacing mt={1} />
+
+          <Text>
+            The return value of the <Text bold inline monospace>mage_ai.clean</Text> method
+            is a Pandas dataframe that has been cleaned using
+            all the actions in your data pipeline.
+          </Text>
+
+          <Spacing mt={2}>
+            <CodeEditor
+              // @ts-ignore
+              disabled
+              // @ts-ignore
+              language="python"
+              padding={UNIT * 1}
+              style={{
+                backgroundColor: themeContext.monotone.grey100,
+                fontFamily: MONO_FONT_FAMILY_REGULAR,
+                fontSize: REGULAR_FONT_SIZE,
+                lineHeight: `${REGULAR_LINE_HEIGHT}px`,
+                tabSize: 4,
+              }}
+              value={SAMPLE_CLEAN_CODE_EXAMPLE_PIPELINE_ID(pipeline?.id)}
+            />
+          </Spacing>
+        </Spacing>
+      </PanelOld>
+
+      <Spacing mb={5} />
+
+      <PanelOld
+        containedWidth
+        fullWidth
+      >
+        <Headline level={3}>
+          Method 2: local JSON file
+        </Headline>
+
+        <Spacing my={3}>
+          <Divider />
+        </Spacing>
+
+        <Spacing mb={5}>
+          <Spacing mb={1}>
+            <Headline level={4}>
               Download the pipeline JSON file
             </Headline>
           </Spacing>
@@ -94,7 +168,7 @@ function Export({
             <FlexContainer alignItems="center">
               <Button
                 onClick={() => {
-                  const pipeline = JSON.stringify(featureSet?.pipeline);
+                  const pipeline = JSON.stringify(featureSet?.pipeline?.actions);
                   download(pipeline, `${metadata?.name}.json`, 'text/plain');
                 }}
                 primary
@@ -110,7 +184,7 @@ function Export({
 
         <Spacing mb={5}>
           <Spacing mb={1}>
-            <Headline>
+            <Headline level={4}>
               Upload the pipeline JSON file to your runtime environment
             </Headline>
           </Spacing>
@@ -129,15 +203,15 @@ function Export({
 
         <Spacing mb={5}>
           <Spacing mb={1}>
-            <Headline>
-              Call the <Headline bold inline monospace>
+            <Headline level={4}>
+              Call the <Headline bold inline level={4} monospace>
                 clean
               </Headline> method
             </Headline>
           </Spacing>
           <Text>
             Load your data as a Pandas dataframe, then
-            invoke the cleaning method by passing in the dataframe variable as the first argument
+            invoke the cleaning method by passing in the dataframe variable as the 1st argument
             and referencing the JSON file path as a keyword argument.
           </Text>
 
@@ -169,13 +243,13 @@ function Export({
         </Spacing>
       </PanelOld>
 
-      <Spacing mb={8} />
+      <Spacing mb={5} />
 
       <PanelOld
         containedWidth
         fullWidth
       >
-        <Headline level={2}>
+        <Headline level={3}>
           [WIP] Method 2: API key
         </Headline>
 
