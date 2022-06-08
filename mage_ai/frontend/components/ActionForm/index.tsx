@@ -195,6 +195,8 @@ function ActionForm({
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
+                  maxHeight: `calc(100vh - ${UNIT * 42}px)`,
+                  overflow: 'auto',
                   tabSize: 4,
                 }}
                 value={actionCode
