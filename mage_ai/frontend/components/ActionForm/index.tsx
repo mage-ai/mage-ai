@@ -5,6 +5,7 @@ import '@uiw/react-textarea-code-editor/dist.css';
 
 import ActionPayloadType, {
   ActionPayloadOverrideType,
+  ActionTypeEnum,
   ActionVariableTypeEnum,
   AxisEnum,
 } from '@interfaces/ActionPayloadType';
@@ -17,6 +18,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import actions from './actions';
+
 import { Check, Close } from '@oracle/icons';
 import {
   ContainerStyle,
@@ -31,12 +33,11 @@ import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
-import {
-  removeAtIndex,
-} from '@utils/array';
+import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
+import { removeAtIndex } from '@utils/array';
 
 type ActionFormProps = {
-  actionType: string;
+  actionType: ActionTypeEnum;
   axis: string;
   currentFeature?: FeatureType;
   features?: FeatureResponseType[];
@@ -179,7 +180,13 @@ function ActionForm({
                 // @ts-ignore
                 language="python"
                 minHeight={code.multiline ? UNIT * 12 : null}
-                onChange={e => setActionCodeState(e.target.value)}
+                onChange={e => {
+                  setActionCodeState(e.target.value);
+                  setCustomCodeState({
+                    actionType,
+                    newValue: e.target.value,
+                  });
+                }}
                 padding={UNIT * 2}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
@@ -187,7 +194,7 @@ function ActionForm({
                   fontSize: REGULAR_FONT_SIZE,
                   tabSize: 4,
                 }}
-                value={actionCode || code.default}
+                value={actionCode || (getCustomCodeState({ actionType }) || code.default)}
               />
             )}
           </Spacing>
