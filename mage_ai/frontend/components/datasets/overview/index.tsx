@@ -706,14 +706,11 @@ function DatasetOverview({
                       padding: UNIT,
                     }}
                   >
-                    {distributionChart}
-                    {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT}} />}
-
                     <div
                       style={{
                         alignItems: 'center',
                         display: 'flex',
-                        marginTop: UNIT,
+                        marginBottom: UNIT,
                       }}
                     >
                       {ColumnTypeIcon && <ColumnTypeIcon size={UNIT * 2} />}
@@ -730,6 +727,9 @@ function DatasetOverview({
                         {columns[columnIndex]}
                       </div>
                     </div>
+
+                    {distributionChart}
+                    {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT}} />}
                   </div>
                 );
               }}
