@@ -7,7 +7,7 @@ import RowDataTable from '@oracle/components/RowDataTable';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
+import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage, transformNumber } from '@utils/number';
@@ -147,7 +147,10 @@ function ColumnReports({
                   secondary={idx % 2 === 1}
                 >
                   <Text>
-                    {transformNumber(outlier, 2)}
+                    {COLUMN_TYPE_NUMBERS.includes(columnType)
+                      ? transformNumber(outlier, 2)
+                      : outlier
+                    }
                   </Text>
                 </RowCard>
               ))}
