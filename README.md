@@ -1,3 +1,4 @@
+[![PyPi](https://img.shields.io/pypi/v/mage-ai?color=orange&style=flat-square)](https://pypi.org/project/mage-ai/)
 [![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci&style=flat-square)](#)
 [![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack&style=flat-square)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
 ![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&style=flat-square&logo=github)
@@ -28,8 +29,14 @@ production environments (e.g. online re-training, inference, etc).
 # Quick start
 
 ### Install library
+Install the most recent released version:
 ```bash
 $ pip install mage-ai
+```
+
+Or install the current build on GitHub:
+```bash
+$ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
 
 ### Launch tool
