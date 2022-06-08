@@ -25,7 +25,7 @@ const columns: {
       Add @transformer_action, then begin typing Python code inside a function. \
       You may refer to the current dataset as df.',
     code: {
-      custom: CODE_EXAMPLE,
+      default: CODE_EXAMPLE,
       multiline: true,
       values: USER_INPUT,
     },
@@ -144,7 +144,7 @@ const rows: {
       Add @transformer_action, then begin typing Python code inside a function. \
       You may refer to the current dataset as df.',
     code: {
-      custom: CODE_EXAMPLE,
+      default: CODE_EXAMPLE,
       multiline: true,
       values: USER_INPUT,
     },

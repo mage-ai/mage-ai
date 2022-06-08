@@ -45,7 +45,7 @@ interface OptionType {
 }
 
 interface CodeType {
-  custom: string;
+  default: string;
   multiline?: boolean;
   value?: string;
   values?: typeof VALUES_TYPE_USER_INPUT
