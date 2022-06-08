@@ -212,21 +212,16 @@ function DatasetDetail({
     <MultiColumn
       after={
         <Spacing p={PADDING_UNITS}>
-          {(featureSet && suggestions?.length > 0)
-            ?
-              <Suggestions
-                addAction={saveAction}
-                featureSet={featureSet}
-                isLoading={isLoadingCommitAction}
-                removeAction={removeAction}
-                removeSuggestion={(action) => console.log(action)}
-                suggestions={suggestions}
-              />
-            :
-              <Text large>
-                No suggestions available.
-              </Text>
-          }
+          {featureSet && (
+            <Suggestions
+              addAction={saveAction}
+              featureSet={featureSet}
+              isLoading={isLoadingCommitAction}
+              removeAction={removeAction}
+              removeSuggestion={(action) => console.log(action)}
+              suggestions={suggestions}
+            />
+          )}
         </Spacing>
       }
       before={columnsVisible && (
