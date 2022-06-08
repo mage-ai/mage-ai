@@ -43,6 +43,7 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     count_distinct: statistics[`${featureUUID}/count_distinct`],
     invalid_value_count: statistics[`${featureUUID}/invalid_value_count`],
     invalid_value_rate: statistics[`${featureUUID}/invalid_value_rate`],
+    invalid_values: statistics[`${featureUUID}/invalid_values`],
     max: statistics[`${featureUUID}/max`],
     max_null_seq: statistics[`${featureUUID}/max_null_seq`],
     median: statistics[`${featureUUID}/median`],

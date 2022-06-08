@@ -7,7 +7,7 @@ import RowDataTable from '@oracle/components/RowDataTable';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
+import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage, transformNumber } from '@utils/number';
@@ -33,6 +33,8 @@ function ColumnReports({
     count,
     count_distinct: countDistinct,
     invalid_value_count: invalidValueCount,
+    invalid_value_rate: invalidValueRate,
+    invalid_values: invalidValues,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -83,6 +85,7 @@ function ColumnReports({
   ];
 
   const showOutliers = outliers && outlierCount > 0;
+  const showInvalidValues = invalidValues && invalidValueCount > 0;
   const warningMetrics = [
     {
       columnValues: [
@@ -131,6 +134,7 @@ function ColumnReports({
               }]}
             />
         }
+
         {showOutliers &&
           <Spacing mt={PADDING_UNITS}>
             <RowDataTable
@@ -143,7 +147,30 @@ function ColumnReports({
                   secondary={idx % 2 === 1}
                 >
                   <Text>
-                    {transformNumber(outlier, 2)}
+                    {COLUMN_TYPE_NUMBERS.includes(columnType)
+                      ? transformNumber(outlier, 2)
+                      : outlier
+                    }
+                  </Text>
+                </RowCard>
+              ))}
+            </RowDataTable>
+          </ Spacing>
+        }
+
+        {showInvalidValues &&
+          <Spacing mt={PADDING_UNITS}>
+            <RowDataTable
+              headerTitle="Invalid values"
+            >
+              {invalidValues?.map((val, idx) => (
+                <RowCard
+                  key={`invalid_val_${idx}`}
+                  last={idx === invalidValues.length - 1}
+                  secondary={idx % 2 === 1}
+                >
+                  <Text>
+                    {val}
                   </Text>
                 </RowCard>
               ))}
