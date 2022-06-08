@@ -23,7 +23,6 @@ import {
   OptionStyle,
 } from './index.style';
 import {
-  CODE_EXAMPLE,
   FormConfigType,
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
