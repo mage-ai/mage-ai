@@ -34,7 +34,11 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
 import light from '@oracle/styles/themes/light';
-import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
+import usePrevious from '@utils/usePrevious';
+import {
+  AsidePopoutStyle,
+  BEFORE_WIDTH,
+} from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
@@ -46,6 +50,7 @@ import { goToWithQuery } from '@utils/routing';
 import { greaterThan, lessThan, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
+import { useWindowSize } from '@utils/sizes';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -72,6 +77,9 @@ function DatasetOverview({
 }: DatasetOverviewProps) {
   const refLoadingBar = useRef(null);
   const mainContentRef = useRef(null);
+
+  const { width: windowWidth } = useWindowSize();
+  const windowWidthPrevious = usePrevious(windowWidth);
 
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
@@ -281,6 +289,7 @@ function DatasetOverview({
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
   const columnsVisible = Number(showColumnsFromUrl) === 1;
+  const columnsVisiblePrevious = usePrevious(columnsVisible);
 
   const {
     height: dataTableHeightInit,
@@ -289,13 +298,31 @@ function DatasetOverview({
 
   const paddingAndBorder = (PADDING_UNITS * UNIT * 2) + (1 * 2);
   let dataTableHeight = 0;
-  let dataTableWidth = 0;
   if (dataTableHeightInit) {
     dataTableHeight = dataTableHeightInit - (paddingAndBorder + 2);
   }
-  if (dataTableWidthInit) {
-    dataTableWidth = dataTableWidthInit - paddingAndBorder;
-  }
+
+  const dataTableWidth = useMemo(() => {
+    let val = 0;
+
+    if (dataTableWidthInit) {
+      val = dataTableWidthInit - paddingAndBorder;
+
+      if (!columnsVisiblePrevious && columnsVisible) {
+        val -= BEFORE_WIDTH;
+      } else if (columnsVisiblePrevious && !columnsVisible) {
+        val += BEFORE_WIDTH;
+      }
+    }
+
+    return val;
+  }, [
+    columnsVisible,
+    columnsVisiblePrevious,
+    dataTableWidthInit,
+    paddingAndBorder,
+    windowWidth === windowWidthPrevious,
+  ]);
 
   return (
     <Layout
