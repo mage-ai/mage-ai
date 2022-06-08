@@ -139,7 +139,10 @@ class FeatureSet(Model):
 
     def write_version_snapshot(self, version):
         version_snapshot = self.to_dict()
-        self.write_json_file(f'{version}.json', version_snapshot, subdir='versions')
+        try:
+            self.write_json_file(f'{version}.json', version_snapshot, subdir='versions')
+        except Exception:
+            print(f'Failed to write snapshot v{version} for feature set {self.id}')
         return version_snapshot
 
     def to_dict(self, column=None, detailed=True, version=None):
