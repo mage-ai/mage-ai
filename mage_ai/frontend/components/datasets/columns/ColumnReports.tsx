@@ -33,6 +33,8 @@ function ColumnReports({
     count,
     count_distinct: countDistinct,
     invalid_value_count: invalidValueCount,
+    invalid_value_rate: invalidValueRate,
+    invalid_values: invalidValues,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -83,6 +85,7 @@ function ColumnReports({
   ];
 
   const showOutliers = outliers && outlierCount > 0;
+  const showInvalidValues = invalidValues && invalidValueCount > 0;
   const warningMetrics = [
     {
       columnValues: [
@@ -131,6 +134,7 @@ function ColumnReports({
               }]}
             />
         }
+
         {showOutliers &&
           <Spacing mt={PADDING_UNITS}>
             <RowDataTable
@@ -144,6 +148,26 @@ function ColumnReports({
                 >
                   <Text>
                     {transformNumber(outlier, 2)}
+                  </Text>
+                </RowCard>
+              ))}
+            </RowDataTable>
+          </ Spacing>
+        }
+
+        {showInvalidValues &&
+          <Spacing mt={PADDING_UNITS}>
+            <RowDataTable
+              headerTitle="Invalid values"
+            >
+              {invalidValues?.map((val, idx) => (
+                <RowCard
+                  key={`invalid_val_${idx}`}
+                  last={idx === invalidValues.length - 1}
+                  secondary={idx % 2 === 1}
+                >
+                  <Text>
+                    {val}
                   </Text>
                 </RowCard>
               ))}
