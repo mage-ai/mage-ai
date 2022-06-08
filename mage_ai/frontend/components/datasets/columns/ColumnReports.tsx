@@ -144,7 +144,7 @@ function ColumnReports({
       <Flex flex={1} flexDirection="column">
         <SimpleDataTable
           columnFlexNumbers={[2, 1, 2]}
-          columnHeaders={[{ label: 'Column summary' }]}
+          columnHeaders={[{ label: 'Quality metrics' }]}
           rowGroupData={[{
             rowData: qualityMetrics,
           }]}
