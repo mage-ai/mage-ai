@@ -19,6 +19,7 @@ export type ButtonProps = {
   borderRadiusRight?: boolean;
   children?: any;
   disabled?: boolean;
+  fullWidth?: boolean;
   iconOnly?: boolean;
   large?: boolean;
   loading?: boolean;
@@ -121,6 +122,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.width && `
     width: ${props.width}px;
+  `}
+
+  ${props => props.fullWidth && `
+    width: 100%;
   `}
 `;
 

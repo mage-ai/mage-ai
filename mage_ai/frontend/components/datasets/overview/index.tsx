@@ -10,11 +10,11 @@ import NextLink from 'next/link';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
-import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
+import ActionMenu from '@components/ActionForm/ActionMenu';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
-import BaseTable from '@oracle/components/Table/BaseTable';
+import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
@@ -99,6 +99,7 @@ function DatasetOverview({
   const { width: windowWidth } = useWindowSize();
   const windowWidthPrevious = usePrevious(windowWidth);
 
+  const [actionMenuVisible, setActionMenuVisible] = useState(false);
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
   const {
@@ -423,10 +424,18 @@ function DatasetOverview({
                 </NextLink>
 
                 <Spacing mt={2}>
-                  <ActionDropdown
-                    actionType={actionType}
+                  <Button
+                    fullWidth
+                    onClick={() => setActionMenuVisible(true)}
+                    primary
+                  >
+                    New action
+                  </Button>
+                  <ActionMenu
                     columnOnly={!!selectedColumn}
                     setActionPayload={setActionPayload}
+                    setVisible={setActionMenuVisible}
+                    visible={actionMenuVisible}
                   />
                   <AsidePopoutStyle>
                     {actionType && (
@@ -736,7 +745,7 @@ function DatasetOverview({
                   </div>
 
                   {distributionChart}
-                  {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT}} />}
+                  {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT }} />}
                 </div>
               );
             }}
