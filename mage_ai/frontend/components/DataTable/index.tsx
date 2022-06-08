@@ -139,14 +139,28 @@ function Table({
     refListOuter,
   ]);
 
-  const defaultColumn = useMemo(() => ({
-    width: DEFAULT_COLUMN_WIDTH,
-  }), []);
-
   const maxWidthOfFirstColumn =
     useMemo(() => (String(data?.length).length * WIDTH_OF_CHARACTER) + (UNIT * 2), [
       data,
     ]);
+
+  const defaultColumn = useMemo(() => {
+    const newWidth = width - (maxWidthOfFirstColumn + 2);
+    const numberOfColumns = columns.length - 1;
+    let defaultColumnWidth = DEFAULT_COLUMN_WIDTH;
+
+    if ((defaultColumnWidth * numberOfColumns) < newWidth) {
+      defaultColumnWidth = newWidth / numberOfColumns;
+    }
+
+    return {
+      width: defaultColumnWidth,
+    };
+  }, [
+    columns,
+    maxWidthOfFirstColumn,
+    width,
+  ]);
 
   // const scrollBarSize = useMemo(() => scrollbarWidth(), []);
 
