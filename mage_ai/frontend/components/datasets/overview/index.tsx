@@ -600,7 +600,7 @@ function DatasetOverview({
                     {},
                     {
                       feature: {
-                        column_type: columnType,
+                        columnType: columnType,
                         uuid: columnUUID,
                       },
                       getYValue: ({ value }) => value,
@@ -640,14 +640,13 @@ function DatasetOverview({
                         isUnusual,
                         hideRange,
                       ])}
-                      height={UNIT * 50}
+                      height={COLUMN_HEADER_CHART_HEIGHT}
                       margin={{
                         bottom: 0,
                         left: 0,
                         right: 0,
                         top: 0,
                       }}
-                      height={COLUMN_HEADER_CHART_HEIGHT}
                       renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
                         <p>
                           {hideRange && (
