@@ -153,7 +153,7 @@ function SimpleDataTable({
           const cells = [];
 
           const warning = warnings.find(warn => warn.name === columnValues[0]);
-          const val = isString(columnValues[1]) ? removePercent(columnValues[1]) : columnValues[1];
+          const val = warning && isString(columnValues[1]) ? removePercent(columnValues[1]) : columnValues[1];
           const shouldWarn = warning && warning.compare(val, warning.val);
 
           columnValues?.forEach((value: any, cellIndex: number) => {
