@@ -24,6 +24,7 @@ type PieProps = {
   margin?: typeof defaultMargin;
   getX: (data: any) => string;
   getY: (data: any) => number;
+  textColor?: string;
   width?: number;
 };
 
@@ -52,6 +53,7 @@ type AnimatedPieProps<Datum> = ProvidedProps<Datum> & {
   getColor: (d: PieArcDatum<Datum>) => string;
   getKey: (d: PieArcDatum<Datum>) => string;
   onClickDatum: (d: PieArcDatum<Datum>) => void;
+  textColor?: string;
 };
 
 function AnimatedPie<Datum>({
@@ -61,6 +63,7 @@ function AnimatedPie<Datum>({
   getKey,
   getColor,
   onClickDatum,
+  textColor = 'white',
 }: AnimatedPieProps<Datum>) {
   const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(arcs, {
     enter: enterUpdateTransition,
@@ -93,7 +96,7 @@ function AnimatedPie<Datum>({
           <animated.g style={{ opacity: props.opacity }}>
             <text
               dy=".33em"
-              fill="white"
+              fill={textColor}
               fontFamily={FONT_FAMILY_REGULAR}
               fontSize={SMALL_FONT_SIZE}
               pointerEvents="none"
@@ -117,6 +120,7 @@ function PieChart({
   getY,
   height,
   margin = defaultMargin,
+  textColor,
   width,
 }: PieProps) {
   const [selectedData, setSelectedData] = useState(null);
@@ -170,6 +174,7 @@ function PieChart({
                   selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data,
                 )
               }
+              textColor={textColor}
             />
           )}
         </Pie>

@@ -12,6 +12,7 @@ import { useMutation } from 'react-query';
 import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
+import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import BaseTable from '@oracle/components/Table/BaseTable';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
@@ -22,11 +23,13 @@ import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Histogram from '@components/charts/Histogram';
 import Layout from '@oracle/components/Layout';
 import Link from '@oracle/elements/Link';
 import MultiColumn from '@oracle/components/Layout/MultiColumn';
 import Overview from '@components/datasets/Insights/Overview';
 import PageBreadcrumbs from '@components/PageBreadcrumbs';
+import PieChart from '@components/charts/PieChart';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Suggestions from '@components/suggestions';
@@ -39,15 +42,28 @@ import {
   AsidePopoutStyle,
   BEFORE_WIDTH,
 } from '@oracle/components/Layout/MultiColumn.style';
+import { ChartTypeEnum } from '@interfaces/InsightsType';
+import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
+import {
+  buildDistributionData,
+} from '@components/datasets/Insights/utils/data';
 import {
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import { greaterThan, lessThan, removeAtIndex } from '@utils/array';
+import {
+  greaterThan,
+  indexBy,
+  lessThan,
+  removeAtIndex,
+  sortByKey,
+} from '@utils/array';
+import { numberWithCommas } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
@@ -63,6 +79,8 @@ const TABS_IN_ORDER = [
   TAB_VISUALIZATIONS,
   TAB_DATA,
 ];
+
+const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
 
 type DatasetOverviewProps = {
   featureSet: FeatureSetType;
@@ -186,8 +204,16 @@ function DatasetOverview({
     Router.push(`${pathname}/features`);
   };
 
+  const insightsByFeatureUUID = useMemo(() => indexBy(insights[0], ({
+    feature: {
+      uuid,
+    },
+  }) => uuid), [
+    insights,
+  ]);
+
   const insightsOverview = selectedColumn
-    ? (insights?.[0] || []).find(({ feature }) => feature.uuid === selectedColumn)
+    ? insightsByFeatureUUID[selectedColumn]
     : insights?.[1] || {};
 
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>(null);
@@ -553,10 +579,161 @@ function DatasetOverview({
 
           {tabsFromUrl?.includes(TAB_DATA) && columns?.length >= 1 && (
             <DataTable
-              width={dataTableWidth}
-              height={dataTableHeight}
+              columnHeaderHeight={COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3) + REGULAR_LINE_HEIGHT}
               columns={columns}
+              height={dataTableHeight}
+              renderColumnHeader={(cell, columnIndex, { width: columnWidth }) => {
+                const columnUUID = columns[columnIndex];
+                const columnType = columnTypes[columnUUID];
+                const ColumnTypeIcon = COLUMN_TYPE_ICON_MAPPING[columnType];
+
+                const {
+                  charts,
+                  // time_series,
+                } = insightsByFeatureUUID[columnUUID];
+                const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
+                const {
+                  distribution = null,
+                } = histogramChart
+                  ? buildDistributionData(
+                    histogramChart,
+                    {},
+                    {
+                      feature: {
+                        columnType: columnType,
+                        uuid: columnUUID,
+                      },
+                      getYValue: ({ value }) => value,
+                    },
+                  )
+                  : {};
+
+                const statisticsByColumn = statistics?.[`${columnUUID}/value_counts`];
+                const statisticsByColumnArray = Object
+                  .entries(statisticsByColumn || {})
+                  .map(([columnValue, uniqueValueCount]) => ({
+                    x: uniqueValueCount,
+                    y: columnValue,
+                  }));
+
+                const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === columnType;
+                const isCategoricalType = [
+                  ColumnTypeEnum.CATEGORY,
+                  ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
+                ].includes(columnType);
+
+                let distributionChart;
+                if (distribution && !isBooleanType) {
+                  distributionChart = (
+                    <Histogram
+                      data={distribution.data.map(({
+                        hideRange,
+                        isUnusual,
+                        x,
+                        xLabel,
+                        y,
+                      }) => [
+                        xLabel,
+                        y.value,
+                        x.min,
+                        x.max,
+                        isUnusual,
+                        hideRange,
+                      ])}
+                      height={COLUMN_HEADER_CHART_HEIGHT}
+                      margin={{
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                      }}
+                      renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
+                        <p>
+                          {hideRange && (
+                            <>
+                              Rows: {value}
+                              <br />
+                              Value: {xLabelMin}
+                            </>
+                          )}
+                          {!hideRange && (
+                            <>
+                              Rows: {value}
+                              <br />
+                              Range: {xLabelMin} - {xLabelMax}
+                            </>
+                          )}
+                        </p>
+                      )}
+                      sortData={d => sortByKey(d, '[2]')}
+                      width={columnWidth - (UNIT * 2)}
+                    />
+                  );
+                } else if (isCategoricalType) {
+                  const data = sortByKey(statisticsByColumnArray, 'x').slice(0, 5);
+
+                  distributionChart = (
+                    <BarGraphHorizontal
+                      data={data}
+                      height={COLUMN_HEADER_CHART_HEIGHT}
+                      margin={{
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                      }}
+                      renderTooltipContent={({ x, y }) => `${y} appears ${numberWithCommas(x)} times`}
+                      xNumTicks={2}
+                      ySerialize={({ y }) => y}
+                    />
+                  );
+                } else if (isBooleanType && statisticsByColumn) {
+                  distributionChart = (
+                    <PieChart
+                      data={Object.entries(statisticsByColumn)}
+                      getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
+                      getY={([, value]) => value}
+                      height={COLUMN_HEADER_CHART_HEIGHT}
+                      textColor={light.monotone.black}
+                    />
+                  );
+                }
+
+                return (
+                  <div
+                    style={{
+                      padding: UNIT,
+                    }}
+                  >
+                    <div
+                      style={{
+                        alignItems: 'center',
+                        display: 'flex',
+                        marginBottom: UNIT,
+                      }}
+                    >
+                      {ColumnTypeIcon && <ColumnTypeIcon size={UNIT * 2} />}
+
+                      <div
+                        style={{
+                          marginLeft: UNIT * 0.5,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: columnWidth - (UNIT * 4.5),
+                        }}
+                      >
+                        {columns[columnIndex]}
+                      </div>
+                    </div>
+
+                    {distributionChart}
+                    {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT}} />}
+                  </div>
+                );
+              }}
               rows={rows}
+              width={dataTableWidth}
             />
           )}
         </Spacing>

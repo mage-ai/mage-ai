@@ -6,7 +6,7 @@ import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
 import { LinearGradient } from '@visx/gradient';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
-import { defaultStyles as tooltipStyles, Tooltip, withTooltip } from '@visx/tooltip';
+import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 
@@ -284,7 +284,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
         </svg>
 
         {tooltipOpen && tooltipData && (
-          <Tooltip
+          <TooltipWithBounds
             left={tooltipLeft}
             style={{
               ...tooltipStyles,
@@ -296,7 +296,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
               {renderTooltipContent?.(tooltipData)}
               {!renderTooltipContent && getX(tooltipData).toFixed(4)}
             </Text>
-          </Tooltip>
+          </TooltipWithBounds>
         )}
       </div>
     );
