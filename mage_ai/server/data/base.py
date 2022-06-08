@@ -10,6 +10,7 @@ DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 class Model:
     def __init__(self, id=None, path=None):
+        self.path = path
         if path is not None:
             self.dir = path
             return
