@@ -86,7 +86,7 @@ function Export({
             </Headline>
           </Spacing>
           <Text>
-            The <Text inline monospace>mage_ai</Text> Python library will read
+            The <Text bold inline monospace>mage_ai</Text> Python library will read
             from a local JSON file that has been created through this tool.
 
             <Spacing mb={1} />
@@ -111,7 +111,7 @@ function Export({
         <Spacing mb={5}>
           <Spacing mb={1}>
             <Headline>
-              Upload the pipeline JSON file to your environment
+              Upload the pipeline JSON file to your runtime environment
             </Headline>
           </Spacing>
           <Text>
@@ -139,6 +139,14 @@ function Export({
             Load your data as a Pandas dataframe, then
             invoke the cleaning method by passing in the dataframe variable as the first argument
             and referencing the JSON file path as a keyword argument.
+          </Text>
+
+          <Spacing mt={1} />
+
+          <Text>
+            The return value of the <Text bold inline monospace>mage_ai.clean</Text> method
+            is a Pandas dataframe that has been cleaned using
+            all the actions in your data pipeline.
           </Text>
 
           <Spacing mt={2}>
