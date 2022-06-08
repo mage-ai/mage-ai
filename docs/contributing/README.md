@@ -103,5 +103,18 @@ $ flask run
 Now visit [http://localhost:5000](http://localhost:5000)
 to make HTTP requests to the backend server.
 
+#### Using the mage_ai Python package from your machine
+
+In your notebook or interactive Python environment, run the following code to use a local
+version of the `mage_ai` library that reads from your local repository:
+
+```python
+import sys
+sys.path.append('/absolute_path_to_repo/mage-ai')
+
+
+import mage_ai
+```
+
 ## Explore the code base
 WIP
