@@ -58,7 +58,10 @@ import pandas as pd
 
 
 df = pd.read_csv('/path_to_data')
-mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_dir') #=> returns cleaned dataframe
+# Option 1: Clean with pipeline uuid
+df_cleaned = mage_ai.clean(df, pipeline_uuid='uuid_of_cleaning_pipeline')
+# Option 2: Clean with pipeline config directory path
+df_cleaned = mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_dir')
 ```
 
 ### More resources
