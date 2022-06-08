@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
-from mage_ai.data_cleaner.cleaning_rules.shared import wrap_column_name
+from mage_ai.data_cleaner.shared.utils import wrap_column_name
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,

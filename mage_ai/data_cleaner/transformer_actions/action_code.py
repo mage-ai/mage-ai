@@ -2,7 +2,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import Operator
 import re
 
 ACTION_CODE_NAME = r'(?:([^\s()"\']+|[\'\"][^"\']+[\'\"]))'
-ACTION_CODE_CONDITION_PATTERN = re.compile(
+ACTION_CODE_PATTERN = re.compile(
     rf'{ACTION_CODE_NAME} ([!=<>]+|(?:contains)|(?:not contains)) {ACTION_CODE_NAME}'
 )
 ORIGINAL_COLUMN_PREFIX = 'orig_'
@@ -11,12 +11,12 @@ TRANSFORMED_COLUMN_PREFIX = 'tf_'
 
 
 def append_prefix(column_name, prefix):
-    isQuoted = False
+    is_quoted = False
     if column_name[0] == '\"' or column_name[0] == '\'':
-        isQuoted = True
+        is_quoted = True
         column_name = column_name.strip(QUOTES)
     column_name = f'{prefix}{column_name}'
-    if isQuoted:
+    if is_quoted:
         column_name = f'`{column_name}`'
     return column_name
 
@@ -80,7 +80,7 @@ def query_with_action_code(df, action_code, kwargs):
     column_set = set(df.columns)
 
     prev_end = 0
-    for match in ACTION_CODE_CONDITION_PATTERN.finditer(action_code):
+    for match in ACTION_CODE_PATTERN.finditer(action_code):
         column_name, operator, value = match.groups()
         column_name = column_name.strip(QUOTES)
         reconstructed_code.append(action_code[prev_end : match.start()])

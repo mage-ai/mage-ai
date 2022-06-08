@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.cleaning_rules.shared import wrap_column_name
+from mage_ai.data_cleaner.shared.utils import wrap_column_name
 from mage_ai.tests.base_test import TestCase
 
 

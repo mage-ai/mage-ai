@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 import re
 
 """
@@ -14,15 +14,7 @@ def default_resolution(df: DataFrame, action: Dict) -> Tuple[bool, str]:
     return True, None
 
 
-def isolate(action_code):
-    split_code = action_code.split(" and ")
-    results = []
-    for clause in split_code:
-        results.extend(clause.split(" or "))
-    return [result.strip(' ()') for result in results]
-
-
-def resolve_filter_action(df: DataFrame, action: dict) -> Tuple[bool, str]:
+def resolve_filter_action(df: DataFrame, action: Dict) -> Tuple[bool, str]:
     for name in df.columns:
         if re.search('\s', name):
             return (
