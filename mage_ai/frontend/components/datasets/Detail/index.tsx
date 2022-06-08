@@ -63,6 +63,7 @@ function DatasetDetail({
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
 
   const {
+    id: featureSetId,
     metadata,
     pipeline,
     suggestions: suggestionsInit,
@@ -307,6 +308,7 @@ function DatasetDetail({
                           }
                           : null
                         }
+                        featureSetId={String(featureSetId)}
                         features={selectedColumn ? null : featuresWithAltColType}
                         onClose={closeAction}
                         onSave={(actionPayloadOverride: ActionPayloadType) => {

@@ -4,6 +4,10 @@ import { ActionTypeEnum } from '@interfaces/ActionPayloadType';
 
 export const LOCAL_STORAGE_KEY_CUSTOM_CODE = 'custom_code';
 
+function getCustomCodeKey(featureSetId: string) {
+  return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;
+}
+
 export function set(key, value) {
   // @ts-ignore
   ls.set(key, value);
@@ -26,23 +30,29 @@ export function get(key, value = null) {
 
 export function getCustomCodeState({
   actionType,
+  featureSetId,
   defaultValue = {},
 }: {
   actionType: ActionTypeEnum;
+  featureSetId: string
   defaultValue?: any;
 }) {
-  return get(LOCAL_STORAGE_KEY_CUSTOM_CODE, defaultValue)[actionType];
+  const key = getCustomCodeKey(featureSetId);
+  return get(key, defaultValue)[actionType];
 }
 
 export function setCustomCodeState({
   actionType,
+  featureSetId,
   newValue,
 }: {
   actionType: ActionTypeEnum;
+  featureSetId: string
   newValue: string;
 }) {
-  set(LOCAL_STORAGE_KEY_CUSTOM_CODE, {
-    ...get(LOCAL_STORAGE_KEY_CUSTOM_CODE),
+  const key = getCustomCodeKey(featureSetId);
+  set(key, {
+    ...get(key),
     [actionType]: newValue,
   });
 }

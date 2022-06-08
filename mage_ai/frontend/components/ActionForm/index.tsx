@@ -40,6 +40,7 @@ type ActionFormProps = {
   actionType: ActionTypeEnum;
   axis: string;
   currentFeature?: FeatureType;
+  featureSetId?: string;
   features?: FeatureResponseType[];
   noBorder?: boolean;
   noHeader?: boolean;
@@ -62,6 +63,7 @@ function ActionForm({
   axis,
   features = [],
   currentFeature,
+  featureSetId,
   noBorder,
   noHeader,
   onClose,
@@ -184,6 +186,7 @@ function ActionForm({
                   setActionCodeState(e.target.value);
                   setCustomCodeState({
                     actionType,
+                    featureSetId,
                     newValue: e.target.value,
                   });
                 }}
@@ -194,7 +197,9 @@ function ActionForm({
                   fontSize: REGULAR_FONT_SIZE,
                   tabSize: 4,
                 }}
-                value={actionCode || (getCustomCodeState({ actionType }) || code.default)}
+                value={actionCode
+                  || (getCustomCodeState({ actionType, featureSetId }) || code.default)
+                }
               />
             )}
           </Spacing>
