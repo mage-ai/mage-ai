@@ -34,11 +34,12 @@ export const ColumnHeaderRowStyle = styled.div<any>`
   `}
 
   ${props => !props.noBorder && `
-    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
+    border-bottom: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 
   ${props => props.noBorder && `
     border-radius: 0px 0px 0px 0px;
+    border: none;
   `}
 `;
 
