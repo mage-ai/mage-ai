@@ -45,7 +45,7 @@ class StatisticsCalculator:
             self.data_tags,
         )
 
-        with timer('statistics.calculate_statistics_overview.time', self.data_tags):
+        with timer('statistics.calculate_statistics_overview.time', self.data_tags, verbose=False):
             if not is_clean:
                 df = clean_dataframe(df, self.column_types, dropna=False)
             data = dict(count=len(df.index))

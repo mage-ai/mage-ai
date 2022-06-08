@@ -44,7 +44,7 @@ class BasePipeline:
         self.column_types = column_types
         all_suggestions = []
         for rule in self.rules:
-            with timer('pipeline.evaluate_cleaning_rule', dict(rule=rule.__name__)):
+            with timer('pipeline.evaluate_cleaning_rule', dict(rule=rule.__name__), verbose=False):
                 suggestions = rule(df, column_types, statistics).evaluate()
             if suggestions:
                 all_suggestions += suggestions
