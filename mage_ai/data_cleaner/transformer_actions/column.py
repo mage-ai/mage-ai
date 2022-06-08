@@ -147,21 +147,33 @@ def reformat(df, action, **kwargs):
     reformat_action = options['reformat']
     df.loc[:, columns] = df[columns].replace('^\s*$', np.nan, regex=True)
 
+    def gen_string_cols(columns):
+        for column in columns:
+            clean_col = df[column]
+            dropped = clean_col.dropna(axis=0)
+            exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
+            if exact_dtype is str:
+                yield column
+
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
-        for column in columns:
+        for column in gen_string_cols(columns):
             if capitalization == 'uppercase':
                 df.loc[:, column] = df[columns][column].str.upper()
             else:
                 df.loc[:, column] = df[columns][column].str.lower()
     elif reformat_action == 'currency_to_num':
-        clean_cols = df[columns].replace(CURRENCY_SYMBOLS, '', regex=True)
-        clean_cols = clean_cols.replace('\s', '', regex=True)
-        clean_cols = clean_cols.replace('^\s*$', np.nan, regex=True)
-        df.loc[:, columns] = clean_cols.astype(float)
+        for column in gen_string_cols(columns):
+            clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
+            clean_col = clean_col.replace('\s', '', regex=True)
+            clean_col = clean_col.replace('^\s*$', np.nan, regex=True)
+            try:
+                df.loc[:, column] = clean_col.astype(float)
+            except ValueError:
+                continue
     elif reformat_action == 'date_format_conversion':
         for column in columns:
-            clean_col = df[columns][column]
+            clean_col = df[column]
             dropped = clean_col.dropna(axis=0)
             exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
             if exact_dtype is str:

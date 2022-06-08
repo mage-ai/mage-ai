@@ -34,7 +34,7 @@ def increment(metric, tags={}):
     pass
 
 
-class AnalysisCalculator():
+class AnalysisCalculator:
     def __init__(
         self,
         df,
@@ -62,8 +62,7 @@ class AnalysisCalculator():
         arr_args_1 = ([df_clean for _ in features_to_use],)
         arr_args_2 = (features_to_use,)
 
-        data_for_columns = \
-            [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
+        data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
 
         time_series_charts = self.calculate_timeseries_data(df)
         for d in data_for_columns:
@@ -81,16 +80,21 @@ class AnalysisCalculator():
         for d in data_for_columns:
             corr = d.get(DATA_KEY_CORRELATION)
             if corr:
-                correlation_overview.append({
-                    'feature': d['feature'],
-                    DATA_KEY_CORRELATION: corr,
-                })
+                correlation_overview.append(
+                    {
+                        'feature': d['feature'],
+                        DATA_KEY_CORRELATION: corr,
+                    }
+                )
 
         increment(f'{DD_KEY}.process.succeeded', self.tags)
 
-        return data_for_columns, merge_dict(overview, {
-            DATA_KEY_CORRELATION: correlation_overview,
-        })
+        return data_for_columns, merge_dict(
+            overview,
+            {
+                DATA_KEY_CORRELATION: correlation_overview,
+            },
+        )
 
     @property
     def features_by_uuid(self):
@@ -106,8 +110,11 @@ class AnalysisCalculator():
 
     @property
     def numeric_features(self):
-        return [f['uuid'] for f in self.features
-                if is_numeric_dtype(self.df, f['uuid'], f['column_type'])]
+        return [
+            f['uuid']
+            for f in self.features
+            if is_numeric_dtype(self.df, f['uuid'], f['column_type'])
+        ]
 
     @property
     def tags(self):
@@ -172,13 +179,16 @@ class AnalysisCalculator():
         }
 
     def calculate_timeseries_data(self, df):
-        timeseries_features = \
-            [f for f in self.features if f['column_type'] in TIMESERIES_COLUMN_TYPES]
+        timeseries_features = [
+            f for f in self.features if f['column_type'] in TIMESERIES_COLUMN_TYPES
+        ]
         datetime_features_to_use = self.datetime_features
 
         charts_by_column = dict()
         for f in datetime_features_to_use:
             time_series_charts = charts.build_time_series_data(df, timeseries_features, f['uuid'])
+            if time_series_charts is None:
+                continue
             for f, chart in time_series_charts.items():
                 if f not in charts_by_column:
                     charts_by_column[f] = [chart]

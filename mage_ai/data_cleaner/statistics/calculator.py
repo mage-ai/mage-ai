@@ -195,8 +195,11 @@ class StatisticsCalculator:
                     ).abs()
                     series_outliers = series_z_score[series_z_score >= OUTLIER_ZSCORE_THRESHOLD]
                     data[f'{col}/outlier_count'] = series_outliers.count()
-                    data[f'{col}/outliers'] = \
-                        series_non_null.loc[series_outliers.index].iloc[:OUTLIER_SAMPLE_COUNT].tolist()
+                    data[f'{col}/outliers'] = (
+                        series_non_null.loc[series_outliers.index]
+                        .iloc[:OUTLIER_SAMPLE_COUNT]
+                        .tolist()
+                    )
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
@@ -219,9 +222,10 @@ class StatisticsCalculator:
                 mode = df_value_counts.index[mode_idx]
 
             if column_type == DATETIME and mode is not None:
-                mode = mode.isoformat()
+                data[f'{col}/mode'] = mode.isoformat()
+            else:
+                data[f'{col}/mode'] = mode
 
-            data[f'{col}/mode'] = mode
             data[f'{col}/mode_ratio'] = (
                 df_value_counts[mode].item() / df_value_counts.sum() if mode else 0
             )
