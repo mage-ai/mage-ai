@@ -11,6 +11,11 @@ export const OPERATOR_LESS_THAN = '<';
 export const OPERATOR_LESS_THAN_OR_EQUAL = '<=';
 export const OPERATOR_NOT_EQUAL = '!=';
 
+export const CODE_EXAMPLE = '@transformer_action\n\
+def transform(df):\n\
+\tdf.dropna()\n\
+\treturn df';
+
 export interface ConditionType {
   feature_attribute?: typeof FEATURE_ATTRIBUTE_COLUMN_TYPE;
   operator: (typeof OPERATOR_CONTAINS
