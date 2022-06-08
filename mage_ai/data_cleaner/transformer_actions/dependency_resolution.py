@@ -22,7 +22,7 @@ def isolate(action_code):
     return [result.strip(' ()') for result in results]
 
 
-def resolve_filter_action(df: DataFrame) -> Tuple[bool, str]:
+def resolve_filter_action(df: DataFrame, action: dict) -> Tuple[bool, str]:
     for name in df.columns:
         if re.search('\s', name):
             return (

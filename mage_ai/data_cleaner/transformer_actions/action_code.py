@@ -1,8 +1,9 @@
 from mage_ai.data_cleaner.transformer_actions.constants import Operator
 import re
 
+ACTION_CODE_NAME = r'(?:([^\s()"\']+|[\'\"][^"\']+[\'\"]))'
 ACTION_CODE_CONDITION_PATTERN = re.compile(
-    r'(?:([^\s()]+|[\'\"][^()"\']+[\'\"])) ([!=<>]+|(?:contains)|(?:not contains)) (?:([^\s()]+|[\'\"][^()"\']+[\'\"]))'
+    rf'{ACTION_CODE_NAME} ([!=<>]+|(?:contains)|(?:not contains)) {ACTION_CODE_NAME}'
 )
 ORIGINAL_COLUMN_PREFIX = 'orig_'
 QUOTES = '\"\''

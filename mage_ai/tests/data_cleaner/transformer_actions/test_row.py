@@ -530,6 +530,49 @@ class RowTests(TestCase):
         assert_frame_equal(df_expected4, df_new4)
         assert_frame_equal(df_expected5, df_new5)
 
+    def test_filter_row_comparing_two_dirty_cols(self):
+        df = pd.DataFrame(
+            [
+                [23.5, 0.2342],
+                [-9230.3, 98],
+                [23.5, -0.32342],
+                [432, 432],
+                [34.2342, 0.082392],
+                [23.5, np.nan],
+                [None, 0.2342],
+            ],
+            columns=['e e e e e  e e e', ' kas22d fe ($)'],
+        )
+        action = dict(
+            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" > " kas22d fe ($)"'
+        )
+        action2 = dict(
+            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" <= " kas22d fe ($)"'
+        )
+        df_expected = pd.DataFrame(
+            [
+                [23.5, 0.2342],
+                [23.5, -0.32342],
+                [34.2342, 0.082392],
+            ],
+            columns=['e e e e e  e e e', ' kas22d fe ($)'],
+        )
+        df_expected2 = pd.DataFrame(
+            [
+                [-9230.3, 98],
+                [432, 432],
+            ],
+            columns=['e e e e e  e e e', ' kas22d fe ($)'],
+        )
+        df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
+        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
+        df_new['e e e e e  e e e'] = df_new['e e e e e  e e e'].astype(float)
+        df_new2['e e e e e  e e e'] = df_new2['e e e e e  e e e'].astype(float)
+        df_new[' kas22d fe ($)'] = df_new[' kas22d fe ($)'].astype(float)
+        df_new2[' kas22d fe ($)'] = df_new2[' kas22d fe ($)'].astype(int)
+        assert_frame_equal(df_expected, df_new)
+        assert_frame_equal(df_expected2, df_new2)
+
     def test_filter_row_dirty_columns_two(self):
         df = pd.DataFrame(
             [
