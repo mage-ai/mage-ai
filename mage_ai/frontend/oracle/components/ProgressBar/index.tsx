@@ -18,15 +18,18 @@ export type ProgressBarProps = {
 };
 
 const ProgressBarContainerStyle = styled.div<ProgressBarProps>`
-  border-radius: ${BORDER_RADIUS_SMALL};
+  border-radius: ${BORDER_RADIUS_SMALL}px;
   height: ${UNIT * 0.75}px;
   overflow: hidden;
   position: relative;
   width: 100%;
+
+  ${props => `
+    background-color: ${(props.theme.monotone || light.monotone).grey200};
+  `}
 `;
 
 const ProgressBarStyle = styled.div<ProgressBarProps>`
-  border-radius: ${BORDER_RADIUS_SMALL}px;
   height: inherit;
   position: absolute;
 
