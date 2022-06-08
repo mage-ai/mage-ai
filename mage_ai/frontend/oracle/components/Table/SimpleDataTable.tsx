@@ -174,6 +174,25 @@ function SimpleDataTable({
                   value={value[1]}
                 />,
               );
+            } else if (typeof value === 'undefined') {
+              cells.pop();
+              cellIndex = arr.length + 1;
+              cells.push(
+                <Cell
+                  cellIndex={cellIndex}
+                  danger={danger}
+                  flex={columnFlexNumbers[cellIndex]}
+                  key={cellIndex}
+                  render={renderFunc}
+                  rowGroupIndex={rowGroupIndex}
+                  rowIndex={rowIndex}
+                  selected={isSelected}
+                  showBackground={rowIndex % 2 === 1}
+                  small={small}
+                  value={value}
+                  vanish={true}
+                />,
+              );
             } else {
               cells.push(
                 <Cell

@@ -20,6 +20,7 @@ type CellProps = {
   showBackground?: boolean;
   showProgress?: boolean;
   value: any;
+  vanish?: boolean;
 };
 
 function Cell({
@@ -34,6 +35,7 @@ function Cell({
   showBackground,
   showProgress,
   value,
+  vanish,
 }: CellProps) {
   const [collapsed, setCollapsed] = useState(false);
   let cellEl;
@@ -117,8 +119,10 @@ function Cell({
         first={cellIndex === 0}
         showBackground={showBackground}
         small={small}
+        vanish={vanish}
       >
-        {cellEl}
+        { !vanish && <>{cellEl} </>
+        }
       </RowCellStyle>
     </Flex>
   );

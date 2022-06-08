@@ -14,6 +14,8 @@ export const TableStyle = styled.div<any>`
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
+    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
+    border-radius: ${BORDER_RADIUS}px ${BORDER_RADIUS}px ${BORDER_RADIUS}px ${BORDER_RADIUS}px;
   `}
 
   ${props => props.height && `
@@ -25,19 +27,14 @@ export const TableStyle = styled.div<any>`
 `;
 
 export const ColumnHeaderRowStyle = styled.div<any>`
-  border-top-left-radius: ${BORDER_RADIUS}px;
-  border-top-right-radius: ${BORDER_RADIUS}px;
-  position: sticky;
-  top: 0;
   width: 100%;
-  z-index: 2;
 
   ${props => `
     background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
   `}
 
   ${props => !props.noBorder && `
-    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
+    // border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 
   ${props => props.noBorder && `
@@ -76,17 +73,13 @@ export const RowStyle = styled.div<any>`
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
     border-top: none;
+    border-bottom: none;
   `}
 
-  ${props => !props.noBorder && `
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
-    border-left: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
-    border-right: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
-  `}
-
-  ${props => props.finalRow && `
-    border-bottom-left-radius: ${BORDER_RADIUS}px;
-    border-bottom-right-radius: ${BORDER_RADIUS}px;
+  ${props => !props.noBorder && !props.last && `
+    // border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    // border-left: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    // border-right: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
 `;
@@ -114,5 +107,13 @@ export const RowCellStyle = styled.div<any>`
 
   ${props => props.showBackground && `
     background-color: ${(props.theme.background || light.background).row};
+  `}
+
+  ${props => props.vanish && `
+    border: none;
+    padding: 0 !important;
+    width: 0% !important;
+    height: 100% !important;
+    background-color: ${(props.theme.background || light.background).page} !important;
   `}
 `;
