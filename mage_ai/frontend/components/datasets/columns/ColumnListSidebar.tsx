@@ -89,7 +89,10 @@ function ColumnListSidebar({
 
               <FlexContainer alignItems="center">
                 {Icon && (
-                  <div style={{ width: UNIT * 2 }}>
+                  <div style={{
+                    height: UNIT * 2,
+                    width: UNIT * 2,
+                  }}>
                     <Icon
                       size={UNIT * 2}
                     />
