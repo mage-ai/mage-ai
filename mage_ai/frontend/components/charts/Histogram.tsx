@@ -5,7 +5,7 @@ import { Bar } from '@visx/shape';
 import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
-import { defaultStyles, Tooltip, withTooltip } from '@visx/tooltip';
+import { defaultStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import {
   scaleBand,
@@ -147,8 +147,8 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         .filter((dateTuple: any) => !!dateTuple[0])
       : dataSortedByCountDesc.slice(0, maxBarCount);
 
-    const xMax = width - margin.left - margin.right;
-    const yMax = height - margin.bottom - margin.top;
+    const xMax = width - (margin.left + margin.right);
+    const yMax = height - (margin.bottom + margin.top);
 
     const xScaleDate = isDateType ? getXScaleDate(dataSample, xMax) : null;
     const dateFrequencyByRange = getDateFrequencyByRange(dataSample, xScaleDate);
@@ -250,11 +250,11 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         const tooltipText: any = renderTooltipContent
           ? renderTooltipContent(tuple)
           : `${colVal} (${getColValFreq(tuple)})`;
-        const tooltipLeftPosition = (x < width / 2) ? x : (x - margin.left * 3);
+        // const tooltipLeftPosition = (x < width / 2) ? x : (x - margin.left * 3);
 
         showTooltip({
           tooltipData: tooltipText,
-          tooltipLeft: tooltipLeftPosition,
+          tooltipLeft: x - margin.left,
           tooltipTop: y + margin.top,
         });
       },
@@ -354,7 +354,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         </svg>
 
         {tooltipOpen && tooltipData && (
-          <Tooltip
+          <TooltipWithBounds
             left={tooltipLeft}
             style={defaultStyles}
             top={tooltipTop}
@@ -362,7 +362,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
             <Text color={BLACK} small>
               {tooltipData}
             </Text>
-          </Tooltip>
+          </TooltipWithBounds>
         )}
       </div>
     );

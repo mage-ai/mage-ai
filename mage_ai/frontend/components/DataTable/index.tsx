@@ -28,6 +28,15 @@ const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
 
+type SharedProps = {
+  columnHeaderHeight?: number;
+  height?: number;
+  renderColumnHeader?: (column: any, idx: number, opts: {
+    [key: string]: number;
+  }) => any;
+  width?: number;
+};
+
 type TableProps = {
   columns: {
     Header: string;
@@ -35,18 +44,15 @@ type TableProps = {
     sticky?: string;
   }[];
   data: string[][] | number[][];
-  height?: number;
-  width?: number;
-};
+} & SharedProps;
 
 type DataTableProps = {
   columns: string[];
-  height?: number;
   rows: string[][] | number[][];
-  width?: number;
-}
+} & SharedProps;
 
 const Styles = styled.div<{
+  columnHeaderHeight?: number;
   height?: number;
 }>`
   ${props => props.height && `
@@ -69,15 +75,24 @@ const Styles = styled.div<{
       }
     }
 
+    .th {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      ${props => `
+        height: ${props.columnHeaderHeight || BASE_ROW_HEIGHT}px;
+      `}
+    }
+
     .th,
     .td {
       ${REGULAR}
       font-family: ${FONT_FAMILY_REGULAR};
       margin: 0;
-      padding: ${UNIT * 1}px;
 
       ${props => `
-        background-color: ${(props.theme.monotone || light.monotone).grey100};
+        background-color: ${(props.theme.monotone || light.monotone).white};
         border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
         border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
       `}
@@ -89,11 +104,8 @@ const Styles = styled.div<{
       }
     }
 
-    .th {
-      height: ${BASE_ROW_HEIGHT}px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .td {
+      padding: ${UNIT * 1}px;
     }
 
     &.sticky {
@@ -114,9 +126,11 @@ function estimateCellHeight({ original }) {
 }
 
 function Table({
+  columnHeaderHeight,
   columns,
   data,
   height,
+  renderColumnHeader,
   width,
 }: TableProps) {
   const refHeader = useRef(null);
@@ -198,6 +212,7 @@ function Table({
       >
         {row.cells.map((cell, idx: number) => {
           const firstColumn = idx === 0;
+
           const cellProps = cell.getCellProps();
           const cellStyle: {
             [key: string]: number | string;
@@ -213,14 +228,21 @@ function Table({
             cellStyle.width = maxWidthOfFirstColumn;
           }
 
+          let el;
+
+          if (firstColumn) {
+            el = cell.render('Cell');
+          } else {
+            el = original[idx - 1];
+          }
+
           return (
             <div
               {...cellProps}
               className="td"
               style={cellStyle}
             >
-              {firstColumn && cell.render('Cell')}
-              {!firstColumn && original[idx - 1]}
+              {el}
             </div>
           )
         })}
@@ -229,6 +251,20 @@ function Table({
   }, [
     prepareRow,
     rows,
+  ]);
+
+  const listHeight = useMemo(() => {
+    let val = height;
+    if (columnHeaderHeight) {
+      val -= columnHeaderHeight;
+    } else {
+      val -= BASE_ROW_HEIGHT;
+    }
+
+    return val;
+  }, [
+    columnHeaderHeight,
+    height,
   ]);
 
   return (
@@ -258,12 +294,21 @@ function Table({
                   ...columnProps.style,
                 };
 
+                let el;
+
                 if (firstColumn) {
                   columnStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
                   columnStyle.left = 0;
                   columnStyle.position = 'sticky';
                   columnStyle.textAlign = 'center';
                   columnStyle.width = maxWidthOfFirstColumn;
+                } else if (renderColumnHeader) {
+                  el = renderColumnHeader(column, idx - 1, {
+                    width: defaultColumn.width,
+                  });
+                } else {
+                  el = column.render('Header');
+                  columnStyle.padding = UNIT * 1;
                 }
 
                 return (
@@ -273,7 +318,7 @@ function Table({
                     style={columnStyle}
                     title={firstColumn ? 'Row number' : `${column.Header}`}
                   >
-                    {column.render('Header')}
+                    {el}
                   </div>
                 );
               })}
@@ -283,7 +328,7 @@ function Table({
 
         <VariableSizeList
           estimatedItemSize={BASE_ROW_HEIGHT}
-          height={height - BASE_ROW_HEIGHT}
+          height={listHeight}
           itemCount={rows?.length}
           itemSize={(idx: number) => estimateCellHeight(rows[idx])}
           outerRef={refListOuter}
@@ -299,8 +344,10 @@ function Table({
 }
 
 function DataTable({
+  columnHeaderHeight,
   columns: columnsProp,
   height,
+  renderColumnHeader,
   rows: rowsProp,
   width,
 }: DataTableProps) {
@@ -323,11 +370,16 @@ function DataTable({
   ]);
 
   return (
-    <Styles height={height}>
+    <Styles
+      columnHeaderHeight={columnHeaderHeight}
+      height={height}
+    >
       <Table
+        columnHeaderHeight={columnHeaderHeight}
         columns={columns}
         data={rowsProp}
         height={height}
+        renderColumnHeader={renderColumnHeader}
         width={width}
       />
     </Styles>
