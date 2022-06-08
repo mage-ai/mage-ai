@@ -51,7 +51,6 @@ export type LinkProps = {
   transparentBorder?: boolean;
   underline?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-  width?: number;
   wordWrap?: boolean;
 };
 
@@ -201,15 +200,6 @@ export const SHARED_LINK_STYLES = css<any>`
     overflow: hidden;
     text-overflow: ${props.textOverflow};
   `}
-
-  ${props => props.width && `
-    overflow: hidden;
-    max-width: ${props.width}px;
-    text-overflow: ellipsis;
-    width: 100%;
-    white-space: nowrap;
-  `}
-
 
   ${props => props.fullHeight && `
     height: 100%;
