@@ -28,12 +28,27 @@ const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
 
+type TableProps = {
+  columns: {
+    Header: string;
+    accessor: (row: any, i: number) => string | number;
+    sticky?: string;
+  }[];
+  data: string[][] | number[][];
+  height?: number;
+  width?: number;
+};
+
 type DataTableProps = {
   columns: string[];
+  height?: number;
   rows: string[][] | number[][];
+  width?: number;
 }
 
-const Styles = styled.div`
+const Styles = styled.div<{
+  height?: number;
+}>`
   ${props => props.height && `
     height: ${props.height}px;
   `}
@@ -103,7 +118,7 @@ function Table({
   data,
   height,
   width,
-}) {
+}: TableProps) {
   const refHeader = useRef(null);
   const refListOuter = useRef(null);
 
@@ -129,8 +144,8 @@ function Table({
   }), []);
 
   const maxWidthOfFirstColumn =
-    useMemo(() => (String(rows?.length).length * WIDTH_OF_CHARACTER) + (UNIT * 2), [
-      rows,
+    useMemo(() => (String(data?.length).length * WIDTH_OF_CHARACTER) + (UNIT * 2), [
+      data,
     ]);
 
   // const scrollBarSize = useMemo(() => scrollbarWidth(), []);
@@ -242,7 +257,7 @@ function Table({
                     {...columnProps}
                     className="th"
                     style={columnStyle}
-                    title={firstColumn ? 'Row number' : column.Header}
+                    title={firstColumn ? 'Row number' : `${column.Header}`}
                   >
                     {column.render('Header')}
                   </div>
@@ -269,16 +284,17 @@ function Table({
   )
 }
 
-function App({
+function DataTable({
   columns: columnsProp,
   height,
   rows: rowsProp,
   width,
-}) {
+}: DataTableProps) {
   const columns = useMemo(() => [{
     Header: ' ',
     accessor: (row, i) => i + 1,
     sticky: 'left',
+    // @ts-ignore
   }].concat(columnsProp?.map(col => ({
     Header: col,
     accessor: col,
@@ -304,4 +320,4 @@ function App({
   )
 }
 
-export default App
+export default DataTable
