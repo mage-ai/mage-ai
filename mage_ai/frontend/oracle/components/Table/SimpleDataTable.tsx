@@ -156,7 +156,7 @@ function SimpleDataTable({
           const val = warning && isString(columnValues[1]) ? removePercent(columnValues[1]) : columnValues[1];
           const shouldWarn = warning && warning.compare(val, warning.val);
 
-          columnValues?.forEach((value: any, cellIndex: number) => {
+          columnValues?.forEach((value: any, cellIndex: number, arr: []) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
             if (Array.isArray(value)) {
               cells.push(
@@ -172,6 +172,25 @@ function SimpleDataTable({
                   showProgress={value[0]}
                   small={small}
                   value={value[1]}
+                />,
+              );
+            } else if (typeof value === 'undefined') {
+              cells.pop();
+              cellIndex = arr.length + 1;
+              cells.push(
+                <Cell
+                  cellIndex={cellIndex}
+                  danger={danger}
+                  flex={columnFlexNumbers[cellIndex]}
+                  key={cellIndex}
+                  render={renderFunc}
+                  rowGroupIndex={rowGroupIndex}
+                  rowIndex={rowIndex}
+                  selected={isSelected}
+                  showBackground={rowIndex % 2 === 1}
+                  small={small}
+                  value={value}
+                  vanish={true}
                 />,
               );
             } else {

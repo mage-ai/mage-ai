@@ -48,6 +48,7 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     max_null_seq: statistics[`${featureUUID}/max_null_seq`],
     median: statistics[`${featureUUID}/median`],
     min: statistics[`${featureUUID}/min`],
+    mode: statistics[`${featureUUID}/mode`],
     null_value_count: statistics[`${featureUUID}/null_value_count`],
     null_value_rate: statistics[`${featureUUID}/null_value_rate`],
     outlier_count: statistics[`${featureUUID}/outlier_count`],

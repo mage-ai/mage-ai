@@ -11,6 +11,7 @@ import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interf
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage, transformNumber } from '@utils/number';
+import { roundNumber } from '@utils/string';
 
 type ColumnReportsProps = {
   column: string;
@@ -29,12 +30,17 @@ function ColumnReports({
 
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
   const {
+    average,
     completeness,
     count,
     count_distinct: countDistinct,
     invalid_value_count: invalidValueCount,
     invalid_value_rate: invalidValueRate,
     invalid_values: invalidValues,
+    max,
+    median,
+    min,
+    mode,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -50,36 +56,62 @@ function ColumnReports({
       columnValues: [
         'Column type',
         COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
+        [false],
       ],
     },
     {
       columnValues: [
-        'Validity', getPercentage(validity),
+        'Validity', getPercentage(validity), [true, validity * 100],
       ],
     },
     {
       columnValues: [
-        'Completeness', getPercentage(completeness),
+        'Completeness', getPercentage(completeness), [true, completeness * 100],
       ],
     },
     {
       columnValues: [
-        'Total values', count,
+        'Total values', count, [false],
       ],
     },
     {
       columnValues: [
-        'Unique values', countDistinct,
+        'Unique values', countDistinct, [false],
       ],
     },
     {
       columnValues: [
-        'Missing values', nullValueCount,
+        'Missing values', nullValueCount, [false],
       ],
     },
     {
       columnValues: [
-        'Invalid values', invalidValueCount,
+        'Invalid values', invalidValueCount, [false],
+      ],
+    },
+    {
+      columnValues: [
+        'Max value', roundNumber(max), [false],
+      ],
+    },
+    {
+      columnValues: [
+        'Min value', roundNumber(min), [false],
+      ],
+    },
+    {
+      columnValues: [
+        'Median value', roundNumber(median), [false],
+      ],
+    },
+    {
+      columnValues: [
+        'Average value', roundNumber(average), [false],
+      ],
+    },
+    {
+      columnValues: [
+        'Mode value', roundNumber(mode), [false],
       ],
     },
   ];
@@ -109,7 +141,7 @@ function ColumnReports({
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
         <SimpleDataTable
-          columnFlexNumbers={[1, 1]}
+          columnFlexNumbers={[2, 1, 2]}
           columnHeaders={[{ label: 'Column summary' }]}
           rowGroupData={[{
             rowData: qualityMetrics,
