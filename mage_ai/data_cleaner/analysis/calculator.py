@@ -7,7 +7,6 @@ from mage_ai.data_cleaner.analysis.constants import (
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.multi import run_parallel
 from mage_ai.data_cleaner.column_type_detector import (
     CATEGORY,
     CATEGORY_HIGH_CARDINALITY,
@@ -16,10 +15,19 @@ from mage_ai.data_cleaner.column_type_detector import (
     NUMBER_WITH_DECIMALS,
     TRUE_OR_FALSE,
 )
-import numpy as np
 import traceback
 
 DD_KEY = 'lambda.analysis_calculator'
+TIMESERIES_COLUMN_TYPES = frozenset(
+    [
+        CATEGORY,
+        CATEGORY_HIGH_CARDINALITY,
+        NUMBER,
+        NUMBER_WITH_DECIMALS,
+        TRUE_OR_FALSE,
+    ]
+)
+VERBOSE = False
 
 
 def increment(metric, tags={}):
@@ -51,11 +59,17 @@ class AnalysisCalculator():
         else:
             df_clean = df
 
-        arr_args_1 = [df_clean for _ in features_to_use],
-        arr_args_2 = features_to_use,
+        arr_args_1 = ([df_clean for _ in features_to_use],)
+        arr_args_2 = (features_to_use,)
 
         data_for_columns = \
-            [d for d in run_parallel(self.calculate_column, arr_args_1, arr_args_2)]
+            [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
+
+        time_series_charts = self.calculate_timeseries_data(df)
+        for d in data_for_columns:
+            fuuid = d['feature']['uuid']
+            if fuuid in time_series_charts:
+                d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
 
         overview = charts.build_overview_data(
             df,
@@ -100,7 +114,7 @@ class AnalysisCalculator():
         return dict()
 
     def calculate_column(self, df, feature):
-        with timer('analysis.calculate_column', dict(feature=feature), verbose=False):
+        with timer('analysis.calculate_column', dict(feature=feature), verbose=VERBOSE):
             try:
                 return self.calculate_column_internal(df, feature)
             except Exception:
@@ -116,7 +130,6 @@ class AnalysisCalculator():
     def calculate_column_internal(self, df, feature):
         df_columns = df.columns
         features_to_use = [f for f in self.features if f['uuid'] in df_columns]
-        datetime_features_to_use = [f for f in self.datetime_features if f['uuid'] in df_columns]
 
         col = feature['uuid']
         column_type = feature['column_type']
@@ -130,14 +143,13 @@ class AnalysisCalculator():
 
         chart_data = []
         correlation = []
-        time_series = []
 
         is_numeric_col = is_numeric_dtype(df, col, column_type)
         if is_numeric_col:
             with timer(
                 'analysis.calculate_column.build_histogram_data',
                 dict(feature=feature),
-                verbose=False,
+                verbose=VERBOSE,
             ):
                 histogram_data = charts.build_histogram_data(col, series_cleaned, column_type)
                 if histogram_data:
@@ -147,27 +159,9 @@ class AnalysisCalculator():
             with timer(
                 'analysis.calculate_column.build_correlation_data',
                 dict(feature=feature),
-                verbose=False,
+                verbose=VERBOSE,
             ):
                 correlation.append(charts.build_correlation_data(df, col, features_to_use))
-
-        if column_type in [
-            CATEGORY,
-            CATEGORY_HIGH_CARDINALITY,
-            NUMBER,
-            NUMBER_WITH_DECIMALS,
-            TRUE_OR_FALSE,
-        ]:
-            time_series = []
-            for f in datetime_features_to_use:
-                with timer(
-                    'analysis.calculate_column.build_time_series_data',
-                    dict(feature=feature, datetime_feature=f),
-                    verbose=False,
-                ):
-                    time_series_chart = charts.build_time_series_data(df, feature, f['uuid'], column_type)
-                if time_series_chart:
-                    time_series.append(time_series_chart)
 
         increment(f'{DD_KEY}.calculate_column.succeeded', tags)
 
@@ -175,5 +169,19 @@ class AnalysisCalculator():
             'feature': feature,
             DATA_KEY_CHARTS: chart_data,
             DATA_KEY_CORRELATION: correlation,
-            DATA_KEY_TIME_SERIES: time_series,
         }
+
+    def calculate_timeseries_data(self, df):
+        timeseries_features = \
+            [f for f in self.features if f['column_type'] in TIMESERIES_COLUMN_TYPES]
+        datetime_features_to_use = self.datetime_features
+
+        charts_by_column = dict()
+        for f in datetime_features_to_use:
+            time_series_charts = charts.build_time_series_data(df, timeseries_features, f['uuid'])
+            for f, chart in time_series_charts.items():
+                if f not in charts_by_column:
+                    charts_by_column[f] = [chart]
+                else:
+                    charts_by_column[f].append(chart)
+        return charts_by_column
