@@ -74,13 +74,11 @@ export const RowStyle = styled.div<any>`
     border-top: none;
     border-bottom: none;
   `}
-
   ${props => !props.noBorder && `
     border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
     border-left: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
     border-right: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
-
   ${props => props.finalRow && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
@@ -96,6 +94,7 @@ export const TextStyle = styled.div`
 export const RowCellStyle = styled.div<any>`
   width: 100%;
   z-index: 0;
+
   ${props => !props.first && `
     border-left: 1px solid ${(props.theme.background || light.background).page};
   `}
@@ -105,10 +104,6 @@ export const RowCellStyle = styled.div<any>`
   ${props => props.small && `
     padding: ${UNIT * 1.5}px;
   `}
-  ${props => props.showBackground && `
-    background-color: ${(props.theme.background || light.background).row};
-  `}
-
   ${props => props.vanish && `
     border: none;
     padding: 0 !important;
