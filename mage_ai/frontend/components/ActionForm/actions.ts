@@ -2,6 +2,7 @@ import {
   ColumnTypeEnum,
 } from '@interfaces/FeatureType';
 import {
+  CODE_EXAMPLE,
   FEATURE_ATTRIBUTE_COLUMN_TYPE as COLUMN_TYPE,
   FormConfigType,
   OPERATOR_CONTAINS as CONTAINS,
@@ -20,8 +21,11 @@ const columns: {
   },
   custom: {
     title: 'Custom code',
-    description: 'Write your own custom cleaning function.',
+    description: `Write your own custom cleaning function. \
+    Add @transformer_action then begin typing Python code inside a function. \
+    Example: ${CODE_EXAMPLE}`,
     code: {
+      description: 'You can refer to your dataset as df',
       multiline: true,
       values: USER_INPUT,
     },
@@ -136,7 +140,9 @@ const rows: {
 } = {
   custom: {
     title: 'Custom code',
-    description: 'Write your own custom cleaning function.',
+    description: `Write your own custom cleaning function. \
+      Add @transformer_action then begin typing Python code inside a function. \
+      Example: ${CODE_EXAMPLE}`,
     code: {
       multiline: true,
       values: USER_INPUT,
