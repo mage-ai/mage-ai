@@ -182,14 +182,13 @@ function ActionForm({
                 minHeight={code.multiline ? UNIT * 12 : null}
                 onChange={e => setActionCodeState(e.target.value)}
                 padding={UNIT * 2}
-                placeholder={CODE_EXAMPLE}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
                   tabSize: 4,
                 }}
-                value={actionCode}
+                value={actionCode || CODE_EXAMPLE}
               />
             )}
           </Spacing>

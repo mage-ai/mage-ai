@@ -13,7 +13,7 @@ export const OPERATOR_NOT_EQUAL = '!=';
 
 export const CODE_EXAMPLE = '@transformer_action\n\
 def transform(df):\n\
-\tdf.dropna()\n\
+\t# Your code here ... \n\
 \treturn df';
 
 export interface ConditionType {
