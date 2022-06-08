@@ -40,7 +40,7 @@ function ColumnReports({
     max,
     median,
     min,
-    // mode,
+    mode,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -106,14 +106,14 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Average value', roundNumber((average)), [false],
+        'Average value', roundNumber(average), [false],
       ],
     },
-    // {
-    //   columnValues: [
-    //     'Mode value', mode, [false],
-    //   ],
-    // },
+    {
+      columnValues: [
+        'Mode value', roundNumber(mode), [false],
+      ],
+    },
   ];
 
   const showOutliers = outliers && outlierCount > 0;
