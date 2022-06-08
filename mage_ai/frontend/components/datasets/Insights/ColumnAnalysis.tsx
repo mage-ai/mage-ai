@@ -147,7 +147,7 @@ function ColumnAnalysis({
     correlationsRowData?.map((_, col, r) => {
       if (Math.abs(r[col][2]) > 0.5) {
         highCorrelations.push({
-          'columnValues': [
+          columnValues: [
             r[col][0]?.toString(),
             r[col][1]?.toString(),
             roundNumber(r[col][2])?.toString(),
@@ -628,44 +628,45 @@ function ColumnAnalysis({
               noPadding={!!correlationsRowData}
               title="Values with high correlation"
             >
-              { highCorrelations.length > 0 ? (
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[
-                    {
-                      label: 'Column',
-                    },
-                    {
-                      label: 'Related column',
-                    },
-                    {
-                      label: 'Correlation',
-                    },
-                  ]}
-                  noBorder
-                  rowGroupData={[
-                    {
-                      rowData: highCorrelations,
-                    },
-                  ]}
-                  small
-                />
-              ) : (
-                <>
-                  <Spacing mb={1} ml={1} mt={1}>
-                    <Text>
-                      There are no values with high correlation.
-                    </Text>
-                  </Spacing>
+              {highCorrelations.length > 0
+                ?
                   <SimpleDataTable
                     columnFlexNumbers={[1, 1, 1]}
-                    columnHeaders={[]}
+                    columnHeaders={[
+                      {
+                        label: 'Column',
+                      },
+                      {
+                        label: 'Related column',
+                      },
+                      {
+                        label: 'Correlation',
+                      },
+                    ]}
                     noBorder
-                    rowGroupData={[]}
+                    rowGroupData={[
+                      {
+                        rowData: highCorrelations,
+                      },
+                    ]}
                     small
                   />
-                </>
-              )}
+                :
+                  <>
+                    <Spacing mb={1} ml={1} mt={1}>
+                      <Text>
+                        There are no values with high correlation.
+                      </Text>
+                    </Spacing>
+                    <SimpleDataTable
+                      columnFlexNumbers={[1, 1, 1]}
+                      columnHeaders={[]}
+                      noBorder
+                      rowGroupData={[]}
+                      small
+                    />
+                  </>
+              }
             </ChartContainer>
           }
         />
