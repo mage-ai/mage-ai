@@ -188,7 +188,7 @@ function ActionForm({
                   fontSize: REGULAR_FONT_SIZE,
                   tabSize: 4,
                 }}
-                value={actionCode || CODE_EXAMPLE}
+                value={actionCode || code.custom}
               />
             )}
           </Spacing>
