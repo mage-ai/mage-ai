@@ -1,3 +1,8 @@
+[![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci&style=flat-square)](#)
+[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack&style=flat-square)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
+![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&style=flat-square&logo=github)
+[![License](https://img.shields.io/github/license/mage-ai/mage-ai?style=flat-square&color=red)](https://opensource.org/licenses/Apache-2.0)
+
 # Intro
 Mage is an open-source data management platform
 that helps you
