@@ -34,12 +34,14 @@ import { goToWithQuery } from '@utils/routing';
 import { removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 
+export type DatasetDetailSharedProps = {
+  featureSet: FeatureSetType;
+  fetchFeatureSet: (arg: any) => void;
+};
+
 type DatasetDetailProps = {
   children: any;
   columnsVisible?: boolean;
-  featureSet: FeatureSetType;
-  fetchFeatureSet,
-  fetchFeatureSet: (arg: any) => void;
   mainContentRef?: any;
   onTabClick?: (tab: string) => void;
   refLoadingBar?: any;
@@ -47,7 +49,7 @@ type DatasetDetailProps = {
   selectedTab?: string;
   setErrorMessages?: (errorMessages: string[]) => void;
   tabs?: string[];
-};
+} & DatasetDetailSharedProps;
 
 function DatasetDetail({
   children,
@@ -187,6 +189,7 @@ function DatasetDetail({
       });
     }
 
+    // @ts-ignore
     commitAction({
       ...pipeline,
       actions: newActions,
@@ -198,6 +201,7 @@ function DatasetDetail({
     const idx =
       pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
 
+    // @ts-ignore
     commitAction({
       ...pipeline,
       actions: removeAtIndex(pipelineActions, idx),
@@ -269,7 +273,7 @@ function DatasetDetail({
             <FlexContainer justifyContent="flex-end">
               <Flex flexDirection="column">
                 <NextLink
-                  as={`/datasets/${featureSet.id}/export`}
+                  as={`/datasets/${featureSet?.id}/export`}
                   href="/datasets/[...slug]"
                   passHref
                 >

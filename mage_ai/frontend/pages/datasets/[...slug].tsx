@@ -30,7 +30,7 @@ function DatasetDetail() {
   } = featureSet || {};
 
   const sharedProps = {
-    featureSet: featureSet,
+    featureSet,
     fetchFeatureSet: mutate,
     selectedColumnIndex: columnIndex,
   };
