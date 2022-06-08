@@ -1,3 +1,4 @@
+from urllib import response
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
 from mage_ai.data_cleaner.column_type_detector import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -20,6 +21,7 @@ class RemoveCollinearColumns(BaseRule):
         if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
             return suggestions
         collinear_columns = []
+        self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
         for column in self.numeric_columns[:-1]:
             variance_inflation_factor = self.get_variance_inflation_factor(column)
             if variance_inflation_factor > self.VIF_UB:
@@ -73,9 +75,11 @@ class RemoveCollinearColumns(BaseRule):
         predictors = sample.drop(column, axis=1).to_numpy()
         params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
 
-        predictions = predictors @ params
-        sum_sq_model = np.sum(predictions * predictions)
-        sum_sq_to = np.sum(responses * responses)
+        mean = responses.mean()
+        residuals = predictors @ params - responses
+        sum_sq_resid = np.sum(residuals * residuals)
+        centered_responses = responses - mean
+        sum_sq_to = np.sum(centered_responses * centered_responses)
 
-        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
+        r_sq = 1 - sum_sq_resid / sum_sq_to if sum_sq_to else 0
         return 1 / (1 - r_sq + self.EPSILON)
