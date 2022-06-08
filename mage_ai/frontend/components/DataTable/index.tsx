@@ -99,7 +99,7 @@ const Styles = styled.div<{
 
       :last-child {
         ${props => `
-          border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+          border-right: none;
         `}
       }
     }
@@ -212,7 +212,6 @@ function Table({
       >
         {row.cells.map((cell, idx: number) => {
           const firstColumn = idx === 0;
-
           const cellProps = cell.getCellProps();
           const cellStyle: {
             [key: string]: number | string;
@@ -228,13 +227,7 @@ function Table({
             cellStyle.width = maxWidthOfFirstColumn;
           }
 
-          let el;
-
-          if (firstColumn) {
-            el = cell.render('Cell');
-          } else {
-            el = original[idx - 1];
-          }
+          const cellValue = original[idx - 1];
 
           return (
             <div
@@ -242,7 +235,20 @@ function Table({
               className="td"
               style={cellStyle}
             >
-              {el}
+              {firstColumn && cell.render('Cell')}
+              {!firstColumn && (
+                <>
+                  {cellValue === true && 'true'}
+                  {cellValue === false && 'false'}
+                  {(cellValue === null || cellValue === 'null') && 'null'}
+                  {cellValue !== true
+                    && cellValue !== false
+                    && cellValue !== null
+                    && cellValue !== 'null'
+                    && cellValue
+                  }
+                </>
+              )}
             </div>
           )
         })}
