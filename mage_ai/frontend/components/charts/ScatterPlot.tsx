@@ -378,7 +378,7 @@ function ScatterPlotContainer({
             onChange={e => setXFeature(e.target.value)}
             value={xFeature}
           >
-            {features.map(feature => (
+            {features.filter(feature => feature !== yFeature).map(feature => (
               <option
                 key={feature}
                 value={feature}
@@ -399,7 +399,7 @@ function ScatterPlotContainer({
             onChange={e => setYFeature(e.target.value)}
             value={yFeature}
           >
-            {features.map(feature => (
+            {features.filter(feature => feature !== xFeature).map(feature => (
               <option
                 key={feature}
                 value={feature}
