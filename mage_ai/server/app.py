@@ -54,8 +54,15 @@ def rescue_errors(endpoint, error_code=500):
 
 
 @app.route('/', endpoint='index')
+@app.route('/datasets', endpoint='dataset_list')
 @rescue_errors
 def index():
+    return render_template('index.html')
+
+
+@app.route('/datasets/<id>', endpoint='dataset_detail')
+@rescue_errors
+def dataset(id):
     return render_template('index.html')
 
 
