@@ -31,6 +31,7 @@ export function createMetricsSample(statistics, colTypes) {
   const metricRows = Array(METRICS_KEYS.length).fill(0);
   const totalCells = (statistics?.count === 0 || types?.length === 0)
     ? 1 : statistics?.count * types?.length;
+
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
       let bar: any[] = [false];

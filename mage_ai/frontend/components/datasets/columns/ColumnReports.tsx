@@ -152,8 +152,8 @@ function ColumnReports({
 
         <Spacing mt={PADDING_UNITS}>
           <SimpleDataTable
-            columnFlexNumbers={[1, 1]}
-            columnHeaders={[{ label: 'Column summary' }]}
+            columnFlexNumbers={[2, 3]}
+            columnHeaders={[{ label: 'Statistics' }]}
             rowGroupData={[{
               rowData: columnSummary,
             }]}
