@@ -80,6 +80,8 @@ const SuggestionRow = ({
   const [editing, setEditing] = useState(false);
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>(action_payload);
 
+  title === 'Remove duplicate rows' && console.log(actionArguments);
+
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
     let el;
 
@@ -146,7 +148,7 @@ const SuggestionRow = ({
         <Text>
           <Text bold inline>
             {title}
-          </Text>{actionArguments?.length && ': '}{featureLinks}
+          </Text>{actionArguments?.length > 0 && ': '}{featureLinks}
         </Text>
 
         {message && (
