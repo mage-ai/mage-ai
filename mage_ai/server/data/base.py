@@ -10,9 +10,11 @@ DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
 
 class Model:
     def __init__(self, id=None, path=None):
-        self.path = path
+        self.path = None
         if path is not None:
-            self.dir = path
+            abs_path = os.path.abspath(path)
+            self.dir = abs_path
+            self.path = abs_path
             return
 
         # TODO: figure out a good directory to store the files
