@@ -8,7 +8,10 @@ import { useMutation } from 'react-query';
 
 import ActionForm from '@components/ActionForm';
 import ActionMenu from '@components/ActionForm/ActionMenu';
-import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
+import ActionPayloadType, {
+  ActionTypeEnum,
+  ActionVariableTypeEnum,
+} from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import FeatureSetType from '@interfaces/FeatureSetType';
@@ -27,8 +30,9 @@ import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
-import { removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { removeAtIndex } from '@utils/array';
+import { setCustomCodeState } from '@storage/localStorage';
 
 export type DatasetDetailSharedProps = {
   featureSet: FeatureSetType;
@@ -125,7 +129,12 @@ function DatasetDetail({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: (response) => {
+            closeAction();
             refLoadingBar?.current?.complete?.();
+            setCustomCodeState({
+              actionType: ActionTypeEnum.CUSTOM,
+              newValue: null,
+            });
 
             return fetchFeatureSet({
               ...featureSet,
@@ -319,7 +328,6 @@ function DatasetDetail({
                               action_type: actionType,
                             },
                           });
-                          closeAction();
                         }}
                         payload={actionPayload}
                         setPayload={setActionPayload}

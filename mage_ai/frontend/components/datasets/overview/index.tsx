@@ -123,7 +123,7 @@ function DatasetOverview({
   const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
     .map(([k, v]: [string, ColumnTypeEnum]) => ({ columnType: v, uuid: k }));
 
-  const metricSample = statistics ? createMetricsSample(statistics, columnTypes) : null;
+  const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
     ? createStatisticsSample(statistics, columnTypes)
     : null;
@@ -241,12 +241,12 @@ function DatasetOverview({
           {!selectedColumn && (
             <>
               <FlexContainer justifyContent={'center'}>
-                <Flex flex={1}>
-                  {metricSample && (
+                <Flex flex={1} flexDirection="column">
+                  {qualityMetrics && (
                     <SimpleDataTable
                       columnFlexNumbers={[2, 1, 2 ]}
-                      columnHeaders={[{ label: 'Quality Metrics' }]}
-                      rowGroupData={[metricSample]}
+                      columnHeaders={[{ label: 'Quality metrics' }]}
+                      rowGroupData={[qualityMetrics]}
                       warnings={[{
                         compare: lessThan,
                         name: 'Validity',
