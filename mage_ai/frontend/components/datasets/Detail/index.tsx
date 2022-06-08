@@ -1,8 +1,6 @@
 import React, {
-  useCallback,
   useMemo,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
@@ -10,9 +8,10 @@ import NextLink from 'next/link';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
-import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
+import ActionMenu from '@components/ActionForm/ActionMenu';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
+import Button from '@oracle/elements/Button';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
@@ -64,6 +63,8 @@ function DatasetDetail({
   setErrorMessages,
   tabs,
 }: DatasetDetailProps) {
+  const [actionMenuVisible, setActionMenuVisible] = useState(false);
+
   const {
     metadata,
     pipeline,
@@ -283,10 +284,19 @@ function DatasetDetail({
                 </NextLink>
 
                 <Spacing mt={2}>
-                  <ActionDropdown
-                    actionType={actionType}
+                  <Button
+                    fullWidth
+                    onClick={() => setActionMenuVisible(true)}
+                    primary
+                  >
+                    New action
+                  </Button>
+
+                  <ActionMenu
                     columnOnly={!!selectedColumn}
                     setActionPayload={setActionPayload}
+                    setVisible={setActionMenuVisible}
+                    visible={actionMenuVisible}
                   />
                   <AsidePopoutStyle>
                     {actionType && (

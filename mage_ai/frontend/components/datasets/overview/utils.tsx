@@ -267,7 +267,7 @@ export function buildRenderColumnHeader({
         </div>
 
         {distributionChart}
-        {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT}} />}
+        {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT }} />}
       </div>
     );
   }
