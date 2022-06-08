@@ -3,6 +3,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import Menu from '@oracle/components/Menu';
 import actionsConfig from '@components/ActionForm/actions';
 import { FormConfigType } from '../constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type ActionMenuProps = {
   columnOnly?: boolean;
@@ -17,13 +18,21 @@ function ActionMenu({
   setVisible,
   visible,
 }: ActionMenuProps) {
+  const handleClick = (
+    actionKey: ActionTypeEnum,
+    axis: AxisEnum,
+  ) => {
+    setActionPayload({
+      action_type: actionKey,
+      axis,
+    });
+    setVisible(false);
+  };
+
   const rowLinks = Object.entries(actionsConfig.rows).map(
     ([actionKey, actionConfig]: [ActionTypeEnum, FormConfigType]) => ({
       label: actionConfig.title,
-      onClick: () => setActionPayload({
-        action_type: actionKey,
-        axis: AxisEnum.ROW,
-      }),
+      onClick: () => handleClick(actionKey, AxisEnum.ROW),
       uuid: actionKey,
     }),
   );
@@ -33,10 +42,7 @@ function ActionMenu({
     ))
     .map(([actionKey, actionConfig]: [ActionTypeEnum, FormConfigType]) => ({
       label: actionConfig.title,
-      onClick: () => setActionPayload({
-        action_type: actionKey,
-        axis: AxisEnum.COLUMN,
-      }),
+      onClick: () => handleClick(actionKey, AxisEnum.COLUMN),
       uuid: actionKey,
     }));
   const allLinks = rowLinks.concat(columnLinks);
@@ -54,6 +60,7 @@ function ActionMenu({
             uuid: 'actions',
           },
         ]}
+        right={UNIT * 4}
       />
     </ClickOutside>
   );
