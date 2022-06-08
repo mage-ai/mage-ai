@@ -195,15 +195,15 @@ function DatasetOverview({
 
   return (
     <DatasetDetail
-      setErrorMessages={setErrorMessages}
-      mainContentRef={mainContentRef}
+      columnsVisible={columnsVisible}
       featureSet={featureSet}
       fetchFeatureSet={fetchFeatureSet}
-      selectedColumnIndex={selectedColumnIndex}
-      columnsVisible={columnsVisible}
+      mainContentRef={mainContentRef}
       onTabClick={t => setTabs(t)}
       refLoadingBar={refLoadingBar}
+      selectedColumnIndex={selectedColumnIndex}
       selectedTab={tabsFromUrl?.[0]}
+      setErrorMessages={setErrorMessages}
       tabs={TABS_IN_ORDER}
     >
       <LoadingBar
