@@ -227,7 +227,10 @@ class Pipeline(Model):
 
     @property
     def pipeline(self):
-        actions = self.read_json_file('pipeline.json', [])
+        fpath = 'pipeline.json'
+        if self.path is not None and os.path.isfile(self.path):
+            fpath = self.path
+        actions = self.read_json_file(fpath, [])
         return BasePipeline(actions=actions)
 
     @pipeline.setter
