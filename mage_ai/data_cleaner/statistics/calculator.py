@@ -195,7 +195,8 @@ class StatisticsCalculator:
                     ).abs()
                     series_outliers = series_z_score[series_z_score >= OUTLIER_ZSCORE_THRESHOLD]
                     data[f'{col}/outlier_count'] = series_outliers.count()
-                    data[f'{col}/outliers'] = series_outliers.iloc[:OUTLIER_SAMPLE_COUNT].tolist()
+                    data[f'{col}/outliers'] = \
+                        series_non_null.loc[series_outliers.index].iloc[:OUTLIER_SAMPLE_COUNT].tolist()
             elif column_type == DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
