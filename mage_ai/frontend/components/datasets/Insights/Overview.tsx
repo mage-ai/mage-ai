@@ -32,6 +32,7 @@ import { indexBy, maxInArray, sortByKey } from '@utils/array';
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
   border-radius: ${BORDER_RADIUS_LARGE}px;
+  overflow: auto;
 `;
 
 export const ChartHeaderStyle = styled.div`
