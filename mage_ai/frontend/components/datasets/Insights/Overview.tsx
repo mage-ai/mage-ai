@@ -32,6 +32,7 @@ import { indexBy, maxInArray, sortByKey } from '@utils/array';
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
   border-radius: ${BORDER_RADIUS_LARGE}px;
+  overflow: auto;
 `;
 
 export const ChartHeaderStyle = styled.div`
@@ -57,7 +58,7 @@ export const BodyStyle = styled.div<any>`
 type ChartContainerProps = {
   children: any;
   noPadding?: boolean;
-  title: string;
+  title?: string;
 };
 
 type OverviewProps = {
@@ -74,11 +75,13 @@ export function ChartContainer({
   return (
     <ChartStyle>
       <FlexContainer flexDirection="column">
-        <HeaderStyle>
-          <Text bold>
-            {title}
-          </Text>
-        </HeaderStyle>
+        {title && (
+          <HeaderStyle>
+            <Text bold>
+              {title}
+            </Text>
+          </HeaderStyle>
+        )}
         <BodyStyle noPadding={noPadding}>
           {children}
         </BodyStyle>
