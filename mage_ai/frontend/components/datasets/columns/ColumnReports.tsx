@@ -54,19 +54,21 @@ function ColumnReports({
   }[] = [
     {
       columnValues: [
-        'Column type',
-        COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
         'Validity', getPercentage(validity), [true, validity * 100],
       ],
     },
     {
       columnValues: [
         'Completeness', getPercentage(completeness), [true, completeness * 100],
+      ],
+    },
+  ];
+  const columnSummary = [
+    {
+      columnValues: [
+        'Column type',
+        COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
+        [false],
       ],
     },
     {
@@ -139,7 +141,7 @@ function ColumnReports({
 
   return (
     <FlexContainer justifyContent={'center'}>
-      <Flex flex={1}>
+      <Flex flex={1} flexDirection="column">
         <SimpleDataTable
           columnFlexNumbers={[2, 1, 2]}
           columnHeaders={[{ label: 'Column summary' }]}
@@ -147,6 +149,16 @@ function ColumnReports({
             rowData: qualityMetrics,
           }]}
         />
+
+        <Spacing mt={PADDING_UNITS}>
+          <SimpleDataTable
+            columnFlexNumbers={[1, 1]}
+            columnHeaders={[{ label: 'Column summary' }]}
+            rowGroupData={[{
+              rowData: columnSummary,
+            }]}
+          />
+        </Spacing>
       </Flex>
 
       <Spacing ml={PADDING_UNITS} />
