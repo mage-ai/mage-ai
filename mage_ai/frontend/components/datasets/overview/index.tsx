@@ -10,7 +10,6 @@ import NextLink from 'next/link';
 import Router from 'next/router';
 import { useMutation } from 'react-query';
 
-import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionMenu from '@components/ActionForm/ActionMenu';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
@@ -426,6 +425,7 @@ function DatasetOverview({
 
                 <Spacing mt={2}>
                   <Button
+                    fullWidth
                     onClick={() => setActionMenuVisible(true)}
                     primary
                   >

@@ -3,7 +3,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import Menu from '@oracle/components/Menu';
 import actionsConfig from '@components/ActionForm/actions';
 import { FormConfigType } from '../constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type ActionMenuProps = {
   columnOnly?: boolean;
@@ -60,7 +60,7 @@ function ActionMenu({
             uuid: 'actions',
           },
         ]}
-        right={UNIT * 4}
+        right={UNIT * PADDING_UNITS}
       />
     </ClickOutside>
   );

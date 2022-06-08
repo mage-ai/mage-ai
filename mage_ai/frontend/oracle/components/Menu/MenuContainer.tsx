@@ -44,7 +44,7 @@ const ContainerStyle = styled.div<MenuContainerProps>`
   `}
 
   ${props => !props.width && `
-    min-width: ${UNIT * 28}px;
+    min-width: ${UNIT * 22}px;
   `}
 `;
 
