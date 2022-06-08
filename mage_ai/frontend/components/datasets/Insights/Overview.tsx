@@ -238,8 +238,11 @@ function Overview({
 
   const columnsWithHighDistribution = [];
 
+  const featureMapping = {};
+
   features.forEach((feature: FeatureType) => {
-    const { uuid } = feature;
+    const { uuid, columnType } = feature;
+    featureMapping[uuid] = columnType;
     const count = statistics?.[`${uuid}/count`];
     if (count) {
       const uniqueValues = statistics[`${uuid}/count_distinct`];
@@ -562,6 +565,7 @@ function Overview({
               title="Scatterplot"
             >
               <ScatterPlot
+                featureMapping={featureMapping}
                 scatterPlotLabels={scatterPlotLabels}
                 scatterPlotOverview={scatterPlot}
                 height={UNIT * 50}

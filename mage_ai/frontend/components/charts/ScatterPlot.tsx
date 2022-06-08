@@ -16,6 +16,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+import { ColumnTypeEnum } from '@interfaces/FeatureType';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
 import { PURPLE, RED } from '@oracle/styles/colors/main';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
@@ -50,12 +51,15 @@ type ScatterPlotProps = {
 } & SharedProps;
 
 type ScatterPlotContainerProps = {
+  featureMapping: {
+    [key: string]: string,
+  },
   scatterPlotOverview: {
     [key: string]: number[],
   },
   scatterPlotLabels?: {
     [key: string]: string[],
-  }
+  },
 } & SharedProps;
 
 const ScatterPlot = withTooltip<ScatterPlotProps>(({
@@ -96,8 +100,14 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
 
+  const xRange = Math.max(...xValues) - Math.min(...xValues);
+  const yRange = Math.max(...yValues) - Math.min(...yValues);
+
+  const xOffset = xRange / 15;
+  const yOffset = yRange / 10;
+
   const xScale = useMemo(() => scaleLinear<number>({
-    domain: [Math.min(...xValues), Math.max(...xValues)],
+    domain: [Math.min(...xValues) - xOffset, Math.max(...xValues) + xOffset],
     range: [0, xMax],
   }), [
     xMax,
@@ -105,7 +115,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   ]);
 
   const yScale = useMemo(() => scaleLinear<number>({
-    domain: [Math.min(...yValues), Math.max(...yValues)],
+    domain: [Math.min(...yValues) - yOffset, Math.max(...yValues) + yOffset],
     nice: true,
     range: [yMax, 0],
   }), [
@@ -114,13 +124,20 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   ]);
 
   const voronoiLayout = useMemo(
-    () =>
-      voronoi({
+    () => {
+      const v = voronoi({
         x: (d) => xScale(getX(d)),
         y: (d) => yScale(getY(d)),
         width: xMax,
         height: yMax,
-      })(data),
+      })
+      // TODO: figure out why this errors
+      try {
+        return v(data);
+      } catch (error) {
+        // just catch the error for now
+      }
+    },
     [xMax, yMax, xScale, yScale],
   );
   const numXTicks = numXTicksProp ||
@@ -140,12 +157,21 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
         y: point.y - margin.top,
       }
       const neighborRadius = 100;
-      const closest = voronoiLayout.find(translatedPoint.x, translatedPoint.y, neighborRadius);
+      const closest = voronoiLayout?.find(translatedPoint.x, translatedPoint.y, neighborRadius);
       if (closest) {
+        let numDuplicates = 0
+        data.forEach(d => {
+          if (closest.data['x'] === d.x && closest.data['y'] === d.y) {
+            numDuplicates = numDuplicates + 1;
+          }
+        })
         showTooltip({
           tooltipLeft: xScale(getX(closest.data)),
           tooltipTop: yScale(getY(closest.data)),
-          tooltipData: closest.data,
+          tooltipData: {
+            point: closest.data,
+            numDuplicates,
+          },
         });
       }
     },
@@ -235,8 +261,8 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
               className="dot"
               cx={xScale(getX(dataPoint))}
               cy={yScale(getY(dataPoint))}
-              r={2}
-              fill={tooltipData === dataPoint ? RED : PURPLE}
+              r={4}
+              fill={tooltipData?.point === dataPoint ? RED : PURPLE}
             />
           ))}
         </Group>
@@ -245,11 +271,16 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
       {tooltipData && (
         <Tooltip left={tooltipLeft} top={tooltipTop} offsetTop={margin.top + UNIT}>
           <Text center small>
-            {`${xAxisLabel}: ${xLabelFormat(getX(tooltipData))}`}
+            {`${xAxisLabel}: ${xLabelFormat(getX(tooltipData?.point))}`}
           </Text>
           <Text center small>
-            {`${yAxisLabel}: ${yLabelFormat(getY(tooltipData))}`}
+            {`${yAxisLabel}: ${yLabelFormat(getY(tooltipData?.point))}`}
           </Text>
+          {tooltipData.numDuplicates > 1 && (
+            <Text center small>
+              {`Duplicates: ${tooltipData?.numDuplicates}`}
+            </Text>
+          )}
         </Tooltip>
       )}
     </>
@@ -257,6 +288,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
 });
 
 function ScatterPlotContainer({
+  featureMapping, 
   height: parentHeight,
   margin: marginArgs,
   scatterPlotOverview,
@@ -296,9 +328,17 @@ function ScatterPlotContainer({
     extraProps['numXTicks'] = scatterPlotLabels[xFeature].length;
   }
 
+  if (featureMapping[xFeature] === ColumnTypeEnum.TRUE_OR_FALSE) {
+    extraProps['numXTicks'] = 1;
+  }
+
   if (yFeature in scatterPlotLabels) {
     extraProps['yLabelFormat'] = (label) => scatterPlotLabels[yFeature][label];
     extraProps['numYTicks'] = scatterPlotLabels[yFeature].length;
+  }
+
+  if (featureMapping[yFeature] === ColumnTypeEnum.TRUE_OR_FALSE) {
+    extraProps['numYTicks'] = 1;
   }
 
   return (

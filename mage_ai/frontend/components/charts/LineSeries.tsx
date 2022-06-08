@@ -105,7 +105,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
   const border = light.monotone.gray;
   const purplePastel = light.brand.wind200;
-  const text = light.monotone.gray;
+  const text = light.content.active;
   const { black, gray } = light.monotone;
 
   const xValues = data.map(d => Number(getX(d)));

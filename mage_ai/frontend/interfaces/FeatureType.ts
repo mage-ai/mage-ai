@@ -50,7 +50,6 @@ export const COLUMN_TYPE_STRING_LIKE = [
 export const COLUMN_TYPE_CATEGORY_VALUES = [
   ColumnTypeEnum.CATEGORY,
   ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
-  ColumnTypeEnum.TEXT,
   ColumnTypeEnum.TRUE_OR_FALSE,
 ];
 
