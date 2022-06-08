@@ -652,6 +652,32 @@ class RowTests(TestCase):
         df_new['orig_col'] = df_new['orig_col'].astype(int)
         assert_frame_equal(df_new, df_expected)
 
+    def test_valid_columns_names(self):
+        df = pd.DataFrame(
+            [
+                [
+                    False,
+                    False,
+                    False,
+                    False,
+                ],
+            ],
+            columns=[
+                '+=  -*&^%$! ?~  |<>',
+                'this.is.an.operator',
+                'are,commas,an,operator',
+                'are()[]{}operators',
+            ],
+        )
+        for column in df.columns:
+            with self.assertRaises(Exception):
+                action = dict(action_code=f'{column} == False')
+                filter_rows(df, action, original_df=df)
+
+        for column in df.columns:
+            action = dict(action_code=f'"{column}" == False')
+            filter_rows(df, action, original_df=df)
+
     def test_sort_rows(self):
         df = pd.DataFrame(
             [
