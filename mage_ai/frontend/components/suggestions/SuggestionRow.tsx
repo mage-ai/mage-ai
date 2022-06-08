@@ -83,7 +83,7 @@ const SuggestionRow = ({
   const featureLinks = actionArguments?.map((col: string, idx: number) => {
     let el;
 
-    if (featureIdMapping?.[col]) {
+    if (col in featureIdMapping) {
       el = (
         <Link
           onClick={() => goToWithQuery({
@@ -146,7 +146,7 @@ const SuggestionRow = ({
         <Text>
           <Text bold inline>
             {title}
-          </Text>{actionArguments?.length && ': '}{featureLinks}
+          </Text>{actionArguments?.length > 0 && ': '}{featureLinks}
         </Text>
 
         {message && (

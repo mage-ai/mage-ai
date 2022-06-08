@@ -171,7 +171,7 @@ function ActionForm({
         </>
       }
 
-      <Spacing p={2}>
+      <Spacing p={!noHeader && 2} pt={noHeader && 2}>
         {code && (
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
