@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import '@uiw/react-textarea-code-editor/dist.css';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
@@ -71,6 +71,8 @@ const SuggestionRow = ({
     action_code: actionCode,
     action_options: actionOptions,
   } = action_payload;
+
+  useEffect(() => setActionPayload(action_payload), [action_payload]);
 
   const numFeatures = actionArguments?.length || 0;
   const numOptions = actionOptions ? Object.keys(actionOptions).length : 0;
