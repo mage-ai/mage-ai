@@ -233,7 +233,7 @@ export function extractNumber(text) {
 
 export function removePercent(text) {
   const matches = text.match(/\d+(\.?\d*)%/) || [];
-  return Number(matches[0].slice(0,-1));
+  return Number(matches[0]?.slice(0,-1));
 }
 
 export function changeDecimalToWholeNumber(number, floatingPoints = 2) {
