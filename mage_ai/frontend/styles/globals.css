@@ -460,7 +460,7 @@ textarea {
 }
 
 ::selection {
-  background: #b3d4fc;
+  background: rgba(56, 107, 233, 0.25);
   text-shadow: none;
 }
 
