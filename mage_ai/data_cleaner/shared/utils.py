@@ -9,6 +9,8 @@ from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
 
+COLUMN_NAME_QUOTE_CHARS = '+=-*&^%$! ?~|<>(){}[],.'
+
 
 def clean_series(series, column_type, dropna=True):
     series_cleaned = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
@@ -59,3 +61,9 @@ def is_numeric_dtype(df, column, column_type):
     return column_type in [NUMBER, NUMBER_WITH_DECIMALS] or issubclass(
         df[column].dtype.type, np.number
     )
+
+
+def wrap_column_name(name: str) -> str:
+    if any(symbol in name for symbol in COLUMN_NAME_QUOTE_CHARS):
+        name = f'"{name}"'
+    return name

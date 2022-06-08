@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.shared.utils import wrap_column_name
 from mage_ai.data_cleaner.column_type_detector import (
     CATEGORICAL_TYPES,
     COLUMN_TYPES,
@@ -346,7 +347,8 @@ class ImputeActionConstructor:
             action_type = ActionType.FILTER
             axis = Axis.ROW
             action_variables = self.__construct_action_variables(self.df_columns)
-            action_code = ' and '.join(map(lambda name: f'{name} != null', self.df_columns))
+            map_cols = map(wrap_column_name, self.df_columns)
+            action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
         elif strategy == ImputationStrategy.SEQ:
             message = 'Fill missing entries using the previously occurring entry in the timeseries.'
             action_arguments = strategy_cache_entry['entries']

@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from typing import Tuple
+from typing import Dict, Tuple
 import re
 
 """
@@ -10,11 +10,11 @@ a cleaning action is made. All dependency resolution functions return both
 """
 
 
-def default_resolution(df: DataFrame) -> Tuple[bool, str]:
+def default_resolution(df: DataFrame, action: Dict) -> Tuple[bool, str]:
     return True, None
 
 
-def resolve_filter_action(df: DataFrame) -> Tuple[bool, str]:
+def resolve_filter_action(df: DataFrame, action: Dict) -> Tuple[bool, str]:
     for name in df.columns:
         if re.search('\s', name):
             return (

@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.shared.utils import wrap_column_name
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
@@ -21,13 +22,14 @@ class RemoveOutliers(BaseRule):
             upper = avg + 3 * std
             lower = avg - 3 * std
 
+            wrapped_c = wrap_column_name(c)
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     REMOVE_OUTLIERS_TITLE,
                     f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
                     ActionType.FILTER,
                     action_arguments=[c],
-                    action_code=f'{c} <= {upper} and {c} >= {lower}',
+                    action_code=f'{wrapped_c} <= {upper} and {wrapped_c} >= {lower}',
                     axis=Axis.ROW,
                 )
             )

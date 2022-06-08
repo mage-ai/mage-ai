@@ -175,8 +175,8 @@ class StatisticsCalculator:
             else len(series)
         )
 
+        dates = None
         if len(series_non_null) > 0:
-            dates = None
             if column_type in NUMBER_TYPES:
                 data[f'{col}/average'] = series_non_null.mean()
                 data[f'{col}/max'] = series_non_null.max()
@@ -205,24 +205,26 @@ class StatisticsCalculator:
                 )
                 data[f'{col}/min'] = dates.min().isoformat()
 
-            if column_type not in NUMBER_TYPES:
-                if dates is not None:
-                    df_value_counts = dates.value_counts()
-                    string_df_value_counts = df_value_counts.head(VALUE_COUNT_LIMIT)
-                    string_df_value_counts.index = string_df_value_counts.index.astype(str)
-                    data[f'{col}/value_counts'] = string_df_value_counts.to_dict()
+        if column_type not in NUMBER_TYPES:
+            if dates is not None:
+                df_value_counts = dates.value_counts()
+                string_df_value_counts = df_value_counts.head(VALUE_COUNT_LIMIT)
+                string_df_value_counts.index = string_df_value_counts.index.astype(str)
+                data[f'{col}/value_counts'] = string_df_value_counts.to_dict()
 
-                mode, mode_idx = None, 0
-                while mode_idx < count_unique and pd.isna(df_value_counts.index[mode_idx]):
-                    mode_idx += 1
-                if mode_idx < count_unique:
-                    mode = df_value_counts.index[mode_idx]
+            mode, mode_idx = None, 0
+            while mode_idx < count_unique and pd.isna(df_value_counts.index[mode_idx]):
+                mode_idx += 1
+            if mode_idx < count_unique:
+                mode = df_value_counts.index[mode_idx]
 
-                if column_type == DATETIME and mode is not None:
-                    mode = mode.isoformat()
+            if column_type == DATETIME and mode is not None:
+                mode = mode.isoformat()
 
-                data[f'{col}/mode'] = mode
-                data[f'{col}/mode_ratio'] = df_value_counts[mode].item() / df_value_counts.sum()
+            data[f'{col}/mode'] = mode
+            data[f'{col}/mode_ratio'] = (
+                df_value_counts[mode].item() / df_value_counts.sum() if mode else 0
+            )
 
         # Detect mismatched formats for some column types
         invalid_rows = get_mismatched_rows(series_non_null, column_type)

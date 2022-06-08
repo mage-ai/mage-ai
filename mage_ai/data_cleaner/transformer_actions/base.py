@@ -14,7 +14,7 @@ import json
 # from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
 
 COLUMN_TYPE_PIPELINE_MAPPING = {}
-DEPENDENCIES = {ActionType.FILTER: resolve_filter_action}
+DEPENDENCIES = {}
 FUNCTION_MAPPING = {
     Axis.COLUMN: {
         ActionType.ADD: column.add_column,
@@ -76,7 +76,7 @@ class BaseAction:
     def execute(self, df, **kwargs):
         action_type = self.action['action_type']
         dependency = DEPENDENCIES.get(action_type, default_resolution)
-        dependencies_met, msg = dependency(df)
+        dependencies_met, msg = dependency(df, self.action)
         if not dependencies_met:
             raise RuntimeError(f'Dependencies of this cleaning action are not completed: {msg}')
 
