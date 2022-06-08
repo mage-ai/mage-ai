@@ -161,4 +161,4 @@ To report bugs or add your awesome code for others to enjoy,
 visit [GitHub](https://github.com/mage-ai/mage-ai).
 
 # License
-WIP
+See the LICENSE file for licensing information.
