@@ -248,7 +248,7 @@ function Overview({
       const uniqueValues = statistics[`${uuid}/count_distinct`];
       const uniquePercentage = uniqueValues / count;
 
-      const valueCounts = statistics?.[uuid];
+      const valueCounts = statistics?.[`${uuid}/value_counts`];
       const data: {
         count: number;
         distributionFeatureUUID?: string;
