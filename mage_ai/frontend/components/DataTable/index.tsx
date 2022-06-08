@@ -32,7 +32,7 @@ type SharedProps = {
   columnHeaderHeight?: number;
   height?: number;
   renderColumnHeader?: (column: any, idx: number, opts: {
-    [key: string]: number;
+    width: number;
   }) => any;
   width?: number;
 };

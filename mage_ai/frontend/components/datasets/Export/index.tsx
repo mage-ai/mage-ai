@@ -1,15 +1,15 @@
 import FeatureSetType from '@interfaces/FeatureSetType';
-
-type ExportProps = {
-  featureSet: FeatureSetType;
-};
+import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
 
 function Export({
-  featureSet,
-}: ExportProps) {
+  ...props
+}: DatasetDetailSharedProps) {
   return (
-    <div>
-    </div>
+    <DatasetDetail {...props}>
+      <div>
+        Export
+      </div>
+    </DatasetDetail>
   );
 }
 

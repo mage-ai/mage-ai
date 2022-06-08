@@ -7,6 +7,7 @@ import Layout from '@oracle/components/Layout';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { queryFromUrl } from '@utils/url';
 
 const SUBPATH_EXPORT = 'export';
@@ -22,10 +23,17 @@ function DatasetDetail() {
 
   // @ts-ignore
   const [featureSetId, subpath] = slug;
-  const { data: featureSet, mutate } = api.feature_sets.detail(featureSetId);
+  const { data: featureSetRaw, mutate } = api.feature_sets.detail(featureSetId);
+  const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
   const {
     metadata,
   } = featureSet || {};
+
+  const sharedProps = {
+    featureSet,
+    fetchFeatureSet: mutate,
+    selectedColumnIndex: columnIndex,
+  };
 
   const datasetName = metadata?.name;
   let el;
@@ -34,16 +42,14 @@ function DatasetDetail() {
     el = (
       <ClientOnly>
         <DatasetOverview
-          featureSet={featureSet}
-          fetchFeatureSet={mutate}
-          selectedColumnIndex={columnIndex}
+          {...sharedProps}
         />
       </ClientOnly>
     );
   } else if (SUBPATH_EXPORT === subpath) {
     el = (
       <Export
-        featureSet={featureSet}
+        {...sharedProps}
       />
     );
     pageTitle = `Export ${datasetName}`;
