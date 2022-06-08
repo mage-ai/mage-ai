@@ -24,6 +24,7 @@ import {
   OptionStyle,
 } from './index.style';
 import {
+  CODE_EXAMPLE,
   FormConfigType,
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
@@ -182,6 +183,7 @@ function ActionForm({
                 minHeight={code.multiline ? UNIT * 12 : null}
                 onChange={e => setActionCodeState(e.target.value)}
                 padding={UNIT * 2}
+                placeholder={CODE_EXAMPLE}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
