@@ -133,7 +133,7 @@ function Table({
       rows,
     ]);
 
-  const scrollBarSize = useMemo(() => scrollbarWidth(), []);
+  // const scrollBarSize = useMemo(() => scrollbarWidth(), []);
 
   const {
     getTableBodyProps,
