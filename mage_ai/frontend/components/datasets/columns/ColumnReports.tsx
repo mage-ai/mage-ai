@@ -111,7 +111,7 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Mode value', roundNumber(mode), [false],
+        'Mode value', typeof mode === 'number' ? roundNumber(mode) : mode, [false],
       ],
     },
   ];
