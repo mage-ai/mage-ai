@@ -211,7 +211,11 @@ const SuggestionRow = ({
             padding="0px"
             transparent
           >
-            <Code muted size={16} />
+            <Code
+              black={editing}
+              muted
+              size={16}
+            />
           </Button>
         )}
         {onClose && (
