@@ -55,11 +55,12 @@ function ColumnReports({
       columnValues: [
         'Column type',
         COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
+        [false],
       ],
     },
     {
       columnValues: [
-        'Validity', [true, validity * 100], getPercentage(validity),
+        'Validity', getPercentage(validity), [true, validity * 100],
       ],
     },
     {
@@ -69,47 +70,47 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Total values', count,
+        'Total values', count, [false],
       ],
     },
     {
       columnValues: [
-        'Unique values', countDistinct,
+        'Unique values', countDistinct, [false],
       ],
     },
     {
       columnValues: [
-        'Missing values', nullValueCount,
+        'Missing values', nullValueCount, [false],
       ],
     },
     {
       columnValues: [
-        'Invalid values', invalidValueCount,
+        'Invalid values', invalidValueCount, [false],
       ],
     },
     {
       columnValues: [
-        'Max value', max,
+        'Max value', max, [false],
       ],
     },
     {
       columnValues: [
-        'Min value', min,
+        'Min value', min, [false],
       ],
     },
     {
       columnValues: [
-        'Median value', median,
+        'Median value', median, [false],
       ],
     },
     {
       columnValues: [
-        'Average value', average,
+        'Average value', average, [false],
       ],
     },
     {
       columnValues: [
-        'Mode value', mode,
+        'Mode value', mode, [false],
       ],
     },
   ];
@@ -139,7 +140,7 @@ function ColumnReports({
     <FlexContainer justifyContent={'center'}>
       <Flex flex={1}>
         <SimpleDataTable
-          columnFlexNumbers={[1, 1]}
+          columnFlexNumbers={[2, 1, 2]}
           columnHeaders={[{ label: 'Column summary' }]}
           rowGroupData={[{
             rowData: qualityMetrics,
