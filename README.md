@@ -24,7 +24,7 @@ production environments (e.g. online re-training, inference, etc).
 
 ### Install library
 ```bash
-$ pip install mage_ai
+$ pip install mage-ai
 ```
 
 ### Launch tool
