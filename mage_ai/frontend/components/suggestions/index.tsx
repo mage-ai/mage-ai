@@ -22,7 +22,6 @@ function Suggestions({
   featureSet,
   isLoading,
   removeAction,
-  removeSuggestion,
   suggestions,
 }: SuggestionsProps) {
   const {
@@ -43,11 +42,11 @@ function Suggestions({
       {hasActions && (
         <Spacing mb={2}>
           {actions?.map((action, idx) => {
-            const { title } = action;
+            const { title, message } = action;
 
             return (
               <Spacing
-                key={`${idx}-${title}`}
+                key={`${idx}-${message}-${title}`}
                 mt={idx >= 1 ? 1 : 0}
               >
                 <SuggestionRow
