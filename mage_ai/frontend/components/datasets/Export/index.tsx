@@ -1,4 +1,5 @@
 import FeatureSetType from '@interfaces/FeatureSetType';
+import DatasetDetail from '../Detail';
 
 type ExportProps = {
   featureSet: FeatureSetType;
@@ -8,8 +9,10 @@ function Export({
   featureSet,
 }: ExportProps) {
   return (
-    <div>
-    </div>
+    <DatasetDetail>
+      <div>
+      </div>
+    </DatasetDetail>
   );
 }
 
