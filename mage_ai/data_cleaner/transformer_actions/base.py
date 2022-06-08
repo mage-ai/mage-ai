@@ -76,9 +76,9 @@ class BaseAction:
     def execute(self, df, **kwargs):
         action_type = self.action['action_type']
         dependency = DEPENDENCIES.get(action_type, default_resolution)
-        dependencies_met, msg = dependency(df)
-        if not dependencies_met:
-            raise RuntimeError(f'Dependencies of this cleaning action are not completed: {msg}')
+        dependencies_met, msg = dependency(df, self.action)
+        # if not dependencies_met:
+        #     raise RuntimeError(f'Dependencies of this cleaning action are not completed: {msg}')
 
         self.hydrate_action()
 

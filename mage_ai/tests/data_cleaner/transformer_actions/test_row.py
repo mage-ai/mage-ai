@@ -449,7 +449,7 @@ class RowTests(TestCase):
         df_new['value'] = df_new['value'].astype(int)
         assert_frame_equal(df_expected, df_new)
 
-    def test_filter_row_bad_deps(self):
+    def test_filter_row_dirty_columns(self):
         df = pd.DataFrame(
             [
                 [100, None, '', 10],
@@ -459,26 +459,136 @@ class RowTests(TestCase):
                 [75, '', '', 80],
                 [None, 'company3', False, 23],
             ],
-            columns=['value   ', 'bra  nd', 'disc ounted', 'inve ntory'],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
         )
-        action_payload = {
-            'action_type': 'filter',
-            'action_code': '%{1} != null',
-            'action_arguments': [],
-            'action_options': {},
-            'axis': 'row',
-            'action_variables': {
-                '1': {
-                    'id': 'value',
-                    'type': 'feature',
-                    'feature': {'column_type': 'number', 'uuid': 'value'},
-                },
-            },
-            'outputs': [],
-        }
-        action = BaseAction(action_payload)
-        with self.assertRaises(RuntimeError):
-            df_new = action.execute(df)
+        action = dict(action_code='("Val ue" < 110 and "Val ue" >= 50) and ("Val ue" != null)')
+        action2 = dict(action_code='"bra  23423  nd" contains brand and "invVe nTory" != null')
+        action3 = dict(
+            action_code='("bra  23423  nd" != null and "Val ue" > 60) or ("dis>>> ??cou nted" == null)'
+        )
+        action4 = dict(
+            action_code='("dis>>> ??cou nted" == True and "invVe nTory" > 15)'
+            ' or ("dis>>> ??cou nted" == False and "Val ue" != null)'
+        )
+        action5 = dict(
+            action_code='("bra  23423  nd" not contains company and "Val ue" == 75 and "invVe nTory" <= 80) or ("dis>>> ??cou nted" != null)'
+        )
+        df_expected = pd.DataFrame(
+            [
+                [100, None, '', 10],
+                [50, 'brand1', True, 13],
+                [75, '', '', 80],
+            ],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
+        )
+        df_expected2 = pd.DataFrame(
+            [
+                [np.NaN, 'brand2', None, 18],
+                [50, 'brand1', True, 13],
+            ],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
+        )
+        df_expected3 = pd.DataFrame(
+            [
+                [100, None, '', 10],
+                [250, 'brand1', False, np.NaN],
+                [np.NaN, 'brand2', None, 18],
+                [75, '', '', 80],
+            ],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
+        )
+        df_expected4 = pd.DataFrame(
+            [
+                [250, 'brand1', False, np.NaN],
+            ],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
+        )
+        df_expected5 = pd.DataFrame(
+            [
+                [250, 'brand1', False, np.NaN],
+                [50, 'brand1', True, 13],
+                [75, '', '', 80],
+                [None, 'company3', False, 23],
+            ],
+            columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
+        )
+        df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
+        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
+        df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
+        df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
+        df_new5 = filter_rows(df, action5, original_df=df).reset_index(drop=True)
+        df_new['Val ue'] = df_new['Val ue'].astype(int)
+        df_new['invVe nTory'] = df_new['invVe nTory'].astype(int)
+        df_new2['bra  23423  nd'] = df_new2['bra  23423  nd'].astype(str)
+        df_new2['invVe nTory'] = df_new2['invVe nTory'].astype(int)
+        df_new4['Val ue'] = df_new4['Val ue'].astype(int)
+        df_new4['bra  23423  nd'] = df_new4['bra  23423  nd'].astype(str)
+        df_new4['dis>>> ??cou nted'] = df_new4['dis>>> ??cou nted'].astype(bool)
+        assert_frame_equal(df_expected, df_new)
+        assert_frame_equal(df_expected2, df_new2)
+        assert_frame_equal(df_expected3, df_new3)
+        assert_frame_equal(df_expected4, df_new4)
+        assert_frame_equal(df_expected5, df_new5)
+
+    def test_filter_row_dirty_columns_two(self):
+        df = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['sfc@mailnet.com', True],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['xyz@mailnet.com', False],
+                ['eeeeasdf', True],
+            ],
+            columns=['e e e e e e email', 'subs crip tion'],
+        )
+        action = dict(
+            action_code='"e e e e e e email" not contains mailnet',
+        )
+        action2 = dict(
+            action_code='"e e e e e e email" not contains \'mailnet\'',
+        )
+        action3 = dict(
+            action_code='"e e e e e e email" not contains @',
+        )
+        action4 = dict(
+            action_code='"e e e e e e email" not contains \'^e+\w\'',
+        )
+        action_invalid = dict(action_code='"subs crip tion" not contains False')
+        df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
+        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
+        df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
+        df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
+        df_expected1 = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['eeeeasdf', True],
+            ],
+            columns=['e e e e e e email', 'subs crip tion'],
+        )
+        df_expected2 = pd.DataFrame(
+            [[np.NaN, False], ['fsdfsdfdsfdsf', False], ['eeeeasdf', True]],
+            columns=['e e e e e e email', 'subs crip tion'],
+        )
+        df_expected3 = pd.DataFrame(
+            [
+                [np.NaN, False],
+                ['sfc@mailnet.com', True],
+                ['fdss@emailserver.net', True],
+                ['fsdfsdfdsfdsf', False],
+                ['xyz@mailnet.com', False],
+            ],
+            columns=['e e e e e e email', 'subs crip tion'],
+        )
+        assert_frame_equal(df_new, df_expected1)
+        assert_frame_equal(df_new2, df_expected1)
+        assert_frame_equal(df_new3, df_expected2)
+        assert_frame_equal(df_new4, df_expected3)
+
+        with self.assertRaises(Exception):
+            _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
 
     def test_original_df_column_name_padding(self):
         # tests edge cases for when columns with the special prefixes "orig_" and "tf_" are given as input
