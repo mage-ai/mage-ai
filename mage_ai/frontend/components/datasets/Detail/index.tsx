@@ -3,9 +3,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import LoadingBar from 'react-top-loading-bar';
 import NextLink from 'next/link';
-import Router from 'next/router';
 import { useMutation } from 'react-query';
 
 import ActionForm from '@components/ActionForm';
@@ -28,7 +26,6 @@ import api from '@api';
 import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { goToWithQuery } from '@utils/routing';
 import { removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
@@ -215,16 +212,21 @@ function DatasetDetail({
     <MultiColumn
       after={
         <Spacing p={PADDING_UNITS}>
-          {featureSet && (
-            <Suggestions
-              addAction={saveAction}
-              featureSet={featureSet}
-              isLoading={isLoadingCommitAction}
-              suggestions={suggestions}
-              removeAction={removeAction}
-              removeSuggestion={(action) => console.log(action)}
-            />
-          )}
+          {(featureSet && suggestions?.length > 0)
+            ?
+              <Suggestions
+                addAction={saveAction}
+                featureSet={featureSet}
+                isLoading={isLoadingCommitAction}
+                removeAction={removeAction}
+                removeSuggestion={(action) => console.log(action)}
+                suggestions={suggestions}
+              />
+            :
+              <Text large>
+                No suggestions available.
+              </Text>
+          }
         </Spacing>
       }
       before={columnsVisible && (
