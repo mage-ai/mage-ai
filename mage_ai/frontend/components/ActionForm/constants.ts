@@ -12,8 +12,8 @@ export const OPERATOR_LESS_THAN_OR_EQUAL = '<=';
 export const OPERATOR_NOT_EQUAL = '!=';
 
 export const CODE_EXAMPLE = '@transformer_action\n\
-def transform(df): \n \
-\tdf.dropna() \n \
+def transform(df):\n\
+\tdf.dropna()\n\
 \treturn df';
 
 export interface ConditionType {
