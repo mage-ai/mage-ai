@@ -4,6 +4,7 @@ export enum ActionTypeEnum {
   CLEAN_COLUMN_NAME = 'clean_column_name',
   COUNT = 'count',
   COUNT_DISTINCT = 'count_distinct',
+  CUSTOM = 'custom',
   DIFF = 'diff',
   DROP_DUPLICATE = 'drop_duplicate',
   EXPAND_COLUMN = 'expand_column',
