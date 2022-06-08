@@ -127,7 +127,7 @@ function DatasetDetail({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: (response) => {
-            refLoadingBar.current.complete();
+            refLoadingBar?.current?.complete?.();
 
             return fetchFeatureSet({
               ...featureSet,
@@ -140,7 +140,7 @@ function DatasetDetail({
               message,
             },
           }) => {
-            refLoadingBar.current.complete();
+            refLoadingBar?.current?.complete?.();
 
             const arr = [];
             if (message) {
@@ -160,7 +160,7 @@ function DatasetDetail({
 
   const beforeCommit = () => {
     setErrorMessages?.(null);
-    refLoadingBar.current.continuousStart();
+    refLoadingBar?.current?.continuousStart?.();
   };
 
   const saveAction = (newActionData: TransformerActionType) => {

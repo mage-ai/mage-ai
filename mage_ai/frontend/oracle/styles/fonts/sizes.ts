@@ -4,19 +4,26 @@ export const SMALL_FONT_SIZE: number = 12;
 export const XSMALL_FONT_SIZE: number = 10;
 export const XXSMALL_FONT_SIZE: number = 8;
 
-export const XSMALL = `
-  font-size: 12px;
-  line-height: 12px;
+export const HERO_LINE_HEIGHT = 72;
+export const XXLARGE_LINE_HEIGHT = 48;
+export const XLARGE_LINE_HEIGHT = 42;
+export const LARGE_LG_LINE_HEIGHT = 34;
+export const LARGE_LINE_HEIGHT = 28;
+export const LARGE_SM_LINE_HEIGHT = 28;
+
+export const HERO = `
+  font-size: 56px;
+  line-height: ${HERO_LINE_HEIGHT}px;
 `;
 
-export const SMALL = `
-  font-size: 12px;
-  line-height: 17px;
+export const XXLARGE = `
+  font-size: 40px;
+  line-height: ${XXLARGE_LINE_HEIGHT}px;
 `;
 
-export const REGULAR = `
-  font-size: ${REGULAR_FONT_SIZE}px;
-  line-height: ${REGULAR_LINE_HEIGHT}px;
+export const XLARGE = `
+  font-size: 32px;
+  line-height: ${XLARGE_LINE_HEIGHT}px;
 `;
 
 export const LARGE = `
@@ -24,12 +31,22 @@ export const LARGE = `
   line-height: 22px;
 `;
 
-export const XLARGE = `
-  font-size: 20px;
-  line-height: 28px;
+export const REGULAR = `
+  font-size: ${REGULAR_FONT_SIZE}px;
+  line-height: ${REGULAR_LINE_HEIGHT}px;
 `;
 
 export const CODE_SIZE = `
-  font-size: 14px;
-  line-height: 20px;
+  font-size: ${REGULAR_FONT_SIZE}px;
+  line-height: ${REGULAR_LINE_HEIGHT}px;
+`;
+
+export const SMALL = `
+  font-size: 12px;
+  line-height: 17px;
+`;
+
+export const XSMALL = `
+  font-size: 12px;
+  line-height: 12px;
 `;
