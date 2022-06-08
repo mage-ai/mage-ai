@@ -22,7 +22,8 @@ const columns: {
   custom: {
     title: 'Custom code',
     description: 'Write your own custom cleaning function. \
-      Add @transformer_action then begin typing Python code inside a function.',
+      Add @transformer_action, then begin typing Python code inside a function. \
+      You may refer to the current dataset as df.',
     code: {
       multiline: true,
       values: USER_INPUT,
@@ -139,7 +140,7 @@ const rows: {
   custom: {
     title: 'Custom code',
     description: 'Write your own custom cleaning function. \
-      Add @transformer_action then begin typing Python code inside a function. \
+      Add @transformer_action, then begin typing Python code inside a function. \
       You may refer to the current dataset as df.',
     code: {
       multiline: true,
