@@ -619,43 +619,43 @@ function ColumnAnalysis({
               title="Values with high correlation"
             >
               {highCorrelations.length > 0
-              ?
-                <SimpleDataTable
-                  columnFlexNumbers={[1, 1, 1]}
-                  columnHeaders={[
-                    {
-                      label: 'Column',
-                    },
-                    {
-                      label: 'Related column',
-                    },
-                    {
-                      label: 'Correlation',
-                    },
-                  ]}
-                  noBorder
-                  rowGroupData={[
-                    {
-                      rowData: highCorrelations,
-                    },
-                  ]}
-                  small
-                />
-              :
-                <>
-                  <Spacing mb={1} ml={1} mt={1}>
-                    <Text>
-                      There are no values with high correlation.
-                    </Text>
-                  </Spacing>
+                ?
                   <SimpleDataTable
                     columnFlexNumbers={[1, 1, 1]}
-                    columnHeaders={[]}
+                    columnHeaders={[
+                      {
+                        label: 'Column',
+                      },
+                      {
+                        label: 'Related column',
+                      },
+                      {
+                        label: 'Correlation',
+                      },
+                    ]}
                     noBorder
-                    rowGroupData={[]}
+                    rowGroupData={[
+                      {
+                        rowData: highCorrelations,
+                      },
+                    ]}
                     small
                   />
-                </>
+                :
+                  <>
+                    <Spacing mb={1} ml={1} mt={1}>
+                      <Text>
+                        There are no values with high correlation.
+                      </Text>
+                    </Spacing>
+                    <SimpleDataTable
+                      columnFlexNumbers={[1, 1, 1]}
+                      columnHeaders={[]}
+                      noBorder
+                      rowGroupData={[]}
+                      small
+                    />
+                  </>
               }
             </ChartContainer>
           }
