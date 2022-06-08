@@ -29,12 +29,17 @@ function ColumnReports({
 
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
   const {
+    average,
     completeness,
     count,
     count_distinct: countDistinct,
     invalid_value_count: invalidValueCount,
     invalid_value_rate: invalidValueRate,
     invalid_values: invalidValues,
+    max,
+    median,
+    min,
+    mode,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -54,12 +59,12 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Validity', getPercentage(validity),
+        'Validity', [true, validity * 100], getPercentage(validity),
       ],
     },
     {
       columnValues: [
-        'Completeness', getPercentage(completeness),
+        'Completeness', getPercentage(completeness), [true, completeness * 100],
       ],
     },
     {
@@ -80,6 +85,31 @@ function ColumnReports({
     {
       columnValues: [
         'Invalid values', invalidValueCount,
+      ],
+    },
+    {
+      columnValues: [
+        'Max value', max,
+      ],
+    },
+    {
+      columnValues: [
+        'Min value', min,
+      ],
+    },
+    {
+      columnValues: [
+        'Median value', median,
+      ],
+    },
+    {
+      columnValues: [
+        'Average value', average,
+      ],
+    },
+    {
+      columnValues: [
+        'Mode value', mode,
       ],
     },
   ];
