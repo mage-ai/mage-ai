@@ -40,11 +40,9 @@ function DatasetDetail() {
   let pageTitle = datasetName || 'Dataset Overview';
   if (slug.length === 1) {
     el = (
-      <ClientOnly>
-        <DatasetOverview
-          {...sharedProps}
-        />
-      </ClientOnly>
+      <DatasetOverview
+        {...sharedProps}
+      />
     );
   } else if (SUBPATH_EXPORT === subpath) {
     el = (
@@ -64,7 +62,9 @@ function DatasetDetail() {
       fullWidth
       pageTitle={pageTitle}
     >
-      {el}
+      <ClientOnly>
+        {el}
+      </ClientOnly>
     </Layout>
   );
 }
