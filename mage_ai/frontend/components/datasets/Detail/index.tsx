@@ -133,6 +133,7 @@ function DatasetDetail({
             refLoadingBar?.current?.complete?.();
             setCustomCodeState({
               actionType: ActionTypeEnum.CUSTOM,
+              featureSetId: String(featureSetId),
               newValue: null,
             });
 
