@@ -1,4 +1,3 @@
-from urllib import response
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
 from mage_ai.data_cleaner.column_type_detector import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -76,10 +75,9 @@ class RemoveCollinearColumns(BaseRule):
         params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
 
         mean = responses.mean()
-        residuals = predictors @ params - responses
-        sum_sq_resid = np.sum(residuals * residuals)
+        centered_predictions = predictors @ params - mean
+        sum_sq_model = np.sum(centered_predictions * centered_predictions)
         centered_responses = responses - mean
         sum_sq_to = np.sum(centered_responses * centered_responses)
-
-        r_sq = 1 - sum_sq_resid / sum_sq_to if sum_sq_to else 0
+        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
         return 1 / (1 - r_sq + self.EPSILON)
