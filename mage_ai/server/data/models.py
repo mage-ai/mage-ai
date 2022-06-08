@@ -4,7 +4,7 @@ from mage_ai.server.data.base import Model
 import os
 import os.path
 
-SAMPLE_SIZE = 200
+SAMPLE_SIZE = 1000
 
 
 # right now, we are writing the models to local files to reduce dependencies

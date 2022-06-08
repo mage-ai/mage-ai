@@ -16,6 +16,7 @@ import BaseTable from '@oracle/components/Table/BaseTable';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
+import DataTable from '@components/DataTable';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
@@ -70,6 +71,7 @@ function DatasetOverview({
   selectedColumnIndex,
 }: DatasetOverviewProps) {
   const refLoadingBar = useRef(null);
+  const mainContentRef = useRef(null);
 
   const [errorMessages, setErrorMessages] = useState(null);
   const qFromUrl = queryFromUrl();
@@ -280,6 +282,21 @@ function DatasetOverview({
 
   const columnsVisible = Number(showColumnsFromUrl) === 1;
 
+  const {
+    height: dataTableHeightInit,
+    width: dataTableWidthInit,
+  } = mainContentRef?.current?.getBoundingClientRect?.() || {};
+
+  const paddingAndBorder = (PADDING_UNITS * UNIT * 2) + (1 * 2);
+  let dataTableHeight = 0;
+  let dataTableWidth = 0;
+  if (dataTableHeightInit) {
+    dataTableHeight = dataTableHeightInit - (paddingAndBorder + 2);
+  }
+  if (dataTableWidthInit) {
+    dataTableWidth = dataTableWidthInit - paddingAndBorder;
+  }
+
   return (
     <Layout
       centerAlign
@@ -387,6 +404,7 @@ function DatasetOverview({
             </FlexContainer>
           </Spacing>
         }
+        mainContentRef={mainContentRef}
         onTabClick={t => setTabs(t)}
         selectedTab={tabsFromUrl?.[0]}
         tabs={TABS_IN_ORDER}
@@ -464,7 +482,7 @@ function DatasetOverview({
                             {
                               compare: greaterThan,
                               name: 'Empty columns',
-                              val: 0,  
+                              val: 0,
                             },
                           ]}
                         />
@@ -506,12 +524,12 @@ function DatasetOverview({
             </>
           )}
 
-          {tabsFromUrl?.includes(TAB_DATA) && (
-            <BaseTable
-              columns={columnHeaderSample}
-              data={rows}
-              datatype={headerTypes}
-              titles={columns}
+          {tabsFromUrl?.includes(TAB_DATA) && columns?.length >= 1 && (
+            <DataTable
+              width={dataTableWidth}
+              height={dataTableHeight}
+              columns={columns}
+              rows={rows}
             />
           )}
         </Spacing>

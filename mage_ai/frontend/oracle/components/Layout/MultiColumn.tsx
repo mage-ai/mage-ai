@@ -22,6 +22,7 @@ type MultiColumnProps = {
   before?: any;
   children: any;
   header: any;
+  mainContentRef?: any;
   onTabClick?: (tab: string) => void;
   selectedTab?: string;
   tabs?: string[];
@@ -32,6 +33,7 @@ function MultiColumn({
   before,
   children,
   header,
+  mainContentRef,
   onTabClick,
   selectedTab,
   tabs,
@@ -89,6 +91,7 @@ function MultiColumn({
       <MainContentStyle
         beforeVisible={!!before}
         headerOffset={heightHeader}
+        ref={mainContentRef}
       >
         <MainContentInnerStyle>
           {children}
