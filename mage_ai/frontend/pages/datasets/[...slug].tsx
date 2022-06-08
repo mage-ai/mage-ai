@@ -1,11 +1,15 @@
 import { useRouter } from 'next/router';
 
 import ClientOnly from '@hocs/ClientOnly';
-import ColumnDetail from '@components/datasets/columns/ColumnDetail';
-import ColumnList from '@components/datasets/columns/ColumnList';
 import DatasetOverview from '@components/datasets/overview';
+import Export from '@components/datasets/Export';
+import Layout from '@oracle/components/Layout';
+import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { queryFromUrl } from '@utils/url';
+
+const SUBPATH_EXPORT = 'export';
 
 function DatasetDetail() {
   const router = useRouter();
@@ -17,15 +21,15 @@ function DatasetDetail() {
   } = queryFromUrl();
 
   // @ts-ignore
-  const [featureSetId, _, featureId] = slug;
+  const [featureSetId, subpath] = slug;
   const { data: featureSet, mutate } = api.feature_sets.detail(featureSetId);
+  const {
+    metadata,
+  } = featureSet || {};
 
-  const sharedProps = {
-    featureSet,
-    featureSetId,
-  };
-
+  const datasetName = metadata?.name;
   let el;
+  let pageTitle = datasetName || 'Dataset Overview';
   if (slug.length === 1) {
     el = (
       <ClientOnly>
@@ -36,24 +40,27 @@ function DatasetDetail() {
         />
       </ClientOnly>
     );
-  } else if (slug.length === 2) {
+  } else if (SUBPATH_EXPORT === subpath) {
     el = (
-      <ColumnList
-        {...sharedProps}
+      <Export
+        featureSet={featureSet}
       />
     );
-  } else if (slug.length === 3) {
-    el = (
-      <ColumnDetail
-        featureId={featureId}
-        {...sharedProps}
-      />
-    );
+    pageTitle = `Export ${datasetName}`;
   } else {
     el = <div />;
   }
 
-  return el;
+  return (
+    <Layout
+      centerAlign
+      footer={<Spacing mt={UNIT} />}
+      fullWidth
+      pageTitle={pageTitle}
+    >
+      {el}
+    </Layout>
+  );
 }
 
 export default DatasetDetail;
