@@ -48,11 +48,11 @@ def connect_data(df, name):
     return feature_set
 
 
-def clean(df, pipeline_uuid=None, pipeline_config_path=None):
+def clean(df, pipeline_uuid=None, pipeline_path=None):
     if pipeline_uuid is not None:
         df_clean = clean_df_with_pipeline(df, id=pipeline_uuid)
-    elif pipeline_config_path is not None:
-        df_clean = clean_df_with_pipeline(df, path=pipeline_config_path)
+    elif pipeline_path is not None:
+        df_clean = clean_df_with_pipeline(df, path=pipeline_path)
     else:
         _, df_clean = clean_df(df)
     return df_clean
