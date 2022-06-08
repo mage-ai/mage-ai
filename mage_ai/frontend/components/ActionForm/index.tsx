@@ -182,7 +182,10 @@ function ActionForm({
                 minHeight={code.multiline ? UNIT * 12 : null}
                 onChange={e => {
                   setActionCodeState(e.target.value);
-                  setCustomCodeState(e.target.value);
+                  setCustomCodeState({
+                    actionType,
+                    newValue: e.target.value,
+                  });
                 }}
                 padding={UNIT * 2}
                 style={{

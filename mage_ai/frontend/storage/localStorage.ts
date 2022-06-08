@@ -26,20 +26,25 @@ export function get(key, value = null) {
 
 export function getCustomCodeState({
   actionType,
-  defaultValue = '',
+  defaultValue = {},
 }: {
   actionType: ActionTypeEnum;
-  defaultValue?: string;
+  defaultValue?: any;
 }) {
-  if (actionType === ActionTypeEnum.CUSTOM) {
-    return get(LOCAL_STORAGE_KEY_CUSTOM_CODE, defaultValue);
-  }
-
-  return defaultValue;
+  return get(LOCAL_STORAGE_KEY_CUSTOM_CODE, defaultValue)[actionType];
 }
 
-export function setCustomCodeState(value) {
-  return set(LOCAL_STORAGE_KEY_CUSTOM_CODE, value);
+export function setCustomCodeState({
+  actionType,
+  newValue,
+}: {
+  actionType: ActionTypeEnum;
+  newValue: string;
+}) {
+  set(LOCAL_STORAGE_KEY_CUSTOM_CODE, {
+    ...get(LOCAL_STORAGE_KEY_CUSTOM_CODE),
+    [actionType]: newValue,
+  });
 }
 
 export default {
