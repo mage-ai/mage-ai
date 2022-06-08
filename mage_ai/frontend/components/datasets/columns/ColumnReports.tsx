@@ -39,7 +39,6 @@ function ColumnReports({
     max,
     median,
     min,
-    mode,
     null_value_count: nullValueCount,
     outlier_count: outlierCount,
     outliers,
@@ -106,11 +105,6 @@ function ColumnReports({
     {
       columnValues: [
         'Average value', average, [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Mode value', mode, [false],
       ],
     },
   ];

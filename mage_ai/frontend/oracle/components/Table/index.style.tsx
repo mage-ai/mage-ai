@@ -34,7 +34,7 @@ export const ColumnHeaderRowStyle = styled.div<any>`
   `}
 
   ${props => !props.noBorder && `
-    // border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
+    border: 1px solid ${(props.theme.interative || light.interactive).defaultBorder};
   `}
 
   ${props => props.noBorder && `

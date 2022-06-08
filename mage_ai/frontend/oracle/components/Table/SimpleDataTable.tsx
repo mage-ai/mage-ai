@@ -156,7 +156,7 @@ function SimpleDataTable({
           const val = warning && isString(columnValues[1]) ? removePercent(columnValues[1]) : columnValues[1];
           const shouldWarn = warning && warning.compare(val, warning.val);
 
-          columnValues?.forEach((value: any, cellIndex: number) => {
+          columnValues?.forEach((value: any, cellIndex: number, arr: []) => {
             const renderFunc = renderRowCellByIndex?.[cellIndex];
             if (Array.isArray(value)) {
               cells.push(
