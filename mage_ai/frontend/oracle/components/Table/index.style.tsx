@@ -12,7 +12,8 @@ export const TableStyle = styled.div<any>`
   position: relative;
   width: 100%;
   z-index: 3;
-  border: collapse;
+  border-bottom-left-radius: ${BORDER_RADIUS}px;
+  border-bottom-right-radius: ${BORDER_RADIUS}px;
 
   ${props => `
     background-color: ${(props.theme.background || light.background).page};
