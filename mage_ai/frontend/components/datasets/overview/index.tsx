@@ -13,12 +13,9 @@ import ActionDropdown from '@components/ActionForm/ActionDropdown';
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType, { ActionVariableTypeEnum } from '@interfaces/ActionPayloadType';
 import BaseTable from '@oracle/components/Table/BaseTable';
-import Button from '@oracle/elements/Button';
-import ButtonGroup from '@oracle/elements/Button/ButtonGroup';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
-import Divider from '@oracle/elements/Divider';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
@@ -39,20 +36,20 @@ import light from '@oracle/styles/themes/light';
 import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
 import {
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
-import { getHost } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { removeAtIndex } from '@utils/array';
-import { useCustomFetchRequest } from '@api';
 
-const TAB_REPORTS = 'Reports';
+export const TABS_QUERY_PARAM = 'tabs[]';
+export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
+
+export const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
 const TAB_DATA = 'Data';
 const TABS_IN_ORDER = [
@@ -79,14 +76,14 @@ function DatasetOverview({
   const {
     show_columns: showColumnsFromUrl,
   } = qFromUrl;
-  const tabsFromUrlInit = qFromUrl['tabs[]'];
+  const tabsFromUrlInit = qFromUrl[TABS_QUERY_PARAM];
   const tabsFromUrl = tabsFromUrlInit
     ? Array.isArray(tabsFromUrlInit) ? tabsFromUrlInit : [tabsFromUrlInit]
     : [];
 
   const setTabs = useCallback((newTab: string, pushHistory: boolean = true) => {
     goToWithQuery({
-      'tabs[]': newTab,
+      [TABS_QUERY_PARAM]: newTab,
     }, {
       pushHistory,
     });

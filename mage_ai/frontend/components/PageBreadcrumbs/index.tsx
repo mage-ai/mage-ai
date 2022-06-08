@@ -3,7 +3,12 @@ import { useRouter } from 'next/router';
 import Breadcrumbs from '@oracle/components/Breadcrumbs';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import { BreadcrumbType } from '@oracle/components/Breadcrumbs/Breadcrumb';
-import { getFeatureUUID } from '@utils/models/featureSet';
+import {
+  SHOW_COLUMNS_QUERY_PARAM,
+  TAB_REPORTS,
+  TABS_QUERY_PARAM,
+} from 'components/datasets/overview';
+import { queryFromUrl } from '@utils/url';
 
 enum PageEnum {
   DATASETS = 'datasets',
@@ -22,35 +27,33 @@ function PageBreadcrumbs({
   featureSet,
 }: PageBreadcrumbsProps) {
   const router = useRouter();
-  const { pathname } = router || {};
   const { slug = [] } = router.query;
+  const qFromUrl = queryFromUrl();
+  const tab = qFromUrl[TABS_QUERY_PARAM];
+  const {
+    show_columns: showColumns,
+    column: columnIndex,
+  } = qFromUrl;
 
   // @ts-ignore
-  const [featureSetId, _, featureId] = slug;
+  const [featureSetId] = slug;
   const pathParts = ['datasets'].concat(slug);
-
+  const columnsAll = featureSet?.sample_data?.columns || [];
+  const columnName = columnsAll[columnIndex];
   const datasetName = featureSet?.metadata?.name || 'dataset';
-  let breadcrumbs: BreadcrumbType[] = [];
 
+  const breadcrumbs: BreadcrumbType[] = [];
+  const tabQuery = `${TABS_QUERY_PARAM}=${tab || TAB_REPORTS}`;
+  const showColumnsQuery = `${SHOW_COLUMNS_QUERY_PARAM}=${showColumns || 0}`;
   if (pathParts.length > 0) {
-    breadcrumbs = pathParts.map((part, idx) => {
+    pathParts.forEach((part, idx) => {
       let label: PageEnum | string = PageEnum.DATASETS;
       let href = `/${PageEnum.DATASETS}`;
       if (idx === 1) {
         label = datasetName.length > MAX_CHARS
           ? `${datasetName.slice(0, MAX_CHARS)}...`
           : datasetName;
-        href = `/${PageEnum.DATASETS}/${featureSetId}`;
-      } else if (idx === 2) {
-        label = 'columns';
-        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.COLUMNS}`;
-      } else if (idx === 3) {
-        const featureIndex = +featureId;
-        const featureUUID = getFeatureUUID(featureSet, featureIndex);
-        label = featureUUID && featureUUID.length > MAX_CHARS
-          ? `${featureUUID.slice(0, MAX_CHARS)}...`
-          : featureUUID;
-        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.COLUMNS}/${featureId}`;
+        href = `/${PageEnum.DATASETS}/${featureSetId}?${tabQuery}&${showColumnsQuery}`;
       }
 
       const breadcrumb: BreadcrumbType = {
@@ -58,14 +61,22 @@ function PageBreadcrumbs({
         href,
         label,
       };
-      if (idx === pathParts.length - 1) {
-        breadcrumb.selected = true;
-        breadcrumb.href = null;
-      }
-
-      return breadcrumb;
+      breadcrumbs.push(breadcrumb);
     });
   }
+
+  if (typeof columnIndex !== 'undefined' && columnName) {
+    breadcrumbs.push({
+      bold: true,
+      label: columnName.length > MAX_CHARS
+        ? `${columnName.slice(0, MAX_CHARS)}...`
+        : columnName,
+    });
+  }
+
+  const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
+  lastBreadcrumb.selected = true;
+  lastBreadcrumb.href = null;
 
   return (
     <Breadcrumbs
