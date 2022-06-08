@@ -20,6 +20,7 @@ class RemoveCollinearColumns(BaseRule):
         if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
             return suggestions
         collinear_columns = []
+        self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
         for column in self.numeric_columns[:-1]:
             variance_inflation_factor = self.get_variance_inflation_factor(column)
             if variance_inflation_factor > self.VIF_UB:
@@ -73,9 +74,10 @@ class RemoveCollinearColumns(BaseRule):
         predictors = sample.drop(column, axis=1).to_numpy()
         params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
 
-        predictions = predictors @ params
-        sum_sq_model = np.sum(predictions * predictions)
-        sum_sq_to = np.sum(responses * responses)
-
+        mean = responses.mean()
+        centered_predictions = predictors @ params - mean
+        sum_sq_model = np.sum(centered_predictions * centered_predictions)
+        centered_responses = responses - mean
+        sum_sq_to = np.sum(centered_responses * centered_responses)
         r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
         return 1 / (1 - r_sq + self.EPSILON)

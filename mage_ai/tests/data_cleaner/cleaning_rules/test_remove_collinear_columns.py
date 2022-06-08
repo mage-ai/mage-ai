@@ -63,7 +63,11 @@ class RemoveCollinearColumnsTests(TestCase):
         result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
         self.assertEqual(result, [])
 
-    def test_collinear_no_results(self):
+    def test_collinear_one_hot_variables(self):
+        """
+        This test case checks whether there exists a better representation for
+        one_hot encoded variables (i.e dummy encoding)
+        """
         df = pd.DataFrame(
             [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]],
             columns=['number_of_users', 'views', 'revenue', 'losses'],
@@ -77,7 +81,23 @@ class RemoveCollinearColumnsTests(TestCase):
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
         result = RemoveCollinearColumns(df, column_types, statistics).evaluate()
-        self.assertEqual(result, [])
+        expected_result = [
+            dict(
+                title='Remove collinear columns',
+                message='Delete these columns to remove redundant data and increase data quality.',
+                status='not_applied',
+                action_payload=dict(
+                    action_type='remove',
+                    action_arguments=['number_of_users'],
+                    axis='column',
+                    action_options={},
+                    action_variables={},
+                    action_code='',
+                    outputs=[],
+                ),
+            )
+        ]
+        self.assertEqual(result, expected_result)
 
     def test_evaluate(self):
         df = pd.DataFrame(
@@ -425,17 +445,17 @@ class RemoveCollinearColumnsTests(TestCase):
     def test_vif_calcuation(self):
         df = pd.DataFrame(
             [
-                [1000, 30000, 10, 100, 30],
-                [500, 10000, 20, 3000, 20],
-                [250, 7500, 25, 8000, 20],
-                [1000, 45003, 20, 90, 40],
-                [1500, 75000, 30, 70, 25],
-                [1250, 60000, 50, 80, 20],
-                [200, 5000, 30, 10000, 30],
-                [800, 12050, 40, 2000, 45],
-                [600, 11000, 50, 3000, 50],
-                [700, 11750, 20, 2750, 55],
-                [1200, 52000, 10, 75, 60],
+                [1000, 30000, 10, 100, 30, 1],
+                [500, 10000, 20, 3000, 20, 1],
+                [250, 7500, 25, 8000, 20, 1],
+                [1000, 45003, 20, 90, 40, 1],
+                [1500, 75000, 30, 70, 25, 1],
+                [1250, 60000, 50, 80, 20, 1],
+                [200, 5000, 30, 10000, 30, 1],
+                [800, 12050, 40, 2000, 45, 1],
+                [600, 11000, 50, 3000, 50, 1],
+                [700, 11750, 20, 2750, 55, 1],
+                [1200, 52000, 10, 75, 60, 1],
             ],
             columns=[
                 'number_of_users',
@@ -443,6 +463,7 @@ class RemoveCollinearColumnsTests(TestCase):
                 'number_of_creators',
                 'losses',
                 'number_of_advertisers',
+                'intercept',
             ],
         )
         column_types = {
@@ -451,22 +472,24 @@ class RemoveCollinearColumnsTests(TestCase):
             'number_of_creators': 'number',
             'losses': 'number',
             'number_of_advertisers': 'number',
+            'intercept': 'number',
         }
         statistics = {}
         df = clean_dataframe(df, column_types, dropna=False)
         rule = RemoveCollinearColumns(df, column_types, statistics)
         expected_vifs_no_remove = (
-            59.32817701051733,
-            26.10502642724925,
-            5.6541251174451315,
-            2.6033835916281176,
-            10.735934980453335,
+            37.32458129910488,
+            17.631950562635552,
+            1.0708742222569918,
+            9.011569965497548,
+            1.4493983644673827,
         )
         expected_vifs_remove = (
-            59.32817701051733,
-            2.941751614824833,
-            3.4216357503903243,
-            1.370441833599666,
+            37.32458129910488,
+            2.3104977034413134,
+            1.0257954327379684,
+            1.0616108815019005,
+            1.0,
         )
         for column, expected_vif in zip(rule.numeric_columns, expected_vifs_no_remove):
             vif = rule.get_variance_inflation_factor(column)
