@@ -31,6 +31,7 @@
     "@visx/tooltip": "^2.10.0",
     "@visx/voronoi": "^2.10.0",
     "axios": "^0.27.2",
+    "local-storage": "^2.0.0",
     "moment": "^2.29.3",
     "next": "12.1.6",
     "next-remove-imports": "^1.0.6",
