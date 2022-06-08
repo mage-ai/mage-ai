@@ -140,17 +140,7 @@ def build_correlation_data(df, col1, features):
     )
 
 
-def build_time_series_data(df, feature, datetime_column, column_type):
-    col1 = feature['uuid']
-    column_type = feature['column_type']
-    tags = dict(
-        column_type=column_type,
-        datetime_column=datetime_column,
-        feature_uuid=col1,
-    )
-
-    increment(f'{DD_KEY}.build_time_series_data.start', tags)
-
+def build_time_series_data(df, features, datetime_column):
     # print(feature, datetime_column)
 
     datetimes = df[datetime_column].dropna()
@@ -166,11 +156,11 @@ def build_time_series_data(df, feature, datetime_column, column_type):
         min_value_datetime,
         max_value_datetime,
         TIME_SERIES_BUCKETS,
-        column_type,
+        DATETIME,
     )
 
     x = []
-    y = []
+    y_dict = dict()
 
     df_copy = df.copy()
     df_copy[datetime_column] = datetimes.apply(lambda x: x if pd.isnull(x) else x.timestamp())
@@ -179,64 +169,69 @@ def build_time_series_data(df, feature, datetime_column, column_type):
         max_value = bucket['max_value']
         min_value = bucket['min_value']
 
-        series = df_copy[(
+        df_filtered = df_copy[(
             df_copy[datetime_column] >= min_value
         ) & (
             df_copy[datetime_column] < max_value
-        )][col1]
+        )]
 
         x.append(dict(
             max=max_value,
             min=min_value,
         ))
 
-        # series_cleaned = clean_series(series, column_type, dropna=False)
-        series_cleaned = series
-        df_value_counts = series_cleaned.value_counts(dropna=False)
-        series_non_null = series_cleaned.dropna()
-        count_unique = len(df_value_counts.index)
+        for f in features:
+            col = f['uuid']
+            column_type = f['column_type']
+            if col not in y_dict:
+                y_dict[col] = []
 
-        y_data = dict(
-            count=series_non_null.size,
-            count_distinct=count_unique - 1 if np.nan in df_value_counts else count_unique,
-            null_value_rate=0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
-        )
+            series = df_filtered[col]
+            # series_cleaned = clean_series(series, column_type, dropna=False)
+            series_cleaned = series
+            series_non_null = series_cleaned.dropna()
 
-        if column_type in [NUMBER, NUMBER_WITH_DECIMALS]:
-            if len(series_non_null) == 0:
-                average = 0
-            else:
-                average = series_non_null.sum() / len(series_non_null)
-            y_data.update(dict(
-                average=average,
-                max=series_non_null.max(),
-                median=series_non_null.quantile(0.5),
-                min=series_non_null.min(),
-                sum=series_non_null.sum(),
-            ))
-        elif column_type in [CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE]:
-            value_counts = series_non_null.value_counts()
-            if len(value_counts.index):
-                value_counts_top = value_counts.sort_values(ascending=False).iloc[:12]
-                mode = value_counts_top.index[0]
+            y_data = dict(
+                count=series_non_null.size,
+                count_distinct=series_non_null.nunique(),
+                null_value_rate=0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
+            )
+
+            if column_type in [NUMBER, NUMBER_WITH_DECIMALS]:
+                if len(series_non_null) == 0:
+                    average = 0
+                else:
+                    average = series_non_null.mean()
                 y_data.update(dict(
-                    mode=mode,
-                    value_counts=value_counts_top.to_dict(),
+                    average=average,
+                    max=series_non_null.max(),
+                    median=series_non_null.quantile(0.5),
+                    min=series_non_null.min(),
+                    sum=series_non_null.sum(),
                 ))
+            elif column_type in [CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE]:
+                value_counts = series_non_null.value_counts()
+                if len(value_counts.index):
+                    value_counts_top = value_counts.sort_values(ascending=False).iloc[:12]
+                    mode = value_counts_top.index[0]
+                    y_data.update(dict(
+                        mode=mode,
+                        value_counts=value_counts_top.to_dict(),
+                    ))
 
-        y.append(y_data)
-
-    increment(f'{DD_KEY}.build_time_series_data.succeeded', tags)
-
-    return dict(
-        type=CHART_TYPE_LINE_CHART,
-        x=x,
-        x_metadata=dict(
-            label=datetime_column,
-            label_type=LABEL_TYPE_RANGE,
-        ),
-        y=y,
-    )
+            y_dict[col].append(y_data)
+    charts = dict()
+    for f, y in y_dict.items():
+        charts[f] = dict(
+            type=CHART_TYPE_LINE_CHART,
+            x=x,
+            x_metadata=dict(
+                label=datetime_column,
+                label_type=LABEL_TYPE_RANGE,
+            ),
+            y=y,
+        )
+    return charts
 
 
 def build_overview_data(
