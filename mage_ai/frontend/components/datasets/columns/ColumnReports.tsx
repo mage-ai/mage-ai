@@ -11,6 +11,7 @@ import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interf
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage, transformNumber } from '@utils/number';
+import { roundNumber } from '@utils/string';
 
 type ColumnReportsProps = {
   column: string;
@@ -90,22 +91,22 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Max value', max, [false],
+        'Max value', roundNumber(max), [false],
       ],
     },
     {
       columnValues: [
-        'Min value', min, [false],
+        'Min value', roundNumber(min), [false],
       ],
     },
     {
       columnValues: [
-        'Median value', median, [false],
+        'Median value', roundNumber(median), [false],
       ],
     },
     {
       columnValues: [
-        'Average value', average, [false],
+        'Average value', roundNumber((average)), [false],
       ],
     },
     // {
