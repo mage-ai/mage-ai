@@ -1,7 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import scrollbarWidth from './scrollbarWidth';
 import styled from 'styled-components';
-import { FixedSizeList } from 'react-window';
+import { VariableSizeList } from 'react-window';
 import {
   useBlockLayout,
   useTable,
@@ -9,6 +14,19 @@ import {
 import { useSticky } from 'react-table-sticky';
 
 import light from '@oracle/styles/themes/light';
+import {
+  FONT_FAMILY_REGULAR,
+  MONO_FONT_FAMILY_REGULAR,
+} from '@oracle/styles/fonts/primary';
+import {
+  REGULAR,
+  REGULAR_LINE_HEIGHT,
+} from '@oracle/styles/fonts/sizes';
+import { UNIT } from '@oracle/styles/units/spacing';
+
+const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
+const DEFAULT_COLUMN_WIDTH = UNIT * 20;
+const WIDTH_OF_CHARACTER = 8.5;
 
 type DataTableProps = {
   columns: string[];
@@ -16,12 +34,17 @@ type DataTableProps = {
 }
 
 const Styles = styled.div`
-  padding: 1rem;
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
 
   .table {
-    display: inline-block;
     border-spacing: 0;
-    border: 1px solid black;
+    display: inline-block;
+
+    ${props => `
+      border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+    `}
 
     .tr {
       :last-child {
@@ -33,18 +56,29 @@ const Styles = styled.div`
 
     .th,
     .td {
+      ${REGULAR}
+      font-family: ${FONT_FAMILY_REGULAR};
       margin: 0;
-      padding: 0.5rem;
-      border-bottom: 1px solid black;
-      border-right: 1px solid black;
+      padding: ${UNIT * 1}px;
 
       ${props => `
         background-color: ${(props.theme.monotone || light.monotone).grey100};
+        border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+        border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
       `}
 
       :last-child {
-        border-right: 1px solid black;
+        ${props => `
+          border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+        `}
       }
+    }
+
+    .th {
+      height: ${BASE_ROW_HEIGHT}px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     &.sticky {
@@ -57,16 +91,25 @@ const Styles = styled.div`
   }
 `
 
-function Table({ columns, data }) {
+function estimateCellHeight({ original }) {
+  const maxLength = Math.max(...original.map(val => val?.length || 0));
+  const totalWidth = maxLength * WIDTH_OF_CHARACTER;
+  const numberOfLines = Math.ceil(totalWidth / (DEFAULT_COLUMN_WIDTH - (UNIT * 2)));
+  return (Math.max(numberOfLines, 1) * REGULAR_LINE_HEIGHT) + (UNIT * 2);
+}
+
+function Table({
+  columns,
+  data,
+  height,
+  width,
+}) {
   const refHeader = useRef(null);
   const refListOuter = useRef(null);
-  // Use the state and functions returned from useTable to build your UI
 
   useEffect(() => {
     const onScrollCallback = (e) => {
-      console.log(e.target.scrollLeft);
-
-      refHeader.current.scroll(e.target.scrollLeft, 0);
+      refHeader?.current?.scroll(e.target.scrollLeft, 0);
     };
 
     if (refListOuter) {
@@ -74,29 +117,31 @@ function Table({ columns, data }) {
     }
 
     return () => {
-      refListOuter.current.removeEventListener('scroll', onScrollCallback)
+      refListOuter?.current?.removeEventListener('scroll', onScrollCallback);
     }
   }, [
     refHeader,
-    refListOuter
+    refListOuter,
   ]);
 
-  const defaultColumn = React.useMemo(
-    () => ({
-      width: 150,
-    }),
-    []
-  )
+  const defaultColumn = useMemo(() => ({
+    width: DEFAULT_COLUMN_WIDTH,
+  }), []);
 
-  const scrollBarSize = React.useMemo(() => scrollbarWidth(), [])
+  const maxWidthOfFirstColumn =
+    useMemo(() => (String(rows?.length).length * WIDTH_OF_CHARACTER) + (UNIT * 2), [
+      rows,
+    ]);
+
+  const scrollBarSize = useMemo(() => scrollbarWidth(), []);
 
   const {
-    getTableProps,
     getTableBodyProps,
+    getTableProps,
     headerGroups,
+    prepareRow,
     rows,
     totalColumnsWidth,
-    prepareRow,
   } = useTable(
     {
       columns,
@@ -107,58 +152,64 @@ function Table({ columns, data }) {
     useSticky,
   );
 
-  const RenderRow = React.useCallback(
-    ({ index, style }) => {
-      const row = rows[index]
-      prepareRow(row)
-      const { original } = row;
-      return (
-        <div
-          {...row.getRowProps({
-            style: {
-              ...style,
-              width: 'auto',
-            },
-          })}
-          className="tr"
-        >
-          {row.cells.map((cell, idx: number) => {
-            const cellProps = cell.getCellProps();
-            const cellStyle = {
-              ...cellProps.style,
-            };
-            if (idx === 0) {
-              cellStyle.left = 0;
-              cellStyle.position = 'sticky';
-            }
+  const RenderRow = useCallback(({ index, style }) => {
+    const row = rows[index];
+    prepareRow(row);
+    const { original } = row;
 
-            return (
-              <div
-                {...cellProps}
-                className="td"
-                style={cellStyle}
-              >
-                {idx === 0 && cell.render('Cell')}
-                {idx >= 1 && original[idx - 1]}
-              </div>
-            )
-          })}
-        </div>
-      )
-    },
-    [prepareRow, rows]
-  )
+    return (
+      <div
+        {...row.getRowProps({
+          style: {
+            ...style,
+            width: 'auto',
+          },
+        })}
+        className="tr"
+      >
+        {row.cells.map((cell, idx: number) => {
+          const firstColumn = idx === 0;
+          const cellProps = cell.getCellProps();
+          const cellStyle: {
+            [key: string]: number | string;
+          } = {
+            ...cellProps.style,
+          };
 
-  // Render the UI for your table
+          if (firstColumn) {
+            cellStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
+            cellStyle.left = 0;
+            cellStyle.position = 'sticky';
+            cellStyle.textAlign = 'center';
+            cellStyle.width = maxWidthOfFirstColumn;
+          }
+
+          return (
+            <div
+              {...cellProps}
+              className="td"
+              style={cellStyle}
+            >
+              {firstColumn && cell.render('Cell')}
+              {!firstColumn && original[idx - 1]}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }, [
+    prepareRow,
+    rows,
+  ]);
+
   return (
     <div
       {...getTableProps()}
       className="table sticky"
       style={{
-        width: 800 + scrollBarSize,
+        width,
       }}
     >
-
       <div {...getTableBodyProps()} className="body">
         <div
           className="header"
@@ -169,28 +220,50 @@ function Table({ columns, data }) {
               {...headerGroup.getHeaderGroupProps()}
               className="tr"
             >
-              {headerGroup.headers.map(column => (
-                <div {...column.getHeaderProps()} className="th">
-                  {column.render('Header')}
-                </div>
-              ))}
+              {headerGroup.headers.map((column, idx: number) => {
+                const firstColumn = idx === 0;
+                const columnProps = column.getHeaderProps();
+                const columnStyle: {
+                  [key: string]: number | string;
+                } = {
+                  ...columnProps.style,
+                };
+
+                if (firstColumn) {
+                  columnStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
+                  columnStyle.left = 0;
+                  columnStyle.position = 'sticky';
+                  columnStyle.textAlign = 'center';
+                  columnStyle.width = maxWidthOfFirstColumn;
+                }
+
+                return (
+                  <div
+                    {...columnProps}
+                    className="th"
+                    style={columnStyle}
+                    title={firstColumn ? 'Row number' : column.Header}
+                  >
+                    {column.render('Header')}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
 
-
-        <FixedSizeList
-          height={400}
-          itemCount={rows.length}
-          itemSize={35}
-          // width={totalColumnsWidth + scrollBarSize}
+        <VariableSizeList
+          estimatedItemSize={BASE_ROW_HEIGHT}
+          height={height - BASE_ROW_HEIGHT}
+          itemCount={rows?.length}
+          itemSize={(idx: number) => estimateCellHeight(rows[idx])}
           outerRef={refListOuter}
           style={{
             overflow: 'auto',
           }}
         >
           {RenderRow}
-        </FixedSizeList>
+        </VariableSizeList>
       </div>
     </div>
   )
@@ -198,68 +271,20 @@ function Table({ columns, data }) {
 
 function App({
   columns: columnsProp,
+  height,
   rows: rowsProp,
+  width,
 }) {
-  // const columns = React.useMemo(
-  //   () => [
-  //     {
-  //       Header: 'Row Index',
-  //       accessor: (row, i) => i,
-  //     },
-  //     {
-  //       Header: 'Name',
-  //       columns: [
-  //         {
-  //           Header: 'First Name',
-  //           accessor: 'firstName',
-  //         },
-  //         {
-  //           Header: 'Last Name',
-  //           accessor: 'lastName',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       Header: 'Info',
-  //       columns: [
-  //         {
-  //           Header: 'Age',
-  //           accessor: 'age',
-  //           width: 50,
-  //         },
-  //         {
-  //           Header: 'Visits',
-  //           accessor: 'visits',
-  //           width: 60,
-  //         },
-  //         {
-  //           Header: 'Status',
-  //           accessor: 'status',
-  //         },
-  //         {
-  //           Header: 'Profile Progress',
-  //           accessor: 'progress',
-  //         },
-  //       ],
-  //     },
-  //   ],
-  //   []
-  // )
-
-  // const data = React.useMemo(() => makeData(100000), [])
-
-
-
-  const columns = React.useMemo(() => [{
-    Header: 'Row index',
-    accessor: (row, i) => i,
+  const columns = useMemo(() => [{
+    Header: ' ',
+    accessor: (row, i) => i + 1,
     sticky: 'left',
   }].concat(columnsProp?.map(col => ({
     Header: col,
     accessor: col,
   }))), [columnsProp]);
 
-  const data = React.useMemo(() => rowsProp?.map(row => row.reduce((acc, v, i) => ({
+  const data = useMemo(() => rowsProp?.map(row => row.reduce((acc, v, i) => ({
     ...acc,
     [columnsProp[i]]: v,
   }), {})), [
@@ -268,8 +293,13 @@ function App({
   ]);
 
   return (
-    <Styles>
-      <Table columns={columns} data={rowsProp} />
+    <Styles height={height}>
+      <Table
+        columns={columns}
+        data={rowsProp}
+        height={height}
+        width={width}
+      />
     </Styles>
   )
 }

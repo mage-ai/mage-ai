@@ -1,4 +1,5 @@
 export const REGULAR_FONT_SIZE: number = 14;
+export const REGULAR_LINE_HEIGHT: number = 20;
 export const SMALL_FONT_SIZE: number = 12;
 export const XSMALL_FONT_SIZE: number = 10;
 export const XXSMALL_FONT_SIZE: number = 8;
@@ -15,7 +16,7 @@ export const SMALL = `
 
 export const REGULAR = `
   font-size: ${REGULAR_FONT_SIZE}px;
-  line-height: 20px;
+  line-height: ${REGULAR_LINE_HEIGHT}px;
 `;
 
 export const LARGE = `
