@@ -2,6 +2,10 @@ import moment from 'moment';
 
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 
+export function isString(data) {
+  return (typeof data === 'string');
+}
+
 export function addUnderscores(string) {
   return string.split(' ').join('_');
 }
@@ -225,6 +229,11 @@ export function isNumeric(str) {
 export function extractNumber(text) {
   const matches = text.match(/%{\d+}/) || [];
   return matches[0]?.slice(2, -1);
+}
+
+export function removePercent(text) {
+  const matches = text.match(/\d+(\.?\d*)%/) || [];
+  return Number(matches[0].slice(0,-1));
 }
 
 export function changeDecimalToWholeNumber(number, floatingPoints = 2) {
