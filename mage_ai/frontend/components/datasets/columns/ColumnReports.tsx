@@ -63,7 +63,7 @@ function ColumnReports({
       ],
     },
   ];
-  const columnSummary = [
+  let columnSummary = [
     {
       columnValues: [
         'Column type',
@@ -93,22 +93,30 @@ function ColumnReports({
     },
     {
       columnValues: [
-        'Max value', roundNumber(max), [false],
+        'Max value',
+        (typeof max !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(max) : max,
+        [false],
       ],
     },
     {
       columnValues: [
-        'Min value', roundNumber(min), [false],
+        'Min value',
+        (typeof min !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(min) : min,
+        [false],
       ],
     },
     {
       columnValues: [
-        'Median value', roundNumber(median), [false],
+        'Median value',
+        (typeof median  !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(median) : median,
+        [false],
       ],
     },
     {
       columnValues: [
-        'Average value', roundNumber(average), [false],
+        'Average value',
+        (typeof average !== 'undefined' &&  COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(average) : average,
+        [false],
       ],
     },
     {
@@ -117,6 +125,7 @@ function ColumnReports({
       ],
     },
   ];
+  columnSummary = columnSummary.filter(({ columnValues }) => typeof columnValues[1] !== 'undefined');
 
   const showOutliers = outliers && outlierCount > 0;
   const showInvalidValues = invalidValues && invalidValueCount > 0;
