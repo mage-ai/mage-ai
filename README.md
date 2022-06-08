@@ -66,7 +66,11 @@ df_cleaned = mage_ai.clean(df, pipeline_uuid='uuid_of_cleaning_pipeline')
 df_cleaned = mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_dir')
 ```
 
-### More resources
+### Demo video (2 min)
+
+[![Mage quick start demo](media/mage-demo-quick-start-youtube-preview.png)](https://www.youtube.com/watch?v=cRib1zOaqWs "Mage quick start demo")
+
+## More resources
 
 - Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 - Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
