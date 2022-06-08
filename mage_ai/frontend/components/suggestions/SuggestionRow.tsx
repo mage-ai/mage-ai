@@ -91,6 +91,7 @@ const SuggestionRow = ({
           })}
           preventDefault
           underline
+          wordWrap
         >
           {col}
         </Link>
