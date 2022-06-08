@@ -4,10 +4,10 @@ import { media } from 'styled-bootstrap-grid';
 import light from '../../styles/themes/light';
 import {
   FONT_FAMILY_BOLD,
-  FONT_FAMILY_DEMI_BOLD,
-  FONT_FAMILY_EXTRA_BOLD,
-  FONT_FAMILY_EXTRA_LIGHT,
-  FONT_FAMILY_HEAVY,
+  FONT_FAMILY_BOLD as FONT_FAMILY_DEMI_BOLD,
+  FONT_FAMILY_BOLD as FONT_FAMILY_EXTRA_BOLD,
+  FONT_FAMILY_LIGHT as FONT_FAMILY_EXTRA_LIGHT,
+  FONT_FAMILY_BOLD as FONT_FAMILY_HEAVY,
   FONT_FAMILY_LIGHT,
   FONT_FAMILY_MEDIUM,
   FONT_FAMILY_REGULAR,
@@ -18,7 +18,10 @@ import {
   XLARGE,
   XXLARGE,
 } from '@oracle/styles/fonts/sizes';
-import { SHARED_STYLES as TEXT_SHARED_STYLES } from '@oracle/elements/Text';
+import {
+  SHARED_STYLES as TEXT_SHARED_STYLES,
+  TextProps,
+} from '@oracle/elements/Text';
 import { UNIT } from '@oracle/styles/units/spacing';
 import Spacing from '@oracle/elements/Spacing';
 
@@ -39,13 +42,14 @@ export type HeadlineProps = {
   level: 0 | 1 | 2 | 3 | 4 | 5;
   lineHeightAuto?: boolean;
   marketing?: boolean;
+  monospace?: boolean;
   spacingBelow?: boolean;
   warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wind?: boolean;
 };
 
-const SHARED_STYLES = css`
+const SHARED_STYLES = css<TextProps & HeadlineProps>`
   ${TEXT_SHARED_STYLES}
 
   margin: 0;

@@ -1,4 +1,5 @@
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
+import Divider from '@oracle/elements/Divider';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import Headline from '@oracle/elements/Headline';
 import PanelOld from '@oracle/components/PanelOld';
@@ -19,7 +20,7 @@ function Export({
       {...props}
       featureSet={featureSet}
     >
-      <Spacing mb={3}>
+      <Spacing mb={5}>
         <Headline level={1}>
           Export data pipeline for <Headline
             bold
@@ -36,13 +37,15 @@ function Export({
         containedWidth
         fullWidth
       >
-        <Spacing mb={3}>
-          <Headline level={2}>
-            Method 1: local JSON file
-          </Headline>
+        <Headline level={2}>
+          Method 1: local JSON file
+        </Headline>
+
+        <Spacing my={3}>
+          <Divider />
         </Spacing>
 
-        <Spacing mb={3}>
+        <Spacing mb={5}>
           <Spacing mb={1}>
             <Headline>
               Download the pipeline JSON file
@@ -58,7 +61,7 @@ function Export({
           </Text>
         </Spacing>
 
-        <Spacing mb={3}>
+        <Spacing mb={5}>
           <Spacing mb={1}>
             <Headline>
               Upload the pipeline JSON file to your environment
@@ -74,7 +77,7 @@ function Export({
           </Text>
         </Spacing>
 
-        <Spacing mb={3}>
+        <Spacing mb={5}>
           <Spacing mb={1}>
             <Headline>
               Load your data
@@ -115,10 +118,12 @@ function Export({
         containedWidth
         fullWidth
       >
-        <Spacing mb={3}>
-          <Headline level={2}>
-            Method 2: API key
-          </Headline>
+        <Headline level={2}>
+          Method 2: API key
+        </Headline>
+
+        <Spacing my={3}>
+          <Divider />
         </Spacing>
       </PanelOld>
     </DatasetDetail>

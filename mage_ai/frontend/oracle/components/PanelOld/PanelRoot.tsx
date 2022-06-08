@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import Spacing from '@oracle/elements/Spacing';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { modelThemeBackgroundColorStyles } from '@oracle/styles/mixins';
 
 type PanelRootProps = {
   borderColor?: string;
@@ -26,8 +25,6 @@ const PanelRootStyle = styled.div<PanelRootProps>`
   ${props => `
     background-color: ${(props.theme.monotone || light.monotone).white};
   `}
-
-  ${modelThemeBackgroundColorStyles}
 
   ${props => props.borderColor && `
     border-color: ${props.borderColor};
