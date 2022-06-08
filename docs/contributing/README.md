@@ -1,13 +1,8 @@
 # Contributing guide
 
-- [WIP] How to add a chart for visualization
-- [WIP] How to add a report
-- [WIP] How to add a cleaning action
-- [WIP] How to add a suggested cleaning action
+## Setting up development environment
 
-## Development environment
-
-### Setting up the front-end UI
+### Front-end UI
 
 #### Install Homebrew (if you haven't already)
 Directions at [brew.sh](https://brew.sh/).
@@ -67,7 +62,7 @@ $ yarn run dev
 
 Now visit [http://localhost:3000/datasets](http://localhost:3000/datasets) to view the tool.
 
-### Setting up the backend server
+### Backend server
 
 #### Install Python packages
 
@@ -116,5 +111,21 @@ sys.path.append('/absolute_path_to_repo/mage-ai')
 import mage_ai
 ```
 
+### Sample data
+Load sample datasets to test and play with.
+
+```python
+import mage_ai
+from mage_ai.server.sample_datasets import list_dataset_names, load_dataset
+
+
+dataset_names = list_dataset_names()
+df = load_dataset('titanic_survival.csv')
+```
+
 ## Explore the code base
-WIP
+
+- [WIP] How to add a chart for visualization
+- [WIP] How to add a report
+- [WIP] How to add a cleaning action
+- [WIP] How to add a suggested cleaning action
