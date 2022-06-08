@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
-import '@uiw/react-textarea-code-editor/dist.css';
+// import '@uiw/react-textarea-code-editor/dist.css';
 import dynamic from 'next/dynamic';
-import { ThemeContext } from 'styled-components';
+import styled, { ThemeContext } from 'styled-components';
 
 import ActionForm from '@components/ActionForm';
 import ActionPayloadType from '@interfaces/ActionPayloadType';
@@ -140,13 +140,11 @@ const SuggestionRow = ({
         flex={1}
         flexDirection="column"
       >
-        <div>
-          <Text>
-            <Text bold inline>
-              {title}
-            </Text>{actionArguments?.length && ': '}{featureLinks}
-          </Text>
-        </div>
+        <Text>
+          <Text bold inline>
+            {title}
+          </Text>{actionArguments?.length && ': '}{featureLinks}
+        </Text>
 
         {message && (
           <Text muted small>
@@ -170,7 +168,7 @@ const SuggestionRow = ({
             disabled
             // @ts-ignore
             language="python"
-            padding={UNIT * 1}
+            padding={UNIT}
             style={{
               backgroundColor: themeContext.monotone.grey100,
               fontFamily: MONO_FONT_FAMILY_REGULAR,
