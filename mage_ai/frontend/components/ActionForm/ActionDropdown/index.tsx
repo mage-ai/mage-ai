@@ -1,8 +1,8 @@
 import React from 'react';
 
+import ActionPayloadType, { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import Select from '@oracle/elements/Inputs/Select';
 import actionsConfig from '@components/ActionForm/actions';
-import ActionPayloadType, { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type ActionDropdownProps = {
