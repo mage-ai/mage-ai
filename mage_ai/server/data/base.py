@@ -75,6 +75,9 @@ class Model:
                     df_output[c] = series_non_null.astype(str)
         df_output.to_parquet(os.path.join(self.dir, file_name))
 
+    def delete(self):
+        os.rmdir(self.dir)
+
     def to_dict(self, detailed):
         pass
 

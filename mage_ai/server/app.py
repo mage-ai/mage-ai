@@ -162,6 +162,26 @@ def feature_set(id):
     )
     return response
 
+@app.route('/feature_sets/<id>', methods=['DELETE'], endpoint='feature_sets_delete')
+@rescue_errors
+def delete_feature_set(id):
+    """
+    response: [
+        {
+            id,
+            metadata,
+        }
+    ]
+    """
+    feature_set = FeatureSet(id=id)
+    response = app.response_class(
+        response=simplejson.dumps(feature_set.to_dict(), ignore_nan=True),
+        status=200,
+        mimetype='application/json',
+    )
+    feature_set.delete()
+    return response
+
 
 @app.route('/feature_sets/<id>/versions/<version>', endpoint='feature_set_versions_get')
 @rescue_errors
