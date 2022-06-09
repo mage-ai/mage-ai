@@ -195,11 +195,10 @@ function ActionForm({
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
-                // @ts-ignore
                 fontSize={REGULAR_FONT_SIZE}
                 highlightActiveLine={true}
-                minLines={MIN_LINES_ACTIONS}
                 maxLines={MAX_LINES_ACTIONS}
+                minLines={MIN_LINES_ACTIONS}
                 mode="python"
                 onChange={e => {
                   setActionCodeState(e);
@@ -221,6 +220,7 @@ function ActionForm({
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
                   overflow: 'auto',
+                  width: 'inherit',
                 }}
                 value={actionCode
                   || (getCustomCodeState({ actionType, featureSetId }) || code.default)
@@ -331,6 +331,7 @@ function ActionForm({
               <TextInput
                 // @ts-ignore
                 compact
+                fullWidth
                 onChange={e => updatePayload({
                   action_options: {
                     ...actionOptions,
@@ -338,7 +339,6 @@ function ActionForm({
                   },
                 })}
                 value={optionValue}
-                width={UNIT * 40}
               />
             );
           }
