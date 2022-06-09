@@ -45,7 +45,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
-import { MAX_LINES_ACTIONS } from '@oracle/styles/editor/rules';
+import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 type ActionFormProps = {
   actionType: ActionTypeEnum;
@@ -198,6 +198,7 @@ function ActionForm({
                 // @ts-ignore
                 fontSize={REGULAR_FONT_SIZE}
                 highlightActiveLine={true}
+                minLines={MIN_LINES_ACTIONS}
                 maxLines={MAX_LINES_ACTIONS}
                 mode="python"
                 onChange={e => {
@@ -224,6 +225,7 @@ function ActionForm({
                 value={actionCode
                   || (getCustomCodeState({ actionType, featureSetId }) || code.default)
                 }
+                wrapEnabled
               />
             )}
           </Spacing>
