@@ -120,7 +120,7 @@ const SuggestionRow = ({
         <Spacing mr={2}>
           {isLoading && <Spinner small />}
 
-          {!isLoading && (
+          {!isLoading && !editing &&(
             <Link
               bold
               noHoverUnderline
