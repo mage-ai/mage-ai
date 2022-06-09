@@ -197,7 +197,6 @@ function ActionForm({
               <CodeEditor
                 fontSize={REGULAR_FONT_SIZE}
                 highlightActiveLine={true}
-                minLines={MIN_LINES_ACTIONS}
                 maxLines={MAX_LINES_ACTIONS}
                 minLines={MIN_LINES_ACTIONS}
                 mode="python"
