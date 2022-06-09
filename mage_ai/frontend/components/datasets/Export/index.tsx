@@ -121,6 +121,7 @@ function Export({
             all the actions in your data pipeline.
           </Text>
 
+          {/* Create a static code editor */}
           <Spacing mt={2}>
             <CodeEditor
               maxLines={MAX_LINES_EXPORT_1}
