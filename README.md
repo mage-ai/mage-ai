@@ -1,13 +1,8 @@
-<div class='myWrapper' markdown='1' align=center>
-
-[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 [![PyPi](https://img.shields.io/pypi/v/mage-ai?color=orange)](https://pypi.org/project/mage-ai/)
 [![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci)](#)
-[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
-![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&logo=github)
 [![License](https://img.shields.io/github/license/mage-ai/mage-ai?color=red)](https://opensource.org/licenses/Apache-2.0)
-</div>
-
+[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
+[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 
 # Intro
 Mage is an open-source data management platform
@@ -19,11 +14,12 @@ prepare it for training AI/ML models.
 The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
 can be hosted in your own cloud environment.
 
-<img
-  alt="Mage demo"
-  src="media/quick-demo.gif"
-  style="border: 1px solid gray; border-radius: 8px;"
-/>
+<kbd>
+  <img
+    alt="Mage demo"
+    src="media/quick-demo.gif"
+  />
+</kbd>
 
 ### Why should I use it?
 Using a data cleaning tool enables you to quickly visualize data quality issues,
@@ -118,22 +114,24 @@ Inspect your data using different charts (e.g. time series, bar chart, box plot,
 
 Here’s a list of available [charts](docs/charts/README.md).
 
-<img
-  alt="dataset visualizations"
-  src="media/dataset-overview-visualizations.png"
-  style="border: 1px solid gray; border-radius: 8px;"
-/>
+<kbd>
+  <img
+    alt="dataset visualizations"
+    src="media/dataset-overview-visualizations.png"
+  />
+</kbd>
 
 ### Reports
 Quickly diagnose data quality issues with summary reports.
 
 Here’s a list of available [reports](docs/reports/README.md).
 
-<img
-  alt="dataset reports"
-  src="media/dataset-overview-reports.png"
-  style="border: 1px solid gray; border-radius: 8px;"
-/>
+<kbd>
+  <img
+    alt="dataset reports"
+    src="media/dataset-overview-reports.png"
+  />
+</kbd>
 
 ### Cleaning actions
 Easily add common cleaning functions to your pipeline with a few clicks.
@@ -145,22 +143,24 @@ you can write and save custom cleaning functions in the UI.
 
 Here’s a list of available [cleaning actions](docs/actions/README.md).
 
-<img
-  alt="cleaning actions"
-  src="media/dataset-overview-actions-preview.png"
-  style="border: 1px solid gray; border-radius: 8px;"
-/>
+<kbd>
+  <img
+    alt="cleaning actions"
+    src="media/dataset-overview-actions-preview.png"
+  />
+</kbd>
 
 ### Data cleaning suggestions
 The tool will automatically suggest different ways to clean your data and improve quality metrics.
 
 Here’s a list of available [suggestions](docs/suggestions/README.md).
 
-<img
-  alt="suggested cleaning actions"
-  src="media/dataset-overview.png"
-  style="border: 1px solid gray; border-radius: 8px;"
-/>
+<kbd>
+  <img
+    alt="suggested cleaning actions"
+    src="media/dataset-overview.png"
+  />
+</kbd>
 
 # Roadmap
 Big features being worked on or in the design phase.
