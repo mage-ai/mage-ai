@@ -105,7 +105,7 @@ def query_with_action_code(df, action_code, kwargs):
     reconstructed_code.append(action_code[prev_end:])
 
     action_code = ''.join(reconstructed_code)
-    queried_df = queried_df.query(action_code).rename(
+    queried_df = queried_df.query(action_code, engine='python').rename(
         lambda x: x[len(TRANSFORMED_COLUMN_PREFIX) :], axis='columns'
     )
     return queried_df[df.columns]
