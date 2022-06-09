@@ -561,6 +561,24 @@ function Overview({
           }
         />
       )}
+
+      {correlations && heatmapData?.length >= 1 && (
+        <ChartRow
+          left={
+            <ChartContainer title="Correlations">
+              <HeatMap
+                countMidpoint={0}
+                data={heatmapData}
+                height={UNIT * 8 * xyLabels.length}
+                minCount={-1}
+                xLabels={xyLabels}
+                yLabels={xyLabels}
+              />
+            </ChartContainer>
+          }
+        />
+      )}
+
       {scatterPlot && (
         <ChartRow
           left={
@@ -576,22 +594,8 @@ function Overview({
                   left: 5 * UNIT,
                 }}
                 yLabelFormat={formatNumberLabel}
-              />
-            </ChartContainer>
-          }
-        />
-      )}
-      {correlations && heatmapData?.length >= 1 && (
-        <ChartRow
-          left={
-            <ChartContainer title="Correlations">
-              <HeatMap
-                countMidpoint={0}
-                data={heatmapData}
-                height={UNIT * 8 * xyLabels.length}
-                minCount={-1}
-                xLabels={xyLabels}
-                yLabels={xyLabels}
+                xFeature={features[0]?.uuid}
+                yFeature={features[features?.length - 1]?.uuid}
               />
             </ChartContainer>
           }

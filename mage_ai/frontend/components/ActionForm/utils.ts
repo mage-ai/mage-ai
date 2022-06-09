@@ -35,6 +35,9 @@ export function evaluateCondition(
   condition: ConditionType,
   payload: ActionPayloadType,
   feature: FeatureType = null,
+  opts: {
+    multiColumns?: boolean;
+  },
 ): boolean {
   const {
     feature_attribute: featureAttribute,
@@ -42,12 +45,17 @@ export function evaluateCondition(
     options_key: optionsKey,
     value,
   } = condition;
+  const {
+    multiColumns,
+  } = opts ||  {};
   let a;
 
   if (optionsKey) {
     a = payload?.action_options?.[optionsKey];
   } else if (feature && featureAttribute) {
     a = feature?.[featureAttribute];
+  } else if (!feature && featureAttribute && multiColumns)  {
+    return true;
   }
 
   return buildOperatorPredicate(operator)(a, value);

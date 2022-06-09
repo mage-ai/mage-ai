@@ -31,6 +31,7 @@ const columns: {
     },
   },
   impute: {
+    multiColumns: true,
     title: 'Impute',
     description: 'Fill in missing values.',
     options: {

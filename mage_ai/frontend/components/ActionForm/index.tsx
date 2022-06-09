@@ -295,7 +295,9 @@ function ActionForm({
           let valuesEl;
 
           if (condition) {
-            conditionMet = evaluateCondition(condition, payload, currentFeature);
+            conditionMet = evaluateCondition(condition, payload, currentFeature, {
+              multiColumns,
+            });
           }
 
           if (Array.isArray(values)) {
@@ -340,7 +342,9 @@ function ActionForm({
                     let conditionMet = true;
 
                     if (condition) {
-                      conditionMet = evaluateCondition(condition, payload, currentFeature);
+                      conditionMet = evaluateCondition(condition, payload, currentFeature, {
+                        multiColumns,
+                      });
                     }
 
                     return conditionMet && (

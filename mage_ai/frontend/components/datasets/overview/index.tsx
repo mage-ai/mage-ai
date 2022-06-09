@@ -92,6 +92,14 @@ function DatasetOverview({
     }
   }, [setTabs, tabsFromUrl]);
 
+  useEffect(() => {
+    if (typeof showColumnsFromUrl === 'undefined') {
+      goToWithQuery({
+        show_columns: 1,
+      });
+    }
+  }, [showColumnsFromUrl]);
+
   const {
     insights,
     metadata,
