@@ -55,7 +55,7 @@ export function evaluateCondition(
   } else if (feature && featureAttribute) {
     a = feature?.[featureAttribute];
   } else if (!feature && featureAttribute && multiColumns)  {
-    return () => true;
+    return true;
   }
 
   return buildOperatorPredicate(operator)(a, value);
