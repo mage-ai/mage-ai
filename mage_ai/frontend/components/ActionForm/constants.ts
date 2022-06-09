@@ -1,4 +1,4 @@
-export const FEATURE_ATTRIBUTE_COLUMN_TYPE = 'column_type';
+export const FEATURE_ATTRIBUTE_COLUMN_TYPE = 'columnType';
 
 export const VALUES_TYPE_COLUMNS = 'columns';
 export const VALUES_TYPE_USER_INPUT = 'user_input';
