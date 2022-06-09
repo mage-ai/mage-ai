@@ -192,7 +192,7 @@ function HeatMap ({
       </svg>
     </>
   );
-};
+}
 
 function HeatMapContainer({
   countMidpoint,
@@ -205,7 +205,7 @@ function HeatMapContainer({
   yAxisLabel,
   yLabels,
 }: HeatMapContainerProps) {
-  const displayLabel = (label: string): string => label.length > 10 ? `${label.substring(0, 10)}...` : label;
+  const displayLabel = (label: string): string => label.length > 12 ? `${label.substring(0, 12)}...` : label;
   const yAxisLabelWidth = unit * 4;
   const yLabelsWidth = unit * 8;
 
@@ -244,7 +244,13 @@ function HeatMapContainer({
                 {/* @ts-ignore */}
                 {xLabels.map(label => (
                   <Flex flex="1" key={label} justifyContent="center">
-                    <Text center minWidth={70} title={label}>
+                    <Text
+                      bold
+                      center
+                      minWidth={70}
+                      title={label}
+                      xsmall
+                    >
                       {displayLabel(label)}
                     </Text>
                   </Flex>
@@ -277,7 +283,12 @@ function HeatMapContainer({
               {/* @ts-ignore */}
               {yLabels.map(label => (
                 <Flex alignItems="center" flex="1" key={label}>
-                  <Text center title={label}>
+                  <Text
+                    bold
+                    center
+                    title={label}
+                    xsmall
+                  >
                     {displayLabel(label)}
                   </Text>
                 </Flex>
