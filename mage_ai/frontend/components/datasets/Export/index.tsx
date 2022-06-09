@@ -137,6 +137,7 @@ function Export({
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
                 tabSize: 4,
+                width: 'inherit',
               }}
               value={SAMPLE_CLEAN_CODE_EXAMPLE_PIPELINE_ID(pipeline?.id)}
             />
