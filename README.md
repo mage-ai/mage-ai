@@ -5,7 +5,7 @@
 [![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack&style=flat-square)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
 ![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&style=flat-square&logo=github)
 [![License](https://img.shields.io/github/license/mage-ai/mage-ai?style=flat-square&color=red)](https://opensource.org/licenses/Apache-2.0)
-
+[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 </div>
 
 
