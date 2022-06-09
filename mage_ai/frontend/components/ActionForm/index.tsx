@@ -201,7 +201,8 @@ function ActionForm({
                 minLines={MIN_LINES_ACTIONS}
                 mode="python"
                 onChange={e => {
-                  setActionCodeState(e);
+                  payload['action_code'] = e;
+                  setActionCodeState(payload.action_code);
                   setCustomCodeState({
                     actionType,
                     featureSetId,
