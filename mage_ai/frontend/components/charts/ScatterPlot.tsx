@@ -60,6 +60,8 @@ type ScatterPlotContainerProps = {
   scatterPlotLabels?: {
     [key: string]: string[],
   },
+  xFeature?: string;
+  yFeature?: string;
 } & SharedProps;
 
 const getDataKey = (data) => `${data.x},${data.y}`;
@@ -157,7 +159,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
     (width > 520
       ? (increasedXTicks ? 20 : 10)
       : (increasedXTicks ? 10 : 5));
-  
+
 
   const axisStrokeColor = border;
 
@@ -302,15 +304,17 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
 });
 
 function ScatterPlotContainer({
-  featureMapping, 
+  featureMapping,
   height: parentHeight,
   margin: marginArgs,
-  scatterPlotOverview,
   scatterPlotLabels = {},
+  scatterPlotOverview,
+  xFeature: xFeatureProp,
+  yFeature: yFeatureProp,
   ...props
 }: ScatterPlotContainerProps) {
-  const [xFeature, setXFeature] = useState<string>();
-  const [yFeature, setYFeature] = useState<string>();
+  const [xFeature, setXFeature] = useState<string>(xFeatureProp);
+  const [yFeature, setYFeature] = useState<string>(yFeatureProp);
 
   const defaultMargin = {
     bottom: 3 * UNIT,
@@ -409,7 +413,7 @@ function ScatterPlotContainer({
             ))}
           </Select>
         </FlexContainer>
-        
+
         <div style={{ height: parentHeight, width: '100%' }}>
           <ParentSize>
             {({ width }) => (
