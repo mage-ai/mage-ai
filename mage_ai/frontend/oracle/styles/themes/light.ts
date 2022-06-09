@@ -12,6 +12,10 @@ import {
   WHITE,
   PURPLE_HIGHLIGHT,
   PURPLE_DISABLED,
+  PURPLE_GRADIENT_FROM,
+  RED_GRADIENT_FROM,
+  PURPLE_GRADIENT_TO,
+  RED_GRADIENT_TO,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -75,11 +79,13 @@ export default {
     wind500: '#4E32BC',
   },
   chart: {
-    gradientFrom: '#4F49F1',
-    gradientFromWater: '#2A60FE',
-    gradientTo: '#A260F5',
-    gradientToFire: '#FF144D',
+    gradientFromPrimary: PURPLE_GRADIENT_FROM,
+    gradientFromSecondary: RED_GRADIENT_FROM,
+    gradientToPrimary: PURPLE_GRADIENT_TO,
+    gradientToSecondary: RED_GRADIENT_TO,
     lines: '#9B6CA7',
+    primary: PURPLE,
+    secondary: RED,
   },
   content: {
     active: BLACK,
