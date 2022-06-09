@@ -45,6 +45,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
+import { MAX_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 type ActionFormProps = {
   actionType: ActionTypeEnum;
@@ -197,6 +198,7 @@ function ActionForm({
                 // @ts-ignore
                 fontSize={REGULAR_FONT_SIZE}
                 highlightActiveLine={true}
+                maxLines={MAX_LINES_ACTIONS}
                 mode="python"
                 onChange={e => {
                   setActionCodeState(e);
@@ -217,7 +219,6 @@ function ActionForm({
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
-                  maxHeight: `calc(100vh - ${UNIT * 42}px)`,
                   overflow: 'auto',
                 }}
                 value={actionCode
