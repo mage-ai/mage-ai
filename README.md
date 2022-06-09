@@ -86,12 +86,12 @@ df_cleaned = mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_di
 
 ## More resources
 
-- Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
+Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 
-1. [Jupyter notebook example](tutorials/assets/quick-start.ipynb)
+1. [Jupyter notebook example](docs/tutorials/assets/quick-start.ipynb)
 1. [Google Colaboratory (Colab) example](https://colab.research.google.com/drive/1JZ9cMevTUgNnJHY1Nm_5Zx3UaiUZ1aQb?usp=sharing)
 
-- Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
+Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
 
 # Features
 
