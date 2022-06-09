@@ -88,11 +88,11 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     if (!yLabelFormat) {
       yLabelFormat = (label) => {
         if (label.length > MAX_LABEL_LENGTH) {
-          return `${label.substring(0, MAX_LABEL_LENGTH)}...`
+          return `${label.substring(0, MAX_LABEL_LENGTH)}...`;
         } else {
-          return label
+          return label;
         }
-      }
+      };
     }
     const fontSize = large ? REGULAR : SMALL_FONT_SIZE;
     const themeContext: ThemeType = useContext(ThemeContext);
@@ -120,11 +120,14 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
 
     const colors = {
       active: themeContext?.content.active || light.content.active,
-      gradientFrom: themeContext?.chart.gradientFrom || light.chart.gradientFrom,
-      gradientTo: themeContext?.chart.gradientTo || light.chart.gradientTo,
+      gradientFromPrimary: themeContext?.chart.gradientFromPrimary || light.chart.gradientFromPrimary,
+      gradientToPrimary: themeContext?.chart.gradientToPrimary || light.chart.gradientToPrimary,
       muted: themeContext?.content.muted || light.content.muted,
+      primary: themeContext?.chart.primary || light.chart.primary,
       tooltipBackground: themeContext?.background.navigation || light.background.navigation,
     };
+
+    console.log(colors);
 
     const tickValues: string[] = data.map(ySerialize);
     const maxTickValueCharacterLength: number =
@@ -209,19 +212,34 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                   barStack.bars.map(bar => (
                     <g key={`barstack-horizontal-${barStack.index}-${bar.index}`}>
                       <LinearGradient
-                        from={colors.gradientFrom}
+                        from={colors.gradientFromPrimary}
                         id="bar-linear-gradient"
-                        to={colors.gradientTo}
+                        to={colors.gradientToPrimary}
                         vertical={false}
                       />
-                      <rect
-                        fill="url(#bar-linear-gradient)"
-                        height={bar.height}
-                        pointerEvents="none"
-                        width={bar.width}
-                        x={bar.x}
-                        y={bar.y}
-                      />
+                      <>           
+                        <rect
+                          fill="url('#bar-linear-gradient')"
+                          height={bar.height}
+                          pointerEvents="none"
+                          rx={6}
+                          width={bar.width}
+                          x={bar.x}
+                          y={bar.y}
+                        />
+                        {/* needed for one-sided rounded bar tip */}
+                        <path
+                          d={`M${bar.width < 10 ? bar.x + bar.width/2 : bar.x + bar.width - 10},${bar.y}
+                            h${bar.width < 10 ? bar.width/10 * 5 : 5}
+                            q5,0 5,5
+                            v${bar.height - 10}
+                            q0,5 -5,5
+                            h-${bar.width < 10 ? bar.width/10 * 5 : 5}
+                            z
+                          `}
+                          fill={colors.primary}
+                        />
+                      </>
                     </g>
                   )),
                 )
