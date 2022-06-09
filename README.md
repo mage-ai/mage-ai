@@ -1,8 +1,13 @@
-[![PyPi](https://img.shields.io/pypi/v/mage-ai?color=orange&style=flat-square)](https://pypi.org/project/mage-ai/)
-[![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci&style=flat-square)](#)
-[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack&style=flat-square)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
-![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&style=flat-square&logo=github)
-[![License](https://img.shields.io/github/license/mage-ai/mage-ai?style=flat-square&color=red)](https://opensource.org/licenses/Apache-2.0)
+<div class='myWrapper' markdown='1' align=center>
+
+[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
+[![PyPi](https://img.shields.io/pypi/v/mage-ai?color=orange)](https://pypi.org/project/mage-ai/)
+[![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci)](#)
+[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
+![Last Commit](https://img.shields.io/github/last-commit/mage-ai/mage-ai?color=purple&logo=github)
+[![License](https://img.shields.io/github/license/mage-ai/mage-ai?color=red)](https://opensource.org/licenses/Apache-2.0)
+</div>
+
 
 # Intro
 Mage is an open-source data management platform
