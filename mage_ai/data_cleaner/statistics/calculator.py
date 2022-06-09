@@ -155,13 +155,12 @@ class StatisticsCalculator:
         # Fix json serialization issue
         df_top_value_counts.index = df_top_value_counts.index.astype(str)
 
-        count_unique = len(df_value_counts.index)
+        df_value_counts_non_null = df_value_counts[df_value_counts.index.notnull()]
+        count_unique = len(df_value_counts_non_null)
 
         data = {
             f'{col}/count': series_non_null.size,
-            f'{col}/count_distinct': count_unique - 1
-            if np.nan in df_value_counts
-            else count_unique,
+            f'{col}/count_distinct': count_unique,
             f'{col}/null_value_rate': 0
             if series.size == 0
             else series.isnull().sum() / series.size,

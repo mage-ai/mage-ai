@@ -931,6 +931,7 @@ class ColumnTests(TestCase):
             ],
             columns=['group_id', 'amount', 'average_amount'],
         )
+        df_new['average_amount'] = df_new['average_amount'].astype(int)
         assert_frame_equal(df_new, df_expected)
 
     def test_count(self):
@@ -2082,6 +2083,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = median(df, action)
+        df_new['median_amount'] = df_new['median_amount'].astype(int)
         df_expected = pd.DataFrame(
             [
                 [1, 1000, 1050],
