@@ -20,6 +20,7 @@ import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
+import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -38,7 +39,12 @@ export type SuggestionRowProps = {
 };
 
 const CodeEditor = dynamic(
-  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  async () => {
+    const ace = await import('react-ace');
+    require('ace-builds/src-noconflict/mode-python');
+    require('ace-builds/src-noconflict/ace');
+    return ace;
+  },
   {
     ssr: false,
   },
@@ -167,18 +173,27 @@ const SuggestionRow = ({
 
         {actionCode && !editing && (
           <CodeEditor
-            // @ts-ignore
-            disabled
-            // @ts-ignore
-            language="python"
-            padding={UNIT}
+            fontSize={REGULAR_FONT_SIZE}
+            highlightActiveLine={true}
+            maxLines={MAX_LINES_ACTIONS}
+            mode="python"
+            readOnly
+            setOptions={{
+              showLineNumbers: true,
+              tabSize: 4,
+              useWorker: false,
+            }}
+            showGutter={true}
+            showPrintMargin={true}
             style={{
               backgroundColor: themeContext.monotone.grey100,
               fontFamily: MONO_FONT_FAMILY_REGULAR,
               fontSize: REGULAR_FONT_SIZE,
-              tabSize: 4,
+              overflow: 'auto',
+              width: 'inherit',
             }}
             value={actionCode}
+            wrapEnabled
           />
         )}
 
