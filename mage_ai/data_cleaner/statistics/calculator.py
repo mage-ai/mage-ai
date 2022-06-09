@@ -1,4 +1,3 @@
-from importlib import invalidate_caches
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
@@ -239,10 +238,8 @@ class StatisticsCalculator:
         invalid_rows = find_syntax_errors(series_non_null, column_type)
         data[f'{col}/invalid_value_count'] = invalid_rows.sum()
         invalid_values = series_non_null[invalid_rows]
-        data[f'{col}/invalid_values'] = invalid_values.tolist()[:INVALID_VALUE_SAMPLE_COUNT]
-        data[f'{col}/invalid_indices'] = (
-            invalid_values.index.tolist() if data[f'{col}/invalid_value_count'] else []
-        )
+        data[f'{col}/invalid_values'] = invalid_values[:INVALID_VALUE_SAMPLE_COUNT].tolist()
+        data[f'{col}/invalid_indices'] = invalid_values.index.tolist()
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )

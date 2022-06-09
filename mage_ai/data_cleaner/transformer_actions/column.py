@@ -2,7 +2,6 @@ from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER_TYPES,
     REGEX_NUMBER,
-    find_syntax_errors,
 )
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
@@ -73,11 +72,6 @@ def diff(df, action, **kwargs):
 
 def first(df, action, **kwargs):
     return __agg(df, action, 'first')
-
-
-def fix_syntax_errors(df, action, **kwargs):
-    columns = action['action_arguments']
-    action_variables = action['action_variables']
 
 
 def impute(df, action, **kwargs):
