@@ -63,18 +63,23 @@ def str_in_set(string, string_set):
     return any(entry in string for entry in string_set)
 
 
-def get_mismatched_rows(series, column_type):
+def find_syntax_errors(series, column_type):
     if len(series) == 0:
-        return []
-    mismatched_rows = []
+        return pd.Series([])
+    mask = pd.Series([False] * len(series))
+    mask.index = series.index
     if column_type == EMAIL:
-        mismatched_rows = series[~series.str.match(REGEX_EMAIL)].tolist()
+        mask |= ~series.str.match(REGEX_EMAIL)
     elif column_type == PHONE_NUMBER:
-        mismatched_rows = series[~series.str.match(REGEX_PHONE_NUMBER)].tolist()
+        mask |= ~series.str.match(REGEX_PHONE_NUMBER)
     elif column_type == ZIP_CODE:
         str_series = series.astype(str)
-        mismatched_rows = series[~str_series.str.match(REGEX_ZIP_CODE)].tolist()
-    return mismatched_rows
+        mask |= ~str_series.str.match(REGEX_ZIP_CODE)
+    # elif column_type == NUMBER:
+    #     mask |= ~series.astr.match(REGEX_NUMBER)
+    # elif column_type == DATETIME:
+    #     mask |= ~series.str.match(REGEX_DATETIME)
+    return mask
 
 
 def infer_number_type(series, column_name, dtype):
