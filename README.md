@@ -28,7 +28,7 @@ production environments (e.g. online re-training, inference, etc).
 
 # Quick start
 
-Try a [demo of Mage](https://colab.research.google.com/drive/1JZ9cMevTUgNnJHY1Nm_5Zx3UaiUZ1aQb?usp=sharing) in Google Colab.
+Try a [demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing) in Google Colab.
 
 ### Install library
 Install the most recent released version:
@@ -89,7 +89,7 @@ df_cleaned = mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_di
 Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
 
 1. [Jupyter notebook example](docs/tutorials/assets/quick-start.ipynb)
-1. [Google Colaboratory (Colab) example](https://colab.research.google.com/drive/1JZ9cMevTUgNnJHY1Nm_5Zx3UaiUZ1aQb?usp=sharing)
+1. [Google Colaboratory (Colab) example](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 
 Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
 
