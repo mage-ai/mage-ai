@@ -19,6 +19,12 @@ prepare it for training AI/ML models.
 The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
 can be hosted in your own cloud environment.
 
+<img
+  alt="Mage demo"
+  src="media/quick-demo.gif"
+  style="border: 1px solid gray; border-radius: 8px;"
+/>
+
 ### Why should I use it?
 Using a data cleaning tool enables you to quickly visualize data quality issues,
 easily fix them, and create repeatable data cleaning pipelines that can be used in
@@ -34,6 +40,8 @@ production environments (e.g. online re-training, inference, etc).
 # Quick start
 
 Try a [demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing) in Google Colab.
+
+<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
 ### Install library
 Install the most recent released version:
@@ -194,3 +202,7 @@ visit [GitHub](https://github.com/mage-ai/mage-ai).
 
 # License
 See the [LICENSE](LICENSE) file for licensing information.
+
+<br />
+
+[<img alt="Wind mage casting spell" height="160" src="media/mage-wind-casting-spell.svg" />](https://www.mage.ai/)
