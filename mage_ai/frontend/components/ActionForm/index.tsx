@@ -1,14 +1,17 @@
 import React, { useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
-import AceEditor from 'react-ace';
 
-// Import the style and colors for Python code.
-import 'ace-builds/src-noconflict/ace';
-import 'ace-builds/src-noconflict/mode-python';
-// Extensions if we want to make our coding editor even better.
-import 'ace-builds/src-noconflict/ext-language_tools';
-import 'ace-builds/src-noconflict/ext-beautify';
+/* ACE EDITOR ADD ONS
+  // Import the style and colors for Python code.
+  import 'ace-builds/src-noconflict/ace';
+  import 'ace-builds/src-noconflict/mode-python';
+
+  Extensions if we want to make our coding editor even better.
+  import 'ace-builds/src-noconflict/ext-language_tools';
+  import 'ace-builds/src-noconflict/ext-beautify';
+  // Note these would go under the dynamic function, due to NextJs Render issues.
+*/
 
 import ActionPayloadType, {
   ActionPayloadOverrideType,
@@ -59,7 +62,12 @@ type ActionFormProps = {
 };
 
 const CodeEditor = dynamic(
-  () => import('react-ace').then((mod) => mod.default),
+  async () => {
+    const ace = await import('react-ace');
+    require('ace-builds/src-noconflict/mode-python');
+    require('ace-builds/src-noconflict/ace');
+    return ace;
+  },
   {
     ssr: false,
   },
