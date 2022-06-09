@@ -59,10 +59,10 @@ run the following:
 
 ```python
 import mage_ai
-import pandas as pd
+from mage_ai.server.sample_datasets import list_dataset_names, load_dataset
 
 
-df = pd.read_csv('/path_to_data')
+df = load_dataset(list_dataset_names()[0])
 mage_ai.connect_data(df, name='name_of_dataset')
 mage_ai.launch()
 ```
