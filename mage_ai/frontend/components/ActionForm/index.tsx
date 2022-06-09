@@ -197,20 +197,19 @@ function ActionForm({
                 // @ts-ignore
                 fontSize={REGULAR_FONT_SIZE}
                 highlightActiveLine={true}
-                minHeight={code.multiline ? UNIT * 12 : null}
                 mode="python"
                 onChange={e => {
-                  setActionCodeState(e.target?.value);
+                  setActionCodeState(e);
                   setCustomCodeState({
                     actionType,
                     featureSetId,
-                    newValue: e.target?.value,
+                    newValue: e,
                   });
                 }}
-                padding={UNIT * 2}
                 setOptions={{
                   showLineNumbers: true,
                   tabSize: 4,
+                  useWorker: false,
                 }}
                 showGutter={true}
                 showPrintMargin={true}
