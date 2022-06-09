@@ -5,17 +5,14 @@ import { ThemeContext } from 'styled-components';
 import Button from '@oracle/elements/Button';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
 import Divider from '@oracle/elements/Divider';
-import FeatureSetType from '@interfaces/FeatureSetType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Link from '@oracle/elements/Link';
 import PanelOld from '@oracle/components/PanelOld';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
-import { MAX_LINES_EXPORT } from '@oracle/styles/editor/rules';
+import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2 } from '@oracle/styles/editor/rules';
 
 const CodeEditor = dynamic(
   async () => {
@@ -127,10 +124,10 @@ function Export({
           {/* Create a static code editor */}
           <Spacing mt={2}>
             <CodeEditor
-              readOnly
-              minLines={MAX_LINES_EXPORT}
-              maxLines={MAX_LINES_EXPORT}
+              maxLines={MAX_LINES_EXPORT_1}
+              minLines={MAX_LINES_EXPORT_1}
               mode="python"
+              readOnly
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
@@ -231,15 +228,17 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
+              maxLines={MAX_LINES_EXPORT_2}
+              minLines={MAX_LINES_EXPORT_2}
               mode="python"
+              readOnly
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
                 tabSize: 4,
-                maxLines: 30,
-                minLines: 2,
+                width: 'inherit',
               }}
               value={SAMPLE_CLEAN_CODE_EXAMPLE}
             />
