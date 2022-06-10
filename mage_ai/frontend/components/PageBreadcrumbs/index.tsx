@@ -60,6 +60,7 @@ function PageBreadcrumbs({
         bold: true,
         href,
         label,
+        title: idx === 1 ? datasetName : null,
       };
       breadcrumbs.push(breadcrumb);
     });
@@ -71,6 +72,7 @@ function PageBreadcrumbs({
       label: columnName.length > MAX_CHARS
         ? `${columnName.slice(0, MAX_CHARS)}...`
         : columnName,
+      title: columnName,
     });
   }
 
