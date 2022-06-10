@@ -17,14 +17,14 @@ def launch(
     iframe_host=None,
     iframe_port=None,
     inline=True,
+    api_key=None,
 ):
-    thread = launch_flask()
+    thread = launch_flask(api_key)
     if inline:
         display_inline_iframe(
             host=iframe_host,
             port=iframe_port,
         )
-
     return thread
 
 

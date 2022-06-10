@@ -2,13 +2,18 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import json
+<<<<<<< HEAD
 import logging
 import os
+=======
+import requests
+>>>>>>> 677b972 ([dy] Initial commit)
 import simplejson
 import sys
 import threading
@@ -366,8 +371,12 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch() -> None:
+def launch(mage_api_key=None) -> None:
     global thread
+    global api_key
+    api_key = mage_api_key
+    if api_key:
+        sync_pipelines()
 
     host = os.getenv('HOST', 'localhost')
     port = os.getenv('PORT', SERVER_PORT)
@@ -377,10 +386,34 @@ def launch() -> None:
         'host': host,
         'port': port,
     }
+    app_kwargs = {'port': SERVER_PORT, 'host': 'localhost', 'debug': False}
     thread = ThreadWithTrace(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
     print(f'Mage running on host and port {host}:{port}')
     return thread
+
+def sync_pipelines():
+    local_pipelines = Pipeline.objects()
+    for pipeline in local_pipelines:
+        feature_set_id = pipeline.metadata['feature_set_id']
+        feature_set = FeatureSet(id=feature_set_id)
+        pipeline_name = f"{feature_set.metadata['name']}_pipeline"
+        data = dict(
+            name=pipeline_name,
+            pipeline_actions=pipeline.pipeline.actions
+        )
+        response = requests.post(
+            data=json.dumps(data),
+            headers={
+                'Content-Type': 'application/json',
+                'X-API-KEY': api_key,
+            },
+            url='http://localhost:8000/api/v1/data_cleaning_pipelines',
+        ).json()
+        print("response:", response)
+        # pipeline.metadata = merge_dict(pipeline.metadata, {
+
+        # })
 
 
 def kill():
