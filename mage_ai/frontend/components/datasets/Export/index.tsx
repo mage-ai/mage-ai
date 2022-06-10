@@ -65,6 +65,7 @@ function Export({
     <DatasetDetail
       {...props}
       featureSet={featureSet}
+      hideColumnsHeader
     >
       <Spacing mb={5}>
         <Headline level={2}>

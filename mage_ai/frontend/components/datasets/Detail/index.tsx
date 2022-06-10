@@ -42,6 +42,7 @@ export type DatasetDetailSharedProps = {
 type DatasetDetailProps = {
   children: any;
   columnsVisible?: boolean;
+  hideColumnsHeader?: boolean;
   mainContentRef?: any;
   onTabClick?: (tab: string) => void;
   refLoadingBar?: any;
@@ -56,6 +57,7 @@ function DatasetDetail({
   columnsVisible,
   featureSet,
   fetchFeatureSet,
+  hideColumnsHeader,
   mainContentRef,
   onTabClick,
   refLoadingBar,
@@ -251,42 +253,44 @@ function DatasetDetail({
       )}
       header={
         <Spacing p={PADDING_UNITS}>
-          <Spacing mb={2}>
-            <FlexContainer justifyContent="space-between">
-              <Link
-                block
-                noHoverUnderline
-                noOutline
-                onClick={() => goToWithQuery({
-                  show_columns: columnsVisible ? 0 : 1,
-                })}
-                preventDefault
-              >
-                <FlexContainer alignItems="center">
-                  <ColumnIcon
-                    primary={!columnsVisible}
-                    size={UNIT * 2}
-                  />
+          {!hideColumnsHeader &&
+            <Spacing mb={2}>
+              <FlexContainer justifyContent="space-between">
+                <Link
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={() => goToWithQuery({
+                    show_columns: columnsVisible ? 0 : 1,
+                  })}
+                  preventDefault
+                >
+                  <FlexContainer alignItems="center">
+                    <ColumnIcon
+                      primary={!columnsVisible}
+                      size={UNIT * 2}
+                    />
 
-                  <Spacing mr={1} />
+                    <Spacing mr={1} />
 
-                  <Text bold primary={!columnsVisible}>
-                    {columnsVisible ? 'Hide columns' : 'Show columns'}
-                  </Text>
-                </FlexContainer>
-              </Link>
-
-              <NextLink
-                as={`/datasets/${featureSet?.id}/export`}
-                href="/datasets/[...slug]"
-                passHref
-              >
-                <Link block>
-                  Export data pipeline
+                    <Text bold primary={!columnsVisible}>
+                      {columnsVisible ? 'Hide columns' : 'Show columns'}
+                    </Text>
+                  </FlexContainer>
                 </Link>
-              </NextLink>
-            </FlexContainer>
-          </Spacing>
+
+                <NextLink
+                  as={`/datasets/${featureSet?.id}/export`}
+                  href="/datasets/[...slug]"
+                  passHref
+                >
+                  <Link block>
+                    Export data pipeline
+                  </Link>
+                </NextLink>
+              </FlexContainer>
+            </Spacing>
+          }
 
           <FlexContainer justifyContent="space-between">
             <PageBreadcrumbs featureSet={featureSet} />
