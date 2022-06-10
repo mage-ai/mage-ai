@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
 
+import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
@@ -28,6 +29,7 @@ import {
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
+import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
@@ -39,8 +41,6 @@ import {
 } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-import Button from '@oracle/elements/Button';
-import { Close } from '@oracle/icons';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
