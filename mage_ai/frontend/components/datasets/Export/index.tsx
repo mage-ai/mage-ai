@@ -13,7 +13,6 @@ import Text from '@oracle/elements/Text';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
 import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2, READ_ONLY } from '@oracle/styles/editor/rules';
-import { AceStyle } from './ace.style';
 
 const CodeEditor = dynamic(
   async () => {
