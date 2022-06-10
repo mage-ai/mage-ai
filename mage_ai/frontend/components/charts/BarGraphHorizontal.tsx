@@ -4,7 +4,6 @@ import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Bar, BarStackHorizontal, Line } from '@visx/shape';
 import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
-import { LinearGradient } from '@visx/gradient';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
 import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
@@ -120,14 +119,12 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
 
     const colors = {
       active: themeContext?.content.active || light.content.active,
-      gradientFromPrimary: themeContext?.chart.gradientFromPrimary || light.chart.gradientFromPrimary,
-      gradientToPrimary: themeContext?.chart.gradientToPrimary || light.chart.gradientToPrimary,
+      backgroundPrimary: themeContext?.chart.backgroundPrimary || light.chart.backgroundPrimary,
+      backgroundSecondary: themeContext?.chart.backgroundSecondary || light.chart.backgroundSecondary,
       muted: themeContext?.content.muted || light.content.muted,
       primary: themeContext?.chart.primary || light.chart.primary,
       tooltipBackground: themeContext?.background.navigation || light.background.navigation,
     };
-
-    console.log(colors);
 
     const tickValues: string[] = data.map(ySerialize);
     const maxTickValueCharacterLength: number =
@@ -211,15 +208,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                 barStacks.map(barStack =>
                   barStack.bars.map(bar => (
                     <g key={`barstack-horizontal-${barStack.index}-${bar.index}`}>
-                      <LinearGradient
-                        from={colors.gradientFromPrimary}
-                        id="bar-linear-gradient"
-                        to={colors.gradientToPrimary}
-                        vertical={false}
-                      />
                       <>           
                         <rect
-                          fill="url('#bar-linear-gradient')"
+                          fill={colors.backgroundPrimary}
                           height={bar.height}
                           pointerEvents="none"
                           rx={6}
@@ -229,12 +220,12 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                         />
                         {/* needed for one-sided rounded bar tip */}
                         <path
-                          d={`M${bar.width < 10 ? bar.x + bar.width/2 : bar.x + bar.width - 10},${bar.y}
-                            h${bar.width < 10 ? bar.width/10 * 5 : 5}
+                          d={`M${bar.width < 14 ? bar.x + bar.width/2 : bar.x + bar.width - 10},${bar.y}
+                            h${bar.width < 14 ? bar.width/14 * 5 : 5}
                             q5,0 5,5
                             v${bar.height - 10}
                             q0,5 -5,5
-                            h-${bar.width < 10 ? bar.width/10 * 5 : 5}
+                            h-${bar.width < 14 ? bar.width/14 * 5 : 5}
                             z
                           `}
                           fill={colors.primary}
