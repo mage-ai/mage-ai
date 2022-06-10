@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
+    find_syntax_errors,
     NUMBER_TYPES,
     REGEX_NUMBER,
 )
@@ -72,6 +73,16 @@ def diff(df, action, **kwargs):
 
 def first(df, action, **kwargs):
     return __agg(df, action, 'first')
+
+
+def fix_syntax_errors(df, action, **kwargs):
+    action_variables = action['action_variables']
+    columns = action['action_arguments']
+    for column in generate_string_cols(df, columns):
+        dtype = action_variables[column]['feature']['column_type']
+        mask = find_syntax_errors(df[column], dtype)
+        df.loc[mask, column] = 'invalid'
+    return df
 
 
 def impute(df, action, **kwargs):

@@ -66,17 +66,22 @@ def str_in_set(string, string_set):
 def find_syntax_errors(series, column_type):
     if len(series) == 0:
         return pd.Series([])
+    str_series = series.astype(str)
     if column_type == EMAIL:
-        return ~series.str.match(REGEX_EMAIL)
+        pattern = REGEX_EMAIL
     elif column_type == PHONE_NUMBER:
-        return ~series.str.match(REGEX_PHONE_NUMBER)
+        pattern = REGEX_PHONE_NUMBER
     elif column_type == ZIP_CODE:
-        str_series = series.astype(str)
-        return ~str_series.str.match(REGEX_ZIP_CODE)
+        pattern = REGEX_ZIP_CODE
+    elif column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
+        pattern = REGEX_NUMBER
+    elif column_type == DATETIME:
+        pattern = REGEX_DATETIME
     else:
         mask = pd.Series([False] * len(series))
         mask.index = series.index
         return mask
+    return ~str_series.str.match(pattern) & series.notna()
 
 
 def infer_number_type(series, column_name, dtype):

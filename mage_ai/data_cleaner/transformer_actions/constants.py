@@ -18,6 +18,7 @@ class ActionType:
     EXPLODE = 'explode'
     FILTER = 'filter'
     FIRST = 'first'
+    FIX_SYNTAX_ERRORS = 'fix_syntax_errors'
     GROUP = 'group'
     IMPUTE = 'impute'
     JOIN = 'join'
