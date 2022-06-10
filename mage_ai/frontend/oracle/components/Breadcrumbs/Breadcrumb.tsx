@@ -37,7 +37,7 @@ function Breadcrumb({
           {!textOnly && label}
 
           {textOnly && (
-            <Text bold primary={!selected} xlarge={large}>
+            <Text bold headline={large} primary={!selected}>
               {label}
             </Text>
           )}
@@ -55,7 +55,7 @@ function Breadcrumb({
     ...linkProps,
     block: true,
     bold: bold || selected,
-    xlarge: large,
+    headline: large,
   };
 
   return (

@@ -11,6 +11,7 @@ import {
   MONO_FONT_FAMILY_REGULAR,
 } from '@oracle/styles/fonts/primary';
 import {
+  HEADLINE_SIZE,
   LARGE,
   REGULAR,
   SMALL,
@@ -33,6 +34,7 @@ export type TextProps = {
   disableWordBreak?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  headline?: boolean;
   inline?: boolean;
   inlineText?: boolean;
   italic?: boolean;
@@ -87,6 +89,10 @@ export const SHARED_TEXT_STYLES = css<TextProps>`
 
   ${props => props.xlarge && `
     ${XLARGE}
+  `}
+
+  ${props => props.headline && `
+    ${HEADLINE_SIZE}
   `}
 
   ${props => !props.monospace && Number(props.weightStyle) === 0 && `
