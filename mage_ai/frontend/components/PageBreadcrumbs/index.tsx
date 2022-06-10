@@ -15,6 +15,7 @@ enum PageEnum {
   DATASET_DETAIL = 'dataset_detail',
   COLUMNS = 'features',
   COLUMN_DETAIL = 'feature_detail',
+  EXPORT = 'export',
 }
 
 type PageBreadcrumbsProps = {
@@ -54,6 +55,9 @@ function PageBreadcrumbs({
           ? `${datasetName.slice(0, MAX_CHARS)}...`
           : datasetName;
         href = `/${PageEnum.DATASETS}/${featureSetId}?${tabQuery}&${showColumnsQuery}`;
+      } else if (part === PageEnum.EXPORT) {
+        label =  PageEnum.EXPORT;
+        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.EXPORT}`;
       }
 
       const breadcrumb: BreadcrumbType = {
