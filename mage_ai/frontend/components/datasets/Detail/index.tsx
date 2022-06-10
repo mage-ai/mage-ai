@@ -42,6 +42,7 @@ export type DatasetDetailSharedProps = {
 type DatasetDetailProps = {
   children: any;
   columnsVisible?: boolean;
+  hideColumnsHeader?: boolean;
   mainContentRef?: any;
   onTabClick?: (tab: string) => void;
   refLoadingBar?: any;
@@ -56,6 +57,7 @@ function DatasetDetail({
   columnsVisible,
   featureSet,
   fetchFeatureSet,
+  hideColumnsHeader,
   mainContentRef,
   onTabClick,
   refLoadingBar,
@@ -251,36 +253,32 @@ function DatasetDetail({
       )}
       header={
         <Spacing p={PADDING_UNITS}>
-          <Spacing mb={2}>
-            <Link
-              block
-              noHoverUnderline
-              noOutline
-              onClick={() => goToWithQuery({
-                show_columns: columnsVisible ? 0 : 1,
-              })}
-              preventDefault
-            >
-              <FlexContainer alignItems="center">
-                <ColumnIcon
-                  primary={!columnsVisible}
-                  size={UNIT * 2}
-                />
+          {!hideColumnsHeader &&
+            <Spacing mb={2}>
+              <FlexContainer justifyContent="space-between">
+                <Link
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={() => goToWithQuery({
+                    show_columns: columnsVisible ? 0 : 1,
+                  })}
+                  preventDefault
+                >
+                  <FlexContainer alignItems="center">
+                    <ColumnIcon
+                      primary={!columnsVisible}
+                      size={UNIT * 2}
+                    />
 
-                <Spacing mr={1} />
+                    <Spacing mr={1} />
 
-                <Text bold primary={!columnsVisible}>
-                  {columnsVisible ? 'Hide columns' : 'Show columns'}
-                </Text>
-              </FlexContainer>
-            </Link>
-          </Spacing>
+                    <Text bold primary={!columnsVisible}>
+                      {columnsVisible ? 'Hide columns' : 'Show columns'}
+                    </Text>
+                  </FlexContainer>
+                </Link>
 
-          <FlexContainer justifyContent="space-between">
-            <PageBreadcrumbs featureSet={featureSet} />
-
-            <FlexContainer justifyContent="flex-end">
-              <Flex flexDirection="column">
                 <NextLink
                   as={`/datasets/${featureSet?.id}/export`}
                   href="/datasets/[...slug]"
@@ -290,55 +288,58 @@ function DatasetDetail({
                     Export data pipeline
                   </Link>
                 </NextLink>
+              </FlexContainer>
+            </Spacing>
+          }
 
-                <Spacing mt={2}>
-                  <Button
-                    fullWidth
-                    onClick={() => setActionMenuVisible(true)}
-                    primary
-                  >
-                    New action
-                  </Button>
+          <FlexContainer justifyContent="space-between">
+            <PageBreadcrumbs featureSet={featureSet} />
+            <Flex>
+              <Button
+                fullWidth
+                onClick={() => setActionMenuVisible(true)}
+                primary
+              >
+                New action
+              </Button>
 
-                  <ActionMenu
-                    columnOnly={!!selectedColumn}
-                    setActionPayload={setActionPayload}
-                    setVisible={setActionMenuVisible}
-                    visible={actionMenuVisible}
+              <ActionMenu
+                columnOnly={!!selectedColumn}
+                setActionPayload={setActionPayload}
+                setVisible={setActionMenuVisible}
+                visible={actionMenuVisible}
+              />
+              <AsidePopoutStyle>
+                {actionType && (
+                  <ActionForm
+                    actionType={actionType}
+                    axis={actionPayload?.axis}
+                    currentFeature={selectedColumn
+                      ? {
+                        columnType: columnTypes[selectedColumn],
+                        uuid: selectedColumn,
+                      }
+                      : null
+                    }
+                    featureSetId={String(featureSetId)}
+                    features={selectedColumn ? null : featuresWithAltColType}
+                    onClose={closeAction}
+                    onSave={(actionPayloadOverride: ActionPayloadType) => {
+                      saveAction({
+                        action_payload: {
+                          ...actionPayload,
+                          ...actionPayloadOverride,
+                          action_type: actionType,
+                        },
+                      });
+                    }}
+                    payload={actionPayload}
+                    setPayload={setActionPayload}
+                    shadow
                   />
-                  <AsidePopoutStyle>
-                    {actionType && (
-                      <ActionForm
-                        actionType={actionType}
-                        axis={actionPayload?.axis}
-                        currentFeature={selectedColumn
-                          ? {
-                            columnType: columnTypes[selectedColumn],
-                            uuid: selectedColumn,
-                          }
-                          : null
-                        }
-                        featureSetId={String(featureSetId)}
-                        features={selectedColumn ? null : featuresWithAltColType}
-                        onClose={closeAction}
-                        onSave={(actionPayloadOverride: ActionPayloadType) => {
-                          saveAction({
-                            action_payload: {
-                              ...actionPayload,
-                              ...actionPayloadOverride,
-                              action_type: actionType,
-                            },
-                          });
-                        }}
-                        payload={actionPayload}
-                        setPayload={setActionPayload}
-                        shadow
-                      />
-                    )}
-                  </AsidePopoutStyle>
-                </Spacing>
-              </Flex>
-            </FlexContainer>
+                )}
+              </AsidePopoutStyle>
+            </Flex>
           </FlexContainer>
         </Spacing>
       }

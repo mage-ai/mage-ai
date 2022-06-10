@@ -15,6 +15,7 @@ enum PageEnum {
   DATASET_DETAIL = 'dataset_detail',
   COLUMNS = 'features',
   COLUMN_DETAIL = 'feature_detail',
+  EXPORT = 'export',
 }
 
 type PageBreadcrumbsProps = {
@@ -54,12 +55,16 @@ function PageBreadcrumbs({
           ? `${datasetName.slice(0, MAX_CHARS)}...`
           : datasetName;
         href = `/${PageEnum.DATASETS}/${featureSetId}?${tabQuery}&${showColumnsQuery}`;
+      } else if (part === PageEnum.EXPORT) {
+        label =  PageEnum.EXPORT;
+        href = `/${PageEnum.DATASETS}/${featureSetId}/${PageEnum.EXPORT}`;
       }
 
       const breadcrumb: BreadcrumbType = {
         bold: true,
         href,
         label,
+        title: idx === 1 ? datasetName : null,
       };
       breadcrumbs.push(breadcrumb);
     });
@@ -71,6 +76,7 @@ function PageBreadcrumbs({
       label: columnName.length > MAX_CHARS
         ? `${columnName.slice(0, MAX_CHARS)}...`
         : columnName,
+      title: columnName,
     });
   }
 
