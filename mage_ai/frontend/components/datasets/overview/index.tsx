@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
 
+import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
 import ColumnReports from '@components/datasets/columns/ColumnReports';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
@@ -28,6 +29,7 @@ import {
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
+import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
@@ -226,9 +228,20 @@ function DatasetOverview({
 
       {errorMessages?.length >= 1 && (
         <Spacing mb={5}>
-          <Text bold>
-            Errors
-          </Text>
+          <FlexContainer justifyContent="space-between">
+            <Text bold>
+              Errors
+            </Text>
+            <Button
+              basic
+              iconOnly
+              onClick={() => setErrorMessages(null)}
+              padding="0px"
+              transparent
+            >
+              <Close muted />
+            </Button>
+          </FlexContainer>
           {errorMessages?.map((msg: string) => (
             <Text key={msg} monospace xsmall>
               {msg}
