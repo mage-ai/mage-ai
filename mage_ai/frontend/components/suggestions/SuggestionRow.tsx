@@ -177,6 +177,7 @@ const SuggestionRow = ({
             mode="python"
             readOnly
             setOptions={{
+              cursorStyle: 'slim',
               showLineNumbers: false,
               tabSize: 4,
               useWorker: false,
