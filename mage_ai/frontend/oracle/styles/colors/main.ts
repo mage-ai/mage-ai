@@ -20,10 +20,12 @@ export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
 
 // CSS background
-export const PURPLE_GRADIENT_FROM = 'rgba(107, 80, 215, 0.04)';
-export const PURPLE_GRADIENT_TO = 'rgba(107, 80, 215, 0.30)';
+export const PURPLE_GRADIENT_BASE = [107, 80, 25];
+export const PURPLE_GRADIENT_FROM = `rgba(${PURPLE_GRADIENT_BASE.join()}, 0.04)`;
+export const PURPLE_GRADIENT_TO = `rgba(${PURPLE_GRADIENT_BASE.join()}, 0.30)`;
 export const PURPLE_GRADIENT = `linear-gradient(180deg, ${PURPLE_GRADIENT_FROM} 0%, ${PURPLE_GRADIENT_TO} 30%)`;
 
-export const RED_GRADIENT_FROM = 'rgba(255, 20, 77, 0.04)';
-export const RED_GRADIENT_TO = 'rgba(255, 20, 77, 0.30)';
+export const RED_GRADIENT_BASE = [255, 20, 77];
+export const RED_GRADIENT_FROM = `rgba(${RED_GRADIENT_BASE.join()}, 0.04)`;
+export const RED_GRADIENT_TO = `rgba(${RED_GRADIENT_BASE.join()}, 0.30)`;
 export const RED_GRADIENT = `linear-gradient(180deg, ${RED_GRADIENT_FROM} 0%, ${RED_GRADIENT_TO} 30%)`;

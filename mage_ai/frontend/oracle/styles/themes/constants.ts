@@ -58,6 +58,8 @@ export type ThemeType = {
     wind500: string,
   },
   chart: {
+    gradientBasePrimary: number[],
+    gradientBaseSecondary: number[],
     gradientFromPrimary: string,
     gradientFromSecondary: string,
     gradientToPrimary: string,
