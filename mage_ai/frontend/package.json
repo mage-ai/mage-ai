@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@types/react-table": "^7.7.12",
-    "@uiw/react-textarea-code-editor": "1.4.4",
     "@visx/axis": "^2.10.0",
     "@visx/curve": "^2.1.0",
     "@visx/event": "^2.6.0",
@@ -36,6 +35,7 @@
     "next": "12.1.6",
     "next-remove-imports": "^1.0.6",
     "react": "18.1.0",
+    "react-ace": "^10.1.0",
     "react-dom": "18.1.0",
     "react-hooks-global-state": "^2.0.0-rc.0",
     "react-loading": "^2.0.3",

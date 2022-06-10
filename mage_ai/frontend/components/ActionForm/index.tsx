@@ -1,7 +1,17 @@
 import React, { useContext, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
-import '@uiw/react-textarea-code-editor/dist.css';
+
+/* ACE EDITOR ADD ONS
+  // Import the style and colors for Python code.
+  import 'ace-builds/src-noconflict/ace';
+  import 'ace-builds/src-noconflict/mode-python';
+
+  Extensions if we want to make our coding editor even better.
+  import 'ace-builds/src-noconflict/ext-language_tools';
+  import 'ace-builds/src-noconflict/ext-beautify';
+  // Note these would go under the dynamic function, due to NextJs Render issues.
+*/
 
 import ActionPayloadType, {
   ActionPayloadOverrideType,
@@ -35,6 +45,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
+import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 type ActionFormProps = {
   actionType: ActionTypeEnum;
@@ -52,7 +63,12 @@ type ActionFormProps = {
 };
 
 const CodeEditor = dynamic(
-  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  async () => {
+    const ace = await import('react-ace');
+    require('ace-builds/src-noconflict/mode-python');
+    require('ace-builds/src-noconflict/ace');
+    return ace;
+  },
   {
     ssr: false,
   },
@@ -179,29 +195,38 @@ function ActionForm({
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
-                // @ts-ignore
-                language="python"
-                minHeight={code.multiline ? UNIT * 12 : null}
+                fontSize={REGULAR_FONT_SIZE}
+                highlightActiveLine={true}
+                maxLines={MAX_LINES_ACTIONS}
+                minLines={MIN_LINES_ACTIONS}
+                mode="python"
                 onChange={e => {
-                  setActionCodeState(e.target.value);
+                  payload['action_code'] = e;
+                  setActionCodeState(payload.action_code);
                   setCustomCodeState({
                     actionType,
                     featureSetId,
-                    newValue: e.target.value,
+                    newValue: e,
                   });
                 }}
-                padding={UNIT * 2}
+                setOptions={{
+                  showLineNumbers: true,
+                  tabSize: 4,
+                  useWorker: false,
+                }}
+                showGutter={true}
+                showPrintMargin={true}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
                   fontSize: REGULAR_FONT_SIZE,
-                  maxHeight: `calc(100vh - ${UNIT * 42}px)`,
                   overflow: 'auto',
-                  tabSize: 4,
+                  width: 'inherit',
                 }}
                 value={actionCode
                   || (getCustomCodeState({ actionType, featureSetId }) || code.default)
                 }
+                wrapEnabled
               />
             )}
           </Spacing>
@@ -309,6 +334,7 @@ function ActionForm({
               <TextInput
                 // @ts-ignore
                 compact
+                fullWidth
                 onChange={e => updatePayload({
                   action_options: {
                     ...actionOptions,
@@ -316,7 +342,6 @@ function ActionForm({
                   },
                 })}
                 value={optionValue}
-                width={UNIT * 40}
               />
             );
           }

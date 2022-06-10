@@ -1,24 +1,26 @@
 import React, { useContext } from 'react';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
-import '@uiw/react-textarea-code-editor/dist.css';
 
 import Button from '@oracle/elements/Button';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
 import Divider from '@oracle/elements/Divider';
-import FeatureSetType from '@interfaces/FeatureSetType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Link from '@oracle/elements/Link';
 import PanelOld from '@oracle/components/PanelOld';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
+import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2 } from '@oracle/styles/editor/rules';
 
 const CodeEditor = dynamic(
-  () => import('@uiw/react-textarea-code-editor').then((mod) => mod.default),
+  async () => {
+    const ace = await import('react-ace');
+    require('ace-builds/src-noconflict/mode-python');
+    require('ace-builds/src-noconflict/ace');
+    return ace;
+  },
   {
     ssr: false,
   },
@@ -121,17 +123,17 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
-              // @ts-ignore
-              disabled
-              // @ts-ignore
-              language="python"
-              padding={UNIT * 1}
+              maxLines={MAX_LINES_EXPORT_1}
+              minLines={MAX_LINES_EXPORT_1}
+              mode="python"
+              readOnly
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
                 tabSize: 4,
+                width: 'inherit',
               }}
               value={SAMPLE_CLEAN_CODE_EXAMPLE_PIPELINE_ID(pipeline?.id)}
             />
@@ -225,17 +227,17 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
-              // @ts-ignore
-              disabled
-              // @ts-ignore
-              language="python"
-              padding={UNIT * 1}
+              maxLines={MAX_LINES_EXPORT_2}
+              minLines={MAX_LINES_EXPORT_2}
+              mode="python"
+              readOnly
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
                 tabSize: 4,
+                width: 'inherit',
               }}
               value={SAMPLE_CLEAN_CODE_EXAMPLE}
             />
