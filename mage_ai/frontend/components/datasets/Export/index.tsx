@@ -12,7 +12,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
-import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2 } from '@oracle/styles/editor/rules';
+import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2, READ_ONLY } from '@oracle/styles/editor/rules';
 import { AceStyle } from './ace.style';
 
 const CodeEditor = dynamic(
@@ -124,18 +124,18 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
+              highlightActiveLine={false}
               maxLines={MAX_LINES_EXPORT_1}
               minLines={MAX_LINES_EXPORT_1}
               mode="python"
               readOnly
-              setOptions={{
-                cursorStyle: 'slim',
-              }}
+              setOptions={READ_ONLY}
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
+                overflow: 'auto',
                 tabSize: 4,
                 width: 'inherit',
               }}
@@ -235,11 +235,13 @@ function Export({
               minLines={MAX_LINES_EXPORT_2}
               mode="python"
               readOnly
+              setOptions={READ_ONLY}
               style={{
                 backgroundColor: themeContext.monotone.grey100,
                 fontFamily: MONO_FONT_FAMILY_REGULAR,
                 fontSize: REGULAR_FONT_SIZE,
                 lineHeight: `${REGULAR_LINE_HEIGHT}px`,
+                overflow: 'auto',
                 tabSize: 4,
                 width: 'inherit',
               }}
