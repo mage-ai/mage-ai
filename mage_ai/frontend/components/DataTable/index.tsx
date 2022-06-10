@@ -49,6 +49,7 @@ type TableProps = {
 type DataTableProps = {
   columns: string[];
   rows: string[][] | number[][];
+  invalids: number[];
 } & SharedProps;
 
 const Styles = styled.div<{
@@ -353,6 +354,7 @@ function DataTable({
   columnHeaderHeight,
   columns: columnsProp,
   height,
+  invalids,
   renderColumnHeader,
   rows: rowsProp,
   width,
