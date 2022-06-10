@@ -200,7 +200,7 @@ function ActionForm({
                 mode="python"
                 onChange={e => {
                   payload['action_code'] = e;
-                  setActionCodeState(payload.action_code);
+                  setActionCodeState(payload.action_code ?? actionCode);
                   setCustomCodeState({
                     actionType,
                     featureSetId,
@@ -216,7 +216,7 @@ function ActionForm({
                   width: 'inherit',
                 }}
                 value={actionCode
-                  || (getCustomCodeState({ actionType, featureSetId }) || code.default)
+                  ?? (getCustomCodeState({ actionType, featureSetId }) ?? code.default)
                 }
                 wrapEnabled
               />
