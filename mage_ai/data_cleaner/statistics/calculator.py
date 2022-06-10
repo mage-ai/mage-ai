@@ -242,7 +242,9 @@ class StatisticsCalculator:
         invalid_values = series_non_null[invalid_rows]
         data[f'{col}/invalid_values'] = invalid_values[:INVALID_VALUE_SAMPLE_COUNT].tolist()
         invalid_indices = series.index.get_indexer(invalid_values.index)
-        data[f'{col}/invalid_indices'] = invalid_indices[np.where(invalid_indices <= SAMPLE_SIZE)]
+        data[f'{col}/invalid_indices'] = invalid_indices[
+            np.where(invalid_indices <= SAMPLE_SIZE)
+        ].tolist()
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )
