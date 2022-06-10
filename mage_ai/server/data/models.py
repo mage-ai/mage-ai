@@ -1,10 +1,9 @@
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.server.data.base import Model
 import os
 import os.path
-
-SAMPLE_SIZE = 1000
 
 
 # right now, we are writing the models to local files to reduce dependencies
@@ -154,8 +153,9 @@ class FeatureSet(Model):
         )
         if detailed:
             sample_data = self.sample_data
-            datetime_cols = [col for col in sample_data.columns
-                             if 'datetime64' in str(sample_data[col])]
+            datetime_cols = [
+                col for col in sample_data.columns if 'datetime64' in str(sample_data[col])
+            ]
             sample_data[datetime_cols] = sample_data[datetime_cols].astype(str)
             # Filter sample data
             if column is not None:
@@ -180,12 +180,11 @@ class FeatureSet(Model):
             # Deduplicate outlier removal suggestions
             pipeline_dict = self.pipeline.to_dict()
             statistics = self.statistics
-            suggestions_filtered, statistics_updated = \
-                BasePipeline.deduplicate_suggestions(
-                    pipeline_dict['actions'],
-                    suggestions,
-                    statistics,
-                )
+            suggestions_filtered, statistics_updated = BasePipeline.deduplicate_suggestions(
+                pipeline_dict['actions'],
+                suggestions,
+                statistics,
+            )
             obj = merge_dict(
                 obj,
                 dict(

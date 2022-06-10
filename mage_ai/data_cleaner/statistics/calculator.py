@@ -1,15 +1,17 @@
+from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
     NUMBER_TYPES,
-    get_mismatched_rows,
+    find_syntax_errors,
 )
 import math
 import numpy as np
 import pandas as pd
 import traceback
+
 
 INVALID_VALUE_SAMPLE_COUNT = 100
 OUTLIER_SAMPLE_COUNT = 100
@@ -22,6 +24,10 @@ def increment(metric, tags):
 
 
 class StatisticsCalculator:
+    """
+    Key Assumption: statistics are clean - all values of the correct exact type at this point
+    """
+
     def __init__(
         self,
         # s3_client,
@@ -230,9 +236,14 @@ class StatisticsCalculator:
             )
 
         # Detect mismatched formats for some column types
-        invalid_rows = get_mismatched_rows(series_non_null, column_type)
-        data[f'{col}/invalid_value_count'] = len(invalid_rows)
-        data[f'{col}/invalid_values'] = invalid_rows[:INVALID_VALUE_SAMPLE_COUNT]
+        invalid_rows = find_syntax_errors(series_non_null, column_type)
+        data[f'{col}/invalid_value_count'] = invalid_rows.sum()
+        invalid_values = series_non_null[invalid_rows]
+        data[f'{col}/invalid_values'] = invalid_values[:INVALID_VALUE_SAMPLE_COUNT].tolist()
+        invalid_indices = series.index.get_indexer(invalid_values.index)
+        data[f'{col}/invalid_indices'] = invalid_indices[
+            np.where(invalid_indices <= SAMPLE_SIZE)
+        ].tolist()
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )

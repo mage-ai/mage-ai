@@ -1,4 +1,8 @@
-from mage_ai.data_cleaner.column_type_detector import DATETIME, NUMBER_TYPES, REGEX_NUMBER
+from mage_ai.data_cleaner.column_type_detector import (
+    DATETIME,
+    NUMBER_TYPES,
+    REGEX_NUMBER,
+)
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,

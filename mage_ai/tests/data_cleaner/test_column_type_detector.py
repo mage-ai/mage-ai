@@ -10,7 +10,7 @@ from mage_ai.data_cleaner.column_type_detector import (
     TEXT,
     TRUE_OR_FALSE,
     ZIP_CODE,
-    get_mismatched_rows,
+    find_syntax_errors,
     infer_column_types,
     REGEX_NUMBER,
 )
@@ -25,7 +25,7 @@ class ColumnTypeDetectorTests(TestCase):
         self.fake = Faker()
         return super().setUp()
 
-    def test_get_mismatched_rows(self):
+    def test_get_syntax_errors(self):
         df = pd.DataFrame(
             [
                 [1, 'abc@xyz.com', '32132'],
@@ -37,9 +37,9 @@ class ColumnTypeDetectorTests(TestCase):
             ],
             columns=['id', 'email', 'zip_code'],
         )
-        rows1 = get_mismatched_rows(df['id'], 'number')
-        rows2 = get_mismatched_rows(df['email'], 'email')
-        rows3 = get_mismatched_rows(df['zip_code'], 'zip_code')
+        rows1 = df['id'][find_syntax_errors(df['id'], 'number')].tolist()
+        rows2 = df['email'][find_syntax_errors(df['email'], 'email')].tolist()
+        rows3 = df['zip_code'][find_syntax_errors(df['zip_code'], 'zip_code')].tolist()
         self.assertEqual(rows1, [])
         self.assertEqual(rows2, ['test', 'abc12345@'])
         self.assertEqual(rows3, ['abcde'])

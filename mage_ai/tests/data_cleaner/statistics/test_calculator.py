@@ -73,6 +73,42 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['cancelled/completeness'], 1)
         self.assertEqual(data['cancelled/quality'], 'Good')
 
+    def test_calculate_statistics_overview_invalid_indices(self):
+        df = pd.DataFrame(
+            [
+                [1, 'abc@xyz.com', '32132'],
+                [2, 'abc2@xyz.com', '12345'],
+                [3, 'test', '1234'],
+                [4, 'abc@test.net', 'abcde'],
+                [5, 'abc12345@', '54321'],
+                [6, 'abcdef@123.com', '56789'],
+            ],
+            columns=['id', 'email', 'zip_code'],
+        )
+        calculator = StatisticsCalculator(
+            column_types=dict(
+                id='number',
+                email='email',
+                zip_code='zip_code',
+            ),
+        )
+        data = calculator.calculate_statistics_overview(df, is_clean=True)
+
+        self.assertEqual(data['email/invalid_values'], ['test', 'abc12345@'])
+        self.assertTrue((data['email/invalid_indices'] == np.array([2, 4])).all())
+        self.assertEqual(data['email/invalid_value_count'], 2)
+        self.assertEqual(data['email/invalid_value_rate'], 2 / 6)
+
+        self.assertEqual(data['zip_code/invalid_values'], ['abcde'])
+        self.assertTrue((data['zip_code/invalid_indices'] == np.array([3])).all())
+        self.assertEqual(data['zip_code/invalid_value_count'], 1)
+        self.assertEqual(data['zip_code/invalid_value_rate'], 1 / 6)
+
+        self.assertEqual(data['id/invalid_values'], [])
+        self.assertTrue((data['id/invalid_indices'] == np.array([]).astype(int)).all())
+        self.assertEqual(data['id/invalid_value_count'], 0)
+        self.assertEqual(data['id/invalid_value_rate'], 0 / 6)
+
     def test_calculate_statistics_overview_no_cleaning(self):
         calculator = StatisticsCalculator(
             column_types=dict(
