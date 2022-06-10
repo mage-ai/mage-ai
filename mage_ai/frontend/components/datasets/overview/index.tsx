@@ -32,7 +32,8 @@ import {
 import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getFeatureSetInvalidValues } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import {
   greaterThan,
@@ -203,6 +204,10 @@ function DatasetOverview({
     count,
   } = featureSetStats;
 
+  const invalidDatasetStats = statistics ? getFeatureSetInvalidValues(featureSet, selectedColumn) : null;
+  const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
+  console.log("By Column", invalidDatasetStats, "All invalids:", invalidValuesAll);
+
   return (
     <DatasetDetail
       columnsVisible={columnsVisible}
@@ -355,6 +360,7 @@ function DatasetOverview({
           }
           columns={columns}
           height={dataTableHeight}
+          invalids={invalidValuesAll}
           renderColumnHeader={selectedColumn ? null : renderColumnHeader}
           rows={rows}
           width={dataTableWidth}

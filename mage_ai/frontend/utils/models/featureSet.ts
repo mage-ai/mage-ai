@@ -69,10 +69,26 @@ export function getFeatureSetInvalidValues(featureSet, featureUUID) {
 
   const { statistics } = featureSet;
   return {
+    invalid_indices: statistics[`${featureUUID}/invalid_indices`],
     invalid_value_count: statistics[`${featureUUID}/invalid_value_count`],
     invalid_values: statistics[`${featureUUID}/invalid_values`],
   };
 }
+
+export function getFeatureSetInvalidValuesAll(featureSet, features) {
+  if (!featureSet || !featureSet.statistics) {
+    return {};
+  }
+
+  const { statistics } = featureSet;
+  const invalidCells = {};
+  features.forEach(featureUUID => {
+    const invalid_indices = statistics[`${featureUUID}/invalid_indices`];
+    invalidCells[featureUUID] = invalid_indices;
+  });
+  console.log(invalidCells);
+  return invalidCells;
+};
 
 export function deserializeFeatureSet(featureSet: any) {
   const {
