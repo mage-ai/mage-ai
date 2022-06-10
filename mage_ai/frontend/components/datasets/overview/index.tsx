@@ -39,6 +39,8 @@ import {
 } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
+import Button from '@oracle/elements/Button';
+import { Close } from '@oracle/icons';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -226,9 +228,20 @@ function DatasetOverview({
 
       {errorMessages?.length >= 1 && (
         <Spacing mb={5}>
-          <Text bold>
-            Errors
-          </Text>
+          <FlexContainer justifyContent="space-between">
+            <Text bold>
+              Errors
+            </Text>
+            <Button
+              basic
+              iconOnly
+              onClick={() => setErrorMessages(null)}
+              padding="0px"
+              transparent
+            >
+              <Close muted />
+            </Button>
+          </FlexContainer>
           {errorMessages?.map((msg: string) => (
             <Text key={msg} monospace xsmall>
               {msg}
