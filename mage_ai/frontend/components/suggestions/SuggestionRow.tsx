@@ -16,11 +16,10 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { Close, Code } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
+import { MAX_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
-import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -179,12 +178,12 @@ const SuggestionRow = ({
             mode="python"
             readOnly
             setOptions={{
-              showLineNumbers: true,
+              showLineNumbers: false,
               tabSize: 4,
               useWorker: false,
             }}
-            showGutter={true}
-            showPrintMargin={true}
+            showGutter={false}
+            showPrintMargin={false}
             style={{
               backgroundColor: themeContext.monotone.grey100,
               fontFamily: MONO_FONT_FAMILY_REGULAR,
