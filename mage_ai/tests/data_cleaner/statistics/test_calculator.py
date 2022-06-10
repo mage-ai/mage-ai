@@ -95,17 +95,17 @@ class StatisticsCalculatorTest(TestCase):
         data = calculator.calculate_statistics_overview(df, is_clean=True)
 
         self.assertEqual(data['email/invalid_values'], ['test', 'abc12345@'])
-        self.assertEqual(data['email/invalid_indices'], [2, 4])
+        self.assertTrue((data['email/invalid_indices'] == np.array([2, 4])).all())
         self.assertEqual(data['email/invalid_value_count'], 2)
         self.assertEqual(data['email/invalid_value_rate'], 2 / 6)
 
         self.assertEqual(data['zip_code/invalid_values'], ['abcde'])
-        self.assertEqual(data['zip_code/invalid_indices'], [3])
+        self.assertTrue((data['zip_code/invalid_indices'] == np.array([3])).all())
         self.assertEqual(data['zip_code/invalid_value_count'], 1)
         self.assertEqual(data['zip_code/invalid_value_rate'], 1 / 6)
 
         self.assertEqual(data['id/invalid_values'], [])
-        self.assertEqual(data['id/invalid_indices'], [])
+        self.assertTrue((data['id/invalid_indices'] == np.array([]).astype(int)).all())
         self.assertEqual(data['id/invalid_value_count'], 0)
         self.assertEqual(data['id/invalid_value_rate'], 0 / 6)
 

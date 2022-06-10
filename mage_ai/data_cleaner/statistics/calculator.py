@@ -1,3 +1,4 @@
+from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
@@ -10,6 +11,7 @@ import math
 import numpy as np
 import pandas as pd
 import traceback
+
 
 INVALID_VALUE_SAMPLE_COUNT = 100
 OUTLIER_SAMPLE_COUNT = 100
@@ -239,7 +241,8 @@ class StatisticsCalculator:
         data[f'{col}/invalid_value_count'] = invalid_rows.sum()
         invalid_values = series_non_null[invalid_rows]
         data[f'{col}/invalid_values'] = invalid_values[:INVALID_VALUE_SAMPLE_COUNT].tolist()
-        data[f'{col}/invalid_indices'] = invalid_values.index.tolist()
+        invalid_indices = series.index.get_indexer(invalid_values.index)
+        data[f'{col}/invalid_indices'] = invalid_indices[np.where(invalid_indices <= SAMPLE_SIZE)]
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )
