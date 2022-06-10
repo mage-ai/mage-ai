@@ -210,7 +210,9 @@ export function buildRenderColumnHeader({
         />
       );
     } else if (isCategoricalType) {
-      const data = sortByKey(statisticsByColumnArray, 'x').slice(0, 5);
+      const data = sortByKey(sortByKey(statisticsByColumnArray, 'x', {
+        ascending: false,
+      }).slice(0, 5), 'x');
 
       distributionChart = (
         <BarGraphHorizontal
