@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import '@uiw/react-textarea-code-editor/dist.css';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
@@ -173,7 +172,7 @@ const SuggestionRow = ({
         {actionCode && !editing && (
           <CodeEditor
             fontSize={REGULAR_FONT_SIZE}
-            highlightActiveLine={true}
+            highlightActiveLine={false}
             maxLines={MAX_LINES_ACTIONS}
             mode="python"
             readOnly

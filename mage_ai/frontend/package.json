@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@types/react-table": "^7.7.12",
-    "@uiw/react-textarea-code-editor": "1.4.4",
     "@visx/axis": "^2.10.0",
     "@visx/curve": "^2.1.0",
     "@visx/event": "^2.6.0",
