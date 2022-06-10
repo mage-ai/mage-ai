@@ -124,7 +124,6 @@ function Export({
 
           <Spacing mt={2}>
             <CodeEditor
-              highlightActiveLine={false}
               maxLines={MAX_LINES_EXPORT_1}
               minLines={MAX_LINES_EXPORT_1}
               mode="python"

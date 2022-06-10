@@ -11,3 +11,12 @@ export const READ_ONLY: any = {
   tabSize: 4,
   useWorker: false,
 };
+
+export const EDIT_ONLY: any = {
+  highlightActiveLine: true,
+  showGutter: true,
+  showLineNumbers: true,
+  showPrintMargin: true,
+  tabSize: 4,
+  useWorker: false,
+};

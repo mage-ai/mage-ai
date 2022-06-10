@@ -173,7 +173,6 @@ const SuggestionRow = ({
           <CodeEditor
             maxLines={MAX_LINES_ACTIONS}
             mode="python"
-            readOnly
             setOptions={READ_ONLY}
             style={{
               backgroundColor: themeContext.monotone.grey100,

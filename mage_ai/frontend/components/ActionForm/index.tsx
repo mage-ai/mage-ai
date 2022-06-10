@@ -45,7 +45,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
-import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
+import { EDIT_ONLY, MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 type ActionFormProps = {
   actionType: ActionTypeEnum;
@@ -195,8 +195,6 @@ function ActionForm({
           <Spacing mb={3}>
             {code.values === VALUES_TYPE_USER_INPUT && (
               <CodeEditor
-                fontSize={REGULAR_FONT_SIZE}
-                highlightActiveLine={true}
                 maxLines={MAX_LINES_ACTIONS}
                 minLines={MIN_LINES_ACTIONS}
                 mode="python"
@@ -209,13 +207,7 @@ function ActionForm({
                     newValue: e,
                   });
                 }}
-                setOptions={{
-                  showLineNumbers: true,
-                  tabSize: 4,
-                  useWorker: false,
-                }}
-                showGutter={true}
-                showPrintMargin={true}
+                setOptions={EDIT_ONLY}
                 style={{
                   backgroundColor: themeContext.monotone.grey100,
                   fontFamily: MONO_FONT_FAMILY_REGULAR,
