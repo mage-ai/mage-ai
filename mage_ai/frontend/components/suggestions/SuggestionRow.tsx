@@ -19,7 +19,6 @@ import { MAX_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { goToWithQuery } from '@utils/routing';
-import { MAX_LINES_ACTIONS, MIN_LINES_ACTIONS } from '@oracle/styles/editor/rules';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
