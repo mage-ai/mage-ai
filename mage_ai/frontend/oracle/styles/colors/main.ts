@@ -1,6 +1,7 @@
 export const BLACK = '#060606';
 export const BLUE = '#2A60FE';
 export const BLUE_HIGHLIGHT = '#86E2FF';
+export const BLUE_HIGHLIGHT_LIGHT = '#CFF3FF';
 export const BLUE_LIGHT = '#AABFFF';
 export const DARK_GRAY_LINES = '#B9BFCA';
 export const GRAY = '#B1B8C3';

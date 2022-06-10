@@ -14,6 +14,7 @@ import {
   PURPLE_DISABLED,
   PURPLE_LIGHT,
   RED_LIGHT,
+  BLUE_HIGHLIGHT_LIGHT,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -79,9 +80,11 @@ export default {
   chart: {
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
+    backgroundTertiary: BLUE_HIGHLIGHT_LIGHT, 
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
+    tertiary: BLUE_HIGHLIGHT,
   },
   content: {
     active: BLACK,
