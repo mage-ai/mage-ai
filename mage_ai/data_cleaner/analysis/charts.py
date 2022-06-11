@@ -105,36 +105,25 @@ def build_histogram_data(col1, series, column_type):
     )
 
 
-def build_correlation_data(df, col1, features):
-    increment(f'{DD_KEY}.build_correlation_data.start', dict(feature_uuid=col1))
-
-    x = []
-    y = []
-
-    df_copy = df.copy()
-    # for feature in features:
-    #     col2 = feature['uuid']
-    #     column_type = feature['column_type']
-    #     series = df_copy[col2]
-    #     df_copy[col2] = clean_series(series, column_type, dropna=False)
-
-    corr = df_copy.corr()
-    for feature in features:
-        col2 = feature['uuid']
-        if col1 != col2:
-            value = corr[col1].get(col2, None)
-
-            if value is not None:
-                x.append(dict(label=col2))
-                y.append(dict(value=value))
-
-    increment(f'{DD_KEY}.build_correlation_data.succeeded', dict(feature_uuid=col1))
-
-    return dict(
-        type=CHART_TYPE_BAR_HORIZONTAL,
-        x=x,
-        y=y,
-    )
+def build_correlation_data(df):
+    charts = dict()
+    df_corr = df.corr()
+    columns = df_corr.columns
+    for col1 in columns:
+        x = []
+        y = []
+        for col2 in columns:
+            if col1 != col2:
+                value = df_corr[col1].get(col2, None)
+                if value is not None:
+                    x.append(dict(label=col2))
+                    y.append(dict(value=value))
+        charts[col1] = [dict(
+            type=CHART_TYPE_BAR_HORIZONTAL,
+            x=x,
+            y=y,
+        )]
+    return charts
 
 
 def build_time_series_data(df, features, datetime_column):
