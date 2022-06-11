@@ -1,6 +1,7 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { flexbox, FlexboxProps } from 'styled-system';
+import { media } from 'styled-bootstrap-grid';
 
 type FlexContainerProps = {
   children: any | any[];
@@ -10,17 +11,49 @@ type FlexContainerProps = {
   justifyContent?: string;
   offsetHeight?: number;
   relative?: boolean;
+  responsive?: boolean;
   textOverflow?: boolean;
   verticalHeight?: number;
   verticalHeightOffset?: number;
   width?: number;
-  wrap?: boolean;
 } & FlexboxProps;
+
+const SHARED_FLEX_DIRECTION_STYLE = css`
+  flex-direction: column;
+`;
+
+const RESPONSIVE_FLEX_DIRECTION = css`
+  ${media.xs`
+    ${(props: any) => props.responsive && `
+      ${SHARED_FLEX_DIRECTION_STYLE}
+    `}
+  `}
+
+  ${media.sm`
+    ${(props: any) => props.responsive && `
+      ${SHARED_FLEX_DIRECTION_STYLE}
+    `}
+  `}
+
+  ${media.md`
+    ${(props: any) => props.responsive && `
+      ${SHARED_FLEX_DIRECTION_STYLE}
+    `}
+  `}
+  
+  ${media.lg`
+    ${(props: any) => props.responsive && `
+      flex-direction: row;
+    `}
+  `}
+`;
 
 const FlexContainerStyle = styled.div<FlexContainerProps>`
   ${flexbox}
 
   display: flex;
+
+  ${RESPONSIVE_FLEX_DIRECTION}
 
   ${props => props.verticalHeight && `
     height: calc(${props.verticalHeight}vh - ${props.verticalHeightOffset}px);
@@ -46,10 +79,6 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
     min-height: calc(100vh - ${props.offsetHeight}px);
   `}
 
-  ${props => props.justifyContent && `
-    justify-content: ${props.justifyContent};
-  `}
-
   ${props => props.width && `
     width: ${props.width}px;
   `}
@@ -66,13 +95,12 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
   `}
 `;
 
-const FlexContainer = React.forwardRef(({
+const FlexContainer = ({
   children,
   fullHeight,
   verticalHeightOffset = 0,
-  wrap,
   ...props
-}: FlexContainerProps, ref) => (
+}: FlexContainerProps) => (
   <FlexContainerStyle
     {...props}
     fullHeight={fullHeight}
@@ -80,6 +108,6 @@ const FlexContainer = React.forwardRef(({
   >
     {children}
   </FlexContainerStyle>
-));
+);
 
 export default FlexContainer;
