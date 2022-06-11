@@ -206,7 +206,6 @@ function DatasetOverview({
 
   const invalidDatasetStats = statistics ? getFeatureSetInvalidValues(featureSet, selectedColumn) : null;
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
-  console.log('By Column', invalidDatasetStats, 'All invalids:', invalidValuesAll);
 
   return (
     <DatasetDetail
@@ -360,7 +359,7 @@ function DatasetOverview({
           }
           columns={columns}
           height={dataTableHeight}
-          invalids={invalidValuesAll}
+          invalidValues={invalidValuesAll}
           renderColumnHeader={selectedColumn ? null : renderColumnHeader}
           rows={rows}
           width={dataTableWidth}

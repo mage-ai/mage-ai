@@ -86,7 +86,7 @@ export function getFeatureSetInvalidValuesAll(featureSet, features) {
     const invalid_indices = statistics[`${featureUUID}/invalid_indices`];
     invalidCells[featureUUID] = invalid_indices;
   });
-  console.log(invalidCells);
+  console.log("Invalid Cells:", invalidCells);
   return invalidCells;
 };
 

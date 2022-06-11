@@ -28,9 +28,14 @@ const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
 
+type InvalidValueType = {
+  [key: string]: number[];
+};
+
 type SharedProps = {
   columnHeaderHeight?: number;
   height?: number;
+  invalidValues?: InvalidValueType;
   renderColumnHeader?: (column: any, idx: number, opts: {
     width: number;
   }) => any;
@@ -49,7 +54,6 @@ type TableProps = {
 type DataTableProps = {
   columns: string[];
   rows: string[][] | number[][];
-  invalids: number[];
 } & SharedProps;
 
 const Styles = styled.div<{
@@ -97,6 +101,9 @@ const Styles = styled.div<{
         border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
         border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
       `}
+      ${props => props.danger && `
+        background-color: ${(props.theme.monotone || light.monotone).black};
+      `}
 
       :last-child {
         ${props => `
@@ -131,6 +138,7 @@ function Table({
   columns,
   data,
   height,
+  invalidValues,
   renderColumnHeader,
   width,
 }: TableProps) {
@@ -196,6 +204,7 @@ function Table({
     useSticky,
   );
 
+  // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
     const row = rows[index];
     prepareRow(row);
@@ -214,6 +223,8 @@ function Table({
         {row.cells.map((cell, idx: number) => {
           const firstColumn = idx === 0;
           const cellProps = cell.getCellProps();
+          const header = cell.column.id;
+          const isInvalid = invalidValues[header]?.includes(index);
           const cellStyle: {
             [key: string]: number | string;
           } = {
@@ -226,6 +237,10 @@ function Table({
             cellStyle.position = 'sticky';
             cellStyle.textAlign = 'center';
             cellStyle.width = maxWidthOfFirstColumn;
+          }
+
+          if (isInvalid) {
+            cellStyle.background = '#000000';
           }
 
           const cellValue = original[idx - 1];
@@ -354,7 +369,7 @@ function DataTable({
   columnHeaderHeight,
   columns: columnsProp,
   height,
-  invalids,
+  invalidValues,
   renderColumnHeader,
   rows: rowsProp,
   width,
@@ -387,11 +402,12 @@ function DataTable({
         columns={columns}
         data={rowsProp}
         height={height}
+        invalidValues={invalidValues}
         renderColumnHeader={renderColumnHeader}
         width={width}
       />
     </Styles>
-  )
+  );
 }
 
-export default DataTable
+export default DataTable;
