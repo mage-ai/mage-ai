@@ -15,7 +15,7 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import { Close, Code } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
-import { MAX_LINES_ACTIONS } from '@oracle/styles/editor/rules';
+import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { goToWithQuery } from '@utils/routing';
@@ -171,18 +171,9 @@ const SuggestionRow = ({
 
         {actionCode && !editing && (
           <CodeEditor
-            fontSize={REGULAR_FONT_SIZE}
-            highlightActiveLine={false}
             maxLines={MAX_LINES_ACTIONS}
             mode="python"
-            readOnly
-            setOptions={{
-              showLineNumbers: false,
-              tabSize: 4,
-              useWorker: false,
-            }}
-            showGutter={false}
-            showPrintMargin={false}
+            setOptions={READ_ONLY}
             style={{
               backgroundColor: themeContext.monotone.grey100,
               fontFamily: MONO_FONT_FAMILY_REGULAR,
