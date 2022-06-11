@@ -26,6 +26,7 @@ FUNCTION_MAPPING = {
         ActionType.DIFF: column.diff,
         # ActionType.EXPAND_COLUMN: column.expand_column,
         ActionType.FIRST: column.first,
+        ActionType.FIX_SYNTAX_ERRORS: column.fix_syntax_errors,
         ActionType.IMPUTE: column.impute,
         ActionType.LAST: column.last,
         ActionType.MAX: column.max,

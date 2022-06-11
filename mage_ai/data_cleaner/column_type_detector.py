@@ -41,7 +41,7 @@ COLUMN_TYPES = frozenset(
 
 REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$|^\d{1,4}[-\/]{1}\d{1,2}[-\/]{1}\d{1,2}$|^\d{1,2}[-\/]{1}\d{1,2}[-\/]{1}\d{1,4}$|^\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}[Tt ]{1}\d{1,2}:\d{1,2}[:]{0,1}\d{1,2}[\.]{0,1}\d*|(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})[\s,]+(\d{2,4})'
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
-REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+#-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
 REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
@@ -66,17 +66,35 @@ def str_in_set(string, string_set):
 def find_syntax_errors(series, column_type):
     if len(series) == 0:
         return pd.Series([])
+    dtype = series.dtype
+    str_series = series
     if column_type == EMAIL:
-        return ~series.str.match(REGEX_EMAIL)
+        pattern = REGEX_EMAIL
     elif column_type == PHONE_NUMBER:
-        return ~series.str.match(REGEX_PHONE_NUMBER)
+        str_series = str_series.astype(str)
+        pattern = REGEX_PHONE_NUMBER
     elif column_type == ZIP_CODE:
-        str_series = series.astype(str)
-        return ~str_series.str.match(REGEX_ZIP_CODE)
+        str_series = str_series.astype(str)
+        pattern = REGEX_ZIP_CODE
+    elif (
+        column_type in NUMBER_TYPES
+        and not np.issubdtype(dtype, np.integer)
+        and not np.issubdtype(dtype, np.floating)
+    ):
+        str_series = str_series.astype(str)
+        pattern = REGEX_NUMBER
+    elif (
+        column_type == DATETIME
+        and not np.issubdtype(dtype, np.datetime64)
+        and not dtype is pd.Timestamp
+    ):
+        str_series = str_series.astype(str)
+        pattern = REGEX_DATETIME
     else:
         mask = pd.Series([False] * len(series))
         mask.index = series.index
         return mask
+    return ~str_series.str.match(pattern, na=True) & series.notna()
 
 
 def infer_number_type(series, column_name, dtype):

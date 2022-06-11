@@ -7,6 +7,7 @@ from mage_ai.data_cleaner.transformer_actions.column import (
     diff,
     # expand_column,
     first,
+    fix_syntax_errors,
     last,
     remove_column,
     select,
@@ -1379,6 +1380,159 @@ class ColumnTests(TestCase):
                 ),
             ],
         )
+
+    def test_fix_syntax_errors(self):
+        from mage_ai.data_cleaner.transformer_actions.column import find_syntax_errors
+
+        df = pd.DataFrame(
+            [
+                [
+                    '-12.3%',
+                    1000,
+                    '11111',
+                    'email@maile.com',
+                    '12223334444',
+                    '12/13/2014',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    '$2.234',
+                    1050,
+                    '2222-2222',
+                    'er34ee@int.co',
+                    ' 1(000)-111-2222',
+                    'not a time',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    'eieio',
+                    np.nan,
+                    '09876',
+                    None,
+                    '12345678901234',
+                    '4/27/2019 12:34:45',
+                    dt(2022, 6, 27),
+                ],
+                ['-4', 1150, None, 'email@email@email.com', 'qqqqqqqqqqq', None, dt(2022, 6, 27)],
+                [
+                    'not a number',
+                    1150,
+                    '23423932423',
+                    'eeeeeeeee',
+                    '1234',
+                    '12-24-2022',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    None,
+                    1150,
+                    '234.3324',
+                    'agoodemail@network.net',
+                    '43213240089',
+                    'is not time',
+                    dt(2022, 6, 27),
+                ],
+            ],
+            columns=[
+                'number',
+                'number_but_correct_type',
+                'zipcode',
+                'email',
+                'phone_number',
+                'date',
+                'date_but_correct_type',
+            ],
+        )
+        action = dict(
+            action_arguments=[
+                'number',
+                'number_but_correct_type',
+                'zipcode',
+                'email',
+                'phone_number',
+                'date',
+                'date_but_correct_type',
+            ],
+            action_variables=dict(
+                number=dict(feature=dict(column_type='number', uuid='number'), type='feature'),
+                number_but_correct_type=dict(
+                    feature=dict(column_type='number', uuid='number_but_correct_type'),
+                    type='feature',
+                ),
+                zipcode=dict(feature=dict(column_type='zip_code', uuid='zipcode'), type='feature'),
+                email=dict(feature=dict(column_type='email', uuid='email'), type='feature'),
+                phone_number=dict(
+                    feature=dict(column_type='phone_number', uuid='phone_number'),
+                    type='feature',
+                ),
+                date=dict(feature=dict(column_type='datetime', uuid='date'), type='feature'),
+                date_but_correct_type=dict(
+                    feature=dict(column_type='datetime', uuid='date_but_correct_type'),
+                    type='feature',
+                ),
+            ),
+        )
+        new_df = fix_syntax_errors(df, action)
+        expected_df = pd.DataFrame(
+            [
+                [
+                    '-12.3%',
+                    1000,
+                    '11111',
+                    'email@maile.com',
+                    '12223334444',
+                    '12/13/2014',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    '$2.234',
+                    1050,
+                    '2222-2222',
+                    'er34ee@int.co',
+                    ' 1(000)-111-2222',
+                    'invalid',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    np.nan,
+                    np.nan,
+                    '09876',
+                    None,
+                    'invalid',
+                    '4/27/2019 12:34:45',
+                    dt(2022, 6, 27),
+                ],
+                ['-4', 1150, None, 'invalid', 'invalid', None, dt(2022, 6, 27)],
+                [
+                    np.nan,
+                    1150,
+                    'invalid',
+                    'invalid',
+                    'invalid',
+                    '12-24-2022',
+                    dt(2022, 6, 27),
+                ],
+                [
+                    None,
+                    1150,
+                    'invalid',
+                    'agoodemail@network.net',
+                    '43213240089',
+                    'invalid',
+                    dt(2022, 6, 27),
+                ],
+            ],
+            columns=[
+                'number',
+                'number_but_correct_type',
+                'zipcode',
+                'email',
+                'phone_number',
+                'date',
+                'date_but_correct_type',
+            ],
+        )
+        assert_frame_equal(new_df, expected_df)
 
     def test_impute(self):
         from mage_ai.data_cleaner.transformer_actions.column import impute

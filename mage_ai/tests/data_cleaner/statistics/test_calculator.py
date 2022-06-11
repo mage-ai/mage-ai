@@ -76,12 +76,12 @@ class StatisticsCalculatorTest(TestCase):
     def test_calculate_statistics_overview_invalid_indices(self):
         df = pd.DataFrame(
             [
-                [1, 'abc@xyz.com', '32132'],
-                [2, 'abc2@xyz.com', '12345'],
-                [3, 'test', '1234'],
+                [1, 'abc@xyz.com', 32132],
+                [2, None, 12345],
+                [3, 'test', 1234],
                 [4, 'abc@test.net', 'abcde'],
-                [5, 'abc12345@', '54321'],
-                [6, 'abcdef@123.com', '56789'],
+                [5, 'abc12345@', 54321],
+                [6, 'abcdef@123.com', 56789],
             ],
             columns=['id', 'email', 'zip_code'],
         )

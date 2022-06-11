@@ -244,6 +244,9 @@ class StatisticsCalculator:
         data[f'{col}/invalid_indices'] = invalid_indices[
             np.where(invalid_indices <= SAMPLE_SIZE)
         ].tolist()
+        data[f'{col}/invalid_value_distribution'] = (
+            invalid_values.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+        )
         data[f'{col}/invalid_value_rate'] = (
             0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
         )

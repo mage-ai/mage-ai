@@ -1,8 +1,41 @@
+from mage_ai.data_cleaner.column_type_detector import (
+    CATEGORY,
+    CATEGORY_HIGH_CARDINALITY,
+    DATETIME,
+    EMAIL,
+    NUMBER,
+    NUMBER_WITH_DECIMALS,
+    TEXT,
+    PHONE_NUMBER,
+    ZIP_CODE,
+)
 import pandas as pd
+import numpy as np
 import re
 
-CONSTANT_IMPUTATION_DEFAULTS = dict(object='missing', datetime=pd.Timestamp.min, number=0)
+CONSTANT_IMPUTATION_DEFAULTS = {
+    CATEGORY: 'missing',
+    CATEGORY_HIGH_CARDINALITY: 'missing',
+    DATETIME: pd.Timestamp.min,
+    EMAIL: 'missing',
+    NUMBER: 0,
+    NUMBER_WITH_DECIMALS: 0,
+    TEXT: 'missing',
+    PHONE_NUMBER: 'missing',
+    ZIP_CODE: 'missing',
+}
 CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
+INVALID_VALUE_PLACEHOLDERS = {
+    CATEGORY: 'invalid',
+    CATEGORY_HIGH_CARDINALITY: 'invalid',
+    DATETIME: 'invalid',
+    EMAIL: 'invalid',
+    NUMBER: np.nan,
+    NUMBER_WITH_DECIMALS: np.nan,
+    TEXT: 'invalid',
+    PHONE_NUMBER: 'invalid',
+    ZIP_CODE: 'invalid',
+}
 
 
 class ActionType:
@@ -18,6 +51,7 @@ class ActionType:
     EXPLODE = 'explode'
     FILTER = 'filter'
     FIRST = 'first'
+    FIX_SYNTAX_ERRORS = 'fix_syntax_errors'
     GROUP = 'group'
     IMPUTE = 'impute'
     JOIN = 'join'
