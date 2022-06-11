@@ -101,10 +101,6 @@ const Styles = styled.div<{
         border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
         border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
       `}
-      ${props => props.danger && `
-        background-color: ${(props.theme.monotone || light.monotone).black};
-      `}
-
       :last-child {
         ${props => `
           border-right: none;
