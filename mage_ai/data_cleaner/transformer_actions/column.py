@@ -1,13 +1,14 @@
 from mage_ai.data_cleaner.column_type_detector import (
     DATETIME,
-    find_syntax_errors,
     NUMBER_TYPES,
     REGEX_NUMBER,
+    find_syntax_errors,
 )
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,
     CURRENCY_SYMBOLS,
+    INVALID_VALUE_PLACEHOLDERS,
     ImputationStrategy,
     NameConventionPatterns,
 )
@@ -81,7 +82,7 @@ def fix_syntax_errors(df, action, **kwargs):
     for column in generate_string_cols(df, columns):
         dtype = action_variables[column]['feature']['column_type']
         mask = find_syntax_errors(df[column], dtype)
-        df.loc[mask, column] = 'invalid'
+        df.loc[mask, column] = INVALID_VALUE_PLACEHOLDERS[dtype]
     return df
 
 
@@ -99,17 +100,9 @@ def impute(df, action, **kwargs):
         df[columns] = df[columns].fillna(df[columns].astype(float).mean(axis=0))
     elif strategy == ImputationStrategy.CONSTANT:
         if value is None:
-            col_by_type = {}
             for column in columns:
                 dtype = action_variables[column]['feature']['column_type']
-                key = 'object'
-                if dtype == DATETIME:
-                    key = 'datetime'
-                elif dtype in NUMBER_TYPES:
-                    key = 'number'
-                col_by_type.setdefault(key, []).append(column)
-            for key, column_set in col_by_type.items():
-                df[column_set] = df[column_set].fillna(CONSTANT_IMPUTATION_DEFAULTS[key])
+                df[column] = df[column].fillna(CONSTANT_IMPUTATION_DEFAULTS[dtype])
         else:
             df[columns] = df[columns].fillna(value)
     elif strategy == ImputationStrategy.MEDIAN:

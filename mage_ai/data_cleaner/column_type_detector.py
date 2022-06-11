@@ -73,7 +73,7 @@ def find_syntax_errors(series, column_type):
         pattern = REGEX_PHONE_NUMBER
     elif column_type == ZIP_CODE:
         pattern = REGEX_ZIP_CODE
-    elif column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
+    elif column_type in NUMBER_TYPES:
         pattern = REGEX_NUMBER
     elif column_type == DATETIME:
         pattern = REGEX_DATETIME

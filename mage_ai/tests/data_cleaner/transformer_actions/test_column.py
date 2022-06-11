@@ -1494,7 +1494,7 @@ class ColumnTests(TestCase):
                     dt(2022, 6, 27),
                 ],
                 [
-                    'invalid',
+                    np.nan,
                     np.nan,
                     '09876',
                     None,
@@ -1504,7 +1504,7 @@ class ColumnTests(TestCase):
                 ],
                 ['-4', 1150, None, 'invalid', 'invalid', None, dt(2022, 6, 27)],
                 [
-                    'invalid',
+                    np.nan,
                     1150,
                     'invalid',
                     'invalid',
