@@ -204,6 +204,7 @@ function DatasetOverview({
     count,
   } = featureSetStats;
 
+  // TODO: For the future when we want to list all the values in a chart
   const invalidDatasetStats = statistics ? getFeatureSetInvalidValues(featureSet, selectedColumn) : null;
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
 

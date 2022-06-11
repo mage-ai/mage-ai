@@ -240,7 +240,8 @@ function Table({
           }
 
           if (isInvalid) {
-            cellStyle.background = '#000000';
+            cellStyle.background = light.interactive.dangerBorder;
+            cellStyle.color = light.monotone.white;
           }
 
           const cellValue = original[idx - 1];
