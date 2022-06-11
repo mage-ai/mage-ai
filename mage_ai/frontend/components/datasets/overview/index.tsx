@@ -206,7 +206,7 @@ function DatasetOverview({
 
   const invalidDatasetStats = statistics ? getFeatureSetInvalidValues(featureSet, selectedColumn) : null;
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
-  console.log("By Column", invalidDatasetStats, "All invalids:", invalidValuesAll);
+  console.log('By Column', invalidDatasetStats, 'All invalids:', invalidValuesAll);
 
   return (
     <DatasetDetail
@@ -227,8 +227,8 @@ function DatasetOverview({
         containerStyle={{
           position: 'relative',
         }}
-        shadow={false}
         ref={refLoadingBar}
+        shadow={false}
       />
 
       {errorMessages?.length >= 1 && (
@@ -314,8 +314,8 @@ function DatasetOverview({
 
               <Spacing mt={PADDING_UNITS}>
                 <FeatureProfiles
-                  features={features}
                   featureSet={featureSet}
+                  features={features}
                   statistics={statistics}
                 />
               </Spacing>
