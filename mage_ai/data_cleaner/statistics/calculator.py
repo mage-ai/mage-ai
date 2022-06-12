@@ -1,4 +1,3 @@
-from matplotlib.pyplot import text
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
