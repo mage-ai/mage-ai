@@ -1,12 +1,9 @@
+from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
-from mage_ai.data_cleaner.column_type_detector import (
-    DATETIME,
-    NUMBER_TYPES,
-    find_syntax_errors,
-)
 import math
 import numpy as np
 import pandas as pd
@@ -130,7 +127,7 @@ class StatisticsCalculator:
     def __evaluate_timeseries(self, data):
         indices = []
         for column, dtype in self.column_types.items():
-            if data[f'{column}/null_value_rate'] <= 0.1 and dtype == DATETIME:
+            if data[f'{column}/null_value_rate'] <= 0.1 and dtype == ColumnType.DATETIME:
                 indices.append(column)
         return {'is_timeseries': len(indices) != 0, 'timeseries_index': indices}
 
@@ -205,13 +202,25 @@ class StatisticsCalculator:
                         .iloc[:OUTLIER_SAMPLE_COUNT]
                         .tolist()
                     )
-            elif column_type == DATETIME:
+            elif column_type == ColumnType.DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
                 data[f'{col}/median'] = (
                     dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
                 )
                 data[f'{col}/min'] = dates.min().isoformat()
+            elif column_type == ColumnType.TEXT:
+                text_series = series_non_null
+                data[f'{col}/avg_str_length'] = text_series.apply(lambda string: len(string)).mean()
+                text_series = text_series.str.split(' ')
+                data[f'{col}/avg_word_count'] = text_series.apply(lambda words: len(words)).mean()
+                text_series = text_series.explode()
+                text_series = text_series[~text_series.str.match('\s*')]
+                data[f'{col}/word_distribution'] = (
+                    text_series.value_counts().head(VALUE_COUNT_LIMIT).todict()
+                )
+            elif column_type == ColumnType.EMAIL:
+                pass
 
         if column_type not in NUMBER_TYPES:
             if dates is not None:
@@ -226,7 +235,7 @@ class StatisticsCalculator:
             if mode_idx < count_unique:
                 mode = df_value_counts.index[mode_idx]
 
-            if column_type == DATETIME and mode is not None:
+            if column_type == ColumnType.DATETIME and mode is not None:
                 data[f'{col}/mode'] = mode.isoformat()
             else:
                 data[f'{col}/mode'] = mode

@@ -8,14 +8,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     LABEL_TYPE_RANGE,
 )
 from mage_ai.data_cleaner.shared.utils import clean_series
-from mage_ai.data_cleaner.column_type_detector import (
-    CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
-    DATETIME,
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    TRUE_OR_FALSE,
-)
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
 import math
 import numpy as np
@@ -48,7 +41,7 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
     else:
         is_integer = int(parts[1]) == 0
 
-    if NUMBER == column_type and total_interval <= max_buckets and is_integer:
+    if ColumnType.NUMBER == column_type and total_interval <= max_buckets and is_integer:
         number_of_buckets = int(total_interval)
         bucket_interval = 1
     elif bucket_interval > 1:
@@ -60,11 +53,13 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
     for i in range(number_of_buckets):
         min_v = min_value + (i * bucket_interval)
         max_v = min_value + ((i + 1) * bucket_interval)
-        buckets.append(dict(
-            max_value=max_v,
-            min_value=min_v,
-            values=[],
-        ))
+        buckets.append(
+            dict(
+                max_value=max_v,
+                min_value=min_v,
+                values=[],
+            )
+        )
 
     return buckets, bucket_interval
 
@@ -90,10 +85,12 @@ def build_histogram_data(col1, series, column_type):
     y = []
 
     for bucket in buckets:
-        x.append(dict(
-            max=bucket['max_value'],
-            min=bucket['min_value'],
-        ))
+        x.append(
+            dict(
+                max=bucket['max_value'],
+                min=bucket['min_value'],
+            )
+        )
         y.append(dict(value=len(bucket['values'])))
 
     increment(f'{DD_KEY}.build_histogram_data.succeeded', dict(feature_uuid=col1))
@@ -156,7 +153,7 @@ def build_time_series_data(df, features, datetime_column):
         min_value_datetime,
         max_value_datetime,
         TIME_SERIES_BUCKETS,
-        DATETIME,
+        ColumnType.DATETIME,
     )
 
     x = []
@@ -169,16 +166,16 @@ def build_time_series_data(df, features, datetime_column):
         max_value = bucket['max_value']
         min_value = bucket['min_value']
 
-        df_filtered = df_copy[(
-            df_copy[datetime_column] >= min_value
-        ) & (
-            df_copy[datetime_column] < max_value
-        )]
+        df_filtered = df_copy[
+            (df_copy[datetime_column] >= min_value) & (df_copy[datetime_column] < max_value)
+        ]
 
-        x.append(dict(
-            max=max_value,
-            min=min_value,
-        ))
+        x.append(
+            dict(
+                max=max_value,
+                min=min_value,
+            )
+        )
 
         for f in features:
             col = f['uuid']
@@ -194,30 +191,40 @@ def build_time_series_data(df, features, datetime_column):
             y_data = dict(
                 count=series_non_null.size,
                 count_distinct=series_non_null.nunique(),
-                null_value_rate=0 if series_cleaned.size == 0 else series_cleaned.isnull().sum() / series_cleaned.size,
+                null_value_rate=0
+                if series_cleaned.size == 0
+                else series_cleaned.isnull().sum() / series_cleaned.size,
             )
 
-            if column_type in [NUMBER, NUMBER_WITH_DECIMALS]:
+            if column_type in [ColumnType.NUMBER, ColumnType.NUMBER_WITH_DECIMALS]:
                 if len(series_non_null) == 0:
                     average = 0
                 else:
                     average = series_non_null.mean()
-                y_data.update(dict(
-                    average=average,
-                    max=series_non_null.max(),
-                    median=series_non_null.quantile(0.5),
-                    min=series_non_null.min(),
-                    sum=series_non_null.sum(),
-                ))
-            elif column_type in [CATEGORY, CATEGORY_HIGH_CARDINALITY, TRUE_OR_FALSE]:
+                y_data.update(
+                    dict(
+                        average=average,
+                        max=series_non_null.max(),
+                        median=series_non_null.quantile(0.5),
+                        min=series_non_null.min(),
+                        sum=series_non_null.sum(),
+                    )
+                )
+            elif column_type in [
+                ColumnType.CATEGORY,
+                ColumnType.CATEGORY_HIGH_CARDINALITY,
+                ColumnType.TRUE_OR_FALSE,
+            ]:
                 value_counts = series_non_null.value_counts()
                 if len(value_counts.index):
                     value_counts_top = value_counts.sort_values(ascending=False).iloc[:12]
                     mode = value_counts_top.index[0]
-                    y_data.update(dict(
-                        mode=mode,
-                        value_counts=value_counts_top.to_dict(),
-                    ))
+                    y_data.update(
+                        dict(
+                            mode=mode,
+                            value_counts=value_counts_top.to_dict(),
+                        )
+                    )
 
             y_dict[col].append(y_data)
     charts = dict()
@@ -254,9 +261,7 @@ def build_overview_data(
             continue
 
         df_copy[datetime_column] = pd.to_datetime(
-            df[datetime_column],
-            infer_datetime_format=True,
-            errors='coerce'
+            df[datetime_column], infer_datetime_format=True, errors='coerce'
         )
         df_copy[datetime_column] = df_copy[datetime_column].apply(
             lambda x: x if pd.isnull(x) else x.timestamp()
@@ -264,7 +269,9 @@ def build_overview_data(
 
         min_value1 = df_copy[datetime_column].min()
         max_value1 = df_copy[datetime_column].max()
-        buckets, bucket_interval = build_buckets(min_value1, max_value1, TIME_SERIES_BUCKETS, column_type)
+        buckets, bucket_interval = build_buckets(
+            min_value1, max_value1, TIME_SERIES_BUCKETS, column_type
+        )
 
         x = []
         y = []
@@ -273,30 +280,34 @@ def build_overview_data(
             max_value = bucket['max_value']
             min_value = bucket['min_value']
 
-            df_filtered = df_copy[(
-                df_copy[datetime_column] >= min_value
-            ) & (
-                df_copy[datetime_column] < max_value
-            )]
+            df_filtered = df_copy[
+                (df_copy[datetime_column] >= min_value) & (df_copy[datetime_column] < max_value)
+            ]
 
-            x.append(dict(
-                max=max_value,
-                min=min_value,
-            ))
+            x.append(
+                dict(
+                    max=max_value,
+                    min=min_value,
+                )
+            )
 
-            y.append(dict(
-                count=len(df_filtered.index),
-            ))
+            y.append(
+                dict(
+                    count=len(df_filtered.index),
+                )
+            )
 
-        time_series.append(dict(
-            type=CHART_TYPE_LINE_CHART,
-            x=x,
-            x_metadata=dict(
-                label=datetime_column,
-                label_type=LABEL_TYPE_RANGE,
-            ),
-            y=y,
-        ))
+        time_series.append(
+            dict(
+                type=CHART_TYPE_LINE_CHART,
+                x=x,
+                x_metadata=dict(
+                    label=datetime_column,
+                    label_type=LABEL_TYPE_RANGE,
+                ),
+                y=y,
+            )
+        )
 
         increment(f'{DD_KEY}.build_overview_time_series.succeeded', tags)
 
@@ -304,7 +315,7 @@ def build_overview_data(
     Build sample data for scatter plot. Sample data consits of two parts:
     1. Numeric features
     2. Low cardinality categorical features
-    """    
+    """
     if df.shape[0] > SCATTER_PLOT_SAMPLE_COUNT:
         df_sample = df.sample(SCATTER_PLOT_SAMPLE_COUNT).copy()
     else:
@@ -318,14 +329,15 @@ def build_overview_data(
     """
     non_numeric_features = list(set(df.columns) - set(numeric_features))
     non_numeric_nuniques = df_sample[non_numeric_features].nunique()
-    non_numeric_nuniques_filtered = \
-        non_numeric_nuniques[(non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT) &
-                             (non_numeric_nuniques > 1)]
+    non_numeric_nuniques_filtered = non_numeric_nuniques[
+        (non_numeric_nuniques <= SCATTER_PLOT_CATEGORY_LIMIT) & (non_numeric_nuniques > 1)
+    ]
     non_numeric_counts = df_sample[non_numeric_features].count()
     sample_count = df_sample.shape[0]
     non_numeric_counts_filtered = non_numeric_counts[non_numeric_counts > sample_count / 2]
-    eligible_category_features = \
-        set(non_numeric_nuniques_filtered.index) & set(non_numeric_counts_filtered.index)
+    eligible_category_features = set(non_numeric_nuniques_filtered.index) & set(
+        non_numeric_counts_filtered.index
+    )
     if len(eligible_category_features) > 0:
         encoder = MultipleColumnLabelEncoder(input_type=str)
         df_sample_category = encoder.fit_transform(df_sample[eligible_category_features])

@@ -1,16 +1,8 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
-)
-from mage_ai.data_cleaner.column_type_detector import (
-    CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
-    DATETIME,
-    EMAIL,
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    TEXT,
 )
 import pandas as pd
 import re
@@ -61,7 +53,14 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     UPPERCASE_PATTERN = r'^[^a-z]*$'
     LOWERCASE_PATTERN = r'^[^A-Z]*$'
     NON_ALPH_PATTERN = r'[^A-Za-z]'
-    ALPHABETICAL_TYPES = frozenset((CATEGORY_HIGH_CARDINALITY, CATEGORY, TEXT, EMAIL))
+    ALPHABETICAL_TYPES = frozenset(
+        (
+            ColumnType.CATEGORY_HIGH_CARDINALITY,
+            ColumnType.CATEGORY,
+            ColumnType.TEXT,
+            ColumnType.EMAIL,
+        )
+    )
     NON_ALPH_UB = 0.4
     ALPH_RATIO_LB = 0.6
 
@@ -166,7 +165,13 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
     CURRENCY_BODY = rf'(?:{CURR_PREFIX}\s*{NUMBER_PATTERN}|{NUMBER_PATTERN}\s*{CURR_SUFFIX})'
     CURRENCY_PATTERN = re.compile(rf'^\s*(?:\-*\s*{CURRENCY_BODY}|{CURRENCY_BODY}\s*)\s*$')
     CURRENCY_TYPES = frozenset(
-        (CATEGORY, CATEGORY_HIGH_CARDINALITY, TEXT, NUMBER, NUMBER_WITH_DECIMALS)
+        (
+            ColumnType.CATEGORY,
+            ColumnType.CATEGORY_HIGH_CARDINALITY,
+            ColumnType.TEXT,
+            ColumnType.NUMBER,
+            ColumnType.NUMBER_WITH_DECIMALS,
+        )
     )
 
     def evaluate(self, column):
@@ -211,7 +216,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
-    DATE_TYPES = frozenset((DATETIME,))
+    DATE_TYPES = frozenset((ColumnType.DATETIME,))
 
     def evaluate(self, column):
         """

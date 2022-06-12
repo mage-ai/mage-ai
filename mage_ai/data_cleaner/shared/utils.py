@@ -1,10 +1,4 @@
-from mage_ai.data_cleaner.column_type_detector import (
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    DATETIME,
-    PHONE_NUMBER,
-    ZIP_CODE,
-)
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -24,7 +18,7 @@ def clean_series(series, column_type, dropna=True):
         return series_cleaned
 
     dtype = type(series_cleaned.dropna().iloc[0])
-    if column_type == NUMBER or column_type == NUMBER_WITH_DECIMALS:
+    if column_type == ColumnType.NUMBER or column_type == ColumnType.NUMBER_WITH_DECIMALS:
         is_percent = False
         if dtype is str:
             series_cleaned = series_cleaned.str.replace(',', '')
@@ -34,7 +28,7 @@ def clean_series(series, column_type, dropna=True):
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace('%', '')
             series_cleaned = series_cleaned.str.replace(' ', '')
-        if column_type == NUMBER:
+        if column_type == ColumnType.NUMBER:
             try:
                 series_cleaned = series_cleaned.astype(int)
             except ValueError:
@@ -43,12 +37,12 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned = series_cleaned.astype(float)
         if is_percent:
             series_cleaned /= 100
-    elif column_type == DATETIME:
+    elif column_type == ColumnType.DATETIME:
         series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
-    elif column_type == PHONE_NUMBER and dtype is not str:
+    elif column_type == ColumnType.PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
-        series_cleaned = series_cleaned.str.replace(r'\.\d*', '')
-    elif column_type == ZIP_CODE and dtype is not str:
+        series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
+    elif column_type == ColumnType.ZIP_CODE and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
     return series_cleaned
 
@@ -58,9 +52,7 @@ def clean_dataframe(df, column_types, dropna=True):
 
 
 def is_numeric_dtype(df, column, column_type):
-    return column_type in [NUMBER, NUMBER_WITH_DECIMALS] or issubclass(
-        df[column].dtype.type, np.number
-    )
+    return column_type in NUMBER_TYPES or issubclass(df[column].dtype.type, np.number)
 
 
 def wrap_column_name(name: str) -> str:

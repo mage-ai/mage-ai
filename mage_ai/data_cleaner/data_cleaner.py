@@ -1,5 +1,5 @@
-from mage_ai.data_cleaner import column_type_detector
 from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
+from mage_ai.data_cleaner.column_types import column_type_detector
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
@@ -17,9 +17,9 @@ def clean(df, transform=True):
     return cleaner.clean(df, transform=transform)
 
 
-class DataCleaner():
+class DataCleaner:
     def analyze(self, df):
-        """ Analyze a dataframe
+        """Analyze a dataframe
         1. Detect column types
         2. Calculate statisitics
         3. Calculate analysis
@@ -56,8 +56,11 @@ class DataCleaner():
                 df_transformed = pipeline.transform(df, auto=True)
         else:
             df_transformed = df
-        return merge_dict(df_stats, dict(
-            df=df_transformed,
-            suggestions=suggested_actions,
-            pipeline=pipeline,
-        ))
+        return merge_dict(
+            df_stats,
+            dict(
+                df=df_transformed,
+                suggestions=suggested_actions,
+                pipeline=pipeline,
+            ),
+        )

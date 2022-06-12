@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.column_type_detector import DATETIME
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
 import pandas as pd
 
@@ -26,10 +26,9 @@ class Addition(BaseUDF):
         return df_result
 
     def __add_value(self, original_column, value, column_type=None, options={}):
-        if column_type == DATETIME:
+        if column_type == ColumnType.DATETIME:
             time_unit = options.get('time_unit', 'd')
             return (
-                pd.to_datetime(original_column, utc=True) +
-                pd.to_timedelta(value, unit=time_unit)
+                pd.to_datetime(original_column, utc=True) + pd.to_timedelta(value, unit=time_unit)
             ).dt.strftime('%Y-%m-%d %H:%M:%S')
         return original_column + value
