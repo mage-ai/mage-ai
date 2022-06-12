@@ -41,7 +41,7 @@ def clean_series(series, column_type, dropna=True):
         series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
     elif column_type == ColumnTypes.PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
-        series_cleaned = series_cleaned.str.replace(r'\.\d*', '')
+        series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
     elif column_type == ColumnTypes.ZIP_CODE and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
     return series_cleaned
