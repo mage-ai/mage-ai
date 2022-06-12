@@ -39,7 +39,7 @@ class CustomActionTests(TestCase):
             action_type='custom',
             axis='row',
             action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -56,7 +56,7 @@ if type(x) is str else x)
     if series_cleaned.count() == 0:
         return series_cleaned
     first_item = series_cleaned.dropna().iloc[0]
-    if column_type == ColumnTypes.NUMBER or column_type == ColumnTypes.NUMBER_WITH_DECIMALS:
+    if column_type == ColumnType.NUMBER or column_type == ColumnType.NUMBER_WITH_DECIMALS:
         is_percent = False
         if type(first_item) is str:
             series_cleaned = series_cleaned.str.replace(",", "")
@@ -66,7 +66,7 @@ if type(x) is str else x)
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace("%", "")
             series_cleaned = series_cleaned.str.replace(" ", "")
-            if column_type == ColumnTypes.NUMBER:
+            if column_type == ColumnType.NUMBER:
                 try:
                     series_cleaned = series_cleaned.astype(int)
                 except ValueError:
@@ -75,7 +75,7 @@ if type(x) is str else x)
                 series_cleaned = series_cleaned.astype(float)
             if is_percent:
                 series_cleaned /= 100
-    elif column_type == ColumnTypes.DATETIME:
+    elif column_type == ColumnType.DATETIME:
         series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
     return series_cleaned
 
@@ -142,7 +142,7 @@ def add_column(df):
             action_type='custom',
             axis='row',
             action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -159,7 +159,7 @@ if type(x) is str else x)
     if series_cleaned.count() == 0:
         return series_cleaned
     first_item = series_cleaned.dropna().iloc[0]
-    if column_type == ColumnTypes.NUMBER or column_type == ColumnTypes.NUMBER_WITH_DECIMALS:
+    if column_type == ColumnType.NUMBER or column_type == ColumnType.NUMBER_WITH_DECIMALS:
         is_percent = False
         if type(first_item) is str:
             series_cleaned = series_cleaned.str.replace(",", "")
@@ -169,7 +169,7 @@ if type(x) is str else x)
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace("%", "")
             series_cleaned = series_cleaned.str.replace(" ", "")
-            if column_type == ColumnTypes.NUMBER:
+            if column_type == ColumnType.NUMBER:
                 try:
                     series_cleaned = series_cleaned.astype(int)
                 except ValueError:
@@ -178,7 +178,7 @@ if type(x) is str else x)
                 series_cleaned = series_cleaned.astype(float)
             if is_percent:
                 series_cleaned /= 100
-    elif column_type == ColumnTypes.DATETIME:
+    elif column_type == ColumnType.DATETIME:
         series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
     return series_cleaned
 

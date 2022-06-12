@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
 import numpy as np
@@ -18,7 +18,7 @@ def clean_series(series, column_type, dropna=True):
         return series_cleaned
 
     dtype = type(series_cleaned.dropna().iloc[0])
-    if column_type == ColumnTypes.NUMBER or column_type == ColumnTypes.NUMBER_WITH_DECIMALS:
+    if column_type == ColumnType.NUMBER or column_type == ColumnType.NUMBER_WITH_DECIMALS:
         is_percent = False
         if dtype is str:
             series_cleaned = series_cleaned.str.replace(',', '')
@@ -28,7 +28,7 @@ def clean_series(series, column_type, dropna=True):
                 is_percent = True
                 series_cleaned = series_cleaned.str.replace('%', '')
             series_cleaned = series_cleaned.str.replace(' ', '')
-        if column_type == ColumnTypes.NUMBER:
+        if column_type == ColumnType.NUMBER:
             try:
                 series_cleaned = series_cleaned.astype(int)
             except ValueError:
@@ -37,12 +37,12 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned = series_cleaned.astype(float)
         if is_percent:
             series_cleaned /= 100
-    elif column_type == ColumnTypes.DATETIME:
+    elif column_type == ColumnType.DATETIME:
         series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
-    elif column_type == ColumnTypes.PHONE_NUMBER and dtype is not str:
+    elif column_type == ColumnType.PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
         series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
-    elif column_type == ColumnTypes.ZIP_CODE and dtype is not str:
+    elif column_type == ColumnType.ZIP_CODE and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
     return series_cleaned
 

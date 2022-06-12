@@ -5,7 +5,7 @@ from mage_ai.data_cleaner.column_types.column_type_detector import (
     infer_column_types,
     REGEX_NUMBER,
 )
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np
@@ -215,21 +215,21 @@ class ColumnTypeDetectorTests(TestCase):
         self.assertEqual(
             column_types,
             {
-                'true_or_false': ColumnTypes.TRUE_OR_FALSE,
-                'number_with_decimals': ColumnTypes.NUMBER_WITH_DECIMALS,
-                'category': ColumnTypes.CATEGORY,
-                'datetime': ColumnTypes.DATETIME,
-                'text': ColumnTypes.TEXT,
-                'number': ColumnTypes.NUMBER,
-                'number_with_dollars': ColumnTypes.NUMBER_WITH_DECIMALS,
-                'number_with_percentage': ColumnTypes.NUMBER_WITH_DECIMALS,
-                'zip_code': ColumnTypes.ZIP_CODE,
-                'zip_code_with_3_numbers': ColumnTypes.ZIP_CODE,
-                'invalid_zip_code': ColumnTypes.NUMBER,
-                'email': ColumnTypes.EMAIL,
-                'phone_number': ColumnTypes.PHONE_NUMBER,
-                'datetime_abnormal': ColumnTypes.DATETIME,
-                'name': ColumnTypes.TEXT,
+                'true_or_false': ColumnType.TRUE_OR_FALSE,
+                'number_with_decimals': ColumnType.NUMBER_WITH_DECIMALS,
+                'category': ColumnType.CATEGORY,
+                'datetime': ColumnType.DATETIME,
+                'text': ColumnType.TEXT,
+                'number': ColumnType.NUMBER,
+                'number_with_dollars': ColumnType.NUMBER_WITH_DECIMALS,
+                'number_with_percentage': ColumnType.NUMBER_WITH_DECIMALS,
+                'zip_code': ColumnType.ZIP_CODE,
+                'zip_code_with_3_numbers': ColumnType.ZIP_CODE,
+                'invalid_zip_code': ColumnType.NUMBER,
+                'email': ColumnType.EMAIL,
+                'phone_number': ColumnType.PHONE_NUMBER,
+                'datetime_abnormal': ColumnType.DATETIME,
+                'name': ColumnType.TEXT,
             },
         )
 
@@ -351,14 +351,14 @@ class ColumnTypeDetectorTests(TestCase):
         )
         ctypes = infer_column_types(df)
         expected_ctypes = dict(
-            zip_code=ColumnTypes.ZIP_CODE,
-            postal_code=ColumnTypes.ZIP_CODE,
-            bad_column_name=ColumnTypes.NUMBER,
-            string_zips=ColumnTypes.ZIP_CODE,
-            not_string_postal_zips=ColumnTypes.TEXT,
-            int_zips=ColumnTypes.ZIP_CODE,
-            not_int_zips=ColumnTypes.NUMBER,
-            bad_column_name_two=ColumnTypes.NUMBER,
+            zip_code=ColumnType.ZIP_CODE,
+            postal_code=ColumnType.ZIP_CODE,
+            bad_column_name=ColumnType.NUMBER,
+            string_zips=ColumnType.ZIP_CODE,
+            not_string_postal_zips=ColumnType.TEXT,
+            int_zips=ColumnType.ZIP_CODE,
+            not_int_zips=ColumnType.NUMBER,
+            bad_column_name_two=ColumnType.NUMBER,
         )
         self.assertEquals(ctypes, expected_ctypes)
 
@@ -378,4 +378,4 @@ class ColumnTypeDetectorTests(TestCase):
         ctypes = infer_column_types(df)
         for col in ctypes:
             print(col)
-            self.assertEqual(ctypes[col], ColumnTypes.DATETIME)
+            self.assertEqual(ctypes[col], ColumnType.DATETIME)

@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 import numpy as np
 import pandas as pd
@@ -39,12 +39,12 @@ def find_syntax_errors(series, column_type):
         return pd.Series([])
     dtype = series.dtype
     str_series = series
-    if column_type == ColumnTypes.EMAIL:
+    if column_type == ColumnType.EMAIL:
         pattern = REGEX_EMAIL
-    elif column_type == ColumnTypes.PHONE_NUMBER:
+    elif column_type == ColumnType.PHONE_NUMBER:
         str_series = str_series.astype(str)
         pattern = REGEX_PHONE_NUMBER
-    elif column_type == ColumnTypes.ZIP_CODE:
+    elif column_type == ColumnType.ZIP_CODE:
         str_series = str_series.astype(str)
         pattern = REGEX_ZIP_CODE
     elif (
@@ -55,7 +55,7 @@ def find_syntax_errors(series, column_type):
         str_series = str_series.astype(str)
         pattern = REGEX_NUMBER
     elif (
-        column_type == ColumnTypes.DATETIME
+        column_type == ColumnType.DATETIME
         and not np.issubdtype(dtype, np.datetime64)
         and not dtype is pd.Timestamp
     ):
@@ -72,7 +72,7 @@ def infer_number_type(series, column_name, dtype):
     clean_series = series.dropna()
     length = len(clean_series)
     if length == 0:
-        mdtype = ColumnTypes.NUMBER_WITH_DECIMALS
+        mdtype = ColumnType.NUMBER_WITH_DECIMALS
     else:
         correct_phone_nums = (
             (clean_series >= 1e9) & (clean_series < 1e12) & (np.floor(clean_series) == clean_series)
@@ -81,7 +81,7 @@ def infer_number_type(series, column_name, dtype):
             correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
             and 'phone' in column_name.lower()
         ):
-            mdtype = ColumnTypes.PHONE_NUMBER
+            mdtype = ColumnType.PHONE_NUMBER
         else:
             if np.issubdtype(dtype, np.integer):
                 if (
@@ -89,26 +89,26 @@ def infer_number_type(series, column_name, dtype):
                     and clean_series.max() <= 99999
                     and str_in_set(column_name.lower(), RESERVED_ZIP_CODE_WORDS)
                 ):
-                    mdtype = ColumnTypes.ZIP_CODE
+                    mdtype = ColumnType.ZIP_CODE
                 else:
-                    mdtype = ColumnTypes.NUMBER
+                    mdtype = ColumnType.NUMBER
             elif np.issubdtype(dtype, np.floating):
-                mdtype = ColumnTypes.NUMBER_WITH_DECIMALS
+                mdtype = ColumnType.NUMBER_WITH_DECIMALS
     return mdtype
 
 
 def infer_column_type(series, column_name, dtype, kwargs):
     mdtype = None
     if 'datetime64' in str(dtype):
-        mdtype = ColumnTypes.DATETIME
+        mdtype = ColumnType.DATETIME
     elif dtype == 'object':
         mdtype = infer_object_type(series, column_name, kwargs)
     elif dtype == 'bool':
-        mdtype = ColumnTypes.TRUE_OR_FALSE
+        mdtype = ColumnType.TRUE_OR_FALSE
     elif np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer):
         mdtype = infer_number_type(series, column_name, dtype)
     if mdtype in NUMBER_TYPES and series.nunique(dropna=False) == 2:
-        mdtype = ColumnTypes.TRUE_OR_FALSE
+        mdtype = ColumnType.TRUE_OR_FALSE
 
     return mdtype
 
@@ -123,19 +123,19 @@ def infer_object_type(series, column_name, kwargs):
 
     exact_dtype = type(clean_series.iloc[0]) if clean_series.count() else None
     if exact_dtype is list:
-        mdtype = ColumnTypes.TEXT
+        mdtype = ColumnType.TEXT
     elif np.issubdtype(exact_dtype, np.bool_):
         if clean_series_nunique <= 2:
-            mdtype = ColumnTypes.TRUE_OR_FALSE
+            mdtype = ColumnType.TRUE_OR_FALSE
         else:
-            mdtype = ColumnTypes.CATEGORY
+            mdtype = ColumnType.CATEGORY
     elif clean_series_nunique <= 2:
-        mdtype = ColumnTypes.TRUE_OR_FALSE
+        mdtype = ColumnType.TRUE_OR_FALSE
     else:
         length = len(clean_series)
         if all(clean_series.str.match(REGEX_NUMBER)):
             if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
-                mdtype = ColumnTypes.NUMBER_WITH_DECIMALS
+                mdtype = ColumnType.NUMBER_WITH_DECIMALS
             else:
                 lowercase_column_name = column_name.lower()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
@@ -143,50 +143,50 @@ def infer_object_type(series, column_name, kwargs):
                 if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
                     lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
                 ):
-                    mdtype = ColumnTypes.PHONE_NUMBER
+                    mdtype = ColumnType.PHONE_NUMBER
                 elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
                     lowercase_column_name, RESERVED_ZIP_CODE_WORDS
                 ):
-                    mdtype = ColumnTypes.ZIP_CODE
+                    mdtype = ColumnType.ZIP_CODE
                 else:
-                    mdtype = ColumnTypes.NUMBER
+                    mdtype = ColumnType.NUMBER
         else:
             matches = clean_series.str.match(REGEX_DATETIME).sum()
             if matches / length >= DATETIME_MATCHES_THRESHOLD:
-                mdtype = ColumnTypes.DATETIME
+                mdtype = ColumnType.DATETIME
             else:
                 correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
                 correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
                 correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
                 lowercase_column_name = column_name.lower()
                 if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
-                    mdtype = ColumnTypes.EMAIL
+                    mdtype = ColumnType.EMAIL
                 elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
                     lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
                 ):
-                    mdtype = ColumnTypes.PHONE_NUMBER
+                    mdtype = ColumnType.PHONE_NUMBER
                 elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
                     lowercase_column_name, RESERVED_ZIP_CODE_WORDS
                 ):
-                    mdtype = ColumnTypes.ZIP_CODE
+                    mdtype = ColumnType.ZIP_CODE
                 elif series_nunique == 2:
-                    mdtype = ColumnTypes.TRUE_OR_FALSE
+                    mdtype = ColumnType.TRUE_OR_FALSE
                 else:
                     if type(exact_dtype) is list:
-                        mdtype = ColumnTypes.TEXT
+                        mdtype = ColumnType.TEXT
                     elif clean_series_nunique / length >= 0.8:
-                        mdtype = ColumnTypes.TEXT
+                        mdtype = ColumnType.TEXT
                     else:
                         word_count = clean_series.map(lambda x: len(str(x).split(' '))).max()
                         if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
-                            mdtype = ColumnTypes.TEXT
+                            mdtype = ColumnType.TEXT
                         else:
                             if clean_series_nunique <= kwargs.get(
                                 'category_cardinality_threshold', 255
                             ):
-                                mdtype = ColumnTypes.CATEGORY
+                                mdtype = ColumnType.CATEGORY
                             else:
-                                mdtype = ColumnTypes.CATEGORY_HIGH_CARDINALITY
+                                mdtype = ColumnType.CATEGORY_HIGH_CARDINALITY
     return mdtype
 
 

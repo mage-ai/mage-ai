@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
@@ -55,10 +55,10 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
     NON_ALPH_PATTERN = r'[^A-Za-z]'
     ALPHABETICAL_TYPES = frozenset(
         (
-            ColumnTypes.CATEGORY_HIGH_CARDINALITY,
-            ColumnTypes.CATEGORY,
-            ColumnTypes.TEXT,
-            ColumnTypes.EMAIL,
+            ColumnType.CATEGORY_HIGH_CARDINALITY,
+            ColumnType.CATEGORY,
+            ColumnType.TEXT,
+            ColumnType.EMAIL,
         )
     )
     NON_ALPH_UB = 0.4
@@ -166,11 +166,11 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
     CURRENCY_PATTERN = re.compile(rf'^\s*(?:\-*\s*{CURRENCY_BODY}|{CURRENCY_BODY}\s*)\s*$')
     CURRENCY_TYPES = frozenset(
         (
-            ColumnTypes.CATEGORY,
-            ColumnTypes.CATEGORY_HIGH_CARDINALITY,
-            ColumnTypes.TEXT,
-            ColumnTypes.NUMBER,
-            ColumnTypes.NUMBER_WITH_DECIMALS,
+            ColumnType.CATEGORY,
+            ColumnType.CATEGORY_HIGH_CARDINALITY,
+            ColumnType.TEXT,
+            ColumnType.NUMBER,
+            ColumnType.NUMBER_WITH_DECIMALS,
         )
     )
 
@@ -216,7 +216,7 @@ class ConvertCurrencySubRule(ReformatValuesSubRule):
 
 class ReformatDateSubRule(ReformatValuesSubRule):
     DATE_MATCHES_LB = 0.3
-    DATE_TYPES = frozenset((ColumnTypes.DATETIME,))
+    DATE_TYPES = frozenset((ColumnType.DATETIME,))
 
     def evaluate(self, column):
         """

@@ -8,7 +8,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     LABEL_TYPE_RANGE,
 )
 from mage_ai.data_cleaner.shared.utils import clean_series
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.estimators.encoders import MultipleColumnLabelEncoder
 import math
 import numpy as np
@@ -41,7 +41,7 @@ def build_buckets(min_value, max_value, max_buckets, column_type):
     else:
         is_integer = int(parts[1]) == 0
 
-    if ColumnTypes.NUMBER == column_type and total_interval <= max_buckets and is_integer:
+    if ColumnType.NUMBER == column_type and total_interval <= max_buckets and is_integer:
         number_of_buckets = int(total_interval)
         bucket_interval = 1
     elif bucket_interval > 1:
@@ -153,7 +153,7 @@ def build_time_series_data(df, features, datetime_column):
         min_value_datetime,
         max_value_datetime,
         TIME_SERIES_BUCKETS,
-        ColumnTypes.DATETIME,
+        ColumnType.DATETIME,
     )
 
     x = []
@@ -196,7 +196,7 @@ def build_time_series_data(df, features, datetime_column):
                 else series_cleaned.isnull().sum() / series_cleaned.size,
             )
 
-            if column_type in [ColumnTypes.NUMBER, ColumnTypes.NUMBER_WITH_DECIMALS]:
+            if column_type in [ColumnType.NUMBER, ColumnType.NUMBER_WITH_DECIMALS]:
                 if len(series_non_null) == 0:
                     average = 0
                 else:
@@ -211,9 +211,9 @@ def build_time_series_data(df, features, datetime_column):
                     )
                 )
             elif column_type in [
-                ColumnTypes.CATEGORY,
-                ColumnTypes.CATEGORY_HIGH_CARDINALITY,
-                ColumnTypes.TRUE_OR_FALSE,
+                ColumnType.CATEGORY,
+                ColumnType.CATEGORY_HIGH_CARDINALITY,
+                ColumnType.TRUE_OR_FALSE,
             ]:
                 value_counts = series_non_null.value_counts()
                 if len(value_counts.index):

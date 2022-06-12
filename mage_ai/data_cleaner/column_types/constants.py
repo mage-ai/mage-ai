@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ColumnTypes(str, Enum):
+class ColumnType(str, Enum):
     CATEGORY = 'category'
     CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
     DATETIME = 'datetime'
@@ -15,9 +15,9 @@ class ColumnTypes(str, Enum):
 
 
 CATEGORICAL_TYPES = frozenset(
-    [ColumnTypes.CATEGORY, ColumnTypes.CATEGORY_HIGH_CARDINALITY, ColumnTypes.TRUE_OR_FALSE]
+    [ColumnType.CATEGORY, ColumnType.CATEGORY_HIGH_CARDINALITY, ColumnType.TRUE_OR_FALSE]
 )
-NUMBER_TYPES = frozenset([ColumnTypes.NUMBER, ColumnTypes.NUMBER_WITH_DECIMALS])
+NUMBER_TYPES = frozenset([ColumnType.NUMBER, ColumnType.NUMBER_WITH_DECIMALS])
 STRING_TYPES = frozenset(
-    [ColumnTypes.EMAIL, ColumnTypes.PHONE_NUMBER, ColumnTypes.TEXT, ColumnTypes.ZIP_CODE]
+    [ColumnType.EMAIL, ColumnType.PHONE_NUMBER, ColumnType.TEXT, ColumnType.ZIP_CODE]
 )

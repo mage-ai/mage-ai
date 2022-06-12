@@ -3,7 +3,7 @@ from mage_ai.data_cleaner.column_types.constants import (
     CATEGORICAL_TYPES,
     NUMBER_TYPES,
     STRING_TYPES,
-    ColumnTypes,
+    ColumnType,
 )
 from mage_ai.data_cleaner.shared.utils import wrap_column_name
 from mage_ai.data_cleaner.transformer_actions.constants import (
@@ -122,7 +122,7 @@ class CategoricalImputeSubRule(TypeImputeSubRule):
 
 
 class DateTimeImputeSubRule(TypeImputeSubRule):
-    ACCEPTED_DTYPES = frozenset((ColumnTypes.DATETIME,))
+    ACCEPTED_DTYPES = frozenset((ColumnType.DATETIME,))
 
     def accepted_dtypes(self):
         return self.ACCEPTED_DTYPES
@@ -269,7 +269,7 @@ class ImputeValues(BaseRule):
         )
 
         self.rule_map = {}
-        for dtype in ColumnTypes:
+        for dtype in ColumnType:
             rule_iterator = iter(self.rules)
             curr_rule = next(rule_iterator)
             while dtype not in curr_rule.accepted_dtypes():
