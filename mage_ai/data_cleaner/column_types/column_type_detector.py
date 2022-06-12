@@ -1,5 +1,5 @@
-from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnTypes
+from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 import numpy as np
 import pandas as pd
 import re

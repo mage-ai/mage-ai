@@ -1,5 +1,5 @@
-from mage_ai.data_cleaner.column_types import column_type_detector
 from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
+from mage_ai.data_cleaner.column_types import column_type_detector
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer

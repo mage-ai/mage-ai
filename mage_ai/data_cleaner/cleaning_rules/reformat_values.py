@@ -1,9 +1,9 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.column_types.constants import ColumnTypes
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
 )
-from mage_ai.data_cleaner.column_types.constants import ColumnTypes
 import pandas as pd
 import re
 
