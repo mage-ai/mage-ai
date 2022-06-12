@@ -1,40 +1,32 @@
-from mage_ai.data_cleaner.column_type_detector import (
-    CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
-    DATETIME,
-    EMAIL,
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    TEXT,
-    PHONE_NUMBER,
-    ZIP_CODE,
-)
+from mage_ai.data_cleaner.column_types.constants import ColumnTypes
 import pandas as pd
 import numpy as np
 import re
 
 CONSTANT_IMPUTATION_DEFAULTS = {
-    CATEGORY: 'missing',
-    CATEGORY_HIGH_CARDINALITY: 'missing',
-    DATETIME: pd.Timestamp.min,
-    EMAIL: 'missing',
-    NUMBER: 0,
-    NUMBER_WITH_DECIMALS: 0,
-    TEXT: 'missing',
-    PHONE_NUMBER: 'missing',
-    ZIP_CODE: 'missing',
+    ColumnTypes.CATEGORY: 'missing',
+    ColumnTypes.CATEGORY_HIGH_CARDINALITY: 'missing',
+    ColumnTypes.DATETIME: pd.Timestamp.min,
+    ColumnTypes.EMAIL: 'missing',
+    ColumnTypes.NUMBER: 0,
+    ColumnTypes.NUMBER_WITH_DECIMALS: 0,
+    ColumnTypes.TEXT: 'missing',
+    ColumnTypes.TRUE_OR_FALSE: 'missing',
+    ColumnTypes.PHONE_NUMBER: 'missing',
+    ColumnTypes.ZIP_CODE: 'missing',
 }
 CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
 INVALID_VALUE_PLACEHOLDERS = {
-    CATEGORY: 'invalid',
-    CATEGORY_HIGH_CARDINALITY: 'invalid',
-    DATETIME: 'invalid',
-    EMAIL: 'invalid',
-    NUMBER: np.nan,
-    NUMBER_WITH_DECIMALS: np.nan,
-    TEXT: 'invalid',
-    PHONE_NUMBER: 'invalid',
-    ZIP_CODE: 'invalid',
+    ColumnTypes.CATEGORY: 'invalid',
+    ColumnTypes.CATEGORY_HIGH_CARDINALITY: 'invalid',
+    ColumnTypes.DATETIME: 'invalid',
+    ColumnTypes.EMAIL: 'invalid',
+    ColumnTypes.NUMBER: np.nan,
+    ColumnTypes.NUMBER_WITH_DECIMALS: np.nan,
+    ColumnTypes.TEXT: 'invalid',
+    ColumnTypes.TRUE_OR_FALSE: 'invalid',
+    ColumnTypes.PHONE_NUMBER: 'invalid',
+    ColumnTypes.ZIP_CODE: 'invalid',
 }
 
 

@@ -7,24 +7,17 @@ from mage_ai.data_cleaner.analysis.constants import (
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.column_type_detector import (
-    CATEGORY,
-    CATEGORY_HIGH_CARDINALITY,
-    DATETIME,
-    NUMBER,
-    NUMBER_WITH_DECIMALS,
-    TRUE_OR_FALSE,
-)
+from mage_ai.data_cleaner.column_types.constants import ColumnTypes
 import traceback
 
 DD_KEY = 'lambda.analysis_calculator'
 TIMESERIES_COLUMN_TYPES = frozenset(
     [
-        CATEGORY,
-        CATEGORY_HIGH_CARDINALITY,
-        NUMBER,
-        NUMBER_WITH_DECIMALS,
-        TRUE_OR_FALSE,
+        ColumnTypes.CATEGORY,
+        ColumnTypes.CATEGORY_HIGH_CARDINALITY,
+        ColumnTypes.NUMBER,
+        ColumnTypes.NUMBER_WITH_DECIMALS,
+        ColumnTypes.TRUE_OR_FALSE,
     ]
 )
 VERBOSE = False
@@ -106,7 +99,7 @@ class AnalysisCalculator:
 
     @property
     def datetime_features(self):
-        return [f for f in self.features if f['column_type'] == DATETIME]
+        return [f for f in self.features if f['column_type'] == ColumnTypes.DATETIME]
 
     @property
     def numeric_features(self):

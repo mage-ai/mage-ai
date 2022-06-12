@@ -1,6 +1,6 @@
 from datetime import datetime as dt
 from mage_ai.data_cleaner.cleaning_rules.reformat_values import ReformatValues
-from mage_ai.data_cleaner.column_type_detector import infer_column_types
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.tests.base_test import TestCase
 import numpy as np
 import pandas as pd
