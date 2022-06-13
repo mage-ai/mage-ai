@@ -33,7 +33,6 @@ import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
-import { getFeatureSetInvalidValues } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import {
   greaterThan,
@@ -204,8 +203,6 @@ function DatasetOverview({
     count,
   } = featureSetStats;
 
-  // TODO: For the future when we want to list all the values in a chart
-  const invalidDatasetStats = statistics ? getFeatureSetInvalidValues(featureSet, selectedColumn) : null;
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
 
   return (

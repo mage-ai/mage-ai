@@ -75,7 +75,7 @@ export function getFeatureSetInvalidValuesAll(featureSet, features) {
     invalidCells[featureUUID] = invalid_indices;
   });
   return invalidCells;
-};
+}
 
 export function deserializeFeatureSet(featureSet: any) {
   const {
