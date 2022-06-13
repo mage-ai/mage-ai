@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.cleaning_rules.base import STATUS_COMPLETED
 from mage_ai.data_cleaner.cleaning_rules.clean_column_names import CleanColumnNames
+from mage_ai.data_cleaner.cleaning_rules.fix_syntax_errors import FixSyntaxErrors
 from mage_ai.data_cleaner.cleaning_rules.impute_values import ImputeValues
 from mage_ai.data_cleaner.cleaning_rules.reformat_values import ReformatValues
 from mage_ai.data_cleaner.cleaning_rules.remove_collinear_columns import RemoveCollinearColumns
@@ -24,6 +25,7 @@ DEFAULT_RULES = [
     CleanColumnNames,
     RemoveColumnsWithHighEmptyRate,
     RemoveColumnsWithSingleValue,
+    FixSyntaxErrors,
     ReformatValues,
     ImputeValues,
     RemoveCollinearColumns,

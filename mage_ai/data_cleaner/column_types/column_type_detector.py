@@ -1,5 +1,9 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
+from mage_ai.data_cleaner.transformer_actions.constants import (
+    CONSTANT_IMPUTATION_DEFAULTS,
+    INVALID_VALUE_PLACEHOLDERS,
+)
 import numpy as np
 import pandas as pd
 import re
@@ -37,15 +41,21 @@ def str_in_set(string, string_set):
 def find_syntax_errors(series, column_type):
     if len(series) == 0:
         return pd.Series([])
+
     dtype = series.dtype
     str_series = series
+    filter_invalid, filter_null = False, False
+    check_syntax_errors = True
     if column_type == ColumnType.EMAIL:
+        filter_invalid, filter_null = True, True
         pattern = REGEX_EMAIL
     elif column_type == ColumnType.PHONE_NUMBER:
         str_series = str_series.astype(str)
+        filter_invalid, filter_null = True, True
         pattern = REGEX_PHONE_NUMBER
     elif column_type == ColumnType.ZIP_CODE:
         str_series = str_series.astype(str)
+        filter_invalid, filter_null = True, True
         pattern = REGEX_ZIP_CODE
     elif (
         column_type in NUMBER_TYPES
@@ -62,10 +72,18 @@ def find_syntax_errors(series, column_type):
         str_series = str_series.astype(str)
         pattern = REGEX_DATETIME
     else:
-        mask = pd.Series([False] * len(series))
-        mask.index = series.index
-        return mask
-    return ~str_series.str.match(pattern, na=True) & series.notna()
+        check_syntax_errors = False
+        pattern = None
+
+    mask = pd.Series([False] * len(series))
+    mask.index = series.index
+    if check_syntax_errors:
+        mask |= ~str_series.str.match(pattern, na=True)
+        if filter_invalid:
+            mask &= ~str_series.str.match(INVALID_VALUE_PLACEHOLDERS[column_type], na=True)
+        if filter_null:
+            mask &= ~str_series.str.match(CONSTANT_IMPUTATION_DEFAULTS[column_type], na=True)
+    return mask & series.notna()
 
 
 def infer_number_type(series, column_name, dtype):

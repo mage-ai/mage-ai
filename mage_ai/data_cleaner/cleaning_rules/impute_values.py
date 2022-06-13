@@ -191,9 +191,6 @@ class ImputeValues(BaseRule):
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
-        self.action_constructor = ImputeActionConstructor(
-            self.df, self.column_types, self._build_transformer_action_suggestion
-        )
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},
@@ -219,7 +216,9 @@ class ImputeValues(BaseRule):
         if self.strategy_cache[ImputationStrategy.ROW_RM].get('num_missing'):
             strategy_cache_entry = self.strategy_cache[ImputationStrategy.ROW_RM]
             suggestions.append(
-                self.action_constructor(ImputationStrategy.ROW_RM, strategy_cache_entry)
+                self.construct_suggestion_from_strategy(
+                    ImputationStrategy.ROW_RM, strategy_cache_entry
+                )
             )
         else:
             for strategy in self.strategy_cache:
@@ -228,8 +227,91 @@ class ImputeValues(BaseRule):
                     strategy not in self.STRATEGY_BLACKLIST
                     and len(strategy_cache_entry['entries']) != 0
                 ):
-                    suggestions.append(self.action_constructor(strategy, strategy_cache_entry))
+                    suggestions.append(
+                        self.construct_suggestion_from_strategy(strategy, strategy_cache_entry)
+                    )
         return suggestions
+
+    def construct_suggestion_from_strategy(self, strategy, strategy_cache_entry):
+        title = 'Fill in missing values'
+        message = ''
+        action_type = None
+        action_arguments = []
+        action_code = ''
+        action_options = {}
+        action_variables = {}
+        axis = None
+        outputs = []
+
+        if strategy == ImputationStrategy.AVERAGE:
+            message = 'For each column, fill missing entries with the average value.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {'strategy': strategy}
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.CONSTANT:
+            message = 'Fill missing values with a placeholder to mark them as missing.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {
+                'strategy': strategy,
+            }
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.MEDIAN:
+            message = 'For each column, fill missing entries with the median value.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {'strategy': strategy}
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.MODE:
+            message = 'For each column, fill missing entries with the most frequent value.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {'strategy': 'mode'}
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.RANDOM:
+            message = 'For each column, fill missing entries with randomly sampled values.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {'strategy': strategy}
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+        elif strategy == ImputationStrategy.ROW_RM:
+            num_missing = strategy_cache_entry['num_missing']
+            title = 'Remove rows with missing entries'
+            message = f'Delete {num_missing} rows to remove all missing values from the dataset.'
+            action_arguments = self.df_columns
+            action_type = ActionType.FILTER
+            axis = Axis.ROW
+            action_variables = self._build_action_variables(self.df_columns)
+            map_cols = map(wrap_column_name, self.df_columns)
+            action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
+        elif strategy == ImputationStrategy.SEQ:
+            message = 'Fill missing entries using the previously occurring entry in the timeseries.'
+            action_arguments = strategy_cache_entry['entries']
+            action_type = ActionType.IMPUTE
+            axis = Axis.COLUMN
+            action_options = {
+                'strategy': strategy,
+                'timeseries_index': strategy_cache_entry['timeseries_index'],
+            }
+            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+
+        return self._build_transformer_action_suggestion(
+            title,
+            message,
+            action_type,
+            action_arguments,
+            action_code,
+            action_options,
+            action_variables,
+            axis,
+            outputs,
+        )
 
     def evaluate(self):
         if self.df.empty:
@@ -278,107 +360,3 @@ class ImputeValues(BaseRule):
                 except StopIteration:
                     raise RuntimeError(f'No rule found to handle imputation of type {dtype}')
             self.rule_map[dtype] = curr_rule
-
-
-class ImputeActionConstructor:
-    def __init__(self, df, column_types, action_builder):
-        self.df = df
-        self.df_columns = df.columns.tolist()
-        self.column_types = column_types
-        self.action_builder = action_builder
-
-    def __call__(self, strategy, strategy_cache_entry):
-        return self.construct_suggestion_from_strategy(strategy, strategy_cache_entry)
-
-    def construct_suggestion_from_strategy(self, strategy, strategy_cache_entry):
-        title = 'Fill in missing values'
-        message = ''
-        action_type = None
-        action_arguments = []
-        action_code = ''
-        action_options = {}
-        action_variables = {}
-        axis = None
-        outputs = []
-
-        if strategy == ImputationStrategy.AVERAGE:
-            message = 'For each column, fill missing entries with the average value.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-        elif strategy == ImputationStrategy.CONSTANT:
-            message = 'Fill missing values with a placeholder to mark them as missing.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {
-                'strategy': strategy,
-            }
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-        elif strategy == ImputationStrategy.MEDIAN:
-            message = 'For each column, fill missing entries with the median value.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-        elif strategy == ImputationStrategy.MODE:
-            message = 'For each column, fill missing entries with the most frequent value.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {'strategy': 'mode'}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-        elif strategy == ImputationStrategy.RANDOM:
-            message = 'For each column, fill missing entries with randomly sampled values.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-        elif strategy == ImputationStrategy.ROW_RM:
-            num_missing = strategy_cache_entry['num_missing']
-            title = 'Remove rows with missing entries'
-            message = f'Delete {num_missing} rows to remove all missing values from the dataset.'
-            action_arguments = self.df_columns
-            action_type = ActionType.FILTER
-            axis = Axis.ROW
-            action_variables = self.__construct_action_variables(self.df_columns)
-            map_cols = map(wrap_column_name, self.df_columns)
-            action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
-        elif strategy == ImputationStrategy.SEQ:
-            message = 'Fill missing entries using the previously occurring entry in the timeseries.'
-            action_arguments = strategy_cache_entry['entries']
-            action_type = ActionType.IMPUTE
-            axis = Axis.COLUMN
-            action_options = {
-                'strategy': strategy,
-                'timeseries_index': strategy_cache_entry['timeseries_index'],
-            }
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
-
-        return self.action_builder(
-            title,
-            message,
-            action_type,
-            action_arguments,
-            action_code,
-            action_options,
-            action_variables,
-            axis,
-            outputs,
-        )
-
-    def __construct_action_variables(self, columns):
-        variable_set = {}
-        for column_name in columns:
-            variable_set[column_name] = {
-                'feature': {
-                    'column_type': self.column_types[column_name],
-                    'uuid': column_name,
-                },
-                'type': 'feature',
-            }
-        return variable_set

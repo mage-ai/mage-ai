@@ -19,7 +19,7 @@ CURRENCY_SYMBOLS = re.compile(r'(?:[\$\€\¥\₹\元\£]|(?:Rs)|(?:CAD))')
 INVALID_VALUE_PLACEHOLDERS = {
     ColumnType.CATEGORY: 'invalid',
     ColumnType.CATEGORY_HIGH_CARDINALITY: 'invalid',
-    ColumnType.DATETIME: 'invalid',
+    ColumnType.DATETIME: pd.NaT,
     ColumnType.EMAIL: 'invalid',
     ColumnType.NUMBER: np.nan,
     ColumnType.NUMBER_WITH_DECIMALS: np.nan,
