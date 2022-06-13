@@ -1,6 +1,7 @@
 STATUS_NOT_APPLIED = 'not_applied'
 STATUS_COMPLETED = 'completed'
 
+
 class BaseRule:
     def __init__(self, df, column_types, statistics):
         self.df = df
@@ -42,3 +43,15 @@ class BaseRule:
                 outputs=outputs,
             ),
         )
+
+    def build_action_variables(self, columns):
+        variable_set = {}
+        for column_name in columns:
+            variable_set[column_name] = {
+                'feature': {
+                    'column_type': self.column_types[column_name],
+                    'uuid': column_name,
+                },
+                'type': 'feature',
+            }
+        return variable_set

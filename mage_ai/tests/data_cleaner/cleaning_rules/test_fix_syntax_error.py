@@ -19,6 +19,7 @@ class FixSyntaxErrorsTest(TestCase):
                     '12223334444',
                     '12/13/2014',
                     dt(2022, 6, 27),
+                    'a@b.c',
                 ],
                 [
                     '$2.234',
@@ -28,6 +29,7 @@ class FixSyntaxErrorsTest(TestCase):
                     ' 1(000)-111-2222',
                     'not a time',
                     dt(2022, 6, 27),
+                    'b@c.d',
                 ],
                 [
                     'eieio',
@@ -37,6 +39,7 @@ class FixSyntaxErrorsTest(TestCase):
                     '12345678901234',
                     '4/27/2019 12:34:45',
                     dt(2022, 6, 27),
+                    'c@d.e',
                 ],
                 ['-4', 1150, None, 'email@email@email.com', 'qqqqqqqqqqq', None, dt(2022, 6, 27)],
                 [
@@ -47,6 +50,7 @@ class FixSyntaxErrorsTest(TestCase):
                     '1234',
                     '12-24-2022',
                     dt(2022, 6, 27),
+                    'd@e.f',
                 ],
                 [
                     None,
@@ -56,6 +60,7 @@ class FixSyntaxErrorsTest(TestCase):
                     '43213240089',
                     'is not time',
                     dt(2022, 6, 27),
+                    'e@f.g',
                 ],
             ],
             columns=[
@@ -66,6 +71,7 @@ class FixSyntaxErrorsTest(TestCase):
                 'phone_number',
                 'date',
                 'date_but_correct_type',
+                'email_but_all_correct',
             ],
         )
         column_types = {
@@ -76,6 +82,7 @@ class FixSyntaxErrorsTest(TestCase):
             'phone_number': ColumnType.PHONE_NUMBER,
             'date': ColumnType.DATETIME,
             'date_but_correct_type': ColumnType.DATETIME,
+            'email_but_all_correct': ColumnType.DATETIME,
         }
         statistics = {
             'number/invalid_value_rate': 3 / 7,
@@ -84,7 +91,8 @@ class FixSyntaxErrorsTest(TestCase):
             'email/invalid_value_rate': 3 / 7,
             'phone_number/invalid_value_rate': 4 / 7,
             'date/invalid_value_rate': 4 / 7,
-            'date_but_correct_type/invalid_value_rate': 0 / 6,
+            'date_but_correct_type/invalid_value_rate': 0 / 7,
+            'email_but_all_correct/invalid_value_rate': 0 / 7,
         }
         result = FixSyntaxErrors(
             df,
@@ -96,7 +104,7 @@ class FixSyntaxErrorsTest(TestCase):
             result,
             [
                 dict(
-                    title='Fix Syntax Errors',
+                    title='Fix syntax errors',
                     message='Fix syntactical errors to reduce the amount of noise in the data.',
                     status='not_applied',
                     action_payload=dict(

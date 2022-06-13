@@ -1,5 +1,4 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
-from mage_ai.data_cleaner.cleaning_rules.shared import build_action_variables
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
@@ -17,13 +16,11 @@ class FixSyntaxErrors(BaseRule):
         if len(columns_with_syntax_errors):
             suggestions.append(
                 self._build_transformer_action_suggestion(
-                    title='Fix Syntax Errors',
+                    title='Fix syntax errors',
                     message='Fix syntactical errors to reduce the amount of noise in the data.',
                     action_type=ActionType.FIX_SYNTAX_ERRORS,
                     action_arguments=columns_with_syntax_errors,
-                    action_variables=build_action_variables(
-                        columns_with_syntax_errors, self.column_types
-                    ),
+                    action_variables=self.build_action_variables(columns_with_syntax_errors),
                     axis=Axis.COLUMN,
                 )
             )

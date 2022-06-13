@@ -41,46 +41,49 @@ def str_in_set(string, string_set):
 def find_syntax_errors(series, column_type):
     if len(series) == 0:
         return pd.Series([])
+
     dtype = series.dtype
-    invalid_placeholder = INVALID_VALUE_PLACEHOLDERS[column_type]
-    null_placeholder = CONSTANT_IMPUTATION_DEFAULTS[column_type]
-    mask = pd.Series([False] * len(series))
-    mask.index = series.index
+    str_series = series
+    filter_invalid, filter_null = False, False
+    check_syntax_errors = True
     if column_type == ColumnType.EMAIL:
-        placeholder_matches = series.str.match(invalid_placeholder, na=True)
-        null_matches = series.str.match(null_placeholder, na=True)
-        mask |= ~series.str.match(REGEX_EMAIL, na=True) & ~placeholder_matches & ~null_matches
+        filter_invalid, filter_null = True, True
+        pattern = REGEX_EMAIL
     elif column_type == ColumnType.PHONE_NUMBER:
-        str_series = series.astype(str)
-        placeholder_matches = str_series.str.match(invalid_placeholder)
-        null_matches = str_series.str.match(null_placeholder)
-        mask |= (
-            ~str_series.str.match(REGEX_PHONE_NUMBER, na=True)
-            & ~placeholder_matches
-            & ~null_matches
-        )
+        str_series = str_series.astype(str)
+        filter_invalid, filter_null = True, True
+        pattern = REGEX_PHONE_NUMBER
     elif column_type == ColumnType.ZIP_CODE:
-        str_series = series.astype(str)
-        placeholder_matches = str_series.str.match(invalid_placeholder)
-        null_matches = str_series.str.match(null_placeholder)
-        mask |= (
-            ~str_series.str.match(REGEX_ZIP_CODE, na=True) & ~placeholder_matches & ~null_matches
-        )
+        str_series = str_series.astype(str)
+        filter_invalid, filter_null = True, True
+        pattern = REGEX_ZIP_CODE
     elif (
         column_type in NUMBER_TYPES
         and not np.issubdtype(dtype, np.integer)
         and not np.issubdtype(dtype, np.floating)
     ):
-        str_series = series.astype(str)
-        mask |= ~str_series.str.match(REGEX_NUMBER, na=True)
+        str_series = str_series.astype(str)
+        pattern = REGEX_NUMBER
     elif (
         column_type == ColumnType.DATETIME
         and not np.issubdtype(dtype, np.datetime64)
         and not dtype is pd.Timestamp
     ):
-        str_series = series.astype(str)
-        placeholder_matches = str_series.str.match(invalid_placeholder)
-        mask |= ~str_series.str.match(REGEX_DATETIME, na=True) & ~placeholder_matches
+        str_series = str_series.astype(str)
+        filter_invalid = True
+        pattern = REGEX_DATETIME
+    else:
+        check_syntax_errors = False
+        pattern = None
+
+    mask = pd.Series([False] * len(series))
+    mask.index = series.index
+    if check_syntax_errors:
+        mask |= ~str_series.str.match(pattern, na=True)
+        if filter_invalid:
+            mask &= ~str_series.str.match(INVALID_VALUE_PLACEHOLDERS[column_type], na=True)
+        if filter_null:
+            mask &= ~str_series.str.match(CONSTANT_IMPUTATION_DEFAULTS[column_type], na=True)
     return mask & series.notna()
 
 

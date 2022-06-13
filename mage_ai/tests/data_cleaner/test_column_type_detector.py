@@ -36,6 +36,29 @@ class ColumnTypeDetectorTests(TestCase):
         self.assertEqual(rows2, ['test', 'abc12345@'])
         self.assertEqual(rows3, ['abcde'])
 
+    def test_get_syntax_errors_invalid_null_values(self):
+        df = pd.DataFrame(
+            [
+                ['1', 'abc@xyz.com', 'invalid', None, '12-22-34'],
+                ['2', 'missing', None, 'invalid', '4-27-19 12:45:56'],
+                [np.nan, 'test', '1234', None, 'not a date'],
+                [0, 'invalid', 'abcde', 'phone number', pd.NaT],
+                ['4', 'abc12345@', '54321', 'missing', pd.Timestamp.min],
+                ['5', None, 'missing', 'another phone', None],
+            ],
+            columns=['id', 'email', 'zip_code', 'phone_number', 'dates'],
+        )
+        rows1 = df['id'][find_syntax_errors(df['id'], 'number')].tolist()
+        rows2 = df['email'][find_syntax_errors(df['email'], 'email')].tolist()
+        rows3 = df['zip_code'][find_syntax_errors(df['zip_code'], 'zip_code')].tolist()
+        rows4 = df['phone_number'][find_syntax_errors(df['phone_number'], 'phone_number')].tolist()
+        rows5 = df['dates'][find_syntax_errors(df['dates'], 'datetime')].tolist()
+        self.assertEqual(rows1, [])
+        self.assertEqual(rows2, ['test', 'abc12345@'])
+        self.assertEqual(rows3, ['abcde'])
+        self.assertEqual(rows4, ['phone number', 'another phone'])
+        self.assertEqual(rows5, ['not a date'])
+
     def test_number_pattern_matching(self):
         good_number_patterns = [
             '3123452',
