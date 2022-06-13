@@ -18,6 +18,8 @@ prepare it for training AI/ML models.
   />
 </kbd>
 
+<br />
+
 > Join us on
 > **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
 
