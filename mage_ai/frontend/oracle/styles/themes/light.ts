@@ -6,6 +6,7 @@ import {
   GRAY_LINES,
   GRAY,
   LIGHT,
+  LIME,
   PURPLE,
   RED,
   SILVER,
@@ -135,10 +136,15 @@ export default {
     n400: '#BCBEC4',
     n500: '#AEB0B6',
   },
+  percentage: {
+    negative: RED,
+    positive: LIME,
+  },
   progress: {
     negative: RED,
     positive: PURPLE,
   },
+
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
