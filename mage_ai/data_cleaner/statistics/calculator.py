@@ -4,7 +4,6 @@ from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
-from string import punctuation
 import math
 import numpy as np
 import pandas as pd
@@ -230,7 +229,6 @@ class StatisticsCalculator:
             elif column_type == ColumnType.EMAIL:
                 valid_emails = series[~find_syntax_errors(series, ColumnType.EMAIL)]
                 domains = valid_emails.str.extract(EMAIL_DOMAIN_REGEX, expand=False)
-                print(domains)
                 data[f'{col}/domain_distribution'] = (
                     domains.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
