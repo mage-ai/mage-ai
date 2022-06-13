@@ -133,7 +133,7 @@ def build_time_series_data(df, features, datetime_column):
     if datetimes.size <= 1:
         return
 
-    datetimes = pd.to_datetime(datetimes, infer_datetime_format=True, errors='coerce')
+    # datetimes = pd.to_datetime(datetimes, infer_datetime_format=True, errors='coerce')
 
     min_value_datetime = datetimes.min().timestamp()
     max_value_datetime = datetimes.max().timestamp()
@@ -149,7 +149,7 @@ def build_time_series_data(df, features, datetime_column):
     y_dict = dict()
 
     df_copy = df.copy()
-    df_copy[datetime_column] = datetimes.apply(lambda x: x if pd.isnull(x) else x.timestamp())
+    df_copy[datetime_column] = datetimes.view(int) / 10**9
 
     for bucket in buckets:
         max_value = bucket['max_value']
@@ -252,9 +252,7 @@ def build_overview_data(
         df_copy[datetime_column] = pd.to_datetime(
             df[datetime_column], infer_datetime_format=True, errors='coerce'
         )
-        df_copy[datetime_column] = df_copy[datetime_column].apply(
-            lambda x: x if pd.isnull(x) else x.timestamp()
-        )
+        df_copy[datetime_column] = df_copy[datetime_column].view(int) / 10**9
 
         min_value1 = df_copy[datetime_column].min()
         max_value1 = df_copy[datetime_column].max()
