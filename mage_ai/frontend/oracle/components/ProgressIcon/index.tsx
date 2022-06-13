@@ -3,7 +3,6 @@ import styled from 'styled-components';
 
 
 import Button from '@oracle/elements/Button';
-import light from '@oracle/styles/themes/light';
 import Text from '@oracle/elements/Text';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
