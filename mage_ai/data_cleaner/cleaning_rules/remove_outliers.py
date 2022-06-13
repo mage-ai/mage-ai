@@ -89,10 +89,7 @@ class RemoveOutliers(BaseRule):
             outlier_scores = outlier_algorithm.negative_outlier_factor_
             outlier_mask = outlier_scores <= LOF_ANOMALY_SCORE_THRESHOLD
         else:
-            n_estimators = max(100 - count // 10, 25)
-            outlier_algorithm = IsolationForest(
-                n_estimators=n_estimators, n_jobs=-1, random_state=42
-            )
+            outlier_algorithm = IsolationForest(n_estimators=75, n_jobs=-1, random_state=42)
             outlier_algorithm.fit(data)
             outlier_scores = outlier_algorithm.decision_function(data)
             outlier_mask = outlier_scores <= ITREE_ANOMALY_SCORE_THRESHOLD
