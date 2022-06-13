@@ -373,5 +373,10 @@ def kill():
     if thread is not None:
         thread.kill()
         thread.join()
-        if not thread.isAlive():
+        try:
+            alive = thread.isAlive()
+        except AttributeError:
+            # thread's method isAlive() was renamed to is_alive() in python version 3.9
+            alive = thread.is_alive()
+        if not alive:
             print('Flask server is terminated')
