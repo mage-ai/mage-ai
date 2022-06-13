@@ -4,7 +4,7 @@ import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-export const BEFORE_WIDTH = UNIT * 40;
+export const BEFORE_WIDTH = UNIT * 35;
 const AFTER_WIDTH = UNIT * 50;
 
 export const HeaderStyle = styled.div<{
