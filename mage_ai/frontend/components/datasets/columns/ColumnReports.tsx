@@ -149,7 +149,7 @@ function ColumnReports({
   );
 
   return (
-    <FlexContainer justifyContent={'center'}>
+    <FlexContainer justifyContent="center" responsive>
       <Flex flex={1} flexDirection="column">
         <SimpleDataTable
           columnFlexNumbers={[2, 1, 2]}
@@ -159,7 +159,7 @@ function ColumnReports({
           }]}
         />
 
-        <Spacing mt={PADDING_UNITS}>
+        <Spacing my={PADDING_UNITS}>
           <SimpleDataTable
             columnFlexNumbers={[2, 3]}
             columnHeaders={[{ label: 'Statistics' }]}

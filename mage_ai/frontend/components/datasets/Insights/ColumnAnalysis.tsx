@@ -625,6 +625,7 @@ function ColumnAnalysis({
               />
             </ChartContainer>
           }
+          responsive
           right={
             <ChartContainer
               noPadding={!!correlationsRowData}
