@@ -73,12 +73,12 @@ class RemoveOutliers(BaseRule):
         """
         data = df.to_numpy()
         count = data.shape[0]
+        if count <= 1:
+            return None
         if ndim > 20:
             data = self.pca_transformer.fit_transform(data)
         if ndim <= 5:
-            if count == 1:
-                n_neighbors = 1
-            elif count < 10:
+            if count < 10:
                 n_neighbors = 2
             elif count < 500:
                 n_neighbors = count // 10 + 1
@@ -102,7 +102,7 @@ class RemoveOutliers(BaseRule):
                 REMOVE_OUTLIERS_TITLE,
                 f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
                 ActionType.REMOVE,
-                action_arguments=df.index[outlier_mask].tolist(),
+                action_options=dict(rows=df.index[outlier_mask].tolist()),
                 axis=Axis.ROW,
             )
         return None

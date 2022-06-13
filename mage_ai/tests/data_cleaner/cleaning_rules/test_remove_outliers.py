@@ -51,9 +51,11 @@ class RemoveOutliersTests(TestCase):
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',
-                        action_arguments=[0],
+                        action_arguments=[],
                         action_code='',
-                        action_options={},
+                        action_options={
+                            'rows': [0],
+                        },
                         action_variables={},
                         axis='row',
                         outputs=[],
@@ -206,9 +208,11 @@ class RemoveOutliersTests(TestCase):
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',
-                        action_arguments=[20, 24],
+                        action_arguments=[],
                         action_code='',
-                        action_options={},
+                        action_options={
+                            'rows': [20, 24],
+                        },
                         action_variables={},
                         axis='row',
                         outputs=[],
@@ -252,9 +256,11 @@ class RemoveOutliersTests(TestCase):
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',
-                        action_arguments=[0, 7, 18, 27],
+                        action_arguments=[],
                         action_code='',
-                        action_options={},
+                        action_options={
+                            'rows': [0, 7, 18, 27],
+                        },
                         action_variables={},
                         axis='row',
                         outputs=[],

@@ -102,8 +102,11 @@ class BasePipeline:
         suggestions_filtered = [
             s
             for s in suggestions
-            if s['title'] != REMOVE_OUTLIERS_TITLE
-            or s['action_payload']['action_arguments'][0] not in columns_with_outlier_removed
+            if not (
+                s['title'] == REMOVE_OUTLIERS_TITLE
+                and len(s['action_payload']['action_arguments']) != 0
+                and s['action_payload']['action_arguments'][0] in columns_with_outlier_removed
+            )
         ]
         statistics_updated = statistics.copy()
         for col in columns_with_outlier_removed:

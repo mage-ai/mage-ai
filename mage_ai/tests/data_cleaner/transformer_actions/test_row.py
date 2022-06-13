@@ -801,18 +801,22 @@ class RowTests(TestCase):
         )
         action1 = dict(
             action_type='remove',
-            action_arguments=[0, 3, 4, 5],
+            action_arguments=[],
             action_code='',
-            action_options={},
+            action_options={
+                'rows': [0, 3, 4, 5],
+            },
             action_variables={},
             axis='row',
             outputs=[],
         )
         action2 = dict(
             action_type='remove',
-            action_arguments=[-1, 0, 1, 2, 3, 4],
+            action_arguments=[],
             action_code='',
-            action_options={},
+            action_options={
+                'rows': [-1, 0, 1, 2, 3, 4],
+            },
             action_variables={},
             axis='row',
             outputs=[],
