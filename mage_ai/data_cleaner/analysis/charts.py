@@ -75,23 +75,20 @@ def build_histogram_data(col1, series, column_type):
     if bucket_interval == 0:
         return
 
-    for value in series.values:
-        index = math.floor((value - min_value) / bucket_interval)
-        if index >= len(buckets):
-            index = len(buckets) - 1
-        buckets[index]['values'].append(value)
+    bins = [b['min_value'] for b in buckets] + [buckets[-1]['max_value']]
+    count, _ = np.histogram(series, bins=bins)
 
     x = []
     y = []
 
-    for bucket in buckets:
+    for idx, bucket in enumerate(buckets):
         x.append(
             dict(
                 max=bucket['max_value'],
                 min=bucket['min_value'],
             )
         )
-        y.append(dict(value=len(bucket['values'])))
+        y.append(dict(value=count[idx]))
 
     increment(f'{DD_KEY}.build_histogram_data.succeeded', dict(feature_uuid=col1))
 
