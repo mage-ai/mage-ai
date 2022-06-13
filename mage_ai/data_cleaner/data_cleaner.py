@@ -12,9 +12,9 @@ def analyze(df):
     return cleaner.analyze(df)
 
 
-def clean(df, transform=True):
+def clean(df, column_types={}, transform=True):
     cleaner = DataCleaner()
-    return cleaner.clean(df, transform=transform)
+    return cleaner.clean(df, column_types=column_types, transform=transform)
 
 
 class DataCleaner:
@@ -25,8 +25,10 @@ class DataCleaner:
         3. Calculate analysis
         """
         with timer('data_cleaner.infer_column_types'):
+            print(f'old column_types: {column_types}')
             column_types = column_type_detector.infer_column_types(df, column_types=column_types)
         with timer('data_cleaner.clean_series'):
+            print(f'new column_types: {column_types}')
             df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types).process(df, is_clean=True)

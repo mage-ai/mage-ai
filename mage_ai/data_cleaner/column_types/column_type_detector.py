@@ -214,7 +214,7 @@ def infer_column_types(df, **kwargs):
     new_cols = [col for col in df_columns if col not in column_types]
     columns = [df[col] for col in new_cols]
     kwarg_list = [kwargs] * len(new_cols)
-    ctypes = column_types.copy()
+    ctypes = {k: v for k, v in column_types.items() if k in df_columns}
     num_entries = len(df)
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
         types = run_parallel_multiple_args(
