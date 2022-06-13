@@ -1,6 +1,8 @@
 [![PyPi](https://img.shields.io/pypi/v/mage-ai?color=orange)](https://pypi.org/project/mage-ai/)
 [![mage-ai](https://img.shields.io/circleci/build/gh/mage-ai/mage-ai?color=%23159946&label=CircleCI&logo=circleci)](#)
 [![License](https://img.shields.io/github/license/mage-ai/mage-ai?color=red)](https://opensource.org/licenses/Apache-2.0)
+[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
+[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
 
 # Intro
 
@@ -9,8 +11,6 @@ that helps you
 <b>clean data</b> and
 prepare it for training AI/ML models.
 
-[![Join Slack](https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack)](https://join.slack.com/t/mageai/shared_invite/zt-1adn34w4m-t~TcnPTlo3~5~d_0raOp6A)
-
 <kbd>
   <img
     alt="Mage demo"
@@ -18,6 +18,8 @@ prepare it for training AI/ML models.
   />
 </kbd>
 
+> Join us on
+> **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
 
 ### What does this do?
 The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
@@ -37,7 +39,7 @@ production environments (e.g. online re-training, inference, etc).
 
 # Quick start
 
-[![Try In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
+Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
@@ -45,11 +47,6 @@ production environments (e.g. online re-training, inference, etc).
 Install the most recent released version:
 ```bash
 $ pip install mage-ai
-```
-
-Or install the current build on GitHub:
-```bash
-$ pip install git+https://github.com/mage-ai/mage-ai.git
 ```
 
 ### Launch tool
@@ -61,11 +58,11 @@ run the following:
 
 ```python
 import mage_ai
-from mage_ai.server.sample_datasets import list_dataset_names, load_dataset
+from mage_ai.server.sample_datasets import load_dataset
 
 
-df = load_dataset(list_dataset_names()[0])
-mage_ai.connect_data(df, name='name_of_dataset')
+df = load_dataset('titanic_survival.csv')
+mage_ai.connect_data(df, name='titanic dataset')
 mage_ai.launch()
 ```
 
@@ -79,10 +76,10 @@ you can clean your data anywhere you can execute Python code:
 
 ```python
 import mage_ai
-import pandas as pd
+from mage_ai.server.sample_datasets import load_dataset
 
 
-df = pd.read_csv('/path_to_data')
+df = load_dataset('titanic_survival.csv')
 
 # Option 1: Clean with pipeline uuid
 df_cleaned = mage_ai.clean(df, pipeline_uuid='uuid_of_cleaning_pipeline')
