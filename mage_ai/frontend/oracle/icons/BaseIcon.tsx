@@ -10,7 +10,9 @@ export type BaseIconProps = {
   earth?: boolean;
   fill?: string;
   muted?: boolean;
+  negative?: boolean;
   opacity?: number;
+  positive?: boolean;
   primary?: boolean;
   secondary?: boolean;
   size?: number;
@@ -95,6 +97,14 @@ export const SHARED_STYLES = css<any>`
 
   ${props => !props.disabled && props.earth && `
     fill: ${(props.theme.brand || light.brand).earth500};
+  `}
+
+  ${props => !props.disabled && props.negative && `
+    fill: ${(props.theme.percentage || light.percentage).negative};
+  `}
+
+  ${props => !props.disabled && props.positive && `
+    fill: ${(props.theme.percentage || light.percentage).positive};
   `}
 `;
 

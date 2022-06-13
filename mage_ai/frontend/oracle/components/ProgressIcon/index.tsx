@@ -23,14 +23,6 @@ const ProgressIconStyle = styled.p<ProgressIconProps>`a
   font-family: ${MONO_FONT_FAMILY_REGULAR};
   font-size: ${REGULAR};
   margin: 0;
-
-  ${props => props.danger &&`
-    color: ${light.percentage.negative}
-  `}
-
-  ${props => !props.danger &&`
-    color: ${light.percentage.positive}
-  `}
 `;
 
 const ProgressIcon = ({
@@ -43,7 +35,7 @@ const ProgressIcon = ({
     { props.danger
       ?
         <Button
-          afterIcon={<ArrowDown fill={light.percentage.negative} />}
+          afterIcon={<ArrowDown negative/>}
           negative
         >
           <Text danger large>
@@ -52,7 +44,7 @@ const ProgressIcon = ({
         </Button>
       :
         <Button
-          afterIcon={<ArrowUp fill={light.percentage.positive} />}
+          afterIcon={<ArrowUp positive />}
           positive
         >
           <Text large positive>
