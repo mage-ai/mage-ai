@@ -12,21 +12,23 @@ def analyze(df):
     return cleaner.analyze(df)
 
 
-def clean(df, transform=True):
+def clean(df, column_types={}, transform=True):
     cleaner = DataCleaner()
-    return cleaner.clean(df, transform=transform)
+    return cleaner.clean(df, column_types=column_types, transform=transform)
 
 
 class DataCleaner:
-    def analyze(self, df):
+    def analyze(self, df, column_types={}):
         """Analyze a dataframe
         1. Detect column types
         2. Calculate statisitics
         3. Calculate analysis
         """
         with timer('data_cleaner.infer_column_types'):
-            column_types = column_type_detector.infer_column_types(df)
+            print(f'old column_types: {column_types}')
+            column_types = column_type_detector.infer_column_types(df, column_types=column_types)
         with timer('data_cleaner.clean_series'):
+            print(f'new column_types: {column_types}')
             df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types).process(df, is_clean=True)
@@ -38,8 +40,8 @@ class DataCleaner:
             statistics=statistics,
         )
 
-    def clean(self, df, transform=True):
-        df_stats = self.analyze(df)
+    def clean(self, df, column_types={}, transform=True):
+        df_stats = self.analyze(df, column_types=column_types)
         df = clean_dataframe(df, df_stats['column_types'])
         pipeline = BasePipeline()
         if df_stats['statistics']['is_timeseries']:

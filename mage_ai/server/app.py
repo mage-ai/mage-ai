@@ -279,7 +279,11 @@ def update_pipeline(id):
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
         df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
-        result = clean_data(df_transformed, transform=False)
+        result = clean_data(
+            df_transformed,
+            column_types=feature_set.metadata.get('column_types', {}),
+            transform=False,
+        )
         prev_version = len(pipeline.pipeline.actions)
         pipeline.pipeline = clean_pipeline
         feature_set.write_files(result, prev_version=prev_version)

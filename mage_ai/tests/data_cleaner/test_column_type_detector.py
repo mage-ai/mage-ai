@@ -6,6 +6,7 @@ from mage_ai.data_cleaner.column_types.column_type_detector import (
     REGEX_NUMBER,
 )
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np
@@ -96,143 +97,7 @@ class ColumnTypeDetectorTests(TestCase):
             self.assertIsNone(match)
 
     def test_infer_column_types(self):
-        columns = [
-            'true_or_false',
-            'number_with_decimals',
-            'category',
-            'datetime',
-            'text',
-            'number',
-            'number_with_dollars',
-            'number_with_percentage',
-            'zip_code',
-            'zip_code_with_3_numbers',
-            'invalid_zip_code',
-            'email',
-            'phone_number',
-            'datetime_abnormal',
-            'name',
-        ]
-        table = [
-            [
-                '1',
-                '3',
-                'male',
-                '2020-1-1',
-                '1.0',
-                '1',
-                3,
-                '30%',
-                '10128-1213',
-                123,
-                123,
-                'fire@mage.ai',
-                '123-456-7890',
-                'May 4, 2021, 6:35 PM',
-                self.fake.name(),
-            ],
-            [
-                '1',
-                '12.0',
-                'female',
-                '2020-07-13',
-                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                '2',
-                '€4',
-                '12.32%',
-                12345,
-                1234,
-                1234,
-                'mage@fire.com',
-                '(123) 456-7890',
-                'Feb 17, 2021, 2:57 PM',
-                self.fake.name(),
-            ],
-            [
-                '1',
-                '0',
-                'machine',
-                '2020-06-25 01:02',
-                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                '3',
-                '¥5,000',
-                '50%',
-                '12345',
-                12345,
-                12345,
-                'fire_mage@mage.com',
-                '1234567890',
-                'Feb 18, 2021, 2:57 PM',
-                self.fake.name(),
-            ],
-            [
-                0,
-                '40.7',
-                'mutant',
-                '2020-12-25 01:02:03',
-                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                '4',
-                'Rs 5,000.01',
-                '20%',
-                '12345',
-                12345,
-                123456,
-                'mage-fire@mage.ai',
-                '1234567',
-                'Feb 19, 2021, 2:57 PM',
-                self.fake.name(),
-            ],
-            [
-                0,
-                '40.7',
-                'alien',
-                '2020-12-25T01:02:03.000Z',
-                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
-                '4',
-                '-10128,121.3123元',
-                '18%',
-                '01234',
-                12345,
-                12,
-                'fire+1@mage.ai',
-                '(123)456-7890',
-                'Feb 20, 2021, 2:57 PM',
-                self.fake.name(),
-            ],
-        ]
-        date_formats = [
-            '01/1/2019',
-            '1/1/2019',
-            '1/21/2019',
-            '11/1/2019',
-            '2020/01/1',
-            '2020/1/01',
-            '2020/1/1',
-            'Pending',
-        ]
-
-        for date_format in date_formats:
-            table.append(
-                [
-                    0,
-                    '40.7',
-                    'mutant',
-                    date_format,
-                    self.fake.text(),
-                    4,
-                    '$5,000.01',
-                    '15.32%',
-                    '01234',
-                    12345,
-                    12,
-                    'fire+1@mage.ai',
-                    '(123)456-7890',
-                    'Feb 18, 2021, 2:57 PM',
-                    self.fake.name(),
-                ]
-            )
-
-        df = pd.DataFrame(table, columns=columns)
+        df = self.__build_test_df()
         column_types = infer_column_types(df)
 
         self.assertEqual(
@@ -254,6 +119,32 @@ class ColumnTypeDetectorTests(TestCase):
                 'datetime_abnormal': ColumnType.DATETIME,
                 'name': ColumnType.TEXT,
             },
+        )
+
+    def test_infer_column_types_with_existing_column_types(self):
+        df = self.__build_test_df()
+        existing_column_types = {
+            'true_or_false': ColumnType.TRUE_OR_FALSE,
+            'number_with_decimals': ColumnType.NUMBER,
+            'category': ColumnType.CATEGORY_HIGH_CARDINALITY,
+            'datetime': ColumnType.DATETIME,
+            'text': ColumnType.TEXT,
+            'number': ColumnType.NUMBER_WITH_DECIMALS,
+            'number_with_dollars': ColumnType.NUMBER,
+            'number_with_percentage': ColumnType.NUMBER,
+        }
+        column_types = infer_column_types(df, column_types=existing_column_types)
+        self.assertEqual(
+            column_types,
+            merge_dict(existing_column_types, {
+                'zip_code': ColumnType.ZIP_CODE,
+                'zip_code_with_3_numbers': ColumnType.ZIP_CODE,
+                'invalid_zip_code': ColumnType.NUMBER,
+                'email': ColumnType.EMAIL,
+                'phone_number': ColumnType.PHONE_NUMBER,
+                'datetime_abnormal': ColumnType.DATETIME,
+                'name': ColumnType.TEXT,
+            }),
         )
 
     def test_phone_number_recognition(self):
@@ -402,3 +293,143 @@ class ColumnTypeDetectorTests(TestCase):
         for col in ctypes:
             print(col)
             self.assertEqual(ctypes[col], ColumnType.DATETIME)
+
+    def __build_test_df(self):
+        columns = [
+            'true_or_false',
+            'number_with_decimals',
+            'category',
+            'datetime',
+            'text',
+            'number',
+            'number_with_dollars',
+            'number_with_percentage',
+            'zip_code',
+            'zip_code_with_3_numbers',
+            'invalid_zip_code',
+            'email',
+            'phone_number',
+            'datetime_abnormal',
+            'name',
+        ]
+        table = [
+            [
+                '1',
+                '3',
+                'male',
+                '2020-1-1',
+                '1.0',
+                '1',
+                3,
+                '30%',
+                '10128-1213',
+                123,
+                123,
+                'fire@mage.ai',
+                '123-456-7890',
+                'May 4, 2021, 6:35 PM',
+                self.fake.name(),
+            ],
+            [
+                '1',
+                '12.0',
+                'female',
+                '2020-07-13',
+                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
+                '2',
+                '€4',
+                '12.32%',
+                12345,
+                1234,
+                1234,
+                'mage@fire.com',
+                '(123) 456-7890',
+                'Feb 17, 2021, 2:57 PM',
+                self.fake.name(),
+            ],
+            [
+                '1',
+                '0',
+                'machine',
+                '2020-06-25 01:02',
+                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
+                '3',
+                '¥5,000',
+                '50%',
+                '12345',
+                12345,
+                12345,
+                'fire_mage@mage.com',
+                '1234567890',
+                'Feb 18, 2021, 2:57 PM',
+                self.fake.name(),
+            ],
+            [
+                0,
+                '40.7',
+                'mutant',
+                '2020-12-25 01:02:03',
+                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
+                '4',
+                'Rs 5,000.01',
+                '20%',
+                '12345',
+                12345,
+                123456,
+                'mage-fire@mage.ai',
+                '1234567',
+                'Feb 19, 2021, 2:57 PM',
+                self.fake.name(),
+            ],
+            [
+                0,
+                '40.7',
+                'alien',
+                '2020-12-25T01:02:03.000Z',
+                ' '.join(['t' for i in range(MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES + 1)]),
+                '4',
+                '-10128,121.3123元',
+                '18%',
+                '01234',
+                12345,
+                12,
+                'fire+1@mage.ai',
+                '(123)456-7890',
+                'Feb 20, 2021, 2:57 PM',
+                self.fake.name(),
+            ],
+        ]
+        date_formats = [
+            '01/1/2019',
+            '1/1/2019',
+            '1/21/2019',
+            '11/1/2019',
+            '2020/01/1',
+            '2020/1/01',
+            '2020/1/1',
+            'Pending',
+        ]
+
+        for date_format in date_formats:
+            table.append(
+                [
+                    0,
+                    '40.7',
+                    'mutant',
+                    date_format,
+                    self.fake.text(),
+                    4,
+                    '$5,000.01',
+                    '15.32%',
+                    '01234',
+                    12345,
+                    12,
+                    'fire+1@mage.ai',
+                    '(123)456-7890',
+                    'Feb 18, 2021, 2:57 PM',
+                    self.fake.name(),
+                ]
+            )
+
+        df = pd.DataFrame(table, columns=columns)
+        return df
