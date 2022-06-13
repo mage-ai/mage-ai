@@ -27,13 +27,11 @@ const ProgressIcon = ({
   children,
   ...props
 }: ProgressIconProps) => (
-  <ProgressIconStyle
-    {...props}
-  >
-    { props.danger
+  <ProgressIconStyle>
+    {props.danger
       ?
         <Button
-          afterIcon={<ArrowDown negative/>}
+          afterIcon={<ArrowDown negative size={10}/>}
           negative
         >
           <Text danger large>
@@ -42,10 +40,10 @@ const ProgressIcon = ({
         </Button>
       :
         <Button
-          afterIcon={<ArrowUp positive />}
+          afterIcon={<ArrowUp positive size={10} />}
           positive
         >
-          <Text large positive>
+          <Text positive>
             {props.percentage}%
           </Text>
         </Button>
