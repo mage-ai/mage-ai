@@ -1,3 +1,4 @@
+from functools import reduce
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
@@ -15,6 +16,7 @@ INVALID_VALUE_SAMPLE_COUNT = 100
 OUTLIER_SAMPLE_COUNT = 100
 OUTLIER_ZSCORE_THRESHOLD = 3
 PUNCTUATION = r'[:;\.,\/\\&`"\'\(\)\[\]\{\}]'
+STOP_WORD_LIST = frozenset(['is', 'and', 'yet', 'but', 'a', 'or', 'nor', 'not', 'to', 'the'])
 VALUE_COUNT_LIMIT = 20
 
 
@@ -223,6 +225,16 @@ class StatisticsCalculator:
                     lambda words: [word for word in words if word != '']
                 )
                 data[f'{col}/avg_word_count'] = text_series.apply(lambda words: len(words)).mean()
+                stop_word_count = text_series.apply(
+                    lambda words: reduce(
+                        lambda x, y: x + y,
+                        map(lambda word: 1 if word in STOP_WORD_LIST else 0, words),
+                    )
+                )
+                data[f'{col}/avg_stop_word_count'] = stop_word_count.mean()
+                data[f'{col}/avg_stop_word_rate'] = (
+                    stop_word_count.mean() / data[f'{col}/avg_word_count']
+                )
                 data[f'{col}/word_distribution'] = (
                     text_series.explode().value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
