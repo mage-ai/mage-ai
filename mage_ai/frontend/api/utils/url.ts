@@ -2,7 +2,7 @@ import { queryString } from '@utils/url';
 
 export function getHost() {
   const LOCALHOST = 'localhost';
-  const PORT = 5000;
+  const PORT = 5789;
 
   let host = LOCALHOST;
   let protocol = 'http://';

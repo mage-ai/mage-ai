@@ -95,7 +95,7 @@ run the following command to launch the backend locally.
 $ flask run
 ```
 
-Now visit [http://localhost:5000](http://localhost:5000)
+Now visit [http://localhost:5789](http://localhost:5789)
 to make HTTP requests to the backend server.
 
 #### Using the mage_ai Python package from your machine
