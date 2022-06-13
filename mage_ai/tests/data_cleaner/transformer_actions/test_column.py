@@ -1490,7 +1490,7 @@ class ColumnTests(TestCase):
                     '2222-2222',
                     'er34ee@int.co',
                     ' 1(000)-111-2222',
-                    'invalid',
+                    pd.NaT,
                     dt(2022, 6, 27),
                 ],
                 [
@@ -1518,7 +1518,7 @@ class ColumnTests(TestCase):
                     'invalid',
                     'agoodemail@network.net',
                     '43213240089',
-                    'invalid',
+                    pd.NaT,
                     dt(2022, 6, 27),
                 ],
             ],

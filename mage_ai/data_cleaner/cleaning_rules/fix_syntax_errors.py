@@ -20,7 +20,7 @@ class FixSyntaxErrors(BaseRule):
                     message='Fix syntactical errors to reduce the amount of noise in the data.',
                     action_type=ActionType.FIX_SYNTAX_ERRORS,
                     action_arguments=columns_with_syntax_errors,
-                    action_variables=self.build_action_variables(columns_with_syntax_errors),
+                    action_variables=self._build_action_variables(columns_with_syntax_errors),
                     axis=Axis.COLUMN,
                 )
             )

@@ -17,6 +17,18 @@ class BaseRule:
         """
         return []
 
+    def _build_action_variables(self, columns):
+        variable_set = {}
+        for column_name in columns:
+            variable_set[column_name] = {
+                'feature': {
+                    'column_type': self.column_types[column_name],
+                    'uuid': column_name,
+                },
+                'type': 'feature',
+            }
+        return variable_set
+
     def _build_transformer_action_suggestion(
         self,
         title,
@@ -43,15 +55,3 @@ class BaseRule:
                 outputs=outputs,
             ),
         )
-
-    def build_action_variables(self, columns):
-        variable_set = {}
-        for column_name in columns:
-            variable_set[column_name] = {
-                'feature': {
-                    'column_type': self.column_types[column_name],
-                    'uuid': column_name,
-                },
-                'type': 'feature',
-            }
-        return variable_set

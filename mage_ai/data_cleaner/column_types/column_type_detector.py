@@ -70,7 +70,6 @@ def find_syntax_errors(series, column_type):
         and not dtype is pd.Timestamp
     ):
         str_series = str_series.astype(str)
-        filter_invalid = True
         pattern = REGEX_DATETIME
     else:
         check_syntax_errors = False
