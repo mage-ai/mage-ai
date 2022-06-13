@@ -209,18 +209,6 @@ class StatisticsCalculator:
                     dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
                 )
                 data[f'{col}/min'] = dates.min().isoformat()
-            elif column_type == ColumnType.TEXT:
-                text_series = series_non_null
-                data[f'{col}/avg_str_length'] = text_series.apply(lambda string: len(string)).mean()
-                text_series = text_series.str.split(' ')
-                data[f'{col}/avg_word_count'] = text_series.apply(lambda words: len(words)).mean()
-                text_series = text_series.explode()
-                text_series = text_series[~text_series.str.match('\s*')]
-                data[f'{col}/word_distribution'] = (
-                    text_series.value_counts().head(VALUE_COUNT_LIMIT).todict()
-                )
-            elif column_type == ColumnType.EMAIL:
-                pass
 
         if column_type not in NUMBER_TYPES:
             if dates is not None:
