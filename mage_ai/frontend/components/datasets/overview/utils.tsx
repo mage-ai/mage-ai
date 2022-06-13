@@ -164,7 +164,54 @@ export function buildRenderColumnHeader({
     ].includes(columnType);
 
     let distributionChart;
-    if (distribution && !isBooleanType) {
+    if (isDatetimeType) {
+      distributionChart = (
+        <Histogram
+          data={distribution?.data.map(({
+            hideRange,
+            isUnusual,
+            x,
+            xLabel,
+            y,
+          }) => [
+            xLabel,
+            y.value,
+            x.min,
+            x.max,
+            isUnusual,
+            hideRange,
+          ])}
+          height={COLUMN_HEADER_CHART_HEIGHT}
+          margin={{
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: 0,
+          }}
+          renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
+            <p>
+              {hideRange && (
+                <>
+                  Rows: {value}
+                  <br />
+                  Value: {xLabelMin}
+                </>
+              )}
+              {!hideRange && (
+                <>
+                  Rows: {value}
+                  <br />
+                  Range: {xLabelMin} - {xLabelMax}
+                </>
+              )}
+            </p>
+          )}
+          sortData={d => sortByKey(d, '[2]')}
+          width={columnWidth - (UNIT * 2)}
+        />
+      );
+    }
+    else if (distribution && !isBooleanType) {
       distributionChart = (
         <Histogram
           data={distribution.data.map(({
@@ -238,52 +285,6 @@ export function buildRenderColumnHeader({
           getY={([, value]) => value}
           height={COLUMN_HEADER_CHART_HEIGHT}
           textColor={light.monotone.black}
-        />
-      );
-    } else if (isDatetimeType) {
-      distributionChart = (
-        <Histogram
-          data={distribution?.data.map(({
-            hideRange,
-            isUnusual,
-            x,
-            xLabel,
-            y,
-          }) => [
-            xLabel,
-            y.value,
-            x.min,
-            x.max,
-            isUnusual,
-            hideRange,
-          ])}
-          height={COLUMN_HEADER_CHART_HEIGHT}
-          margin={{
-            bottom: 0,
-            left: 0,
-            right: 0,
-            top: 0,
-          }}
-          renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
-            <p>
-              {hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Value: {xLabelMin}
-                </>
-              )}
-              {!hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Range: {xLabelMin} - {xLabelMax}
-                </>
-              )}
-            </p>
-          )}
-          sortData={d => sortByKey(d, '[2]')}
-          width={columnWidth - (UNIT * 2)}
         />
       );
     }
