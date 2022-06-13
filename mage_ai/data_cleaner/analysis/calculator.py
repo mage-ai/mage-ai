@@ -57,9 +57,12 @@ class AnalysisCalculator:
 
         data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
 
+        correlation_data = self.calculate_correlation_data(df)
         time_series_charts = self.calculate_timeseries_data(df)
         for d in data_for_columns:
             fuuid = d['feature']['uuid']
+            if fuuid in correlation_data:
+                d[DATA_KEY_CORRELATION] = correlation_data[fuuid]
             if fuuid in time_series_charts:
                 d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
 
@@ -128,14 +131,8 @@ class AnalysisCalculator:
                 }
 
     def calculate_column_internal(self, df, feature):
-        df_columns = df.columns
-        features_to_use = [f for f in self.features if f['uuid'] in df_columns]
-
         col = feature['uuid']
         column_type = feature['column_type']
-
-        tags = merge_dict(self.tags, dict(column_type=column_type, feature_uuid=col))
-        increment(f'{DD_KEY}.calculate_column.start', tags)
 
         # series = df[col]
         # series_cleaned = clean_series(series, column_type)
@@ -155,21 +152,14 @@ class AnalysisCalculator:
                 if histogram_data:
                     chart_data.append(histogram_data)
 
-        if is_numeric_col or df[col].dtype == 'bool':
-            with timer(
-                'analysis.calculate_column.build_correlation_data',
-                dict(feature=feature),
-                verbose=VERBOSE,
-            ):
-                correlation.append(charts.build_correlation_data(df, col, features_to_use))
-
-        increment(f'{DD_KEY}.calculate_column.succeeded', tags)
-
         return {
             'feature': feature,
             DATA_KEY_CHARTS: chart_data,
             DATA_KEY_CORRELATION: correlation,
         }
+
+    def calculate_correlation_data(self, df):
+        return charts.build_correlation_data(df)
 
     def calculate_timeseries_data(self, df):
         timeseries_features = [
