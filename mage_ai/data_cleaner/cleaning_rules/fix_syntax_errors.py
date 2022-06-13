@@ -18,7 +18,7 @@ class FixSyntaxErrors(BaseRule):
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     title='Fix Syntax Errors',
-                    message='Fix syntatical errors in entries to reduce noise in dataset',
+                    message='Fix syntactical errors to reduce the amount of noise in the data.',
                     action_type=ActionType.FIX_SYNTAX_ERRORS,
                     action_arguments=columns_with_syntax_errors,
                     action_variables=build_action_variables(
