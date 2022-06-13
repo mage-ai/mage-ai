@@ -9,6 +9,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { WARNINGS } from '../constants';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { getPercentage, transformNumber } from '@utils/number';
 import { roundNumber } from '@utils/string';
@@ -157,6 +158,7 @@ function ColumnReports({
           rowGroupData={[{
             rowData: qualityMetrics,
           }]}
+          warnings={WARNINGS.qualityMetrics}
         />
 
         <Spacing my={PADDING_UNITS}>
@@ -166,6 +168,7 @@ function ColumnReports({
             rowGroupData={[{
               rowData: columnSummary,
             }]}
+            warnings={WARNINGS.statistics}
           />
         </Spacing>
       </Flex>
