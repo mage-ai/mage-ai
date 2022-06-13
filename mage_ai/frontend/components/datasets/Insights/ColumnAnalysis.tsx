@@ -381,9 +381,6 @@ function ColumnAnalysis({
       };
     });
 
-    console.log("legend names:", legendNames);
-    console.log("data:", data);
-
     return (
       <LineSeries
         data={data}
@@ -628,6 +625,7 @@ function ColumnAnalysis({
               />
             </ChartContainer>
           }
+          responsive
           right={
             <ChartContainer
               noPadding={!!correlationsRowData}

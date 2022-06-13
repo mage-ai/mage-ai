@@ -33,6 +33,7 @@ export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
   border-radius: ${BORDER_RADIUS_LARGE}px;
   overflow: auto;
+  margin-bottom: ${UNIT * PADDING_UNITS}px;
 `;
 
 export const ChartHeaderStyle = styled.div`
@@ -92,32 +93,32 @@ export function ChartContainer({
 
 export function ChartRow({
   left,
+  responsive,
   right,
 }: {
-  left: any,
-  right?: any,
+  left: any;
+  responsive?: boolean;
+  right?: any;
 }) {
   return (
-    <Spacing mb={PADDING_UNITS}>
-      <FlexContainer>
-        <FlexContainer flex={1}>
-          <div style={{ width: '100%', height: '100%' }}>
-            {left}
-          </div>
-        </FlexContainer>
-        {right && (
-          <>
-            <Spacing mr={PADDING_UNITS} />
-
-            <FlexContainer flex={1}>
-              <div style={{ width: '100%', height: '100%' }}>
-                {right}
-              </div>
-            </FlexContainer>
-          </>
-        )}
+    <FlexContainer responsive={responsive}>
+      <FlexContainer flex={1}>
+        <div style={{ width: '100%', height: '100%' }}>
+          {left}
+        </div>
       </FlexContainer>
-    </Spacing>
+      {right && (
+        <>
+          <Spacing mr={PADDING_UNITS} />
+
+          <FlexContainer flex={1}>
+            <div style={{ width: '100%', height: '100%' }}>
+              {right}
+            </div>
+          </FlexContainer>
+        </>
+      )}
+    </FlexContainer>
   );
 }
 
@@ -318,6 +319,7 @@ function Overview({
             />
           </ChartContainer>
         }
+        responsive
         right={
           <ChartContainer
             noPadding={columnsWithHighNullValues.length >= 1}
@@ -371,6 +373,7 @@ function Overview({
                   {chart}
                 </ChartContainer>
               }
+              responsive
               right={
                 <ChartContainer
                   noPadding={unusualDates.length >= 1}
@@ -435,6 +438,7 @@ function Overview({
             />
           </ChartContainer>
         }
+        responsive
         right={
           <ChartContainer
             noPadding={columnsWithHighUniqueValues.length >= 1}
@@ -508,6 +512,7 @@ function Overview({
               />
             </ChartContainer>
           }
+          responsive
           right={
             <ChartContainer
               noPadding={columnsWithHighDistribution.length >= 1}

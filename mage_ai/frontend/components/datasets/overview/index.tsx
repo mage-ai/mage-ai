@@ -263,29 +263,34 @@ function DatasetOverview({
 
           {!selectedColumn && (
             <>
-              <FlexContainer justifyContent={'center'}>
+              <FlexContainer
+                justifyContent="center"
+                responsive
+              >
                 <Flex flex={1} flexDirection="column">
                   {qualityMetrics && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[2, 1, 2 ]}
-                      columnHeaders={[{ label: 'Quality metrics' }]}
-                      rowGroupData={[qualityMetrics]}
-                      warnings={[{
-                        compare: lessThan,
-                        name: 'Validity',
-                        val: 80,
-                      },
-                      {
-                        compare: lessThan,
-                        name: 'Completeness',
-                        val: 80,
-                      },
-                      {
-                        compare: greaterThan,
-                        name: 'Duplicate rows',
-                        val: 0,
-                      }]}
-                    />
+                    <Spacing mb={PADDING_UNITS}>
+                      <SimpleDataTable
+                        columnFlexNumbers={[2, 1, 2]}
+                        columnHeaders={[{ label: 'Quality metrics' }]}
+                        rowGroupData={[qualityMetrics]}
+                        warnings={[{
+                          compare: lessThan,
+                          name: 'Validity',
+                          val: 80,
+                        },
+                        {
+                          compare: lessThan,
+                          name: 'Completeness',
+                          val: 80,
+                        },
+                        {
+                          compare: greaterThan,
+                          name: 'Duplicate rows',
+                          val: 0,
+                        }]}
+                      />
+                    </Spacing>
                   )}
                 </Flex>
 
@@ -294,7 +299,7 @@ function DatasetOverview({
                 <Flex flex={1}>
                   {statSample && (
                     <SimpleDataTable
-                      columnFlexNumbers={[1, 1, 1]}
+                      columnFlexNumbers={[1, 1]}
                       columnHeaders={[{ label: 'Statistics' }]}
                       rowGroupData={[statSample]}
                       warnings={[
