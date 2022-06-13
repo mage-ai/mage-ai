@@ -26,3 +26,7 @@ export const SILVER = '#F9FAFC';
 export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
 export const YELLOW_LIGHT = '#FFEBA3';
+
+// CSS background
+export const PURPLE_GRADIENT = 'linear-gradient(180deg, rgba(127, 79, 235, 0.3) 0%, rgba(127, 79, 235, 0) 100%);';
+export const RED_GRADIENT = 'linear-gradient(180deg, rgba(255, 5, 5, 0.3) 0%, rgba(255, 5, 5, 0) 100%);';

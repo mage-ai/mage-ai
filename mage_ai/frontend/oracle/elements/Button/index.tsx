@@ -23,11 +23,13 @@ export type ButtonProps = {
   iconOnly?: boolean;
   large?: boolean;
   loading?: boolean;
+  negative?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
   noPadding?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
+  positive?: boolean;
   primary?: boolean;
   small?: boolean;
   selected?: boolean;
@@ -75,6 +77,15 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.noBorderRight && `
     border-right: none;
+  `}
+
+  ${props => props.negative && `
+    background-color: rgba(255, 161, 184, 0.5); !important
+  `}
+
+  // TODO: Change to Lime 40 theme.
+  ${props => props.positive && `
+    background-color: #D0F299; !important
   `}
 
   ${props => !props.iconOnly && props.large && `
@@ -140,7 +151,9 @@ const Button = ({
   children,
   disabled,
   loading,
+  negative,
   onClick,
+  positive,
   ...props
 }: ButtonProps, ref) => {
   const iconProps = {
@@ -152,10 +165,12 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
+      negative={negative}
       onClick={(e) => {
         e?.preventDefault();
         onClick?.(e);
       }}
+      positive={positive}
       ref={ref}
     >
       <FlexContainer
