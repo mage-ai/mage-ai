@@ -11,6 +11,8 @@ from sklearn.neighbors import LocalOutlierFactor
 from typing import Union, Dict
 import numpy as np
 
+ITREE_ANOMALY_SCORE_THRESHOLD = -0.10
+LOF_ANOMALY_SCORE_THRESHOLD = -1.5
 REMOVE_OUTLIERS_TITLE = 'Remove outliers'
 
 
@@ -82,17 +84,23 @@ class RemoveOutliers(BaseRule):
                 n_neighbors = count // 10 + 1
             else:
                 n_neighbors = 20
-            outlier_mask = LocalOutlierFactor(n_neighbors=n_neighbors, n_jobs=-1).fit_predict(data)
+            outlier_algorithm = LocalOutlierFactor(n_neighbors=n_neighbors, n_jobs=-1)
+            outlier_algorithm.fit(data)
+            outlier_scores = outlier_algorithm.negative_outlier_factor_
+            outlier_mask = outlier_scores <= LOF_ANOMALY_SCORE_THRESHOLD
         else:
             n_estimators = max(100 - count // 10, 25)
-            outlier_mask = IsolationForest(n_estimators=n_estimators, n_jobs=-1).fit_predict(data)
-        outlier_count = (outlier_mask == -1).sum()
+            outlier_algorithm = IsolationForest(n_estimators=n_estimators, n_jobs=-1)
+            outlier_algorithm.fit(data)
+            outlier_scores = outlier_algorithm.decision_function(data)
+            outlier_mask = outlier_scores <= ITREE_ANOMALY_SCORE_THRESHOLD
+        outlier_count = outlier_mask.sum()
         if outlier_count > 0:
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
                 f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
                 ActionType.REMOVE,
-                action_arguments=df.index[outlier_mask == -1].tolist(),
+                action_arguments=df.index[outlier_mask].tolist(),
                 axis=Axis.ROW,
             )
         return None
