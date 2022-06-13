@@ -46,7 +46,7 @@ const ProgressIcon = ({
           afterIcon={<ArrowDown fill={light.percentage.negative} />}
           negative
         >
-          <Text danger>
+          <Text danger large>
             {props.percentage}%
           </Text>
         </Button>
@@ -55,7 +55,7 @@ const ProgressIcon = ({
           afterIcon={<ArrowUp fill={light.percentage.positive} />}
           positive
         >
-          <Text positive>
+          <Text large positive>
             {props.percentage}%
           </Text>
         </Button>
