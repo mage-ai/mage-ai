@@ -68,7 +68,7 @@ mage_ai.connect_data(df, name='titanic dataset')
 mage_ai.launch()
 ```
 
-Open [http://localhost:5000](http://localhost:5000) in your browser to access the tool locally.
+Open [http://localhost:5789](http://localhost:5789) in your browser to access the tool locally.
 
 To stop the tool, run this command: `mage_ai.kill()`
 
