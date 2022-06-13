@@ -1,47 +1,124 @@
 export type ThemeType = {
+  accent: {
+    alert: string,
+    cyan: string,
+    cyanTransparent: string,
+    info: string,
+    infoTransparent: string,
+    negative: string,
+    negativeTransparent: string,
+    positive: string,
+    primaryTransparent: string,
+    warning: string,
+    warningTransparent: string,
+  },
   background: {
-    page: string;
-    header: string;
-    navigation: string;
-    row: string;
+    dark: string,
+    header: string,
+    muted: string,
+    navigation: string,
+    page: string,
+    row: string,
+  },
+  brand: {
+    earth100: string,
+    earth200: string,
+    earth300: string,
+    earth400: string,
+    earth400Transparent: string,
+    earth500: string,
+    energy100: string,
+    energy200: string,
+    energy300: string,
+    energy400: string,
+    energy400Transparent: string,
+    energy500: string,
+    fire100: string,
+    fire200: string,
+    fire300: string,
+    fire400: string,
+    fire400Transparent: string,
+    fire500: string,
+    stone100: string,
+    stone200: string,
+    stone400: string,
+    stone500: string,
+    water100: string,
+    water200: string,
+    water300: string,
+    water400: string,
+    water400Transparent: string,
+    water500: string,
+    wind100: string,
+    wind200: string,
+    wind300: string,
+    wind400: string,
+    wind400SuperTransparent: string,
+    wind400Transparent: string,
+    wind500: string,
   },
   chart: {
-    gradientFrom: string;
-    gradientFromWater: string;
-    gradientTo: string;
-    gradientToFire: string;
-    lines: string;
+    backgroundPrimary: string,
+    backgroundSecondary: string,
+    lines: string,
+    primary: string,
+    secondary: string,
   },
   content: {
-    active: string;
-    default: string;
-    disabled: string;
-    muted: string;
+    active: string,
+    default: string,
+    disabled: string,
+    muted: string,
   },
   elevation: {
     visualizationAccent: string,
     visualizationAccentAlt: string,
-  }
+  },
+  feature: {
+    active: string,
+    disabled: string,
+  },
+  interactive: {
+    activeBorder: string,
+    dangerBorder: string,
+    defaultBorder: string,
+    disabledBorder: string,
+    focusBackground: string,
+    focusBorder: string,
+    hoverBackground: string,
+    hoverBorder: string,
+    linkPrimary: string,
+    linkSecondary: string,
+  },
   loader: {
     color: string,
   },
   monotone: {
-    black: string;
-    gray: string;
-    white: string;
+    black: string,
+    blackTransparent: string,
+    gray: string,
+    grey100: string,
+    grey200: string,
+    grey300: string,
+    grey400: string,
+    grey500: string,
+    purple: string,
+    white: string,
+  },
+  neutral: {
+    n100: string,
+    n200: string,
+    n300: string,
+    n400: string,
+    n500: string,
+  },
+  progress: {
+    negative: string,
+    positive: string,
   },
   shadow: {
-    base: string;
-    hover: string;
-    popup: string;
-  },
-  interactive: {
-    dangerBorder: string;
-    defaultBorder: string;
-    disabledBorder: string;
-    focusBorder: string;
-    hoverBorder: string;
-    linkPrimary: string;
-    linkSecondary: string;
+    base: string,
+    menu: string,
+    popup: string,
   },
 };

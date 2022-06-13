@@ -4,7 +4,6 @@ import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Bar, BarStackHorizontal, Line } from '@visx/shape';
 import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
-import { LinearGradient } from '@visx/gradient';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
 import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
@@ -88,11 +87,11 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     if (!yLabelFormat) {
       yLabelFormat = (label) => {
         if (label.length > MAX_LABEL_LENGTH) {
-          return `${label.substring(0, MAX_LABEL_LENGTH)}...`
+          return `${label.substring(0, MAX_LABEL_LENGTH)}...`;
         } else {
-          return label
+          return label;
         }
-      }
+      };
     }
     const fontSize = large ? REGULAR : SMALL_FONT_SIZE;
     const themeContext: ThemeType = useContext(ThemeContext);
@@ -120,9 +119,10 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
 
     const colors = {
       active: themeContext?.content.active || light.content.active,
-      gradientFrom: themeContext?.chart.gradientFrom || light.chart.gradientFrom,
-      gradientTo: themeContext?.chart.gradientTo || light.chart.gradientTo,
+      backgroundPrimary: themeContext?.chart.backgroundPrimary || light.chart.backgroundPrimary,
+      backgroundSecondary: themeContext?.chart.backgroundSecondary || light.chart.backgroundSecondary,
       muted: themeContext?.content.muted || light.content.muted,
+      primary: themeContext?.chart.primary || light.chart.primary,
       tooltipBackground: themeContext?.background.navigation || light.background.navigation,
     };
 
@@ -208,20 +208,29 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                 barStacks.map(barStack =>
                   barStack.bars.map(bar => (
                     <g key={`barstack-horizontal-${barStack.index}-${bar.index}`}>
-                      <LinearGradient
-                        from={colors.gradientFrom}
-                        id="bar-linear-gradient"
-                        to={colors.gradientTo}
-                        vertical={false}
-                      />
-                      <rect
-                        fill="url(#bar-linear-gradient)"
-                        height={bar.height}
-                        pointerEvents="none"
-                        width={bar.width}
-                        x={bar.x}
-                        y={bar.y}
-                      />
+                      <>           
+                        <rect
+                          fill={colors.backgroundPrimary}
+                          height={bar.height}
+                          pointerEvents="none"
+                          rx={4}
+                          width={bar.width}
+                          x={bar.x}
+                          y={bar.y}
+                        />
+                        {/* needed for one-sided rounded bar tip */}
+                        <path
+                          d={`M${bar.width < 14 ? bar.x + bar.width/2 : bar.x + bar.width - 10},${bar.y}
+                            h${bar.width < 14 ? bar.width/14 * 5 : 5}
+                            q5,0 5,5
+                            v${bar.height - 10}
+                            q0,5 -5,5
+                            h-${bar.width < 14 ? bar.width/14 * 5 : 5}
+                            z
+                          `}
+                          fill={colors.primary}
+                        />
+                      </>
                     </g>
                   )),
                 )

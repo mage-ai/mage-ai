@@ -18,6 +18,11 @@ const {
     wind300,
     wind400,
   },
+  chart: {
+    backgroundPrimary,
+    backgroundSecondary,
+    backgroundTertiary,
+  },
 } = light;
 
 export const COLORS = [
@@ -39,12 +44,8 @@ export const COLORS = [
 ];
 
 export const COLORS_IN_ORDER = [
-  wind400,
-  water400,
-  earth400,
-  fire400,
-  wind300,
-  water300,
-  earth300,
-  fire300,
+  backgroundPrimary,
+  backgroundSecondary,
+  backgroundTertiary,
+  ...COLORS,
 ];
