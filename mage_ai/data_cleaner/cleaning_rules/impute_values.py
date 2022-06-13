@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
+from mage_ai.data_cleaner.cleaning_rules.shared import build_action_variables
 from mage_ai.data_cleaner.column_types.constants import (
     CATEGORICAL_TYPES,
     NUMBER_TYPES,
@@ -307,7 +308,9 @@ class ImputeActionConstructor:
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
         elif strategy == ImputationStrategy.CONSTANT:
             message = 'Fill missing values with a placeholder to mark them as missing.'
             action_arguments = strategy_cache_entry['entries']
@@ -316,28 +319,36 @@ class ImputeActionConstructor:
             action_options = {
                 'strategy': strategy,
             }
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
         elif strategy == ImputationStrategy.MEDIAN:
             message = 'For each column, fill missing entries with the median value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
         elif strategy == ImputationStrategy.MODE:
             message = 'For each column, fill missing entries with the most frequent value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': 'mode'}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
         elif strategy == ImputationStrategy.RANDOM:
             message = 'For each column, fill missing entries with randomly sampled values.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
         elif strategy == ImputationStrategy.ROW_RM:
             num_missing = strategy_cache_entry['num_missing']
             title = 'Remove rows with missing entries'
@@ -345,7 +356,7 @@ class ImputeActionConstructor:
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
             axis = Axis.ROW
-            action_variables = self.__construct_action_variables(self.df_columns)
+            action_variables = build_action_variables(self.df_columns, self.column_types)
             map_cols = map(wrap_column_name, self.df_columns)
             action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
         elif strategy == ImputationStrategy.SEQ:
@@ -357,7 +368,9 @@ class ImputeActionConstructor:
                 'strategy': strategy,
                 'timeseries_index': strategy_cache_entry['timeseries_index'],
             }
-            action_variables = self.__construct_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                strategy_cache_entry['entries'], self.column_types
+            )
 
         return self.action_builder(
             title,
@@ -370,15 +383,3 @@ class ImputeActionConstructor:
             axis,
             outputs,
         )
-
-    def __construct_action_variables(self, columns):
-        variable_set = {}
-        for column_name in columns:
-            variable_set[column_name] = {
-                'feature': {
-                    'column_type': self.column_types[column_name],
-                    'uuid': column_name,
-                },
-                'type': 'feature',
-            }
-        return variable_set

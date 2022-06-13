@@ -1,5 +1,9 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
+from mage_ai.data_cleaner.transformer_actions.constants import (
+    CONSTANT_IMPUTATION_DEFAULTS,
+    INVALID_VALUE_PLACEHOLDERS,
+)
 import numpy as np
 import pandas as pd
 import re
@@ -38,34 +42,46 @@ def find_syntax_errors(series, column_type):
     if len(series) == 0:
         return pd.Series([])
     dtype = series.dtype
-    str_series = series
+    invalid_placeholder = INVALID_VALUE_PLACEHOLDERS[column_type]
+    null_placeholder = CONSTANT_IMPUTATION_DEFAULTS[column_type]
+    mask = pd.Series([False] * len(series))
+    mask.index = series.index
     if column_type == ColumnType.EMAIL:
-        pattern = REGEX_EMAIL
+        placeholder_matches = series.str.match(invalid_placeholder, na=True)
+        null_matches = series.str.match(null_placeholder, na=True)
+        mask |= ~series.str.match(REGEX_EMAIL, na=True) & ~placeholder_matches & ~null_matches
     elif column_type == ColumnType.PHONE_NUMBER:
-        str_series = str_series.astype(str)
-        pattern = REGEX_PHONE_NUMBER
+        str_series = series.astype(str)
+        placeholder_matches = str_series.str.match(invalid_placeholder)
+        null_matches = str_series.str.match(null_placeholder)
+        mask |= (
+            ~str_series.str.match(REGEX_PHONE_NUMBER, na=True)
+            & ~placeholder_matches
+            & ~null_matches
+        )
     elif column_type == ColumnType.ZIP_CODE:
-        str_series = str_series.astype(str)
-        pattern = REGEX_ZIP_CODE
+        str_series = series.astype(str)
+        placeholder_matches = str_series.str.match(invalid_placeholder)
+        null_matches = str_series.str.match(null_placeholder)
+        mask |= (
+            ~str_series.str.match(REGEX_ZIP_CODE, na=True) & ~placeholder_matches & ~null_matches
+        )
     elif (
         column_type in NUMBER_TYPES
         and not np.issubdtype(dtype, np.integer)
         and not np.issubdtype(dtype, np.floating)
     ):
-        str_series = str_series.astype(str)
-        pattern = REGEX_NUMBER
+        str_series = series.astype(str)
+        mask |= ~str_series.str.match(REGEX_NUMBER, na=True)
     elif (
         column_type == ColumnType.DATETIME
         and not np.issubdtype(dtype, np.datetime64)
         and not dtype is pd.Timestamp
     ):
-        str_series = str_series.astype(str)
-        pattern = REGEX_DATETIME
-    else:
-        mask = pd.Series([False] * len(series))
-        mask.index = series.index
-        return mask
-    return ~str_series.str.match(pattern, na=True) & series.notna()
+        str_series = series.astype(str)
+        placeholder_matches = str_series.str.match(invalid_placeholder)
+        mask |= ~str_series.str.match(REGEX_DATETIME, na=True) & ~placeholder_matches
+    return mask & series.notna()
 
 
 def infer_number_type(series, column_name, dtype):
