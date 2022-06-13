@@ -45,6 +45,7 @@ FUNCTION_MAPPING = {
         # ActionType.EXPLODE: row.explode,
         ActionType.FILTER: row.filter_rows,
         ActionType.SORT: row.sort_rows,
+        ActionType.REMOVE: row.remove,
     },
 }
 

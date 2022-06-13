@@ -85,3 +85,9 @@ def sort_rows(df, action, **kwargs):
         )
 
     return df_final
+
+
+def remove(df, action, **kwargs):
+    row_indices = action['action_arguments']
+    row_indices = [index for index in row_indices if index in df.index]
+    return df.drop(row_indices, axis=0)
