@@ -75,23 +75,20 @@ def build_histogram_data(col1, series, column_type):
     if bucket_interval == 0:
         return
 
-    for value in series.values:
-        index = math.floor((value - min_value) / bucket_interval)
-        if index >= len(buckets):
-            index = len(buckets) - 1
-        buckets[index]['values'].append(value)
+    bins = [b['min_value'] for b in buckets] + [buckets[-1]['max_value']]
+    count, _ = np.histogram(series, bins=bins)
 
     x = []
     y = []
 
-    for bucket in buckets:
+    for idx, bucket in enumerate(buckets):
         x.append(
             dict(
                 max=bucket['max_value'],
                 min=bucket['min_value'],
             )
         )
-        y.append(dict(value=len(bucket['values'])))
+        y.append(dict(value=count[idx]))
 
     increment(f'{DD_KEY}.build_histogram_data.succeeded', dict(feature_uuid=col1))
 
@@ -133,7 +130,7 @@ def build_time_series_data(df, features, datetime_column):
     if datetimes.size <= 1:
         return
 
-    datetimes = pd.to_datetime(datetimes, infer_datetime_format=True, errors='coerce')
+    # datetimes = pd.to_datetime(datetimes, infer_datetime_format=True, errors='coerce')
 
     min_value_datetime = datetimes.min().timestamp()
     max_value_datetime = datetimes.max().timestamp()
@@ -149,7 +146,7 @@ def build_time_series_data(df, features, datetime_column):
     y_dict = dict()
 
     df_copy = df.copy()
-    df_copy[datetime_column] = datetimes.apply(lambda x: x if pd.isnull(x) else x.timestamp())
+    df_copy[datetime_column] = datetimes.view(int) / 10**9
 
     for bucket in buckets:
         max_value = bucket['max_value']
@@ -166,6 +163,7 @@ def build_time_series_data(df, features, datetime_column):
             )
         )
 
+        series_count = df_filtered.shape[0]
         for f in features:
             col = f['uuid']
             column_type = f['column_type']
@@ -176,13 +174,14 @@ def build_time_series_data(df, features, datetime_column):
             # series_cleaned = clean_series(series, column_type, dropna=False)
             series_cleaned = series
             series_non_null = series_cleaned.dropna()
+            non_null_count = series_non_null.size
 
             y_data = dict(
-                count=series_non_null.size,
+                count=non_null_count,
                 count_distinct=series_non_null.nunique(),
                 null_value_rate=0
-                if series_cleaned.size == 0
-                else series_cleaned.isnull().sum() / series_cleaned.size,
+                if series_count == 0
+                else (series_count - non_null_count) / series_count,
             )
 
             if column_type in [ColumnType.NUMBER, ColumnType.NUMBER_WITH_DECIMALS]:
@@ -194,7 +193,7 @@ def build_time_series_data(df, features, datetime_column):
                     dict(
                         average=average,
                         max=series_non_null.max(),
-                        median=series_non_null.quantile(0.5),
+                        median=series_non_null.median(),
                         min=series_non_null.min(),
                         sum=series_non_null.sum(),
                     )
@@ -206,7 +205,7 @@ def build_time_series_data(df, features, datetime_column):
             ]:
                 value_counts = series_non_null.value_counts()
                 if len(value_counts.index):
-                    value_counts_top = value_counts.sort_values(ascending=False).iloc[:12]
+                    value_counts_top = value_counts.iloc[:12]
                     mode = value_counts_top.index[0]
                     y_data.update(
                         dict(
@@ -252,9 +251,7 @@ def build_overview_data(
         df_copy[datetime_column] = pd.to_datetime(
             df[datetime_column], infer_datetime_format=True, errors='coerce'
         )
-        df_copy[datetime_column] = df_copy[datetime_column].apply(
-            lambda x: x if pd.isnull(x) else x.timestamp()
-        )
+        df_copy[datetime_column] = df_copy[datetime_column].view(int) / 10**9
 
         min_value1 = df_copy[datetime_column].min()
         max_value1 = df_copy[datetime_column].max()
