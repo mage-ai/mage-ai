@@ -80,12 +80,12 @@ const ButtonStyle = styled.button<ButtonProps>`
   `}
 
   ${props => props.negative && `
-    background-color: rgba(255, 161, 184, 0.5); !important
+    background-color: ${light.background.negative}; !important
   `}
 
   // TODO: Change to Lime 40 theme.
   ${props => props.positive && `
-    background-color: #D0F299; !important
+    background-color: ${light.background.positive}; !important
   `}
 
   ${props => !props.iconOnly && props.large && `

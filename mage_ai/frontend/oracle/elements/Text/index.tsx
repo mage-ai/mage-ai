@@ -52,6 +52,7 @@ export type TextProps = {
   noWrapping?: boolean;
   overflow?: string;
   overflowWrap?: boolean;
+  positive?: boolean;
   primary?: boolean;
   raw?: boolean;
   rightAligned?: boolean;
@@ -208,6 +209,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.danger && `
     color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+  `}
+
+  ${props => props.positive && `
+    color: ${(props.theme.percentage || light.percentage).positive} !important;
   `}
 
   ${props => props.underline && `
