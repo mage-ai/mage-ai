@@ -381,9 +381,6 @@ function ColumnAnalysis({
       };
     });
 
-    console.log("legend names:", legendNames);
-    console.log("data:", data);
-
     return (
       <LineSeries
         data={data}
