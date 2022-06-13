@@ -221,7 +221,7 @@ export function buildRenderColumnHeader({
           margin={{
             bottom: 0,
             left: 0,
-            right: 0,
+            right: 20,
             top: 0,
           }}
           renderTooltipContent={({ x, y }) => `${y} appears ${numberWithCommas(x)} times`}
@@ -273,5 +273,5 @@ export function buildRenderColumnHeader({
         {!distributionChart && <div style={{ height: COLUMN_HEADER_CHART_HEIGHT }} />}
       </div>
     );
-  }
+  };
 }
