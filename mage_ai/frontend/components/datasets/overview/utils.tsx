@@ -121,6 +121,7 @@ export function buildRenderColumnHeader({
   columnTypes,
   columns,
   insightsByFeatureUUID,
+  insightsOverview,
   statistics,
 }) {
   return (cell, columnIndex, { width: columnWidth }) => {
@@ -131,7 +132,67 @@ export function buildRenderColumnHeader({
     const {
       charts,
     } = insightsByFeatureUUID[columnUUID];
+
+    const {
+      time_series: timeSeries,
+    } = insightsOverview;
+
+    const timeSeriesData = [];
+
+    timeSeries?.forEach((tsChart) => {
+      const {
+        distribution,
+      } = buildDistributionData(
+        tsChart,
+        columnUUID,
+      );
+
+      timeSeriesData.push(distribution);
+    });
+
+
     const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
+    const timeSeriesHistograms = timeSeriesData.map(({
+      data,
+      featureUUID,
+    }) => (
+      <Histogram
+        data={data.map(({
+          isUnusual,
+          x,
+          xLabel,
+          xLabelMax,
+          xLabelMin,
+          y,
+        }) => [
+          xLabel,
+          y.count,
+          xLabelMin,
+          xLabelMax,
+          x.min,
+          x.max,
+          isUnusual,
+        ])}
+        getBarColor={([]) => light.brand.wind300}
+        height={UNIT * 50}
+        key={featureUUID}
+        large
+        margin={{
+          right: 4 * UNIT,
+        }}
+        renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
+          <Text small>
+            Rows: {count}
+            <br />
+            Dates: {xLabelMin} - {xLabelMax}
+          </Text>
+        )}
+        showAxisLabels
+        showYAxisLabels
+        showZeroes
+        sortData={d => sortByKey(d, '[4]')}
+      />
+    ));
     const {
       distribution = null,
     } = histogramChart
@@ -165,51 +226,7 @@ export function buildRenderColumnHeader({
 
     let distributionChart;
     if (isDatetimeType) {
-      distributionChart = (
-        <Histogram
-          data={distribution?.data.map(({
-            hideRange,
-            isUnusual,
-            x,
-            xLabel,
-            y,
-          }) => [
-            xLabel,
-            y.value,
-            x.min,
-            x.max,
-            isUnusual,
-            hideRange,
-          ])}
-          height={COLUMN_HEADER_CHART_HEIGHT}
-          margin={{
-            bottom: 0,
-            left: 0,
-            right: 0,
-            top: 0,
-          }}
-          renderTooltipContent={([, value, xLabelMin, xLabelMax,, hideRange]) => (
-            <p>
-              {hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Value: {xLabelMin}
-                </>
-              )}
-              {!hideRange && (
-                <>
-                  Rows: {value}
-                  <br />
-                  Range: {xLabelMin} - {xLabelMax}
-                </>
-              )}
-            </p>
-          )}
-          sortData={d => sortByKey(d, '[2]')}
-          width={columnWidth - (UNIT * 2)}
-        />
-      );
+      distributionChart = timeSeriesHistograms;
     }
     else if (distribution && !isBooleanType) {
       distributionChart = (

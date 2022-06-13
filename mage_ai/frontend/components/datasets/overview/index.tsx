@@ -190,11 +190,13 @@ function DatasetOverview({
     columnTypes,
     columns,
     insightsByFeatureUUID,
+    insightsOverview,
     statistics,
   }), [
     columnTypes,
     columns,
     insightsByFeatureUUID,
+    insightsOverview,
     statistics,
   ]);
 
