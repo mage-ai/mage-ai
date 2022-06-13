@@ -134,10 +134,6 @@ class AnalysisCalculator:
         col = feature['uuid']
         column_type = feature['column_type']
 
-        # series = df[col]
-        # series_cleaned = clean_series(series, column_type)
-        series_cleaned = df[col].dropna()
-
         chart_data = []
         correlation = []
 
@@ -148,6 +144,7 @@ class AnalysisCalculator:
                 dict(feature=feature),
                 verbose=VERBOSE,
             ):
+                series_cleaned = df[col].dropna()
                 histogram_data = charts.build_histogram_data(col, series_cleaned, column_type)
                 if histogram_data:
                     chart_data.append(histogram_data)
