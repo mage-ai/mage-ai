@@ -4,15 +4,18 @@ from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
+from string import punctuation
 import math
 import numpy as np
 import pandas as pd
 import traceback
 
 
+EMAIL_DOMAIN_REGEX = r'\@([^\s]*)'
 INVALID_VALUE_SAMPLE_COUNT = 100
 OUTLIER_SAMPLE_COUNT = 100
 OUTLIER_ZSCORE_THRESHOLD = 3
+PUNCTUATION = r'[:;\.,\/\\&`"\'\(\)\[\]\{\}]'
 VALUE_COUNT_LIMIT = 20
 
 
@@ -209,6 +212,28 @@ class StatisticsCalculator:
                     dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
                 )
                 data[f'{col}/min'] = dates.min().isoformat()
+            elif column_type == ColumnType.TEXT:
+                text_series = series_non_null
+                data[f'{col}/avg_string_length'] = text_series.apply(
+                    lambda string: len(string)
+                ).mean()
+                text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
+                text_series = text_series.str.lower()
+                text_series = text_series.str.split('\s+')
+                text_series = text_series.apply(
+                    lambda words: [word for word in words if word != '']
+                )
+                data[f'{col}/avg_word_count'] = text_series.apply(lambda words: len(words)).mean()
+                data[f'{col}/word_distribution'] = (
+                    text_series.explode().value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+                )
+            elif column_type == ColumnType.EMAIL:
+                valid_emails = series[~find_syntax_errors(series, ColumnType.EMAIL)]
+                domains = valid_emails.str.extract(EMAIL_DOMAIN_REGEX, expand=False)
+                print(domains)
+                data[f'{col}/domain_distribution'] = (
+                    domains.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+                )
 
         if column_type not in NUMBER_TYPES:
             if dates is not None:
