@@ -166,6 +166,7 @@ def build_time_series_data(df, features, datetime_column):
             )
         )
 
+        series_count = df_filtered.shape[0]
         for f in features:
             col = f['uuid']
             column_type = f['column_type']
@@ -176,13 +177,14 @@ def build_time_series_data(df, features, datetime_column):
             # series_cleaned = clean_series(series, column_type, dropna=False)
             series_cleaned = series
             series_non_null = series_cleaned.dropna()
+            non_null_count = series_non_null.size
 
             y_data = dict(
-                count=series_non_null.size,
+                count=non_null_count,
                 count_distinct=series_non_null.nunique(),
                 null_value_rate=0
-                if series_cleaned.size == 0
-                else series_cleaned.isnull().sum() / series_cleaned.size,
+                if series_count == 0
+                else (series_count - non_null_count) / series_count,
             )
 
             if column_type in [ColumnType.NUMBER, ColumnType.NUMBER_WITH_DECIMALS]:
@@ -194,7 +196,7 @@ def build_time_series_data(df, features, datetime_column):
                     dict(
                         average=average,
                         max=series_non_null.max(),
-                        median=series_non_null.quantile(0.5),
+                        median=series_non_null.median(),
                         min=series_non_null.min(),
                         sum=series_non_null.sum(),
                     )
@@ -206,7 +208,7 @@ def build_time_series_data(df, features, datetime_column):
             ]:
                 value_counts = series_non_null.value_counts()
                 if len(value_counts.index):
-                    value_counts_top = value_counts.sort_values(ascending=False).iloc[:12]
+                    value_counts_top = value_counts.iloc[:12]
                     mode = value_counts_top.index[0]
                     y_data.update(
                         dict(
