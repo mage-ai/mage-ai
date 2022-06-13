@@ -35,9 +35,10 @@ DEFAULT_RULES = [
 
 
 class BasePipeline:
-    def __init__(self, actions=[]):
+    def __init__(self, actions=[], rules=DEFAULT_RULES):
         self.actions = actions
-        self.rules = DEFAULT_RULES
+        self.rules = rules
+        self.outliers_removed = False
 
     def create_actions(self, df, column_types, statistics):
         if not statistics or len(statistics) == 0:
@@ -62,11 +63,20 @@ class BasePipeline:
         df_transformed = df
         while len(action_queue) != 0:
             action = action_queue.pop(0)
-            df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
-            action['status'] = STATUS_COMPLETED
-            completed_queue.append(action)
-            if auto:
-                action_queue = self.update_suggestions(df_transformed)
+            payload = action['action_payload']
+            if not (
+                payload['action_type'] == 'remove'
+                and payload['axis'] == 'row'
+                and self.outliers_removed
+            ):
+                df_transformed = BaseAction(payload).execute(df_transformed)
+                action['status'] = STATUS_COMPLETED
+                completed_queue.append(action)
+                # TODO: Come up with a better way to limit the execution of certain actions:
+                if payload['action_type'] == 'remove' and payload['axis'] == 'row':
+                    self.outliers_removed = True
+                if auto:
+                    action_queue = self.update_suggestions(df_transformed)
         self.actions = completed_queue
         return df_transformed
 
