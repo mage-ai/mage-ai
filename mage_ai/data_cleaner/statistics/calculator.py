@@ -217,7 +217,7 @@ class StatisticsCalculator:
                 text_series = text_series.explode()
                 text_series = text_series[~text_series.str.match('\s*')]
                 data[f'{col}/word_distribution'] = (
-                    text_series.value_counts().head(VALUE_COUNT_LIMIT).todict()
+                    text_series.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
             elif column_type == ColumnType.EMAIL:
                 pass
