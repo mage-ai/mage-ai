@@ -1,15 +1,18 @@
 import NextLink from 'next/link';
 
+import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { ArrowDown } from '@oracle/icons';
 
 export type BreadcrumbType = {
   as?: string;
   bold?: boolean;
+  button?: boolean;
   hideIcon?: boolean;
   href?: string;
   label: string;
@@ -23,6 +26,7 @@ export type BreadcrumbType = {
 function Breadcrumb({
   as,
   bold,
+  button,
   hideIcon,
   href,
   label,
@@ -32,10 +36,13 @@ function Breadcrumb({
   selected,
   title,
 }: BreadcrumbType) {
-  const buildEl = (textOnly: boolean = false) => (
+  const buildEl = (
+    textOnly: boolean = false,
+    noRightMargin: boolean = false,
+  ) => (
     <FlexContainer alignItems="center">
       <Flex>
-        <Spacing mr={{ xs: 1 }}>
+        <Spacing mr={noRightMargin ? 0 : { xs: 1 }}>
           {!textOnly && label}
 
           {textOnly && (
@@ -66,6 +73,27 @@ function Breadcrumb({
     title,
   };
 
+  const buttonOrLinkEl = button
+    ? (
+      <Button
+        afterIcon={<ArrowDown size={12} />}
+        basic
+        noPadding
+        onClick={onClick}
+        transparent
+      >
+        {buildEl(true, true)}
+      </Button>
+    )
+    : (
+      <Link
+        {...sharedLinkProps}
+        onClick={onClick}
+      >
+        {buildEl()}
+      </Link>
+    );
+
   return (
     <ClientOnly>
       <Spacing mr={{ xs: 1 }}>
@@ -80,14 +108,7 @@ function Breadcrumb({
             </Link>
           </NextLink>
         )}
-        {!href && onClick && (
-          <Link
-            {...sharedLinkProps}
-            onClick={onClick}
-          >
-            {buildEl()}
-          </Link>
-        )}
+        {(!href && onClick) && buttonOrLinkEl}
       </Spacing>
     </ClientOnly>
   );

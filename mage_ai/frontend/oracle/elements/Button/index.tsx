@@ -25,6 +25,7 @@ export type ButtonProps = {
   loading?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noPadding?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
@@ -49,6 +50,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.padding && `
     padding: ${props.padding};
+  `}
+
+  ${props => props.noPadding && `
+    padding: 0;
   `}
 
   ${props => !props.basic && `
@@ -140,7 +145,7 @@ const Button = ({
 }: ButtonProps) => {
   const iconProps = {
     disabled,
-    size: UNIT * 3,
+    size: UNIT * 1.5,
   };
 
   return (
