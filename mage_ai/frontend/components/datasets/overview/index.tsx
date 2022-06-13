@@ -32,7 +32,7 @@ import {
 import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import {
   greaterThan,
@@ -203,6 +203,8 @@ function DatasetOverview({
     count,
   } = featureSetStats;
 
+  const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
+
   return (
     <DatasetDetail
       columnsVisible={columnsVisible}
@@ -222,8 +224,8 @@ function DatasetOverview({
         containerStyle={{
           position: 'relative',
         }}
-        shadow={false}
         ref={refLoadingBar}
+        shadow={false}
       />
 
       {errorMessages?.length >= 1 && (
@@ -309,8 +311,8 @@ function DatasetOverview({
 
               <Spacing mt={PADDING_UNITS}>
                 <FeatureProfiles
-                  features={features}
                   featureSet={featureSet}
+                  features={features}
                   statistics={statistics}
                 />
               </Spacing>
@@ -355,6 +357,7 @@ function DatasetOverview({
           }
           columns={columns}
           height={dataTableHeight}
+          invalidValues={invalidValuesAll}
           renderColumnHeader={selectedColumn ? null : renderColumnHeader}
           rows={rows}
           width={dataTableWidth}

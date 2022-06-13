@@ -41,6 +41,7 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     completeness: statistics[`${featureUUID}/completeness`],
     count: statistics[`${featureUUID}/count`],
     count_distinct: statistics[`${featureUUID}/count_distinct`],
+    invalid_indices: statistics[`${featureUUID}/invalid_indices`],
     invalid_value_count: statistics[`${featureUUID}/invalid_value_count`],
     invalid_value_rate: statistics[`${featureUUID}/invalid_value_rate`],
     invalid_values: statistics[`${featureUUID}/invalid_values`],
@@ -60,6 +61,20 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     validity: statistics[`${featureUUID}/validity`],
     value_counts: statistics[`${featureUUID}/value_counts`],
   };
+}
+
+export function getFeatureSetInvalidValuesAll(featureSet, features) {
+  if (!featureSet || !featureSet.statistics) {
+    return {};
+  }
+
+  const { statistics } = featureSet;
+  const invalidCells = {};
+  features.forEach(featureUUID => {
+    const invalid_indices = statistics[`${featureUUID}/invalid_indices`];
+    invalidCells[featureUUID] = invalid_indices;
+  });
+  return invalidCells;
 }
 
 export function deserializeFeatureSet(featureSet: any) {
