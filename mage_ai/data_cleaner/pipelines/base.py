@@ -65,7 +65,8 @@ class BasePipeline:
             action = action_queue.pop(0)
             payload = action['action_payload']
             if not (
-                payload['action_type'] == 'remove'
+                action['title'] == REMOVE_OUTLIERS_TITLE
+                and payload['action_type'] == 'remove'
                 and payload['axis'] == 'row'
                 and self.outliers_removed
             ):
