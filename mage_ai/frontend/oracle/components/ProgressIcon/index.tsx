@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 
-
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
