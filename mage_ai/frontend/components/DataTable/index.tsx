@@ -4,7 +4,6 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
-import scrollbarWidth from './scrollbarWidth';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
 import {
@@ -116,7 +115,7 @@ const Styles = styled.div<{
       overflow: hidden;
     }
   }
-`
+`;
 
 function estimateCellHeight({ original }) {
   const maxLength = Math.max(...original.map(val => val?.length || 0));
@@ -147,7 +146,7 @@ function Table({
 
     return () => {
       refListOuter?.current?.removeEventListener('scroll', onScrollCallback);
-    }
+    };
   }, [
     refHeader,
     refListOuter,
@@ -184,7 +183,6 @@ function Table({
     headerGroups,
     prepareRow,
     rows,
-    totalColumnsWidth,
   } = useTable(
     {
       columns,
@@ -233,6 +231,7 @@ function Table({
             <div
               {...cellProps}
               className="td"
+              key={`${idx}-${cellValue}`}
               style={cellStyle}
             >
               {firstColumn && cell.render('Cell')}
@@ -250,10 +249,10 @@ function Table({
                 </>
               )}
             </div>
-          )
+          );
         })}
       </div>
-    )
+    );
   }, [
     prepareRow,
     rows,
@@ -290,6 +289,7 @@ function Table({
             <div
               {...headerGroup.getHeaderGroupProps()}
               className="tr"
+              key={headerGroup.id}
             >
               {headerGroup.headers.map((column, idx: number) => {
                 const firstColumn = idx === 0;
@@ -321,6 +321,7 @@ function Table({
                   <div
                     {...columnProps}
                     className="th"
+                    key={column.id}
                     style={columnStyle}
                     title={firstColumn ? 'Row number' : `${column.Header}`}
                   >
@@ -346,7 +347,7 @@ function Table({
         </VariableSizeList>
       </div>
     </div>
-  )
+  );
 }
 
 function DataTable({
@@ -389,7 +390,7 @@ function DataTable({
         width={width}
       />
     </Styles>
-  )
+  );
 }
 
-export default DataTable
+export default DataTable;
