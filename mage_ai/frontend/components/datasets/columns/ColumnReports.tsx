@@ -8,11 +8,11 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import StatsTable, { StatRow } from '@components/datasets/StatsTable';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
-import { transformNumber } from '@utils/number';
-import { formatPercent, isInteger, isNumeric, roundNumber } from '@utils/string';
-import ProgressBar from '@oracle/components/ProgressBar';
 import { greaterThan, lessThan } from '@utils/array';
+import { isNumeric, roundNumber } from '@utils/string';
+import { transformNumber } from '@utils/number';
 
 type ColumnReportsProps = {
   column: string;
@@ -49,21 +49,6 @@ function ColumnReports({
     skew,
     validity,
   } = featureSetStats;
-
-  type StatRow = {
-    name: string,
-    value?: any,
-    rate?: number,
-    progress?: boolean,
-    warning?: Warning;
-  };
-
-  type Warning = {
-    compare: (a: number, b: number) => boolean;
-    val: number;
-  };
-
-  const shouldWarn = (w: Warning, n: number) => w && w.compare(n, w.val);
 
   const qualityMetrics: StatRow[] = [
     {
@@ -159,53 +144,6 @@ function ColumnReports({
 
   const noWarningMetrics = warningMetrics.every(
     ({ value }) => value === undefined,
-  );
-
-  type StatsTableProps = {
-    stats: StatRow[],
-    title: string,
-  };
-
-  const StatsTable = ({ stats, title }: StatsTableProps) => (
-    <RowDataTable alternating headerTitle={title}>
-      {stats?.map(({ name, value, rate, progress, warning }) => {
-        const warn = {
-          bold: shouldWarn(warning, rate),
-          danger: shouldWarn(warning, rate),
-        };
-
-        const stylePercent = (value, rate) => (
-          value !== undefined
-            ? `(${formatPercent(rate)})`
-            : formatPercent(rate)
-        );
-
-        return (
-          <RowCard columnFlexNumbers={[2,1,2]} key={name}>
-            <Text>{name}</Text>
-            <Flex>
-              {value !== undefined &&
-                <Text {...warn}>
-                  {value}
-                </Text>
-              }
-              &nbsp;
-              {rate !== undefined &&
-                <Text {...warn}>
-                  {stylePercent(value, rate)}
-                </Text>
-              }
-            </Flex>
-            {progress &&
-              <ProgressBar
-                progress={rate*100}
-                {...warn}
-              />
-            }
-          </RowCard>
-        );
-      })}
-    </RowDataTable>
   );
 
   return (
