@@ -4,7 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.row import (
     # explode,
     filter_rows,
     sort_rows,
-    remove,
+    remove_row,
 )
 from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
@@ -842,7 +842,7 @@ class RowTests(TestCase):
             ],
         )
         expected_df2.index = pd.Int64Index([])
-        new_df = remove(df, action1)
-        new_df2 = remove(df, action2).astype(object)
+        new_df = remove_row(df, action1)
+        new_df2 = remove_row(df, action2).astype(object)
         assert_frame_equal(new_df, expected_df)
         assert_frame_equal(new_df2, expected_df2)

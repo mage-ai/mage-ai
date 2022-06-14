@@ -66,8 +66,7 @@ class BasePipeline:
             payload = action['action_payload']
             if not (
                 action['title'] == REMOVE_OUTLIERS_TITLE
-                and payload['action_type'] == 'remove'
-                and payload['axis'] == 'row'
+                and payload['action_type'] == 'remove_outliers'
                 and self.outliers_removed
             ):
                 df_transformed = BaseAction(payload).execute(df_transformed)
