@@ -1,3 +1,4 @@
+from matplotlib.pyplot import text
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
@@ -71,14 +72,14 @@ class StatisticsCalculator:
             data['total_null_value_count'] = sum(
                 data[f'{col}/null_value_count'] for col in df.columns
             )
-            data['total_null_value_rate'] = (
-                data['total_null_value_count'] / df.size if df.size else 0
+            data['total_null_value_rate'] = self.__protected_division(
+                data['total_null_value_count'], df.size
             )
             data['total_invalid_value_count'] = sum(
                 data[f'{col}/invalid_value_count'] for col in df.columns
             )
-            data['total_invalid_value_rate'] = (
-                data['total_invalid_value_count'] / df.size if df.size else 0
+            data['total_invalid_value_rate'] = self.__protected_division(
+                data['total_invalid_value_count'], df.size
             )
 
             df_dedupe = df.drop_duplicates()
@@ -88,29 +89,24 @@ class StatisticsCalculator:
                 [col for col in df.columns if data[f'{col}/count'] == 0]
             )
 
-            if column_count != 0:
-                data['avg_null_value_count'] = data['total_null_value_count'] / column_count
-                data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
-                data['empty_column_rate'] = data['empty_column_count'] / column_count
-            else:
-                data['avg_null_value_count'] = 0
-                data['avg_invalid_value_count'] = 0
-                data['empty_column_rate'] = 0
-
-            if row_count != 0:
-                data['duplicate_row_rate'] = (
-                    data['duplicate_row_count'] / row_count if row_count else 0
-                )
-            else:
-                data['duplicate_row_rate'] = 0
-
-            data['completeness'] = (
-                1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
+            data['avg_null_value_count'] = self.__protected_division(
+                data['total_null_value_count'], column_count
             )
-            data['validity'] = (
-                data['completeness'] - data['avg_invalid_value_count'] / data['count']
-                if data['count'] > 0
-                else 0
+            data['avg_invalid_value_count'] = self.__protected_division(
+                data['total_invalid_value_count'], column_count
+            )
+            data['empty_column_rate'] = self.__protected_division(
+                data['empty_column_count'], column_count
+            )
+            data['duplicate_row_rate'] = self.__protected_division(
+                data['duplicate_row_count'], row_count
+            )
+
+            data['completeness'] = 1 - self.__protected_division(
+                data['avg_null_value_count'], data['count']
+            )
+            data['validity'] = data['completeness'] - self.__protected_division(
+                data['avg_invalid_value_count'], data['count']
             )
 
             timeseries_metadata = self.__evaluate_timeseries(data)
@@ -159,6 +155,9 @@ class StatisticsCalculator:
                 indices.append(column)
         return {'is_timeseries': len(indices) != 0, 'timeseries_index': indices}
 
+    def __protected_division(self, dividend: float, divisor: float) -> float:
+        return dividend / divisor if divisor != 0 else 0
+
     def __statistics_overview(self, series, col):
         # The following regex based replace has high overheads
         # series = series.replace(r'^\s*$', np.nan, regex=True)
@@ -192,17 +191,16 @@ class StatisticsCalculator:
         data = {
             f'{col}/count': series_non_null.size,
             f'{col}/count_distinct': count_unique,
-            f'{col}/null_value_rate': 0
-            if series.size == 0
-            else series.isnull().sum() / series.size,
             f'{col}/null_value_count': series.isnull().sum(),
             f'{col}/value_counts': df_top_value_counts.to_dict(),
         }
 
-        data[f'{col}/unique_value_rate'] = (
-            data[f'{col}/count_distinct'] / series.size if series.size else 0
+        data[f'{col}/null_value_rate'] = self.__protected_division(
+            data[f'{col}/null_value_count'], series.size
         )
-
+        data[f'{col}/unique_value_rate'] = self.__protected_division(
+            data[f'{col}/count_distinct'], series.size
+        )
         data[f'{col}/max_null_seq'] = (
             max(self.null_seq_gen(series.isna().to_numpy()))
             if data[f'{col}/count'] != 0
@@ -231,8 +229,8 @@ class StatisticsCalculator:
                     ).abs()
                     series_outliers = series_z_score[series_z_score >= OUTLIER_ZSCORE_THRESHOLD]
                     data[f'{col}/outlier_count'] = series_outliers.count()
-                    data[f'{col}/outlier_ratio'] = (
-                        data[f'{col}/outlier_count'] / series.size if series.size else 0
+                    data[f'{col}/outlier_ratio'] = self.__protected_division(
+                        data[f'{col}/outlier_count'], series.size
                     )
                     data[f'{col}/outliers'] = (
                         series_non_null.loc[series_outliers.index]
@@ -253,11 +251,8 @@ class StatisticsCalculator:
                 data[f'{col}/min_character_count'] = string_length.min()
                 data[f'{col}/max_character_count'] = string_length.max()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
-                text_series = text_series.str.lower()
+                text_series = text_series.str.lower().str.strip()
                 text_series = text_series.str.split('\s+')
-                text_series = text_series.apply(
-                    lambda words: [word for word in words if word != '']
-                )
 
                 word_count = text_series.map(len)
                 data[f'{col}/max_word_count'] = word_count.max()
@@ -312,8 +307,8 @@ class StatisticsCalculator:
         data[f'{col}/invalid_value_distribution'] = (
             invalid_values.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
         )
-        data[f'{col}/invalid_value_rate'] = (
-            0 if series.size == 0 else data[f'{col}/invalid_value_count'] / series.size
+        data[f'{col}/invalid_value_rate'] = self.__protected_division(
+            data[f'{col}/invalid_value_count'], series.size
         )
 
         # Calculate quality metrics
