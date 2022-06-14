@@ -219,11 +219,11 @@ export function timeRemaining(startAt, timeToCompleteInSec) {
 }
 
 export function isNumeric(str) {
-  if (typeof str !== 'string') {
-    return false;
-  }
+  return !isNaN(str);
+}
 
-  return !Number.isNaN(str) && !Number.isNaN(parseFloat(str));
+export function isInteger(str) {
+  return Number.isInteger(Number(str));
 }
 
 export function extractNumber(text) {
