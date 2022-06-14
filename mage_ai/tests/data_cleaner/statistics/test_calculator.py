@@ -274,7 +274,6 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['cancelled/quality'], 'Good')
 
     def test_calculate_statistics_text_data(self):
-        # this data was generated using Faker
         texts = [
             'Know fine seat prevent 92383ee3. \nCreate Mr. real',
             'Avoid seat place.\nTrial exist against create.',
@@ -282,25 +281,6 @@ class StatisticsCalculatorTest(TestCase):
             'Physical father different ago away place. Health enough product even goal seat team.',
             None,
             None,
-        ]
-        shuffle(texts)
-        df = pd.DataFrame({'text': texts})
-        calculator = StatisticsCalculator(
-            column_types=dict(
-                text='text',
-            ),
-        )
-        data = calculator.calculate_statistics_overview(df, is_clean=True)
-        self.assertEquals(data['text/word_distribution']['seat'], 4)
-        self.assertEquals(data['text/word_distribution']['create'], 2)
-        self.assertEquals(data['text/word_distribution']['place'], 2)
-        self.assertEquals(data['text/total_word_count'], 40)
-        self.assertEquals(data['text/avg_word_count'], 10)
-        self.assertEquals(data['text/avg_string_length'], 65.5)
-        self.assertEquals(data['text/total_character_count'], 262)
-
-    def test_calculate_statistics_stop_word_rate(self):
-        texts = [
             'I know that bees make honey, but do they bake cake?',
             'It is not a problem with the quantum flux capacitor, but the light conduits',
             'Breaking News: scientists finally figure out if water is wet, leading to widespread controversy',
@@ -316,9 +296,12 @@ class StatisticsCalculatorTest(TestCase):
             ),
         )
         data = calculator.calculate_statistics_overview(df, is_clean=True)
-        self.assertAlmostEquals(data['text/total_stop_word_count'], 11, places=3)
-        self.assertAlmostEquals(data['text/stop_word_rate'], 0.22, places=3)
-        self.assertAlmostEquals(data['text/avg_stop_word_count'], 2.75, places=3)
+        self.assertEquals(data['text/word_distribution']['seat'], 4)
+        self.assertEquals(data['text/word_distribution']['create'], 2)
+        self.assertEquals(data['text/word_distribution']['place'], 2)
+        self.assertEquals(data['text/max_word_count'], 14)
+        self.assertEquals(data['text/min_word_count'], 7)
+        self.assertEquals(data['text/word_count_excl_stopwords'], 79)
 
     def test_calculate_statistics_email_data(self):
         # This data was generated using Faker

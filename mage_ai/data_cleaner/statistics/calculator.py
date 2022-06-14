@@ -181,6 +181,8 @@ class StatisticsCalculator:
             else len(series)
         )
 
+        invalid_rows = find_syntax_errors(series_non_null, column_type)
+
         dates = None
         if len(series_non_null) > 0:
             if column_type in NUMBER_TYPES:
@@ -215,34 +217,27 @@ class StatisticsCalculator:
                 data[f'{col}/min'] = dates.min().isoformat()
             elif column_type == ColumnType.TEXT:
                 text_series = series_non_null
-                num_chars = text_series.apply(lambda string: len(string))
-                data[f'{col}/total_character_count'] = num_chars.sum()
-                data[f'{col}/avg_string_length'] = num_chars.mean()
+                data[f'{col}/avg_string_length'] = text_series.str.len().mean()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
                 text_series = text_series.str.lower()
                 text_series = text_series.str.split('\s+')
                 text_series = text_series.apply(
                     lambda words: [word for word in words if word != '']
                 )
-                word_count = text_series.apply(lambda words: len(words))
-                data[f'{col}/total_word_count'] = word_count.sum()
-                data[f'{col}/avg_word_count'] = word_count.mean()
-                stop_words = text_series.apply(
-                    lambda words: reduce(
-                        lambda x, y: x + y,
-                        map(lambda word: 1 if word in STOP_WORD_LIST else 0, words),
-                    )
-                    if len(words)
-                    else 0
-                )
-                data[f'{col}/total_stop_word_count'] = stop_words.sum()
-                data[f'{col}/stop_word_rate'] = stop_words.sum() / data[f'{col}/total_word_count']
-                data[f'{col}/avg_stop_word_count'] = stop_words.mean()
+
+                word_count = text_series.map(len)
+                data[f'{col}/max_word_count'] = word_count.max()
+                data[f'{col}/min_word_count'] = word_count.min()
+
+                exploded_text_series = text_series.explode()
                 data[f'{col}/word_distribution'] = (
-                    text_series.explode().value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+                    exploded_text_series.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+                )
+                data[f'{col}/word_count_excl_stopwords'] = (
+                    len(exploded_text_series) - exploded_text_series.isin(STOP_WORD_LIST).sum()
                 )
             elif column_type == ColumnType.EMAIL:
-                valid_emails = series[~find_syntax_errors(series, ColumnType.EMAIL)]
+                valid_emails = series_non_null[~invalid_rows]
                 domains = valid_emails.str.extract(EMAIL_DOMAIN_REGEX, expand=False)
                 data[f'{col}/domain_distribution'] = (
                     domains.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
@@ -271,7 +266,6 @@ class StatisticsCalculator:
             )
 
         # Detect mismatched formats for some column types
-        invalid_rows = find_syntax_errors(series_non_null, column_type)
         data[f'{col}/invalid_value_count'] = invalid_rows.sum()
         invalid_values = series_non_null[invalid_rows]
         data[f'{col}/invalid_values'] = invalid_values[:INVALID_VALUE_SAMPLE_COUNT].tolist()
