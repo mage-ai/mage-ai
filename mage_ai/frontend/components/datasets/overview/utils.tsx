@@ -145,9 +145,14 @@ export function buildRenderColumnHeader({
         distribution,
       } = buildDistributionData(
         tsChart,
-        columnUUID,
+        {},
+        {
+          feature: {
+            'columnType': columnType,
+            'uuid': columnUUID,
+          },
+        },
       );
-
       timeSeriesData.push(distribution);
     });
 
@@ -184,7 +189,9 @@ export function buildRenderColumnHeader({
           <Text small>
             Rows: {count}
             <br />
-            Dates: {xLabelMin} - {xLabelMax}
+            Start: {xLabelMin}
+            <br />
+            End: {xLabelMax}
           </Text>
         )}
         showYAxisLabels
