@@ -36,20 +36,28 @@ def display_inline_iframe(host=None, port=None):
     host = host or 'localhost'
     port = port or SERVER_PORT
 
-    path_to_local_server = f'http://{host}:{port}'
+    path_to_server = f'http://{host}:{port}'
+
+    def __print_url():
+        print(f'Open UI in another tab with url: {path_to_server}')
+
     if type(get_ipython()).__module__.startswith('google.colab'):
+        from google.colab.output import eval_js
+        path_to_server = eval_js(f'google.colab.kernel.proxyPort({SERVER_PORT})')
+        __print_url()
         display(Javascript("""
             (async ()=>{
                 fm = document.createElement('iframe')
-                fm.src = await google.colab.kernel.proxyPort(%s)
+                fm.src = %s
                 fm.width = '95%%'
                 fm.height = '%d'
                 fm.frameBorder = 0
                 document.body.append(fm)
             })();
-            """ % (SERVER_PORT, IFRAME_HEIGHT)))
+            """ % (path_to_server, IFRAME_HEIGHT)))
     else:
-        display(IFrame(path_to_local_server, width='95%', height=1000))
+        __print_url()
+        display(IFrame(path_to_server, width='95%', height=1000))
 
 
 def connect_data(df, name):
