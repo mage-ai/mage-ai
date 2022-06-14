@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FlexContainer from '@oracle/components/FlexContainer'
+import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -26,7 +26,6 @@ function ColumnListSidebar({
 }: ColumnListSidebarProps) {
   const {
     metadata,
-    sample_data: sampleData,
   } = featureSet;
   const columnTypesByFeatureUUID = metadata?.column_types || {};
 
