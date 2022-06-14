@@ -42,7 +42,8 @@ production environments (e.g. online re-training, inference, etc).
 
 # Quick start
 
-Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
+- Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
+- Try a **[hosted version of Mage](http://18.237.55.91:5789/)**
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
@@ -72,6 +73,28 @@ mage_ai.launch()
 Open [http://localhost:5789](http://localhost:5789) in your browser to access the tool locally.
 
 To stop the tool, run this command: `mage_ai.kill()`
+
+#### Custom host and port for tool
+
+If you want to change the default host (`localhost`) and the default port (`5789`)
+that the tool runs on, you can set 2 separate environment variables:
+
+```bash
+$ export HOST=127.0.0.1
+$ export PORT=1337
+```
+
+#### Using tool in Jupyter notebook cell
+
+You can run the tool inside a Jupyter notebook cell iFrame using the method:
+`mage_ai.launch()` within a single cell.
+
+Optionally, you can use the following arguments to change the default host and
+port that the iFrame loads from:
+
+```python
+mage_ai.launch(iframe_host='127.0.0.1', iframe_port=1337)
+```
 
 ### Cleaning data
 After building a data cleaning pipeline from the UI,

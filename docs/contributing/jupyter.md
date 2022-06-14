@@ -1,6 +1,6 @@
 # Install `mage_ai`
 ```bash
-$ pip install git+https://github.com/mage-ai/mage-ai.git#egg=mage-ai
+$ pip3 install git+https://github.com/mage-ai/mage-ai.git#egg=mage-ai
 ```
 
 # Run Jupyter
