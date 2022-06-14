@@ -84,10 +84,12 @@ function PageBreadcrumbs({
   }
 
   const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
-  lastBreadcrumb.button = true;
   lastBreadcrumb.selected = true;
   lastBreadcrumb.href = null;
-  lastBreadcrumb.onClick = () => setColumnListMenuVisible(true);
+  if (lastBreadcrumb.label !== PageEnum.EXPORT) {
+    lastBreadcrumb.button = true;
+    lastBreadcrumb.onClick = () => setColumnListMenuVisible(true);
+  }
 
   return (
     <Breadcrumbs
