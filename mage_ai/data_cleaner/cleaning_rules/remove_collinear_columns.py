@@ -16,7 +16,7 @@ class RemoveCollinearColumns(BaseRule):
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
-        """ Evaluate columns for colinearity with Variance Inflation Factor.
+        """ Evaluate columns for collinearity with Variance Inflation Factor.
         VIF = 1 / (1 - <coefficient of determination on column k>)
         Measures increase in regression model variance due to multicollinearity
         => column k is multicollinear with others if model predicting its value
@@ -28,13 +28,10 @@ class RemoveCollinearColumns(BaseRule):
         collinear_columns = []
         self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
 
-        X = self.numeric_df.to_numpy()
-        X = (X-X.mean(axis=0)) / X.std(axis=0) # norm
-        vifs = np.diagonal(np.linalg.pinv(X.T@X))
-        for vif, column in zip(vifs, self.numeric_columns):
-            if vif > self.VIF_UB:
-                collinear_columns.append(column)
-        
+        C = np.corrcoef(df.to_numpy().T)
+        vifs = np.diagonal(np.linalg.pinv(C))
+        collinear_columns = [num_col for vif, num_col in
+                                 zip(vifs, self.numeric_columns) if vif > self.VIF_UB]
         if len(collinear_columns) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
