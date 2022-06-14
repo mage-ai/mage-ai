@@ -1,2 +1,2 @@
 recursive-include mage_ai/server/frontend_dist *
-recursive-include mage_ai/server/sample_datasets *
+recursive-include mage_ai/sample_datasets *
