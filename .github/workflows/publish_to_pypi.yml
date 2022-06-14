@@ -1,0 +1,40 @@
+name: Build and publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry Run'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --user --upgrade setuptools wheel requests
+    - name: Build stable distribution
+      run: |
+        rm -rf dist/*
+        python setup.py sdist bdist_wheel
+    - name: Publish distribution to Test PyPI
+      if: github.event.inputs.dry_run == 'true'
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+    - name: Publish distribution to PyPI
+      if: github.event.inputs.dry_run == 'false'
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
