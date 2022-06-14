@@ -394,3 +394,17 @@ def kill():
             alive = thread.is_alive()
         if not alive:
             print('Flask server is terminated')
+
+
+if __name__ == '__main__':
+    app.debug = os.getenv('DEBUG', True)
+    host = os.getenv('HOST')
+    port = os.getenv('PORT', SERVER_PORT)
+
+    args = dict(port=port)
+    if host:
+        args['host'] = host
+
+    print(f'Mage running on host and port {host}:{port}')
+
+    app.run(**args)

@@ -6,16 +6,16 @@ export function getHost() {
 
   let host = LOCALHOST;
   let protocol = 'http://';
+
   if (typeof window !== 'undefined') {
     host = window.location.hostname;
-  }
-  if (host === LOCALHOST) {
-    host = `${host}:${PORT}`;
-  } else {
-    protocol = 'https://';
+
+    if (window.location.protocol.includes('https://')) {
+      protocol = 'https://';
+    }
   }
 
-  return `${protocol}${host}`;
+  return `${protocol}${host}:${PORT}`;
 }
 
 export function buildUrl(
