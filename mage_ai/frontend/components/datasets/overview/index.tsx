@@ -272,7 +272,7 @@ function DatasetOverview({
                   {qualityMetrics && (
                     <Spacing mb={PADDING_UNITS}>
                       <SimpleDataTable
-                        columnFlexNumbers={[2, 1, 2 ]}
+                        columnFlexNumbers={[2, 1, 2]}
                         columnHeaders={[{ label: 'Quality metrics' }]}
                         rowGroupData={[qualityMetrics]}
                         warnings={WARNINGS.qualityMetrics}

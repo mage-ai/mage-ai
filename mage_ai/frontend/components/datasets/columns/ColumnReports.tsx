@@ -47,6 +47,7 @@ function ColumnReports({
     outlier_count: outlierCount,
     outliers,
     skew,
+    unique_value_rate: uniqueValueRate,
     validity,
   } = featureSetStats;
 
@@ -83,7 +84,11 @@ function ColumnReports({
     {
       name: 'Unique values',
       value: countDistinct,
-      // TODO rate
+      rate: uniqueValueRate,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
     },
     {
       name: 'Missing values',
@@ -92,7 +97,7 @@ function ColumnReports({
       warning: {
         compare: greaterThan,
         val: 0,
-      }
+      },
     },
     {
       name: 'Invalid values',
@@ -101,7 +106,7 @@ function ColumnReports({
       warning: {
         compare: greaterThan,
         val: 0,
-      }
+      },
     },
     {
       name: 'Max value',
@@ -131,7 +136,6 @@ function ColumnReports({
     {
       name: 'Outliers',
       value: outlierCount,
-      // TODO rate
     },
     {
       name: 'Skewness',
