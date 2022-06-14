@@ -182,8 +182,10 @@ export function buildRenderColumnHeader({
         key={columnUUID}
         large
         margin={{
-          right: 5 * UNIT,
-          top: 10,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          top: 0,
         }}
         renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
           <Text small>
@@ -194,7 +196,6 @@ export function buildRenderColumnHeader({
             End: {xLabelMax}
           </Text>
         )}
-        showYAxisLabels
         sortData={d => sortByKey(d, '[4]')}
       />
     ));
