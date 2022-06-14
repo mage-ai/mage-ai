@@ -2,18 +2,14 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
-from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
+from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import json
-<<<<<<< HEAD
 import logging
 import os
-=======
-import requests
->>>>>>> 677b972 ([dy] Initial commit)
 import simplejson
 import sys
 import threading
@@ -98,7 +94,8 @@ def process():
     if not id:
         return
 
-    feature_set = FeatureSet(id=id)
+    global api_key
+    feature_set = FeatureSet(id=id, api_key=api_key)
     df = feature_set.data
     metadata = feature_set.metadata
 
@@ -241,7 +238,7 @@ def pipelines():
     return response
 
 
-@app.route('/pipelines/<id>', endpoint='piplines_get')
+@app.route('/pipelines/<id>', endpoint='pipelines_get')
 @rescue_errors
 def pipeline(id):
     """
@@ -296,6 +293,10 @@ def update_pipeline(id):
     else:
         pipeline.pipeline = clean_pipeline
 
+    global api_key
+    if api_key:
+        pipeline.sync_pipeline()
+
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -319,16 +320,19 @@ def clean_df(df, name):
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, id=None, path=None):
+def clean_df_with_pipeline(df, id=None, path=None, remote_id=None):
     pipeline = None
     if id is not None:
-        pipeline = Pipeline(id=id)
+        pipeline = Pipeline(id=id).pipeline
     elif path is not None:
-        pipeline = Pipeline(path=path)
+        pipeline = Pipeline(path=path).pipeline
+    elif remote_id is not None:
+        global api_key
+        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, api_key))
     if pipeline is None:
         print('Please provide a valid pipeline id or config path.')
         return df
-    return pipeline.pipeline.transform(df, auto=False)
+    return pipeline.transform(df, auto=False)
 
 
 def connect_df(df, name):
@@ -373,9 +377,9 @@ class ThreadWithTrace(threading.Thread):
 
 def launch(mage_api_key=None) -> None:
     global thread
-    global api_key
-    api_key = mage_api_key
-    if api_key:
+    if mage_api_key:
+        global api_key
+        api_key = mage_api_key
         sync_pipelines()
 
     host = os.getenv('HOST', 'localhost')
@@ -393,27 +397,11 @@ def launch(mage_api_key=None) -> None:
     return thread
 
 def sync_pipelines():
+    print('Syncing pipelines with cloud database.', end='')
     local_pipelines = Pipeline.objects()
     for pipeline in local_pipelines:
-        feature_set_id = pipeline.metadata['feature_set_id']
-        feature_set = FeatureSet(id=feature_set_id)
-        pipeline_name = f"{feature_set.metadata['name']}_pipeline"
-        data = dict(
-            name=pipeline_name,
-            pipeline_actions=pipeline.pipeline.actions
-        )
-        response = requests.post(
-            data=json.dumps(data),
-            headers={
-                'Content-Type': 'application/json',
-                'X-API-KEY': api_key,
-            },
-            url='http://localhost:8000/api/v1/data_cleaning_pipelines',
-        ).json()
-        print("response:", response)
-        # pipeline.metadata = merge_dict(pipeline.metadata, {
-
-        # })
+        print('.', end='')
+        pipeline.sync_pipeline(api_key)
 
 
 def kill():
