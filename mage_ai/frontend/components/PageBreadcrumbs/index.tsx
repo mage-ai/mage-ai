@@ -76,18 +76,18 @@ function PageBreadcrumbs({
   if (typeof columnIndex !== 'undefined' && columnName) {
     breadcrumbs.push({
       bold: true,
-      button: true,
       label: columnName.length > MAX_CHARS
         ? `${columnName.slice(0, MAX_CHARS)}...`
         : columnName,
-      onClick: () => setColumnListMenuVisible(true),
       title: columnName,
     });
   }
 
   const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
+  lastBreadcrumb.button = true;
   lastBreadcrumb.selected = true;
   lastBreadcrumb.href = null;
+  lastBreadcrumb.onClick = () => setColumnListMenuVisible(true);
 
   return (
     <Breadcrumbs

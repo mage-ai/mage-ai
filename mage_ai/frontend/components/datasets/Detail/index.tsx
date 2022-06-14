@@ -265,9 +265,11 @@ function DatasetDetail({
       )}
       header={
         <Spacing p={PADDING_UNITS}>
-          {!hideColumnsHeader &&
-            <Spacing mb={2}>
-              <FlexContainer justifyContent="space-between">
+          <Spacing mb={2}>
+            <FlexContainer
+              justifyContent={hideColumnsHeader ? 'flex-end' : 'space-between'}
+            >
+              {!hideColumnsHeader &&
                 <Link
                   block
                   noHoverUnderline
@@ -290,19 +292,19 @@ function DatasetDetail({
                     </Text>
                   </FlexContainer>
                 </Link>
+              }
 
-                <NextLink
-                  as={`/datasets/${featureSet?.id}/export`}
-                  href="/datasets/[...slug]"
-                  passHref
-                >
-                  <Link block>
-                    Export data pipeline
-                  </Link>
-                </NextLink>
-              </FlexContainer>
-            </Spacing>
-          }
+              <NextLink
+                as={`/datasets/${featureSet?.id}/export`}
+                href="/datasets/[...slug]"
+                passHref
+              >
+                <Link block>
+                  Export data pipeline
+                </Link>
+              </NextLink>
+            </FlexContainer>
+          </Spacing>
 
           <FlexContainer justifyContent="space-between">
             <PageBreadcrumbs
