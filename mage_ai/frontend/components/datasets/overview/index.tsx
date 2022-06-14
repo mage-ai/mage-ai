@@ -101,7 +101,7 @@ function DatasetOverview({
         show_columns: 1,
       });
     }
-  }, [showColumnsFromUrl]);
+  }, [showColumnsFromUrl, windowWidth]);
 
   const {
     insights,
