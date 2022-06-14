@@ -4,6 +4,8 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
+import Link from '@oracle/elements/Link';
+import NextLink from 'next/link';
 import router from 'next/router';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
@@ -23,6 +25,7 @@ import {
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
+import FlexContainer from '@oracle/components/FlexContainer';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
@@ -198,13 +201,7 @@ function Table({
     useBlockLayout,
     useSticky,
   );
-
-  const viewInvalidCellValue = (index, isInvalid) => {
-    if (isInvalid) {
-      const { slug = [] } = router.query;
-      router.push(`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`);
-    }
-  };
+  const { slug = [] } = router.query;
 
   // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
@@ -245,7 +242,6 @@ function Table({
           if (isInvalid) {
             cellStyle.background = light.interactive.dangerBorder;
             cellStyle.color = light.monotone.white;
-            cellValue = cellValue + ' View all';
           }
 
           return (
@@ -253,12 +249,11 @@ function Table({
               {...cellProps}
               className="td"
               key={`${idx}-${cellValue}`}
-              onClick={()=> viewInvalidCellValue(idx - 1, isInvalid)}
               style={cellStyle}
             >
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
-                <>
+                <FlexContainer alignItems="left">
                   {cellValue === true && 'true'}
                   {cellValue === false && 'false'}
                   {(cellValue === null || cellValue === 'null') && 'null'}
@@ -268,13 +263,27 @@ function Table({
                     && cellValue !== 'null'
                     && cellValue
                   }
-                </>
+                </FlexContainer>
+              )}
+              {isInvalid && (
+                <FlexContainer alignItems="right">
+                  <NextLink
+                    as={`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`}
+                    href="/datasets/[...slug]"
+                    passHref
+                  >
+                    <Link>
+                      View all
+                    </Link>
+                  </NextLink>
+                </FlexContainer>
               )}
             </div>
           );
         })}
       </div>
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     prepareRow,
     rows,
