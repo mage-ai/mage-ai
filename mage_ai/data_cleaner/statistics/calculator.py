@@ -92,6 +92,10 @@ class StatisticsCalculator:
                 data['avg_null_value_count'] = data['total_null_value_count'] / column_count
                 data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
                 data['empty_column_rate'] = data['empty_column_count'] / column_count
+            else:
+                data['avg_null_value_count'] = 0
+                data['avg_invalid_value_count'] = 0
+                data['empty_column_rate'] = 0
 
             if row_count != 0:
                 data['avg_invalid_value_rate'] = data['avg_invalid_value_count'] / row_count
@@ -99,6 +103,10 @@ class StatisticsCalculator:
                 data['duplicate_row_rate'] = (
                     data['duplicate_row_count'] / row_count if row_count else 0
                 )
+            else:
+                data['avg_invalid_value_rate'] = 0
+                data['avg_null_value_rate'] = 0
+                data['duplicate_row_rate'] = 0
 
             data['completeness'] = (
                 1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
