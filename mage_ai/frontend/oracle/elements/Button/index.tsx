@@ -142,7 +142,7 @@ const Button = ({
   loading,
   onClick,
   ...props
-}: ButtonProps) => {
+}: ButtonProps, ref) => {
   const iconProps = {
     disabled,
     size: UNIT * 1.5,
@@ -156,6 +156,7 @@ const Button = ({
         e?.preventDefault();
         onClick?.(e);
       }}
+      ref={ref}
     >
       <FlexContainer
         alignItems="center"
@@ -192,4 +193,4 @@ const Button = ({
   );
 };
 
-export default Button;
+export default React.forwardRef(Button);

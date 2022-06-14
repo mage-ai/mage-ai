@@ -1,3 +1,4 @@
+import React from 'react';
 import NextLink from 'next/link';
 
 import Button from '@oracle/elements/Button';
@@ -35,7 +36,7 @@ function Breadcrumb({
   onClick,
   selected,
   title,
-}: BreadcrumbType) {
+}: BreadcrumbType, ref) {
   const buildEl = (
     textOnly: boolean = false,
     noRightMargin: boolean = false,
@@ -80,6 +81,7 @@ function Breadcrumb({
         basic
         noPadding
         onClick={onClick}
+        ref={ref}
         transparent
       >
         {buildEl(true, true)}
@@ -114,4 +116,4 @@ function Breadcrumb({
   );
 }
 
-export default Breadcrumb;
+export default React.forwardRef(Breadcrumb);

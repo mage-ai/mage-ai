@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRouter } from 'next/router';
 
 import Breadcrumbs from '@oracle/components/Breadcrumbs';
@@ -28,7 +29,7 @@ const MAX_CHARS = 35;
 function PageBreadcrumbs({
   featureSet,
   setColumnListMenuVisible,
-}: PageBreadcrumbsProps) {
+}: PageBreadcrumbsProps, ref) {
   const router = useRouter();
   const { slug = [] } = router.query;
   const qFromUrl = queryFromUrl();
@@ -95,8 +96,9 @@ function PageBreadcrumbs({
       linkProps={{
         noHoverUnderline: true,
       }}
+      ref={ref}
     />
   );
 }
 
-export default PageBreadcrumbs;
+export default React.forwardRef(PageBreadcrumbs);

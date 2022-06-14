@@ -1,6 +1,7 @@
 import React, {
   useMemo,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import NextLink from 'next/link';
@@ -27,7 +28,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
-import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
+import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
@@ -69,6 +70,7 @@ function DatasetDetail({
 }: DatasetDetailProps) {
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
   const [columnListMenuVisible, setColumnListMenuVisible] = useState(false);
+  const breadcrumbRef = useRef(null);
 
   const {
     id: featureSetId,
@@ -223,6 +225,18 @@ function DatasetDetail({
 
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
+  const onClickColumn = (col: string) => goToWithQuery({
+    column: col === null ? null : columnsAll.indexOf(col),
+  }, {
+    pushHistory: true,
+  });
+  const {
+    left: breadcrumbLeft,
+    top: breadcrumbTop,
+  } = breadcrumbRef?.current?.getBoundingClientRect?.() || {};
+  const finalBreadcrumbLeftPosition = breadcrumbLeft - (columnsVisible ? BEFORE_WIDTH : 0);
+  const finalBreadcrumbTopPosition = breadcrumbTop + 28; // Add line-height
+
   return (
     <MultiColumn
       after={
@@ -244,11 +258,7 @@ function DatasetDetail({
           <ColumnListSidebar
             columns={columnsAll}
             featureSet={featureSet}
-            onClickColumn={col => goToWithQuery({
-              column: col === null ? null : columnsAll.indexOf(col),
-            }, {
-              pushHistory: true,
-            })}
+            onClickColumn={onClickColumn}
             selectedColumn={selectedColumn}
           />
         </Spacing>
@@ -297,17 +307,16 @@ function DatasetDetail({
           <FlexContainer justifyContent="space-between">
             <PageBreadcrumbs
               featureSet={featureSet}
+              ref={breadcrumbRef}
               setColumnListMenuVisible={setColumnListMenuVisible}
             />
             <ColumnListMenu
               columns={columnsAll}
               featureSet={featureSet}
-              onClickColumn={col => goToWithQuery({
-                column: col === null ? null : columnsAll.indexOf(col),
-              }, {
-                pushHistory: true,
-              })}
+              left={finalBreadcrumbLeftPosition}
+              onClickColumn={onClickColumn}
               setVisible={setColumnListMenuVisible}
+              top={finalBreadcrumbTopPosition}
               visible={columnListMenuVisible}
             />
             <Flex>

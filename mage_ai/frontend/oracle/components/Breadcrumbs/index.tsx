@@ -1,3 +1,5 @@
+import React from 'react';
+
 import Breadcrumb, { BreadcrumbType } from './Breadcrumb';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -15,7 +17,7 @@ function BreadCrumbs({
   breadcrumbs,
   large,
   linkProps,
-}: BreadcrumbSetProps) {
+}: BreadcrumbSetProps, ref) {
   return (
     <FlexContainer>
       {breadcrumbs.map(
@@ -31,6 +33,7 @@ function BreadCrumbs({
               {...props}
               large={large}
               linkProps={linkProps}
+              ref={ref}
             />
           </Flex>
         ),
@@ -39,4 +42,4 @@ function BreadCrumbs({
   );
 }
 
-export default BreadCrumbs;
+export default React.forwardRef(BreadCrumbs);

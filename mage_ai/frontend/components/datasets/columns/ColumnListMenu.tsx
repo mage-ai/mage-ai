@@ -9,9 +9,11 @@ import { sortByKey } from '@utils/array';
 
 type ColumnListMenuProps = {
   columns: string[];
+  left?: number;
   featureSet: FeatureSetType;
   onClickColumn: (col: string) => void;
   setVisible: (visible: boolean) => void;
+  top?: number;
   visible: boolean;
 };
 
@@ -20,8 +22,10 @@ const ALL_COLUMNS = 'all_columns';
 function ColumnListMenu({
   columns,
   featureSet,
+  left,
   onClickColumn,
   setVisible,
+  top,
   visible,
 }: ColumnListMenuProps) {
   const {
@@ -33,12 +37,15 @@ function ColumnListMenu({
     {
       beforeIcon: <Insights />,
       label: 'All columns',
-      onClick: () => onClickColumn(null),
+      onClick: () => {
+        onClickColumn(null);
+        setVisible(false);
+      },
       uuid: ALL_COLUMNS,
     },
   ];
 
-  const columnLinks: LinkType[] = columns.map(
+  const columnLinks: LinkType[] = (columns || []).map(
     (col: string) => {
       const columnType = columnTypesByFeatureUUID[col];
       const Icon = COLUMN_TYPE_ICON_MAPPING[columnType];
@@ -46,16 +53,18 @@ function ColumnListMenu({
       return {
         beforeIcon: <Icon />,
         label: col,
-        onClick: () => onClickColumn(col),
+        onClick: () => {
+          onClickColumn(col);
+          setVisible(false);
+        },
         uuid: col,
       };
     },
   );
-
   const sortedLinks = useMemo(() => sortByKey(
-    allColumnsLink.concat(columnLinks),
+    columnLinks,
     ({ uuid }) => uuid,
-  ), [columns]);
+  ), [columnLinks]);
 
   return (
     <ClickOutside
@@ -64,13 +73,14 @@ function ColumnListMenu({
       open={visible}
     >
       <Menu
+        left={left}
         linkGroups={[
           {
-            links: sortedLinks,
+            links: allColumnsLink.concat(sortedLinks),
             uuid: 'columns',
           },
         ]}
-        // right={UNIT * PADDING_UNITS}
+        top={top}
       />
     </ClickOutside>
   );
