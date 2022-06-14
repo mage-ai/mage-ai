@@ -13,6 +13,7 @@ import ActionPayloadType, {
   ActionVariableTypeEnum,
 } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
+import ColumnListMenu from '@components/datasets/columns/ColumnListMenu';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
@@ -67,6 +68,7 @@ function DatasetDetail({
   tabs,
 }: DatasetDetailProps) {
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
+  const [columnListMenuVisible, setColumnListMenuVisible] = useState(false);
 
   const {
     id: featureSetId,
@@ -293,7 +295,21 @@ function DatasetDetail({
           }
 
           <FlexContainer justifyContent="space-between">
-            <PageBreadcrumbs featureSet={featureSet} />
+            <PageBreadcrumbs
+              featureSet={featureSet}
+              setColumnListMenuVisible={setColumnListMenuVisible}
+            />
+            <ColumnListMenu
+              columns={columnsAll}
+              featureSet={featureSet}
+              onClickColumn={col => goToWithQuery({
+                column: col === null ? null : columnsAll.indexOf(col),
+              }, {
+                pushHistory: true,
+              })}
+              setVisible={setColumnListMenuVisible}
+              visible={columnListMenuVisible}
+            />
             <Flex>
               <Button
                 fullWidth

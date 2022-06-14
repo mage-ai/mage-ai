@@ -20,12 +20,14 @@ enum PageEnum {
 
 type PageBreadcrumbsProps = {
   featureSet: FeatureSetType;
+  setColumnListMenuVisible: (visible: boolean) => void;
 };
 
 const MAX_CHARS = 35;
 
 function PageBreadcrumbs({
   featureSet,
+  setColumnListMenuVisible,
 }: PageBreadcrumbsProps) {
   const router = useRouter();
   const { slug = [] } = router.query;
@@ -73,9 +75,11 @@ function PageBreadcrumbs({
   if (typeof columnIndex !== 'undefined' && columnName) {
     breadcrumbs.push({
       bold: true,
+      button: true,
       label: columnName.length > MAX_CHARS
         ? `${columnName.slice(0, MAX_CHARS)}...`
         : columnName,
+      onClick: () => setColumnListMenuVisible(true),
       title: columnName,
     });
   }
