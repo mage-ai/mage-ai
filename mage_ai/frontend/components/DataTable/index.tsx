@@ -1,10 +1,10 @@
-import NextLink from 'next/link';
 import React, {
   useCallback,
   useEffect,
   useMemo,
   useRef,
 } from 'react';
+import router from 'next/router';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
 import {
@@ -199,11 +199,11 @@ function Table({
     useSticky,
   );
 
-  const viewInvalidCellValue = (cell, isInvalid) => {
+  const viewInvalidCellValue = (index, isInvalid) => {
     if (isInvalid) {
-      console.log('clicked');
+      const { slug = [] } = router.query;
+      router.push(`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`);
     }
-
   };
 
   // Index refers to rowIndex but you cannot change the name.
@@ -253,7 +253,7 @@ function Table({
               {...cellProps}
               className="td"
               key={`${idx}-${cellValue}`}
-              onClick={()=> viewInvalidCellValue(cell, isInvalid)}
+              onClick={()=> viewInvalidCellValue(idx - 1, isInvalid)}
               style={cellStyle}
             >
               {firstColumn && cell.render('Cell')}
