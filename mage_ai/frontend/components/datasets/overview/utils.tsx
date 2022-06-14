@@ -1,6 +1,7 @@
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
+import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import {
   CATEGORICAL_TYPES,
@@ -154,11 +155,10 @@ export function buildRenderColumnHeader({
     const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
     const timeSeriesHistograms = timeSeriesData.map(({
       data,
-      featureUUID,
+      columnUUID,
     }) => (
       <Histogram
         data={data.map(({
-          isUnusual,
           x,
           xLabel,
           xLabelMax,
@@ -171,14 +171,14 @@ export function buildRenderColumnHeader({
           xLabelMax,
           x.min,
           x.max,
-          isUnusual,
         ])}
         getBarColor={([]) => light.brand.wind300}
-        height={UNIT * 50}
-        key={featureUUID}
+        height={COLUMN_HEADER_CHART_HEIGHT}
+        key={columnUUID}
         large
         margin={{
-          right: 4 * UNIT,
+          right: 5 * UNIT,
+          top: 10,
         }}
         renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
           <Text small>
@@ -187,9 +187,7 @@ export function buildRenderColumnHeader({
             Dates: {xLabelMin} - {xLabelMax}
           </Text>
         )}
-        showAxisLabels
         showYAxisLabels
-        showZeroes
         sortData={d => sortByKey(d, '[4]')}
       />
     ));
