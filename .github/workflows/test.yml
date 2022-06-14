@@ -3,8 +3,7 @@ name: Test
 on: [push]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,3 +22,16 @@ jobs:
       - name: Run unit tests
         run: |
           python3 -m unittest discover
+  build_frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14.19.1"
+      - name: Install dependencies
+        run: yarn
+      - name: Build and export
+        run: |
+          cd mage_ai/frontend && yarn install && yarn export
