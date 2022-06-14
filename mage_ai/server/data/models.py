@@ -38,6 +38,16 @@ class FeatureSet(Model):
             self.data = df
             self.data_orig = df
 
+    def __repr__(self):
+        formatted_suggestions = []
+        for idx, s in enumerate(self.suggestions):
+            formatted_suggestions.append(
+                f'{idx + 1}. {s["title"]}({s["action_payload"]["action_arguments"]}):'
+                f' {s["message"]}',
+            )
+        suggestion_str = '\n'.join(formatted_suggestions)
+        return f'<FeatureSet {self.id}> Cleaning suggestions:\n{suggestion_str}'
+
     @property
     def data(self):
         if self._data is None:
