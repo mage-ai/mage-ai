@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import React, {
   useCallback,
   useEffect,
@@ -198,6 +199,13 @@ function Table({
     useSticky,
   );
 
+  const viewInvalidCellValue = (cell, isInvalid) => {
+    if (isInvalid) {
+      console.log('clicked');
+    }
+
+  };
+
   // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
     const row = rows[index];
@@ -233,18 +241,19 @@ function Table({
             cellStyle.width = maxWidthOfFirstColumn;
           }
 
+          let cellValue = original[idx - 1];
           if (isInvalid) {
             cellStyle.background = light.interactive.dangerBorder;
             cellStyle.color = light.monotone.white;
+            cellValue = cellValue + ' View all';
           }
-
-          const cellValue = original[idx - 1];
 
           return (
             <div
               {...cellProps}
               className="td"
               key={`${idx}-${cellValue}`}
+              onClick={()=> viewInvalidCellValue(cell, isInvalid)}
               style={cellStyle}
             >
               {firstColumn && cell.render('Cell')}
