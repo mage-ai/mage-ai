@@ -42,7 +42,8 @@ production environments (e.g. online re-training, inference, etc).
 
 # Quick start
 
-Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
+- Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
+- Try a **[hosted version of Mage](http://18.237.55.91:5789/)**
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
