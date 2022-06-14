@@ -114,6 +114,10 @@ export const SHARED_LINK_STYLES = css<any>`
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).focusBorder};
   `}
 
+  ${props => props.danger && `
+    color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+  `}
+
   ${props => props.transparentBorder && `
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} transparent;
   `}

@@ -4,6 +4,9 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
+import Link from '@oracle/elements/Link';
+import NextLink from 'next/link';
+import router from 'next/router';
 import styled from 'styled-components';
 import { VariableSizeList } from 'react-window';
 import {
@@ -12,7 +15,9 @@ import {
 } from 'react-table';
 import { useSticky } from 'react-table-sticky';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import light from '@oracle/styles/themes/light';
+import Text from '@oracle/elements/Text';
 import {
   FONT_FAMILY_REGULAR,
   MONO_FONT_FAMILY_REGULAR,
@@ -21,6 +26,7 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
+import { TABS_QUERY_PARAM, SHOW_COLUMNS_QUERY_PARAM } from '@components/datasets/overview';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
@@ -197,6 +203,7 @@ function Table({
     useBlockLayout,
     useSticky,
   );
+  const { slug = [] } = router.query;
 
   // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
@@ -233,12 +240,10 @@ function Table({
             cellStyle.width = maxWidthOfFirstColumn;
           }
 
-          if (isInvalid) {
-            cellStyle.background = light.interactive.dangerBorder;
-            cellStyle.color = light.monotone.white;
-          }
-
           const cellValue = original[idx - 1];
+          if (isInvalid) {
+            cellStyle.color = light.interactive.dangerBorder;
+          }
 
           return (
             <div
@@ -249,27 +254,37 @@ function Table({
             >
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
-                <>
-                  {cellValue === true && 'true'}
-                  {cellValue === false && 'false'}
-                  {(cellValue === null || cellValue === 'null') && 'null'}
-                  {cellValue !== true
-                    && cellValue !== false
-                    && cellValue !== null
-                    && cellValue !== 'null'
-                    && cellValue
-                  }
-                </>
+                <FlexContainer justifyContent="space-between">
+                  <Text danger={isInvalid} wordBreak>
+                    {cellValue === true && 'true'}
+                    {cellValue === false && 'false'}
+                    {(cellValue === null || cellValue === 'null') && 'null'}
+                    {cellValue !== true
+                      && cellValue !== false
+                      && cellValue !== null
+                      && cellValue !== 'null'
+                      && cellValue
+                    }
+                  </Text>
+                  {isInvalid && (
+                    <NextLink
+                      as={`/datasets/${slug}/?${TABS_QUERY_PARAM}=Reports&${SHOW_COLUMNS_QUERY_PARAM}=1&column=${index}`}
+                      href="/datasets/[...slug]"
+                      passHref
+                    >
+                      <Link danger>
+                        View all
+                      </Link>
+                    </NextLink>
+                  )}
+                </FlexContainer>
               )}
             </div>
           );
         })}
       </div>
     );
-  }, [
-    prepareRow,
-    rows,
-  ]);
+  }, [invalidValues, maxWidthOfFirstColumn, prepareRow, rows, slug]);
 
   const listHeight = useMemo(() => {
     let val = height;
