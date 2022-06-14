@@ -24,14 +24,19 @@ function DatasetDetail() {
   // @ts-ignore
   const [featureSetId, subpath] = slug;
   const { data: featureSetRaw, mutate } = api.feature_sets.detail(featureSetId);
+  const { data: featureSetRawOriginal, mutateOriginal } = api.versions.feature_sets.detail(featureSetId, '0');
   const featureSet = featureSetRaw ? deserializeFeatureSet(featureSetRaw) : {};
+  const featureSetOriginal = featureSetRawOriginal ? deserializeFeatureSet(featureSetRawOriginal) : {};
+
   const {
     metadata,
   } = featureSet || {};
 
   const sharedProps = {
     featureSet,
+    featureSetOriginal,
     fetchFeatureSet: mutate,
+    fetchFeatureSetOriginal: mutateOriginal,
     selectedColumnIndex: columnIndex,
   };
 
