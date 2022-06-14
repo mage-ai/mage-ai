@@ -78,21 +78,18 @@ $ pip3 install -r requirements.txt
 
 #### Run backend server locally
 
-Change directory into the server folder.
+You can optionally set the host or port environment variables:
+
 ```bash
-$ cd mage-ai/mage_ai/server
+$ export HOST=127.0.0.1
+$ export PORT=5789
 ```
 
-Set an environment variable to `development`.
-```bash
-$ export ENV=development
-```
-
-While in the directory `mage-ai/mage_ai/server`,
+While in the root directory,
 run the following command to launch the backend locally.
 
 ```bash
-$ flask run
+$ python3 mage_ai/server/app.py
 ```
 
 Now visit [http://localhost:5789](http://localhost:5789)
