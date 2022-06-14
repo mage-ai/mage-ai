@@ -217,7 +217,10 @@ class StatisticsCalculator:
                 data[f'{col}/min'] = dates.min().isoformat()
             elif column_type == ColumnType.TEXT:
                 text_series = series_non_null
-                data[f'{col}/avg_string_length'] = text_series.str.len().mean()
+                string_length = text_series.str.len()
+                data[f'{col}/avg_string_length'] = string_length.mean()
+                data[f'{col}/min_character_count'] = string_length.min()
+                data[f'{col}/max_character_count'] = string_length.max()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
                 text_series = text_series.str.lower()
                 text_series = text_series.str.split('\s+')
@@ -227,6 +230,7 @@ class StatisticsCalculator:
 
                 word_count = text_series.map(len)
                 data[f'{col}/max_word_count'] = word_count.max()
+                data[f'{col}/avg_word_count'] = word_count.mean()
                 data[f'{col}/min_word_count'] = word_count.min()
 
                 exploded_text_series = text_series.explode()
