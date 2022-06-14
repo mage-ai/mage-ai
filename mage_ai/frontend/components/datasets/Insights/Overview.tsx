@@ -244,7 +244,7 @@ function Overview({
 
   const featureMapping = {};
 
-  const rowCount = statistics.count;
+  const rowCount = statistics?.count;
 
   features.forEach((feature: FeatureType) => {
     const { uuid, columnType } = feature;
