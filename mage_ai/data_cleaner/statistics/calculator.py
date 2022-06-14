@@ -1,4 +1,3 @@
-from functools import reduce
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
@@ -237,9 +236,10 @@ class StatisticsCalculator:
                 data[f'{col}/word_distribution'] = (
                     exploded_text_series.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
-                data[f'{col}/word_count_excl_stopwords'] = (
-                    len(exploded_text_series) - exploded_text_series.isin(STOP_WORD_LIST).sum()
-                )
+                # TODO: Calculate average word count excluding stopwords
+                # data[f'{col}/word_count_excl_stopwords'] = (
+                #     len(exploded_text_series) - exploded_text_series.isin(STOP_WORD_LIST).sum()
+                # )
             elif column_type == ColumnType.EMAIL:
                 valid_emails = series_non_null[~invalid_rows]
                 domains = valid_emails.str.extract(EMAIL_DOMAIN_REGEX, expand=False)

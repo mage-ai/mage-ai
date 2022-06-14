@@ -301,7 +301,6 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEquals(data['text/word_distribution']['place'], 2)
         self.assertEquals(data['text/max_word_count'], 14)
         self.assertEquals(data['text/min_word_count'], 7)
-        self.assertEquals(data['text/word_count_excl_stopwords'], 79)
 
     def test_calculate_statistics_email_data(self):
         # This data was generated using Faker
