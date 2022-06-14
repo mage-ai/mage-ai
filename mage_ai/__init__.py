@@ -48,13 +48,13 @@ def display_inline_iframe(host=None, port=None):
         display(Javascript("""
             (async ()=>{
                 fm = document.createElement('iframe')
-                fm.src = %s
+                fm.src = await google.colab.kernel.proxyPort(%s)
                 fm.width = '95%%'
                 fm.height = '%d'
                 fm.frameBorder = 0
                 document.body.append(fm)
             })();
-            """ % (path_to_server, IFRAME_HEIGHT)))
+            """ % (SERVER_PORT, IFRAME_HEIGHT)))
     else:
         __print_url()
         display(IFrame(path_to_server, width='95%', height=1000))
