@@ -30,6 +30,7 @@ import {
   createStatisticsSample,
 } from './utils';
 import { Close } from '@oracle/icons';
+import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
@@ -95,7 +96,7 @@ function DatasetOverview({
   }, [setTabs, tabsFromUrl]);
 
   useEffect(() => {
-    if (typeof showColumnsFromUrl === 'undefined') {
+    if (typeof showColumnsFromUrl === 'undefined' && windowWidth >= LARGE_WINDOW_WIDTH) {
       goToWithQuery({
         show_columns: 1,
       });
@@ -210,6 +211,7 @@ function DatasetOverview({
       columnsVisible={columnsVisible}
       featureSet={featureSet}
       fetchFeatureSet={fetchFeatureSet}
+      hideColumnsHeader={windowWidth < LARGE_WINDOW_WIDTH}
       mainContentRef={mainContentRef}
       onTabClick={t => setTabs(t)}
       refLoadingBar={refLoadingBar}

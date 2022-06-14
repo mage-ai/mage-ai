@@ -9,10 +9,9 @@ import Spacing from '@oracle/elements/Spacing';
 import MenuContainer from './MenuContainer';
 import { capitalize } from '@utils/string';
 
-type LinkType = {
+export type LinkType = {
   afterElement?: any;
-  disabled?: boolean;
-  iconName?: string;
+  beforeIcon?: any;
   label: string;
   linkProps?: {
     as?: string;
@@ -67,6 +66,7 @@ function Menu({
 
           {links.map(({
             afterElement,
+            beforeIcon,
             label,
             linkProps,
             onClick: onClickLink,
@@ -109,27 +109,30 @@ function Menu({
               );
             }
 
-            if (afterElement) {
-              return (
-                <FlexContainer
-                  alignItems="center"
-                  justifyContent="space-between"
-                  key={key}
-                >
-                  <Flex flex={1}>
-                    {linkEl}
-                  </Flex>
+            return (
+              <FlexContainer
+                alignItems="center"
+                justifyContent="space-between"
+                key={key}
+              >
+                <Flex alignItems="center" flex={1}>
+                  {beforeIcon &&
+                    <Spacing mr="4px">
+                      {beforeIcon}
+                    </Spacing>
+                  }
+                  {linkEl}
+                </Flex>
 
+                {afterElement &&
                   <Spacing
                     py={1}
                   >
                     {afterElement}
                   </Spacing>
-                </FlexContainer>
-              );
-            }
-
-            return linkEl;
+                }
+              </FlexContainer>
+            );
           })}
         </div>
       ))}

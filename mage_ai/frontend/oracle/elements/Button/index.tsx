@@ -25,6 +25,7 @@ export type ButtonProps = {
   loading?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noPadding?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
@@ -49,6 +50,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.padding && `
     padding: ${props.padding};
+  `}
+
+  ${props => props.noPadding && `
+    padding: 0;
   `}
 
   ${props => !props.basic && `
@@ -137,10 +142,10 @@ const Button = ({
   loading,
   onClick,
   ...props
-}: ButtonProps) => {
+}: ButtonProps, ref) => {
   const iconProps = {
     disabled,
-    size: UNIT * 3,
+    size: UNIT * 1.5,
   };
 
   return (
@@ -151,6 +156,7 @@ const Button = ({
         e?.preventDefault();
         onClick?.(e);
       }}
+      ref={ref}
     >
       <FlexContainer
         alignItems="center"
@@ -187,4 +193,4 @@ const Button = ({
   );
 };
 
-export default Button;
+export default React.forwardRef(Button);

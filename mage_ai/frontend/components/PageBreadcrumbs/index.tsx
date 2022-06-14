@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRouter } from 'next/router';
 
 import Breadcrumbs from '@oracle/components/Breadcrumbs';
@@ -20,13 +21,15 @@ enum PageEnum {
 
 type PageBreadcrumbsProps = {
   featureSet: FeatureSetType;
+  setColumnListMenuVisible: (visible: boolean) => void;
 };
 
 const MAX_CHARS = 35;
 
 function PageBreadcrumbs({
   featureSet,
-}: PageBreadcrumbsProps) {
+  setColumnListMenuVisible,
+}: PageBreadcrumbsProps, ref) {
   const router = useRouter();
   const { slug = [] } = router.query;
   const qFromUrl = queryFromUrl();
@@ -83,6 +86,10 @@ function PageBreadcrumbs({
   const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
   lastBreadcrumb.selected = true;
   lastBreadcrumb.href = null;
+  if (lastBreadcrumb.label !== PageEnum.EXPORT) {
+    lastBreadcrumb.button = true;
+    lastBreadcrumb.onClick = () => setColumnListMenuVisible(true);
+  }
 
   return (
     <Breadcrumbs
@@ -91,8 +98,9 @@ function PageBreadcrumbs({
       linkProps={{
         noHoverUnderline: true,
       }}
+      ref={ref}
     />
   );
 }
 
-export default PageBreadcrumbs;
+export default React.forwardRef(PageBreadcrumbs);

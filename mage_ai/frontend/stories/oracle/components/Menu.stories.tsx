@@ -3,7 +3,7 @@ import { Meta, Story } from '@storybook/react';
 
 import Menu, { MenuProps } from '@oracle/components/Menu';
 import ThemeBlock from 'stories/ThemeBlock';
-import { ArrowRight } from '@oracle/icons';
+import { ArrowRight, NumberHash } from '@oracle/icons';
 
 export default {
   component: Menu,
@@ -42,6 +42,7 @@ Regular.args = {
           uuid: 'remove_columns',
         },
         {
+          beforeIcon: <NumberHash />,
           label: 'Reformat value',
           uuid: 'reformat_values',
         },

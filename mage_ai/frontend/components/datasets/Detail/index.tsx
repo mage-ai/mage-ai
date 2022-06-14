@@ -1,6 +1,7 @@
 import React, {
   useMemo,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import NextLink from 'next/link';
@@ -13,6 +14,7 @@ import ActionPayloadType, {
   ActionVariableTypeEnum,
 } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
+import ColumnListMenu from '@components/datasets/columns/ColumnListMenu';
 import ColumnListSidebar from '@components/datasets/columns/ColumnListSidebar';
 import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, FeatureResponseType } from '@interfaces/FeatureType';
@@ -26,7 +28,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
-import { AsidePopoutStyle } from '@oracle/components/Layout/MultiColumn.style';
+import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
@@ -67,6 +69,8 @@ function DatasetDetail({
   tabs,
 }: DatasetDetailProps) {
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
+  const [columnListMenuVisible, setColumnListMenuVisible] = useState(false);
+  const breadcrumbRef = useRef(null);
 
   const {
     id: featureSetId,
@@ -221,6 +225,18 @@ function DatasetDetail({
 
   const closeAction = () => setActionPayload({} as ActionPayloadType);
 
+  const onClickColumn = (col: string) => goToWithQuery({
+    column: col === null ? null : columnsAll.indexOf(col),
+  }, {
+    pushHistory: true,
+  });
+  const {
+    left: breadcrumbLeft,
+    top: breadcrumbTop,
+  } = breadcrumbRef?.current?.getBoundingClientRect?.() || {};
+  const finalBreadcrumbLeftPosition = breadcrumbLeft - (columnsVisible ? BEFORE_WIDTH : 0);
+  const finalBreadcrumbTopPosition = breadcrumbTop + 28; // Add line-height
+
   return (
     <MultiColumn
       after={
@@ -242,20 +258,18 @@ function DatasetDetail({
           <ColumnListSidebar
             columns={columnsAll}
             featureSet={featureSet}
-            onClickColumn={col => goToWithQuery({
-              column: col === null ? null : columnsAll.indexOf(col),
-            }, {
-              pushHistory: true,
-            })}
+            onClickColumn={onClickColumn}
             selectedColumn={selectedColumn}
           />
         </Spacing>
       )}
       header={
         <Spacing p={PADDING_UNITS}>
-          {!hideColumnsHeader &&
-            <Spacing mb={2}>
-              <FlexContainer justifyContent="space-between">
+          <Spacing mb={2}>
+            <FlexContainer
+              justifyContent={hideColumnsHeader ? 'flex-end' : 'space-between'}
+            >
+              {!hideColumnsHeader &&
                 <Link
                   block
                   noHoverUnderline
@@ -278,22 +292,35 @@ function DatasetDetail({
                     </Text>
                   </FlexContainer>
                 </Link>
+              }
 
-                <NextLink
-                  as={`/datasets/${featureSet?.id}/export`}
-                  href="/datasets/[...slug]"
-                  passHref
-                >
-                  <Link block>
-                    Export data pipeline
-                  </Link>
-                </NextLink>
-              </FlexContainer>
-            </Spacing>
-          }
+              <NextLink
+                as={`/datasets/${featureSet?.id}/export`}
+                href="/datasets/[...slug]"
+                passHref
+              >
+                <Link block>
+                  Export data pipeline
+                </Link>
+              </NextLink>
+            </FlexContainer>
+          </Spacing>
 
           <FlexContainer justifyContent="space-between">
-            <PageBreadcrumbs featureSet={featureSet} />
+            <PageBreadcrumbs
+              featureSet={featureSet}
+              ref={breadcrumbRef}
+              setColumnListMenuVisible={setColumnListMenuVisible}
+            />
+            <ColumnListMenu
+              columns={columnsAll}
+              featureSet={featureSet}
+              left={finalBreadcrumbLeftPosition}
+              onClickColumn={onClickColumn}
+              setVisible={setColumnListMenuVisible}
+              top={finalBreadcrumbTopPosition}
+              visible={columnListMenuVisible}
+            />
             <Flex>
               <Button
                 fullWidth

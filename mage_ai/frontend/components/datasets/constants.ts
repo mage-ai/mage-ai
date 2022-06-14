@@ -1,3 +1,5 @@
+export const LARGE_WINDOW_WIDTH = 992;
+
 // TODO: Update to use total instead of average
 export const METRICS_KEYS = [
   'duplicate_row_count',
