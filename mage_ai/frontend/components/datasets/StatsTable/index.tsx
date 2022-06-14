@@ -41,7 +41,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={[2,1,2]} key={name}>
+          <RowCard columnFlexNumbers={[2, 1, 2]} key={name}>
             <Text>{name}</Text>
             <Flex>
               {value !== undefined &&
@@ -58,7 +58,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
             </Flex>
             {progress &&
               <ProgressBar
-                progress={rate*100}
+                progress={rate * 100}
                 {...warn}
               />
             }
