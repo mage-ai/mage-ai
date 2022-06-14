@@ -1,9 +1,9 @@
-name: Test
+name: Build and test
 
 on: [push]
 
 jobs:
-  test:
+  test_backend:
     runs-on: ubuntu-latest
     strategy:
       matrix:
