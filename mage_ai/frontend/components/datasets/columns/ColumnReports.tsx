@@ -4,15 +4,15 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Panel from '@oracle/components/Panel';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
-import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { WARNINGS } from '../constants';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
-import { getPercentage, transformNumber } from '@utils/number';
-import { roundNumber } from '@utils/string';
+import { transformNumber } from '@utils/number';
+import { formatPercent, isInteger, isNumeric, roundNumber } from '@utils/string';
+import ProgressBar from '@oracle/components/ProgressBar';
+import { greaterThan, lessThan } from '@utils/array';
 
 type ColumnReportsProps = {
   column: string;
@@ -43,134 +43,176 @@ function ColumnReports({
     min,
     mode,
     null_value_count: nullValueCount,
+    null_value_rate: nullValueRate,
     outlier_count: outlierCount,
     outliers,
     skew,
     validity,
   } = featureSetStats;
 
-  const qualityMetrics: {
-    columnValues: (string | number | any)[];
-    uuid?: string | number;
-  }[] = [
+  type StatRow = {
+    name: string,
+    value?: any,
+    rate?: number,
+    progress?: boolean,
+    warning?: Warning;
+  };
+
+  type Warning = {
+    compare: (a: number, b: number) => boolean;
+    val: number;
+  };
+
+  const shouldWarn = (w: Warning, n: number) => w && w.compare(n, w.val);
+
+  const qualityMetrics: StatRow[] = [
     {
-      columnValues: [
-        'Validity', getPercentage(validity), [true, validity * 100],
-      ],
+      name: 'Validity',
+      rate: validity,
+      progress: true,
+      warning: {
+        compare: lessThan,
+        val: 0.8,
+      },
     },
     {
-      columnValues: [
-        'Completeness', getPercentage(completeness), [true, completeness * 100],
-      ],
-    },
-  ];
-  let columnSummary = [
-    {
-      columnValues: [
-        'Column type',
-        COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Total values', count, [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Unique values', countDistinct, [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Missing values', nullValueCount, [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Invalid values', invalidValueCount, [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Max value',
-        (typeof max !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(max) : max,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Min value',
-        (typeof min !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(min) : min,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Median value',
-        (typeof median  !== 'undefined' && COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(median) : median,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Average value',
-        (typeof average !== 'undefined' &&  COLUMN_TYPE_NUMBERS.includes(columnType)) ? roundNumber(average) : average,
-        [false],
-      ],
-    },
-    {
-      columnValues: [
-        'Mode value', typeof mode === 'number' ? roundNumber(mode) : mode, [false],
-      ],
+      name: 'Completeness',
+      rate: completeness,
+      progress: true,
+      warning: {
+        compare: lessThan,
+        val: 0.8,
+      },
     },
   ];
-  columnSummary = columnSummary.filter(({ columnValues }) => typeof columnValues[1] !== 'undefined');
+
+  let columnSummary: StatRow[] = [
+    {
+      name: 'Column type',
+      value: COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType] || columnType,
+    },
+    {
+      name: 'Total values',
+      value: count,
+    },
+    {
+      name: 'Unique values',
+      value: countDistinct,
+      // TODO rate
+    },
+    {
+      name: 'Missing values',
+      value: nullValueCount,
+      rate: nullValueRate,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      }
+    },
+    {
+      name: 'Invalid values',
+      value: invalidValueCount,
+      rate: invalidValueRate,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      }
+    },
+    {
+      name: 'Max value',
+      value: isNumeric(max) ? roundNumber(max) : max,
+    },
+    {
+      name: 'Min value',
+      value: isNumeric(min) ? roundNumber(min) : min,
+    },
+    {
+      name: 'Median value',
+      value: isNumeric(median) ? roundNumber(median) : median,
+    },
+    {
+      name: 'Average value',
+      value: isNumeric(average) ? roundNumber(average) : average,
+    },
+    {
+      name: 'Mode value',
+      value: isNumeric(mode) ? roundNumber(mode) : mode,
+    },
+  ];
+
+  columnSummary = columnSummary.filter(({ value }) => value !== undefined);
+
+  const warningMetrics: StatRow[] = [
+    {
+      name: 'Outliers',
+      value: outlierCount,
+      // TODO rate
+    },
+    {
+      name: 'Skewness',
+      value: skew?.toFixed(3),
+    },
+  ];
 
   const showOutliers = outliers && outlierCount > 0;
   const showInvalidValues = invalidValues && invalidValueCount > 0;
-  const warningMetrics = [
-    {
-      columnValues: [
-        'Outliers',
-        outlierCount,
-      ],
-      danger: showOutliers,
-    },
-    {
-      columnValues: [
-        'Skewness',
-        skew?.toFixed(3),
-      ],
-    },
-  ];
+
   const noWarningMetrics = warningMetrics.every(
-    ({ columnValues }) => (typeof columnValues[1] === 'undefined'),
+    ({ value }) => value === undefined,
+  );
+
+  type StatsTableProps = {
+    stats: StatRow[],
+    title: string,
+  };
+
+  const StatsTable = ({ stats, title }: StatsTableProps) => (
+    <RowDataTable alternating headerTitle={title}>
+      {stats?.map(({ name, value, rate, progress, warning }) => {
+        const warn = {
+          bold: shouldWarn(warning, rate),
+          danger: shouldWarn(warning, rate),
+        };
+
+        const stylePercent = (value, rate) => (
+          value !== undefined
+            ? `(${formatPercent(rate)})`
+            : formatPercent(rate)
+        );
+
+        return (
+          <RowCard columnFlexNumbers={[2,1,2]} key={name}>
+            <Text>{name}</Text>
+            <Flex>
+              {value !== undefined &&
+                <Text {...warn}>
+                  {value}
+                </Text>
+              }
+              &nbsp;
+              {rate !== undefined &&
+                <Text {...warn}>
+                  {stylePercent(value, rate)}
+                </Text>
+              }
+            </Flex>
+            {progress &&
+              <ProgressBar
+                progress={rate*100}
+                {...warn}
+              />
+            }
+          </RowCard>
+        );
+      })}
+    </RowDataTable>
   );
 
   return (
     <FlexContainer justifyContent="center" responsive>
       <Flex flex={1} flexDirection="column">
-        <SimpleDataTable
-          columnFlexNumbers={[2, 1, 2]}
-          columnHeaders={[{ label: 'Quality metrics' }]}
-          rowGroupData={[{
-            rowData: qualityMetrics,
-          }]}
-          warnings={WARNINGS.qualityMetrics}
-        />
-
-        <Spacing my={PADDING_UNITS}>
-          <SimpleDataTable
-            columnFlexNumbers={[2, 3]}
-            columnHeaders={[{ label: 'Statistics' }]}
-            rowGroupData={[{
-              rowData: columnSummary,
-            }]}
-            warnings={WARNINGS.statistics}
-          />
-        </Spacing>
+        <StatsTable stats={qualityMetrics} title="Quality metrics" />
+        <StatsTable stats={columnSummary} title="Statistics" />
       </Flex>
 
       <Spacing ml={PADDING_UNITS} />
@@ -182,36 +224,25 @@ function ColumnReports({
               <Text>There are no warnings.</Text>
             </Panel>
           :
-            <SimpleDataTable
-              columnFlexNumbers={[1, 1]}
-              columnHeaders={[{ label: 'Warnings' }]}
-              rowGroupData={[{
-                rowData: warningMetrics,
-              }]}
-            />
+            <StatsTable stats={warningMetrics} title="Warnings" />
         }
 
         {showOutliers &&
-          <Spacing mt={PADDING_UNITS}>
-            <RowDataTable
-              headerTitle="Outliers"
-            >
-              {outliers?.map((outlier, idx) => (
-                <RowCard
-                  key={`outlier_${idx}`}
-                  last={idx === outliers.length - 1}
-                  secondary={idx % 2 === 1}
-                >
-                  <Text>
-                    {COLUMN_TYPE_NUMBERS.includes(columnType)
-                      ? transformNumber(outlier, 2)
-                      : outlier
-                    }
-                  </Text>
-                </RowCard>
-              ))}
-            </RowDataTable>
-          </ Spacing>
+          <RowDataTable
+            alternating
+            headerTitle="Outliers"
+          >
+            {outliers?.map((outlier, idx) => (
+              <RowCard key={`outlier_${idx}`}>
+                <Text>
+                  {COLUMN_TYPE_NUMBERS.includes(columnType)
+                    ? transformNumber(outlier, 2)
+                    : outlier
+                  }
+                </Text>
+              </RowCard>
+            ))}
+          </RowDataTable>
         }
 
         {showInvalidValues &&
