@@ -1,4 +1,5 @@
 import { greaterThan, lessThan } from '@utils/array';
+
 export const LARGE_WINDOW_WIDTH = 992;
 
 // TODO: Update to use total instead of average
