@@ -6,8 +6,9 @@ from mage_ai.data_cleaner.transformer_actions.utils import generate_action_title
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
-import logging
 import json
+import logging
+import os
 import simplejson
 import sys
 import threading
@@ -367,9 +368,18 @@ class ThreadWithTrace(threading.Thread):
 
 def launch() -> None:
     global thread
-    app_kwargs = {'port': SERVER_PORT, 'host': 'localhost', 'debug': False}
+
+    host = os.getenv('HOST', 'localhost')
+    port = os.getenv('PORT', SERVER_PORT)
+
+    app_kwargs = {
+        'debug': False,
+        'host': host,
+        'port': port,
+    }
     thread = ThreadWithTrace(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
+    print(f'Mage running on host and port {host}:{port}')
     return thread
 
 
