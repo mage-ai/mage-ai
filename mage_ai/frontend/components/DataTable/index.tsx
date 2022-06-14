@@ -16,6 +16,7 @@ import {
 import { useSticky } from 'react-table-sticky';
 
 import light from '@oracle/styles/themes/light';
+import Text from '@oracle/elements/Text';
 import {
   FONT_FAMILY_REGULAR,
   MONO_FONT_FAMILY_REGULAR,
@@ -253,27 +254,27 @@ function Table({
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
                 <FlexContainer justifyContent={'space-between'}>
-                  {cellValue === true && 'true'}
-                  {cellValue === false && 'false'}
-                  {(cellValue === null || cellValue === 'null') && 'null'}
-                  {cellValue !== true
+                  <Text danger={isInvalid} wordBreak>
+                    {cellValue === true && 'true'}
+                    {cellValue === false && 'false'}
+                    {(cellValue === null || cellValue === 'null') && 'null'}
+                    {cellValue !== true
                     && cellValue !== false
                     && cellValue !== null
                     && cellValue !== 'null'
                     && cellValue
                   }
+                  </Text>
                   {isInvalid && (
-                  <FlexContainer justifyContent={'space-between'}>
                     <NextLink
                       as={`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`}
                       href="/datasets/[...slug]"
                       passHref
                     >
-                      <Link>
+                      <Link danger>
                         View all
                       </Link>
                     </NextLink>
-                  </FlexContainer>
                   )}
                 </FlexContainer>
               )}
