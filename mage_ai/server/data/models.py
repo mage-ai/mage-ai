@@ -227,7 +227,8 @@ class Pipeline(Model):
         if pipeline is not None:
             self.pipeline = pipeline
 
-        self.sync_pipeline(api_key)
+        if api_key is not None:
+            self.sync_pipeline(api_key)
 
     def sync_pipeline(self, api_key):
         Mage().sync_pipeline(self, api_key)
@@ -251,6 +252,11 @@ class Pipeline(Model):
     @pipeline.setter
     def pipeline(self, pipeline):
         return self.write_json_file('pipeline.json', pipeline.actions)
+    
+    def get_feature_set(self):
+        feature_set_id = self.metadata.get('feature_set_id')
+        if feature_set_id is not None:
+            return FeatureSet(id=feature_set_id)
 
     def to_dict(self, detailed=True):
         return dict(

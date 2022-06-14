@@ -44,12 +44,13 @@ class Mage():
 
     def get_pipeline_actions(self, id, api_key):
         try:
-            requests.get(
+            response = requests.get(
                 headers={
                     'Content-Type': 'application/json',
                     'X-API-KEY': api_key,
                 },
                 url=f'{self.url_prefix}/data_cleaning_pipelines/{id}',
-            ).json()['data_cleaning_pipeline']['pipeline_actions']
+            ).json()
+            return response['data_cleaning_pipeline'].get('pipeline_actions', [])
         except:
-            pass
+            return []

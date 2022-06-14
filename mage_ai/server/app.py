@@ -94,7 +94,6 @@ def process():
     if not id:
         return
 
-    global api_key
     feature_set = FeatureSet(id=id, api_key=api_key)
     df = feature_set.data
     metadata = feature_set.metadata
@@ -327,7 +326,6 @@ def clean_df_with_pipeline(df, id=None, path=None, remote_id=None):
     elif path is not None:
         pipeline = Pipeline(path=path).pipeline
     elif remote_id is not None:
-        global api_key
         pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, api_key))
     if pipeline is None:
         print('Please provide a valid pipeline id or config path.')
@@ -377,8 +375,8 @@ class ThreadWithTrace(threading.Thread):
 
 def launch(mage_api_key=None) -> None:
     global thread
+    global api_key
     if mage_api_key:
-        global api_key
         api_key = mage_api_key
         sync_pipelines()
 
@@ -402,7 +400,6 @@ def sync_pipelines():
     for pipeline in local_pipelines:
         print('.', end='')
         pipeline.sync_pipeline(api_key)
-
 
 def kill():
     if thread is not None:
