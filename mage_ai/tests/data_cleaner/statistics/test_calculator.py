@@ -1,10 +1,16 @@
+from faker import Faker
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 from mage_ai.tests.base_test import TestCase
+from random import shuffle
 import pandas as pd
 import numpy as np
 
 
 class StatisticsCalculatorTest(TestCase):
+    def setUp(self):
+        self.faker = Faker(locale='en_US')
+        return super().setUp()
+
     def test_calculate_statistics_overview(self):
         calculator = StatisticsCalculator(
             column_types=dict(
@@ -266,3 +272,73 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['cancelled/null_value_rate'], 0)
         self.assertEqual(data['cancelled/completeness'], 1)
         self.assertEqual(data['cancelled/quality'], 'Good')
+
+    def test_calculate_statistics_text_data(self):
+        texts = [
+            'Know fine seat prevent 92383ee3. \nCreate Mr. real',
+            'Avoid seat place.\nTrial exist against create.',
+            'Exactly question mention floor time. Tree theory central seat important beyond hour.',
+            'Physical father different ago away place. Health enough product even goal seat team.',
+            None,
+            None,
+            'I know that bees make honey, but do they bake cake?',
+            'It is not a problem with the quantum flux capacitor, but the light conduits',
+            'Breaking News: scientists finally figure out if water is wet, leading to widespread controversy',
+            'The Mage data cleaning tool is overpowered, try it out now!',
+            None,
+            None,
+        ]
+        shuffle(texts)
+        df = pd.DataFrame({'text': texts})
+        calculator = StatisticsCalculator(
+            column_types=dict(
+                text='text',
+            ),
+        )
+        data = calculator.calculate_statistics_overview(df, is_clean=True)
+        self.assertEquals(data['text/word_distribution']['seat'], 4)
+        self.assertEquals(data['text/word_distribution']['create'], 2)
+        self.assertEquals(data['text/word_distribution']['place'], 2)
+        self.assertEquals(data['text/max_word_count'], 14)
+        self.assertEquals(data['text/min_word_count'], 7)
+
+    def test_calculate_statistics_email_data(self):
+        # This data was generated using Faker
+        emails = [
+            'xclarke@yahoo.com',
+            'daniel40@gmail.com',
+            'not an email',
+            'phammary@yahoo.com',
+            'welchjeffrey@gmail.com',
+            None,
+            'an improperly formatted email@net.co',
+            'wardcindy@gmail.com',
+            'bdavis@yahoo.com',
+            'qcarpenter@gmail.com',
+            'email@net@net.com',
+            'larsonkatherine@hotmail.com',
+            None,
+            'edwardswilliam@jones.org',
+            'ojensen@hotmail.com',
+            'karenmcbride@gmail.com',
+            'danielharris@kim.com',
+            'not an email',
+        ]
+        shuffle(emails)
+        df = pd.DataFrame({'emails': emails})
+        calculator = StatisticsCalculator(
+            column_types=dict(
+                emails='email',
+            ),
+        )
+        data = calculator.calculate_statistics_overview(df, is_clean=True)
+
+        expected_domain_distribution = {
+            'gmail.com': 5,
+            'yahoo.com': 3,
+            'hotmail.com': 2,
+            'jones.org': 1,
+            'kim.com': 1,
+        }
+
+        self.assertEquals(expected_domain_distribution, data['emails/domain_distribution'])
