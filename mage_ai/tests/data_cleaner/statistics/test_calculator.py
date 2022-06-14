@@ -294,9 +294,10 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEquals(data['text/word_distribution']['seat'], 4)
         self.assertEquals(data['text/word_distribution']['create'], 2)
         self.assertEquals(data['text/word_distribution']['place'], 2)
-        self.assertEquals(data['text/avg_stop_word_rate'], 0.0)
+        self.assertEquals(data['text/total_word_count'], 40)
         self.assertEquals(data['text/avg_word_count'], 10)
         self.assertEquals(data['text/avg_string_length'], 65.5)
+        self.assertEquals(data['text/total_character_count'], 262)
 
     def test_calculate_statistics_stop_word_rate(self):
         texts = [
@@ -315,8 +316,9 @@ class StatisticsCalculatorTest(TestCase):
             ),
         )
         data = calculator.calculate_statistics_overview(df, is_clean=True)
-        self.assertEquals(data['text/avg_stop_word_count'], 2.75)
-        self.assertEquals(data['text/avg_stop_word_rate'], 0.22)
+        self.assertAlmostEquals(data['text/total_stop_word_count'], 11, places=3)
+        self.assertAlmostEquals(data['text/stop_word_rate'], 0.22, places=3)
+        self.assertAlmostEquals(data['text/avg_stop_word_count'], 2.75, places=3)
 
     def test_calculate_statistics_email_data(self):
         # This data was generated using Faker

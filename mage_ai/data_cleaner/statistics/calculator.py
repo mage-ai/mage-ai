@@ -215,26 +215,29 @@ class StatisticsCalculator:
                 data[f'{col}/min'] = dates.min().isoformat()
             elif column_type == ColumnType.TEXT:
                 text_series = series_non_null
-                data[f'{col}/avg_string_length'] = text_series.apply(
-                    lambda string: len(string)
-                ).mean()
+                num_chars = text_series.apply(lambda string: len(string))
+                data[f'{col}/total_character_count'] = num_chars.sum()
+                data[f'{col}/avg_string_length'] = num_chars.mean()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
                 text_series = text_series.str.lower()
                 text_series = text_series.str.split('\s+')
                 text_series = text_series.apply(
                     lambda words: [word for word in words if word != '']
                 )
-                data[f'{col}/avg_word_count'] = text_series.apply(lambda words: len(words)).mean()
-                stop_word_count = text_series.apply(
+                word_count = text_series.apply(lambda words: len(words))
+                data[f'{col}/total_word_count'] = word_count.sum()
+                data[f'{col}/avg_word_count'] = word_count.mean()
+                stop_words = text_series.apply(
                     lambda words: reduce(
                         lambda x, y: x + y,
                         map(lambda word: 1 if word in STOP_WORD_LIST else 0, words),
                     )
+                    if len(words)
+                    else 0
                 )
-                data[f'{col}/avg_stop_word_count'] = stop_word_count.mean()
-                data[f'{col}/avg_stop_word_rate'] = (
-                    stop_word_count.mean() / data[f'{col}/avg_word_count']
-                )
+                data[f'{col}/total_stop_word_count'] = stop_words.sum()
+                data[f'{col}/stop_word_rate'] = stop_words.sum() / data[f'{col}/total_word_count']
+                data[f'{col}/avg_stop_word_count'] = stop_words.mean()
                 data[f'{col}/word_distribution'] = (
                     text_series.explode().value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
