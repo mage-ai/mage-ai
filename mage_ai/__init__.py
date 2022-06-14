@@ -13,9 +13,18 @@ IFRAME_HEIGHT = 1000
 MAX_NUM_OF_ROWS = 100_000
 
 
-def launch():
+def launch(
+    iframe_host=None,
+    iframe_port=None,
+    inline=True,
+):
     thread = launch_flask()
-    display_inline_iframe()
+    if inline:
+        display_inline_iframe(
+            host=iframe_host,
+            port=iframe_port,
+        )
+
     return thread
 
 
@@ -23,8 +32,11 @@ def kill():
     kill_flask()
 
 
-def display_inline_iframe():
-    path_to_local_server = f'http://localhost:{SERVER_PORT}'
+def display_inline_iframe(host=None, port=None):
+    host = host or 'localhost'
+    port = port or SERVER_PORT
+
+    path_to_local_server = f'http://{host}:{port}'
     if type(get_ipython()).__module__.startswith('google.colab'):
         display(Javascript("""
             (async ()=>{
