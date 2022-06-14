@@ -16,27 +16,31 @@ class RemoveCollinearColumns(BaseRule):
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
+        """ Evaluate columns for colinearity with Variance Inflation Factor.
+        VIF = 1 / (1 - <coefficient of determination on column k>)
+        Measures increase in regression model variance due to multicollinearity
+        => column k is multicollinear with others if model predicting its value
+        has this variance inflation greater than some amount
+        """
         suggestions = []
         if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
             return suggestions
         collinear_columns = []
         self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
-        for column in self.numeric_columns[:-1]:
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
+
+        X = self.numeric_df.to_numpy()
+        X = (X-X.mean(axis=0)) / X.std(axis=0) # norm
+        vifs = np.diagonal(np.linalg.pinv(X.T@X))
+        for vif, column in zip(vifs, self.numeric_columns):
+            if vif > self.VIF_UB:
                 collinear_columns.append(column)
-                self.numeric_df.drop(column, axis=1, inplace=True)
-        if len(collinear_columns) != len(self.numeric_columns) - 1:
-            # check the final column if and only if there are other columns to compare it to
-            column = self.numeric_columns[-1]
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
-                collinear_columns.append(column)
+        
         if len(collinear_columns) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     'Remove collinear columns',
-                    'Delete these columns to remove redundant data and increase data quality.',
+                    'Delete some of these columns to remove'
+                    'redundant data and increase data quality.',
                     ActionType.REMOVE,
                     action_arguments=collinear_columns,
                     axis=Axis.COLUMN,
@@ -55,29 +59,3 @@ class RemoveCollinearColumns(BaseRule):
                 numeric_df.drop(column, axis=1, inplace=True)
         numeric_df = numeric_df.dropna(axis=0)
         return numeric_df, numeric_columns
-
-    def get_variance_inflation_factor(self, column):
-        """
-        Variance Inflation Factor = 1 / (1 - <coefficient of determination on column k>)
-        Measures increase in regression model variance due to collinearity
-        => column k is multicollinear with others if model predicting its value
-        has this variance inflation greater than some amount
-        """
-        if self.numeric_df.empty:
-            raise RuntimeError('No other columns to compare \'{column}\' against')
-        if len(self.numeric_df) > self.ROW_SAMPLE_SIZE:
-            sample = self.numeric_df.sample(self.ROW_SAMPLE_SIZE)
-        else:
-            sample = self.numeric_df
-
-        responses = sample[column].to_numpy()
-        predictors = sample.drop(column, axis=1).to_numpy()
-        params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
-
-        mean = responses.mean()
-        centered_predictions = predictors @ params - mean
-        sum_sq_model = np.sum(centered_predictions * centered_predictions)
-        centered_responses = responses - mean
-        sum_sq_to = np.sum(centered_responses * centered_responses)
-        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
-        return 1 / (1 - r_sq + self.EPSILON)
