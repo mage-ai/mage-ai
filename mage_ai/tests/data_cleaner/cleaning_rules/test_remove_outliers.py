@@ -47,7 +47,21 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 1 outlier(s) to reduce the amount of noise in the data.',
+                    message='Remove 1 outlier(s) to reduce the amount of noise in this column.',
+                    status='not_applied',
+                    action_payload=dict(
+                        action_type='filter',
+                        action_arguments=['number3'],
+                        action_code='number3 <= 1779.01 and number3 >= 51.49000000000001',
+                        action_options={},
+                        action_variables={},
+                        axis='row',
+                        outputs=[],
+                    ),
+                ),
+                dict(
+                    title='Remove outliers',
+                    message='Remove 1 multidimensional outlier(s) to reduce the amount of noise in the data.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',
@@ -60,7 +74,7 @@ class RemoveOutliersTests(TestCase):
                         axis='row',
                         outputs=[],
                     ),
-                )
+                ),
             ],
         )
 
@@ -99,7 +113,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 1 outlier(s) to reduce the amount of noise in the data.',
+                    message='Remove 1 outlier(s) to reduce the amount of noise in this column.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='filter',
@@ -204,7 +218,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 2 outlier(s) to reduce the amount of noise in the data.',
+                    message='Remove 2 multidimensional outlier(s) to reduce the amount of noise in the data.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',
@@ -252,7 +266,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 4 outlier(s) to reduce the amount of noise in the data.',
+                    message='Remove 4 multidimensional outlier(s) to reduce the amount of noise in the data.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='remove',

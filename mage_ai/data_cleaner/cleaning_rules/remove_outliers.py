@@ -48,7 +48,7 @@ class RemoveOutliers(BaseRule):
             wrapped_c = wrap_column_name(column)
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
-                f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
+                f'Remove {outlier_count} outlier(s) to reduce the amount of noise in this column.',
                 ActionType.FILTER,
                 action_arguments=[column],
                 action_code=f'{wrapped_c} <= {upper} and {wrapped_c} >= {lower}',
@@ -97,7 +97,7 @@ class RemoveOutliers(BaseRule):
         if outlier_count > 0:
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
-                f'Remove {outlier_count} outlier(s) to reduce the amount of noise in the data.',
+                f'Remove {outlier_count} multidimensional outlier(s) to reduce the amount of noise in the data.',
                 ActionType.REMOVE,
                 action_options=dict(rows=df.index[outlier_mask].tolist()),
                 axis=Axis.ROW,
@@ -107,12 +107,13 @@ class RemoveOutliers(BaseRule):
     def evaluate(self):
         suggestions = []
         ndim = len(self.numeric_columns)
-        suggestion = None
         if len(self.numeric_df) > 0:
-            if ndim == 1:
-                suggestion = self.one_dim_outlier_check(self.numeric_columns[0])
-            elif ndim >= 2:
+            for col in self.numeric_columns:
+                suggestion = self.one_dim_outlier_check(col)
+                if suggestion:
+                    suggestions.append(suggestion)
+            if ndim >= 2:
                 suggestion = self.multi_dim_outlier_check(self.numeric_df, ndim)
-            if suggestion:
-                suggestions.append(suggestion)
+                if suggestion:
+                    suggestions.append(suggestion)
         return suggestions
