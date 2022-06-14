@@ -95,7 +95,7 @@ function DatasetOverview({
   }, [setTabs, tabsFromUrl]);
 
   useEffect(() => {
-    if (typeof showColumnsFromUrl === 'undefined') {
+    if (typeof showColumnsFromUrl === 'undefined' && windowWidth > 991) {
       goToWithQuery({
         show_columns: 1,
       });
