@@ -240,8 +240,7 @@ function Table({
 
           let cellValue = original[idx - 1];
           if (isInvalid) {
-            cellStyle.background = light.interactive.dangerBorder;
-            cellStyle.color = light.monotone.white;
+            cellStyle.color = light.interactive.dangerBorder;
           }
 
           return (
@@ -253,7 +252,7 @@ function Table({
             >
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
-                <FlexContainer alignItems="left">
+                <FlexContainer justifyContent={'space-between'}>
                   {cellValue === true && 'true'}
                   {cellValue === false && 'false'}
                   {(cellValue === null || cellValue === 'null') && 'null'}
@@ -263,19 +262,19 @@ function Table({
                     && cellValue !== 'null'
                     && cellValue
                   }
-                </FlexContainer>
-              )}
-              {isInvalid && (
-                <FlexContainer alignItems="right">
-                  <NextLink
-                    as={`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`}
-                    href="/datasets/[...slug]"
-                    passHref
-                  >
-                    <Link>
-                      View all
-                    </Link>
-                  </NextLink>
+                  {isInvalid && (
+                  <FlexContainer justifyContent={'space-between'}>
+                    <NextLink
+                      as={`/datasets/${slug}/?tabs[]=Reports&show_columns=1&column=${index}`}
+                      href="/datasets/[...slug]"
+                      passHref
+                    >
+                      <Link>
+                        View all
+                      </Link>
+                    </NextLink>
+                  </FlexContainer>
+                  )}
                 </FlexContainer>
               )}
             </div>
