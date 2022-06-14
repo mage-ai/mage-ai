@@ -12,7 +12,6 @@ import {
   Switch,
 } from '@oracle/icons';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
-import { UNIT } from '@oracle/styles/units/spacing';
 
 export const COLUMN_TYPE_ICON_MAPPING = {
   [ColumnTypeEnum.CATEGORY]: Category,
