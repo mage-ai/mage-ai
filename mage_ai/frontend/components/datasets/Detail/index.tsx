@@ -45,9 +45,8 @@ import { setCustomCodeState } from '@storage/localStorage';
 
 export type DatasetDetailSharedProps = {
   featureSet: FeatureSetType;
-  featureSetOriginal: FeatureSetType
+  featureSetOriginal: FeatureSetType;
   fetchFeatureSet: (arg: any) => void;
-  fetchFeatureSetOriginal: (arg: any) => void;
 };
 
 type DatasetDetailProps = {
