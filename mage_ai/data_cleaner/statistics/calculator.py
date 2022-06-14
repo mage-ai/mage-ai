@@ -66,14 +66,40 @@ class StatisticsCalculator:
 
             # Aggregated stats
             column_count = len(df.columns)
+            row_count = df.shape[0]
+
             data['total_null_value_count'] = sum(
                 data[f'{col}/null_value_count'] for col in df.columns
+            )
+            data['total_null_value_rate'] = (
+                data['total_null_value_count'] / df.size if df.size else 0
             )
             data['total_invalid_value_count'] = sum(
                 data[f'{col}/invalid_value_count'] for col in df.columns
             )
-            data['avg_null_value_count'] = data['total_null_value_count'] / column_count
-            data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
+            data['total_invalid_value_rate'] = (
+                data['total_invalid_value_count'] / df.size if df.size else 0
+            )
+
+            df_dedupe = df.drop_duplicates()
+            data['duplicate_row_count'] = row_count - df_dedupe.shape[0]
+
+            data['empty_column_count'] = len(
+                [col for col in df.columns if data[f'{col}/count'] == 0]
+            )
+
+            if column_count != 0:
+                data['avg_null_value_count'] = data['total_null_value_count'] / column_count
+                data['avg_invalid_value_count'] = data['total_invalid_value_count'] / column_count
+                data['empty_column_rate'] = data['empty_column_count'] / column_count
+
+            if row_count != 0:
+                data['avg_invalid_value_rate'] = data['avg_invalid_value_count'] / row_count
+                data['avg_null_value_rate'] = data['avg_null_value_count'] / row_count
+                data['duplicate_row_rate'] = (
+                    data['duplicate_row_count'] / row_count if row_count else 0
+                )
+
             data['completeness'] = (
                 1 - data['avg_null_value_count'] / data['count'] if data['count'] > 0 else 0
             )
@@ -81,11 +107,6 @@ class StatisticsCalculator:
                 data['completeness'] - data['avg_invalid_value_count'] / data['count']
                 if data['count'] > 0
                 else 0
-            )
-            df_dedupe = df.drop_duplicates()
-            data['duplicate_row_count'] = df.shape[0] - df_dedupe.shape[0]
-            data['empty_column_count'] = len(
-                [col for col in df.columns if data[f'{col}/count'] == 0]
             )
 
             timeseries_metadata = self.__evaluate_timeseries(data)
@@ -174,6 +195,10 @@ class StatisticsCalculator:
             f'{col}/value_counts': df_top_value_counts.to_dict(),
         }
 
+        data[f'{col}/unique_value_rate'] = (
+            data[f'{col}/count_distinct'] / series.size if series.size else 0
+        )
+
         data[f'{col}/max_null_seq'] = (
             max(self.null_seq_gen(series.isna().to_numpy()))
             if data[f'{col}/count'] != 0
@@ -202,6 +227,9 @@ class StatisticsCalculator:
                     ).abs()
                     series_outliers = series_z_score[series_z_score >= OUTLIER_ZSCORE_THRESHOLD]
                     data[f'{col}/outlier_count'] = series_outliers.count()
+                    data[f'{col}/outlier_ratio'] = (
+                        data[f'{col}/outlier_count'] / series.size if series.size else 0
+                    )
                     data[f'{col}/outliers'] = (
                         series_non_null.loc[series_outliers.index]
                         .iloc[:OUTLIER_SAMPLE_COUNT]
