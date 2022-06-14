@@ -98,14 +98,10 @@ class StatisticsCalculator:
                 data['empty_column_rate'] = 0
 
             if row_count != 0:
-                data['avg_invalid_value_rate'] = data['avg_invalid_value_count'] / row_count
-                data['avg_null_value_rate'] = data['avg_null_value_count'] / row_count
                 data['duplicate_row_rate'] = (
                     data['duplicate_row_count'] / row_count if row_count else 0
                 )
             else:
-                data['avg_invalid_value_rate'] = 0
-                data['avg_null_value_rate'] = 0
                 data['duplicate_row_rate'] = 0
 
             data['completeness'] = (
