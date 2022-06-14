@@ -14,6 +14,8 @@ export type MenuContainerProps = {
 
 const ContainerStyle = styled.div<MenuContainerProps>`
   border-radius: ${BORDER_RADIUS_XLARGE}px;
+  max-height: 85vh;
+  overflow: auto;
   padding: ${UNIT * 1.75}px;
   position: absolute;
   z-index: 101;
