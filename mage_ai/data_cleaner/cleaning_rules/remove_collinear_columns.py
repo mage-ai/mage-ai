@@ -28,15 +28,15 @@ class RemoveCollinearColumns(BaseRule):
         collinear_columns = []
         self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
 
-        C = np.corrcoef(df.to_numpy().T)
-        vifs = np.diagonal(np.linalg.pinv(C))
+        C = np.corrcoef(self.numeric_df.to_numpy().T)
+        vifs = np.diagonal(np.linalg.pinv(C, hermitian=True))
         collinear_columns = [num_col for vif, num_col in
                                  zip(vifs, self.numeric_columns) if vif > self.VIF_UB]
         if len(collinear_columns) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
                     'Remove collinear columns',
-                    'Delete some of these columns to remove'
+                    'Delete some of these columns to remove '
                     'redundant data and increase data quality.',
                     ActionType.REMOVE,
                     action_arguments=collinear_columns,
