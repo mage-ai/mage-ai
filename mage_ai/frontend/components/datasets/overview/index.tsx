@@ -33,12 +33,13 @@ import { Close } from '@oracle/icons';
 import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics, getOverallStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import { indexBy } from '@utils/array';
+import { greaterThan, indexBy, lessThan } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 import { WARNINGS } from '../constants';
+import StatsTable, { StatRow } from '../StatsTable';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -113,6 +114,70 @@ function DatasetOverview({
     statistics: originalStatistics,
   } = featureSetOriginal || {};
 
+  const overallStats = getOverallStatistics(featureSet);
+  const {
+    completeness,
+    count: totalCount,
+    duplicate_row_count: duplicateRowCount,
+    empty_column_count: emptyColumnCount,
+    total_invalid_value_count: totalInvalidValueCount,
+    total_null_value_count: totalNullValueCount,
+    validity,
+  } = overallStats;
+
+  const qualityMetrics: StatRow[] = [
+    {
+      name: 'Validity',
+      rate: validity,
+      progress: true,
+      warning: {
+        compare: lessThan,
+        val: 0.8,
+      },
+    },
+    {
+      name: 'Completeness',
+      rate: completeness,
+      progress: true,
+      warning: {
+        compare: lessThan,
+        val: 0.8,
+      },
+    },
+    {
+      name: 'Empty columns',
+      rate: emptyColumnCount,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
+    },
+    {
+      name: 'Missing cells',
+      value: totalNullValueCount,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
+    },
+    {
+      name: 'Invalid cells',
+      value: totalInvalidValueCount,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
+    },
+    {
+      name: 'Duplicate rows',
+      value: validity,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
+    },
+  ];
+
   const {
     columns: columnsAll,
     rows: rowsAll,
@@ -156,7 +221,7 @@ function DatasetOverview({
   }, [originalStatistics, showColumnsFromUrl, statistics]);
 
   // TODO: Add keys that match in metricChanges to what's in the quality metrics at the end of the array.
-  const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
+  // const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
     ? createStatisticsSample(statistics, columnTypes)
     : null;
@@ -299,12 +364,7 @@ function DatasetOverview({
                 <Flex flex={1} flexDirection="column">
                   {qualityMetrics && (
                     <Spacing mb={PADDING_UNITS}>
-                      <SimpleDataTable
-                        columnFlexNumbers={[2, 1, 2]}
-                        columnHeaders={[{ label: 'Quality metrics' }]}
-                        rowGroupData={[qualityMetrics]}
-                        warnings={WARNINGS.qualityMetrics}
-                      />
+                      <StatsTable stats={qualityMetrics} title="Quality metrics" />
                     </Spacing>
                   )}
                 </Flex>
