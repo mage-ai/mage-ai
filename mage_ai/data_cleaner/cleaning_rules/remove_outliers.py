@@ -7,8 +7,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
 from typing import Union, Dict
 import numpy as np
 
-ITREE_ANOMALY_SCORE_THRESHOLD = -0.10
-LOF_ANOMALY_SCORE_THRESHOLD = -1.5
 REMOVE_OUTLIERS_TITLE = 'Remove outliers'
 
 
@@ -17,11 +15,6 @@ class RemoveOutliers(BaseRule):
     Checks dataframe for the existence of potential outliers, and generates a cleaning suggestion
     to remove these outliers
     """
-
-    def __init__(self, df, column_types, statistics):
-        super().__init__(df, column_types, statistics)
-        self.numeric_df, self.numeric_columns = self._filter_numeric_types()
-        self.numeric_indices = np.arange(len(self.numeric_df))
 
     def one_dim_outlier_check(self, column: str) -> Union[Dict, None]:
         """
@@ -53,9 +46,8 @@ class RemoveOutliers(BaseRule):
 
     def evaluate(self):
         suggestions = []
-        if len(self.numeric_df) > 0:
-            for col in self.numeric_columns:
-                suggestion = self.one_dim_outlier_check(col)
-                if suggestion:
-                    suggestions.append(suggestion)
+        for col in self.df_columns:
+            suggestion = self.one_dim_outlier_check(col)
+            if suggestion:
+                suggestions.append(suggestion)
         return suggestions

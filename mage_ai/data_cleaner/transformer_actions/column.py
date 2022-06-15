@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors, REGEX_NUMBER
-from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemoval
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
+from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,
@@ -198,17 +199,27 @@ def remove_column(df, action, **kwargs):
 
 
 def remove_outliers(df, action, **kwargs):
-    cols = action['action_arguments']
+    cols = set(action['action_arguments'])
+    numeric_df = df.copy()
+    for column in df.columns:
+        if column not in cols:
+            numeric_df.drop(column, axis=1, inplace=True)
+        else:
+            dtype = action['action_variables'][column]['feature']['column_type']
+            if dtype in NUMBER_TYPES:
+                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
+            else:
+                numeric_df.drop(column, axis=1, inplace=True)
+    outlier_mask = numeric_df.notna().all(axis=1)
+    numeric_df = numeric_df.dropna(axis=0)
+
     method = action['action_options']['method']
-    remover = OutlierRemoval(method=method)
-    outlier_mask = df[cols].notna().all(axis=1)
-    try:
-        X = df[cols].dropna().to_numpy().astype(float)
-    except ValueError:
-        raise TypeError(f'Cannot convert columns to numerical type: {cols}')
-    notna_outlier_mask = remover.fit_transform(X)
+    remover = OutlierRemover(method=method)
+    notna_outlier_mask = remover.fit_transform(numeric_df.to_numpy())
     # This code maps the outlier mask on a subset of data back to the mask on the entire data
-    outlier_mask[outlier_mask] &= pd.Series(notna_outlier_mask, dtype='bool')
+    notna_outlier_mask = pd.Series(notna_outlier_mask, dtype='bool')
+    notna_outlier_mask.index = outlier_mask[outlier_mask].index
+    outlier_mask[outlier_mask] = notna_outlier_mask
     outlier_mask = outlier_mask.astype(bool)
     return df[~outlier_mask]
 

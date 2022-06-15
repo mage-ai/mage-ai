@@ -280,15 +280,9 @@ def update_pipeline(id):
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
         df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
-
-        # TODO: Come up with better way to support dynamic rulesets for pipelines
-        rules = [rule for rule in DEFAULT_RULES]
-        if clean_pipeline.outliers_removed:
-            rules.remove(RemoveOutliers)
         result = clean_data(
             df_transformed,
             column_types=feature_set.metadata.get('column_types', {}),
-            rules=rules,
             transform=False,
         )
         prev_version = len(pipeline.pipeline.actions)
