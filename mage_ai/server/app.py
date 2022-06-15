@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
-from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
+from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
@@ -27,6 +27,7 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 
 thread = None
 api_key = None
+
 
 def rescue_errors(endpoint, error_code=500):
     def handler(*args, **kwargs):
@@ -393,12 +394,14 @@ def launch(mage_api_key=None) -> None:
     print(f'Mage running on host and port {host}:{port}')
     return thread
 
+
 def sync_pipelines():
     print('Syncing pipelines with cloud database.', end='')
     local_pipelines = Pipeline.objects()
     for pipeline in local_pipelines:
         print('.', end='')
         pipeline.sync_pipeline(api_key)
+
 
 def kill():
     if thread is not None:
