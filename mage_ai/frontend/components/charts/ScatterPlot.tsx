@@ -19,6 +19,11 @@ import light from '@oracle/styles/themes/light';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
 import { PURPLE, RED } from '@oracle/styles/colors/main';
+import {
+  SCATTER_PLOT_X_LABEL_MAX_LENGTH,
+  SCATTER_PLOT_Y_LABEL_MAX_LENGTH,
+  truncateLabel,
+} from './utils/label';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 
@@ -90,9 +95,6 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
   const getX = getXProp || (d => d?.x);
   const getY = getYProp || (d => d?.y);
 
-  const xLabelFormat = xLabelFormatProp || (x => x);
-  const yLabelFormat = yLabelFormatProp || (y => y);
-
   const data = [];
   const dataDuplicateCount: {
     [key: string]: number,
@@ -112,6 +114,15 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
 
   const xValues = data.map(d => Number(getX(d)));
   const yValues = data.map(d => Number(getY(d)));
+
+  const xFormat = xLabelFormatProp || (x => x);
+  const xLabelFormat = x => truncateLabel(xFormat(x), SCATTER_PLOT_X_LABEL_MAX_LENGTH)
+
+  const yFormat = yLabelFormatProp || (y => y);
+  const yLabelFormat = y => truncateLabel(yFormat(y), SCATTER_PLOT_Y_LABEL_MAX_LENGTH)
+
+  const yLabelMaxLength = Math.max(...yValues.map(y => yLabelFormat(y).length));
+  margin.left = (yLabelMaxLength + 3) * UNIT;
 
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
@@ -239,7 +250,7 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
             numTicks={numXTicks}
             scale={xScale}
             stroke={axisStrokeColor}
-            tickFormat={label => xLabelFormat ? xLabelFormat(label) : label}
+            tickFormat={xLabelFormat}
             tickLabelProps={(val) => ({
               fill: text,
               fontFamily,
@@ -255,9 +266,8 @@ const ScatterPlot = withTooltip<ScatterPlotProps>(({
             numTicks={numYTicks}
             scale={yScale}
             stroke={axisStrokeColor}
-            tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
-            tickLabelProps={label => ({
-              dx: (String(label).length > 4) ? 3 : 0,
+            tickFormat={yLabelFormat}
+            tickLabelProps={() => ({
               fill: text,
               fontFamily,
               fontSize: SMALL_FONT_SIZE,
@@ -317,7 +327,7 @@ function ScatterPlotContainer({
   const [yFeature, setYFeature] = useState<string>(yFeatureProp);
 
   const defaultMargin = {
-    bottom: 3 * UNIT,
+    bottom: 5 * UNIT,
     left: 3 * UNIT,
     right: 3 * UNIT,
     top: 3 * UNIT,
