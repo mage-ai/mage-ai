@@ -95,6 +95,7 @@ const SuggestionRow = ({
     if (col in featureIdMapping) {
       el = (
         <Link
+          noOutline
           onClick={() => goToWithQuery({
             column: columns.indexOf(col),
           }, {
@@ -163,7 +164,7 @@ const SuggestionRow = ({
 
         {featureLinks}
         {numFeatures > DISPLAY_COLS_NUM &&
-          <Link onClick={() => setDisplayAllCols(!displayAllCols)}>
+          <Link noOutline onClick={() => setDisplayAllCols(!displayAllCols)}>
             <Text bold secondary>
               {displayAllCols
                 ?
