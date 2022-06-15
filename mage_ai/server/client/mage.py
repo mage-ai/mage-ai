@@ -54,7 +54,7 @@ class Mage():
     def get_pipeline_actions(self, id, api_key):
         if api_key is None:
             print('Fetching pipeline actions failed, invalid API key')
-            return
+            return []
         try:
             response = requests.get(
                 headers={

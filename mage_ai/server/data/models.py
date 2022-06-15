@@ -226,9 +226,8 @@ class Pipeline(Model):
 
         if pipeline is not None:
             self.pipeline = pipeline
-
-        if api_key is not None:
-            self.sync_pipeline(api_key)
+            if api_key is not None:
+                self.sync_pipeline(api_key)
 
     def sync_pipeline(self, api_key):
         Mage().sync_pipeline(self, api_key)

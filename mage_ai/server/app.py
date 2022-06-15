@@ -26,7 +26,7 @@ app = Flask(
 CORS(app, resources={r'/*': {'origins': '*'}})
 
 thread = None
-
+api_key = None
 
 def rescue_errors(endpoint, error_code=500):
     def handler(*args, **kwargs):
@@ -292,9 +292,8 @@ def update_pipeline(id):
     else:
         pipeline.pipeline = clean_pipeline
 
-    global api_key
-    if api_key:
-        pipeline.sync_pipeline()
+    if api_key is not None:
+        pipeline.sync_pipeline(api_key)
 
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
