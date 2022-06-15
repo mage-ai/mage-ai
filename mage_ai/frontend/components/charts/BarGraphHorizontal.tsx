@@ -218,18 +218,6 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                           x={bar.x}
                           y={bar.y}
                         />
-                        {/* needed for one-sided rounded bar tip */}
-                        <path
-                          d={`M${bar.width < 14 ? bar.x + bar.width/2 : bar.x + bar.width - 10},${bar.y}
-                            h${bar.width < 14 ? bar.width/14 * 5 : 5}
-                            q5,0 5,5
-                            v${bar.height - 10}
-                            q0,5 -5,5
-                            h-${bar.width < 14 ? bar.width/14 * 5 : 5}
-                            z
-                          `}
-                          fill={colors.primary}
-                        />
                       </>
                     </g>
                   )),
