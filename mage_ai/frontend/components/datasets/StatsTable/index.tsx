@@ -73,7 +73,6 @@ function StatsTable({ stats, title }: StatsTableProps) {
               ?
                 <FlexContainer alignItems="center">
                   &nbsp;
-                  {console.log(name, change)}
                   <ProgressIcon danger={change < 0} percentage={Math.abs(change)}/>
                 </FlexContainer>
               :

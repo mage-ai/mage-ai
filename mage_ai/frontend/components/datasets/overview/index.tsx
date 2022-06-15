@@ -26,7 +26,6 @@ import { BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
   COLUMN_HEADER_CHART_HEIGHT,
   buildRenderColumnHeader,
-  createMetricsSample,
   createStatisticsSample,
 } from './utils';
 import { Close } from '@oracle/icons';
@@ -239,8 +238,6 @@ function DatasetOverview({
     uuid,
   }));
 
-  // TODO: Add keys that match in metricChanges to what's in the quality metrics at the end of the array.
-  // const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
     ? createStatisticsSample(statistics, columnTypes)
     : null;
