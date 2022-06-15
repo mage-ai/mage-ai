@@ -2,119 +2,125 @@ from mage_ai.data_cleaner.estimators.base import BaseEstimator
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+import numpy as np
 
-LOF_ANOMALY_SCORE_THRESHOLD = -1.5
-ITREE_ANOMALY_SCORE_THRESHOLD = -0.1
-
-
-class CustomIsolationForest(BaseEstimator):
-    def __init__(
-        self,
-        n_estimators=100,
-        max_samples='auto',
-        contamination='auto',
-        bootstrap=False,
-        n_jobs=None,
-        random_state=None,
-        score_threshold=-0.1,
-        verbose=0,
-    ):
-        self.itree = IsolationForest(
-            n_estimators=n_estimators,
-            max_samples=max_samples,
-            contamination=contamination,
-            bootstrap=bootstrap,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-        )
-        self.fitted = False
-        self.score_threshold = score_threshold
-
-    def fit(self, X, y=None):
-        self.itree.fit(X, y)
-        self.fitted = True
-
-    def transform(self, X, **kwargs):
-        if self.fitted:
-            outlier_scores = self.itree.decision_function(X)
-            return outlier_scores <= self.score_threshold
-        else:
-            raise RuntimeError('No mask found, call fit() before attempting to extract mask')
+MAX_CONTAMINATION_RATE = 0.15
+MIN_CONTAMINATION_RATE = 0.025
+SUPPORTED_METHODS = ['lof', 'auto', 'itree']
 
 
-class CustomLocalOutlierFactor(BaseEstimator):
-    def __init__(
-        self,
-        n_neighbors=20,
-        algorithm='auto',
-        leaf_size=30,
-        metric='minkowski',
-        p=2,
-        metric_params=None,
-        contamination='auto',
-        novelty=False,
-        n_jobs=None,
-        score_threshold=-1.5,
-    ):
-        self.lof = LocalOutlierFactor(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            contamination=contamination,
-            novelty=novelty,
-            n_jobs=n_jobs,
-        )
-        self.fitted = False
-        self.score_threshold = score_threshold
+class OutlierRemover(BaseEstimator):
+    """
+    Automatically removes outliers from the given data.
+    """
 
-    def fit(self, X, y=None):
-        self.lof.fit(X, y)
-        self.fitted = True
+    def __init__(self, method: str = 'auto') -> None:
+        """
+        Constructs an outlier remover.
 
-    def transform(self, X=None, **kwargs):
-        outlier_scores = self.lof.negative_outlier_factor_
-        return outlier_scores <= self.score_threshold
-
-
-class OutlierRemoval(BaseEstimator):
-    def __init__(self, method='auto') -> None:
+        Args:
+            method (str, optional): Specifies the outlier removal method to use. Defaults to 'auto'. There are three options:
+            - 'lof' - Local Outlier Factor
+            - 'itree' - Isolation Forest
+            - 'auto' - Automatically best method based on runtime comparisons
+        """
+        if method not in SUPPORTED_METHODS:
+            raise ValueError(f'The method specified \'{method}\' is not supported.')
         self.method = method
 
-    def fit(self, X, y=None) -> None:
+    def estimate_contamination_rate(self, X: np.ndarray) -> float:
+        """
+        Guesses the outlier contamination rate from the data. Uses the IQR
+        rule to estimate outliers dimensionwise, and then aggregates the entire
+        count to provide an estimate on the number of outliers in the dataset. This
+        estimate is used to compute the contamination factor used in finding outliers with
+        more complex algorithms.
+
+        The exact algorithm used to estimate the contamination rate is as follows:
+        1. Calculate the first and third quantile for each dimension
+        2. Calculate the interquartile range for each dimension
+        3. Compute the per-dimension outlier region as x <= lower - 1.5*IQR and x >= upper + 1.5*IQR
+        4. Find all entries that exist in the outlier region per-dimension
+        5. Mark examples with at least 50% of its features as outliers to be potential multidimensional outliers
+        6. Return the ratio of these potential outliers in the region
+
+        Args:
+            X (np.ndarray): Input array of shape (n_samples, n_dimensions)
+
+        Returns:
+            float: The guessed contamination rate
+        """
+        # TODO - use PCA to calculate the iqrs along the axes of greatest variance
+        first = np.quantile(X, 0.25, axis=0)
+        third = np.quantile(X, 0.75, axis=0)
+        iqr_diffs = 1.5 * (third - first)
+
+        lower_bound = first - iqr_diffs
+        upper_bound = third + iqr_diffs
+
+        # select all rows with at least 50% potential outliers
+        mask = (X < lower_bound) | (X > upper_bound)
+        mask = mask.sum(axis=1) / mask.shape[1]
+        mask = mask >= 0.5
+        return mask.sum() / mask.size
+
+    def fit(self, X: np.ndarray, y: np.ndarray = None) -> None:
+        """
+        Fits the outlier remover on the given data.
+
+        Args:
+            X (np.ndarray): Input array of shape (n_samples, n_dimensions)
+            y (np.ndarray, optional): Not used. Defaults to None.
+        """
         count, ndim = X.shape
         pca_transformer = PCA(n_components=20, random_state=42)
+        # Clamp contamination rate in case that IQR method gives bad results
+        contamination_rate = max(self.estimate_contamination_rate(X), MIN_CONTAMINATION_RATE)
+        contamination_rate = min(contamination_rate, MAX_CONTAMINATION_RATE)
+
         if ndim > 20:
             X = pca_transformer.fit_transform(X)
-        method = self.method
         if self.method == 'auto':
             if ndim <= 5:
-                method = 'lof'
+                self.method = 'lof'
             else:
-                method = 'itree'
-        if method == 'lof':
+                self.method = 'itree'
+        if self.method == 'lof':
             if count < 10:
                 n_neighbors = 2
             elif count < 500:
                 n_neighbors = count // 10 + 1
-            else:
+            elif contamination_rate <= 0.1:
                 n_neighbors = 20
-            self.outlier_remover = CustomLocalOutlierFactor(
-                n_neighbors=n_neighbors, n_jobs=-1, score_threshold=LOF_ANOMALY_SCORE_THRESHOLD
+            else:
+                n_neighbors = 35
+            self.outlier_remover = LocalOutlierFactor(
+                n_neighbors=n_neighbors,
+                n_jobs=-1,
+                contamination=contamination_rate,
             )
-        elif method == 'itree':
-            self.outlier_remover = CustomIsolationForest(
-                n_estimators=75,
+        elif self.method == 'itree':
+            self.outlier_remover = IsolationForest(
+                contamination=contamination_rate,
+                n_estimators=100,
                 n_jobs=-1,
                 random_state=42,
-                score_threshold=ITREE_ANOMALY_SCORE_THRESHOLD,
             )
-        else:
-            raise ValueError(f'Invalid method specified: {method}')
-        self.outlier_remover.fit(X, y)
+            self.outlier_remover.fit(X, y)
 
-    def transform(self, X, **kwargs):
-        return self.outlier_remover.transform(X, **kwargs)
+    def transform(self, X: np.ndarray, **kwargs) -> np.ndarray:
+        """
+        Determines the labels of outliers in the input data
+
+        Args:
+            X (np.ndarray): Input array of shape (n_samples, n_dimensions)
+
+        Returns:
+            np.ndarray: Array of shape (n_samples,) containing labels for the entries.
+            Label is True if outlier, else False.
+        """
+        if self.method == 'lof':
+            labels = self.outlier_remover.fit_predict(X, **kwargs)
+        else:
+            labels = self.outlier_remover.predict(X, **kwargs)
+        return labels == -1

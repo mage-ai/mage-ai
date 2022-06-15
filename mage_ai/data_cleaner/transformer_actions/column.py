@@ -212,6 +212,8 @@ def remove_outliers(df, action, **kwargs):
                 numeric_df.drop(column, axis=1, inplace=True)
     outlier_mask = numeric_df.notna().all(axis=1)
     numeric_df = numeric_df.dropna(axis=0)
+    if numeric_df.size == 0:
+        return df
 
     method = action['action_options']['method']
     remover = OutlierRemover(method=method)
