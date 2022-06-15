@@ -5,7 +5,7 @@ import ProgressIcon from '@oracle/components/ProgressIcon';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Text from '@oracle/elements/Text';
-import { formatPercent, roundNumber } from '@utils/string';
+import { formatPercent } from '@utils/string';
 
 export type StatRow = {
   name: string,
@@ -14,6 +14,7 @@ export type StatRow = {
   progress?: boolean,
   warning?: WarningType;
   change?: number,
+  flex?: number[],
 };
 
 export type WarningType = {
@@ -31,7 +32,7 @@ const shouldWarn = (w: WarningType, n: number) => w && w.compare(n, w.val);
 function StatsTable({ stats, title }: StatsTableProps) {
   return (
     <RowDataTable alternating headerTitle={title}>
-      {stats?.map(({ name, value, rate, progress, warning, change }) => {
+      {stats?.map(({ name, value, rate, progress, warning, change, flex }) => {
         const warn = {
           bold: shouldWarn(warning, rate),
           danger: shouldWarn(warning, rate),
@@ -44,7 +45,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={[2, 1, 1, 2]} key={name}>
+          <RowCard columnFlexNumbers={flex || [2, 1, 1, 1]} key={name}>
             <Text>{name}</Text>
             <Flex>
               {value !== undefined &&
@@ -59,17 +60,23 @@ function StatsTable({ stats, title }: StatsTableProps) {
                 </Text>
               }
             </Flex>
-            {progress &&
-              <ProgressBar
-                progress={rate * 100}
-                {...warn}
-              />
+            {progress
+              ?
+                <ProgressBar
+                  progress={rate * 100}
+                  {...warn}
+                />
+              :
+                <> </>
             }
-            { change &&
-              <FlexContainer alignItems="center">
-                &nbsp;
-                <ProgressIcon danger={change < 0} percentage={roundNumber(change)}/>
-              </FlexContainer>
+            { change
+              ?
+                <FlexContainer alignItems="center">
+                  &nbsp;
+                  <ProgressIcon danger={change < 0} percentage={Math.abs(change)}/>
+                </FlexContainer>
+              :
+                <> </>
             }
           </RowCard>
         );

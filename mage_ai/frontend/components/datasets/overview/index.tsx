@@ -40,6 +40,7 @@ import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 import { WARNINGS } from '../constants';
 import StatsTable, { StatRow } from '../StatsTable';
+import { roundNumber } from '@utils/string';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -120,18 +121,21 @@ function DatasetOverview({
     count: totalCount,
     duplicate_row_count: duplicateRowCount,
     empty_column_count: emptyColumnCount,
+    empty_column_rate: emptyColumnRate,
     total_invalid_value_count: totalInvalidValueCount,
+    total_invalid_value_rate: totalInvalidValueRate,
     total_null_value_count: totalNullValueCount,
+    total_null_value_rate: totalNullValueRate,
     validity,
   } = overallStats;
 
-  // Subtract original from quality
+  // Subtract current from original to see improvements.
   useEffect(() => {
     if (statistics && originalStatistics) {
       let result;
       const metricChanges = Object.keys(originalStatistics).reduce((a, k) => {
-        result = originalStatistics[k] - statistics[k];
-        if (result > 0) {
+        result = roundNumber(statistics[k] - originalStatistics[k]);
+        if (result !== 0) {
           a[k] = result;
         }
         return a;
@@ -140,6 +144,7 @@ function DatasetOverview({
     }
   }, [originalStatistics, showColumnsFromUrl, statistics]);
 
+  console.log(changes, changes['empty_column_count']);
   const qualityMetrics: StatRow[] = [
     {
       name: 'Validity',
@@ -150,6 +155,7 @@ function DatasetOverview({
         val: 0.8,
       },
       change: changes['validity'],
+      flex: [2, 1, 2],
     },
     {
       name: 'Completeness',
@@ -160,33 +166,39 @@ function DatasetOverview({
         val: 0.8,
       },
       change: changes['completeness'],
+      flex: [2, 1, 2],
     },
     {
       name: 'Empty columns',
-      rate: emptyColumnCount,
+      value: emptyColumnCount,
+      rate: emptyColumnRate,
       warning: {
         compare: greaterThan,
         val: 0,
       },
-      change: changes['emptyColumnCount'],
+      change: changes['emptyColumnRate'],
+      flex: [2, 1, 2, 1],
     },
     {
       name: 'Missing cells',
       value: totalNullValueCount,
+      rate: totalNullValueRate,
       warning: {
         compare: greaterThan,
         val: 0,
       },
-      change: changes['totalNullValueCount'],
+      change: changes['totalNullValueRate'],
+      flex: [2, 1, 2, 1],
     },
     {
       name: 'Invalid cells',
       value: totalInvalidValueCount,
+      rate: totalInvalidValueRate,
       warning: {
         compare: greaterThan,
         val: 0,
       },
-      change: changes['totalInvalidValueCount'],
+      change: changes['totalInvalidValueRate'],
     },
     {
       name: 'Duplicate rows',
@@ -226,7 +238,6 @@ function DatasetOverview({
     uuid,
   }));
 
-  
   // TODO: Add keys that match in metricChanges to what's in the quality metrics at the end of the array.
   // const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
