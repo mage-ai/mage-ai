@@ -12,7 +12,7 @@ class RemoveCollinearColumns(BaseRule):
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
-        self.numeric_df, self.numeric_columns = self.filter_numeric_types()
+        self.numeric_df, self.numeric_columns = self._filter_numeric_types()
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
@@ -43,18 +43,6 @@ class RemoveCollinearColumns(BaseRule):
                 )
             )
         return suggestions
-
-    def filter_numeric_types(self):
-        numeric_columns = []
-        numeric_df = self.df.copy()
-        for column in self.df_columns:
-            if self.column_types[column] in NUMBER_TYPES:
-                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
-                numeric_columns.append(column)
-            else:
-                numeric_df.drop(column, axis=1, inplace=True)
-        numeric_df = numeric_df.dropna(axis=0)
-        return numeric_df, numeric_columns
 
     def get_variance_inflation_factor(self, column):
         """

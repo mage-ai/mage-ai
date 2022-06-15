@@ -4,6 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.row import (
     # explode,
     filter_rows,
     sort_rows,
+    remove_row,
 )
 from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
@@ -783,3 +784,65 @@ class RowTests(TestCase):
             )
 
             self.assertTrue(sort_rows(df, action).equals(val))
+
+    def test_remove_rows(self):
+        df = pd.DataFrame(
+            [
+                [0, False, 'a'],
+                [1, True, 'b'],
+                [1, True, 'c'],
+                [0, True, 'd'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
+        action1 = dict(
+            action_type='remove',
+            action_arguments=[],
+            action_code='',
+            action_options={
+                'rows': [0, 3, 4, 5],
+            },
+            action_variables={},
+            axis='row',
+            outputs=[],
+        )
+        action2 = dict(
+            action_type='remove',
+            action_arguments=[],
+            action_code='',
+            action_options={
+                'rows': [-1, 0, 1, 2, 3, 4],
+            },
+            action_variables={},
+            axis='row',
+            outputs=[],
+        )
+        expected_df = pd.DataFrame(
+            [
+                [1, True, 'b'],
+                [1, True, 'c'],
+            ],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
+        expected_df.index = pd.Int64Index([1, 2])
+        expected_df2 = pd.DataFrame(
+            [],
+            columns=[
+                'integer',
+                'boolean',
+                'string',
+            ],
+        )
+        expected_df2.index = pd.Int64Index([])
+        new_df = remove_row(df, action1)
+        new_df2 = remove_row(df, action2).astype(object)
+        assert_frame_equal(new_df, expected_df)
+        assert_frame_equal(new_df2, expected_df2)

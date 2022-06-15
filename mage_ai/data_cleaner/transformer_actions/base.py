@@ -34,6 +34,7 @@ FUNCTION_MAPPING = {
         ActionType.MIN: column.min,
         ActionType.REFORMAT: column.reformat,
         ActionType.REMOVE: column.remove_column,
+        ActionType.REMOVE_OUTLIERS: column.remove_outliers,
         ActionType.SELECT: column.select,
         ActionType.SHIFT_DOWN: column.shift_down,
         ActionType.SHIFT_UP: column.shift_up,
@@ -45,6 +46,7 @@ FUNCTION_MAPPING = {
         # ActionType.EXPLODE: row.explode,
         ActionType.FILTER: row.filter_rows,
         ActionType.SORT: row.sort_rows,
+        ActionType.REMOVE: row.remove_row,
     },
 }
 

@@ -35,9 +35,9 @@ DEFAULT_RULES = [
 
 
 class BasePipeline:
-    def __init__(self, actions=[]):
+    def __init__(self, actions=[], rules=DEFAULT_RULES):
         self.actions = actions
-        self.rules = DEFAULT_RULES
+        self.rules = rules
 
     def create_actions(self, df, column_types, statistics):
         if not statistics or len(statistics) == 0:
@@ -62,7 +62,8 @@ class BasePipeline:
         df_transformed = df
         while len(action_queue) != 0:
             action = action_queue.pop(0)
-            df_transformed = BaseAction(action['action_payload']).execute(df_transformed)
+            payload = action['action_payload']
+            df_transformed = BaseAction(payload).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
             completed_queue.append(action)
             if auto:
@@ -92,8 +93,11 @@ class BasePipeline:
         suggestions_filtered = [
             s
             for s in suggestions
-            if s['title'] != REMOVE_OUTLIERS_TITLE
-            or s['action_payload']['action_arguments'][0] not in columns_with_outlier_removed
+            if not (
+                s['title'] == REMOVE_OUTLIERS_TITLE
+                and len(s['action_payload']['action_arguments']) != 0
+                and s['action_payload']['action_arguments'][0] in columns_with_outlier_removed
+            )
         ]
         statistics_updated = statistics.copy()
         for col in columns_with_outlier_removed:
