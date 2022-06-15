@@ -7,7 +7,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import MenuContainer from './MenuContainer';
-import { capitalize } from '@utils/string';
 
 export type LinkType = {
   afterElement?: any;
@@ -72,7 +71,7 @@ function Menu({
             onClick: onClickLink,
             uuid,
           }: LinkType) => {
-            const text = capitalize(label);
+            const text = label;
             const key = uuid || text;
 
             let linkEl = (
