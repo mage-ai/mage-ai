@@ -31,16 +31,16 @@ const ProgressIcon = ({
     {props.danger
       ?
         <Button
-          afterIcon={<ArrowDown negative size={10}/>}
+          afterIcon={<ArrowDown negative size={20}/>}
           negative
         >
-          <Text danger large>
+          <Text danger>
             {props.percentage}%
           </Text>
         </Button>
       :
         <Button
-          afterIcon={<ArrowUp positive size={10} />}
+          afterIcon={<ArrowUp positive size={20} />}
           positive
         >
           <Text positive>

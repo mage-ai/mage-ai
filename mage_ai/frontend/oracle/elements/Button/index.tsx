@@ -80,11 +80,11 @@ const ButtonStyle = styled.button<ButtonProps>`
   `}
 
   ${props => props.negative && `
-    background-color: ${light.background.negative}; !important
+    background-color: ${(props.theme.background || light.background).negative};
   `}
 
   ${props => props.positive && `
-    background-color: ${light.background.positive}; !important
+    background-color: ${(props.theme.background || light.background).positive};
   `}
 
   ${props => !props.iconOnly && props.large && `
