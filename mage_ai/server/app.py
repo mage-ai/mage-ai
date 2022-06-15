@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request
+from tokenize import String
+from flask import Flask, render_template, request, send_file
 from flask_cors import CORS
+from io import BytesIO, StringIO
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
@@ -9,6 +11,7 @@ from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import json
 import logging
+import pandas as pd
 import os
 import simplejson
 import sys
@@ -66,6 +69,26 @@ def index():
 @rescue_errors
 def dataset(id):
     return render_template('index.html')
+
+
+@app.route('/download/feature_sets/<id>', endpoint='download_feature_set')
+@rescue_errors
+def download_feature_set(id):
+    if not id or not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
+    feature_set = FeatureSet(id=id)
+    try:
+        name = feature_set.metadata['name']
+    except KeyError:
+        name = str(id)
+    return app.response_class(
+        response=feature_set.data.to_csv(index=False, mode='w'),
+        status=200,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="{name}.csv"',
+        },
+    )
 
 
 @app.route('/process', methods=['POST'], endpoint='process')
