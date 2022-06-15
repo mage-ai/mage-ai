@@ -45,7 +45,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={flex || [2, 1, 1, 1]} key={name}>
+          <RowCard columnFlexNumbers={flex || [2, 1, 2, 1]} key={name}>
             <Text>{name}</Text>
             <Flex>
               {value !== undefined &&
@@ -73,6 +73,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
               ?
                 <FlexContainer alignItems="center">
                   &nbsp;
+                  {console.log(name, change)}
                   <ProgressIcon danger={change < 0} percentage={Math.abs(change)}/>
                 </FlexContainer>
               :
