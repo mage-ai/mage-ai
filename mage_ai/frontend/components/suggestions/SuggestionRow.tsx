@@ -13,7 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import { Close, Code } from '@oracle/icons';
+import { Close, Edit } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
@@ -215,7 +215,7 @@ const SuggestionRow = ({
             padding="0px"
             transparent
           >
-            <Code
+            <Edit
               black={editing}
               muted
               size={16}
