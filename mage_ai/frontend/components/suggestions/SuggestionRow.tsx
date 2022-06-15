@@ -99,7 +99,12 @@ const SuggestionRow = ({
           preventDefault
           wordWrap
         >
-          <Text monospace secondary maxWidth={30*UNIT}>
+          <Text
+            maxWidth={30 * UNIT}
+            monospace
+            secondary
+            title={col}
+          >
             {col}
           </Text>
         </Link>
@@ -109,9 +114,7 @@ const SuggestionRow = ({
     }
 
     return (
-      <span
-        key={col}
-      >
+      <span key={col}>
         {el}
       </span>
     );
@@ -126,7 +129,7 @@ const SuggestionRow = ({
         <Spacing mr={2}>
           {isLoading && <Spinner small />}
 
-          {!isLoading && !editing &&(
+          {!isLoading && !editing && (
             <Link
               bold
               noHoverUnderline
