@@ -29,8 +29,7 @@ class RemoveCollinearColumns(BaseRule):
         self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
 
         C = np.corrcoef(self.numeric_df.to_numpy())
-        vifs = np.diagonal(np.linalg.pinv(C, rcond=self.EPSILON,
-                                          hermitian=True))
+        vifs = np.diagonal(np.linalg.pinv(C, rcond=self.EPSILON, hermitian=True))
         collinear_columns = [num_col for vif, num_col in
                                  zip(vifs, self.numeric_columns) if vif > self.VIF_UB]
         if len(collinear_columns) != 0:
