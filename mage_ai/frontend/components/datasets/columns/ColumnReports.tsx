@@ -87,7 +87,7 @@ function ColumnReports({
       rate: uniqueValueRate,
       warning: {
         compare: greaterThan,
-        val: 0,
+        val: 0.8,
       },
     },
     {
