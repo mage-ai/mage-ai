@@ -12,7 +12,7 @@ $ jupyter notebook --ip=* --allow_origin=*
 # Start app
 ```python
 import mage_ai
-from mage_ai.server.sample_datasets import load_dataset
+from mage_ai.sample_datasets import load_dataset
 
 from datetime import datetime
 
