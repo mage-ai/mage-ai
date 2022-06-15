@@ -10,10 +10,10 @@ export type StatRow = {
   value?: any,
   rate?: number,
   progress?: boolean,
-  warning?: Warning;
+  warning?: WarningType;
 };
 
-export type Warning = {
+export type WarningType = {
   compare: (a: number, b: number) => boolean;
   val: number;
 };
@@ -23,7 +23,7 @@ export type StatsTableProps = {
   title: string,
 };
 
-const shouldWarn = (w: Warning, n: number) => w && w.compare(n, w.val);
+const shouldWarn = (w: WarningType, n: number) => w && w.compare(n, w.val);
 
 function StatsTable({ stats, title }: StatsTableProps) {
   return (
