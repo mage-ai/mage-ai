@@ -158,7 +158,7 @@ const Button = ({
         e?.preventDefault();
         onClick?.(e);
       }}
-      onMouseEnter={(e) => {
+      onHover={(e) => {
         e?.preventDefault();
         onHover?.(e);
       }}
