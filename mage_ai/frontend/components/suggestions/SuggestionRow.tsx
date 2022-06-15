@@ -89,11 +89,9 @@ const SuggestionRow = ({
   const DISPLAY_COLS_NUM = 5;
 
   const displayArguments = displayAllCols ? actionArguments : actionArguments?.slice(0, DISPLAY_COLS_NUM);
-  const featureLinks = displayArguments.map((col: string) => {
-    let el;
-
-    if (col in featureIdMapping) {
-      el = (
+  const featureLinks = displayArguments.map((col: string) => (
+    <span key={col}>
+      {col in featureIdMapping ?
         <Link
           noOutline
           onClick={() => goToWithQuery({
@@ -113,17 +111,18 @@ const SuggestionRow = ({
             {col}
           </Text>
         </Link>
-      );
-    } else {
-      el = col;
-    }
-
-    return (
-      <span key={col}>
-        {el}
-      </span>
-    );
-  });
+        :
+        <Text
+          color={themeContext.interactive.linkSecondaryDisabled}
+          maxWidth={30 * UNIT}
+          monospace
+          title={col}
+        >
+          {col}
+        </Text>
+      }
+    </span>
+  ));
 
   return (
     <RowCard
