@@ -200,16 +200,13 @@ def remove_column(df, action, **kwargs):
 
 def remove_outliers(df, action, **kwargs):
     cols = set(action['action_arguments'])
-    numeric_df = df.copy()
-    for column in df.columns:
-        if column not in cols:
-            numeric_df.drop(column, axis=1, inplace=True)
+    numeric_df = df[cols].copy()
+    for column in numeric_df.columns:
+        dtype = action['action_variables'][column]['feature']['column_type']
+        if dtype in NUMBER_TYPES:
+            numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
         else:
-            dtype = action['action_variables'][column]['feature']['column_type']
-            if dtype in NUMBER_TYPES:
-                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
-            else:
-                numeric_df.drop(column, axis=1, inplace=True)
+            numeric_df.drop(column, axis=1, inplace=True)
     outlier_mask = numeric_df.notna().all(axis=1)
     numeric_df = numeric_df.dropna(axis=0)
     if numeric_df.size == 0:

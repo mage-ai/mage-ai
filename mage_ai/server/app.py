@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request
 from flask_cors import CORS
-from mage_ai.data_cleaner.cleaning_rules.remove_outliers import RemoveOutliers
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
