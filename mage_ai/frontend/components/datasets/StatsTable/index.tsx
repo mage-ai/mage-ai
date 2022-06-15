@@ -1,9 +1,11 @@
 import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import ProgressBar from '@oracle/components/ProgressBar';
+import ProgressIcon from '@oracle/components/ProgressIcon';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Text from '@oracle/elements/Text';
-import { formatPercent } from '@utils/string';
+import { formatPercent, roundNumber } from '@utils/string';
 
 export type StatRow = {
   name: string,
@@ -11,6 +13,7 @@ export type StatRow = {
   rate?: number,
   progress?: boolean,
   warning?: WarningType;
+  change?: number,
 };
 
 export type WarningType = {
@@ -28,7 +31,7 @@ const shouldWarn = (w: WarningType, n: number) => w && w.compare(n, w.val);
 function StatsTable({ stats, title }: StatsTableProps) {
   return (
     <RowDataTable alternating headerTitle={title}>
-      {stats?.map(({ name, value, rate, progress, warning }) => {
+      {stats?.map(({ name, value, rate, progress, warning, change }) => {
         const warn = {
           bold: shouldWarn(warning, rate),
           danger: shouldWarn(warning, rate),
@@ -41,7 +44,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={[2, 1, 2]} key={name}>
+          <RowCard columnFlexNumbers={[2, 1, 1, 2]} key={name}>
             <Text>{name}</Text>
             <Flex>
               {value !== undefined &&
@@ -61,6 +64,12 @@ function StatsTable({ stats, title }: StatsTableProps) {
                 progress={rate * 100}
                 {...warn}
               />
+            }
+            { change &&
+              <FlexContainer alignItems="center">
+                &nbsp;
+                <ProgressIcon danger={change < 0} percentage={roundNumber(change)}/>
+              </FlexContainer>
             }
           </RowCard>
         );
