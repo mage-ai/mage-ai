@@ -35,13 +35,10 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import {
-  greaterThan,
-  indexBy,
-  lessThan,
-} from '@utils/array';
+import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
+import { WARNINGS } from '../constants';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -278,21 +275,7 @@ function DatasetOverview({
                         columnFlexNumbers={[2, 1, 2]}
                         columnHeaders={[{ label: 'Quality metrics' }]}
                         rowGroupData={[qualityMetrics]}
-                        warnings={[{
-                          compare: lessThan,
-                          name: 'Validity',
-                          val: 80,
-                        },
-                        {
-                          compare: lessThan,
-                          name: 'Completeness',
-                          val: 80,
-                        },
-                        {
-                          compare: greaterThan,
-                          name: 'Duplicate rows',
-                          val: 0,
-                        }]}
+                        warnings={WARNINGS.qualityMetrics}
                       />
                     </Spacing>
                   )}
@@ -306,13 +289,7 @@ function DatasetOverview({
                       columnFlexNumbers={[1, 1]}
                       columnHeaders={[{ label: 'Statistics' }]}
                       rowGroupData={[statSample]}
-                      warnings={[
-                        {
-                          compare: greaterThan,
-                          name: 'Empty columns',
-                          val: 0,
-                        },
-                      ]}
+                      warnings={WARNINGS.statistics}
                     />
                   )}
                 </Flex>
