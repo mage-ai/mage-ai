@@ -27,7 +27,6 @@ export type ButtonProps = {
   noBorderRight?: boolean;
   noPadding?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
-  onHover?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
   small?: boolean;
@@ -142,7 +141,6 @@ const Button = ({
   disabled,
   loading,
   onClick,
-  onHover,
   ...props
 }: ButtonProps, ref) => {
   const iconProps = {
@@ -157,10 +155,6 @@ const Button = ({
       onClick={(e) => {
         e?.preventDefault();
         onClick?.(e);
-      }}
-      onHover={(e) => {
-        e?.preventDefault();
-        onHover?.(e);
       }}
       ref={ref}
     >
