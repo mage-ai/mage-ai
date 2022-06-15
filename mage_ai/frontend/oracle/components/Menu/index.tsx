@@ -71,8 +71,7 @@ function Menu({
             onClick: onClickLink,
             uuid,
           }: LinkType) => {
-            const text = label;
-            const key = uuid || text;
+            const key = uuid || label;
 
             let linkEl = (
               <Link
@@ -91,7 +90,7 @@ function Menu({
                   px="4px"
                   py={1}
                 >
-                  {text}
+                  {label}
                 </Spacing>
               </Link>
             );
