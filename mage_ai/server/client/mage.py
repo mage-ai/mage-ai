@@ -1,13 +1,21 @@
+from mage_ai.data_cleaner.shared.hash import merge_dict
+
 import json
 import requests
-from mage_ai.data_cleaner.shared.hash import merge_dict
 
 class Mage():
     def __init__(self, **kwargs):
         self.url_prefix = 'https://backend.mage.ai/api/v1'
     
     def sync_pipeline(self, pipeline, api_key):
+        error_message = f'Syncing pipeline {pipeline.id} failed'
+        if api_key is None:
+            print(f'{error_message}, invalid API key')
+            return
         feature_set = pipeline.get_feature_set()
+        if feature_set is None:
+            print(f'{error_message}, feature set does not exist')
+            return
         pipeline_name = f"{feature_set.metadata['name']}_pipeline"
         data = {
             'data_cleaning_pipeline': {
@@ -40,9 +48,13 @@ class Mage():
                     'remote_id': pipeline_response['id'],
                 })
         except:
+            print(error_message)
             pass
 
     def get_pipeline_actions(self, id, api_key):
+        if api_key is None:
+            print('Fetching pipeline actions failed, invalid API key')
+            return
         try:
             response = requests.get(
                 headers={
@@ -53,4 +65,5 @@ class Mage():
             ).json()
             return response['data_cleaning_pipeline'].get('pipeline_actions', [])
         except:
+            print('Fetching pipeline actions from database failed')
             return []

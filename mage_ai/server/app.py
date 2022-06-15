@@ -319,14 +319,15 @@ def clean_df(df, name):
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, id=None, path=None, remote_id=None):
+def clean_df_with_pipeline(df, id=None, path=None, remote_id=None, mage_api_key=None):
     pipeline = None
     if id is not None:
         pipeline = Pipeline(id=id).pipeline
     elif path is not None:
         pipeline = Pipeline(path=path).pipeline
     elif remote_id is not None:
-        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, api_key))
+        final_key = mage_api_key if mage_api_key is not None else api_key
+        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
         print('Please provide a valid pipeline id or config path.')
         return df
@@ -388,7 +389,6 @@ def launch(mage_api_key=None) -> None:
         'host': host,
         'port': port,
     }
-    app_kwargs = {'port': SERVER_PORT, 'host': 'localhost', 'debug': False}
     thread = ThreadWithTrace(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
     print(f'Mage running on host and port {host}:{port}')
