@@ -3,6 +3,7 @@ from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
+from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
@@ -25,7 +26,7 @@ app = Flask(
 CORS(app, resources={r'/*': {'origins': '*'}})
 
 thread = None
-
+api_key = None
 
 def rescue_errors(endpoint, error_code=500):
     def handler(*args, **kwargs):
@@ -93,7 +94,7 @@ def process():
     if not id:
         return
 
-    feature_set = FeatureSet(id=id)
+    feature_set = FeatureSet(id=id, api_key=api_key)
     df = feature_set.data
     metadata = feature_set.metadata
 
@@ -236,7 +237,7 @@ def pipelines():
     return response
 
 
-@app.route('/pipelines/<id>', endpoint='piplines_get')
+@app.route('/pipelines/<id>', endpoint='pipelines_get')
 @rescue_errors
 def pipeline(id):
     """
@@ -291,6 +292,9 @@ def update_pipeline(id):
     else:
         pipeline.pipeline = clean_pipeline
 
+    if api_key is not None:
+        pipeline.sync_pipeline(api_key)
+
     response = app.response_class(
         response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
         status=200,
@@ -314,16 +318,19 @@ def clean_df(df, name):
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, id=None, path=None):
+def clean_df_with_pipeline(df, id=None, path=None, remote_id=None, mage_api_key=None):
     pipeline = None
     if id is not None:
-        pipeline = Pipeline(id=id)
+        pipeline = Pipeline(id=id).pipeline
     elif path is not None:
-        pipeline = Pipeline(path=path)
+        pipeline = Pipeline(path=path).pipeline
+    elif remote_id is not None:
+        final_key = mage_api_key if mage_api_key is not None else api_key
+        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
         print('Please provide a valid pipeline id or config path.')
         return df
-    return pipeline.pipeline.transform(df, auto=False)
+    return pipeline.transform(df, auto=False)
 
 
 def connect_df(df, name):
@@ -366,8 +373,12 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch() -> None:
+def launch(mage_api_key=None) -> None:
     global thread
+    global api_key
+    if mage_api_key:
+        api_key = mage_api_key
+        sync_pipelines()
 
     host = os.getenv('HOST', 'localhost')
     port = os.getenv('PORT', SERVER_PORT)
@@ -382,6 +393,12 @@ def launch() -> None:
     print(f'Mage running on host and port {host}:{port}')
     return thread
 
+def sync_pipelines():
+    print('Syncing pipelines with cloud database.', end='')
+    local_pipelines = Pipeline.objects()
+    for pipeline in local_pipelines:
+        print('.', end='')
+        pipeline.sync_pipeline(api_key)
 
 def kill():
     if thread is not None:
