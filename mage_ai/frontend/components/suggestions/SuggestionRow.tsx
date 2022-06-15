@@ -19,6 +19,7 @@ import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { goToWithQuery } from '@utils/routing';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -96,10 +97,11 @@ const SuggestionRow = ({
             pushHistory: true,
           })}
           preventDefault
-          underline
           wordWrap
         >
-          {col}
+          <Text monospace secondary maxWidth={30*UNIT}>
+            {col}
+          </Text>
         </Link>
       );
     } else {
@@ -110,7 +112,7 @@ const SuggestionRow = ({
       <span
         key={col}
       >
-        {el}{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
+        {el}
       </span>
     );
   });
