@@ -9,13 +9,14 @@ export function getHost() {
 
   if (typeof window !== 'undefined') {
     host = window.location.hostname;
-
-    if (window.location.protocol.includes('https://')) {
-      protocol = 'https://';
-    }
+  }
+  if (host === LOCALHOST) {
+    host = `${host}:${PORT}`;
+  } else {
+    protocol = 'https://';
   }
 
-  return `${protocol}${host}:${PORT}`;
+  return `${protocol}${host}`;
 }
 
 export function buildUrl(

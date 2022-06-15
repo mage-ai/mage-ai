@@ -113,7 +113,7 @@ Load sample datasets to test and play with.
 
 ```python
 import mage_ai
-from mage_ai.server.sample_datasets import list_dataset_names, load_dataset
+from mage_ai.sample_datasets import list_dataset_names, load_dataset
 
 
 dataset_names = list_dataset_names()
