@@ -244,6 +244,8 @@ function Overview({
 
   const featureMapping = {};
 
+  const rowCount = statistics?.count;
+
   features.forEach((feature: FeatureType) => {
     const { uuid, columnType } = feature;
     featureMapping[uuid] = columnType;
@@ -279,7 +281,7 @@ function Overview({
           Object.entries(valueCounts).filter(([k, _]) => k !== null && String(k).trim().length >= 1),
           ([, v]) => v,
         );
-        const distributionPercentage = distributionValueMax / count;
+        const distributionPercentage = distributionValueMax / rowCount;
 
         data.distributionFeatureUUID = distributionFeatureUUID;
         data.distributionPercentage = distributionPercentage;

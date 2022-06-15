@@ -1,3 +1,5 @@
+import { greaterThan, lessThan } from '@utils/array';
+
 export const LARGE_WINDOW_WIDTH = 992;
 
 // TODO: Update to use total instead of average
@@ -48,6 +50,33 @@ export const METRICS_SORTED_MAPPING = {
   'total_invalid_value_count': 3,
   'total_null_value_count': 2,
   'validity': 0,
+};
+
+export const WARNINGS = {
+  qualityMetrics: [
+    {
+      compare: lessThan,
+      name: 'Validity',
+      val: 80,
+    },
+    {
+      compare: lessThan,
+      name: 'Completeness',
+      val: 80,
+    },
+    {
+      compare: greaterThan,
+      name: 'Duplicate rows',
+      val: 0,
+    },
+  ],
+  statistics: [
+    {
+      compare: greaterThan,
+      name: 'Empty columns',
+      val: 0,
+    },
+  ],
 };
 
 // eslint-disable-next-line import/no-anonymous-default-export

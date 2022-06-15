@@ -1,3 +1,5 @@
+import React from 'react';
+
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 
@@ -7,6 +9,7 @@ import {
 } from './index.style';
 
 export type RowDataTableProps = {
+  alternating?: boolean;
   children: any;
   headerDetails?: string;
   headerTitle: string;
@@ -15,6 +18,7 @@ export type RowDataTableProps = {
 };
 
 function RowDataTable({
+  alternating,
   children,
   headerDetails,
   headerTitle,
@@ -40,7 +44,15 @@ function RowDataTable({
         minHeight={minHeight}
         scrollable={scrollable}
       >
-        {children}
+        {children.length && children?.map((row, idx) => (
+          React.cloneElement(
+            row,
+            {
+              last: idx === children.length - 1,
+              secondary: alternating && idx % 2 === 1,
+            },
+          )
+        ))}
       </RowContainerStyle>
     </>
   );
