@@ -62,7 +62,7 @@ run the following:
 
 ```python
 import mage_ai
-from mage_ai.server.sample_datasets import load_dataset
+from mage_ai.sample_datasets import load_dataset
 
 
 df = load_dataset('titanic_survival.csv')
@@ -102,7 +102,7 @@ you can clean your data anywhere you can execute Python code:
 
 ```python
 import mage_ai
-from mage_ai.server.sample_datasets import load_dataset
+from mage_ai.sample_datasets import load_dataset
 
 
 df = load_dataset('titanic_survival.csv')
