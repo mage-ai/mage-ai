@@ -15,7 +15,7 @@ import api from '@api';
 import { File } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { isBadQuality } from '@components/utils';
-import { pluralize } from '@utils/string';
+import { numberWithCommas, pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 const Dashboard: NextPage = () => {
@@ -78,8 +78,8 @@ const Dashboard: NextPage = () => {
                             {name}
                           </Link>
                         </FlexContainer>
-                        <Text>{num_features} features</Text>
-                        <Text>{count} rows</Text>
+                        <Text>{numberWithCommas(num_features)} features</Text>
+                        <Text>{numberWithCommas(count)} rows</Text>
                         <Text
                           bold={isBadQuality(quality)}
                           danger={isBadQuality(quality)}
