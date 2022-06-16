@@ -172,16 +172,14 @@ def feature_set_download(id):
     if not FeatureSet.is_valid_id(id):
         raise RuntimeError(f'Unknown feature set id: {id}')
     feature_set = FeatureSet(id=id)
+
     name = feature_set.metadata['name']
     name = name.replace(' ', '_')
 
     index_args = request.args.get('store_index', 'false').lower()
-    if index_args == 'false':
-        use_index = False
-    elif index_args == 'true':
-        use_index = True
-    else:
+    if index_args != 'true' and index_args != 'false':
         raise ValueError(f'Invalid value for \'store_index\' specified: {index_args}')
+    use_index = index_args == 'true'
 
     return app.response_class(
         response=feature_set.data.to_csv(index=use_index, mode='w'),
