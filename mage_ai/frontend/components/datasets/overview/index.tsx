@@ -128,8 +128,10 @@ function DatasetOverview({
   const {
     column_types: columnTypes,
   } = metadata || {};
-  const features: FeatureType[] = Object.entries(featureSet?.metadata?.column_types || {})
-    .map(([k, v]: [string, ColumnTypeEnum]) => ({ columnType: v, uuid: k }));
+  const features: FeatureType[] = columnsAll.map(uuid => ({
+    columnType: columnTypes[uuid],
+    uuid,
+  }))
 
   const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)

@@ -7,6 +7,7 @@ import { scaleLinear } from '@visx/scale';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
@@ -40,13 +41,20 @@ function min<Datum>(data: Datum[], value: (d: Datum) => number): number {
 const bins = (d: any) => d.bins;
 const count = (d: any) => d.count;
 
+export type LabelType = {
+  label: number | string;
+  linkProps?: {
+    onClick?: () => void,
+  };
+}
+
 type HeatMapSharedProps = {
   countMidpoint?: number;
   data: number[][] | string[][];
   height: number;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   minCount?: number;
-  yLabels?: number[] | string[];
+  yLabels?: LabelType[];
 };
 
 export type HeatmapProps = {
@@ -56,7 +64,7 @@ export type HeatmapProps = {
 
 type HeatMapContainerProps = {
   xAxisLabel?: string;
-  xLabels?: number[] | string[];
+  xLabels?: LabelType[];
   yAxisLabel?: string;
 } & HeatMapSharedProps;
 
@@ -241,18 +249,29 @@ function HeatMapContainer({
 
             {xLabels && (
               <FlexContainer>
-                {/* @ts-ignore */}
-                {xLabels.map(label => (
+                {xLabels.map(({ label, linkProps }) => (
                   <Flex flex="1" key={label} justifyContent="center">
-                    <Text
-                      bold
-                      center
-                      minWidth={70}
-                      title={label}
-                      xsmall
-                    >
-                      {displayLabel(label)}
-                    </Text>
+                    {linkProps ? (
+                      <Link
+                        bold
+                        centerAlign
+                        minWidth={70}
+                        onClick={linkProps.onClick}
+                        xsmall
+                      >
+                        {label}
+                      </Link>
+                    ) : (
+                      <Text
+                        bold
+                        center
+                        minWidth={70}
+                        title={String(label)}
+                        xsmall
+                      >
+                        {displayLabel(String(label))}
+                      </Text>
+                    )}
                   </Flex>
                 ))}
               </FlexContainer>
@@ -281,16 +300,27 @@ function HeatMapContainer({
               width={yLabelsWidth}
             >
               {/* @ts-ignore */}
-              {yLabels.map(label => (
+              {yLabels.map(({ label, linkProps }) => (
                 <Flex alignItems="center" flex="1" key={label}>
-                  <Text
-                    bold
-                    center
-                    title={label}
-                    xsmall
-                  >
-                    {displayLabel(label)}
-                  </Text>
+                  {linkProps ? (
+                    <Link
+                      bold
+                      centerAlign
+                      onClick={linkProps.onClick}
+                      xsmall
+                    >
+                      {label}
+                    </Link>
+                  ) : (
+                    <Text
+                      bold
+                      center
+                      title={String(label)}
+                      xsmall
+                    >
+                      {displayLabel(String(label))}
+                    </Text>
+                  )}
                 </Flex>
               ))}
             </FlexContainer>
