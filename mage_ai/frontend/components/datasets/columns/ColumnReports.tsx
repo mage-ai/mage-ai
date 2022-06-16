@@ -7,7 +7,7 @@ import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
-import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
+import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { greaterThan, lessThan } from '@utils/array';
@@ -32,6 +32,7 @@ function ColumnReports({
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
   const {
     average,
+    avg_word_count: avgWordCount,
     completeness,
     count,
     count_distinct: countDistinct,
@@ -39,8 +40,10 @@ function ColumnReports({
     invalid_value_rate: invalidValueRate,
     invalid_values: invalidValues,
     max,
+    max_word_count: maxWordCount,
     median,
     min,
+    min_word_count: minWordCount,
     mode,
     null_value_count: nullValueCount,
     null_value_rate: nullValueRate,
@@ -109,26 +112,48 @@ function ColumnReports({
       },
     },
     {
-      name: 'Max value',
-      value: isNumeric(max) ? roundNumber(max) : max,
-    },
-    {
-      name: 'Min value',
-      value: isNumeric(min) ? roundNumber(min) : min,
-    },
-    {
-      name: 'Median value',
-      value: isNumeric(median) ? roundNumber(median) : median,
-    },
-    {
-      name: 'Average value',
-      value: isNumeric(average) ? roundNumber(average) : average,
-    },
-    {
       name: 'Mode value',
       value: isNumeric(mode) ? roundNumber(mode) : mode,
     },
   ];
+
+  if (COLUMN_TYPE_NUMBERS.includes(columnType)) {
+    columnSummary.push(
+      {
+        name: 'Max value',
+        value: isNumeric(max) ? roundNumber(max) : max,
+      },
+      {
+        name: 'Min value',
+        value: isNumeric(min) ? roundNumber(min) : min,
+      },
+      {
+        name: 'Median value',
+        value: isNumeric(median) ? roundNumber(median) : median,
+      },
+      {
+        name: 'Average value',
+        value: isNumeric(average) ? roundNumber(average) : average,
+      },
+    );
+  }
+
+  if (columnType === ColumnTypeEnum.TEXT) {
+    columnSummary.push(
+      {
+        name: 'Max word count',
+        value: numberWithCommas(maxWordCount),
+      },
+      {
+        name: 'Min word count',
+        value: numberWithCommas(minWordCount),
+      },
+      {
+        name: 'Mean word count',
+        value: isNumeric(avgWordCount) ? roundNumber(avgWordCount) : avgWordCount,
+      },
+    );
+  }
 
   columnSummary = columnSummary.filter(({ value }) => value !== undefined);
 
