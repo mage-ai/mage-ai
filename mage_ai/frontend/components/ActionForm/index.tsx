@@ -35,6 +35,7 @@ import {
   OptionStyle,
 } from './index.style';
 import {
+  CODE_EXAMPLE,
   FormConfigType,
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
@@ -88,7 +89,7 @@ function ActionForm({
   shadow,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
-  const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
+  const [actionCodeState, setActionCodeState] = useState(payload?.action_code || CODE_EXAMPLE);
 
   const {
     action_arguments: actionArguments,

@@ -36,7 +36,9 @@ def execute_custom_action(df, action, **kwargs):
     """
     custom_actions = deque()
     transformer_action = build_custom_action_decorator(custom_actions)
-    exec(action['action_code'], {'df': df, 'transformer_action': transformer_action})
+    action_code = action['action_code']
+    action_code = action_code.replace('\t', ' ' * 4)
+    exec(action_code, {'df': df, 'transformer_action': transformer_action})
     while len(custom_actions) != 0:
         df = custom_actions.popleft()(df)
     return df
