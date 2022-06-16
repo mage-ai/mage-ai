@@ -5,7 +5,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
 )
 
 
-class RemoveUninformativeColumns(BaseRule):
+class RemoveColumnsWithSingleValue(BaseRule):
 
     # Check statistic [feature_uuid]/count_distinct
     def evaluate(self):
@@ -20,9 +20,8 @@ class RemoveUninformativeColumns(BaseRule):
         if len(columns_with_single_value) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
-                    'Remove uninformative columns',
-                    'Remove columns with low information content'
-                    ' to reduce the amount of redundant data.',
+                    'Remove columns with single value',
+                    'Remove columns with a single unique value to reduce the amount of redundant data.',
                     ActionType.REMOVE,
                     action_arguments=columns_with_single_value,
                     axis=Axis.COLUMN,
