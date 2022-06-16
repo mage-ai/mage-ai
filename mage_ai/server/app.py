@@ -374,15 +374,17 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch(mage_api_key=None) -> None:
+def launch(mage_api_key=None, host=None, port=None) -> None:
     global thread
     global api_key
     if mage_api_key:
         api_key = mage_api_key
         sync_pipelines()
 
-    host = os.getenv('HOST', 'localhost')
-    port = os.getenv('PORT', SERVER_PORT)
+    if host is None:
+        host = os.getenv('HOST', 'localhost')
+    if port is None:
+        port = os.getenv('PORT', SERVER_PORT)
 
     app_kwargs = {
         'debug': False,
