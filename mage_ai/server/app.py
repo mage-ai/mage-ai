@@ -177,7 +177,7 @@ def feature_set_download(id):
     name = name.replace(' ', '_')
 
     index_args = request.args.get('store_index', 'false').lower()
-    if index_args != 'true' and index_args != 'false':
+    if index_args not in ['true', 'false']:
         raise ValueError(f'Invalid value for \'store_index\' specified: {index_args}')
     use_index = index_args == 'true'
 
