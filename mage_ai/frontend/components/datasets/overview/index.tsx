@@ -42,6 +42,7 @@ import { WARNINGS } from '../constants';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
+export const COLUMN_QUERY_PARAM = 'column';
 
 export const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
