@@ -30,6 +30,11 @@ const columns: {
       values: USER_INPUT,
     },
   },
+  fix_syntax_errors: {
+    multiColumns: true,
+    title: 'Fix syntax errors',
+    description: 'Fix syntactical errors to reduce the amount of noise in the data.',
+  },
   impute: {
     multiColumns: true,
     title: 'Impute',
