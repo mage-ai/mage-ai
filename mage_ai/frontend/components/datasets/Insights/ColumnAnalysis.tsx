@@ -71,58 +71,10 @@ function ColumnAnalysis({
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
 
-  const statsRowData = [
-    {
-      columnValues: ['Number of values', numberWithCommas(numberOfValues)],
-      uuid: 'count',
-    },
-    {
-      columnValues: ['Unique values', numberWithCommas(numberOfUniqueValues)],
-      uuid: 'count_distinct',
-    },
-    {
-      columnValues: ['Missing values', formatPercent(statisticsOverview?.[`${column}/null_value_rate`])],
-      uuid: 'null_value_rate',
-    },
-  ];
-
   const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
   const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
   const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
   const isTextType = ColumnTypeEnum.TEXT === feature.columnType;
-
-  if (isNumberType) {
-    statsRowData.push(...[
-      {
-        columnValues: ['Minimum', numberWithCommas(statisticsOverview?.[`${column}/min`])],
-        uuid: 'min',
-      },
-      {
-        columnValues: ['Maximum', numberWithCommas(statisticsOverview?.[`${column}/max`])],
-        uuid: 'max',
-      },
-      {
-        columnValues: ['Average', numberWithCommas(statisticsOverview?.[`${column}/average`])],
-        uuid: 'average',
-      },
-      {
-        columnValues: ['Median', numberWithCommas(statisticsOverview?.[`${column}/median`])],
-        uuid: 'median',
-      },
-      {
-        columnValues: ['Total sum', numberWithCommas(statisticsOverview?.[`${column}/sum`])],
-        uuid: 'sum',
-      },
-    ]);
-  } else {
-    const mode = statisticsOverview?.[`${column}/mode`];
-    if (mode) {
-      statsRowData.push({
-        columnValues: ['Most frequent value', mode],
-        uuid: 'mode',
-      });
-    }
-  }
 
   const {
     charts,
