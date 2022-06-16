@@ -7,7 +7,7 @@ import FeatureType, {
   COLUMN_TYPE_NUMBERS,
 } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
-import HeatMap from '@components/charts/HeatMap';
+import HeatMap, { LabelType } from '@components/charts/HeatMap';
 import Histogram from '@components/charts/Histogram';
 import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
@@ -26,6 +26,7 @@ import {
 } from '@components/datasets/Insights/utils/data';
 import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
+import { goToWithQuery } from '@utils/routing';
 import {
   groupBy,
   indexBy,
@@ -130,18 +131,29 @@ function ColumnAnalysis({
     time_series: timeSeries,
   } = insights || {};
 
+  const columnsAll = features.map(({ uuid }) => uuid);
+
   const correlationsRowData = correlations?.length >= 1
     ? buildCorrelationsRowData([{
       correlations,
       feature,
     }])
     : null;
-  const yLabels = [column];
+  const yLabels: LabelType[] = [{ label: column }];
   const heatmapData = [[1]];
   const highCorrelations = [];
   if (correlationsRowData) {
     correlationsRowData?.map(([, col, r], idx: number) => {
-      yLabels.push(col);
+      yLabels.push({
+        label: col,
+        linkProps: {
+          onClick: () => goToWithQuery({
+            column: col === null ? null : columnsAll.indexOf(col),
+          }, {
+            pushHistory: true,
+          }),
+        },
+      });
       heatmapData.push([roundNumber(r)]);
     });
     correlationsRowData?.map((_, col, r) => {
@@ -620,7 +632,7 @@ function ColumnAnalysis({
                 data={heatmapData}
                 height={UNIT * 8 * yLabels.length}
                 minCount={-1}
-                xLabels={[column]}
+                xLabels={[{ label: column }]}
                 yLabels={yLabels}
               />
             </ChartContainer>

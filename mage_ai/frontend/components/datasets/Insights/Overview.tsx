@@ -28,6 +28,7 @@ import {
 import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { indexBy, maxInArray, sortByKey } from '@utils/array';
+import { goToWithQuery } from '@utils/routing';
 
 export const ChartStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -133,7 +134,7 @@ function Overview({
     scatter_plot: scatterPlot,
     scatter_plot_labels: scatterPlotLabels,
   } = insightsOverview;
-
+  const columnsAll = features.map(({ uuid }) => uuid);
   const xyLabels = [];
   const heatmapData = correlations?.map(({
     correlations: c,
@@ -141,7 +142,16 @@ function Overview({
       uuid,
     },
   }, idx: number) => {
-    xyLabels.push(uuid);
+    xyLabels.push({
+      label: uuid,
+      linkProps: {
+        onClick: () => goToWithQuery({
+          column: uuid === null ? null : columnsAll.indexOf(uuid),
+        }, {
+          pushHistory: true,
+        }),
+      }
+    });
 
     const arr = c[0].y.map(({ value }) => roundNumber(value));
     arr.splice(idx, 0, 1);
