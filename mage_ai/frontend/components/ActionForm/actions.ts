@@ -139,6 +139,29 @@ const columns: {
       },
     },
   },
+  remove_outliers: {
+    multiColumns: true,
+    title: 'Remove outliers',
+    description: 'Remove rows with outliers to reduce noise in the data.',
+    options: {
+      method: {
+        values: [
+          {
+            value: 'lof',
+            description: 'Use the Local Outlier Factor algorithm',
+          },
+          {
+            value: 'itree',
+            description: 'Use the Isolation Forest algorithm',
+          },
+          {
+            value: 'auto',
+            description: 'Choose the best method automatically',
+          },
+        ],
+      },
+    },
+  },
 };
 
 const rows: {
