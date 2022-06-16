@@ -18,6 +18,7 @@ export const isGoodQuality = (quality: string) => !isBadQuality(quality);
 
 export const createDatasetTabRedirectLink = (
   tab: string,
+  columnIndex: number,
 ) => {
   const router = useRouter();
   const { slug = [] }: any = router.query;
@@ -25,12 +26,13 @@ export const createDatasetTabRedirectLink = (
 
   const {
     show_columns: showColumns,
-    column: columnIndex,
+    column: columnIndexFromQuery,
   } = queryFromUrl();
 
   const path = `/${PageEnum.DATASETS}/${featureSetId}`;
+  const columnQueryParam = `${COLUMN_QUERY_PARAM}=${columnIndexFromQuery || columnIndex}`;
   const queryParams =
-    `${TABS_QUERY_PARAM}=${tab}&${COLUMN_QUERY_PARAM}=${columnIndex || 0}&${SHOW_COLUMNS_QUERY_PARAM}=${showColumns || 0}`;
+    `${TABS_QUERY_PARAM}=${tab}&${columnQueryParam}&${SHOW_COLUMNS_QUERY_PARAM}=${showColumns || 0}`;
 
   return `${path}?${queryParams}`;
 };

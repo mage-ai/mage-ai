@@ -169,6 +169,7 @@ function Table({
       data,
     ]);
 
+  const columnsAll = columns.map(col => col?.Header).slice(1);
   const defaultColumn = useMemo(() => {
     const newWidth = width - (maxWidthOfFirstColumn + 2);
     const numberOfColumns = columns.length - 1;
@@ -204,7 +205,6 @@ function Table({
   );
   const { slug = [] } = router.query;
 
-  // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
     const row = rows[index];
     prepareRow(row);
@@ -240,6 +240,7 @@ function Table({
           }
 
           const cellValue = original[idx - 1];
+          const columnIndex = columnsAll.indexOf(header);
           if (isInvalid) {
             cellStyle.color = light.interactive.dangerBorder;
           }
@@ -267,7 +268,7 @@ function Table({
                   </Text>
                   {isInvalid && (
                     <NextLink
-                      as={createDatasetTabRedirectLink(TAB_REPORTS)}
+                      as={createDatasetTabRedirectLink(TAB_REPORTS, columnIndex)}
                       href="/datasets/[...slug]"
                       passHref
                     >
