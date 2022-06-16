@@ -16,8 +16,8 @@ import {
 import { useSticky } from 'react-table-sticky';
 
 import FlexContainer from '@oracle/components/FlexContainer';
-import light from '@oracle/styles/themes/light';
 import Text from '@oracle/elements/Text';
+import light from '@oracle/styles/themes/light';
 import {
   FONT_FAMILY_REGULAR,
   MONO_FONT_FAMILY_REGULAR,
@@ -26,8 +26,9 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
-import { TABS_QUERY_PARAM, SHOW_COLUMNS_QUERY_PARAM } from '@components/datasets/overview';
+import { TAB_REPORTS } from '@components/datasets/overview';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { createDatasetTabRedirectLink } from '@components/utils';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
@@ -186,8 +187,6 @@ function Table({
     width,
   ]);
 
-  // const scrollBarSize = useMemo(() => scrollbarWidth(), []);
-
   const {
     getTableBodyProps,
     getTableProps,
@@ -268,7 +267,7 @@ function Table({
                   </Text>
                   {isInvalid && (
                     <NextLink
-                      as={`/datasets/${slug}/?${TABS_QUERY_PARAM}=Reports&${SHOW_COLUMNS_QUERY_PARAM}=1&column=${index}`}
+                      as={createDatasetTabRedirectLink(TAB_REPORTS)}
                       href="/datasets/[...slug]"
                       passHref
                     >
