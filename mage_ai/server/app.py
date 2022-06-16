@@ -166,6 +166,31 @@ def feature_set(id):
     return response
 
 
+@app.route('/feature_sets/<id>/download/', endpoint='feature_set_download')
+@rescue_errors
+def feature_set_download(id):
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
+    feature_set = FeatureSet(id=id)
+
+    name = feature_set.metadata['name']
+    name = name.replace(' ', '_')
+
+    index_args = request.args.get('store_index', 'false').lower()
+    if index_args not in ['true', 'false']:
+        raise ValueError(f'Invalid value for \'store_index\' specified: {index_args}')
+    use_index = index_args == 'true'
+
+    return app.response_class(
+        response=feature_set.data.to_csv(index=use_index, mode='w'),
+        status=200,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="{name}.csv"',
+        },
+    )
+
+
 @app.route('/feature_sets/<id>/versions/<version>', endpoint='feature_set_versions_get')
 @rescue_errors
 def feature_set_version(id, version):
