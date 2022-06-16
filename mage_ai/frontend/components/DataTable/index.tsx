@@ -16,8 +16,9 @@ import {
 import { useSticky } from 'react-table-sticky';
 
 import FlexContainer from '@oracle/components/FlexContainer';
-import light from '@oracle/styles/themes/light';
 import Text from '@oracle/elements/Text';
+import light from '@oracle/styles/themes/light';
+import scrollbarWidth from './scrollbarWidth';
 import {
   FONT_FAMILY_REGULAR,
   MONO_FONT_FAMILY_REGULAR,
@@ -26,8 +27,9 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
-import { TABS_QUERY_PARAM, SHOW_COLUMNS_QUERY_PARAM } from '@components/datasets/overview';
+import { TAB_REPORTS } from '@components/datasets/overview';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { createDatasetTabRedirectLink } from '@components/utils';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
@@ -168,8 +170,10 @@ function Table({
       data,
     ]);
 
+  const columnsAll = columns.map(col => col?.Header).slice(1);
+  const scrollBarSize = useMemo(() => scrollbarWidth(), []);
   const defaultColumn = useMemo(() => {
-    const newWidth = width - (maxWidthOfFirstColumn + 2);
+    const newWidth = width - (maxWidthOfFirstColumn + 2) - scrollBarSize;
     const numberOfColumns = columns.length - 1;
     let defaultColumnWidth = DEFAULT_COLUMN_WIDTH;
 
@@ -183,10 +187,9 @@ function Table({
   }, [
     columns,
     maxWidthOfFirstColumn,
+    scrollBarSize,
     width,
   ]);
-
-  // const scrollBarSize = useMemo(() => scrollbarWidth(), []);
 
   const {
     getTableBodyProps,
@@ -205,7 +208,6 @@ function Table({
   );
   const { slug = [] } = router.query;
 
-  // Index refers to rowIndex but you cannot change the name.
   const RenderRow = useCallback(({ index, style }) => {
     const row = rows[index];
     prepareRow(row);
@@ -241,6 +243,7 @@ function Table({
           }
 
           const cellValue = original[idx - 1];
+          const columnIndex = columnsAll.indexOf(header);
           if (isInvalid) {
             cellStyle.color = light.interactive.dangerBorder;
           }
@@ -268,7 +271,7 @@ function Table({
                   </Text>
                   {isInvalid && (
                     <NextLink
-                      as={`/datasets/${slug}/?${TABS_QUERY_PARAM}=Reports&${SHOW_COLUMNS_QUERY_PARAM}=1&column=${index}`}
+                      as={createDatasetTabRedirectLink(TAB_REPORTS, columnIndex)}
                       href="/datasets/[...slug]"
                       passHref
                     >

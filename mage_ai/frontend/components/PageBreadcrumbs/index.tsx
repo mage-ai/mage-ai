@@ -11,7 +11,7 @@ import {
 } from 'components/datasets/overview';
 import { queryFromUrl } from '@utils/url';
 
-enum PageEnum {
+export enum PageEnum {
   DATASETS = 'datasets',
   DATASET_DETAIL = 'dataset_detail',
   COLUMNS = 'features',

@@ -44,14 +44,12 @@ function RowDataTable({
         minHeight={minHeight}
         scrollable={scrollable}
       >
-        {children.length && children?.map((row, idx) => (
-          React.cloneElement(
-            row,
-            {
-              last: idx === children.length - 1,
-              secondary: alternating && idx % 2 === 1,
-            },
-          )
+        {React.Children.map(children, (row, idx) => row && React.cloneElement(
+          row,
+          {
+            last: idx === children.length - 1,
+            secondary: alternating && idx % 2 === 1,
+          },
         ))}
       </RowContainerStyle>
     </>

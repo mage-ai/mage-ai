@@ -35,13 +35,13 @@ import {
   OptionStyle,
 } from './index.style';
 import {
+  CODE_EXAMPLE,
   FormConfigType,
   VALUES_TYPE_COLUMNS,
   VALUES_TYPE_USER_INPUT,
 } from './constants';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { evaluateCondition } from './utils';
 import { getCustomCodeState, setCustomCodeState } from '@storage/localStorage';
 import { removeAtIndex } from '@utils/array';
@@ -89,7 +89,7 @@ function ActionForm({
   shadow,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
-  const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
+  const [actionCodeState, setActionCodeState] = useState(payload?.action_code || CODE_EXAMPLE);
 
   const {
     action_arguments: actionArguments,

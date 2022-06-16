@@ -89,7 +89,7 @@ const SuggestionRow = ({
   const DISPLAY_COLS_NUM = 5;
 
   const displayArguments = displayAllCols ? actionArguments : actionArguments?.slice(0, DISPLAY_COLS_NUM);
-  const featureLinks = displayArguments.map((col: string) => (
+  const featureLinks = displayArguments?.map((col: string) => (
     <span key={col}>
       {col in featureIdMapping ?
         <Link

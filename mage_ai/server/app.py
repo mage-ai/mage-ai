@@ -166,6 +166,31 @@ def feature_set(id):
     return response
 
 
+@app.route('/feature_sets/<id>/download/', endpoint='feature_set_download')
+@rescue_errors
+def feature_set_download(id):
+    if not FeatureSet.is_valid_id(id):
+        raise RuntimeError(f'Unknown feature set id: {id}')
+    feature_set = FeatureSet(id=id)
+
+    name = feature_set.metadata['name']
+    name = name.replace(' ', '_')
+
+    index_args = request.args.get('store_index', 'false').lower()
+    if index_args not in ['true', 'false']:
+        raise ValueError(f'Invalid value for \'store_index\' specified: {index_args}')
+    use_index = index_args == 'true'
+
+    return app.response_class(
+        response=feature_set.data.to_csv(index=use_index, mode='w'),
+        status=200,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="{name}.csv"',
+        },
+    )
+
+
 @app.route('/feature_sets/<id>/versions/<version>', endpoint='feature_set_versions_get')
 @rescue_errors
 def feature_set_version(id, version):
@@ -374,15 +399,17 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch(mage_api_key=None) -> None:
+def launch(mage_api_key=None, host=None, port=None) -> None:
     global thread
     global api_key
     if mage_api_key:
         api_key = mage_api_key
         sync_pipelines()
 
-    host = os.getenv('HOST', 'localhost')
-    port = os.getenv('PORT', SERVER_PORT)
+    if host is None:
+        host = os.getenv('HOST', 'localhost')
+    if port is None:
+        port = os.getenv('PORT', SERVER_PORT)
 
     app_kwargs = {
         'debug': False,
