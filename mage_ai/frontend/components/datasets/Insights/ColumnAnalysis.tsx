@@ -56,13 +56,6 @@ function ColumnAnalysis({
   const refContainer = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  console.log({
-    column,
-    features,
-    insights,
-    statisticsByColumn,
-  });
-
   useEffect(() => {
     setContainerWidth(refContainer?.current?.getBoundingClientRect()?.width);
   }, [
