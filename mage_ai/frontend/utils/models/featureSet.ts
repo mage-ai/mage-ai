@@ -72,7 +72,7 @@ export function getFeatureSetInvalidValuesAll(featureSet, features) {
 
   const { statistics } = featureSet;
   const invalidCells = {};
-  features.forEach(featureUUID => {
+  features?.forEach(featureUUID => {
     const invalid_indices = statistics[`${featureUUID}/invalid_indices`];
     invalidCells[featureUUID] = invalid_indices;
   });

@@ -12,7 +12,7 @@ export function find(arr, func) {
 }
 
 export function groupBy(arr, func) {
-  return arr.reduce((acc, obj) => {
+  return arr?.reduce((acc, obj) => {
     const key = func(obj);
     if (!acc[key]) {
       acc[key] = [];
@@ -24,7 +24,7 @@ export function groupBy(arr, func) {
 }
 
 export function indexBy(arr, func) {
-  return arr.reduce(
+  return arr?.reduce(
     (acc, obj) => ({
       ...acc,
       [func(obj)]: obj,
@@ -34,7 +34,7 @@ export function indexBy(arr, func) {
 }
 
 export function indexByKeyWithValue(arr, keyFunc, valFunc) {
-  return arr.reduce(
+  return arr?.reduce(
     (acc, obj) => ({
       ...acc,
       [keyFunc(obj)]: valFunc(obj),
@@ -44,16 +44,16 @@ export function indexByKeyWithValue(arr, keyFunc, valFunc) {
 }
 
 export function maxInArray(arr, func) {
-  return arr.reduce((max, n) => (func(n) > func(max) ? n : max), arr[0]);
+  return arr?.reduce((max, n) => (func(n) > func(max) ? n : max), arr[0]);
 }
 
 export function minInArray(arr, func) {
-  return arr.reduce((min, n) => (func(n) < func(min) ? n : min), arr[0]);
+  return arr?.reduce((min, n) => (func(n) < func(min) ? n : min), arr[0]);
 }
 
 export function prependArray(value, arrArg) {
-  const newArray = arrArg.slice();
-  newArray.unshift(value);
+  const newArray = arrArg?.slice();
+  newArray?.unshift(value);
 
   return newArray;
 }
