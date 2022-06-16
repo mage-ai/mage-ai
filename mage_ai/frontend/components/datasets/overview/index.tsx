@@ -129,10 +129,10 @@ function DatasetOverview({
   const {
     column_types: columnTypes,
   } = metadata || {};
-  const features: FeatureType[] = columnsAll.map(uuid => ({
+  const features: FeatureType[] = columnsAll?.map(uuid => ({
     columnType: columnTypes[uuid],
     uuid,
-  }))
+  }));
 
   const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
