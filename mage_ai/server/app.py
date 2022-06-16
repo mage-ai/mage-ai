@@ -173,6 +173,7 @@ def feature_set_download(id):
         raise RuntimeError(f'Unknown feature set id: {id}')
     feature_set = FeatureSet(id=id)
     name = feature_set.metadata['name']
+    name = name.replace(' ', '_')
     return app.response_class(
         response=feature_set.data.to_csv(index=False, mode='w'),
         status=200,
