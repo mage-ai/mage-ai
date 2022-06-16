@@ -200,7 +200,7 @@ function ActionForm({
                 minLines={MIN_LINES_ACTIONS}
                 mode="python"
                 onChange={e => {
-                  payload['action_code'] = e;
+                  payload['action_code'] = e.replace('\t', ' '.repeat(4));
                   setActionCodeState(payload.action_code ?? actionCode);
                   setCustomCodeState({
                     actionType,
