@@ -136,16 +136,43 @@ class ColumnTypeDetectorTests(TestCase):
         column_types = infer_column_types(df, column_types=existing_column_types)
         self.assertEqual(
             column_types,
-            merge_dict(existing_column_types, {
-                'zip_code': ColumnType.ZIP_CODE,
-                'zip_code_with_3_numbers': ColumnType.ZIP_CODE,
-                'invalid_zip_code': ColumnType.NUMBER,
-                'email': ColumnType.EMAIL,
-                'phone_number': ColumnType.PHONE_NUMBER,
-                'datetime_abnormal': ColumnType.DATETIME,
-                'name': ColumnType.TEXT,
-            }),
+            merge_dict(
+                existing_column_types,
+                {
+                    'zip_code': ColumnType.ZIP_CODE,
+                    'zip_code_with_3_numbers': ColumnType.ZIP_CODE,
+                    'invalid_zip_code': ColumnType.NUMBER,
+                    'email': ColumnType.EMAIL,
+                    'phone_number': ColumnType.PHONE_NUMBER,
+                    'datetime_abnormal': ColumnType.DATETIME,
+                    'name': ColumnType.TEXT,
+                },
+            ),
         )
+
+    def test_integer_recognition(self):
+        df = pd.DataFrame(
+            dict(
+                integers=[1, 2, 3, 4, 5],
+                not_integers=[1.2, 3.4, 5.6, 6.8, 9.2],
+                more_integers=[1.0, 2.0, 3.0, 4.0, 5.0],
+                integers_with_null=[1, None, 2, 3, np.nan],
+                not_integers_with_null=[1.1, np.nan, 2.0, 3.0, np.nan],
+                str_integers=['1.0', None, '2.0', '3.0', None],
+                str_not_integers=['1.000', None, '2.0002', '3.000', None],
+            )
+        )
+        ctypes = infer_column_types(df)
+        expected_ctypes = dict(
+            integers='number',
+            not_integers='number_with_decimals',
+            more_integers='number',
+            integers_with_null='number',
+            not_integers_with_null='number_with_decimals',
+            str_integers='number',
+            str_not_integers='number_with_decimals',
+        )
+        self.assertEquals(ctypes, expected_ctypes)
 
     def test_phone_number_recognition(self):
         df = pd.DataFrame(
@@ -210,7 +237,7 @@ class ColumnTypeDetectorTests(TestCase):
             int_phone_nums='phone_number',
             float_phone_nums='phone_number',
             not_float_phone_nums='number_with_decimals',
-            bad_column_name_one='number_with_decimals',
+            bad_column_name_one='number',
             bad_column_name_two='text',
         )
         self.assertEquals(ctypes, expected_ctypes)

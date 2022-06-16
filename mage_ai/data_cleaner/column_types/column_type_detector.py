@@ -18,7 +18,7 @@ REGEX_DATETIME_PATTERN = r'^\d{2,4}-\d{1,2}-\d{1,2}$|^\d{2,4}-\d{1,2}-\d{1,2}[Tt
 REGEX_DATETIME = re.compile(REGEX_DATETIME_PATTERN)
 REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+#-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
-REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}\s*(?:[元€$]|CAD){0,1})$'
+REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?\s*(?:[元€$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
 REGEX_FLOAT_NEW_SYM = re.compile(r'[\.\%]')
 REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$'
@@ -92,9 +92,8 @@ def infer_number_type(series, column_name, dtype):
     if length == 0:
         mdtype = ColumnType.NUMBER_WITH_DECIMALS
     else:
-        correct_phone_nums = (
-            (clean_series >= 1e9) & (clean_series < 1e12) & (np.floor(clean_series) == clean_series)
-        ).sum()
+        is_integer = np.floor(clean_series) == clean_series
+        correct_phone_nums = ((clean_series >= 1e9) & (clean_series < 1e12) & is_integer).sum()
         if (
             correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD
             and 'phone' in column_name.lower()
@@ -111,7 +110,10 @@ def infer_number_type(series, column_name, dtype):
                 else:
                     mdtype = ColumnType.NUMBER
             elif np.issubdtype(dtype, np.floating):
-                mdtype = ColumnType.NUMBER_WITH_DECIMALS
+                if is_integer.sum() == is_integer.size:
+                    mdtype = ColumnType.NUMBER
+                else:
+                    mdtype = ColumnType.NUMBER_WITH_DECIMALS
     return mdtype
 
 
@@ -152,22 +154,25 @@ def infer_object_type(series, column_name, kwargs):
     else:
         length = len(clean_series)
         if all(clean_series.str.match(REGEX_NUMBER)):
-            if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
+            if not all(clean_series.str.match(REGEX_INTEGER)):
                 mdtype = ColumnType.NUMBER_WITH_DECIMALS
             else:
-                lowercase_column_name = column_name.lower()
-                correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
-                correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
-                ):
-                    mdtype = ColumnType.PHONE_NUMBER
-                elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_ZIP_CODE_WORDS
-                ):
-                    mdtype = ColumnType.ZIP_CODE
-                else:
+                if clean_series.str.contains(REGEX_FLOAT_NEW_SYM).sum():
                     mdtype = ColumnType.NUMBER
+                else:
+                    lowercase_column_name = column_name.lower()
+                    correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
+                    correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+                    if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                        lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
+                    ):
+                        mdtype = ColumnType.PHONE_NUMBER
+                    elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                        lowercase_column_name, RESERVED_ZIP_CODE_WORDS
+                    ):
+                        mdtype = ColumnType.ZIP_CODE
+                    else:
+                        mdtype = ColumnType.NUMBER
         else:
             matches = clean_series.str.match(REGEX_DATETIME).sum()
             if matches / length >= DATETIME_MATCHES_THRESHOLD:
