@@ -195,7 +195,7 @@ function FeatureProfile({
 }
 
 function FeatureProfiles({
-  features,
+  features = [],
   featureSet,
   statistics,
 }: FeatureProfilesProps) {

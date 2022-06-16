@@ -18,6 +18,7 @@ import { useSticky } from 'react-table-sticky';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+import scrollbarWidth from './scrollbarWidth';
 import {
   FONT_FAMILY_REGULAR,
   MONO_FONT_FAMILY_REGULAR,
@@ -170,8 +171,9 @@ function Table({
     ]);
 
   const columnsAll = columns.map(col => col?.Header).slice(1);
+  const scrollBarSize = useMemo(() => scrollbarWidth(), []);
   const defaultColumn = useMemo(() => {
-    const newWidth = width - (maxWidthOfFirstColumn + 2);
+    const newWidth = width - (maxWidthOfFirstColumn + 2) - scrollBarSize;
     const numberOfColumns = columns.length - 1;
     let defaultColumnWidth = DEFAULT_COLUMN_WIDTH;
 
@@ -185,6 +187,7 @@ function Table({
   }, [
     columns,
     maxWidthOfFirstColumn,
+    scrollBarSize,
     width,
   ]);
 
