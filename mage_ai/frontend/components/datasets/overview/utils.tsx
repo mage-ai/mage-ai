@@ -104,7 +104,7 @@ export function createStatisticsSample(statistics, colTypes) {
     },{
       columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
     },{
-      columnValues: ['Time series Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
+      columnValues: ['Datetime Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
     });
   } else {
     rowData.push({
@@ -112,7 +112,7 @@ export function createStatisticsSample(statistics, colTypes) {
     },{
       columnValues: ['Numerical Features', '0 (0%)'],
     },{
-      columnValues: ['Time series Features', '0 (0%)'],
+      columnValues: ['Datetime Features', '0 (0%)'],
     });
   }
   return { rowData };
