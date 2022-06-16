@@ -42,6 +42,7 @@ import { WARNINGS } from '../constants';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
+export const COLUMN_QUERY_PARAM = 'column';
 
 export const TAB_REPORTS = 'Reports';
 const TAB_VISUALIZATIONS = 'Visualizations';
@@ -128,10 +129,10 @@ function DatasetOverview({
   const {
     column_types: columnTypes,
   } = metadata || {};
-  const features: FeatureType[] = columnsAll.map(uuid => ({
+  const features: FeatureType[] = columnsAll?.map(uuid => ({
     columnType: columnTypes[uuid],
     uuid,
-  }))
+  }));
 
   const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
