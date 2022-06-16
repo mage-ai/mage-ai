@@ -36,7 +36,7 @@ export function createMetricsSample(statistics, colTypes) {
   stats.map((key) => {
     if (METRICS_KEYS.includes(key)) {
       let bar: any[] = [false];
-      let value = statistics[key];
+      let value = numberWithCommas(statistics[key]);
       const order = HUMAN_READABLE_MAPPING[key];
       const index = METRICS_SORTED_MAPPING[key];
       if (PERCENTAGE_KEYS.includes(key)) {
@@ -69,7 +69,7 @@ export function createStatisticsSample(statistics, colTypes) {
   stats.map((key) => {
     if (STAT_KEYS.includes(key)) {
       const name = HUMAN_READABLE_MAPPING[key];
-      let value = statistics[key];
+      let value = numberWithCommas(statistics[key]);
       if (WARN_KEYS.includes(key)) {
         if (total !== 0) {
           value = `${value} (${getPercentage(value / total)})`;

@@ -11,7 +11,7 @@ import { COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interf
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { greaterThan, lessThan } from '@utils/array';
-import { isNumeric, roundNumber } from '@utils/string';
+import { isNumeric, numberWithCommas, roundNumber } from '@utils/string';
 import { transformNumber } from '@utils/number';
 
 type ColumnReportsProps = {
@@ -79,11 +79,11 @@ function ColumnReports({
     },
     {
       name: 'Total values',
-      value: count,
+      value: numberWithCommas(count),
     },
     {
       name: 'Unique values',
-      value: countDistinct,
+      value: numberWithCommas(countDistinct),
       rate: uniqueValueRate,
       warning: {
         compare: greaterThan,
@@ -92,7 +92,7 @@ function ColumnReports({
     },
     {
       name: 'Missing values',
-      value: nullValueCount,
+      value: numberWithCommas(nullValueCount),
       rate: nullValueRate,
       warning: {
         compare: greaterThan,
@@ -101,7 +101,7 @@ function ColumnReports({
     },
     {
       name: 'Invalid values',
-      value: invalidValueCount,
+      value: numberWithCommas(invalidValueCount),
       rate: invalidValueRate,
       warning: {
         compare: greaterThan,
