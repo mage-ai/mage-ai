@@ -4,6 +4,7 @@ import moment from 'moment';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType, {
   ColumnTypeEnum,
+  COLUMN_TYPE_CATEGORICAL,
   COLUMN_TYPE_NUMBERS,
 } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -18,7 +19,7 @@ import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { DATE_FORMAT } from './constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
   buildDistributionData,
@@ -55,6 +56,13 @@ function ColumnAnalysis({
   const refContainer = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  console.log({
+    column,
+    features,
+    insights,
+    statisticsByColumn,
+  });
+
   useEffect(() => {
     setContainerWidth(refContainer?.current?.getBoundingClientRect()?.width);
   }, [
@@ -87,10 +95,8 @@ function ColumnAnalysis({
 
   const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
   const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
-  const isCategoricalType = [
-    ColumnTypeEnum.CATEGORY,
-    ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
-  ].includes(feature.columnType);
+  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
+  const isTextType = ColumnTypeEnum.TEXT === feature.columnType;
 
   if (isNumberType) {
     statsRowData.push(...[
@@ -246,7 +252,7 @@ function ColumnAnalysis({
         sortData={d => sortByKey(d, '[2]')}
       />
     );
-  } else if (isCategoricalType) {
+  } else if (isCategoricalType || isTextType) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -531,7 +537,7 @@ function ColumnAnalysis({
           <ChartRow
             left={
               <ChartContainer
-                title="Distribution of values"
+                title={isTextType ? 'Word distribution' : 'Distribution of values'}
               >
                 {distributionChart}
               </ChartContainer>
