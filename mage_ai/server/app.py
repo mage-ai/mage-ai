@@ -174,8 +174,17 @@ def feature_set_download(id):
     feature_set = FeatureSet(id=id)
     name = feature_set.metadata['name']
     name = name.replace(' ', '_')
+
+    index_args = request.args.get('index', 'false').lower()
+    if index_args == 'false':
+        use_index = False
+    elif index_args == 'true':
+        use_index = True
+    else:
+        raise ValueError(f'Invalid value for \'index\' specified: {index_args}')
+
     return app.response_class(
-        response=feature_set.data.to_csv(index=False, mode='w'),
+        response=feature_set.data.to_csv(index=use_index, mode='w'),
         status=200,
         mimetype='text/csv',
         headers={
