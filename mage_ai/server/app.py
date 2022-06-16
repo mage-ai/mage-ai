@@ -175,13 +175,13 @@ def feature_set_download(id):
     name = feature_set.metadata['name']
     name = name.replace(' ', '_')
 
-    index_args = request.args.get('index', 'false').lower()
+    index_args = request.args.get('store_index', 'false').lower()
     if index_args == 'false':
         use_index = False
     elif index_args == 'true':
         use_index = True
     else:
-        raise ValueError(f'Invalid value for \'index\' specified: {index_args}')
+        raise ValueError(f'Invalid value for \'store_index\' specified: {index_args}')
 
     return app.response_class(
         response=feature_set.data.to_csv(index=use_index, mode='w'),
