@@ -194,7 +194,7 @@ Big features being worked on or in the design phase.
 1. Data quality monitoring and alerting
 1. Apply cleaning actions to columns and values that match a condition
 
-Here’s a detailed list of [🪲 features and bugs](https://airtable.com/shrE1pn6fRsVlniOV)
+Here’s a detailed list of [🪲 features and bugs](https://airtable.com/shrwN5wDuDuPScPut/tblAlH31g7dYRjmoZ)
 that are in progress or upcoming.
 
 # Contributing

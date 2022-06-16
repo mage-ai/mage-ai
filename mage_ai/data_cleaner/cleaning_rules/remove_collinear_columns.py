@@ -12,7 +12,7 @@ class RemoveCollinearColumns(BaseRule):
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
-        self.numeric_df, self.numeric_columns = self.filter_numeric_types()
+        self.numeric_df, self.numeric_columns = self._filter_numeric_types()
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
@@ -45,14 +45,28 @@ class RemoveCollinearColumns(BaseRule):
             )
         return suggestions
 
-    def filter_numeric_types(self):
-        numeric_columns = []
-        numeric_df = self.df.copy()
-        for column in self.df_columns:
-            if self.column_types[column] in NUMBER_TYPES:
-                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
-                numeric_columns.append(column)
-            else:
-                numeric_df.drop(column, axis=1, inplace=True)
-        numeric_df = numeric_df.dropna(axis=0)
-        return numeric_df, numeric_columns
+    def get_variance_inflation_factor(self, column):
+        """
+        Variance Inflation Factor = 1 / (1 - <coefficient of determination on column k>)
+        Measures increase in regression model variance due to collinearity
+        => column k is multicollinear with others if model predicting its value
+        has this variance inflation greater than some amount
+        """
+        if self.numeric_df.empty:
+            raise RuntimeError('No other columns to compare \'{column}\' against')
+        if len(self.numeric_df) > self.ROW_SAMPLE_SIZE:
+            sample = self.numeric_df.sample(self.ROW_SAMPLE_SIZE)
+        else:
+            sample = self.numeric_df
+
+        responses = sample[column].to_numpy()
+        predictors = sample.drop(column, axis=1).to_numpy()
+        params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
+
+        mean = responses.mean()
+        centered_predictions = predictors @ params - mean
+        sum_sq_model = np.sum(centered_predictions * centered_predictions)
+        centered_responses = responses - mean
+        sum_sq_to = np.sum(centered_responses * centered_responses)
+        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
+        return 1 / (1 - r_sq + self.EPSILON)

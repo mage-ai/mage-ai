@@ -1,3 +1,5 @@
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
+
 STATUS_NOT_APPLIED = 'not_applied'
 STATUS_COMPLETED = 'completed'
 
@@ -8,6 +10,18 @@ class BaseRule:
         self.df_columns = df.columns.tolist()
         self.column_types = column_types
         self.statistics = statistics
+
+    def _filter_numeric_types(self):
+        numeric_columns = []
+        numeric_df = self.df.copy()
+        for column in self.df_columns:
+            if self.column_types[column] in NUMBER_TYPES:
+                numeric_df.loc[:, column] = numeric_df.loc[:, column].astype(float)
+                numeric_columns.append(column)
+            else:
+                numeric_df.drop(column, axis=1, inplace=True)
+        numeric_df = numeric_df.dropna(axis=0)
+        return numeric_df, numeric_columns
 
     def evaluate(self):
         """Evaluate data cleaning rule and generate suggested actions

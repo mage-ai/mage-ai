@@ -55,6 +55,7 @@ class ActionType:
     MODE = 'mode'
     REFORMAT = 'reformat'
     REMOVE = 'remove'
+    REMOVE_OUTLIERS = 'remove_outliers'
     SCALE = 'scale'
     SELECT = 'select'
     SHIFT_DOWN = 'shift_down'

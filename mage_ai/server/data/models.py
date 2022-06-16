@@ -1,6 +1,7 @@
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.server.client.mage import Mage
 from mage_ai.server.data.base import Model
 import os
 import os.path
@@ -8,7 +9,7 @@ import os.path
 
 # right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
-    def __init__(self, id=None, df=None, name=None):
+    def __init__(self, id=None, df=None, name=None, api_key=None):
         super().__init__(id)
 
         # Update metadata
@@ -24,7 +25,7 @@ class FeatureSet(Model):
             metadata_updated = True
 
         if self.pipeline is None:
-            pipeline = Pipeline(feature_set_id=self.id)
+            pipeline = Pipeline(feature_set_id=self.id, api_key=api_key)
             metadata['pipeline_id'] = pipeline.id
             metadata_updated = True
 
@@ -209,7 +210,7 @@ class FeatureSet(Model):
 
 
 class Pipeline(Model):
-    def __init__(self, id=None, path=None, feature_set_id=None, pipeline=None):
+    def __init__(self, id=None, path=None, feature_set_id=None, pipeline=None, api_key=None):
         super().__init__(id=id, path=path)
 
         # Update metadata
@@ -225,6 +226,11 @@ class Pipeline(Model):
 
         if pipeline is not None:
             self.pipeline = pipeline
+            if api_key is not None:
+                self.sync_pipeline(api_key)
+
+    def sync_pipeline(self, api_key):
+        Mage().sync_pipeline(self, api_key)
 
     @property
     def metadata(self):
@@ -245,6 +251,11 @@ class Pipeline(Model):
     @pipeline.setter
     def pipeline(self, pipeline):
         return self.write_json_file('pipeline.json', pipeline.actions)
+    
+    def get_feature_set(self):
+        feature_set_id = self.metadata.get('feature_set_id')
+        if feature_set_id is not None:
+            return FeatureSet(id=feature_set_id)
 
     def to_dict(self, detailed=True):
         return dict(

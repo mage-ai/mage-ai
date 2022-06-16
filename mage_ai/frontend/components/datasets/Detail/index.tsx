@@ -12,6 +12,7 @@ import ActionMenu from '@components/ActionForm/ActionMenu';
 import ActionPayloadType, {
   ActionTypeEnum,
   ActionVariableTypeEnum,
+  AxisEnum,
 } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import ColumnListMenu from '@components/datasets/columns/ColumnListMenu';
@@ -27,9 +28,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
+import actions from '@components/ActionForm/actions';
 import api from '@api';
+
 import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import { Column as ColumnIcon } from '@oracle/icons';
+import { FormConfigType } from '@components/ActionForm/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
@@ -352,12 +356,17 @@ function DatasetDetail({
                     features={selectedColumn ? null : featuresWithAltColType}
                     onClose={closeAction}
                     onSave={(actionPayloadOverride: ActionPayloadType) => {
+                      const actionConfig: FormConfigType =
+                        (actionPayload?.axis === AxisEnum.ROW ? actions.rows : actions.columns)?.[actionType];
+                      const actionTitle = actionConfig?.title;
+
                       saveAction({
                         action_payload: {
                           ...actionPayload,
                           ...actionPayloadOverride,
                           action_type: actionType,
                         },
+                        title: actionTitle,
                       });
                     }}
                     payload={actionPayload}

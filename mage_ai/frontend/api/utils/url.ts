@@ -1,19 +1,31 @@
 import { queryString } from '@utils/url';
 
 export function getHost() {
+  const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
   const PORT = 5789;
 
   let host = LOCALHOST;
   let protocol = 'http://';
 
-  if (typeof window !== 'undefined') {
+  if (windowDefined) {
     host = window.location.hostname;
   }
+
   if (host === LOCALHOST) {
     host = `${host}:${PORT}`;
   } else {
     protocol = 'https://';
+
+    if (windowDefined) {
+      if (!window.location.protocol?.match(/https/)) {
+        protocol = 'http://';
+      }
+
+      if (!!window.location.port) {
+        host = `${host}:${window.location.port}`;
+      }
+    }
   }
 
   return `${protocol}${host}`;

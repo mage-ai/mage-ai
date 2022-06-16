@@ -30,6 +30,11 @@ const columns: {
       values: USER_INPUT,
     },
   },
+  fix_syntax_errors: {
+    multiColumns: true,
+    title: 'Fix syntax errors',
+    description: 'Fix syntactical errors to reduce the amount of noise in the data.',
+  },
   impute: {
     multiColumns: true,
     title: 'Impute',
@@ -129,6 +134,29 @@ const columns: {
           },
           {
             value: 'uppercase',
+          },
+        ],
+      },
+    },
+  },
+  remove_outliers: {
+    multiColumns: true,
+    title: 'Remove outliers',
+    description: 'Remove rows with outliers to reduce noise in the data.',
+    options: {
+      method: {
+        values: [
+          {
+            value: 'lof',
+            description: 'Use the Local Outlier Factor algorithm',
+          },
+          {
+            value: 'itree',
+            description: 'Use the Isolation Forest algorithm',
+          },
+          {
+            value: 'auto',
+            description: 'Choose the best method automatically',
           },
         ],
       },

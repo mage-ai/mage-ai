@@ -13,12 +13,13 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import { Close, Code } from '@oracle/icons';
+import { ArrowDown, ArrowUp, Close, Edit } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { goToWithQuery } from '@utils/routing';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -82,38 +83,46 @@ const SuggestionRow = ({
   const numOptions = actionOptions ? Object.keys(actionOptions).length : 0;
 
   const [editing, setEditing] = useState(false);
+  const [displayAllCols, setDisplayAllCols] = useState(false);
   const [actionPayload, setActionPayload] = useState<ActionPayloadType>(action_payload);
 
-  const featureLinks = actionArguments?.map((col: string, idx: number) => {
-    let el;
+  const DISPLAY_COLS_NUM = 5;
 
-    if (col in featureIdMapping) {
-      el = (
+  const displayArguments = displayAllCols ? actionArguments : actionArguments?.slice(0, DISPLAY_COLS_NUM);
+  const featureLinks = displayArguments?.map((col: string) => (
+    <span key={col}>
+      {col in featureIdMapping ?
         <Link
+          noOutline
           onClick={() => goToWithQuery({
             column: columns.indexOf(col),
           }, {
             pushHistory: true,
           })}
           preventDefault
-          underline
           wordWrap
         >
-          {col}
+          <Text
+            maxWidth={30 * UNIT}
+            monospace
+            secondary
+            title={col}
+          >
+            {col}
+          </Text>
         </Link>
-      );
-    } else {
-      el = col;
-    }
-
-    return (
-      <span
-        key={col}
-      >
-        {el}{numFeatures >= 2 && numFeatures - 1 !== idx && ', '}
-      </span>
-    );
-  });
+        :
+        <Text
+          color={themeContext.interactive.linkSecondaryDisabled}
+          maxWidth={30 * UNIT}
+          monospace
+          title={col}
+        >
+          {col}
+        </Text>
+      }
+    </span>
+  ));
 
   return (
     <RowCard
@@ -124,7 +133,7 @@ const SuggestionRow = ({
         <Spacing mr={2}>
           {isLoading && <Spinner small />}
 
-          {!isLoading && !editing &&(
+          {!isLoading && !editing && (
             <Link
               bold
               noHoverUnderline
@@ -147,11 +156,30 @@ const SuggestionRow = ({
         flex={1}
         flexDirection="column"
       >
-        <Text>
-          <Text bold inline>
-            {title}
-          </Text>{actionArguments?.length > 0 && ': '}{featureLinks}
+        <Text bold inline>
+          {title}
+          {numFeatures > 0 && ': '}
         </Text>
+
+        {featureLinks}
+        {numFeatures > DISPLAY_COLS_NUM &&
+          <Link noOutline onClick={() => setDisplayAllCols(!displayAllCols)}>
+            <Text bold secondary>
+              {displayAllCols
+                ?
+                  <>
+                    <ArrowUp secondary size={10} />&nbsp;
+                    Show less
+                  </>
+                :
+                  <>
+                    <ArrowDown secondary size={10} />&nbsp;
+                    {numFeatures - DISPLAY_COLS_NUM} more
+                  </>
+              }
+            </Text>
+          </Link>
+        }
 
         {message && (
           <Text muted small>
@@ -215,7 +243,7 @@ const SuggestionRow = ({
             padding="0px"
             transparent
           >
-            <Code
+            <Edit
               black={editing}
               muted
               size={16}

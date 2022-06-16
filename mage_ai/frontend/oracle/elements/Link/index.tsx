@@ -30,6 +30,7 @@ export type LinkProps = {
   href?: string;
   inline?: boolean;
   large?: boolean;
+  minWidth?: number;
   muted?: boolean;
   noColor?: boolean;
   noHoverUnderline?: boolean;
@@ -52,6 +53,7 @@ export type LinkProps = {
   underline?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wordWrap?: boolean;
+  xsmall?: boolean;
 };
 
 export const SHARED_LINK_STYLES = css<any>`

@@ -2750,6 +2750,274 @@ class ColumnTests(TestCase):
         df_new3['mostlydate'] = df_new3['mostlydate'].astype(np.datetime64)
         assert_frame_equal(df_new3, expected_df)
 
+    def test_remove_outliers(self):
+        from mage_ai.data_cleaner.transformer_actions.column import remove_outliers
+
+        df = pd.DataFrame(
+            [
+                [1, 1, 1],
+                [1, 2, 997],
+                [1, 3, 998],
+                [1, 4, 999],
+                [1, 5, 1000],
+                [1, 6, 997],
+                [1, 7, 998],
+                [1, 8, 999],
+                [1, 9, 1000],
+                [1, 10, 997],
+                [1, 11, 998],
+                [1, 12, 999],
+            ],
+            columns=['number1', 'number2', 'number3'],
+        )
+
+        expected_df = df.drop(0, axis=0)
+
+        action_lof = dict(
+            action_type='remove_outliers',
+            action_arguments=['number1', 'number2', 'number3'],
+            action_options={'method': 'lof'},
+            action_variables={
+                'number1': {
+                    'feature': {'column_type': 'number', 'uuid': 'number1'},
+                    'type': 'feature',
+                },
+                'number2': {
+                    'feature': {'column_type': 'number', 'uuid': 'number2'},
+                    'type': 'feature',
+                },
+                'number3': {
+                    'feature': {'column_type': 'number', 'uuid': 'number3'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+
+        action_itree = dict(
+            action_type='remove_outliers',
+            action_arguments=['number1', 'number2', 'number3'],
+            action_options={'method': 'itree'},
+            action_variables={
+                'number1': {
+                    'feature': {'column_type': 'number', 'uuid': 'number1'},
+                    'type': 'feature',
+                },
+                'number2': {
+                    'feature': {'column_type': 'number', 'uuid': 'number2'},
+                    'type': 'feature',
+                },
+                'number3': {
+                    'feature': {'column_type': 'number', 'uuid': 'number3'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+
+        lof_df = remove_outliers(df, action_lof)
+        itree_df = remove_outliers(df, action_itree)
+
+        assert_frame_equal(expected_df, lof_df)
+        assert_frame_equal(expected_df, itree_df)
+
+    def test_remove_outliers_bad_inputs(self):
+        from mage_ai.data_cleaner.transformer_actions.column import remove_outliers
+
+        df = pd.DataFrame(
+            [
+                ['e', '2', 997],
+                ['e', '3', np.nan],
+                ['e', '4', 999],
+                ['e', '5', 1000],
+                ['e', '6', 997],
+                ['e', None, 998],
+                ['e', '8', 999],
+                ['e', '9', 1000],
+                ['e', '10', 997],
+                ['e', '11', np.nan],
+                ['e', '12', 999],
+                ['e', '1', 1],
+            ],
+            columns=['number1', 'number2', 'number3'],
+        )
+
+        expected_df = df.drop(11, axis=0)
+
+        action_one = dict(
+            action_type='remove_outliers',
+            action_arguments=['number2', 'number3'],
+            action_options={'method': 'auto'},
+            action_variables={
+                'number1': {
+                    'feature': {'column_type': 'text', 'uuid': 'number1'},
+                    'type': 'feature',
+                },
+                'number2': {
+                    'feature': {'column_type': 'number', 'uuid': 'number2'},
+                    'type': 'feature',
+                },
+                'number3': {
+                    'feature': {'column_type': 'number', 'uuid': 'number3'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+
+        action_two = dict(
+            action_type='remove_outliers',
+            action_arguments=['number1', 'number3'],
+            action_options={'method': 'auto'},
+            action_variables={
+                'number1': {
+                    'feature': {'column_type': 'text', 'uuid': 'number1'},
+                    'type': 'feature',
+                },
+                'number2': {
+                    'feature': {'column_type': 'number', 'uuid': 'number2'},
+                    'type': 'feature',
+                },
+                'number3': {
+                    'feature': {'column_type': 'number', 'uuid': 'number3'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+
+        df_one = remove_outliers(df, action_one)
+        df_two = remove_outliers(df, action_two)
+
+        assert_frame_equal(expected_df, df_one)
+        assert_frame_equal(expected_df, df_two)
+
+    def test_remove_outliers_lof(self):
+        from mage_ai.data_cleaner.transformer_actions.column import remove_outliers
+
+        """
+        This test case is engineered so that only in the
+        multidimensional case is a row removed as an outlier
+        """
+        df = pd.DataFrame(
+            [
+                [0, 0, -1],
+                [0, 0, -2],
+                [0, 0, -3],
+                [0, 0, 2],
+                [0, 0, 1],
+                [0, 0, 3],
+                [0, 0, 2],
+                [0, 2, 0],
+                [3, 0, 0],
+                [1, 0, 0],
+                [2, 0, 0],
+                [3, 0, 0],
+                [-2, 0, 0],
+                [0, -1, 0],
+                [0, 0, -2],
+                [0, 2, 0],
+                [0, 3, 0],
+                [0, 4, 0],
+                [0, 3, 0],
+                [0, 2, 0],
+                [-3, -2, -3],
+                [0, -3, 0],
+                [0, -2, 0],
+                [0, -3, 0],
+                [2, 2, 2],
+                [0, -1, 0],
+                [-1, 0, 0],
+                [-3, 0, 0],
+                [2, 0, 0],
+                [-2, 0, 0],
+            ],
+            columns=['number1', 'number2', 'number3'],
+        )
+
+        expected_df = df.drop([20, 24], axis=0)
+
+        action = dict(
+            action_type='remove_outliers',
+            action_arguments=['number1', 'number2', 'number3'],
+            action_options={'method': 'auto'},
+            action_variables={
+                'number1': {
+                    'feature': {'column_type': 'number', 'uuid': 'number1'},
+                    'type': 'feature',
+                },
+                'number2': {
+                    'feature': {'column_type': 'number', 'uuid': 'number2'},
+                    'type': 'feature',
+                },
+                'number3': {
+                    'feature': {'column_type': 'number', 'uuid': 'number3'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+
+        new_df = remove_outliers(df, action)
+
+        assert_frame_equal(new_df, expected_df)
+
+    def test_remove_outliers_itree(self):
+        from mage_ai.data_cleaner.transformer_actions.column import remove_outliers
+
+        """
+        This test case is engineered so that only in the
+        multidimensional case is a row removed as an outlier
+        """
+        data = np.zeros((30, 7))
+        col = np.random.randint(0, 6, size=(30,))
+        values = np.random.randint(-3, 3, size=(30,))
+        data[np.arange(30), col] = values
+        data[0] = np.array([-10, 2, 4, -5, 7, 2, 3])
+        data[7] = np.array([7, 3, -5, 4, 3, -9, -8])
+        data[18] = np.array([-4, 5, 10, -3, -2, 2, -6])
+        data[27] = np.array([-10, 3, 3, 4, 5, -9, 3])
+        df = pd.DataFrame(data, columns=['1', '2', '3', '4', '5', '6', '7'])
+        expected_df = df.drop([0, 7, 18, 27], axis=0)
+        action = dict(
+            action_type='remove_outliers',
+            action_arguments=['1', '2', '3', '4', '5', '6', '7'],
+            action_options={'method': 'auto'},
+            action_variables={
+                '1': {
+                    'feature': {'column_type': 'number', 'uuid': '1'},
+                    'type': 'feature',
+                },
+                '2': {
+                    'feature': {'column_type': 'number', 'uuid': '2'},
+                    'type': 'feature',
+                },
+                '3': {
+                    'feature': {'column_type': 'number', 'uuid': '3'},
+                    'type': 'feature',
+                },
+                '4': {
+                    'feature': {'column_type': 'number', 'uuid': '4'},
+                    'type': 'feature',
+                },
+                '5': {
+                    'feature': {'column_type': 'number', 'uuid': '5'},
+                    'type': 'feature',
+                },
+                '6': {
+                    'feature': {'column_type': 'number', 'uuid': '6'},
+                    'type': 'feature',
+                },
+                '7': {
+                    'feature': {'column_type': 'number', 'uuid': '7'},
+                    'type': 'feature',
+                },
+            },
+            axis='column',
+        )
+        new_df = remove_outliers(df, action)
+        assert_frame_equal(new_df, expected_df)
+
     def test_select(self):
         df = pd.DataFrame(
             [
