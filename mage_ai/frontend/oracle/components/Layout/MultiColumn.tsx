@@ -64,25 +64,24 @@ function MultiColumn({
         {tabs && (
           <Spacing px={PADDING_UNITS}>
             <FlexContainer>
-
-            {tabs.map((key: string, idx: number) => (
-              <Link
-                block
-                bold={selectedTab === key}
-                key={key}
-                noHoverUnderline
-                noOutline
-                onClick={() => onTabClick(key)}
-                preventDefault
-              >
-                <TabStyle
-                  first={idx === 0}
-                  selected={selectedTab === key}
+              {tabs.map((key: string, idx: number) => (
+                <Link
+                  block
+                  bold={selectedTab === key}
+                  key={key}
+                  noHoverUnderline
+                  noOutline
+                  onClick={() => onTabClick(key)}
+                  preventDefault
                 >
-                  {key}
-                </TabStyle>
-              </Link>
-            ))}
+                  <TabStyle
+                    first={idx === 0}
+                    selected={selectedTab === key}
+                  >
+                    {key}
+                  </TabStyle>
+                </Link>
+              ))}
             </FlexContainer>
           </Spacing>
         )}

@@ -111,6 +111,7 @@ export default {
     hoverBorder: DARK_GRAY_LINES,
     linkPrimary: BLUE,
     linkSecondary: PURPLE,
+    linkSecondaryDisabled: PURPLE_LIGHT,
   },
   loader: {
     color: '#EB0032',

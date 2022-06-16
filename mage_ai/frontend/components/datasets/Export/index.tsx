@@ -257,7 +257,7 @@ function Export({
         fullWidth
       >
         <Headline level={3}>
-          [WIP] Method 2: API key
+          Method 3: API key
         </Headline>
 
         <Spacing my={3}>

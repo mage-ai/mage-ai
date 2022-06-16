@@ -17,8 +17,9 @@ def launch(
     iframe_host=None,
     iframe_port=None,
     inline=True,
+    api_key=None,
 ):
-    thread = launch_flask()
+    thread = launch_flask(api_key)
     if inline:
         display_inline_iframe(
             host=iframe_host,
@@ -68,11 +69,19 @@ def connect_data(df, name):
     return feature_set
 
 
-def clean(df, pipeline_uuid=None, pipeline_path=None):
+def clean(
+    df,
+    pipeline_uuid=None,
+    pipeline_path=None,
+    remote_pipeline_uuid=None,
+    api_key=None,
+):
     if pipeline_uuid is not None:
         df_clean = clean_df_with_pipeline(df, id=pipeline_uuid)
     elif pipeline_path is not None:
         df_clean = clean_df_with_pipeline(df, path=pipeline_path)
+    elif remote_pipeline_uuid is not None:
+        df_clean = clean_df_with_pipeline(df, remote_id=remote_pipeline_uuid, mage_api_key=api_key)
     else:
         _, df_clean = clean_df(df)
     return df_clean

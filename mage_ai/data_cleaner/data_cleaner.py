@@ -1,6 +1,6 @@
 from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
 from mage_ai.data_cleaner.column_types import column_type_detector
-from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.shared.logger import timer
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
@@ -12,9 +12,9 @@ def analyze(df):
     return cleaner.analyze(df)
 
 
-def clean(df, column_types={}, transform=True):
+def clean(df, column_types={}, transform=True, rules=DEFAULT_RULES):
     cleaner = DataCleaner()
-    return cleaner.clean(df, column_types=column_types, transform=transform)
+    return cleaner.clean(df, column_types=column_types, rules=rules, transform=transform)
 
 
 class DataCleaner:
@@ -38,10 +38,10 @@ class DataCleaner:
             statistics=statistics,
         )
 
-    def clean(self, df, column_types={}, transform=True):
+    def clean(self, df, column_types={}, transform=True, rules=DEFAULT_RULES):
         df_stats = self.analyze(df, column_types=column_types)
         df = clean_dataframe(df, df_stats['column_types'])
-        pipeline = BasePipeline()
+        pipeline = BasePipeline(rules=rules)
         if df_stats['statistics']['is_timeseries']:
             df = df.sort_values(by=df_stats['statistics']['timeseries_index'], axis=0)
         # TODO: Pass in both cleaned and uncleaned versions of dataset
