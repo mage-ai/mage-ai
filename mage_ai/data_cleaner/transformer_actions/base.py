@@ -5,12 +5,19 @@ from mage_ai.data_cleaner.transformer_actions.dependency_resolution import (
     default_resolution,
 )
 from mage_ai.data_cleaner.transformer_actions.helpers import drop_na
-from mage_ai.data_cleaner.transformer_actions.spark.transformers import transform as transform_spark
 from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
     interpolate,
     replace_true_false,
 )
 import json
+
+try:
+    from mage_ai.data_cleaner.transformer_actions.spark.transformers import (
+        transform as transform_spark,
+    )
+    PYSPARK = True
+except ImportError:
+    PYSPARK = False
 
 # from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
 
@@ -127,6 +134,8 @@ class BaseAction:
             return df_output
 
     def execute_spark(self, df, **kwargs):
+        if not PYSPARK:
+            raise RuntimeError('Spark is not supported in current environment')
         return transform_spark(df, self.action, **kwargs)
 
     def groupby(self, df, action):
