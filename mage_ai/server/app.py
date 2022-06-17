@@ -50,8 +50,7 @@ def rescue_errors(endpoint, error_code=500):
                 status=200,
                 mimetype='application/json',
             )
-            log.error('An error was caught and reported to the client: ')
-            log.error(exception)
+            log.exception('An error was caught and reported to the client: ')
         return response
 
     return handler
@@ -355,7 +354,7 @@ def clean_df_with_pipeline(df, id=None, path=None, remote_id=None, mage_api_key=
         final_key = mage_api_key if mage_api_key is not None else api_key
         pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
-        print('Please provide a valid pipeline id or config path.')
+        log.error('Please provide a valid pipeline id or config path.')
         return df
     return pipeline.transform(df, auto=False)
 

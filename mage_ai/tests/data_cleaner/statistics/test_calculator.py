@@ -214,7 +214,6 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['total_null_value_rate'], 0)
         self.assertEqual(data['total_invalid_value_rate'], 0)
         self.assertEqual(data['duplicate_row_rate'], 0)
-        print(data['date/value_counts'])
 
     def test_calculate_statistics_handle_nulls(self):
         calculator = StatisticsCalculator(

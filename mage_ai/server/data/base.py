@@ -1,11 +1,14 @@
 from numpyencoder import NumpyEncoder
 import json
+import logging
 import os
 import os.path
 import pandas as pd
 
 # This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
+
+logger = logging.getLogger(__name__)
 
 
 class Model:
@@ -99,7 +102,7 @@ class Model:
             try:
                 arr.append(cls(id=id))
             except Exception:
-                print(f'Fail to load {cls.__name__} with id {id}')
+                logger.exception(f'Fail to load {cls.__name__} with id {id}')
         return arr
 
     @staticmethod

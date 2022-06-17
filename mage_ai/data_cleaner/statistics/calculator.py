@@ -7,7 +7,7 @@ from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
 import pandas as pd
-import traceback
+import logging
 
 
 EMAIL_DOMAIN_REGEX = r'\@([^\s]*)'
@@ -17,6 +17,8 @@ OUTLIER_ZSCORE_THRESHOLD = 3
 PUNCTUATION = r'[:;\.,\/\\&`"\'\(\)\[\]\{\}]'
 STOP_WORD_LIST = frozenset(['is', 'and', 'yet', 'but', 'a', 'or', 'nor', 'not', 'to', 'the'])
 VALUE_COUNT_LIMIT = 20
+
+logger = logging.getLogger(__name__)
 
 
 def increment(metric, tags):
@@ -144,7 +146,7 @@ class StatisticsCalculator:
                     },
                 ),
             )
-            traceback.print_exc()
+            logger.exception(f'An error was caught while processing statistics: {err}')
             return {}
 
     def __evaluate_timeseries(self, data):
@@ -218,7 +220,6 @@ class StatisticsCalculator:
                 data[f'{col}/sum'] = series_non_null.sum()
                 data[f'{col}/skew'] = series_non_null.skew()
                 data[f'{col}/std'] = series_non_null.std()
-
                 # detect outliers
                 if data[f'{col}/std'] == 0:
                     data[f'{col}/outlier_count'] = 0

@@ -1,4 +1,7 @@
+import logging
 import time
+
+logger = logging.getLogger(__name__)
 
 
 class timer(object):
@@ -6,6 +9,7 @@ class timer(object):
     with timer('metric.metric', tags={ 'key': 'value' }):
         function()
     """
+
     def __init__(self, metric, tags={}, verbose=True):
         self.metric = metric
         self.start = None
@@ -20,4 +24,4 @@ class timer(object):
         # https://statsd.readthedocs.io/en/v3.1/timing.html
         dt = int((time.time() - self.start) * 1000)
         if self.verbose:
-            print(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')
+            logger.debug(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')

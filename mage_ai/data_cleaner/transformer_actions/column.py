@@ -16,8 +16,13 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
+from keyword import iskeyword
+import logging
 import pandas as pd
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 def add_column(df, action, **kwargs):
@@ -166,7 +171,7 @@ def reformat(df, action, **kwargs):
             try:
                 df.loc[:, column] = clean_col.astype(float)
             except ValueError:
-                print(
+                logger.warn(
                     f'Currency conversion applied on non-numerical column \'{column}\''
                     ': no action taken'
                 )

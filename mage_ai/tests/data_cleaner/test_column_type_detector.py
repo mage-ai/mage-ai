@@ -88,7 +88,6 @@ class ColumnTypeDetectorTests(TestCase):
         ]
 
         for good in good_number_patterns:
-            print(good)
             match = REGEX_NUMBER.match(good)
             self.assertIsNotNone(match)
 
@@ -315,10 +314,8 @@ class ColumnTypeDetectorTests(TestCase):
                 ],
             )
         )
-        print(df)
         ctypes = infer_column_types(df)
         for col in ctypes:
-            print(col)
             self.assertEqual(ctypes[col], ColumnType.DATETIME)
 
     def __build_test_df(self):
