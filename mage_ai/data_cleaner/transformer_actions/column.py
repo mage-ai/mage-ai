@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors, REGEX_NUMBER
+from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
@@ -7,7 +7,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     CURRENCY_SYMBOLS,
     INVALID_VALUE_PLACEHOLDERS,
     ImputationStrategy,
-    NameConventionPatterns,
 )
 from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 from mage_ai.data_cleaner.transformer_actions.helpers import (
@@ -16,8 +15,7 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
-from mage_ai.data_cleaner.transformer_actions.utils import generate_string_cols
-from keyword import iskeyword
+from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
 import pandas as pd
 import numpy as np
 
@@ -55,7 +53,7 @@ def count_distinct(df, action, **kwargs):
 
 def clean_column_names(df, action, **kwargs):
     columns = action['action_arguments']
-    mapping = {col: __clean_column_name(col) for col in columns}
+    mapping = {col: clean_column_name(col) for col in columns}
     return df.rename(columns=mapping)
 
 
@@ -264,30 +262,6 @@ def __agg(df, action, agg_method):
 
 def __column_mapping(action):
     return dict(zip(action['action_arguments'], [o['uuid'] for o in action['outputs']]))
-
-
-def __clean_column_name(name):
-    if iskeyword(name):
-        name = f'{name}_'
-    name = name.strip(' \'\"_-')
-    name = NameConventionPatterns.CONNECTORS.sub('_', name)
-    name = NameConventionPatterns.NON_ALNUM.sub('', name)
-    name = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', name)
-    if iskeyword(name):
-        name = f'{name}_'
-    uppercase_group = NameConventionPatterns.UPPERCASE.match(name)
-    pascal_group = NameConventionPatterns.PASCAL.match(name)
-    camel_group = NameConventionPatterns.CAMEL.match(name)
-    if uppercase_group:
-        name = name.lower()
-    elif pascal_group:
-        components = NameConventionPatterns.PASCAL_COMPONENT.findall(name)
-        name = '_'.join(components)
-    elif camel_group:
-        components = NameConventionPatterns.CAMEL_COMPONENT.findall(name)
-        components += NameConventionPatterns.PASCAL_COMPONENT.findall(name)
-        name = '_'.join(components)
-    return name.lower()
 
 
 # Filter by timestamp_feature_a - window <= timestamp_feature_b <= timestamp_feature_a

@@ -1,4 +1,34 @@
-from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER
+from mage_ai.data_cleaner.transformer_actions.constants import (
+    ActionType,
+    Axis,
+    NameConventionPatterns,
+)
+from keyword import iskeyword
+
+
+def clean_column_name(name):
+    if iskeyword(name):
+        name = f'{name}_'
+    name = name.strip(' \'\"_-')
+    name = NameConventionPatterns.CONNECTORS.sub('_', name)
+    name = NameConventionPatterns.NON_ALNUM.sub('', name)
+    name = REGEX_NUMBER.sub(lambda number: f'number_{number.group(0)}', name)
+    if iskeyword(name):
+        name = f'{name}_'
+    uppercase_group = NameConventionPatterns.UPPERCASE.match(name)
+    pascal_group = NameConventionPatterns.PASCAL.match(name)
+    camel_group = NameConventionPatterns.CAMEL.match(name)
+    if uppercase_group:
+        name = name.lower()
+    elif pascal_group:
+        components = NameConventionPatterns.PASCAL_COMPONENT.findall(name)
+        name = '_'.join(components)
+    elif camel_group:
+        components = NameConventionPatterns.CAMEL_COMPONENT.findall(name)
+        components += NameConventionPatterns.PASCAL_COMPONENT.findall(name)
+        name = '_'.join(components)
+    return name.lower()
 
 
 def columns_to_remove(transformer_actions):

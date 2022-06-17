@@ -4,6 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.spark.constants import (
     ROW_NUMBER_COLUMN,
     ROW_NUMBER_LIT_COLUMN,
 )
+from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name
 from pyspark.sql import functions as F
 from pyspark.sql.functions import PandasUDFType, expr, pandas_udf
 from pyspark.sql.types import (
@@ -72,6 +73,14 @@ def transform_agg(feature_set, transformer_action, agg_func, use_string_col_name
 
 def transform_average(feature_set, transformer_action, sort_options={}):
     return transform_agg(feature_set, transformer_action, F.avg)
+
+
+def transform_clean_column_name(feature_set, transformer_action, sort_options={}):
+    columns = transformer_action['action_arguments']
+    mapping = {col: clean_column_name(col) for col in columns}
+    for old_name, new_name in mapping.items():
+        feature_set = feature_set.withColumnRenamed(old_name, new_name)
+    return feature_set
 
 
 def transform_count(feature_set, transformer_action, sort_options={}):
@@ -229,6 +238,7 @@ TRANSFORMER_FUNCTION_MAPPING = {
         # 'distance_between': transform_add_distance_between,
     },
     'average': transform_average,
+    'clean_column_name': transform_clean_column_name,
     'count': transform_count,
     'count_distinct': transform_count_distinct,
     'drop_duplicate': transform_drop_duplicate,
