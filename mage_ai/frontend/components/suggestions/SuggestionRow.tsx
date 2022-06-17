@@ -18,8 +18,8 @@ import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
-import { goToWithQuery } from '@utils/routing';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { goToWithQuery } from '@utils/routing';
 
 export type SuggestionRowProps = {
   action: TransformerActionType;
@@ -100,7 +100,7 @@ const SuggestionRow = ({
             pushHistory: true,
           })}
           preventDefault
-          wordWrap
+          secondary
         >
           <Text
             maxWidth={30 * UNIT}
@@ -113,7 +113,7 @@ const SuggestionRow = ({
         </Link>
         :
         <Text
-          color={themeContext.interactive.linkSecondaryDisabled}
+          color={themeContext.monotone.grey400}
           maxWidth={30 * UNIT}
           monospace
           title={col}
@@ -163,7 +163,11 @@ const SuggestionRow = ({
 
         {featureLinks}
         {numFeatures > DISPLAY_COLS_NUM &&
-          <Link noOutline onClick={() => setDisplayAllCols(!displayAllCols)}>
+          <Link
+            noOutline
+            onClick={() => setDisplayAllCols(!displayAllCols)}
+            secondary
+          >
             <Text bold secondary>
               {displayAllCols
                 ?

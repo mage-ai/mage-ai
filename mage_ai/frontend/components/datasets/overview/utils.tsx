@@ -346,17 +346,14 @@ export function buildRenderColumnHeader({
               href="/datasets/[...slug]"
               passHref
             >
-              <Link>
-                <Text
-                  backgroundColor={light.feature.active}
-                  bold
-                  monospace
-                  secondary
-                  textOverflow
-                  title={columns[columnIndex]}
-                >
-                  {columns[columnIndex]}
-                </Text>
+              <Link
+                bold
+                monospace
+                secondary
+                small
+                title={columns[columnIndex]}
+              >
+                {columns[columnIndex]}
               </Link>
             </NextLink>
           </div>
