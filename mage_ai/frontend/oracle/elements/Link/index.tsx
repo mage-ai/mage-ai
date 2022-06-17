@@ -51,6 +51,7 @@ export type LinkProps = {
   title?: string;
   transparentBorder?: boolean;
   underline?: boolean;
+  verticalAlignContent?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wordWrap?: boolean;
   xsmall?: boolean;
@@ -223,9 +224,13 @@ export const SHARED_LINK_STYLES = css<any>`
     flex: ${props.flex};
   `}
 
-
   ${props => typeof props.height !== 'undefined' && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.verticalAlignContent && `
+    align-items: center;
+    display: flex;
   `}
 `;
 

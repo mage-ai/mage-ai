@@ -7,6 +7,7 @@ from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
+import argparse
 import json
 import logging
 import os
@@ -444,9 +445,14 @@ def kill():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', type=str, default=None)
+    parser.add_argument('--port', type=int, default=None)
+    args = parser.parse_args()
+
     app.debug = os.getenv('DEBUG', True)
-    host = os.getenv('HOST')
-    port = os.getenv('PORT', SERVER_PORT)
+    host = args.host or os.getenv('HOST')
+    port = args.port or os.getenv('PORT', SERVER_PORT)
 
     args = dict(port=port)
     if host:

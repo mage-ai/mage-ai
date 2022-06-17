@@ -85,11 +85,19 @@ $ export HOST=127.0.0.1
 $ export PORT=5789
 ```
 
+Or, you can set the host and port at runtime (see below).
+
 While in the root directory,
 run the following command to launch the backend locally.
 
 ```bash
 $ python3 mage_ai/server/app.py
+```
+
+or
+
+```bash
+$ python3 mage_ai/server/app.py --host 127.0.0.2 --port 1337
 ```
 
 Now visit [http://localhost:5789](http://localhost:5789)

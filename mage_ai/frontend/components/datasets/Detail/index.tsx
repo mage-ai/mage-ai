@@ -30,9 +30,12 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import actions from '@components/ActionForm/actions';
 import api from '@api';
-
 import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
-import { Column as ColumnIcon } from '@oracle/icons';
+import {
+  Chat,
+  Column as ColumnIcon,
+  Input as InputIcon,
+} from '@oracle/icons';
 import { FormConfigType } from '@components/ActionForm/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
@@ -283,6 +286,7 @@ function DatasetDetail({
                   })}
                   preventDefault
                 >
+
                   <FlexContainer alignItems="center">
                     <ColumnIcon
                       primary={!columnsVisible}
@@ -298,15 +302,35 @@ function DatasetDetail({
                 </Link>
               }
 
-              <NextLink
-                as={`/datasets/${featureSet?.id}/export`}
-                href="/datasets/[...slug]"
-                passHref
-              >
-                <Link block>
-                  Export data pipeline
+              <FlexContainer alignItems="center">
+                <Link
+                  block
+                  href="https://www.mage.ai/chat"
+                  openNewWindow
+                  verticalAlignContent
+                >
+                  <Chat primary size={UNIT * 2} />
+                  &nbsp;
+                  Help and support
                 </Link>
-              </NextLink>
+
+                <Spacing mr={3} />
+
+                <NextLink
+                  as={`/datasets/${featureSet?.id}/export`}
+                  href="/datasets/[...slug]"
+                  passHref
+                >
+                  <Link
+                    block
+                    verticalAlignContent
+                  >
+                    <InputIcon primary size={UNIT * 2} />
+                    &nbsp;
+                    Export data pipeline
+                  </Link>
+                </NextLink>
+              </FlexContainer>
             </FlexContainer>
           </Spacing>
 
