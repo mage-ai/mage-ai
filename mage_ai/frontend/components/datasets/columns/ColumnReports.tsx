@@ -32,6 +32,7 @@ function ColumnReports({
   const featureSetStats = getFeatureSetStatistics(featureSet, featureUUID);
   const {
     average,
+    avg_string_length: avgStringLength,
     avg_word_count: avgWordCount,
     completeness,
     count,
@@ -40,9 +41,11 @@ function ColumnReports({
     invalid_value_rate: invalidValueRate,
     invalid_values: invalidValues,
     max,
+    max_character_count: maxCharCount,
     max_word_count: maxWordCount,
     median,
     min,
+    min_character_count: minCharCount,
     min_word_count: minWordCount,
     mode,
     null_value_count: nullValueCount,
@@ -149,8 +152,20 @@ function ColumnReports({
         value: numberWithCommas(minWordCount),
       },
       {
-        name: 'Mean word count',
+        name: 'Average word count',
         value: isNumeric(avgWordCount) ? roundNumber(avgWordCount) : avgWordCount,
+      },
+      {
+        name: 'Max character count',
+        value: numberWithCommas(maxCharCount),
+      },
+      {
+        name: 'Min character count',
+        value: numberWithCommas(minCharCount),
+      },
+      {
+        name: 'Average string length',
+        value: isNumeric(avgStringLength) ? roundNumber(avgStringLength) : avgStringLength,
       },
     );
   }
