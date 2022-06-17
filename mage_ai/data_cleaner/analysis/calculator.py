@@ -4,7 +4,7 @@ from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
 )
-from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.column_types.constants import ColumnType
@@ -35,57 +35,62 @@ class AnalysisCalculator:
         df,
         column_types,
         statistics,
+        verbose=False,
         **kwargs,
     ):
         self.df = df
         self.column_types = column_types
         self.features = [{'uuid': col, 'column_type': column_types.get(col)} for col in df.columns]
+        self.verbose = verbose
 
     def process(self, df, is_clean=False):
-        increment(f'{DD_KEY}.process.start', self.tags)
+        with VerboseFunctionExec('Generating visualizations', verbose=self.verbose):
+            increment(f'{DD_KEY}.process.start', self.tags)
 
-        df_columns = df.columns
-        features_to_use = self.features
-        datetime_features_to_use = [f for f in self.datetime_features if f['uuid'] in df_columns]
-        numeric_features_to_use = self.numeric_features
+            df_columns = df.columns
+            features_to_use = self.features
+            datetime_features_to_use = [
+                f for f in self.datetime_features if f['uuid'] in df_columns
+            ]
+            numeric_features_to_use = self.numeric_features
 
-        if not is_clean:
-            df_clean = clean_dataframe(df, self.column_types, dropna=False)
-        else:
-            df_clean = df
+            if not is_clean:
+                df_clean = clean_dataframe(df, self.column_types, dropna=False)
+            else:
+                df_clean = df
 
-        arr_args_1 = ([df_clean for _ in features_to_use],)
-        arr_args_2 = (features_to_use,)
+            arr_args_1 = ([df_clean for _ in features_to_use],)
+            arr_args_2 = (features_to_use,)
 
-        data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
+            data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
 
-        correlation_data = self.calculate_correlation_data(df)
-        time_series_charts = self.calculate_timeseries_data(df)
-        for d in data_for_columns:
-            fuuid = d['feature']['uuid']
-            if fuuid in correlation_data:
-                d[DATA_KEY_CORRELATION] = correlation_data[fuuid]
-            if fuuid in time_series_charts:
-                d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
+            correlation_data = self.calculate_correlation_data(df)
+            time_series_charts = self.calculate_timeseries_data(df)
+            for d in data_for_columns:
+                fuuid = d['feature']['uuid']
+                if fuuid in correlation_data:
+                    d[DATA_KEY_CORRELATION] = correlation_data[fuuid]
+                if fuuid in time_series_charts:
+                    d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
 
-        overview = charts.build_overview_data(
-            df,
-            datetime_features_to_use,
-            numeric_features_to_use,
-        )
+            overview = charts.build_overview_data(
+                df,
+                datetime_features_to_use,
+                numeric_features_to_use,
+            )
 
-        correlation_overview = []
-        for d in data_for_columns:
-            corr = d.get(DATA_KEY_CORRELATION)
-            if corr:
-                correlation_overview.append(
-                    {
-                        'feature': d['feature'],
-                        DATA_KEY_CORRELATION: corr,
-                    }
-                )
+            correlation_overview = []
+            for d in data_for_columns:
+                corr = d.get(DATA_KEY_CORRELATION)
+                if corr:
+                    correlation_overview.append(
+                        {
+                            'feature': d['feature'],
+                            DATA_KEY_CORRELATION: corr,
+                        }
+                    )
 
-        increment(f'{DD_KEY}.process.succeeded', self.tags)
+            increment(f'{DD_KEY}.process.succeeded', self.tags)
 
         return data_for_columns, merge_dict(
             overview,

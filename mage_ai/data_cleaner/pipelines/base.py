@@ -18,7 +18,7 @@ from mage_ai.data_cleaner.cleaning_rules.remove_outliers import (
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.shared.array import flatten
-from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec, timer
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 
 DEFAULT_RULES = [
@@ -35,19 +35,23 @@ DEFAULT_RULES = [
 
 
 class BasePipeline:
-    def __init__(self, actions=[], rules=DEFAULT_RULES):
+    def __init__(self, actions=[], rules=DEFAULT_RULES, verbose=False):
         self.actions = actions
         self.rules = rules
+        self.verbose = verbose
 
     def create_actions(self, df, column_types, statistics):
         if not statistics or len(statistics) == 0:
-            calculator = StatisticsCalculator(column_types)
+            calculator = StatisticsCalculator(column_types, self.verbose)
             statistics = calculator.calculate_statistics_overview(df, False)
         self.column_types = column_types
         all_suggestions = []
         for rule in self.rules:
             with timer('pipeline.evaluate_cleaning_rule', dict(rule=rule.__name__), verbose=False):
-                suggestions = rule(df, column_types, statistics).evaluate()
+                with VerboseFunctionExec(
+                    f'Evaluating cleaning rule: {rule.__name__}', verbose=self.verbose
+                ):
+                    suggestions = rule(df, column_types, statistics).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions
@@ -62,8 +66,10 @@ class BasePipeline:
         df_transformed = df
         while len(action_queue) != 0:
             action = action_queue.pop(0)
+            title = action['title']
             payload = action['action_payload']
-            df_transformed = BaseAction(payload).execute(df_transformed)
+            with VerboseFunctionExec(f'Executing cleaning action: {title}', self.verbose):
+                df_transformed = BaseAction(payload).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
             completed_queue.append(action)
             if auto:

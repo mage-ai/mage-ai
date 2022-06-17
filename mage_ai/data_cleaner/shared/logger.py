@@ -25,3 +25,19 @@ class timer(object):
         dt = int((time.time() - self.start) * 1000)
         if self.verbose:
             logger.debug(f'[time] metric: {self.metric}, value: {dt}ms, tags: {self.tags}')
+
+
+class VerboseFunctionExec:
+    def __init__(self, message, verbose=True):
+        self.message = message
+        self.verbose = verbose
+
+    def __enter__(self):
+        if self.verbose:
+            print(f'{self.message}...', end='')
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if exc_type is not None:
+            print('FAILED')
+        elif self.verbose:
+            print('DONE')

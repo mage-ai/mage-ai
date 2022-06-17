@@ -136,19 +136,23 @@ def connect_data(df, name):
 
 def clean(
     df,
+    name=None,
     pipeline_uuid=None,
     pipeline_path=None,
     remote_pipeline_uuid=None,
     api_key=None,
+    verbose=False,
 ):
     if pipeline_uuid is not None:
-        df_clean = clean_df_with_pipeline(df, id=pipeline_uuid)
+        df_clean = clean_df_with_pipeline(df, id=pipeline_uuid, verbose=verbose)
     elif pipeline_path is not None:
-        df_clean = clean_df_with_pipeline(df, path=pipeline_path)
+        df_clean = clean_df_with_pipeline(df, path=pipeline_path, verbose=verbose)
     elif remote_pipeline_uuid is not None:
-        df_clean = clean_df_with_pipeline(df, remote_id=remote_pipeline_uuid, mage_api_key=api_key)
+        df_clean = clean_df_with_pipeline(
+            df, remote_id=remote_pipeline_uuid, mage_api_key=api_key, verbose=verbose
+        )
     else:
-        _, df_clean = clean_df(df)
+        _, df_clean = clean_df(df, name=name)
     return df_clean
 
 

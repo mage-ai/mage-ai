@@ -2,7 +2,7 @@ from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_e
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
@@ -36,9 +36,11 @@ class StatisticsCalculator:
         # object_key_prefix,
         # feature_set_version,
         column_types,
+        verbose=False,
         **kwargs,
     ):
         self.column_types = column_types
+        self.verbose = verbose
 
     @property
     def data_tags(self):
@@ -54,67 +56,68 @@ class StatisticsCalculator:
         )
 
         with timer('statistics.calculate_statistics_overview.time', self.data_tags, verbose=False):
-            if not is_clean:
-                df = clean_dataframe(df, self.column_types, dropna=False)
-            data = dict(count=len(df.index))
+            with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
+                if not is_clean:
+                    df = clean_dataframe(df, self.column_types, dropna=False)
+                data = dict(count=len(df.index))
 
-            arr_args_1 = ([df[col] for col in df.columns],)
-            arr_args_2 = ([col for col in df.columns],)
+                arr_args_1 = ([df[col] for col in df.columns],)
+                arr_args_2 = ([col for col in df.columns],)
 
-            dicts = map(self.statistics_overview, *arr_args_1, *arr_args_2)
+                dicts = map(self.statistics_overview, *arr_args_1, *arr_args_2)
 
-            for d in dicts:
-                data.update(d)
+                for d in dicts:
+                    data.update(d)
 
-            # Aggregated stats
-            column_count = len(df.columns)
-            row_count = df.shape[0]
+                # Aggregated stats
+                column_count = len(df.columns)
+                row_count = df.shape[0]
 
-            data['total_null_value_count'] = sum(
-                data[f'{col}/null_value_count'] for col in df.columns
-            )
-            data['total_null_value_rate'] = self.__protected_division(
-                data['total_null_value_count'], df.size
-            )
-            data['total_invalid_value_count'] = sum(
-                data[f'{col}/invalid_value_count'] for col in df.columns
-            )
-            data['total_invalid_value_rate'] = self.__protected_division(
-                data['total_invalid_value_count'], df.size
-            )
+                data['total_null_value_count'] = sum(
+                    data[f'{col}/null_value_count'] for col in df.columns
+                )
+                data['total_null_value_rate'] = self.__protected_division(
+                    data['total_null_value_count'], df.size
+                )
+                data['total_invalid_value_count'] = sum(
+                    data[f'{col}/invalid_value_count'] for col in df.columns
+                )
+                data['total_invalid_value_rate'] = self.__protected_division(
+                    data['total_invalid_value_count'], df.size
+                )
 
-            df_dedupe = df.drop_duplicates()
-            data['duplicate_row_count'] = row_count - df_dedupe.shape[0]
+                df_dedupe = df.drop_duplicates()
+                data['duplicate_row_count'] = row_count - df_dedupe.shape[0]
 
-            data['empty_column_count'] = len(
-                [col for col in df.columns if data[f'{col}/count'] == 0]
-            )
+                data['empty_column_count'] = len(
+                    [col for col in df.columns if data[f'{col}/count'] == 0]
+                )
 
-            data['avg_null_value_count'] = self.__protected_division(
-                data['total_null_value_count'], column_count
-            )
-            data['avg_invalid_value_count'] = self.__protected_division(
-                data['total_invalid_value_count'], column_count
-            )
-            data['empty_column_rate'] = self.__protected_division(
-                data['empty_column_count'], column_count
-            )
-            data['duplicate_row_rate'] = self.__protected_division(
-                data['duplicate_row_count'], row_count
-            )
+                data['avg_null_value_count'] = self.__protected_division(
+                    data['total_null_value_count'], column_count
+                )
+                data['avg_invalid_value_count'] = self.__protected_division(
+                    data['total_invalid_value_count'], column_count
+                )
+                data['empty_column_rate'] = self.__protected_division(
+                    data['empty_column_count'], column_count
+                )
+                data['duplicate_row_rate'] = self.__protected_division(
+                    data['duplicate_row_count'], row_count
+                )
 
-            data['completeness'] = 1 - self.__protected_division(
-                data['avg_null_value_count'], data['count']
-            )
-            data['validity'] = data['completeness'] - self.__protected_division(
-                data['avg_invalid_value_count'], data['count']
-            )
+                data['completeness'] = 1 - self.__protected_division(
+                    data['avg_null_value_count'], data['count']
+                )
+                data['validity'] = data['completeness'] - self.__protected_division(
+                    data['avg_invalid_value_count'], data['count']
+                )
 
-            timeseries_metadata = self.__evaluate_timeseries(data)
-            data.update(timeseries_metadata)
+                timeseries_metadata = self.__evaluate_timeseries(data)
+                data.update(timeseries_metadata)
 
-            # object_key = s3_paths.path_statistics_overview(self.object_key_prefix)
-            # s3_data.upload_json_sorted(self.s3_client, object_key, data)
+                # object_key = s3_paths.path_statistics_overview(self.object_key_prefix)
+                # s3_data.upload_json_sorted(self.s3_client, object_key, data)
 
         increment(
             'statistics.calculate_statistics_overview.success',

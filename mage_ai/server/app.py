@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
@@ -344,18 +345,24 @@ def clean_df(df, name):
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, id=None, path=None, remote_id=None, mage_api_key=None):
+def clean_df_with_pipeline(
+    df, id=None, path=None, remote_id=None, mage_api_key=None, verbose=False
+):
     pipeline = None
     if id is not None:
-        pipeline = Pipeline(id=id).pipeline
+        with VerboseFunctionExec(f'Loading pipeline with uuid {id} from file...', verbose=verbose):
+            pipeline = Pipeline(id=id).pipeline
     elif path is not None:
-        pipeline = Pipeline(path=path).pipeline
+        with VerboseFunctionExec(f'Loading pipeline from path {path}...', verbose=verbose):
+            pipeline = Pipeline(path=path).pipeline
     elif remote_id is not None:
-        final_key = mage_api_key if mage_api_key is not None else api_key
-        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
+        with VerboseFunctionExec(f'Loading pipeline from Mage servers..', verbose=verbose):
+            final_key = mage_api_key if mage_api_key is not None else api_key
+            pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
         log.error('Please provide a valid pipeline id or config path.')
         return df
+    pipeline.verbose = verbose
     return pipeline.transform(df, auto=False)
 
 
