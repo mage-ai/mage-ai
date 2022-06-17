@@ -89,7 +89,7 @@ function ActionForm({
   shadow,
 }: ActionFormProps) {
   const themeContext = useContext(ThemeContext);
-  const [actionCodeState, setActionCodeState] = useState(payload?.action_code || CODE_EXAMPLE);
+  const [actionCodeState, setActionCodeState] = useState(payload?.action_code);
 
   const {
     action_arguments: actionArguments,
