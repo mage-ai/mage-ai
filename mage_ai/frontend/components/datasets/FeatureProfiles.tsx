@@ -169,6 +169,7 @@ function FeatureProfile({
               pushHistory: true,
             })}
             preventDefault
+            secondary
           >
             <Text
               backgroundColor={light.feature.active}

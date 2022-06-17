@@ -31,6 +31,7 @@ export type LinkProps = {
   inline?: boolean;
   large?: boolean;
   minWidth?: number;
+  monospace?: boolean;
   muted?: boolean;
   noColor?: boolean;
   noHoverUnderline?: boolean;
