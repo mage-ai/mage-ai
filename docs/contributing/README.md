@@ -2,6 +2,32 @@
 
 ## Setting up development environment
 
+### Using Docker
+
+Run the below script to build the Docker image and run all the services:
+
+```bash
+$ ./scripts/dev.sh
+```
+
+Or run the following command to build the Docker image:
+
+```bash
+$ docker-compose build .
+```
+
+Run the following command to run all the services:
+
+```bash
+$ docker-compose up
+```
+
+Open [http://localhost:3000/](http://localhost:3000/) in your browser to use the app.
+
+Jupyter Lab is running on [http://127.0.0.1:8888/lab](http://127.0.0.1:8888/lab).
+Look at your terminal and find a corresponding URL with a token in the URL parameter;
+e.g. `http://127.0.0.1:8888/lab?token=`.
+
 ### Front-end UI
 
 #### Install Homebrew (if you haven't already)

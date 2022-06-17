@@ -1,0 +1,39 @@
+version: '3'
+services:
+  lab:
+    image: mage/lab
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - HOME_DIR=/home/jovyan
+    command: "jupyter lab --allow-root"
+    ports:
+      - 8888:8888
+    volumes:
+      - .:/home/jovyan
+    mem_limit: 99999m
+    oom_kill_disable: true
+  server:
+    image: mage/lab
+    depends_on:
+      - lab
+    environment:
+      - FLASK_ENV=development
+    command: "python3 mage_ai/server/app.py --host 0.0.0.0 --port 5789"
+    ports:
+      - 5789:5789
+    volumes:
+      - .:/home/jovyan
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging
+  app:
+    image: mage/lab
+    depends_on:
+      - server
+    command: "npm run dev"
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/home/jovyan
+    working_dir: /home/jovyan/mage_ai/frontend
