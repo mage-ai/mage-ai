@@ -2,7 +2,7 @@ import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import Pie, { ProvidedProps, PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import React, { useState } from 'react';
 import { Group } from '@visx/group';
-import { animated, useTransition, interpolate } from 'react-spring';
+import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
 import { COLORS_IN_ORDER } from './constants';
@@ -80,7 +80,7 @@ function AnimatedPie<Datum>({
     return (
       <g key={key}>
         <animated.path
-          d={interpolate([props.startAngle, props.endAngle], (startAngle, endAngle) =>
+          d={to([props.startAngle, props.endAngle], (startAngle, endAngle) =>
             path({
               ...arc,
               endAngle,
