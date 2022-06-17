@@ -134,7 +134,7 @@ function Overview({
     scatter_plot: scatterPlot,
     scatter_plot_labels: scatterPlotLabels,
   } = insightsOverview;
-  const columnsAll = features.map(({ uuid }) => uuid);
+  const columnsAll = features?.map(({ uuid }) => uuid);
   const xyLabels = [];
   const heatmapData = correlations?.map(({
     correlations: c,
@@ -187,7 +187,7 @@ function Overview({
   const allColumnsWithNullValues = [];
   const columnsWithLowNullValues = [];
   const columnsWithHighNullValues = [];
-  features.forEach((feature: FeatureType) => {
+  features?.forEach((feature: FeatureType) => {
     const { uuid } = feature;
     const value = statistics[`${uuid}/null_value_rate`];
 
@@ -256,7 +256,7 @@ function Overview({
 
   const rowCount = statistics?.count;
 
-  features.forEach((feature: FeatureType) => {
+  features?.forEach((feature: FeatureType) => {
     const { uuid, columnType } = feature;
     featureMapping[uuid] = columnType;
     const count = statistics?.[`${uuid}/count`];

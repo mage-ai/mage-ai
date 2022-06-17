@@ -154,6 +154,8 @@ function DatasetOverview({
   const columnsVisible = Number(showColumnsFromUrl) === 1;
   const columnsVisiblePrevious = usePrevious(columnsVisible);
 
+  const colType = features?.find((feature) => feature.uuid === selectedColumn)?.columnType;
+
   const {
     height: dataTableHeightInit,
     width: dataTableWidthInit,
@@ -302,7 +304,6 @@ function DatasetOverview({
                 <FeatureProfiles
                   featureSet={featureSet}
                   features={features}
-                  statistics={statistics}
                 />
               </Spacing>
             </>
@@ -317,7 +318,11 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={statistics?.[`${selectedColumn}/value_counts`] || {}}
+              statisticsByColumn={
+                (colType === ColumnTypeEnum.TEXT 
+                  ? statistics?.[`${selectedColumn}/word_distribution`]
+                  : statistics?.[`${selectedColumn}/value_counts`]
+                ) || {}}
               statisticsOverview={statistics}
             />
           )}

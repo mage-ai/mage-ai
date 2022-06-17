@@ -46,7 +46,7 @@ export type LabelType = {
   linkProps?: {
     onClick?: () => void,
   };
-}
+};
 
 type HeatMapSharedProps = {
   countMidpoint?: number;

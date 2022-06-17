@@ -4,6 +4,7 @@ import moment from 'moment';
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType, {
   ColumnTypeEnum,
+  COLUMN_TYPE_CATEGORICAL,
   COLUMN_TYPE_NUMBERS,
 } from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -18,7 +19,7 @@ import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { DATE_FORMAT } from './constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
   buildDistributionData,
@@ -70,60 +71,10 @@ function ColumnAnalysis({
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
 
-  const statsRowData = [
-    {
-      columnValues: ['Number of values', numberWithCommas(numberOfValues)],
-      uuid: 'count',
-    },
-    {
-      columnValues: ['Unique values', numberWithCommas(numberOfUniqueValues)],
-      uuid: 'count_distinct',
-    },
-    {
-      columnValues: ['Missing values', formatPercent(statisticsOverview?.[`${column}/null_value_rate`])],
-      uuid: 'null_value_rate',
-    },
-  ];
-
   const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
   const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
-  const isCategoricalType = [
-    ColumnTypeEnum.CATEGORY,
-    ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
-  ].includes(feature.columnType);
-
-  if (isNumberType) {
-    statsRowData.push(...[
-      {
-        columnValues: ['Minimum', numberWithCommas(statisticsOverview?.[`${column}/min`])],
-        uuid: 'min',
-      },
-      {
-        columnValues: ['Maximum', numberWithCommas(statisticsOverview?.[`${column}/max`])],
-        uuid: 'max',
-      },
-      {
-        columnValues: ['Average', numberWithCommas(statisticsOverview?.[`${column}/average`])],
-        uuid: 'average',
-      },
-      {
-        columnValues: ['Median', numberWithCommas(statisticsOverview?.[`${column}/median`])],
-        uuid: 'median',
-      },
-      {
-        columnValues: ['Total sum', numberWithCommas(statisticsOverview?.[`${column}/sum`])],
-        uuid: 'sum',
-      },
-    ]);
-  } else {
-    const mode = statisticsOverview?.[`${column}/mode`];
-    if (mode) {
-      statsRowData.push({
-        columnValues: ['Most frequent value', mode],
-        uuid: 'mode',
-      });
-    }
-  }
+  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
+  const isTextType = ColumnTypeEnum.TEXT === feature.columnType;
 
   const {
     charts,
@@ -246,7 +197,7 @@ function ColumnAnalysis({
         sortData={d => sortByKey(d, '[2]')}
       />
     );
-  } else if (isCategoricalType) {
+  } else if (isCategoricalType || isTextType) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -531,7 +482,7 @@ function ColumnAnalysis({
           <ChartRow
             left={
               <ChartContainer
-                title="Distribution of values"
+                title={isTextType ? 'Word distribution' : 'Distribution of values'}
               >
                 {distributionChart}
               </ChartContainer>

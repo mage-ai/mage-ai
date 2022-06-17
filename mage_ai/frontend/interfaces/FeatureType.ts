@@ -47,10 +47,9 @@ export const COLUMN_TYPE_STRING_LIKE = [
   ColumnTypeEnum.TEXT,
 ];
 
-export const COLUMN_TYPE_CATEGORY_VALUES = [
+export const COLUMN_TYPE_CATEGORICAL = [
   ColumnTypeEnum.CATEGORY,
   ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
-  ColumnTypeEnum.TRUE_OR_FALSE,
 ];
 
 export const COLUMN_TYPE_HUMAN_READABLE_MAPPING = {

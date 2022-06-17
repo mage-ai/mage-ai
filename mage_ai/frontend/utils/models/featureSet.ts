@@ -38,6 +38,8 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
   const { statistics } = featureSet;
   return {
     average: statistics[`${featureUUID}/average`],
+    avg_string_length: statistics[`${featureUUID}/avg_string_length`],
+    avg_word_count: statistics[`${featureUUID}/avg_word_count`],
     completeness: statistics[`${featureUUID}/completeness`],
     count: statistics[`${featureUUID}/count`],
     count_distinct: statistics[`${featureUUID}/count_distinct`],
@@ -46,9 +48,13 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     invalid_value_rate: statistics[`${featureUUID}/invalid_value_rate`],
     invalid_values: statistics[`${featureUUID}/invalid_values`],
     max: statistics[`${featureUUID}/max`],
+    max_character_count: statistics[`${featureUUID}/max_character_count`],
     max_null_seq: statistics[`${featureUUID}/max_null_seq`],
+    max_word_count: statistics[`${featureUUID}/max_word_count`],
     median: statistics[`${featureUUID}/median`],
     min: statistics[`${featureUUID}/min`],
+    min_character_count: statistics[`${featureUUID}/min_character_count`],
+    min_word_count: statistics[`${featureUUID}/min_word_count`],
     mode: statistics[`${featureUUID}/mode`],
     null_value_count: statistics[`${featureUUID}/null_value_count`],
     null_value_rate: statistics[`${featureUUID}/null_value_rate`],
@@ -72,7 +78,7 @@ export function getFeatureSetInvalidValuesAll(featureSet, features) {
 
   const { statistics } = featureSet;
   const invalidCells = {};
-  features.forEach(featureUUID => {
+  features?.forEach(featureUUID => {
     const invalid_indices = statistics[`${featureUUID}/invalid_indices`];
     invalidCells[featureUUID] = invalid_indices;
   });

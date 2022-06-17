@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -18,8 +17,8 @@ import {
   WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
-import { formatPercent, roundNumber } from '@utils/string';
-import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { formatPercent, pluralize, roundNumber } from '@utils/string';
+import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 
 export const ContainerStyle = styled.div`
@@ -66,13 +65,11 @@ type FeatureProfileProps = {
   columns: string[];
   feature: FeatureType,
   featureSet: FeatureSetType,
-  statistics: any,
 };
 
 type FeatureProfilesProps = {
   features: FeatureType[],
   featureSet: FeatureSetType,
-  statistics: any,
 };
 
 const entryTypes = [
@@ -93,6 +90,7 @@ const entryTypes = [
 const percentages = ['Missing', 'Invalid', 'Unique'];
 
 // % thresholds, above which we warn the user
+// TODO refactor to use StatsTable.WarningType
 const warnings = {
   'Missing': 0,
   'Invalid': 0,
@@ -104,27 +102,33 @@ function FeatureProfile({
   columns,
   feature,
   featureSet,
-  statistics,
 }: FeatureProfileProps) {
   const {
     columnType,
     uuid,
   } = feature;
 
-  const rowCount = statistics?.['count'];
-  // const numberOfValues = statistics?.[`${uuid}/count`];
-  const numberOfUniqueValues = statistics?.[`${uuid}/count_distinct`];
-  const numberOfNullValues = statistics?.[`${uuid}/null_value_count`];
-  // const nullValueRate = statistics?.[`${uuid}/null_value_rate`];
-  const maxValue = statistics?.[`${uuid}/max`];
-  const minValue = statistics?.[`${uuid}/min`];
-  const meanValue = statistics?.[`${uuid}/average`];
-  const medianValue = statistics?.[`${uuid}/median`];
-  const modeValue = statistics?.[`${uuid}/mode`];
-  const numberOfInvalidValues = statistics?.[`${uuid}/invalid_value_count`];
-  const numberOfOutliers = statistics?.[`${uuid}/outlier_count`];
-  const skewness = statistics?.[`${uuid}/skew`];
-  const stddev = statistics?.[`${uuid}/std`];
+  const featureSetStats = getFeatureSetStatistics(featureSet, uuid);
+  const {
+    average: meanValue,
+    avg_string_length: avgStringLength,
+    avg_word_count: avgWordCount,
+    count: rowCount,
+    count_distinct: numberOfUniqueValues,
+    invalid_value_count: numberOfInvalidValues,
+    max: maxValue,
+    max_character_count: maxCharCount,
+    max_word_count: maxWordCount,
+    min: minValue,
+    min_character_count: minCharCount,
+    min_word_count: minWordCount,
+    median: medianValue,
+    mode: modeValue,
+    null_value_count: numberOfNullValues,
+    outlier_count: numberOfOutliers,
+    skew: skewness,
+    std: stddev,
+  } = featureSetStats;
 
   const entries = [
     columnType,
@@ -141,9 +145,17 @@ function FeatureProfile({
     stddev,
   ];
 
-  const featureSetId = featureSet.id;
-  const featureUuid = feature?.uuid;
-  const featureId = getFeatureIdMapping(featureSet)[featureUuid];
+  const textReplacements = {
+    'Min': minWordCount,
+    'Max': maxWordCount,
+    'Mean': avgWordCount,
+  };
+
+  const textTooltips = {
+    'Min': `${pluralize('character', minCharCount)}`,
+    'Max': `${pluralize('character', maxCharCount)}`,
+    'Mean': `${pluralize('character', roundNumber(avgStringLength))}`,
+  };
 
   return (
     <Flex flexDirection="column">
@@ -174,7 +186,9 @@ function FeatureProfile({
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
         const entry = entryTypes[idx];
-        const val = !isNaN(label) ? roundNumber(label) : label;
+        const isTextStat = columnType === ColumnTypeEnum.TEXT && entry in textReplacements;
+        const subbedVal = isTextStat ? textReplacements[entry] : label;
+        const val = !isNaN(subbedVal) ? roundNumber(subbedVal) : subbedVal;
         const shouldWarn = entry in warnings && (val/rowCount) > warnings[entry];
 
         return (
@@ -183,8 +197,9 @@ function FeatureProfile({
               bold={shouldWarn}
               danger={shouldWarn}
               textOverflow
+              title={isTextStat ? textTooltips[entry] : ''}
             >
-              {val}
+              {isTextStat ? `${pluralize('word', val)}` : val}
               {percentages.includes(entry) && ` (${formatPercent(label/rowCount)})`}
             </Text>
           </CellStyle>
@@ -197,7 +212,6 @@ function FeatureProfile({
 function FeatureProfiles({
   features = [],
   featureSet,
-  statistics,
 }: FeatureProfilesProps) {
   const columns = useMemo(() => features.map(({ uuid }) => uuid), [features]);
 
@@ -228,7 +242,6 @@ function FeatureProfiles({
                     columns={columns}
                     feature={feature}
                     featureSet={featureSet}
-                    statistics={statistics}
                   />
                 </FeatureProfileStyle>
               ))}
