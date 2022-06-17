@@ -243,7 +243,7 @@ TRANSFORMER_FUNCTION_MAPPING = {
     'count_distinct': transform_count_distinct,
     'drop_duplicate': transform_drop_duplicate,
     'expand_column': transform_group,
-    'filter': transform_filter,
+    # 'filter': transform_filter,
     'first': transform_first,
     # 'group': transform_group,
     'last': transform_last,
