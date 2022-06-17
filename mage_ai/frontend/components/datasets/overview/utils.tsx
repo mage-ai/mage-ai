@@ -350,6 +350,7 @@ export function buildRenderColumnHeader({
                 bold
                 monospace
                 secondary
+                small
                 title={columns[columnIndex]}
               >
                 {columns[columnIndex]}
