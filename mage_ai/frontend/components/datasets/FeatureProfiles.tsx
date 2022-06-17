@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_CATEGORICAL } from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -18,7 +17,7 @@ import {
   WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
-import { formatPercent, roundNumber } from '@utils/string';
+import { formatPercent, pluralize, roundNumber } from '@utils/string';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 
@@ -178,9 +177,8 @@ function FeatureProfile({
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
         const entry = entryTypes[idx];
-        const subbedVal = (columnType === ColumnTypeEnum.TEXT && entry in textReplacements)
-          ? textReplacements[entry]
-          : label;
+        const isTextStat = columnType === ColumnTypeEnum.TEXT && entry in textReplacements;
+        const subbedVal = isTextStat ? textReplacements[entry] : label;
         const val = !isNaN(subbedVal) ? roundNumber(subbedVal) : subbedVal;
         const shouldWarn = entry in warnings && (val/rowCount) > warnings[entry];
 
@@ -191,7 +189,7 @@ function FeatureProfile({
               danger={shouldWarn}
               textOverflow
             >
-              {val}
+              {isTextStat ? `${pluralize('word', val)}` : val}
               {percentages.includes(entry) && ` (${formatPercent(label/rowCount)})`}
             </Text>
           </CellStyle>
