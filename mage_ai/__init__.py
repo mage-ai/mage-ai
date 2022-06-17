@@ -110,8 +110,11 @@ def connect_data(df, name):
         # Convert pyspark dataframe to pandas
         df_spark = df
         row_count = df_spark.count()
-        sample_fraction = row_count / MAX_NUM_OF_ROWS
-        df = df_spark.sample(withReplacement=False, fraction=sample_fraction).toPandas()
+        if row_count >= MAX_NUM_OF_ROWS:
+            sample_fraction = MAX_NUM_OF_ROWS / row_count
+            df = df_spark.sample(withReplacement=False, fraction=sample_fraction).toPandas()
+        else:
+            df = df_spark.toPandas()
 
     if df.shape[0] > MAX_NUM_OF_ROWS:
         feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name)
