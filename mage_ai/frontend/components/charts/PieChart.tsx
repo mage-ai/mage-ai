@@ -2,7 +2,7 @@ import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import Pie, { ProvidedProps, PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import React, { useState } from 'react';
 import { Group } from '@visx/group';
-import { animated, useTransition, interpolate } from 'react-spring';
+import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
 import { COLORS_IN_ORDER } from './constants';
@@ -80,7 +80,7 @@ function AnimatedPie<Datum>({
     return (
       <g key={key}>
         <animated.path
-          d={interpolate([props.startAngle, props.endAngle], (startAngle, endAngle) =>
+          d={to([props.startAngle, props.endAngle], (startAngle, endAngle) =>
             path({
               ...arc,
               endAngle,
@@ -153,12 +153,11 @@ function PieChart({
         {/* Donut */}
         <Pie
           cornerRadius={UNIT / 2}
-          data={
-            selectedData ?
-              data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
-              : data
+          data={selectedData
+            ? data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
+            : data
           }
-          innerRadius={radius - donutThickness}
+          innerRadius={Math.max(radius - donutThickness, 12.25)}
           outerRadius={radius}
           padAngle={0.005}
           pieValue={getY}

@@ -1,5 +1,8 @@
+import NextLink from 'next/link';
+
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import Histogram from '@components/charts/Histogram';
+import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
@@ -18,8 +21,10 @@ import {
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
+import { TAB_REPORTS } from './index';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
+import { createDatasetTabRedirectLink } from '@components/utils';
 import { getPercentage } from '@utils/number';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -336,7 +341,24 @@ export function buildRenderColumnHeader({
               width: columnWidth - (UNIT * 4.5),
             }}
           >
-            {columns[columnIndex]}
+            <NextLink
+              as={createDatasetTabRedirectLink(TAB_REPORTS, columnIndex)}
+              href="/datasets/[...slug]"
+              passHref
+            >
+              <Link>
+                <Text
+                  backgroundColor={light.feature.active}
+                  bold
+                  monospace
+                  secondary
+                  textOverflow
+                  title={columns[columnIndex]}
+                >
+                  {columns[columnIndex]}
+                </Text>
+              </Link>
+            </NextLink>
           </div>
         </div>
 
