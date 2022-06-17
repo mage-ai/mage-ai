@@ -146,68 +146,70 @@ function DatasetOverview({
 
   const qualityMetrics: StatRow[] = [
     {
-      name: 'Validity',
-      rate: validity,
-      progress: true,
-      warning: {
-        compare: lessThan,
-        val: 0.8,
-      },
       change: changes['validity'],
       columnFlexNumbers: [2, 1, 2],
-    },
-    {
-      name: 'Completeness',
-      rate: completeness,
+      name: 'Validity',
       progress: true,
+      rate: validity,
       warning: {
         compare: lessThan,
         val: 0.8,
       },
+    },
+    {
       change: changes['completeness'],
       columnFlexNumbers: [2, 1, 2],
+      name: 'Completeness',
+      progress: true,
+      rate: completeness,
+      warning: {
+        compare: lessThan,
+        val: 0.8,
+      },
     },
     {
-      name: 'Empty columns',
-      value: emptyColumnCount,
-      rate: emptyColumnRate,
-      warning: {
-        compare: greaterThan,
-        val: 0,
-      },
       change: changes['empty_column_rate'],
-      columnFlexNumbers: [2, 1, 2, 1],
-    },
-    {
-      name: 'Missing cells',
-      value: totalNullValueCount,
-      rate: totalNullValueRate,
+      columnFlexNumbers: [1, 1],
+      name: 'Empty columns',
+      rate: emptyColumnRate,
+      value: emptyColumnCount,
       warning: {
         compare: greaterThan,
         val: 0,
       },
+    },
+    {
       change: changes['total_null_value_rate'],
-      columnFlexNumbers: [2, 1, 2, 1],
-    },
-    {
-      name: 'Invalid cells',
-      value: totalInvalidValueCount,
-      rate: totalInvalidValueRate,
+      columnFlexNumbers: [1, 1],
+      name: 'Missing cells',
+      rate: totalNullValueRate,
+      value: totalNullValueCount,
       warning: {
         compare: greaterThan,
         val: 0,
       },
+    },
+    {
       change: changes['total_invalid_value_rate'],
-    },
-    {
-      name: 'Duplicate rows',
-      value: duplicateRowCount,
-      rate: duplicateRowRate,
+      columnFlexNumbers: [1, 1],
+      name: 'Invalid cells',
+      rate: totalInvalidValueRate,
+      value: totalInvalidValueCount,
       warning: {
         compare: greaterThan,
         val: 0,
       },
+    },
+    {
       change: changes['duplicate_row_rate'],
+      columnFlexNumbers: [1, 1],
+      name: 'Duplicate rows',
+      rate: duplicateRowRate,
+      value: duplicateRowCount,
+      warning: {
+        compare: greaterThan,
+        val: 0,
+      },
     },
   ];
 

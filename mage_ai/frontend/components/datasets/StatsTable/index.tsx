@@ -2,6 +2,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import ProgressBar from '@oracle/components/ProgressBar';
 import ProgressIcon from '@oracle/components/ProgressIcon';
+import Spacing from '@oracle/elements/Spacing';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Text from '@oracle/elements/Text';
@@ -14,7 +15,7 @@ export type StatRow = {
   progress?: boolean,
   warning?: WarningType;
   change?: number,
-  flex?: number[],
+  columnFlexNumbers?: number[],
 };
 
 export type WarningType = {
@@ -32,7 +33,7 @@ const shouldWarn = (w: WarningType, n: number) => w && w.compare(n, w.val);
 function StatsTable({ stats, title }: StatsTableProps) {
   return (
     <RowDataTable alternating headerTitle={title}>
-      {stats?.map(({ name, value, rate, progress, warning, change, flex }) => {
+      {stats?.map(({ name, value, rate, progress, warning, change, columnFlexNumbers }) => {
         const warn = {
           bold: shouldWarn(warning, rate),
           danger: shouldWarn(warning, rate),
@@ -45,26 +46,30 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={flex || [2, 1, 2, 1]} key={name}>
+          <RowCard columnFlexNumbers={columnFlexNumbers || [2, 1, 2, 1]} key={name}>
             <Text>{name}</Text>
-            <Flex>
+            <>
               {value !== undefined &&
                 <Text {...warn}>
                   {value}
                 </Text>
               }
               {rate !== undefined &&
-                <Text {...warn}>
-                  {stylePercent(value, rate)}
-                </Text>
+                <Spacing px={1}>
+                  <Text {...warn}>
+                    {stylePercent(value, rate)}
+                  </Text>
+                </Spacing>
               }
               {change &&
-                <ProgressIcon
-                  danger={change < 0}
-                  percentage={Math.abs(change)}
-                />
+                <Spacing pr={1}>
+                  <ProgressIcon
+                    danger={change < 0}
+                    percentage={Math.abs(change)}
+                  />
+                </Spacing>
               }
-            </Flex>
+            </>
             {progress &&
               <ProgressBar
                 progress={rate * 100}

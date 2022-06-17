@@ -34,13 +34,14 @@ function RowCard({
         {React.Children.map(children, (child, idx) => child && columnFlexNumbers
           ? (
             <Flex
+              alignItems="center"
               flex={columnFlexNumbers[idx]}
               key={`row-card-item-${idx}`}
             >
               {child}
             </Flex>
           )
-          : child
+          : child,
         )}
       </FlexContainer>
     </RowStyle>
