@@ -19,7 +19,7 @@ import {
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, roundNumber } from '@utils/string';
-import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 
 export const ContainerStyle = styled.div`
@@ -66,13 +66,11 @@ type FeatureProfileProps = {
   columns: string[];
   feature: FeatureType,
   featureSet: FeatureSetType,
-  statistics: any,
 };
 
 type FeatureProfilesProps = {
   features: FeatureType[],
   featureSet: FeatureSetType,
-  statistics: any,
 };
 
 const entryTypes = [
@@ -93,6 +91,7 @@ const entryTypes = [
 const percentages = ['Missing', 'Invalid', 'Unique'];
 
 // % thresholds, above which we warn the user
+// TODO refactor to use StatsTable.WarningType
 const warnings = {
   'Missing': 0,
   'Invalid': 0,
@@ -104,27 +103,27 @@ function FeatureProfile({
   columns,
   feature,
   featureSet,
-  statistics,
 }: FeatureProfileProps) {
   const {
     columnType,
     uuid,
   } = feature;
 
-  const rowCount = statistics?.['count'];
-  // const numberOfValues = statistics?.[`${uuid}/count`];
-  const numberOfUniqueValues = statistics?.[`${uuid}/count_distinct`];
-  const numberOfNullValues = statistics?.[`${uuid}/null_value_count`];
-  // const nullValueRate = statistics?.[`${uuid}/null_value_rate`];
-  const maxValue = statistics?.[`${uuid}/max`];
-  const minValue = statistics?.[`${uuid}/min`];
-  const meanValue = statistics?.[`${uuid}/average`];
-  const medianValue = statistics?.[`${uuid}/median`];
-  const modeValue = statistics?.[`${uuid}/mode`];
-  const numberOfInvalidValues = statistics?.[`${uuid}/invalid_value_count`];
-  const numberOfOutliers = statistics?.[`${uuid}/outlier_count`];
-  const skewness = statistics?.[`${uuid}/skew`];
-  const stddev = statistics?.[`${uuid}/std`];
+  const featureSetStats = getFeatureSetStatistics(featureSet, uuid);
+  const {
+    count: rowCount,
+    count_distinct: numberOfUniqueValues,
+    null_value_count: numberOfNullValues,
+    max: maxValue,
+    min: minValue,
+    average: meanValue,
+    median: medianValue,
+    mode: modeValue,
+    invalid_value_count: numberOfInvalidValues,
+    outlier_count: numberOfOutliers,
+    skew: skewness,
+    std: stddev,
+  } = featureSetStats;
 
   const entries = [
     columnType,
@@ -140,10 +139,6 @@ function FeatureProfile({
     skewness,
     stddev,
   ];
-
-  const featureSetId = featureSet.id;
-  const featureUuid = feature?.uuid;
-  const featureId = getFeatureIdMapping(featureSet)[featureUuid];
 
   return (
     <Flex flexDirection="column">
@@ -197,7 +192,6 @@ function FeatureProfile({
 function FeatureProfiles({
   features = [],
   featureSet,
-  statistics,
 }: FeatureProfilesProps) {
   const columns = useMemo(() => features.map(({ uuid }) => uuid), [features]);
 
@@ -228,7 +222,6 @@ function FeatureProfiles({
                     columns={columns}
                     feature={feature}
                     featureSet={featureSet}
-                    statistics={statistics}
                   />
                 </FeatureProfileStyle>
               ))}

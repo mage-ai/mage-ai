@@ -304,7 +304,6 @@ function DatasetOverview({
                 <FeatureProfiles
                   featureSet={featureSet}
                   features={features}
-                  statistics={statistics}
                 />
               </Spacing>
             </>
