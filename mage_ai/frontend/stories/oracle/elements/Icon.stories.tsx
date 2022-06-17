@@ -9,6 +9,7 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  Binary,
   CalendarDate,
   Categories,
   Category,
@@ -42,12 +43,13 @@ import {
 } from '@oracle/icons';
 
 const ICONS = [
-    Action,
+  Action,
   AlertCircle,
   Alphabet,
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  Binary,
   CalendarDate,
   Categories,
   Category,

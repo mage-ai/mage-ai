@@ -115,9 +115,10 @@ function Menu({
               >
                 <Flex alignItems="center" flex={1}>
                   {beforeIcon &&
-                    <Spacing mr="4px">
+                    <>
                       {beforeIcon}
-                    </Spacing>
+                      <Spacing mr="4px" />
+                    </>
                   }
                   {linkEl}
                 </Flex>

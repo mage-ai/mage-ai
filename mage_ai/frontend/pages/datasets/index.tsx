@@ -1,6 +1,5 @@
 import Router from 'next/router';
 import type { NextPage } from 'next';
-import { useEffect, useMemo, useState } from 'react';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
@@ -92,7 +91,6 @@ const Dashboard: NextPage = () => {
                   :
                   <Spacing p={2}>
                     <Text>
-                      {/* TODO: add link to README or something here? */}
                       No datasets available. Add one to get started.
                     </Text>
                   </Spacing>
