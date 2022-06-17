@@ -1,6 +1,7 @@
 from IPython import get_ipython
 from IPython.display import IFrame, Javascript, display
 from enum import Enum
+from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.server.app import (
     clean_df,
     clean_df_with_pipeline,
@@ -105,7 +106,7 @@ def display_inline_iframe(host=None, port=None, notebook_type=None, config={}):
 
 
 def connect_data(df, name):
-    if type(df).__module__ == 'pyspark.sql.dataframe':
+    if is_spark_dataframe(df):
         # Convert pyspark dataframe to pandas
         df_spark = df
         row_count = df_spark.count()
