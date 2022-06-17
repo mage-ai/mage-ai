@@ -153,12 +153,11 @@ function PieChart({
         {/* Donut */}
         <Pie
           cornerRadius={UNIT / 2}
-          data={
-            selectedData ?
-              data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
-              : data
+          data={selectedData
+            ? data.filter(d => JSON.stringify(d) === JSON.stringify(selectedData))
+            : data
           }
-          innerRadius={radius - donutThickness}
+          innerRadius={Math.max(radius - donutThickness, 12.25)}
           outerRadius={radius}
           padAngle={0.005}
           pieValue={getY}
