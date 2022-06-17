@@ -137,3 +137,10 @@ test.ipynb
 
 # test files
 testfiles/
+
+# Docker specific files
+.jupyter/
+.local/
+.npm/
+.python_history
+mage_ai/frontend/package-lock.json
