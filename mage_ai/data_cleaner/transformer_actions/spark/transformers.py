@@ -230,7 +230,7 @@ def transform_with_partitions(feature_set, transformer_action, sort_options={}):
 
     df_filtered = fs.groupby(GROUP_MOD_COLUMN).apply(execute_transform)
 
-    return df_filtered
+    return df_filtered.drop(GROUP_MOD_COLUMN, ROW_NUMBER_COLUMN, ROW_NUMBER_LIT_COLUMN)
 
 
 TRANSFORMER_FUNCTION_MAPPING = {
