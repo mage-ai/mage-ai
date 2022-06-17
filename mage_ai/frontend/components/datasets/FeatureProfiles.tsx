@@ -110,18 +110,21 @@ function FeatureProfile({
 
   const featureSetStats = getFeatureSetStatistics(featureSet, uuid);
   const {
+    average: meanValue,
+    avg_string_length: avgStringLength,
     avg_word_count: avgWordCount,
     count: rowCount,
     count_distinct: numberOfUniqueValues,
-    null_value_count: numberOfNullValues,
+    invalid_value_count: numberOfInvalidValues,
     max: maxValue,
+    max_character_count: maxCharCount,
     max_word_count: maxWordCount,
     min: minValue,
+    min_character_count: minCharCount,
     min_word_count: minWordCount,
-    average: meanValue,
     median: medianValue,
     mode: modeValue,
-    invalid_value_count: numberOfInvalidValues,
+    null_value_count: numberOfNullValues,
     outlier_count: numberOfOutliers,
     skew: skewness,
     std: stddev,
@@ -146,6 +149,12 @@ function FeatureProfile({
     'Min': minWordCount,
     'Max': maxWordCount,
     'Mean': avgWordCount,
+  };
+
+  const textTooltips = {
+    'Min': `${pluralize('character', minCharCount)}`,
+    'Max': `${pluralize('character', maxCharCount)}`,
+    'Mean': `${pluralize('character', roundNumber(avgStringLength))}`,
   };
 
   return (
@@ -188,6 +197,7 @@ function FeatureProfile({
               bold={shouldWarn}
               danger={shouldWarn}
               textOverflow
+              title={isTextStat ? textTooltips[entry] : ''}
             >
               {isTextStat ? `${pluralize('word', val)}` : val}
               {percentages.includes(entry) && ` (${formatPercent(label/rowCount)})`}
