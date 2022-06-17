@@ -1,5 +1,6 @@
 import {
   Alphabet,
+  Binary,
   CalendarDate,
   Category,
   Categories,
@@ -9,7 +10,6 @@ import {
   NumberHash,
   NumberWithDecimalHash,
   Phone,
-  Switch,
 } from '@oracle/icons';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
 
@@ -22,7 +22,7 @@ export const COLUMN_TYPE_ICON_MAPPING = {
   [ColumnTypeEnum.NUMBER_WITH_DECIMALS]: NumberWithDecimalHash,
   [ColumnTypeEnum.PHONE_NUMBER]: Phone,
   [ColumnTypeEnum.TEXT]: Alphabet,
-  [ColumnTypeEnum.TRUE_OR_FALSE]: Switch,
+  [ColumnTypeEnum.TRUE_OR_FALSE]: Binary,
   [ColumnTypeEnum.UUID]: IDLetters,
   [ColumnTypeEnum.ZIP_CODE]: MapPin,
 };
