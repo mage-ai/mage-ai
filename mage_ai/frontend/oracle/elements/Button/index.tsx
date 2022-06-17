@@ -18,21 +18,21 @@ export type ButtonProps = {
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
+  danger?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
   iconOnly?: boolean;
   large?: boolean;
   loading?: boolean;
-  negative?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
   noPadding?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
-  positive?: boolean;
   primary?: boolean;
-  small?: boolean;
   selected?: boolean;
+  small?: boolean;
+  success?: boolean;
   target?: string;
   transparent?: boolean;
   width?: number;
@@ -79,12 +79,12 @@ const ButtonStyle = styled.button<ButtonProps>`
     border-right: none;
   `}
 
-  ${props => props.negative && `
-    background-color: ${(props.theme.background || light.background).negative};
+  ${props => props.danger && `
+    background-color: ${(props.theme.background || light.background).danger};
   `}
 
-  ${props => props.positive && `
-    background-color: ${(props.theme.background || light.background).positive};
+  ${props => props.success && `
+    background-color: ${(props.theme.background || light.background).success};
   `}
 
   ${props => !props.iconOnly && props.large && `
@@ -150,9 +150,7 @@ const Button = ({
   children,
   disabled,
   loading,
-  negative,
   onClick,
-  positive,
   ...props
 }: ButtonProps, ref) => {
   const iconProps = {
@@ -164,12 +162,10 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
-      negative={negative}
       onClick={(e) => {
         e?.preventDefault();
         onClick?.(e);
       }}
-      positive={positive}
       ref={ref}
     >
       <FlexContainer

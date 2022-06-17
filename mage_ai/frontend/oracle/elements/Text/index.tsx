@@ -208,11 +208,11 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.danger && `
-    color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+    color: ${(props.theme.interactive || light.interactive).dangerBorder};
   `}
 
   ${props => props.positive && `
-    color: ${(props.theme.percentage || light.percentage).positive} !important;
+    color: ${(props.theme.status || light.status).positive};
   `}
 
   ${props => props.underline && `

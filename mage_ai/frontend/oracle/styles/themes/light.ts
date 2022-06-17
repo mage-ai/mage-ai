@@ -7,14 +7,15 @@ import {
   GRAY_LINES,
   GRAY,
   LIGHT,
-  LIME,
-  LIME_LIGHT,
+  LIME_XLIGHT,
+  LIME_TEXT,
   PURPLE,
   PURPLE_DISABLED,
   PURPLE_HIGHLIGHT,
   PURPLE_LIGHT,
   RED,
   RED_LIGHT,
+  RED_XLIGHT,
   SILVER,
   WHITE,
 } from '../colors/main';
@@ -35,14 +36,14 @@ export default {
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
   },
   background: {
+    danger: RED_XLIGHT,
     dark: GRAY,
     header: SILVER,
     muted: SILVER,
     navigation: '#EDEDED',
-    negative: RED_LIGHT,
     page: WHITE,
-    positive: LIME_LIGHT,
     row: LIGHT,
+    success: LIME_XLIGHT,
   },
   brand: {
     earth100: '#C6EEDB',
@@ -139,19 +140,18 @@ export default {
     n400: '#BCBEC4',
     n500: '#AEB0B6',
   },
-  percentage: {
-    negative: RED,
-    positive: LIME,
-  },
   progress: {
     negative: RED,
     positive: PURPLE,
   },
-
   shadow: {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
+  },
+  status: {
+    negative: RED,
+    positive: LIME_TEXT,
   },
 };
 

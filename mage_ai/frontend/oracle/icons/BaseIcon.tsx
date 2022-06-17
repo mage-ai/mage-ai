@@ -100,11 +100,11 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.disabled && props.negative && `
-    fill: ${(props.theme.percentage || light.percentage).negative};
+    fill: ${(props.theme.status || light.status).negative};
   `}
 
   ${props => !props.disabled && props.positive && `
-    fill: ${(props.theme.percentage || light.percentage).positive};
+    fill: ${(props.theme.status || light.status).positive};
   `}
 `;
 
