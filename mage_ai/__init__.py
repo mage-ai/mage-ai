@@ -152,7 +152,7 @@ def clean(
             df, remote_id=remote_pipeline_uuid, mage_api_key=api_key, verbose=verbose
         )
     else:
-        _, df_clean = clean_df(df, name=name)
+        _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
 

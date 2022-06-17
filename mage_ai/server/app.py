@@ -336,10 +336,10 @@ def update_pipeline(id):
 #     return feature_set.column(column_name)
 
 
-def clean_df(df, name):
+def clean_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
-    result = clean_data(df)
+    result = clean_data(df, verbose=verbose)
 
     feature_set.write_files(result)
     return (feature_set, result['df'])
@@ -350,13 +350,15 @@ def clean_df_with_pipeline(
 ):
     pipeline = None
     if id is not None:
-        with VerboseFunctionExec(f'Loading pipeline with uuid {id} from file...', verbose=verbose):
+        with VerboseFunctionExec(f'Loading pipeline with uuid \'{id}\' from file', verbose=verbose):
             pipeline = Pipeline(id=id).pipeline
     elif path is not None:
-        with VerboseFunctionExec(f'Loading pipeline from path {path}...', verbose=verbose):
+        with VerboseFunctionExec(f'Loading pipeline from path \'{path}\'', verbose=verbose):
             pipeline = Pipeline(path=path).pipeline
     elif remote_id is not None:
-        with VerboseFunctionExec(f'Loading pipeline from Mage servers..', verbose=verbose):
+        with VerboseFunctionExec(
+            f'Loading pipeline \'{remote_id}\' from Mage servers', verbose=verbose
+        ):
             final_key = mage_api_key if mage_api_key is not None else api_key
             pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
