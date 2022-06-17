@@ -1,8 +1,8 @@
+from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.data_cleaner.transformer_actions import column, row
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, VariableType
 from mage_ai.data_cleaner.transformer_actions.dependency_resolution import (
     default_resolution,
-    resolve_filter_action,
 )
 from mage_ai.data_cleaner.transformer_actions.helpers import drop_na
 from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
@@ -10,6 +10,14 @@ from mage_ai.data_cleaner.transformer_actions.variable_replacer import (
     replace_true_false,
 )
 import json
+
+try:
+    from mage_ai.data_cleaner.transformer_actions.spark.transformers import (
+        transform as transform_spark,
+    )
+    PYSPARK = True
+except ImportError:
+    PYSPARK = False
 
 # from pipelines.column_type_pipelines import COLUMN_TYPE_PIPELINE_MAPPING
 
@@ -88,6 +96,9 @@ class BaseAction:
         if self.action.get('action_code'):
             self.action['action_code'] = replace_true_false(self.action['action_code'])
 
+        if is_spark_dataframe(df):
+            return self.execute_spark(df, **kwargs)
+
         if df.empty:
             return df
 
@@ -121,6 +132,11 @@ class BaseAction:
             return df
         else:
             return df_output
+
+    def execute_spark(self, df, **kwargs):
+        if not PYSPARK:
+            raise RuntimeError('Spark is not supported in current environment')
+        return transform_spark(df, self.action, **kwargs)
 
     def groupby(self, df, action):
         def __transform_partition(pdf, actions):

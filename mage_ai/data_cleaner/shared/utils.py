@@ -55,6 +55,10 @@ def is_numeric_dtype(df, column, column_type):
     return column_type in NUMBER_TYPES or issubclass(df[column].dtype.type, np.number)
 
 
+def is_spark_dataframe(df):
+    return type(df).__module__ == 'pyspark.sql.dataframe'
+
+
 def wrap_column_name(name: str) -> str:
     if any(symbol in name for symbol in COLUMN_NAME_QUOTE_CHARS):
         name = f'"{name}"'
