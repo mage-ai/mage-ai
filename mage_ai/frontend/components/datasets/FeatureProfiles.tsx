@@ -3,7 +3,7 @@ import NextLink from 'next/link';
 import styled from 'styled-components';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_CATEGORICAL } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -111,11 +111,14 @@ function FeatureProfile({
 
   const featureSetStats = getFeatureSetStatistics(featureSet, uuid);
   const {
+    avg_word_count: avgWordCount,
     count: rowCount,
     count_distinct: numberOfUniqueValues,
     null_value_count: numberOfNullValues,
     max: maxValue,
+    max_word_count: maxWordCount,
     min: minValue,
+    min_word_count: minWordCount,
     average: meanValue,
     median: medianValue,
     mode: modeValue,
@@ -139,6 +142,12 @@ function FeatureProfile({
     skewness,
     stddev,
   ];
+
+  const textReplacements = {
+    'Min': minWordCount,
+    'Max': maxWordCount,
+    'Mean': avgWordCount,
+  };
 
   return (
     <Flex flexDirection="column">
@@ -168,8 +177,12 @@ function FeatureProfile({
         </Spacing>
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
+        console.log({ entry: entryTypes[idx], label, idx });
         const entry = entryTypes[idx];
-        const val = !isNaN(label) ? roundNumber(label) : label;
+        const subbedVal = (columnType === ColumnTypeEnum.TEXT && entry in textReplacements)
+          ? textReplacements[entry]
+          : label;
+        const val = !isNaN(subbedVal) ? roundNumber(subbedVal) : subbedVal;
         const shouldWarn = entry in warnings && (val/rowCount) > warnings[entry];
 
         return (
