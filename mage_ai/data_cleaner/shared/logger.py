@@ -37,7 +37,8 @@ class VerboseFunctionExec:
             print(f'{self.message}...', end='')
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        if exc_type is not None:
-            print('FAILED')
-        elif self.verbose:
-            print('DONE')
+        if self.verbose:
+            if exc_type is None:
+                print('DONE')
+            else:
+                print('FAILED')
