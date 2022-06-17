@@ -312,6 +312,7 @@ def update_pipeline(id):
             df_transformed,
             column_types=feature_set.metadata.get('column_types', {}),
             transform=False,
+            verbose=True,
         )
         prev_version = len(pipeline.pipeline.actions)
         pipeline.pipeline = clean_pipeline
@@ -368,10 +369,10 @@ def clean_df_with_pipeline(
     return pipeline.transform(df, auto=False)
 
 
-def connect_df(df, name):
+def connect_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
-    result = clean_data(df, transform=False)
+    result = clean_data(df, transform=False, verbose=verbose)
 
     feature_set.write_files(result, write_orig_data=True)
     return (feature_set, df)

@@ -116,7 +116,7 @@ def display_inline_iframe(host=None, port=None, notebook_type=None, config={}):
         display(IFrame(path_to_server, width='95%', height=1000))
 
 
-def connect_data(df, name):
+def connect_data(df, name, verbose=False):
     if is_spark_dataframe(df):
         # Convert pyspark dataframe to pandas
         df_spark = df
@@ -128,9 +128,9 @@ def connect_data(df, name):
             df = df_spark.toPandas()
 
     if df.shape[0] > MAX_NUM_OF_ROWS:
-        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name)
+        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name, verbose=verbose)
     else:
-        feature_set, _ = connect_df(df, name)
+        feature_set, _ = connect_df(df, name, verbose=verbose)
     return feature_set
 
 
