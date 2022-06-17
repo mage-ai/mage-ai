@@ -177,7 +177,6 @@ function FeatureProfile({
         </Spacing>
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
-        console.log({ entry: entryTypes[idx], label, idx });
         const entry = entryTypes[idx];
         const subbedVal = (columnType === ColumnTypeEnum.TEXT && entry in textReplacements)
           ? textReplacements[entry]
