@@ -320,10 +320,8 @@ function DatasetOverview({
               insights={insightsOverview}
               statisticsByColumn={
                 (colType === ColumnTypeEnum.TEXT 
-                  ?
-                  statistics?.[`${selectedColumn}/word_distribution`]
-                  :
-                  statistics?.[`${selectedColumn}/value_counts`]
+                  ? statistics?.[`${selectedColumn}/word_distribution`]
+                  : statistics?.[`${selectedColumn}/value_counts`]
                 ) || {}}
               statisticsOverview={statistics}
             />
