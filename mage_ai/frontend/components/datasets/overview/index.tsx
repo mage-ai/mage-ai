@@ -154,7 +154,7 @@ function DatasetOverview({
         val: 0.8,
       },
       change: changes['validity'],
-      flex: [2, 1, 2],
+      columnFlexNumbers: [2, 1, 2],
     },
     {
       name: 'Completeness',
@@ -165,7 +165,7 @@ function DatasetOverview({
         val: 0.8,
       },
       change: changes['completeness'],
-      flex: [2, 1, 2],
+      columnFlexNumbers: [2, 1, 2],
     },
     {
       name: 'Empty columns',
@@ -176,7 +176,7 @@ function DatasetOverview({
         val: 0,
       },
       change: changes['empty_column_rate'],
-      flex: [2, 1, 2, 1],
+      columnFlexNumbers: [2, 1, 2, 1],
     },
     {
       name: 'Missing cells',
@@ -187,7 +187,7 @@ function DatasetOverview({
         val: 0,
       },
       change: changes['total_null_value_rate'],
-      flex: [2, 1, 2, 1],
+      columnFlexNumbers: [2, 1, 2, 1],
     },
     {
       name: 'Invalid cells',
@@ -380,7 +380,10 @@ function DatasetOverview({
                 <Flex flex={1} flexDirection="column">
                   {qualityMetrics && (
                     <Spacing mb={PADDING_UNITS}>
-                      <StatsTable stats={qualityMetrics} title="Quality metrics" />
+                      <StatsTable
+                        stats={qualityMetrics}
+                        title="Quality metrics"
+                      />
                     </Spacing>
                   )}
                 </Flex>

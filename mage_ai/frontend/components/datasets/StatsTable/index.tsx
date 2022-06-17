@@ -53,30 +53,23 @@ function StatsTable({ stats, title }: StatsTableProps) {
                   {value}
                 </Text>
               }
-              &nbsp;
               {rate !== undefined &&
                 <Text {...warn}>
                   {stylePercent(value, rate)}
                 </Text>
               }
-            </Flex>
-            {progress
-              ?
-                <ProgressBar
-                  progress={rate * 100}
-                  {...warn}
+              {change &&
+                <ProgressIcon
+                  danger={change < 0}
+                  percentage={Math.abs(change)}
                 />
-              :
-                <> </>
-            }
-            { change
-              ?
-                <FlexContainer alignItems="center">
-                  &nbsp;
-                  <ProgressIcon danger={change < 0} percentage={Math.abs(change)}/>
-                </FlexContainer>
-              :
-                <> </>
+              }
+            </Flex>
+            {progress &&
+              <ProgressBar
+                progress={rate * 100}
+                {...warn}
+              />
             }
           </RowCard>
         );
