@@ -6,7 +6,12 @@ type CsvExportProps = {
   linkRef: any;
 };
 
-const HiddenLink = styled.a<CsvExportProps>`
+const HiddenLink = styled.a<{
+  download: string;
+  href: string;
+  ref: any;
+  target: string;
+}>`
   visibility: hidden;
 `;
 
