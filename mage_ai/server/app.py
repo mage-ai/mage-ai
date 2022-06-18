@@ -167,7 +167,7 @@ def feature_set(id):
     return response
 
 
-@app.route('/feature_sets/<id>/download/', endpoint='feature_set_download')
+@app.route('/feature_sets/<id>/downloads/', endpoint='feature_set_download', methods=['POST'])
 @rescue_errors
 def feature_set_download(id):
     if not FeatureSet.is_valid_id(id):
@@ -183,7 +183,7 @@ def feature_set_download(id):
     use_index = index_args == 'true'
 
     return app.response_class(
-        response=feature_set.data.to_csv(index=use_index, mode='w'),
+        response=feature_set.data.to_csv(index=False),
         status=200,
         mimetype='text/csv',
         headers={

@@ -28,6 +28,21 @@ Jupyter Lab is running on [http://127.0.0.1:8888/lab](http://127.0.0.1:8888/lab)
 Look at your terminal and find a corresponding URL with a token in the URL parameter;
 e.g. `http://127.0.0.1:8888/lab?token=`.
 
+#### Debugging
+
+Instead of using `breakpoint()`, add the following line to your code where you
+want a debug:
+```python
+import pdb; pdb.set_trace()
+```
+
+Attach to running container to use debugger. To get the container ID, run `docker ps`
+and look in the `NAMES` column.
+
+```bash
+$ docker attach [container_id]
+```
+
 #### Example notebook
 
 Open the `example.ipynb` notebook for an interactive Python environment and connect your data

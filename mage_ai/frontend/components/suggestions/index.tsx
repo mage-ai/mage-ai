@@ -1,12 +1,23 @@
-import { useMemo } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useMutation } from 'react-query';
 
 import Accordion, { AccordionPanel } from '@oracle/components/Accordion';
+import Button from '@oracle/elements/Button';
+import CsvExport from '@oracle/components/CsvExport';
 import FeatureSetType, { ColumnFeatureSetType } from '@interfaces/FeatureSetType';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import SuggestionType from '@interfaces/SuggestionType';
 import TransformerActionType from '@interfaces/TransformerActionType';
+import api from '@api';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
+import { onError, onSuccess, parseError } from '@api/utils/response';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -24,8 +35,13 @@ function Suggestions({
   removeAction,
   suggestions,
 }: SuggestionsProps) {
+  const csvLink = useRef(null);
+  const [downloadReady, setDownloadReady] = useState(false);
+  const [downloadedFeatureSet, setDownloadedFeatureSet] = useState(null);
+
   const {
     insights,
+    metadata,
     pipeline,
   } = featureSet || {};
   const {
@@ -36,6 +52,39 @@ function Suggestions({
   const featureIdMapping = useMemo(() => getFeatureIdMapping(featureSet), [featureSet]);
 
   const hasActions = Array.isArray(actions) && actions?.length >= 1;
+
+  const parseErrorFromResponse = (res) => {
+    const { code, messages } = parseError(res);
+    alert(messages?.[0] || code);
+  };
+  const errorOrSuccess = (response) => {
+    if (response.error) {
+      parseErrorFromResponse(response);
+    } else if (response.data) {
+      setDownloadedFeatureSet(response.data);
+      setDownloadReady(true);
+    } else {
+      alert('CSV download failed, please try again.');
+    }
+  };
+  const [downloadDataset, { isLoading: isLoadingDownload }] = useMutation(
+    api.downloads.feature_sets.useCreate(featureSet?.id),
+    {
+      onSuccess: errorOrSuccess,
+    },
+  );
+
+  useEffect(() => {
+    if (csvLink?.current && downloadReady) {
+      csvLink.current.click();
+      setDownloadReady(false);
+    }
+  }, [
+    downloadReady,
+    setDownloadReady,
+  ]);
+
+  const fileName = metadata?.name?.replace(/ /g, '_') || 'cleaned_dataset';
 
   return (
     <>
@@ -68,6 +117,23 @@ function Suggestions({
           })}
         </Spacing>
       )}
+
+      <Spacing mb={PADDING_UNITS}>
+        {downloadedFeatureSet && (
+          <CsvExport
+            csvData={downloadedFeatureSet}
+            filename={`${fileName}.csv`}
+            linkRef={csvLink}
+          />
+        )}
+
+        <Button
+          loading={isLoading || isLoadingDownload}
+          onClick={() => downloadDataset()}
+        >
+          Download dataset
+        </Button>
+      </Spacing>
 
       {suggestions?.length >= 1 && (
         <Accordion
