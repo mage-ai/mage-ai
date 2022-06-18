@@ -87,8 +87,6 @@ const entryTypes = [
   'Std dev',
 ];
 
-const percentages = ['Missing', 'Invalid', 'Unique'];
-
 // % thresholds, above which we warn the user
 // TODO refactor to use StatsTable.WarningType
 const warnings = {
@@ -116,6 +114,7 @@ function FeatureProfile({
     count: rowCount,
     count_distinct: numberOfUniqueValues,
     invalid_value_count: numberOfInvalidValues,
+    invalid_value_rate: invalidValueRate,
     max: maxValue,
     max_character_count: maxCharCount,
     max_word_count: maxWordCount,
@@ -125,9 +124,11 @@ function FeatureProfile({
     median: medianValue,
     mode: modeValue,
     null_value_count: numberOfNullValues,
+    null_value_rate: nullValueRate,
     outlier_count: numberOfOutliers,
     skew: skewness,
     std: stddev,
+    unique_value_rate: uniqueValueRate,
   } = featureSetStats;
 
   const entries = [
@@ -155,6 +156,12 @@ function FeatureProfile({
     'Min': `${pluralize('character', minCharCount)}`,
     'Max': `${pluralize('character', maxCharCount)}`,
     'Mean': `${pluralize('character', roundNumber(avgStringLength))}`,
+  };
+
+  const percentages = {
+    'Invalid': formatPercent(invalidValueRate),
+    'Missing': formatPercent(nullValueRate),
+    'Unique': formatPercent(uniqueValueRate),
   };
 
   return (
@@ -201,7 +208,7 @@ function FeatureProfile({
               title={isTextStat ? textTooltips[entry] : ''}
             >
               {isTextStat ? `${pluralize('word', val)}` : val}
-              {percentages.includes(entry) && ` (${formatPercent(label/rowCount)})`}
+              {entry in percentages && ` (${percentages[entry]})`}
             </Text>
           </CellStyle>
         );
