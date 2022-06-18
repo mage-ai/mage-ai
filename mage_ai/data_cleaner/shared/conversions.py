@@ -3,10 +3,13 @@ Useful conversion functions between Pandas DataFrames, numpy NDArrays, and order
 """
 
 from collections import OrderedDict
+import logging
 import numpy as np
 import pandas as pd
 import scipy
 import six.moves
+
+logger = logging.getLogger(__name__)
 
 
 def df_to_fd(x, copy=False, nan_str='null', dtype=None):
@@ -33,7 +36,9 @@ def df_to_fd(x, copy=False, nan_str='null', dtype=None):
     if copy:
         if dtype:
             if isinstance(dtype, list):
-                assert len(dtype) == len(list(x)), 'dtypes must be same length as there are features in DataFrame'
+                assert len(dtype) == len(
+                    list(x)
+                ), 'dtypes must be same length as there are features in DataFrame'
                 out = OrderedDict((f, x[f].values.astype(dtype[i])) for i, f in enumerate(list(x)))
                 for feat in nan_indices:
                     out[feat][nan_indices[feat]] = nan_str
@@ -54,7 +59,7 @@ def df_to_fd(x, copy=False, nan_str='null', dtype=None):
         try:
             out[feat][nan_indices[feat]] = nan_str
         except ValueError:
-            print(feat, x[feat].dtype)
+            logger.exception(feat, x[feat].dtype)
     return out
 
 
@@ -105,7 +110,11 @@ def np_to_fd(x, axes=None, feature_names=None, copy=True, dtype=None):
     # creates a non-contiguous array in memory for each feature we extract (which breaks some stuff)
     if copy:
         view_t = np.ascontiguousarray(view_t, dtype)
-    cols = feature_names if feature_names else ['c' + str(i) for i in six.moves.xrange(view_t.shape[0])]
+    cols = (
+        feature_names
+        if feature_names
+        else ['c' + str(i) for i in six.moves.xrange(view_t.shape[0])]
+    )
     return OrderedDict((cols[i], view_t[i]) for i in six.moves.xrange(view_t.shape[0]))
 
 
@@ -137,14 +146,9 @@ def as_scalar(x, str_encoding='utf-8'):
         int,
         bool,
         np.bool,  # an alias for Python bool but needed here separately
-        str
+        str,
     ]
-    NUMPY_SCALAR_TYPES = [
-        np.bool_,
-        np.str_,
-        np.floating,
-        np.integer
-    ]
+    NUMPY_SCALAR_TYPES = [np.bool_, np.str_, np.floating, np.integer]
     if type(x) in PYTHON_SCALAR_TYPES:
         return x
     elif isinstance(x, tuple(NUMPY_SCALAR_TYPES)):
@@ -193,11 +197,16 @@ def fd_to_np(x, method='column_stack', axis=None, dtype=None):
         elif isinstance(x[feature], scipy.sparse.csr_matrix):
             x[feature] = sparse_to_dense(x[feature])
         else:
-            raise ValueError('Unsupported container tensor type in feature dict: {}'.format(str(type(x[feature]))))
+            raise ValueError(
+                'Unsupported container tensor type in feature dict: {}'.format(
+                    str(type(x[feature]))
+                )
+            )
         if first_shape is None:
             first_shape = x[feature].shape
-        assert first_shape[0] == x[feature].shape[0], 'incompatible shapes: {}, {}'.format(first_shape,
-                                                                                           x[feature].shape)
+        assert first_shape[0] == x[feature].shape[0], 'incompatible shapes: {}, {}'.format(
+            first_shape, x[feature].shape
+        )
     if method == 'column_stack':
         out = np.column_stack([(x[key]) for key in x])
     elif method == 'stack':
@@ -252,7 +261,10 @@ def cast_fd(x, dtype, order='C'):
                 o[feat] = np.array(x[feat]).astype(dtype=dtype, order=order)
             else:
                 raise ValueError(
-                    'Can only cast lists or numpy arrays. Key {} is of type {}'.format(feat, str(type(x[feat]))))
+                    'Can only cast lists or numpy arrays. Key {} is of type {}'.format(
+                        feat, str(type(x[feat]))
+                    )
+                )
         else:
             o[feat] = x[feat].astype(dtype=dtype, order=order)
     return o
@@ -295,8 +307,7 @@ def to_list(feature):
     :return: the corresponding data in native python type
     """
     if isinstance(feature, list):
-        return [each.item() if isinstance(each, np.generic) else each
-                for each in feature]
+        return [each.item() if isinstance(each, np.generic) else each for each in feature]
     elif isinstance(feature, (np.ndarray, pd.Series)):
         return feature.tolist()
     # handle the unlikely default case: feature_rows is not a list nor ndarray or pandas series

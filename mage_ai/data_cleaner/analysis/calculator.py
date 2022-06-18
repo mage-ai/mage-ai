@@ -4,11 +4,11 @@ from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
 )
-from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-import traceback
+import logging
 
 DD_KEY = 'lambda.analysis_calculator'
 TIMESERIES_COLUMN_TYPES = frozenset(
@@ -22,6 +22,8 @@ TIMESERIES_COLUMN_TYPES = frozenset(
 )
 VERBOSE = False
 
+logger = logging.getLogger(__name__)
+
 
 def increment(metric, tags={}):
     pass
@@ -33,16 +35,22 @@ class AnalysisCalculator:
         df,
         column_types,
         statistics,
+        verbose=False,
         **kwargs,
     ):
         self.df = df
         self.column_types = column_types
         self.features = [{'uuid': col, 'column_type': column_types.get(col)} for col in df.columns]
+        self.verbose = verbose
 
     def process(self, df, is_clean=False):
-        increment(f'{DD_KEY}.process.start', self.tags)
+        with VerboseFunctionExec('Generating visualizations', verbose=self.verbose):
+            return self.__process(df, is_clean=is_clean)
 
+    def __process(self, df, is_clean=False):
+        increment(f'{DD_KEY}.process.start', self.tags)
         df_columns = df.columns
+
         features_to_use = self.features
         datetime_features_to_use = [f for f in self.datetime_features if f['uuid'] in df_columns]
         numeric_features_to_use = self.numeric_features
@@ -121,8 +129,7 @@ class AnalysisCalculator:
             try:
                 return self.calculate_column_internal(df, feature)
             except Exception:
-                print(f'Failed to calculate stats for column {feature}')
-                traceback.print_exc()
+                logger.exception(f'Failed to calculate stats for column {feature}')
                 return {
                     'feature': feature,
                     DATA_KEY_CHARTS: [],

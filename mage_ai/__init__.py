@@ -10,10 +10,13 @@ from mage_ai.server.app import (
     launch as launch_flask,
 )
 from mage_ai.server.constants import SERVER_PORT
+import logging
 import os
 
 IFRAME_HEIGHT = 1000
 MAX_NUM_OF_ROWS = 100_000
+
+logger = logging.getLogger(__name__)
 
 
 class NotebookType(str, Enum):
@@ -70,9 +73,12 @@ def display_inline_iframe(host=None, port=None, notebook_type=None, config={}):
 
     if notebook_type == NotebookType.GOOGLE_COLAB:
         from google.colab.output import eval_js
+
         path_to_server = eval_js(f'google.colab.kernel.proxyPort({SERVER_PORT})')
         __print_url()
-        display(Javascript("""
+        display(
+            Javascript(
+                """
             (async ()=>{
                 fm = document.createElement('iframe')
                 fm.src = await google.colab.kernel.proxyPort(%s)
@@ -81,7 +87,10 @@ def display_inline_iframe(host=None, port=None, notebook_type=None, config={}):
                 fm.frameBorder = 0
                 document.body.append(fm)
             })();
-            """ % (SERVER_PORT, IFRAME_HEIGHT)))
+            """
+                % (SERVER_PORT, IFRAME_HEIGHT)
+            )
+        )
     elif notebook_type == NotebookType.DATABRICKS:
         required_args = [
             'cluster_id',
@@ -91,21 +100,23 @@ def display_inline_iframe(host=None, port=None, notebook_type=None, config={}):
         ]
         for arg in required_args:
             if arg not in config:
-                print(f'Parameter "{arg}" is required to generate proxy url.')
+                logger.error(f'Parameter "{arg}" is required to generate proxy url.')
                 return
         databricks_host = config.get('databricks_host')
         cluster_id = config.get('cluster_id')
         workspace_id = config.get('workspace_id')
         token = config.get('token')
-        path_to_server = f'https://{databricks_host}/driver-proxy-api/o/'\
-                         f'{workspace_id}/{cluster_id}/{port}/?token={token}'
+        path_to_server = (
+            f'https://{databricks_host}/driver-proxy-api/o/'
+            f'{workspace_id}/{cluster_id}/{port}/?token={token}'
+        )
         __print_url()
     else:
         __print_url()
         display(IFrame(path_to_server, width='95%', height=1000))
 
 
-def connect_data(df, name):
+def connect_data(df, name, verbose=False):
     if is_spark_dataframe(df):
         # Convert pyspark dataframe to pandas
         df_spark = df
@@ -117,27 +128,31 @@ def connect_data(df, name):
             df = df_spark.toPandas()
 
     if df.shape[0] > MAX_NUM_OF_ROWS:
-        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name)
+        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name, verbose=verbose)
     else:
-        feature_set, _ = connect_df(df, name)
+        feature_set, _ = connect_df(df, name, verbose=verbose)
     return feature_set
 
 
 def clean(
     df,
+    name=None,
     pipeline_uuid=None,
     pipeline_path=None,
     remote_pipeline_uuid=None,
     api_key=None,
+    verbose=False,
 ):
     if pipeline_uuid is not None:
-        df_clean = clean_df_with_pipeline(df, id=pipeline_uuid)
+        df_clean = clean_df_with_pipeline(df, id=pipeline_uuid, verbose=verbose)
     elif pipeline_path is not None:
-        df_clean = clean_df_with_pipeline(df, path=pipeline_path)
+        df_clean = clean_df_with_pipeline(df, path=pipeline_path, verbose=verbose)
     elif remote_pipeline_uuid is not None:
-        df_clean = clean_df_with_pipeline(df, remote_id=remote_pipeline_uuid, mage_api_key=api_key)
+        df_clean = clean_df_with_pipeline(
+            df, remote_id=remote_pipeline_uuid, mage_api_key=api_key, verbose=verbose
+        )
     else:
-        _, df_clean = clean_df(df)
+        _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
 

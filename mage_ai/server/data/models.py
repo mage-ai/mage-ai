@@ -3,9 +3,11 @@ from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.data.base import Model
+import logging
 import os
 import os.path
 
+logger = logging.getLogger(__name__)
 
 # right now, we are writing the models to local files to reduce dependencies
 class FeatureSet(Model):
@@ -152,7 +154,7 @@ class FeatureSet(Model):
         try:
             self.write_json_file(f'{version}.json', version_snapshot, subdir='versions')
         except Exception:
-            print(f'Failed to write snapshot v{version} for feature set {self.id}')
+            logger.exception(f'Failed to write snapshot v{version} for feature set {self.id}')
         return version_snapshot
 
     def to_dict(self, column=None, detailed=True, version=None):
@@ -251,7 +253,7 @@ class Pipeline(Model):
     @pipeline.setter
     def pipeline(self, pipeline):
         return self.write_json_file('pipeline.json', pipeline.actions)
-    
+
     def get_feature_set(self):
         feature_set_id = self.metadata.get('feature_set_id')
         if feature_set_id is not None:

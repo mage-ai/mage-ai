@@ -5,6 +5,9 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     NameConventionPatterns,
 )
 from keyword import iskeyword
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def clean_column_name(name):
@@ -78,4 +81,6 @@ def generate_string_cols(df, columns):
         if exact_dtype is str:
             yield column
         else:
-            print(f'Attempted to perform string-only action on non-string column \'{column}\'')
+            logger.warn(
+                f'Attempted to perform string-only action on non-string column \'{column}\''
+            )

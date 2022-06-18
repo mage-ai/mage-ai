@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
+from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_PORT
@@ -50,8 +51,7 @@ def rescue_errors(endpoint, error_code=500):
                 status=200,
                 mimetype='application/json',
             )
-            log.error('An error was caught and reported to the client: ')
-            log.error(exception)
+            log.exception('An error was caught and reported to the client: ')
         return response
 
     return handler
@@ -312,6 +312,7 @@ def update_pipeline(id):
             df_transformed,
             column_types=feature_set.metadata.get('column_types', {}),
             transform=False,
+            verbose=True,
         )
         prev_version = len(pipeline.pipeline.actions)
         pipeline.pipeline = clean_pipeline
@@ -336,34 +337,42 @@ def update_pipeline(id):
 #     return feature_set.column(column_name)
 
 
-def clean_df(df, name):
+def clean_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
-    result = clean_data(df)
+    result = clean_data(df, verbose=verbose)
 
     feature_set.write_files(result)
     return (feature_set, result['df'])
 
 
-def clean_df_with_pipeline(df, id=None, path=None, remote_id=None, mage_api_key=None):
+def clean_df_with_pipeline(
+    df, id=None, path=None, remote_id=None, mage_api_key=None, verbose=False
+):
     pipeline = None
     if id is not None:
-        pipeline = Pipeline(id=id).pipeline
+        with VerboseFunctionExec(f'Loading pipeline with uuid \'{id}\' from file', verbose=verbose):
+            pipeline = Pipeline(id=id).pipeline
     elif path is not None:
-        pipeline = Pipeline(path=path).pipeline
+        with VerboseFunctionExec(f'Loading pipeline from path \'{path}\'', verbose=verbose):
+            pipeline = Pipeline(path=path).pipeline
     elif remote_id is not None:
-        final_key = mage_api_key if mage_api_key is not None else api_key
-        pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
+        with VerboseFunctionExec(
+            f'Loading pipeline \'{remote_id}\' from Mage servers', verbose=verbose
+        ):
+            final_key = mage_api_key if mage_api_key is not None else api_key
+            pipeline = BasePipeline(actions=Mage().get_pipeline_actions(remote_id, final_key))
     if pipeline is None:
-        print('Please provide a valid pipeline id or config path.')
+        log.error('Please provide a valid pipeline id or config path.')
         return df
+    pipeline.verbose = verbose
     return pipeline.transform(df, auto=False)
 
 
-def connect_df(df, name):
+def connect_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
-    result = clean_data(df, transform=False)
+    result = clean_data(df, transform=False, verbose=verbose)
 
     feature_set.write_files(result, write_orig_data=True)
     return (feature_set, df)

@@ -2,12 +2,12 @@ from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_e
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.logger import timer
+from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 import math
 import numpy as np
 import pandas as pd
-import traceback
+import logging
 
 
 EMAIL_DOMAIN_REGEX = r'\@([^\s]*)'
@@ -17,6 +17,8 @@ OUTLIER_ZSCORE_THRESHOLD = 3
 PUNCTUATION = r'[:;\.,\/\\&`"\'\(\)\[\]\{\}]'
 STOP_WORD_LIST = frozenset(['is', 'and', 'yet', 'but', 'a', 'or', 'nor', 'not', 'to', 'the'])
 VALUE_COUNT_LIMIT = 20
+
+logger = logging.getLogger(__name__)
 
 
 def increment(metric, tags):
@@ -34,9 +36,11 @@ class StatisticsCalculator:
         # object_key_prefix,
         # feature_set_version,
         column_types,
+        verbose=False,
         **kwargs,
     ):
         self.column_types = column_types
+        self.verbose = verbose
 
     @property
     def data_tags(self):
@@ -50,7 +54,38 @@ class StatisticsCalculator:
             'statistics.calculate_statistics_overview.start',
             self.data_tags,
         )
+        with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
+            return self.__calculate_statistics_overview(df, is_clean=is_clean)
 
+        return data
+
+    def null_seq_gen(self, arr):
+        prev = -1
+        for is_null in arr:
+            if is_null:
+                prev += 1
+            else:
+                prev = 0
+            yield prev
+
+    def statistics_overview(self, series, col):
+        try:
+            return self.__statistics_overview(series, col)
+        except Exception as err:
+            increment(
+                'statistics.calculate_statistics_overview.column.failed',
+                merge_dict(
+                    self.data_tags,
+                    {
+                        'col': col,
+                        'error': err.__class__.__name__,
+                    },
+                ),
+            )
+            logger.exception(f'An error was caught while processing statistics: {err}')
+            return {}
+
+    def __calculate_statistics_overview(self, df, is_clean=True):
         with timer('statistics.calculate_statistics_overview.time', self.data_tags, verbose=False):
             if not is_clean:
                 df = clean_dataframe(df, self.column_types, dropna=False)
@@ -120,32 +155,6 @@ class StatisticsCalculator:
         )
 
         return data
-
-    def null_seq_gen(self, arr):
-        prev = -1
-        for is_null in arr:
-            if is_null:
-                prev += 1
-            else:
-                prev = 0
-            yield prev
-
-    def statistics_overview(self, series, col):
-        try:
-            return self.__statistics_overview(series, col)
-        except Exception as err:
-            increment(
-                'statistics.calculate_statistics_overview.column.failed',
-                merge_dict(
-                    self.data_tags,
-                    {
-                        'col': col,
-                        'error': err.__class__.__name__,
-                    },
-                ),
-            )
-            traceback.print_exc()
-            return {}
 
     def __evaluate_timeseries(self, data):
         indices = []
@@ -218,7 +227,6 @@ class StatisticsCalculator:
                 data[f'{col}/sum'] = series_non_null.sum()
                 data[f'{col}/skew'] = series_non_null.skew()
                 data[f'{col}/std'] = series_non_null.std()
-
                 # detect outliers
                 if data[f'{col}/std'] == 0:
                     data[f'{col}/outlier_count'] = 0

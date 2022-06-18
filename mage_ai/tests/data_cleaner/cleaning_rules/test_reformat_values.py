@@ -239,7 +239,6 @@ class ReformatValuesCleaningRuleTests(TestCase):
         # date3 and date4 are detected as text type.
         # TODO: Update column_type_detector to detect date3 and date4 as datetime type.
         column_types = infer_column_types(df)
-        print(column_types)
         statistics = {
             'date1/count': 5,
             'date2/count': 4,
