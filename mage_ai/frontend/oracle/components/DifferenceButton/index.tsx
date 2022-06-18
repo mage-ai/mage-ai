@@ -8,12 +8,15 @@ import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export type ProgressIconProps = {
-  percentage?: number;
+export type DifferenceButtonProps = {
   danger?: boolean;
+  decrease?: boolean;
+  increase?: boolean;
+  percentage?: number;
+  success?: boolean;
 };
 
-const ProgressIconStyle = styled.p<ProgressIconProps>`a
+const DifferenceButtonStyle = styled.p<DifferenceButtonProps>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
   display: inline;
   font-family: ${MONO_FONT_FAMILY_REGULAR};
@@ -23,15 +26,16 @@ const ProgressIconStyle = styled.p<ProgressIconProps>`a
 
 const ICON_SIZE = UNIT * 2;
 
-const ProgressIcon = ({
+const DifferenceButton = ({
   ...props
-}: ProgressIconProps) => (
-  <ProgressIconStyle>
+}: DifferenceButtonProps) => (
+  <DifferenceButtonStyle>
     {props.danger
       ?
         <Button
           afterIcon={<ArrowDown negative size={ICON_SIZE}/>}
           danger
+          notClickable
           padding="2px 6px"
         >
           <Text danger>
@@ -41,6 +45,7 @@ const ProgressIcon = ({
       :
         <Button
           afterIcon={<ArrowUp positive size={ICON_SIZE} />}
+          notClickable
           padding="2px 6px"
           success
         >
@@ -49,7 +54,7 @@ const ProgressIcon = ({
           </Text>
         </Button>
     }
-  </ProgressIconStyle>
+  </DifferenceButtonStyle>
 );
 
-export default ProgressIcon;
+export default DifferenceButton;

@@ -59,18 +59,20 @@ function ColumnReports({
 
   const qualityMetrics: StatRow[] = [
     {
+      columnFlexNumbers: [2, 1, 2],
       name: 'Validity',
-      rate: validity,
       progress: true,
+      rate: validity,
       warning: {
         compare: lessThan,
         val: 0.8,
       },
     },
     {
+      columnFlexNumbers: [2, 1, 2],
       name: 'Completeness',
-      rate: completeness,
       progress: true,
+      rate: completeness,
       warning: {
         compare: lessThan,
         val: 0.8,

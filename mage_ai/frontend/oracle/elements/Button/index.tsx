@@ -27,6 +27,7 @@ export type ButtonProps = {
   noBorder?: boolean;
   noBorderRight?: boolean;
   noPadding?: boolean;
+  notClickable?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
@@ -56,6 +57,13 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.noPadding && `
     padding: 0;
+  `}
+
+  ${props => props.notClickable && `
+    &:hover,
+    &:focus {
+      cursor: default;
+    }
   `}
 
   ${props => !props.basic && `

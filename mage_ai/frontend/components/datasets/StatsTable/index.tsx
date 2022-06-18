@@ -1,7 +1,7 @@
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import ProgressBar from '@oracle/components/ProgressBar';
-import ProgressIcon from '@oracle/components/ProgressIcon';
+import DifferenceButton from '@oracle/components/DifferenceButton';
 import Spacing from '@oracle/elements/Spacing';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
@@ -46,16 +46,18 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={columnFlexNumbers || [2, 1, 2, 1]} key={name}>
+          <RowCard columnFlexNumbers={columnFlexNumbers || [1, 1, 1]} key={name}>
             <Text>{name}</Text>
             <>
               {value !== undefined &&
-                <Text {...warn}>
-                  {value}
-                </Text>
+                <Spacing pr={1}>
+                  <Text {...warn}>
+                    {value}
+                  </Text>
+                </Spacing>
               }
               {rate !== undefined &&
-                <Spacing px={1}>
+                <Spacing pr={1}>
                   <Text {...warn}>
                     {stylePercent(value, rate)}
                   </Text>
@@ -63,7 +65,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
               }
               {change &&
                 <Spacing pr={1}>
-                  <ProgressIcon
+                  <DifferenceButton
                     danger={change < 0}
                     percentage={Math.abs(change)}
                   />

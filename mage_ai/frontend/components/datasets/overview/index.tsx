@@ -169,7 +169,7 @@ function DatasetOverview({
     },
     {
       change: changes['empty_column_rate'],
-      columnFlexNumbers: [1, 1],
+      columnFlexNumbers: [2, 3],
       name: 'Empty columns',
       rate: emptyColumnRate,
       value: emptyColumnCount,
@@ -180,7 +180,7 @@ function DatasetOverview({
     },
     {
       change: changes['total_null_value_rate'],
-      columnFlexNumbers: [1, 1],
+      columnFlexNumbers: [2, 3],
       name: 'Missing cells',
       rate: totalNullValueRate,
       value: totalNullValueCount,
@@ -191,7 +191,7 @@ function DatasetOverview({
     },
     {
       change: changes['total_invalid_value_rate'],
-      columnFlexNumbers: [1, 1],
+      columnFlexNumbers: [2, 3],
       name: 'Invalid cells',
       rate: totalInvalidValueRate,
       value: totalInvalidValueCount,
@@ -202,7 +202,7 @@ function DatasetOverview({
     },
     {
       change: changes['duplicate_row_rate'],
-      columnFlexNumbers: [1, 1],
+      columnFlexNumbers: [2, 3],
       name: 'Duplicate rows',
       rate: duplicateRowRate,
       value: duplicateRowCount,
