@@ -45,52 +45,53 @@ class AnalysisCalculator:
 
     def process(self, df, is_clean=False):
         with VerboseFunctionExec('Generating visualizations', verbose=self.verbose):
-            increment(f'{DD_KEY}.process.start', self.tags)
+            return self.__process(df, is_clean=is_clean)
 
-            df_columns = df.columns
-            features_to_use = self.features
-            datetime_features_to_use = [
-                f for f in self.datetime_features if f['uuid'] in df_columns
-            ]
-            numeric_features_to_use = self.numeric_features
+    def __process(self, df, is_clean=False):
+        increment(f'{DD_KEY}.process.start', self.tags)
+        df_columns = df.columns
 
-            if not is_clean:
-                df_clean = clean_dataframe(df, self.column_types, dropna=False)
-            else:
-                df_clean = df
+        features_to_use = self.features
+        datetime_features_to_use = [f for f in self.datetime_features if f['uuid'] in df_columns]
+        numeric_features_to_use = self.numeric_features
 
-            arr_args_1 = ([df_clean for _ in features_to_use],)
-            arr_args_2 = (features_to_use,)
+        if not is_clean:
+            df_clean = clean_dataframe(df, self.column_types, dropna=False)
+        else:
+            df_clean = df
 
-            data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
+        arr_args_1 = ([df_clean for _ in features_to_use],)
+        arr_args_2 = (features_to_use,)
 
-            correlation_data = self.calculate_correlation_data(df)
-            time_series_charts = self.calculate_timeseries_data(df)
-            for d in data_for_columns:
-                fuuid = d['feature']['uuid']
-                if fuuid in correlation_data:
-                    d[DATA_KEY_CORRELATION] = correlation_data[fuuid]
-                if fuuid in time_series_charts:
-                    d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
+        data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
 
-            overview = charts.build_overview_data(
-                df,
-                datetime_features_to_use,
-                numeric_features_to_use,
-            )
+        correlation_data = self.calculate_correlation_data(df)
+        time_series_charts = self.calculate_timeseries_data(df)
+        for d in data_for_columns:
+            fuuid = d['feature']['uuid']
+            if fuuid in correlation_data:
+                d[DATA_KEY_CORRELATION] = correlation_data[fuuid]
+            if fuuid in time_series_charts:
+                d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
 
-            correlation_overview = []
-            for d in data_for_columns:
-                corr = d.get(DATA_KEY_CORRELATION)
-                if corr:
-                    correlation_overview.append(
-                        {
-                            'feature': d['feature'],
-                            DATA_KEY_CORRELATION: corr,
-                        }
-                    )
+        overview = charts.build_overview_data(
+            df,
+            datetime_features_to_use,
+            numeric_features_to_use,
+        )
 
-            increment(f'{DD_KEY}.process.succeeded', self.tags)
+        correlation_overview = []
+        for d in data_for_columns:
+            corr = d.get(DATA_KEY_CORRELATION)
+            if corr:
+                correlation_overview.append(
+                    {
+                        'feature': d['feature'],
+                        DATA_KEY_CORRELATION: corr,
+                    }
+                )
+
+        increment(f'{DD_KEY}.process.succeeded', self.tags)
 
         return data_for_columns, merge_dict(
             overview,
