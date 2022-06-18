@@ -28,6 +28,11 @@ Jupyter Lab is running on [http://127.0.0.1:8888/lab](http://127.0.0.1:8888/lab)
 Look at your terminal and find a corresponding URL with a token in the URL parameter;
 e.g. `http://127.0.0.1:8888/lab?token=`.
 
+#### Example notebook
+
+Open the `example.ipynb` notebook for an interactive Python environment and connect your data
+to the app.
+
 ### Front-end UI
 
 #### Install Homebrew (if you haven't already)
