@@ -134,7 +134,7 @@ Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a mas
 1. [Cleaning actions](#cleaning-actions)
 1. [Data cleaning suggestions](#data-cleaning-suggestions)
 
-### Data visualizations
+### 1. Data visualizations
 Inspect your data using different charts (e.g. time series, bar chart, box plot, etc.).
 
 Here’s a list of available [charts](docs/charts/README.md).
@@ -146,7 +146,7 @@ Here’s a list of available [charts](docs/charts/README.md).
   />
 </kbd>
 
-### Reports
+### 2. Reports
 Quickly diagnose data quality issues with summary reports.
 
 Here’s a list of available [reports](docs/reports/README.md).
@@ -158,7 +158,7 @@ Here’s a list of available [reports](docs/reports/README.md).
   />
 </kbd>
 
-### Cleaning actions
+### 3. Cleaning actions
 Easily add common cleaning functions to your pipeline with a few clicks.
 Cleaning actions include imputing missing values, reformatting strings, removing duplicates,
 and many more.
@@ -175,7 +175,7 @@ Here’s a list of available [cleaning actions](docs/actions/README.md).
   />
 </kbd>
 
-### Data cleaning suggestions
+### 4. Data cleaning suggestions
 The tool will automatically suggest different ways to clean your data and improve quality metrics.
 
 Here’s a list of available [suggestions](docs/suggestions/README.md).
@@ -211,7 +211,7 @@ Got questions? Live chat with us in
 
 Anything you contribute, the Mage team and community will maintain. We’re in it together!
 
-# Community
+# 🧙 Community
 We love the community of Magers (`/ˈmājər/`);
 a group of mages who help each other realize their full potential!
 
@@ -225,7 +225,7 @@ For real-time news and fun memes, check out the Mage
 To report bugs or add your awesome code for others to enjoy,
 visit [GitHub](https://github.com/mage-ai/mage-ai).
 
-# 🧙 License
+# 🪪 License
 See the [LICENSE](LICENSE) file for licensing information.
 
 <br />
