@@ -56,6 +56,10 @@ You can run the tool inside a Jupyter notebook cell iFrame using the method:
 Optionally, you can use the following arguments to change the default host and
 port that the iFrame loads from:
 
+##### Kill tool
+
+*To stop the tool, run this command*: `mage_ai.kill()`
+
 ```python
 mage_ai.launch(iframe_host='127.0.0.1', iframe_port=1337)
 ```
