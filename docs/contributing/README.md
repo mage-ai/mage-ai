@@ -2,7 +2,7 @@
 
 ## Setting up development environment
 
-### Using Docker
+### 🏗️ Using Docker
 
 Run the below script to build the Docker image and run all the services:
 
@@ -45,10 +45,22 @@ $ docker attach [container_id]
 
 #### Example notebook
 
-Open the `example.ipynb` notebook for an interactive Python environment and connect your data
+Open the [example.ipynb](../../example.ipynb) notebook for an interactive Python environment and connect your data
 to the app.
 
-### Front-end UI
+##### Using tool in Jupyter notebook cell
+
+You can run the tool inside a Jupyter notebook cell iFrame using the method:
+`mage_ai.launch()` within a single cell.
+
+Optionally, you can use the following arguments to change the default host and
+port that the iFrame loads from:
+
+```python
+mage_ai.launch(iframe_host='127.0.0.1', iframe_port=1337)
+```
+
+### 🖥️ Setting up the front-end UI
 
 #### Install Homebrew (if you haven't already)
 Directions at [brew.sh](https://brew.sh/).
@@ -108,7 +120,7 @@ $ yarn run dev
 
 Now visit [http://localhost:3000/datasets](http://localhost:3000/datasets) to view the tool.
 
-### Backend server
+### 🗄️ Setting up the backend server
 
 #### Install Python packages
 
@@ -162,7 +174,7 @@ sys.path.append('/absolute_path_to_repo/mage-ai')
 import mage_ai
 ```
 
-### Sample data
+### 💾 Sample data
 Load sample datasets to test and play with.
 
 ```python

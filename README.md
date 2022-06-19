@@ -74,28 +74,6 @@ Open [http://localhost:5789](http://localhost:5789) in your browser to access th
 
 To stop the tool, run this command: `mage_ai.kill()`
 
-#### Custom host and port for tool
-
-If you want to change the default host (`localhost`) and the default port (`5789`)
-that the tool runs on, you can set 2 separate environment variables:
-
-```bash
-$ export HOST=127.0.0.1
-$ export PORT=1337
-```
-
-#### Using tool in Jupyter notebook cell
-
-You can run the tool inside a Jupyter notebook cell iFrame using the method:
-`mage_ai.launch()` within a single cell.
-
-Optionally, you can use the following arguments to change the default host and
-port that the iFrame loads from:
-
-```python
-mage_ai.launch(iframe_host='127.0.0.1', iframe_port=1337)
-```
-
 ### 3. Cleaning data
 After building a data cleaning pipeline from the UI,
 you can clean your data anywhere you can execute Python code:
