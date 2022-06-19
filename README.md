@@ -33,14 +33,14 @@ Using a data cleaning tool enables you to quickly visualize data quality issues,
 easily fix them, and create repeatable data cleaning pipelines that can be used in
 production environments (e.g. online re-training, inference, etc).
 
-# Table of contents
+# 📖 Table of contents
 1. [Quick start](#quick-start)
 1. [Features](#features)
 1. [Roadmap](#roadmap)
 1. [Contributing](#contributing)
 1. [Community](#community)
 
-# Quick start
+# 🏃‍♀️ Quick start
 
 - Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
 - Try a **[hosted version of Mage](http://18.237.55.91:5789/)**
@@ -127,7 +127,7 @@ Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to 
 
 Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
 
-# Features
+# 🔮 Features
 
 1. [Data visualizations](#data-visualizations)
 1. [Reports](#reports)
@@ -187,7 +187,7 @@ Here’s a list of available [suggestions](docs/suggestions/README.md).
   />
 </kbd>
 
-# Roadmap
+# 🗺️ Roadmap
 Big features being worked on or in the design phase.
 
 1. Encoding actions (e.g. one-hot encoding, label hasher, ordinal encoding, embeddings, etc.)
@@ -197,7 +197,7 @@ Big features being worked on or in the design phase.
 Here’s a detailed list of [🪲 features and bugs](https://airtable.com/shrwN5wDuDuPScPut/tblAlH31g7dYRjmoZ)
 that are in progress or upcoming.
 
-# Contributing
+# 🙋‍♀️ Contributing
 We welcome all contributions to Mage;
 from small UI enhancements to brand new cleaning actions.
 We love seeing community members level up and give people power-ups!
@@ -225,7 +225,7 @@ For real-time news and fun memes, check out the Mage
 To report bugs or add your awesome code for others to enjoy,
 visit [GitHub](https://github.com/mage-ai/mage-ai).
 
-# License
+# 🧙 License
 See the [LICENSE](LICENSE) file for licensing information.
 
 <br />
