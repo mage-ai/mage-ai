@@ -24,21 +24,12 @@ prepare it for training AI/ML models.
 > Join us on
 > **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
 
-### What does this do?
-The current version of Mage includes a data cleaning UI tool that can run locally on your laptop or
-can be hosted in your own cloud environment.
-
-### Why should I use it?
-Using a data cleaning tool enables you to quickly visualize data quality issues,
-easily fix them, and create repeatable data cleaning pipelines that can be used in
-production environments (e.g. online re-training, inference, etc).
-
-# 📖 Table of contents
-1. [Quick start](#quick-start)
-1. [Features](#features)
-1. [Roadmap](#roadmap)
-1. [Contributing](#contributing)
-1. [Community](#community)
+### Table of contents
+1. [Quick start](#%EF%B8%8F-quick-start)
+1. [Features](#-features)
+1. [Roadmap](#%EF%B8%8F-roadmap)
+1. [Contributing](#%EF%B8%8F-contributing)
+1. [Community](#-community)
 
 # 🏃‍♀️ Quick start
 
