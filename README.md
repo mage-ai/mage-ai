@@ -24,7 +24,8 @@ prepare it for training AI/ML models.
 > Join us on
 > **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
 
-### Table of contents
+**Table of contents**
+
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Features](#-features)
 1. [Roadmap](#%EF%B8%8F-roadmap)
@@ -38,19 +39,12 @@ prepare it for training AI/ML models.
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
-### 1. Install library
-Install the most recent released version:
+### 1. Install Mage
 ```bash
 $ pip install mage-ai
 ```
 
-### 2. Launch tool
-Load your data, connect it to Mage, and launch the tool locally.
-
-
-From anywhere you can execute Python code (e.g. terminal, Jupyter notebook, etc.),
-run the following:
-
+### 2. Load and connect data
 ```python
 import mage_ai
 from mage_ai.sample_datasets import load_dataset
@@ -58,32 +52,26 @@ from mage_ai.sample_datasets import load_dataset
 
 df = load_dataset('titanic_survival.csv')
 mage_ai.connect_data(df, name='titanic dataset')
+```
+
+### 3. Launch tool
+```python
 mage_ai.launch()
 ```
 
 Open [http://localhost:5789](http://localhost:5789) in your browser to access the tool locally.
 
-To stop the tool, run this command: `mage_ai.kill()`
+If you’re launching Mage in a notebook, the tool will render in an iFrame.
 
-### 3. Cleaning data
+### 4. Clean data
 After building a data cleaning pipeline from the UI,
 you can clean your data anywhere you can execute Python code:
 
 ```python
-import mage_ai
-from mage_ai.sample_datasets import load_dataset
-
-
-df = load_dataset('titanic_survival.csv')
-
-# Option 1: Clean with pipeline uuid
-df_cleaned = mage_ai.clean(df, pipeline_uuid='uuid_of_cleaning_pipeline')
-
-# Option 2: Clean with pipeline config directory path
-df_cleaned = mage_ai.clean(df, pipeline_config_path='/path_to_pipeline_config_dir')
+mage_ai.clean(df, pipeline_uuid='pipeline name')
 ```
 
-### Demo video (2 min)
+## Demo video (2 min)
 
 [![Mage quick start demo](media/mage-demo-quick-start-youtube-preview.png)](https://www.youtube.com/watch?v=cRib1zOaqWs "Mage quick start demo")
 
@@ -98,10 +86,10 @@ Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a mas
 
 # 🔮 Features
 
-1. [Data visualizations](#data-visualizations)
-1. [Reports](#reports)
-1. [Cleaning actions](#cleaning-actions)
-1. [Data cleaning suggestions](#data-cleaning-suggestions)
+1. [Data visualizations](#1-data-visualizations)
+1. [Reports](#2-reports)
+1. [Cleaning actions](#3-cleaning-actions)
+1. [Data cleaning suggestions](#4-data-cleaning-suggestions)
 
 ### 1. Data visualizations
 Inspect your data using different charts (e.g. time series, bar chart, box plot, etc.).
