@@ -47,13 +47,13 @@ production environments (e.g. online re-training, inference, etc).
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
-### Install library
+### 1. Install library
 Install the most recent released version:
 ```bash
 $ pip install mage-ai
 ```
 
-### Launch tool
+### 2. Launch tool
 Load your data, connect it to Mage, and launch the tool locally.
 
 
@@ -96,7 +96,7 @@ port that the iFrame loads from:
 mage_ai.launch(iframe_host='127.0.0.1', iframe_port=1337)
 ```
 
-### Cleaning data
+### 3. Cleaning data
 After building a data cleaning pipeline from the UI,
 you can clean your data anywhere you can execute Python code:
 
