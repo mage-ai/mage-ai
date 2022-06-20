@@ -1,5 +1,7 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+from pandas.core.indexes.frozen import FrozenList
+from typing import Any, List, Union
 import pandas as pd
 import numpy as np
 
@@ -44,6 +46,8 @@ def clean_series(series, column_type, dropna=True):
         series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
     elif column_type == ColumnType.ZIP_CODE and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
+    elif column_type == ColumnType.LIST:
+        series_cleaned = series_cleaned.apply(parse_list)
     return series_cleaned
 
 
@@ -57,6 +61,30 @@ def is_numeric_dtype(df, column, column_type):
 
 def is_spark_dataframe(df):
     return type(df).__module__ == 'pyspark.sql.dataframe'
+
+
+def __parse_element(element: str) -> Any:
+    if element == 'nan' or element == 'np.nan':
+        return np.nan
+    else:
+        try:
+            return eval(element)
+        except:
+            return None
+
+
+def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList[Any]:
+    dtype = type(list_literal)
+    if dtype is FrozenList:
+        return list_literal
+    elif dtype in (list, tuple):
+        return FrozenList(list_literal)
+    elif dtype is not str:
+        return None
+    list_literal = list_literal.strip('[]() ')
+    if list_literal == '':
+        return FrozenList([])
+    return FrozenList([__parse_element(element) for element in list_literal.split(', ')])
 
 
 def wrap_column_name(name: str) -> str:

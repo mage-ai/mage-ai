@@ -146,7 +146,13 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
 
 
 class StringImputeSubRule(TypeImputeSubRule):
-    ACCEPTED_DTYPES = frozenset(STRING_TYPES)
+    # TODO: Give list type its own imputation strategy
+    ACCEPTED_DTYPES = frozenset(
+        (
+            *STRING_TYPES,
+            ColumnType.LIST,
+        )
+    )
     RAND_EMPTY_UB = 0.3
     MODE_PROP_LB = 0.4
 
