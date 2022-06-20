@@ -30,7 +30,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { getPercentage, transformNumber } from '@utils/number';
-import { numberWithCommas, roundNumber } from '@utils/string';
+import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;

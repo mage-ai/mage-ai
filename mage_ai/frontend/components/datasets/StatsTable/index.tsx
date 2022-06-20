@@ -16,7 +16,7 @@ export type StatRow = {
   columnFlexNumbers?: number[],
   name: string,
   progress?: boolean,
-  rate?: number | string,
+  rate?: number,
   successDirection?: SuccessDirectionEnum,
   value?: any,
   warning?: WarningType;
