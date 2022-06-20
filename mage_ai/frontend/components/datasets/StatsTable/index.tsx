@@ -1,5 +1,3 @@
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
 import ProgressBar from '@oracle/components/ProgressBar';
 import DifferenceButton from '@oracle/components/DifferenceButton';
 import Spacing from '@oracle/elements/Spacing';
@@ -8,14 +6,20 @@ import RowDataTable from '@oracle/components/RowDataTable';
 import Text from '@oracle/elements/Text';
 import { formatPercent } from '@utils/string';
 
+export enum SuccessDirectionEnum {
+  INCREASE = 'increase',
+  DECREASE = 'decrease',
+}
+
 export type StatRow = {
-  name: string,
-  value?: any,
-  rate?: number,
-  progress?: boolean,
-  warning?: WarningType;
   change?: number,
   columnFlexNumbers?: number[],
+  name: string,
+  progress?: boolean,
+  rate?: number,
+  successDirection?: SuccessDirectionEnum,
+  value?: any,
+  warning?: WarningType;
 };
 
 export type WarningType = {
@@ -33,7 +37,16 @@ const shouldWarn = (w: WarningType, n: number) => w && w.compare(n, w.val);
 function StatsTable({ stats, title }: StatsTableProps) {
   return (
     <RowDataTable alternating headerTitle={title}>
-      {stats?.map(({ name, value, rate, progress, warning, change, columnFlexNumbers }) => {
+      {stats?.map(({
+        change,
+        columnFlexNumbers,
+        name,
+        progress,
+        rate,
+        successDirection,
+        value,
+        warning,
+      }) => {
         const warn = {
           bold: shouldWarn(warning, rate),
           danger: shouldWarn(warning, rate),
@@ -66,8 +79,15 @@ function StatsTable({ stats, title }: StatsTableProps) {
               {change &&
                 <Spacing pr={1}>
                   <DifferenceButton
-                    danger={change < 0}
+                    danger={successDirection === SuccessDirectionEnum.DECREASE
+                      ? change > 0
+                      : change < 0}
+                    decrease={change < 0}
+                    increase={change > 0}
                     percentage={Math.abs(change)}
+                    success={successDirection === SuccessDirectionEnum.INCREASE
+                      ? change > 0
+                      : change < 0}
                   />
                 </Spacing>
               }

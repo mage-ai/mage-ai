@@ -38,7 +38,7 @@ import { greaterThan, indexBy, lessThan } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 import { WARNINGS } from '../constants';
-import StatsTable, { StatRow } from '../StatsTable';
+import StatsTable, { StatRow, SuccessDirectionEnum } from '../StatsTable';
 import { roundNumber } from '@utils/string';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
@@ -151,6 +151,7 @@ function DatasetOverview({
       name: 'Validity',
       progress: true,
       rate: validity,
+      successDirection: SuccessDirectionEnum.INCREASE,
       warning: {
         compare: lessThan,
         val: 0.8,
@@ -162,6 +163,7 @@ function DatasetOverview({
       name: 'Completeness',
       progress: true,
       rate: completeness,
+      successDirection: SuccessDirectionEnum.INCREASE,
       warning: {
         compare: lessThan,
         val: 0.8,
@@ -172,6 +174,7 @@ function DatasetOverview({
       columnFlexNumbers: [2, 3],
       name: 'Empty columns',
       rate: emptyColumnRate,
+      successDirection: SuccessDirectionEnum.DECREASE,
       value: emptyColumnCount,
       warning: {
         compare: greaterThan,
@@ -183,6 +186,7 @@ function DatasetOverview({
       columnFlexNumbers: [2, 3],
       name: 'Missing cells',
       rate: totalNullValueRate,
+      successDirection: SuccessDirectionEnum.DECREASE,
       value: totalNullValueCount,
       warning: {
         compare: greaterThan,
@@ -194,6 +198,7 @@ function DatasetOverview({
       columnFlexNumbers: [2, 3],
       name: 'Invalid cells',
       rate: totalInvalidValueRate,
+      successDirection: SuccessDirectionEnum.DECREASE,
       value: totalInvalidValueCount,
       warning: {
         compare: greaterThan,
@@ -205,6 +210,7 @@ function DatasetOverview({
       columnFlexNumbers: [2, 3],
       name: 'Duplicate rows',
       rate: duplicateRowRate,
+      successDirection: SuccessDirectionEnum.DECREASE,
       value: duplicateRowCount,
       warning: {
         compare: greaterThan,
