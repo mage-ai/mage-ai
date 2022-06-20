@@ -6,59 +6,82 @@ import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+
 import {
   CATEGORICAL_TYPES,
   DATE_TYPES,
   HUMAN_READABLE_MAPPING,
   METRICS_KEYS,
+  METRICS_RATE_KEY_MAPPING,
   METRICS_SORTED_MAPPING,
+  METRICS_SUCCESS_DIRECTION_MAPPING,
+  METRICS_WARNING_MAPPING,
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
-  RATIO_KEYS,
   STAT_KEYS,
   WARN_KEYS,
 } from '../constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
+import { StatRow } from '../StatsTable';
 import { TAB_REPORTS } from './index';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { createDatasetTabRedirectLink } from '@components/utils';
-import { getPercentage } from '@utils/number';
-import { numberWithCommas } from '@utils/string';
+import { getPercentage, transformNumber } from '@utils/number';
+import { numberWithCommas, roundNumber } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
 
-export function createMetricsSample(statistics, colTypes) {
-  const stats = Object.keys(statistics);
-  const types = Object.values(colTypes);
+export function createMetricsSample({
+  latestStatistics,
+  versionStatistics,
+}) {
+  const stats = Object.keys(latestStatistics);
   const metricRows = Array(METRICS_KEYS.length).fill(0);
-  const totalCells = (statistics?.count === 0 || types?.length === 0)
-    ? 1 : statistics?.count * types?.length;
 
-  stats.map((key) => {
+  stats.forEach((key) => {
     if (METRICS_KEYS.includes(key)) {
-      let bar: any[] = [false];
-      let value = statistics[key];
-      const order = HUMAN_READABLE_MAPPING[key];
+      const name = HUMAN_READABLE_MAPPING[key];
+      let value = latestStatistics[key];
+      let rate = value;
+      let progress = false;
+      let columnFlexNumbers = [2, 3];
       const index = METRICS_SORTED_MAPPING[key];
-      if (PERCENTAGE_KEYS.includes(key)) {
-        bar = [true, value * 100];
-        value = getPercentage(value);
-      } else if (RATIO_KEYS.includes(key)) {
-        value = `${value} (${getPercentage(value / totalCells)})`;
+      const successDirection = METRICS_SUCCESS_DIRECTION_MAPPING[key];
+      const warning = METRICS_WARNING_MAPPING[key];
+      let change = roundNumber(latestStatistics[key] - versionStatistics[key]);
+
+      if (PERCENTAGE_KEYS.includes(key)){
+        progress = true;
+        columnFlexNumbers = [2, 1, 2];
+      } else if (key in METRICS_RATE_KEY_MAPPING) {
+        value = transformNumber(value, 0);
+        const rateKey = METRICS_RATE_KEY_MAPPING[key];
+        rate = latestStatistics[rateKey];
+        change = roundNumber(latestStatistics[rateKey] - versionStatistics[rateKey]);
       }
-      metricRows[index] = {
-        columnValues: [order, numberWithCommas(value), bar],
+
+      const qualityMetricObj: StatRow = {
+        change: change === 0 ? null : change,
+        columnFlexNumbers,
+        name,
+        progress,
+        rate,
+        successDirection,
+        warning,
       };
+      if (!PERCENTAGE_KEYS.includes(key)) {
+        qualityMetricObj.value = value;
+      }
+
+      metricRows[index] = qualityMetricObj;
     }
   });
 
-  return {
-    rowData: metricRows,
-  };
+  return metricRows;
 }
 
 export function createStatisticsSample(statistics, colTypes) {

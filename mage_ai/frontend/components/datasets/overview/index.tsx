@@ -19,27 +19,31 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Overview from '@components/datasets/Insights/Overview';
 import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import StatsTable, { StatRow } from '../StatsTable';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import usePrevious from '@utils/usePrevious';
+
 import { BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
   COLUMN_HEADER_CHART_HEIGHT,
   buildRenderColumnHeader,
+  createMetricsSample,
   createStatisticsSample,
 } from './utils';
 import { Close } from '@oracle/icons';
 import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics, getOverallStatistics } from '@utils/models/featureSet';
+import { WARNINGS } from '../constants';
+import {
+  getFeatureSetInvalidValuesAll,
+  getFeatureSetStatistics,
+} from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import { greaterThan, indexBy, lessThan } from '@utils/array';
+import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-import { WARNINGS } from '../constants';
-import StatsTable, { StatRow, SuccessDirectionEnum } from '../StatsTable';
-import { roundNumber } from '@utils/string';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -71,7 +75,6 @@ function DatasetOverview({
   const windowWidthPrevious = usePrevious(windowWidth);
 
   const [errorMessages, setErrorMessages] = useState(null);
-  // const [changes, setChanges] = useState({});
   const qFromUrl = queryFromUrl();
   const {
     show_columns: showColumnsFromUrl,
@@ -109,108 +112,18 @@ function DatasetOverview({
     metadata,
     statistics = {},
   } = featureSet || {};
+  const {
+    column_types: columnTypes,
+  } = metadata || {};
 
   const {
     statistics: originalStatistics = {},
   } = featureSetOriginal || {};
 
-  const overallStats = getOverallStatistics(featureSet);
-  const {
-    completeness,
-    count: totalCount,
-    duplicate_row_count: duplicateRowCount,
-    duplicate_row_rate: duplicateRowRate,
-    empty_column_count: emptyColumnCount,
-    empty_column_rate: emptyColumnRate,
-    total_invalid_value_count: totalInvalidValueCount,
-    total_invalid_value_rate: totalInvalidValueRate,
-    total_null_value_count: totalNullValueCount,
-    total_null_value_rate: totalNullValueRate,
-    validity,
-  } = overallStats;
-
-  const metricChanges = Object.keys(originalStatistics).reduce((acc, k) => {
-    const result = roundNumber(statistics[k] - originalStatistics[k]);
-    if (result !== 0) {
-      acc[k] = result;
-    }
-    return acc;
-  }, {});
-
-  const qualityMetrics: StatRow[] = [
-    {
-      change: metricChanges['validity'],
-      columnFlexNumbers: [2, 1, 2],
-      name: 'Validity',
-      progress: true,
-      rate: validity,
-      successDirection: SuccessDirectionEnum.INCREASE,
-      warning: {
-        compare: lessThan,
-        val: 0.8,
-      },
-    },
-    {
-      change: metricChanges['completeness'],
-      columnFlexNumbers: [2, 1, 2],
-      name: 'Completeness',
-      progress: true,
-      rate: completeness,
-      successDirection: SuccessDirectionEnum.INCREASE,
-      warning: {
-        compare: lessThan,
-        val: 0.8,
-      },
-    },
-    {
-      change: metricChanges['empty_column_rate'],
-      columnFlexNumbers: [2, 3],
-      name: 'Empty columns',
-      rate: emptyColumnRate,
-      successDirection: SuccessDirectionEnum.DECREASE,
-      value: emptyColumnCount,
-      warning: {
-        compare: greaterThan,
-        val: 0,
-      },
-    },
-    {
-      change: metricChanges['total_null_value_rate'],
-      columnFlexNumbers: [2, 3],
-      name: 'Missing cells',
-      rate: totalNullValueRate,
-      successDirection: SuccessDirectionEnum.DECREASE,
-      value: totalNullValueCount,
-      warning: {
-        compare: greaterThan,
-        val: 0,
-      },
-    },
-    {
-      change: metricChanges['total_invalid_value_rate'],
-      columnFlexNumbers: [2, 3],
-      name: 'Invalid cells',
-      rate: totalInvalidValueRate,
-      successDirection: SuccessDirectionEnum.DECREASE,
-      value: totalInvalidValueCount,
-      warning: {
-        compare: greaterThan,
-        val: 0,
-      },
-    },
-    {
-      change: metricChanges['duplicate_row_rate'],
-      columnFlexNumbers: [2, 3],
-      name: 'Duplicate rows',
-      rate: duplicateRowRate,
-      successDirection: SuccessDirectionEnum.DECREASE,
-      value: duplicateRowCount,
-      warning: {
-        compare: greaterThan,
-        val: 0,
-      },
-    },
-  ];
+  const qualityMetrics: StatRow[] = createMetricsSample({
+    latestStatistics: statistics,
+    versionStatistics: originalStatistics,
+  });
 
   const {
     columns: columnsAll,
@@ -231,9 +144,6 @@ function DatasetOverview({
     ],
   );
 
-  const {
-    column_types: columnTypes,
-  } = metadata || {};
   const features: FeatureType[] = columnsAll?.map(uuid => ({
     columnType: columnTypes[uuid],
     uuid,
