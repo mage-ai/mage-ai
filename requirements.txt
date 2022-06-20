@@ -1,3 +1,4 @@
+beautifulsoup4
 Faker==4.14.0
 Flask==2.1.2
 Jinja2==3.1.2

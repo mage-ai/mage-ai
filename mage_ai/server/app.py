@@ -31,6 +31,15 @@ thread = None
 api_key = None
 
 
+class ServerConfig:
+    def __init__(self):
+        self.server_base_path = None
+        self.server_url_params = None
+
+
+server_config = ServerConfig()
+
+
 def rescue_errors(endpoint, error_code=500):
     def handler(*args, **kwargs):
         try:
@@ -324,12 +333,6 @@ def update_pipeline(id):
         mimetype='application/json',
     )
     return response
-
-
-# @app.route("/feature_sets/<id>/columns/<column_name>")
-# def feature_set_column(id, column_name):
-#     feature_set = FeatureSet(id=id)
-#     return feature_set.column(column_name)
 
 
 def clean_df(df, name, verbose=False):
