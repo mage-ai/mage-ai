@@ -136,7 +136,8 @@ class BaseAction:
     def execute_spark(self, df, **kwargs):
         if not PYSPARK:
             raise RuntimeError('Spark is not supported in current environment')
-        return transform_spark(df, self.action, **kwargs)
+        df = transform_spark(df, self.action, **kwargs).cache()
+        return df
 
     def groupby(self, df, action):
         def __transform_partition(pdf, actions):
