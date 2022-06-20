@@ -9,6 +9,7 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { getPercentage } from '@utils/number';
 
 export type DifferenceButtonProps = {
   danger?: boolean;
@@ -52,7 +53,7 @@ const DifferenceButton = ({
             danger={danger}
             success={success}
           >
-            {percentage}%
+            {getPercentage(percentage)}
           </Text>
           {icon && React.cloneElement(icon, {
             danger,

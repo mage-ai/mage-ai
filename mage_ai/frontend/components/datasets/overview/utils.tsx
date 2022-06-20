@@ -52,7 +52,7 @@ export function createMetricsSample({
       const index = METRICS_SORTED_MAPPING[key];
       const successDirection = METRICS_SUCCESS_DIRECTION_MAPPING[key];
       const warning = METRICS_WARNING_MAPPING[key];
-      let change = roundNumber(latestStatistics[key] - versionStatistics[key]);
+      let change = latestStatistics[key] - versionStatistics[key];
 
       if (PERCENTAGE_KEYS.includes(key)){
         progress = true;
@@ -61,7 +61,7 @@ export function createMetricsSample({
         value = transformNumber(value, 0);
         const rateKey = METRICS_RATE_KEY_MAPPING[key];
         rate = latestStatistics[rateKey];
-        change = roundNumber(latestStatistics[rateKey] - versionStatistics[rateKey]);
+        change = latestStatistics[rateKey] - versionStatistics[rateKey];
       }
 
       const qualityMetricObj: StatRow = {
