@@ -111,7 +111,7 @@ const ButtonStyle = styled.button<ButtonProps>`
     background-color: transparent; !important
   `}
 
-  ${props => !props.disabled && `
+  ${props => !props.disabled && !props.notClickable && `
     &:hover {
       border-color: ${light.interactive.hoverBorder};
     }

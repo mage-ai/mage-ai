@@ -67,7 +67,6 @@ function ColumnReports({
       name: 'Validity',
       progress: true,
       rate: validity,
-      successDirection: SuccessDirectionEnum.INCREASE,
       warning: {
         compare: lessThan,
         val: 0.8,
@@ -78,7 +77,6 @@ function ColumnReports({
       name: 'Completeness',
       progress: true,
       rate: completeness,
-      successDirection: SuccessDirectionEnum.INCREASE,
       warning: {
         compare: lessThan,
         val: 0.8,

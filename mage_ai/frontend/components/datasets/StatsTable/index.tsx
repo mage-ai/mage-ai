@@ -1,5 +1,5 @@
 import ProgressBar from '@oracle/components/ProgressBar';
-import DifferenceButton from '@oracle/components/DifferenceButton';
+import DifferenceButton from '@components/datasets/StatsTable/DifferenceButton';
 import Spacing from '@oracle/elements/Spacing';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
