@@ -71,7 +71,7 @@ function DatasetOverview({
   const windowWidthPrevious = usePrevious(windowWidth);
 
   const [errorMessages, setErrorMessages] = useState(null);
-  const [changes, setChanges] = useState({});
+  // const [changes, setChanges] = useState({});
   const qFromUrl = queryFromUrl();
   const {
     show_columns: showColumnsFromUrl,
@@ -107,11 +107,11 @@ function DatasetOverview({
   const {
     insights,
     metadata,
-    statistics,
+    statistics = {},
   } = featureSet || {};
 
   const {
-    statistics: originalStatistics,
+    statistics: originalStatistics = {},
   } = featureSetOriginal || {};
 
   const overallStats = getOverallStatistics(featureSet);
@@ -129,24 +129,17 @@ function DatasetOverview({
     validity,
   } = overallStats;
 
-  // Subtract current from original to see improvements.
-  useEffect(() => {
-    if (statistics && originalStatistics) {
-      let result;
-      const metricChanges = Object.keys(originalStatistics).reduce((a, k) => {
-        result = roundNumber(statistics[k] - originalStatistics[k]);
-        if (result !== 0) {
-          a[k] = result;
-        }
-        return a;
-      }, {});
-      setChanges(metricChanges);
+  const metricChanges = Object.keys(originalStatistics).reduce((acc, k) => {
+    const result = roundNumber(statistics[k] - originalStatistics[k]);
+    if (result !== 0) {
+      acc[k] = result;
     }
-  }, [originalStatistics, showColumnsFromUrl, statistics]);
+    return acc;
+  }, {});
 
   const qualityMetrics: StatRow[] = [
     {
-      change: changes['validity'],
+      change: metricChanges['validity'],
       columnFlexNumbers: [2, 1, 2],
       name: 'Validity',
       progress: true,
@@ -158,7 +151,7 @@ function DatasetOverview({
       },
     },
     {
-      change: changes['completeness'],
+      change: metricChanges['completeness'],
       columnFlexNumbers: [2, 1, 2],
       name: 'Completeness',
       progress: true,
@@ -170,7 +163,7 @@ function DatasetOverview({
       },
     },
     {
-      change: changes['empty_column_rate'],
+      change: metricChanges['empty_column_rate'],
       columnFlexNumbers: [2, 3],
       name: 'Empty columns',
       rate: emptyColumnRate,
@@ -182,7 +175,7 @@ function DatasetOverview({
       },
     },
     {
-      change: changes['total_null_value_rate'],
+      change: metricChanges['total_null_value_rate'],
       columnFlexNumbers: [2, 3],
       name: 'Missing cells',
       rate: totalNullValueRate,
@@ -194,7 +187,7 @@ function DatasetOverview({
       },
     },
     {
-      change: changes['total_invalid_value_rate'],
+      change: metricChanges['total_invalid_value_rate'],
       columnFlexNumbers: [2, 3],
       name: 'Invalid cells',
       rate: totalInvalidValueRate,
@@ -206,7 +199,7 @@ function DatasetOverview({
       },
     },
     {
-      change: changes['duplicate_row_rate'],
+      change: metricChanges['duplicate_row_rate'],
       columnFlexNumbers: [2, 3],
       name: 'Duplicate rows',
       rate: duplicateRowRate,
