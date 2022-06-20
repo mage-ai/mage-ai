@@ -52,12 +52,12 @@ export type TextProps = {
   noWrapping?: boolean;
   overflow?: string;
   overflowWrap?: boolean;
-  positive?: boolean;
   primary?: boolean;
   raw?: boolean;
   rightAligned?: boolean;
   secondary?: boolean;
   small?: boolean;
+  success?: boolean;
   textOverflow?: boolean;
   title?: string;
   underline?: boolean;
@@ -211,7 +211,7 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${(props.theme.interactive || light.interactive).dangerBorder};
   `}
 
-  ${props => props.positive && `
+  ${props => props.success && `
     color: ${(props.theme.status || light.status).positive};
   `}
 

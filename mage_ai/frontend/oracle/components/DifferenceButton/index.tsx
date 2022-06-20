@@ -1,6 +1,8 @@
+import React from 'react';
 import styled from 'styled-components';
 
 import Button from '@oracle/elements/Button';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { ArrowDown, ArrowUp } from '@oracle/icons';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
@@ -27,34 +29,40 @@ const DifferenceButtonStyle = styled.p<DifferenceButtonProps>`
 const ICON_SIZE = UNIT * 2;
 
 const DifferenceButton = ({
-  ...props
-}: DifferenceButtonProps) => (
-  <DifferenceButtonStyle>
-    {props.danger
-      ?
-        <Button
-          afterIcon={<ArrowDown negative size={ICON_SIZE}/>}
-          danger
-          notClickable
-          padding="2px 6px"
-        >
-          <Text danger>
-            {props.percentage}%
+  danger,
+  decrease,
+  increase,
+  percentage,
+  success,
+}: DifferenceButtonProps) => {
+  const icon = decrease
+    ? <ArrowDown />
+    : (increase && <ArrowUp />);
+
+  return (
+    <DifferenceButtonStyle>
+      <Button
+        danger={danger}
+        notClickable
+        padding="2px 6px"
+        success={success}
+      >
+        <FlexContainer alignItems="center">
+          <Text
+            danger={danger}
+            success={success}
+          >
+            {percentage}%
           </Text>
-        </Button>
-      :
-        <Button
-          afterIcon={<ArrowUp positive size={ICON_SIZE} />}
-          notClickable
-          padding="2px 6px"
-          success
-        >
-          <Text positive>
-            {props.percentage}%
-          </Text>
-        </Button>
-    }
-  </DifferenceButtonStyle>
-);
+          {icon && React.cloneElement(icon, {
+            danger,
+            size: ICON_SIZE,
+            success,
+          })}
+        </FlexContainer>
+      </Button>
+    </DifferenceButtonStyle>
+  );
+};
 
 export default DifferenceButton;

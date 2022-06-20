@@ -10,9 +10,9 @@ export type BaseIconProps = {
   earth?: boolean;
   fill?: string;
   muted?: boolean;
-  negative?: boolean;
+  danger?: boolean;
   opacity?: number;
-  positive?: boolean;
+  success?: boolean;
   primary?: boolean;
   secondary?: boolean;
   size?: number;
@@ -99,11 +99,11 @@ export const SHARED_STYLES = css<any>`
     fill: ${(props.theme.brand || light.brand).earth500};
   `}
 
-  ${props => !props.disabled && props.negative && `
+  ${props => !props.disabled && props.danger && `
     fill: ${(props.theme.status || light.status).negative};
   `}
 
-  ${props => !props.disabled && props.positive && `
+  ${props => !props.disabled && props.success && `
     fill: ${(props.theme.status || light.status).positive};
   `}
 `;
