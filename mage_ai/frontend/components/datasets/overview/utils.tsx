@@ -61,7 +61,7 @@ export function createMetricsSample({
         value = transformNumber(value, 0);
         const rateKey = METRICS_RATE_KEY_MAPPING[key];
         rate = latestStatistics[rateKey];
-        change = latestStatistics[rateKey] - versionStatistics[rateKey];
+        change = (latestStatistics[rateKey] ?? 0) - (versionStatistics[rateKey] ?? 0);
       }
 
       const qualityMetricObj: StatRow = {
