@@ -1,14 +1,13 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
-from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 import numpy as np
 
 
 class RemoveCollinearColumns(BaseRule):
-    EPSILON = 1e-12
+    EPSILON = 1e-15
     MIN_ENTRIES = 3
-    ROW_SAMPLE_SIZE = 300
-    VIF_UB = 5
+    VDP_UB = .5
+
 
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
@@ -16,29 +15,48 @@ class RemoveCollinearColumns(BaseRule):
         self.numeric_indices = np.arange(len(self.numeric_df))
 
     def evaluate(self):
+        n_cols = len(self.numeric_df)
         suggestions = []
-        if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
+        if self.numeric_df.empty or n_cols < self.MIN_ENTRIES:
             return suggestions
-        collinear_columns = []
-        self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
-        for column in self.numeric_columns[:-1]:
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
-                collinear_columns.append(column)
-                self.numeric_df.drop(column, axis=1, inplace=True)
-        if len(collinear_columns) != len(self.numeric_columns) - 1:
-            # check the final column if and only if there are other columns to compare it to
-            column = self.numeric_columns[-1]
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
-                collinear_columns.append(column)
-        if len(collinear_columns) != 0:
+
+        X = self.numeric_df.assign(bias=1.).to_numpy()
+        X /= np.linalg.norm(X, axis=0)
+        _, evecs = np.linalg.eigh(X.T @ X)
+        vdps = evecs / np.sum(evecs*evecs, axis=0)
+
+        problem = vdps < self.VDP_UB
+        for i in range(n_cols+1):
+            problem[i, i] = 0
+        problem_columns = []
+
+        # remove near-constant columns
+        near_constant = problem[:, -1] or problem[-1, :]
+        problem = problem[:-1, :-1]
+        for i in range(n_cols):
+            if near_constant[i]:
+                problem[:, i] = 0
+                problem[i, :] = 0
+                problem_columns.append(self.numeric_columns[i])
+
+        problem.astype(int)
+        c_sums = problem.sum(axis=0)
+        r_sums = problem.sum(axis=1)
+        t_sums = c_sums + r_sums
+        
+        while t_sums.sum() > 0:
+            i = np.argmax(t_sums)
+            problem[:, i] = 0
+            problem[i, :] = 0
+            problem_columns.append(self.numeric_columns[i])
+
+        if len(problem_columns) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
-                    'Remove collinear columns',
-                    'Delete these columns to remove redundant data and increase data quality.',
+                    'Remove collinear and near-constant columns',
+                    'Delete these columns to remove redundant data, and increase quality.',
                     ActionType.REMOVE,
-                    action_arguments=collinear_columns,
+                    action_arguments=problem_columns,
                     axis=Axis.COLUMN,
                 )
             )
