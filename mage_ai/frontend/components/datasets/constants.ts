@@ -25,7 +25,7 @@ export const WARN_KEYS = [
 export const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
 export const DATE_TYPES = ['datetime'];
 export const NUMBER_TYPES = ['number', 'number_with_decimals'];
-export const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
+export const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code'];
 
 export const PERCENTAGE_KEYS = ['completeness', 'validity'];
 
@@ -54,8 +54,11 @@ export const METRICS_RATE_KEY_MAPPING = {
 };
 
 export const METRICS_SUCCESS_DIRECTION_MAPPING = {
+  column_count: SuccessDirectionEnum.INCREASE,
   completeness: SuccessDirectionEnum.INCREASE,
+  count: SuccessDirectionEnum.INCREASE,
   duplicate_row_count: SuccessDirectionEnum.DECREASE,
+  empty_column_count: SuccessDirectionEnum.DECREASE,
   total_invalid_value_count: SuccessDirectionEnum.DECREASE,
   total_null_value_count: SuccessDirectionEnum.DECREASE,
   validity: SuccessDirectionEnum.INCREASE,
@@ -67,6 +70,10 @@ export const METRICS_WARNING_MAPPING = {
     val: 0.8,
   },
   duplicate_row_count: {
+    compare: greaterThan,
+    val: 0,
+  },
+  empty_column_count: {
     compare: greaterThan,
     val: 0,
   },

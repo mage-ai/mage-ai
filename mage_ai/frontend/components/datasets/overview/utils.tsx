@@ -28,8 +28,8 @@ import { StatRow } from '../StatsTable';
 import { TAB_REPORTS } from './index';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
+import { calculateChange, getPercentage, transformNumber } from '@utils/number';
 import { createDatasetTabRedirectLink } from '@components/utils';
-import { getPercentage, transformNumber } from '@utils/number';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -65,7 +65,7 @@ export function createMetricsSample({
       }
 
       const qualityMetricObj: StatRow = {
-        change: change === 0 ? null : change,
+        change,
         columnFlexNumbers,
         name,
         progress,
@@ -80,70 +80,105 @@ export function createMetricsSample({
       metricRows[index] = qualityMetricObj;
     }
   });
-
   return metricRows;
 }
 
-export function createStatisticsSample(statistics, colTypes) {
-  const stats = Object.keys(statistics);
-  const types = Object.values(colTypes);
-  const total = types.length;
-  const rowData = [];
+function getColumnTypeCounts(
+  columnTypes: string[],
+): {
+  countCategory: number,
+  countDatetime: number,
+  countNumerical: number,
+} {
+  let countCategory = 0;
+  let countDatetime = 0;
+  let countNumerical = 0;
 
-  rowData.push({
-    columnValues: ['Column count', total],
+  columnTypes.forEach((val: string) => {
+    if (CATEGORICAL_TYPES.includes(val)) {
+      countCategory += 1;
+    } else if (NUMBER_TYPES.includes(val)) {
+      countNumerical += 1;
+    } else if (DATE_TYPES.includes(val)) {
+      countDatetime += 1;
+    }
   });
 
-  stats.map((key) => {
+  return {
+    countCategory,
+    countDatetime,
+    countNumerical,
+  };
+}
+
+export function createStatisticsSample({
+  latestColumnTypes = {},
+  latestStatistics,
+  versionColumnTypes = {},
+  versionStatistics,
+}) {
+  const currentStats = Object.keys(latestStatistics);
+  const currentTypes: string[] = Object.values(latestColumnTypes);
+  const previousTypes: string[] = Object.values(versionColumnTypes);
+  const currentTotal = currentTypes.length;
+  const previousColumnTotal = previousTypes.length;
+  const rowData: StatRow[] = [];
+
+  rowData.push({
+    change: calculateChange(currentTotal, previousColumnTotal),
+    name: 'Column count',
+    successDirection: METRICS_SUCCESS_DIRECTION_MAPPING.column_count,
+    value: numberWithCommas(currentTotal),
+  });
+
+  currentStats.forEach((key) => {
     if (STAT_KEYS.includes(key)) {
       const name = HUMAN_READABLE_MAPPING[key];
-      let value = numberWithCommas(statistics[key]);
-      if (WARN_KEYS.includes(key)) {
-        if (total !== 0) {
-          value = `${value} (${getPercentage(value / total)})`;
-        } else {
-          value = '0 (0%)';
-        }
-      }
+      const currentValue = latestStatistics[key];
+      const previousValue = versionStatistics[key];
+      const warning = METRICS_WARNING_MAPPING[key];
+      const change = calculateChange((currentValue ?? 0), (previousValue ?? 0));
       rowData.push({
-        columnValues: [name, value],
+        change,
+        name,
+        successDirection: METRICS_SUCCESS_DIRECTION_MAPPING[key],
+        value: numberWithCommas(currentValue),
+        warning,
       });
     }
   });
 
-  let countCategory = 0;
-  let countNumerical = 0;
-  let countTimeseries = 0;
+  const {
+    countCategory: currentCountCategory,
+    countDatetime: currentCountDatetime,
+    countNumerical: currentCountNumerical,
+  } = getColumnTypeCounts(currentTypes);
+  const {
+    countCategory: previousCountCategory,
+    countDatetime: previousCountDatetime,
+    countNumerical: previousCountNumerical,
+  } = getColumnTypeCounts(previousTypes);
 
-  types.map((val: string) => {
-    if (CATEGORICAL_TYPES.includes(val)) {
-      countCategory += 1;
-    }
-    else if (NUMBER_TYPES.includes(val)) {
-      countNumerical += 1;
-    } else if (DATE_TYPES.includes(val)) {
-      countTimeseries += 1;
-    }
-  });
+  // if (currentTotal !== 0) {
+    rowData.push({
+      change: calculateChange(currentCountCategory, previousCountCategory),
+      name: 'Categorical Features',
+      rate: currentCountCategory / currentTotal,
+      value: numberWithCommas(currentCountCategory),
+    }, {
+      change: calculateChange(currentCountNumerical, previousCountNumerical),
+      name: 'Numerical Features',
+      rate: currentCountNumerical / currentTotal,
+      value: numberWithCommas(currentCountNumerical),
+    }, {
+      change: calculateChange(currentCountDatetime, previousCountDatetime),
+      name: 'Datetime Features',
+      rate: currentCountDatetime / currentTotal,
+      value: numberWithCommas(currentCountDatetime),
+    });
+  // }
 
-  if (total !== 0) {
-    rowData.push({
-      columnValues: ['Categorical Features', `${countCategory} (${getPercentage(countCategory / total)})`],
-    },{
-      columnValues: ['Numerical Features', `${countNumerical} (${getPercentage(countNumerical / total)})`],
-    },{
-      columnValues: ['Datetime Features', `${countTimeseries} (${getPercentage(countTimeseries / total)})`],
-    });
-  } else {
-    rowData.push({
-      columnValues: ['Categorical Features', '0 (0%)'],
-    },{
-      columnValues: ['Numerical Features', '0 (0%)'],
-    },{
-      columnValues: ['Datetime Features', '0 (0%)'],
-    });
-  }
-  return { rowData };
+  return rowData;
 }
 
 export function buildRenderColumnHeader({

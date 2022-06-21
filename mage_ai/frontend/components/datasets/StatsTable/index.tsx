@@ -43,7 +43,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         name,
         progress,
         rate,
-        successDirection,
+        successDirection = SuccessDirectionEnum.INCREASE,
         value,
         warning,
       }) => {
@@ -80,7 +80,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
                   </Text>
                 </Spacing>
               }
-              {change &&
+              {(change < 0 || change > 0) &&
                 <Spacing pr={1}>
                   <DifferenceButton
                     danger={successDirection === SuccessDirectionEnum.DECREASE

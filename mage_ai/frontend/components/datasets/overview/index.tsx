@@ -117,8 +117,10 @@ function DatasetOverview({
   } = metadata || {};
 
   const {
+    metadata: originalMetadata,
     statistics: originalStatistics = {},
   } = featureSetOriginal || {};
+  const originalColumnTypes = originalMetadata?.column_types;
 
   const qualityMetrics: StatRow[] = createMetricsSample({
     latestStatistics: statistics,
@@ -150,7 +152,12 @@ function DatasetOverview({
   }));
 
   const statSample = (statistics && columnTypes)
-    ? createStatisticsSample(statistics, columnTypes)
+    ? createStatisticsSample({
+      latestColumnTypes: columnTypes,
+      latestStatistics: statistics,
+      versionColumnTypes: originalColumnTypes,
+      versionStatistics: originalStatistics,
+    })
     : null;
 
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
@@ -301,13 +308,11 @@ function DatasetOverview({
 
                 <Spacing ml={PADDING_UNITS} />
 
-                <Flex flex={1}>
+                <Flex flex={1} flexDirection="column">
                   {statSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[1, 1]}
-                      columnHeaders={[{ label: 'Statistics' }]}
-                      rowGroupData={[statSample]}
-                      warnings={WARNINGS.statistics}
+                    <StatsTable
+                      stats={statSample}
+                      title="Statistics"
                     />
                   )}
                 </Flex>
