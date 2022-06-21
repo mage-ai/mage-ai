@@ -34,7 +34,7 @@ export const ColumnProfileStyle = styled.div`
 
 export const HeaderStyle = styled.div`
   background: ${SILVER};
-  padding: ${PADDING}px;
+  padding: ${UNIT * 1.75}px ${PADDING}px;
   border-bottom: 1px solid ${GRAY_LINES};
   border-top-left-radius: ${BORDER_RADIUS_LARGE}px;
   border-top-right-radius: ${BORDER_RADIUS_LARGE}px;
