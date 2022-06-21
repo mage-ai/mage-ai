@@ -5,7 +5,7 @@ from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
-from mage_ai.server.constants import SERVER_PORT
+from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import argparse
@@ -29,6 +29,15 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 
 thread = None
 api_key = None
+
+
+class ServerConfig:
+    def __init__(self):
+        self.server_base_path = None
+        self.server_url_params = None
+
+
+server_config = ServerConfig()
 
 
 def rescue_errors(endpoint, error_code=500):
@@ -326,12 +335,6 @@ def update_pipeline(id):
     return response
 
 
-# @app.route("/feature_sets/<id>/columns/<column_name>")
-# def feature_set_column(id, column_name):
-#     feature_set = FeatureSet(id=id)
-#     return feature_set.column(column_name)
-
-
 def clean_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
@@ -404,17 +407,12 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch(mage_api_key=None, host=None, port=None) -> None:
+def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
     global thread
     global api_key
     if mage_api_key:
         api_key = mage_api_key
         sync_pipelines()
-
-    if host is None:
-        host = os.getenv('HOST', 'localhost')
-    if port is None:
-        port = os.getenv('PORT', SERVER_PORT)
 
     app_kwargs = {
         'debug': False,
