@@ -31,11 +31,9 @@ def infer_notebook_type():
         return NotebookType.DATABRICKS
     elif type(get_ipython()).__module__.startswith('google.colab'):
         return NotebookType.GOOGLE_COLAB
+    elif os.environ.get('AWS_PATH'):
+        return NotebookType.SAGEMAKER
     else:
-        copy = os.environ.copy()
-        print('env copy:', copy)
-        module = type(get_ipython()).__module__
-        print('module:', module)
         return None
 
 
