@@ -22,7 +22,7 @@ class RemoveCollinearColumns(BaseRule):
         X = self.numeric_df.assign(bias=1.).to_numpy()
         X /= np.linalg.norm(X, axis=0)
         _, evecs = np.linalg.eigh(X.T @ X)
-        vdps = evecs / np.sum(evecs*evecs, axis=0)
+        vdps = evecs / (np.sum(evecs*evecs, axis=0) + self.EPSILON)
 
         problem = vdps < self.VDP_UB
         for i in range(n_cols+1):
