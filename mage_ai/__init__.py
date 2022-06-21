@@ -6,7 +6,7 @@ from mage_ai.server.app import (
     kill as kill_flask,
     launch as launch_flask,
 )
-from mage_ai.server.constants import SERVER_PORT
+from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.utils.frontend_renderer import (
     NotebookType,
     display_inline_iframe,
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def launch(
-    host='localhost',
+    host=SERVER_HOST,
     port=SERVER_PORT,
     inline=True,
     api_key=None,

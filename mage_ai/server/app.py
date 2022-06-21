@@ -5,7 +5,7 @@ from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
-from mage_ai.server.constants import SERVER_PORT
+from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from numpyencoder import NumpyEncoder
 import argparse
@@ -407,17 +407,12 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch(mage_api_key=None, host=None, port=None) -> None:
+def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
     global thread
     global api_key
     if mage_api_key:
         api_key = mage_api_key
         sync_pipelines()
-
-    if host is None:
-        host = os.getenv('HOST', 'localhost')
-    if port is None:
-        port = os.getenv('PORT', SERVER_PORT)
 
     app_kwargs = {
         'debug': False,
