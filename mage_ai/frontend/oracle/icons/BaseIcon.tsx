@@ -5,19 +5,19 @@ import { DEFAULT_SIZE } from './shared/constants';
 
 export type BaseIconProps = {
   black?: boolean;
+  danger?: boolean;
   default?: boolean;
   disabled?: boolean;
   earth?: boolean;
   fill?: string;
   muted?: boolean;
-  danger?: boolean;
   opacity?: number;
-  success?: boolean;
   primary?: boolean;
   secondary?: boolean;
   size?: number;
   stroke?: string;
   style?: any;
+  success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
 };
