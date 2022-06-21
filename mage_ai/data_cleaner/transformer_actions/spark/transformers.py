@@ -187,6 +187,10 @@ def transform_min(feature_set, transformer_action, sort_options={}):
     return transform_agg(feature_set, transformer_action, F.min)
 
 
+def transform_noop(feature_set, transformer_action, sort_options={}):
+    return feature_set
+
+
 def transform_remove(feature_set, transformer_action, sort_options={}):
     return feature_set.drop(*transformer_action['action_arguments'])
 
@@ -251,6 +255,7 @@ TRANSFORMER_FUNCTION_MAPPING = {
     'median': transform_median,
     'min': transform_min,
     'remove': transform_remove,
+    'remove_outliers': transform_noop,
     'select': transform_select,
     'shift_down': transform_group,
     'sort': transform_sort,
