@@ -6,6 +6,7 @@ from mage_ai.server.app import (
     kill as kill_flask,
     launch as launch_flask,
 )
+from mage_ai.server.cli import run_gunicorn_command
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.utils.frontend_renderer import (
     NotebookType,
@@ -98,7 +99,5 @@ def clean(
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
-
-def init(api_key):
-    # verify api_key with Mage backend
-    pass
+def test():
+    run_gunicorn_command('127.0.0.1', 5789)
