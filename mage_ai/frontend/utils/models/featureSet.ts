@@ -30,6 +30,29 @@ export function getFeatureUUID(featureSet, featureIndex) {
   return featureData?.uuid;
 }
 
+export function getOverallStatistics(featureSet) {
+  if (!featureSet || !featureSet.statistics) {
+    return {};
+  }
+
+  const { statistics } = featureSet;
+  return {
+    'completeness': statistics['completeness'],
+    'count': statistics['count'],
+    'duplicate_row_count': statistics['duplicate_row_count'],
+    'duplicate_row_rate': statistics['duplicate_row_rate'],
+    'empty_column_count': statistics['empty_column_count'],
+    'empty_column_rate': statistics['empty_column_rate'],
+    'empty_row_count': statistics['empty_row_count'],
+    'total_invalid_value_count': statistics['total_invalid_value_count'],
+    'total_invalid_value_rate': statistics['total_invalid_value_rate'],
+    'total_null_value_count': statistics['total_null_value_count'],
+    'total_null_value_rate': statistics['total_null_value_rate'],
+    'validity': statistics['validity'],
+  };
+}
+
+
 export function getFeatureSetStatistics(featureSet, featureUUID) {
   if (!featureSet || !featureSet.statistics) {
     return {};

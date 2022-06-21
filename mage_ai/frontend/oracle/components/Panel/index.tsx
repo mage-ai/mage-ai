@@ -9,7 +9,7 @@ import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 
 const HEADERS_HEIGHT_OFFSET = 14;
-const HEADER_PADDING_Y_UNITS = 2;
+const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
 
 const HEADER_STYLES = css`

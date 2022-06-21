@@ -5,6 +5,7 @@ import { DEFAULT_SIZE } from './shared/constants';
 
 export type BaseIconProps = {
   black?: boolean;
+  danger?: boolean;
   default?: boolean;
   disabled?: boolean;
   earth?: boolean;
@@ -16,6 +17,7 @@ export type BaseIconProps = {
   size?: number;
   stroke?: string;
   style?: any;
+  success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
 };
@@ -95,6 +97,14 @@ export const SHARED_STYLES = css<any>`
 
   ${props => !props.disabled && props.earth && `
     fill: ${(props.theme.brand || light.brand).earth500};
+  `}
+
+  ${props => !props.disabled && props.danger && `
+    fill: ${(props.theme.status || light.status).negative};
+  `}
+
+  ${props => !props.disabled && props.success && `
+    fill: ${(props.theme.status || light.status).positive};
   `}
 `;
 

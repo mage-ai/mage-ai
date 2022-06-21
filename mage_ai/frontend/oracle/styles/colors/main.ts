@@ -11,6 +11,8 @@ export const GREEN_LIGHT = '#ACEABA';
 export const LIGHT = '#FBFCFD';
 export const LIME = '#2FCB52';
 export const LIME_LIGHT = '#D0F299';
+export const LIME_XLIGHT = '#E8F8CC';
+export const LIME_TEXT = '#24B400';
 export const NAVY = '#0F4CFF';
 export const PINK = '#FF4FF8';
 export const PINK_LIGHT = '#FFB9FC';
@@ -22,7 +24,12 @@ export const PURPLE_LIGHT = '#C4B9EF';
 export const RED = '#FF144D';
 export const RED_HIGHLIGHT = 'rgba(255, 241, 244, 0.06)';
 export const RED_LIGHT = '#FFA1B8';
+export const RED_XLIGHT = '#FFD0DB';
 export const SILVER = '#F9FAFC';
 export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
 export const YELLOW_LIGHT = '#FFEBA3';
+
+// CSS background
+export const PURPLE_GRADIENT = 'linear-gradient(180deg, rgba(127, 79, 235, 0.3) 0%, rgba(127, 79, 235, 0) 100%);';
+export const RED_GRADIENT = 'linear-gradient(180deg, rgba(255, 5, 5, 0.3) 0%, rgba(255, 5, 5, 0) 100%);';

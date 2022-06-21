@@ -18,6 +18,7 @@ export type ButtonProps = {
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
+  danger?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
   iconOnly?: boolean;
@@ -26,11 +27,13 @@ export type ButtonProps = {
   noBorder?: boolean;
   noBorderRight?: boolean;
   noPadding?: boolean;
+  notClickable?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
-  small?: boolean;
   selected?: boolean;
+  small?: boolean;
+  success?: boolean;
   target?: string;
   transparent?: boolean;
   width?: number;
@@ -56,6 +59,13 @@ const ButtonStyle = styled.button<ButtonProps>`
     padding: 0;
   `}
 
+  ${props => props.notClickable && `
+    &:hover,
+    &:focus {
+      cursor: default;
+    }
+  `}
+
   ${props => !props.basic && `
     border-style: solid;
     border-width: 1px;
@@ -77,6 +87,14 @@ const ButtonStyle = styled.button<ButtonProps>`
     border-right: none;
   `}
 
+  ${props => props.danger && `
+    background-color: ${(props.theme.background || light.background).danger};
+  `}
+
+  ${props => props.success && `
+    background-color: ${(props.theme.background || light.background).success};
+  `}
+
   ${props => !props.iconOnly && props.large && `
     ${LARGE}
   `}
@@ -93,7 +111,7 @@ const ButtonStyle = styled.button<ButtonProps>`
     background-color: transparent; !important
   `}
 
-  ${props => !props.disabled && `
+  ${props => !props.disabled && !props.notClickable && `
     &:hover {
       border-color: ${light.interactive.hoverBorder};
     }

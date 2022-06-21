@@ -24,11 +24,13 @@ export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_version
 export const FEATURES: 'features' = 'features';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
+export const VERSIONS: 'versions' = 'versions';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [COLUMNS, FEATURE_SETS],
   [DOWNLOADS, FEATURE_SETS],
+  [VERSIONS, FEATURE_SETS],
   [FEATURE_SETS],
   [PIPELINES],
 ];

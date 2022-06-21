@@ -7,7 +7,11 @@ import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
-import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING, COLUMN_TYPE_NUMBERS } from '@interfaces/FeatureType';
+import {
+  ColumnTypeEnum,
+  COLUMN_TYPE_HUMAN_READABLE_MAPPING,
+  COLUMN_TYPE_NUMBERS,
+} from '@interfaces/FeatureType';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureSetStatistics } from '@utils/models/featureSet';
 import { greaterThan, lessThan } from '@utils/array';
@@ -59,18 +63,20 @@ function ColumnReports({
 
   const qualityMetrics: StatRow[] = [
     {
+      columnFlexNumbers: [2, 1, 2],
       name: 'Validity',
-      rate: validity,
       progress: true,
+      rate: validity,
       warning: {
         compare: lessThan,
         val: 0.8,
       },
     },
     {
+      columnFlexNumbers: [2, 1, 2],
       name: 'Completeness',
-      rate: completeness,
       progress: true,
+      rate: completeness,
       warning: {
         compare: lessThan,
         val: 0.8,
