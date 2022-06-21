@@ -281,7 +281,7 @@ class StatisticsCalculator:
                     domains.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
             elif column_type == ColumnType.LIST:
-                lengths = series_non_null.apply(len)
+                lengths = series_non_null.str.len()
                 data[f'{col}/avg_list_length'] = lengths.mean()
                 data[f'{col}/max_list_length'] = lengths.max()
                 data[f'{col}/min_list_length'] = lengths.min()
