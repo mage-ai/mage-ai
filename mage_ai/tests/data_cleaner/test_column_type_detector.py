@@ -491,6 +491,24 @@ class ColumnTypeDetectorTests(TestCase):
                     ('not string?', True, True, 8, False, np.nan, None),
                     tuple(),
                 ],
+                'string_lists': [
+                    '[2, \'string\', False, None]',
+                    '[np.nan, 2.0, \'string\', \'3\']',
+                    '[\'not string?\', True, True, 8, False, np.nan, None]',
+                    '[]',
+                ],
+                'string_tuples': [
+                    '(2, \'string\', False, None)',
+                    '(np.nan, 2.0, \'string\', \'3\')',
+                    '(\'not string?\', True, True, 8, False, np.nan, None)',
+                    '()',
+                ],
+                'not_a_list': [
+                    '3',
+                    4,
+                    'a category',
+                    'a very long piece of text',
+                ],
             }
         )
         ctypes = infer_column_types(df)
@@ -500,5 +518,8 @@ class ColumnTypeDetectorTests(TestCase):
             lists3=ColumnType.LIST,
             lists4=ColumnType.LIST,
             tuples=ColumnType.LIST,
+            string_lists=ColumnType.LIST,
+            string_tuples=ColumnType.LIST,
+            not_a_list=ColumnType.TEXT,
         )
         self.assertEquals(ctypes, expected_ctypes)

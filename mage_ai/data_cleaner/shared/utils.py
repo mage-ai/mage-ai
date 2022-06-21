@@ -73,7 +73,7 @@ def __parse_element(element: str) -> Any:
             return None
 
 
-def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList[Any]:
+def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList:
     dtype = type(list_literal)
     if dtype is FrozenList:
         return list_literal
