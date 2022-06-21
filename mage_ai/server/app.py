@@ -407,7 +407,7 @@ class ThreadWithTrace(threading.Thread):
         self.killed = True
 
 
-def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
+def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT, server_name=None) -> None:
     global thread
     global api_key
     if mage_api_key:
@@ -419,6 +419,7 @@ def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
         'host': host,
         'port': port,
     }
+    app.config['SERVER_NAME'] = server_name
     thread = ThreadWithTrace(target=app.run, kwargs=app_kwargs, daemon=True)
     thread.start()
     print(f'Mage running on host and port {host}:{port}')

@@ -30,6 +30,7 @@ def launch(
     iframe_host=None,
     iframe_port=None,
     config={},
+    server_name=None,
 ):
     iframe_host = iframe_host or host
     iframe_port = iframe_port or port
@@ -43,7 +44,7 @@ def launch(
             notebook_type=notebook_type,
             config=config,
         )
-    thread = launch_flask(mage_api_key=api_key, host=host, port=port)
+    thread = launch_flask(mage_api_key=api_key, host=host, port=port, server_name=server_name)
     if inline:
         display_inline_iframe(
             host=iframe_host,
