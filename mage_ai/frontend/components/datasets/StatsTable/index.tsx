@@ -59,7 +59,11 @@ function StatsTable({ stats, title }: StatsTableProps) {
         );
 
         return (
-          <RowCard columnFlexNumbers={columnFlexNumbers || [1, 1, 1]} key={name}>
+          <RowCard
+            columnFlexNumbers={columnFlexNumbers || [1, 1, 1]}
+            condensed={!!change}
+            key={name}
+          >
             <Text>{name}</Text>
             <>
               {value !== undefined &&
