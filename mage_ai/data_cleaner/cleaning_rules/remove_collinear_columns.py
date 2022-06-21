@@ -8,7 +8,6 @@ class RemoveCollinearColumns(BaseRule):
     MIN_ENTRIES = 3
     VDP_UB = .5
 
-
     def __init__(self, df, column_types, statistics):
         super().__init__(df, column_types, statistics)
         self.numeric_df, self.numeric_columns = self._filter_numeric_types()
@@ -45,10 +44,14 @@ class RemoveCollinearColumns(BaseRule):
         t_sums = c_sums + r_sums
         
         while t_sums.sum() > 0:
-            i = np.argmax(t_sums)
+            i = t_sums.argmax()
             problem[:, i] = 0
             problem[i, :] = 0
             problem_columns.append(self.numeric_columns[i])
+
+            c_sums = problem.sum(axis=0)
+            r_sums = problem.sum(axis=1)
+            t_sums = c_sums + r_sums
 
         if len(problem_columns) != 0:
             suggestions.append(
