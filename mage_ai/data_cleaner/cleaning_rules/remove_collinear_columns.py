@@ -38,6 +38,7 @@ class RemoveCollinearColumns(BaseRule):
                 problem[i, :] = 0
                 problem_columns.append(self.numeric_columns[i])
 
+        # remove collinear columns
         problem.astype(int)
         c_sums = problem.sum(axis=0)
         r_sums = problem.sum(axis=1)
