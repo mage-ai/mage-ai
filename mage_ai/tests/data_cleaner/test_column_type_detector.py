@@ -457,3 +457,69 @@ class ColumnTypeDetectorTests(TestCase):
 
         df = pd.DataFrame(table, columns=columns)
         return df
+
+    def test_list_recognition(self):
+        df = pd.DataFrame(
+            {
+                'lists': [
+                    ['this', 'is', 'a', 'list', 'of', 'strings'],
+                    ['this', 'is', 'a', 'list', 'of', 'strings'],
+                    ['this', 'is', 'a', 'list', 'of', 'strings'],
+                    None,
+                ],
+                'lists2': [
+                    [2, 1, 3, 4, 2, 1, 2, 2],
+                    [8, 9, 6, 4, 6, 4, 5, 4, 3, 4],
+                    [],
+                    [2, 3, 4, 1, 2],
+                ],
+                'lists3': [
+                    None,
+                    [True, False, True, True],
+                    [False, True, False, True],
+                    [True, True, True, False],
+                ],
+                'lists4': [
+                    [2, 'string', False, None],
+                    [np.nan, 2.0, 'string', '3'],
+                    ['not string?', True, True, 8, False, np.nan, None],
+                    [],
+                ],
+                'tuples': [
+                    (2, 'string', False, None),
+                    (np.nan, 2.0, 'string', '3'),
+                    ('not string?', True, True, 8, False, np.nan, None),
+                    tuple(),
+                ],
+                'string_lists': [
+                    '[2, \'string\', False, None]',
+                    '[np.nan,2.0,\'string\',\'3\']',
+                    '[\'not string?\'   ,  True, True , 8   , False  , np.nan, None]',
+                    '[]',
+                ],
+                'string_tuples': [
+                    '(2, \'string\', False, None)',
+                    '(np.nan, 2.0, \'string\', \'3\')',
+                    '(\'not string?\', True, True, 8, False, np.nan, None)',
+                    '()',
+                ],
+                'not_a_list': [
+                    '3',
+                    4,
+                    'a category',
+                    'a very long piece of text',
+                ],
+            }
+        )
+        ctypes = infer_column_types(df)
+        expected_ctypes = dict(
+            lists=ColumnType.LIST,
+            lists2=ColumnType.LIST,
+            lists3=ColumnType.LIST,
+            lists4=ColumnType.LIST,
+            tuples=ColumnType.LIST,
+            string_lists=ColumnType.LIST,
+            string_tuples=ColumnType.LIST,
+            not_a_list=ColumnType.TEXT,
+        )
+        self.assertEquals(ctypes, expected_ctypes)

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
+from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
@@ -311,10 +312,13 @@ def update_pipeline(id):
     feature_set_id = pipeline.metadata.get('feature_set_id')
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
-        df_transformed = clean_pipeline.transform(feature_set.data_orig, auto=False)
+        df = feature_set.data_orig
+        ctypes = feature_set.metadata.get('column_types', {})
+        df = clean_dataframe(df, ctypes, False)
+        df_transformed = clean_pipeline.transform(df, auto=False)
         result = clean_data(
             df_transformed,
-            column_types=feature_set.metadata.get('column_types', {}),
+            column_types=ctypes,
             transform=False,
             verbose=True,
         )

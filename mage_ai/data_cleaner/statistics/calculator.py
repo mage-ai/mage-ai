@@ -191,7 +191,7 @@ class StatisticsCalculator:
         series_non_null = series.dropna()
 
         # Fix json serialization issue
-        df_top_value_counts.index = df_top_value_counts.index.astype(str)
+        df_top_value_counts.index = pd.Index(str(idx) for idx in df_top_value_counts.index)
 
         df_value_counts_non_null = df_value_counts[df_value_counts.index.notnull()]
         count_unique = len(df_value_counts_non_null)
@@ -289,7 +289,7 @@ class StatisticsCalculator:
                 data[f'{col}/value_counts'] = string_df_value_counts.to_dict()
 
             mode, mode_idx = None, 0
-            while mode_idx < count_unique and pd.isna(df_value_counts.index[mode_idx]):
+            while mode_idx < count_unique and df_value_counts.index[mode_idx] in [None, np.nan]:
                 mode_idx += 1
             if mode_idx < count_unique:
                 mode = df_value_counts.index[mode_idx]
