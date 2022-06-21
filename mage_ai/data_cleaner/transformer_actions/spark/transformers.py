@@ -150,7 +150,6 @@ def transform_group(feature_set, transformer_action, sort_options={}):
     schema = StructType(feature_set.schema.fields + new_fields)
     groupby_columns = transformer_action['action_options']['groupby_columns']
 
-    @pandas_udf(schema, PandasUDFType.GROUPED_MAP)
     def execute_transform(df):
         from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 
@@ -166,7 +165,7 @@ def transform_group(feature_set, transformer_action, sort_options={}):
                 df[field.name] = 0
         return df
 
-    return feature_set.groupby(groupby_columns).apply(execute_transform)
+    return feature_set.groupby(groupby_columns).applyInPandas(execute_transform, schema=schema)
 
 
 def transform_last(feature_set, transformer_action, sort_options={}):
@@ -225,14 +224,13 @@ def transform_with_partitions(feature_set, transformer_action, sort_options={}):
     new_fields = __create_new_struct_fields(feature_set, transformer_action)
     schema = StructType(fs.schema.fields + new_fields)
 
-    @pandas_udf(schema, PandasUDFType.GROUPED_MAP)
     def execute_transform(df):
         from mage_ai.data_cleaner.transformer_actions.base import BaseAction
         df = BaseAction(transformer_action).execute(df)
 
         return df
 
-    df_filtered = fs.groupby(GROUP_MOD_COLUMN).apply(execute_transform)
+    df_filtered = fs.groupby(GROUP_MOD_COLUMN).applyInPandas(execute_transform, schema=schema)
 
     return df_filtered.drop(GROUP_MOD_COLUMN, ROW_NUMBER_COLUMN, ROW_NUMBER_LIT_COLUMN)
 
