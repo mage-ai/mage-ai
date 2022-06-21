@@ -79,10 +79,10 @@ def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList:
     dtype = type(list_literal)
     if dtype is FrozenList:
         return list_literal
-    elif dtype in (list, tuple):
+    elif dtype in [list, tuple, set]:
         return FrozenList(list_literal)
     elif dtype is not str:
-        return None
+        return FrozenList([list_literal])
     list_literal = list_literal.strip('[]() ')
     if list_literal == '':
         return FrozenList([])

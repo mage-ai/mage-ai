@@ -176,6 +176,7 @@ def infer_object_type(series, column_name, kwargs):
         matches = clean_series.str.match(REGEX_DATETIME).sum()
         if matches / length >= DATETIME_MATCHES_THRESHOLD:
             return ColumnType.DATETIME
+        # TODO: Refactor / Reduce cleaning logic
         correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
         correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
         correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
