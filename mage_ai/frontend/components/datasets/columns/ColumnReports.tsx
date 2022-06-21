@@ -5,7 +5,7 @@ import Panel from '@oracle/components/Panel';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import StatsTable, { StatRow, SuccessDirectionEnum } from '@components/datasets/StatsTable';
+import StatsTable, { StatRow } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import {
   ColumnTypeEnum,

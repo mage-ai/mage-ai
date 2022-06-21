@@ -17,7 +17,6 @@ import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Overview from '@components/datasets/Insights/Overview';
-import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow } from '../StatsTable';
 import Text from '@oracle/elements/Text';
@@ -35,7 +34,6 @@ import { Close } from '@oracle/icons';
 import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { WARNINGS } from '../constants';
 import {
   getFeatureSetInvalidValuesAll,
   getFeatureSetStatistics,

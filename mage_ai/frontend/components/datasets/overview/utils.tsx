@@ -19,7 +19,6 @@ import {
   NUMBER_TYPES,
   PERCENTAGE_KEYS,
   STAT_KEYS,
-  WARN_KEYS,
 } from '../constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
@@ -28,7 +27,7 @@ import { StatRow } from '../StatsTable';
 import { TAB_REPORTS } from './index';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
-import { calculateChange, getPercentage, transformNumber } from '@utils/number';
+import { calculateChange, transformNumber } from '@utils/number';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -159,24 +158,22 @@ export function createStatisticsSample({
     countNumerical: previousCountNumerical,
   } = getColumnTypeCounts(previousTypes);
 
-  // if (currentTotal !== 0) {
-    rowData.push({
-      change: calculateChange(currentCountCategory, previousCountCategory),
-      name: 'Categorical Features',
-      rate: currentCountCategory / currentTotal,
-      value: numberWithCommas(currentCountCategory),
-    }, {
-      change: calculateChange(currentCountNumerical, previousCountNumerical),
-      name: 'Numerical Features',
-      rate: currentCountNumerical / currentTotal,
-      value: numberWithCommas(currentCountNumerical),
-    }, {
-      change: calculateChange(currentCountDatetime, previousCountDatetime),
-      name: 'Datetime Features',
-      rate: currentCountDatetime / currentTotal,
-      value: numberWithCommas(currentCountDatetime),
-    });
-  // }
+  rowData.push({
+    change: calculateChange(currentCountCategory, previousCountCategory),
+    name: 'Categorical Features',
+    rate: currentCountCategory / currentTotal,
+    value: numberWithCommas(currentCountCategory),
+  }, {
+    change: calculateChange(currentCountNumerical, previousCountNumerical),
+    name: 'Numerical Features',
+    rate: currentCountNumerical / currentTotal,
+    value: numberWithCommas(currentCountNumerical),
+  }, {
+    change: calculateChange(currentCountDatetime, previousCountDatetime),
+    name: 'Datetime Features',
+    rate: currentCountDatetime / currentTotal,
+    value: numberWithCommas(currentCountDatetime),
+  });
 
   return rowData;
 }
