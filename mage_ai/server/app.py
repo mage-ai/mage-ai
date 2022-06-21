@@ -304,12 +304,12 @@ def update_pipeline(id):
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
         df = feature_set.data_orig
-        ctypes = feature_set.metadata['column_types']
+        ctypes = feature_set.metadata.get('column_types', {})
         df = clean_dataframe(df, ctypes, False)
         df_transformed = clean_pipeline.transform(df, auto=False)
         result = clean_data(
             df_transformed,
-            column_types=feature_set.metadata.get('column_types', {}),
+            column_types=ctypes,
             transform=False,
             verbose=True,
         )

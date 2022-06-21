@@ -140,7 +140,7 @@ def infer_object_type(series, column_name, kwargs):
     clean_series = clean_series.dropna()
 
     exact_dtype = type(clean_series.iloc[0]) if clean_series.count() else None
-    if exact_dtype is list or exact_dtype is tuple:
+    if exact_dtype in [list, tuple, set]:
         return ColumnType.LIST
 
     series_nunique = series.nunique(dropna=False)

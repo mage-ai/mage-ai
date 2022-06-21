@@ -289,9 +289,7 @@ class StatisticsCalculator:
                 data[f'{col}/value_counts'] = string_df_value_counts.to_dict()
 
             mode, mode_idx = None, 0
-            while mode_idx < count_unique and (
-                df_value_counts.index[mode_idx] is None or df_value_counts.index[mode_idx] is np.nan
-            ):
+            while mode_idx < count_unique and df_value_counts.index[mode_idx] in [None, np.nan]:
                 mode_idx += 1
             if mode_idx < count_unique:
                 mode = df_value_counts.index[mode_idx]

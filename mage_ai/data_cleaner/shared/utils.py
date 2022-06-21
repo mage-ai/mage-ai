@@ -4,8 +4,10 @@ from pandas.core.indexes.frozen import FrozenList
 from typing import Any, List, Union
 import pandas as pd
 import numpy as np
+import re
 
 COLUMN_NAME_QUOTE_CHARS = '+=-*&^%$! ?~|<>(){}[],.'
+LIST_SPLIT = re.compile(r'\s*,\s*')
 
 
 def clean_series(series, column_type, dropna=True):
@@ -84,7 +86,7 @@ def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList:
     list_literal = list_literal.strip('[]() ')
     if list_literal == '':
         return FrozenList([])
-    return FrozenList([__parse_element(element) for element in list_literal.split(', ')])
+    return FrozenList([__parse_element(element) for element in LIST_SPLIT.split(list_literal)])
 
 
 def wrap_column_name(name: str) -> str:

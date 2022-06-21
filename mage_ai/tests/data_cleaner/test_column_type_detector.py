@@ -493,8 +493,8 @@ class ColumnTypeDetectorTests(TestCase):
                 ],
                 'string_lists': [
                     '[2, \'string\', False, None]',
-                    '[np.nan, 2.0, \'string\', \'3\']',
-                    '[\'not string?\', True, True, 8, False, np.nan, None]',
+                    '[np.nan,2.0,\'string\',\'3\']',
+                    '[\'not string?\'   ,  True, True , 8   , False  , np.nan, None]',
                     '[]',
                 ],
                 'string_tuples': [

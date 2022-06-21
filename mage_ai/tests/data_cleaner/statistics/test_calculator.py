@@ -1,5 +1,4 @@
 from faker import Faker
-from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 from mage_ai.tests.base_test import TestCase
 from random import shuffle
