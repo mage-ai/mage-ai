@@ -33,17 +33,17 @@ function CodeEditor({
   autoSave,
   defaultValue,
   height = '100vh',
-  language = DEFAULT_LANGUAGE,
+  language,
   onChange,
   onSave,
-  theme: themeProp = DEFAULT_THEME,
+  theme: themeProp,
   width = '100%',
 }: CodeEditorProps) {
-  console.log('render');
+  console.log('CodeEditor render');
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
-  const [theme, setTheme] = useState(themeProp);
+  const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
   const handleEditorWillMount = useCallback((monaco) => {
     // here is the monaco instance
@@ -66,6 +66,8 @@ function CodeEditor({
     }
 
     addKeyboardShortcut(monaco, editor, shortcuts);
+
+    editor.getModel().updateOptions({ tabSize: 4 })
   }, [
     onSave,
   ]);
