@@ -59,11 +59,7 @@ def clean_series(series, column_type, dropna=True):
 
 
 def clean_dataframe(df, column_types, dropna=True):
-    cols = [df[col] for col in df.columns]
-    ctypes = [column_types[col] for col in df.columns]
-    dropnas = [dropna for _ in df.columns]
-    clean_cols = run_parallel_multiple_args(clean_series, cols, ctypes, dropnas)
-    return pd.DataFrame({col: clean_col for col, clean_col in zip(df.columns, clean_cols)})
+    return df.apply(lambda col: clean_series(col, column_types[col.name], dropna=dropna))
 
 
 def is_numeric_dtype(df, column, column_type):
