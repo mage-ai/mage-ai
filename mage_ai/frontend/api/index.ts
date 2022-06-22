@@ -23,6 +23,7 @@ export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
 export const FEATURES: 'features' = 'features';
 export const PIPELINES: 'pipelines' = 'pipelines';
+export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const VERSIONS: 'versions' = 'versions';
 
@@ -33,6 +34,7 @@ const RESOURCES: any[][] = [
   [VERSIONS, FEATURE_SETS],
   [FEATURE_SETS],
   [PIPELINES],
+  [STATUS],
 ];
 
 const apis: any = {};
