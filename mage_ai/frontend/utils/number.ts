@@ -35,6 +35,10 @@ export function getPercentage(number) {
 }
 
 export function calculateChange(endValue, startValue) {
+  if (typeof startValue === 'undefined') {
+    return 0;
+  }
+
   const difference = endValue - startValue;
   return difference / startValue;
 }

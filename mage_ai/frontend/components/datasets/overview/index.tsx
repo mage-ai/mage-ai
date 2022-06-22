@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
+import Router from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
@@ -20,6 +21,7 @@ import Overview from '@components/datasets/Insights/Overview';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow } from '../StatsTable';
 import Text from '@oracle/elements/Text';
+import api from '@api';
 import light from '@oracle/styles/themes/light';
 import usePrevious from '@utils/usePrevious';
 
@@ -35,6 +37,7 @@ import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import {
+  deserializeFeatureSet,
   getFeatureSetInvalidValuesAll,
   getFeatureSetStatistics,
 } from '@utils/models/featureSet';
@@ -62,12 +65,14 @@ type DatasetOverviewProps = {
 
 function DatasetOverview({
   featureSet,
-  featureSetOriginal,
   fetchFeatureSet,
   selectedColumnIndex,
 }: DatasetOverviewProps) {
   const refLoadingBar = useRef(null);
   const mainContentRef = useRef(null);
+
+  const { data: featureSetRawOriginal, mutateOriginal } = api.versions.feature_sets.detail(featureSet?.id, '0');
+  const featureSetOriginal = featureSetRawOriginal ? deserializeFeatureSet(featureSetRawOriginal) : {};
 
   const { width: windowWidth } = useWindowSize();
   const windowWidthPrevious = usePrevious(windowWidth);
@@ -116,7 +121,7 @@ function DatasetOverview({
 
   const {
     metadata: originalMetadata,
-    statistics: originalStatistics = {},
+    statistics: originalStatistics,
   } = featureSetOriginal || {};
   const originalColumnTypes = originalMetadata?.column_types;
 
@@ -233,7 +238,6 @@ function DatasetOverview({
     <DatasetDetail
       columnsVisible={columnsVisible}
       featureSet={featureSet}
-      featureSetOriginal={featureSetOriginal}
       fetchFeatureSet={fetchFeatureSet}
       hideColumnsHeader={windowWidth < LARGE_WINDOW_WIDTH}
       mainContentRef={mainContentRef}
