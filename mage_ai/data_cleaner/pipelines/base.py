@@ -18,8 +18,10 @@ from mage_ai.data_cleaner.cleaning_rules.remove_outliers import (
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.shared.array import flatten
+from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec, timer
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
+import numpy as np
 
 DEFAULT_RULES = [
     CleanColumnNames,
@@ -56,6 +58,19 @@ class BasePipeline:
                 all_suggestions += suggestions
         self.actions = all_suggestions
         return all_suggestions
+
+    def create_preview_results(self, df, suggested_actions):
+        for action in suggested_actions:
+            payload = action['action_payload']
+            if payload['axis'] != 'row':
+                continue
+            df_transformed = BaseAction(payload).execute(df)
+            row_removed = df.index.difference(df_transformed.index)
+            row_removed = row_removed[np.where(row_removed <= SAMPLE_SIZE)]
+            if len(row_removed) > 0:
+                action['preview_results'] = dict(
+                    removed_row_indices=row_removed.tolist(),
+                )
 
     def transform(self, df, auto=True):
         if len(self.actions) == 0:

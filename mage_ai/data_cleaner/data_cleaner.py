@@ -62,6 +62,8 @@ class DataCleaner:
                 df_stats['column_types'],
                 df_stats['statistics'],
             )
+        with timer('data_cleaner.create_preview_results'):
+            pipeline.create_preview_results(df, suggested_actions)
         if transform:
             with timer('data_cleaner.transform_data'):
                 df_transformed = pipeline.transform(df, auto=True)
