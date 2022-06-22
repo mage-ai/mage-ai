@@ -280,6 +280,22 @@ class StatisticsCalculator:
                 data[f'{col}/domain_distribution'] = (
                     domains.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
                 )
+            elif column_type == ColumnType.LIST:
+                lengths = series_non_null.str.len()
+                data[f'{col}/avg_list_length'] = lengths.mean()
+                data[f'{col}/max_list_length'] = lengths.max()
+                data[f'{col}/min_list_length'] = lengths.min()
+                data[f'{col}/length_distribution'] = (
+                    lengths.value_counts().head(VALUE_COUNT_LIMIT).to_dict()
+                )
+
+                elements = series_non_null.explode()
+                element_value_counts = elements.value_counts(dropna=False)
+                data[f'{col}/most_frequent_element'] = element_value_counts.index[0]
+                data[f'{col}/least_frequent_element'] = element_value_counts.index[-1]
+                data[f'{col}/element_distribution'] = element_value_counts.head(
+                    VALUE_COUNT_LIMIT
+                ).to_dict()
 
         if column_type not in NUMBER_TYPES:
             if dates is not None:

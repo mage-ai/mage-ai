@@ -1,4 +1,5 @@
 from faker import Faker
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 from mage_ai.tests.base_test import TestCase
 from random import shuffle
@@ -352,3 +353,46 @@ class StatisticsCalculatorTest(TestCase):
         }
 
         self.assertEquals(expected_domain_distribution, data['emails/domain_distribution'])
+
+    def test_calculate_statistics_list_data(self):
+        lists = [
+            [2, 'string', False, None],
+            None,
+            [np.nan, 2.0, 'string', '3'],
+            ['not string?', True, True, 8, False, np.nan, None],
+            "['not string?'     ,  True,True   ,8, False, np.nan, None]",
+            [],
+            [8, 9, 9, 8, 'pop', 'string'],
+        ]
+        df = pd.DataFrame({'lists': lists})
+        column_types = infer_column_types(df)
+        calculator = StatisticsCalculator(column_types)
+        data = calculator.calculate_statistics_overview(df, is_clean=False)
+        self.assertTrue(data['lists/most_frequent_element'] is np.nan)
+        self.assertEqual(data['lists/least_frequent_element'], 'pop')
+        self.assertEqual(data['lists/max_list_length'], 7)
+        self.assertEqual(data['lists/min_list_length'], 0)
+        self.assertAlmostEqual(data['lists/avg_list_length'], 4.1428, 3)
+
+        expected_list_length_distribution = {
+            4: 2,
+            7: 2,
+            6: 1,
+            0: 1,
+            1: 1,
+        }
+        self.assertEquals(expected_list_length_distribution, data['lists/length_distribution'])
+
+        expected_element_distribution = {
+            'string': 3,
+            8: 4,
+            True: 4,
+            False: 3,
+            9: 2,
+            np.nan: 8,
+            'pop': 1,
+            'not string?': 2,
+            2: 2,
+            '3': 1,
+        }
+        self.assertEquals(expected_element_distribution, data['lists/element_distribution'])
