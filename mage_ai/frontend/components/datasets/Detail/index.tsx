@@ -51,7 +51,7 @@ export type DatasetDetailSharedProps = {
 type DatasetDetailProps = {
   children: any;
   columnsVisible?: boolean;
-  fetchFeatureSetOriginal: (arg?: any) => void;
+  fetchFeatureSetOriginal?: (arg?: any) => void;
   hideColumnsHeader?: boolean;
   mainContentRef?: any;
   onTabClick?: (tab: string) => void;
