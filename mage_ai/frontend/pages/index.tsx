@@ -7,7 +7,7 @@ const Home = () => {
   const completePath = router.asPath;
   const basePath = completePath.split('?')[0];
   let pathname = '/datasets';
-  if (basePath !== '/') {
+  if (basePath && basePath !== '/') {
     pathname = `${basePath}/datasets`;
   }
 
