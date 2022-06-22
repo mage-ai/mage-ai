@@ -33,3 +33,8 @@ export function getPercentage(number) {
 
   return `${percentage}%`;
 }
+
+export function calculateChange(endValue, startValue) {
+  const difference = endValue - startValue;
+  return difference / startValue;
+}

@@ -6,6 +6,7 @@ class ColumnType(str, Enum):
     CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
     DATETIME = 'datetime'
     EMAIL = 'email'
+    LIST = 'list'
     NUMBER = 'number'
     NUMBER_WITH_DECIMALS = 'number_with_decimals'
     PHONE_NUMBER = 'phone_number'

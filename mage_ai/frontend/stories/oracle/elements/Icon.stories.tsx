@@ -47,6 +47,7 @@ const ICONS = [
   AlertCircle,
   Alphabet,
   ArrowDown,
+  ArrowUp,
   ArrowRight,
   ArrowUp,
   Binary,

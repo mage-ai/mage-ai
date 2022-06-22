@@ -1,8 +1,8 @@
 import { greaterThan, lessThan } from '@utils/array';
+import { SuccessDirectionEnum } from './StatsTable';
 
 export const LARGE_WINDOW_WIDTH = 992;
 
-// TODO: Update to use total instead of average
 export const METRICS_KEYS = [
   'duplicate_row_count',
   'completeness',
@@ -21,35 +21,74 @@ export const WARN_KEYS = [
   'empty_row_count',
 ];
 
-export const RATIO_KEYS = [
-  'total_invalid_value_count',
-  'total_null_value_count',
-];
 
 export const CATEGORICAL_TYPES = ['category', 'category_high_cardinality', 'true_or_false'];
 export const DATE_TYPES = ['datetime'];
 export const NUMBER_TYPES = ['number', 'number_with_decimals'];
-export const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code']; // We aren't counting this but good to have.
+export const STRING_TYPES = ['email', 'phone_number', 'text', 'zip_code'];
 
 export const PERCENTAGE_KEYS = ['completeness', 'validity'];
 
 export const HUMAN_READABLE_MAPPING = {
-
-  'completeness': 'Completeness',
-  'count': 'Row count',
-  'duplicate_row_count': 'Duplicate rows',
-  'empty_column_count': 'Empty columns',
-  'total_invalid_value_count': 'Invalid cells',
-  'total_null_value_count': 'Missing cells',
-  'validity': 'Validity',
+  completeness: 'Completeness',
+  count: 'Row count',
+  duplicate_row_count: 'Duplicate rows',
+  empty_column_count: 'Empty columns',
+  total_invalid_value_count: 'Invalid cells',
+  total_null_value_count: 'Missing cells',
+  validity: 'Validity',
 };
 
 export const METRICS_SORTED_MAPPING = {
-  'completeness': 1,
-  'duplicate_row_count': 4,
-  'total_invalid_value_count': 3,
-  'total_null_value_count': 2,
-  'validity': 0,
+  completeness: 1,
+  duplicate_row_count: 4,
+  total_invalid_value_count: 3,
+  total_null_value_count: 2,
+  validity: 0,
+};
+
+export const METRICS_RATE_KEY_MAPPING = {
+  duplicate_row_count: 'duplicate_row_rate',
+  total_invalid_value_count: 'total_invalid_value_rate',
+  total_null_value_count: 'total_null_value_rate',
+};
+
+export const METRICS_SUCCESS_DIRECTION_MAPPING = {
+  column_count: SuccessDirectionEnum.INCREASE,
+  completeness: SuccessDirectionEnum.INCREASE,
+  count: SuccessDirectionEnum.INCREASE,
+  duplicate_row_count: SuccessDirectionEnum.DECREASE,
+  empty_column_count: SuccessDirectionEnum.DECREASE,
+  total_invalid_value_count: SuccessDirectionEnum.DECREASE,
+  total_null_value_count: SuccessDirectionEnum.DECREASE,
+  validity: SuccessDirectionEnum.INCREASE,
+};
+
+export const METRICS_WARNING_MAPPING = {
+  completeness: {
+    compare: lessThan,
+    val: 0.8,
+  },
+  duplicate_row_count: {
+    compare: greaterThan,
+    val: 0,
+  },
+  empty_column_count: {
+    compare: greaterThan,
+    val: 0,
+  },
+  total_invalid_value_count: {
+    compare: greaterThan,
+    val: 0,
+  },
+  total_null_value_count: {
+    compare: greaterThan,
+    val: 0,
+  },
+  validity: {
+    compare: lessThan,
+    val: 0.8,
+  },
 };
 
 export const WARNINGS = {
@@ -78,6 +117,3 @@ export const WARNINGS = {
     },
   ],
 };
-
-// eslint-disable-next-line import/no-anonymous-default-export
-export default {};

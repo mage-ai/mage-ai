@@ -9,8 +9,9 @@ import {
 import { RowCardProps } from '@oracle/components/RowCard';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export const PADDING_SIZE = UNIT * 1.75;
+export const PADDING_SIZE = UNIT * 1.5;
 export const ROW_VERTICAL_PADDING_SIZE = UNIT * 1.5;
+export const CONDENSED_VERTICAL_ROW_PADDING = 9;
 export const SCROLL_PADDING_SIZE = 3;
 export const ROW_PADDING_HORIZONTAL_UNITS = 2;
 
@@ -21,7 +22,7 @@ type RowContainerStyleProps = {
 
 type RowStyleProps = Pick<
   RowCardProps,
-  'border' | 'last' | 'secondary' | 'noHorizontalPadding'
+  'border' | 'condensed' | 'last' | 'secondary' | 'noHorizontalPadding'
 >;
 
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
@@ -65,6 +66,11 @@ export const RowStyle = styled.div<RowStyleProps>`
   ${props => props.noHorizontalPadding && `
     padding-left: 0;
     padding-right: 0;
+  `}
+
+  ${props => props.condensed && `
+    padding-top: ${CONDENSED_VERTICAL_ROW_PADDING}px;
+    padding-bottom: ${CONDENSED_VERTICAL_ROW_PADDING}px;
   `}
 
   ${props => !props.secondary && `

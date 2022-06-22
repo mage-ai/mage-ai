@@ -8,6 +8,7 @@ export type RowCardProps = {
   border?: boolean;
   children: any;
   columnFlexNumbers?: number[];
+  condensed?: boolean;
   flexStart?: boolean;
   last?: boolean;
   noHorizontalPadding?: boolean;
@@ -18,6 +19,7 @@ function RowCard({
   border,
   children,
   columnFlexNumbers,
+  condensed,
   flexStart,
   last,
   noHorizontalPadding,
@@ -26,6 +28,7 @@ function RowCard({
   return (
     <RowStyle
       border={border}
+      condensed={condensed}
       last={last}
       noHorizontalPadding={noHorizontalPadding}
       secondary={secondary}
@@ -34,13 +37,14 @@ function RowCard({
         {React.Children.map(children, (child, idx) => child && columnFlexNumbers
           ? (
             <Flex
+              alignItems="center"
               flex={columnFlexNumbers[idx]}
               key={`row-card-item-${idx}`}
             >
               {child}
             </Flex>
           )
-          : child
+          : child,
         )}
       </FlexContainer>
     </RowStyle>

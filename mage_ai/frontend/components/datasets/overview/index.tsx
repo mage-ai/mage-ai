@@ -17,11 +17,12 @@ import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Overview from '@components/datasets/Insights/Overview';
-import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
 import Spacing from '@oracle/elements/Spacing';
+import StatsTable, { StatRow } from '../StatsTable';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import usePrevious from '@utils/usePrevious';
+
 import { BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
   COLUMN_HEADER_CHART_HEIGHT,
@@ -33,12 +34,14 @@ import { Close } from '@oracle/icons';
 import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import { getFeatureSetInvalidValuesAll, getFeatureSetStatistics } from '@utils/models/featureSet';
+import {
+  getFeatureSetInvalidValuesAll,
+  getFeatureSetStatistics,
+} from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-import { WARNINGS } from '../constants';
 
 export const TABS_QUERY_PARAM = 'tabs[]';
 export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
@@ -59,6 +62,7 @@ type DatasetOverviewProps = {
 
 function DatasetOverview({
   featureSet,
+  featureSetOriginal,
   fetchFeatureSet,
   selectedColumnIndex,
 }: DatasetOverviewProps) {
@@ -104,8 +108,22 @@ function DatasetOverview({
   const {
     insights,
     metadata,
-    statistics,
+    statistics = {},
   } = featureSet || {};
+  const {
+    column_types: columnTypes,
+  } = metadata || {};
+
+  const {
+    metadata: originalMetadata,
+    statistics: originalStatistics = {},
+  } = featureSetOriginal || {};
+  const originalColumnTypes = originalMetadata?.column_types;
+
+  const qualityMetrics: StatRow[] = createMetricsSample({
+    latestStatistics: statistics,
+    versionStatistics: originalStatistics,
+  });
 
   const {
     columns: columnsAll,
@@ -126,17 +144,18 @@ function DatasetOverview({
     ],
   );
 
-  const {
-    column_types: columnTypes,
-  } = metadata || {};
   const features: FeatureType[] = columnsAll?.map(uuid => ({
     columnType: columnTypes[uuid],
     uuid,
   }));
 
-  const qualityMetrics = statistics ? createMetricsSample(statistics, columnTypes) : null;
   const statSample = (statistics && columnTypes)
-    ? createStatisticsSample(statistics, columnTypes)
+    ? createStatisticsSample({
+      latestColumnTypes: columnTypes,
+      latestStatistics: statistics,
+      versionColumnTypes: originalColumnTypes,
+      versionStatistics: originalStatistics,
+    })
     : null;
 
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
@@ -214,6 +233,7 @@ function DatasetOverview({
     <DatasetDetail
       columnsVisible={columnsVisible}
       featureSet={featureSet}
+      featureSetOriginal={featureSetOriginal}
       fetchFeatureSet={fetchFeatureSet}
       hideColumnsHeader={windowWidth < LARGE_WINDOW_WIDTH}
       mainContentRef={mainContentRef}
@@ -276,11 +296,9 @@ function DatasetOverview({
                 <Flex flex={1} flexDirection="column">
                   {qualityMetrics && (
                     <Spacing mb={PADDING_UNITS}>
-                      <SimpleDataTable
-                        columnFlexNumbers={[2, 1, 2]}
-                        columnHeaders={[{ label: 'Quality metrics' }]}
-                        rowGroupData={[qualityMetrics]}
-                        warnings={WARNINGS.qualityMetrics}
+                      <StatsTable
+                        stats={qualityMetrics}
+                        title="Quality metrics"
                       />
                     </Spacing>
                   )}
@@ -288,13 +306,11 @@ function DatasetOverview({
 
                 <Spacing ml={PADDING_UNITS} />
 
-                <Flex flex={1}>
+                <Flex flex={1} flexDirection="column">
                   {statSample && (
-                    <SimpleDataTable
-                      columnFlexNumbers={[1, 1]}
-                      columnHeaders={[{ label: 'Statistics' }]}
-                      rowGroupData={[statSample]}
-                      warnings={WARNINGS.statistics}
+                    <StatsTable
+                      stats={statSample}
+                      title="Statistics"
                     />
                   )}
                 </Flex>

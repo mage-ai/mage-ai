@@ -20,6 +20,8 @@ REGEX_EMAIL_PATTERN = r'^[a-zA-Z0-9_.+#-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 REGEX_EMAIL = re.compile(REGEX_EMAIL_PATTERN)
 REGEX_INTEGER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.0*)?\s*(?:[元€$]|CAD){0,1})$'
 REGEX_INTEGER = re.compile(REGEX_INTEGER_PATTERN)
+REGEX_LIST_PATTERN = r'^[\[(](?:[^\n\r],?)*[\])]$'
+REGEX_LIST = re.compile(REGEX_LIST_PATTERN)
 REGEX_NUMBER_PATTERN = r'^\-{0,1}\s*(?:(?:[$€¥₹£]|Rs|CAD){0,1}\s*(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}|(?:[0-9]+(?:,[0-9]+)*|[0-9]+){0,1}(?:\.[0-9]*){0,1}\s*(?:[元€$]|CAD){0,1})\s*\%{0,1}$'
 REGEX_NUMBER = re.compile(REGEX_NUMBER_PATTERN)
 REGEX_PHONE_NUMBER_PATTERN = (
@@ -135,78 +137,77 @@ def infer_column_type(series, column_name, dtype, kwargs):
 def infer_object_type(series, column_name, kwargs):
     clean_series = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
     clean_series = clean_series.map(lambda x: x if (not isinstance(x, str) or x != '') else np.nan)
-    clean_series = clean_series.dropna().astype(str)
+    clean_series = clean_series.dropna()
+
+    exact_dtype = type(clean_series.iloc[0]) if clean_series.count() else None
+    if exact_dtype in [list, tuple, set]:
+        return ColumnType.LIST
 
     series_nunique = series.nunique(dropna=False)
     clean_series_nunique = clean_series.nunique()
-
-    exact_dtype = type(clean_series.iloc[0]) if clean_series.count() else None
-    if exact_dtype is list:
-        mdtype = ColumnType.TEXT
-    elif np.issubdtype(exact_dtype, np.bool_):
+    if np.issubdtype(exact_dtype, np.bool_):
         if clean_series_nunique <= 2:
-            mdtype = ColumnType.TRUE_OR_FALSE
+            return ColumnType.TRUE_OR_FALSE
         else:
-            mdtype = ColumnType.CATEGORY
+            return ColumnType.CATEGORY
     elif clean_series_nunique <= 2:
-        mdtype = ColumnType.TRUE_OR_FALSE
-    else:
-        length = len(clean_series)
-        if all(clean_series.str.match(REGEX_NUMBER)):
-            if not all(clean_series.str.match(REGEX_INTEGER)):
-                mdtype = ColumnType.NUMBER_WITH_DECIMALS
-            else:
-                lowercase_column_name = column_name.lower()
-                correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
-                correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
-                ):
-                    mdtype = ColumnType.PHONE_NUMBER
-                elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_ZIP_CODE_WORDS
-                ):
-                    mdtype = ColumnType.ZIP_CODE
-                else:
-                    mdtype = ColumnType.NUMBER
+        return ColumnType.TRUE_OR_FALSE
+
+    clean_series = clean_series.astype(str)
+    length = len(clean_series)
+    if all(clean_series.str.match(REGEX_NUMBER)):
+        if not all(clean_series.str.match(REGEX_INTEGER)):
+            return ColumnType.NUMBER_WITH_DECIMALS
         else:
-            matches = clean_series.str.match(REGEX_DATETIME).sum()
-            if matches / length >= DATETIME_MATCHES_THRESHOLD:
-                mdtype = ColumnType.DATETIME
+            lowercase_column_name = column_name.lower()
+            correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
+            correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+            if correct_phone_nums / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
+            ):
+                return ColumnType.PHONE_NUMBER
+            elif correct_zip_codes / length >= NUMBER_TYPE_MATCHES_THRESHOLD and str_in_set(
+                lowercase_column_name, RESERVED_ZIP_CODE_WORDS
+            ):
+                return ColumnType.ZIP_CODE
             else:
-                correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
-                correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
-                correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
-                lowercase_column_name = column_name.lower()
-                if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
-                    mdtype = ColumnType.EMAIL
-                elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
-                ):
-                    mdtype = ColumnType.PHONE_NUMBER
-                elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
-                    lowercase_column_name, RESERVED_ZIP_CODE_WORDS
-                ):
-                    mdtype = ColumnType.ZIP_CODE
-                elif series_nunique == 2:
-                    mdtype = ColumnType.TRUE_OR_FALSE
-                else:
-                    if type(exact_dtype) is list:
-                        mdtype = ColumnType.TEXT
-                    elif clean_series_nunique / length >= 0.8:
-                        mdtype = ColumnType.TEXT
-                    else:
-                        word_count = clean_series.map(lambda x: len(str(x).split(' '))).max()
-                        if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
-                            mdtype = ColumnType.TEXT
-                        else:
-                            if clean_series_nunique <= kwargs.get(
-                                'category_cardinality_threshold', 255
-                            ):
-                                mdtype = ColumnType.CATEGORY
-                            else:
-                                mdtype = ColumnType.CATEGORY_HIGH_CARDINALITY
-    return mdtype
+                return ColumnType.NUMBER
+    else:
+        matches = clean_series.str.match(REGEX_DATETIME).sum()
+        if matches / length >= DATETIME_MATCHES_THRESHOLD:
+            return ColumnType.DATETIME
+        # TODO: Refactor / Reduce cleaning logic
+        correct_emails = clean_series.str.match(REGEX_EMAIL).sum()
+        correct_phone_nums = clean_series.str.match(REGEX_PHONE_NUMBER).sum()
+        correct_zip_codes = clean_series.str.match(REGEX_ZIP_CODE).sum()
+        correct_lists = clean_series.str.match(REGEX_LIST).sum()
+        lowercase_column_name = column_name.lower()
+        if correct_emails / length >= STRING_TYPE_MATCHES_THRESHOLD:
+            return ColumnType.EMAIL
+        elif correct_phone_nums / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
+            lowercase_column_name, RESERVED_PHONE_NUMBER_WORDS
+        ):
+            return ColumnType.PHONE_NUMBER
+        elif correct_zip_codes / length >= STRING_TYPE_MATCHES_THRESHOLD and str_in_set(
+            lowercase_column_name, RESERVED_ZIP_CODE_WORDS
+        ):
+            return ColumnType.ZIP_CODE
+        elif correct_lists / length >= STRING_TYPE_MATCHES_THRESHOLD:
+            return ColumnType.LIST
+        elif series_nunique == 2:
+            return ColumnType.TRUE_OR_FALSE
+
+        if clean_series_nunique / length >= 0.8:
+            return ColumnType.TEXT
+
+        word_count = clean_series.map(lambda x: len(str(x).split(' '))).max()
+        if word_count > MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES:
+            return ColumnType.TEXT
+
+        if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):
+            return ColumnType.CATEGORY
+        else:
+            return ColumnType.CATEGORY_HIGH_CARDINALITY
 
 
 def infer_column_types(df, **kwargs):

@@ -2,19 +2,22 @@ import {
   BLACK,
   BLUE,
   BLUE_HIGHLIGHT,
+  BLUE_HIGHLIGHT_LIGHT,
   DARK_GRAY_LINES,
   GRAY_LINES,
   GRAY,
   LIGHT,
+  LIME_XLIGHT,
+  LIME_TEXT,
   PURPLE,
+  PURPLE_DISABLED,
+  PURPLE_HIGHLIGHT,
+  PURPLE_LIGHT,
   RED,
+  RED_LIGHT,
+  RED_XLIGHT,
   SILVER,
   WHITE,
-  PURPLE_HIGHLIGHT,
-  PURPLE_DISABLED,
-  PURPLE_LIGHT,
-  RED_LIGHT,
-  BLUE_HIGHLIGHT_LIGHT,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -33,12 +36,14 @@ export default {
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
   },
   background: {
+    danger: RED_XLIGHT,
     dark: GRAY,
     header: SILVER,
     muted: SILVER,
     navigation: '#EDEDED',
     page: WHITE,
     row: LIGHT,
+    success: LIME_XLIGHT,
   },
   brand: {
     earth100: '#C6EEDB',
@@ -143,6 +148,10 @@ export default {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
+  },
+  status: {
+    negative: RED,
+    positive: LIME_TEXT,
   },
 };
 
