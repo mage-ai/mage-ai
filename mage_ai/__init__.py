@@ -43,6 +43,13 @@ def launch(
             notebook_type=notebook_type,
             config=config,
         )
+    elif notebook_type == NotebookType.SAGEMAKER:
+        update_frontend_urls(
+            host=host,
+            port=port,
+            notebook_type=notebook_type,
+            config=config,
+        )
     thread = launch_flask(mage_api_key=api_key, host=host, port=port)
     if inline:
         display_inline_iframe(
@@ -97,8 +104,3 @@ def clean(
     else:
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
-
-
-def init(api_key):
-    # verify api_key with Mage backend
-    pass
