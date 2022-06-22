@@ -354,7 +354,7 @@ function Table({
                     className="th"
                     key={column.id}
                     style={columnStyle}
-                    title={firstColumn && 'Row number'}
+                    title={firstColumn ? 'Row number' : undefined}
                   >
                     {el}
                   </div>
