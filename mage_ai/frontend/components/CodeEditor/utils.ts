@@ -57,6 +57,7 @@ export const defineTheme = theme => new Promise((res) => {
     import(`monaco-themes/themes/${monacoThemes[theme]}.json`),
   ]).then(([monaco, themeData]) => {
     monaco.editor.defineTheme(theme, themeData);
+    // @ts-ignore
     res();
   });
 });

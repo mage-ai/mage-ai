@@ -1,8 +1,9 @@
 import CodeEditor from '@components/CodeEditor';
+import Spacing from '@oracle/elements/Spacing';
 
 function Test() {
   return (
-    <>
+    <Spacing p={5}>
       <CodeEditor
         autoSave
         defaultValue={`import mysql.connector
@@ -40,11 +41,13 @@ import mage_ai
 df = query_table('materia_development.features_with_feature_sets')
 mage_ai.connect_data(df, 'features_with_feature_sets')
         `}
+        height="calc(100vh - 90px)"
         onSave={(value: string) => {
           console.log(`Saving...\n${value}`);
         }}
+        width="calc(100vw - 90px)"
       />
-    </>
+    </Spacing>
   );
 }
 

@@ -8,6 +8,7 @@ import Editor from '@monaco-editor/react';
 
 import {
   DEFAULT_AUTO_SAVE_INTERVAL,
+  DEFAULT_FONT_SIZE,
   DEFAULT_LANGUAGE,
   DEFAULT_THEME,
 } from './constants';
@@ -21,6 +22,7 @@ import {
 type CodeEditorProps = {
   autoSave?: boolean;
   defaultValue?: string;
+  fontSize?: number;
   height?: number | string;
   language?: string;
   onChange?: (value: string) => void;
@@ -32,6 +34,7 @@ type CodeEditorProps = {
 function CodeEditor({
   autoSave,
   defaultValue,
+  fontSize = DEFAULT_FONT_SIZE,
   height = '100vh',
   language,
   onChange,
@@ -46,8 +49,6 @@ function CodeEditor({
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
   const handleEditorWillMount = useCallback((monaco) => {
-    // here is the monaco instance
-    // do something before editor is mounted
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
   }, []);
 
@@ -67,7 +68,9 @@ function CodeEditor({
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
-    editor.getModel().updateOptions({ tabSize: 4 })
+    editor.getModel().updateOptions({
+      tabSize: 4,
+    });
   }, [
     onSave,
   ]);
@@ -105,6 +108,9 @@ function CodeEditor({
       language={language || DEFAULT_LANGUAGE}
       onChange={onChange}
       onMount={handleEditorDidMount}
+      options={{
+        fontSize,
+      }}
       theme={theme}
       // value={value}
       width={width}
