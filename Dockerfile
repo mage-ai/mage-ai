@@ -26,10 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
 COPY requirements.txt requirements.txt
 RUN ${PIP} install -r requirements.txt
 
-# RUN jupyter nbextension install --py --sys-prefix widgetsnbextension
-
 COPY . /home/jovyan/src
 
-RUN cd /home/jovyan/src/mage_ai/frontend && npm install
+RUN cd /home/jovyan/src/mage_ai/frontend && npm install -g npm@8.12.2
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/jovyan/src"
