@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
+from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 from pandas.core.indexes.frozen import FrozenList
 from typing import Any, List, Union
@@ -8,6 +9,10 @@ import re
 
 COLUMN_NAME_QUOTE_CHARS = '+=-*&^%$! ?~|<>(){}[],.'
 LIST_SPLIT = re.compile(r'\s*,\s*')
+LIST_TYPES = frozenset([list, set, tuple])
+NONE_TYPES = frozenset([None, np.nan])
+PAREN_LIKE_OPEN = frozenset(['[', '('])
+PAREN_LIKE_CLOSE = frozenset([']', ')'])
 
 
 def clean_series(series, column_type, dropna=True):
@@ -54,7 +59,11 @@ def clean_series(series, column_type, dropna=True):
 
 
 def clean_dataframe(df, column_types, dropna=True):
-    return df.apply(lambda col: clean_series(col, column_types[col.name], dropna=dropna), axis=0)
+    cols = [df[col] for col in df.columns]
+    ctypes = [column_types[col] for col in df.columns]
+    dropnas = [dropna for _ in df.columns]
+    clean_cols = run_parallel_multiple_args(clean_series, cols, ctypes, dropnas)
+    return pd.DataFrame({col: clean_col for col, clean_col in zip(df.columns, clean_cols)})
 
 
 def is_numeric_dtype(df, column, column_type):
@@ -79,10 +88,14 @@ def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList:
     dtype = type(list_literal)
     if dtype is FrozenList:
         return list_literal
-    elif dtype in [list, tuple, set]:
+    elif dtype in LIST_TYPES:
         return FrozenList(list_literal)
+    elif list_literal in NONE_TYPES:
+        return list_literal
     elif dtype is not str:
         return FrozenList([list_literal])
+    if list_literal[0] not in PAREN_LIKE_OPEN or list_literal[-1] not in PAREN_LIKE_CLOSE:
+        return list_literal
     list_literal = list_literal.strip('[]() ')
     if list_literal == '':
         return FrozenList([])

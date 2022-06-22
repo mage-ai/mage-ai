@@ -15,11 +15,7 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
-from mage_ai.data_cleaner.transformer_actions.utils import (
-    clean_column_name,
-    # fillna,
-    generate_string_cols,
-)
+from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
 from keyword import iskeyword
 import logging
 import pandas as pd
@@ -114,8 +110,9 @@ def impute(df, action, **kwargs):
         if ColumnType.LIST in ctypes:
             for column in columns:
                 mode = df[column].mode().iloc[0]
-                temp = df[column].isna().apply(lambda is_null: mode if is_null else None)
-                df[column] = df[column].fillna(temp)
+                df[column] = df[column].apply(
+                    lambda element: element if element not in [None, np.nan] else mode
+                )
         else:
             df[columns] = df[columns].fillna(df[columns].mode(axis=0).iloc[0])
     elif strategy == ImputationStrategy.COLUMN:
