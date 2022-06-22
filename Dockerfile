@@ -30,6 +30,6 @@ RUN ${PIP} install -r requirements.txt
 
 COPY . /home/jovyan/src
 
-RUN cd /home/jovyan/src/mage_ai/frontend && npm install
+RUN cd /home/jovyan/src/mage_ai/frontend && npm install -g npm@8.12.2
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/jovyan/src"
