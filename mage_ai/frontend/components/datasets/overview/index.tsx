@@ -116,7 +116,7 @@ function DatasetOverview({
 
   const {
     metadata: originalMetadata,
-    statistics: originalStatistics = {},
+    statistics: originalStatistics,
   } = featureSetOriginal || {};
   const originalColumnTypes = originalMetadata?.column_types;
 

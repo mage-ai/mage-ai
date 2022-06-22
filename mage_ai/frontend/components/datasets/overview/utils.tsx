@@ -51,7 +51,9 @@ export function createMetricsSample({
       const index = METRICS_SORTED_MAPPING[key];
       const successDirection = METRICS_SUCCESS_DIRECTION_MAPPING[key];
       const warning = METRICS_WARNING_MAPPING[key];
-      let change = latestStatistics[key] - versionStatistics[key];
+      let change = versionStatistics
+        ? latestStatistics[key] - versionStatistics?.[key]
+        : 0;
 
       if (PERCENTAGE_KEYS.includes(key)){
         progress = true;
@@ -60,7 +62,9 @@ export function createMetricsSample({
         value = transformNumber(value, 0);
         const rateKey = METRICS_RATE_KEY_MAPPING[key];
         rate = latestStatistics[rateKey];
-        change = (latestStatistics[rateKey] ?? 0) - (versionStatistics[rateKey] ?? 0);
+        change = versionStatistics
+          ? (latestStatistics[rateKey] ?? 0) - (versionStatistics?.[rateKey] ?? 0)
+          : 0;
       }
 
       const qualityMetricObj: StatRow = {
@@ -85,10 +89,14 @@ export function createMetricsSample({
 function getColumnTypeCounts(
   columnTypes: string[],
 ): {
-  countCategory: number,
-  countDatetime: number,
-  countNumerical: number,
+  countCategory?: number,
+  countDatetime?: number,
+  countNumerical?: number,
 } {
+  if (typeof columnTypes === 'undefined') {
+    return {};
+  }
+
   let countCategory = 0;
   let countDatetime = 0;
   let countNumerical = 0;
@@ -113,14 +121,16 @@ function getColumnTypeCounts(
 export function createStatisticsSample({
   latestColumnTypes = {},
   latestStatistics,
-  versionColumnTypes = {},
+  versionColumnTypes,
   versionStatistics,
 }) {
   const currentStats = Object.keys(latestStatistics);
   const currentTypes: string[] = Object.values(latestColumnTypes);
-  const previousTypes: string[] = Object.values(versionColumnTypes);
+  const previousTypes: string[] = versionColumnTypes
+    ? Object.values(versionColumnTypes)
+    : undefined;
   const currentTotal = currentTypes.length;
-  const previousColumnTotal = previousTypes.length;
+  const previousColumnTotal = previousTypes?.length;
   const rowData: StatRow[] = [];
 
   rowData.push({
@@ -134,9 +144,9 @@ export function createStatisticsSample({
     if (STAT_KEYS.includes(key)) {
       const name = HUMAN_READABLE_MAPPING[key];
       const currentValue = latestStatistics[key];
-      const previousValue = versionStatistics[key];
+      const previousValue = versionStatistics?.[key];
       const warning = METRICS_WARNING_MAPPING[key];
-      const change = calculateChange((currentValue ?? 0), (previousValue ?? 0));
+      const change = calculateChange((currentValue ?? 0), previousValue);
       rowData.push({
         change,
         name,
