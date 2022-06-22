@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import dynamic from 'next/dynamic';
-import { ThemeContext } from 'styled-components';
+import styled, { ThemeContext } from 'styled-components';
 
 import Button from '@oracle/elements/Button';
 import DatasetDetail, { DatasetDetailSharedProps } from '../Detail';
@@ -11,9 +11,16 @@ import Link from '@oracle/elements/Link';
 import PanelOld from '@oracle/components/PanelOld';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import {
+  MAX_LINES_EXPORT_1,
+  MAX_LINES_EXPORT_2,
+  MAX_LINES_LAUNCH,
+  MIN_LINES_LAUNCH,
+  READ_ONLY,
+} from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { PADDING } from '@oracle/styles/units/spacing';
 import { REGULAR_FONT_SIZE, REGULAR_LINE_HEIGHT} from '@oracle/styles/fonts/sizes';
-import { MAX_LINES_EXPORT_1, MAX_LINES_EXPORT_2, MAX_LINES_LAUNCH, MIN_LINES_LAUNCH, READ_ONLY } from '@oracle/styles/editor/rules';
 
 const CodeEditor = dynamic(
   async () => {
@@ -26,6 +33,13 @@ const CodeEditor = dynamic(
     ssr: false,
   },
 );
+
+const ImageStyle = styled.img`
+  margin-top: ${PADDING}px;
+  max-width: 900px;
+  object-fit: contain;
+  width: 100%;
+`
 
 function download(content, fileName, contentType) {
   const a = document.createElement('a');
@@ -295,6 +309,10 @@ function Export({
             or create a new workspace for your organization. Once you've selected the workspace, copy the
             API key from the <Link href="https://www.mage.ai/dashboard">dashboard</Link> page.
           </Text>
+          <ImageStyle
+            src="/images/dashboard-api-key.webp"
+            height={400}
+          />
         </Spacing>
 
         <Spacing mb={5}>
