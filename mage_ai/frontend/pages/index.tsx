@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 const Home = () => {
   const router = useRouter();
   const queryParams = router.query;
-  const basePath = router.pathname;
+  const completePath = router.asPath;
+  const basePath = completePath.split('?')[0];
   let pathname = '/datasets';
   if (basePath !== '/') {
     pathname = `${basePath}/datasets`;
