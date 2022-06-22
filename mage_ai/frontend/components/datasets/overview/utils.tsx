@@ -24,7 +24,7 @@ import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_CATEGORICAL, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import { StatRow } from '../StatsTable';
-import { TAB_REPORTS } from './index';
+import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { calculateChange, transformNumber } from '@utils/number';
@@ -409,7 +409,7 @@ export function buildRenderColumnHeader({
             }}
           >
             <NextLink
-              as={createDatasetTabRedirectLink(TAB_REPORTS, columnIndex)}
+              as={createDatasetTabRedirectLink(TAB_VISUALIZATIONS, columnIndex)}
               href="/datasets/[...slug]"
               passHref
             >
