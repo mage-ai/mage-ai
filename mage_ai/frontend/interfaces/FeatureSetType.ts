@@ -1,5 +1,5 @@
 import InsightsType from './InsightsType';
-import MetadataType from './MetadataType';
+import { MetadataType } from './MetadataType';
 import PipelineType from './PipelineType';
 import SuggestionType from './SuggestionType';
 
