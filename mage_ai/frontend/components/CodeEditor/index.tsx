@@ -108,8 +108,13 @@ function CodeEditor({
       language={language || DEFAULT_LANGUAGE}
       onChange={onChange}
       onMount={handleEditorDidMount}
+      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
       options={{
         fontSize,
+        minimap: {
+          enabled: false,
+        },
+        scrollBeyondLastLine: false,
       }}
       theme={theme}
       // value={value}
