@@ -57,8 +57,6 @@ class StatisticsCalculator:
         with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
             return self.__calculate_statistics_overview(df, is_clean=is_clean)
 
-        return data
-
     def null_seq_gen(self, arr):
         prev = -1
         for is_null in arr:

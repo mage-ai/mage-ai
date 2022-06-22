@@ -78,7 +78,11 @@ def connect_data(df, name, verbose=False):
             df = df_spark.toPandas()
 
     if df.shape[0] > MAX_NUM_OF_ROWS:
-        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name, verbose=verbose)
+        feature_set, _ = connect_df(
+            df.sample(MAX_NUM_OF_ROWS).reset_index(drop=True),
+            name,
+            verbose=verbose,
+        )
     else:
         feature_set, _ = connect_df(df, name, verbose=verbose)
     return feature_set
