@@ -6,7 +6,6 @@ import React, {
   useState,
 } from 'react';
 import LoadingBar from 'react-top-loading-bar';
-import Router from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ColumnAnalysis from '@components/datasets/Insights/ColumnAnalysis';
@@ -71,7 +70,7 @@ function DatasetOverview({
   const refLoadingBar = useRef(null);
   const mainContentRef = useRef(null);
 
-  const { data: featureSetRawOriginal, mutateOriginal } = api.versions.feature_sets.detail(featureSet?.id, '0');
+  const { data: featureSetRawOriginal, mutate: mutateOriginal } = api.versions.feature_sets.detail(featureSet?.id, '0');
   const featureSetOriginal = featureSetRawOriginal ? deserializeFeatureSet(featureSetRawOriginal) : {};
 
   const { width: windowWidth } = useWindowSize();
@@ -239,6 +238,7 @@ function DatasetOverview({
       columnsVisible={columnsVisible}
       featureSet={featureSet}
       fetchFeatureSet={fetchFeatureSet}
+      fetchFeatureSetOriginal={mutateOriginal}
       hideColumnsHeader={windowWidth < LARGE_WINDOW_WIDTH}
       mainContentRef={mainContentRef}
       onTabClick={t => setTabs(t)}
