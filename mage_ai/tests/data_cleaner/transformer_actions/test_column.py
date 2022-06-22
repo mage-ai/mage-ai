@@ -2375,6 +2375,94 @@ class ColumnTests(TestCase):
         # assert_frame_equal(new_df_mode, expected_df_mode)
         assert_frame_equal(new_df_constant, expected_df_constant)
 
+    def test_impute_list_seq(self):
+        from mage_ai.data_cleaner.transformer_actions.column import impute
+
+        df = pd.DataFrame(
+            [
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                ['CA', '', '12-28-2022'],
+                [None, '', '12-30-2022'],
+                ['CA', None, '12-30-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+                ['', None, ''],
+                [None, '', None],
+            ],
+            columns=['state', 'location', 'timestamp'],
+        )
+        df['lists'] = pd.Series(
+            [
+                (np.nan, 2.0, 'string', '3'),
+                ['not string?', True, True, 8, False, np.nan, None],
+                None,
+                None,
+                ('not string?', True, True, 8, False, np.nan, None),
+                [],
+                '[\'not string?\'   ,  True, True , 8   , False  , np.nan, None]',
+                '(\'not string?\'   ,  True, True , 8   , False  , np.nan, None)',
+                tuple(),
+                None,
+            ]
+        )
+        df['timestamp'] = pd.to_datetime(
+            df['timestamp'], infer_datetime_format=True, errors='coerce'
+        )
+        action = dict(
+            action_type='impute',
+            action_arguments=['state', 'location', 'timestamp', 'lists'],
+            action_options=dict(strategy='sequential', timeseries_index=['timestamp']),
+            action_variables=dict(
+                state=dict(feature=dict(column_type='category', uuid='state'), type='feature'),
+                location=dict(
+                    feature=dict(column_type='zip_code', uuid='location'), type='feature'
+                ),
+                timestamp=dict(
+                    feature=dict(column_type='datetime', uuid='timestamp'), type='feature'
+                ),
+                lists=dict(feature=dict(column_type='list', uuid='lists'), type='feature'),
+            ),
+            action_code='',
+            axis='column',
+            outputs=[],
+        )
+        expected_df = pd.DataFrame(
+            [
+                ['CT', '06902', '12-24-2022'],
+                ['NY', '10001', '12-25-2022'],
+                ['CA', '10001', '12-28-2022'],
+                ['CA', '10001', '12-30-2022'],
+                ['CA', '10001', '12-30-2022'],
+                ['MA', '12214', '12-31-2022'],
+                ['PA', '12214', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+                ['TX', '75001', '1-2-2023'],
+            ],
+            columns=['state', 'location', 'timestamp'],
+        )
+        expected_df['lists'] = pd.Series(
+            [
+                (np.nan, 2.0, 'string', '3'),
+                ['not string?', True, True, 8, False, np.nan, None],
+                ['not string?', True, True, 8, False, np.nan, None],
+                ['not string?', True, True, 8, False, np.nan, None],
+                ['not string?', True, True, 8, False, np.nan, None],
+                [],
+                ['not string?', True, True, 8, False, np.nan, None],
+                ['not string?', True, True, 8, False, np.nan, None],
+                [],
+                [],
+            ]
+        )
+        new_df = impute(df, action).reset_index(drop=True)
+        expected_df['timestamp'] = pd.to_datetime(
+            expected_df['timestamp'], infer_datetime_format=True, errors='coerce'
+        )
+        assert_frame_equal(expected_df, new_df)
+
     def test_last_column(self):
         df = pd.DataFrame(
             [

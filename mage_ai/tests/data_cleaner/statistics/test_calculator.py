@@ -372,14 +372,13 @@ class StatisticsCalculatorTest(TestCase):
         self.assertEqual(data['lists/least_frequent_element'], 'pop')
         self.assertEqual(data['lists/max_list_length'], 7)
         self.assertEqual(data['lists/min_list_length'], 0)
-        self.assertAlmostEqual(data['lists/avg_list_length'], 4.1428, 3)
+        self.assertAlmostEqual(data['lists/avg_list_length'], 4.6667, 3)
 
         expected_list_length_distribution = {
             4: 2,
             7: 2,
             6: 1,
             0: 1,
-            1: 1,
         }
         self.assertEquals(expected_list_length_distribution, data['lists/length_distribution'])
 
@@ -389,7 +388,7 @@ class StatisticsCalculatorTest(TestCase):
             True: 4,
             False: 3,
             9: 2,
-            np.nan: 8,
+            np.nan: 7,
             'pop': 1,
             'not string?': 2,
             2: 2,

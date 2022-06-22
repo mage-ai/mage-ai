@@ -1,5 +1,4 @@
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-from pandas.core.indexes.frozen import FrozenList
 import pandas as pd
 import numpy as np
 import re
