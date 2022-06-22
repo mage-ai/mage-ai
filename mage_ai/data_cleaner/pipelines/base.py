@@ -57,6 +57,16 @@ class BasePipeline:
         self.actions = all_suggestions
         return all_suggestions
 
+    def create_preview_results(self, df, suggested_actions):
+        for action in suggested_actions:
+            payload = action['action_payload']
+            df_transformed = BaseAction(payload).execute(df)
+            row_removed = df.index.difference(df_transformed.index)
+            if len(row_removed) > 0:
+                action['preview_results'] = dict(
+                    removed_row_indices=row_removed.tolist(),
+                )
+
     def transform(self, df, auto=True):
         if len(self.actions) == 0:
             print('Pipeline is empty.')
