@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from pandas.core.indexes.frozen import FrozenList
 import pandas as pd
 import numpy as np
 import re
@@ -8,6 +9,7 @@ CONSTANT_IMPUTATION_DEFAULTS = {
     ColumnType.CATEGORY_HIGH_CARDINALITY: 'missing',
     ColumnType.DATETIME: pd.Timestamp.min,
     ColumnType.EMAIL: 'missing',
+    ColumnType.LIST: '[]',
     ColumnType.NUMBER: 0,
     ColumnType.NUMBER_WITH_DECIMALS: 0,
     ColumnType.TEXT: 'missing',
@@ -21,6 +23,7 @@ INVALID_VALUE_PLACEHOLDERS = {
     ColumnType.CATEGORY_HIGH_CARDINALITY: 'invalid',
     ColumnType.DATETIME: pd.NaT,
     ColumnType.EMAIL: 'invalid',
+    ColumnType.LIST: 'invalid',
     ColumnType.NUMBER: np.nan,
     ColumnType.NUMBER_WITH_DECIMALS: np.nan,
     ColumnType.TEXT: 'invalid',

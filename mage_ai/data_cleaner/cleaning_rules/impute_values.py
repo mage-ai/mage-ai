@@ -145,14 +145,42 @@ class DateTimeImputeSubRule(TypeImputeSubRule):
         return ImputationStrategy.CONSTANT
 
 
+class ListImputeSubRule(TypeImputeSubRule):
+    ACCEPTED_DTYPES = frozenset((ColumnType.LIST,))
+    RAND_EMPTY_UB = 0.3
+    MODE_PROP_LB = 0.4
+
+    def accepted_dtypes(self):
+        return self.ACCEPTED_DTYPES
+
+    def evaluate(self, column):
+        """
+        Rule:
+        1. If there are no null entries, no suggestion
+        2. If the dataset was identified as timeseries, suggest sequential imputation
+        3. Else, if more than MODE_PROP_LB of nonnull entries are a single value, use
+           imputation with mode
+        4. Else, if less than RAND_EMPTY_UB ratio of entries are null, use random imputation
+        5. Else suggest no imputation (no good fit)
+        """
+        if self.statistics[f'{column}/null_value_rate'] == 0:
+            return ImputationStrategy.NOOP
+        elif (
+            self.is_timeseries
+            and self.statistics[f'{column}/max_null_seq'] <= self.MAX_NULL_SEQ_LENGTH
+            and self.df[column].notna().iloc[0]
+        ):
+            return ImputationStrategy.SEQ
+        elif self.statistics[f'{column}/mode_ratio'] >= self.MODE_PROP_LB:
+            return ImputationStrategy.MODE
+        elif self.statistics[f'{column}/null_value_rate'] <= self.RAND_EMPTY_UB:
+            return ImputationStrategy.RANDOM
+        return ImputationStrategy.CONSTANT
+
+
 class StringImputeSubRule(TypeImputeSubRule):
     # TODO: Give list type its own imputation strategy
-    ACCEPTED_DTYPES = frozenset(
-        (
-            *STRING_TYPES,
-            ColumnType.LIST,
-        )
-    )
+    ACCEPTED_DTYPES = STRING_TYPES
     RAND_EMPTY_UB = 0.3
     MODE_PROP_LB = 0.4
 
@@ -188,6 +216,7 @@ class ImputeValues(BaseRule):
     RULESET = (
         CategoricalImputeSubRule,
         DateTimeImputeSubRule,
+        ListImputeSubRule,
         NumericalImputeSubRule,
         StringImputeSubRule,
     )

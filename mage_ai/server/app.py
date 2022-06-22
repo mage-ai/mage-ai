@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 from flask_cors import CORS
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
