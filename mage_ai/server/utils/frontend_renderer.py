@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 class NotebookType(str, Enum):
     DATABRICKS = 'databricks'
     GOOGLE_COLAB = 'google_colab'
+    SAGEMAKER = 'sagemaker'
 
 
 def infer_notebook_type():
@@ -30,7 +31,10 @@ def infer_notebook_type():
         return NotebookType.DATABRICKS
     elif type(get_ipython()).__module__.startswith('google.colab'):
         return NotebookType.GOOGLE_COLAB
-    return None
+    elif os.environ.get('AWS_PATH'):
+        return NotebookType.SAGEMAKER
+    else:
+        return None
 
 
 def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None, config={}):
@@ -59,6 +63,11 @@ def display_inline_iframe(host='localhost', port=SERVER_PORT, notebook_type=None
         url_params = server_config.server_url_params
         path_to_server = f'https://{databricks_host}{base_path}{url_params}'
         __print_url()
+    elif notebook_type == NotebookType.SAGEMAKER:
+        sagemaker_host = config.get('sagemaker_host')
+        path_to_server = f'https://{sagemaker_host}/proxy/{port}'
+        __print_url()
+        display(IFrame(path_to_server, width='95%', height=1000))
     else:
         __print_url()
         display(IFrame(path_to_server, width='95%', height=1000))
@@ -84,6 +93,10 @@ def update_frontend_urls(host=None, port=None, notebook_type=None, config={}):
         server_config.server_base_path = base_path
         server_config.server_url_params = url_params
         __update_frontend_urls_in_files(base_path, url_params)
+    elif notebook_type == NotebookType.SAGEMAKER:
+        base_path = f'/proxy/{port}/'
+        __update_frontend_urls_in_files(base_path, None)
+
 
 
 def __update_frontend_urls_in_files(base_path, url_params):

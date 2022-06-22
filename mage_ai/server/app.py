@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from flask_cors import CORS
+from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
 from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
@@ -313,7 +314,7 @@ def update_pipeline(id):
     if feature_set_id is not None:
         feature_set = FeatureSet(id=feature_set_id)
         df = feature_set.data_orig
-        ctypes = feature_set.metadata.get('column_types', {})
+        ctypes = infer_column_types(df, column_types=feature_set.metadata.get('column_types', {}))
         df = clean_dataframe(df, ctypes, False)
         df_transformed = clean_pipeline.transform(df, auto=False)
         result = clean_data(

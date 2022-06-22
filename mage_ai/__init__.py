@@ -43,6 +43,13 @@ def launch(
             notebook_type=notebook_type,
             config=config,
         )
+    elif notebook_type == NotebookType.SAGEMAKER:
+        update_frontend_urls(
+            host=host,
+            port=port,
+            notebook_type=notebook_type,
+            config=config,
+        )
     thread = launch_flask(mage_api_key=api_key, host=host, port=port)
     if inline:
         display_inline_iframe(
@@ -71,7 +78,11 @@ def connect_data(df, name, verbose=False):
             df = df_spark.toPandas()
 
     if df.shape[0] > MAX_NUM_OF_ROWS:
-        feature_set, _ = connect_df(df.sample(MAX_NUM_OF_ROWS), name, verbose=verbose)
+        feature_set, _ = connect_df(
+            df.sample(MAX_NUM_OF_ROWS).reset_index(drop=True),
+            name,
+            verbose=verbose,
+        )
     else:
         feature_set, _ = connect_df(df, name, verbose=verbose)
     return feature_set
@@ -97,8 +108,3 @@ def clean(
     else:
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
-
-
-def init(api_key):
-    # verify api_key with Mage backend
-    pass
