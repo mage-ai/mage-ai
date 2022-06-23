@@ -269,8 +269,8 @@ class ReformatValues(BaseRule):
         ReformatDateSubRule,
     ]
 
-    def __init__(self, df, column_types, statistics):
-        super().__init__(df, column_types, statistics)
+    def __init__(self, df, column_types, statistics, custom_config={}):
+        super().__init__(df, column_types, statistics, custom_config=custom_config)
         # TODO Clean dataframe prior to giving to rule
         self.clean_column_cache = {}
         self.exact_dtypes = self.infer_exact_dtypes()

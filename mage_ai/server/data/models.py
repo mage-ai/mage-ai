@@ -57,6 +57,14 @@ class FeatureSet(Model):
             self._data = self.read_parquet_file('data.parquet')
         return self._data
 
+    @property
+    def cleaning_rule_configs(self):
+        return self.read_json_file('cleaning_rule_configs.json', {})
+
+    @cleaning_rule_configs.setter
+    def cleaning_rule_configs(self, configs):
+        return self.write_json_file('cleaning_rule_configs.json', configs)
+
     @data.setter
     def data(self, df):
         self.write_parquet_file(os.path.join(self.dir, 'data.parquet'), df)
@@ -126,6 +134,8 @@ class FeatureSet(Model):
         if prev_version is not None:
             # Save the old version as a snapshot
             self.write_version_snapshot(prev_version)
+        if 'cleaning_rule_configs' in obj:
+            self.cleaning_rule_configs = obj['cleaning_rule_configs']
         if 'df' in obj:
             self.data = obj['df']
         if 'metadata' in obj:
@@ -205,6 +215,7 @@ class FeatureSet(Model):
                     sample_data=sample_data_dict,
                     statistics=statistics_updated,
                     insights=self.insights,
+                    cleaning_rule_configs=self.cleaning_rule_configs,
                     suggestions=suggestions_filtered,
                 ),
             )

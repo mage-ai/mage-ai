@@ -321,6 +321,7 @@ def update_pipeline(id):
             df_transformed,
             column_types=ctypes,
             transform=False,
+            rule_configs=feature_set.cleaning_rule_configs,
             verbose=True,
         )
         prev_version = len(pipeline.pipeline.actions)

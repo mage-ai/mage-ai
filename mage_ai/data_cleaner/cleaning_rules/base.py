@@ -5,11 +5,14 @@ STATUS_COMPLETED = 'completed'
 
 
 class BaseRule:
-    def __init__(self, df, column_types, statistics):
+    default_config = dict()
+
+    def __init__(self, df, column_types, statistics, custom_config={}):
         self.df = df
         self.df_columns = df.columns.tolist()
         self.column_types = column_types
         self.statistics = statistics
+        self.custom_config = custom_config
 
     def _filter_numeric_types(self):
         numeric_columns = []
@@ -22,6 +25,9 @@ class BaseRule:
                 numeric_df.drop(column, axis=1, inplace=True)
         numeric_df = numeric_df.dropna(axis=0)
         return numeric_df, numeric_columns
+
+    def config(self, name):
+        return self.custom_config.get(name, self.default_config.get(name))
 
     def evaluate(self):
         """Evaluate data cleaning rule and generate suggested actions

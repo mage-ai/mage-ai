@@ -224,8 +224,8 @@ class ImputeValues(BaseRule):
     TIMESERIES_NULL_RATIO_MAX = 0.1
     STRATEGY_BLACKLIST = [ImputationStrategy.NOOP, ImputationStrategy.ROW_RM]
 
-    def __init__(self, df, column_types, statistics):
-        super().__init__(df, column_types, statistics)
+    def __init__(self, df, column_types, statistics, custom_config={}):
+        super().__init__(df, column_types, statistics, custom_config=custom_config)
         self.exact_dtypes = self.get_exact_dtypes()
         self.strategy_cache = {
             ImputationStrategy.AVERAGE: {'entries': []},

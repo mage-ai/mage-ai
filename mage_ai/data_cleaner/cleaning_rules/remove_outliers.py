@@ -11,6 +11,10 @@ REMOVE_OUTLIERS_TITLE = 'Remove outliers'
 
 
 class RemoveOutliers(BaseRule):
+    default_config = dict(
+        max_z_score=3,
+    )
+
     """
     Checks dataframe for the existence of potential outliers, and generates a cleaning suggestion
     to remove these outliers
@@ -31,8 +35,9 @@ class RemoveOutliers(BaseRule):
         if outlier_count:
             std = self.statistics[f'{column}/std']
             avg = self.statistics[f'{column}/average']
-            upper = avg + 3 * std
-            lower = avg - 3 * std
+            max_z_score = self.config('max_z_score')
+            upper = avg + max_z_score * std
+            lower = avg - max_z_score * std
             wrapped_c = wrap_column_name(column)
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
