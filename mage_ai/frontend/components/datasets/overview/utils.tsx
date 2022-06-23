@@ -24,7 +24,7 @@ import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_CATEGORICAL, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import { StatRow } from '../StatsTable';
-import { TAB_VISUALIZATIONS } from './constants';
+import { COLUMN_DISTRIBUTION_STATS, TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { calculateChange, transformNumber } from '@utils/number';
@@ -32,6 +32,7 @@ import { createDatasetTabRedirectLink } from '@components/utils';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 import Flex from '@oracle/components/Flex';
+import { DISTRIBUTION_COLUMNS } from '../Insights/constants';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
 
@@ -286,7 +287,9 @@ export function buildRenderColumnHeader({
       )
       : {};
 
-    const statisticsByColumn = statistics?.[`${columnUUID}/value_counts`];
+    const distributionName = COLUMN_DISTRIBUTION_STATS[columnType] || COLUMN_DISTRIBUTION_STATS.default;
+    const statisticsByColumn = statistics?.[`${columnUUID}/${distributionName}`];
+
     const statisticsByColumnArray = Object
       .entries(statisticsByColumn || {})
       .map(([columnValue, uniqueValueCount]) => ({
@@ -348,7 +351,7 @@ export function buildRenderColumnHeader({
           width={columnWidth - (UNIT * 2)}
         />
       );
-    } else if (isCategoricalType) {
+    } else if (DISTRIBUTION_COLUMNS.includes(columnType)) {
       const data = sortByKey(sortByKey(statisticsByColumnArray, 'x', {
         ascending: false,
       }).slice(0, 5), 'x');

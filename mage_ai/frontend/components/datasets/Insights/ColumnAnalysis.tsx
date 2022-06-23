@@ -18,7 +18,7 @@ import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
-import { DATE_FORMAT } from './constants';
+import { DATE_FORMAT, DISTRIBUTION_COLUMNS, DISTRIBUTION_TITLES } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
@@ -74,7 +74,6 @@ function ColumnAnalysis({
   const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
   const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
   const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
-  const isTextType = ColumnTypeEnum.TEXT === feature.columnType;
   const isDatetimeType = ColumnTypeEnum.DATETIME === feature.columnType;
 
   const {
@@ -198,7 +197,7 @@ function ColumnAnalysis({
         sortData={d => sortByKey(d, '[2]')}
       />
     );
-  } else if (isCategoricalType || isTextType) {
+  } else if (DISTRIBUTION_COLUMNS.includes(feature.columnType)) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -541,7 +540,7 @@ function ColumnAnalysis({
           <ChartRow
             left={
               <ChartContainer
-                title={isTextType ? 'Word distribution' : 'Distribution of values'}
+                title={DISTRIBUTION_TITLES[feature.columnType] || DISTRIBUTION_TITLES.default}
               >
                 {distributionChart}
               </ChartContainer>
