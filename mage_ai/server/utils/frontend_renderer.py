@@ -94,7 +94,7 @@ def update_frontend_urls(host=None, port=None, notebook_type=None, config={}):
         server_config.server_url_params = url_params
         __update_frontend_urls_in_files(base_path, url_params)
     elif notebook_type == NotebookType.SAGEMAKER:
-        base_path = f'/proxy/{port}/'
+        base_path = f'/proxy/{port}'
         __update_frontend_urls_in_files(base_path, None)
 
 

@@ -4,9 +4,11 @@ export function getHost() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
   const PORT = 5789;
+  const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
 
   let host = LOCALHOST;
   let protocol = 'http://';
+  let basePath = '';
 
   if (windowDefined) {
     host = window.location.hostname;
@@ -26,9 +28,13 @@ export function getHost() {
         host = `${host}:${window.location.port}`;
       }
     }
+
+  }
+  if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
+    basePath = CLOUD_BASE_PATH;
   }
 
-  return `${protocol}${host}`;
+  return `${protocol}${host}${basePath}`;
 }
 
 export function buildUrl(
