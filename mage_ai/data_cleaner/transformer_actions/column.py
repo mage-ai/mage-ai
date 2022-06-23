@@ -126,7 +126,7 @@ def impute(df, action, **kwargs):
         df = df.sort_values(by=timeseries_cols, axis=0)
         df[columns] = df[columns].fillna(method='ffill')
     elif strategy == ImputationStrategy.RANDOM:
-        for column in columns:
+        for column, dtype in zip(columns, ctypes):
             invalid_idx = df[df[column].isna()].index
             valid_idx = df[df[column].notna()].index
             if len(invalid_idx) == len(df[column]):
@@ -135,7 +135,11 @@ def impute(df, action, **kwargs):
                 )
             sample = df.loc[valid_idx, column].sample(len(invalid_idx), replace=True)
             sample.index = invalid_idx
-            df.at[invalid_idx, column] = sample
+            if dtype == ColumnType.LIST:
+                for idx, sample_value in zip(invalid_idx, sample):
+                    df.at[idx, column] = sample_value
+            else:
+                df.loc[invalid_idx, column] = sample
     elif value is not None:
         df[columns] = df[columns].fillna(value)
     else:
