@@ -8,7 +8,9 @@ const Home = () => {
   const basePath = completePath.split('?')[0];
   let pathname = '/datasets';
   if (basePath && basePath !== '/') {
-    pathname = `${basePath}/datasets`;
+    pathname = !basePath.includes('/datasets')
+      ? `${basePath}/datasets`
+      : basePath;
   }
 
   useEffect(() => {
@@ -16,7 +18,7 @@ const Home = () => {
       pathname,
       query: queryParams,
     });
-  });
+  }, []);
 };
 
 export default Home;
