@@ -36,6 +36,13 @@ import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import {
+  TAB_DATA,
+  TABS_IN_ORDER,
+  TAB_REPORTS,
+  TABS_QUERY_PARAM,
+  TAB_VISUALIZATIONS,
+} from './constants';
+import {
   deserializeFeatureSet,
   getFeatureSetInvalidValuesAll,
   getFeatureSetStatistics,
@@ -44,19 +51,6 @@ import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-
-export const TABS_QUERY_PARAM = 'tabs[]';
-export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
-export const COLUMN_QUERY_PARAM = 'column';
-
-export const TAB_REPORTS = 'Reports';
-const TAB_VISUALIZATIONS = 'Visualizations';
-const TAB_DATA = 'Data';
-const TABS_IN_ORDER = [
-  TAB_REPORTS,
-  TAB_VISUALIZATIONS,
-  TAB_DATA,
-];
 
 type DatasetOverviewProps = {
   selectedColumnIndex?: number;
@@ -170,14 +164,13 @@ function DatasetOverview({
     insights,
   ]);
 
-  const insightsOverview = selectedColumn
-    ? insightsByFeatureUUID[selectedColumn]
-    : insights?.[1] || {};
-
   const columnsVisible = Number(showColumnsFromUrl) === 1;
   const columnsVisiblePrevious = usePrevious(columnsVisible);
-
   const colType = features?.find((feature) => feature.uuid === selectedColumn)?.columnType;
+
+  const insightsOverview = (selectedColumn && colType !== ColumnTypeEnum.DATETIME)
+    ? insightsByFeatureUUID[selectedColumn]
+    : insights?.[1] || {};
 
   const {
     height: dataTableHeightInit,

@@ -1,8 +1,8 @@
 import {
   COLUMN_QUERY_PARAM,
-  TABS_QUERY_PARAM,
   SHOW_COLUMNS_QUERY_PARAM,
-} from '@components/datasets/overview';
+  TABS_QUERY_PARAM,
+} from '@components/datasets/overview/constants';
 import { PageEnum } from '@components/PageBreadcrumbs';
 import { queryFromUrl } from '@utils/url';
 import { useRouter } from 'next/router';

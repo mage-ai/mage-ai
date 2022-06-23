@@ -27,7 +27,7 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
-import { TAB_REPORTS } from '@components/datasets/overview';
+import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
 
@@ -354,7 +354,7 @@ function Table({
                     className="th"
                     key={column.id}
                     style={columnStyle}
-                    title={firstColumn && 'Row number'}
+                    title={firstColumn ? 'Row number' : undefined}
                   >
                     {el}
                   </div>
