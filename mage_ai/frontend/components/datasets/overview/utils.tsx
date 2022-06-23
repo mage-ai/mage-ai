@@ -22,7 +22,7 @@ import {
 } from '../constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
-import { ColumnTypeEnum } from '@interfaces/FeatureType';
+import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import { StatRow } from '../StatsTable';
 import { TAB_REPORTS } from './index';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -31,6 +31,7 @@ import { calculateChange, transformNumber } from '@utils/number';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
+import Flex from '@oracle/components/Flex';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
 
@@ -395,7 +396,11 @@ export function buildRenderColumnHeader({
             marginBottom: UNIT,
           }}
         >
-          {ColumnTypeIcon && <ColumnTypeIcon size={UNIT * 2} />}
+          {ColumnTypeIcon && 
+            <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
+              <ColumnTypeIcon size={UNIT * 2} />
+            </Flex>
+          }
 
           <div
             style={{
