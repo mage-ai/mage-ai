@@ -107,11 +107,14 @@ def impute(df, action, **kwargs):
     elif strategy == ImputationStrategy.MEDIAN:
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
     elif strategy == ImputationStrategy.MODE:
-        for column in columns:
-            mode = df[column].mode().iloc[0]
-            df[column] = df[column].apply(
-                lambda element: element if element not in [None, np.nan] else mode
-            )
+        if ColumnType.LIST in ctypes:
+            for column in columns:
+                mode = df[column].mode().iloc[0]
+                df[column] = df[column].apply(
+                    lambda element: element if element not in [None, np.nan] else mode
+                )
+        else:
+            df[columns] = df[columns].fillna(df[columns].mode(axis=0).iloc[0])
     elif strategy == ImputationStrategy.COLUMN:
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
