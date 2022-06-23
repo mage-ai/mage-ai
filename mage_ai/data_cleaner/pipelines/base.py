@@ -42,7 +42,7 @@ class BasePipeline:
         self.rules = rules
         self.verbose = verbose
 
-    def create_actions(self, df, column_types, statistics):
+    def create_actions(self, df, column_types, statistics, rule_configs={}):
         if not statistics or len(statistics) == 0:
             calculator = StatisticsCalculator(column_types, self.verbose)
             statistics = calculator.calculate_statistics_overview(df, False)
@@ -53,7 +53,9 @@ class BasePipeline:
                 with VerboseFunctionExec(
                     f'Evaluating cleaning rule: {rule.__name__}', verbose=self.verbose
                 ):
-                    suggestions = rule(df, column_types, statistics).evaluate()
+                    rule_config = rule_configs.get(rule.__name__, {})
+                    suggestions = \
+                        rule(df, column_types, statistics, custom_config=rule_config).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions

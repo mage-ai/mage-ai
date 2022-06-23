@@ -8,10 +8,13 @@ class RemoveCollinearColumns(BaseRule):
     EPSILON = 1e-12
     MIN_ENTRIES = 3
     ROW_SAMPLE_SIZE = 300
-    VIF_UB = 5
 
-    def __init__(self, df, column_types, statistics):
-        super().__init__(df, column_types, statistics)
+    default_config = dict(
+        vif_ub=3,
+    )
+
+    def __init__(self, df, column_types, statistics, custom_config={}):
+        super().__init__(df, column_types, statistics, custom_config=custom_config)
         self.numeric_df, self.numeric_columns = self._filter_numeric_types()
         self.numeric_indices = np.arange(len(self.numeric_df))
 
@@ -23,14 +26,14 @@ class RemoveCollinearColumns(BaseRule):
         self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
         for column in self.numeric_columns[:-1]:
             variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
+            if variance_inflation_factor > self.config('vif_ub'):
                 collinear_columns.append(column)
                 self.numeric_df.drop(column, axis=1, inplace=True)
         if len(collinear_columns) != len(self.numeric_columns) - 1:
             # check the final column if and only if there are other columns to compare it to
             column = self.numeric_columns[-1]
             variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.VIF_UB:
+            if variance_inflation_factor > self.config('vif_ub'):
                 collinear_columns.append(column)
         if len(collinear_columns) != 0:
             suggestions.append(

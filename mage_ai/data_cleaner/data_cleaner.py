@@ -12,9 +12,22 @@ def analyze(df):
     return cleaner.analyze(df)
 
 
-def clean(df, column_types={}, transform=True, rules=DEFAULT_RULES, verbose=True):
+def clean(
+    df,
+    column_types={},
+    transform=True,
+    rules=DEFAULT_RULES,
+    rule_configs={},
+    verbose=True,
+):
     cleaner = DataCleaner(verbose=verbose)
-    return cleaner.clean(df, column_types=column_types, rules=rules, transform=transform)
+    return cleaner.clean(
+        df,
+        column_types=column_types,
+        rules=rules,
+        rule_configs=rule_configs,
+        transform=transform,
+    )
 
 
 class DataCleaner:
@@ -50,7 +63,7 @@ class DataCleaner:
             statistics=statistics,
         )
 
-    def clean(self, df, column_types={}, transform=True, rules=DEFAULT_RULES):
+    def clean(self, df, column_types={}, transform=True, rules=DEFAULT_RULES, rule_configs={}):
         df_stats = self.analyze(df, column_types=column_types)
         df = df_stats['cleaned_df']
         pipeline = BasePipeline(rules=rules, verbose=self.verbose)
@@ -62,6 +75,7 @@ class DataCleaner:
                 df,
                 df_stats['column_types'],
                 df_stats['statistics'],
+                rule_configs=rule_configs,
             )
         with timer('data_cleaner.create_preview_results'):
             pipeline.create_preview_results(df, suggested_actions)
