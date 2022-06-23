@@ -26,6 +26,14 @@ import usePrevious from '@utils/usePrevious';
 
 import { BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
+  COLUMN_DISTRIBUTION_STATS,
+  TAB_DATA,
+  TABS_IN_ORDER,
+  TAB_REPORTS,
+  TABS_QUERY_PARAM,
+  TAB_VISUALIZATIONS,
+} from './constants';
+import {
   COLUMN_HEADER_CHART_HEIGHT,
   buildRenderColumnHeader,
   createMetricsSample,
@@ -35,13 +43,6 @@ import { Close } from '@oracle/icons';
 import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
-import {
-  TAB_DATA,
-  TABS_IN_ORDER,
-  TAB_REPORTS,
-  TABS_QUERY_PARAM,
-  TAB_VISUALIZATIONS,
-} from './constants';
 import {
   deserializeFeatureSet,
   getFeatureSetInvalidValuesAll,
@@ -226,12 +227,6 @@ function DatasetOverview({
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
 
-  const distributionData = {
-    [ColumnTypeEnum.EMAIL]: statistics?.[`${selectedColumn}/domain_distribution`],
-    [ColumnTypeEnum.TEXT]: statistics?.[`${selectedColumn}/word_distribution`],
-    default: statistics?.[`${selectedColumn}/value_counts`],
-  };
-
   return (
     <DatasetDetail
       columnsVisible={columnsVisible}
@@ -337,7 +332,9 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={distributionData[colType] || distributionData.default}
+              statisticsByColumn={
+                COLUMN_DISTRIBUTION_STATS[colType] || COLUMN_DISTRIBUTION_STATS.default
+              }
               statisticsOverview={statistics}
             />
           )}
