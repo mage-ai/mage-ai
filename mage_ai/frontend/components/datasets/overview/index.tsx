@@ -226,6 +226,12 @@ function DatasetOverview({
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
 
+  const distributionData = {
+    [ColumnTypeEnum.EMAIL]: statistics?.[`${selectedColumn}/domain_distribution`],
+    [ColumnTypeEnum.TEXT]: statistics?.[`${selectedColumn}/word_distribution`],
+    default: statistics?.[`${selectedColumn}/value_counts`],
+  };
+
   return (
     <DatasetDetail
       columnsVisible={columnsVisible}
@@ -331,11 +337,7 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={
-                (colType === ColumnTypeEnum.TEXT 
-                  ? statistics?.[`${selectedColumn}/word_distribution`]
-                  : statistics?.[`${selectedColumn}/value_counts`]
-                ) || {}}
+              statisticsByColumn={distributionData[colType] || distributionData.default}
               statisticsOverview={statistics}
             />
           )}
