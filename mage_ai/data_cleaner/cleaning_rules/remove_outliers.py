@@ -5,7 +5,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     Axis,
 )
 from typing import Union, Dict
-import numpy as np
 
 REMOVE_OUTLIERS_TITLE = 'Remove outliers'
 
