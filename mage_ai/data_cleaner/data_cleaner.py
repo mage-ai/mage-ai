@@ -44,6 +44,7 @@ class DataCleaner:
                 df, column_types, statistics, verbose=self.verbose
             ).process(df, is_clean=True)
         return dict(
+            cleaned_df=df,
             insights=analysis,
             column_types=column_types,
             statistics=statistics,
@@ -51,7 +52,7 @@ class DataCleaner:
 
     def clean(self, df, column_types={}, transform=True, rules=DEFAULT_RULES):
         df_stats = self.analyze(df, column_types=column_types)
-        df = clean_dataframe(df, df_stats['column_types'])
+        df = df_stats['cleaned_df']
         pipeline = BasePipeline(rules=rules, verbose=self.verbose)
         if df_stats['statistics']['is_timeseries']:
             df = df.sort_values(by=df_stats['statistics']['timeseries_index'], axis=0)

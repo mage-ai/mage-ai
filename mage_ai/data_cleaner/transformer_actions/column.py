@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
-from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
+from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
 from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
@@ -95,20 +95,29 @@ def impute(df, action, **kwargs):
 
     empty_string_pattern = r'^\s*$'
     df[columns] = df[columns].replace(empty_string_pattern, np.nan, regex=True)
+    ctypes = [action_variables[column]['feature']['column_type'] for column in columns]
 
     if strategy == ImputationStrategy.AVERAGE:
         df[columns] = df[columns].fillna(df[columns].astype(float).mean(axis=0))
     elif strategy == ImputationStrategy.CONSTANT:
         if value is None:
-            for column in columns:
-                dtype = action_variables[column]['feature']['column_type']
-                df[column] = df[column].fillna(CONSTANT_IMPUTATION_DEFAULTS[dtype])
-        else:
-            df[columns] = df[columns].fillna(value)
+            value = pd.Series([CONSTANT_IMPUTATION_DEFAULTS[dtype] for dtype in ctypes])
+            value.index = pd.Index(columns)
+        df[columns] = df[columns].fillna(value)
     elif strategy == ImputationStrategy.MEDIAN:
         df[columns] = df[columns].fillna(df[columns].astype(float).median(axis=0))
     elif strategy == ImputationStrategy.MODE:
-        df[columns] = df[columns].fillna(df[columns].mode(axis=0).iloc[0])
+        if ColumnType.LIST in ctypes:
+            for column, dtype in zip(columns, ctypes):
+                mode = df[column].mode().iloc[0]
+                if dtype == ColumnType.LIST:
+                    df[column] = df[column].apply(
+                        lambda element: element if element not in [None, np.nan] else mode
+                    )
+                else:
+                    df[columns] = df[columns].fillna(mode)
+        else:
+            df[columns] = df[columns].fillna(df[columns].mode(axis=0).iloc[0])
     elif strategy == ImputationStrategy.COLUMN:
         replacement_df = pd.DataFrame({col: df[value] for col in columns})
         df[columns] = df[columns].fillna(replacement_df)
@@ -117,7 +126,7 @@ def impute(df, action, **kwargs):
         df = df.sort_values(by=timeseries_cols, axis=0)
         df[columns] = df[columns].fillna(method='ffill')
     elif strategy == ImputationStrategy.RANDOM:
-        for column in columns:
+        for column, dtype in zip(columns, ctypes):
             invalid_idx = df[df[column].isna()].index
             valid_idx = df[df[column].notna()].index
             if len(invalid_idx) == len(df[column]):
@@ -126,7 +135,11 @@ def impute(df, action, **kwargs):
                 )
             sample = df.loc[valid_idx, column].sample(len(invalid_idx), replace=True)
             sample.index = invalid_idx
-            df.loc[invalid_idx, column] = sample
+            if dtype == ColumnType.LIST:
+                for idx, sample_value in zip(invalid_idx, sample):
+                    df.at[idx, column] = sample_value
+            else:
+                df.loc[invalid_idx, column] = sample
     elif value is not None:
         df[columns] = df[columns].fillna(value)
     else:
