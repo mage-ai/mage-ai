@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -172,7 +172,11 @@ function FeatureProfile({
       <FeatureProfileStyle>
         <Spacing p={2}>
           <FlexContainer alignItems="center">
-            {ColumnTypeIcon && <ColumnTypeIcon size={UNIT * 2} />}
+            {ColumnTypeIcon && 
+              <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
+                <ColumnTypeIcon size={UNIT * 2} />
+              </Flex>
+            }
             <Link
               inline
               onClick={() => goToWithQuery({
