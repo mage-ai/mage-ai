@@ -164,14 +164,13 @@ function DatasetOverview({
     insights,
   ]);
 
-  const insightsOverview = selectedColumn
-    ? insightsByFeatureUUID[selectedColumn]
-    : insights?.[1] || {};
-
   const columnsVisible = Number(showColumnsFromUrl) === 1;
   const columnsVisiblePrevious = usePrevious(columnsVisible);
-
   const colType = features?.find((feature) => feature.uuid === selectedColumn)?.columnType;
+
+  const insightsOverview = (selectedColumn && colType !== ColumnTypeEnum.DATETIME)
+    ? insightsByFeatureUUID[selectedColumn]
+    : insights?.[1] || {};
 
   const {
     height: dataTableHeightInit,
