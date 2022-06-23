@@ -24,10 +24,9 @@ export type BaseIconProps = {
 
 type BaseIconInternalProps = {
   children: any;
-  title?: string;
 };
 
-export const SVGStyle = styled.svg``;
+export const SVGStyle = styled.svg<BaseIconInternalProps>``;
 
 export const SHARED_STYLES = css<any>`
 
