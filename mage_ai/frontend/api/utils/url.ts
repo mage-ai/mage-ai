@@ -4,6 +4,12 @@ export function getHost() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
   const PORT = 5789;
+  /*
+  The CLOUD_BASE_PATH placeholder below is used for replacing with base
+  paths required by cloud notebooks. The backend will detect the notebook type
+  and replace the placeholder when the mage_ai tool is launched. We may not
+  know the base path until the tool is launched.
+  */
   const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
 
   let host = LOCALHOST;
