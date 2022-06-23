@@ -340,6 +340,18 @@ def update_pipeline(id):
     return response
 
 
+@app.route('/status')
+@rescue_errors
+def get_status():
+    return app.response_class(
+        response=json.dumps(dict(
+            api_key_provided=api_key is not None,
+        )),
+        status=200,
+        mimetype='application/json',
+    )
+
+
 def clean_df(df, name, verbose=False):
     feature_set = FeatureSet(df=df, name=name)
 
@@ -414,10 +426,7 @@ class ThreadWithTrace(threading.Thread):
 
 def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
     global thread
-    global api_key
-    if mage_api_key:
-        api_key = mage_api_key
-        sync_pipelines()
+    sync_pipelines(mage_api_key)
 
     app_kwargs = {
         'debug': False,
@@ -430,12 +439,17 @@ def launch(mage_api_key=None, host=SERVER_HOST, port=SERVER_PORT) -> None:
     return thread
 
 
-def sync_pipelines():
-    print('Syncing pipelines with cloud database.', end='')
-    local_pipelines = Pipeline.objects()
-    for pipeline in local_pipelines:
-        print('.', end='')
-        pipeline.sync_pipeline(api_key)
+def sync_pipelines(mage_api_key=None):
+    global api_key
+    if mage_api_key:
+        api_key = mage_api_key
+
+    if api_key is not None:
+        print('Syncing pipelines with cloud database.', end='')
+        local_pipelines = Pipeline.objects()
+        for pipeline in local_pipelines:
+            print('.', end='')
+            pipeline.sync_pipeline(api_key)
 
 
 def kill():

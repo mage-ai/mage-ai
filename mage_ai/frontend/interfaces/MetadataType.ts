@@ -5,7 +5,7 @@ export enum FeatureSetQualityEnum {
   BAD = 'Bad',
 }
 
-export default interface MetadataType {
+export interface MetadataType {
   column_types: {
     [key: string]: ColumnTypeEnum;
   };
@@ -15,4 +15,9 @@ export default interface MetadataType {
     count: number;
     quality: FeatureSetQualityEnum;
   };
+}
+
+export interface PipelineMetadataType {
+  feature_set_id: number;
+  remote_id: number;
 }

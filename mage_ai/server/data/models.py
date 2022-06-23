@@ -262,5 +262,6 @@ class Pipeline(Model):
     def to_dict(self, detailed=True):
         return dict(
             id=self.id,
+            metadata=self.metadata,
             actions=self.pipeline.actions,
         )
