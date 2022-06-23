@@ -170,7 +170,7 @@ function FeatureProfile({
   return (
     <Flex flexDirection="column">
       <FeatureProfileStyle>
-        <Spacing p={2}>
+        <Spacing px={1} py={2}>
           <FlexContainer alignItems="center">
             {ColumnTypeIcon && 
               <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
