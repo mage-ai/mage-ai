@@ -395,3 +395,68 @@ class StatisticsCalculatorTest(TestCase):
             '3': 1,
         }
         self.assertEquals(expected_element_distribution, data['lists/element_distribution'])
+
+    def test_calculate_statistics_box_plot(self):
+        df = pd.DataFrame(
+            [
+                [1000, 'US', 30000, 10, 'cute animal #1', 100, 30],
+                [500, 'CA', 10000000, 20, 'intro to regression', 3000, 20],
+                [200, '', np.nan, 50, 'daily news #1', None, 75],
+                [250, 'CA', 7500, 25, 'machine learning seminar', 8000, 20],
+                [1000, 'MX', 45003, 20, 'cute animal #4', 90, 40],
+                [1500, 'MX', 75000, 30, '', 70, 25],
+                [1500, 'US', 75000, np.nan, 'daily news #3', 70, 25],
+                [None, 'US', 75000, 30, 'tutorial: how to start a startup', 70, np.nan],
+                [1250, 'US', 60000, 50, 'cute animal #3', 80, 20],
+                [200, 'CA', 5000, 30, '', 10000, 30],
+                [800, 'US', 50, 40, 'meme compilation', 2000, 45],
+                [600, 'CA', 11000, 50, 'daily news #2', 3000, 50],
+                [600, 'CA', '', 50, '', 3000, None],
+                [700, 'MX', 11750, 20, 'cute animal #2', 2750, 55],
+                [700, '', None, 20, '', None, 55],
+                [700, 'MX', 11750, '', '', 2750, 55],
+                [1200, 'MX', 52000, 10, 'vc funding strats', 75, 60],
+            ],
+            columns=[
+                'number_of_users',
+                'location',
+                'views',
+                'number_of_creators',
+                'name',
+                'losses',
+                'number_of_advertisers',
+            ],
+        )
+
+        column_types = {
+            'number_of_users': 'number',
+            'location': 'category',
+            'views': 'number',
+            'number_of_creators': 'number',
+            'name': 'text',
+            'losses': 'number',
+            'number_of_advertisers': 'number',
+        }
+        calculator = StatisticsCalculator(column_types=column_types)
+        data = calculator.calculate_statistics_overview(df, is_clean=False)
+
+        expected_box_plot_no_users = {
+            'outliers': [],
+            'min': 200.0,
+            'first_quartile': 600.0,
+            'median': 700.0,
+            'third_quartile': 1000.0,
+            'max': 1500.0,
+        }
+
+        expected_box_plot_views = {
+            'outliers': [10000000.0],
+            'min': 50.0,
+            'first_quartile': 11000.0,
+            'median': 37501.5,
+            'third_quartile': 75000.0,
+            'max': 75000.0,
+        }
+
+        self.assertEqual(expected_box_plot_no_users, data['number_of_users/box_plot_data'])
+        self.assertEqual(expected_box_plot_views, data['views/box_plot_data'])
