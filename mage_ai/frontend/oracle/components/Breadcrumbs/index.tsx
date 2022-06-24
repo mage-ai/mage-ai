@@ -25,11 +25,10 @@ function BreadCrumbs({
           props: BreadcrumbType,
           idx: number,
         ) => (
-          <Flex key={props.label || idx}>
+          <Flex key={`${props.label}_${idx}` || idx}>
             <Breadcrumb
               bold={bold}
               hideIcon={idx === breadcrumbs.length - 1}
-              key={props.label}
               {...props}
               large={large}
               linkProps={linkProps}
