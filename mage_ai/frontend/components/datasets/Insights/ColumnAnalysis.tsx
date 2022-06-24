@@ -28,11 +28,7 @@ import {
 import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
-import {
-  groupBy,
-  indexBy,
-  sortByKey,
-} from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 
 type ColumnAnalysisProps = {
   column: string;
@@ -65,16 +61,17 @@ function ColumnAnalysis({
 
   const statisticsOverview = statisticsOverviewProp || {};
   const numberOfRows = statisticsOverview?.count;
-  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-  const featuresByColumnType = groupBy(features, ({ columnType: ct }) => ct);
-  const feature = featuresByUUID[column] || {};
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
 
-  const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
-  const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
-  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
-  const isDatetimeType = ColumnTypeEnum.DATETIME === feature.columnType;
+  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
+  const feature = featuresByUUID[column] || {};
+  const { uuid: columnUUID, columnType } = feature;
+
+  const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === columnType;
+  const isNumberType = COLUMN_TYPE_NUMBERS.includes(columnType);
+  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(columnType);
+  const isDatetimeType = ColumnTypeEnum.DATETIME === columnType;
 
   const {
     charts,
@@ -197,7 +194,7 @@ function ColumnAnalysis({
         sortData={d => sortByKey(d, '[2]')}
       />
     );
-  } else if (DISTRIBUTION_COLUMNS.includes(feature.columnType)) {
+  } else if (DISTRIBUTION_COLUMNS.includes(columnType)) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -219,28 +216,23 @@ function ColumnAnalysis({
       />
     );
   } else if (isDatetimeType) {
-    const timeSeriesData = [];
-    timeSeries?.forEach((tsChart) => {
-      const {
-        distribution,
-      } = buildDistributionData(
-        tsChart,
-        {},
-        {
-          feature: {
-            'columnType': feature.columnType,
-            'uuid': feature.columnUUID,
-          },
-        },
-      );
-      timeSeriesData.push(distribution);
-    });
+    const datetimeColumns = features.filter(({ columnType: featureType }) => (
+      featureType === ColumnTypeEnum.DATETIME
+    ));
+    const colIndex = datetimeColumns.findIndex(({ uuid }) => uuid === columnUUID);
 
-    const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
-    const timeSeriesHistograms = timeSeriesData.map(({
-      data,
-      columnUUID,
-    }) => (
+    const { distribution: { data, featureUUID } } = buildDistributionData(
+      timeSeries[colIndex],
+      {},
+      {
+        feature: {
+          'columnType': columnType,
+          'uuid': columnUUID,
+        },
+      },
+    );
+
+    distributionChart = (
       <Histogram
         data={data.map(({
           x,
@@ -258,7 +250,7 @@ function ColumnAnalysis({
         ])}
         getBarColor={([]) => light.brand.wind300}
         height={UNIT * 50}
-        key={columnUUID}
+        key={featureUUID}
         large
         renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
           <Text small>
@@ -273,9 +265,7 @@ function ColumnAnalysis({
         showYAxisLabels
         sortData={d => sortByKey(d, '[4]')}
       />
-    ));
-
-    distributionChart = timeSeriesHistograms;
+    );
   }
 
   let unusualDistributionTable;
@@ -540,7 +530,7 @@ function ColumnAnalysis({
           <ChartRow
             left={
               <ChartContainer
-                title={DISTRIBUTION_TITLES[feature.columnType] || DISTRIBUTION_TITLES.default}
+                title={DISTRIBUTION_TITLES[columnType] || DISTRIBUTION_TITLES.default}
               >
                 {distributionChart}
               </ChartContainer>

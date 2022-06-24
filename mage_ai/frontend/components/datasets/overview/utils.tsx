@@ -1,6 +1,7 @@
 import NextLink from 'next/link';
 
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
+import Flex from '@oracle/components/Flex';
 import Histogram from '@components/charts/Histogram';
 import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
@@ -20,19 +21,18 @@ import {
   PERCENTAGE_KEYS,
   STAT_KEYS,
 } from '../constants';
+import { COLUMN_DISTRIBUTION_STATS, TAB_VISUALIZATIONS } from './constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
-import { ColumnTypeEnum, COLUMN_TYPE_CATEGORICAL, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
+import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
+import { DISTRIBUTION_COLUMNS } from '../Insights/constants';
 import { StatRow } from '../StatsTable';
-import { COLUMN_DISTRIBUTION_STATS, TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { calculateChange, transformNumber } from '@utils/number';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
-import Flex from '@oracle/components/Flex';
-import { DISTRIBUTION_COLUMNS } from '../Insights/constants';
 
 export const COLUMN_HEADER_CHART_HEIGHT = UNIT * 12;
 
@@ -210,9 +210,11 @@ export function buildRenderColumnHeader({
       time_series: timeSeries,
     } = insightsOverview;
 
-    const timeSeriesData = [];
+    const datetimeColumns = columns.filter((col) => (
+      columnTypes[col] === ColumnTypeEnum.DATETIME
+    ));
 
-    timeSeries?.forEach((tsChart) => {
+    const timeSeriesData = timeSeries?.map((tsChart) => {
       const {
         distribution,
       } = buildDistributionData(
@@ -225,52 +227,54 @@ export function buildRenderColumnHeader({
           },
         },
       );
-      timeSeriesData.push(distribution);
+      return distribution;
     });
 
+    const timeSeriesHistograms = {};
+
+    timeSeriesData?.forEach(({ data }, idx) => {
+      timeSeriesHistograms[datetimeColumns[idx]] = (
+        <Histogram
+          data={data.map(({
+            x,
+            xLabel,
+            xLabelMax,
+            xLabelMin,
+            y,
+          }) => [
+            xLabel,
+            y.count,
+            xLabelMin,
+            xLabelMax,
+            x.min,
+            x.max,
+          ])}
+          getBarColor={([]) => light.brand.wind300}
+          height={COLUMN_HEADER_CHART_HEIGHT}
+          key={columnUUID}
+          large
+          margin={{
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: 0,
+          }}
+          renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
+            <Text small>
+              Rows: {count}
+              <br />
+              Start: {xLabelMin}
+              <br />
+              End: {xLabelMax}
+            </Text>
+          )}
+          sortData={d => sortByKey(d, '[4]')}
+        />
+      );
+    });
 
     const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
-    const timeSeriesHistograms = timeSeriesData.map(({
-      data,
-      columnUUID,
-    }) => (
-      <Histogram
-        data={data.map(({
-          x,
-          xLabel,
-          xLabelMax,
-          xLabelMin,
-          y,
-        }) => [
-          xLabel,
-          y.count,
-          xLabelMin,
-          xLabelMax,
-          x.min,
-          x.max,
-        ])}
-        getBarColor={([]) => light.brand.wind300}
-        height={COLUMN_HEADER_CHART_HEIGHT}
-        key={columnUUID}
-        large
-        margin={{
-          bottom: 0,
-          left: 0,
-          right: 0,
-          top: 0,
-        }}
-        renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
-          <Text small>
-            Rows: {count}
-            <br />
-            Start: {xLabelMin}
-            <br />
-            End: {xLabelMax}
-          </Text>
-        )}
-        sortData={d => sortByKey(d, '[4]')}
-      />
-    ));
+
     const {
       distribution = null,
     } = histogramChart
@@ -299,11 +303,10 @@ export function buildRenderColumnHeader({
 
     const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === columnType;
     const isDatetimeType = ColumnTypeEnum.DATETIME === columnType;
-    const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(columnType);
 
     let distributionChart;
     if (isDatetimeType) {
-      distributionChart = timeSeriesHistograms;
+      distributionChart = timeSeriesHistograms[columnUUID];
     }
     else if (distribution && !isBooleanType) {
       distributionChart = (
