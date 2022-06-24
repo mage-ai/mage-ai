@@ -74,6 +74,7 @@ const SuggestionRow = ({
   const {
     action_payload,
     message,
+    preview_results,
     status,
     title,
   } = action;
@@ -83,6 +84,7 @@ const SuggestionRow = ({
     action_options: actionOptions,
     action_type: actionType,
   } = action_payload;
+  const previewRowIndexes = preview_results?.removed_row_indices || [];
 
   useEffect(() => setActionPayload(action_payload), [action_payload]);
 
@@ -169,7 +171,9 @@ const SuggestionRow = ({
             {numFeatures > 0 && ': '}
           </Text>
           <Flex>
-            {actionType === ActionTypeEnum.FILTER && status !== ActionStatusEnum.COMPLETED &&
+            {(actionType === ActionTypeEnum.FILTER
+              && status !== ActionStatusEnum.COMPLETED
+              && previewRowIndexes.length > 0) &&
               <Button
                 basic
                 iconOnly

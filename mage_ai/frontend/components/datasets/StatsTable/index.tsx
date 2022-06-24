@@ -46,7 +46,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
         successDirection = SuccessDirectionEnum.INCREASE,
         value,
         warning,
-      }) => {
+      }, idx) => {
         const warn = {
           bold: shouldWarn(warning, rate),
           danger: shouldWarn(warning, rate),
@@ -62,7 +62,7 @@ function StatsTable({ stats, title }: StatsTableProps) {
           <RowCard
             columnFlexNumbers={columnFlexNumbers || [1, 1, 1]}
             condensed={!!change}
-            key={name}
+            key={`${name}_${idx}`}
           >
             <Text>{name}</Text>
             <>
