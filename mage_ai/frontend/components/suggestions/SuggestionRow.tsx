@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType, { ActionTypeEnum } from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionStatusEnum, ActionTypeEnum } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -74,6 +74,7 @@ const SuggestionRow = ({
   const {
     action_payload,
     message,
+    status,
     title,
   } = action;
   const {
@@ -168,7 +169,7 @@ const SuggestionRow = ({
             {numFeatures > 0 && ': '}
           </Text>
           <Flex>
-            {actionType === ActionTypeEnum.FILTER &&
+            {actionType === ActionTypeEnum.FILTER && status !== ActionStatusEnum.COMPLETED &&
               <Button
                 basic
                 iconOnly
