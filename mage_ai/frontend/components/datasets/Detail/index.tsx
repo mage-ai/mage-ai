@@ -205,6 +205,7 @@ function DatasetDetail({
         },
       });
     }
+    setSuggestionPreviewIdx(null);
 
     // @ts-ignore
     commitAction({
@@ -214,6 +215,7 @@ function DatasetDetail({
   };
   const removeAction = (existingActionData: TransformerActionType) => {
     beforeCommit();
+    setSuggestionPreviewIdx(null);
 
     const idx =
       pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
