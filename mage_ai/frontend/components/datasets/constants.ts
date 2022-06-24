@@ -1,5 +1,6 @@
-import { greaterThan, lessThan } from '@utils/array';
+import { COLUMN_TYPE_CATEGORICAL, ColumnTypeEnum } from '@interfaces/FeatureType';
 import { SuccessDirectionEnum } from './StatsTable';
+import { greaterThan, lessThan } from '@utils/array';
 
 export const LARGE_WINDOW_WIDTH = 992;
 
@@ -116,4 +117,25 @@ export const WARNINGS = {
       val: 0,
     },
   ],
+};
+
+export const DISTRIBUTION_STATS = {
+  [ColumnTypeEnum.EMAIL]: 'domain_distribution',
+  [ColumnTypeEnum.TEXT]: 'word_distribution',
+  [ColumnTypeEnum.LIST]: 'element_distribution',
+  default: 'value_counts',
+};
+
+export const DISTRIBUTION_COLUMNS = [
+  ...COLUMN_TYPE_CATEGORICAL,
+  ColumnTypeEnum.TEXT,
+  ColumnTypeEnum.EMAIL,
+  ColumnTypeEnum.LIST,
+];
+
+export const DISTRIBUTION_TITLES = {
+  [ColumnTypeEnum.EMAIL]: 'Domain distribution',
+  [ColumnTypeEnum.TEXT]: 'Word distribution',
+  [ColumnTypeEnum.LIST]: 'Element distribution',
+  default: 'Distribution of values',
 };

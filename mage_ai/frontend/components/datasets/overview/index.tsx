@@ -26,23 +26,22 @@ import usePrevious from '@utils/usePrevious';
 
 import { BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
-  COLUMN_DISTRIBUTION_STATS,
-  TAB_DATA,
-  TABS_IN_ORDER,
-  TAB_REPORTS,
-  TABS_QUERY_PARAM,
-  TAB_VISUALIZATIONS,
-} from './constants';
-import {
   COLUMN_HEADER_CHART_HEIGHT,
   buildRenderColumnHeader,
   createMetricsSample,
   createStatisticsSample,
 } from './utils';
 import { Close } from '@oracle/icons';
-import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
+import { DISTRIBUTION_STATS, LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
+import {
+  TAB_DATA,
+  TABS_IN_ORDER,
+  TAB_REPORTS,
+  TABS_QUERY_PARAM,
+  TAB_VISUALIZATIONS,
+} from './constants';
 import {
   deserializeFeatureSet,
   getFeatureSetInvalidValuesAll,
@@ -226,6 +225,8 @@ function DatasetOverview({
   } = featureSetStats;
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
+  const distributionName = DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default;
+  const statisticsByColumn = statistics?.[`${selectedColumn}/${distributionName}`];
 
   return (
     <DatasetDetail
@@ -332,9 +333,7 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={
-                COLUMN_DISTRIBUTION_STATS[colType] || COLUMN_DISTRIBUTION_STATS.default
-              }
+              statisticsByColumn={statisticsByColumn}
               statisticsOverview={statistics}
             />
           )}

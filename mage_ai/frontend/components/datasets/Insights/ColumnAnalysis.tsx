@@ -18,7 +18,8 @@ import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
-import { DATE_FORMAT, DISTRIBUTION_COLUMNS, DISTRIBUTION_TITLES } from './constants';
+import { DATE_FORMAT } from './constants';
+import { DISTRIBUTION_COLUMNS, DISTRIBUTION_TITLES } from '../constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
