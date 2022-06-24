@@ -18,6 +18,7 @@ import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
+import { TABS_QUERY_PARAM, TAB_DATA } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 
@@ -177,8 +178,13 @@ const SuggestionRow = ({
                     setSuggestionPreviewIdx(null);
                   } else {
                     setSuggestionPreviewIdx(idx);
-                  }
-                }}
+                    goToWithQuery({
+                      [TABS_QUERY_PARAM]: TAB_DATA,
+                    }, {
+                      pushHistory: true,
+                    });
+                  }}
+                }
               >
                 <PreviewOpen
                   highlight={idx === suggestionPreviewIdx}

@@ -17,7 +17,7 @@ import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
-import { onError, onSuccess, parseError } from '@api/utils/response';
+import { parseError } from '@api/utils/response';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -25,6 +25,8 @@ type SuggestionsProps = {
   isLoading?: boolean;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion?: (action: TransformerActionType) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
+  suggestionPreviewIdx?: number;
   suggestions: SuggestionType[];
 };
 
@@ -33,12 +35,13 @@ function Suggestions({
   featureSet,
   isLoading,
   removeAction,
+  setSuggestionPreviewIdx,
+  suggestionPreviewIdx,
   suggestions,
 }: SuggestionsProps) {
   const csvLink = useRef(null);
   const [downloadReady, setDownloadReady] = useState(false);
   const [downloadedFeatureSet, setDownloadedFeatureSet] = useState(null);
-  const [suggestionPreviewIdx, setSuggestionPreviewIdx] = useState(null);
 
   const {
     insights,

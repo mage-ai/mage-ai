@@ -59,6 +59,8 @@ type DatasetDetailProps = {
   selectedColumnIndex?: number;
   selectedTab?: string;
   setErrorMessages?: (errorMessages: string[]) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
+  suggestionPreviewIdx?: number;
   tabs?: string[];
 } & DatasetDetailSharedProps;
 
@@ -75,6 +77,8 @@ function DatasetDetail({
   selectedColumnIndex,
   selectedTab,
   setErrorMessages,
+  setSuggestionPreviewIdx,
+  suggestionPreviewIdx,
   tabs,
 }: DatasetDetailProps) {
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
@@ -258,6 +262,8 @@ function DatasetDetail({
               isLoading={isLoadingCommitAction}
               removeAction={removeAction}
               removeSuggestion={(action) => console.log(action)}
+              setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+              suggestionPreviewIdx={suggestionPreviewIdx}
               suggestions={suggestions}
             />
           )}

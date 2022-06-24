@@ -66,6 +66,7 @@ function DatasetOverview({
 
   const { data: featureSetRawOriginal, mutate: mutateOriginal } = api.versions.feature_sets.detail(featureSet?.id, '0');
   const featureSetOriginal = featureSetRawOriginal ? deserializeFeatureSet(featureSetRawOriginal) : {};
+  const [suggestionPreviewIdx, setSuggestionPreviewIdx] = useState(null);
 
   const { width: windowWidth } = useWindowSize();
   const windowWidthPrevious = usePrevious(windowWidth);
@@ -107,6 +108,7 @@ function DatasetOverview({
     insights,
     metadata,
     statistics = {},
+    suggestions = [],
   } = featureSet || {};
   const {
     column_types: columnTypes,
@@ -223,6 +225,7 @@ function DatasetOverview({
   const {
     count,
   } = featureSetStats;
+  const suggestionPreviewIndexes = suggestions?.[suggestionPreviewIdx]?.preview_results?.removed_row_indices;
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
   const distributionName = DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default;
@@ -241,6 +244,8 @@ function DatasetOverview({
       selectedColumnIndex={selectedColumnIndex}
       selectedTab={tabsFromUrl?.[0]}
       setErrorMessages={setErrorMessages}
+      setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+      suggestionPreviewIdx={suggestionPreviewIdx}
       tabs={TABS_IN_ORDER}
     >
       <LoadingBar
@@ -363,6 +368,7 @@ function DatasetOverview({
           columns={columns}
           height={dataTableHeight}
           invalidValues={invalidValuesAll}
+          previewIndexes={{ removedRows: suggestionPreviewIndexes }}
           renderColumnHeader={selectedColumn ? null : renderColumnHeader}
           rows={rows}
           width={dataTableWidth}
