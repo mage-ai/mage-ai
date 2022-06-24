@@ -251,7 +251,7 @@ class StatisticsCalculator:
                 )
                 outliers = series_non_null[outlier_mask].tolist()
                 data[f'{col}/box_plot_data'] = {
-                    'outliers': outliers,
+                    'outliers': outliers[:OUTLIER_SAMPLE_COUNT],
                     'min': data[f'{col}/min'],
                     'first_quartile': first_quartile,
                     'median': data[f'{col}/median'],
