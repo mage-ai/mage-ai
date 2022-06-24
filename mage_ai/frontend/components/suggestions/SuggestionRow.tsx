@@ -185,6 +185,7 @@ const SuggestionRow = ({
                     });
                   }}
                 }
+                title="Preview"
               >
                 <PreviewOpen
                   highlight={idx === suggestionPreviewIdx}
@@ -200,6 +201,7 @@ const SuggestionRow = ({
                 iconOnly
                 noPadding
                 onClick={() => setEditing(!editing)}
+                title="Edit"
               >
                 <Edit
                   black={editing}
