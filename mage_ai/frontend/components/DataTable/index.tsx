@@ -325,11 +325,11 @@ function Table({
           className="header"
           ref={refHeader}
         >
-          {headerGroups.map(headerGroup => (
+          {headerGroups.map((headerGroup, groupIdx) => (
             <div
               {...headerGroup.getHeaderGroupProps()}
               className="tr"
-              key={headerGroup.id}
+              key={`${headerGroup.id}_${groupIdx}`}
             >
               {headerGroup.headers.map((column, idx: number) => {
                 const firstColumn = idx === 0;
