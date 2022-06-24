@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionTypeEnum } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -13,7 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import { ArrowDown, ArrowUp, Close, Edit } from '@oracle/icons';
+import { ArrowDown, ArrowUp, Close, Edit, PreviewOpen } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
@@ -49,6 +49,8 @@ const CodeEditor = dynamic(
   },
 );
 
+const ICON_SIZE = UNIT * 2;
+
 const SuggestionRow = ({
   action,
   border,
@@ -75,6 +77,7 @@ const SuggestionRow = ({
     action_arguments: actionArguments,
     action_code: actionCode,
     action_options: actionOptions,
+    action_type: actionType,
   } = action_payload;
 
   useEffect(() => setActionPayload(action_payload), [action_payload]);
@@ -156,10 +159,44 @@ const SuggestionRow = ({
         flex={1}
         flexDirection="column"
       >
-        <Text bold inline>
-          {title}
-          {numFeatures > 0 && ': '}
-        </Text>
+        <FlexContainer justifyContent="space-between">
+          <Text bold inline>
+            {title}
+            {numFeatures > 0 && ': '}
+          </Text>
+          <Flex>
+            {actionType === ActionTypeEnum.FILTER &&
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => {}}
+                transparent
+              >
+                <PreviewOpen
+                  muted
+                  size={ICON_SIZE}
+                />
+              </Button>
+            }
+            <Spacing pr={1} />
+            {saveAction && (
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setEditing(!editing)}
+                transparent
+              >
+                <Edit
+                  black={editing}
+                  muted
+                  size={ICON_SIZE}
+                />
+              </Button>
+            )}
+          </Flex>
+        </FlexContainer>
 
         {featureLinks}
         {numFeatures > DISPLAY_COLS_NUM &&
@@ -220,7 +257,7 @@ const SuggestionRow = ({
 
         {editing &&
           <ActionForm
-            actionType={actionPayload?.action_type}
+            actionType={actionType}
             axis={actionPayload?.axis}
             features={features}
             noBorder
@@ -237,43 +274,25 @@ const SuggestionRow = ({
         }
       </Flex>
 
-      <FlexContainer>
-        {/* TODO: add Preview here */}
-        {saveAction && (
-          <Button
-            basic
-            iconOnly
-            onClick={() => setEditing(!editing)}
-            padding="0px"
-            transparent
-          >
-            <Edit
-              black={editing}
-              muted
-              size={16}
-            />
-          </Button>
-        )}
-        {onClose && (
-          <>
-            <Spacing mr={1} />
+      {onClose && (
+        <>
+          <Spacing mr={1} />
 
-            {isLoading && <Spinner small />}
+          {isLoading && <Spinner small />}
 
-            {!isLoading && (
-              <Button
-                basic
-                iconOnly
-                onClick={onClose}
-                padding="0px"
-                transparent
-              >
-                <Close muted />
-              </Button>
-            )}
-          </>
-        )}
-      </FlexContainer>
+          {!isLoading && (
+            <Button
+              basic
+              iconOnly
+              onClick={onClose}
+              padding="0px"
+              transparent
+            >
+              <Close muted />
+            </Button>
+          )}
+        </>
+      )}
     </RowCard>
   );
 };
