@@ -249,7 +249,7 @@ class StatisticsCalculator:
                 outlier_mask = (series_non_null <= first_quartile - 1.5 * iqr) | (
                     series_non_null >= third_quartile + 1.5 * iqr
                 )
-                outliers = series_non_null[outlier_mask].tolist()
+                outliers = series_non_null[outlier_mask].unique().tolist()
                 data[f'{col}/box_plot_data'] = {
                     'outliers': outliers[:OUTLIER_SAMPLE_COUNT],
                     'min': data[f'{col}/min'],
