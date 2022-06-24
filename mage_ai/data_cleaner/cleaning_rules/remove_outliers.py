@@ -40,7 +40,7 @@ class RemoveOutliers(BaseRule):
             wrapped_c = wrap_column_name(column)
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
-                f'Remove {outlier_count} outlier(s) to reduce the amount of noise in this column.',
+                f'Remove {outlier_count} outlier(s) and null values to reduce the amount of noise in this column.',
                 ActionType.FILTER,
                 action_arguments=[column],
                 action_code=f'{wrapped_c} <= {upper} and {wrapped_c} >= {lower}',
