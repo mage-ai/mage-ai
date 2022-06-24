@@ -11,6 +11,8 @@ import light from '@oracle/styles/themes/light';
 import {
   CATEGORICAL_TYPES,
   DATE_TYPES,
+  DISTRIBUTION_COLUMNS,
+  DISTRIBUTION_STATS,
   HUMAN_READABLE_MAPPING,
   METRICS_KEYS,
   METRICS_RATE_KEY_MAPPING,
@@ -21,12 +23,11 @@ import {
   PERCENTAGE_KEYS,
   STAT_KEYS,
 } from '../constants';
-import { COLUMN_DISTRIBUTION_STATS, TAB_VISUALIZATIONS } from './constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
-import { DISTRIBUTION_COLUMNS } from '../Insights/constants';
 import { StatRow } from '../StatsTable';
+import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { calculateChange, transformNumber } from '@utils/number';
@@ -291,7 +292,7 @@ export function buildRenderColumnHeader({
       )
       : {};
 
-    const distributionName = COLUMN_DISTRIBUTION_STATS[columnType] || COLUMN_DISTRIBUTION_STATS.default;
+    const distributionName = DISTRIBUTION_STATS[columnType] || DISTRIBUTION_STATS.default;
     const statisticsByColumn = statistics?.[`${columnUUID}/${distributionName}`];
 
     const statisticsByColumnArray = Object
