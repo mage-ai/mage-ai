@@ -301,8 +301,8 @@ const SuggestionRow = ({
             <Button
               basic
               iconOnly
+              noPadding
               onClick={onClose}
-              padding="0px"
               transparent
             >
               <Close muted />

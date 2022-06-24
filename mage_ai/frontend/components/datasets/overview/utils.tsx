@@ -5,6 +5,7 @@ import Flex from '@oracle/components/Flex';
 import Histogram from '@components/charts/Histogram';
 import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
+import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 
@@ -119,6 +120,27 @@ function getColumnTypeCounts(
     countDatetime,
     countNumerical,
   };
+}
+
+export function getColumnSuggestions(
+  allSuggestions: SuggestionType[],
+  selectedColumn: string,
+) {
+  return allSuggestions?.reduce((acc, s) => {
+    const { action_payload: { action_arguments: aa } } = s;
+
+    if (aa?.includes(selectedColumn)) {
+      acc.push({
+        ...s,
+        action_payload: {
+          ...s.action_payload,
+          action_arguments: [selectedColumn],
+        },
+      });
+    }
+
+    return acc;
+  }, []);
 }
 
 export function createStatisticsSample({

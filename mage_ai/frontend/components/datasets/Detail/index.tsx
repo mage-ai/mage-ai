@@ -30,6 +30,7 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import actions from '@components/ActionForm/actions';
 import api from '@api';
+
 import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
   Chat,
@@ -38,6 +39,7 @@ import {
 } from '@oracle/icons';
 import { FormConfigType } from '@components/ActionForm/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getColumnSuggestions } from '../overview/utils';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { removeAtIndex } from '@utils/array';
@@ -100,21 +102,7 @@ function DatasetDetail({
   const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
   const suggestions = useMemo(
     () => selectedColumn
-      ? suggestionsInit?.reduce((acc, s) => {
-        const { action_payload: { action_arguments: aa } } = s;
-
-        if (aa?.includes(selectedColumn)) {
-          acc.push({
-            ...s,
-            action_payload: {
-              ...s.action_payload,
-              action_arguments: [selectedColumn],
-            },
-          });
-        }
-
-        return acc;
-      }, [])
+      ? getColumnSuggestions(suggestionsInit, selectedColumn)
       : suggestionsInit,
     [
       selectedColumn,

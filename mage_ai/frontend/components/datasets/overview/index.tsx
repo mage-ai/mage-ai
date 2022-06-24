@@ -30,6 +30,7 @@ import {
   buildRenderColumnHeader,
   createMetricsSample,
   createStatisticsSample,
+  getColumnSuggestions,
 } from './utils';
 import { Close } from '@oracle/icons';
 import { DISTRIBUTION_STATS, LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
@@ -225,7 +226,11 @@ function DatasetOverview({
   const {
     count,
   } = featureSetStats;
-  const suggestionPreviewIndexes = suggestions?.[suggestionPreviewIdx]?.preview_results?.removed_row_indices;
+  const filteredSuggestions = selectedColumn
+    ? getColumnSuggestions(suggestions, selectedColumn)
+    : suggestions;
+  const suggestionPreviewIndexes =
+    filteredSuggestions?.[suggestionPreviewIdx]?.preview_results?.removed_row_indices;
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
   const distributionName = DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default;
