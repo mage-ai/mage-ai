@@ -10,6 +10,7 @@ export type BaseIconProps = {
   disabled?: boolean;
   earth?: boolean;
   fill?: string;
+  highlight?: boolean;
   muted?: boolean;
   opacity?: number;
   primary?: boolean;
@@ -29,7 +30,6 @@ type BaseIconInternalProps = {
 export const SVGStyle = styled.svg<BaseIconInternalProps>``;
 
 export const SHARED_STYLES = css<any>`
-
   ${props => props.fill && typeof props.fill !== 'undefined' && `
     fill: ${props.fill};
   `}
@@ -60,6 +60,10 @@ export const SHARED_STYLES = css<any>`
 
   ${props => !props.useStroke && props.black && `
     fill: ${(props.theme.monotone || light.monotone).black};
+  `}
+
+  ${props => !props.useStroke && props.highlight && `
+    fill: ${(props.theme.background || light.background).menu};
   `}
 
   ${props => props.useStroke && props.black && `

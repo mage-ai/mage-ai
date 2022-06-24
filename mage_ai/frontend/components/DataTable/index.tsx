@@ -43,6 +43,9 @@ type SharedProps = {
   columnHeaderHeight?: number;
   height?: number;
   invalidValues?: InvalidValueType;
+  previewIndexes?: {
+    removedRows?: number[];
+  };
   renderColumnHeader?: (column: any, idx: number, opts: {
     width: number;
   }) => any;
@@ -142,6 +145,7 @@ function Table({
   data,
   height,
   invalidValues,
+  previewIndexes,
   renderColumnHeader,
   width,
 }: TableProps) {
@@ -207,11 +211,13 @@ function Table({
     useSticky,
   );
   const { slug = [] } = router.query;
+  const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
 
   const RenderRow = useCallback(({ index, style }) => {
     const row = rows[index];
     prepareRow(row);
     const { original } = row;
+    const rowToBeRemoved = removedRowIndexes.has(index);
 
     return (
       <div
@@ -246,6 +252,9 @@ function Table({
           const columnIndex = columnsAll.indexOf(header);
           if (isInvalid) {
             cellStyle.color = light.interactive.dangerBorder;
+          }
+          if (rowToBeRemoved) {
+            cellStyle.backgroundColor = light.background.danger;
           }
 
           return (
@@ -316,11 +325,11 @@ function Table({
           className="header"
           ref={refHeader}
         >
-          {headerGroups.map(headerGroup => (
+          {headerGroups.map((headerGroup, groupIdx) => (
             <div
               {...headerGroup.getHeaderGroupProps()}
               className="tr"
-              key={headerGroup.id}
+              key={`${headerGroup.id}_${groupIdx}`}
             >
               {headerGroup.headers.map((column, idx: number) => {
                 const firstColumn = idx === 0;
@@ -386,6 +395,7 @@ function DataTable({
   columns: columnsProp,
   height,
   invalidValues,
+  previewIndexes,
   renderColumnHeader,
   rows: rowsProp,
   width,
@@ -419,6 +429,7 @@ function DataTable({
         data={rowsProp}
         height={height}
         invalidValues={invalidValues}
+        previewIndexes={previewIndexes}
         renderColumnHeader={renderColumnHeader}
         width={width}
       />

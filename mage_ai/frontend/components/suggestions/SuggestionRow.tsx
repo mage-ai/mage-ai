@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 
 import ActionForm from '@components/ActionForm';
-import ActionPayloadType from '@interfaces/ActionPayloadType';
+import ActionPayloadType, { ActionStatusEnum, ActionTypeEnum } from '@interfaces/ActionPayloadType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -13,11 +13,12 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import { ArrowDown, ArrowUp, Close, Edit } from '@oracle/icons';
+import { ArrowDown, ArrowUp, Close, Edit, PreviewOpen } from '@oracle/icons';
 import { FeatureResponseType } from '@interfaces/FeatureType';
 import { MAX_LINES_ACTIONS, READ_ONLY } from '@oracle/styles/editor/rules';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE } from '@oracle/styles/fonts/sizes';
+import { TABS_QUERY_PARAM, TAB_DATA } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { goToWithQuery } from '@utils/routing';
 
@@ -28,13 +29,14 @@ export type SuggestionRowProps = {
   featureIdMapping: {
     [key: string]: number;
   };
-  featureSetId?: string | number;
   idx: number;
   isLoading?: boolean;
   link?: () => void;
   onClose?: () => void;
   saveAction?: (ActionPayloadType) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
   showIdx?: boolean;
+  suggestionPreviewIdx?: number;
 };
 
 const CodeEditor = dynamic(
@@ -49,18 +51,21 @@ const CodeEditor = dynamic(
   },
 );
 
+const ICON_SIZE = UNIT * 2;
+
 const SuggestionRow = ({
   action,
   border,
   features,
   featureIdMapping,
-  featureSetId,
   idx,
   isLoading,
   link,
   onClose,
   saveAction,
+  setSuggestionPreviewIdx,
   showIdx,
+  suggestionPreviewIdx,
 }: SuggestionRowProps) => {
   const themeContext = useContext(ThemeContext);
 
@@ -69,13 +74,17 @@ const SuggestionRow = ({
   const {
     action_payload,
     message,
+    preview_results,
+    status,
     title,
   } = action;
   const {
     action_arguments: actionArguments,
     action_code: actionCode,
     action_options: actionOptions,
+    action_type: actionType,
   } = action_payload;
+  const previewRowIndexes = preview_results?.removed_row_indices || [];
 
   useEffect(() => setActionPayload(action_payload), [action_payload]);
 
@@ -156,10 +165,58 @@ const SuggestionRow = ({
         flex={1}
         flexDirection="column"
       >
-        <Text bold inline>
-          {title}
-          {numFeatures > 0 && ': '}
-        </Text>
+        <FlexContainer justifyContent="space-between">
+          <Text bold inline>
+            {title}
+            {numFeatures > 0 && ': '}
+          </Text>
+          <Flex>
+            {(actionType === ActionTypeEnum.FILTER
+              && status !== ActionStatusEnum.COMPLETED
+              && previewRowIndexes.length > 0) &&
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => {
+                  if (suggestionPreviewIdx === idx) {
+                    setSuggestionPreviewIdx(null);
+                  } else {
+                    setSuggestionPreviewIdx(idx);
+                    goToWithQuery({
+                      [TABS_QUERY_PARAM]: TAB_DATA,
+                    }, {
+                      pushHistory: true,
+                    });
+                  }}
+                }
+                title="Preview"
+              >
+                <PreviewOpen
+                  highlight={idx === suggestionPreviewIdx}
+                  muted
+                  size={ICON_SIZE}
+                />
+              </Button>
+            }
+            <Spacing pr={1} />
+            {saveAction && (
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setEditing(!editing)}
+                title="Edit"
+              >
+                <Edit
+                  black={editing}
+                  muted
+                  size={ICON_SIZE}
+                />
+              </Button>
+            )}
+          </Flex>
+        </FlexContainer>
 
         {featureLinks}
         {numFeatures > DISPLAY_COLS_NUM &&
@@ -194,8 +251,12 @@ const SuggestionRow = ({
         {!message && actionOptions && (
           <FlexContainer>
             {Object.entries(actionOptions).map(([k, v], idx: number) => (
-              <Text key={k} inline muted small>
-                <Text inline monospace muted small>{k}</Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
+              <Text inline key={k} muted small>
+                <Text
+                  inline monospace muted small
+                >
+                  {k}
+                </Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
               </Text>
             ))}
           </FlexContainer>
@@ -220,7 +281,7 @@ const SuggestionRow = ({
 
         {editing &&
           <ActionForm
-            actionType={actionPayload?.action_type}
+            actionType={actionType}
             axis={actionPayload?.axis}
             features={features}
             noBorder
@@ -237,43 +298,25 @@ const SuggestionRow = ({
         }
       </Flex>
 
-      <FlexContainer>
-        {/* TODO: add Preview here */}
-        {saveAction && (
-          <Button
-            basic
-            iconOnly
-            onClick={() => setEditing(!editing)}
-            padding="0px"
-            transparent
-          >
-            <Edit
-              black={editing}
-              muted
-              size={16}
-            />
-          </Button>
-        )}
-        {onClose && (
-          <>
-            <Spacing mr={1} />
+      {onClose && (
+        <>
+          <Spacing mr={1} />
 
-            {isLoading && <Spinner small />}
+          {isLoading && <Spinner small />}
 
-            {!isLoading && (
-              <Button
-                basic
-                iconOnly
-                onClick={onClose}
-                padding="0px"
-                transparent
-              >
-                <Close muted />
-              </Button>
-            )}
-          </>
-        )}
-      </FlexContainer>
+          {!isLoading && (
+            <Button
+              basic
+              iconOnly
+              noPadding
+              onClick={onClose}
+              transparent
+            >
+              <Close muted />
+            </Button>
+          )}
+        </>
+      )}
     </RowCard>
   );
 };

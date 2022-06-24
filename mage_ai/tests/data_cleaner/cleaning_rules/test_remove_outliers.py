@@ -12,7 +12,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 1 outlier(s) to reduce the amount of noise in this column.',
+                    message='Remove 1 outlier(s) and null values to reduce the amount of noise in this column.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='filter',
@@ -41,7 +41,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 1 outlier(s) to reduce the amount of noise in this column.',
+                    message='Remove 1 outlier(s) and null values to reduce the amount of noise in this column.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='filter',
@@ -92,7 +92,7 @@ class RemoveOutliersTests(TestCase):
             [
                 dict(
                     title='Remove outliers',
-                    message='Remove 1 outlier(s) to reduce the amount of noise in this column.',
+                    message='Remove 1 outlier(s) and null values to reduce the amount of noise in this column.',
                     status='not_applied',
                     action_payload=dict(
                         action_type='filter',

@@ -35,6 +35,7 @@ export type ButtonProps = {
   small?: boolean;
   success?: boolean;
   target?: string;
+  title?: string;
   transparent?: boolean;
   width?: number;
 };
