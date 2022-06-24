@@ -225,6 +225,8 @@ function DatasetOverview({
   } = featureSetStats;
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
+  const distributionName = DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default;
+  const statisticsByColumn = statistics?.[`${selectedColumn}/${distributionName}`];
 
   return (
     <DatasetDetail
@@ -331,7 +333,7 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default}
+              statisticsByColumn={statisticsByColumn}
               statisticsOverview={statistics}
             />
           )}
