@@ -171,7 +171,6 @@ const SuggestionRow = ({
                 iconOnly
                 noPadding
                 onClick={() => {}}
-                transparent
               >
                 <PreviewOpen
                   muted
@@ -186,7 +185,6 @@ const SuggestionRow = ({
                 iconOnly
                 noPadding
                 onClick={() => setEditing(!editing)}
-                transparent
               >
                 <Edit
                   black={editing}
