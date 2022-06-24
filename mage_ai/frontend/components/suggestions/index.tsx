@@ -38,6 +38,7 @@ function Suggestions({
   const csvLink = useRef(null);
   const [downloadReady, setDownloadReady] = useState(false);
   const [downloadedFeatureSet, setDownloadedFeatureSet] = useState(null);
+  const [suggestionPreviewIdx, setSuggestionPreviewIdx] = useState(null);
 
   const {
     insights,
@@ -102,7 +103,6 @@ function Suggestions({
                   action={action}
                   border
                   featureIdMapping={featureIdMapping}
-                  featureSetId={featureSet?.id}
                   features={features}
                   idx={idx}
                   isLoading={isLoading}
@@ -150,13 +150,14 @@ function Suggestions({
               <SuggestionRow
                 action={suggestion}
                 featureIdMapping={featureIdMapping}
-                featureSetId={featureSet?.id}
                 features={features}
                 idx={idx}
                 isLoading={isLoading}
                 key={`${idx}-${suggestion.title}`}
                 link={() => addAction(suggestion)}
                 saveAction={addAction}
+                setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+                suggestionPreviewIdx={suggestionPreviewIdx}
               />
             ))}
           </AccordionPanel>

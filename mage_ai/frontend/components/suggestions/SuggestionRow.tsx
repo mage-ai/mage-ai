@@ -28,13 +28,14 @@ export type SuggestionRowProps = {
   featureIdMapping: {
     [key: string]: number;
   };
-  featureSetId?: string | number;
   idx: number;
   isLoading?: boolean;
   link?: () => void;
   onClose?: () => void;
   saveAction?: (ActionPayloadType) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
   showIdx?: boolean;
+  suggestionPreviewIdx?: number;
 };
 
 const CodeEditor = dynamic(
@@ -56,13 +57,14 @@ const SuggestionRow = ({
   border,
   features,
   featureIdMapping,
-  featureSetId,
   idx,
   isLoading,
   link,
   onClose,
   saveAction,
+  setSuggestionPreviewIdx,
   showIdx,
+  suggestionPreviewIdx,
 }: SuggestionRowProps) => {
   const themeContext = useContext(ThemeContext);
 
@@ -170,9 +172,16 @@ const SuggestionRow = ({
                 basic
                 iconOnly
                 noPadding
-                onClick={() => {}}
+                onClick={() => {
+                  if (suggestionPreviewIdx === idx) {
+                    setSuggestionPreviewIdx(null);
+                  } else {
+                    setSuggestionPreviewIdx(idx);
+                  }
+                }}
               >
                 <PreviewOpen
+                  highlight={idx === suggestionPreviewIdx}
                   muted
                   size={ICON_SIZE}
                 />
@@ -229,8 +238,12 @@ const SuggestionRow = ({
         {!message && actionOptions && (
           <FlexContainer>
             {Object.entries(actionOptions).map(([k, v], idx: number) => (
-              <Text key={k} inline muted small>
-                <Text inline monospace muted small>{k}</Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
+              <Text inline key={k} muted small>
+                <Text
+                  inline monospace muted small
+                >
+                  {k}
+                </Text>: {v}{numOptions >= 2 && idx !== numOptions - 1 && <>,&nbsp;</>}
               </Text>
             ))}
           </FlexContainer>
