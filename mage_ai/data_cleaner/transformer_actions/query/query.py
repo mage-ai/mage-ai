@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class Query:
-    def __init__(self, df: DataFrame, ctypes: Dict[str, ColumnType]) -> None:
+    def __init__(self, df: DataFrame) -> None:
         """
         Constructs a query to operate on the given dataframe
 
@@ -25,7 +25,6 @@ class Query:
         """
         self.df = df
         self.columns = list(df.columns)
-        self.ctypes = ctypes
 
     def execute(self) -> DataFrame:
         """
@@ -45,11 +44,10 @@ class SelectQuery(Query):
     def __init__(
         self,
         df: DataFrame,
-        ctypes: Dict[ColumnType, str],
         selection_columns: List[str],
         condition: str,
     ) -> None:
-        super().__init__(df, ctypes)
+        super().__init__(df)
         self.selection_columns = selection_columns
         self.condition = condition
 
@@ -67,8 +65,7 @@ class QueryTransformer(Transformer):
     Generates a query object by traversing the parse tree associated with a query.
     """
 
-    def __init__(self, df: DataFrame, ctypes: Dict[str, ColumnType]):
-        self.ctypes = ctypes
+    def __init__(self, df: DataFrame):
         self.columns = list(df.columns)
         self.df = df
 
@@ -77,18 +74,14 @@ class QueryTransformer(Transformer):
 
     def select(self, items):
         columns, _, condition = items
-        query = SelectQuery(self.df, self.ctypes, columns, condition)
+        query = SelectQuery(self.df, columns, condition)
         return query
 
     def literal(self, items):
         return items[0]
 
     def column_type(self, items):
-        value = items[0].value
-        # if value[0] in '\'\"' and value[-1] in '\'\"':
-        #     value = value.strip('\"\'')
-        #     value = f'`{value}`'
-        return value
+        return items[0].value
 
     def datetime(self, items):
         return f'datetime.fromisoformat({items[0]})'
@@ -209,18 +202,15 @@ class QueryGenerator:
     Generates a query to be executed on the given dataframe
     """
 
-    def __init__(
-        self, df: DataFrame, ctypes: Dict[str, ColumnType], grammar_fp: str = GRAMMAR_FP
-    ) -> None:
+    def __init__(self, df: DataFrame, grammar_fp: str = GRAMMAR_FP) -> None:
         """
         Initializes the query generator
 
         Args:
             df (DataFrame): Data frame to generate queries for.
-            ctypes (Dict[str, ColumnType]): Column types for each column in the data frame.
             grammar_fp (str, optional): Filepath to the grammar (.lark file) to use to parse this query. Defaults to GRAMMAR_FP.
         """
-        transformer = QueryTransformer(df, ctypes)
+        transformer = QueryTransformer(df)
         self.parser = Lark(GRAMMAR, start='query', parser='lalr', transformer=transformer)
 
     def __call__(self, query: str) -> Query:

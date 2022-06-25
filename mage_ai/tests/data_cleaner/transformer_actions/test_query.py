@@ -164,9 +164,8 @@ SHARED_DF['Date of Birth'] = pd.to_datetime(SHARED_DF['Date of Birth'])
 
 class QueryGenerationTests(TestCase):
     def setUp(self):
-        ctypes = infer_column_types(SHARED_DF)
         self.query_gen = QueryGenerator(
-            SHARED_DF, ctypes, 'mage_ai/data_cleaner/transformer_actions/sqlgrammar.lark'
+            SHARED_DF, 'mage_ai/data_cleaner/transformer_actions/sqlgrammar.lark'
         )
         return super().setUp()
 
@@ -275,6 +274,7 @@ class QueryGenerationTests(TestCase):
         for sql, pandas in test_queries:
             query = self.query_gen(sql)
             self.assertEqual(query.condition, pandas)
+            print(query.execute())
 
     def test_in(self):
         test_queries = [
@@ -306,7 +306,7 @@ class QueryGenerationTests(TestCase):
                 'and ((Name like "%s" and Name like "%x%" and Name like "%b%") OR NOT Profit < 0)',
                 '((`Date of Birth` >= datetime.fromisoformat("1989-02-01") and `Date of Birth` <='
                 ' datetime.fromisoformat("2022-05-06")) or Profit >= 15)'
-                'and ((Name.str.fullmatch(".*s", na=False) and Name.str.fullmatch(".*x.*", na=False)'
+                ' and ((Name.str.fullmatch(".*s", na=False) and Name.str.fullmatch(".*x.*", na=False)'
                 ' and Name.str.fullmatch(".*b.*", na=False)) or ~(Profit < 0))',
             ),
         ]

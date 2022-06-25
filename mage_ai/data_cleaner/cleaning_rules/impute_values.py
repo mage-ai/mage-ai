@@ -324,7 +324,9 @@ class ImputeValues(BaseRule):
             axis = Axis.ROW
             action_variables = self._build_action_variables(self.df_columns)
             map_cols = map(wrap_column_name, self.df_columns)
-            action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
+            action_code = 'SELECT * FROM df WHERE ' + ' and '.join(
+                map(lambda name: f'{name} NOT NULL', map_cols)
+            )
         elif strategy == ImputationStrategy.SEQ:
             message = 'Fill missing entries using the previously occurring entry in the timeseries.'
             action_arguments = strategy_cache_entry['entries']
