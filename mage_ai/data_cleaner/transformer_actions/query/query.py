@@ -1,8 +1,7 @@
-from datetime import date, datetime
-from lark import Lark, Token, Transformer
-from pyparsing import col
-from tomlkit import string
+from datetime import datetime
+from lark import Lark, Transformer
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from mage_ai.data_cleaner.transformer_actions.query.grammar import GRAMMAR
 from pandas import DataFrame
 from typing import Dict, List
 import logging
@@ -222,9 +221,7 @@ class QueryGenerator:
             grammar_fp (str, optional): Filepath to the grammar (.lark file) to use to parse this query. Defaults to GRAMMAR_FP.
         """
         transformer = QueryTransformer(df, ctypes)
-        with open(grammar_fp, 'r') as fin:
-            grammar = fin.read()
-        self.parser = Lark(grammar, start='query', parser='lalr', transformer=transformer)
+        self.parser = Lark(GRAMMAR, start='query', parser='lalr', transformer=transformer)
 
     def __call__(self, query: str) -> Query:
         """

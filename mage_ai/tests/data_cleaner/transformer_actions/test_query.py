@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
-from mage_ai.data_cleaner.transformer_actions.query import QueryGenerator
+from mage_ai.data_cleaner.transformer_actions.query.query import QueryGenerator
 from mage_ai.tests.base_test import TestCase
 import datetime
 import numpy as np

@@ -1,3 +1,4 @@
+GRAMMAR = r'''
 // Define all the queries that are allowed
 query: select
 select : "SELECT"i column "FROM"i CNAME ["WHERE"i expr]
@@ -57,3 +58,4 @@ notkw: "NOT"i
 %import common.CNAME
 %import common.WS
 %ignore WS
+'''
