@@ -202,16 +202,16 @@ class QueryGenerator:
     Generates a query to be executed on the given dataframe
     """
 
-    def __init__(self, df: DataFrame, grammar_fp: str = GRAMMAR_FP) -> None:
+    def __init__(self, df: DataFrame, grammar: str = GRAMMAR) -> None:
         """
         Initializes the query generator
 
         Args:
             df (DataFrame): Data frame to generate queries for.
-            grammar_fp (str, optional): Filepath to the grammar (.lark file) to use to parse this query. Defaults to GRAMMAR_FP.
+            grammar (str, optional): Grammar to use to parse this query. Defaults to GRAMMAR.
         """
         transformer = QueryTransformer(df)
-        self.parser = Lark(GRAMMAR, start='query', parser='lalr', transformer=transformer)
+        self.parser = Lark(grammar, start='query', parser='lalr', transformer=transformer)
 
     def __call__(self, query: str) -> Query:
         """
