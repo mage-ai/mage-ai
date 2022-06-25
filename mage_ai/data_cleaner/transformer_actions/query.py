@@ -1,0 +1,239 @@
+from datetime import date, datetime
+from lark import Lark, Token, Transformer
+from pyparsing import col
+from tomlkit import string
+from mage_ai.data_cleaner.column_types.constants import ColumnType
+from pandas import DataFrame
+from typing import Dict, List
+import logging
+import numpy as np
+import re
+
+GRAMMAR_FP = './sqlgrammar.lark'
+
+
+logger = logging.getLogger(__name__)
+
+
+class Query:
+    def __init__(self, df: DataFrame, ctypes: Dict[str, ColumnType]) -> None:
+        """
+        Constructs a query to operate on the given dataframe
+
+        Args:
+            df (DataFrame): Data frame to execute the given query on
+            ctypes (Dict[ColumnType, str]): Column types for each column in the data frame.
+        """
+        self.df = df
+        self.columns = list(df.columns)
+        self.ctypes = ctypes
+
+    def execute(self) -> DataFrame:
+        """
+        Executes the query on the data frame
+
+        Returns:
+            DataFrame: Returns the dataframe after being transformed by the query
+        """
+        raise NotImplementedError('Children of Query must override this method')
+
+
+class SelectQuery(Query):
+    """
+    Constructs a select query to execute on the given dataframe.
+    """
+
+    def __init__(
+        self,
+        df: DataFrame,
+        ctypes: Dict[ColumnType, str],
+        selection_columns: List[str],
+        condition: str,
+    ) -> None:
+        super().__init__(df, ctypes)
+        self.selection_columns = selection_columns
+        self.condition = condition
+
+    def execute(self) -> DataFrame:
+        logger.debug(f'Executing query: SELECT {self.columns} FROM df WHERE {self.condition}')
+        view = self.df
+        if self.condition:
+            view = view.query(self.condition)
+        view = view[self.selection_columns]
+        return view
+
+
+class QueryTransformer(Transformer):
+    """
+    Generates a query object by traversing the parse tree associated with a query.
+    """
+
+    def __init__(self, df: DataFrame, ctypes: Dict[str, ColumnType]):
+        self.ctypes = ctypes
+        self.columns = list(df.columns)
+        self.df = df
+
+    def query(self, items):
+        return items[0]
+
+    def select(self, items):
+        columns, _, condition = items
+        query = SelectQuery(self.df, self.ctypes, columns, condition)
+        return query
+
+    def literal(self, items):
+        return items[0]
+
+    def column_type(self, items):
+        value = items[0].value
+        # if value[0] in '\'\"' and value[-1] in '\'\"':
+        #     value = value.strip('\"\'')
+        #     value = f'`{value}`'
+        return value
+
+    def datetime(self, items):
+        return f'datetime.fromisoformat({items[0]})'
+
+    def column(self, items):
+        return [item.strip('\"\'') for item in items]
+
+    def negation(self, items):
+        return f'~({items[1]})'
+
+    def binop(self, items):
+        expr1, op, expr2 = items
+        return f'{expr1} {op} {expr2}'
+
+    def parens(self, items):
+        return f'({",".join(items[1:-1])})'
+
+    def null_expr(self, items):
+        expr, condition = items
+        return self.build_null_expr(expr, condition)
+
+    def build_null_expr(self, column, condition):
+        dtype = self.__get_exact_dtype(column)
+        string_condition = f'{column}.{condition}()'
+        if dtype is str:
+            if condition == 'isna':
+                string_condition = f'({string_condition} or {column}.str.len() == 0)'
+            else:
+                string_condition = f'({string_condition} and {column}.str.len() >= 1)'
+        elif np.issubdtype(dtype, np.bool_):
+            if condition == 'isna':
+                string_condition = f'({string_condition} or {column} == \'\')'
+            else:
+                string_condition = f'({string_condition} and {column} != \'\')'
+        return string_condition
+
+    def null_check(self, items):
+        if type(items) is str:
+            return items
+        else:
+            return "notna"
+
+    def is_expr(self, items):
+        column, negation, value = items
+        column = self.__escape_column_name(column)
+        if value.lower() == 'null':
+            if negation:
+                cond = 'notna'
+            else:
+                cond = 'isna'
+            return self.build_null_expr(column, cond)
+        else:
+            return f'{column} {"!" if negation else "="}= {value}'
+
+    def between_expr(self, items):
+        column, negation, lb, ub = items
+        column = self.__escape_column_name(column)
+        return f'{"~" if negation else ""}({column} >= {lb} and {column} <= {ub})'
+
+    def binop(self, items):
+        return " ".join(items)
+
+    def in_expr(self, items):
+        column, negation, values = items
+        column = self.__escape_column_name(column)
+        if ',' not in values:
+            values = values[:-1] + ',' + values[-1]
+        return f'{"~" if negation else ""}{column}.isin({values})'
+
+    def like_expr(self, items):
+        # TODO: Perform check for column being string type
+        column, negation, expr = items
+        value = expr.value.strip('\"\'')
+        value = re.escape(value)
+        value = value.replace('_', '.')
+        value = value.replace('%', '.*')
+        value = f'"{value}"'
+        return f'{"~" if negation else ""}{column}.str.fullmatch({value}, na=False)'
+
+    def literal_set(self, items):
+        print(items)
+        return '(' + ','.join(items) + ')'
+
+    def expr(self, items):
+        return ' '.join(items)
+
+    def __get_exact_dtype(self, column):
+        series = self.df[column.strip('\"\'`')]
+        return type(series.dropna().iloc[0]) if series.count() else None
+
+    def __escape_column_name(self, value):
+        if value[0] in '\'\"' and value[-1] in '\'\"':
+            value = value.strip('\"\'')
+            value = f'`{value}`'
+        return value
+
+    notkw = lambda self, _: 'not'
+    true = lambda self, _: 'true'
+    false = lambda self, _: 'false'
+    le = lambda self, _: '<'
+    ge = lambda self, _: '>'
+    leq = lambda self, _: '<='
+    geq = lambda self, _: '>='
+    neq = lambda self, _: '!='
+    lpar = lambda self, _: '('
+    rpar = lambda self, _: ')'
+    isna = lambda self, _: 'isna'
+    notna = lambda self, _: 'notna'
+    and_ct = lambda self, _: 'and'
+    or_ct = lambda self, _: 'or'
+    null = lambda self, _: 'null'
+    all = lambda self, _: self.columns
+    dtnow = lambda self, _: datetime.now()
+
+
+class QueryGenerator:
+    """
+    Generates a query to be executed on the given dataframe
+    """
+
+    def __init__(
+        self, df: DataFrame, ctypes: Dict[str, ColumnType], grammar_fp: str = GRAMMAR_FP
+    ) -> None:
+        """
+        Initializes the query generator
+
+        Args:
+            df (DataFrame): Data frame to generate queries for.
+            ctypes (Dict[str, ColumnType]): Column types for each column in the data frame.
+            grammar_fp (str, optional): Filepath to the grammar (.lark file) to use to parse this query. Defaults to GRAMMAR_FP.
+        """
+        transformer = QueryTransformer(df, ctypes)
+        with open(grammar_fp, 'r') as fin:
+            grammar = fin.read()
+        self.parser = Lark(grammar, start='query', parser='lalr', transformer=transformer)
+
+    def __call__(self, query: str) -> Query:
+        """
+        Generates a query object from the given query string
+
+        Args:
+            query (str): String to generate query from
+
+        Returns:
+            Query: Query object corresponding to the query string
+        """
+        return self.parser.parse(query)
