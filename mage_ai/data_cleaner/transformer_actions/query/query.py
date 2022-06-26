@@ -1,9 +1,8 @@
 from datetime import datetime
 from lark import Lark, Transformer
-from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.query.grammar import GRAMMAR
 from pandas import DataFrame
-from typing import Dict, List
+from typing import List
 import logging
 import numpy as np
 import re
@@ -100,8 +99,9 @@ class QueryTransformer(Transformer):
         return f'({",".join(items[1:-1])})'
 
     def null_expr(self, items):
-        expr, condition = items
-        return self.build_null_expr(expr, condition)
+        column, condition = items
+        column = self.__escape_column_name(column)
+        return self.build_null_expr(column, condition)
 
     def build_null_expr(self, column, condition):
         dtype = self.__get_exact_dtype(column)
@@ -185,6 +185,7 @@ class QueryTransformer(Transformer):
     ge = lambda self, _: '>'
     leq = lambda self, _: '<='
     geq = lambda self, _: '>='
+    eq = lambda self, _: '=='
     neq = lambda self, _: '!='
     lpar = lambda self, _: '('
     rpar = lambda self, _: ')'
