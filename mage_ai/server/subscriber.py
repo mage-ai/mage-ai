@@ -3,7 +3,7 @@ import argparse
 import json
 
 
-def get_msg(client, callback=None):
+def get_messages(client, callback=None):
     def print_callback(message):
         print(message, callback)
 
@@ -71,4 +71,4 @@ if __name__ == '__main__':
     manager = KernelManager(**connection)
     client = manager.client()
 
-    get_msg(client)
+    get_messages(client)
