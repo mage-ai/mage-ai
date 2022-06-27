@@ -23,11 +23,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
         graphviz \
         yarn
 
+# Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install -r requirements.txt
 
 COPY . /home/jovyan/src
 
+# Install Node version 17
+RUN echo -e 'y' | conda install nodejs==17.9.0
+
+# Install node modules used in front-end
 RUN cd /home/jovyan/src/mage_ai/frontend && npm install -g npm@8.12.2
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/jovyan/src"
