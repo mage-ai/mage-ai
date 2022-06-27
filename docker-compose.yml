@@ -37,3 +37,14 @@ services:
     volumes:
       - .:/home/jovyan
     working_dir: /home/jovyan/mage_ai/frontend
+  server_kernel:
+    image: mage/lab
+    depends_on:
+      - lab
+    command: "python3 mage_ai/server/server.py"
+    ports:
+      - 6789:6789
+    volumes:
+      - .:/home/jovyan
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging

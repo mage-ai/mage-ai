@@ -16,18 +16,17 @@ class ApiHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'application/json')
 
     def get(self):
-        value = self.get_argument('key')
+        value = self.get_argument('value', None)
         r = json.dumps(dict(
             method='get',
             value=value,
         ))
         self.write(r)
+        self.finish()
 
     def post(self):
-        value = self.get_argument('key')
         r = json.dumps(dict(
             method='post',
-            value=value,
         ))
         self.write(r)
 
@@ -36,8 +35,9 @@ def make_app():
     return tornado.web.Application(
         [
             (r'/websocket/', WebSocketServer),
-            (r'/', ApiHandler),
+            (r'/api/', ApiHandler),
         ],
+        autoreload=True,
     )
 
 
@@ -49,7 +49,7 @@ async def main():
     os.environ['CONNECTION_FILE'] = connection_file
 
     app = make_app()
-    app.listen(8888)
+    app.listen(6789)
 
     get_messages(
         manager.client(),
