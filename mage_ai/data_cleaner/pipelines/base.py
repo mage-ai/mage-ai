@@ -68,6 +68,7 @@ class BasePipeline:
                 continue
             df_transformed = BaseAction(payload).execute(df)
             row_removed = df.index.difference(df_transformed.index)
+            row_removed = df.index.get_indexer(row_removed)
             row_removed = row_removed[np.where(row_removed <= SAMPLE_SIZE)]
             if len(row_removed) > 0:
                 action['preview_results'] = dict(
