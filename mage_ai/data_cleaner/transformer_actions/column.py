@@ -312,9 +312,7 @@ def __groupby_agg(df, action, agg_method):
     df_filtered, _ = __filter_df_with_time_window(df, action)
     action_code = action.get('action_code')
     if action_code is not None and action_code != '':
-        gen = QueryGenerator(df_filtered)
-        query = gen(action_code)
-        df_filtered = query.execute()
+        df_filtered = QueryGenerator(df_filtered)(action_code).execute()
     action_options = action['action_options']
     df_agg = df_filtered.groupby(action_options['groupby_columns'],)[
         action['action_arguments']

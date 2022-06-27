@@ -25,8 +25,7 @@ def filter_rows(df, action, **kwargs):
         TransformerAction serialized into a dictionary
     """
     action_code = action['action_code']
-    query = QueryGenerator(df)(action_code)
-    return query.execute()
+    return QueryGenerator(df)(action_code).execute()
 
 
 def sort_rows(df, action, **kwargs):
