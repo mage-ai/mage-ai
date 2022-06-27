@@ -65,6 +65,16 @@ def clean_dataframe(df, column_types, dropna=True):
     return df.apply(lambda col: clean_series(col, column_types[col.name], dropna=dropna))
 
 
+def clean_name(name):
+    for c in ['\ufeff', '\uFEFF', '"', '$', '\n', '\r', '\t']:
+        name = name.replace(c, '')
+    name = re.sub('\W', '_', name)
+
+    if name and re.match('\d', name[0]):
+        name = f'letter_{name}'
+    return name.lower()
+
+
 def is_numeric_dtype(df, column, column_type):
     return column_type in NUMBER_TYPES or issubclass(df[column].dtype.type, np.number)
 
