@@ -9728,6 +9728,11 @@ react-use-measure@^2.0.4:
   dependencies:
     debounce "^1.2.1"
 
+react-use-websocket@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/react-use-websocket/-/react-use-websocket-4.2.0.tgz#658c4e44ee5e0fc3d29a66c2a753a72754a5db87"
+  integrity sha512-ZovaTlc/tWX6a590fi3kMWImhyoWj46BWJWvO5oucZJzRnVVhYtes2D9g+5MKXjSdR7Es3456hB89v4/1pcBKg==
+
 react-window@^1.8.7:
   version "1.8.7"
   resolved "https://registry.npmjs.org/react-window/-/react-window-1.8.7.tgz"
