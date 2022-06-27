@@ -26,7 +26,7 @@ class RemoveCollinearColumns(BaseRule):
         good_columns = self.numeric_columns.copy()
         while True:
             e_vals = np.linalg.eigvalsh(C)
-            e_vals = np.sign(e_vals) / (abs(e_vals) + self.EPSILON)
+            vifs = np.sign(e_vals) / (abs(e_vals) + self.EPSILON)
             collinearity = vifs >= self.VIF_UB
 
             i = collinearity.argmax()
