@@ -7,8 +7,7 @@ import logging
 import numpy as np
 import re
 
-GRAMMAR_FP = './sqlgrammar.lark'
-
+QUOTES = '\'\"'
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,6 @@ class Query:
 
         Args:
             df (DataFrame): Data frame to execute the given query on
-            ctypes (Dict[ColumnType, str]): Column types for each column in the data frame.
         """
         self.df = df
         self.columns = list(df.columns)
@@ -70,44 +68,18 @@ class QueryTransformer(Transformer):
         self.df = df
         self.dtype_cache = {}
 
-    def query(self, items):
-        return items[0]
-
-    def select(self, items):
-        columns, _, condition = items
-        query = SelectQuery(self.df, columns, condition)
-        return query
-
-    def literal(self, items):
-        return items[0]
-
-    def column_type(self, items):
-        return items[0].value
-
-    def datetime(self, items):
-        return f'datetime.fromisoformat({items[0]})'
-
-    def column(self, items):
-        return [item.strip('\"\'') for item in items]
-
-    def negation(self, items):
-        return f'~({items[1]})'
+    def between_expr(self, items):
+        column, negation, lb, ub = items
+        column = self.__escape_column_name(column)
+        return f'{"~" if negation else ""}({column} >= {lb} and {column} <= {ub})'
 
     def binop(self, items):
         expr1, op, expr2 = items
-        if expr1.strip('\"\'') in self.column_set:
+        if expr1.strip(QUOTES) in self.column_set:
             expr1 = self.__escape_column_name(expr1)
-        if expr2.strip('\"\'') in self.column_set:
+        if expr2.strip(QUOTES) in self.column_set:
             expr2 = self.__escape_column_name(expr2)
         return f'{expr1} {op} {expr2}'
-
-    def parens(self, items):
-        return f'({",".join(items[1:-1])})'
-
-    def null_expr(self, items):
-        column, condition = items
-        column = self.__escape_column_name(column)
-        return self.build_null_expr(column, condition)
 
     def build_null_expr(self, column, condition):
         dtype = self.__get_exact_dtype(column)
@@ -124,28 +96,17 @@ class QueryTransformer(Transformer):
                 string_condition = f'({string_condition} and {column} != \'\')'
         return string_condition
 
-    def null_check(self, items):
-        if type(items) is str:
-            return items
-        else:
-            return "notna"
+    def column(self, items):
+        return [item.strip(QUOTES) for item in items]
 
-    def is_expr(self, items):
-        column, negation, value = items
-        column = self.__escape_column_name(column)
-        if value.lower() == 'null':
-            if negation:
-                cond = 'notna'
-            else:
-                cond = 'isna'
-            return self.build_null_expr(column, cond)
-        else:
-            return f'{column} {"!" if negation else "="}= {value}'
+    def column_type(self, items):
+        return items[0].value
 
-    def between_expr(self, items):
-        column, negation, lb, ub = items
-        column = self.__escape_column_name(column)
-        return f'{"~" if negation else ""}({column} >= {lb} and {column} <= {ub})'
+    def datetime(self, items):
+        return f'datetime.fromisoformat({items[0]})'
+
+    def expr(self, items):
+        return ' '.join(items)
 
     def in_expr(self, items):
         column, negation, values = items
@@ -154,37 +115,70 @@ class QueryTransformer(Transformer):
             values = values[:-1] + ',' + values[-1]
         return f'{"~" if negation else ""}{column}.isin({values})'
 
+    def is_expr(self, items):
+        column, negation, value = items
+        column = self.__escape_column_name(column)
+        if value.lower() == 'null':
+            cond = 'notna' if negation else 'isna'
+            return self.build_null_expr(column, cond)
+        else:
+            return f'{column} {"!" if negation else "="}= {value}'
+
+    def literal(self, items):
+        return items[0]
+
+    def literal_set(self, items):
+        return '(' + ','.join(items) + ')'
+
     def like_expr(self, items):
-        # TODO: Perform check for column being string type
         column, negation, expr = items
         column = self.__escape_column_name(column)
-        value = expr.value.strip('\"\'')
+        value = expr.value.strip(QUOTES)
         value = re.escape(value)
         value = value.replace('_', '.')
         value = value.replace('%', '.*')
         value = f'"{value}"'
         return f'{"~" if negation else ""}{column}.str.fullmatch({value}, na=False)'
 
-    def literal_set(self, items):
-        print(items)
-        return '(' + ','.join(items) + ')'
+    def negation(self, items):
+        return f'~({items[1]})'
 
-    def expr(self, items):
-        return ' '.join(items)
+    def null_check(self, items):
+        if type(items) is str:
+            return items
+        else:
+            return "notna"
+
+    def null_expr(self, items):
+        column, condition = items
+        column = self.__escape_column_name(column)
+        return self.build_null_expr(column, condition)
+
+    def parens(self, items):
+        return f'({",".join(items[1:-1])})'
+
+    def query(self, items):
+        return items[0]
+
+    def select(self, items):
+        columns, _, condition = items
+        query = SelectQuery(self.df, columns, condition)
+        return query
 
     def __get_exact_dtype(self, column):
-        dtype = self.dtype_cache.get(column, None)
+        stripped = column.strip(QUOTES + '`')
+        dtype = self.dtype_cache.get(stripped, None)
         if dtype is None:
-            series = self.df[column.strip('\"\'`')]
-            dropped_series = series.dropna()
-            dropped_series = dropped_series[~(dropped_series == '')]
-            dtype = type(dropped_series.iloc[0]) if len(dropped_series) else None
+            series = self.df[stripped]
+            series = series.dropna()
+            series = series[~(series == '')]
+            dtype = type(series.iloc[0]) if len(series) else None
             self.dtype_cache[column] = dtype
         return dtype
 
     def __escape_column_name(self, value):
-        if value[0] in '\'\"' and value[-1] in '\'\"':
-            value = value.strip('\"\'')
+        if value[0] in QUOTES and value[-1] in QUOTES:
+            value = value.strip(QUOTES)
             value = f'`{value}`'
         return value
 
@@ -219,7 +213,7 @@ class QueryGenerator:
 
         Args:
             df (DataFrame): Data frame to generate queries for.
-            grammar (str, optional): Grammar to use to parse this query. Defaults to GRAMMAR.
+            grammar (str, optional): Grammar to use to parse this query. Defaults to base querying grammar.
         """
         transformer = QueryTransformer(df)
         self.parser = Lark(grammar, start='query', parser='lalr', transformer=transformer)
