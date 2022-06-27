@@ -17,7 +17,8 @@ class RemoveOutliersTests(TestCase):
                     action_payload=dict(
                         action_type='filter',
                         action_arguments=['number3'],
-                        action_code='number3 <= 1779.01 and number3 >= 51.49000000000001',
+                        action_code='SELECT * FROM df WHERE number3 BETWEEN'
+                        ' 51.49000000000001 AND 1779.01',
                         action_options={},
                         action_variables={},
                         axis='row',
@@ -46,8 +47,8 @@ class RemoveOutliersTests(TestCase):
                     action_payload=dict(
                         action_type='filter',
                         action_arguments=['number3'],
-                        action_code='number3 <= 1491.0900000000001 and'
-                        ' number3 >= 339.40999999999997',
+                        action_code='SELECT * FROM df WHERE number3 BETWEEN 339.40999999999997 AND'
+                        ' 1491.0900000000001',
                         action_options={},
                         action_variables={},
                         axis='row',
@@ -97,7 +98,7 @@ class RemoveOutliersTests(TestCase):
                     action_payload=dict(
                         action_type='filter',
                         action_arguments=['number ([3])'],
-                        action_code='"number ([3])" <= 1779.01 and "number ([3])" >= 51.49000000000001',
+                        action_code='SELECT * FROM df WHERE "number ([3])" BETWEEN 51.49000000000001 AND 1779.01',
                         action_options={},
                         action_variables={},
                         axis='row',

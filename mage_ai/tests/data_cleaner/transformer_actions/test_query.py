@@ -164,9 +164,7 @@ SHARED_DF['Date of Birth'] = pd.to_datetime(SHARED_DF['Date of Birth'])
 
 class QueryGenerationTests(TestCase):
     def setUp(self):
-        self.query_gen = QueryGenerator(
-            SHARED_DF, 'mage_ai/data_cleaner/transformer_actions/sqlgrammar.lark'
-        )
+        self.query_gen = QueryGenerator(SHARED_DF)
         return super().setUp()
 
     def test_column_selection(self):

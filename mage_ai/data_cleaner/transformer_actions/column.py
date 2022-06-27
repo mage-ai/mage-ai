@@ -1,7 +1,6 @@
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
-from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,
     CURRENCY_SYMBOLS,
@@ -14,6 +13,7 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_column_type,
     get_time_window_str,
 )
+from mage_ai.data_cleaner.transformer_actions.query.query import QueryGenerator
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
 from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
 from keyword import iskeyword
@@ -312,7 +312,9 @@ def __groupby_agg(df, action, agg_method):
     df_filtered, _ = __filter_df_with_time_window(df, action)
     action_code = action.get('action_code')
     if action_code is not None and action_code != '':
-        df_filtered = query_with_action_code(df_filtered, action_code, {'original_df': df_filtered})
+        gen = QueryGenerator(df_filtered)
+        query = gen(action_code)
+        df_filtered = query.execute()
     action_options = action['action_options']
     df_agg = df_filtered.groupby(action_options['groupby_columns'],)[
         action['action_arguments']

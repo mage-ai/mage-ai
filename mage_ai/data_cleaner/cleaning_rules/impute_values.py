@@ -324,7 +324,7 @@ class ImputeValues(BaseRule):
             axis = Axis.ROW
             action_variables = self._build_action_variables(self.df_columns)
             map_cols = map(wrap_column_name, self.df_columns)
-            action_code = 'SELECT * FROM df WHERE ' + ' and '.join(
+            action_code = 'SELECT * FROM df WHERE ' + ' AND '.join(
                 map(lambda name: f'{name} NOT NULL', map_cols)
             )
         elif strategy == ImputationStrategy.SEQ:

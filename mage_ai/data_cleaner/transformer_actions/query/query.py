@@ -66,7 +66,9 @@ class QueryTransformer(Transformer):
 
     def __init__(self, df: DataFrame):
         self.columns = list(df.columns)
+        self.column_set = set(self.columns)
         self.df = df
+        self.dtype_cache = {}
 
     def query(self, items):
         return items[0]
@@ -93,6 +95,10 @@ class QueryTransformer(Transformer):
 
     def binop(self, items):
         expr1, op, expr2 = items
+        if expr1.strip('\"\'') in self.column_set:
+            expr1 = self.__escape_column_name(expr1)
+        if expr2.strip('\"\'') in self.column_set:
+            expr2 = self.__escape_column_name(expr2)
         return f'{expr1} {op} {expr2}'
 
     def parens(self, items):
@@ -141,9 +147,6 @@ class QueryTransformer(Transformer):
         column = self.__escape_column_name(column)
         return f'{"~" if negation else ""}({column} >= {lb} and {column} <= {ub})'
 
-    def binop(self, items):
-        return " ".join(items)
-
     def in_expr(self, items):
         column, negation, values = items
         column = self.__escape_column_name(column)
@@ -154,6 +157,7 @@ class QueryTransformer(Transformer):
     def like_expr(self, items):
         # TODO: Perform check for column being string type
         column, negation, expr = items
+        column = self.__escape_column_name(column)
         value = expr.value.strip('\"\'')
         value = re.escape(value)
         value = value.replace('_', '.')
@@ -169,8 +173,14 @@ class QueryTransformer(Transformer):
         return ' '.join(items)
 
     def __get_exact_dtype(self, column):
-        series = self.df[column.strip('\"\'`')]
-        return type(series.dropna().iloc[0]) if series.count() else None
+        dtype = self.dtype_cache.get(column, None)
+        if dtype is None:
+            series = self.df[column.strip('\"\'`')]
+            dropped_series = series.dropna()
+            dropped_series = dropped_series[~(dropped_series == '')]
+            dtype = type(dropped_series.iloc[0]) if len(dropped_series) else None
+            self.dtype_cache[column] = dtype
+        return dtype
 
     def __escape_column_name(self, value):
         if value[0] in '\'\"' and value[-1] in '\'\"':
