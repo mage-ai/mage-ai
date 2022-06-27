@@ -52,5 +52,6 @@ def get_messages(client, callback=None):
                       type='text',
                     )))
         except Exception as e:
-            print('timeout kc.get_iopub_msg', e)
+            if str(e):
+                print('ERROR', e)
             pass

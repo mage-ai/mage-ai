@@ -29,7 +29,7 @@ Look at your terminal and find a corresponding URL with a token in the URL param
 e.g. `http://127.0.0.1:8888/lab?token=`.
 
 The backend server running Tornado and an iPython kernel is running
-at [http://localhost:6789](http://localhost:6789).
+at [http://localhost:6789/api/?value=test](http://localhost:6789/api/?value=test).
 
 #### Debugging
 
