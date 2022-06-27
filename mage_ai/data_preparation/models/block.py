@@ -49,8 +49,8 @@ class Block:
         return dict(
             name=self.name,
             uuid=self.uuid,
-            type=self.type,
-            status=self.status.value,
+            type=self.type.value if type(self.type) is not str else self.type,
+            status=self.status.value if type(self.status) is not str else self.status,
             upstream_blocks=[b.uuid for b in self.upstream_blocks],
             downstream_blocks=[b.uuid for b in self.downstream_blocks]
         )

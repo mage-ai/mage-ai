@@ -52,10 +52,12 @@ class Pipeline:
         self.name = config.get('name')
         self.block_configs = config.get('blocks', [])
         blocks = \
-            [Block(c.get('uuid'), c.get('type'), self.repo_path) for c in self.block_configs]
+            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'))
+             for c in self.block_configs]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
+        # breakpoint()
         for b in self.block_configs:
-            block = self.blocks_by_uuid[b.uuid]
+            block = self.blocks_by_uuid[b['uuid']]
             block.downstream_blocks = \
                 [self.blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])]
             block.upstream_blocks = \
