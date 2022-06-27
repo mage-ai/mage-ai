@@ -509,7 +509,26 @@ class ImputeValuesTest(TestCase):
             ],
             columns=['state', 'location', 'timestamp'],
         )
-        column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
+        df['lists'] = pd.Series(
+            [
+                (np.nan, 2.0, 'string', '3'),
+                ['not string?', True, True, 8, False, np.nan, None],
+                None,
+                None,
+                None,
+                ('not string?', True, True, 8, False, np.nan, None),
+                [],
+                '[\'not string?\'   ,  True, True , 8   , False  , np.nan, None]',
+                '(\'not string?\'   ,  True, True , 8   , False  , np.nan, None)',
+                tuple(),
+            ]
+        )
+        column_types = {
+            'state': 'category',
+            'location': 'zip_code',
+            'timestamp': 'datetime',
+            'lists': 'list',
+        }
         statistics = {
             'state/count': 7,
             'state/count_distinct': 6,
@@ -521,6 +540,9 @@ class ImputeValuesTest(TestCase):
             'location/max_null_seq': 4,
             'timestamp/null_value_rate': 1 / 10,
             'timestamp/max_null_seq': 1,
+            'lists/null_value_rate': 0.3,
+            'lists/max_null_seq': 1,
+            'lists/mode_ratio': 2 / 10,
             'is_timeseries': True,
             'timeseries_index': ['timestamp'],
         }
@@ -531,7 +553,7 @@ class ImputeValuesTest(TestCase):
                 'entry in the timeseries.',
                 action_payload=dict(
                     action_type='impute',
-                    action_arguments=['state', 'location', 'timestamp'],
+                    action_arguments=['state', 'location', 'timestamp', 'lists'],
                     action_options=dict(strategy='sequential', timeseries_index=['timestamp']),
                     action_variables=dict(
                         state=dict(
@@ -543,6 +565,7 @@ class ImputeValuesTest(TestCase):
                         timestamp=dict(
                             feature=dict(column_type='datetime', uuid='timestamp'), type='feature'
                         ),
+                        lists=dict(feature=dict(column_type='list', uuid='lists'), type='feature'),
                     ),
                     action_code='',
                     axis='column',
@@ -574,7 +597,26 @@ class ImputeValuesTest(TestCase):
             ],
             columns=['state', 'location', 'timestamp'],
         )
-        column_types = {'state': 'category', 'location': 'zip_code', 'timestamp': 'datetime'}
+        df['lists'] = pd.Series(
+            [
+                (np.nan, 2.0, 'string', '3'),
+                ['not string?', True, True, 8, False, np.nan, None],
+                None,
+                ('not string?', True, True, 8, False, np.nan, None),
+                [],
+                '[\'not string?\'   ,  True, True , 8   , False  , np.nan, None]',
+                None,
+                '(\'not string?\'   ,  True, True , 8   , False  , np.nan, None)',
+                tuple(),
+                None,
+            ]
+        )
+        column_types = {
+            'state': 'category',
+            'location': 'zip_code',
+            'timestamp': 'datetime',
+            'lists': 'list',
+        }
         statistics = {
             'state/count': 7,
             'state/count_distinct': 6,
@@ -589,6 +631,9 @@ class ImputeValuesTest(TestCase):
             'timestamp/null_value_rate': 0,
             'timestamp/max_null_seq': 0,
             'timestamp/mode_ratio': 1 / 10,
+            'lists/null_value_rate': 0.3,
+            'lists/max_null_seq': 1,
+            'lists/mode_ratio': 2 / 10,
             'is_timeseries': True,
             'timeseries_index': ['timestamp'],
         }
@@ -599,7 +644,7 @@ class ImputeValuesTest(TestCase):
                 'entry in the timeseries.',
                 action_payload=dict(
                     action_type='impute',
-                    action_arguments=['state', 'location'],
+                    action_arguments=['state', 'location', 'lists'],
                     action_options=dict(strategy='sequential', timeseries_index=['timestamp']),
                     action_variables=dict(
                         state=dict(
@@ -608,6 +653,7 @@ class ImputeValuesTest(TestCase):
                         location=dict(
                             feature=dict(column_type='zip_code', uuid='location'), type='feature'
                         ),
+                        lists=dict(feature=dict(column_type='list', uuid='lists'), type='feature'),
                     ),
                     action_code='',
                     axis='column',

@@ -1,15 +1,19 @@
 import NextLink from 'next/link';
 
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
+import Flex from '@oracle/components/Flex';
 import Histogram from '@components/charts/Histogram';
 import Link from '@oracle/elements/Link';
 import PieChart from '@components/charts/PieChart';
+import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 
 import {
   CATEGORICAL_TYPES,
   DATE_TYPES,
+  DISTRIBUTION_COLUMNS,
+  DISTRIBUTION_STATS,
   HUMAN_READABLE_MAPPING,
   METRICS_KEYS,
   METRICS_RATE_KEY_MAPPING,
@@ -22,9 +26,9 @@ import {
 } from '../constants';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
-import { ColumnTypeEnum } from '@interfaces/FeatureType';
+import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import { StatRow } from '../StatsTable';
-import { TAB_REPORTS } from './index';
+import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildDistributionData } from '@components/datasets/Insights/utils/data';
 import { calculateChange, transformNumber } from '@utils/number';
@@ -118,6 +122,27 @@ function getColumnTypeCounts(
   };
 }
 
+export function getColumnSuggestions(
+  allSuggestions: SuggestionType[],
+  selectedColumn: string,
+) {
+  return allSuggestions?.reduce((acc, s) => {
+    const { action_payload: { action_arguments: aa } } = s;
+
+    if (aa?.includes(selectedColumn)) {
+      acc.push({
+        ...s,
+        action_payload: {
+          ...s.action_payload,
+          action_arguments: [selectedColumn],
+        },
+      });
+    }
+
+    return acc;
+  }, []);
+}
+
 export function createStatisticsSample({
   latestColumnTypes = {},
   latestStatistics,
@@ -208,9 +233,11 @@ export function buildRenderColumnHeader({
       time_series: timeSeries,
     } = insightsOverview;
 
-    const timeSeriesData = [];
+    const datetimeColumns = columns.filter((col) => (
+      columnTypes[col] === ColumnTypeEnum.DATETIME
+    ));
 
-    timeSeries?.forEach((tsChart) => {
+    const timeSeriesData = timeSeries?.map((tsChart) => {
       const {
         distribution,
       } = buildDistributionData(
@@ -223,52 +250,54 @@ export function buildRenderColumnHeader({
           },
         },
       );
-      timeSeriesData.push(distribution);
+      return distribution;
     });
 
+    const timeSeriesHistograms = {};
+
+    timeSeriesData?.forEach(({ data }, idx) => {
+      timeSeriesHistograms[datetimeColumns[idx]] = (
+        <Histogram
+          data={data.map(({
+            x,
+            xLabel,
+            xLabelMax,
+            xLabelMin,
+            y,
+          }) => [
+            xLabel,
+            y.count,
+            xLabelMin,
+            xLabelMax,
+            x.min,
+            x.max,
+          ])}
+          getBarColor={([]) => light.brand.wind300}
+          height={COLUMN_HEADER_CHART_HEIGHT}
+          key={columnUUID}
+          large
+          margin={{
+            bottom: 0,
+            left: 0,
+            right: 0,
+            top: 0,
+          }}
+          renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
+            <Text small>
+              Rows: {count}
+              <br />
+              Start: {xLabelMin}
+              <br />
+              End: {xLabelMax}
+            </Text>
+          )}
+          sortData={d => sortByKey(d, '[4]')}
+        />
+      );
+    });
 
     const histogramChart = charts?.find(({ type }) => ChartTypeEnum.HISTOGRAM === type);
-    const timeSeriesHistograms = timeSeriesData.map(({
-      data,
-      columnUUID,
-    }) => (
-      <Histogram
-        data={data.map(({
-          x,
-          xLabel,
-          xLabelMax,
-          xLabelMin,
-          y,
-        }) => [
-          xLabel,
-          y.count,
-          xLabelMin,
-          xLabelMax,
-          x.min,
-          x.max,
-        ])}
-        getBarColor={([]) => light.brand.wind300}
-        height={COLUMN_HEADER_CHART_HEIGHT}
-        key={columnUUID}
-        large
-        margin={{
-          bottom: 0,
-          left: 0,
-          right: 0,
-          top: 0,
-        }}
-        renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
-          <Text small>
-            Rows: {count}
-            <br />
-            Start: {xLabelMin}
-            <br />
-            End: {xLabelMax}
-          </Text>
-        )}
-        sortData={d => sortByKey(d, '[4]')}
-      />
-    ));
+
     const {
       distribution = null,
     } = histogramChart
@@ -285,7 +314,9 @@ export function buildRenderColumnHeader({
       )
       : {};
 
-    const statisticsByColumn = statistics?.[`${columnUUID}/value_counts`];
+    const distributionName = DISTRIBUTION_STATS[columnType] || DISTRIBUTION_STATS.default;
+    const statisticsByColumn = statistics?.[`${columnUUID}/${distributionName}`];
+
     const statisticsByColumnArray = Object
       .entries(statisticsByColumn || {})
       .map(([columnValue, uniqueValueCount]) => ({
@@ -295,14 +326,10 @@ export function buildRenderColumnHeader({
 
     const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === columnType;
     const isDatetimeType = ColumnTypeEnum.DATETIME === columnType;
-    const isCategoricalType = [
-      ColumnTypeEnum.CATEGORY,
-      ColumnTypeEnum.CATEGORY_HIGH_CARDINALITY,
-    ].includes(columnType);
 
     let distributionChart;
     if (isDatetimeType) {
-      distributionChart = timeSeriesHistograms;
+      distributionChart = timeSeriesHistograms[columnUUID];
     }
     else if (distribution && !isBooleanType) {
       distributionChart = (
@@ -350,7 +377,7 @@ export function buildRenderColumnHeader({
           width={columnWidth - (UNIT * 2)}
         />
       );
-    } else if (isCategoricalType) {
+    } else if (DISTRIBUTION_COLUMNS.includes(columnType)) {
       const data = sortByKey(sortByKey(statisticsByColumnArray, 'x', {
         ascending: false,
       }).slice(0, 5), 'x');
@@ -395,7 +422,11 @@ export function buildRenderColumnHeader({
             marginBottom: UNIT,
           }}
         >
-          {ColumnTypeIcon && <ColumnTypeIcon size={UNIT * 2} />}
+          {ColumnTypeIcon && 
+            <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
+              <ColumnTypeIcon size={UNIT * 2} />
+            </Flex>
+          }
 
           <div
             style={{
@@ -407,7 +438,7 @@ export function buildRenderColumnHeader({
             }}
           >
             <NextLink
-              as={createDatasetTabRedirectLink(TAB_REPORTS, columnIndex)}
+              as={createDatasetTabRedirectLink(TAB_VISUALIZATIONS, columnIndex)}
               href="/datasets/[...slug]"
               passHref
             >

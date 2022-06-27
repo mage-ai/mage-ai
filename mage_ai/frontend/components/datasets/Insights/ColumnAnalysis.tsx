@@ -19,6 +19,7 @@ import light from '@oracle/styles/themes/light';
 import { ChartContainer, ChartRow } from './Overview';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { DATE_FORMAT } from './constants';
+import { DISTRIBUTION_COLUMNS, DISTRIBUTION_TITLES } from '../constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildCorrelationsRowData,
@@ -28,11 +29,7 @@ import {
 import { formatNumberLabel } from '@components/charts/utils/label';
 import { formatPercent, numberWithCommas, roundNumber } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
-import {
-  groupBy,
-  indexBy,
-  sortByKey,
-} from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 
 type ColumnAnalysisProps = {
   column: string;
@@ -65,16 +62,17 @@ function ColumnAnalysis({
 
   const statisticsOverview = statisticsOverviewProp || {};
   const numberOfRows = statisticsOverview?.count;
-  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
-  const featuresByColumnType = groupBy(features, ({ columnType: ct }) => ct);
-  const feature = featuresByUUID[column] || {};
   const numberOfValues = statisticsOverview?.[`${column}/count`];
   const numberOfUniqueValues = statisticsOverview?.[`${column}/count_distinct`];
 
-  const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === feature.columnType;
-  const isNumberType = COLUMN_TYPE_NUMBERS.includes(feature.columnType);
-  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(feature.columnType);
-  const isTextType = ColumnTypeEnum.TEXT === feature.columnType;
+  const featuresByUUID = indexBy(features, ({ uuid }) => uuid);
+  const feature = featuresByUUID[column] || {};
+  const { uuid: columnUUID, columnType } = feature;
+
+  const isBooleanType = ColumnTypeEnum.TRUE_OR_FALSE === columnType;
+  const isNumberType = COLUMN_TYPE_NUMBERS.includes(columnType);
+  const isCategoricalType = COLUMN_TYPE_CATEGORICAL.includes(columnType);
+  const isDatetimeType = ColumnTypeEnum.DATETIME === columnType;
 
   const {
     charts,
@@ -197,7 +195,7 @@ function ColumnAnalysis({
         sortData={d => sortByKey(d, '[2]')}
       />
     );
-  } else if (isCategoricalType || isTextType) {
+  } else if (DISTRIBUTION_COLUMNS.includes(columnType)) {
     const data = sortByKey(statisticsByColumnArray, 'x');
 
     distributionChart = (
@@ -216,6 +214,57 @@ function ColumnAnalysis({
         getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
         getY={([, value]) => value}
         height={60 * UNIT}
+      />
+    );
+  } else if (isDatetimeType) {
+    const datetimeColumns = features.filter(({ columnType: featureType }) => (
+      featureType === ColumnTypeEnum.DATETIME
+    ));
+    const colIndex = datetimeColumns.findIndex(({ uuid }) => uuid === columnUUID);
+
+    const { distribution: { data, featureUUID } } = buildDistributionData(
+      timeSeries[colIndex],
+      {},
+      {
+        feature: {
+          'columnType': columnType,
+          'uuid': columnUUID,
+        },
+      },
+    );
+
+    distributionChart = (
+      <Histogram
+        data={data.map(({
+          x,
+          xLabel,
+          xLabelMax,
+          xLabelMin,
+          y,
+        }) => [
+          xLabel,
+          y.count,
+          xLabelMin,
+          xLabelMax,
+          x.min,
+          x.max,
+        ])}
+        getBarColor={([]) => light.brand.wind300}
+        height={UNIT * 50}
+        key={featureUUID}
+        large
+        renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
+          <Text small>
+            Rows: {count}
+            <br />
+            Start: {xLabelMin}
+            <br />
+            End: {xLabelMax}
+          </Text>
+        )}
+        showAxisLabels
+        showYAxisLabels
+        sortData={d => sortByKey(d, '[4]')}
       />
     );
   }
@@ -482,7 +531,7 @@ function ColumnAnalysis({
           <ChartRow
             left={
               <ChartContainer
-                title={isTextType ? 'Word distribution' : 'Distribution of values'}
+                title={DISTRIBUTION_TITLES[columnType] || DISTRIBUTION_TITLES.default}
               >
                 {distributionChart}
               </ChartContainer>
@@ -547,7 +596,7 @@ function ColumnAnalysis({
         </>
       )}
 
-      {timeSeriesChartsByDatetimeColumn.length >= 1 &&
+      {timeSeriesChartsByDatetimeColumn.length >= 1 && !isDatetimeType &&
         timeSeriesChartsByDatetimeColumn.map(({
           column: datetimeColumn,
           charts: timeseriesCharts,

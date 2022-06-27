@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import FeatureSetType from '@interfaces/FeatureSetType';
-import FeatureType, { ColumnTypeEnum } from '@interfaces/FeatureType';
+import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -10,6 +10,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import {
   GRAY_LINES,
   LIGHT,
@@ -164,32 +165,41 @@ function FeatureProfile({
     'Unique': formatPercent(uniqueValueRate),
   };
 
+  const ColumnTypeIcon = COLUMN_TYPE_ICON_MAPPING[columnType];
+
   return (
     <Flex flexDirection="column">
       <FeatureProfileStyle>
-        <Spacing p={2}>
-          <Link
-            inline
-            onClick={() => goToWithQuery({
-              column: columns.indexOf(uuid),
-            }, {
-              pushHistory: true,
-            })}
-            preventDefault
-            secondary
-          >
-            <Text
-              backgroundColor={light.feature.active}
-              bold
-              maxWidth={25 * UNIT}
-              monospace
+        <Spacing px={1} py={2}>
+          <FlexContainer alignItems="center">
+            {ColumnTypeIcon && 
+              <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
+                <ColumnTypeIcon size={UNIT * 2} />
+              </Flex>
+            }
+            <Link
+              inline
+              onClick={() => goToWithQuery({
+                column: columns.indexOf(uuid),
+              }, {
+                pushHistory: true,
+              })}
+              preventDefault
               secondary
-              textOverflow
-              title={uuid}
             >
-              {uuid}
-            </Text>
-          </Link>
+              <Text
+                backgroundColor={light.feature.active}
+                bold
+                maxWidth={25 * UNIT}
+                monospace
+                secondary
+                textOverflow
+                title={uuid}
+              >
+                {uuid}
+              </Text>
+            </Link>
+          </FlexContainer>
         </Spacing>
       </FeatureProfileStyle>
       {entries.map((label = '-', idx) => {
