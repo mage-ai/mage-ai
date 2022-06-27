@@ -17,7 +17,7 @@ import TransformerActionType from '@interfaces/TransformerActionType';
 import api from '@api';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
-import { onError, onSuccess, parseError } from '@api/utils/response';
+import { parseError } from '@api/utils/response';
 
 type SuggestionsProps = {
   addAction: (action: TransformerActionType) => void;
@@ -25,6 +25,8 @@ type SuggestionsProps = {
   isLoading?: boolean;
   removeAction: (action: TransformerActionType) => void;
   removeSuggestion?: (action: TransformerActionType) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
+  suggestionPreviewIdx?: number;
   suggestions: SuggestionType[];
 };
 
@@ -33,6 +35,8 @@ function Suggestions({
   featureSet,
   isLoading,
   removeAction,
+  setSuggestionPreviewIdx,
+  suggestionPreviewIdx,
   suggestions,
 }: SuggestionsProps) {
   const csvLink = useRef(null);
@@ -102,7 +106,6 @@ function Suggestions({
                   action={action}
                   border
                   featureIdMapping={featureIdMapping}
-                  featureSetId={featureSet?.id}
                   features={features}
                   idx={idx}
                   isLoading={isLoading}
@@ -150,13 +153,14 @@ function Suggestions({
               <SuggestionRow
                 action={suggestion}
                 featureIdMapping={featureIdMapping}
-                featureSetId={featureSet?.id}
                 features={features}
                 idx={idx}
                 isLoading={isLoading}
                 key={`${idx}-${suggestion.title}`}
                 link={() => addAction(suggestion)}
                 saveAction={addAction}
+                setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+                suggestionPreviewIdx={suggestionPreviewIdx}
               />
             ))}
           </AccordionPanel>

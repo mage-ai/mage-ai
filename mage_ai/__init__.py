@@ -5,6 +5,7 @@ from mage_ai.server.app import (
     connect_df,
     kill as kill_flask,
     launch as launch_flask,
+    sync_pipelines,
 )
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.utils.frontend_renderer import (
@@ -62,6 +63,10 @@ def launch(
     return thread
 
 
+def remote_sync(api_key=None):
+    sync_pipelines(api_key)
+
+
 def kill():
     kill_flask()
 
@@ -86,7 +91,6 @@ def connect_data(df, name, verbose=False):
     else:
         feature_set, _ = connect_df(df, name, verbose=verbose)
     return feature_set
-
 
 def clean(
     df,

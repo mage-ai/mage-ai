@@ -150,7 +150,7 @@ function Overview({
         }, {
           pushHistory: true,
         }),
-      }
+      },
     });
 
     const arr = c[0].y.map(({ value }) => roundNumber(value));

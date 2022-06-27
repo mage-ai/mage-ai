@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from mage_ai.data_cleaner.shared.utils import parse_list
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Operator, VariableType
 import numpy as np
 import re
@@ -14,6 +15,8 @@ def convert_col_type(df_col, col_type):
         return df_col.dropna().astype(float)
     elif col_type == ColumnType.TEXT:
         return df_col.dropna().astype(str)
+    elif col_type == ColumnType.LIST:
+        return df_col.apply(parse_list)
     return df_col
 
 

@@ -30,6 +30,7 @@ import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import actions from '@components/ActionForm/actions';
 import api from '@api';
+
 import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {
   Chat,
@@ -38,6 +39,7 @@ import {
 } from '@oracle/icons';
 import { FormConfigType } from '@components/ActionForm/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getColumnSuggestions } from '../overview/utils';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { removeAtIndex } from '@utils/array';
@@ -59,6 +61,8 @@ type DatasetDetailProps = {
   selectedColumnIndex?: number;
   selectedTab?: string;
   setErrorMessages?: (errorMessages: string[]) => void;
+  setSuggestionPreviewIdx?: (idx: number) => void;
+  suggestionPreviewIdx?: number;
   tabs?: string[];
 } & DatasetDetailSharedProps;
 
@@ -75,6 +79,8 @@ function DatasetDetail({
   selectedColumnIndex,
   selectedTab,
   setErrorMessages,
+  setSuggestionPreviewIdx,
+  suggestionPreviewIdx,
   tabs,
 }: DatasetDetailProps) {
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
@@ -96,21 +102,7 @@ function DatasetDetail({
   const pipelineActions = Array.isArray(pipeline?.actions) ? pipeline?.actions : [];
   const suggestions = useMemo(
     () => selectedColumn
-      ? suggestionsInit?.reduce((acc, s) => {
-        const { action_payload: { action_arguments: aa } } = s;
-
-        if (aa?.includes(selectedColumn)) {
-          acc.push({
-            ...s,
-            action_payload: {
-              ...s.action_payload,
-              action_arguments: [selectedColumn],
-            },
-          });
-        }
-
-        return acc;
-      }, [])
+      ? getColumnSuggestions(suggestionsInit, selectedColumn)
       : suggestionsInit,
     [
       selectedColumn,
@@ -213,6 +205,7 @@ function DatasetDetail({
         },
       });
     }
+    setSuggestionPreviewIdx(null);
 
     // @ts-ignore
     commitAction({
@@ -222,6 +215,7 @@ function DatasetDetail({
   };
   const removeAction = (existingActionData: TransformerActionType) => {
     beforeCommit();
+    setSuggestionPreviewIdx(null);
 
     const idx =
       pipelineActions.findIndex(({ id }: TransformerActionType) => id === existingActionData.id);
@@ -258,6 +252,8 @@ function DatasetDetail({
               isLoading={isLoadingCommitAction}
               removeAction={removeAction}
               removeSuggestion={(action) => console.log(action)}
+              setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+              suggestionPreviewIdx={suggestionPreviewIdx}
               suggestions={suggestions}
             />
           )}

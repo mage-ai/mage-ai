@@ -1,7 +1,7 @@
 import InsightsType from './InsightsType';
-import MetadataType from './MetadataType';
 import PipelineType from './PipelineType';
 import SuggestionType from './SuggestionType';
+import { MetadataType } from './MetadataType';
 
 export default interface FeatureSetType {
   id: string | number;

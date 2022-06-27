@@ -30,11 +30,19 @@ import {
   buildRenderColumnHeader,
   createMetricsSample,
   createStatisticsSample,
+  getColumnSuggestions,
 } from './utils';
 import { Close } from '@oracle/icons';
-import { LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
+import { DISTRIBUTION_STATS, LARGE_WINDOW_WIDTH } from '@components/datasets/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
+import {
+  TAB_DATA,
+  TABS_IN_ORDER,
+  TAB_REPORTS,
+  TABS_QUERY_PARAM,
+  TAB_VISUALIZATIONS,
+} from './constants';
 import {
   deserializeFeatureSet,
   getFeatureSetInvalidValuesAll,
@@ -44,19 +52,6 @@ import { goToWithQuery } from '@utils/routing';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-
-export const TABS_QUERY_PARAM = 'tabs[]';
-export const SHOW_COLUMNS_QUERY_PARAM = 'show_columns';
-export const COLUMN_QUERY_PARAM = 'column';
-
-export const TAB_REPORTS = 'Reports';
-const TAB_VISUALIZATIONS = 'Visualizations';
-const TAB_DATA = 'Data';
-const TABS_IN_ORDER = [
-  TAB_REPORTS,
-  TAB_VISUALIZATIONS,
-  TAB_DATA,
-];
 
 type DatasetOverviewProps = {
   selectedColumnIndex?: number;
@@ -72,6 +67,7 @@ function DatasetOverview({
 
   const { data: featureSetRawOriginal, mutate: mutateOriginal } = api.versions.feature_sets.detail(featureSet?.id, '0');
   const featureSetOriginal = featureSetRawOriginal ? deserializeFeatureSet(featureSetRawOriginal) : {};
+  const [suggestionPreviewIdx, setSuggestionPreviewIdx] = useState(null);
 
   const { width: windowWidth } = useWindowSize();
   const windowWidthPrevious = usePrevious(windowWidth);
@@ -113,6 +109,7 @@ function DatasetOverview({
     insights,
     metadata,
     statistics = {},
+    suggestions = [],
   } = featureSet || {};
   const {
     column_types: columnTypes,
@@ -170,14 +167,13 @@ function DatasetOverview({
     insights,
   ]);
 
-  const insightsOverview = selectedColumn
-    ? insightsByFeatureUUID[selectedColumn]
-    : insights?.[1] || {};
-
   const columnsVisible = Number(showColumnsFromUrl) === 1;
   const columnsVisiblePrevious = usePrevious(columnsVisible);
-
   const colType = features?.find((feature) => feature.uuid === selectedColumn)?.columnType;
+
+  const insightsOverview = (selectedColumn && colType !== ColumnTypeEnum.DATETIME)
+    ? insightsByFeatureUUID[selectedColumn]
+    : insights?.[1] || {};
 
   const {
     height: dataTableHeightInit,
@@ -230,8 +226,15 @@ function DatasetOverview({
   const {
     count,
   } = featureSetStats;
+  const filteredSuggestions = selectedColumn
+    ? getColumnSuggestions(suggestions, selectedColumn)
+    : suggestions;
+  const suggestionPreviewIndexes =
+    filteredSuggestions?.[suggestionPreviewIdx]?.preview_results?.removed_row_indices;
 
   const invalidValuesAll = statistics ? getFeatureSetInvalidValuesAll(featureSet, columnsAll) : null;
+  const distributionName = DISTRIBUTION_STATS[colType] || DISTRIBUTION_STATS.default;
+  const statisticsByColumn = statistics?.[`${selectedColumn}/${distributionName}`];
 
   return (
     <DatasetDetail
@@ -246,6 +249,8 @@ function DatasetOverview({
       selectedColumnIndex={selectedColumnIndex}
       selectedTab={tabsFromUrl?.[0]}
       setErrorMessages={setErrorMessages}
+      setSuggestionPreviewIdx={setSuggestionPreviewIdx}
+      suggestionPreviewIdx={suggestionPreviewIdx}
       tabs={TABS_IN_ORDER}
     >
       <LoadingBar
@@ -338,11 +343,7 @@ function DatasetOverview({
               column={selectedColumn}
               features={features}
               insights={insightsOverview}
-              statisticsByColumn={
-                (colType === ColumnTypeEnum.TEXT 
-                  ? statistics?.[`${selectedColumn}/word_distribution`]
-                  : statistics?.[`${selectedColumn}/value_counts`]
-                ) || {}}
+              statisticsByColumn={statisticsByColumn}
               statisticsOverview={statistics}
             />
           )}
@@ -372,6 +373,7 @@ function DatasetOverview({
           columns={columns}
           height={dataTableHeight}
           invalidValues={invalidValuesAll}
+          previewIndexes={{ removedRows: suggestionPreviewIndexes }}
           renderColumnHeader={selectedColumn ? null : renderColumnHeader}
           rows={rows}
           width={dataTableWidth}

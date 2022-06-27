@@ -7,8 +7,12 @@ class RemoveCollinearColumns(BaseRule):
     MIN_ENTRIES = 3
     VIF_UB = 5
 
-    def __init__(self, df, column_types, statistics):
-        super().__init__(df, column_types, statistics)
+    default_config = dict(
+        vif_ub=3,
+    )
+
+    def __init__(self, df, column_types, statistics, custom_config={}):
+        super().__init__(df, column_types, statistics, custom_config=custom_config)
         self.numeric_df, self.numeric_columns = self._filter_numeric_types()
         self.numeric_indices = np.arange(len(self.numeric_df))
 

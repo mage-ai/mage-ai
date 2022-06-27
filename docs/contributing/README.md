@@ -92,8 +92,9 @@ $ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bas
 
 ```bash
 # Uninstall any existing node versions (e.g. through Homebrew) FIRST.
-$ nvm install 16
-$ nvm use 16
+$ nvm install 17.9.0
+$ nvm use 16 17.9.0
+$ nvm alias default 17.9.0
 ```
 
 #### Install Yarn after installing Node

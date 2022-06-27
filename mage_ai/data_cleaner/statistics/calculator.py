@@ -242,6 +242,26 @@ class StatisticsCalculator:
                         .iloc[:OUTLIER_SAMPLE_COUNT]
                         .tolist()
                     )
+                # generate five number summary
+                first_quartile = series_non_null.quantile(0.25, interpolation='nearest')
+                third_quartile = series_non_null.quantile(0.75, interpolation='nearest')
+                iqr = third_quartile - first_quartile
+                outlier_mask = (series_non_null <= first_quartile - 1.5 * iqr) | (
+                    series_non_null >= third_quartile + 1.5 * iqr
+                )
+                outliers = series_non_null[outlier_mask].unique().tolist()
+                data[f'{col}/box_plot_data'] = {
+                    'outliers': outliers[:OUTLIER_SAMPLE_COUNT],
+                    'min': data[f'{col}/min'],
+                    'first_quartile': first_quartile,
+                    'median': data[f'{col}/median'],
+                    'third_quartile': third_quartile,
+                    'max': data[f'{col}/max'],
+                }
+                if len(outliers) != 0:
+                    not_outliers = series_non_null[~outlier_mask]
+                    data[f'{col}/box_plot_data']['min'] = not_outliers.min()
+                    data[f'{col}/box_plot_data']['max'] = not_outliers.max()
             elif column_type == ColumnType.DATETIME:
                 dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
                 data[f'{col}/max'] = dates.max().isoformat()

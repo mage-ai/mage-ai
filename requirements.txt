@@ -1,9 +1,9 @@
-beautifulsoup4
 Faker==4.14.0
 Flask==2.1.2
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 Werkzeug==2.1.2
+beautifulsoup4
 click==8.1.3
 flask-cors==3.0.10
 importlib-metadata==4.11.3
@@ -11,8 +11,8 @@ ipython
 itsdangerous==2.1.2
 joblib>=1.1.0
 jupyter-server-proxy==3.2.1
-numpy~=1.21.0
 numpyencoder==0.3.0
+numpy~=1.21.0
 pandas~=1.3.0
 pyarrow==8.0.0
 python-dateutil==2.8.2
