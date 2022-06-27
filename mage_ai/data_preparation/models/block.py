@@ -17,7 +17,7 @@ class BlockType(str, Enum):
 
 class Block:
     def __init__(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED):
-        self.name = name
+        self.name = name or uuid
         self.uuid = uuid
         self.type = block_type
         self.status = status
@@ -43,7 +43,16 @@ class Block:
 
     @classmethod
     def get_all_blocks(self, repo_path):
-        pass
+        block_uuids = dict()
+        for t in BlockType:
+            block_dir = os.path.join(repo_path, f'{t.value}s')
+            if not os.path.exists(block_dir):
+                continue
+            block_uuids[t.value] = []
+            for f in os.listdir(block_dir):
+                if f.endswith('.py') and f != '__init__.py':
+                    block_uuids[t.value].append(f.split('.')[0])
+        return block_uuids
 
     def to_dict(self):
         return dict(

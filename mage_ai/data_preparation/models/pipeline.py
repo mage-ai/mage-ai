@@ -49,7 +49,7 @@ class Pipeline:
 
     @classmethod
     def get_all_pipelines(self, repo_path):
-        pass
+        return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
     def load_config_from_yaml(self):
         with open(self.config_path) as fp:
