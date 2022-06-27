@@ -16,10 +16,13 @@ PAREN_LIKE_CLOSE = frozenset([']', ')'])
 
 
 def clean_series(series, column_type, dropna=True):
-    series_cleaned = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
-    series_cleaned = series_cleaned.map(
-        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan
-    )
+    if series.dtype == 'object':
+        series_cleaned = series.apply(lambda x: x.strip(' \'\"') if type(x) is str else x)
+        series_cleaned = series_cleaned.map(
+            lambda x: x if (not isinstance(x, str) or x != '') else np.nan
+        )
+    else:
+        series_cleaned = series
     if dropna:
         series_cleaned = series_cleaned.dropna()
 
