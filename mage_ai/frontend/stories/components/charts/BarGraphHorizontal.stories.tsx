@@ -7,7 +7,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export default {
   component: BarGraphHorizontal,
-  title: 'Components/Charts/BarGraphHorizontal'
+  title: 'Components/Charts/BarGraphHorizontal',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
@@ -43,7 +43,7 @@ const data = [
     x: 0.85,
     y: 'Feature 5',
   },
-]
+];
 
 Regular.args = {
   data,
@@ -51,4 +51,4 @@ Regular.args = {
   renderTooltipContent: ({ x }) => `The value of this bar is ${x}`,
   xNumTicks: 2,
   ySerialize: ({ y }) => y,
-}
+};
