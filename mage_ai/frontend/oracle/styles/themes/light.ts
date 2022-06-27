@@ -93,10 +93,15 @@ export default {
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
+<<<<<<< HEAD
+=======
+    backgroundDanger: RED_LIGHT,
+>>>>>>> 62f6490e ([sp] add danger styling to light theme)
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
     tertiary: BLUE_HIGHLIGHT,
+    danger: RED,
   },
   content: {
     active: BLACK,
