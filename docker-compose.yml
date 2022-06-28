@@ -43,8 +43,6 @@ services:
     depends_on:
       - server
     command: "yarn run dev"
-    environment:
-      - NODE_PATH=/home/src/node_modules
     ports:
       - 3000:3000
     volumes:
