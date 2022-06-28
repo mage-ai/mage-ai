@@ -1,3 +1,4 @@
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { BoxPlot } from '@visx/stats';
 import { ThemeContext } from 'styled-components';
 import { scaleLinear } from '@visx/scale';
@@ -5,7 +6,7 @@ import { useContext } from 'react';
 
 import { ThemeType } from '@oracle/styles/themes/constants';
 
-type BoxPlotHorizontalProps = {
+export type BoxPlotHorizontalProps = {
   data: {
     min: number;
     firstQuartile: number;
@@ -18,6 +19,7 @@ type BoxPlotHorizontalProps = {
   secondary?: boolean;
   danger?: boolean;
   scale?: number;
+  width?: number;
   height?: number;
 };
 
@@ -27,6 +29,7 @@ function BoxPlotHorizontal({
   secondary,
   danger,
   scale = 1.0,
+  width,
   height,
 }: BoxPlotHorizontalProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -62,7 +65,7 @@ function BoxPlotHorizontal({
   });
 
   return (
-    <svg width="100%">
+    <svg height={height} width={width}>
       <BoxPlot
         {...data}
         {...color}
@@ -75,4 +78,23 @@ function BoxPlotHorizontal({
   );
 }
 
-export default BoxPlotHorizontal;
+function BoxPlotHorizontalContainer({
+  height: parentHeight,
+  ...props
+}: BoxPlotHorizontalProps) {
+  return (
+    <div style={{ height: parentHeight, width: '100%' }}>
+      <ParentSize>
+        {({ width, height }) => (
+          <BoxPlotHorizontal
+            {...props}
+            height={height}
+            width={width}
+          />
+        )}
+      </ParentSize>
+    </div>
+  );
+}
+
+export default BoxPlotHorizontalContainer;
