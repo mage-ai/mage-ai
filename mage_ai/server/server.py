@@ -1,4 +1,5 @@
 from jupyter_client import KernelManager
+from jupyter_client.multikernelmanager import MultiKernelManager
 from kernel_output_parser import parse_output_message
 from subscriber import get_messages
 from websocket import WebSocketServer
@@ -9,13 +10,18 @@ import tornado.ioloop
 import tornado.web
 
 
-class ApiHandler(tornado.web.RequestHandler):
+manager = KernelManager()
+
+
+class BaseHandler(tornado.web.RequestHandler):
     def check_origin(self, origin):
         return True
 
     def set_default_headers(self):
         self.set_header('Content-Type', 'application/json')
 
+
+class ApiHandler(BaseHandler):
     def get(self):
         value = self.get_argument('value', None)
         r = json.dumps(dict(
@@ -32,19 +38,35 @@ class ApiHandler(tornado.web.RequestHandler):
         self.write(r)
 
 
+class KernelsHandler(BaseHandler):
+    def get(self, kernel_id, action):
+        if 'interrupt' == action:
+            manager.interrupt_kernel()
+        elif 'restart' == action:
+            manager.restart_kernel()
+
+        r = json.dumps(dict(
+            method='get',
+            value=kernel_id,
+        ))
+        self.write(r)
+        self.finish()
+
+
 def make_app():
     return tornado.web.Application(
         [
             (r'/websocket/', WebSocketServer),
             (r'/api/', ApiHandler),
+            (r'/kernels/(?P<kernel_id>[\w\-]+)/(?P<action>\w+)', KernelsHandler),
         ],
         autoreload=True,
     )
 
 
 async def main():
-    manager = KernelManager()
     manager.start_kernel()
+    os.environ['KERNEL_ID'] = manager.kernel_id
 
     connection_file = manager.connection_file
     os.environ['CONNECTION_FILE'] = connection_file
