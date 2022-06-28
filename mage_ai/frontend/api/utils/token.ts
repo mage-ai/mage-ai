@@ -1,4 +1,6 @@
+// @ts-ignore
 import Cookies from 'js-cookie';
+
 import {
   COOKIE_DOMAIN,
   COOKIE_KEY_REF as COOKIE_KEY_REF_ORIG,

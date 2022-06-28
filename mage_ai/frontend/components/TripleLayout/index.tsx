@@ -159,8 +159,8 @@ function TripleLayout({
 
       <MainContentStyle
         ref={mainContentRef}
-        left={beforeWidth}
         style={{
+          left: beforeWidth,
           width: `calc(100% - ${beforeWidth + afterWidth}px)`,
         }}
       >
@@ -171,7 +171,6 @@ function TripleLayout({
 
       {after && (
         <AfterStyle
-          active={afterMousedownActive}
           style={{
             width: afterWidth,
           }}

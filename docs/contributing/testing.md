@@ -15,3 +15,10 @@ $ cd mage_ai/frontend
 $ yarn install
 $ yarn export_prod
 ```
+
+## Front-end
+To check proper types in TypeScript, run:
+
+```bash
+$ ./scripts/test.sh
+```

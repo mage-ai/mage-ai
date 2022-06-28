@@ -73,7 +73,9 @@ const ASIDE_INNER_STYLE = css`
   z-index: 2;
 `;
 
-const ASIDE_DRAGGABLE_STYLE = css`
+const ASIDE_DRAGGABLE_STYLE = css<{
+  active?: boolean;
+}>`
   cursor: ew-resize;
   height: 100%;
   position: absolute;
@@ -111,7 +113,11 @@ export const AfterInnerStyle = styled.div`
   ${ASIDE_INNER_STYLE}
 `;
 
-export const DraggableStyle = styled.div`
+export const DraggableStyle = styled.div<{
+  active?: boolean;
+  left?: number;
+  right?: number;
+}>`
   ${ASIDE_DRAGGABLE_STYLE}
 
   ${props => typeof props.left !== 'undefined' && `
@@ -135,10 +141,6 @@ export const MainContentStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
-  `}
-
-  ${props => props.left && `
-    left: ${props.left}px;
   `}
 `;
 
