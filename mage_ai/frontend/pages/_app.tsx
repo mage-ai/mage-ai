@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components';
 import '@styles/globals.css';
 import light from '@oracle/styles/themes/light';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { getCurrentTheme } from '@oracle/styles/themes/utils';
 import { theme as stylesTheme } from '@styles/theme';
 
 type AppInternalProps = {
@@ -44,10 +45,11 @@ function MyApp(props: MyAppProps & AppProps) {
 
 MyApp.getInitialProps = async (appContext) => {
   const appProps = await App.getInitialProps(appContext);
+  const { ctx } = appContext;
 
   return {
     ...appProps,
-    currentTheme: light,
+    currentTheme: getCurrentTheme(ctx),
   };
 };
 
