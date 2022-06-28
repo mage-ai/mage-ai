@@ -1,5 +1,6 @@
 from enum import Enum
 from mage_ai.data_cleaner.shared.utils import clean_name
+from mage_ai.data_preparation.variable_manager import variable_manager
 import os
 
 
@@ -16,13 +17,29 @@ class BlockType(str, Enum):
 
 
 class Block:
-    def __init__(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED):
+    def __init__(
+        self,
+        name,
+        uuid,
+        block_type,
+        status=BlockStatus.NOT_EXECUTED,
+        pipeline=None
+    ):
         self.name = name or uuid
         self.uuid = uuid
         self.type = block_type
         self.status = status
+        self.pipeline = pipeline
         self.upstream_blocks = []
         self.downstream_blocks = []
+
+    @property
+    def input_variables(self):
+        return {b.uuid: b.output_variables for b in self.upstream_blocks}
+
+    @property
+    def output_variables(self):
+        return []
 
     @classmethod
     def create(self, name, block_type, repo_path):
@@ -39,7 +56,7 @@ class Block:
             pass
         with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
             pass
-        return Block(name, uuid, block_type,)
+        return Block(name, uuid, block_type)
 
     @classmethod
     def get_all_blocks(self, repo_path):
@@ -65,26 +82,45 @@ class Block:
         )
 
     def execute(self):
-        self.status = BlockStatus.executed
+        outputs = self.__execute()
+        if len(outputs) != len(self.output_variables):
+            raise Exception(
+                f'The number of output variables does not match the block type: {self.type}',
+            )
+        variable_mapping = dict(zip(self.output_variables, outputs))
+        self.__store_variables(variable_mapping)
+        self.status = BlockStatus.EXECUTED
+        return outputs
+
+    def __execute(self):
         # TODO: implement execution logic
+        return ()
 
-    def update(self):
-        pass
-
-    def delete(self):
-        pass
+    def __store_variables(self, variable_mapping):
+        if self.pipeline is None:
+            return
+        for uuid, data in variable_mapping.items():
+            variable_manager.add_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                uuid,
+                data,
+            )
 
 
 class DataLoaderBlock(Block):
-    def execute(self):
-        pass
+    @property
+    def output_variables(self):
+        return ['df']
 
 
 class DataExporterBlock(Block):
-    def execute(self):
-        pass
+    @property
+    def output_variables(self):
+        return []
 
 
 class TransformerBlock(Block):
-    def execute(self):
-        pass
+    @property
+    def output_variables(self):
+        return ['df']

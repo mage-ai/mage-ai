@@ -47,6 +47,6 @@ class BlockTest(TestCase):
             uuid='test_data_exporter',
             type='data_exporter',
             status='not_executed',
-            upstream_blocks=['test_transformer_2',],
+            upstream_blocks=['test_transformer_2'],
             downstream_blocks=[],
         ))

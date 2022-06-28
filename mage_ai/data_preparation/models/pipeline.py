@@ -23,6 +23,10 @@ class Pipeline:
             PIPELINE_CONFIG_FILE,
         )
 
+    @property
+    def dir_path(self):
+        return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
     @classmethod
     def create(self, name, repo_path):
         """
@@ -57,7 +61,7 @@ class Pipeline:
         self.name = config.get('name')
         self.block_configs = config.get('blocks', [])
         blocks = \
-            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'))
+            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
              for c in self.block_configs]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
         # breakpoint()
@@ -84,6 +88,7 @@ class Pipeline:
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
         block.upstream_blocks = upstream_blocks
+        block.pipeline = self
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
         return block
