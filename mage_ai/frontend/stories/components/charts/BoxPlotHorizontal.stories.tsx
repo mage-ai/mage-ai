@@ -27,43 +27,53 @@ const data = {
   thirdQuartile: 85,
   max: 100,
   outliers: [
-    105,
-    2,
-    125,
+    -20, 0, 3, 105,
   ],
 };
 
-export const Regular = Template.bind({});
+export const Default = Template.bind({});
 
-Regular.args = {
+Default.args = {
   data,
-  height: UNIT*4,
-  scale: 5,
+  height: 50,
+};
+
+export const OneSided = Template.bind({});
+
+OneSided.args = {
+  data: {
+    ...data,
+    outliers: [
+      -20, -5,
+    ],
+  },
+  height: 50,
+  width: 200,
 };
 
 export const Primary = Template.bind({});
 
 Primary.args = {
   data,
+  height: 50,
   primary: true,
-  height: UNIT*8,
-  scale: 5,
+  width: 250,
 };
 
 export const Secondary = Template.bind({});
 
 Secondary.args = {
   data,
+  height: 50,
   secondary: true,
-  height: UNIT*8,
-  scale: 5,
+  width: 250,
 };
 
 export const Danger = Template.bind({});
 
 Danger.args = {
   data,
+  height: 50,
   danger: true,
-  height: UNIT*8,
-  scale: 5,
+  width: 250,
 };
