@@ -126,7 +126,7 @@ df.head(10)
         </Spacing>
       )}
 
-      {!isInProgress && runCount >= 1 && (
+      {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (
         <Spacing mt={2}>
           <Text>
             Run count: {runCount}
