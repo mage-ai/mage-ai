@@ -5,6 +5,7 @@ import { scaleLinear } from '@visx/scale';
 import { useContext } from 'react';
 
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type BoxPlotHorizontalProps = {
   data: {
@@ -18,9 +19,8 @@ export type BoxPlotHorizontalProps = {
   primary?: boolean;
   secondary?: boolean;
   danger?: boolean;
-  scale?: number;
   width?: number;
-  height?: number;
+  height: number;
 };
 
 function BoxPlotHorizontal({
@@ -28,7 +28,6 @@ function BoxPlotHorizontal({
   primary,
   secondary,
   danger,
-  scale = 1.0,
   width,
   height,
 }: BoxPlotHorizontalProps) {
@@ -56,22 +55,25 @@ function BoxPlotHorizontal({
   const color = colorMap[Math.max(colorIdx, 0)];
   
   const { min, max, outliers } = data;
-  const yMin = Math.min(...outliers) || min; 
-  const yMax = Math.max(...outliers) || max;
+  const yMin = Math.min(Math.min(...outliers) || min, min); 
+  const yMax = Math.max(Math.max(...outliers) || max, max);
 
   const xScale = scaleLinear<number>({
-    domain: [0, yMax / scale],
-    range: [yMin, yMax],
+    domain: [yMin, yMax],
+    range: [UNIT, width],
   });
 
   return (
-    <svg height={height} width={width}>
+    <svg height={height + UNIT} width={width + UNIT}>
       <BoxPlot
         {...data}
         {...color}
         boxWidth={height}
         horizontal
+        rx={5}
+        ry={5}
         strokeWidth={1}
+        top={UNIT/2}
         valueScale={xScale}
       />
     </svg>
@@ -79,11 +81,12 @@ function BoxPlotHorizontal({
 }
 
 function BoxPlotHorizontalContainer({
+  width: parentWidth,
   height: parentHeight,
   ...props
 }: BoxPlotHorizontalProps) {
   return (
-    <div style={{ height: parentHeight, width: '100%' }}>
+    <div style={{ height: parentHeight, width: parentWidth }}>
       <ParentSize>
         {({ width, height }) => (
           <BoxPlotHorizontal
