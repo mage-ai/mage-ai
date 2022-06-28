@@ -6,6 +6,7 @@ import { useContext } from 'react';
 
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import light from '@oracle/styles/themes/light';
 
 export type BoxPlotHorizontalProps = {
   data: {
@@ -36,18 +37,18 @@ function BoxPlotHorizontal({
   const colorMap = [
     {
       color: primary,
-      fill: themeContext.chart.backgroundPrimary,
-      stroke: themeContext.chart.primary,
+      fill: (themeContext.chart || light.chart).backgroundPrimary,
+      stroke: (themeContext.chart || light.chart).primary,
     },
     {
       color: secondary,
-      fill: themeContext.chart.backgroundSecondary,
-      stroke: themeContext.chart.secondary,
+      fill: (themeContext.chart || light.chart).backgroundSecondary,
+      stroke: (themeContext.chart || light.chart).secondary,
     },
     {
       color: danger,
-      fill: themeContext.chart.backgroundDanger,
-      stroke: themeContext.chart.danger,
+      fill: (themeContext.chart || light.chart).backgroundDanger,
+      stroke: (themeContext.chart || light.chart).danger,
     },
   ];
 
