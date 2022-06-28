@@ -88,6 +88,7 @@ class Pipeline:
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
         block.upstream_blocks = upstream_blocks
+        block.pipeline = self
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
         return block

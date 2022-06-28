@@ -8,15 +8,6 @@ class VariableManager:
         self.repo_path = repo_path
         # TODO: implement caching logic
 
-    def get_variable(self, pipeline_uuid, block_uuid, variable_uuid, variable_type=None):
-        variable = Variable(
-            variable_uuid,
-            self.__pipeline_path(pipeline_uuid),
-            block_uuid,
-            variable_type=variable_type,
-        )
-        return variable.read_data()
-
     def add_variable(self, pipeline_uuid, block_uuid, variable_uuid, data, variable_type=None):
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
@@ -28,6 +19,15 @@ class VariableManager:
         )
         variable.write_data(data)
 
+    def get_variable(self, pipeline_uuid, block_uuid, variable_uuid, variable_type=None):
+        variable = Variable(
+            variable_uuid,
+            self.__pipeline_path(pipeline_uuid),
+            block_uuid,
+            variable_type=variable_type,
+        )
+        return variable.read_data()
+
     def get_variables_by_pipeline(self, pipeline_uuid):
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
         if not os.path.exists(variable_dir_path):
@@ -36,7 +36,7 @@ class VariableManager:
         variables_by_block = dict()
         for d in block_dirs:
             variables = os.listdir(os.path.join(variable_dir_path, d))
-            variables_by_block[d] = [v.split('.')[0] for v in variables]
+            variables_by_block[d] = sorted([v.split('.')[0] for v in variables])
         return variables_by_block
 
     def __pipeline_path(self, pipeline_uuid):

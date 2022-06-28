@@ -87,9 +87,9 @@ class Block:
             raise Exception(
                 f'The number of output variables does not match the block type: {self.type}',
             )
-        variable_mapping = zip(self.output_variables, outputs)
+        variable_mapping = dict(zip(self.output_variables, outputs))
         self.__store_variables(variable_mapping)
-        self.status = BlockStatus.executed
+        self.status = BlockStatus.EXECUTED
         return outputs
 
     def __execute(self):
