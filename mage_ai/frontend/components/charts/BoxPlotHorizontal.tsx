@@ -37,18 +37,18 @@ function BoxPlotHorizontal({
   const colorMap = [
     {
       color: primary,
-      fill: (themeContext.chart || light.chart).backgroundPrimary,
-      stroke: (themeContext.chart || light.chart).primary,
+      fill: (themeContext?.chart || light.chart).backgroundPrimary,
+      stroke: (themeContext?.chart || light.chart).primary,
     },
     {
       color: secondary,
-      fill: (themeContext.chart || light.chart).backgroundSecondary,
-      stroke: (themeContext.chart || light.chart).secondary,
+      fill: (themeContext?.chart || light.chart).backgroundSecondary,
+      stroke: (themeContext?.chart || light.chart).secondary,
     },
     {
       color: danger,
-      fill: (themeContext.chart || light.chart).backgroundDanger,
-      stroke: (themeContext.chart || light.chart).danger,
+      fill: (themeContext?.chart || light.chart).backgroundDanger,
+      stroke: (themeContext?.chart || light.chart).danger,
     },
   ];
 
