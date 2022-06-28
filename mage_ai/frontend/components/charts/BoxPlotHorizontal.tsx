@@ -4,33 +4,33 @@ import { ThemeContext } from 'styled-components';
 import { scaleLinear } from '@visx/scale';
 import { useContext } from 'react';
 
+import light from '@oracle/styles/themes/light';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import light from '@oracle/styles/themes/light';
 
 export type BoxPlotHorizontalProps = {
+  danger?: boolean;
   data: {
-    min: number;
     firstQuartile: number;
-    median: number;
-    thirdQuartile: number;
     max: number;
+    median: number;
+    min: number;
     outliers: number[];
+    thirdQuartile: number;
   },
+  height: number;
   primary?: boolean;
   secondary?: boolean;
-  danger?: boolean;
   width?: number;
-  height: number;
 };
 
 function BoxPlotHorizontal({
+  danger,
   data,
+  height,
   primary,
   secondary,
-  danger,
   width,
-  height,
 }: BoxPlotHorizontalProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
@@ -74,7 +74,7 @@ function BoxPlotHorizontal({
         rx={5}
         ry={5}
         strokeWidth={1}
-        top={UNIT/2}
+        top={UNIT / 2}
         valueScale={xScale}
       />
     </svg>
