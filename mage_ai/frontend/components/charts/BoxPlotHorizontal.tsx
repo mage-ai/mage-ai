@@ -5,7 +5,7 @@ import { useContext } from 'react';
 
 import { ThemeType } from '@oracle/styles/themes/constants';
 
-export type BoxPlotHorizontalProps = {
+type BoxPlotHorizontalProps = {
   data: {
     min: number;
     firstQuartile: number;
@@ -17,34 +17,39 @@ export type BoxPlotHorizontalProps = {
   primary?: boolean;
   secondary?: boolean;
   danger?: boolean;
-  width: number;
+  scale?: number;
+  height?: number;
 };
 
 function BoxPlotHorizontal({
   data,
-  width,
   primary,
   secondary,
   danger,
+  scale = 1.0,
+  height,
 }: BoxPlotHorizontalProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
 
-  const colorIdx = [primary, secondary, danger].findIndex(el => el);
   const colorMap = [
     {
+      color: primary,
       fill: themeContext.chart.backgroundPrimary,
       stroke: themeContext.chart.primary,
     },
     {
+      color: secondary,
       fill: themeContext.chart.backgroundSecondary,
       stroke: themeContext.chart.secondary,
     },
     {
+      color: danger,
       fill: themeContext.chart.backgroundDanger,
       stroke: themeContext.chart.danger,
     },
   ];
 
+  const colorIdx = colorMap.findIndex(el => el.color);
   const color = colorMap[Math.max(colorIdx, 0)];
   
   const { min, max, outliers } = data;
@@ -52,16 +57,16 @@ function BoxPlotHorizontal({
   const yMax = Math.max(...outliers) || max;
 
   const xScale = scaleLinear<number>({
-    domain: [0, yMax],
+    domain: [0, yMax / scale],
     range: [yMin, yMax],
   });
 
   return (
-    <svg>
+    <svg width="100%">
       <BoxPlot
         {...data}
         {...color}
-        boxWidth={width}
+        boxWidth={height}
         horizontal
         strokeWidth={1}
         valueScale={xScale}

@@ -37,7 +37,8 @@ export const Regular = Template.bind({});
 
 Regular.args = {
   data,
-  width: UNIT*4,
+  height: UNIT*4,
+  scale: 5,
 };
 
 export const Primary = Template.bind({});
@@ -45,7 +46,8 @@ export const Primary = Template.bind({});
 Primary.args = {
   data,
   primary: true,
-  width: UNIT*4,
+  height: UNIT*8,
+  scale: 5,
 };
 
 export const Secondary = Template.bind({});
@@ -53,7 +55,8 @@ export const Secondary = Template.bind({});
 Secondary.args = {
   data,
   secondary: true,
-  width: UNIT*4,
+  height: UNIT*8,
+  scale: 5,
 };
 
 export const Danger = Template.bind({});
@@ -61,5 +64,6 @@ export const Danger = Template.bind({});
 Danger.args = {
   data,
   danger: true,
-  width: UNIT*4,
+  height: UNIT*8,
+  scale: 5,
 };
