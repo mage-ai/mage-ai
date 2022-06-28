@@ -57,7 +57,7 @@ class Pipeline:
         self.name = config.get('name')
         self.block_configs = config.get('blocks', [])
         blocks = \
-            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'))
+            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
              for c in self.block_configs]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
         # breakpoint()
