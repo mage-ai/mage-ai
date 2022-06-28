@@ -3,7 +3,6 @@ import { Meta, Story } from '@storybook/react';
 
 import BoxPlotHorizontal, { BoxPlotHorizontalProps } from '@components/charts/BoxPlotHorizontal';
 import ThemeBlock from '../../ThemeBlock';
-import { UNIT } from '@oracle/styles/units/spacing';
 
 export default {
   component: BoxPlotHorizontal,
