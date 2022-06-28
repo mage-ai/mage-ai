@@ -1,39 +1,69 @@
 version: '3'
 services:
-  lab:
-    image: mage/lab
+  server_kernel:
+    image: mage/data
     build:
       context: .
       dockerfile: ./Dockerfile
+    command: "python mage_ai/server/server.py"
+    ports:
+      - 6789:6789
+    volumes:
+      - .:/home/src
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging
+  lab:
+    image: mage/data
+    depends_on:
+      - server_kernel
     environment:
-      - HOME_DIR=/home/jovyan
-    command: "jupyter lab --allow-root"
+      - HOME_DIR=/home/src
+    command: "jupyter lab --allow-root --ip=0.0.0.0"
     ports:
       - 8888:8888
     volumes:
-      - .:/home/jovyan
+      - .:/home/src
     mem_limit: 99999m
     oom_kill_disable: true
   server:
-    image: mage/lab
+    image: mage/data
     depends_on:
-      - lab
+      - server_kernel
     environment:
       - FLASK_ENV=development
-    command: "python3 mage_ai/server/app.py --host 0.0.0.0 --port 5789"
+    command: "python mage_ai/server/app.py --host 0.0.0.0 --port 5789"
     ports:
       - 5789:5789
     volumes:
-      - .:/home/jovyan
+      - .:/home/src
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging
   app:
-    image: mage/lab
+    image: mage/data
     depends_on:
       - server
-    command: "npm run dev"
+    command: "yarn run dev"
+    environment:
+      - NODE_PATH=/home/src/node_modules
     ports:
       - 3000:3000
     volumes:
-      - .:/home/jovyan
-    working_dir: /home/jovyan/mage_ai/frontend
+      - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
+      - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
+      - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
+      - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
+      - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
+      - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
+      - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
+      - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
+      - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
+      - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
+      - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
+      - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
+      - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
+      - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
+      - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
+      - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
+      - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
+      - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
+    working_dir: /home/src/mage_ai/frontend

@@ -28,6 +28,9 @@ Jupyter Lab is running on [http://127.0.0.1:8888/lab](http://127.0.0.1:8888/lab)
 Look at your terminal and find a corresponding URL with a token in the URL parameter;
 e.g. `http://127.0.0.1:8888/lab?token=`.
 
+The backend server running Tornado and an iPython kernel is running
+at [http://localhost:6789/api/?value=test](http://localhost:6789/api/?value=test).
+
 #### Debugging
 
 Instead of using `breakpoint()`, add the following line to your code where you
@@ -137,6 +140,13 @@ $ cd mage-ai
 Install Python packages
 ```bash
 $ pip3 install -r requirements.txt
+```
+
+#### Run backend server with iPython kernel
+This server is used in the data preparation tool. It leverages ZMQ and WebSocket.
+
+```bash
+$ python3 mage_ai/server/server.py
 ```
 
 #### Run backend server locally

@@ -1,9 +1,7 @@
-from jupyter_client import KernelManager
-import argparse
 import json
 
 
-def get_msg(client, callback=None):
+def get_messages(client, callback=None):
     def print_callback(message):
         print(message, callback)
 
@@ -54,21 +52,6 @@ def get_msg(client, callback=None):
                       type='text',
                     )))
         except Exception as e:
-            print('timeout kc.get_iopub_msg', e)
+            if str(e):
+                print('ERROR', e)
             pass
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--conn_file', type=str, default=None)
-    args = parser.parse_args()
-
-    connection_file = args.conn_file
-    print(connection_file)
-    with open(connection_file) as f:
-        connection = json.loads(f.read())
-
-    manager = KernelManager(**connection)
-    client = manager.client()
-
-    get_msg(client)
