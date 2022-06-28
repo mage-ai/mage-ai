@@ -47,8 +47,8 @@ function Test() {
   //   console.log(data.toString('utf-8'));
   // });
 
-  const socketUrlPublish = 'ws://localhost:8888/websocket/';
-  // const socketUrlSubscribe = 'ws://localhost:8888/websocket/subscribe/';
+  const socketUrlPublish = 'ws://localhost:6789/websocket/';
+  // const socketUrlSubscribe = 'ws://localhost:6789/websocket/subscribe/';
 
   const {
     sendMessage,
