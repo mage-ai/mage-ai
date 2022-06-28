@@ -90,6 +90,7 @@ class Block:
         variable_mapping = zip(self.output_variables, outputs)
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.executed
+        return outputs
 
     def __execute(self):
         # TODO: implement execution logic

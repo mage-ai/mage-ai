@@ -23,6 +23,10 @@ class Pipeline:
             PIPELINE_CONFIG_FILE,
         )
 
+    @property
+    def dir_path(self):
+        return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
     @classmethod
     def create(self, name, repo_path):
         """

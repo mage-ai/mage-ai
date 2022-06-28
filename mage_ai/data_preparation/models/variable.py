@@ -29,6 +29,8 @@ class Variable:
         self.variable_type = variable_type
 
     def write_data(self, data):
+        if self.variable_type is None and type(data) is pd.DataFrame:
+            self.variable_type = VariableType.DATAFRAME
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
