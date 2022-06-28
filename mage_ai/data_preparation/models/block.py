@@ -1,6 +1,6 @@
 from enum import Enum
 from mage_ai.data_cleaner.shared.utils import clean_name
-from mage_ai.data_preparation.variable_manager import variable_manager
+from mage_ai.data_preparation.variable_manager import VariableManager
 import os
 
 
@@ -100,7 +100,7 @@ class Block:
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
-            variable_manager.add_variable(
+            VariableManager(self.pipeline.repo_path).add_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 uuid,

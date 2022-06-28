@@ -53,6 +53,9 @@ class Pipeline:
 
     @classmethod
     def get_all_pipelines(self, repo_path):
+        pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
+        if not os.path.exists(pipelines_folder):
+            os.mkdir(pipelines_folder)
         return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
     def load_config_from_yaml(self):
@@ -92,6 +95,9 @@ class Pipeline:
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
         return block
+
+    def get_block(self, block_uuid):
+        return self.blocks_by_uuid.get(block_uuid)
 
     def remove_block(self, block):
         if block.uuid not in self.blocks_by_uuid:
