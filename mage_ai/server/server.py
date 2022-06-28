@@ -1,4 +1,5 @@
 from jupyter_client import KernelManager
+from kernel_output_parser import parse_output_message
 from subscriber import get_messages
 from websocket import WebSocketServer
 import asyncio
@@ -53,7 +54,9 @@ async def main():
 
     get_messages(
         manager.client(),
-        lambda message: WebSocketServer.send_message(message),
+        lambda content: WebSocketServer.send_message(
+            parse_output_message(content),
+        ),
     )
 
     await asyncio.Event().wait()
