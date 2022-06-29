@@ -28,6 +28,7 @@
     "@visx/responsive": "^2.10.0",
     "@visx/scale": "^2.2.2",
     "@visx/shape": "^2.10.0",
+    "@visx/stats": "^2.10.0",
     "@visx/threshold": "^2.10.0",
     "@visx/tooltip": "^2.10.0",
     "@visx/voronoi": "^2.10.0",

@@ -60,9 +60,13 @@ export type ThemeType = {
   chart: {
     backgroundPrimary: string,
     backgroundSecondary: string,
+    backgroundTertiary: string,
+    backgroundDanger: string,
     lines: string,
     primary: string,
     secondary: string,
+    tertiary: string,
+    danger: string,
   },
   content: {
     active: string,
