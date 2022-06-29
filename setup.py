@@ -35,6 +35,10 @@ setuptools.setup(
     install_requires=requirements,
     dependency_links=dependency_links,
     python_requires='>=3.6',
-    entry_points={},
+    entry_points={
+        'console_scripts': [
+            'mage=mage_ai.command_line:main',
+        ],
+    },
     extras_require={}
 )
