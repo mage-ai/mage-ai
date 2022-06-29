@@ -57,10 +57,12 @@ class Pipeline:
     # async function for parallel processing
     async def execute(self):
         tasks = {}
+        added_blocks = set()
         blocks = Queue()
         for b in self.block_configs:
             if len(b.get('upstream_blocks', [])) == 0:
                 blocks.put(self.blocks_by_uuid[b['uuid']])
+                added_blocks.add(b['uuid'])
         while not blocks.empty():
             block = blocks.get()
             skip = False
@@ -70,15 +72,15 @@ class Pipeline:
                     skip = True
                     break
             if skip:
-                blocks.put(block)
                 continue
-            for upstream_block in block.upstream_blocks:
-                await tasks[upstream_block.uuid]
+            await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
             task = asyncio.create_task(block.execute())
             tasks[block.uuid] = task
             for downstream_block in block.downstream_blocks:
-                if downstream_block.uuid not in tasks:
-                    blocks.append(downstream_block)
+                if downstream_block.uuid not in added_blocks:
+                    added_blocks.add(downstream_block.uuid)
+                    blocks.put(downstream_block)
+        await asyncio.gather(*tasks.values())
 
     def load_config_from_yaml(self):
         with open(self.config_path) as fp:
@@ -125,6 +127,7 @@ class Pipeline:
         block.pipeline = self
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
+        self.load_config_from_yaml()
         return block
 
     def get_block(self, block_uuid):
@@ -146,10 +149,13 @@ class Pipeline:
                 [b for b in upstream_block.downstream_blocks if b.uuid != block.uuid]
         del self.blocks_by_uuid[block.uuid]
         self.__save()
+        self.load_config_from_yaml()
         return block
 
     # TODO: Implement this method
     def update_block(self, block, upstream_block_uuids=None, downstream_block_uuids=None):
+        self.blocks_by_uuid[block.uuid] = block
+        self.__save()
         return block
 
     def delete(self):

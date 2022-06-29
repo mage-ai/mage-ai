@@ -87,6 +87,13 @@ class ApiPipelineHandler(BaseHandler):
         pipeline.update(data)
         self.write(dict(pipeline=pipeline.to_dict()))
 
+class ApiPipelineExecuteHandler(BaseHandler):
+    def get(self, pipeline_uuid):
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        asyncio.run(pipeline.execute())
+        self.write(dict(pipeline=pipeline.to_dict()))
+        self.finish()
+
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
@@ -116,6 +123,15 @@ class ApiPipelineBlockHandler(BaseHandler):
         block = pipeline.get_block(block_uuid)
         block.update(data)
         self.write(dict(block=block.to_dict()))
+
+
+class ApiPipelineBlockExecuteHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        block = pipeline.get_block(block_uuid)
+        asyncio.run(block.execute())
+        self.write(dict(block=block.to_dict()))
+        self.finish()
 
 
 class ApiPipelineBlockListHandler(BaseHandler):
@@ -180,8 +196,11 @@ def make_app():
             (r'/api/', ApiHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_content', ApiFileContentHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+/execute)', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
+                ApiPipelineBlockHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
                 ApiPipelineBlockHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',

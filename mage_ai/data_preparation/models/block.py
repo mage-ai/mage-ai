@@ -1,10 +1,12 @@
 from enum import Enum
+
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
 import asyncio
 import os
 import pandas as pd
+import random
 
 
 class BlockStatus(str, Enum):
@@ -95,7 +97,7 @@ class Block:
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
     async def execute(self):
-        outputs = await self.__execute()
+        outputs = await self.execute_block()
         if len(outputs) != len(self.output_variables):
             raise Exception(
                 f'The number of output variables does not match the block type: {self.type}',
@@ -103,6 +105,7 @@ class Block:
         variable_mapping = dict(zip(self.output_variables, outputs))
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
+        self.__update_pipeline_block()
         return outputs
 
     def get_analyses(self):
@@ -169,9 +172,11 @@ class Block:
             self.__update_downstream_blocks()
         return self
 
-    async def __execute(self):
+    async def execute_block(self):
         # TODO: implement execution logic
-        await asyncio.sleep(1)
+        print(f'Executing block {self.uuid}...')
+        await asyncio.sleep(random.randint(1, 5))
+        print(f'Finished executing block {self.uuid}...')
         return ()
 
     def __store_variables(self, variable_mapping):
@@ -194,6 +199,11 @@ class Block:
         """
         return
 
+    def __update_pipeline_block(self):
+        if self.pipeline is None:
+            return
+        self.pipeline.update_block(self)
+
     def __update_upstream_blocks(self, upstream_blocks):
         if self.pipeline is None:
             return
@@ -210,6 +220,14 @@ class DataLoaderBlock(Block):
     def output_variables(self):
         return ['df']
 
+    async def execute_block(self):
+        # TODO: implement execution logic
+        print(f'Executing block {self.uuid}...')
+        await asyncio.sleep(random.randint(1, 5))
+        data = {'col1': [1, 2], 'col2': [5, 6]}
+        df = pd.DataFrame(data)
+        print(f'Finished executing block {self.uuid}...')
+        return (df)
 
 class DataExporterBlock(Block):
     @property
@@ -221,6 +239,15 @@ class TransformerBlock(Block):
     @property
     def output_variables(self):
         return ['df']
+
+    async def execute_block(self):
+        # TODO: implement execution logic
+        print(f'Executing block {self.uuid}...')
+        await asyncio.sleep(random.randint(1, 5))
+        data = {'col1': [1, 2], 'col2': [5, 6]}
+        df = pd.DataFrame(data)
+        print(f'Finished executing block {self.uuid}...')
+        return (df)
 
 
 BLOCK_TYPE_TO_CLASS = {
