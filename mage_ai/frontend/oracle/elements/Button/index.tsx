@@ -22,6 +22,7 @@ export type ButtonProps = {
   disabled?: boolean;
   fullWidth?: boolean;
   iconOnly?: boolean;
+  id?: string;
   large?: boolean;
   loading?: boolean;
   noBackground?: boolean;
@@ -170,6 +171,7 @@ const Button = ({
   beforeIcon,
   children,
   disabled,
+  id,
   loading,
   onClick,
   ...props
@@ -183,6 +185,7 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
+      id={id}
       onClick={(e) => {
         e?.preventDefault();
         onClick?.(e);

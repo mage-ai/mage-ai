@@ -26,7 +26,7 @@ const samplePipeline = {
   uuid: 'pipeline_1',
   blocks: [
     {
-      name: 'Data loader 1',
+      name: 'Data loader 1', // level 0
       type: BlockTypeEnum.DATA_LOADER,
       uuid: 'loader_1',
       upstream_blocks: [],
@@ -36,7 +36,7 @@ const samplePipeline = {
       ],
     },
     {
-      name: 'Data exporter 1',
+      name: 'Data exporter 1', // level 1
       type: BlockTypeEnum.DATA_EXPORTER,
       uuid: 'exporter_1',
       upstream_blocks: [
@@ -45,7 +45,7 @@ const samplePipeline = {
       downstream_blocks: [],
     },
     {
-      name: 'Transformer 1',
+      name: 'Transformer 1', // level 1
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_1',
       upstream_blocks: [
@@ -58,7 +58,7 @@ const samplePipeline = {
       ],
     },
     {
-      name: 'Transformer 2',
+      name: 'Transformer 2', // level 2
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_2',
       upstream_blocks: [
@@ -67,7 +67,7 @@ const samplePipeline = {
       downstream_blocks: [],
     },
     {
-      name: 'Transformer 3',
+      name: 'Transformer 3', // level 2
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_3',
       upstream_blocks: [
@@ -78,7 +78,7 @@ const samplePipeline = {
       ],
     },
     {
-      name: 'Transformer 4',
+      name: 'Transformer 4', // level 2
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_4',
       upstream_blocks: [
@@ -87,7 +87,7 @@ const samplePipeline = {
       downstream_blocks: [],
     },
     {
-      name: 'Transformer 5',
+      name: 'Transformer 5', // level 3
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_5',
       upstream_blocks: [
@@ -98,7 +98,7 @@ const samplePipeline = {
       ],
     },
     {
-      name: 'Data exporter 2',
+      name: 'Data exporter 2', // level 4
       type: BlockTypeEnum.DATA_EXPORTER,
       uuid: 'exporter_2',
       upstream_blocks: [
