@@ -2,6 +2,7 @@ from jupyter_client import KernelManager
 from jupyter_client.multikernelmanager import MultiKernelManager
 from kernel_output_parser import parse_output_message
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -43,6 +44,31 @@ class ApiHandler(BaseHandler):
             method='post',
         ))
         self.write(r)
+
+
+class ApiFileListHandler(BaseHandler):
+    def get(self):
+        self.write(dict(files=File.get_all_files(repo_path)))
+
+    def post(self):
+        data = json.loads(self.request.body).get('file', {})
+        file = File.create(data.get('name'), data.get('dir_path'), repo_path)
+        self.write(dict(file=file.to_dict()))
+
+
+class ApiFileContentHandler(BaseHandler):
+    def get(self):
+        file_path = self.get_argument('path', None)
+        file = File.from_path(file_path, repo_path)
+        self.write(dict(file=file.to_dict(include_content=True)))
+
+    def post(self):
+        data = json.loads(self.request.body).get('file', {})
+        path = data.get('path')
+        content = data.get('content')
+        file = File.from_path(path, repo_path)
+        file.update_content(content)
+        self.write(dict(file=file.to_dict(include_content=True)))
 
 
 class ApiPipelineHandler(BaseHandler):
@@ -135,6 +161,8 @@ def make_app():
         [
             (r'/websocket/', WebSocketServer),
             (r'/api/', ApiHandler),
+            (r'/api/files', ApiFileListHandler),
+            (r'/api/file_content', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
