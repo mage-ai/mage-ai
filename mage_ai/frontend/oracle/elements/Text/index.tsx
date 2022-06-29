@@ -179,6 +179,10 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${(props.theme.content || light.content).active};
   `}
 
+  ${props => props.inverted && `
+    color: ${(props.theme.monotone || light.monotone).white};
+  `}
+
   ${props => props.muted && `
     color: ${(props.theme.monotone || light.monotone).grey400};
   `}
