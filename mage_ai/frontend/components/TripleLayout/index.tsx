@@ -9,7 +9,6 @@ import NextHead from 'next/head';
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import {
   AFTER_DEFAULT_WIDTH,
@@ -203,13 +202,10 @@ function TripleLayout({
             >
               <FlexContainer justifyContent="flex-end">
                 <Button
-                  autoHeight
-                  block
-                  noHoverUnderline
-                  noOutline
+                  noBackground
+                  noBorder
                   noPadding
                   onClick={() => toggleBefore()}
-                  preventDefault
                 >
                   {beforeHidden && (
                     <ChevronRight
@@ -270,13 +266,11 @@ function TripleLayout({
               py={2}
             >
               <FlexContainer>
-                <Link
-                  autoHeight
-                  block
-                  noHoverUnderline
-                  noOutline
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
                   onClick={() => toggleAfter()}
-                  preventDefault
                 >
                   {afterHidden && (
                     <ChevronLeft
@@ -290,7 +284,7 @@ function TripleLayout({
                       size={UNIT * 2}
                     />
                   )}
-                </Link>
+                </Button>
               </FlexContainer>
             </Spacing>
           </AsideHeaderStyle>
