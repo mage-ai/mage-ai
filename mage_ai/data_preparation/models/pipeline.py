@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.templates.utils import copy_templates
 import os
 import shutil
 import yaml
@@ -39,13 +40,7 @@ class Pipeline:
         if os.path.exists(pipeline_path):
             raise Exception(f'Pipeline {name} alredy exists.')
         # Copy pipeline files from template folder
-        template_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            'templates/pipeline',
-        )
-        if not os.path.exists(template_path):
-            raise IOError('Could not find templates for pipeline.')
-        shutil.copytree(template_path, pipeline_path)
+        copy_templates('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, 'metadata.yaml'), 'w') as fp:
             yaml.dump(dict(name=name, uuid=uuid), fp)
