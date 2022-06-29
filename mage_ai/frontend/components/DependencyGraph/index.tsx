@@ -75,7 +75,7 @@ function DependencyGraph({
     <ContainerStyle>
       {nodeLevels.map((nodeLevel, index) => (
         <FlexContainer alignItems="center" key={index}>
-          <Spacing mr={6}>
+          <Spacing mr={(index === nodeLevels.length - 1) ? 0 : 6}>
             {nodeLevel.map((block) => {
               const { uuid, name, type } = block;
               const nodeColor = getNodeColor(type, themeContext);

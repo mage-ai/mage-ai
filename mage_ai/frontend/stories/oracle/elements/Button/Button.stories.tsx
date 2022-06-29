@@ -43,9 +43,6 @@ All.args = {
     <Button primary>
       Primary
     </Button>,
-    <Button secondary>
-      Secondary
-    </Button>,
     <Button success>
       Success
     </Button>,
