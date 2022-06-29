@@ -90,15 +90,15 @@ export default {
     wind500: '#4E32BC',
   },
   chart: {
+    backgroundDanger: RED_LIGHT,
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
-    backgroundDanger: RED_LIGHT,
+    danger: RED,
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
     tertiary: BLUE_HIGHLIGHT,
-    danger: RED,
   },
   content: {
     active: BLACK,
