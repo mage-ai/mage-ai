@@ -56,18 +56,17 @@ class Pipeline:
 
     # async function for parallel processing
     async def execute(self):
-        tasks = {}
-        added_blocks = set()
+        tasks = dict()
         blocks = Queue()
         for b in self.block_configs:
             if len(b.get('upstream_blocks', [])) == 0:
                 blocks.put(self.blocks_by_uuid[b['uuid']])
-                added_blocks.add(b['uuid'])
+                tasks[b['uuid']] = None
         while not blocks.empty():
             block = blocks.get()
             skip = False
             for upstream_block in block.upstream_blocks:
-                if upstream_block.uuid not in tasks:
+                if tasks.get(upstream_block.uuid) is None:
                     blocks.put(block)
                     skip = True
                     break
@@ -77,8 +76,8 @@ class Pipeline:
             task = asyncio.create_task(block.execute())
             tasks[block.uuid] = task
             for downstream_block in block.downstream_blocks:
-                if downstream_block.uuid not in added_blocks:
-                    added_blocks.add(downstream_block.uuid)
+                if downstream_block.uuid not in tasks:
+                    tasks[downstream_block.uuid] = None
                     blocks.put(downstream_block)
         await asyncio.gather(*tasks.values())
 

@@ -1,5 +1,4 @@
 from enum import Enum
-
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -172,8 +171,8 @@ class Block:
             self.__update_downstream_blocks()
         return self
 
+    # TODO: implement execution logic
     async def execute_block(self):
-        # TODO: implement execution logic
         print(f'Executing block {self.uuid}...')
         await asyncio.sleep(random.randint(1, 5))
         print(f'Finished executing block {self.uuid}...')
@@ -220,8 +219,9 @@ class DataLoaderBlock(Block):
     def output_variables(self):
         return ['df']
 
+    # TODO: implement execution logic
     async def execute_block(self):
-        # TODO: implement execution logic
+        # TODO: remove test code
         print(f'Executing block {self.uuid}...')
         await asyncio.sleep(random.randint(1, 5))
         data = {'col1': [1, 2], 'col2': [5, 6]}
@@ -240,8 +240,9 @@ class TransformerBlock(Block):
     def output_variables(self):
         return ['df']
 
+    # TODO: implement execution logic
     async def execute_block(self):
-        # TODO: implement execution logic
+        # TODO: remove test code
         print(f'Executing block {self.uuid}...')
         await asyncio.sleep(random.randint(1, 5))
         data = {'col1': [1, 2], 'col2': [5, 6]}
