@@ -104,7 +104,7 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
       showTooltip({
         tooltipData,
         tooltipLeft: x,
-        tooltipTop: y,
+        tooltipTop: y + UNIT,
       });
     },
   };
@@ -117,7 +117,7 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
           value: findClosestNum(data.outliers, invScale(x)),
         },
         tooltipLeft: x,
-        tooltipTop: y,
+        tooltipTop: y + UNIT,
       });
     },
     onMouseLeave: () => hideTooltip(),
