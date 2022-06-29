@@ -1,14 +1,14 @@
 from jupyter_client import KernelManager
 from jupyter_client.multikernelmanager import MultiKernelManager
-from kernel_output_parser import parse_output_message
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import init_repo
 from mage_ai.data_preparation.variable_manager import VariableManager
-from subscriber import get_messages
-from websocket import WebSocketServer
+from mage_ai.server.kernel_output_parser import parse_output_message
+from mage_ai.server.subscriber import get_messages
+from mage_ai.server.websocket import WebSocketServer
 import asyncio
 import json
 import os
