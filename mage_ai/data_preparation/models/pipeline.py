@@ -1,6 +1,8 @@
+from queue import Queue
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.templates.utils import copy_templates
+import asyncio
 import os
 import yaml
 
@@ -52,9 +54,31 @@ class Pipeline:
             os.mkdir(pipelines_folder)
         return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
-    def execute(self):
-        # TODO: implement execution logic
-        pass
+    # async function for parallel processing
+    async def execute(self):
+        tasks = {}
+        blocks = Queue()
+        for b in self.block_configs:
+            if len(b.get('upstream_blocks', [])) == 0:
+                blocks.put(self.blocks_by_uuid[b['uuid']])
+        while not blocks.empty():
+            block = blocks.get()
+            skip = False
+            for upstream_block in block.upstream_blocks:
+                if upstream_block.uuid not in tasks:
+                    blocks.put(block)
+                    skip = True
+                    break
+            if skip:
+                blocks.put(block)
+                continue
+            for upstream_block in block.upstream_blocks:
+                await tasks[upstream_block.uuid]
+            task = asyncio.create_task(block.execute())
+            tasks[block.uuid] = task
+            for downstream_block in block.downstream_blocks:
+                if downstream_block.uuid not in tasks:
+                    blocks.append(downstream_block)
 
     def load_config_from_yaml(self):
         with open(self.config_path) as fp:

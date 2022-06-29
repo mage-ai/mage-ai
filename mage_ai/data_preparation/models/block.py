@@ -2,6 +2,7 @@ from enum import Enum
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
+import asyncio
 import os
 import pandas as pd
 
@@ -93,8 +94,8 @@ class Block:
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
-    def execute(self):
-        outputs = self.__execute()
+    async def execute(self):
+        outputs = await self.__execute()
         if len(outputs) != len(self.output_variables):
             raise Exception(
                 f'The number of output variables does not match the block type: {self.type}',
@@ -168,8 +169,9 @@ class Block:
             self.__update_downstream_blocks()
         return self
 
-    def __execute(self):
+    async def __execute(self):
         # TODO: implement execution logic
+        await asyncio.sleep(1)
         return ()
 
     def __store_variables(self, variable_mapping):
