@@ -13,6 +13,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ButtonProps = {
   afterIcon?: any;
+  backgroundColor?: string;
   basic?: boolean;
   beforeIcon?: any;
   borderRadiusLeft?: boolean;
@@ -101,6 +102,10 @@ const ButtonStyle = styled.button<ButtonProps>`
     border-right: none;
   `}
 
+  ${props => props.backgroundColor && `
+    background-color: ${props.backgroundColor};
+  `}
+
   ${props => props.danger && `
     background-color: ${(props.theme.background || light.background).danger};
   `}
@@ -140,9 +145,6 @@ const ButtonStyle = styled.button<ButtonProps>`
     border-color: ${light.interactive.linkPrimary};
     &:hover {
       border-color: ${light.monotone.black};
-    }
-    &:active {
-      background: ${light.interactive.focusBackground};
     }
   `}
 
