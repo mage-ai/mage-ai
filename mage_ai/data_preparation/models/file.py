@@ -24,11 +24,13 @@ class File:
 
     @classmethod
     def get_all_files(self, repo_path):
-        return self.__get_all_files_in_dir(repo_path)
-        
-    @classmethod
-    def __get_all_files_in_dir(self, dir_path):
-        all_files = dict()
+        file_paths = []
+        for r, d, f in os.walk(repo_path):
+            if '.variables' in r:
+                continue
+            for file in f:
+                file_paths.append(os.path.join(r, file))
+        return file_paths
 
     def content(self):
         with open(self.file_path) as fp:
