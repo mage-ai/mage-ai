@@ -41,7 +41,3 @@ class VariableManager:
 
     def __pipeline_path(self, pipeline_uuid):
         return os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
-
-
-# TODO: Set repo_path when launching server
-variable_manager = VariableManager(os.getcwd())
