@@ -45,8 +45,6 @@ function TripleLayout({
   after,
   before,
   children,
-  onAfterWidthChange,
-  onBeforeWidthChange,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);

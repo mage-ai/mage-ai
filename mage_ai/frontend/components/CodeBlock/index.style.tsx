@@ -13,6 +13,6 @@ export const ContainerStyle = styled.div<ContainerProps>`
   padding-top: ${UNIT}px;
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).codeTextarea};
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 `;

@@ -8,6 +8,10 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -15,11 +19,6 @@ import usePrevious from '@utils/usePrevious';
 import {
   ContainerStyle,
 } from './index.style';
-import {
-  DataTypeEnum,
-  ExecutionStateEnum,
-  KernelOutputType,
-} from '@interfaces/KernelOutputType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeBlockProps = {
@@ -60,7 +59,7 @@ function CodeBlockProps({
       code: value,
     }));
     setMessages([]);
-    setRunCount(1 + runCount);
+    setRunCount(1 + Number(runCount));
     setRunEndTime(0)
     setRunStartTime(Number(new Date()));
   }, [
@@ -109,8 +108,10 @@ function CodeBlockProps({
           return;
         }
 
-        let dataArray = dataInit;
-        if (!Array.isArray(dataInit)) {
+        let dataArray: string[] = [];
+        if (Array.isArray(dataInit)) {
+          dataArray = dataInit;
+        } else {
           dataArray = [dataInit];
         }
 
@@ -145,7 +146,7 @@ function CodeBlockProps({
             Run count: {runCount}
           </Text>
           <Text>
-            Execution time: {(runEndTime - runStartTime) / 1000}s
+            Execution time: {(Number(runEndTime) - Number(runStartTime)) / 1000}s
           </Text>
         </Spacing>
       )}
