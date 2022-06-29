@@ -1,3 +1,4 @@
+import React, { useContext } from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { BoxPlot } from '@visx/stats';
 import { ThemeContext } from 'styled-components';
@@ -10,7 +11,6 @@ import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withToolti
 import { findClosestNum } from '@utils/array';
 import { localPoint } from '@visx/event';
 import { scaleLinear } from '@visx/scale';
-import { useContext } from 'react';
 
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
