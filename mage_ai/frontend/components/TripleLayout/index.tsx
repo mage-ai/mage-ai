@@ -39,14 +39,12 @@ type TripleLayoutProps = {
   after?: any;
   before?: any;
   children: any;
-  mainContentRef?: any;
 };
 
 function TripleLayout({
   after,
   before,
   children,
-  mainContentRef,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
@@ -231,7 +229,6 @@ function TripleLayout({
       )}
 
       <MainContentStyle
-        ref={mainContentRef}
         style={{
           left: beforeWidthFinal,
           width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,

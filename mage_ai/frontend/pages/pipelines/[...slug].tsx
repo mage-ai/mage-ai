@@ -1,9 +1,10 @@
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
+import CodeBlock from '@components/CodeBlock';
 import Head from '@oracle/elements/Head';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout'
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 function PipelineDetail() {
   return (
@@ -38,6 +39,14 @@ function PipelineDetail() {
           </div>
         }
       >
+        <Spacing mt={PADDING_UNITS}>
+          <CodeBlock />
+        </Spacing>
+
+        <Spacing mt={PADDING_UNITS}>
+          <CodeBlock />
+        </Spacing>
+
         <Spacing p={PADDING_UNITS}>
           <AddNewBlocks />
         </Spacing>

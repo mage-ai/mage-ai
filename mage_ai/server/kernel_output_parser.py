@@ -21,9 +21,8 @@ def parse_output_message(message: dict) -> dict:
         data_content = image
         data_type = 'image/png'
     elif traceback:
-        for line in traceback:
-            data_content = line
-            data_type = 'text'
+        data_content = [line for line in traceback]
+        data_type = 'text'
     elif text:
         data_content = text
         data_type = 'text/plain'

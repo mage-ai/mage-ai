@@ -1,5 +1,7 @@
 import { loader } from '@monaco-editor/react';
 
+import { SINGLE_LINE_HEIGHT } from './index.style';
+
 const monacoThemes = {
   'all-hallows-eve': 'All Hallows Eve',
   'birds-of-paradise': 'Birds of Paradise',
@@ -56,8 +58,26 @@ export const defineTheme = theme => new Promise((res) => {
     loader.init(),
     import(`monaco-themes/themes/${monacoThemes[theme]}.json`),
   ]).then(([monaco, themeData]) => {
+    `
+      {
+        "editor.foreground": "#F8F8F8",
+        "editor.background": "#141414",
+        "editor.selectionBackground": "#DDF0FF33",
+        "editor.lineHighlightBackground": "#FFFFFF08",
+        "editorCursor.foreground": "#A7A7A7",
+        "editorWhitespace.foreground": "#FFFFFF40"
+      }
+    `
+    themeData.colors['editor.background'] = '#000000';
+    themeData.colors['editor.foreground'] = '#FFFFFF';
     monaco.editor.defineTheme(theme, themeData);
     // @ts-ignore
     res();
   });
 });
+
+export function calculateHeightFromContent(content: string) {
+  // Need a buffer of 2 lines or else when adding new lines too fast,
+  // the contents of the editor will jump up a bit
+  return (content.split('\n').length + 2) * SINGLE_LINE_HEIGHT;
+}

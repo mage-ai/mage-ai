@@ -9,7 +9,7 @@ export enum DataTypeEnum {
 }
 
 export default interface KernelOutputType {
-  data?: string;
+  data?: string | string[];
   execution_state: ExecutionStateEnum;
   metadata?: {
     [key: string]: string;

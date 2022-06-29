@@ -3,21 +3,31 @@ import {
   useEffect,
   useState,
 } from 'react';
+import Ansi from 'ansi-to-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import Button from '@oracle/elements/Button';
 import CodeEditor from '@components/CodeEditor';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
-  DataTypeEnum,
-  ExecutionStateEnum,
-  KernelOutputType,
-} from '@interfaces/KernelOutputType';
+  ContainerStyle,
+} from './index.style';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-function Test() {
+type CodeBlockProps = {
+  height?: number;
+};
+
+function CodeBlockProps({
+  height,
+}: CodeBlockProps) {
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
@@ -49,7 +59,7 @@ function Test() {
       code: value,
     }));
     setMessages([]);
-    setRunCount(1 + runCount);
+    setRunCount(1 + Number(runCount));
     setRunEndTime(0)
     setRunStartTime(Number(new Date()));
   }, [
@@ -79,35 +89,39 @@ function Test() {
   ]);
 
   return (
-    <Spacing p={5}>
-      <CodeEditor
-        // autoSave
-        defaultValue={`import mage_ai
-from mage_ai.sample_datasets import load_dataset
-
-
-df = load_dataset('titanic_survival.csv')
-print(len(df.index))
-df.head(10)
-`}
-        height="calc(50vh)"
-        onSave={saveCodeText}
-        width="calc(100vw - 90px)"
-      />
+    <Spacing px={PADDING_UNITS}>
+      <ContainerStyle>
+        <CodeEditor
+          autoHeight
+          // autoSave
+          height={height}
+          onSave={saveCodeText}
+          width="100%"
+        />
+      </ContainerStyle>
 
       {messages.map(({
-        data,
+        data: dataInit,
         type: dataType,
       }: KernelOutputType, idx: number) => {
-        if (!data) {
+        if (!dataInit || dataInit?.length === 0) {
           return;
         }
 
-        return (
+        let dataArray: string[] = [];
+        if (Array.isArray(dataInit)) {
+          dataArray = dataInit;
+        } else {
+          dataArray = [dataInit];
+        }
+
+        return dataArray.map((data: string) => (
           <div key={data}>
             {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
               <Text monospace>
-                {data}
+                <Ansi>
+                  {data}
+                </Ansi>
               </Text>
             )}
             {dataType === DataTypeEnum.IMAGE_PNG && (
@@ -117,7 +131,7 @@ df.head(10)
               />
             )}
           </div>
-        );
+        ));
       })}
 
       {isInProgress && (
@@ -132,7 +146,7 @@ df.head(10)
             Run count: {runCount}
           </Text>
           <Text>
-            Execution time: {(runEndTime - runStartTime) / 1000}s
+            Execution time: {(Number(runEndTime) - Number(runStartTime)) / 1000}s
           </Text>
         </Spacing>
       )}
@@ -140,4 +154,4 @@ df.head(10)
   );
 }
 
-export default Test;
+export default CodeBlockProps;

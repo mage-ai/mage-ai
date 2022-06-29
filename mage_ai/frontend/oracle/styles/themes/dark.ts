@@ -54,6 +54,7 @@ export default {
   },
   background: {
     codeArea: '#161617',
+    codeTextarea: '#000000',
     danger: RED_XLIGHT,
     dark: GRAY,
     header: SILVER,
