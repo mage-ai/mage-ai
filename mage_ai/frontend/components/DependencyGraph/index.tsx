@@ -86,7 +86,8 @@ function DependencyGraph({
                     backgroundColor={nodeColor}
                     id={uuid}
                     onClick={() => setSelectedBlock(block)}
-                    selected={selectedBlock?.uuid === uuid}
+                    selectedAlt={selectedBlock?.uuid === uuid}
+                    smallBorderRadius
                   >
                     <Text
                       inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
