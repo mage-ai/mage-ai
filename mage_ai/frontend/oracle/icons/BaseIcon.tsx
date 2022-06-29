@@ -1,5 +1,6 @@
 import styled, { css } from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import { DEFAULT_SIZE } from './shared/constants';
 
@@ -11,6 +12,7 @@ export type BaseIconProps = {
   earth?: boolean;
   fill?: string;
   highlight?: boolean;
+  neutral?: boolean;
   muted?: boolean;
   opacity?: number;
   primary?: boolean;
@@ -36,6 +38,14 @@ export const SHARED_STYLES = css<any>`
 
   ${props => props.stroke && `
     stroke: ${props.stroke};
+  `}
+
+  ${props => props.neutral && !props.useStroke && !props.stroke && !props.fill && !props.disabled && `
+    fill: ${(props.theme.icons || dark.icons).neutral} !important;
+  `}
+
+  ${props => props.neutral && props.useStroke && !props.stroke && !props.fill && !props.disabled && `
+    stroke: ${(props.theme.icons || dark.icons).neutral} !important;
   `}
 
   ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && `

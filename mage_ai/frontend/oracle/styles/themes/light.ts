@@ -37,6 +37,7 @@ export default {
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
   },
   background: {
+    codeArea: '#161617',
     danger: RED_XLIGHT,
     dark: GRAY,
     header: SILVER,
@@ -45,6 +46,10 @@ export default {
     navigation: '#EDEDED',
     page: WHITE,
     row: LIGHT,
+    scrollbarThumb: 'rgba(0, 0, 0, 0.5)',
+    scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
+    scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
+    sidePanel: '#232429',
     success: LIME_XLIGHT,
   },
   brand: {
@@ -87,7 +92,7 @@ export default {
   chart: {
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
-    backgroundTertiary: BLUE_HIGHLIGHT_LIGHT, 
+    backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
@@ -106,6 +111,9 @@ export default {
   feature: {
     active: PURPLE_HIGHLIGHT,
     disabled: PURPLE_DISABLED,
+  },
+  icons: {
+    neutral: '#787878',
   },
   interactive: {
     activeBorder: BLACK,

@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import NextHead from 'next/head';
 
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -14,6 +15,7 @@ import {
   AFTER_MIN_WIDTH,
   AfterInnerStyle,
   AfterStyle,
+  AsideHeaderStyle,
   BEFORE_DEFAULT_WIDTH,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
@@ -26,7 +28,11 @@ import {
   MainContentStyle,
   TabStyle,
 } from './index.style';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import {
+  ChevronLeft,
+  ChevronRight,
+} from '@oracle/icons';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
@@ -47,10 +53,25 @@ function TripleLayout({
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
+  const [afterHidden, setAfterHidden] = useState(false);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
-  const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
+  const [beforeHidden, setBeforeHidden] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
+
+  const toggleAfter = useCallback(() => {
+    setAfterHidden(!afterHidden);
+  }, [
+    afterHidden,
+    setAfterHidden,
+  ]);
+  const toggleBefore = useCallback(() => {
+    setBeforeHidden(!beforeHidden);
+  }, [
+    beforeHidden,
+    setBeforeHidden,
+  ]);
 
   useEffect(() => {
     const resizeBefore = (e) => {
@@ -137,22 +158,76 @@ function TripleLayout({
     width,
   ]);
 
+  const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
+  const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
+
   return (
     <>
+      {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
+        <NextHead>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                body {
+                  cursor: col-resize;
+                }
+              `,
+            }}
+          />
+        </NextHead>
+      )}
+
       {before && (
         <BeforeStyle
           style={{
-            width: beforeWidth,
+            width: beforeWidthFinal,
           }}
         >
           <DraggableStyle
             active={beforeMousedownActive}
+            disabled={beforeHidden}
             ref={refBeforeInnerDraggable}
             right={0}
           />
 
+          <AsideHeaderStyle
+            style={{
+              width: beforeWidthFinal,
+            }}
+            visible={beforeWidthFinal}
+          >
+            <Spacing
+              px={beforeHidden ? 1 : 2}
+              py={2}
+            >
+              <FlexContainer justifyContent="flex-end">
+                <Link
+                  autoHeight
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={() => toggleBefore()}
+                  preventDefault
+                >
+                  {beforeHidden && (
+                    <ChevronRight
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                  {!beforeHidden && (
+                    <ChevronLeft
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                </Link>
+              </FlexContainer>
+            </Spacing>
+          </AsideHeaderStyle>
+
           <BeforeInnerStyle ref={refBeforeInner}>
-            {before}
+            {!beforeHidden && before}
           </BeforeInnerStyle>
         </BeforeStyle>
       )}
@@ -160,8 +235,8 @@ function TripleLayout({
       <MainContentStyle
         ref={mainContentRef}
         style={{
-          left: beforeWidth,
-          width: `calc(100% - ${beforeWidth + afterWidth}px)`,
+          left: beforeWidthFinal,
+          width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
         }}
       >
         <MainContentInnerStyle>
@@ -172,17 +247,54 @@ function TripleLayout({
       {after && (
         <AfterStyle
           style={{
-            width: afterWidth,
+            width: afterWidthFinal,
           }}
         >
           <DraggableStyle
             active={afterMousedownActive}
+            disabled={afterHidden}
             left={0}
             ref={refAfterInnerDraggable}
           />
 
+          <AsideHeaderStyle
+            style={{
+              width: afterWidthFinal,
+            }}
+            visible={afterHidden}
+          >
+            <Spacing
+              px={afterHidden ? 1 : 2}
+              py={2}
+            >
+              <FlexContainer>
+                <Link
+                  autoHeight
+                  block
+                  noHoverUnderline
+                  noOutline
+                  onClick={() => toggleAfter()}
+                  preventDefault
+                >
+                  {afterHidden && (
+                    <ChevronLeft
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                  {!afterHidden && (
+                    <ChevronRight
+                      neutral
+                      size={UNIT * 2}
+                    />
+                  )}
+                </Link>
+              </FlexContainer>
+            </Spacing>
+          </AsideHeaderStyle>
+
           <AfterInnerStyle ref={refAfterInner}>
-            {after}
+            {!afterHidden && after}
           </AfterInnerStyle>
         </AfterStyle>
       )}

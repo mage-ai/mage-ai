@@ -46,8 +46,15 @@ export default {
     navigation: '#EDEDED',
     page: WHITE,
     row: LIGHT,
+    scrollbarThumb: 'rgba(0, 0, 0, 0.5)',
+    scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
+    scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
     sidePanel: '#232429',
     success: LIME_XLIGHT,
+  },
+  borders: {
+    medium: '#1C1C1C',
+    dark: '#000000',
   },
   brand: {
     earth100: '#C6EEDB',
@@ -108,6 +115,9 @@ export default {
   feature: {
     active: PURPLE_HIGHLIGHT,
     disabled: PURPLE_DISABLED,
+  },
+  icons: {
+    neutral: '#787878',
   },
   interactive: {
     activeBorder: BLACK,
