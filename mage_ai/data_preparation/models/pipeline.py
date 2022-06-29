@@ -58,6 +58,10 @@ class Pipeline:
             os.mkdir(pipelines_folder)
         return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
+    def execute(self):
+        # TODO: implement execution logic
+        pass
+
     def load_config_from_yaml(self):
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
@@ -82,12 +86,21 @@ class Pipeline:
             blocks=[b.to_dict() for b in self.blocks_by_uuid.values()],
         )
 
-    def execute(self):
-        # TODO: implement execution logic
-        pass
+    def update(self, data):
+        if 'name' in data and data['name'] != self.name:
+            """
+            Rename pipeline folder
+            """
+            new_name = data['name']
+            new_uuid = clean_name(new_name)
+            old_pipeline_path = self.dir_path
+            self.name = new_name
+            self.uuid = new_uuid
+            new_pipeline_path = self.dir_path
+            os.rename(old_pipeline_path, new_pipeline_path)
 
     def add_block(self, block, upstream_block_uuids=[]):
-        upstream_blocks = [self.blocks_by_uuid[uuid] for uuid in upstream_block_uuids]
+        upstream_blocks = self.get_blocks(upstream_block_uuids)
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
         block.upstream_blocks = upstream_blocks
@@ -98,6 +111,9 @@ class Pipeline:
 
     def get_block(self, block_uuid):
         return self.blocks_by_uuid.get(block_uuid)
+
+    def get_blocks(self, block_uuids):
+        return [self.blocks_by_uuid[uuid] for uuid in block_uuids]
 
     def remove_block(self, block):
         if block.uuid not in self.blocks_by_uuid:
@@ -112,6 +128,10 @@ class Pipeline:
                 [b for b in upstream_block.downstream_blocks if b.uuid != block.uuid]
         del self.blocks_by_uuid[block.uuid]
         self.__save()
+        return block
+
+    # TODO: Implement this method
+    def update_block(self, block, upstream_block_uuids=None, downstream_block_uuids=None):
         return block
 
     def delete(self):

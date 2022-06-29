@@ -48,52 +48,53 @@ class ApiHandler(BaseHandler):
 class ApiPipelineHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, repo_path)
-        r = json.dumps(dict(pipeline=pipeline.to_dict()))
-        self.write(r)
+        self.write(dict(pipeline=pipeline.to_dict()))
         self.finish()
 
-    def put(self, pipelin_uuid):
+    def put(self, pipeline_uuid):
         """
         Allow updating pipeline name and uuid
         """
-        data = json.loads(self.request.body)
-        pass
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        data = json.loads(self.request.body).get('pipeline', {})
+        pipeline.update(data)
+        self.write(dict(pipeline=pipeline.to_dict()))
 
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
         pipelines = Pipeline.get_all_pipelines(repo_path)
-        r = json.dumps(dict(pipelines=pipelines))
-        self.write(r)
+        self.write(dict(pipelines=pipelines))
         self.finish()
 
     def post(self):
         data = json.loads(self.request.body)
         name = data.get('pipeline', {}).get('name')
         pipeline = Pipeline.create(name, repo_path)
-        self.write(json.dumps(dict(pipeline=pipeline.to_dict())))
+        self.write(dict(pipeline=pipeline.to_dict()))
 
 
 class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, repo_path)
-        r = json.dumps(dict(block=pipeline.get_block(block_uuid).to_dict()))
-        self.write(r)
+        self.write(dict(block=pipeline.get_block(block_uuid).to_dict()))
         self.finish()
 
     def put(self, pipeline_uuid, block_uuid):
         """
         Allow updating block name, uuid, upstream_block, and downstream_blocks
         """
-        data = json.loads(self.request.body)
-        pass
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        data = json.loads(self.request.body).get('block', {})
+        block = pipeline.get_block(block_uuid)
+        block.update(data)
+        self.write(dict(block=block.to_dict()))
 
 
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, repo_path)
-        r = json.dumps(dict(blocks=pipeline.to_dict()['blocks']))
-        self.write(r)
+        self.write(dict(blocks=pipeline.to_dict()['blocks']))
         self.finish()
 
     def post(self, pipeline_uuid):
@@ -104,13 +105,13 @@ class ApiPipelineBlockListHandler(BaseHandler):
         block_data = json.loads(self.request.body).get('block', {})
         block = Block.create(block_data.get('name'), block_data.get('type'), repo_path)
         pipeline.add_block(block, block_data.get('upstream_blocks', []))
-        self.write(json.dumps(dict(block=block.to_dict())))
+        self.write(dict(block=block.to_dict()))
 
 
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         variables = VariableManager(repo_path).get_variables_by_pipeline(pipeline_uuid)
-        self.write(json.dumps(variables))
+        self.write(variables)
         self.finish()
 
 

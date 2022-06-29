@@ -41,6 +41,14 @@ class Block:
     def output_variables(self):
         return []
 
+    @property
+    def upstream_block_uuids(self):
+        return [b.uuid for b in self.upstream_blocks]
+
+    @property
+    def downstream_block_uuids(self):
+        return [b.uuid for b in self.downstream_blocks]
+
     @classmethod
     def create(self, name, block_type, repo_path):
         """
@@ -71,16 +79,6 @@ class Block:
                     block_uuids[t.value].append(f.split('.')[0])
         return block_uuids
 
-    def to_dict(self):
-        return dict(
-            name=self.name,
-            uuid=self.uuid,
-            type=self.type.value if type(self.type) is not str else self.type,
-            status=self.status.value if type(self.status) is not str else self.status,
-            upstream_blocks=[b.uuid for b in self.upstream_blocks],
-            downstream_blocks=[b.uuid for b in self.downstream_blocks]
-        )
-
     def execute(self):
         outputs = self.__execute()
         if len(outputs) != len(self.output_variables):
@@ -91,6 +89,27 @@ class Block:
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
         return outputs
+
+    def to_dict(self):
+        return dict(
+            name=self.name,
+            uuid=self.uuid,
+            type=self.type.value if type(self.type) is not str else self.type,
+            status=self.status.value if type(self.status) is not str else self.status,
+            upstream_blocks=self.upstream_block_uuids,
+            downstream_blocks=self.downstream_block_uuids,
+        )
+
+    def update(self, data):
+        if 'name' in data and data['name'] != self.name:
+            self.__update_name()
+        if 'upstream_blocks' in data and \
+                set(data['upstream_blocks']) != set(self.upstream_block_uuids):
+            self.__update_upstream_blocks()
+        if 'downstream_blocks' in data and \
+                set(data['downstream_blocks']) != set(self.downstream_block_uuids):
+            self.__update_downstream_blocks()
+        return self
 
     def __execute(self):
         # TODO: implement execution logic
@@ -106,6 +125,25 @@ class Block:
                 uuid,
                 data,
             )
+
+    # TODO: implement this method
+    def __update_name(self):
+        """
+        1. Rename block file
+        2. Update the folder of variable
+        3. Update upstream and downstream relationships
+        """
+        return
+
+    def __update_upstream_blocks(self, upstream_blocks):
+        if self.pipeline is None:
+            return
+        self.pipeline.update_block(self, upstream_blocks=upstream_blocks)
+
+    def __update_downstream_blocks(self, downstream_blocks):
+        if self.pipeline is None:
+            return
+        self.pipeline.update_block(self, downstream_blocks=downstream_blocks)
 
 
 class DataLoaderBlock(Block):
