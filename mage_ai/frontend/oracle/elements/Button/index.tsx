@@ -4,12 +4,12 @@ import styled from 'styled-components';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
-import { UNIT } from '@oracle/styles/units/spacing';
+import Spinner from '@oracle/components/Spinner';
+import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import light from '@oracle/styles/themes/light';
-import Spinner from '@oracle/components/Spinner';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ButtonProps = {
   afterIcon?: any;
@@ -24,6 +24,7 @@ export type ButtonProps = {
   iconOnly?: boolean;
   large?: boolean;
   loading?: boolean;
+  noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
   noPadding?: boolean;
@@ -41,7 +42,6 @@ export type ButtonProps = {
 };
 
 const ButtonStyle = styled.button<ButtonProps>`
-  background-color: ${light.background.row};
   border: none;
   border-color: ${light.interactive.defaultBorder};
   color: ${light.content.active};
@@ -51,6 +51,14 @@ const ButtonStyle = styled.button<ButtonProps>`
   padding: 7px 16px;
   position: relative;
   z-index: 0;
+
+  ${props => !props.noBackground && `
+    background-color: ${light.background.row};
+  `}
+
+  ${props => props.noBackground && `
+    background-color: transparent;
+  `}
 
   ${props => props.padding && `
     padding: ${props.padding};
@@ -74,6 +82,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
     border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.noBorder && `
+    border: none;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `

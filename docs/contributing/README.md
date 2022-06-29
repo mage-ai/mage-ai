@@ -31,6 +31,20 @@ e.g. `http://127.0.0.1:8888/lab?token=`.
 The backend server running Tornado and an iPython kernel is running
 at [http://localhost:6789/api/?value=test](http://localhost:6789/api/?value=test).
 
+#### Adding new Python packages
+Add the package to `./requirements.txt` and run:
+
+```bash
+$ ./scripts/server/setup.sh
+```
+
+#### Adding new JS libraries
+Add the package to `./mage_ai/frontend/package.json` and run:
+
+```bash
+$ ./scripts/frontend/setup.sh
+```
+
 #### Debugging
 
 Instead of using `breakpoint()`, add the following line to your code where you

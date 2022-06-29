@@ -391,3 +391,35 @@ export const Input = build([
   fill: 'none',
   viewBox: '0 0 24 24',
 });
+
+export const ChevronDown = build([{
+  d: 'M8.0015 11.7109L14.0022 5.71017L12.588 4.29597L7.99485 8.88914L3.40754 4.34482L2 5.76567L8.0015 11.7109Z',
+  clipRule: 'evenodd',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 16 16',
+});
+
+export const ChevronLeft = build([{
+  d: 'M4.28906 7.9976L10.2898 13.9983L11.704 12.5841L7.11086 7.99095L11.6552 3.40363L10.2343 1.99609L4.28906 7.9976Z',
+  clipRule: 'evenodd',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 16 16',
+});
+
+export const ChevronRight = build([{
+  d: 'M11.7109 7.9976L5.71017 13.9983L4.29597 12.5841L8.88914 7.99095L4.34482 3.40363L5.76567 1.99609L11.7109 7.9976Z',
+  clipRule: 'evenodd',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 16 16',
+});
+
+export const ChevronUp = build([{
+  d: 'M8.00101 4.41406L14.0017 10.4148L12.5875 11.829L7.99436 7.23586L3.40705 11.7802L1.99951 10.3593L8.00101 4.41406Z',
+  clipRule: 'evenodd',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 16 16',
+});

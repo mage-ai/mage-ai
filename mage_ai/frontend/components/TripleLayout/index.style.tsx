@@ -3,13 +3,19 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import {
+  SCROLLBAR_WIDTH,
+  ScrollbarStyledCss,
+} from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 50;
-export const AFTER_MIN_WIDTH = UNIT * 13;
-export const BEFORE_MIN_WIDTH = UNIT * 5;
+export const AFTER_MIN_WIDTH = PADDING_UNITS * 3 * UNIT;
+export const BEFORE_MIN_WIDTH = AFTER_MIN_WIDTH;
 export const BEFORE_DEFAULT_WIDTH = UNIT * 35;
-export const DRAGGABLE_WIDTH = UNIT * 2;
+export const DRAGGABLE_WIDTH = UNIT * 0.5;
 export const MAIN_MIN_WIDTH = UNIT * 13;
+
+const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
 
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
@@ -57,8 +63,9 @@ export const TabStyle = styled.div<{
 `;
 
 const ASIDE_STYLE = css`
-  height: 100%;
+  height: calc(100% - ${ASIDE_HEADER_HEIGHT}px);
   position: fixed;
+  top: ${ASIDE_HEADER_HEIGHT}px;
   z-index: 1;
 
   ${props => `
@@ -67,6 +74,8 @@ const ASIDE_STYLE = css`
 `;
 
 const ASIDE_INNER_STYLE = css`
+  ${ScrollbarStyledCss}
+
   height: 100%;
   overflow: auto;
   position: relative;
@@ -75,21 +84,44 @@ const ASIDE_INNER_STYLE = css`
 
 const ASIDE_DRAGGABLE_STYLE = css<{
   active?: boolean;
+  disabled?: boolean;
 }>`
-  cursor: ew-resize;
-  height: 100%;
+  height: calc(100% + ${ASIDE_HEADER_HEIGHT}px);
   position: absolute;
+  top: -${ASIDE_HEADER_HEIGHT}px;
   width: ${DRAGGABLE_WIDTH}px;
-  z-index: 3;
+  z-index: 6;
 
   &:hover {
-    ${props => `
+    ${props => !props.disabled && `
       border-color: ${(props.theme.text || dark.text).fileBrowser} !important;
     `}
   }
 
-  ${props => props.active && `
+  ${props => !props.disabled && `
+    cursor: col-resize;
+  `}
+
+  ${props => props.active && !props.disabled && `
     border-color: ${(props.theme.text || dark.text).fileBrowser} !important;
+  `}
+`;
+
+export const AsideHeaderStyle = styled.div<{
+  visible: boolean;
+}>`
+  border-bottom: 1px solid transparent;
+  height: ${ASIDE_HEADER_HEIGHT}px;
+  position: fixed;
+  top: 0;
+  z-index: 4;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).sidePanel};
+  `}
+
+  ${props => !props.visible && `
+    border-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 `;
 
@@ -115,6 +147,7 @@ export const AfterInnerStyle = styled.div`
 
 export const DraggableStyle = styled.div<{
   active?: boolean;
+  disabled?: boolean;
   left?: number;
   right?: number;
 }>`
