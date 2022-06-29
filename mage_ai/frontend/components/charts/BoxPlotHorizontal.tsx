@@ -1,9 +1,18 @@
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { BoxPlot } from '@visx/stats';
 import { ThemeContext } from 'styled-components';
+import {
+  TooltipWithBounds,
+  defaultStyles as tooltipStyles,
+  withTooltip,
+} from '@visx/tooltip';
+import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
+import { findClosestNum } from '@utils/array';
+import { localPoint } from '@visx/event';
 import { scaleLinear } from '@visx/scale';
 import { useContext } from 'react';
 
+import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -24,14 +33,31 @@ export type BoxPlotHorizontalProps = {
   width?: number;
 };
 
-function BoxPlotHorizontal({
-  danger,
-  data,
-  height,
-  primary,
-  secondary,
-  width,
-}: BoxPlotHorizontalProps) {
+interface TooltipData {
+  firstQuartile?: number;
+  max?: number;
+  median?: number;
+  min?: number;
+  name?: string;
+  thirdQuartile?: number;
+  value?: number;
+};
+
+const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
+  ({
+    danger,
+    data,
+    height,
+    hideTooltip,
+    primary,
+    secondary,
+    showTooltip,
+    tooltipData,
+    tooltipLeft,
+    tooltipOpen,
+    tooltipTop,
+    width,
+  }: BoxPlotHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
   const themeContext: ThemeType = useContext(ThemeContext);
 
   const colorMap = [
@@ -55,7 +81,7 @@ function BoxPlotHorizontal({
   const colorIdx = colorMap.findIndex(el => el.color);
   const color = colorMap[Math.max(colorIdx, 0)];
   
-  const { min, max, outliers } = data;
+  const { min, max, median, outliers } = data;
   const yMin = Math.min(Math.min(...outliers) || min, min); 
   const yMax = Math.max(Math.max(...outliers) || max, max);
 
@@ -64,22 +90,87 @@ function BoxPlotHorizontal({
     range: [UNIT, width],
   });
 
+  const invScale = scaleLinear<number>({
+    domain: [UNIT, width],
+    range: [yMin, yMax],
+  });
+
+  const handleTooltip = {
+    onMouseMove: (e) => {
+      const { x, y } = localPoint(e) || { x: 0, y: 0 };
+      const { outliers, ...tooltipData } = data;
+      showTooltip({
+        tooltipData,
+        tooltipLeft: x,
+        tooltipTop: y,
+      })
+    },
+    onMouseLeave: () => hideTooltip(),
+  };
+
+  const handleOutlierTooltip = {
+    onMouseEnter: (e) => {
+      const { x, y } = localPoint(e) || { x: 0, y: 0 };
+      showTooltip({
+        tooltipData: {
+          value: findClosestNum(data.outliers, invScale(x))
+        },
+        tooltipLeft: x,
+        tooltipTop: y,
+      })
+    },
+    onMouseLeave: () => hideTooltip(),
+  };
+
+  const SUMMARY_READABLE_MAPPING = {
+    firstQuartile: 'First quartile',
+    max: 'Max',
+    median: 'Median',
+    min: 'Min',
+    thirdQuartile: 'Third quartile',
+    value: 'Value',
+  };
+
   return (
-    <svg height={height + UNIT} width={width + UNIT}>
-      <BoxPlot
-        {...data}
-        {...color}
-        boxWidth={height}
-        horizontal
-        rx={5}
-        ry={5}
-        strokeWidth={1}
-        top={UNIT / 2}
-        valueScale={xScale}
-      />
-    </svg>
+    <div>
+      <svg height={height + UNIT} width={width + UNIT}>
+        <BoxPlot
+          {...data}
+          {...color}
+          boxProps={handleTooltip}
+          maxProps={handleTooltip}
+          medianProps={handleTooltip}
+          minProps={handleTooltip}
+          boxWidth={height}
+          horizontal
+          outlierProps={handleOutlierTooltip}
+          rx={5}
+          ry={5}
+          strokeWidth={1}
+          top={UNIT / 2}
+          valueScale={xScale}
+        />
+      </svg>
+
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          style={{
+            ...tooltipStyles,
+            backgroundColor: (themeContext?.background || light.background).navigation,
+          }}
+          top={tooltipTop}
+        >
+          <Text small>
+            {Object.entries(tooltipData).map(([k, v]) => (
+              <div>{SUMMARY_READABLE_MAPPING[k]}: {v}</div>
+            ))}
+          </Text>
+        </TooltipWithBounds>
+      )}
+    </div>
   );
-}
+});
 
 function BoxPlotHorizontalContainer({
   width: parentWidth,
