@@ -7,7 +7,7 @@ import Ansi from 'ansi-to-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import Button from '@oracle/elements/Button';
-import CodeEditor from '@components/CodeEditor';
+import CodeEditor, { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -26,7 +26,8 @@ type CodeBlockProps = {
   defaultValue?: string;
   height?: number;
   mainContainerRef?: any;
-};
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
+}
 
 function CodeBlockProps({
   defaultValue,
@@ -94,19 +95,18 @@ function CodeBlockProps({
   ]);
 
   const onDidChangeCursorPosition = useCallback(({
-    editorRect,
+    editorRect: {
+      height,
+      top,
+    },
     position: {
       lineNumber,
     },
-  }) => {
+  }: OnDidChangeCursorPositionParameterType) => {
     if (mainContainerRef?.current) {
       const {
         height: mainContainerHeight,
       } = mainContainerRef.current.getBoundingClientRect();
-      const {
-        height,
-        top,
-      } = editorRect;
 
       const heightAtLineNumber = lineNumber * SINGLE_LINE_HEIGHT;
 

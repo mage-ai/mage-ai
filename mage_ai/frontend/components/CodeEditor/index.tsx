@@ -21,6 +21,16 @@ import {
   testShortcut,
 } from './keyboard_shortcuts/shortcuts';
 
+export type OnDidChangeCursorPositionParameterType = {
+  editorRect: {
+    height: number;
+    top: number;
+  };
+  position: {
+    lineNumber: number;
+  };
+};
+
 type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
@@ -30,18 +40,7 @@ type CodeEditorProps = {
   height?: number | string;
   language?: string;
   onChange?: (value: string) => void;
-  onDidChangeCursorPosition?: ({
-    editorRect: {
-      height: number;
-      width: number;
-      x: number;
-      y: number;
-    };
-    position: {
-      column: number;
-      lineNumber: number;
-    };
-  });
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
   onSave?: (value: string) => void;
   theme?: any;
   width?: number | string;
@@ -99,11 +98,22 @@ function CodeEditor({
 
     if (onDidChangeCursorPosition) {
       editor.onDidChangeCursorPosition(({
-        position,
+        position: {
+          lineNumber,
+        },
       }) => {
+        const {
+          height,
+          top,
+        } = editor._domElement.getBoundingClientRect();
         onDidChangeCursorPosition({
-          editorRect: editor._domElement.getBoundingClientRect(),
-          position,
+          editorRect: {
+            height: Number(height),
+            top: Number(top),
+          },
+          position: {
+            lineNumber: Number(lineNumber),
+          },
         });
       });
     }
