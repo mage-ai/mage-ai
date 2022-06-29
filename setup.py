@@ -10,7 +10,7 @@ def readme():
 requirements, dependency_links = [], []
 with open('requirements.txt') as f:
     for line in f.read().splitlines():
-        if line.startswith('-e git+'):
+        if line.startswith('git+'):
             dependency_links.append(line.replace('-e ', ''))
         else:
             requirements.append(line)
