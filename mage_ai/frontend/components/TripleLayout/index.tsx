@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 import NextHead from 'next/head';
 
+import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -194,18 +195,19 @@ function TripleLayout({
             style={{
               width: beforeWidthFinal,
             }}
-            visible={beforeWidthFinal}
+            visible={beforeHidden}
           >
             <Spacing
               px={beforeHidden ? 1 : 2}
               py={2}
             >
               <FlexContainer justifyContent="flex-end">
-                <Link
+                <Button
                   autoHeight
                   block
                   noHoverUnderline
                   noOutline
+                  noPadding
                   onClick={() => toggleBefore()}
                   preventDefault
                 >
@@ -221,7 +223,7 @@ function TripleLayout({
                       size={UNIT * 2}
                     />
                   )}
-                </Link>
+                </Button>
               </FlexContainer>
             </Spacing>
           </AsideHeaderStyle>

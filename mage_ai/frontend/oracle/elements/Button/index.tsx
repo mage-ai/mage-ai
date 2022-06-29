@@ -4,12 +4,12 @@ import styled from 'styled-components';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
-import { UNIT } from '@oracle/styles/units/spacing';
+import Spinner from '@oracle/components/Spinner';
+import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import light from '@oracle/styles/themes/light';
-import Spinner from '@oracle/components/Spinner';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ButtonProps = {
   afterIcon?: any;
