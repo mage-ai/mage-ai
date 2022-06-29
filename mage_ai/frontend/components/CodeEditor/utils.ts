@@ -1,6 +1,9 @@
 import { loader } from '@monaco-editor/react';
 
-import { SINGLE_LINE_HEIGHT } from './index.style';
+import {
+  NUMBER_OF_BUFFER_LINES,
+  SINGLE_LINE_HEIGHT,
+} from './index.style';
 
 const monacoThemes = {
   'all-hallows-eve': 'All Hallows Eve',
@@ -79,5 +82,5 @@ export const defineTheme = theme => new Promise((res) => {
 export function calculateHeightFromContent(content: string) {
   // Need a buffer of 2 lines or else when adding new lines too fast,
   // the contents of the editor will jump up a bit
-  return (content.split('\n').length + 2) * SINGLE_LINE_HEIGHT;
+  return (content.split('\n').length + NUMBER_OF_BUFFER_LINES) * SINGLE_LINE_HEIGHT;
 }

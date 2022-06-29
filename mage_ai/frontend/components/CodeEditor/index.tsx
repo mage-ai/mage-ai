@@ -30,12 +30,22 @@ type CodeEditorProps = {
   height?: number | string;
   language?: string;
   onChange?: (value: string) => void;
+  onDidChangeCursorPosition?: ({
+    editorRect: {
+      height: number;
+      width: number;
+      x: number;
+      y: number;
+    };
+    position: {
+      column: number;
+      lineNumber: number;
+    };
+  });
   onSave?: (value: string) => void;
   theme?: any;
   width?: number | string;
 };
-
-
 
 function CodeEditor({
   autoHeight,
@@ -45,15 +55,14 @@ function CodeEditor({
   height,
   language,
   onChange,
+  onDidChangeCursorPosition,
   onSave,
   theme: themeProp,
   width = '100%',
 }: CodeEditorProps) {
-  console.log('CodeEditor render');
-
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
-  const editorElementParentRef = useRef(null);
+  const refBottomOfEditor = useRef(null);
 
   const [content, setContent] = useState('');
   const [heightOfContent, setHeightOfContent] = useState(height);
@@ -87,11 +96,24 @@ function CodeEditor({
       editor._domElement.style.height =
         `${calculateHeightFromContent(defaultValue || '')}px`;
     }
+
+    if (onDidChangeCursorPosition) {
+      editor.onDidChangeCursorPosition(({
+        position,
+      }) => {
+        onDidChangeCursorPosition({
+          editorRect: editor._domElement.getBoundingClientRect(),
+          position,
+        });
+      });
+    }
   }, [
     autoHeight,
     defaultValue,
     height,
+    onDidChangeCursorPosition,
     onSave,
+    refBottomOfEditor.current,
   ]);
 
   useEffect(() => {
@@ -120,33 +142,40 @@ function CodeEditor({
   ]);
 
   return (
-    <Editor
-      beforeMount={handleEditorWillMount}
-      defaultValue={defaultValue}
-      height={height}
-      language={language || DEFAULT_LANGUAGE}
-      onChange={(val: string) => {
-        onChange?.(val);
+    <>
+      <Editor
+        beforeMount={handleEditorWillMount}
+        defaultValue={defaultValue}
+        height={height}
+        language={language || DEFAULT_LANGUAGE}
+        onChange={(val: string) => {
+          onChange?.(val);
 
-        if (autoHeight) {
-          editorRef.current._domElement.style.height = `${calculateHeightFromContent(val)}px`;
-        }
-      }}
-      onMount={handleEditorDidMount}
-      // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
-      options={{
-        fontSize,
-        hideCursorInOverviewRuler: true,
-        minimap: {
-          enabled: false,
-        },
-        overviewRulerBorder: false,
-        scrollBeyondLastLine: false,
-      }}
-      theme={theme}
-      // value={value}
-      width={width}
-    />
+          if (autoHeight) {
+            editorRef.current._domElement.style.height = `${calculateHeightFromContent(val)}px`;
+          }
+        }}
+        onMount={handleEditorDidMount}
+        // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
+        options={{
+          fontSize,
+          hideCursorInOverviewRuler: true,
+          minimap: {
+            enabled: false,
+          },
+          overviewRulerBorder: false,
+          scrollBeyondLastLine: false,
+          // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorScrollbarOptions.html
+          scrollbar: {
+            alwaysConsumeMouseWheel: false,
+          },
+        }}
+        theme={theme}
+        // value={value}
+        width={width}
+      />
+      <div ref={refBottomOfEditor} />
+    </>
   );
 }
 

@@ -19,14 +19,19 @@ import usePrevious from '@utils/usePrevious';
 import {
   ContainerStyle,
 } from './index.style';
+import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeBlockProps = {
+  defaultValue?: string;
   height?: number;
+  mainContainerRef?: any;
 };
 
 function CodeBlockProps({
+  defaultValue,
   height,
+  mainContainerRef,
 }: CodeBlockProps) {
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
@@ -88,13 +93,47 @@ function CodeBlockProps({
     setRunEndTime,
   ]);
 
+  const onDidChangeCursorPosition = useCallback(({
+    editorRect,
+    position: {
+      lineNumber,
+    },
+  }) => {
+    if (mainContainerRef?.current) {
+      const {
+        height: mainContainerHeight,
+      } = mainContainerRef.current.getBoundingClientRect();
+      const {
+        height,
+        top,
+      } = editorRect;
+
+      const heightAtLineNumber = lineNumber * SINGLE_LINE_HEIGHT;
+
+      if (top + heightAtLineNumber > mainContainerHeight) {
+        const newY = mainContainerRef.current.scrollTop
+          + ((heightAtLineNumber - mainContainerHeight) + top);
+
+        mainContainerRef.current.scrollTo(0, newY);
+      } else if (heightAtLineNumber + top < SINGLE_LINE_HEIGHT) {
+        const newY = mainContainerRef.current.scrollTop
+          + ((heightAtLineNumber + top) - SINGLE_LINE_HEIGHT);
+        mainContainerRef.current.scrollTo(0, newY);
+      }
+    }
+  }, [
+    mainContainerRef,
+  ]);
+
   return (
     <Spacing px={PADDING_UNITS}>
       <ContainerStyle>
         <CodeEditor
           autoHeight
           // autoSave
+          defaultValue={defaultValue}
           height={height}
+          onDidChangeCursorPosition={onDidChangeCursorPosition}
           onSave={saveCodeText}
           width="100%"
         />
