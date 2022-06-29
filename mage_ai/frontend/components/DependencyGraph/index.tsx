@@ -3,12 +3,13 @@ import styled from 'styled-components';
 import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { INVERTED_TEXT_COLOR_BLOCK_TYPES, MIN_NODE_WIDTH } from './constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFinalLevelIndex, getNodeColor } from './utils';
@@ -27,11 +28,6 @@ const ContainerStyle = styled.div`
   width: 100%;
   overflow: auto;
 `;
-
-const INVERTED_TEXT_COLOR_BLOCK_TYPES = [
-  BlockTypeEnum.DATA_LOADER,
-  BlockTypeEnum.TRANSFORMER,
-];
 
 function DependencyGraph({
   pipeline,
@@ -85,6 +81,7 @@ function DependencyGraph({
                   <Button
                     backgroundColor={nodeColor}
                     id={uuid}
+                    minWidth={MIN_NODE_WIDTH}
                     onClick={() => setSelectedBlock(block)}
                     selectedAlt={selectedBlock?.uuid === uuid}
                     smallBorderRadius

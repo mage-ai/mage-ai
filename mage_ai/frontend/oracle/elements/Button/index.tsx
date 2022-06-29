@@ -31,6 +31,7 @@ export type ButtonProps = {
   id?: string;
   large?: boolean;
   loading?: boolean;
+  minWidth?: number;
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
@@ -179,6 +180,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.width && `
     width: ${props.width}px;
+  `}
+
+  ${props => props.minWidth && `
+    min-width: ${props.minWidth}px;
   `}
 
   ${props => props.fullWidth && `
