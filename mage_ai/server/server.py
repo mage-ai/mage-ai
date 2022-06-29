@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.data_preparation.repo_manager import init_repo
 from mage_ai.data_preparation.variable_manager import VariableManager
 from subscriber import get_messages
 from websocket import WebSocketServer
@@ -17,7 +18,7 @@ import tornado.web
 # TODO: Set repo_path when launching server
 repo_path = os.path.join(os.getcwd(), 'default_repo')
 if not os.path.exists(repo_path):
-    os.mkdir(repo_path)
+    init_repo(repo_path)
 manager = KernelManager()
 
 
