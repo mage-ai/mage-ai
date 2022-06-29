@@ -56,6 +56,7 @@ class BaseFile(BaseLoader):
             format = os.path.splitext(filepath)[-1][1:]
         self.reader = FORMAT_TO_FUNCTION[format]
         self.filepath = filepath
+        self.format = format
 
 
 class BaseSQL(BaseLoader):
