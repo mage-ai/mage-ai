@@ -1,6 +1,7 @@
 from mage_ai.data_loader.base import BaseSQL
 from pandas import DataFrame, read_sql
 from psycopg2 import connect
+from typing import Mapping, Sequence, Union
 
 
 class Postgres(BaseSQL):
@@ -15,9 +16,9 @@ class Postgres(BaseSQL):
         Args:
             dbname (str): The name of the database to connect to.
             user (str): The user with which to connect to the database with.
-            password (str): The login password for the above user. Defaults to None (as for users with no login password).
-            host (str): Path to host address for database. Defaults to None (as for in-memory datasets).
-            port (str): Port on which the database is running. Defaults to None (as for in-memory datasets).
+            password (str): The login password for the user.
+            host (str): Path to host address for database.
+            port (str): Port on which the database is running.
         """
         super().__init__(**kwargs)
 
@@ -27,16 +28,16 @@ class Postgres(BaseSQL):
         """
         self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, vars=None):
+    def query(self, query_string: str, query_vars: Union[Sequence, Mapping] = None) -> None:
         """
-        Queries the database to perform some query action.
+        Sends query to the connected database.
 
         Args:
             query_string (str): SQL query string to apply on the connected database.
-            *args, **kwargs: Additional query parameters.
+            query_vars (Union[Sequence, Mapping], optional): Variable values to fill in when using format strings in query. Defaults to None.
         """
         with self.conn.cursor() as cur:
-            return cur.execute(query_string, vars)
+            return cur.execute(query_string, query_vars)
 
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
@@ -48,6 +49,6 @@ class Postgres(BaseSQL):
             **kwargs: Additional query parameters.
 
         Returns:
-            DataFrame: The dataframe corresponding to the subtable returned by the given query.
+            DataFrame: The data frame corresponding to the data returned by the given query.
         """
         return read_sql(query_string, self.conn, **kwargs)
