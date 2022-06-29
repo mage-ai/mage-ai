@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import * as ReactDOM from 'react-dom';
 import Editor from '@monaco-editor/react';
 
 import {
@@ -13,6 +14,7 @@ import {
   DEFAULT_THEME,
 } from './constants';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
+import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
 import {
   saveCode,
@@ -20,7 +22,9 @@ import {
 } from './keyboard_shortcuts/shortcuts';
 
 type CodeEditorProps = {
+  autoHeight?: boolean;
   autoSave?: boolean;
+  content?: string;
   defaultValue?: string;
   fontSize?: number;
   height?: number | string;
@@ -31,11 +35,14 @@ type CodeEditorProps = {
   width?: number | string;
 };
 
+
+
 function CodeEditor({
+  autoHeight,
   autoSave,
   defaultValue,
   fontSize = DEFAULT_FONT_SIZE,
-  height = '100vh',
+  height,
   language,
   onChange,
   onSave,
@@ -46,6 +53,10 @@ function CodeEditor({
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
+  const editorElementParentRef = useRef(null);
+
+  const [content, setContent] = useState('');
+  const [heightOfContent, setHeightOfContent] = useState(height);
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
   const handleEditorWillMount = useCallback((monaco) => {
@@ -71,7 +82,15 @@ function CodeEditor({
     editor.getModel().updateOptions({
       tabSize: 4,
     });
+
+    if (autoHeight && !height) {
+      editor._domElement.style.height =
+        `${calculateHeightFromContent(defaultValue || '')}px`;
+    }
   }, [
+    autoHeight,
+    defaultValue,
+    height,
     onSave,
   ]);
 
@@ -106,14 +125,22 @@ function CodeEditor({
       defaultValue={defaultValue}
       height={height}
       language={language || DEFAULT_LANGUAGE}
-      onChange={onChange}
+      onChange={(val: string) => {
+        onChange?.(val);
+
+        if (autoHeight) {
+          editorRef.current._domElement.style.height = `${calculateHeightFromContent(val)}px`;
+        }
+      }}
       onMount={handleEditorDidMount}
       // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
       options={{
         fontSize,
+        hideCursorInOverviewRuler: true,
         minimap: {
           enabled: false,
         },
+        overviewRulerBorder: false,
         scrollBeyondLastLine: false,
       }}
       theme={theme}
