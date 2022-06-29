@@ -11,7 +11,8 @@ class Postgres(BaseSQL):
 
     def __init__(self, **kwargs) -> None:
         """
-        Initializes the data loader. Below are some sample arguments, for the full list see libpq parameter keywords.
+        Initializes the data loader. Below are some sample arguments, for the full
+        list see libpq parameter keywords.
 
         Args:
             dbname (str): The name of the database to connect to.
@@ -34,7 +35,8 @@ class Postgres(BaseSQL):
 
         Args:
             query_string (str): SQL query string to apply on the connected database.
-            query_vars (Union[Sequence, Mapping], optional): Variable values to fill in when using format strings in query. Defaults to None.
+            query_vars (Union[Sequence, Mapping], optional): Variable values to fill
+            in when using format strings in query. Defaults to None.
         """
         with self.conn.cursor() as cur:
             return cur.execute(query_string, query_vars)

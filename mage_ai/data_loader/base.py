@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from pandas import DataFrame
 from enum import Enum
+from pandas import DataFrame
 from typing import Any, Union
 import pandas as pd
 import os

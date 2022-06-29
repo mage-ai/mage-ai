@@ -12,6 +12,8 @@ def load_data_from_postgres():
         'dbname': 'name of your database',
         'user': 'login username',
         'password': 'login password',
+        'host': 'path to host address',
+        'port': 'database port on host address',
     }
 
     with Postgres(**config) as loader:
