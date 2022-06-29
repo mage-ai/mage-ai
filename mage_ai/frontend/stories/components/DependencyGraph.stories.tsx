@@ -111,6 +111,6 @@ const samplePipeline = {
 
 Regular.args = {
   pipeline: samplePipeline,
-  selectedBlock: 'block_1',
+  selectedBlock: { uuid: 'exporter_1' },
   setSelectedBlock: (uuid) => console.log('Selected block:', uuid),
 };

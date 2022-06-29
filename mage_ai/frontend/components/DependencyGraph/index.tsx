@@ -1,5 +1,7 @@
 import Xarrow from 'react-xarrows';
 import styled from 'styled-components';
+import { ThemeContext } from 'styled-components';
+import { useContext } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -7,8 +9,9 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getFinalLevelIndex } from './utils';
+import { getFinalLevelIndex, getNodeColor } from './utils';
 import { indexBy } from '@utils/array';
 
 export type DependencyGraphProps = {
@@ -25,11 +28,17 @@ const ContainerStyle = styled.div`
   overflow: auto;
 `;
 
+const INVERTED_TEXT_COLOR_BLOCK_TYPES = [
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 function DependencyGraph({
   pipeline,
   selectedBlock,
   setSelectedBlock,
 }: DependencyGraphProps) {
+  const themeContext: ThemeType = useContext(ThemeContext);
   const blocks = pipeline?.blocks || [];
   const blockUUIDMapping = indexBy(blocks, ({ uuid }) => uuid);
 
@@ -44,7 +53,7 @@ function DependencyGraph({
       uuid: startBlockUUID,
     } = block;
     const arrowsToDownstreamBlocks = downstreamBlocks.map(endBlockUUID => ({
-      color: 'blue',
+      color: getNodeColor(type, themeContext),
       end: endBlockUUID,
       start: startBlockUUID,
     }));
@@ -69,14 +78,21 @@ function DependencyGraph({
           <Spacing mr={6}>
             {nodeLevel.map((block) => {
               const { uuid, name, type } = block;
+              const nodeColor = getNodeColor(type, themeContext);
 
               return (
                 <Spacing key={uuid} py={1}>
                   <Button
+                    backgroundColor={nodeColor}
                     id={uuid}
                     onClick={() => setSelectedBlock(block)}
+                    selected={selectedBlock?.uuid === uuid}
                   >
-                    <Text monospace small>
+                    <Text
+                      inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+                      monospace
+                      small
+                    >
                       {name}
                     </Text>
                   </Button>
