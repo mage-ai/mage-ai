@@ -11,6 +11,12 @@ export function find(arr, func) {
   return arr?.find(func);
 }
 
+export function findClosestNum(arr, num) {
+  return arr.reduce((prev, curr) => (
+    Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev
+  ));
+}
+
 export function groupBy(arr, func) {
   return arr?.reduce((acc, obj) => {
     const key = func(obj);
