@@ -1,7 +1,8 @@
 from mage_ai.data_loader.file import FileLoader
+from pandas import DataFrame
 
 
-def load_data_from_file():
+def load_data_from_file() -> DataFrame:
     """
     Template code for loading data from local filesytem
     """
