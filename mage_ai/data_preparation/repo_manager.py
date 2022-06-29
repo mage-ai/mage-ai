@@ -1,5 +1,5 @@
+from mage_ai.data_preparation.templates.utils import copy_templates
 import os
-import shutil
 
 
 def init_repo(repo_path: str) -> None:
@@ -9,10 +9,4 @@ def init_repo(repo_path: str) -> None:
     if os.path.exists(repo_path):
         return
 
-    template_path = os.path.join(
-        os.path.dirname(__file__),
-        'templates/repo',
-    )
-    if not os.path.exists(template_path):
-        raise IOError('Could not find templates for repo.')
-    shutil.copytree(template_path, repo_path)
+    copy_templates('repo', repo_path)
