@@ -7,6 +7,7 @@ import React, {
 import NextHead from 'next/head';
 
 import Button from '@oracle/elements/Button';
+import ClientOnly from '@hocs/ClientOnly';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -34,38 +35,52 @@ import {
 } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
+  get,
+  set,
+} from '@storage/localStorage';
 
 type TripleLayoutProps = {
   after?: any;
   before?: any;
   children: any;
+  mainContainerRef: any;
 };
 
 function TripleLayout({
   after,
   before,
   children,
+  mainContainerRef,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
-  const [afterHidden, setAfterHidden] = useState(false);
+  const [afterHidden, setAfterHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
-  const [beforeHidden, setBeforeHidden] = useState(false);
+  const [beforeHidden, setBeforeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
 
   const toggleAfter = useCallback(() => {
-    setAfterHidden(!afterHidden);
+    const val = !afterHidden;
+    setAfterHidden(val);
+    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
   }, [
     afterHidden,
     setAfterHidden,
   ]);
   const toggleBefore = useCallback(() => {
-    setBeforeHidden(!beforeHidden);
+    const val = !beforeHidden;
+    setBeforeHidden(val);
+    set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN, val);
   }, [
     beforeHidden,
     setBeforeHidden,
@@ -160,7 +175,7 @@ function TripleLayout({
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
 
   return (
-    <>
+    <ClientOnly>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
         <NextHead>
           <style
@@ -234,7 +249,7 @@ function TripleLayout({
           width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
         }}
       >
-        <MainContentInnerStyle>
+        <MainContentInnerStyle ref={mainContainerRef}>
           {children}
         </MainContentInnerStyle>
       </MainContentStyle>
@@ -291,7 +306,7 @@ function TripleLayout({
           </AfterInnerStyle>
         </AfterStyle>
       )}
-    </>
+    </ClientOnly>
   );
 }
 

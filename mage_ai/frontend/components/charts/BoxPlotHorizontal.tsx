@@ -80,9 +80,9 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
 
   const colorIdx = colorMap.findIndex(el => el.color);
   const color = colorMap[Math.max(colorIdx, 0)];
-  
+
   const { min, max, outliers } = data;
-  const yMin = Math.min(Math.min(...outliers) || min, min); 
+  const yMin = Math.min(Math.min(...outliers) || min, min);
   const yMax = Math.max(Math.max(...outliers) || max, max);
 
   const xScale = scaleLinear<number>({

@@ -7,7 +7,7 @@ import Ansi from 'ansi-to-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import Button from '@oracle/elements/Button';
-import CodeEditor from '@components/CodeEditor';
+import CodeEditor, { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -19,14 +19,20 @@ import usePrevious from '@utils/usePrevious';
 import {
   ContainerStyle,
 } from './index.style';
+import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeBlockProps = {
+  defaultValue?: string;
   height?: number;
-};
+  mainContainerRef?: any;
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
+}
 
 function CodeBlockProps({
+  defaultValue,
   height,
+  mainContainerRef,
 }: CodeBlockProps) {
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
@@ -88,13 +94,46 @@ function CodeBlockProps({
     setRunEndTime,
   ]);
 
+  const onDidChangeCursorPosition = useCallback(({
+    editorRect: {
+      height,
+      top,
+    },
+    position: {
+      lineNumber,
+    },
+  }: OnDidChangeCursorPositionParameterType) => {
+    if (mainContainerRef?.current) {
+      const {
+        height: mainContainerHeight,
+      } = mainContainerRef.current.getBoundingClientRect();
+
+      const heightAtLineNumber = lineNumber * SINGLE_LINE_HEIGHT;
+
+      if (top + heightAtLineNumber > mainContainerHeight) {
+        const newY = mainContainerRef.current.scrollTop
+          + ((heightAtLineNumber - mainContainerHeight) + top);
+
+        mainContainerRef.current.scrollTo(0, newY);
+      } else if (heightAtLineNumber + top < SINGLE_LINE_HEIGHT) {
+        const newY = mainContainerRef.current.scrollTop
+          + ((heightAtLineNumber + top) - SINGLE_LINE_HEIGHT);
+        mainContainerRef.current.scrollTo(0, newY);
+      }
+    }
+  }, [
+    mainContainerRef,
+  ]);
+
   return (
     <Spacing px={PADDING_UNITS}>
       <ContainerStyle>
         <CodeEditor
           autoHeight
           // autoSave
+          defaultValue={defaultValue}
           height={height}
+          onDidChangeCursorPosition={onDidChangeCursorPosition}
           onSave={saveCodeText}
           width="100%"
         />

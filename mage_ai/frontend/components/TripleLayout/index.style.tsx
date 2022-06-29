@@ -178,6 +178,8 @@ export const MainContentStyle = styled.div<{
 `;
 
 export const MainContentInnerStyle = styled.div`
+  ${ScrollbarStyledCss}
+
   height: 100%;
   overflow: auto;
 `;
