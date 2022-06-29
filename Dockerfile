@@ -13,6 +13,7 @@ RUN apt install nodejs
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN ${PIP} install -r requirements.txt
+RUN ${PIP} install jupyterlab
 
 COPY ./mage_ai /home/src/mage_ai
 
@@ -22,7 +23,5 @@ RUN yarn global add next
 RUN cd /home/src/mage_ai/frontend && yarn install
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
-
-RUN ${PIP} install jupyterlab
 
 WORKDIR /home/src

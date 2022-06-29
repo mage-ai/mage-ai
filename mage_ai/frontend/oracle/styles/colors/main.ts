@@ -1,5 +1,6 @@
 export const BLACK = '#060606';
 export const BLUE = '#2A60FE';
+export const BLUE_DARK = '#4877FF';
 export const BLUE_HIGHLIGHT = '#86E2FF';
 export const BLUE_HIGHLIGHT_LIGHT = '#CFF3FF';
 export const BLUE_LIGHT = '#AABFFF';
@@ -18,6 +19,7 @@ export const PINK = '#FF4FF8';
 export const PINK_LIGHT = '#FFB9FC';
 export const PURPLE = '#6B50D7';
 export const PURPLE_ALT = 'rgba(247, 244, 254, 0.06)';
+export const PURPLE_DARK = '#7D55EC';
 export const PURPLE_DISABLED = 'rgba(201, 206, 218, 0.12)';
 export const PURPLE_HIGHLIGHT = 'rgba(250, 248, 254, 0.14)';
 export const PURPLE_LIGHT = '#C4B9EF';

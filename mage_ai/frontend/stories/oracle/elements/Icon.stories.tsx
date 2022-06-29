@@ -4,6 +4,7 @@ import ThemeBlock from 'stories/ThemeBlock';
 
 import {
   Action,
+  Add,
   AlertCircle,
   Alphabet,
   ArrowDown,
@@ -48,6 +49,7 @@ import {
 
 const ICONS = [
   Action,
+  Add,
   AlertCircle,
   Alphabet,
   ArrowDown,

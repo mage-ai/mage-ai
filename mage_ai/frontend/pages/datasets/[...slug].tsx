@@ -6,6 +6,7 @@ import Export from '@components/datasets/Export';
 import Layout from '@oracle/components/Layout';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
+import light from '@oracle/styles/themes/light';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { deserializeFeatureSet } from '@utils/models/featureSet';
 import { queryFromUrl } from '@utils/url';
@@ -69,5 +70,11 @@ function DatasetDetail() {
     </Layout>
   );
 }
+
+DatasetDetail.getInitialProps = async () => ({
+  themeProps: {
+    currentTheme: light,
+  },
+});
 
 export default DatasetDetail;

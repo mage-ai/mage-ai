@@ -1,6 +1,7 @@
 import {
   BLACK,
   BLUE,
+  BLUE_DARK,
   BLUE_HIGHLIGHT,
   BLUE_HIGHLIGHT_LIGHT,
   DARK_GRAY_LINES,
@@ -11,6 +12,7 @@ import {
   LIME_TEXT,
   NAVY,
   PURPLE,
+  PURPLE_DARK,
   PURPLE_DISABLED,
   PURPLE_HIGHLIGHT,
   PURPLE_LIGHT,
@@ -20,11 +22,24 @@ import {
   SILVER,
   WHITE,
 } from '../colors/main';
+import {
+  DARK_CONTENT_ACTIVE,
+  DARK_CONTENT_DEFAULT,
+  DARK_CONTENT_DISABLED,
+  DARK_CONTENT_INVERTED,
+  DARK_CONTENT_MUTED,
+  LIGHT_CONTENT_ACTIVE,
+  LIGHT_CONTENT_DEFAULT,
+  LIGHT_CONTENT_DISABLED,
+  LIGHT_CONTENT_INVERTED,
+  LIGHT_CONTENT_MUTED,
+} from '../colors/content';
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default {
   accent: {
     alert: '#F6540B',
+    blue: BLUE_DARK,
     cyan: '#65E3FF',
     cyanTransparent: 'rgba(101, 227, 255, 0.12)',
     info: '#00ABFF',
@@ -33,6 +48,7 @@ export default {
     negativeTransparent: 'rgba(255, 30, 89, 0.3)',
     positive: '#00A81A',
     primaryTransparent: 'rgb(155, 108, 167, 0.5)',
+    purple: PURPLE_DARK,
     warning: '#DD9900',
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
   },
@@ -103,10 +119,11 @@ export default {
     tertiary: BLUE_HIGHLIGHT,
   },
   content: {
-    active: BLACK,
-    default: WHITE,
-    disabled: GRAY_LINES,
-    muted: GRAY,
+    active: DARK_CONTENT_ACTIVE,
+    default: DARK_CONTENT_DEFAULT,
+    disabled: DARK_CONTENT_DISABLED,
+    inverted: DARK_CONTENT_INVERTED,
+    muted: DARK_CONTENT_MUTED,
   },
   elevation: {
     visualizationAccent: '#996CFF',
@@ -122,6 +139,7 @@ export default {
   interactive: {
     activeBorder: BLACK,
     dangerBorder: RED,
+    defaultBackground: '#232429',
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
     focusBackground: GRAY,

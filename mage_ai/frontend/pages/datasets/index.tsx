@@ -3,6 +3,7 @@ import type { NextPage } from 'next';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
+import light from '@oracle/styles/themes/light';
 import Link from '@oracle/elements/Link';
 import RowCard from '@oracle/components/RowCard';
 import RowDataTable from '@oracle/components/RowDataTable';
@@ -103,5 +104,11 @@ const Dashboard: NextPage = () => {
     </Layout>
   );
 };
+
+Dashboard.getInitialProps = async () => ({
+  themeProps: {
+    currentTheme: light,
+  },
+});
 
 export default Dashboard;
