@@ -46,6 +46,7 @@ export type KeyboardShortcutButtonProps = {
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   borderless?: boolean;
+  center?: boolean;
   centerText?: boolean;
   children?: any;
   earth?: boolean;
@@ -68,6 +69,7 @@ export type KeyboardShortcutButtonProps = {
   mutedDisabled?: boolean;
   noBackground?: boolean;
   noPadding?: boolean;
+  noHover?: boolean;
   pill?: boolean;
   primaryEnergy?: boolean;
   secondary?: boolean;
@@ -79,11 +81,12 @@ export type KeyboardShortcutButtonProps = {
   warning?: boolean;
   water?: boolean;
   wind?: boolean;
+  withIcon?: boolean;
   wrapText?: boolean;
   useModelTheme?: boolean;
 } & KeyboardShortcutSharedProps;
 
-const SHARED_STYLES = css`
+const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${transition()}
 
   align-items: center;
@@ -383,6 +386,7 @@ function KeyboardShortcutButton({
         userProperties,
       }) => {
         const El = (
+          // @ts-ignore
           <ElToUse
             {...props}
             {...(useModelTheme ? sharedProps : {})}

@@ -3,6 +3,7 @@ import ls from 'local-storage';
 import { ActionTypeEnum } from '@interfaces/ActionPayloadType';
 
 export const LOCAL_STORAGE_KEY_CUSTOM_CODE = 'custom_code';
+const LOCAL_STORAGE_KEY_OBJECT_COUNTS = 'object_counts';
 
 function getCustomCodeKey(featureSetId: string) {
   return `${LOCAL_STORAGE_KEY_CUSTOM_CODE}_${featureSetId}`;
@@ -61,3 +62,7 @@ export default {
   get,
   set,
 };
+
+export function resetObjectCounts() {
+  return set(LOCAL_STORAGE_KEY_OBJECT_COUNTS, {});
+}

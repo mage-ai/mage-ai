@@ -7,7 +7,10 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export type NumberOrString = number | string;
 
-const SpacingStyle = styled.div`
+const SpacingStyle = styled.div<{
+  marginRight?: boolean;
+  small?: boolean;
+}>`
   ${props => props.small && `
     margin-left: ${UNIT * 0.25}px;
   `}

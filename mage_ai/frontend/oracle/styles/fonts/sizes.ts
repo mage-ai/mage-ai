@@ -7,6 +7,7 @@ export const XXSMALL_FONT_SIZE: number = 8;
 export const HERO_LINE_HEIGHT = 72;
 export const XXLARGE_LINE_HEIGHT = 48;
 export const XLARGE_LINE_HEIGHT = 42;
+export const LARGE_LG_LINE_HEIGHT = 34;
 export const LARGE_LINE_HEIGHT = 28;
 
 export const HERO = `
@@ -27,6 +28,11 @@ export const XLARGE = `
 export const HEADLINE_SIZE = `
   font-size: 20px;
   line-height: ${LARGE_LINE_HEIGHT}px;
+`;
+
+export const LARGE_LG = `
+  font-size: 24px;
+  line-height: ${LARGE_LG_LINE_HEIGHT}px;
 `;
 
 export const LARGE = `

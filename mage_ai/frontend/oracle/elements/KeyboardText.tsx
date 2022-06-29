@@ -15,7 +15,12 @@ export type KeyboardTextProps = {
   spacingLeft?: number;
 };
 
-const SHARED_STYLES = css`
+const SHARED_STYLES = css<{
+  borderless?: boolean;
+  disabled?: boolean;
+  mutedDisabled?: boolean;
+  spacingLeft?: number;
+}>`
   min-width: 18px;
   padding-left: 2px;
   padding-right: 2px;

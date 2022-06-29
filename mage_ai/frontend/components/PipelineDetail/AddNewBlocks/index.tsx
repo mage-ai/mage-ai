@@ -18,6 +18,7 @@ function AddNewBlocks() {
         }
         inline
         onClick={() => false}
+        uuid="AddNewBlocks/Transformer"
       >
         Transformer
       </KeyboardShortcutButton>
@@ -32,6 +33,7 @@ function AddNewBlocks() {
         }
         inline
         onClick={() => false}
+        uuid="AddNewBlocks/Data_loader"
       >
         Data loader
       </KeyboardShortcutButton>
@@ -46,6 +48,7 @@ function AddNewBlocks() {
         }
         inline
         onClick={() => false}
+        uuid="AddNewBlocks/Scratchpad"
       >
         Scratchpad
       </KeyboardShortcutButton>

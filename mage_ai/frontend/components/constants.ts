@@ -13,6 +13,16 @@ import {
   Phone,
 } from '@oracle/icons';
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
+import { UNIT } from '@oracle/styles/units/spacing';
+
+export const HEADER_HEIGHT_UNITS = 7;
+export const HEADER_HEIGHT = UNIT * HEADER_HEIGHT_UNITS;
+export const HEADER_Z_INDEX = 22;
+export const MARGIN_TOP_HEIGHT_UNITS = 5;
+export const MARGIN_TOP_HEIGHT = UNIT * MARGIN_TOP_HEIGHT_UNITS;
+export const SUBHEADER_Z_INDEX = 21;
+export const SUBHEADER_TOOLBAR_HEIGHT_UNITS = 5;
+export const SUBHEADER_TOOLBAR_HEIGHT = UNIT * SUBHEADER_TOOLBAR_HEIGHT_UNITS;
 
 export const COLUMN_TYPE_ICON_MAPPING = {
   [ColumnTypeEnum.CATEGORY]: Category,
