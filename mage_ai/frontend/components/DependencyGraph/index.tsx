@@ -1,4 +1,4 @@
-import Xarrow from 'react-xarrows';
+import Xarrow, { useXarrow, Xwrapper } from 'react-xarrows';
 import styled from 'styled-components';
 import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
@@ -35,6 +35,7 @@ function DependencyGraph({
   setSelectedBlock,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
+  const updateXarrow = useXarrow();
   const blocks = pipeline?.blocks || [];
   const blockUUIDMapping = indexBy(blocks, ({ uuid }) => uuid);
 
@@ -68,51 +69,53 @@ function DependencyGraph({
   }, []);
 
   return (
-    <ContainerStyle>
-      {nodeLevels.map((nodeLevel, index) => (
-        <FlexContainer alignItems="center" key={index}>
-          <Spacing mr={(index === nodeLevels.length - 1) ? 0 : 6}>
-            {nodeLevel.map((block) => {
-              const { uuid, name, type } = block;
-              const nodeColor = getNodeColor(type, themeContext);
+    <ContainerStyle onScroll={updateXarrow}>
+      <Xwrapper>
+        {nodeLevels.map((nodeLevel, index) => (
+          <FlexContainer alignItems="center" key={index}>
+            <Spacing mr={(index === nodeLevels.length - 1) ? 0 : 6}>
+              {nodeLevel.map((block) => {
+                const { uuid, name, type } = block;
+                const nodeColor = getNodeColor(type, themeContext);
 
-              return (
-                <Spacing key={uuid} py={1}>
-                  <Button
-                    backgroundColor={nodeColor}
-                    id={uuid}
-                    minWidth={MIN_NODE_WIDTH}
-                    onClick={() => setSelectedBlock(block)}
-                    selectedAlt={selectedBlock?.uuid === uuid}
-                    smallBorderRadius
-                  >
-                    <Text
-                      inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
-                      monospace
-                      small
+                return (
+                  <Spacing key={uuid} py={1}>
+                    <Button
+                      backgroundColor={nodeColor}
+                      id={uuid}
+                      minWidth={MIN_NODE_WIDTH}
+                      onClick={() => setSelectedBlock(block)}
+                      selectedAlt={selectedBlock?.uuid === uuid}
+                      smallBorderRadius
                     >
-                      {name}
-                    </Text>
-                  </Button>
-                </Spacing>
-              );
-            })}
-          </Spacing>
-        </FlexContainer>
-      ))}
-      {arrows.map(({ color, end, start }) => (
-        <Xarrow
-          animateDrawing={0.2}
-          color={color}
-          curveness={0.6}
-          dashness={false}
-          end={end}
-          headSize={5}
-          key={`${start}_${end}`}
-          start={start}
-          strokeWidth={1}
-        />
-      ))}
+                      <Text
+                        inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+                        monospace
+                        small
+                      >
+                        {name}
+                      </Text>
+                    </Button>
+                  </Spacing>
+                );
+              })}
+            </Spacing>
+          </FlexContainer>
+        ))}
+        {arrows.map(({ color, end, start }) => (
+          <Xarrow
+            animateDrawing={0.2}
+            color={color}
+            curveness={0.6}
+            dashness={false}
+            end={end}
+            headSize={5}
+            key={`${start}_${end}`}
+            start={start}
+            strokeWidth={1}
+          />
+        ))}
+      </Xwrapper>
     </ContainerStyle>
   );
 }
