@@ -10,29 +10,40 @@ class Redshift(BaseSQL):
 
     @classmethod
     def with_credentials(
-        cls, database: str, host: str, user: str, password: str, port: int, **kwargs
+        cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
     ):
+        """
+        Creates a Redshift data loader from temporary database credentials
+
+        Args:
+            database (str): Name of the database to connect to
+            host (str): The hostname of the Redshift cluster which the database belongs to
+            user (str): Username for authentication
+            password (str): Password for authentication
+            port (int, optional): Port number of the Redshift cluster. Defaults to 5439.
+
+        Returns:
+            Redshift: the constructed dataloader using this method
+        """
         return cls(database=database, host=host, user=user, password=password, port=port, **kwargs)
 
-    def with_iam(cls, profile: str, iam: bool = True, **kwargs):
-        return cls(profile=profile, iam=iam, **kwargs)
+    @classmethod
+    def with_iam(cls, profile: str, **kwargs):
+        """
+        Creates a Redshift data loader from IAM credentials. If IAM credentials not
+        stored on system or not found by the connector, manually specify the credentials as arguments.
+
+        Args:
+            profile (str): The profile to use from the IAM credentials file
+
+        Returns:
+            Redshift: the constructed dataloader using this method
+        """
+        return cls(profile=profile, iam=True, **kwargs)
 
     def __init__(self, **kwargs) -> None:
         """
-        Initializes settings for connecting to a Redshift warehouse. Depending how authentication and authorization is performed,
-        below are the parameters that should be provided:
-        - Database Login with Username and Password: Provide
-            - host (str): Path to the Redshift cluster.
-            - database (str): The name of the database to access within the cluster.
-            - user (str): The username to access the database
-            - password (str): The password to access the database
-        - IAM Credentials Login: Provide
-            - iam (bool): Set this to true to indicate that IAM credentials should be used.
-            - cluster_identifier (str): The name of the cluster to connect to.
-            - database (str): The name of the database to access within the cluster.
-            - profile (str): The name of the profile to use when accessing the Redshift cluster, as specified in the credentials file.
-
-        If IAM credentials not stored on system or not found by the connector, manually specify the credentials as arguments.
+        Initializes settings for connecting to a Redshift warehouse.
         """
         super().__init__(**kwargs)
 

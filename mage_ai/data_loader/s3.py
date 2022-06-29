@@ -1,58 +1,41 @@
-from mage_ai.data_loader.base import BaseSQL
+from mage_ai.data_loader.base import BaseFile, FileFormat
 from pandas import DataFrame
-from redshift_connector import connect
+from io import BytesIO
+import boto3
 
 
-class Redshift(BaseSQL):
+class S3(BaseFile):
     """
-    Loads data from a Redshift data warehouse.
+    Loads data from a S3 bucket. Supports loading files of any of the following types:
+    - ".csv"
+    - ".json"
+    - ".parquet"
+    - ".hdf5"
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self, bucket_name: str, object_name: str, format: FileFormat = None, **kwargs
+    ) -> None:
         """
-        Initializes settings for connecting to a Redshift warehouse. Depending how authentication and authorization is performed, a few different parameters must be provided:
-        - Database Login with Username and Password: Provide
-            - host (str): Path to the Redshift cluster.
-            - database (str): The name of the database to access within the cluster.
-            - user (str): The username to access the database
-            - password (str): The password to access the database
-        - IAM Credentials Login: Provide
-            - iam (bool): Set this to true to indicate that IAM credentials should be used.
-            - cluster_identifier (str): The name of the cluster to connect to.
-            - database (str): The name of the database to access within the cluster.
-            - profile (str): The name of the profile to use when accessing the Redshift cluster, as specified in the credentials file.
-
-        If IAM credentials not stored on system or not found by the connector, manually specify the credentials as arguments.
-        """
-        super().__init__(**kwargs)
-
-    def open(self) -> None:
-        """
-        Opens a connection to the Redshift warehouse.
-        """
-        self._ctx = connect(**self.settings)
-
-    def query(self, query_string: str, **kwargs) -> None:
-        """
-        Executes any query on the Redshift warehouse.
+        Initializes data loader from an S3 bucket. If IAM credentials are stored on file, no further arguments are needed.
+        Otherwise, the access credentials must also be passed as keyword arguments.
 
         Args:
-            query_string (str): The query to execute on the Redshift warehouse.
-            **kwargs: Additional parameters to pass to the query.
+            bucket_name (str): Bucket to load resource from
+            object_name (str): Object key name within bucket given
+            format (FileFormat, optional): File format of object. Defaults to None, in which case the format is inferred.
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, **kwargs)
+        super().__init__(object_name, format)
+        self.bucket_name = bucket_name
+        self.client = boto3.resource('s3', **kwargs)
 
-    def load(self, query_string: str, *args, **kwargs) -> DataFrame:
+    def load(self) -> DataFrame:
         """
-        Loads data from Redshift into a Pandas data frame based on the query given.
-        This will fail if the query returns no data from the database.
-
-        Args:
-            query_string (str): Query to fetch a table or subset of a table.
+        Loads data from S3 into a Pandas data frame.
 
         Returns:
-            DataFrame: Data frame associated with the given query.
+            DataFrame: The data frame specified by the bucket name and object name
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, *args, **kwargs).fetch_dataframe()
+        buffer = BytesIO()
+        self.client.download_fileobj(self.bucket_name, self.filepath, buffer)
+        return self.opener(buffer)

@@ -1,6 +1,24 @@
 from abc import ABC, abstractmethod
 from pandas import DataFrame
+from enum import Enum
 from typing import Any
+import pandas as pd
+import os
+
+
+class FileFormat(str, Enum):
+    CSV = 'csv'
+    JSON = 'json'
+    PARQUET = 'parquet'
+    HDF5 = 'hdf5'
+
+
+FORMAT_TO_FUNCTION = {
+    FileFormat.CSV: pd.read_csv,
+    FileFormat.JSON: pd.read_json,
+    FileFormat.PARQUET: pd.read_parquet,
+    FileFormat.HDF5: pd.read_hdf,
+}
 
 
 class BaseLoader(ABC):
@@ -18,6 +36,25 @@ class BaseLoader(ABC):
             DataFrame: dataframe returned by the source.
         """
         pass
+
+
+class BaseFile(BaseLoader):
+    """
+    Data loader for file-like data sources (for example, loading from local
+    filesystem or external file storages such as AWS S3)
+    """
+
+    def __init__(self, filepath: os.PathLike, format: FileFormat = None) -> None:
+        """
+        Initializes the file data loader
+
+        Args:
+            filepath (os.PathLike): Path to the file
+            format (FileFormat, optional): File format for the data being loaded. Defaults to None.
+        """
+        if format is None:
+            format = os.path.splitext(filepath)[-1][1:]
+        self.reader = FORMAT_TO_FUNCTION[format]
 
 
 class BaseSQL(BaseLoader):
