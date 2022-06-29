@@ -14,6 +14,7 @@
     "storybook": "start-storybook -p 6007 -s ./public"
   },
   "dependencies": {
+    "@amplitude/react-amplitude": "^1.0.0",
     "@monaco-editor/react": "^4.4.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "^2.10.0",

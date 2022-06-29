@@ -11,6 +11,9 @@
       "@components/*": [
         "components/*"
       ],
+      "@context/*": [
+        "context/*"
+      ],
       "@hocs/*": [
         "hocs/*"
       ],

@@ -8,6 +8,7 @@ import { UNIT, PADDING } from '@oracle/styles/units/spacing';
 
 export type SpinnerProps = {
   fullScreen?: boolean;
+  inverted?: boolean;
   large?: boolean;
   left?: number;
   relative?: boolean;

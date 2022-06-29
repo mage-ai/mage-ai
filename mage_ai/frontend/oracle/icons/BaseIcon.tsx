@@ -49,11 +49,11 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && `
-    fill: ${(props.theme.content || light.content).active};
+    fill: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && `
-    stroke: ${(props.theme.content || light.content).active};
+    stroke: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => !props.useStroke && props.muted && !props.disabled && `

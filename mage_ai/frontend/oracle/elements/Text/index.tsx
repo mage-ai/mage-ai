@@ -37,6 +37,7 @@ export type TextProps = {
   headline?: boolean;
   inline?: boolean;
   inlineText?: boolean;
+  inverted?: boolean;
   italic?: boolean;
   large?: boolean;
   letterSpacing?: number;
