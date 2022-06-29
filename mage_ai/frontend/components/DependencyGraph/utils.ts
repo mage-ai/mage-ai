@@ -1,19 +1,19 @@
 import BlockType from '@interfaces/BlockType';
 
 export const getFinalLevelIndex = (
-  downstreamBlockUUIDs: string[],
+  uptreamBlockUUIDs: string[],
   blockUUIDMapping: { [key: string]: BlockType },
   checkedBlocks: string[] = [],
 ) => {
-  if (downstreamBlockUUIDs.length === 0) {
+  if (uptreamBlockUUIDs.length === 0) {
     return 0;
   }
 
-  const levels = downstreamBlockUUIDs
+  const levels = uptreamBlockUUIDs
     .filter((uuid) => !checkedBlocks.includes(uuid))
     .map((uuid) => (1
       + getFinalLevelIndex(
-        blockUUIDMapping[uuid].downstream_blocks,
+        blockUUIDMapping[uuid].upstream_blocks,
         blockUUIDMapping,
         [...checkedBlocks, uuid],
       )

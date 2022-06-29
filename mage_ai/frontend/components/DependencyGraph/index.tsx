@@ -6,6 +6,7 @@ import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFinalLevelIndex } from './utils';
 import { indexBy } from '@utils/array';
@@ -53,38 +54,44 @@ function DependencyGraph({
 
   const nodeLevels: BlockType[][] = blocks.reduce((acc, block) => {
     const {
-      downstream_blocks: downstreamBlocks,
+      upstream_blocks: upstreamBlocks,
     } = block;
-    const finalLevelIndex = getFinalLevelIndex(downstreamBlocks, blockUUIDMapping);
+    const finalLevelIndex = getFinalLevelIndex(upstreamBlocks, blockUUIDMapping);
     acc[finalLevelIndex] = [...(acc[finalLevelIndex] || []), block];
 
     return acc;
-  }, []).reverse();
-  // console.log('nodeLevels', nodeLevels);
+  }, []);
 
   return (
     <ContainerStyle>
       {nodeLevels.map((nodeLevel, index) => (
-        <Spacing key={index} mt={index*11} mr={6}>
-          {nodeLevel.map((block) => {
-            const { uuid, name, type } = block;
-            
-            return (
-              <Button
-                id={uuid}
-                key={uuid}
-                onClick={() => setSelectedBlock(block)}
-              >
-                {name}
-              </Button>
-            );
-          })}
-        </Spacing>
+        <FlexContainer alignItems="center" key={index}>
+          <Spacing mr={6}>
+            {nodeLevel.map((block) => {
+              const { uuid, name, type } = block;
+
+              return (
+                <Spacing key={uuid} py={1}>
+                  <Button
+                    id={uuid}
+                    onClick={() => setSelectedBlock(block)}
+                  >
+                    <Text monospace small>
+                      {name}
+                    </Text>
+                  </Button>
+                </Spacing>
+              );
+            })}
+          </Spacing>
+        </FlexContainer>
       ))}
       {arrows.map(({ color, end, start }) => (
         <Xarrow
+          animateDrawing={0.2}
           color={color}
-          curveness={0.8}
+          curveness={0.6}
+          dashness={false}
           end={end}
           headSize={5}
           key={`${start}_${end}`}
