@@ -108,7 +108,7 @@ const ASIDE_DRAGGABLE_STYLE = css<{
 `;
 
 export const AsideHeaderStyle = styled.div<{
-  hidden: boolean;
+  visible: boolean;
 }>`
   border-bottom: 1px solid transparent;
   height: ${ASIDE_HEADER_HEIGHT}px;
