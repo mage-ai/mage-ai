@@ -8,7 +8,9 @@ import { transition } from '@oracle/styles/mixins';
 
 export const SCROLLBAR_WIDTH = UNIT * 1.5;
 
-export const ScrollbarStyledCss = css`
+export const ScrollbarStyledCss = css<{
+  scrollbarBorderRadiusLarge?: boolean;
+}>`
   ${props => `
     ::-webkit-scrollbar {
       width: ${SCROLLBAR_WIDTH}px;
