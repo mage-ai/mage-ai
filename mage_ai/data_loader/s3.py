@@ -14,6 +14,41 @@ class S3(BaseFile):
     - ".hdf5"
     """
 
+    def __init__(
+        self,
+        bucket_name: str,
+        object_name: str,
+        format: FileFormat = None,
+        **kwargs,
+    ) -> None:
+        """
+        Initializes data loader from an S3 bucket. If credentials are stored on
+        file, no further arguments are needed. Otherwise, use the factory method to construct
+        the data loader using manually specified credentials.
+
+        Args:
+            bucket_name (str): Bucket to load resource from
+            object_name (str): Object key name within bucket given
+            format (FileFormat, optional): File format of object. Defaults to None, in which
+            case the format is inferred.
+            **kwargs: all other keyword arguments to pass to the client
+        """
+        super().__init__(object_name, format)
+        self.bucket_name = bucket_name
+        self.client = boto3.client('s3', **kwargs)
+
+    def load(self, **kwargs) -> DataFrame:
+        """
+        Loads data from S3 into a Pandas data frame.
+
+        Returns:
+            DataFrame: The data frame specified by the bucket name and object name
+        """
+        buffer = BytesIO()
+        self.client.download_fileobj(self.bucket_name, self.filepath, buffer)
+        buffer.seek(0)
+        return self.reader(buffer, **kwargs)
+
     @classmethod
     def with_credentials(
         cls,
@@ -49,38 +84,3 @@ class S3(BaseFile):
             aws_secret_access_key=secret_access_key,
             region_name=region,
         )
-
-    def __init__(
-        self,
-        bucket_name: str,
-        object_name: str,
-        format: FileFormat = None,
-        **kwargs,
-    ) -> None:
-        """
-        Initializes data loader from an S3 bucket. If credentials are stored on
-        file, no further arguments are needed. Otherwise, use the factory method to construct
-        the data loader using manually specified credentials.
-
-        Args:
-            bucket_name (str): Bucket to load resource from
-            object_name (str): Object key name within bucket given
-            format (FileFormat, optional): File format of object. Defaults to None, in which
-            case the format is inferred.
-            **kwargs: all other keyword arguments to pass to the client
-        """
-        super().__init__(object_name, format)
-        self.bucket_name = bucket_name
-        self.client = boto3.client('s3', **kwargs)
-
-    def load(self, **kwargs) -> DataFrame:
-        """
-        Loads data from S3 into a Pandas data frame.
-
-        Returns:
-            DataFrame: The data frame specified by the bucket name and object name
-        """
-        buffer = BytesIO()
-        self.client.download_fileobj(self.bucket_name, self.filepath, buffer)
-        buffer.seek(0)
-        return self.reader(buffer, **kwargs)
