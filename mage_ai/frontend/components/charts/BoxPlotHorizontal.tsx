@@ -41,7 +41,7 @@ interface TooltipData {
   name?: string;
   thirdQuartile?: number;
   value?: number;
-};
+}
 
 const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
   ({
@@ -81,7 +81,7 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
   const colorIdx = colorMap.findIndex(el => el.color);
   const color = colorMap[Math.max(colorIdx, 0)];
   
-  const { min, max, median, outliers } = data;
+  const { min, max, outliers } = data;
   const yMin = Math.min(Math.min(...outliers) || min, min); 
   const yMax = Math.max(Math.max(...outliers) || max, max);
 
@@ -96,16 +96,17 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
   });
 
   const handleTooltip = {
+    onMouseLeave: () => hideTooltip(),
     onMouseMove: (e) => {
       const { x, y } = localPoint(e) || { x: 0, y: 0 };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { outliers, ...tooltipData } = data;
       showTooltip({
         tooltipData,
         tooltipLeft: x,
         tooltipTop: y,
-      })
+      });
     },
-    onMouseLeave: () => hideTooltip(),
   };
 
   const handleOutlierTooltip = {
@@ -113,11 +114,11 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
       const { x, y } = localPoint(e) || { x: 0, y: 0 };
       showTooltip({
         tooltipData: {
-          value: findClosestNum(data.outliers, invScale(x))
+          value: findClosestNum(data.outliers, invScale(x)),
         },
         tooltipLeft: x,
         tooltipTop: y,
-      })
+      });
     },
     onMouseLeave: () => hideTooltip(),
   };
@@ -163,7 +164,7 @@ const BoxPlotHorizontal = withTooltip<BoxPlotHorizontalProps, TooltipData>(
         >
           <Text small>
             {Object.entries(tooltipData).map(([k, v]) => (
-              <div>{SUMMARY_READABLE_MAPPING[k]}: {v}</div>
+              <div key={k}>{SUMMARY_READABLE_MAPPING[k]}: {v}</div>
             ))}
           </Text>
         </TooltipWithBounds>
