@@ -3,7 +3,6 @@ from google.oauth2 import service_account
 from mage_ai.data_loader.base import BaseLoader
 from pandas import DataFrame
 from typing import Mapping
-import json
 
 
 class BigQuery(BaseLoader):
@@ -15,18 +14,34 @@ class BigQuery(BaseLoader):
         """
         Initializes settings for connecting to a BigQuery warehouse.
 
-        To authenticate access to a BigQuery warehouse, credentials must be provided.
+        To authenticate (and authorize) access to a BigQuery warehouse, credentials must be provided.
         Below are the different ways in which the BigQuery data loader can access those
         credentials:
         - Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to a
           service account key. In this case no other no other parameters need to be
           specified.
-        - Manually pass in the path to the credentials file. Construct the data loader
-          using the factory method `with_credentials_file`.
-        - Manually define the credentials mapping object to use. Construct the data loader
-          using the factory method `with_credentials_object`.
+        - Manually pass in the `google.oauth2.service_account.Credentials` object with the
+        keyword argument `credentials`
+        - Manually pass in the path to the credentials with the keyword argument
+        `path_to_credentials`.
+        - Manually define the service key key-value set to use (such as a dictionary containing
+        the same parameters as a service key) with the keyword argument `credentials_mapping`
+
+        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
+        to the Google BigQuery client, accepting all other configuration settings there.
         """
-        self.client = Client(**kwargs)
+        path_to_credentials = kwargs.get('path_to_credentials')
+        credentials_mapping = kwargs.get('credentials_mapping')
+
+        credentials = None
+        if credentials_mapping is not None:
+            credentials = service_account.Credentials.from_service_account_info(credentials_mapping)
+            kwargs.pop('credentials_mapping')
+        if path_to_credentials is not None:
+            credentials = service_account.Credentials.from_service_account_file(path_to_credentials)
+            kwargs.pop('path_to_credentials')
+
+        self.client = Client(credentials=credentials, **kwargs)
 
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
@@ -53,9 +68,7 @@ class BigQuery(BaseLoader):
         Returns:
             BigQuery: BigQuery data loader
         """
-        with open(path_to_credentials, 'r') as fin:
-            mapping = json.loads(fin.read().replace('\n', ''))
-        return cls.with_credentials_object(mapping, **kwargs)
+        return cls(path_to_credentials=path_to_credentials, **kwargs)
 
     @classmethod
     def with_credentials_object(cls, credentials: Mapping[str, str], **kwargs):
@@ -69,6 +82,4 @@ class BigQuery(BaseLoader):
         Returns:
             BigQuery: BigQuery data loader
         """
-        return cls(
-            credentials=service_account.Credentials.from_service_account_info(credentials), **kwargs
-        )
+        return cls(credentials_mapping=credentials, **kwargs)
