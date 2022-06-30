@@ -2,23 +2,34 @@ from mage_ai.data_loader.bigquery import BigQuery
 from pandas import DataFrame
 
 
+@data_loader
 def load_data_from_big_query() -> DataFrame:
     """
     Template code for loading data from Google BigQuery.
 
-    This code template assumes that the `GOOGLE_APPLICATION_CREDENTIALS` environment
-    variable is not set.
-    - If this environment variable is set, then config can be left empty
-    - If authentication credentials are set manually, either (a) use the
-      `BigQuery.with_credentials_object()` factory method to construct the loader or (b)
-      specify the mapping object with `credentials_mapping` in the config object
-    - If authentication credentials are stored on file, either (a) use the
-      `BigQuery.with_credentials_file()` factory method to construct the loader
-      (b) specify the filepath with `path_to_credentials` in the config object
+    Depending on your preferred method of providing service account credentials,
+    there are three options for initializing a Google BigQuery data loader:
+
+    1. (Default) If the environment variable `GOOGLE_APPLICATION_CREDENTIALS` contains the path
+    to the service account key, construct the data loader using the default constructor. Any
+    additional parameters can still be specified as a keyword argument.
+
+    2. If the path to the service account key is manually specified, construct the data loader
+    using the factory method `with_credentials_file`. Example:
+    ```
+    BigQuery.with_credentials_file('path/to/service/account/key.json', **kwargs)
+    ```
+
+    3. If the contents of the service account key are manually specified in a dictionary-like
+    object, construct the data loader using this factory method `with_credentials_object`. Example:
+    ```
+    BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
+    ```
     """
+
     query = 'your_gbq_query'
     config = {
-        'path_to_credentials': 'path/to/your/service/account/key.json',
+        # Specify any other configuration settings here to pass to BigQuery client
+        'project': 'your_project_name',
     }
-
     return BigQuery(**config).load(query)
