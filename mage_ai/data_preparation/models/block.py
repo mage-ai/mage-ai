@@ -1,7 +1,9 @@
 from enum import Enum
 from mage_ai.data_cleaner.shared.utils import clean_name
+from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
 import os
+import pandas as pd
 
 
 class BlockStatus(str, Enum):
@@ -79,6 +81,18 @@ class Block:
                     block_uuids[t.value].append(f.split('.')[0])
         return block_uuids
 
+    @classmethod
+    def get_block(
+        self,
+        name,
+        uuid,
+        block_type,
+        status=BlockStatus.NOT_EXECUTED,
+        pipeline=None
+    ):
+        block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
+        return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
+
     def execute(self):
         outputs = self.__execute()
         if len(outputs) != len(self.output_variables):
@@ -88,6 +102,45 @@ class Block:
         variable_mapping = dict(zip(self.output_variables, outputs))
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
+        return outputs
+
+    def get_analyses(self):
+        if self.status == BlockStatus.NOT_EXECUTED:
+            return []
+        if len(self.output_variables) == 0:
+            return []
+        analyses = []
+        variable_manager = VariableManager(self.pipeline.repo_path)
+        for v in self.output_variables:
+            data = variable_manager.get_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    v,
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
+            analyses.append(data)
+        return analyses
+
+    def get_outputs(self):
+        if self.status == BlockStatus.NOT_EXECUTED:
+            return []
+        if len(self.output_variables) == 0:
+            return []
+        outputs = []
+        variable_manager = VariableManager(self.pipeline.repo_path)
+        for v in self.output_variables:
+            data = variable_manager.get_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    v,
+                    sample=True,
+                )
+            if type(data) is pd.DataFrame:
+                data = dict(
+                    columns=data.columns.tolist(),
+                    rows=data.to_numpy().tolist(),
+                )
+            outputs.append(data)
         return outputs
 
     def to_dict(self):
@@ -162,3 +215,11 @@ class TransformerBlock(Block):
     @property
     def output_variables(self):
         return ['df']
+
+
+BLOCK_TYPE_TO_CLASS = {
+    BlockType.DATA_EXPORTER: DataExporterBlock,
+    BlockType.DATA_LOADER: DataLoaderBlock,
+    BlockType.SCRATCHPAD: Block,
+    BlockType.TRANSFORMER: TransformerBlock,
+}

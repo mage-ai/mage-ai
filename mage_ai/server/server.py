@@ -135,6 +135,22 @@ class ApiPipelineBlockListHandler(BaseHandler):
         self.write(dict(block=block.to_dict()))
 
 
+class ApiPipelineBlockAnalysisHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        block = pipeline.get_block(block_uuid)
+        analyses = block.get_analyses()
+        self.write(dict(analyses=analyses))
+
+
+class ApiPipelineBlockOutputHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline(pipeline_uuid, repo_path)
+        block = pipeline.get_block(block_uuid)
+        outputs = block.get_outputs()
+        self.write(dict(outputs=outputs))
+
+
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         variables = VariableManager(repo_path).get_variables_by_pipeline(pipeline_uuid)
@@ -168,6 +184,10 @@ def make_app():
             (r'/api/pipelines', ApiPipelineListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
                 ApiPipelineBlockHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
+                ApiPipelineBlockAnalysisHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
+                ApiPipelineBlockOutputHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables',
                 ApiPipelineVariableListHandler),
