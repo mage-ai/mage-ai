@@ -105,8 +105,8 @@ class Block:
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
-    async def execute(self):
-        outputs = await self.execute_block()
+    async def execute(self, custom_code=None):
+        outputs = await self.execute_block(custom_code)
         if len(outputs) != len(self.output_variables):
             raise Exception(
                 f'The number of output variables does not match the block type: {self.type}',
@@ -182,7 +182,7 @@ class Block:
         return self
 
     # TODO: implement execution logic
-    async def execute_block(self):
+    async def execute_block(self, custom_code):
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
@@ -204,8 +204,11 @@ class Block:
                 ]
 
         decorated_functions = []
-        with open(self.file_path) as file:
-            exec(file.read(), {self.type: block_decorator(decorated_functions)})
+        if custom_code is not None:
+            exec(custom_code, {self.type: block_decorator(decorated_functions)})
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
             return decorated_functions[0](*input_vars)
 
