@@ -10,7 +10,7 @@ def readme():
 requirements, dependency_links = [], []
 with open('requirements.txt') as f:
     for line in f.read().splitlines():
-        if line.startswith('-e git+'):
+        if line.startswith('git+'):
             dependency_links.append(line.replace('-e ', ''))
         else:
             requirements.append(line)
@@ -35,6 +35,10 @@ setuptools.setup(
     install_requires=requirements,
     dependency_links=dependency_links,
     python_requires='>=3.6',
-    entry_points={},
+    entry_points={
+        'console_scripts': [
+            'mage=mage_ai.command_line:main',
+        ],
+    },
     extras_require={}
 )
