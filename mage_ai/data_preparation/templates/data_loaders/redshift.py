@@ -2,6 +2,7 @@ from mage_ai.data_loader.redshift import Redshift
 from pandas import DataFrame
 
 
+@data_loader
 def load_data_from_redshift() -> DataFrame:
     """
     Template code for loading data from Redshift cluster. Additional

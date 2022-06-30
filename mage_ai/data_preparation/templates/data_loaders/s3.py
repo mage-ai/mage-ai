@@ -2,6 +2,7 @@ from mage_ai.data_loader.s3 import S3
 from pandas import DataFrame
 
 
+@data_loader
 def load_from_s3_bucket() -> DataFrame:
     """
     Template code for loading data from S3 bucket.
