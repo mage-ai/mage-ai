@@ -105,7 +105,15 @@ class PipelineTest(TestCase):
         ))
 
     def test_execute(self):
-        pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
+        pipeline = Pipeline.create('test pipeline 3', self.repo_path)
+        block1 = Block.create('block1', 'scratchpad', self.repo_path)
+        block2 = Block.create('block2', 'scratchpad', self.repo_path)
+        block3 = Block.create('block3', 'scratchpad', self.repo_path)
+        block4 = Block.create('block4', 'scratchpad', self.repo_path)
+        pipeline.add_block(block1)
+        pipeline.add_block(block2, upstream_block_uuids=['block1'])
+        pipeline.add_block(block3, upstream_block_uuids=['block1'])
+        pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         asyncio.run(pipeline.execute())
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 3',
@@ -114,7 +122,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block1',
                     uuid='block1',
-                    type='data_loader',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
@@ -122,7 +130,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block2',
                     uuid='block2',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
@@ -130,7 +138,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block3',
                     uuid='block3',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block1'],
                     downstream_blocks=['block4'],
@@ -138,7 +146,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block4',
                     uuid='block4',
-                    type='data_exporter',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=[],
@@ -148,13 +156,13 @@ class PipelineTest(TestCase):
 
     def test_execute_multiple_paths(self):
         pipeline = Pipeline.create('test pipeline 4', self.repo_path)
-        block1 = Block.create('block1', 'data_loader', self.repo_path)
-        block2 = Block.create('block2', 'transformer', self.repo_path)
-        block3 = Block.create('block3', 'transformer', self.repo_path)
-        block4 = Block.create('block4', 'data_loader', self.repo_path)
-        block5 = Block.create('block5', 'transformer', self.repo_path)
-        block6 = Block.create('block6', 'transformer', self.repo_path)
-        block7 = Block.create('block7', 'data_exporter', self.repo_path)
+        block1 = Block.create('block1', 'scratchpad', self.repo_path)
+        block2 = Block.create('block2', 'scratchpad', self.repo_path)
+        block3 = Block.create('block3', 'scratchpad', self.repo_path)
+        block4 = Block.create('block4', 'scratchpad', self.repo_path)
+        block5 = Block.create('block5', 'scratchpad', self.repo_path)
+        block6 = Block.create('block6', 'scratchpad', self.repo_path)
+        block7 = Block.create('block7', 'scratchpad', self.repo_path)
         pipeline.add_block(block1)
         pipeline.add_block(block2, upstream_block_uuids=['block1'])
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
@@ -170,7 +178,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block1',
                     uuid='block1',
-                    type='data_loader',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=[],
                     downstream_blocks=['block2', 'block3'],
@@ -178,7 +186,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block2',
                     uuid='block2',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
@@ -186,7 +194,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block3',
                     uuid='block3',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block1'],
                     downstream_blocks=['block7'],
@@ -194,7 +202,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block4',
                     uuid='block4',
-                    type='data_loader',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=[],
                     downstream_blocks=['block5'],
@@ -202,7 +210,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block5',
                     uuid='block5',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block4'],
                     downstream_blocks=['block6'],
@@ -210,7 +218,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block6',
                     uuid='block6',
-                    type='transformer',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block5'],
                     downstream_blocks=['block7'],
@@ -218,7 +226,7 @@ class PipelineTest(TestCase):
                 dict(
                     name='block7',
                     uuid='block7',
-                    type='data_exporter',
+                    type='scratchpad',
                     status='executed',
                     upstream_blocks=['block2', 'block3', 'block6'],
                     downstream_blocks=[],

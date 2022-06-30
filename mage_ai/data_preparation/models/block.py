@@ -26,7 +26,6 @@ class Block:
         block_type,
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
-        repo_path=None,
     ):
         self.name = name or uuid
         self.uuid = uuid
@@ -35,7 +34,6 @@ class Block:
         self.pipeline = pipeline
         self.upstream_blocks = []
         self.downstream_blocks = []
-        self.repo_path = repo_path
 
     @property
     def input_variables(self):
@@ -56,7 +54,7 @@ class Block:
     @property
     def file_path(self):
         repo_path = \
-            self.pipeline.repo_path if self.pipeline is not None else self.repo_path
+            self.pipeline.repo_path if self.pipeline is not None else None
         return os.path.join(
             repo_path or os.getcwd(),
             f'{self.type}s/{self.uuid}.py',
@@ -69,7 +67,6 @@ class Block:
         2. Create a new python file with code template
         """
         uuid = clean_name(name)
-        self.repo_path = repo_path
         block_dir_path = os.path.join(repo_path, f'{block_type}s')
         if not os.path.exists(block_dir_path):
             os.mkdir(block_dir_path)
@@ -182,7 +179,7 @@ class Block:
         return self
 
     # TODO: implement execution logic
-    async def execute_block(self, custom_code):
+    async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
