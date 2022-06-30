@@ -30,22 +30,18 @@ class BigQuery(BaseLoader):
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
         to the Google BigQuery client, accepting all other configuration settings there.
         """
-        path_to_credentials = kwargs.get('path_to_credentials')
-        credentials_mapping = kwargs.get('credentials_mapping')
         credentials = kwargs.get('credentials')
-        if credentials not in kwargs or credentials is None:
-            if credentials_mapping is not None:
-                credentials = service_account.Credentials.from_service_account_info(
-                    credentials_mapping
-                )
-                kwargs.pop('credentials_mapping')
-            if path_to_credentials is not None:
-                credentials = service_account.Credentials.from_service_account_file(
-                    path_to_credentials
-                )
-                kwargs.pop('path_to_credentials')
-        else:
-            kwargs.pop('credentials')
+        if credentials is None:
+            if 'credentials_mapping' in kwargs:
+                mapping_obj = kwargs.pop('credentials_mapping')
+                if mapping_obj is not None:
+                    credentials = service_account.Credentials.from_service_account_info(mapping_obj)
+            if 'path_to_credentials' in kwargs:
+                path = kwargs.pop('path_to_credentials')
+                if path is not None:
+                    credentials = service_account.Credentials.from_service_account_file(path)
+            if 'credentials' in kwargs:
+                kwargs.pop('credentials')
 
         self.client = Client(credentials=credentials, **kwargs)
 
