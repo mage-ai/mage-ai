@@ -155,6 +155,15 @@ export const File = build([{
   viewBox: '0 0 12 12',
 });
 
+export const Folder = build([{
+  clipRule: 'evenodd',
+  d: 'M0.5 9.5V2.5C0.5 1.67157 1.17157 1 2 1H5.29524C6.07107 1 6.7 1.62893 6.7 2.40476C6.7 3.10169 7.26497 3.66667 7.96191 3.66667H10C10.8284 3.66667 11.5 4.33824 11.5 5.16667V9.5C11.5 10.3284 10.8284 11 10 11H2C1.17157 11 0.5 10.3284 0.5 9.5Z',
+  fill: '#5590D6',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 12 12',
+});
+
 export const Graph = build([{
   d: 'M5 5C5 4.44772 4.55228 4 4 4C3.44772 4 3 4.44772 3 5V18.5C3 19.3284 3.67157 20 4.5 20H20C20.5523 20 21 19.5522 21 19C21 18.4477 20.5523 18 20 18H5V5Z',
 }, {
@@ -191,6 +200,14 @@ export const PreviewOpen = build([{
   fillRule: 'evenodd',
 }], {
   viewBox: '0 0 16 12',
+});
+
+export const Rectangle = build([{
+  clipRule: 'evenOdd',
+  d: 'M3 0.5h6s3 0 3 3v6s0 3 -3 3h-6s-3 0 -3 -3v-6s0 -3 3 -3',
+  fillRule: 'evenodd',
+}], {
+  viewBox: '0 0 12 12',
 });
 
 export const Report = build([{

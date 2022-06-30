@@ -1,4 +1,5 @@
 import BaseIcon from '@oracle/icons/BaseIcon';
+import { Rectangle } from '@oracle/icons';
 
 export type FileTreeNodeStyle = {
   color?: string;
@@ -69,20 +70,26 @@ export const FILE_EXT_ICON_MAPPING = {
 export const NODE_STYLE_MAPPING = {
   data_loaders: {
     color: 'blue',
+    icon: Rectangle,
   },
   exporters: {
     color: 'gold',
+    icon: Rectangle,
   },
   global_variables: {
     color: 'blue',
+    icon: Rectangle,
   },
   pipelines: {
     color: 'pink',
+    icon: Rectangle,
   },
   scratchpad: {
     color: 'brown',
+    icon: Rectangle,
   },
   transformers: {
     color: 'purple',
+    icon: Rectangle,
   },
 };

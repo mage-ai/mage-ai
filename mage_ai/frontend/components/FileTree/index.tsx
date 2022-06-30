@@ -2,7 +2,8 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { File } from '@oracle/icons';
+import { File, Folder } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { FileTreeNode, NODE_STYLE_MAPPING } from './constants';
 
 export type FileTreeProps = {
@@ -20,20 +21,22 @@ function FileTree({
     const el = tree.map(({ name, children }) => {
       const {
         color = 'black',
-        icon: FileTreeIcon = File,
+        icon: FileTreeIcon = children ? Folder : File,
       } = NODE_STYLE_MAPPING[name] || {};
       return (
         <>
           {
             <Flex alignItems="center">
               <Spacing mr={depth * 2} />
-              <FileTreeIcon />&nbsp;
-              <Text
-                color={color}
-                monospace
-              >
-                {name}
-              </Text>
+              <FileTreeIcon fill={color} />&nbsp;
+              <Spacing py={`${0.75 * UNIT}px`}>
+                <Text
+                  color={color}
+                  monospace
+                >
+                  {name}
+                </Text>
+              </Spacing>
             </Flex>
           }
           {children && buildTreeEl(children)}
