@@ -1,6 +1,6 @@
 from pandas import DataFrame
-from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER, infer_column_types
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
@@ -21,7 +21,7 @@ def build_action_variables(
 
     Args:
         df (DataFrame): Data frame to build transformer actions for.
-        ctypes (Dict[str, ColumnType], optional): Column types for each column in dataframe.
+        ctypes (Dict[str, ColumnType], optional): Column type for each column in dataframe.
         Defaults to None, in which case the column types will be automatically inferred.
         columns (List[str], options): Columns to generate action variables for. Defaults to None,
         in which case action variables are generated for all columns of the data frame.
@@ -55,19 +55,22 @@ def build_transformer_action(
     outputs: List[Dict] = [],
 ) -> Dict:
     """
-    Builds transformer action payload from arguments. This payload can be passed as input to the
-    `transformer_actions` library for use in performing cleaning actions.
+    Builds transformer action payload from arguments. The output of this function can be passed
+    as input to the `transformer_actions.base.BaseAction` to perform the requested transformation.
 
     Designed as a helper method to simplify generating transformer action payloads
 
     Args:
         df (DataFrame): The data frame to build a transformer action payload for.
         action_type (Union[ActionType, str]): Transformer action to perform.
-        action_arguments (List[str], optional): Columns/Rows to perform this action on. Defaults to [].
+        action_arguments (List[str], optional): Columns/Rows to perform this action on.
+        Defaults to [].
         action_code (str, optional): Special code or query to execute with action. Defaults to ''.
         action_options (Dict, optional): Options specifying behavior of action. Defaults to {}.
-        axis (Union[Axis, str], optional): Axis of the data frame to apply the action to. Defaults to Axis.COLUMN.
-        outputs (List[Dict], optional): Specifies metadata of newly created columns. Defaults to [].
+        axis (Union[Axis, str], optional): Axis of the data frame to apply the action to.
+        Defaults to Axis.COLUMN.
+        outputs (List[Dict], optional): Specifies metadata of newly created columns.
+        Defaults to [].
 
     Returns:
         Dict: Transformer action payload

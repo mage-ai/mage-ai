@@ -19,10 +19,10 @@ def build_template_from_suggestion(suggestion: Dict) -> str:
     Creates a file template from a suggestion.
 
     Args:
-        suggestion (Dict): Input suggestion payload
+        suggestion (Dict): Suggestion payload generated from `BaseRule`.
 
     Returns:
-        str: String equivalent of action template. Write this to file to get an executable python file.
+        str: String version of Python code to execute to run this cleaning suggestion.
     """
     clean_title = suggestion['title'].lower().replace(' ', '_')
     cleaned_payload = json.dumps(suggestion['action_payload'], indent=4)

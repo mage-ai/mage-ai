@@ -17,5 +17,6 @@ def execute_transformer_action(df: DataFrame) -> DataFrame:
         action_type=ActionType.CUSTOM,  # Specify the transformer action to perform
         action_arguments=[],  # Specify the columns of data frame to apply the action tos
         axis=Axis.COLUMN,  # Specify the axis of data frame to apply action to
+        action_code='',  # Specify Python code or query to execute (if action requires this field)
     )
     return BaseAction(action).execute(df)

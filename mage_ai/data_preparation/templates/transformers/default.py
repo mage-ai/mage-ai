@@ -7,10 +7,10 @@ def transform_df(df: DataFrame) -> DataFrame:
     Template code for a transformer block.
 
     Args:
-        df (DataFrame): Input data frame from previously executed block.
+        df (DataFrame): Data frame from previously executed block.
 
     Returns:
         DataFrame: Transformed data frame
     """
-    # Your logic here
+    # Specify your transformation logic here
     return df
