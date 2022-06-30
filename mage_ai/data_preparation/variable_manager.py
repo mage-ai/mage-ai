@@ -51,8 +51,12 @@ class VariableManager:
         block_dirs = os.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
-            variables = os.listdir(os.path.join(variable_dir_path, d))
-            variables_by_block[d] = sorted([v.split('.')[0] for v in variables])
+            block_variables_path = os.path.join(variable_dir_path, d)
+            if not os.path.isdir(block_variables_path):
+                variables_by_block[d] = []
+            else:
+                variables = os.listdir(os.path.join(variable_dir_path, d))
+                variables_by_block[d] = sorted([v.split('.')[0] for v in variables])
         return variables_by_block
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
