@@ -63,9 +63,12 @@ class Block:
         block_dir_path = os.path.join(repo_path, f'{block_type}s')
         if not os.path.exists(block_dir_path):
             os.mkdir(block_dir_path)
+            with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                pass
         # TODO: update the following code to use code template
-        with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-            pass
+        file_path = os.path.join(block_dir_path, f'{uuid}.py')
+        if os.path.exists(file_path):
+            raise Exception(f'Block {uuid} already exists. Please use a different name.')
         with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
             pass
         return Block(name, uuid, block_type)
@@ -165,10 +168,7 @@ class Block:
             self.__update_name()
         if 'upstream_blocks' in data and \
                 set(data['upstream_blocks']) != set(self.upstream_block_uuids):
-            self.__update_upstream_blocks()
-        if 'downstream_blocks' in data and \
-                set(data['downstream_blocks']) != set(self.downstream_block_uuids):
-            self.__update_downstream_blocks()
+            self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
     # TODO: implement execution logic
@@ -206,12 +206,7 @@ class Block:
     def __update_upstream_blocks(self, upstream_blocks):
         if self.pipeline is None:
             return
-        self.pipeline.update_block(self, upstream_blocks=upstream_blocks)
-
-    def __update_downstream_blocks(self, downstream_blocks):
-        if self.pipeline is None:
-            return
-        self.pipeline.update_block(self, downstream_blocks=downstream_blocks)
+        self.pipeline.update_block(self, upstream_block_uuids=upstream_blocks)
 
 
 class DataLoaderBlock(Block):
@@ -228,6 +223,7 @@ class DataLoaderBlock(Block):
         df = pd.DataFrame(data)
         print(f'Finished executing block {self.uuid}...')
         return (df)
+
 
 class DataExporterBlock(Block):
     @property
