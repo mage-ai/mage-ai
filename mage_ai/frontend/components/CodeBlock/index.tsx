@@ -83,6 +83,7 @@ function CodeBlockProps({
   const saveCodeText = useCallback((value: string) => {
     sendMessage(JSON.stringify({
       code: value,
+      uuid: block.uuid,
     }));
     setMessages([]);
     setRunCount(1 + Number(runCount));
@@ -97,6 +98,8 @@ function CodeBlockProps({
     setRunEndTime,
     setRunStartTime,
   ]);
+
+  console.log(messages)
 
   const finalExecutionState = messages?.[messages.length - 1]?.execution_state;
   const isInProgress = messages?.length >= 1 && finalExecutionState !== ExecutionStateEnum.IDLE;

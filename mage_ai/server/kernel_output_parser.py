@@ -2,8 +2,10 @@ def parse_output_message(message: dict) -> dict:
     data_content = None
     data_type = None
 
-    content = message['content']
+    parent_header = message['parent_header']
+    msg_id = parent_header['msg_id']
 
+    content = message['content']
     execution_state = content.get('execution_state')
 
     traceback = content.get('traceback')
@@ -34,5 +36,6 @@ def parse_output_message(message: dict) -> dict:
         data=data_content,
         execution_state=execution_state,
         metadata=metadata,
+        msg_id=msg_id,
         type=data_type,
     )

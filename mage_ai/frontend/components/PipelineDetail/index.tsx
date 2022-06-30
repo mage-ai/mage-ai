@@ -4,6 +4,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
@@ -17,6 +18,7 @@ import {
   KEY_CODE_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import {
@@ -107,6 +109,30 @@ function PipelineDetail({
       textareaFocused,
     ],
   );
+
+  // const {
+  //   sendMessage,
+  //   lastMessage,
+  //   readyState,
+  // } = useWebSocket(WEBSOCKT_URL, {
+  //   onMessage: ({
+  //     data: messageData,
+  //   }) => {
+  //     if (messageData) {
+  //       setMessages([
+  //         ...messages,
+  //         JSON.parse(messageData),
+  //       ]);
+  //     }
+  //   },
+  //   onOpen: () => console.log('socketUrlPublish opened'),
+  //   shouldReconnect: (closeEvent) => {
+  //     // Will attempt to reconnect on all close events, such as server shutting down
+  //     console.log('Attempting to reconnect...');
+
+  //     return true;
+  //   },
+  // });
 
   return (
     <Spacing p={PADDING_UNITS}>
