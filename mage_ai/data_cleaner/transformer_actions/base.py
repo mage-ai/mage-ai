@@ -127,7 +127,7 @@ class BaseAction:
         if self.action_type == ActionType.FILTER:
             return df.loc[df_output.index][df_output.columns]
         elif self.action_type == ActionType.ADD:
-            output_cols = [f['uuid'] for f in self.action[' ']]
+            output_cols = [f['uuid'] for f in self.action['outputs']]
             df[output_cols] = df_output[output_cols]
             return df
         else:
