@@ -9,6 +9,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -44,6 +45,9 @@ function PipelineDetail({
       uuid: 'b',
     },
   ]);
+  const [messages, setMessages] = useState<{
+    [uuid: string]: KernelOutputType[];
+  }>([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
@@ -110,29 +114,52 @@ function PipelineDetail({
     ],
   );
 
-  // const {
-  //   sendMessage,
-  //   lastMessage,
-  //   readyState,
-  // } = useWebSocket(WEBSOCKT_URL, {
-  //   onMessage: ({
-  //     data: messageData,
-  //   }) => {
-  //     if (messageData) {
-  //       setMessages([
-  //         ...messages,
-  //         JSON.parse(messageData),
-  //       ]);
-  //     }
-  //   },
-  //   onOpen: () => console.log('socketUrlPublish opened'),
-  //   shouldReconnect: (closeEvent) => {
-  //     // Will attempt to reconnect on all close events, such as server shutting down
-  //     console.log('Attempting to reconnect...');
+  const {
+    sendMessage,
+    readyState,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onMessage: ({
+      data: messageData,
+    }) => {
+      if (messageData) {
+        const message = JSON.parse(messageData);
+        const { uuid } = message;
+        const messagesFromUUID = messages[uuid] || [];
 
-  //     return true;
-  //   },
-  // });
+        setMessages({
+          ...messages,
+          [uuid]: messagesFromUUID.concat(message),
+        });
+      }
+    },
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  const onSave = useCallback((payload: {
+    block: BlockType;
+    code: string;
+  }) => {
+    const { uuid } = block;
+
+    sendMessage(JSON.stringify({
+      code,
+      uuid,
+    }));
+
+    const newMessages = { ...messages };
+    delete newMessages[uuid];
+    setMessages(newMessages);
+  }, [
+    messages,
+    sendMessage,
+    setMessages,
+  ]);
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -155,7 +182,9 @@ function PipelineDetail({
             block={block}
             key={uuid}
             mainContainerRef={mainContainerRef}
+            messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
+            onSave={onSave}
             selected={selected}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setTextareaFocused={setTextareaFocused}

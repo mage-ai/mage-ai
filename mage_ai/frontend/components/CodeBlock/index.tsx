@@ -38,6 +38,11 @@ type CodeBlockProps = {
   block: BlockType;
   mainContainerRef?: any;
   noDivider?: boolean;
+  messages: KernelOutputType[];
+  onSave: (payload: {
+    block: BlockType;
+    code: string;
+  }) => void;
 } & CodeEditorSharedProps & CommandButtonsSharedProps;
 
 function CodeBlockProps({
@@ -47,59 +52,36 @@ function CodeBlockProps({
   deleteBlock,
   height,
   mainContainerRef,
+  messages,
   noDivider,
+  onSave,
   selected,
   setSelected,
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
-  const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
   const [runStartTime, setRunStartTime] = useState<Number>(0);
-  const socketUrlPublish = 'ws://localhost:6789/websocket/';
 
-  const {
-    sendMessage,
-    lastMessage,
-    readyState,
-  } = useWebSocket(socketUrlPublish, {
-    onMessage: ({
-      data: messageData,
-    }) => {
-      if (messageData) {
-        setMessages([
-          ...messages,
-          JSON.parse(messageData),
-        ]);
-      }
-    },
-    onOpen: () => console.log('socketUrlPublish opened'),
-    // Will attempt to reconnect on all close events, such as server shutting down
-    shouldReconnect: (closeEvent) => true,
-  });
-
-  const saveCodeText = useCallback((value: string) => {
-    sendMessage(JSON.stringify({
-      code: value,
-      uuid: block.uuid,
-    }));
-    setMessages([]);
+  const saveCodeText = useCallback((code: string) => {
+    saveCodeText({
+      block,
+      code,
+    });
     setRunCount(1 + Number(runCount));
     setRunEndTime(0)
     setRunStartTime(Number(new Date()));
   }, [
+    block,
     runCount,
     runEndTime,
-    sendMessage,
-    setMessages,
+    saveCodeText,
     setRunCount,
     setRunEndTime,
     setRunStartTime,
   ]);
-
-  console.log(messages)
 
   const finalExecutionState = messages?.[messages.length - 1]?.execution_state;
   const isInProgress = messages?.length >= 1 && finalExecutionState !== ExecutionStateEnum.IDLE;
@@ -177,7 +159,7 @@ function CodeBlockProps({
           />
         </CodeContainerStyle>
 
-        {messages.map(({
+        {messages?.map(({
           data: dataInit,
           type: dataType,
         }: KernelOutputType, idx: number) => {
