@@ -11,6 +11,6 @@ def load_from_s3_bucket() -> DataFrame:
     AWS CLI to configure credentials on system.
     """
     bucket_name = 'your_s3_bucket_name'  # Specify S3 bucket name to pull data from
-    object_name = 'your_object_name'  # Specify object to download from S3 bucket
+    object_key = 'your_object_key'  # Specify object to download from S3 bucket
 
-    return S3(bucket_name, object_name).load()
+    return S3(bucket_name, object_key).load()

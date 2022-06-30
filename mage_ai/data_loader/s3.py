@@ -1,6 +1,6 @@
+from io import BytesIO
 from mage_ai.data_loader.base import BaseFile, FileFormat
 from pandas import DataFrame
-from io import BytesIO
 import boto3
 
 
@@ -17,7 +17,7 @@ class S3(BaseFile):
     def __init__(
         self,
         bucket_name: str,
-        object_name: str,
+        object_key: str,
         format: FileFormat = None,
         **kwargs,
     ) -> None:
@@ -29,12 +29,12 @@ class S3(BaseFile):
 
         Args:
             bucket_name (str): Bucket to load resource from
-            object_name (str): Object key name within bucket given
+            object_key (str): Object key of resource to load
             format (FileFormat, optional): File format of object. Defaults to None, in which
             case the format is inferred.
             **kwargs: all other keyword arguments to pass to the client
         """
-        super().__init__(object_name, format)
+        super().__init__(object_key, format)
         self.bucket_name = bucket_name
         self.client = boto3.client('s3', **kwargs)
 
@@ -43,18 +43,17 @@ class S3(BaseFile):
         Loads data from S3 into a Pandas data frame.
 
         Returns:
-            DataFrame: The data frame specified by the bucket name and object name
+            DataFrame: The data frame constructed from the file in the S3 bucket
         """
-        buffer = BytesIO()
-        self.client.download_fileobj(self.bucket_name, self.filepath, buffer)
-        buffer.seek(0)
+        response = self.client.get_object(Bucket=self.bucket_name, Key=self.filepath)
+        buffer = BytesIO(response['Body'].read())
         return self.reader(buffer, **kwargs)
 
     @classmethod
     def with_credentials(
         cls,
         bucket_name: str,
-        object_name: str,
+        object_key: str,
         access_key_id: str,
         secret_access_key: str,
         region: str,
@@ -67,7 +66,7 @@ class S3(BaseFile):
 
         Args:
             bucket_name (str): Bucket to load resource from
-            object_name (str): Object key name within bucket given
+            object_key (str): Object key of resource to load
             format (FileFormat, optional): File format of object. Defaults to None,
             in which case the format is inferred.
             access_key_id (str, optional): AWS Access Key ID credential. Specify if IAM
@@ -79,7 +78,7 @@ class S3(BaseFile):
         """
         return cls(
             bucket_name=bucket_name,
-            object_name=object_name,
+            object_key=object_key,
             format=format,
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_access_key,
