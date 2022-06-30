@@ -1,6 +1,8 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.templates.utils import copy_templates
+from queue import Queue
+import asyncio
 import os
 import yaml
 
@@ -52,9 +54,36 @@ class Pipeline:
             os.mkdir(pipelines_folder)
         return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
-    def execute(self):
-        # TODO: implement execution logic
-        pass
+    async def execute(self):
+        """
+        Async function for parallel processing
+        This function will schedule the block execution in topological
+        order based on a block's upstream dependencies.
+        """
+        tasks = dict()
+        blocks = Queue()
+        for b in self.blocks_by_uuid.values():
+            if len(b.upstream_blocks) == 0:
+                blocks.put(b)
+                tasks[b.uuid] = None
+        while not blocks.empty():
+            block = blocks.get()
+            skip = False
+            for upstream_block in block.upstream_blocks:
+                if tasks.get(upstream_block.uuid) is None:
+                    blocks.put(block)
+                    skip = True
+                    break
+            if skip:
+                continue
+            await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
+            task = asyncio.create_task(block.execute())
+            tasks[block.uuid] = task
+            for downstream_block in block.downstream_blocks:
+                if downstream_block.uuid not in tasks:
+                    tasks[downstream_block.uuid] = None
+                    blocks.put(downstream_block)
+        await asyncio.gather(*tasks.values())
 
     def load_config_from_yaml(self):
         with open(self.config_path) as fp:
@@ -126,6 +155,8 @@ class Pipeline:
 
     # TODO: Implement this method
     def update_block(self, block, upstream_block_uuids=None, downstream_block_uuids=None):
+        self.blocks_by_uuid[block.uuid] = block
+        self.__save()
         return block
 
     def delete(self):
