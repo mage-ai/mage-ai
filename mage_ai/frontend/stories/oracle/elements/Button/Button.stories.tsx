@@ -43,6 +43,9 @@ All.args = {
     <Button primary>
       Primary
     </Button>,
+    <Button success>
+      Success
+    </Button>,
     <Button selected>
       Selected
     </Button>,

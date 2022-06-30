@@ -6,13 +6,19 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import {
+  BORDER_RADIUS,
+  BORDER_RADIUS_SMALL,
+  BORDER_STYLE,
+  OUTLINE_WIDTH,
+} from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ButtonProps = {
   afterIcon?: any;
+  backgroundColor?: string;
   basic?: boolean;
   beforeIcon?: any;
   borderRadiusLeft?: boolean;
@@ -22,8 +28,10 @@ export type ButtonProps = {
   disabled?: boolean;
   fullWidth?: boolean;
   iconOnly?: boolean;
+  id?: string;
   large?: boolean;
   loading?: boolean;
+  minWidth?: number;
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
@@ -33,7 +41,9 @@ export type ButtonProps = {
   padding?: string;
   primary?: boolean;
   selected?: boolean;
+  selectedAlt?: boolean;
   small?: boolean;
+  smallBorderRadius?: boolean;
   success?: boolean;
   target?: string;
   title?: string;
@@ -43,17 +53,19 @@ export type ButtonProps = {
 
 const ButtonStyle = styled.button<ButtonProps>`
   border: none;
-  border-color: ${light.interactive.defaultBorder};
-  color: ${light.content.active};
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
-
-  padding: 7px 16px;
+  padding: 7px ${UNIT * 2}px;
   position: relative;
   z-index: 0;
 
+  ${props => `
+    border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
+    color: ${(props.theme.content || light.content).active};
+  `}
+
   ${props => !props.noBackground && `
-    background-color: ${light.background.row};
+    background-color: ${(props.theme.background || light.background).row};
   `}
 
   ${props => props.noBackground && `
@@ -76,7 +88,7 @@ const ButtonStyle = styled.button<ButtonProps>`
   `}
 
   ${props => !props.basic && `
-    border-style: solid;
+    border-style: ${BORDER_STYLE};
     border-width: 1px;
   `}
 
@@ -86,6 +98,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.noBorder && `
     border: none;
+  `}
+
+  ${props => props.smallBorderRadius && `
+    border-radius: ${BORDER_RADIUS_SMALL}px;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `
@@ -98,6 +114,10 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => props.noBorderRight && `
     border-right: none;
+  `}
+
+  ${props => props.backgroundColor && `
+    background-color: ${props.backgroundColor};
   `}
 
   ${props => props.danger && `
@@ -126,38 +146,44 @@ const ButtonStyle = styled.button<ButtonProps>`
 
   ${props => !props.disabled && !props.notClickable && `
     &:hover {
-      border-color: ${light.interactive.hoverBorder};
+      border-color: ${(props.theme.interactive || light.interactive).hoverBorder};
     }
     &:active {
-      border-color: ${light.content.active};
+      border-color: ${(props.theme.content || light.content).active};
     }
   `}
 
   ${props => props.primary && !props.disabled && `
-    background-color: ${light.interactive.linkPrimary};
-    color: ${light.monotone.white};
-    border-color: ${light.interactive.linkPrimary};
+    background-color: ${(props.theme.interactive || light.interactive).linkPrimary};
+    color: ${(props.theme.monotone || light.monotone).white};
+    border-color: ${(props.theme.interactive || light.interactive).linkPrimary};
     &:hover {
-      border-color: ${light.monotone.black};
-    }
-    &:active {
-      background: ${light.interactive.focusBackground};
+      border-color: ${(props.theme.monotone || light.monotone).black};
     }
   `}
 
   ${props => props.disabled && `
-    color: ${light.interactive.disabledBorder};
+    color: ${(props.theme.interactive || light.interactive).disabledBorder};
     &:hover {
       cursor: not-allowed;
     }
   `}
 
   ${props => props.selected && `
-    border-color: ${light.content.active};
+    border-color: ${(props.theme.content || light.content).active};
+  `}
+
+  ${props => props.selectedAlt && `
+    border: ${OUTLINE_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).white};
+    box-shadow: 0 0 0 0.5px ${(props.theme.interactive || light.interactive).defaultBorder};
   `}
 
   ${props => props.width && `
     width: ${props.width}px;
+  `}
+
+  ${props => props.minWidth && `
+    min-width: ${props.minWidth}px;
   `}
 
   ${props => props.fullWidth && `
@@ -170,6 +196,7 @@ const Button = ({
   beforeIcon,
   children,
   disabled,
+  id,
   loading,
   onClick,
   ...props
@@ -183,6 +210,7 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
+      id={id}
       onClick={(e) => {
         e?.preventDefault();
         onClick?.(e);

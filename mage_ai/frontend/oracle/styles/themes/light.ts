@@ -1,12 +1,14 @@
 import {
   BLACK,
   BLUE,
+  BLUE_DARK,
   BLUE_HIGHLIGHT,
   BLUE_HIGHLIGHT_LIGHT,
   DARK_GRAY_LINES,
   GRAY_LINES,
   GRAY,
   LIGHT,
+  LIME,
   LIME_XLIGHT,
   LIME_TEXT,
   NAVY,
@@ -19,6 +21,7 @@ import {
   RED_XLIGHT,
   SILVER,
   WHITE,
+  YELLOW,
 } from '../colors/main';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -94,6 +97,9 @@ export default {
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
+    button1: BLUE_DARK,
+    button2: YELLOW,
+    button3: LIME,
     danger: RED,
     lines: '#9B6CA7',
     primary: PURPLE,

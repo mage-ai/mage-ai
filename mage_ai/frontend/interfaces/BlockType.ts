@@ -12,6 +12,7 @@ export enum StatusTypeEnum {
 
 export default interface BlockType {
   downstream_blocks?: string[];
+  file?: string;
   name?: string;
   status?: StatusTypeEnum;
   type?: BlockTypeEnum;

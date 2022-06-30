@@ -8,6 +8,7 @@ import {
   GRAY_LINES,
   GRAY,
   LIGHT,
+  LIME,
   LIME_XLIGHT,
   LIME_TEXT,
   NAVY,
@@ -21,6 +22,7 @@ import {
   RED_XLIGHT,
   SILVER,
   WHITE,
+  YELLOW,
 } from '../colors/main';
 import {
   DARK_CONTENT_ACTIVE,
@@ -115,6 +117,9 @@ export default {
     backgroundPrimary: PURPLE_LIGHT,
     backgroundSecondary: RED_LIGHT,
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
+    button1: BLUE_DARK,
+    button2: YELLOW,
+    button3: LIME,
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
