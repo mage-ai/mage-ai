@@ -8,6 +8,7 @@ type FlexContainerProps = {
   fullHeight?: boolean;
   fullScreenHeight?: boolean;
   fullWidth?: boolean;
+  inline?: boolean;
   justifyContent?: string;
   offsetHeight?: number;
   relative?: boolean;
@@ -40,7 +41,7 @@ const RESPONSIVE_FLEX_DIRECTION = css`
       ${SHARED_FLEX_DIRECTION_STYLE}
     `}
   `}
-  
+
   ${media.lg`
     ${(props: any) => props.responsive && `
       flex-direction: row;
@@ -50,8 +51,6 @@ const RESPONSIVE_FLEX_DIRECTION = css`
 
 const FlexContainerStyle = styled.div<FlexContainerProps>`
   ${flexbox}
-
-  display: flex;
 
   ${RESPONSIVE_FLEX_DIRECTION}
 
@@ -69,6 +68,14 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
 
   ${props => props.fullWidth && `
     width: 100%;
+  `}
+
+  ${props => !props.inline && `
+    display: flex;
+  `}
+
+  ${props => props.inline && `
+    display: inline-flex;
   `}
 
   ${props => props.fullScreenHeight && !props.offsetHeight && `

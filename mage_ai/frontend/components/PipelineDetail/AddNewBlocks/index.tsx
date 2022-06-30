@@ -1,3 +1,4 @@
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
@@ -7,17 +8,32 @@ import {
   IconContainerStyle,
 } from './index.style';
 
-function AddNewBlocks() {
+type AddNewBlocksProps = {
+  addNewBlock: (block: BlockType) => void;
+  compact?: boolean;
+};
+
+function AddNewBlocks({
+  addNewBlock,
+  compact,
+}: AddNewBlocksProps) {
+  const sharedProps = {
+    compact,
+    inline: true,
+  };
+
   return (
-    <FlexContainer>
+    <FlexContainer inline>
       <KeyboardShortcutButton
+        {...sharedProps}
         beforeElement={
-          <IconContainerStyle purple>
-            <Add size={ICON_SIZE} />
+          <IconContainerStyle compact={compact} purple >
+            <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        inline
-        onClick={() => false}
+        onClick={() => addNewBlock({
+          type: BlockTypeEnum.TRANSFORMER,
+        })}
         uuid="AddNewBlocks/Transformer"
       >
         Transformer
@@ -26,13 +42,15 @@ function AddNewBlocks() {
       <Spacing ml={1} />
 
       <KeyboardShortcutButton
+        {...sharedProps}
         beforeElement={
-          <IconContainerStyle blue>
-            <Add size={ICON_SIZE} />
+          <IconContainerStyle blue compact={compact}>
+            <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        inline
-        onClick={() => false}
+        onClick={() => addNewBlock({
+          type: BlockTypeEnum.DATA_LOADER,
+        })}
         uuid="AddNewBlocks/Data_loader"
       >
         Data loader
@@ -41,13 +59,15 @@ function AddNewBlocks() {
       <Spacing ml={1} />
 
       <KeyboardShortcutButton
+        {...sharedProps}
         beforeElement={
-          <IconContainerStyle border>
-            <Add size={ICON_SIZE} />
+          <IconContainerStyle border compact={compact}>
+            <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        inline
-        onClick={() => false}
+        onClick={() => addNewBlock({
+          type: BlockTypeEnum.SCRATCHPAD,
+        })}
         uuid="AddNewBlocks/Scratchpad"
       >
         Scratchpad

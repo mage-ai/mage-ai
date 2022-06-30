@@ -7,12 +7,14 @@ import React, {
 import * as ReactDOM from 'react-dom';
 import Editor from '@monaco-editor/react';
 
+import usePrevious from '@utils/usePrevious';
 import {
   DEFAULT_AUTO_SAVE_INTERVAL,
   DEFAULT_FONT_SIZE,
   DEFAULT_LANGUAGE,
   DEFAULT_THEME,
 } from './constants';
+import { SINGLE_LINE_HEIGHT } from './index.style';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
@@ -31,20 +33,28 @@ export type OnDidChangeCursorPositionParameterType = {
   };
 };
 
+export type CodeEditorSharedProps = {
+  defaultValue?: string;
+  height?: number | string;
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
+  selected?: boolean;
+  setSelected?: (value: boolean) => void;
+  setTextareaFocused?: (value: boolean) => void;
+  textareaFocused?: boolean;
+};
+
 type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   content?: string;
-  defaultValue?: string;
   fontSize?: number;
-  height?: number | string;
   language?: string;
   onChange?: (value: string) => void;
-  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
   onSave?: (value: string) => void;
+  showLineNumbers?: boolean;
   theme?: any;
   width?: number | string;
-};
+} & CodeEditorSharedProps;
 
 function CodeEditor({
   autoHeight,
@@ -56,6 +66,11 @@ function CodeEditor({
   onChange,
   onDidChangeCursorPosition,
   onSave,
+  selected,
+  setSelected,
+  setTextareaFocused,
+  showLineNumbers,
+  textareaFocused,
   theme: themeProp,
   width = '100%',
 }: CodeEditorProps) {
@@ -96,6 +111,26 @@ function CodeEditor({
         `${calculateHeightFromContent(defaultValue || '')}px`;
     }
 
+    editor.onDidFocusEditorWidget(() => {
+      setSelected?.(true);
+      setTextareaFocused?.(true);
+    });
+
+    editor.onDidContentSizeChange(({
+      contentHeight,
+      contentHeightChanged,
+    }) => {
+      if (autoHeight && contentHeightChanged) {
+        editor._domElement.style.height = `${contentHeight + (SINGLE_LINE_HEIGHT * 2)}px`;
+      }
+    });
+
+    if (selected && textareaFocused) {
+      setTimeout(() => {
+        editor.focus();
+      }, 1);
+    }
+
     if (onDidChangeCursorPosition) {
       editor.onDidChangeCursorPosition(({
         position: {
@@ -106,6 +141,7 @@ function CodeEditor({
           height,
           top,
         } = editor._domElement.getBoundingClientRect();
+
         onDidChangeCursorPosition({
           editorRect: {
             height: Number(height),
@@ -124,6 +160,10 @@ function CodeEditor({
     onDidChangeCursorPosition,
     onSave,
     refBottomOfEditor.current,
+    selected,
+    setSelected,
+    setTextareaFocused,
+    textareaFocused,
   ]);
 
   useEffect(() => {
@@ -151,6 +191,31 @@ function CodeEditor({
     onSave,
   ]);
 
+  const selectedPrevious = usePrevious(selected);
+  const textareaFocusedPrevious = usePrevious(textareaFocused);
+
+  useEffect(() => {
+    if (editorRef?.current) {
+      if (selected && textareaFocused) {
+        setTimeout(() => {
+          editorRef.current.focus();
+        }, 1);
+      } else {
+        const textarea = ReactDOM
+          .findDOMNode(editorRef.current._domElement)
+          // @ts-ignore
+          .getElementsByClassName('inputarea')
+        textarea[0].blur()
+      }
+    }
+  }, [
+    editorRef,
+    selected,
+    selectedPrevious,
+    textareaFocused,
+    textareaFocusedPrevious,
+  ]);
+
   return (
     <>
       <Editor
@@ -160,10 +225,6 @@ function CodeEditor({
         language={language || DEFAULT_LANGUAGE}
         onChange={(val: string) => {
           onChange?.(val);
-
-          if (autoHeight) {
-            editorRef.current._domElement.style.height = `${calculateHeightFromContent(val)}px`;
-          }
         }}
         onMount={handleEditorDidMount}
         // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
@@ -174,10 +235,12 @@ function CodeEditor({
             enabled: false,
           },
           overviewRulerBorder: false,
+          renderLineHighlightOnlyWhenFocus: true,
           scrollBeyondLastLine: false,
           // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorScrollbarOptions.html
           scrollbar: {
             alwaysConsumeMouseWheel: false,
+            vertical: 'hidden',
           },
         }}
         theme={theme}

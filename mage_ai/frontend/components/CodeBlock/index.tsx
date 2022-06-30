@@ -6,8 +6,13 @@ import {
 import Ansi from 'ansi-to-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
+import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import CodeEditor, { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
+import CodeEditor, {
+  CodeEditorSharedProps,
+  OnDidChangeCursorPositionParameterType,
+} from '@components/CodeEditor';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -17,23 +22,36 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
+  BlockDivider,
+  BlockDividerInner,
+} from './index.style';
+import {
   ContainerStyle,
+  CodeContainerStyle,
 } from './index.style';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeBlockProps = {
-  defaultValue?: string;
-  height?: number;
+  addNewBlock: (block: BlockType) => void;
+  block: BlockType;
   mainContainerRef?: any;
-  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
-}
+  noDivider?: boolean;
+} & CodeEditorSharedProps;
 
 function CodeBlockProps({
+  addNewBlock,
+  block,
   defaultValue,
   height,
   mainContainerRef,
+  noDivider,
+  selected,
+  setSelected,
+  setTextareaFocused,
+  textareaFocused,
 }: CodeBlockProps) {
+  const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
@@ -126,70 +144,89 @@ function CodeBlockProps({
   ]);
 
   return (
-    <Spacing px={PADDING_UNITS}>
-      <ContainerStyle>
-        <CodeEditor
-          autoHeight
-          // autoSave
-          defaultValue={defaultValue}
-          height={height}
-          onDidChangeCursorPosition={onDidChangeCursorPosition}
-          onSave={saveCodeText}
-          width="100%"
-        />
+    <>
+      <ContainerStyle
+        blockType={block.type}
+        selected={selected}
+      >
+        <CodeContainerStyle className={selected ? 'selected' : null}>
+          <CodeEditor
+            autoHeight
+            // autoSave
+            defaultValue={defaultValue}
+            height={height}
+            onDidChangeCursorPosition={onDidChangeCursorPosition}
+            onSave={saveCodeText}
+            selected={selected}
+            setSelected={setSelected}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={textareaFocused}
+            width="100%"
+          />
+        </CodeContainerStyle>
+
+        {messages.map(({
+          data: dataInit,
+          type: dataType,
+        }: KernelOutputType, idx: number) => {
+          if (!dataInit || dataInit?.length === 0) {
+            return;
+          }
+
+          let dataArray: string[] = [];
+          if (Array.isArray(dataInit)) {
+            dataArray = dataInit;
+          } else {
+            dataArray = [dataInit];
+          }
+
+          return dataArray.map((data: string) => (
+            <div key={data}>
+              {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
+                <Text monospace>
+                  <Ansi>
+                    {data}
+                  </Ansi>
+                </Text>
+              )}
+              {dataType === DataTypeEnum.IMAGE_PNG && (
+                <img
+                  alt={`Image {idx} from code output`}
+                  src={`data:image/png;base64, ${data}`}
+                />
+              )}
+            </div>
+          ));
+        })}
+
+        {isInProgress && (
+          <Spacing mt={1}>
+            <Spinner />
+          </Spacing>
+        )}
+
+        {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (
+          <Spacing mt={2}>
+            <Text>
+              Run count: {runCount}
+            </Text>
+            <Text>
+              Execution time: {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+            </Text>
+          </Spacing>
+        )}
       </ContainerStyle>
 
-      {messages.map(({
-        data: dataInit,
-        type: dataType,
-      }: KernelOutputType, idx: number) => {
-        if (!dataInit || dataInit?.length === 0) {
-          return;
-        }
-
-        let dataArray: string[] = [];
-        if (Array.isArray(dataInit)) {
-          dataArray = dataInit;
-        } else {
-          dataArray = [dataInit];
-        }
-
-        return dataArray.map((data: string) => (
-          <div key={data}>
-            {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
-              <Text monospace>
-                <Ansi>
-                  {data}
-                </Ansi>
-              </Text>
-            )}
-            {dataType === DataTypeEnum.IMAGE_PNG && (
-              <img
-                alt={`Image {idx} from code output`}
-                src={`data:image/png;base64, ${data}`}
-              />
-            )}
-          </div>
-        ));
-      })}
-
-      {isInProgress && (
-        <Spacing mt={1}>
-          <Spinner />
-        </Spacing>
+      {!noDivider && (
+        <BlockDivider
+          onMouseEnter={() => setAddNewBlocksVisible(true)}
+          onMouseLeave={() => setAddNewBlocksVisible(false)}
+        >
+          {addNewBlocksVisible && <AddNewBlocks addNewBlock={addNewBlock} compact />}
+          <BlockDividerInner className="block-divider-inner" />
+        </BlockDivider>
       )}
-
-      {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (
-        <Spacing mt={2}>
-          <Text>
-            Run count: {runCount}
-          </Text>
-          <Text>
-            Execution time: {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-          </Text>
-        </Spacing>
-      )}
-    </Spacing>
+    </>
   );
 }
 

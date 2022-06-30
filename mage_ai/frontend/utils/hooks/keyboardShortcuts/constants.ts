@@ -120,3 +120,5 @@ export const KEY_SYMBOL_ESCAPE = 'esc';
 export const KEY_SYMBOL_META = '⌘';
 export const KEY_SYMBOL_SHIFT = '⇧';
 export const KEY_SYMBOL_TAB = 'tab';
+
+export const KEY_ENTER = 'Enter';
