@@ -168,7 +168,7 @@ class Block:
             self.__update_name()
         if 'upstream_blocks' in data and \
                 set(data['upstream_blocks']) != set(self.upstream_block_uuids):
-            self.__update_upstream_blocks()
+            self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
     # TODO: implement execution logic
@@ -206,7 +206,7 @@ class Block:
     def __update_upstream_blocks(self, upstream_blocks):
         if self.pipeline is None:
             return
-        self.pipeline.update_block(self, upstream_blocks=upstream_blocks)
+        self.pipeline.update_block(self, upstream_block_uuids=upstream_blocks)
 
 
 class DataLoaderBlock(Block):
