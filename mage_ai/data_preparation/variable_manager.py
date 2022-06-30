@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.models.variable import Variable, VariableType, VARIABLE_DIR
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Any, Dict, List
 import os
 import pandas as pd
@@ -56,3 +57,11 @@ class VariableManager:
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
         return os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
+
+
+def get_global_variable(pipeline_uuid: str, key: str) -> Any:
+    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
+
+
+def set_global_variable(pipeline_uuid: str, key: str, value: Any) -> None:
+    VariableManager(get_repo_path()).add_variable(pipeline_uuid, 'global', key, value)

@@ -3,8 +3,7 @@ from jupyter_client.multikernelmanager import MultiKernelManager
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.repo_manager import init_repo
+from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.subscriber import get_messages
@@ -15,10 +14,6 @@ import os
 import tornado.ioloop
 import tornado.web
 
-# TODO: Set repo_path when launching server
-repo_path = os.path.join(os.getcwd(), 'default_repo')
-if not os.path.exists(repo_path):
-    init_repo(repo_path)
 manager = KernelManager()
 
 
@@ -49,32 +44,32 @@ class ApiHandler(BaseHandler):
 
 class ApiFileListHandler(BaseHandler):
     def get(self):
-        self.write(dict(files=File.get_all_files(repo_path)))
+        self.write(dict(files=File.get_all_files(get_repo_path())))
 
     def post(self):
         data = json.loads(self.request.body).get('file', {})
-        file = File.create(data.get('name'), data.get('dir_path'), repo_path)
+        file = File.create(data.get('name'), data.get('dir_path'), get_repo_path())
         self.write(dict(file=file.to_dict()))
 
 
 class ApiFileContentHandler(BaseHandler):
     def get(self):
         file_path = self.get_argument('path', None)
-        file = File.from_path(file_path, repo_path)
+        file = File.from_path(file_path, get_repo_path())
         self.write(dict(file=file.to_dict(include_content=True)))
 
     def post(self):
         data = json.loads(self.request.body).get('file', {})
         path = data.get('path')
         content = data.get('content')
-        file = File.from_path(path, repo_path)
+        file = File.from_path(path, get_repo_path())
         file.update_content(content)
         self.write(dict(file=file.to_dict(include_content=True)))
 
 
 class ApiPipelineHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         self.write(dict(pipeline=pipeline.to_dict()))
         self.finish()
 
@@ -82,7 +77,7 @@ class ApiPipelineHandler(BaseHandler):
         """
         Allow updating pipeline name and uuid
         """
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data)
         self.write(dict(pipeline=pipeline.to_dict()))
@@ -90,7 +85,7 @@ class ApiPipelineHandler(BaseHandler):
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         data = json.loads(self.request.body)
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         asyncio.run(pipeline.execute())
         self.write(dict(pipeline=pipeline.to_dict()))
         self.finish()
@@ -98,20 +93,20 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
-        pipelines = Pipeline.get_all_pipelines(repo_path)
+        pipelines = Pipeline.get_all_pipelines(get_repo_path())
         self.write(dict(pipelines=pipelines))
         self.finish()
 
     def post(self):
         data = json.loads(self.request.body)
         name = data.get('pipeline', {}).get('name')
-        pipeline = Pipeline.create(name, repo_path)
+        pipeline = Pipeline.create(name, get_repo_path())
         self.write(dict(pipeline=pipeline.to_dict()))
 
 
 class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         self.write(dict(block=pipeline.get_block(block_uuid).to_dict()))
         self.finish()
 
@@ -119,7 +114,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         """
         Allow updating block name, uuid, upstream_block, and downstream_blocks
         """
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         data = json.loads(self.request.body).get('block', {})
         block = pipeline.get_block(block_uuid)
         block.update(data)
@@ -129,7 +124,7 @@ class ApiPipelineBlockHandler(BaseHandler):
 class ApiPipelineBlockExecuteHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         data = json.loads(self.request.body)
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
         asyncio.run(block.execute())
         self.write(dict(block=block.to_dict()))
@@ -138,7 +133,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
 
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         self.write(dict(blocks=pipeline.to_dict()['blocks']))
         self.finish()
 
@@ -146,16 +141,16 @@ class ApiPipelineBlockListHandler(BaseHandler):
         """
         Create block and add to pipeline
         """
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block_data = json.loads(self.request.body).get('block', {})
-        block = Block.create(block_data.get('name'), block_data.get('type'), repo_path)
+        block = Block.create(block_data.get('name'), block_data.get('type'), get_repo_path())
         pipeline.add_block(block, block_data.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict()))
 
 
 class ApiPipelineBlockAnalysisHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
         analyses = block.get_analyses()
         self.write(dict(analyses=analyses))
@@ -163,7 +158,7 @@ class ApiPipelineBlockAnalysisHandler(BaseHandler):
 
 class ApiPipelineBlockOutputHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path)
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
         outputs = block.get_outputs()
         self.write(dict(outputs=outputs))
@@ -171,7 +166,7 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
 
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        variables = VariableManager(repo_path).get_variables_by_pipeline(pipeline_uuid)
+        variables = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
         self.write(variables)
         self.finish()
 
@@ -218,7 +213,13 @@ def make_app():
     )
 
 
-async def main():
+async def main(repo_path: str = None):
+    if repo_path is None:
+        repo_path = os.path.join(os.getcwd(), 'default_repo')
+    if not os.path.exists(repo_path):
+        init_repo(repo_path)
+    set_repo_path(repo_path)
+
     manager.start_kernel()
     os.environ['KERNEL_ID'] = manager.kernel_id
 
