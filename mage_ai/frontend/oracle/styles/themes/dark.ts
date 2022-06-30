@@ -70,6 +70,7 @@ export default {
     success: LIME_XLIGHT,
   },
   borders: {
+    light: '#2F3034',
     medium: '#1C1C1C',
     dark: '#000000',
   },

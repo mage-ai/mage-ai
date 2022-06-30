@@ -16,7 +16,9 @@ function PipelineDetailPage() {
         before={<div style={{ height: 9999 }} />}
         mainContainerRef={mainContainerRef}
       >
-        <PipelineDetail />
+        <PipelineDetail
+          mainContainerRef={mainContainerRef}
+        />
       </TripleLayout>
     </>
   );

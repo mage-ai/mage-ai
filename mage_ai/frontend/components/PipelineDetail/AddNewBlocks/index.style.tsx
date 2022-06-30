@@ -1,8 +1,10 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 export const ICON_SIZE = PADDING_UNITS * UNIT;
 
@@ -25,11 +27,11 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
   `}
 
   ${props => props.blue && `
-    background-color: ${(props.theme.accent || dark.accent).blue};
+    background-color: ${getColorsForBlockType(BlockTypeEnum.DATA_LOADER, props).accent};
   `}
 
   ${props => props.purple && `
-    background-color: ${(props.theme.accent || dark.accent).purple};
+    background-color: ${getColorsForBlockType(BlockTypeEnum.TRANSFORMER, props).accent};
   `}
 
   ${props => !props.compact && `
