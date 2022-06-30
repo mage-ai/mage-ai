@@ -4,20 +4,17 @@ from pandas import DataFrame
 
 def load_data_from_redshift() -> DataFrame:
     """
-    Template code for loading data from Redshift cluster.
-
-    This template assumes that IAM profiles are specified in `~/.aws`.
-    - If IAM profiles are not setup, manually specify them as keyword arguments in `config`
-    - If using temporary database credentials, use `Redshift.with_temporary_credentials()`
-    to create loader.
+    Template code for loading data from Redshift cluster. Additional
+    configuration parameters can be added to the `config` dictionary.
     """
     config = {
-        'cluster_identifier': 'your_redshift_cluster_name',
         'database': 'your_redshift_database_name',
-        'db_user': 'your_redshift_database_username',
-        'profile': 'default',
+        'user': 'database_login_username',
+        'password': 'database_login_password',
+        'host': 'database_host',
+        'port': 'database_port',
     }
     query = 'your_redshift_selection_query'
 
-    with Redshift.with_iam(**config) as loader:
+    with Redshift.with_temporary_credentials(**config) as loader:
         return loader.load(query)
