@@ -46,11 +46,11 @@ def build_action_variables(
 
 
 def build_transformer_action(
+    df: DataFrame,
     action_type: Union[ActionType, str],
     action_arguments: List[str] = [],
     action_code: str = '',
     action_options: Dict = {},
-    action_variables: Dict = {},
     axis: Union[Axis, str] = Axis.COLUMN,
     outputs: List[Dict] = [],
 ) -> Dict:
@@ -58,18 +58,21 @@ def build_transformer_action(
     Builds transformer action payload from arguments. This payload can be passed as input to the
     `transformer_actions` library for use in performing cleaning actions.
 
+    Designed as a helper method to simplify generating transformer action payloads
+
     Args:
+        df (DataFrame): The data frame to build a transformer action payload for.
         action_type (Union[ActionType, str]): Transformer action to perform.
         action_arguments (List[str], optional): Columns/Rows to perform this action on. Defaults to [].
         action_code (str, optional): Special code or query to execute with action. Defaults to ''.
-        action_options (Dict, optional): Options specifying . Defaults to {}.
-        action_variables (Dict, optional): Variable metadata for action arguments. Defaults to {}.
+        action_options (Dict, optional): Options specifying behavior of action. Defaults to {}.
         axis (Union[Axis, str], optional): Axis of the data frame to apply the action to. Defaults to Axis.COLUMN.
         outputs (List[Dict], optional): Specifies metadata of newly created columns. Defaults to [].
 
     Returns:
         Dict: Transformer action payload
     """
+    action_variables = build_action_variables(df, action_arguments)
     return dict(
         action_type=action_type,
         action_arguments=action_arguments,
