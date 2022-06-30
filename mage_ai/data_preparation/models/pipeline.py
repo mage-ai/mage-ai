@@ -1,7 +1,7 @@
-from queue import Queue
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.templates.utils import copy_templates
+from queue import Queue
 import asyncio
 import os
 import yaml
@@ -54,14 +54,18 @@ class Pipeline:
             os.mkdir(pipelines_folder)
         return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
 
-    # async function for parallel processing
     async def execute(self):
+        """
+        Async function for parallel processing
+        This function will schedule the block execution in topological
+        order based on a block's upstream dependencies.
+        """
         tasks = dict()
         blocks = Queue()
-        for b in self.block_configs:
-            if len(b.get('upstream_blocks', [])) == 0:
-                blocks.put(self.blocks_by_uuid[b['uuid']])
-                tasks[b['uuid']] = None
+        for b in self.blocks_by_uuid.values():
+            if len(b.upstream_blocks) == 0:
+                blocks.put(b)
+                tasks[b.uuid] = None
         while not blocks.empty():
             block = blocks.get()
             skip = False
@@ -126,7 +130,6 @@ class Pipeline:
         block.pipeline = self
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
-        self.load_config_from_yaml()
         return block
 
     def get_block(self, block_uuid):
@@ -148,7 +151,6 @@ class Pipeline:
                 [b for b in upstream_block.downstream_blocks if b.uuid != block.uuid]
         del self.blocks_by_uuid[block.uuid]
         self.__save()
-        self.load_config_from_yaml()
         return block
 
     # TODO: Implement this method
