@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import init_repo
 from mage_ai.server.server import main as start_server
 
@@ -19,7 +20,11 @@ def main():
         else:
             repo_path = os.getcwd()
         asyncio.run(start_server(repo_path))
-
+    elif command == 'run':
+        pipeline_uuid = sys.argv[2]
+        pipeline = Pipeline(pipeline_uuid, os.getcwd())
+        
+        asyncio.run(pipeline.execute())
 
 if __name__ == "__main__":
     main()
