@@ -4,6 +4,7 @@ from mage_ai.data_preparation.templates.utils import copy_templates
 from queue import Queue
 import asyncio
 import os
+import subprocess
 import yaml
 
 PIPELINES_FOLDER = 'pipelines'
@@ -61,6 +62,8 @@ class Pipeline:
         This function will schedule the block execution in topological
         order based on a block's upstream dependencies.
         """
+        subprocess.run(['pip', 'install', '-r', f'{self.dir_path}/requirements.txt'])
+
         tasks = dict()
         blocks = Queue()
         for b in self.blocks_by_uuid.values():
