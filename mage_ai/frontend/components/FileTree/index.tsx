@@ -18,13 +18,10 @@ function FileTree({
 }: FileTreeProps) {
   const [tree, setTree] = useState(initialTree);
 
-  let depth = 0;
-
   const toggleFolder = (name: string, depth: number) => {
     let searchDepth = 0;
     const updateExpanded = (subtree: FileTreeNode) => {
-      console.log(`Searching ${subtree?.name} (depth ${searchDepth}) | Looking for ${name} (depth ${depth})`);
-      if (subtree?.name === name && searchDepth === depth) {
+    if (subtree?.name === name && searchDepth === depth) {
         subtree.collapsed = !subtree.collapsed;
         return;
       }
@@ -39,8 +36,9 @@ function FileTree({
     setTree(treeCopy.children);
   };
 
-  const toggleFolderHandler = (name, depth) => (e) => toggleFolder(name, depth);
+  const toggleFolderHandler = (name, depth) => () => toggleFolder(name, depth);
 
+  let depth = 0;
   const buildTreeEl = (tree: FileTreeNode[]) => {
     depth++;
     const el = tree.map(({ name, children, collapsed, selected }) => {
