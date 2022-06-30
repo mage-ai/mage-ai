@@ -204,7 +204,8 @@ class Block:
                 ]
 
         decorated_functions = []
-        exec(open(self.file_path).read(), {self.type: block_decorator(decorated_functions)})
+        with open(self.file_path) as file:
+            exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
             return decorated_functions[0](*input_vars)
 

@@ -48,8 +48,6 @@ def load_data():
             ''')
         with open(block2.file_path, 'w') as file:
             file.write('''import pandas as pd
-from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-
 @transformer
 def remove_duplicate_rows(df):
 	df_transformed = df.drop_duplicates()
@@ -68,6 +66,53 @@ def remove_duplicate_rows(df):
             variable_type='dataframe'
         )
         self.assertEqual(len(data.index), 2)
+
+    def test_execute_multiple_upstream_blocks(self):
+        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline)
+        block3 = Block.create('test_transformer', 'transformer', self.repo_path, pipeline)
+        block1.downstream_blocks = [block3]
+        block2.downstream_blocks = [block3]
+        block3.upstream_blocks = [block1, block2]
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block2.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [5], 'col2': [6]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block3.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@transformer
+def union_datasets(df1, df2):
+	df_union = pd.concat([df1, df2])
+	return [df_union]
+            ''')
+        pipeline.add_block(block1)
+        pipeline.add_block(block2)
+        pipeline.add_block(block3, upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'])
+        asyncio.run(block1.execute())
+        asyncio.run(block2.execute())
+        asyncio.run(block3.execute())
+
+        variable_manager = VariableManager(pipeline.repo_path)
+        data = variable_manager.get_variable(
+            pipeline.uuid,
+            block3.uuid,
+            'df',
+            variable_type='dataframe'
+        )
+        self.assertEqual(len(data.index), 3)
 
     def test_to_dict(self):
         block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
