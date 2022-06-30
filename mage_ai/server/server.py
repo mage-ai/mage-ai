@@ -13,6 +13,7 @@ import json
 import os
 import tornado.ioloop
 import tornado.web
+import traceback
 
 manager = KernelManager()
 
@@ -23,6 +24,18 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def set_default_headers(self):
         self.set_header('Content-Type', 'application/json')
+
+    def write_error(self, status_code, **kwargs):
+        if status_code == 500:
+            exception = kwargs['exc_info'][1]
+            self.write(dict(
+                error=dict(
+                    code=status_code,
+                    errors=traceback.format_stack(),
+                    exception=str(exception),
+                    message=traceback.format_exc(),
+                )
+            ))
 
 
 class ApiHandler(BaseHandler):
