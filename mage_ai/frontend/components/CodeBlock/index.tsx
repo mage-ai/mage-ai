@@ -13,6 +13,7 @@ import CodeEditor, {
   CodeEditorSharedProps,
   OnDidChangeCursorPositionParameterType,
 } from '@components/CodeEditor';
+import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -37,12 +38,13 @@ type CodeBlockProps = {
   block: BlockType;
   mainContainerRef?: any;
   noDivider?: boolean;
-} & CodeEditorSharedProps;
+} & CodeEditorSharedProps & CommandButtonsSharedProps;
 
 function CodeBlockProps({
   addNewBlock,
   block,
   defaultValue,
+  deleteBlock,
   height,
   mainContainerRef,
   noDivider,
@@ -144,7 +146,14 @@ function CodeBlockProps({
   ]);
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
+      {selected && (
+        <CommandButtons
+          block={block}
+          deleteBlock={deleteBlock}
+        />
+      )}
+
       <ContainerStyle
         blockType={block.type}
         selected={selected}
@@ -226,7 +235,7 @@ function CodeBlockProps({
           <BlockDividerInner className="block-divider-inner" />
         </BlockDivider>
       )}
-    </>
+    </div>
   );
 }
 

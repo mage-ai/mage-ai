@@ -39,12 +39,14 @@ import {
   NumberWithDecimalHash,
   Phone,
   Pipeline,
+  PlayButton,
   PreviewHidden,
   PreviewOpen,
   Report,
   Search,
   Sort,
   Switch,
+  Trash,
 } from '@oracle/icons';
 
 const ICONS = [
@@ -53,8 +55,8 @@ const ICONS = [
   AlertCircle,
   Alphabet,
   ArrowDown,
-  ArrowUp,
   ArrowRight,
+  ArrowUp,
   ArrowUp,
   Binary,
   CalendarDate,
@@ -85,12 +87,14 @@ const ICONS = [
   NumberWithDecimalHash,
   Phone,
   Pipeline,
+  PlayButton,
   PreviewHidden,
   PreviewOpen,
   Report,
   Search,
   Sort,
   Switch,
+  Trash,
 ];
 
 const Icons = () => (

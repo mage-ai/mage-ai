@@ -69,7 +69,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.black && `
-    fill: ${(props.theme.monotone || light.monotone).black};
+    fill: ${(props.theme.content || light.content).inverted};
   `}
 
   ${props => !props.useStroke && props.highlight && `
@@ -77,7 +77,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => props.useStroke && props.black && `
-    stroke: ${(props.theme.monotone || light.monotone).black};
+    stroke: ${(props.theme.content || light.content).inverted};
   `}
 
   ${props => props.useStroke && props.muted && !props.disabled && `

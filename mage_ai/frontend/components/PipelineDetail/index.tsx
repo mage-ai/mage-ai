@@ -19,7 +19,10 @@ import {
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pushAtIndex } from '@utils/array';
+import {
+  pushAtIndex,
+  removeAtIndex,
+} from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
@@ -119,6 +122,10 @@ function PipelineDetail({
               setSelectedBlock(addNewBlockAtIndex(b, idx + 1));
               setTextareaFocused(true);
             }}
+            deleteBlock={(b: BlockType) => setBlocks(removeAtIndex(
+              blocks,
+              blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
+            ))}
             block={block}
             key={uuid}
             mainContainerRef={mainContainerRef}

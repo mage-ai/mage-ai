@@ -31,6 +31,7 @@ export const ContainerStyle = styled.div<ContainerProps>`
   border-radius: ${BORDER_RADIUS}px;
   border: 2px solid transparent;
   overflow: hidden;
+  position: relative;
 
   ${props => props.selected && `
     border-color: ${getColorsForBlockType(props.blockType, props).accent};
