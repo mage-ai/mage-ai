@@ -1,13 +1,13 @@
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Button from '@oracle/elements/Button';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ArrowDown, ArrowRight, File, Folder } from '@oracle/icons';
+import { FileTreeNode, NODE_STYLE_MAPPING } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
-import { FileTreeNode, NODE_STYLE_MAPPING } from './constants';
+import { equals } from '@utils/array';
 
 export type FileTreeProps = {
   tree: FileTreeNode[];
@@ -16,37 +16,55 @@ export type FileTreeProps = {
 function FileTree({
   tree: initialTree,
 }: FileTreeProps) {
-  const [tree, setTree] = useState(initialTree);
+  type TreeOperation = true | false | 'toggle';
 
-  const toggleFolder = (name: string, depth: number) => {
-    let searchDepth = 0;
-    const updateExpanded = (subtree: FileTreeNode) => {
-    if (subtree?.name === name && searchDepth === depth) {
-        subtree.collapsed = !subtree.collapsed;
+  const [tree, setTree] = useState(initialTree);
+  const [selectedPath, setSelectedPath] = useState([]);
+
+  const setTreeState = (path: string[], prop: string, value: TreeOperation) => {
+    const searchPath: string[] = [];
+    const updateTree = (subtree: FileTreeNode) => {
+      if (equals(path, searchPath)) {
+        subtree[prop] = value === 'toggle' ? !subtree[prop] : value;
         return;
       }
 
-      searchDepth++;
-      subtree.children?.forEach(childTree => updateExpanded(childTree));
-      searchDepth--;
+      subtree.children?.forEach(childTree => {
+        searchPath.push(childTree.name);
+        updateTree(childTree);
+        searchPath.pop();
+      });
     };
 
     const treeCopy = { children: JSON.parse(JSON.stringify(tree)), name: 'root' };
-    updateExpanded(treeCopy);
+    updateTree(treeCopy);
     setTree(treeCopy.children);
   };
 
-  const toggleFolderHandler = (name, depth) => () => toggleFolder(name, depth);
+  const toggleFolder = (path: string[]) => {
+    setTreeState([...path], 'collapsed', 'toggle');
+    setSelectedPath([...path]);
+  };
+  
+  const selectFile = (path: string[]) => setSelectedPath([...path]);
+
+  const fileTreeHandler = (path, isFolder) => (e) => {
+    e.preventDefault();
+    return isFolder ? toggleFolder(path) : selectFile(path);
+  };
 
   let depth = 0;
+  const path: string[] = [];
   const buildTreeEl = (tree: FileTreeNode[]) => {
     depth++;
-    const el = tree.map(({ name, children, collapsed, selected }) => {
+    const el = tree.map(({ name, children, collapsed }) => {
+      path.push(name);
       const {
-        color = 'black',
+        color,
         icon: FileTreeIcon = children ? Folder : File,
       } = NODE_STYLE_MAPPING[name] || {};
-      return (
+
+      const fileNodeEl = (
         <>
           <Flex alignItems="center">
             <Spacing mr={children ? `${depth * 2 * UNIT - 12}px` : `${depth * 2 * UNIT}px`} />
@@ -54,38 +72,33 @@ function FileTree({
               noColor
               noHoverUnderline
               noOutline
-              onClick={toggleFolderHandler(name, depth)}
+              onClick={fileTreeHandler([...path], !!children)}
             >
               <Spacing py={`${0.75 * UNIT}px`}>
                 <FlexContainer alignItems="center">
                   {children && (
-                    <Button
-                      basic
-                      iconOnly
-                      noPadding
-                      onClick={() => collapsed = true}
-                      title="Expand folder"
-                    >
-                      {collapsed ? <ArrowRight /> : <ArrowDown />}
-                    </Button>
+                    collapsed ? <ArrowRight /> : <ArrowDown />
                   )}
                   &nbsp;
                   <FileTreeIcon fill={color} />
                   &nbsp;
                   <Text
-                    color={selected ? 'white' : color}
                     monospace
+                    color={color}
+                    muted={!equals(path, selectedPath)}
                   >
                     {name}
                   </Text>
                 </FlexContainer>
-
               </Spacing>
             </Link>
           </Flex>
           {children && !collapsed && buildTreeEl(children)}
         </>
       );
+
+      path.pop();
+      return fileNodeEl;
     });
     depth--;
     return el;
