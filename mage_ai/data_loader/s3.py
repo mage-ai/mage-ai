@@ -2,12 +2,12 @@ from mage_ai.data_loader.base import BaseFile, FileFormat
 from pandas import DataFrame
 from io import BytesIO
 import boto3
-import os
 
 
 class S3(BaseFile):
     """
-    Loads data from a S3 bucket. Supports loading files of any of the following types:
+    Loads data from a S3 bucket into a Pandas data frame. Supports loading files
+    of any of the following types:
     - ".csv"
     - ".json"
     - ".parquet"
@@ -22,8 +22,9 @@ class S3(BaseFile):
         **kwargs,
     ) -> None:
         """
-        Initializes data loader from an S3 bucket. If credentials are stored on
-        file, no further arguments are needed. Otherwise, use the factory method to construct
+        Initializes data loader from an S3 bucket. If profile is stored on
+        file (in `~/.aws`), no further arguments are needed other than those
+        specified below. Otherwise, use the factory method `with_credentials` to construct
         the data loader using manually specified credentials.
 
         Args:
@@ -61,8 +62,8 @@ class S3(BaseFile):
     ) -> 'S3':
         """
         Initializes data loader from an S3 bucket using manually specified credentials.
-        If credentials are stored on file under `~/.aws`, do not use this factory method;
-        the default constructor will automatically recognize the credentials.
+        If credentials are stored on file under `~/.aws/`, do not use this
+        factory method, the default constructor will automatically load the credentials.
 
         Args:
             bucket_name (str): Bucket to load resource from

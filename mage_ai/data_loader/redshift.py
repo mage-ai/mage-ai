@@ -10,35 +10,36 @@ class Redshift(BaseSQL):
 
     def __init__(self, **kwargs) -> None:
         """
-        Initializes settings for connecting to a Redshift warehouse.
+        Initializes settings for connecting to a cluster.
         """
         super().__init__(**kwargs)
 
     def open(self) -> None:
         """
-        Opens a connection to the Redshift warehouse.
+        Opens a connection to the Redshift cluster.
         """
         self._ctx = connect(**self.settings)
 
     def query(self, query_string: str, **kwargs) -> None:
         """
-        Executes any query on the Redshift warehouse.
+        Sends query to the connected Redshift cluster.
 
         Args:
-            query_string (str): The query to execute on the Redshift warehouse.
+            query_string (str): The query to execute on the Redshift cluster.
             **kwargs: Additional parameters to pass to the query.
         """
         with self.conn.cursor() as cur:
-            return cur.execute(query_string, **kwargs)
+            cur.execute(query_string, **kwargs)
 
     def load(self, query_string: str, *args, **kwargs) -> DataFrame:
         """
-        Loads data from Redshift into a Pandas data frame based on the query given.
+        Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database.
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            *args, **kwargs: Additional parameters to send to query, including format strings.
+            *args, **kwargs: Additional parameters to send to query, including parameters
+            for use with format strings. See `redshift-connector` docs for more options.
 
         Returns:
             DataFrame: Data frame associated with the given query.
@@ -47,7 +48,7 @@ class Redshift(BaseSQL):
             return cur.execute(query_string, *args, **kwargs).fetch_dataframe()
 
     @classmethod
-    def with_credentials(
+    def with_temporary_credentials(
         cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
     ):
         """
@@ -59,6 +60,7 @@ class Redshift(BaseSQL):
             user (str): Username for authentication
             password (str): Password for authentication
             port (int, optional): Port number of the Redshift cluster. Defaults to 5439.
+            **kwargs: Additional parameters passed to the loader constructor
 
         Returns:
             Redshift: the constructed dataloader using this method
@@ -75,15 +77,19 @@ class Redshift(BaseSQL):
         **kwargs
     ):
         """
-        Creates a Redshift data loader using a profile from `~/.aws/credentials`. If credentials
-        not stored on system or not found by the connector, use `with_credentials` to construct
-        the data loader.
+        Creates a Redshift data loader using an IAM profile from `~/.aws`.
+
+        The IAM Profile configuration can also be manually specified as keyword
+        arguments to this constructor, but is not recommended. If credentials are manually
+        specified, the region of the Redshift cluster must also be specified.
 
         Args:
             cluster_identifier (str): Identifier of the cluster to connect to.
             database (str): The database to connect to within the specified cluster.
             db_user (str): Database username
-            profile (str, optional): The profile to use from stored credentials file. Defaults to 'default'.
+            profile (str, optional): The profile to use from stored credentials file.
+            Defaults to 'default'.
+            **kwargs: Additional parameters passed to the loader constructor
 
         Returns:
             Redshift: the constructed dataloader using this method

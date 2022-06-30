@@ -3,7 +3,14 @@ from pandas import DataFrame
 
 
 def load_from_s3_bucket() -> DataFrame:
-    bucket_name = 'your s3 bucket name'
-    object_name = 'your object name'
+    """
+    Template code for loading data from S3 bucket.
+
+    This template assumes that user credentials are specified in `~/.aws`.
+    If not, use `S3.with_credentials()` to manually specify AWS credentials or use
+    AWS CLI to configure credentials on system.
+    """
+    bucket_name = 'your_s3_bucket_name'  # Specify S3 bucket name to pull data from
+    object_name = 'your_object_name'  # Specify object to download from S3 bucket
 
     return S3(bucket_name, object_name).load()
