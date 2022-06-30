@@ -136,7 +136,7 @@ function CodeBlockProps({
       }}
       style={{ position: 'relative' }}
     >
-      {selected && (
+      {(selected || isInProgress) && (
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}

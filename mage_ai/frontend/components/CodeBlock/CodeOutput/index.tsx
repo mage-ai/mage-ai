@@ -8,7 +8,7 @@ import {
   ExtraInfoStyle,
 } from './index.style';
 
-type ContainerProps = {
+type CodeOutputProps = {
   isInProgress: boolean;
   messages: KernelOutputType[];
   runCount: Number;
