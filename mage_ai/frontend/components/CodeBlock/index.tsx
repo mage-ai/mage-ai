@@ -11,6 +11,7 @@ import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import CodeEditor, {
   CodeEditorSharedProps,
+  OnDidChangeCursorPositionParameterType,
 } from '@components/CodeEditor';
 import KernelOutputType, {
   DataTypeEnum,

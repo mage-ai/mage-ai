@@ -21,7 +21,7 @@ import {
   testShortcut,
 } from './keyboard_shortcuts/shortcuts';
 
-type OnDidChangeCursorPositionParameterType = {
+export type OnDidChangeCursorPositionParameterType = {
   editorRect: {
     height: number;
     top: number;
