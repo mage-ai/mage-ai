@@ -14,6 +14,7 @@ services:
     tty: true # used for interactive debugging
   lab:
     image: mage/data
+    build: .
     depends_on:
       - server_kernel
     environment:
@@ -27,6 +28,7 @@ services:
     oom_kill_disable: true
   server:
     image: mage/data
+    build: .
     depends_on:
       - server_kernel
     environment:
@@ -40,6 +42,7 @@ services:
     tty: true # used for interactive debugging
   app:
     image: mage/data
+    build: .
     depends_on:
       - server
     command: "yarn run dev"
