@@ -166,9 +166,6 @@ class Block:
         if 'upstream_blocks' in data and \
                 set(data['upstream_blocks']) != set(self.upstream_block_uuids):
             self.__update_upstream_blocks()
-        if 'downstream_blocks' in data and \
-                set(data['downstream_blocks']) != set(self.downstream_block_uuids):
-            self.__update_downstream_blocks()
         return self
 
     # TODO: implement execution logic
@@ -208,11 +205,6 @@ class Block:
             return
         self.pipeline.update_block(self, upstream_blocks=upstream_blocks)
 
-    def __update_downstream_blocks(self, downstream_blocks):
-        if self.pipeline is None:
-            return
-        self.pipeline.update_block(self, downstream_blocks=downstream_blocks)
-
 
 class DataLoaderBlock(Block):
     @property
@@ -228,6 +220,7 @@ class DataLoaderBlock(Block):
         df = pd.DataFrame(data)
         print(f'Finished executing block {self.uuid}...')
         return (df)
+
 
 class DataExporterBlock(Block):
     @property

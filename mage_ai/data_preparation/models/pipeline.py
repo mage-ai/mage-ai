@@ -154,8 +154,23 @@ class Pipeline:
         self.__save()
         return block
 
-    # TODO: Implement this method
-    def update_block(self, block, upstream_block_uuids=None, downstream_block_uuids=None):
+    def update_block(self, block, upstream_block_uuids=None):
+        if upstream_block_uuids is not None:
+            curr_upstream_block_uuids = set(block.upstream_block_uuids)
+            new_upstream_block_uuids = set(upstream_block_uuids)
+            if curr_upstream_block_uuids != new_upstream_block_uuids:
+                upstream_blocks_added = self.get_blocks(
+                    new_upstream_block_uuids - curr_upstream_block_uuids,
+                )
+                upstream_blocks_removed = self.get_blocks(
+                    curr_upstream_block_uuids - new_upstream_block_uuids,
+                )
+                for b in upstream_blocks_added:
+                    b.downstream_blocks = b.downstream_blocks.append(block)
+                for b in upstream_blocks_removed:
+                    b.downstream_blocks = \
+                        [db for db in b.downstream_blocks if db.uuid != block.uuid]
+                block.upstream_blocks = self.get_blocks(upstream_block_uuids)
         self.blocks_by_uuid[block.uuid] = block
         self.__save()
         return block
