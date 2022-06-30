@@ -24,7 +24,7 @@ python-dateutil==2.8.2
 pytz==2022.1
 pyyaml~=6.0
 redshift-connector==2.0.907
-requests==2.28.0
+requests==2.27.0
 scikit-learn>=1.0
 simplejson
 six>=1.15.0
