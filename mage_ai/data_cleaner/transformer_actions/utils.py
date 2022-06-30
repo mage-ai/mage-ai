@@ -26,7 +26,7 @@ def build_action_variables(
         columns (List[str], options): Columns to generate action variables for. Defaults to None,
         in which case action variables are generated for all columns of the data frame.
     Returns:
-        Dict: Action variable set.
+        Dict: Set of action variables.
     """
     if ctypes is None:
         ctypes = {}
