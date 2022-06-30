@@ -1,7 +1,8 @@
 from mage_ai.data_loader.postgres import Postgres
+from pandas import DataFrame
 
 
-def load_data_from_postgres():
+def load_data_from_postgres() -> DataFrame:
     """
     Template code for loading data from PostgreSQL database
     """
