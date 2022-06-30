@@ -63,9 +63,12 @@ class Block:
         block_dir_path = os.path.join(repo_path, f'{block_type}s')
         if not os.path.exists(block_dir_path):
             os.mkdir(block_dir_path)
+            with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
+                pass
         # TODO: update the following code to use code template
-        with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
-            pass
+        file_path = os.path.join(block_dir_path, f'{uuid}.py')
+        if os.path.exists(file_path):
+            raise Exception(f'Block {uuid} already exists. Please use a different name.')
         with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
             pass
         return Block(name, uuid, block_type)
