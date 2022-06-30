@@ -52,7 +52,8 @@ class Pipeline:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):
             os.mkdir(pipelines_folder)
-        return os.listdir(os.path.join(repo_path, PIPELINES_FOLDER))
+        return [d for d in os.listdir(pipelines_folder)
+                if os.path.isdir(os.path.join(pipelines_folder, d))]
 
     async def execute(self):
         """
