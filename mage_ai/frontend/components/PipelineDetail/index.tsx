@@ -47,7 +47,7 @@ function PipelineDetail({
   ]);
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
-  }>([]);
+  }>({});
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
@@ -133,7 +133,7 @@ function PipelineDetail({
       const message = JSON.parse(lastMessage.data);
       const { uuid } = message;
 
-      setMessages((messagesPrevious: KernelOutputType[]) => {
+      setMessages((messagesPrevious) => {
         const messagesFromUUID = messagesPrevious[uuid] || [];
 
         return {
@@ -170,7 +170,7 @@ function PipelineDetail({
       uuid,
     }));
 
-    setMessages((messagesPrevious: KernelOutputType[]) => {
+    setMessages((messagesPrevious) => {
       delete messagesPrevious[uuid];
 
       return messagesPrevious;

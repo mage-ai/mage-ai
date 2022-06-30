@@ -160,6 +160,7 @@ export default {
   },
   loader: {
     color: '#EB0032',
+    colorInverted: '#EB0032',
   },
   monotone: {
     black: BLACK,

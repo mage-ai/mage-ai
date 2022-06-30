@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ReactLoading from 'react-loading';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import { ThemeContext } from 'styled-components';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, PADDING } from '@oracle/styles/units/spacing';
