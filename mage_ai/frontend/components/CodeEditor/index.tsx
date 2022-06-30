@@ -21,7 +21,7 @@ import {
   testShortcut,
 } from './keyboard_shortcuts/shortcuts';
 
-export type OnDidChangeCursorPositionParameterType = {
+type OnDidChangeCursorPositionParameterType = {
   editorRect: {
     height: number;
     top: number;
@@ -31,20 +31,26 @@ export type OnDidChangeCursorPositionParameterType = {
   };
 };
 
+export type CodeEditorSharedProps = {
+  defaultValue?: string;
+  height?: number | string;
+  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
+  selected?: boolean;
+  setSelected?: (value: boolean) => void;
+};
+
 type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   content?: string;
-  defaultValue?: string;
   fontSize?: number;
-  height?: number | string;
   language?: string;
   onChange?: (value: string) => void;
-  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
   onSave?: (value: string) => void;
+  showLineNumbers?: boolean;
   theme?: any;
   width?: number | string;
-};
+} & CodeEditorSharedProps;
 
 function CodeEditor({
   autoHeight,
@@ -56,6 +62,9 @@ function CodeEditor({
   onChange,
   onDidChangeCursorPosition,
   onSave,
+  selected,
+  setSelected,
+  showLineNumbers,
   theme: themeProp,
   width = '100%',
 }: CodeEditorProps) {
@@ -96,6 +105,10 @@ function CodeEditor({
         `${calculateHeightFromContent(defaultValue || '')}px`;
     }
 
+    editor.onDidFocusEditorWidget(() => {
+      setSelected?.(true);
+    });
+
     if (onDidChangeCursorPosition) {
       editor.onDidChangeCursorPosition(({
         position: {
@@ -124,6 +137,7 @@ function CodeEditor({
     onDidChangeCursorPosition,
     onSave,
     refBottomOfEditor.current,
+    setSelected,
   ]);
 
   useEffect(() => {
@@ -151,6 +165,15 @@ function CodeEditor({
     onSave,
   ]);
 
+  useEffect(() => {
+    if (editorRef?.current && selected) {
+      editorRef.current.focus();
+    }
+  }, [
+    editorRef?.current,
+    selected,
+  ])
+
   return (
     <>
       <Editor
@@ -174,6 +197,7 @@ function CodeEditor({
             enabled: false,
           },
           overviewRulerBorder: false,
+          renderLineHighlightOnlyWhenFocus: true,
           scrollBeyondLastLine: false,
           // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IEditorScrollbarOptions.html
           scrollbar: {

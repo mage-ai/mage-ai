@@ -11,7 +11,7 @@ import ModelThemeContext from '@context/ModelTheme';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_REGULAR,
@@ -20,6 +20,7 @@ import {
   LARGE,
   LARGE_LG,
   REGULAR,
+  SMALL,
 } from '@oracle/styles/fonts/sizes';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -49,6 +50,7 @@ export type KeyboardShortcutButtonProps = {
   center?: boolean;
   centerText?: boolean;
   children?: any;
+  compact?: boolean;
   earth?: boolean;
   fitContentWidth?: boolean;
   fire?: boolean;
@@ -90,7 +92,6 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${transition()}
 
   align-items: center;
-  border-radius: ${BORDER_RADIUS}px;
   border: none;
   display: flex;
   flex-direction: row;
@@ -98,8 +99,12 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   text-align: left;
   z-index: 0;
 
-  ${props => !props.large1 && !props.large2 && `
+  ${props => !props.large1 && !props.large2 && !props.compact && `
     ${REGULAR}
+  `}
+
+  ${props => props.compact && `
+    ${SMALL}
   `}
 
   ${props => props.large1 && `
@@ -131,10 +136,13 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     justify-content: center;
   `}
 
-  ${props => !props.noPadding && !props.spacious && `
+  ${props => !props.noPadding && !props.spacious && !props.compact && `
     padding: ${UNIT * 1.25}px ${UNIT * 1.5}px;
   `}
 
+  ${props => props.compact && `
+    padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
+  `}
 
   ${props => !props.noPadding && !props.spacious && props.halfPaddingTop && `
     padding-top: ${UNIT * 0.625}px;
@@ -212,8 +220,12 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     }
   `}
 
-  ${props => !props.pill && !props.borderless && `
+  ${props => !props.pill && !props.borderless && !props.compact && `
     border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.compact && `
+    border-radius: ${BORDER_RADIUS_SMALL}px;
   `}
 
   ${props => !props.borderRadiusLeft && !props.borderRadiusRight && props.pill && !props.spacious && `
@@ -335,6 +347,7 @@ function KeyboardShortcutButton({
   borderless,
   centerText,
   children,
+  compact,
   disabled,
   fitContentWidth,
   inverted,
@@ -391,6 +404,7 @@ function KeyboardShortcutButton({
             {...props}
             {...(useModelTheme ? sharedProps : {})}
             center={centerText}
+            compact={compact}
             bold={useModelTheme || bold}
             borderless={useModelTheme || borderless}
             disabled={disabled || mutedDisabled}

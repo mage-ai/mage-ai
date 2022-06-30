@@ -100,5 +100,5 @@ export function logEventCustom(logEventOriginalFunction, eventType, opts = {}) {
 // Tracking: ${eventType}
 // ${JSON.stringify(opts, undefined, 2)}
 //   `);
-  logEventOriginalFunction(eventType);
+  logEventOriginalFunction?.(eventType);
 }

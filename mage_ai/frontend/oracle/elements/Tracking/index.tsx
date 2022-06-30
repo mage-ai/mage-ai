@@ -1,4 +1,4 @@
-import { Amplitude } from '@amplitude/react-amplitude';
+// import { Amplitude } from '@amplitude/react-amplitude';
 
 import EventPropertiesType, { buildEventProperties } from '@interfaces/EventPropertiesType';
 import UserPropertiesType, { buildUserProperties } from '@interfaces/UserPropertiesType';
@@ -14,16 +14,18 @@ function Tracking({
   eventProperties,
   userProperties,
 }: TrackingProps) {
-  return (
-    <Amplitude
-      eventProperties={buildEventProperties({
-        ...(eventProperties || {}),
-      })}
-      userProperties={buildUserProperties(userProperties)}
-    >
-      {children}
-    </Amplitude>
-  );
+  return children(eventType => false);
+
+  // return (
+  //   <Amplitude
+  //     eventProperties={buildEventProperties({
+  //       ...(eventProperties || {}),
+  //     })}
+  //     userProperties={buildUserProperties(userProperties)}
+  //   >
+  //     {children}
+  //   </Amplitude>
+  // );
 }
 
 export default Tracking;

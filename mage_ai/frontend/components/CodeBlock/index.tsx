@@ -6,8 +6,12 @@ import {
 import Ansi from 'ansi-to-react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
+import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import CodeEditor, { OnDidChangeCursorPositionParameterType } from '@components/CodeEditor';
+import CodeEditor, {
+  CodeEditorSharedProps,
+} from '@components/CodeEditor';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -17,23 +21,31 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
+  BlockDivider,
+  BlockDividerInner,
+} from './index.style';
+import {
   ContainerStyle,
 } from './index.style';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeBlockProps = {
-  defaultValue?: string;
-  height?: number;
+  addNewBlock: (block: BlockType) => void;
   mainContainerRef?: any;
-  onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
-}
+  noDivider?: boolean;
+} & CodeEditorSharedProps;
 
 function CodeBlockProps({
+  addNewBlock,
   defaultValue,
   height,
   mainContainerRef,
+  noDivider,
+  selected,
+  setSelected,
 }: CodeBlockProps) {
+  const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
@@ -126,8 +138,8 @@ function CodeBlockProps({
   ]);
 
   return (
-    <Spacing px={PADDING_UNITS}>
-      <ContainerStyle>
+    <div>
+      <ContainerStyle className={selected ? 'selected' : null}>
         <CodeEditor
           autoHeight
           // autoSave
@@ -135,6 +147,8 @@ function CodeBlockProps({
           height={height}
           onDidChangeCursorPosition={onDidChangeCursorPosition}
           onSave={saveCodeText}
+          selected={selected}
+          setSelected={setSelected}
           width="100%"
         />
       </ContainerStyle>
@@ -189,7 +203,17 @@ function CodeBlockProps({
           </Text>
         </Spacing>
       )}
-    </Spacing>
+
+      {!noDivider && (
+        <BlockDivider
+          onMouseEnter={() => setAddNewBlocksVisible(true)}
+          onMouseLeave={() => setAddNewBlocksVisible(false)}
+        >
+          {addNewBlocksVisible && <AddNewBlocks addNewBlock={addNewBlock} compact />}
+          <BlockDividerInner className="block-divider-inner" />
+        </BlockDivider>
+      )}
+    </div>
   );
 }
 

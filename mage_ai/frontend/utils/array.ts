@@ -1,5 +1,12 @@
 import { dig } from '@utils/hash';
 
+export function pushAtIndex(item, idx, arr) {
+  const copy = arr.slice();
+  copy.splice(idx, 0, item);
+
+  return copy;
+}
+
 export function appendArray(value, arrArg) {
   const newArray = arrArg.slice();
   newArray.push(value);
