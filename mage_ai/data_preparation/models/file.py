@@ -30,7 +30,7 @@ class File:
                 continue
             for file in f:
                 file_paths.append(os.path.join(r, file))
-        return file_paths
+        return [os.path.relpath(p, repo_path) for p in file_paths]
 
     def content(self):
         with open(self.file_path) as fp:

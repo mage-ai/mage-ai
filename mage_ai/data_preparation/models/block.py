@@ -118,6 +118,7 @@ class Block:
                     v,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
+            data['variable_uuid'] = v
             analyses.append(data)
         return analyses
 
@@ -137,8 +138,11 @@ class Block:
                 )
             if type(data) is pd.DataFrame:
                 data = dict(
-                    columns=data.columns.tolist(),
-                    rows=data.to_numpy().tolist(),
+                    variable_uuid=v,
+                    sample_data=dict(
+                        columns=data.columns.tolist(),
+                        rows=data.to_numpy().tolist(),
+                    )
                 )
             outputs.append(data)
         return outputs
