@@ -61,7 +61,7 @@ class Block:
         )
 
     @classmethod
-    def create(self, name, block_type, repo_path, pipeline=None):
+    def create(self, name, block_type, repo_path, pipeline=None, upstream_block_uuids=[]):
         """
         1. Create a new folder for block_type if not exist
         2. Create a new python file with code template
@@ -75,7 +75,10 @@ class Block:
             pass
         with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
             pass
-        return BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
+        block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
+        if pipeline is not None:
+            pipeline.add_block(block, upstream_block_uuids)
+        return block
 
     @classmethod
     def get_all_blocks(self, repo_path):

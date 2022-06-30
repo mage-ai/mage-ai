@@ -3,7 +3,9 @@ from mage_ai.data_preparation.models.block import Block, BlockType, DataLoaderBl
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import TestCase
+from pandas.util.testing import assert_frame_equal
 import os
+import pandas as pd
 import shutil
 
 
@@ -50,8 +52,8 @@ def load_data():
             file.write('''import pandas as pd
 @transformer
 def remove_duplicate_rows(df):
-	df_transformed = df.drop_duplicates()
-	return [df_transformed]
+    df_transformed = df.drop_duplicates()
+    return [df_transformed]
             ''')
         pipeline.add_block(block1)
         pipeline.add_block(block2, upstream_block_uuids=['test_data_loader'])
@@ -65,7 +67,8 @@ def remove_duplicate_rows(df):
             'df',
             variable_type='dataframe'
         )
-        self.assertEqual(len(data.index), 2)
+        df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
+        assert_frame_equal(data, df_final)
 
     def test_execute_multiple_upstream_blocks(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
@@ -95,8 +98,8 @@ def load_data():
             file.write('''import pandas as pd
 @transformer
 def union_datasets(df1, df2):
-	df_union = pd.concat([df1, df2])
-	return [df_union]
+    df_union = pd.concat([df1, df2])
+    return [df_union]
             ''')
         pipeline.add_block(block1)
         pipeline.add_block(block2)
@@ -112,7 +115,11 @@ def union_datasets(df1, df2):
             'df',
             variable_type='dataframe'
         )
-        self.assertEqual(len(data.index), 3)
+        df_final = pd.concat([
+            pd.DataFrame({'col1': [1, 3], 'col2': [2, 4]}),
+            pd.DataFrame({'col1': [5], 'col2': [6]}),
+        ])
+        assert_frame_equal(data, df_final)
 
     def test_to_dict(self):
         block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
