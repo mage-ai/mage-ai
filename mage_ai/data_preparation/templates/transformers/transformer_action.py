@@ -4,6 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_act
 from pandas import DataFrame
 
 
+@transformer
 def execute_transformer_action(df: DataFrame) -> DataFrame:
     """
     Template code for transforming data frame using actions from
