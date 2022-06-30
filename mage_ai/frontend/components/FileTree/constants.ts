@@ -8,8 +8,9 @@ export type FileTreeNodeStyle = {
 
 export type FileTreeNode = {
   children?: FileTreeNode[];
-  expanded?: boolean;
+  collapsed?: boolean;
   name: string;
+  selected?: boolean;
 };
 
 
@@ -50,10 +51,43 @@ export const TEST_FILE_TREE: FileTreeNode[] = [
             name: '__init__.py',
           },
           {
-            name: 'sales_data.py',
+            name: 'upload_to_s3.py',
           },
         ],
         name: 'exporters',
+      },
+      {
+        children: [
+          {
+            name: '__init__.py',
+          },
+          {
+            name: 'sales_data.py',
+          },
+        ],
+        name: 'data_loaders',
+      },
+      {
+        children: [
+          {
+            name: '__init__.py',
+          },
+          {
+            name: 'summary_statistics.py',
+          },
+        ],
+        name: 'global_variables',
+      },
+      {
+        children: [
+          {
+            name: '__init__.py',
+          },
+          {
+            name: 'average_purchase_price.py',
+          },
+        ],
+        name: 'transformers',
       },
     ],
     name: 'demo_project',
@@ -77,11 +111,11 @@ export const NODE_STYLE_MAPPING = {
     icon: Rectangle,
   },
   global_variables: {
-    color: 'blue',
+    color: 'green',
     icon: Rectangle,
   },
   pipelines: {
-    color: 'pink',
+    color: 'magenta',
     icon: Rectangle,
   },
   scratchpad: {
