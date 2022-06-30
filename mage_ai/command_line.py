@@ -4,6 +4,7 @@ from mage_ai.server.server import main as start_server
 import asyncio
 import os
 
+
 def main():
     import sys
     command = sys.argv[1]
@@ -13,8 +14,12 @@ def main():
         init_repo(repo_path)
     elif command == 'start':
         print('Starting server...')
+        if len(sys.argv) > 2:
+            repo_path = os.path.join(os.getcwd(), sys.argv[2])
+        else:
+            repo_path = os.getcwd()
+        asyncio.run(start_server(repo_path))
 
-        asyncio.run(start_server())
 
 if __name__ == "__main__":
     main()
