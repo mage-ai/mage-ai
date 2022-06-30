@@ -1,5 +1,6 @@
 from enum import Enum
 from numpyencoder import NumpyEncoder
+from typing import Any
 import json
 import os
 import pandas as pd
@@ -10,6 +11,7 @@ DATAFRAME_ANALYSIS_KEYS = frozenset([
     'insights',
     'suggestions',
 ])
+DATAFRAME_SAMPLE_COUNT = 1000
 VARIABLE_DIR = '.variables'
 
 
@@ -19,7 +21,13 @@ class VariableType(str, Enum):
 
 
 class Variable:
-    def __init__(self, uuid, pipeline_path, block_uuid, variable_type=None):
+    def __init__(
+        self,
+        uuid: str,
+        pipeline_path: str,
+        block_uuid: str,
+        variable_type: VariableType = None
+    ) -> None:
         self.uuid = uuid
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
@@ -28,7 +36,7 @@ class Variable:
             os.makedirs(self.variable_dir_path)
         self.variable_type = variable_type
 
-    def write_data(self, data):
+    def write_data(self, data: Any) -> None:
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
         if self.variable_type == VariableType.DATAFRAME:
@@ -38,7 +46,7 @@ class Variable:
         else:
             self.__write_json(data)
 
-    def read_data(self):
+    def read_data(self, sample: bool = False) -> Any:
         if self.variable_type is None and \
             os.path.exists(
                 os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')):
@@ -46,7 +54,10 @@ class Variable:
             self.variable_type = VariableType.DATAFRAME
 
         if self.variable_type == VariableType.DATAFRAME:
-            return self.__read_parquet()
+            df = self.__read_parquet()
+            if sample and df.shape[0] > DATAFRAME_SAMPLE_COUNT:
+                df = df.iloc[:DATAFRAME_SAMPLE_COUNT]
+            return df
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()

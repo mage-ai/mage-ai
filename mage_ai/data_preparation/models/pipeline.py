@@ -2,7 +2,6 @@ from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.templates.utils import copy_templates
 import os
-import shutil
 import yaml
 
 PIPELINES_FOLDER = 'pipelines'
@@ -63,7 +62,7 @@ class Pipeline:
         self.name = config.get('name')
         self.block_configs = config.get('blocks', [])
         blocks = \
-            [Block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
+            [Block.get_block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
              for c in self.block_configs]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
         # breakpoint()
