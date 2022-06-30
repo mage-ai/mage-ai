@@ -1,5 +1,6 @@
 export enum ExecutionStateEnum {
-  IDLE = 'idle',
+  BUSY = 'busy', // Code is being executed
+  IDLE = 'idle', // Nothing is being done
 }
 
 export enum DataTypeEnum {

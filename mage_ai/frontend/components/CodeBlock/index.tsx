@@ -128,11 +128,19 @@ function CodeBlockProps({
   ]);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div
+      onClick={() => {
+        if (!selected) {
+          setSelected(true);
+        }
+      }}
+      style={{ position: 'relative' }}
+    >
       {selected && (
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
+          status={isInProgress ? ExecutionStateEnum.BUSY : ExecutionStateEnum.IDLE}
         />
       )}
 

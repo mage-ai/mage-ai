@@ -7,6 +7,7 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, PADDING } from '@oracle/styles/units/spacing';
 
 export type SpinnerProps = {
+  color?: string;
   fullScreen?: boolean;
   inverted?: boolean;
   large?: boolean;
@@ -18,6 +19,7 @@ export type SpinnerProps = {
 };
 
 const Spinner = ({
+  color,
   fullScreen,
   inverted,
   large,
@@ -48,9 +50,11 @@ const Spinner = ({
   const loadingEl = (
     // @ts-ignore
     <ReactLoading
-      color={inverted
-        ? (themeContext.loader || dark.loader).colorInverted
-        : (themeContext.loader || dark.loader).color
+      color={color
+        ? color
+        : inverted
+          ? (themeContext.loader || dark.loader).colorInverted
+          : (themeContext.loader || dark.loader).color
       }
       height={size}
       type="spin"

@@ -2,7 +2,6 @@ import Ansi from 'ansi-to-react';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import {
   ContainerStyle,
@@ -66,13 +65,6 @@ function CodeOutput({
             </div>
           ));
         })}
-
-        {isInProgress && (
-          <Spacing mt={1}>
-            <Spinner />
-          </Spacing>
-        )}
-
       </ContainerStyle>
 
       {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (

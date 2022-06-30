@@ -20,7 +20,7 @@ def parse_output_message(message: dict) -> dict:
 
     if content.get('name') == 'stdout':
         text_stdout = content.get('text')
-        data_content = text_stdout
+        data_content = text_stdout.split('\n')
         data_type = 'text/plain'
     elif image:
         data_content = image
@@ -29,7 +29,7 @@ def parse_output_message(message: dict) -> dict:
         data_content = [line for line in traceback]
         data_type = 'text'
     elif text:
-        data_content = text
+        data_content = text.split('\n')
         data_type = 'text/plain'
     elif code:
         data_content = code
