@@ -19,6 +19,7 @@ export type SpinnerProps = {
 
 const Spinner = ({
   fullScreen,
+  inverted,
   large,
   left = 0,
   relative,
@@ -44,23 +45,25 @@ const Spinner = ({
     }
   }, [bodyHeight, bodyWidth]);
 
+  const loadingEl = (
+    // @ts-ignore
+    <ReactLoading
+      color={inverted
+        ? (themeContext.loader || dark.loader).colorInverted
+        : (themeContext.loader || dark.loader).color
+      }
+      height={size}
+      type="spin"
+      width={size}
+    />
+  );
+
+  if (!fullScreen) {
+    return loadingEl;
+  }
+
   if (bodyHeight && bodyWidth) {
     const bodyHeightAdjusted: number = bodyHeight - (PADDING);
-    const loadingEl = (
-      // @ts-ignore
-      <ReactLoading
-        color={
-          (themeContext.loader || light.loader).color
-        }
-        height={size}
-        type="spin"
-        width={size}
-      />
-    );
-
-    if (!fullScreen) {
-      return loadingEl;
-    }
 
     return (
       <div

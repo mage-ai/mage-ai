@@ -26,10 +26,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     def on_message(self, raw_message):
         message = json.loads(raw_message)
         code = message.get('code')
-        uuid = message.get('uuid')
         output = message.get('output')
 
         if code:
+            block_uuid = message.get('uuid')
+            pipeline_uuid = message.get('pipeline_uuid')
+
             connection_file = os.getenv('CONNECTION_FILE')
             with open(connection_file) as f:
                 connection = json.loads(f.read())
@@ -39,7 +41,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             msg_id = client.execute(code)
 
-            WebSocketServer.running_executions_mapping.add((msg_id, uuid))
+            WebSocketServer.running_executions_mapping.add((msg_id, block_uuid))
         elif output:
             self.send_message(output)
 

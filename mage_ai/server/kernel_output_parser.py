@@ -2,6 +2,9 @@ def parse_output_message(message: dict) -> dict:
     data_content = None
     data_type = None
 
+    header = message['header']
+    msg_type = header['msg_type']
+
     parent_header = message['parent_header']
     msg_id = parent_header['msg_id']
 
@@ -37,5 +40,6 @@ def parse_output_message(message: dict) -> dict:
         execution_state=execution_state,
         metadata=metadata,
         msg_id=msg_id,
+        msg_type=msg_type,
         type=data_type,
     )

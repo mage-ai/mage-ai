@@ -4,6 +4,7 @@ export enum ExecutionStateEnum {
 
 export enum DataTypeEnum {
   IMAGE_PNG = 'image/png',
+  TABLE = 'table',
   TEXT = 'text',
   TEXT_PLAIN = 'text/plain',
 }

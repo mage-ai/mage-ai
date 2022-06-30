@@ -115,23 +115,10 @@ function PipelineDetail({
   );
 
   const {
-    sendMessage,
+    lastMessage,
     readyState,
+    sendMessage,
   } = useWebSocket(WEBSOCKT_URL, {
-    onMessage: ({
-      data: messageData,
-    }) => {
-      if (messageData) {
-        const message = JSON.parse(messageData);
-        const { uuid } = message;
-        const messagesFromUUID = messages[uuid] || [];
-
-        setMessages({
-          ...messages,
-          [uuid]: messagesFromUUID.concat(message),
-        });
-      }
-    },
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down
@@ -141,10 +128,41 @@ function PipelineDetail({
     },
   });
 
+  useEffect(() => {
+    if (lastMessage) {
+      const message = JSON.parse(lastMessage.data);
+      const { uuid } = message;
+
+      setMessages((messagesPrevious: KernelOutputType[]) => {
+        const messagesFromUUID = messagesPrevious[uuid] || [];
+
+        return {
+          ...messagesPrevious,
+          [uuid]: messagesFromUUID.concat(message),
+        };
+      });
+    }
+  }, [
+    lastMessage,
+    setMessages,
+  ]);
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Open',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+  }[readyState];
+
   const onSave = useCallback((payload: {
     block: BlockType;
     code: string;
   }) => {
+    const {
+      block,
+      code,
+    } = payload;
     const { uuid } = block;
 
     sendMessage(JSON.stringify({
@@ -152,11 +170,12 @@ function PipelineDetail({
       uuid,
     }));
 
-    const newMessages = { ...messages };
-    delete newMessages[uuid];
-    setMessages(newMessages);
+    setMessages((messagesPrevious: KernelOutputType[]) => {
+      delete messagesPrevious[uuid];
+
+      return messagesPrevious;
+    });
   }, [
-    messages,
     sendMessage,
     setMessages,
   ]);

@@ -10,10 +10,11 @@ import Editor from '@monaco-editor/react';
 import usePrevious from '@utils/usePrevious';
 import {
   DEFAULT_AUTO_SAVE_INTERVAL,
-  DEFAULT_FONT_SIZE,
   DEFAULT_LANGUAGE,
   DEFAULT_THEME,
 } from './constants';
+import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { REGULAR_FONT_SIZE as DEFAULT_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { SINGLE_LINE_HEIGHT } from './index.style';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
@@ -229,6 +230,7 @@ function CodeEditor({
         onMount={handleEditorDidMount}
         // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
         options={{
+          fontFamily: MONO_FONT_FAMILY_REGULAR,
           fontSize,
           hideCursorInOverviewRuler: true,
           minimap: {
