@@ -32,14 +32,20 @@ class BigQuery(BaseLoader):
         """
         path_to_credentials = kwargs.get('path_to_credentials')
         credentials_mapping = kwargs.get('credentials_mapping')
-
-        credentials = None
-        if credentials_mapping is not None:
-            credentials = service_account.Credentials.from_service_account_info(credentials_mapping)
-            kwargs.pop('credentials_mapping')
-        if path_to_credentials is not None:
-            credentials = service_account.Credentials.from_service_account_file(path_to_credentials)
-            kwargs.pop('path_to_credentials')
+        credentials = kwargs.get('credentials')
+        if credentials not in kwargs or credentials is None:
+            if credentials_mapping is not None:
+                credentials = service_account.Credentials.from_service_account_info(
+                    credentials_mapping
+                )
+                kwargs.pop('credentials_mapping')
+            if path_to_credentials is not None:
+                credentials = service_account.Credentials.from_service_account_file(
+                    path_to_credentials
+                )
+                kwargs.pop('path_to_credentials')
+        else:
+            kwargs.pop('credentials')
 
         self.client = Client(credentials=credentials, **kwargs)
 
