@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import tornado.websocket
 
-from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block import Block, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 
@@ -47,11 +47,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             manager = KernelManager(**connection)
             client = manager.client()
 
-            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            pipeline = Pipeline(pipeline_uuid, os.path.join(os.getcwd(), 'default_repo'))
             block = pipeline.get_block(block_uuid)
-            block_output = asyncio.run(block.execute(code))
-
-            msg_id = client.execute(add_internal_output_info(code))
+            block_output = []
+            if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+                block_output = asyncio.run(block.execute(code))
+                # Run with no code because we still need to send a message
+                msg_id = client.execute(add_internal_output_info(code))
+            else:
+                msg_id = client.execute(add_internal_output_info(code))
 
             value = dict(
                 block_uuid=block_uuid,
@@ -71,20 +75,20 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         output_dict = dict(uuid=uuid)
         if len(output) > 0:
-            df = find(type(output) == pd.DataFrame, output)
+            df = find(lambda val: type(val) == pd.DataFrame, output)
             if df.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
                 df = df.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
-            output_dict['df_out'] = [
+            output_dict['data'] = [
                 df.columns.to_list(),
-                *df.to_numpy().tolist(),
+                *df.values.tolist(),
             ]
 
-        print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message}')
+        message_final = merge_dict(
+            message,
+            output_dict,
+        )
+
+        print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message_final}')
 
         for client in self.clients:
-            client.write_message(json.dumps(merge_dict(
-                message,
-                output_dict,
-            )))
-
-        del WebSocketServer.running_executions_mapping[msg_id]
+            client.write_message(json.dumps(message_final))
