@@ -170,7 +170,7 @@ export default {
     grey200: '#D5D7DC',
     grey300: '#B4B8C0',
     grey400: '#70747C',
-    grey500: '#28292C',
+    grey500: '#51535C',
     purple: PURPLE,
     white: WHITE,
   },

@@ -1,11 +1,12 @@
 import BaseIcon from '@oracle/icons/BaseIcon';
 import dark from '@oracle/styles/themes/dark';
-import { RoundedSquare } from '@oracle/icons';
+import { FileFill, RoundedSquare } from '@oracle/icons';
 import { ThemeType } from '@oracle/styles/themes/constants';
 
 export type FileNodeProps = {
-  color?: string;
-  icon?: typeof BaseIcon;
+  textColor?: string;
+  iconName?: typeof BaseIcon;
+  iconColor?: string;
 };
 
 export type FileNodeType = {
@@ -109,35 +110,53 @@ export enum ReservedFolderEnum {
 }
 
 export const getFileNodeColor: (
-  nodeName: ReservedFolderEnum,
+  path: string[],
   themeType: ThemeType
-) => FileNodeProps = (nodeName, themeType) => {
-  const mapping = {
-    [ReservedFolderEnum.DATA_LOADERS]: {
-      color: (themeType?.chart || dark.chart).button1,
-      icon: RoundedSquare,
-    },
-    [ReservedFolderEnum.EXPORTERS]: {
-      color: (themeType?.chart || dark.chart).button2,
-      icon: RoundedSquare,
-    },
-    [ReservedFolderEnum.GLOBAL_VARIABLES]: {
-      color: (themeType?.chart || dark.chart).button3,
-      icon: RoundedSquare,
-    },
-    [ReservedFolderEnum.PIPELINES]: {
-      color: (themeType?.chart || dark.chart).button4,
-      icon: RoundedSquare,
-    },
-    [ReservedFolderEnum.SCRATCHPAD]: {
-      color: (themeType?.chart || dark.chart).button5,
-      icon: RoundedSquare,
-    },
-    [ReservedFolderEnum.TRANSFORMERS]: {
-      color: (themeType?.chart || dark.chart).primary,
-      icon: RoundedSquare,
-    },
-  };
+) => FileNodeProps = (path, themeType) => {
+  const nodeName = path.at(-1);
+  
+  if (nodeName === '__init__.py') {
+    return {
+      iconColor: (themeType?.monotone || dark.monotone).grey500,
+      iconName: FileFill,
+    };
+  }
 
-  return mapping[nodeName];
+  // style reserved folder names 
+  if (path.length === 2) {
+    const mapping = {
+      [ReservedFolderEnum.DATA_LOADERS]: {
+        iconColor: (themeType?.chart || dark.chart).button1,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).button1,
+      },
+      [ReservedFolderEnum.EXPORTERS]: {
+        iconColor: (themeType?.chart || dark.chart).button2,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).button2,
+      },
+      [ReservedFolderEnum.GLOBAL_VARIABLES]: {
+        iconColor: (themeType?.chart || dark.chart).button3,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).button3,
+      },
+      [ReservedFolderEnum.PIPELINES]: {
+        iconColor: (themeType?.chart || dark.chart).button4,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).button4,
+      },
+      [ReservedFolderEnum.SCRATCHPAD]: {
+        iconColor: (themeType?.chart || dark.chart).button5,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).button5,
+      },
+      [ReservedFolderEnum.TRANSFORMERS]: {
+        iconColor: (themeType?.chart || dark.chart).primary,
+        iconName: RoundedSquare,
+        textColor: (themeType?.chart || dark.chart).primary,
+      },
+    };
+  
+    return mapping[nodeName];
+  }
 };
