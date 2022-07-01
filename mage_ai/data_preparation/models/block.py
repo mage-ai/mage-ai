@@ -1,4 +1,5 @@
 from enum import Enum
+from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -119,6 +120,7 @@ class Block:
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
         self.__update_pipeline_block()
+        self.__analyze_outputs(variable_mapping)
         return outputs
 
     def get_analyses(self):
@@ -216,8 +218,32 @@ class Block:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
             outputs = decorated_functions[0](*input_vars)
-
+            if type(outputs) is not list:
+                outputs = [outputs]
         return outputs
+
+    def __analyze_outputs(self, variable_mapping):
+        if self.pipeline is None:
+            return
+        for uuid, data in variable_mapping.items():
+            vtype = self.output_variables[uuid]
+            if vtype is pd.DataFrame:
+                analysis = clean_data(
+                    data.reset_index(drop=True),
+                    transform=False,
+                )
+                VariableManager(self.pipeline.repo_path).add_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    uuid,
+                    dict(
+                        metadata=dict(column_types=analysis['column_types']),
+                        statistics=analysis['statistics'],
+                        insights=analysis['insights'],
+                        suggestions=analysis['suggestions'],
+                    ),
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
 
     def __store_variables(self, variable_mapping):
         if self.pipeline is None:
