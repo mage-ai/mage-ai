@@ -116,9 +116,9 @@ def clean(
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
-# Data preparation methods
+### --------------- Data preparation methods --------------- ###
 
-def run(pipeline_uuid: str, repo_name: str=None) -> None:
+def run(pipeline_uuid: str, repo_name: str = None) -> None:
     repo_path = os.getcwd() if repo_name is None else os.path.join(os.getcwd(), repo_name)
     pipeline = Pipeline(pipeline_uuid, repo_path)
 
