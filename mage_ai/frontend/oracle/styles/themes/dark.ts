@@ -23,6 +23,9 @@ import {
   SILVER,
   WHITE,
   YELLOW,
+  PINK,
+  LIGHT_PINK,
+  LIME_DARK,
 } from '../colors/main';
 import {
   DARK_CONTENT_ACTIVE,
@@ -116,9 +119,11 @@ export default {
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
     button1: BLUE_DARK,
     button2: YELLOW,
-    button3: LIME,
+    button3: LIME_DARK,
+    button4: PINK,
+    button5: LIGHT_PINK,
     lines: '#9B6CA7',
-    primary: PURPLE,
+    primary: PURPLE_DARK,
     secondary: RED,
     tertiary: BLUE_HIGHLIGHT,
   },
