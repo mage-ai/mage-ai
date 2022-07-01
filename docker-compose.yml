@@ -45,7 +45,7 @@ services:
     build: .
     depends_on:
       - server
-    command: "yarn run dev"
+    command: ./scripts/install_and_run.sh
     ports:
       - 3000:3000
     volumes:
@@ -62,6 +62,7 @@ services:
       - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
       - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
       - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
+      - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
       - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
       - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
       - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
