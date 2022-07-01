@@ -7,7 +7,7 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import styled, { ThemeContext } from 'styled-components';
 import { ArrowDown, ArrowRight, File, Folder } from '@oracle/icons';
-import { FileTreeNode, getFileNodeColor } from './constants';
+import { FileTreeNode, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
 import { equals } from '@utils/array';
@@ -80,7 +80,11 @@ function FileTree({
   const path: string[] = [];
   const buildTreeEl = (tree: FileTreeNode[]) => {
     depth++;
-    const el = tree.map(({ name, children, collapsed }) => {
+    const el = tree.map(({ name, children, collapsed }: {
+      name: ReservedFolderEnum,
+      children: FileTreeNode[],
+      collapsed: boolean,
+    }) => {
       path.push(name);
       const {
         color,
@@ -107,8 +111,8 @@ function FileTree({
                   <FileTreeIcon fill={color} />
                   &nbsp;
                   <Text
-                    monospace
                     color={color}
+                    monospace
                     muted={!equals(path, selectedPath)}
                   >
                     {name}

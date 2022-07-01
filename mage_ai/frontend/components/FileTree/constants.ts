@@ -99,32 +99,41 @@ export const TEST_FILE_TREE: FileTreeNode[] = [
   },
 ];
 
+export enum ReservedFolderEnum {
+  DATA_LOADERS = 'data_loaders',
+  EXPORTERS = 'exporters',
+  GLOBAL_VARIABLES = 'global_variables',
+  PIPELINES = 'pipelines',
+  SCRATCHPAD = 'scratchpad',
+  TRANSFORMERS = 'transformers',
+}
+
 export const getFileNodeColor = (
-  nodeName: string,
+  nodeName: ReservedFolderEnum,
   themeType: ThemeType,
 ) => {
   const mapping = {
-    data_loaders: {
+    [ReservedFolderEnum.DATA_LOADERS]: {
       color: (themeType?.chart || dark.chart).button1,
       icon: RoundedSquare,
     },
-    exporters: {
+    [ReservedFolderEnum.EXPORTERS]: {
       color: (themeType?.chart || dark.chart).button2,
       icon: RoundedSquare,
     },
-    global_variables: {
+    [ReservedFolderEnum.GLOBAL_VARIABLES]: {
       color: (themeType?.chart || dark.chart).button3,
       icon: RoundedSquare,
     },
-    pipelines: {
+    [ReservedFolderEnum.PIPELINES]: {
       color: (themeType?.chart || dark.chart).button4,
       icon: RoundedSquare,
     },
-    scratchpad: {
+    [ReservedFolderEnum.SCRATCHPAD]: {
       color: (themeType?.chart || dark.chart).button5,
       icon: RoundedSquare,
     },
-    transformers: {
+    [ReservedFolderEnum.TRANSFORMERS]: {
       color: (themeType?.chart || dark.chart).primary,
       icon: RoundedSquare,
     },
