@@ -1,3 +1,4 @@
+from jinja2 import Template
 from typing import Dict
 import json
 import os
@@ -27,18 +28,10 @@ def build_template_from_suggestion(suggestion: Dict) -> str:
     clean_title = suggestion['title'].lower().replace(' ', '_')
     cleaned_payload = json.dumps(suggestion['action_payload'], indent=4)
     cleaned_payload = cleaned_payload.replace('\n', '\n    ')
-    template = f"""from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from pandas import DataFrame
-
-
-@transformer
-def {clean_title}(df: DataFrame) -> DataFrame:
-    \"\"\"
-    Transformer Action: {suggestion['message']}
-    \"\"\"
-    action = {cleaned_payload}
-    return BaseAction(action).execute(df)
-"""
-    return template
+    source_path = os.path.join(os.path.dirname(__file__), 'transformers/suggestion_fmt.jinja')
+    with open(source_path, 'r') as source:
+        template = Template(source.read())
+    return (
+        template.render(title=clean_title, message=suggestion['message'], payload=cleaned_payload)
+        + "\n"
+    )

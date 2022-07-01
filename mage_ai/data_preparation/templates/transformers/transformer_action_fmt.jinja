@@ -7,16 +7,12 @@ from pandas import DataFrame
 @transformer
 def execute_transformer_action(df: DataFrame) -> DataFrame:
     """
-    Template code for transforming data frame using actions from
-    the `transformer_actions` library.
-
-    See library documentation for the required payload parameters when constructing
-    the action below.
+    Transformer action: {action_type}
     """
     action = build_transformer_action(
-        action_type=ActionType.CUSTOM,  # Specify the transformer action to perform
+        action_type=ActionType.{action_type},
         action_arguments=[],  # Specify the columns of data frame to apply the action to
-        axis=Axis.COLUMN,  # Specify the axis of data frame to apply action to
-        action_code='',  # Specify Python code or query to execute (if action requires this field)
+        axis=Axis.{axis},
+        {additional_params}
     )
     return BaseAction(action).execute(df)

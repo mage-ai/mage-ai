@@ -1,4 +1,4 @@
-from pandas import DataFrame
+from keyword import iskeyword
 from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER, infer_column_types
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
@@ -6,7 +6,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     Axis,
     NameConventionPatterns,
 )
-from keyword import iskeyword
+from pandas import DataFrame
 from typing import Dict, List, Union
 import logging
 
