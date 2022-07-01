@@ -6,8 +6,11 @@ import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import { ContainerStyle } from './index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
@@ -15,6 +18,11 @@ import {
   PlayButtonFilled,
   Trash,
 } from '@oracle/icons';
+import {
+  KEY_SYMBOL_D,
+  KEY_SYMBOL_ENTER,
+  KEY_SYMBOL_META,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '../index.style';
 
@@ -52,33 +60,71 @@ function CommandButtons({
           />
         )}
         {!isInProgress && (
-          <Button
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => runBlock()}
+          <Tooltip
+            appearAbove
+            appearBefore
+            default
+            label={(
+              <Text>
+                Run block
+                &nbsp;
+                <KeyboardTextGroup
+                  inline
+                  monospace
+                  keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                />
+              </Text>
+            )}
+            size={UNIT * 3}
+            widthFitContent
           >
-            <Circle
-              color={color}
-              size={UNIT * 3}
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => runBlock()}
             >
-              <PlayButtonFilled
-                black
-                size={UNIT * 1.5}
-              />
-            </Circle>
-          </Button>
+              <Circle
+                color={color}
+                size={UNIT * 3}
+              >
+                <PlayButtonFilled
+                  black
+                  size={UNIT * 1.5}
+                />
+              </Circle>
+            </Button>
+          </Tooltip>
         )}
 
         <Spacing mt={PADDING_UNITS}>
-          <Button
-            noBackground
-            noBorder
-            noPadding
-            onClick={() => deleteBlock(block)}
+          <Tooltip
+            appearAbove
+            appearBefore
+            default
+            label={(
+              <Text>
+                Delete block and file
+                &nbsp;
+                <KeyboardTextGroup
+                  inline
+                  monospace
+                  keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
+                />
+              </Text>
+            )}
+            size={UNIT * 3}
+            widthFitContent
           >
-            <Trash size={UNIT * 2.5} />
-          </Button>
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => deleteBlock(block)}
+            >
+              <Trash size={UNIT * 2.5} />
+            </Button>
+          </Tooltip>
         </Spacing>
 
         {isInProgress && (

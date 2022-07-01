@@ -24,8 +24,8 @@ import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
 import {
   executeCode,
+  interruptCode,
   saveCode,
-  testShortcut,
 } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
@@ -51,6 +51,7 @@ type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
   fontSize?: number;
+  interruptKernel: () => void;
   language?: string;
   onChange?: (value: string) => void;
   onSave?: (value: string) => void;
@@ -67,6 +68,7 @@ function CodeEditor({
   autoSave,
   fontSize = DEFAULT_FONT_SIZE,
   height,
+  interruptKernel,
   language,
   onChange,
   onDidChangeCursorPosition,
@@ -97,9 +99,7 @@ function CodeEditor({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    const shortcuts = [
-      testShortcut(monaco),
-    ];
+    const shortcuts = [];
 
     // Keyboard shortcuts for saving content: Command + S
     if (onSave) {
@@ -110,6 +110,9 @@ function CodeEditor({
 
     shortcuts.push(executeCode(monaco, () => {
       runBlock(editor.getValue());
+    }));
+    shortcuts.push(interruptCode(monaco, () => {
+      interruptKernel();
     }));
 
     addKeyboardShortcut(monaco, editor, shortcuts);
