@@ -87,6 +87,8 @@ class Pipeline:
         await asyncio.gather(*tasks.values())
 
     def load_config_from_yaml(self):
+        if not os.path.exists(self.config_path):
+            raise Exception(f'Pipeline {self.uuid} does not exist.')
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
         self.name = config.get('name')
