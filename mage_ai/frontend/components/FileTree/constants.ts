@@ -90,6 +90,10 @@ export const TEST_FILE_TREE: FileTreeNode[] = [
         ],
         name: 'transformers',
       },
+      {
+        children: [],
+        name: 'scratchpad',
+      },
     ],
     name: 'demo_project',
   },
