@@ -40,18 +40,3 @@ export function executeCode(monaco, runBlock) {
     run: () => runBlock(),
   };
 }
-
-export function interruptCode(monaco, callback) {
-  return {
-    contextMenuGroupId: 'navigation',
-    contextMenuOrder: 1.5,
-    id: 'interruptCode',
-    keybindingContext: null,
-    keybindings: [
-      monaco.KeyMod.chord(monaco.KeyCode.KeyI, monaco.KeyCode.KeyI),
-    ],
-    label: 'Interrupt kernel',
-    precondition: null,
-    run: () => callback(),
-  };
-}

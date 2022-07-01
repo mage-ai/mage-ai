@@ -18,8 +18,10 @@ import usePrevious from '@utils/usePrevious';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
+  KEY_CODE_D,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
+  KEY_CODE_I,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
@@ -58,6 +60,27 @@ function PipelineDetail({
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
 
+  const [interruptKernel] = useMutation(
+    api.interrupt.kernels.useCreate(pipeline?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+
+          },
+        },
+      ),
+    },
+  );
+
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
   const addNewBlockAtIndex = useCallback((block: BlockType, idx: number) => {
     const newBlock = {
@@ -86,24 +109,31 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (keyMapping[KEY_CODE_ESCAPE]) {
-        if (textareaFocused) {
+      if (textareaFocused) {
+        if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
-        } else if (selectedBlock) {
-          setSelectedBlock(null);
         }
-      } else if (selectedBlock && !textareaFocused) {
+      } else if (selectedBlock) {
         const selectedBlockIndex =
           blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 
-        if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
+        if (keyMapping[KEY_CODE_ESCAPE]) {
+          setSelectedBlock(null);
+        } else if (keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I) {
+          interruptKernel();
+        } else if (keyHistory[0] === KEY_CODE_D
+          && keyHistory[1] === KEY_CODE_D
+          && selectedBlockIndex !== -1
+        ) {
+          setBlocks(removeAtIndex(blocks, selectedBlockIndex))
+        } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
           setSelectedBlock(blocks[selectedBlockIndex - 1]);
         } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
           setSelectedBlock(blocks[selectedBlockIndex + 1]);
         } else if (keyMapping[KEY_CODE_ENTER]) {
           setTextareaFocused(true);
         }
-      } else if (selectedBlockPrevious && !selectedBlock) {
+      }  else if (selectedBlockPrevious && !selectedBlock) {
         if (keyMapping[KEY_CODE_ENTER]) {
           setSelectedBlock(selectedBlockPrevious);
         }
@@ -111,10 +141,12 @@ function PipelineDetail({
     },
     [
       blocks,
+      interruptKernel,
       numberOfBlocks,
       selectedBlock,
-      setSelectedBlock,
       selectedBlockPrevious,
+      setBlocks,
+      setSelectedBlock,
       setTextareaFocused,
       textareaFocused,
     ],
@@ -181,31 +213,13 @@ function PipelineDetail({
 
       return messagesPrevious;
     });
+
+    setTextareaFocused(false);
   }, [
     sendMessage,
     setMessages,
+    setTextareaFocused,
   ]);
-
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(pipeline?.id),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: (response) => {
-
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-
-          },
-        },
-      ),
-    },
-  );
 
   return (
     <Spacing p={PADDING_UNITS}>

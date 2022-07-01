@@ -21,6 +21,7 @@ import {
 import {
   KEY_SYMBOL_D,
   KEY_SYMBOL_ENTER,
+  KEY_SYMBOL_I,
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -68,6 +69,7 @@ function CommandButtons({
               <Text>
                 Run block
                 &nbsp;
+                &nbsp;
                 <KeyboardTextGroup
                   inline
                   monospace
@@ -106,6 +108,7 @@ function CommandButtons({
               <Text>
                 Delete block and file
                 &nbsp;
+                &nbsp;
                 <KeyboardTextGroup
                   inline
                   monospace
@@ -129,19 +132,39 @@ function CommandButtons({
 
         {isInProgress && (
           <Spacing mt={PADDING_UNITS}>
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => interruptKernel()}
+            <Tooltip
+              appearAbove
+              appearBefore
+              default
+              label={(
+                <Text>
+                  Interrupt kernel
+                  &nbsp;
+                  &nbsp;
+                  <KeyboardTextGroup
+                    inline
+                    monospace
+                    keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
+                  />
+                </Text>
+              )}
+              size={UNIT * 3}
+              widthFitContent
             >
-              <Circle
-                borderSize={1.5}
-                size={UNIT * 2.5}
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => interruptKernel()}
               >
-                <Close size={UNIT * 1} />
-              </Circle>
-            </Button>
+                <Circle
+                  borderSize={1.5}
+                  size={UNIT * 2.5}
+                >
+                  <Close size={UNIT * 1} />
+                </Circle>
+              </Button>
+            </Tooltip>
           </Spacing>
         )}
       </FlexContainer>
