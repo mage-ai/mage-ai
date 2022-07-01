@@ -5,6 +5,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
+import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import {
   BORDER_RADIUS,
@@ -15,6 +16,14 @@ import {
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
+
+export function selectOutlineColor(props) {
+  if (props.outlineBackgroundColorSelector) {
+    return props.outlineBackgroundColorSelector(props.theme || dark);
+  }
+
+  return (props.theme.background || dark.background).page;
+}
 
 export type ButtonProps = {
   afterIcon?: any;

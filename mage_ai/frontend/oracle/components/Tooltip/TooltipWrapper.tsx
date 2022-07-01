@@ -20,16 +20,19 @@ export type TooltipWrapperProps = {
   description?: string;
   inline?: boolean;
   label?: string | any;
+  leftPosition?: number;
   maxWidth?: number;
+  minWidth?: number;
   muted?: boolean;
   noHoverOutline?: boolean;
+  rightPosition?: boolean;
   size?: number;
   topOffset?: number;
   warning?: boolean;
   widthFitContent?: boolean;
 };
 
-const SHARED_CONTAINER_STYLES = css`
+const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
   position: relative;
 
   ${props => props.size && `
@@ -146,22 +149,26 @@ function TooltipWrapper({
   const leftPosition = (minWidth - size) / -2;
   const ContainerEl = inline ? ContainerSpanStyle : ContainerStyle;
   const El = basic ? BasicStyle : HoverStyle;
+  const elRendered = (
+    // @ts-ignore
+    <El
+      block={block}
+      href="#"
+      noHoverOutline={noHoverOutline}
+      onClick={e => e.preventDefault()}
+      onMouseEnter={() => setVisible(true)}
+      size={size}
+    >
+      {children}
+    </El>
+  );
 
   return (
     <ContainerEl
       onMouseLeave={() => setVisible(false)}
       size={size}
     >
-      <El
-        block={block}
-        href="#"
-        noHoverOutline={noHoverOutline}
-        onClick={e => e.preventDefault()}
-        onMouseEnter={() => setVisible(true)}
-        size={size}
-      >
-        {children}
-      </El>
+      {elRendered}
 
       {visible && (
         <ContentStyle

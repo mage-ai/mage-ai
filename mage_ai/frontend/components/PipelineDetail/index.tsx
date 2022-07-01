@@ -24,6 +24,7 @@ import {
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
   KEY_CODE_I,
+  KEY_CODE_NUMBER_0,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
@@ -62,6 +63,26 @@ function PipelineDetail({
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
 
+  const [restartKernel] = useMutation(
+    api.restart.kernels.useCreate(pipeline?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+
+          },
+        },
+      ),
+    },
+  );
   const [interruptKernel] = useMutation(
     api.interrupt.kernels.useCreate(pipeline?.id),
     {
@@ -115,37 +136,46 @@ function PipelineDetail({
         if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
         }
-      } else if (selectedBlock) {
-        const selectedBlockIndex =
-          blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
+      } else {
+        if (selectedBlock) {
+          const selectedBlockIndex =
+            blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
 
-        if (keyMapping[KEY_CODE_ESCAPE]) {
-          setSelectedBlock(null);
-        } else if (keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I) {
-          interruptKernel();
-        } else if (keyHistory[0] === KEY_CODE_D
-          && keyHistory[1] === KEY_CODE_D
-          && selectedBlockIndex !== -1
-        ) {
-          setBlocks(removeAtIndex(blocks, selectedBlockIndex))
-        } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
-          setSelectedBlock(blocks[selectedBlockIndex - 1]);
-        } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
-          setSelectedBlock(blocks[selectedBlockIndex + 1]);
-        } else if (keyMapping[KEY_CODE_ENTER]) {
-          setTextareaFocused(true);
-        } else if (keyMapping[KEY_CODE_A]) {
-          setSelectedBlock(addNewBlockAtIndex({
-            type: BlockTypeEnum.SCRATCHPAD,
-          }, selectedBlockIndex));
-        } else if (keyMapping[KEY_CODE_B]) {
-          setSelectedBlock(addNewBlockAtIndex({
-            type: BlockTypeEnum.SCRATCHPAD,
-          }, selectedBlockIndex + 1));
+          if (keyMapping[KEY_CODE_ESCAPE]) {
+            setSelectedBlock(null);
+          } else if (keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I) {
+            interruptKernel();
+          } else if (keyHistory[0] === KEY_CODE_D
+            && keyHistory[1] === KEY_CODE_D
+            && selectedBlockIndex !== -1
+          ) {
+            setBlocks(removeAtIndex(blocks, selectedBlockIndex))
+          } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
+            setSelectedBlock(blocks[selectedBlockIndex - 1]);
+          } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
+            setSelectedBlock(blocks[selectedBlockIndex + 1]);
+          } else if (keyMapping[KEY_CODE_ENTER]) {
+            setTextareaFocused(true);
+          } else if (keyMapping[KEY_CODE_A]) {
+            setSelectedBlock(addNewBlockAtIndex({
+              type: BlockTypeEnum.SCRATCHPAD,
+            }, selectedBlockIndex));
+          } else if (keyMapping[KEY_CODE_B]) {
+            setSelectedBlock(addNewBlockAtIndex({
+              type: BlockTypeEnum.SCRATCHPAD,
+            }, selectedBlockIndex + 1));
+          }
+        } else if (selectedBlockPrevious) {
+          if (keyMapping[KEY_CODE_ENTER]) {
+            setSelectedBlock(selectedBlockPrevious);
+          }
         }
-      } else if (selectedBlockPrevious && !selectedBlock) {
-        if (keyMapping[KEY_CODE_ENTER]) {
-          setSelectedBlock(selectedBlockPrevious);
+
+        if (keyHistory[0] === KEY_CODE_NUMBER_0 && keyHistory[1] === KEY_CODE_NUMBER_0) {
+          const warning = 'Do you want to restart the kernel? All variables will be cleared.';
+          if (typeof window !== 'undefined' && window.confirm(warning)) {
+            restartKernel();
+          }
         }
       }
     },
@@ -154,6 +184,7 @@ function PipelineDetail({
       blocks,
       interruptKernel,
       numberOfBlocks,
+      restartKernel,
       selectedBlock,
       selectedBlockPrevious,
       setBlocks,

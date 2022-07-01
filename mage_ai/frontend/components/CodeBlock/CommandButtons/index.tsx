@@ -117,7 +117,7 @@ function CommandButtons({
                 />
               </Text>
             )}
-            size={UNIT * 3}
+            size={UNIT * 2.5}
             widthFitContent
           >
             <Button
