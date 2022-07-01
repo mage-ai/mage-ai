@@ -16,8 +16,10 @@ import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
+  KEY_CODE_A,
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
+  KEY_CODE_B,
   KEY_CODE_D,
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
@@ -132,14 +134,23 @@ function PipelineDetail({
           setSelectedBlock(blocks[selectedBlockIndex + 1]);
         } else if (keyMapping[KEY_CODE_ENTER]) {
           setTextareaFocused(true);
+        } else if (keyMapping[KEY_CODE_A]) {
+          setSelectedBlock(addNewBlockAtIndex({
+            type: BlockTypeEnum.SCRATCHPAD,
+          }, selectedBlockIndex));
+        } else if (keyMapping[KEY_CODE_B]) {
+          setSelectedBlock(addNewBlockAtIndex({
+            type: BlockTypeEnum.SCRATCHPAD,
+          }, selectedBlockIndex + 1));
         }
-      }  else if (selectedBlockPrevious && !selectedBlock) {
+      } else if (selectedBlockPrevious && !selectedBlock) {
         if (keyMapping[KEY_CODE_ENTER]) {
           setSelectedBlock(selectedBlockPrevious);
         }
       }
     },
     [
+      addNewBlockAtIndex,
       blocks,
       interruptKernel,
       numberOfBlocks,
