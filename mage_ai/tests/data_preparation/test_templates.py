@@ -1,4 +1,7 @@
 from mage_ai.data_preparation.templates.utils import build_template_from_suggestion
+from mage_ai.data_loader.base import DataSource
+from mage_ai.data_preparation.models.block import BlockType
+from mage_ai.data_preparation.templates.template import fetch_template_source
 from mage_ai.tests.base_test import TestCase
 
 
@@ -65,3 +68,129 @@ def remove_rows_with_missing_entries(df: DataFrame) -> DataFrame:
 """
         new_string = build_template_from_suggestion(suggestion)
         self.assertEqual(expected_string, new_string)
+
+    def test_template_generation_data_loader_default(self):
+        expected_template = """from pandas import DataFrame
+
+
+@data_loader
+def load_data() -> DataFrame:
+    \"\"\"
+    Template code for loading data from any source.
+
+    Returns:
+        DataFrame: Returned pandas data frame.
+    \"\"\"
+    # Specify your data loading logic here
+    return DataFrame({})
+"""
+
+        config1 = {'data_source': 'default'}
+        config2 = {}
+        new_template1 = fetch_template_source(BlockType.DATA_LOADER, config1)
+        new_template2 = fetch_template_source(BlockType.DATA_LOADER, config2)
+        self.assertEqual(expected_template, new_template1)
+        self.assertEqual(expected_template, new_template2)
+
+    def test_template_generation_data_loader_specific(self):
+        redshift_template = """from mage_ai.data_loader.redshift import Redshift
+from pandas import DataFrame
+
+
+@data_loader
+def load_data_from_redshift() -> DataFrame:
+    \"\"\"
+    Template code for loading data from Redshift cluster. Additional
+    configuration parameters can be added to the `config` dictionary.
+    \"\"\"
+    config = {
+        'database': 'your_redshift_database_name',
+        'user': 'database_login_username',
+        'password': 'database_login_password',
+        'host': 'database_host',
+        'port': 'database_port',
+    }
+    query = 'your_redshift_selection_query'
+
+    with Redshift.with_temporary_credentials(**config) as loader:
+        return loader.load(query)
+"""
+        s3_template = """from mage_ai.data_loader.s3 import S3
+from pandas import DataFrame
+
+
+@data_loader
+def load_from_s3_bucket() -> DataFrame:
+    \"\"\"
+    Template code for loading data from S3 bucket.
+
+    This template assumes that user credentials are specified in `~/.aws`.
+    If not, use `S3.with_credentials()` to manually specify AWS credentials or use
+    AWS CLI to configure credentials on system.
+    \"\"\"
+    bucket_name = 'your_s3_bucket_name'  # Specify S3 bucket name to pull data from
+    object_key = 'your_object_key'  # Specify object to download from S3 bucket
+
+    return S3(bucket_name, object_key).load()
+"""
+
+        config1 = {'data_source': DataSource.REDSHIFT}
+        config2 = {'data_source': DataSource.S3}
+        new_redshift_template = fetch_template_source(BlockType.DATA_LOADER, config1)
+        new_s3_template = fetch_template_source(BlockType.DATA_LOADER, config2)
+        self.assertEqual(redshift_template, new_redshift_template)
+        self.assertEqual(s3_template, new_s3_template)
+
+    def test_template_generation_transformer_default(self):
+        expected_template = """from pandas import DataFrame
+
+
+@transformer
+def transform_df(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Template code for a transformer block.
+    Args:
+        df (DataFrame): Data frame from previously executed block.
+    Returns:
+        DataFrame: Transformed data frame
+    \"\"\"
+    # Specify your transformation logic here
+    return df
+"""
+
+        config1 = {'action_type': 'custom'}
+        config2 = {'axis': 'row'}
+        config3 = {}
+        new_template1 = fetch_template_source(BlockType.TRANSFORMER, config1)
+        new_template2 = fetch_template_source(BlockType.TRANSFORMER, config2)
+        new_template3 = fetch_template_source(BlockType.TRANSFORMER, config3)
+        self.assertEqual(expected_template, new_template1)
+        self.assertEqual(expected_template, new_template2)
+        self.assertEqual(expected_template, new_template3)
+
+    def test_template_generation_transformer_action_default(self):
+        expected_template = """from pandas import DataFrame
+
+
+@transformer
+def transform_df(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Template code for a transformer block.
+    Args:
+        df (DataFrame): Data frame from previously executed block.
+    Returns:
+        DataFrame: Transformed data frame
+    \"\"\"
+    # Specify your transformation logic here
+    return df
+"""
+
+        config1 = {'action_type': 'custom'}
+        config2 = {'axis': 'row'}
+        config3 = {}
+        new_template1 = fetch_template_source(BlockType.TRANSFORMER, config1)
+        new_template2 = fetch_template_source(BlockType.TRANSFORMER, config2)
+        new_template3 = fetch_template_source(BlockType.TRANSFORMER, config3)
+        self.assertEqual(expected_template, new_template1)
+        self.assertEqual(expected_template, new_template2)
+        self.assertEqual(expected_template, new_template3)
