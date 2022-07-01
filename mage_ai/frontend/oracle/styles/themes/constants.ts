@@ -65,6 +65,8 @@ export type ThemeType = {
     button1: string;
     button2: string;
     button3: string;
+    button4: string;
+    button5: string;
     danger: string,
     lines: string;
     primary: string;

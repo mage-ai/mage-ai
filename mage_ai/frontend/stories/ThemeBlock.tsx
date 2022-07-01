@@ -8,11 +8,12 @@ import Text from '../oracle/elements/Text';
 import light from '../oracle/styles/themes/light';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { gridTheme, theme } from '../styles/theme';
+import dark from '@oracle/styles/themes/dark';
 
 type ContainerProps = {
   reducedPadding?: boolean;
   theme?: any;
-}
+};
 
 const Container = styled.div<ContainerProps>`
   flex: 1;
@@ -57,10 +58,30 @@ const ThemeBlock = ({
     </ThemeProvider>
   );
 
+  const darkEl = (
+    <ThemeProvider theme={{ ...theme, ...dark }}>
+      <Container reducedPadding={reducedPadding}>
+        <Text bold xlarge>{title || 'Dark Theme'}</Text>
+        <br />
+        <Divider short />
+
+        <Spacing mt={3}>
+          {React.Children.map(children, (child, idx) => React.cloneElement(
+            child,
+            {
+              key: idx,
+            },
+          ))}
+        </Spacing>
+      </Container>
+    </ThemeProvider>
+  );
+
   return (
     <GridThemeProvider gridTheme={gridTheme}>
       <>
         {lightEl}
+        {darkEl}
       </>
     </GridThemeProvider>
   );
