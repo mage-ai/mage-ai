@@ -156,7 +156,9 @@ class ApiPipelineBlockListHandler(BaseHandler):
             get_repo_path(),
             pipeline=pipeline,
             upstream_block_uuids=block_data.get('upstream_blocks', []),
+            config=block_data.get('config'),
         )
+        pipeline.add_block(block, block_data.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict()))
 
 

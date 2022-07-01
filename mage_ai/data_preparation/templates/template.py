@@ -21,7 +21,7 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
     Creates a file template from a suggestion.
 
     Args:
-        suggestion (Dict): Suggestion payload generated from `BaseRule`.
+        suggestion (Mapping): Suggestion payload generated from `BaseRule`.
 
     Returns:
         str: String version of Python code to execute to run this cleaning suggestion.
@@ -66,7 +66,7 @@ def read_template_file(template_path: str) -> jinja2.Template:
         template_path (str): File path of template to load relative to `templates` package
 
     Returns:
-        str: Template source code
+        jinja2.Template: Template source object
     """
     return template_env.get_template(template_path)
 
@@ -126,7 +126,9 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
             additional_params.append('action_options={\'your_action_option\': None}')
         if action_type in OUTPUT_TYPES:
             additional_params.append('outputs=[\'your_output_metadata\']')
-        additional_params_str = '\n        ' + ',\n        '.join(additional_params)
+        additional_params_str = ',\n        '.join(additional_params)
+        if additional_params_str != '':
+            additional_params_str = '\n        ' + additional_params_str
         return (
             template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
         )

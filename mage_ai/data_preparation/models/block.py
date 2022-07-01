@@ -2,7 +2,7 @@ from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
 from mage_ai.data_preparation.models.variable import VariableType
-from mage_ai.data_preparation.templates.template import copy_template_directory, load_template
+from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 import os
 import pandas as pd
