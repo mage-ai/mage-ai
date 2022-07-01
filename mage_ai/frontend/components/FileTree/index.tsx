@@ -39,16 +39,36 @@ function FileTree({
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
-  type TreeOperation = true | false | 'toggle';
+
+  enum TreeOperationEnum {
+    CUSTOM_VAL,
+    FALSE,
+    TRUE,
+    TOGGLE,
+  }
+
+  type TreeOperationType = {
+    key: string,
+    type: TreeOperationEnum,
+    value?: any;
+  };
 
   const [tree, setTree] = useState(initialTree);
   const [selectedPath, setSelectedPath] = useState([]);
 
-  const setTreeState = (path: string[], prop: string, value: TreeOperation) => {
+  const setTreeState = (path: string[], payload: TreeOperationType) => {
     const searchPath: string[] = [];
+    const { key, type, value } = payload;
+    
     const updateTree = (subtree: FileNodeType) => {
       if (equals(path, searchPath)) {
-        subtree[prop] = value === 'toggle' ? !subtree[prop] : value;
+        const updateMap = {
+          [TreeOperationEnum.TRUE]: true,
+          [TreeOperationEnum.FALSE]: false,
+          [TreeOperationEnum.TOGGLE]: !subtree[key],
+          [TreeOperationEnum.CUSTOM_VAL]: value,
+        };
+        subtree[key] = updateMap[type];
         return;
       }
 
@@ -59,13 +79,17 @@ function FileTree({
       });
     };
 
+    // 'root' name here is arbitrary, needed to match type definition
     const treeCopy = { children: JSON.parse(JSON.stringify(tree)), name: 'root' };
     updateTree(treeCopy);
     setTree(treeCopy.children);
   };
 
   const toggleFolder = (path: string[]) => {
-    setTreeState([...path], 'collapsed', 'toggle');
+    setTreeState([...path], {
+      key: 'collapsed',
+      type: TreeOperationEnum.TOGGLE,
+    });
     setSelectedPath([...path]);
   };
   
