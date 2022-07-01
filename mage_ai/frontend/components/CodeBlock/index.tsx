@@ -160,9 +160,7 @@ function CodeBlockProps({
           <CodeEditor
             // autoSave
             autoHeight
-            defaultValue={defaultValue}
             height={height}
-            interruptKernel={interruptKernel}
             onChange={(val: string) => setContent(val)}
             onDidChangeCursorPosition={onDidChangeCursorPosition}
             placeholder="Start typing here..."

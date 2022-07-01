@@ -11,6 +11,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import dark from '@oracle/styles/themes/dark';
 import { ContainerStyle } from './index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {

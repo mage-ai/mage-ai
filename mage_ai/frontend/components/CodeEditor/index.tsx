@@ -54,7 +54,7 @@ type CodeEditorProps = {
   onChange?: (value: string) => void;
   onSave?: (value: string) => void;
   placeholder?: string;
-  runBlock: () => void;
+  runBlock: (content: string) => void;
   showLineNumbers?: boolean;
   theme?: any;
   value?: string;
