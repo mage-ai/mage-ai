@@ -77,12 +77,14 @@ class Block:
             os.mkdir(block_dir_path)
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
-        # TODO: update the following code to use code template
         file_path = os.path.join(block_dir_path, f'{uuid}.py')
         if os.path.exists(file_path):
-            raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
-            pass
+            if pipeline is not None and pipeline.has_block(uuid):
+                raise Exception(f'Block {uuid} already exists. Please use a different name.')
+        else:
+            # TODO: update the following code to use code template
+            with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
+                pass
         block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
         if pipeline is not None:
             pipeline.add_block(block, upstream_block_uuids)
@@ -218,6 +220,8 @@ class Block:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
             outputs = decorated_functions[0](*input_vars)
+            if outputs is None:
+                outputs = []
             if type(outputs) is not list:
                 outputs = [outputs]
         return outputs

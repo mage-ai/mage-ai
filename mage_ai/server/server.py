@@ -132,6 +132,8 @@ class ApiPipelineBlockHandler(BaseHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         data = json.loads(self.request.body).get('block', {})
         block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         block.update(data)
         self.write(dict(block=block.to_dict()))
 
@@ -140,6 +142,8 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         asyncio.run(block.execute())
         self.write(dict(block=block.to_dict(include_outputs=True)))
         self.finish()
@@ -157,8 +161,13 @@ class ApiPipelineBlockListHandler(BaseHandler):
         """
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block_data = json.loads(self.request.body).get('block', {})
-        block = Block.create(block_data.get('name'), block_data.get('type'), get_repo_path())
-        pipeline.add_block(block, block_data.get('upstream_blocks', []))
+        block = Block.create(
+            block_data.get('name'),
+            block_data.get('type'),
+            get_repo_path(),
+            pipeline=pipeline,
+            upstream_block_uuids=block_data.get('upstream_blocks', []),
+        )
         self.write(dict(block=block.to_dict()))
 
 
@@ -166,6 +175,8 @@ class ApiPipelineBlockAnalysisHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         analyses = block.get_analyses()
         self.write(dict(analyses=analyses))
 
@@ -174,6 +185,8 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         outputs = block.get_outputs()
         self.write(dict(outputs=outputs))
 
@@ -206,7 +219,7 @@ def make_app():
             (r'/api/', ApiHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_content', ApiFileContentHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+/execute)', ApiPipelineExecuteHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',

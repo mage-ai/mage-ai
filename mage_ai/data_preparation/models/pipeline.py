@@ -87,6 +87,8 @@ class Pipeline:
         await asyncio.gather(*tasks.values())
 
     def load_config_from_yaml(self):
+        if not os.path.exists(self.config_path):
+            raise Exception(f'Pipeline {self.uuid} does not exist.')
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
         self.name = config.get('name')
@@ -138,6 +140,9 @@ class Pipeline:
 
     def get_blocks(self, block_uuids):
         return [self.blocks_by_uuid[uuid] for uuid in block_uuids]
+
+    def has_block(self, block_uuid):
+        return block_uuid in self.blocks_by_uuid
 
     def remove_block(self, block):
         if block.uuid not in self.blocks_by_uuid:
