@@ -9,9 +9,6 @@ def execute_transformer_action(df: DataFrame) -> DataFrame:
     """
     Template code for transforming data frame using actions from
     the `transformer_actions` library.
-
-    See library documentation for the required payload parameters when constructing
-    the action below.
     """
     action = build_transformer_action(
         action_type=ActionType.CUSTOM,  # Specify the transformer action to perform
