@@ -138,7 +138,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
         asyncio.run(block.execute())
-        self.write(dict(block=block.to_dict()))
+        self.write(dict(block=block.to_dict(include_outputs=True)))
         self.finish()
 
 

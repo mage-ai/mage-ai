@@ -1,4 +1,5 @@
 from enum import Enum
+from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -37,11 +38,15 @@ class Block:
 
     @property
     def input_variables(self):
-        return {b.uuid: b.output_variables for b in self.upstream_blocks}
+        return {b.uuid: b.output_variables.keys() for b in self.upstream_blocks}
 
     @property
     def output_variables(self):
-        return []
+        """
+        Return output variables in dictionary.
+        The key is the variable name, and the value is variable data type.
+        """
+        return dict()
 
     @property
     def upstream_block_uuids(self):
@@ -110,14 +115,12 @@ class Block:
 
     async def execute(self, custom_code=None):
         outputs = await self.execute_block(custom_code)
-        if len(outputs) != len(self.output_variables):
-            raise Exception(
-                f'The number of output variables does not match the block type: {self.type}',
-            )
-        variable_mapping = dict(zip(self.output_variables, outputs))
+        self.__verify_outputs(outputs)
+        variable_mapping = dict(zip(self.output_variables.keys(), outputs))
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
         self.__update_pipeline_block()
+        self.__analyze_outputs(variable_mapping)
         return outputs
 
     def get_analyses(self):
@@ -127,7 +130,9 @@ class Block:
             return []
         analyses = []
         variable_manager = VariableManager(self.pipeline.repo_path)
-        for v in self.output_variables:
+        for v, vtype in self.output_variables.items():
+            if vtype is not pd.DataFrame:
+                continue
             data = variable_manager.get_variable(
                     self.pipeline.uuid,
                     self.uuid,
@@ -145,7 +150,7 @@ class Block:
             return []
         outputs = []
         variable_manager = VariableManager(self.pipeline.repo_path)
-        for v in self.output_variables:
+        for v, _ in self.output_variables.items():
             data = variable_manager.get_variable(
                     self.pipeline.uuid,
                     self.uuid,
@@ -163,8 +168,8 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def to_dict(self):
-        return dict(
+    def to_dict(self, include_outputs=False):
+        data = dict(
             name=self.name,
             uuid=self.uuid,
             type=self.type.value if type(self.type) is not str else self.type,
@@ -172,6 +177,9 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
         )
+        if include_outputs:
+            data['outputs'] = self.get_outputs()
+        return data
 
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
@@ -181,7 +189,6 @@ class Block:
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
-    # TODO: implement execution logic
     async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
             def custom_code(function):
@@ -202,7 +209,7 @@ class Block:
                     )
                     for var in vars
                 ]
-
+        outputs = []
         decorated_functions = []
         if custom_code is not None:
             exec(custom_code, {self.type: block_decorator(decorated_functions)})
@@ -210,9 +217,33 @@ class Block:
             with open(self.file_path) as file:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
-            return decorated_functions[0](*input_vars)
+            outputs = decorated_functions[0](*input_vars)
+            if type(outputs) is not list:
+                outputs = [outputs]
+        return outputs
 
-        return []
+    def __analyze_outputs(self, variable_mapping):
+        if self.pipeline is None:
+            return
+        for uuid, data in variable_mapping.items():
+            vtype = self.output_variables[uuid]
+            if vtype is pd.DataFrame:
+                analysis = clean_data(
+                    data.reset_index(drop=True),
+                    transform=False,
+                )
+                VariableManager(self.pipeline.repo_path).add_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    uuid,
+                    dict(
+                        metadata=dict(column_types=analysis['column_types']),
+                        statistics=analysis['statistics'],
+                        insights=analysis['insights'],
+                        suggestions=analysis['suggestions'],
+                    ),
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
 
     def __store_variables(self, variable_mapping):
         if self.pipeline is None:
@@ -244,23 +275,39 @@ class Block:
             return
         self.pipeline.update_block(self, upstream_block_uuids=upstream_blocks)
 
+    def __verify_outputs(self, outputs):
+        if len(outputs) != len(self.output_variables):
+            raise Exception(
+                f'The number of output variables does not match the block type: {self.type}',
+            )
+        variable_names = list(self.output_variables.keys())
+        variable_dtypes = list(self.output_variables.values())
+        for idx, output in enumerate(outputs):
+            actual_dtype = type(output)
+            expected_dtype = variable_dtypes[idx]
+            if type(output) is not variable_dtypes[idx]:
+                raise Exception(
+                    f'The variable {variable_names[idx]} should be {expected_dtype} type,'
+                    f' but {actual_dtype} type is returned',
+                )
+
 
 class DataLoaderBlock(Block):
     @property
     def output_variables(self):
-        return ['df']
+        return dict(df=pd.DataFrame)
   
 
 class DataExporterBlock(Block):
     @property
     def output_variables(self):
-        return []
+        return dict()
 
 
 class TransformerBlock(Block):
     @property
     def output_variables(self):
-        return ['df']
+        return dict(df=pd.DataFrame)
 
 
 BLOCK_TYPE_TO_CLASS = {
