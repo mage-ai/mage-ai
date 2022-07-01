@@ -1,4 +1,5 @@
 from async_timeout import asyncio
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType, DataLoaderBlock, TransformerBlock
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import VariableManager
@@ -67,8 +68,20 @@ def remove_duplicate_rows(df):
             'df',
             variable_type='dataframe'
         )
+        analysis = variable_manager.get_variable(
+            pipeline.uuid,
+            block2.uuid,
+            'df',
+            variable_type='dataframe_analysis',
+        )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
         assert_frame_equal(data, df_final)
+        self.assertEqual(
+            analysis['metadata']['column_types'],
+            dict(col1=ColumnType.TRUE_OR_FALSE, col2=ColumnType.TRUE_OR_FALSE),
+        )
+        self.assertTrue(len(analysis['statistics']) > 0)
+        self.assertTrue(len(analysis['insights']) > 0)
 
     def test_execute_multiple_upstream_blocks(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
@@ -115,11 +128,24 @@ def union_datasets(df1, df2):
             'df',
             variable_type='dataframe'
         )
+        analysis = variable_manager.get_variable(
+            pipeline.uuid,
+            block3.uuid,
+            'df',
+            variable_type='dataframe_analysis',
+        )
         df_final = pd.concat([
             pd.DataFrame({'col1': [1, 3], 'col2': [2, 4]}),
             pd.DataFrame({'col1': [5], 'col2': [6]}),
         ])
         assert_frame_equal(data, df_final)
+        self.assertEqual(
+            analysis['metadata']['column_types'],
+            dict(col1=ColumnType.NUMBER, col2=ColumnType.NUMBER),
+        )
+        self.assertTrue(len(analysis['statistics']) > 0)
+        self.assertTrue(len(analysis['insights']) > 0)
+        self.assertTrue(len(analysis['suggestions']) > 0)
 
     def test_to_dict(self):
         block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
