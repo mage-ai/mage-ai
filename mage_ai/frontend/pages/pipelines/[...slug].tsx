@@ -3,7 +3,9 @@ import { useRef } from 'react';
 import Head from '@oracle/elements/Head';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
-import TripleLayout from '@components/TripleLayout'
+import Sidekick from '@components/Sidekick';
+import TripleLayout from '@components/TripleLayout';
+import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
@@ -19,7 +21,7 @@ function PipelineDetailPage({
       <Head title="Pipeline detail page" />
 
       <TripleLayout
-        after={<div style={{ height: 9999 }} />}
+        after={<Sidekick views={SIDEKICK_VIEWS} />}
         before={<div style={{ height: 9999 }} />}
         mainContainerRef={mainContainerRef}
       >
