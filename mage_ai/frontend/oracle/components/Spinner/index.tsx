@@ -16,6 +16,7 @@ export type SpinnerProps = {
   right?: number;
   small?: boolean;
   top?: number;
+  type?: 'blank' | 'balls' | 'bars' | 'bubbles' | 'cubes' | 'cylon' | 'spin' | 'spinningBubbles' | 'spokes'
 };
 
 const Spinner = ({
@@ -28,6 +29,7 @@ const Spinner = ({
   right = 0,
   small,
   top = 0,
+  type = 'spin',
 }: SpinnerProps) => {
   const [bodyHeight, setBodyHeight] = useState(undefined);
   const [bodyWidth, setBodyWidth] = useState(undefined);
@@ -57,7 +59,7 @@ const Spinner = ({
           : (themeContext.loader || dark.loader).color
       }
       height={size}
-      type="spin"
+      type={type}
       width={size}
     />
   );

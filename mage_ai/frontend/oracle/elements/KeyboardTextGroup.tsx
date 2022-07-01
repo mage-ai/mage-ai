@@ -32,6 +32,7 @@ export type KeyboardTextGroupProps = {
   monospace?: boolean;
   mutedDisabled?: boolean;
   small?: boolean;
+  uuidForKey?: string;
 };
 
 function KeyboardTextGroup({
@@ -42,13 +43,17 @@ function KeyboardTextGroup({
   monospace,
   mutedDisabled,
   small,
+  uuidForKey,
 }: KeyboardTextGroupProps) {
   const els = [];
+  const previousKeys = [];
 
   keyTextGroups.forEach((keyTextGroup: NumberOrString[], idx1: number) => {
     const combo = [];
 
     keyTextGroup.forEach((keyText: NumberOrString, idx2: number) => {
+      previousKeys.push(keyText);
+
       if (idx2 >= 1) {
         combo.push(<SpacingStyle key={`spacing-${keyText}`} small={small} />);
       }
@@ -58,7 +63,7 @@ function KeyboardTextGroup({
           borderless={borderless}
           disabled={disabled}
           inline
-          key={`key-${keyText}`}
+          key={`key-${previousKeys.join('-')}-${uuidForKey}`}
           keyText={keyText}
           monospace={monospace}
           mutedDisabled={mutedDisabled}

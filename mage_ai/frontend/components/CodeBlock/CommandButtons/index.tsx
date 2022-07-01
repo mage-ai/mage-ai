@@ -30,24 +30,25 @@ import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
   deleteBlock: (block: BlockType) => void;
+  executionState: ExecutionStateEnum;
   interruptKernel: () => void;
 }
 
 type CommandButtonsProps = {
   block: BlockType;
   runBlock: () => void;
-  status: ExecutionStateEnum;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
   block,
   deleteBlock,
+  executionState,
   interruptKernel,
   runBlock,
-  status
 }) {
+  const { uuid } = block.uuid;
   const themeContext = useContext(ThemeContext);
-  const isInProgress = ExecutionStateEnum.BUSY === status;
+  const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
 
   return (
@@ -56,11 +57,18 @@ function CommandButtons({
         alignItems="center"
         flexDirection="column"
       >
-        {isInProgress && (
+        {ExecutionStateEnum.QUEUED === executionState && (
+          <Spinner
+            color={(themeContext || dark).content.active}
+            type="cylon"
+          />
+        )}
+        {ExecutionStateEnum.BUSY === executionState && (
           <Spinner
             color={(themeContext || dark).content.active}
           />
         )}
+
         {!isInProgress && (
           <Tooltip
             appearAbove
@@ -75,6 +83,7 @@ function CommandButtons({
                   inline
                   monospace
                   keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                  uuidForKey={uuid}
                 />
               </Text>
             )}
@@ -114,6 +123,7 @@ function CommandButtons({
                   inline
                   monospace
                   keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
+                  uuidForKey={uuid}
                 />
               </Text>
             )}
@@ -146,10 +156,11 @@ function CommandButtons({
                     inline
                     monospace
                     keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
+                    uuidForKey={uuid}
                   />
                 </Text>
               )}
-              size={UNIT * 3}
+              size={UNIT * 2.5}
               widthFitContent
             >
               <Button

@@ -10,7 +10,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
-import KernelOutputType from '@interfaces/KernelOutputType';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
@@ -24,6 +24,7 @@ import {
   KEY_CODE_ENTER,
   KEY_CODE_ESCAPE,
   KEY_CODE_I,
+  KEY_CODE_META,
   KEY_CODE_NUMBER_0,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
@@ -59,6 +60,7 @@ function PipelineDetail({
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
+  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
@@ -119,6 +121,102 @@ function PipelineDetail({
     setBlocks,
   ]);
 
+  const {
+    lastMessage,
+    readyState,
+    sendMessage,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  useEffect(() => {
+    if (lastMessage) {
+      const message: KernelOutputType = JSON.parse(lastMessage.data);
+      const {
+        execution_state: executionState,
+        uuid,
+      } = message;
+
+      setMessages((messagesPrevious) => {
+        const messagesFromUUID = messagesPrevious[uuid] || [];
+
+        return {
+          ...messagesPrevious,
+          [uuid]: messagesFromUUID.concat(message),
+        };
+      });
+
+      if (ExecutionStateEnum.IDLE === executionState) {
+        setRunningBlocks((runningBlocksPrevious) =>
+          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+        );
+      }
+    }
+  }, [
+    lastMessage,
+    setMessages,
+    setRunningBlocks,
+  ]);
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Open',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+  }[readyState];
+
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+  }) => {
+    const {
+      block,
+      code,
+    } = payload;
+    const { uuid } = block;
+
+    sendMessage(JSON.stringify({
+      code,
+      uuid,
+    }));
+
+    setMessages((messagesPrevious) => {
+      delete messagesPrevious[uuid];
+
+      return messagesPrevious;
+    });
+
+    setTextareaFocused(false);
+
+    setRunningBlocks((runningBlocksPrevious) => runningBlocksPrevious.concat(block));
+  }, [
+    sendMessage,
+    setMessages,
+    setRunningBlocks,
+    setTextareaFocused,
+  ]);
+
+  const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
+    acc: {
+      [uuid: string]: BlockType;
+    },
+    block: BlockType,
+    idx: number,
+  ) => ({
+    ...acc,
+    [block.uuid]: {
+      ...block,
+      priority: idx,
+    },
+  }), {}), [runningBlocks]);
+
   const uuidKeyboard = 'PipelineDetail/index';
   const {
     registerOnKeyDown,
@@ -143,18 +241,24 @@ function PipelineDetail({
 
           if (keyMapping[KEY_CODE_ESCAPE]) {
             setSelectedBlock(null);
-          } else if (keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I) {
+          } else if (keyHistory[0] === KEY_CODE_I
+            && keyHistory[1] === KEY_CODE_I
+          ) {
             interruptKernel();
           } else if (keyHistory[0] === KEY_CODE_D
             && keyHistory[1] === KEY_CODE_D
             && selectedBlockIndex !== -1
           ) {
+            const blockBeforeIndex = selectedBlockIndex - 1;
+            if (blockBeforeIndex >= 0) {
+              setSelectedBlock(blocks[blockBeforeIndex]);
+            }
             setBlocks(removeAtIndex(blocks, selectedBlockIndex))
           } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
             setSelectedBlock(blocks[selectedBlockIndex - 1]);
           } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
             setSelectedBlock(blocks[selectedBlockIndex + 1]);
-          } else if (keyMapping[KEY_CODE_ENTER]) {
+          } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
           } else if (keyMapping[KEY_CODE_A]) {
             setSelectedBlock(addNewBlockAtIndex({
@@ -194,75 +298,6 @@ function PipelineDetail({
     ],
   );
 
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(WEBSOCKT_URL, {
-    onOpen: () => console.log('socketUrlPublish opened'),
-    shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
-
-      return true;
-    },
-  });
-
-  useEffect(() => {
-    if (lastMessage) {
-      const message = JSON.parse(lastMessage.data);
-      const { uuid } = message;
-
-      setMessages((messagesPrevious) => {
-        const messagesFromUUID = messagesPrevious[uuid] || [];
-
-        return {
-          ...messagesPrevious,
-          [uuid]: messagesFromUUID.concat(message),
-        };
-      });
-    }
-  }, [
-    lastMessage,
-    setMessages,
-  ]);
-
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
-
-  const runBlock = useCallback((payload: {
-    block: BlockType;
-    code: string;
-  }) => {
-    const {
-      block,
-      code,
-    } = payload;
-    const { uuid } = block;
-
-    sendMessage(JSON.stringify({
-      code,
-      uuid,
-    }));
-
-    setMessages((messagesPrevious) => {
-      delete messagesPrevious[uuid];
-
-      return messagesPrevious;
-    });
-
-    setTextareaFocused(false);
-  }, [
-    sendMessage,
-    setMessages,
-    setTextareaFocused,
-  ]);
-
   return (
     <Spacing p={PADDING_UNITS}>
       {blocks.map((block: BlockType, idx: number) => {
@@ -270,6 +305,13 @@ function PipelineDetail({
           uuid,
         } = block;
         const selected: boolean = selectedBlock?.uuid === uuid;
+        const runningBlock = runningBlocksByUUID[uuid];
+        const executionState = runningBlock
+          ? (runningBlock.priority === 0
+            ? ExecutionStateEnum.BUSY
+            : ExecutionStateEnum.QUEUED
+           )
+          : ExecutionStateEnum.IDLE;
 
         return (
           <CodeBlock
@@ -282,6 +324,7 @@ function PipelineDetail({
               blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
             ))}
             block={block}
+            executionState={executionState}
             key={uuid}
             interruptKernel={interruptKernel}
             mainContainerRef={mainContainerRef}
