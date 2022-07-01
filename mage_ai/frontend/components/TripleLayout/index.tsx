@@ -278,7 +278,7 @@ function TripleLayout({
           >
             <Spacing
               px={afterHidden ? 1 : 2}
-              py={2}
+              py={after ? '10.5px' : 2}
             >
               <FlexContainer>
                 <Button
