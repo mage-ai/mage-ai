@@ -70,7 +70,43 @@ class ActionType(str, Enum):
     UPDATE_VALUE = 'update_value'
 
 
-class Axis(str, Enum):
+ACTION_CODE_TYPES = frozenset([ActionType.ADD, ActionType.CUSTOM, ActionType.FILTER])
+ACTION_OPTION_TYPES = frozenset(
+    [
+        ActionType.ADD,
+        ActionType.SORT,
+        ActionType.GROUP,
+        ActionType.IMPUTE,
+        ActionType.DROP_DUPLICATE,
+        ActionType.MEDIAN,
+        ActionType.MIN,
+        ActionType.MAX,
+        ActionType.MODE,
+        ActionType.SUM,
+        ActionType.AVERAGE,
+        ActionType.SHIFT_UP,
+        ActionType.SHIFT_DOWN,
+        ActionType.REFORMAT,
+        ActionType.JOIN,
+    ]
+)
+OUTPUT_TYPES = frozenset(
+    [
+        ActionType.ADD,
+        ActionType.GROUP,
+        ActionType.MEDIAN,
+        ActionType.MIN,
+        ActionType.MAX,
+        ActionType.MODE,
+        ActionType.SUM,
+        ActionType.AVERAGE,
+        ActionType.SHIFT_UP,
+        ActionType.SHIFT_DOWN,
+    ]
+)
+
+
+class Axis:
     COLUMN = 'column'
     ROW = 'row'
 

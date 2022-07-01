@@ -1,4 +1,3 @@
-from enum import Enum
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import BlockStatus, BlockType

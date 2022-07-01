@@ -1,11 +1,54 @@
+from mage_ai.data_cleaner.transformer_actions.constants import (
+    ACTION_CODE_TYPES,
+    ACTION_OPTION_TYPES,
+    OUTPUT_TYPES,
+)
+from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_loader.base import DataSource
+from typing import Mapping, Union
+import jinja2
+import json
 import os
 import shutil
-from typing import Union
-from mage_ai.data_preparation.models.block import BlockType
-from mage_ai.data_loader.base import DataSource
+
+template_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader('mage_ai/data_preparation/templates')
+)
 
 
-def copy_templates(template_path: str, dest_path: str) -> None:
+def build_template_from_suggestion(suggestion: Mapping) -> str:
+    """
+    Creates a file template from a suggestion.
+
+    Args:
+        suggestion (Dict): Suggestion payload generated from `BaseRule`.
+
+    Returns:
+        str: String version of Python code to execute to run this cleaning suggestion.
+    """
+    clean_title = suggestion['title'].lower().replace(' ', '_')
+    cleaned_payload = json.dumps(suggestion['action_payload'], indent=4)
+    cleaned_payload = cleaned_payload.replace('\n', '\n    ')
+    source_path = os.path.join(os.path.dirname(__file__), 'transformers/suggestion_fmt.jinja')
+    with open(source_path, 'r') as source:
+        template = jinja2.Template(source.read())
+    return (
+        template.render(title=clean_title, message=suggestion['message'], payload=cleaned_payload)
+        + "\n"
+    )
+
+
+def copy_template_directory(template_path: str, dest_path: str) -> None:
+    """
+    Copies a template directory structure from source to destination.
+
+    Args:
+        template_path (str): Source directory for the template to copy.
+        dest_path (str): Destination directory to copy template to.
+
+    Raises:
+        IOError: Raises IOError if template could not be found.
+    """
     template_path = os.path.join(
         os.path.dirname(__file__),
         template_path,
@@ -15,42 +58,81 @@ def copy_templates(template_path: str, dest_path: str) -> None:
     shutil.copytree(template_path, dest_path)
 
 
-def fetch_template_path(block_type: Union[BlockType, str], block_name: str) -> os.PathLike:
+def read_template_file(template_path: str) -> jinja2.Template:
+    """
+    Reads template source code into a string
+
+    Args:
+        template_path (str): File path of template to load relative to `templates` package
+
+    Returns:
+        str: Template source code
+    """
+    return template_env.get_template(template_path)
+
+
+def write_template(template_source: str, dest_path: str) -> None:
+    """
+    Writes template source code to destination file
+
+    Args:
+        template_source (str): Template source code to write to file
+        dest_path (str): Destination file to write template source code to.
+    """
+    with open(dest_path, 'w') as foutput:
+        foutput.write(template_source)
+
+
+def load_template(
+    block_type: Union[BlockType, str], config: Mapping[str, str], dest_path: str
+) -> None:
+    template_source = fetch_template_source(block_type, config)
+    write_template(template_source, dest_path)
+
+
+def fetch_template_source(block_type: Union[BlockType, str], config: Mapping[str, str]) -> str:
     if block_type == BlockType.DATA_LOADER:
-        return __fetch_data_loader_templates(block_name)
+        template_source = __fetch_data_loader_templates(config)
     elif block_type == BlockType.TRANSFORMER:
-        return __fetch_transformer_templates(block_name)
+        template_source = __fetch_transformer_templates(config)
     elif block_type == BlockType.DATA_EXPORTER:
-        return __fetch_data_exporter_templates(block_name)
-    elif block_type != BlockType.SCRATCHPAD:
-        raise ValueError(f'Invalid block type defined: {block_type}')
+        template_source = __fetch_data_exporter_templates(config)
+    else:
+        template_source = ''
+    return template_source
 
 
-def __fetch_data_loader_templates(block_name: str):
-    has_gcp_creds = os.environ().get('GOOGLE_APPLICATION_CREDENTIALS') is not None
-    has_aws_creds = os.access('~/.aws/credentials', os.F_OK) and os.access('~/.aws/config', os.F_OK)
-    recognized_source = None
+def __fetch_data_loader_templates(config: Mapping[str, str]):
+    data_source = config.get('data_source')
+    try:
+        _ = DataSource(data_source)
+        template_path = f'data_loaders/{data_source.lower()}.py'
+    except ValueError:
+        template_path = 'data_loaders/default.py'
 
-    lowercase_block_name = block_name.lower()
-    for source in DataSource:
-        if source in lowercase_block_name:
-            recognized_source = source
-            break
-
-    if has_gcp_creds and not has_aws_creds:
-        return 'data_loaders/bigquery.py'
-    elif not has_gcp_creds and has_aws_creds:
-        if recognized_source == 'redshift':
-            return 'data_loaders/redshift.py'
-        elif recognized_source == 's3':
-            return 'data_loaders/s3.py'
-
-    return 'data_loaders/default.py'
+    return template_env.get_template(template_path).render() + '\n'
 
 
-def __fetch_transformer_templates(block_name: str):
-    return 'transformers/default.py'
+def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
+    action_type = config.get('action_type')
+    axis = config.get('axis')
+
+    if action_type is not None and axis is not None:
+        template = template_env.get_template('transformers/transformer_action_fmt.jinja')
+        additional_params = []
+        if action_type in ACTION_CODE_TYPES:
+            additional_params = ['action_code=\'your_action_code\'']
+        if action_type in ACTION_OPTION_TYPES:
+            additional_params.append('action_options={\'your_action_option\': None}')
+        if action_type in OUTPUT_TYPES:
+            additional_params.append('outputs=[\'your_output_metadata\']')
+        additional_params_str = '\n        ' + ',\n        '.join(additional_params)
+        return (
+            template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
+        )
+    else:
+        return template_env.get_template('transformers/default.py').render() + '\n'
 
 
-def __fetch_data_exporter_templates(block_name: str):
-    return
+def __fetch_data_exporter_templates(config: Mapping[str, str]):
+    return 'data_exporters/default.py'

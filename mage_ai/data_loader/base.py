@@ -6,6 +6,15 @@ import pandas as pd
 import os
 
 
+class DataSource(str, Enum):
+    BIGQUERY = 'bigquery'
+    FILE = 'file'
+    POSTGRES = 'postgres'
+    REDSHIFT = 'redshift'
+    S3 = 's3'
+    SNOWFLAKE = 'snowflake'
+
+
 class FileFormat(str, Enum):
     CSV = 'csv'
     JSON = 'json'

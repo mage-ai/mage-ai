@@ -1,7 +1,10 @@
-from mage_ai.data_preparation.templates.utils import build_template_from_suggestion
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_loader.base import DataSource
 from mage_ai.data_preparation.models.block import BlockType
-from mage_ai.data_preparation.templates.template import fetch_template_source
+from mage_ai.data_preparation.templates.template import (
+    fetch_template_source,
+    build_template_from_suggestion,
+)
 from mage_ai.tests.base_test import TestCase
 
 
@@ -149,8 +152,10 @@ def load_from_s3_bucket() -> DataFrame:
 def transform_df(df: DataFrame) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
+
     Args:
         df (DataFrame): Data frame from previously executed block.
+
     Returns:
         DataFrame: Transformed data frame
     \"\"\"
@@ -176,8 +181,10 @@ def transform_df(df: DataFrame) -> DataFrame:
 def transform_df(df: DataFrame) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
+
     Args:
         df (DataFrame): Data frame from previously executed block.
+
     Returns:
         DataFrame: Transformed data frame
     \"\"\"
@@ -194,3 +201,108 @@ def transform_df(df: DataFrame) -> DataFrame:
         self.assertEqual(expected_template, new_template1)
         self.assertEqual(expected_template, new_template2)
         self.assertEqual(expected_template, new_template3)
+
+    def test_template_generation_transformer_action_simple(self):
+        expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+
+@transformer
+def execute_transformer_action(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Execute Transformer Action: clean_column_name
+    \"\"\"
+    action = build_transformer_action(
+        action_type=ActionType.CLEAN_COLUMN_NAME,
+        action_arguments=[],
+        axis=Axis.COLUMN,
+    )
+
+    return BaseAction(action).execute(df)
+"""
+
+        config = {'action_type': ActionType.CLEAN_COLUMN_NAME.value, 'axis': Axis.COLUMN}
+        new_template = fetch_template_source(BlockType.TRANSFORMER, config)
+        self.assertEqual(expected_template, new_template)
+
+    def test_template_generation_transformer_action_action_code(self):
+        expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+
+@transformer
+def execute_transformer_action(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Execute Transformer Action: custom
+    \"\"\"
+    action = build_transformer_action(
+        action_type=ActionType.CUSTOM,
+        action_arguments=[],
+        axis=Axis.ROW,
+        action_code='your_action_code'
+    )
+
+    return BaseAction(action).execute(df)
+"""
+
+        config = {'action_type': ActionType.CUSTOM.value, 'axis': Axis.ROW}
+        new_template = fetch_template_source(BlockType.TRANSFORMER, config)
+        self.assertEqual(expected_template, new_template)
+
+    def test_template_generation_transformer_action_action_options(self):
+        expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+
+@transformer
+def execute_transformer_action(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Execute Transformer Action: reformat
+    \"\"\"
+    action = build_transformer_action(
+        action_type=ActionType.REFORMAT,
+        action_arguments=[],
+        axis=Axis.COLUMN,
+        action_options={'your_action_option': None}
+    )
+
+    return BaseAction(action).execute(df)
+"""
+
+        config = {'action_type': ActionType.REFORMAT.value, 'axis': Axis.COLUMN}
+        new_template = fetch_template_source(BlockType.TRANSFORMER, config)
+        self.assertEqual(expected_template, new_template)
+
+    def test_template_generation_transformer_action_outputs(self):
+        expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+
+@transformer
+def execute_transformer_action(df: DataFrame) -> DataFrame:
+    \"\"\"
+    Execute Transformer Action: add
+    \"\"\"
+    action = build_transformer_action(
+        action_type=ActionType.ADD,
+        action_arguments=[],
+        axis=Axis.COLUMN,
+        action_code='your_action_code',
+        action_options={'your_action_option': None},
+        outputs=['your_output_metadata']
+    )
+
+    return BaseAction(action).execute(df)
+"""
+
+        config = {'action_type': ActionType.ADD.value, 'axis': Axis.COLUMN}
+        new_template = fetch_template_source(BlockType.TRANSFORMER, config)
+        self.assertEqual(expected_template, new_template)
