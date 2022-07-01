@@ -1,5 +1,7 @@
 import BaseIcon from '@oracle/icons/BaseIcon';
-import { Rectangle } from '@oracle/icons';
+import { RoundedSquare } from '@oracle/icons';
+import { ThemeType } from '@oracle/styles/themes/constants';
+import dark from '@oracle/styles/themes/dark';
 
 export type FileTreeNodeStyle = {
   color?: string;
@@ -12,7 +14,6 @@ export type FileTreeNode = {
   name: string;
   selected?: boolean;
 };
-
 
 export const TEST_FILE_TREE: FileTreeNode[] = [
   {
@@ -99,31 +100,36 @@ export const FILE_EXT_ICON_MAPPING = {
   py: {/* black file icon */},
 };
 
-// TODO fill in as we go
-// TODO replace with actual theme colors
-export const NODE_STYLE_MAPPING = {
-  data_loaders: {
-    color: 'blue',
-    icon: Rectangle,
-  },
-  exporters: {
-    color: 'gold',
-    icon: Rectangle,
-  },
-  global_variables: {
-    color: 'green',
-    icon: Rectangle,
-  },
-  pipelines: {
-    color: 'magenta',
-    icon: Rectangle,
-  },
-  scratchpad: {
-    color: 'brown',
-    icon: Rectangle,
-  },
-  transformers: {
-    color: 'purple',
-    icon: Rectangle,
-  },
+export const getFileNodeColor = (
+  nodeName: string,
+  themeType: ThemeType,
+) => {
+  const mapping = {
+    data_loaders: {
+      color: (themeType?.chart || dark.chart).button1,
+      icon: RoundedSquare,
+    },
+    exporters: {
+      color: (themeType?.chart || dark.chart).button2,
+      icon: RoundedSquare,
+    },
+    global_variables: {
+      color: (themeType?.chart || dark.chart).button3,
+      icon: RoundedSquare,
+    },
+    pipelines: {
+      color: (themeType?.chart || dark.chart).button4,
+      icon: RoundedSquare,
+    },
+    scratchpad: {
+      color: (themeType?.chart || dark.chart).button5,
+      icon: RoundedSquare,
+    },
+    transformers: {
+      color: (themeType?.chart || dark.chart).primary,
+      icon: RoundedSquare,
+    },
+  };
+
+  return mapping[nodeName];
 };

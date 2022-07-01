@@ -202,7 +202,7 @@ export const PreviewOpen = build([{
   viewBox: '0 0 16 12',
 });
 
-export const Rectangle = build([{
+export const RoundedSquare = build([{
   clipRule: 'evenOdd',
   d: 'M3 0.5h6s3 0 3 3v6s0 3 -3 3h-6s-3 0 -3 -3v-6s0 -3 3 -3',
   fillRule: 'evenodd',

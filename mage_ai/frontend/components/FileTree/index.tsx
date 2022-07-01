@@ -1,10 +1,13 @@
+import React, { useContext } from 'react';
+
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ArrowDown, ArrowRight, File, Folder } from '@oracle/icons';
-import { FileTreeNode, NODE_STYLE_MAPPING } from './constants';
+import { FileTreeNode, getFileNodeColor } from './constants';
+import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
 import { equals } from '@utils/array';
@@ -16,6 +19,7 @@ export type FileTreeProps = {
 function FileTree({
   tree: initialTree,
 }: FileTreeProps) {
+  const themeContext = useContext(ThemeContext);
   type TreeOperation = true | false | 'toggle';
 
   const [tree, setTree] = useState(initialTree);
@@ -62,7 +66,7 @@ function FileTree({
       const {
         color,
         icon: FileTreeIcon = children ? Folder : File,
-      } = NODE_STYLE_MAPPING[name] || {};
+      } = getFileNodeColor(name, themeContext) || {};
 
       const fileNodeEl = (
         <>
