@@ -38,9 +38,13 @@ class BlockTest(TestCase):
     def test_execute(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
         block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline)
-        block2 = Block.create('test_transformer', 'transformer', self.repo_path, pipeline)
-        block2.upstream_blocks = [block1]
-        block1.downstream_blocks = [block2]
+        block2 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline,
+            upstream_block_uuids=['test_data_loader'],
+        )
         with open(block1.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_loader
@@ -56,8 +60,6 @@ def remove_duplicate_rows(df):
     df_transformed = df.drop_duplicates()
     return [df_transformed]
             ''')
-        pipeline.add_block(block1)
-        pipeline.add_block(block2, upstream_block_uuids=['test_data_loader'])
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
 
@@ -87,10 +89,13 @@ def remove_duplicate_rows(df):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
         block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline)
         block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline)
-        block3 = Block.create('test_transformer', 'transformer', self.repo_path, pipeline)
-        block1.downstream_blocks = [block3]
-        block2.downstream_blocks = [block3]
-        block3.upstream_blocks = [block1, block2]
+        block3 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline,
+            upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
+        )
         with open(block1.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_loader
@@ -114,9 +119,6 @@ def union_datasets(df1, df2):
     df_union = pd.concat([df1, df2])
     return [df_union]
             ''')
-        pipeline.add_block(block1)
-        pipeline.add_block(block2)
-        pipeline.add_block(block3, upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'])
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
         asyncio.run(block3.execute())

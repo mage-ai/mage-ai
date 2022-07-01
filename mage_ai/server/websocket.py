@@ -1,3 +1,4 @@
+from async_timeout import asyncio
 from jupyter_client import KernelManager
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
@@ -6,6 +7,10 @@ import json
 import os
 import tornado.websocket
 
+from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_path
+
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -13,7 +18,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     # Note that `clients` is a class variable and `send_message` is a
     # classmethod.
     clients = set()
-    running_executions_mapping = set()
+    running_executions_mapping = dict()
 
     def open(self):
         WebSocketServer.clients.add(self)
@@ -40,20 +45,27 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             manager = KernelManager(**connection)
             client = manager.client()
 
+            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            block = pipeline.get_block(block_uuid)
+            block_output = asyncio.run(block.execute(code))
+
             msg_id = client.execute(add_internal_output_info(code))
 
-            WebSocketServer.running_executions_mapping.add((msg_id, block_uuid))
+            value = dict(
+                block_uuid=block_uuid,
+                block_output=block_output,
+            )
+
+            WebSocketServer.running_executions_mapping[msg_id] = value
         elif output:
             self.send_message(output)
 
     @classmethod
     def send_message(self, message: dict) -> None:
         msg_id = message['msg_id']
-        msg_id_uuid_tuple = find(
-            lambda tup: tup[0] == msg_id,
-            list(WebSocketServer.running_executions_mapping),
-        )
-        uuid = msg_id_uuid_tuple[1]
+        msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
+        uuid = msg_id_value['block_uuid']
+        output = msg_id_value['block_output']
 
         print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message}')
 
@@ -62,3 +74,5 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 message,
                 dict(uuid=uuid),
             )))
+
+        del WebSocketServer.running_executions_mapping[msg_id]
