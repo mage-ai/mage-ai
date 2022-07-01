@@ -18,6 +18,7 @@ export enum MsgType {
 
 export default interface KernelOutputType {
   data?: string | string[];
+  error?: string;
   execution_state: ExecutionStateEnum;
   metadata?: {
     [key: string]: string;

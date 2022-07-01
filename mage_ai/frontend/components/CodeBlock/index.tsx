@@ -27,6 +27,7 @@ import {
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
+  KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -138,6 +139,7 @@ function CodeBlockProps({
   const messagesWithType = useMemo(() => messages.filter(({ type }: KernelOutputType) => type), [
     messages,
   ]);
+  const hasError = !!messagesWithType.find(({ error }) => error);
 
   const uuidKeyboard = `CodeBlock/${block.uuid}`;
   const {
@@ -155,10 +157,16 @@ function CodeBlockProps({
       if (selected) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();
+        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
+          runBlockAndTrack();
+          addNewBlock({
+            type: block.type,
+          });
         }
       }
     },
     [
+      addNewBlock,
       runBlockAndTrack,
       selected,
     ],
@@ -185,6 +193,7 @@ function CodeBlockProps({
 
       <ContainerStyle
         blockType={block.type}
+        hasError={hasError}
         selected={selected}
       >
         <CodeContainerStyle

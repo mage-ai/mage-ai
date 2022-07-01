@@ -1,6 +1,7 @@
 def parse_output_message(message: dict) -> dict:
     data_content = None
     data_type = None
+    error = None
 
     header = message['header']
     msg_type = header['msg_type']
@@ -28,6 +29,7 @@ def parse_output_message(message: dict) -> dict:
     elif traceback:
         data_content = [line for line in traceback]
         data_type = 'text'
+        error = traceback
     elif text:
         data_content = text.split('\n')
         data_type = 'text/plain'
@@ -37,6 +39,7 @@ def parse_output_message(message: dict) -> dict:
 
     return dict(
         data=data_content,
+        error=error,
         execution_state=execution_state,
         metadata=metadata,
         msg_id=msg_id,

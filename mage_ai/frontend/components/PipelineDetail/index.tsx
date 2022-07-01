@@ -10,6 +10,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
+import KernelStatus from './KernelStatus';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -65,14 +66,22 @@ function PipelineDetail({
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
 
+  const {
+    data: dataKernels,
+    mutate: fetchKernels,
+  } = api.kernels.list({}, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+  });
+  const kernels = dataKernels?.kernels;
+  const kernel = kernels?.[0];
+
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(pipeline?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (response) => {
-
-          },
+          callback: () => fetchKernels(),
           onErrorCallback: ({
             error: {
               errors,
@@ -180,22 +189,33 @@ function PipelineDetail({
       block,
       code,
     } = payload;
-    const { uuid } = block;
 
-    sendMessage(JSON.stringify({
-      code,
-      uuid,
-    }));
+    if (code) {
+      const { uuid } = block;
 
-    setMessages((messagesPrevious) => {
-      delete messagesPrevious[uuid];
+      sendMessage(JSON.stringify({
+        code,
+        uuid,
+      }));
 
-      return messagesPrevious;
-    });
+      setMessages((messagesPrevious) => {
+        delete messagesPrevious[uuid];
 
-    setTextareaFocused(false);
+        return messagesPrevious;
+      });
 
-    setRunningBlocks((runningBlocksPrevious) => runningBlocksPrevious.concat(block));
+      setTextareaFocused(false);
+
+      setRunningBlocks((runningBlocksPrevious) => {
+
+
+        if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+          return runningBlocksPrevious;
+        }
+
+        return runningBlocksPrevious.concat(block);
+      });
+    }
   }, [
     sendMessage,
     setMessages,
@@ -249,9 +269,12 @@ function PipelineDetail({
             && keyHistory[1] === KEY_CODE_D
             && selectedBlockIndex !== -1
           ) {
-            const blockBeforeIndex = selectedBlockIndex - 1;
-            if (blockBeforeIndex >= 0) {
-              setSelectedBlock(blocks[blockBeforeIndex]);
+            if (selectedBlockIndex - 1 >= 0) {
+              setSelectedBlock(blocks[selectedBlockIndex - 1]);
+            } else if (blocks.length >= 2) {
+              setSelectedBlock(blocks[selectedBlockIndex + 1]);
+            } else {
+              setSelectedBlock(null);
             }
             setBlocks(removeAtIndex(blocks, selectedBlockIndex))
           } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
@@ -300,6 +323,13 @@ function PipelineDetail({
 
   return (
     <Spacing p={PADDING_UNITS}>
+      <Spacing mb={1}>
+        <KernelStatus
+          kernel={kernel}
+          restartKernel={restartKernel}
+        />
+      </Spacing>
+
       {blocks.map((block: BlockType, idx: number) => {
         const {
           uuid,
