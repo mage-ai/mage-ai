@@ -97,7 +97,6 @@ class ApiPipelineHandler(BaseHandler):
 
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
-        data = json.loads(self.request.body)
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         asyncio.run(pipeline.execute())
         self.write(dict(pipeline=pipeline.to_dict()))
@@ -135,8 +134,7 @@ class ApiPipelineBlockHandler(BaseHandler):
 
 
 class ApiPipelineBlockExecuteHandler(BaseHandler):
-    def get(self, pipeline_uuid, block_uuid):
-        data = json.loads(self.request.body)
+    def post(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
         asyncio.run(block.execute())
