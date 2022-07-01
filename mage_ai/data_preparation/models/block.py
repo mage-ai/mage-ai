@@ -166,8 +166,8 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def to_dict(self):
-        return dict(
+    def to_dict(self, include_outputs=False):
+        data = dict(
             name=self.name,
             uuid=self.uuid,
             type=self.type.value if type(self.type) is not str else self.type,
@@ -175,6 +175,9 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
         )
+        if include_outputs:
+            data['outputs'] = self.get_outputs()
+        return data
 
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
@@ -204,7 +207,7 @@ class Block:
                     )
                     for var in vars
                 ]
-
+        outputs = []
         decorated_functions = []
         if custom_code is not None:
             exec(custom_code, {self.type: block_decorator(decorated_functions)})
@@ -212,9 +215,9 @@ class Block:
             with open(self.file_path) as file:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
-            return decorated_functions[0](*input_vars)
+            outputs = decorated_functions[0](*input_vars)
 
-        return []
+        return outputs
 
     def __store_variables(self, variable_mapping):
         if self.pipeline is None:
