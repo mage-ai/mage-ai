@@ -23,7 +23,6 @@ class PipelineTest(TestCase):
         self.assertEqual(pipeline.name, 'test pipeline')
         self.assertEqual(pipeline.blocks_by_uuid, dict())
         self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/__init__.py'))
-        self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/requirements.txt'))
         self.assertTrue(os.path.exists(f'{self.repo_path}/pipelines/test_pipeline/metadata.yaml'))
 
     def test_add_block(self):
