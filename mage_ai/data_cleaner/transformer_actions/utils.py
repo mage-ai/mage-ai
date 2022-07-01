@@ -1,13 +1,90 @@
-from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER
+from keyword import iskeyword
+from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER, infer_column_types
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
     NameConventionPatterns,
 )
-from keyword import iskeyword
+from pandas import DataFrame
+from typing import Dict, List, Union
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def build_action_variables(
+    df: DataFrame, ctypes: Dict[str, ColumnType] = None, columns: List[str] = None
+) -> Dict:
+    """
+    Builds action variable set from data frame for use with transformer actions library.
+
+    Args:
+        df (DataFrame): Data frame to build transformer actions for.
+        ctypes (Dict[str, ColumnType], optional): Column type for each column in dataframe.
+        Defaults to None, in which case the column types will be automatically inferred.
+        columns (List[str], options): Columns to generate action variables for. Defaults to None,
+        in which case action variables are generated for all columns of the data frame.
+    Returns:
+        Dict: Set of action variables.
+    """
+    if ctypes is None:
+        ctypes = {}
+    if columns is None:
+        columns = df.columns
+    ctypes = infer_column_types(df, column_types=ctypes)
+    variable_set = {}
+    for column_name in columns:
+        variable_set[column_name] = {
+            'feature': {
+                'column_type': ctypes[column_name],
+                'uuid': column_name,
+            },
+            'type': 'feature',
+        }
+    return variable_set
+
+
+def build_transformer_action(
+    df: DataFrame,
+    action_type: Union[ActionType, str],
+    action_arguments: List[str] = [],
+    action_code: str = '',
+    action_options: Dict = {},
+    axis: Union[Axis, str] = Axis.COLUMN,
+    outputs: List[Dict] = [],
+) -> Dict:
+    """
+    Builds transformer action payload from arguments. The output of this function can be passed
+    as input to the `transformer_actions.base.BaseAction` to perform the requested transformation.
+
+    Designed as a helper method to simplify generating transformer action payloads
+
+    Args:
+        df (DataFrame): The data frame to build a transformer action payload for.
+        action_type (Union[ActionType, str]): Transformer action to perform.
+        action_arguments (List[str], optional): Columns/Rows to perform this action on.
+        Defaults to [].
+        action_code (str, optional): Special code or query to execute with action. Defaults to ''.
+        action_options (Dict, optional): Options specifying behavior of action. Defaults to {}.
+        axis (Union[Axis, str], optional): Axis of the data frame to apply the action to.
+        Defaults to Axis.COLUMN.
+        outputs (List[Dict], optional): Specifies metadata of newly created columns.
+        Defaults to [].
+
+    Returns:
+        Dict: Transformer action payload
+    """
+    action_variables = build_action_variables(df, action_arguments)
+    return dict(
+        action_type=action_type,
+        action_arguments=action_arguments,
+        action_code=action_code,
+        action_options=action_options,
+        action_variables=action_variables,
+        axis=axis,
+        outputs=outputs,
+    )
 
 
 def clean_column_name(name):

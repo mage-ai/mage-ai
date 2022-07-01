@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from enum import Enum
 import pandas as pd
 import numpy as np
 import re
@@ -32,7 +33,7 @@ INVALID_VALUE_PLACEHOLDERS = {
 }
 
 
-class ActionType:
+class ActionType(str, Enum):
     ADD = 'add'
     AVERAGE = 'average'
     CLEAN_COLUMN_NAME = 'clean_column_name'
@@ -69,18 +70,18 @@ class ActionType:
     UPDATE_VALUE = 'update_value'
 
 
-class Axis:
+class Axis(str, Enum):
     COLUMN = 'column'
     ROW = 'row'
 
 
-class VariableType:
+class VariableType(str, Enum):
     FEATURE = 'feature'
     FEATURE_SET = 'feature_set'
     FEATURE_SET_VERSION = 'feature_set_version'
 
 
-class Operator:
+class Operator(str, Enum):
     CONTAINS = 'contains'
     NOT_CONTAINS = 'not contains'
     EQUALS = '=='
@@ -91,7 +92,7 @@ class Operator:
     LESS_THAN_OR_EQUALS = '<='
 
 
-class ImputationStrategy:
+class ImputationStrategy(str, Enum):
     AVERAGE = 'average'
     COLUMN = 'column'
     CONSTANT = 'constant'

@@ -11,6 +11,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     Axis,
     ImputationStrategy,
 )
+from mage_ai.data_cleaner.transformer_actions.utils import build_action_variables
 
 
 class TypeImputeSubRule:
@@ -284,7 +285,9 @@ class ImputeValues(BaseRule):
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
         elif strategy == ImputationStrategy.CONSTANT:
             message = 'Fill missing values with a placeholder to mark them as missing.'
             action_arguments = strategy_cache_entry['entries']
@@ -293,28 +296,36 @@ class ImputeValues(BaseRule):
             action_options = {
                 'strategy': strategy,
             }
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
         elif strategy == ImputationStrategy.MEDIAN:
             message = 'For each column, fill missing entries with the median value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
         elif strategy == ImputationStrategy.MODE:
             message = 'For each column, fill missing entries with the most frequent value.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': 'mode'}
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
         elif strategy == ImputationStrategy.RANDOM:
             message = 'For each column, fill missing entries with randomly sampled values.'
             action_arguments = strategy_cache_entry['entries']
             action_type = ActionType.IMPUTE
             axis = Axis.COLUMN
             action_options = {'strategy': strategy}
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
         elif strategy == ImputationStrategy.ROW_RM:
             num_missing = strategy_cache_entry['num_missing']
             title = 'Remove rows with missing entries'
@@ -322,7 +333,7 @@ class ImputeValues(BaseRule):
             action_arguments = self.df_columns
             action_type = ActionType.FILTER
             axis = Axis.ROW
-            action_variables = self._build_action_variables(self.df_columns)
+            action_variables = build_action_variables(self.df, self.column_types, self.df_columns)
             map_cols = map(wrap_column_name, self.df_columns)
             action_code = ' and '.join(map(lambda name: f'{name} != null', map_cols))
         elif strategy == ImputationStrategy.SEQ:
@@ -334,7 +345,9 @@ class ImputeValues(BaseRule):
                 'strategy': strategy,
                 'timeseries_index': strategy_cache_entry['timeseries_index'],
             }
-            action_variables = self._build_action_variables(strategy_cache_entry['entries'])
+            action_variables = build_action_variables(
+                self.df, self.column_types, strategy_cache_entry['entries']
+            )
 
         return self._build_transformer_action_suggestion(
             title,
