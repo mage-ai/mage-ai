@@ -24,11 +24,11 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
   align-items: center;
   display: flex;
 
-  ${(props: any) => props.highlighted && `
+  ${props => props.highlighted && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 
-  ${(props: any) => `
+  ${props => `
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
