@@ -139,6 +139,9 @@ class Pipeline:
     def get_blocks(self, block_uuids):
         return [self.blocks_by_uuid[uuid] for uuid in block_uuids]
 
+    def has_block(self, block_uuid):
+        return block_uuid in self.blocks_by_uuid
+
     def remove_block(self, block):
         if block.uuid not in self.blocks_by_uuid:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
