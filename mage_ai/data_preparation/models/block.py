@@ -37,11 +37,15 @@ class Block:
 
     @property
     def input_variables(self):
-        return {b.uuid: b.output_variables for b in self.upstream_blocks}
+        return {b.uuid: b.output_variables.keys() for b in self.upstream_blocks}
 
     @property
     def output_variables(self):
-        return []
+        """
+        Return output variables in dictionary.
+        The key is the variable name, and the value is variable data type.
+        """
+        return dict()
 
     @property
     def upstream_block_uuids(self):
@@ -110,11 +114,8 @@ class Block:
 
     async def execute(self, custom_code=None):
         outputs = await self.execute_block(custom_code)
-        if len(outputs) != len(self.output_variables):
-            raise Exception(
-                f'The number of output variables does not match the block type: {self.type}',
-            )
-        variable_mapping = dict(zip(self.output_variables, outputs))
+        self.__verify_outputs(outputs)
+        variable_mapping = dict(zip(self.output_variables.keys(), outputs))
         self.__store_variables(variable_mapping)
         self.status = BlockStatus.EXECUTED
         self.__update_pipeline_block()
@@ -127,7 +128,9 @@ class Block:
             return []
         analyses = []
         variable_manager = VariableManager(self.pipeline.repo_path)
-        for v in self.output_variables:
+        for v, vtype in self.output_variables.items():
+            if vtype is not pd.DataFrame:
+                continue
             data = variable_manager.get_variable(
                     self.pipeline.uuid,
                     self.uuid,
@@ -145,7 +148,7 @@ class Block:
             return []
         outputs = []
         variable_manager = VariableManager(self.pipeline.repo_path)
-        for v in self.output_variables:
+        for v, _ in self.output_variables.items():
             data = variable_manager.get_variable(
                     self.pipeline.uuid,
                     self.uuid,
@@ -181,7 +184,6 @@ class Block:
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
-    # TODO: implement execution logic
     async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
             def custom_code(function):
@@ -244,23 +246,39 @@ class Block:
             return
         self.pipeline.update_block(self, upstream_block_uuids=upstream_blocks)
 
+    def __verify_outputs(self, outputs):
+        if len(outputs) != len(self.output_variables):
+            raise Exception(
+                f'The number of output variables does not match the block type: {self.type}',
+            )
+        variable_names = list(self.output_variables.keys())
+        variable_dtypes = list(self.output_variables.values())
+        for idx, output in enumerate(outputs):
+            actual_dtype = type(output)
+            expected_dtype = variable_dtypes[idx]
+            if type(output) is not variable_dtypes[idx]:
+                raise Exception(
+                    f'The variable {variable_names[idx]} should be {expected_dtype} type,'
+                    f' but {actual_dtype} type is returned',
+                )
+
 
 class DataLoaderBlock(Block):
     @property
     def output_variables(self):
-        return ['df']
+        return dict(df=pd.DataFrame)
   
 
 class DataExporterBlock(Block):
     @property
     def output_variables(self):
-        return []
+        return dict()
 
 
 class TransformerBlock(Block):
     @property
     def output_variables(self):
-        return ['df']
+        return dict(df=pd.DataFrame)
 
 
 BLOCK_TYPE_TO_CLASS = {
