@@ -1,7 +1,7 @@
 import BaseIcon from '@oracle/icons/BaseIcon';
+import dark from '@oracle/styles/themes/dark';
 import { RoundedSquare } from '@oracle/icons';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import dark from '@oracle/styles/themes/dark';
 
 export type FileTreeNodeStyle = {
   color?: string;
@@ -98,11 +98,6 @@ export const TEST_FILE_TREE: FileTreeNode[] = [
     name: 'demo_project',
   },
 ];
-
-// TODO fill in as we go
-export const FILE_EXT_ICON_MAPPING = {
-  py: {/* black file icon */},
-};
 
 export const getFileNodeColor = (
   nodeName: string,
