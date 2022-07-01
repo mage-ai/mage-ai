@@ -7,13 +7,13 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import styled, { ThemeContext } from 'styled-components';
 import { ArrowDown, ArrowRight, File, Folder } from '@oracle/icons';
-import { FileTreeNode, getFileNodeColor, ReservedFolderEnum } from './constants';
+import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
 import { equals } from '@utils/array';
 
 export type FileTreeProps = {
-  tree: FileTreeNode[];
+  tree: FileNodeType[];
 };
 
 type FileNodeStyleProps = {
@@ -46,7 +46,7 @@ function FileTree({
 
   const setTreeState = (path: string[], prop: string, value: TreeOperation) => {
     const searchPath: string[] = [];
-    const updateTree = (subtree: FileTreeNode) => {
+    const updateTree = (subtree: FileNodeType) => {
       if (equals(path, searchPath)) {
         subtree[prop] = value === 'toggle' ? !subtree[prop] : value;
         return;
@@ -76,14 +76,13 @@ function FileTree({
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
-
   let depth = 0;
   const path: string[] = [];
-  const buildTreeEl = (tree: FileTreeNode[]) => {
+  const buildTreeEl = (tree: FileNodeType[]) => {
     depth++;
     const el = tree.map(({ name, children, collapsed }: {
       name: ReservedFolderEnum,
-      children: FileTreeNode[],
+      children: FileNodeType[],
       collapsed: boolean,
     }) => {
       path.push(name);
@@ -129,6 +128,7 @@ function FileTree({
       path.pop();
       return fileNodeEl;
     });
+
     depth--;
     return el;
   };

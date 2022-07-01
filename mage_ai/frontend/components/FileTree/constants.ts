@@ -3,19 +3,19 @@ import dark from '@oracle/styles/themes/dark';
 import { RoundedSquare } from '@oracle/icons';
 import { ThemeType } from '@oracle/styles/themes/constants';
 
-export type FileTreeNodeStyle = {
+export type FileNodeProps = {
   color?: string;
   icon?: typeof BaseIcon;
 };
 
-export type FileTreeNode = {
-  children?: FileTreeNode[];
+export type FileNodeType = {
+  children?: FileNodeType[];
   collapsed?: boolean;
   name: string;
   selected?: boolean;
 };
 
-export const TEST_FILE_TREE: FileTreeNode[] = [
+export const TEST_FILE_TREE: FileNodeType[] = [
   {
     children: [
       {
@@ -108,10 +108,10 @@ export enum ReservedFolderEnum {
   TRANSFORMERS = 'transformers',
 }
 
-export const getFileNodeColor = (
+export const getFileNodeColor: (
   nodeName: ReservedFolderEnum,
-  themeType: ThemeType,
-) => {
+  themeType: ThemeType
+) => FileNodeProps = (nodeName, themeType) => {
   const mapping = {
     [ReservedFolderEnum.DATA_LOADERS]: {
       color: (themeType?.chart || dark.chart).button1,
