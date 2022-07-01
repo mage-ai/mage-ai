@@ -34,7 +34,11 @@ function PipelineDetailPage({
 
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
   const { slug: slugArray }: { slug: string[] } = ctx.query;
-  const [pipelineId,] = slugArray;
+  let pipelineId;
+
+  if (Array.isArray(slugArray)) {
+    pipelineId = slugArray[0];
+  }
 
   return {
     pipeline: {
