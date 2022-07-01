@@ -14,7 +14,7 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionRow from './SuggestionRow';
 import SuggestionType from '@interfaces/SuggestionType';
 import TransformerActionType from '@interfaces/TransformerActionType';
-import api from '@api';
+import api from '@api/cleaner';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { getFeatureIdMapping } from '@utils/models/featureSet';
 import { parseError } from '@api/utils/response';

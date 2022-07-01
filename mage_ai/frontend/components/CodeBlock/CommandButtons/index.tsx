@@ -11,6 +11,7 @@ import Spinner from '@oracle/components/Spinner';
 import { ContainerStyle } from './index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
+  Close,
   PlayButtonFilled,
   Trash,
 } from '@oracle/icons';
@@ -19,16 +20,20 @@ import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
   deleteBlock: (block: BlockType) => void;
+  interruptKernel: () => void;
 }
 
 type CommandButtonsProps = {
   block: BlockType;
+  runBlock: () => void;
   status: ExecutionStateEnum;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
   block,
   deleteBlock,
+  interruptKernel,
+  runBlock,
   status
 }) {
   const themeContext = useContext(ThemeContext);
@@ -43,7 +48,7 @@ function CommandButtons({
       >
         {isInProgress && (
           <Spinner
-            color={color}
+            color={(themeContext || dark).content.active}
           />
         )}
         {!isInProgress && (
@@ -51,6 +56,7 @@ function CommandButtons({
             noBackground
             noBorder
             noPadding
+            onClick={() => runBlock()}
           >
             <Circle
               color={color}
@@ -74,6 +80,24 @@ function CommandButtons({
             <Trash size={UNIT * 2.5} />
           </Button>
         </Spacing>
+
+        {isInProgress && (
+          <Spacing mt={PADDING_UNITS}>
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              onClick={() => interruptKernel()}
+            >
+              <Circle
+                borderSize={1.5}
+                size={UNIT * 2.5}
+              >
+                <Close size={UNIT * 1} />
+              </Circle>
+            </Button>
+          </Spacing>
+        )}
       </FlexContainer>
     </ContainerStyle>
   );

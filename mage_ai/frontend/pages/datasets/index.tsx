@@ -11,7 +11,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Tab from '@oracle/components/Tabs/Tab';
 import Tabs from '@oracle/components/Tabs';
 import Text from '@oracle/elements/Text';
-import api from '@api';
+import api from '@api/cleaner';
 import { File } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { isBadQuality } from '@components/utils';

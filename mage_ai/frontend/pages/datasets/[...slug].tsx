@@ -5,7 +5,7 @@ import DatasetOverview from '@components/datasets/overview';
 import Export from '@components/datasets/Export';
 import Layout from '@oracle/components/Layout';
 import Spacing from '@oracle/elements/Spacing';
-import api from '@api';
+import api from '@api/cleaner';
 import light from '@oracle/styles/themes/light';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { deserializeFeatureSet } from '@utils/models/featureSet';

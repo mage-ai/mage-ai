@@ -22,6 +22,9 @@ class BaseHandler(tornado.web.RequestHandler):
         return True
 
     def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Headers', '*')
+        self.set_header('Access-Control-Allow-Methods', 'DELETE, GET, PATCH, POST, PUT, OPTIONS')
+        self.set_header('Access-Control-Allow-Origin', '*')
         self.set_header('Content-Type', 'application/json')
 
     def write_error(self, status_code, **kwargs):
@@ -183,15 +186,14 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
 
 class KernelsHandler(BaseHandler):
-    def get(self, kernel_id, action):
-        if 'interrupt' == action:
+    def post(self, kernel_id, action_type):
+        if 'interrupt' == action_type:
             manager.interrupt_kernel()
-        elif 'restart' == action:
+        elif 'restart' == action_type:
             manager.restart_kernel()
 
         r = json.dumps(dict(
-            method='get',
-            value=kernel_id,
+            id=kernel_id,
         ))
         self.write(r)
         self.finish()
@@ -218,7 +220,7 @@ def make_app():
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables',
                 ApiPipelineVariableListHandler),
-            (r'/kernels/(?P<kernel_id>[\w\-]+)/(?P<action>\w+)', KernelsHandler),
+            (r'/kernels/(?P<kernel_id>[\w\-]+)/(?P<action_type>[\w\-]+)', KernelsHandler),
         ],
         autoreload=True,
     )

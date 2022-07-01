@@ -5,6 +5,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import dark from '@oracle/styles/themes/dark';
 
 type CircleProps = {
+  borderSize?: number;
   children: any;
   color?: string;
   size: number;
@@ -13,8 +14,12 @@ type CircleProps = {
 const CircleStyle = styled.div<CircleProps>`
   border-radius: 50%;
 
-  ${props => !props.color && `
+  ${props => !props.color && !props.borderSize && `
     background-color: ${(props.theme.content || dark.content).muted};
+  `}
+
+  ${props => props.borderSize && `
+    border: ${props.borderSize}px solid ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.color && `

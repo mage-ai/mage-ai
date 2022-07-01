@@ -3,7 +3,7 @@ import { queryString } from '@utils/url';
 export function getHost() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
-  const PORT = 6789;
+  const PORT = 5789;
   /*
   The CLOUD_BASE_PATH placeholder below is used for replacing with base
   paths required by cloud notebooks. The backend will detect the notebook type

@@ -5,12 +5,15 @@ import {
   useState,
 } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelOutputType from '@interfaces/KernelOutputType';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -22,6 +25,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { onSuccess } from '@api/utils/response';
 import {
   pushAtIndex,
   removeAtIndex,
@@ -30,10 +34,12 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
+  pipeline: PipelineType;
 };
 
 function PipelineDetail({
   mainContainerRef,
+  pipeline,
 }: PipelineDetailProps) {
   const [blocks, setBlocks] = useState<BlockType[]>([
     {
@@ -155,7 +161,7 @@ function PipelineDetail({
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
   }[readyState];
 
-  const onSave = useCallback((payload: {
+  const runBlock = useCallback((payload: {
     block: BlockType;
     code: string;
   }) => {
@@ -180,6 +186,27 @@ function PipelineDetail({
     setMessages,
   ]);
 
+  const [interruptKernel] = useMutation(
+    api.interrupt.kernels.useCreate(pipeline?.id),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <Spacing p={PADDING_UNITS}>
       {blocks.map((block: BlockType, idx: number) => {
@@ -200,10 +227,11 @@ function PipelineDetail({
             ))}
             block={block}
             key={uuid}
+            interruptKernel={interruptKernel}
             mainContainerRef={mainContainerRef}
             messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
-            onSave={onSave}
+            runBlock={runBlock}
             selected={selected}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setTextareaFocused={setTextareaFocused}

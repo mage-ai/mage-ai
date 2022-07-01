@@ -11,7 +11,7 @@ import Link from '@oracle/elements/Link';
 import PanelOld from '@oracle/components/PanelOld';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import api from '@api';
+import api from '@api/cleaner';
 import {
   MAX_LINES_EXPORT_1,
   MAX_LINES_EXPORT_2,
@@ -315,7 +315,7 @@ function Export({
         <Spacing my={3}>
           <Divider />
         </Spacing>
-        
+
         {apiKeyProvided
           ? (
             <Spacing mb={5}>
@@ -327,13 +327,13 @@ function Export({
               <Spacing mb={2}>
                 <Text>
                   It looks like you already have an API key connected. All your local pipelines should have
-                  been synced with the cloud database. You can now use these pipelines 
+                  been synced with the cloud database. You can now use these pipelines
                 </Text>
               </Spacing>
               <Spacing mb={2}>
                 <Text>
                   If you or a collaborator has already synced a pipeline to the cloud, you can simply call
-                  the <Text bold inline monospace>mage_ai.clean</Text> function with the dataset and 
+                  the <Text bold inline monospace>mage_ai.clean</Text> function with the dataset and
                   the <Text inline monospace>remote_pipeline_id</Text>. The pipeline needs to have been synced
                   with the same API key in order for you to use it.
                 </Text>
@@ -426,7 +426,7 @@ function Export({
                 <Spacing mb={2}>
                   <Text>
                     If you or a collaborator has already synced a pipeline to the cloud, you can simply call
-                    the <Text bold inline monospace>mage_ai.clean</Text> function with the dataset and 
+                    the <Text bold inline monospace>mage_ai.clean</Text> function with the dataset and
                     the <Text inline monospace>remote_pipeline_id</Text>. The pipeline needs to have been synced
                     with the same API key in order for you to use it.
                   </Text>

@@ -1,3 +1,6 @@
+// monaco.KeyCode docs
+// https://microsoft.github.io/monaco-editor/api/enums/monaco.KeyCode.html
+
 export function testShortcut(monaco) {
   // Explanation:
   // Press F1 => the action will appear and run if it is enabled
@@ -44,5 +47,20 @@ export function saveCode(monaco, onSave) {
     label: 'Save',
     precondition: null,
     run: () => onSave(),
+  };
+}
+
+export function executeCode(monaco, runBlock) {
+  return {
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'executeCode',
+    keybindingContext: null,
+    keybindings: [
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+    ],
+    label: 'Run',
+    precondition: null,
+    run: () => runBlock(),
   };
 }
