@@ -220,6 +220,8 @@ class Block:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
         if len(decorated_functions) > 0:
             outputs = decorated_functions[0](*input_vars)
+            if outputs is None:
+                outputs = []
             if type(outputs) is not list:
                 outputs = [outputs]
         return outputs

@@ -211,7 +211,7 @@ def make_app():
             (r'/api/', ApiHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_content', ApiFileContentHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+/execute)', ApiPipelineExecuteHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
