@@ -1,4 +1,5 @@
 from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.server.app import (
     clean_df,
     clean_df_with_pipeline,
@@ -14,7 +15,9 @@ from mage_ai.server.utils.frontend_renderer import (
     infer_notebook_type,
     update_frontend_urls,
 )
+import asyncio
 import logging
+import os
 
 
 MAX_NUM_OF_ROWS = 100_000
@@ -112,3 +115,11 @@ def clean(
     else:
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
+
+### --------------- Data preparation methods --------------- ###
+
+def run(pipeline_uuid: str, repo_name: str = None) -> None:
+    repo_path = os.getcwd() if repo_name is None else os.path.join(os.getcwd(), repo_name)
+    pipeline = Pipeline(pipeline_uuid, repo_path)
+
+    asyncio.run(pipeline.execute())
