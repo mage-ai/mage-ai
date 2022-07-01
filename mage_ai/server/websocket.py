@@ -1,16 +1,18 @@
-from async_timeout import asyncio
 from jupyter_client import KernelManager
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from utils.output_display import add_internal_output_info
+import asyncio
 import json
 import os
+import pandas as pd
 import tornado.websocket
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 
+DATAFRAME_OUTPUT_SAMPLE_COUNT = 10
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -67,12 +69,22 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         uuid = msg_id_value['block_uuid']
         output = msg_id_value['block_output']
 
+        output_dict = dict(uuid=uuid)
+        if len(output) > 0:
+            df = find(type(output) == pd.DataFrame, output)
+            if df.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
+                df = df.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
+            output_dict['df_out'] = [
+                df.columns.to_list(),
+                *df.to_numpy().tolist(),
+            ]
+
         print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message}')
 
         for client in self.clients:
             client.write_message(json.dumps(merge_dict(
                 message,
-                dict(uuid=uuid),
+                output_dict,
             )))
 
         del WebSocketServer.running_executions_mapping[msg_id]
