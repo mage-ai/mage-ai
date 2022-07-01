@@ -4,9 +4,9 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
-  SCROLLBAR_WIDTH,
   ScrollbarStyledCss,
 } from '@oracle/styles/scrollbars';
+import { hideScrollBar } from '@oracle/styles/mixins';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 50;
 export const AFTER_MIN_WIDTH = PADDING_UNITS * 3 * UNIT;
@@ -115,6 +115,9 @@ export const AsideHeaderStyle = styled.div<{
   position: fixed;
   top: 0;
   z-index: 4;
+  overflow-x: auto;
+
+  ${hideScrollBar()}
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).sidePanel};

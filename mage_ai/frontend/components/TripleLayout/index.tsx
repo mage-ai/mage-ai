@@ -8,8 +8,8 @@ import NextHead from 'next/head';
 
 import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
-import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import {
   AFTER_DEFAULT_WIDTH,
@@ -33,7 +33,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from '@oracle/icons';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -68,6 +69,8 @@ function TripleLayout({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
+  const [activeSidekickView, setActiveSidekickView] = useState(ViewKeyEnum.TREE);
+  const sidekickViews = after?.props?.views || [];
 
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
@@ -117,7 +120,7 @@ function TripleLayout({
 
     return () => {
       refBeforeInnerDraggable?.current?.removeEventListener?.('mousedown', addMousedown, false);
-      document?.removeEventListener?.('mouseup', removeMousemove, false)
+      document?.removeEventListener?.('mouseup', removeMousemove, false);
       removeMousemove();
     };
   }, [
@@ -159,7 +162,7 @@ function TripleLayout({
 
     return () => {
       refAfterInnerDraggable?.current?.removeEventListener?.('mousedown', addMousedown, false);
-      document?.removeEventListener?.('mouseup', removeMousemove, false)
+      document?.removeEventListener?.('mouseup', removeMousemove, false);
       removeMousemove();
     };
   }, [
@@ -275,7 +278,7 @@ function TripleLayout({
           >
             <Spacing
               px={afterHidden ? 1 : 2}
-              py={2}
+              py={after ? '10.5px' : 2}
             >
               <FlexContainer>
                 <Button
@@ -297,12 +300,32 @@ function TripleLayout({
                     />
                   )}
                 </Button>
+                {sidekickViews.map(({ key, label }: any) => {
+                  const active = key === activeSidekickView;
+                  const Icon = NAV_ICON_MAPPING[key];
+
+                  return (
+                    <Spacing key={key} pl={1}>
+                      <KeyboardShortcutButton
+                        beforeElement={<Icon />}
+                        blackBorder
+                        compact
+                        inline
+                        onClick={() => setActiveSidekickView(key)}
+                        selected={active}
+                        uuid={key}
+                      >
+                        {label}
+                      </KeyboardShortcutButton>
+                    </Spacing>
+                  );
+                })}
               </FlexContainer>
             </Spacing>
           </AsideHeaderStyle>
 
           <AfterInnerStyle ref={refAfterInner}>
-            {!afterHidden && after}
+            {!afterHidden && React.cloneElement(after, { activeView: activeSidekickView })}
           </AfterInnerStyle>
         </AfterStyle>
       )}
