@@ -17,7 +17,8 @@ class Snowflake(BaseSQL):
         Required Arguments:
             user (str): Username for the Snowflake user.
             password (str): Login Password for the user.
-            account (str): Snowflake account identifier (excluding `snowflake-computing.com` suffix).
+            account (str): Snowflake account identifier (excluding
+            `snowflake-computing.com` suffix).
         """
         super().__init__(**kwargs)
 
