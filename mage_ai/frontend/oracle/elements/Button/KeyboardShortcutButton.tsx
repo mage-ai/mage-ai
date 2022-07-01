@@ -11,7 +11,12 @@ import ModelThemeContext from '@context/ModelTheme';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import {
+  BORDER_RADIUS,
+  BORDER_RADIUS_SMALL,
+  BORDER_STYLE,
+  BORDER_WIDTH,
+ } from '@oracle/styles/units/borders';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_REGULAR,
@@ -220,6 +225,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     }
   `}
 
+  ${props => props.blackBorder && `
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).black};
+  `}
+
   ${props => !props.pill && !props.borderless && !props.compact && `
     border-radius: ${BORDER_RADIUS}px;
   `}
@@ -283,7 +292,7 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.selected && `
-    background-color: ${(props.theme.brand || dark.brand).fire400};
+    background-color: ${(props.theme.monotone || dark.monotone).black};
     color: ${(props.theme.monotone || dark.monotone).white};
   `}
 
