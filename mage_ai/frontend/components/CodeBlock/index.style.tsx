@@ -57,15 +57,13 @@ export const CodeContainerStyle = styled.div`
   }
 `;
 
-type BlockDividerProps = {
-};
-
-export const BlockDivider = styled.div<BlockDividerProps>`
+export const BlockDivider = styled.div`
   align-items: center;
   display: flex;
   height: ${UNIT * 1.5}px;
   justify-content: center;
   position: relative;
+  z-index: 1;
 
   &:hover {
     .block-divider-inner {

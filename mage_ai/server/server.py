@@ -1,5 +1,4 @@
 from jupyter_client import KernelManager
-from jupyter_client.multikernelmanager import MultiKernelManager
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -94,6 +93,7 @@ class ApiPipelineHandler(BaseHandler):
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data)
         self.write(dict(pipeline=pipeline.to_dict()))
+
 
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):

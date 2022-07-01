@@ -1,10 +1,9 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
-import Ansi from 'ansi-to-react';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType from '@interfaces/BlockType';
@@ -13,14 +12,9 @@ import CodeEditor, {
   CodeEditorSharedProps,
   OnDidChangeCursorPositionParameterType,
 } from '@components/CodeEditor';
+import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
-import KernelOutputType, {
-  DataTypeEnum,
-  ExecutionStateEnum,
-} from '@interfaces/KernelOutputType';
-import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
-import Text from '@oracle/elements/Text';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import usePrevious from '@utils/usePrevious';
 import {
   BlockDivider,
@@ -38,6 +32,11 @@ type CodeBlockProps = {
   block: BlockType;
   mainContainerRef?: any;
   noDivider?: boolean;
+  messages: KernelOutputType[];
+  onSave: (payload: {
+    block: BlockType;
+    code: string;
+  }) => void;
 } & CodeEditorSharedProps & CommandButtonsSharedProps;
 
 function CodeBlockProps({
@@ -47,52 +46,31 @@ function CodeBlockProps({
   deleteBlock,
   height,
   mainContainerRef,
+  messages = [],
   noDivider,
+  onSave,
   selected,
   setSelected,
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
-  const [messages, setMessages] = useState<KernelOutputType[]>([]);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
   const [runStartTime, setRunStartTime] = useState<Number>(0);
-  const socketUrlPublish = 'ws://localhost:6789/websocket/';
 
-  const {
-    sendMessage,
-    lastMessage,
-    readyState,
-  } = useWebSocket(socketUrlPublish, {
-    onMessage: ({
-      data: messageData,
-    }) => {
-      if (messageData) {
-        setMessages([
-          ...messages,
-          JSON.parse(messageData),
-        ]);
-      }
-    },
-    onOpen: () => console.log('socketUrlPublish opened'),
-    // Will attempt to reconnect on all close events, such as server shutting down
-    shouldReconnect: (closeEvent) => true,
-  });
-
-  const saveCodeText = useCallback((value: string) => {
-    sendMessage(JSON.stringify({
-      code: value,
-    }));
-    setMessages([]);
+  const saveCodeText = useCallback((code: string) => {
+    onSave({
+      block,
+      code,
+    });
     setRunCount(1 + Number(runCount));
     setRunEndTime(0)
     setRunStartTime(Number(new Date()));
   }, [
+    block,
     runCount,
-    runEndTime,
-    sendMessage,
-    setMessages,
+    onSave,
     setRunCount,
     setRunEndTime,
     setRunStartTime,
@@ -145,12 +123,24 @@ function CodeBlockProps({
     mainContainerRef,
   ]);
 
+  const messagesWithType = useMemo(() => messages.filter(({ type }: KernelOutputType) => type), [
+    messages,
+  ]);
+
   return (
-    <div style={{ position: 'relative' }}>
-      {selected && (
+    <div
+      onClick={() => {
+        if (!selected) {
+          setSelected(true);
+        }
+      }}
+      style={{ position: 'relative' }}
+    >
+      {(selected || isInProgress) && (
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
+          status={isInProgress ? ExecutionStateEnum.BUSY : ExecutionStateEnum.IDLE}
         />
       )}
 
@@ -174,55 +164,14 @@ function CodeBlockProps({
           />
         </CodeContainerStyle>
 
-        {messages.map(({
-          data: dataInit,
-          type: dataType,
-        }: KernelOutputType, idx: number) => {
-          if (!dataInit || dataInit?.length === 0) {
-            return;
-          }
-
-          let dataArray: string[] = [];
-          if (Array.isArray(dataInit)) {
-            dataArray = dataInit;
-          } else {
-            dataArray = [dataInit];
-          }
-
-          return dataArray.map((data: string) => (
-            <div key={data}>
-              {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
-                <Text monospace>
-                  <Ansi>
-                    {data}
-                  </Ansi>
-                </Text>
-              )}
-              {dataType === DataTypeEnum.IMAGE_PNG && (
-                <img
-                  alt={`Image {idx} from code output`}
-                  src={`data:image/png;base64, ${data}`}
-                />
-              )}
-            </div>
-          ));
-        })}
-
-        {isInProgress && (
-          <Spacing mt={1}>
-            <Spinner />
-          </Spacing>
-        )}
-
-        {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (
-          <Spacing mt={2}>
-            <Text>
-              Run count: {runCount}
-            </Text>
-            <Text>
-              Execution time: {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-            </Text>
-          </Spacing>
+        {messagesWithType.length >= 1 && (
+          <CodeOutput
+            isInProgress={isInProgress}
+            messages={messagesWithType}
+            runCount={runCount}
+            runEndTime={runEndTime}
+            runStartTime={runStartTime}
+          />
         )}
       </ContainerStyle>
 

@@ -1,3 +1,4 @@
+export const LARGE_FONT_SIZE: number = 16;
 export const REGULAR_FONT_SIZE: number = 14;
 export const REGULAR_LINE_HEIGHT: number = 20;
 export const SMALL_FONT_SIZE: number = 12;
@@ -36,7 +37,7 @@ export const LARGE_LG = `
 `;
 
 export const LARGE = `
-  font-size: 16px;
+  font-size: ${LARGE_FONT_SIZE}px;
   line-height: 22px;
 `;
 

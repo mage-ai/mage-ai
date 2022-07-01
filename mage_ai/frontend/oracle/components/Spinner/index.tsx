@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ReactLoading from 'react-loading';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import { ThemeContext } from 'styled-components';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, PADDING } from '@oracle/styles/units/spacing';
 
 export type SpinnerProps = {
+  color?: string;
   fullScreen?: boolean;
   inverted?: boolean;
   large?: boolean;
@@ -18,7 +19,9 @@ export type SpinnerProps = {
 };
 
 const Spinner = ({
+  color,
   fullScreen,
+  inverted,
   large,
   left = 0,
   relative,
@@ -44,23 +47,27 @@ const Spinner = ({
     }
   }, [bodyHeight, bodyWidth]);
 
+  const loadingEl = (
+    // @ts-ignore
+    <ReactLoading
+      color={color
+        ? color
+        : inverted
+          ? (themeContext.loader || dark.loader).colorInverted
+          : (themeContext.loader || dark.loader).color
+      }
+      height={size}
+      type="spin"
+      width={size}
+    />
+  );
+
+  if (!fullScreen) {
+    return loadingEl;
+  }
+
   if (bodyHeight && bodyWidth) {
     const bodyHeightAdjusted: number = bodyHeight - (PADDING);
-    const loadingEl = (
-      // @ts-ignore
-      <ReactLoading
-        color={
-          (themeContext.loader || light.loader).color
-        }
-        height={size}
-        type="spin"
-        width={size}
-      />
-    );
-
-    if (!fullScreen) {
-      return loadingEl;
-    }
 
     return (
       <div

@@ -4,10 +4,12 @@ import {
   useMemo,
   useState,
 } from 'react';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -17,6 +19,7 @@ import {
   KEY_CODE_ESCAPE,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import {
@@ -42,6 +45,9 @@ function PipelineDetail({
       uuid: 'b',
     },
   ]);
+  const [messages, setMessages] = useState<{
+    [uuid: string]: KernelOutputType[];
+  }>({});
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
@@ -108,6 +114,72 @@ function PipelineDetail({
     ],
   );
 
+  const {
+    lastMessage,
+    readyState,
+    sendMessage,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  useEffect(() => {
+    if (lastMessage) {
+      const message = JSON.parse(lastMessage.data);
+      const { uuid } = message;
+
+      setMessages((messagesPrevious) => {
+        const messagesFromUUID = messagesPrevious[uuid] || [];
+
+        return {
+          ...messagesPrevious,
+          [uuid]: messagesFromUUID.concat(message),
+        };
+      });
+    }
+  }, [
+    lastMessage,
+    setMessages,
+  ]);
+
+  const connectionStatus = {
+    [ReadyState.CONNECTING]: 'Connecting',
+    [ReadyState.OPEN]: 'Open',
+    [ReadyState.CLOSING]: 'Closing',
+    [ReadyState.CLOSED]: 'Closed',
+    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+  }[readyState];
+
+  const onSave = useCallback((payload: {
+    block: BlockType;
+    code: string;
+  }) => {
+    const {
+      block,
+      code,
+    } = payload;
+    const { uuid } = block;
+
+    sendMessage(JSON.stringify({
+      code,
+      uuid,
+    }));
+
+    setMessages((messagesPrevious) => {
+      delete messagesPrevious[uuid];
+
+      return messagesPrevious;
+    });
+  }, [
+    sendMessage,
+    setMessages,
+  ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       {blocks.map((block: BlockType, idx: number) => {
@@ -129,7 +201,9 @@ function PipelineDetail({
             block={block}
             key={uuid}
             mainContainerRef={mainContainerRef}
+            messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
+            onSave={onSave}
             selected={selected}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setTextareaFocused={setTextareaFocused}

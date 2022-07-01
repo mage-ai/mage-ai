@@ -55,7 +55,7 @@ export default {
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
   },
   background: {
-    codeArea: '#161617',
+    codeArea: '#1E1F24',
     codeTextarea: '#000000',
     danger: RED_XLIGHT,
     dark: GRAY,
@@ -70,6 +70,7 @@ export default {
     scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
     sidePanel: '#232429',
     success: LIME_XLIGHT,
+    table: '#292A2F',
   },
   borders: {
     light: '#2F3034',
@@ -146,7 +147,7 @@ export default {
   interactive: {
     activeBorder: BLACK,
     dangerBorder: RED,
-    defaultBackground: '#232429',
+    defaultBackground: '#36383F',
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
     focusBackground: GRAY,
@@ -159,6 +160,7 @@ export default {
   },
   loader: {
     color: '#EB0032',
+    colorInverted: '#EB0032',
   },
   monotone: {
     black: BLACK,
@@ -193,6 +195,6 @@ export default {
     positive: LIME_TEXT,
   },
   text: {
-    fileBrowser: '#777A85',
+    fileBrowser: '#787A85',
   },
 };
