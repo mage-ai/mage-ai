@@ -131,6 +131,7 @@ dmypy.json
 
 # data files
 mage_ai/server/data/files/**
+default_repo
 
 # test notebook
 test.ipynb
