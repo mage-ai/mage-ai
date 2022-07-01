@@ -30,7 +30,16 @@ class File:
                 continue
             for file in f:
                 file_paths.append(os.path.join(r, file))
-        return [os.path.relpath(p, repo_path) for p in file_paths]
+        file_relpaths = [os.path.relpath(p, repo_path) for p in file_paths]
+        files_dict = dict()
+
+        for path in file_relpaths:
+            d = files_dict
+            path_parts = path.split('/')
+            for i in range(len(path_parts) - 1):
+                d = d.setdefault(path_parts[0], {})
+            d.setdefault(path_parts[-1], None)
+        return files_dict
 
     def content(self):
         with open(self.file_path) as fp:
