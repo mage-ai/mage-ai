@@ -1,11 +1,11 @@
-import BaseIcon from '@oracle/icons/BaseIcon';
 import dark from '@oracle/styles/themes/dark';
+import { BaseIconProps } from '@oracle/icons/BaseIcon';
 import { FileFill, RoundedSquare } from '@oracle/icons';
 import { ThemeType } from '@oracle/styles/themes/constants';
 
 export type FileNodeProps = {
   textColor?: string;
-  iconName?: typeof BaseIcon;
+  iconType?: (props: BaseIconProps) => JSX.Element;
   iconColor?: string;
 };
 
@@ -118,7 +118,7 @@ export const getFileNodeColor: (
   if (nodeName === '__init__.py') {
     return {
       iconColor: (themeType?.monotone || dark.monotone).grey500,
-      iconName: FileFill,
+      iconType: FileFill,
     };
   }
 
@@ -127,32 +127,32 @@ export const getFileNodeColor: (
     const mapping = {
       [ReservedFolderEnum.DATA_LOADERS]: {
         iconColor: (themeType?.chart || dark.chart).button1,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button1,
       },
       [ReservedFolderEnum.EXPORTERS]: {
         iconColor: (themeType?.chart || dark.chart).button2,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button2,
       },
       [ReservedFolderEnum.GLOBAL_VARIABLES]: {
         iconColor: (themeType?.chart || dark.chart).button3,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button3,
       },
       [ReservedFolderEnum.PIPELINES]: {
         iconColor: (themeType?.chart || dark.chart).button4,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button4,
       },
       [ReservedFolderEnum.SCRATCHPAD]: {
         iconColor: (themeType?.chart || dark.chart).button5,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button5,
       },
       [ReservedFolderEnum.TRANSFORMERS]: {
         iconColor: (themeType?.chart || dark.chart).primary,
-        iconName: RoundedSquare,
+        iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).primary,
       },
     };

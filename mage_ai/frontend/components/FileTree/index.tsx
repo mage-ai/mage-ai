@@ -88,7 +88,7 @@ function FileTree({
       path.push(name);
       const {
         iconColor = (themeContext.content || dark.content).active,
-        iconName: FileTreeIcon = children ? Folder : FileFill,
+        iconType: FileTreeIcon = children ? Folder : FileFill,
         textColor,
       } = getFileNodeColor(path, themeContext) || {};
 
