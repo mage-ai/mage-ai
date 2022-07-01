@@ -1,13 +1,13 @@
 import React, { useContext } from 'react';
 
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
+import styled, { ThemeContext } from 'styled-components';
 import { ArrowDown, ArrowRight, File, Folder } from '@oracle/icons';
 import { FileTreeNode, getFileNodeColor } from './constants';
-import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
 import { equals } from '@utils/array';
@@ -57,6 +57,25 @@ function FileTree({
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
+  type FileNodeProps = {
+    highlighted?: boolean;
+  };
+
+  const FileNodeStyle = styled.div<FileNodeProps>`
+    align-items: center;
+    display: flex;
+
+    ${(props: any) => props.highlighted && `
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    `}
+
+    ${(props: any) => `
+      &:hover {
+        background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+      }
+    `}
+  `;
+
   let depth = 0;
   const path: string[] = [];
   const buildTreeEl = (tree: FileTreeNode[]) => {
@@ -70,9 +89,10 @@ function FileTree({
 
       const fileNodeEl = (
         <>
-          <Flex alignItems="center">
+          <FileNodeStyle highlighted={equals(path, selectedPath)}>
             <Spacing mr={children ? `${depth * 2 * UNIT - 12}px` : `${depth * 2 * UNIT}px`} />
             <Link
+              fullWidth
               noColor
               noHoverUnderline
               noOutline
@@ -96,7 +116,7 @@ function FileTree({
                 </FlexContainer>
               </Spacing>
             </Link>
-          </Flex>
+          </FileNodeStyle>
           {children && !collapsed && buildTreeEl(children)}
         </>
       );

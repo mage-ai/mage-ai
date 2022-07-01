@@ -26,6 +26,7 @@ import {
   PINK,
   LIGHT_PINK,
   LIME_DARK,
+  GRAY_HIGHLIGHT,
 } from '../colors/main';
 import {
   DARK_CONTENT_ACTIVE,
@@ -153,7 +154,7 @@ export default {
     disabledBorder: GRAY,
     focusBackground: GRAY,
     focusBorder: BLUE_HIGHLIGHT,
-    hoverBackground: SILVER,
+    hoverBackground: GRAY_HIGHLIGHT,
     hoverBorder: DARK_GRAY_LINES,
     linkPrimary: BLUE,
     linkSecondary: PURPLE,
