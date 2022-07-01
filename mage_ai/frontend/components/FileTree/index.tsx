@@ -16,6 +16,25 @@ export type FileTreeProps = {
   tree: FileTreeNode[];
 };
 
+type FileNodeStyleProps = {
+  highlighted?: boolean;
+};
+
+const FileNodeStyle = styled.div<FileNodeStyleProps>`
+  align-items: center;
+  display: flex;
+
+  ${(props: any) => props.highlighted && `
+    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+  `}
+
+  ${(props: any) => `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    }
+  `}
+`;
+
 function FileTree({
   tree: initialTree,
 }: FileTreeProps) {
@@ -57,24 +76,6 @@ function FileTree({
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
-  type FileNodeProps = {
-    highlighted?: boolean;
-  };
-
-  const FileNodeStyle = styled.div<FileNodeProps>`
-    align-items: center;
-    display: flex;
-
-    ${(props: any) => props.highlighted && `
-      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
-    `}
-
-    ${(props: any) => `
-      &:hover {
-        background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
-      }
-    `}
-  `;
 
   let depth = 0;
   const path: string[] = [];
