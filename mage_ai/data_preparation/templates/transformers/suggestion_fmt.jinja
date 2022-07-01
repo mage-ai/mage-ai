@@ -5,14 +5,9 @@ from pandas import DataFrame
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def {{ title }}(df: DataFrame) -> DataFrame:
     """
-    Transformer action: {action_type}
+    Transformer Action: {{ message }}
     """
-    action = build_transformer_action(
-        action_type=ActionType.{action_type},
-        action_arguments=[],  # Specify the columns of data frame to apply the action to
-        axis=Axis.{axis},
-        {additional_params}
-    )
+    action = {{ payload }}
     return BaseAction(action).execute(df)
