@@ -30,10 +30,11 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
   block: BlockType;
+  defaultValue?: string;
   mainContainerRef?: any;
   noDivider?: boolean;
   messages: KernelOutputType[];
-  onSave: (payload: {
+  runBlock: (payload: {
     block: BlockType;
     code: string;
   }) => void;
@@ -42,35 +43,38 @@ type CodeBlockProps = {
 function CodeBlockProps({
   addNewBlock,
   block,
-  defaultValue,
+  defaultValue = '',
   deleteBlock,
   height,
+  interruptKernel,
   mainContainerRef,
   messages = [],
   noDivider,
-  onSave,
+  runBlock,
   selected,
   setSelected,
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
+  const [content, setContent] = useState(defaultValue)
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
   const [runStartTime, setRunStartTime] = useState<Number>(0);
 
-  const saveCodeText = useCallback((code: string) => {
-    onSave({
+  const runBlockAndTrack = useCallback((code?: string) => {
+    runBlock({
       block,
-      code,
+      code: code || content,
     });
     setRunCount(1 + Number(runCount));
     setRunEndTime(0)
     setRunStartTime(Number(new Date()));
   }, [
     block,
+    content,
     runCount,
-    onSave,
+    runBlock,
     setRunCount,
     setRunEndTime,
     setRunStartTime,
@@ -140,6 +144,8 @@ function CodeBlockProps({
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
+          interruptKernel={interruptKernel}
+          runBlock={runBlockAndTrack}
           status={isInProgress ? ExecutionStateEnum.BUSY : ExecutionStateEnum.IDLE}
         />
       )}
@@ -148,18 +154,22 @@ function CodeBlockProps({
         blockType={block.type}
         selected={selected}
       >
-        <CodeContainerStyle className={selected ? 'selected' : null}>
+        <CodeContainerStyle
+          className={selected && textareaFocused ? 'selected' : null}
+        >
           <CodeEditor
-            autoHeight
             // autoSave
-            defaultValue={defaultValue}
+            autoHeight
             height={height}
+            onChange={(val: string) => setContent(val)}
             onDidChangeCursorPosition={onDidChangeCursorPosition}
-            onSave={saveCodeText}
+            placeholder="Start typing here..."
+            runBlock={runBlockAndTrack}
             selected={selected}
             setSelected={setSelected}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}
+            value={content}
             width="100%"
           />
         </CodeContainerStyle>

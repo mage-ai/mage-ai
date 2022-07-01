@@ -17,10 +17,9 @@ export function getColorsForBlockType(blockType: BlockTypeEnum, props) {
   }
 
   return {
-    accent
+    accent,
   };
 }
-
 
 type ContainerProps = {
   blockType: BlockTypeEnum;

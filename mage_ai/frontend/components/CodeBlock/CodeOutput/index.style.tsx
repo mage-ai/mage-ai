@@ -5,7 +5,8 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-const LEFT_PADDING = 62;
+// Look at the code editor div class "margin" and role "presentation"
+const LEFT_PADDING = 68;
 
 export const ContainerStyle = styled.div`
   padding-left: ${LEFT_PADDING}px;

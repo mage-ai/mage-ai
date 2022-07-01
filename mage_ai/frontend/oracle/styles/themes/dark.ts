@@ -64,6 +64,7 @@ export default {
     muted: SILVER,
     navigation: '#EDEDED',
     page: WHITE,
+    popup: '#27292E',
     row: LIGHT,
     scrollbarThumb: 'rgba(0, 0, 0, 0.5)',
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',

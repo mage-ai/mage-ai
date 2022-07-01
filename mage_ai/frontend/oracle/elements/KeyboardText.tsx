@@ -3,7 +3,7 @@ import styled, { ThemeContext, css } from 'styled-components';
 
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
 export type KeyboardTextProps = {
   borderless?: boolean;
@@ -26,7 +26,7 @@ const SHARED_STYLES = css<{
   padding-right: 2px;
 
   ${props => !props.disabled && `
-    background-color: ${(props.theme.monotone || dark.monotone).white};
+    background-color: ${(props.theme.content || dark.content).inverted};
   `}
 
   ${props => props.disabled && `
@@ -44,7 +44,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.borderless && `
-    border-radius: ${BORDER_RADIUS}px;
+    border-radius: ${BORDER_RADIUS_SMALL}px;
     padding-bottom: 4px;
     padding-top: 4px;
   `}
@@ -86,9 +86,9 @@ function KeyboardText({
       style.borderColor = (themeContext?.monotone || dark.monotone)?.grey400;
     } else {
       // @ts-ignore
-      style.borderColor = (themeContext?.monotone || dark.monotone)?.blackTransparent;
+      style.borderColor = (themeContext?.content || dark.content)?.active;
     }
-    style.borderRadius = BORDER_RADIUS;
+    style.borderRadius = BORDER_RADIUS_SMALL;
     style.borderStyle = 'solid';
     style.borderWidth = 1;
     style.overflow = 'hidden';
@@ -96,7 +96,6 @@ function KeyboardText({
 
   return (
     <Text
-      bold
       center
       inline
       inverted

@@ -29,7 +29,7 @@ import Suggestions from '@components/suggestions';
 import Text from '@oracle/elements/Text';
 import TransformerActionType from '@interfaces/TransformerActionType';
 import actions from '@components/ActionForm/actions';
-import api from '@api';
+import api from '@api/cleaner';
 
 import { AsidePopoutStyle, BEFORE_WIDTH } from '@oracle/components/Layout/MultiColumn.style';
 import {

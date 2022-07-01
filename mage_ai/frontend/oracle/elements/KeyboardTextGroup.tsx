@@ -28,6 +28,7 @@ export type KeyboardTextGroupProps = {
   borderless?: boolean;
   disabled?: boolean;
   keyTextGroups: NumberOrString[][];
+  inline?: boolean;
   monospace?: boolean;
   mutedDisabled?: boolean;
   small?: boolean;
@@ -37,6 +38,7 @@ function KeyboardTextGroup({
   borderless,
   disabled,
   keyTextGroups,
+  inline,
   monospace,
   mutedDisabled,
   small,
@@ -86,7 +88,7 @@ function KeyboardTextGroup({
   });
 
   return (
-    <FlexContainer alignItems="center">
+    <FlexContainer alignItems="center" inline={inline}>
       {els}
     </FlexContainer>
   );

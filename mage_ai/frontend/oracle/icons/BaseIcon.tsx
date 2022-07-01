@@ -12,6 +12,7 @@ export type BaseIconProps = {
   earth?: boolean;
   fill?: string;
   highlight?: boolean;
+  inverted?: boolean;
   neutral?: boolean;
   muted?: boolean;
   opacity?: number;
@@ -23,6 +24,7 @@ export type BaseIconProps = {
   success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
+  warning?: boolean;
 };
 
 type BaseIconInternalProps = {
@@ -50,6 +52,14 @@ export const SHARED_STYLES = css<any>`
 
   ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && `
     fill: ${(props.theme.content || dark.content).active};
+  `}
+
+  ${props => !props.useStroke && !props.stroke && !props.fill && !props.disabled && props.inverted && `
+    fill: ${(props.theme.content || dark.content).inverted};
+  `}
+
+  ${props => !props.useStroke && !props.stroke && !props.fill && props.warning && `
+    fill: ${(props.theme.accent || dark.accent).warning};
   `}
 
   ${props => props.useStroke && !props.stroke && !props.fill && !props.disabled && `

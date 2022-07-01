@@ -6,7 +6,7 @@ import React, {
 } from 'react';
 import * as ReactDOM from 'react-dom';
 import Editor from '@monaco-editor/react';
-
+import Text from '@oracle/elements/Text';
 import usePrevious from '@utils/usePrevious';
 import {
   DEFAULT_AUTO_SAVE_INTERVAL,
@@ -15,13 +15,16 @@ import {
 } from './constants';
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE as DEFAULT_FONT_SIZE } from '@oracle/styles/fonts/sizes';
-import { SINGLE_LINE_HEIGHT } from './index.style';
+import {
+  PlaceholderStyle,
+  SINGLE_LINE_HEIGHT,
+} from './index.style';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
 import {
+  executeCode,
   saveCode,
-  testShortcut,
 } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
@@ -35,7 +38,6 @@ export type OnDidChangeCursorPositionParameterType = {
 };
 
 export type CodeEditorSharedProps = {
-  defaultValue?: string;
   height?: number | string;
   onDidChangeCursorPosition?: (opts: OnDidChangeCursorPositionParameterType) => void;
   selected?: boolean;
@@ -47,39 +49,42 @@ export type CodeEditorSharedProps = {
 type CodeEditorProps = {
   autoHeight?: boolean;
   autoSave?: boolean;
-  content?: string;
   fontSize?: number;
   language?: string;
   onChange?: (value: string) => void;
   onSave?: (value: string) => void;
+  placeholder?: string;
+  runBlock: (content: string) => void;
   showLineNumbers?: boolean;
   theme?: any;
+  value?: string;
   width?: number | string;
 } & CodeEditorSharedProps;
 
 function CodeEditor({
   autoHeight,
   autoSave,
-  defaultValue,
   fontSize = DEFAULT_FONT_SIZE,
   height,
   language,
   onChange,
   onDidChangeCursorPosition,
   onSave,
+  placeholder,
+  runBlock,
   selected,
   setSelected,
   setTextareaFocused,
   showLineNumbers,
   textareaFocused,
   theme: themeProp,
+  value,
   width = '100%',
 }: CodeEditorProps) {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
 
-  const [content, setContent] = useState('');
   const [heightOfContent, setHeightOfContent] = useState(height);
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
@@ -91,15 +96,18 @@ function CodeEditor({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    const shortcuts = [
-      testShortcut(monaco),
-    ];
+    const shortcuts = [];
 
+    // Keyboard shortcuts for saving content: Command + S
     if (onSave) {
       shortcuts.push(saveCode(monaco, () => {
         onSave(editor.getValue());
       }));
     }
+
+    shortcuts.push(executeCode(monaco, () => {
+      runBlock(editor.getValue());
+    }));
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
@@ -109,7 +117,7 @@ function CodeEditor({
 
     if (autoHeight && !height) {
       editor._domElement.style.height =
-        `${calculateHeightFromContent(defaultValue || '')}px`;
+        `${calculateHeightFromContent(value || '')}px`;
     }
 
     editor.onDidFocusEditorWidget(() => {
@@ -156,15 +164,16 @@ function CodeEditor({
     }
   }, [
     autoHeight,
-    defaultValue,
     height,
     onDidChangeCursorPosition,
     onSave,
     refBottomOfEditor.current,
+    runBlock,
     selected,
     setSelected,
     setTextareaFocused,
     textareaFocused,
+    value,
   ]);
 
   useEffect(() => {
@@ -219,9 +228,15 @@ function CodeEditor({
 
   return (
     <>
+      {placeholder && !value?.length && (
+        <PlaceholderStyle>
+          <Text monospace muted>
+            {placeholder}
+          </Text>
+        </PlaceholderStyle>
+      )}
       <Editor
         beforeMount={handleEditorWillMount}
-        defaultValue={defaultValue}
         height={height}
         language={language || DEFAULT_LANGUAGE}
         onChange={(val: string) => {
@@ -246,7 +261,7 @@ function CodeEditor({
           },
         }}
         theme={theme}
-        // value={value}
+        value={value}
         width={width}
       />
       <div ref={refBottomOfEditor} />

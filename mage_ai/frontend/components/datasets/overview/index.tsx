@@ -20,7 +20,7 @@ import Overview from '@components/datasets/Insights/Overview';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow } from '../StatsTable';
 import Text from '@oracle/elements/Text';
-import api from '@api';
+import api from '@api/cleaner';
 import light from '@oracle/styles/themes/light';
 import usePrevious from '@utils/usePrevious';
 
