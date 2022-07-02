@@ -6,10 +6,10 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS_SMALL}px;
+  margin-top: ${UNIT * 1.5}px;
   padding: ${UNIT}px;
   position: absolute;
   right: -${UNIT / 2}px;
-  top: ${UNIT}px;
   z-index: 1;
 
   ${props =>  `

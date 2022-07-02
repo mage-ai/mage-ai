@@ -29,9 +29,12 @@ type ContainerProps = {
 
 export const ContainerStyle = styled.div<ContainerProps>`
   border-radius: ${BORDER_RADIUS}px;
-  border: 2px solid transparent;
   overflow: hidden;
   position: relative;
+
+  ${props => `
+    border: 2px solid ${(props.theme.background || dark.background).codeTextarea};
+  `}
 
   ${props => props.selected && !props.hasError && `
     border-color: ${getColorsForBlockType(props.blockType, props).accent};

@@ -3,16 +3,24 @@ import styled from 'styled-components';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
 type CircleProps = {
   borderSize?: number;
   children?: any;
   color?: string;
   size: number;
+  square?: boolean;
 };
 
 const CircleStyle = styled.div<CircleProps>`
-  border-radius: 50%;
+  ${props => !props.square && `
+    border-radius: 50%;
+  `}
+
+  ${props => props.square && `
+    border-radius: ${BORDER_RADIUS_SMALL}px;
+  `}
 
   ${props => !props.color && !props.borderSize && `
     background-color: ${(props.theme.content || dark.content).muted};
