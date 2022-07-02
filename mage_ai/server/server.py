@@ -21,6 +21,10 @@ class BaseHandler(tornado.web.RequestHandler):
     def check_origin(self, origin):
         return True
 
+    def options(self):
+        self.set_status(204)
+        self.finish()
+
     def set_default_headers(self):
         self.set_header('Access-Control-Allow-Headers', '*')
         self.set_header('Access-Control-Allow-Methods', 'DELETE, GET, PATCH, POST, PUT, OPTIONS')
@@ -199,14 +203,35 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
 
 class KernelsHandler(BaseHandler):
+    def get(self, kernel_id=None):
+        kernels = []
+
+        if manager.has_kernel:
+            kernels.append(dict(
+                alive=manager.is_alive(),
+                id=manager.kernel_id,
+                name=manager.kernel_name,
+            ))
+
+        r = json.dumps(dict(kernels=kernels))
+        self.write(r)
+
     def post(self, kernel_id, action_type):
         if 'interrupt' == action_type:
             manager.interrupt_kernel()
         elif 'restart' == action_type:
-            manager.restart_kernel()
+            try:
+                manager.restart_kernel()
+            except RuntimeError as e:
+                # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
+                if 'start_kernel' in str(e):
+                    manager.start_kernel()
+            os.environ['CONNECTION_FILE'] = manager.connection_file
 
         r = json.dumps(dict(
-            id=kernel_id,
+            kernel=dict(
+                id=kernel_id,
+            ),
         ))
         self.write(r)
         self.finish()
@@ -233,7 +258,8 @@ def make_app():
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables',
                 ApiPipelineVariableListHandler),
-            (r'/kernels/(?P<kernel_id>[\w\-]+)/(?P<action_type>[\w\-]+)', KernelsHandler),
+            (r'/kernels', KernelsHandler),
+            (r'/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         ],
         autoreload=True,
     )
@@ -247,10 +273,7 @@ async def main(repo_path: str = None):
     set_repo_path(repo_path)
 
     manager.start_kernel()
-    os.environ['KERNEL_ID'] = manager.kernel_id
-
-    connection_file = manager.connection_file
-    os.environ['CONNECTION_FILE'] = connection_file
+    os.environ['CONNECTION_FILE'] = manager.connection_file
 
     app = make_app()
     app.listen(6789)

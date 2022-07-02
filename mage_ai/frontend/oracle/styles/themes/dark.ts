@@ -71,9 +71,11 @@ export default {
     table: '#292A2F',
   },
   borders: {
+    danger: RED,
+    dark: '#000000',
     light: '#2F3034',
     medium: '#1C1C1C',
-    dark: '#000000',
+    success: LIME,
   },
   brand: {
     earth100: '#C6EEDB',

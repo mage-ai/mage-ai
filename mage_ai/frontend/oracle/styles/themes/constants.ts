@@ -20,6 +20,13 @@ export type ThemeType = {
     page: string;
     row: string;
   };
+  borders: {
+    danger: string;
+    dark: string;
+    light: string;
+    medium: string;
+    success: string;
+  };
   brand: {
     earth100: string;
     earth200: string;

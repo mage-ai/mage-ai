@@ -24,13 +24,21 @@ import {
   ContainerStyle,
   CodeContainerStyle,
 } from './index.style';
+import {
+  KEY_CODE_ENTER,
+  KEY_CODE_META,
+  KEY_CODE_SHIFT,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
   block: BlockType;
   defaultValue?: string;
+  executionState: ExecutionStateEnum;
   mainContainerRef?: any;
   noDivider?: boolean;
   messages: KernelOutputType[];
@@ -45,6 +53,7 @@ function CodeBlockProps({
   block,
   defaultValue = '',
   deleteBlock,
+  executionState,
   height,
   interruptKernel,
   mainContainerRef,
@@ -80,7 +89,7 @@ function CodeBlockProps({
     setRunStartTime,
   ]);
 
-  const finalExecutionState = messages?.[messages.length - 1]?.execution_state;
+  const finalExecutionState = executionState;
   const isInProgress = messages?.length >= 1 && finalExecutionState !== ExecutionStateEnum.IDLE;
 
   const finalExecutionStatePrevious = usePrevious(finalExecutionState);
@@ -130,6 +139,38 @@ function CodeBlockProps({
   const messagesWithType = useMemo(() => messages.filter(({ type }: KernelOutputType) => type), [
     messages,
   ]);
+  const hasError = !!messagesWithType.find(({ error }) => error);
+
+  const uuidKeyboard = `CodeBlock/${block.uuid}`;
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping, keyHistory) => {
+      if (selected) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
+          runBlockAndTrack();
+        } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
+          runBlockAndTrack();
+          addNewBlock({
+            type: block.type,
+          });
+        }
+      }
+    },
+    [
+      addNewBlock,
+      runBlockAndTrack,
+      selected,
+    ],
+  );
 
   return (
     <div
@@ -144,14 +185,15 @@ function CodeBlockProps({
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
+          executionState={finalExecutionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
-          status={isInProgress ? ExecutionStateEnum.BUSY : ExecutionStateEnum.IDLE}
         />
       )}
 
       <ContainerStyle
         blockType={block.type}
+        hasError={hasError}
         selected={selected}
       >
         <CodeContainerStyle

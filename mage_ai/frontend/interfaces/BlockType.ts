@@ -14,6 +14,7 @@ export default interface BlockType {
   downstream_blocks?: string[];
   file?: string;
   name?: string;
+  priority?: number;
   status?: StatusTypeEnum;
   type?: BlockTypeEnum;
   upstream_blocks?: string[];

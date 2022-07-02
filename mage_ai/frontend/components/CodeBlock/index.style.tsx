@@ -23,6 +23,7 @@ export function getColorsForBlockType(blockType: BlockTypeEnum, props) {
 
 type ContainerProps = {
   blockType: BlockTypeEnum;
+  hasError?: boolean;
   selected: boolean;
 };
 
@@ -32,8 +33,12 @@ export const ContainerStyle = styled.div<ContainerProps>`
   overflow: hidden;
   position: relative;
 
-  ${props => props.selected && `
+  ${props => props.selected && !props.hasError && `
     border-color: ${getColorsForBlockType(props.blockType, props).accent};
+  `}
+
+  ${props => props.selected && props.hasError && `
+    border-color: ${(props.theme.borders || dark.borders).danger};
   `}
 `;
 

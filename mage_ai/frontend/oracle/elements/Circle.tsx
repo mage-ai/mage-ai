@@ -6,7 +6,7 @@ import dark from '@oracle/styles/themes/dark';
 
 type CircleProps = {
   borderSize?: number;
-  children: any;
+  children?: any;
   color?: string;
   size: number;
 };
@@ -41,9 +41,11 @@ function Circle({ children, ...props }: CircleProps) {
         fullWidth
         justifyContent="center"
       >
-        <Flex>
-          {children}
-        </Flex>
+        {children && (
+          <Flex>
+            {children}
+          </Flex>
+        )}
       </FlexContainer>
     </CircleStyle>
   );
