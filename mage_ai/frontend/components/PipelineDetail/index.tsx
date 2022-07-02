@@ -37,6 +37,7 @@ import {
   pushAtIndex,
   removeAtIndex,
 } from '@utils/array';
+import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
@@ -48,16 +49,7 @@ function PipelineDetail({
   mainContainerRef,
   pipeline,
 }: PipelineDetailProps) {
-  const [blocks, setBlocks] = useState<BlockType[]>([
-    {
-      type: BlockTypeEnum.DATA_LOADER,
-      uuid: 'a',
-    },
-    {
-      type: BlockTypeEnum.TRANSFORMER,
-      uuid: 'b',
-    },
-  ]);
+  const [blocks, setBlocks] = useState<BlockType[]>(pipeline.blocks);
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
@@ -116,15 +108,49 @@ function PipelineDetail({
   );
 
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
-  const addNewBlockAtIndex = useCallback((block: BlockType, idx: number) => {
-    const newBlock = {
-      uuid: getNewUUID(),
-      ...block,
-    };
-    setBlocks((previousBlocks) => pushAtIndex(newBlock, idx, previousBlocks));
-
-    return newBlock;
+  const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipeline?.uuid));
+  const addNewBlockAtIndex = useCallback((
+    block: BlockType,
+    idx: number,
+    onCreate?: (block: BlockType) => void,
+  ) => {
+    const name = randomNameGenerator();
+    // @ts-ignore
+    createBlock({
+      block: {
+        name,
+        uuid: `${name}.py`,
+        ...block,
+      },
+    }).then((response: {
+      data: {
+        block: BlockType;
+      };
+    }) => {
+      onSuccess(
+        response, {
+          callback: () => {
+            const {
+              data: {
+                block,
+              },
+            } = response;
+            setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
+            onCreate?.(block);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      );
+    });
   }, [
+    createBlock,
     setBlocks,
   ]);
 
@@ -284,13 +310,13 @@ function PipelineDetail({
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
           } else if (keyMapping[KEY_CODE_A]) {
-            setSelectedBlock(addNewBlockAtIndex({
+            addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex));
+            }, selectedBlockIndex, setSelectedBlock);
           } else if (keyMapping[KEY_CODE_B]) {
-            setSelectedBlock(addNewBlockAtIndex({
+            addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
-            }, selectedBlockIndex + 1));
+            }, selectedBlockIndex + 1, setSelectedBlock);
           }
         } else if (selectedBlockPrevious) {
           if (keyMapping[KEY_CODE_ENTER]) {
@@ -347,7 +373,7 @@ function PipelineDetail({
         return (
           <CodeBlock
             addNewBlock={(b: BlockType) => {
-              setSelectedBlock(addNewBlockAtIndex(b, idx + 1));
+              addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               setTextareaFocused(true);
             }}
             deleteBlock={(b: BlockType) => setBlocks(removeAtIndex(
@@ -373,7 +399,7 @@ function PipelineDetail({
       <Spacing mt={PADDING_UNITS}>
         <AddNewBlocks
           addNewBlock={(b: BlockType) => {
-            setSelectedBlock(addNewBlockAtIndex(b, numberOfBlocks));
+            addNewBlockAtIndex(b, numberOfBlocks, setSelectedBlock);
             setTextareaFocused(true);
           }}
         />

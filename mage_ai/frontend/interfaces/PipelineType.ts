@@ -13,7 +13,3 @@ export default interface PipelineType {
   name?: string;
   uuid?: string;
 }
-
-export function randomNameGenerator() {
-  return `${randomSample(nouns)} ${randomSample(adjectives)}`;
-}

@@ -17,6 +17,7 @@ import {
 import { handle } from '@api/utils/response';
 import { onError, onSuccess } from '@api/utils/response';
 
+export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const FEATURES: 'features' = 'features';
@@ -32,6 +33,7 @@ export const VERSIONS: 'versions' = 'versions';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
+  [BLOCKS, PIPELINES],
   [COLUMNS, FEATURE_SETS],
   [DOWNLOADS, FEATURE_SETS],
   [FEATURE_SETS],
