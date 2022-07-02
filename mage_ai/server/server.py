@@ -21,7 +21,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def check_origin(self, origin):
         return True
 
-    def options(self):
+    def options(self, **kwargs):
         self.set_status(204)
         self.finish()
 
@@ -42,23 +42,6 @@ class BaseHandler(tornado.web.RequestHandler):
                     message=traceback.format_exc(),
                 )
             ))
-
-
-class ApiHandler(BaseHandler):
-    def get(self):
-        value = self.get_argument('value', None)
-        r = json.dumps(dict(
-            method='get',
-            value=value,
-        ))
-        self.write(r)
-        self.finish()
-
-    def post(self):
-        r = json.dumps(dict(
-            method='post',
-        ))
-        self.write(r)
 
 
 class ApiFileListHandler(BaseHandler):
@@ -241,7 +224,6 @@ def make_app():
     return tornado.web.Application(
         [
             (r'/websocket/', WebSocketServer),
-            (r'/api/', ApiHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_content', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
@@ -258,8 +240,8 @@ def make_app():
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables',
                 ApiPipelineVariableListHandler),
-            (r'/kernels', KernelsHandler),
-            (r'/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
+            (r'/api/kernels', KernelsHandler),
+            (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         ],
         autoreload=True,
     )

@@ -217,3 +217,7 @@ export function standardDeviation(arr, usePopulation = false) {
       (arr.length - (usePopulation ? 0 : 1))
   );
 }
+
+export function randomSample(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}

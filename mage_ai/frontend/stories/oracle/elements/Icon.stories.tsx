@@ -31,6 +31,7 @@ import {
   FileFill as FilledFileIcon,
   Folder,
   Graph,
+  GraphWithNodes,
   IDLetters,
   Info,
   Input,
@@ -53,6 +54,7 @@ import {
   RoundedSquare,
   Search,
   Sort,
+  Stack,
   Switch,
   Trash,
 } from '@oracle/icons';
@@ -87,6 +89,7 @@ const ICONS = [
   FilledFileIcon,
   Folder,
   Graph,
+  GraphWithNodes,
   IDLetters,
   Info,
   Input,
@@ -109,6 +112,7 @@ const ICONS = [
   RoundedSquare,
   Search,
   Sort,
+  Stack,
   Switch,
   Trash,
 ];

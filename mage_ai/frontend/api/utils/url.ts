@@ -40,7 +40,7 @@ export function getHost() {
     basePath = CLOUD_BASE_PATH;
   }
 
-  return `${protocol}${host}${basePath}`;
+  return `${protocol}${host}${basePath}/api`;
 }
 
 export function buildUrl(

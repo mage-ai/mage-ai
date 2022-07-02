@@ -77,7 +77,7 @@ function PipelineDetail({
   const kernel = kernels?.[0];
 
   const [restartKernel] = useMutation(
-    api.restart.kernels.useCreate(pipeline?.id),
+    api.restart.kernels.useCreate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -88,14 +88,14 @@ function PipelineDetail({
               message,
             },
           }) => {
-
+            console.log(errors, message);
           },
         },
       ),
     },
   );
   const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(pipeline?.id),
+    api.interrupt.kernels.useCreate(kernel?.id),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -108,7 +108,7 @@ function PipelineDetail({
               message,
             },
           }) => {
-
+            console.log(errors, message);
           },
         },
       ),
