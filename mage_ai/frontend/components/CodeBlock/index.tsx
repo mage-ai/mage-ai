@@ -105,18 +105,17 @@ function CodeBlockProps({
     setRunStartTime,
   ]);
 
-  const finalExecutionState = executionState;
-  const isInProgress = messages?.length >= 1 && finalExecutionState !== ExecutionStateEnum.IDLE;
+  const isInProgress = messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
-  const finalExecutionStatePrevious = usePrevious(finalExecutionState);
+  const finalExecutionStatePrevious = usePrevious(executionState);
   useEffect(() => {
-    if (finalExecutionState === ExecutionStateEnum.IDLE
-      && finalExecutionState !== finalExecutionStatePrevious
+    if (executionState === ExecutionStateEnum.IDLE
+      && executionState !== finalExecutionStatePrevious
     ) {
       setRunEndTime(Number(new Date()));
     }
   }, [
-    finalExecutionState,
+    executionState,
     finalExecutionStatePrevious,
     setRunEndTime,
   ]);
@@ -190,6 +189,12 @@ function CodeBlockProps({
 
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
+  const borderColorShareProps = {
+    blockType: block.type,
+    hasError,
+    selected,
+  };
+  const hasOutput = messagesWithType.length >= 1;
 
   return (
     <div
@@ -276,19 +281,17 @@ function CodeBlockProps({
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
-          executionState={finalExecutionState}
+          executionState={executionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
         />
       )}
 
-      <ContainerStyle
-        blockType={block.type}
-        hasError={hasError}
-        selected={selected}
-      >
+      <ContainerStyle>
         <CodeContainerStyle
+          {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
+          hasOutput={hasOutput}
         >
           <CodeEditor
             // autoSave
@@ -307,8 +310,9 @@ function CodeBlockProps({
           />
         </CodeContainerStyle>
 
-        {messagesWithType.length >= 1 && (
+        {hasOutput && (
           <CodeOutput
+            {...borderColorShareProps}
             isInProgress={isInProgress}
             messages={messagesWithType}
             runCount={runCount}

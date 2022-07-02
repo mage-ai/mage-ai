@@ -5,8 +5,11 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import {
   ContainerStyle,
+  ExtraInfoBorderStyle,
+  ExtraInfoContentStyle,
   ExtraInfoStyle,
 } from './index.style';
+import { BorderColorShareProps } from '../index.style';
 
 type CodeOutputProps = {
   isInProgress: boolean;
@@ -14,16 +17,20 @@ type CodeOutputProps = {
   runCount: Number;
   runEndTime: Number;
   runStartTime: Number;
-};
+} & BorderColorShareProps;
 
 function CodeOutput({
+  blockType,
+  hasError,
   isInProgress,
   messages,
   runCount,
   runEndTime,
   runStartTime,
+  selected,
 }: CodeOutputProps) {
   const primaryDataType = messages[0].type;
+  const executedAndIdle = !isInProgress && runCount >= 1 && runEndTime >= runStartTime;
 
   if (DataTypeEnum.TABLE === primaryDataType) {
 
@@ -31,7 +38,12 @@ function CodeOutput({
 
   return (
     <>
-      <ContainerStyle>
+      <ContainerStyle
+        blockType={blockType}
+        executedAndIdle={executedAndIdle}
+        hasError={hasError}
+        selected={selected}
+      >
         {messages?.map(({
           data: dataInit,
           type: dataType,
@@ -67,13 +79,21 @@ function CodeOutput({
         })}
       </ContainerStyle>
 
-      {!isInProgress && runCount >= 1 && runEndTime >= runStartTime && (
-        <ExtraInfoStyle>
-          <FlexContainer fullWidth justifyContent="flex-end">
-            <Text small>
-              {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-            </Text>
-          </FlexContainer>
+      {executedAndIdle && (
+        <ExtraInfoStyle
+          blockType={blockType}
+          hasError={hasError}
+          selected={selected}
+        >
+          <ExtraInfoBorderStyle />
+
+          <ExtraInfoContentStyle>
+            <FlexContainer fullWidth justifyContent="flex-end">
+              <Text small>
+                {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+              </Text>
+            </FlexContainer>
+          </ExtraInfoContentStyle>
         </ExtraInfoStyle>
       )}
     </>
