@@ -259,6 +259,7 @@ function TripleLayout({
                     <KeyboardShortcutButton
                       beforeElement={<GraphWithNodes />}
                       compact
+                      // @ts-ignore
                       onClick={() => createPipeline({
                         pipeline: {
                           name: randomNameGenerator(),
