@@ -8,6 +8,7 @@ import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
 import BlockType, { BlockTypeEnum, OutputType } from '@interfaces/BlockType';
+import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
@@ -20,6 +21,7 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
+import { TEST_FILE_TREE } from '@components/FileTree/constants';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
@@ -306,7 +308,7 @@ function PipelineDetailPage({
           >
             <TripleLayout
               after={<Sidekick views={SIDEKICK_VIEWS} />}
-              before={<div style={{ height: 9999 }} />}
+              before={<FileTree tree={TEST_FILE_TREE} />}
               beforeHeader={<FileHeaderMenu />}
               mainContainerRef={mainContainerRef}
             >
