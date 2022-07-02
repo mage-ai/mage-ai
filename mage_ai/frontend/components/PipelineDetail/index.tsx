@@ -115,13 +115,18 @@ function PipelineDetail({
     onCreate?: (block: BlockType) => void,
   ) => {
     const name = randomNameGenerator();
+    // @ts-ignore
     createBlock({
       block: {
         name,
         uuid: `${name}.py`,
         ...block,
       },
-    }).then((response) => {
+    }).then((response: {
+      data: {
+        block: BlockType;
+      };
+    }) => {
       onSuccess(
         response, {
           callback: () => {
