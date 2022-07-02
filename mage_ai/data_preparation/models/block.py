@@ -75,8 +75,10 @@ class Block:
 
         file_path = os.path.join(block_dir_path, f'{uuid}.py')
         if os.path.exists(file_path):
-            raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        load_template(block_type, config, file_path)
+            if pipeline is not None and pipeline.has_block(uuid):
+                raise Exception(f'Block {uuid} already exists. Please use a different name.')
+        else:
+            load_template(block_type, config, file_path)
 
         block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
         if pipeline is not None:
