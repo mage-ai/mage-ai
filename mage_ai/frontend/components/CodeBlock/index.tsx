@@ -1,20 +1,32 @@
 import {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { ThemeContext } from 'styled-components';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
-import BlockType from '@interfaces/BlockType';
+import BlockType, {
+  BLOCK_TYPE_ABBREVIATION_MAPPING,
+  BLOCK_TYPE_NAME_MAPPING,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Circle from '@oracle/elements/Circle';
 import CodeEditor, {
   CodeEditorSharedProps,
   OnDidChangeCursorPositionParameterType,
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import usePrevious from '@utils/usePrevious';
 import {
   BlockDivider,
@@ -23,7 +35,9 @@ import {
 import {
   ContainerStyle,
   CodeContainerStyle,
+  getColorsForBlockType,
 } from './index.style';
+import { FileFill, Stack } from '@oracle/icons';
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
@@ -32,6 +46,7 @@ import {
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
@@ -65,6 +80,7 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
+  const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
   const [runCount, setRunCount] = useState<Number>(0);
@@ -89,18 +105,17 @@ function CodeBlockProps({
     setRunStartTime,
   ]);
 
-  const finalExecutionState = executionState;
-  const isInProgress = messages?.length >= 1 && finalExecutionState !== ExecutionStateEnum.IDLE;
+  const isInProgress = messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
-  const finalExecutionStatePrevious = usePrevious(finalExecutionState);
+  const finalExecutionStatePrevious = usePrevious(executionState);
   useEffect(() => {
-    if (finalExecutionState === ExecutionStateEnum.IDLE
-      && finalExecutionState !== finalExecutionStatePrevious
+    if (executionState === ExecutionStateEnum.IDLE
+      && executionState !== finalExecutionStatePrevious
     ) {
       setRunEndTime(Number(new Date()));
     }
   }, [
-    finalExecutionState,
+    executionState,
     finalExecutionStatePrevious,
     setRunEndTime,
   ]);
@@ -172,6 +187,15 @@ function CodeBlockProps({
     ],
   );
 
+  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
+  const borderColorShareProps = {
+    blockType: block.type,
+    hasError,
+    selected,
+  };
+  const hasOutput = messagesWithType.length >= 1;
+
   return (
     <div
       onClick={() => {
@@ -181,23 +205,93 @@ function CodeBlockProps({
       }}
       style={{ position: 'relative' }}
     >
+      <div style={{ marginBottom: UNIT / 4 }}>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Flex alignItems="center" flex={1}>
+            <Tooltip
+              block
+              label={BLOCK_TYPE_NAME_MAPPING[block.type]}
+              size={null}
+              widthFitContent
+            >
+              <FlexContainer alignItems="center">
+                <Circle
+                  color={color}
+                  size={UNIT * 1.5}
+                  square
+                />
+
+                <Spacing mr={1} />
+
+                <Text
+                  color={color}
+                  monospace
+                >
+                  {BLOCK_TYPE_ABBREVIATION_MAPPING[block.type]}
+                </Text>
+              </FlexContainer>
+            </Tooltip>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <FileFill size={UNIT * 1.5} />
+
+            <Spacing mr={1} />
+
+            <Text monospace muted>
+              {block.uuid}
+            </Text>
+          </Flex>
+
+          <div>
+            <Tooltip
+              appearBefore
+              block
+              label={`
+                ${pluralize('parent block', numberOfParentBlocks)}${numberOfParentBlocks === 0 && '. Click to select 1 or more blocks to depend on.'}
+              `}
+              size={null}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                // onClick={() => toggleBefore()}
+              >
+                <FlexContainer alignItems="center">
+                  <Text monospace>
+                    {numberOfParentBlocks}
+                  </Text>
+
+                  <Spacing mr={1} />
+
+                  <Stack size={UNIT * 2} />
+                </FlexContainer>
+              </Button>
+            </Tooltip>
+          </div>
+        </FlexContainer>
+      </div>
+
       {(selected || isInProgress) && (
         <CommandButtons
           block={block}
           deleteBlock={deleteBlock}
-          executionState={finalExecutionState}
+          executionState={executionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
         />
       )}
 
-      <ContainerStyle
-        blockType={block.type}
-        hasError={hasError}
-        selected={selected}
-      >
+      <ContainerStyle>
         <CodeContainerStyle
+          {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
+          hasOutput={hasOutput}
         >
           <CodeEditor
             // autoSave
@@ -216,8 +310,9 @@ function CodeBlockProps({
           />
         </CodeContainerStyle>
 
-        {messagesWithType.length >= 1 && (
+        {hasOutput && (
           <CodeOutput
+            {...borderColorShareProps}
             isInProgress={isInProgress}
             messages={messagesWithType}
             runCount={runCount}

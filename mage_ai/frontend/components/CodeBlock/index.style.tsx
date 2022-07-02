@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BlockTypeEnum } from '@interfaces/BlockType';
@@ -21,18 +21,13 @@ export function getColorsForBlockType(blockType: BlockTypeEnum, props) {
   };
 }
 
-type ContainerProps = {
+export type BorderColorShareProps = {
   blockType: BlockTypeEnum;
   hasError?: boolean;
   selected: boolean;
 };
 
-export const ContainerStyle = styled.div<ContainerProps>`
-  border-radius: ${BORDER_RADIUS}px;
-  border: 2px solid transparent;
-  overflow: hidden;
-  position: relative;
-
+export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
   ${props => props.selected && !props.hasError && `
     border-color: ${getColorsForBlockType(props.blockType, props).accent};
   `}
@@ -42,12 +37,41 @@ export const ContainerStyle = styled.div<ContainerProps>`
   `}
 `;
 
-export const CodeContainerStyle = styled.div`
+export const ContainerStyle = styled.div`
+  border-radius: ${BORDER_RADIUS}px;
+  overflow: hidden;
+  position: relative;
+`;
+
+export const CodeContainerStyle = styled.div<{
+  hasOutput: boolean;
+} & BorderColorShareProps>`
+  ${BORDER_COLOR_SHARED_STYLES}
+
+  border-left-style: solid;
+  border-left-width: 2px;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+  border-top-style: solid;
+  border-top-width: 2px;
   padding-bottom: ${UNIT}px;
   padding-top: ${UNIT}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+
+  ${props => !props.selected && !props.hasError && `
+    border-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+
+  ${props => !props.hasOutput && `
+    border-bottom-left-radius: ${BORDER_RADIUS}px;
+    border-bottom-right-radius: ${BORDER_RADIUS}px;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
   `}
 
   .line-numbers {
@@ -64,7 +88,7 @@ export const CodeContainerStyle = styled.div`
 export const BlockDivider = styled.div`
   align-items: center;
   display: flex;
-  height: ${UNIT * 1.5}px;
+  height: ${UNIT * 2}px;
   justify-content: center;
   position: relative;
   z-index: 1;
