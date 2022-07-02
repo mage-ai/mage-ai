@@ -5,12 +5,16 @@ import React, {
   useState,
 } from 'react';
 import NextHead from 'next/head';
+import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
+import api from '@api';
 import {
   AFTER_DEFAULT_WIDTH,
   AFTER_MIN_WIDTH,
@@ -32,16 +36,19 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  GraphWithNodes,
 } from '@oracle/icons';
 import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { useWindowSize } from '@utils/sizes';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   get,
   set,
 } from '@storage/localStorage';
+import { onSuccess } from '@api/utils/response';
+import { randomNameGenerator } from '@interfaces/PipelineType';
+import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
@@ -56,6 +63,7 @@ function TripleLayout({
   children,
   mainContainerRef,
 }: TripleLayoutProps) {
+  const router = useRouter();
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
@@ -177,6 +185,31 @@ function TripleLayout({
   const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
 
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <ClientOnly>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
@@ -212,11 +245,35 @@ function TripleLayout({
             }}
             visible={beforeHidden}
           >
-            <Spacing
-              px={beforeHidden ? 1 : 2}
-              py={2}
+            <FlexContainer
+              alignItems="center"
+              fullWidth
+              fullHeight
+              justifyContent="space-between"
             >
-              <FlexContainer justifyContent="flex-end">
+              <Flex>
+                <Spacing pl={beforeHidden ? 1 : 2} />
+
+                {!beforeHidden && (
+                  <Spacing pr={PADDING_UNITS}>
+                    <KeyboardShortcutButton
+                      beforeElement={<GraphWithNodes />}
+                      compact
+                      // @ts-ignore
+                      onClick={() => createPipeline({
+                        pipeline: {
+                          name: randomNameGenerator(),
+                        },
+                      })}
+                      uuid="TripleLayout/NewPipeline"
+                    >
+                      New pipeline
+                    </KeyboardShortcutButton>
+                  </Spacing>
+                )}
+              </Flex>
+
+              <Flex>
                 <Button
                   noBackground
                   noBorder
@@ -236,8 +293,10 @@ function TripleLayout({
                     />
                   )}
                 </Button>
-              </FlexContainer>
-            </Spacing>
+
+                <Spacing pr={beforeHidden ? 1 : 2} />
+              </Flex>
+            </FlexContainer>
           </AsideHeaderStyle>
 
           <BeforeInnerStyle ref={refBeforeInner}>

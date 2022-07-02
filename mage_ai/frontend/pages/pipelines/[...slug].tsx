@@ -5,6 +5,7 @@ import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import TripleLayout from '@components/TripleLayout';
+import api from '@api';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 
 type PipelineDetailPageProps = {
@@ -12,23 +13,27 @@ type PipelineDetailPageProps = {
 };
 
 function PipelineDetailPage({
-  pipeline,
+  pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
   const mainContainerRef = useRef(null);
+  const { data, isLoading } = api.pipelines.detail(pipelineProp.uuid);
+  const pipeline = data?.pipeline;
 
   return (
     <>
-      <Head title="Pipeline detail page" />
+      <Head title={pipeline?.name} />
 
       <TripleLayout
         after={<Sidekick views={SIDEKICK_VIEWS} />}
         before={<div style={{ height: 9999 }} />}
         mainContainerRef={mainContainerRef}
       >
-        <PipelineDetail
-          mainContainerRef={mainContainerRef}
-          pipeline={pipeline}
-        />
+        {pipeline && (
+          <PipelineDetail
+            mainContainerRef={mainContainerRef}
+            pipeline={pipeline}
+          />
+        )}
       </TripleLayout>
     </>
   );
@@ -36,15 +41,15 @@ function PipelineDetailPage({
 
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
   const { slug: slugArray }: { slug: string[] } = ctx.query;
-  let pipelineId;
+  let pipelineUUID;
 
   if (Array.isArray(slugArray)) {
-    pipelineId = slugArray[0];
+    pipelineUUID = slugArray[0];
   }
 
   return {
     pipeline: {
-      id: pipelineId,
+      uuid: pipelineUUID,
     },
   };
 };
