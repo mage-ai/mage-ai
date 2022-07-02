@@ -88,7 +88,7 @@ export const CodeContainerStyle = styled.div<{
 export const BlockDivider = styled.div`
   align-items: center;
   display: flex;
-  height: ${UNIT * 1.5}px;
+  height: ${UNIT * 2}px;
   justify-content: center;
   position: relative;
   z-index: 1;
