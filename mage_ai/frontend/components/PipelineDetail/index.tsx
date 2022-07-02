@@ -319,7 +319,7 @@ function PipelineDetail({
       setTextareaFocused,
       textareaFocused,
     ],
-  );('selectedBlock', selectedBlock)
+  );
 
   return (
     <Spacing p={PADDING_UNITS}>

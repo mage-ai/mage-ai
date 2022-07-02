@@ -23,6 +23,7 @@ export type ThemeType = {
   borders: {
     danger: string;
     dark: string;
+    info: string;
     light: string;
     medium: string;
     success: string;
