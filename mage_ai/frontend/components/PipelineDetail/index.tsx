@@ -121,12 +121,10 @@ function PipelineDetail({
       uuid: getNewUUID(),
       ...block,
     };
-    const newBlocks = pushAtIndex(newBlock, idx, blocks);
-    setBlocks(newBlocks);
+    setBlocks((previousBlocks) => pushAtIndex(newBlock, idx, previousBlocks));
 
     return newBlock;
   }, [
-    blocks,
     setBlocks,
   ]);
 
@@ -321,12 +319,13 @@ function PipelineDetail({
       setTextareaFocused,
       textareaFocused,
     ],
-  );
+  );('selectedBlock', selectedBlock)
 
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={1}>
         <KernelStatus
+          isBusy={runningBlocks.length >= 1}
           kernel={kernel}
           restartKernel={restartKernel}
         />

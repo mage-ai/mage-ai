@@ -10,6 +10,8 @@ export function getColorsForBlockType(blockType: BlockTypeEnum, props) {
 
   if (BlockTypeEnum.TRANSFORMER === blockType) {
     accent = (props.theme.accent || dark.accent).purple;
+  } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
+    accent = (props.theme.accent || dark.accent).yellow;
   } else if (BlockTypeEnum.DATA_LOADER === blockType) {
     accent = (props.theme.accent || dark.accent).blue;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType) {

@@ -13,6 +13,7 @@ type IconContainerProps = {
   border?: boolean;
   compact?: boolean;
   purple?: boolean;
+  yellow?: boolean;
 };
 
 export const IconContainerStyle = styled.div<IconContainerProps>`
@@ -32,6 +33,10 @@ export const IconContainerStyle = styled.div<IconContainerProps>`
 
   ${props => props.purple && `
     background-color: ${getColorsForBlockType(BlockTypeEnum.TRANSFORMER, props).accent};
+  `}
+
+  ${props => props.yellow && `
+    background-color: ${getColorsForBlockType(BlockTypeEnum.DATA_EXPORTER, props).accent};
   `}
 
   ${props => !props.compact && `
