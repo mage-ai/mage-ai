@@ -261,6 +261,7 @@ class Block:
                 analysis = clean_data(
                     data.reset_index(drop=True),
                     transform=False,
+                    verbose=False,
                 )
                 VariableManager(self.pipeline.repo_path).add_variable(
                     self.pipeline.uuid,
