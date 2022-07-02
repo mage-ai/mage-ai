@@ -1,4 +1,4 @@
-from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.shared.hash import merge_dict
 
 import json
 import logging

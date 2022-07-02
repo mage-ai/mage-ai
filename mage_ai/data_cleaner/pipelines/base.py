@@ -17,10 +17,10 @@ from mage_ai.data_cleaner.cleaning_rules.remove_outliers import (
 )
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-from mage_ai.data_cleaner.shared.array import flatten
-from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
-from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec, timer
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
+from mage_ai.shared.array import flatten
+from mage_ai.shared.constants import SAMPLE_SIZE
+from mage_ai.shared.logger import VerboseFunctionExec, timer
 import numpy as np
 
 DEFAULT_RULES = [

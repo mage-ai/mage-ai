@@ -6,7 +6,7 @@ from mage_ai.data_cleaner.column_types.column_type_detector import (
     REGEX_NUMBER,
 )
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_cleaner.shared.hash import merge_dict
+from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np

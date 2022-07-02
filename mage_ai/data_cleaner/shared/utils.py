@@ -1,6 +1,6 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
-from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+from mage_ai.shared.multi import run_parallel_multiple_args
 from pandas.core.indexes.frozen import FrozenList
 from typing import Any, List, Union
 import pandas as pd
