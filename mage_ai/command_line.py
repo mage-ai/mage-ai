@@ -24,7 +24,8 @@ def main():
         pipeline_uuid = sys.argv[2]
         pipeline = Pipeline(pipeline_uuid, os.getcwd())
         
-        asyncio.run(pipeline.execute())
+        asyncio.run(pipeline.execute(analyze_outputs=False))
+
 
 if __name__ == "__main__":
     main()
