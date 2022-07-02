@@ -16,6 +16,7 @@ import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type KernelStatus = {
@@ -37,7 +38,9 @@ function KernelStatus({
   return (
     <FlexContainer
       alignItems="center"
+      // @ts-ignore
       onMouseEnter={() => setRestartKernelVisible(true)}
+      // @ts-ignore
       onMouseLeave={() => setRestartKernelVisible(false)}
     >
       <Tooltip

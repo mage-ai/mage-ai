@@ -192,31 +192,33 @@ function PipelineDetail({
 
     if (code) {
       const { uuid } = block;
+      const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
-      sendMessage(JSON.stringify({
-        code,
-        uuid,
-      }));
+      if (!isAlreadyRunning) {
+        sendMessage(JSON.stringify({
+          code,
+          uuid,
+        }));
 
-      setMessages((messagesPrevious) => {
-        delete messagesPrevious[uuid];
+        setMessages((messagesPrevious) => {
+          delete messagesPrevious[uuid];
 
-        return messagesPrevious;
-      });
+          return messagesPrevious;
+        });
 
-      setTextareaFocused(false);
+        setTextareaFocused(false);
 
-      setRunningBlocks((runningBlocksPrevious) => {
+        setRunningBlocks((runningBlocksPrevious) => {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+            return runningBlocksPrevious;
+          }
 
-
-        if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
-          return runningBlocksPrevious;
-        }
-
-        return runningBlocksPrevious.concat(block);
-      });
+          return runningBlocksPrevious.concat(block);
+        });
+      }
     }
   }, [
+    runningBlocks,
     sendMessage,
     setMessages,
     setRunningBlocks,
