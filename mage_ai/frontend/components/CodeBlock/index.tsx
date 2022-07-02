@@ -93,8 +93,7 @@ function CodeBlockProps({
       code: code || content,
     });
     setRunCount(1 + Number(runCount));
-    setRunEndTime(0)
-    setRunStartTime(Number(new Date()));
+    setRunEndTime(null);
   }, [
     block,
     content,
@@ -102,6 +101,16 @@ function CodeBlockProps({
     runBlock,
     setRunCount,
     setRunEndTime,
+  ]);
+
+  const messagesPrevious = usePrevious(messages);
+  useEffect(() => {
+    if (!messagesPrevious?.length && messages?.length >= 1) {
+      setRunStartTime(Number(new Date()));
+    }
+  }, [
+    messages,
+    messagesPrevious,
     setRunStartTime,
   ]);
 
@@ -195,17 +204,23 @@ function CodeBlockProps({
     selected,
   };
   const hasOutput = messagesWithType.length >= 1;
+  const onClickSelectBlock = useCallback(() => {
+    if (!selected) {
+      setSelected(true);
+    }
+  }, [
+    selected,
+    setSelected,
+  ]);
 
   return (
     <div
-      onClick={() => {
-        if (!selected) {
-          setSelected(true);
-        }
-      }}
       style={{ position: 'relative' }}
     >
-      <div style={{ marginBottom: UNIT / 4 }}>
+      <div
+        onClick={() => onClickSelectBlock()}
+        style={{ marginBottom: UNIT / 4 }}
+      >
         <FlexContainer
           alignItems="center"
           justifyContent="space-between"
@@ -287,7 +302,7 @@ function CodeBlockProps({
         />
       )}
 
-      <ContainerStyle>
+      <ContainerStyle onClick={() => onClickSelectBlock()}>
         <CodeContainerStyle
           {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
@@ -327,7 +342,12 @@ function CodeBlockProps({
           onMouseEnter={() => setAddNewBlocksVisible(true)}
           onMouseLeave={() => setAddNewBlocksVisible(false)}
         >
-          {addNewBlocksVisible && <AddNewBlocks addNewBlock={addNewBlock} compact />}
+          {addNewBlocksVisible && (
+            <AddNewBlocks
+              addNewBlock={addNewBlock}
+              compact
+            />
+          )}
           <BlockDividerInner className="block-divider-inner" />
         </BlockDivider>
       )}

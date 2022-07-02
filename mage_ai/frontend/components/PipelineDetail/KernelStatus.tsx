@@ -20,11 +20,13 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type KernelStatus = {
+  isBusy: boolean;
   kernel: KernelType;
   restartKernel: () => void;
 };
 
 function KernelStatus({
+  isBusy,
   kernel,
   restartKernel,
 }) {
@@ -54,9 +56,12 @@ function KernelStatus({
       >
         <FlexContainer alignItems="center">
           <Circle
-            color={alive
-              ? (themeContext || dark).borders.success
-              : (themeContext || dark).borders.danger
+            color={isBusy
+              ? (themeContext || dark).borders.info
+              : (alive
+                ? (themeContext || dark).borders.success
+                : (themeContext || dark).borders.danger
+              )
             }
             size={UNIT}
           />
@@ -64,7 +69,7 @@ function KernelStatus({
           <Spacing mr={1} />
 
           <Text>
-            {alive ? `${name} is alive` : 'Kernel is dead'}
+            {alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
           </Text>
         </FlexContainer>
       </Tooltip>

@@ -31,9 +31,12 @@ function AddNewBlocks({
             <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        onClick={() => addNewBlock({
-          type: BlockTypeEnum.TRANSFORMER,
-        })}
+        onClick={(e) => {
+          e.preventDefault();
+          addNewBlock({
+            type: BlockTypeEnum.TRANSFORMER,
+          });
+        }}
         uuid="AddNewBlocks/Transformer"
       >
         Transformer
@@ -48,12 +51,38 @@ function AddNewBlocks({
             <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        onClick={() => addNewBlock({
-          type: BlockTypeEnum.DATA_LOADER,
-        })}
+        onClick={(e) => {
+          e.preventDefault();
+          addNewBlock({
+            type: BlockTypeEnum.DATA_LOADER,
+          });
+        }}
         uuid="AddNewBlocks/Data_loader"
       >
         Data loader
+      </KeyboardShortcutButton>
+
+      <Spacing ml={1} />
+
+      <KeyboardShortcutButton
+        {...sharedProps}
+        beforeElement={
+          <IconContainerStyle compact={compact} yellow>
+            <Add
+              inverted
+              size={compact ? ICON_SIZE / 2 : ICON_SIZE}
+            />
+          </IconContainerStyle>
+        }
+        onClick={(e) => {
+          e.preventDefault();
+          addNewBlock({
+            type: BlockTypeEnum.DATA_EXPORTER,
+          });
+        }}
+        uuid="AddNewBlocks/Data_exporter"
+      >
+        Data exporter
       </KeyboardShortcutButton>
 
       <Spacing ml={1} />
@@ -65,9 +94,12 @@ function AddNewBlocks({
             <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
           </IconContainerStyle>
         }
-        onClick={() => addNewBlock({
-          type: BlockTypeEnum.SCRATCHPAD,
-        })}
+        onClick={(e) => {
+          e.preventDefault();
+          addNewBlock({
+            type: BlockTypeEnum.SCRATCHPAD,
+          });
+        }}
         uuid="AddNewBlocks/Scratchpad"
       >
         Scratchpad

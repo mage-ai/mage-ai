@@ -50,6 +50,7 @@ export default {
     purple: PURPLE_DARK,
     warning: '#DD9900',
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
+    yellow: YELLOW,
   },
   background: {
     codeArea: '#1E1F24',
@@ -73,6 +74,7 @@ export default {
   borders: {
     danger: RED,
     dark: '#000000',
+    info: YELLOW,
     light: '#2F3034',
     medium: '#1C1C1C',
     success: LIME_DARK,
