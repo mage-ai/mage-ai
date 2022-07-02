@@ -1,15 +1,19 @@
 import Ansi from 'ansi-to-react';
+
+import Circle from '@oracle/elements/Circle';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import { BorderColorShareProps } from '../index.style';
+import { Check } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
   ExtraInfoContentStyle,
   ExtraInfoStyle,
 } from './index.style';
-import { BorderColorShareProps } from '../index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type CodeOutputProps = {
   isInProgress: boolean;
@@ -88,10 +92,28 @@ function CodeOutput({
           <ExtraInfoBorderStyle />
 
           <ExtraInfoContentStyle>
-            <FlexContainer fullWidth justifyContent="flex-end">
+            <FlexContainer
+              alignItems="center"
+              fullWidth
+              justifyContent="flex-end"
+            >
               <Text small>
                 {(Number(runEndTime) - Number(runStartTime)) / 1000}s
               </Text>
+
+              <Spacing mr={1} />
+
+              {!hasError && <Check size={UNIT * 2} success />}
+              {hasError && (
+                <Circle
+                  danger
+                  size={UNIT * 2}
+                >
+                  <Text bold monospace small>
+                    !
+                  </Text>
+                </Circle>
+              )}
             </FlexContainer>
           </ExtraInfoContentStyle>
         </ExtraInfoStyle>

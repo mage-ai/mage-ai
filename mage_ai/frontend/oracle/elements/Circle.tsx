@@ -9,6 +9,7 @@ type CircleProps = {
   borderSize?: number;
   children?: any;
   color?: string;
+  danger?: boolean;
   size: number;
   square?: boolean;
 };
@@ -37,6 +38,10 @@ const CircleStyle = styled.div<CircleProps>`
   ${props => props.size && `
     height: ${props.size}px;
     width: ${props.size}px;
+  `}
+
+  ${props => props.danger && `
+    background-color: ${(props.theme.borders || dark.borders).danger};
   `}
 `;
 

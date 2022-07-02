@@ -7,6 +7,7 @@ import {
   DARK_GRAY_LINES,
   GRAY,
   GRAY_HIGHLIGHT,
+  GREEN,
   GRAY_LINES,
   LIME_DARK,
   LIME_TEXT,
@@ -77,7 +78,7 @@ export default {
     info: YELLOW,
     light: '#2F3034',
     medium: '#1C1C1C',
-    success: LIME_DARK,
+    success: GREEN,
   },
   brand: {
     earth100: '#C6EEDB',
