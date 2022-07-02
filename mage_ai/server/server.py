@@ -149,7 +149,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block_data = json.loads(self.request.body).get('block', {})
         block = Block.create(
-            block_data.get('name'),
+            block_data.get('name') or block_data.get('uuid'),
             block_data.get('type'),
             get_repo_path(),
             pipeline=pipeline,

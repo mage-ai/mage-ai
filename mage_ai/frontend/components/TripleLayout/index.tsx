@@ -47,7 +47,7 @@ import {
   set,
 } from '@storage/localStorage';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@interfaces/PipelineType';
+import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {

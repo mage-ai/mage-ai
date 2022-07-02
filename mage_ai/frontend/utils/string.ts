@@ -1,4 +1,7 @@
+import adjectives from '@utils/adjectives';
 import moment from 'moment';
+import nouns from '@utils/nouns';
+import { randomSample } from '@utils/array';
 
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 
@@ -247,4 +250,8 @@ export function formatPercent(decimal) {
 export function roundNumber(number, floatingPoints = 2) {
   const denom = 10 ** floatingPoints;
   return Math.round((number || 0) * denom) / denom;
+}
+
+export function randomNameGenerator() {
+  return `${randomSample(adjectives)} ${randomSample(nouns)}`;
 }
