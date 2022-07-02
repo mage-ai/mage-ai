@@ -29,11 +29,13 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
     clean_title = suggestion['title'].lower().replace(' ', '_')
     cleaned_payload = json.dumps(suggestion['action_payload'], indent=4)
     cleaned_payload = cleaned_payload.replace('\n', '\n    ')
-    source_path = os.path.join(os.path.dirname(__file__), 'transformers/suggestion_fmt.jinja')
-    with open(source_path, 'r') as source:
-        template = jinja2.Template(source.read())
+    template = read_template_file('transformers/suggestion_fmt.jinja')
     return (
-        template.render(title=clean_title, message=suggestion['message'], payload=cleaned_payload)
+        template.render(
+            title=clean_title,
+            message=suggestion['message'],
+            payload=cleaned_payload,
+        )
         + "\n"
     )
 
@@ -102,7 +104,7 @@ def fetch_template_source(block_type: Union[BlockType, str], config: Mapping[str
     return template_source
 
 
-def __fetch_data_loader_templates(config: Mapping[str, str]):
+def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
     data_source = config.get('data_source')
     try:
         _ = DataSource(data_source)
@@ -116,6 +118,10 @@ def __fetch_data_loader_templates(config: Mapping[str, str]):
 def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
     action_type = config.get('action_type')
     axis = config.get('axis')
+    suggested_action = config.get('suggested_action')
+
+    if suggested_action:
+        return build_template_from_suggestion(suggested_action)
 
     if action_type is not None and axis is not None:
         template = template_env.get_template('transformers/transformer_action_fmt.jinja')
@@ -123,6 +129,7 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
         if action_type in ACTION_CODE_TYPES:
             additional_params = ['action_code=\'your_action_code\'']
         if action_type in ACTION_OPTION_TYPES:
+            # TODO: Automatically generate action options from action type
             additional_params.append('action_options={\'your_action_option\': None}')
         if action_type in OUTPUT_TYPES:
             additional_params.append('outputs=[\'your_output_metadata\']')
@@ -136,5 +143,5 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
         return template_env.get_template('transformers/default.py').render() + '\n'
 
 
-def __fetch_data_exporter_templates(config: Mapping[str, str]):
-    return 'data_exporters/default.py'
+def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
+    return template_env.get_template('data_exporters/default.py').render() + '\n'

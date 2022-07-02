@@ -106,7 +106,7 @@ OUTPUT_TYPES = frozenset(
 )
 
 
-class Axis:
+class Axis(str, Enum):
     COLUMN = 'column'
     ROW = 'row'
 
