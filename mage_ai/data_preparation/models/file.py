@@ -54,7 +54,7 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
     if not is_dir:
         tree_entry['disabled'] = disabled
         return tree_entry
-    if depth == MAX_DEPTH:
+    if depth >= MAX_DEPTH:
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
     tree_entry['children'] = list(
