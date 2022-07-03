@@ -34,14 +34,16 @@ class BaseHandler(tornado.web.RequestHandler):
     def write_error(self, status_code, **kwargs):
         if status_code == 500:
             exception = kwargs['exc_info'][1]
-            self.write(dict(
-                error=dict(
-                    code=status_code,
-                    errors=traceback.format_stack(),
-                    exception=str(exception),
-                    message=traceback.format_exc(),
+            self.write(
+                dict(
+                    error=dict(
+                        code=status_code,
+                        errors=traceback.format_stack(),
+                        exception=str(exception),
+                        message=traceback.format_exc(),
+                    )
                 )
-            ))
+            )
 
 
 class ApiFileListHandler(BaseHandler):
@@ -154,7 +156,9 @@ class ApiPipelineBlockListHandler(BaseHandler):
             get_repo_path(),
             pipeline=pipeline,
             upstream_block_uuids=block_data.get('upstream_blocks', []),
+            config=block_data.get('config'),
         )
+        pipeline.add_block(block, block_data.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict()))
 
 
@@ -190,11 +194,13 @@ class KernelsHandler(BaseHandler):
         kernels = []
 
         if manager.has_kernel:
-            kernels.append(dict(
-                alive=manager.is_alive(),
-                id=manager.kernel_id,
-                name=manager.kernel_name,
-            ))
+            kernels.append(
+                dict(
+                    alive=manager.is_alive(),
+                    id=manager.kernel_id,
+                    name=manager.kernel_name,
+                )
+            )
 
         r = json.dumps(dict(kernels=kernels))
         self.write(r)
@@ -211,11 +217,13 @@ class KernelsHandler(BaseHandler):
                     manager.start_kernel()
             os.environ['CONNECTION_FILE'] = manager.connection_file
 
-        r = json.dumps(dict(
-            kernel=dict(
-                id=kernel_id,
-            ),
-        ))
+        r = json.dumps(
+            dict(
+                kernel=dict(
+                    id=kernel_id,
+                ),
+            )
+        )
         self.write(r)
         self.finish()
 
@@ -229,17 +237,24 @@ def make_app():
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
-                ApiPipelineBlockExecuteHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
-                ApiPipelineBlockHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
-                ApiPipelineBlockAnalysisHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
-                ApiPipelineBlockOutputHandler),
+            (
+                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
+                ApiPipelineBlockExecuteHandler,
+            ),
+            (
+                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
+                ApiPipelineBlockHandler,
+            ),
+            (
+                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
+                ApiPipelineBlockAnalysisHandler,
+            ),
+            (
+                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
+                ApiPipelineBlockOutputHandler,
+            ),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables',
-                ApiPipelineVariableListHandler),
+            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables', ApiPipelineVariableListHandler),
             (r'/api/kernels', KernelsHandler),
             (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         ],

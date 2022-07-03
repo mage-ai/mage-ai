@@ -1,14 +1,12 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.templates.utils import copy_templates
+from mage_ai.data_preparation.templates.template import copy_template_directory
 from queue import Queue
 import asyncio
 import os
 import yaml
-
-PIPELINES_FOLDER = 'pipelines'
-PIPELINE_CONFIG_FILE = 'metadata.yaml'
 
 
 class Pipeline:
@@ -42,7 +40,7 @@ class Pipeline:
         if os.path.exists(pipeline_path):
             raise Exception(f'Pipeline {name} alredy exists.')
         # Copy pipeline files from template folder
-        copy_templates('pipeline', pipeline_path)
+        copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, 'metadata.yaml'), 'w') as fp:
             yaml.dump(dict(name=name, uuid=uuid), fp)
@@ -53,8 +51,11 @@ class Pipeline:
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):
             os.mkdir(pipelines_folder)
-        return [d for d in os.listdir(pipelines_folder)
-                if os.path.isdir(os.path.join(pipelines_folder, d))]
+        return [
+            d
+            for d in os.listdir(pipelines_folder)
+            if os.path.isdir(os.path.join(pipelines_folder, d))
+        ]
 
     async def execute(self):
         """
@@ -94,17 +95,20 @@ class Pipeline:
             config = yaml.full_load(fp) or {}
         self.name = config.get('name')
         self.block_configs = config.get('blocks', [])
-        blocks = \
-            [Block.get_block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
-             for c in self.block_configs]
+        blocks = [
+            Block.get_block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
+            for c in self.block_configs
+        ]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
         # breakpoint()
         for b in self.block_configs:
             block = self.blocks_by_uuid[b['uuid']]
-            block.downstream_blocks = \
-                [self.blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])]
-            block.upstream_blocks = \
-                [self.blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])]
+            block.downstream_blocks = [
+                self.blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
+            ]
+            block.upstream_blocks = [
+                self.blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
+            ]
 
     def to_dict(self):
         return dict(
@@ -150,12 +154,15 @@ class Pipeline:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
         if len(block.downstream_blocks) > 0:
             downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
-            raise Exception(f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
-                            '. Please remove the these blocks first.')
+            raise Exception(
+                f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
+                '. Please remove the these blocks first.'
+            )
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:
-            upstream_block.downstream_blocks = \
-                [b for b in upstream_block.downstream_blocks if b.uuid != block.uuid]
+            upstream_block.downstream_blocks = [
+                b for b in upstream_block.downstream_blocks if b.uuid != block.uuid
+            ]
         del self.blocks_by_uuid[block.uuid]
         self.__save()
         return block
@@ -174,8 +181,9 @@ class Pipeline:
                 for b in upstream_blocks_added:
                     b.downstream_blocks = b.downstream_blocks.append(block)
                 for b in upstream_blocks_removed:
-                    b.downstream_blocks = \
-                        [db for db in b.downstream_blocks if db.uuid != block.uuid]
+                    b.downstream_blocks = [
+                        db for db in b.downstream_blocks if db.uuid != block.uuid
+                    ]
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids)
         self.blocks_by_uuid[block.uuid] = block
         self.__save()

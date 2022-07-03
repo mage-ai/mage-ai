@@ -1,22 +1,11 @@
-from enum import Enum
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
+from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
 from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 import os
 import pandas as pd
-
-
-class BlockStatus(str, Enum):
-    EXECUTED = 'executed'
-    NOT_EXECUTED = 'not_executed'
-
-
-class BlockType(str, Enum):
-    DATA_EXPORTER = 'data_exporter'
-    DATA_LOADER = 'data_loader'
-    SCRATCHPAD = 'scratchpad'
-    TRANSFORMER = 'transformer'
 
 
 class Block:
@@ -58,33 +47,39 @@ class Block:
 
     @property
     def file_path(self):
-        repo_path = \
-            self.pipeline.repo_path if self.pipeline is not None else None
+        repo_path = self.pipeline.repo_path if self.pipeline is not None else None
         return os.path.join(
             repo_path or os.getcwd(),
             f'{self.type}s/{self.uuid}.py',
         )
 
     @classmethod
-    def create(self, name, block_type, repo_path, pipeline=None, upstream_block_uuids=[]):
+    def create(
+        self, name, block_type, repo_path, pipeline=None, upstream_block_uuids=None, config=None
+    ):
         """
         1. Create a new folder for block_type if not exist
         2. Create a new python file with code template
         """
+        if upstream_block_uuids is None:
+            upstream_block_uuids = []
+        if config is None:
+            config = {}
+
         uuid = clean_name(name)
         block_dir_path = os.path.join(repo_path, f'{block_type}s')
         if not os.path.exists(block_dir_path):
             os.mkdir(block_dir_path)
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
+
         file_path = os.path.join(block_dir_path, f'{uuid}.py')
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
         else:
-            # TODO: update the following code to use code template
-            with open(os.path.join(block_dir_path, f'{uuid}.py'), 'w'):
-                pass
+            load_template(block_type, config, file_path)
+
         block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
         if pipeline is not None:
             pipeline.add_block(block, upstream_block_uuids)
@@ -104,14 +99,7 @@ class Block:
         return block_uuids
 
     @classmethod
-    def get_block(
-        self,
-        name,
-        uuid,
-        block_type,
-        status=BlockStatus.NOT_EXECUTED,
-        pipeline=None
-    ):
+    def get_block(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED, pipeline=None):
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
@@ -136,11 +124,11 @@ class Block:
             if vtype is not pd.DataFrame:
                 continue
             data = variable_manager.get_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    v,
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
-                )
+                self.pipeline.uuid,
+                self.uuid,
+                v,
+                variable_type=VariableType.DATAFRAME_ANALYSIS,
+            )
             data['variable_uuid'] = v
             analyses.append(data)
         return analyses
@@ -154,18 +142,18 @@ class Block:
         variable_manager = VariableManager(self.pipeline.repo_path)
         for v, _ in self.output_variables.items():
             data = variable_manager.get_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    v,
-                    sample=True,
-                )
+                self.pipeline.uuid,
+                self.uuid,
+                v,
+                sample=True,
+            )
             if type(data) is pd.DataFrame:
                 data = dict(
                     variable_uuid=v,
                     sample_data=dict(
                         columns=data.columns.tolist(),
                         rows=data.to_numpy().tolist(),
-                    )
+                    ),
                 )
             outputs.append(data)
         return outputs
@@ -186,8 +174,9 @@ class Block:
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
-        if 'upstream_blocks' in data and \
-                set(data['upstream_blocks']) != set(self.upstream_block_uuids):
+        if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
+            self.upstream_block_uuids
+        ):
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
@@ -196,9 +185,9 @@ class Block:
             def custom_code(function):
                 decorated_functions.append(function)
                 return function
-            
+
             return custom_code
-        
+
         input_vars = []
         if self.pipeline is not None:
             repo_path = self.pipeline.repo_path
@@ -308,7 +297,7 @@ class DataLoaderBlock(Block):
     @property
     def output_variables(self):
         return dict(df=pd.DataFrame)
-  
+
 
 class DataExporterBlock(Block):
     @property

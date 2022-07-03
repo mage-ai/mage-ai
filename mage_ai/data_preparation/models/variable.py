@@ -1,18 +1,14 @@
 from enum import Enum
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_ANALYSIS_KEYS,
+    DATAFRAME_SAMPLE_COUNT,
+    VARIABLE_DIR,
+)
 from numpyencoder import NumpyEncoder
 from typing import Any
 import json
 import os
 import pandas as pd
-
-DATAFRAME_ANALYSIS_KEYS = frozenset([
-    'metadata',
-    'statistics',
-    'insights',
-    'suggestions',
-])
-DATAFRAME_SAMPLE_COUNT = 1000
-VARIABLE_DIR = '.variables'
 
 
 class VariableType(str, Enum):
@@ -22,11 +18,7 @@ class VariableType(str, Enum):
 
 class Variable:
     def __init__(
-        self,
-        uuid: str,
-        pipeline_path: str,
-        block_uuid: str,
-        variable_type: VariableType = None
+        self, uuid: str, pipeline_path: str, block_uuid: str, variable_type: VariableType = None
     ) -> None:
         self.uuid = uuid
         self.pipeline_path = pipeline_path
@@ -51,9 +43,9 @@ class Variable:
             self.__write_json(data)
 
     def read_data(self, sample: bool = False) -> Any:
-        if self.variable_type is None and \
-            os.path.exists(
-                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')):
+        if self.variable_type is None and os.path.exists(
+            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
+        ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
 
