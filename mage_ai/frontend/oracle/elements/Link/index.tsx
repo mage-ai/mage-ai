@@ -53,6 +53,7 @@ export type LinkProps = {
   transparentBorder?: boolean;
   underline?: boolean;
   verticalAlignContent?: boolean;
+  warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wordWrap?: boolean;
   xsmall?: boolean;

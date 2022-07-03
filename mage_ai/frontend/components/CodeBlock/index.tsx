@@ -308,6 +308,7 @@ function CodeBlockProps({
                 <>
                   <Spacing ml={1} />
                   <Link
+                    // @ts-ignore
                     onClick={() => updateBlock({
                       block: {
                         ...block,

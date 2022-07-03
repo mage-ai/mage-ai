@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import { media } from 'styled-bootstrap-grid';
 
 import light from '@oracle/styles/themes/light';
 import {
@@ -13,6 +14,7 @@ import {
 import {
   HEADLINE_SIZE,
   LARGE,
+  LARGE_SM,
   REGULAR,
   SMALL,
   XLARGE,
@@ -40,6 +42,7 @@ export type TextProps = {
   inverted?: boolean;
   italic?: boolean;
   large?: boolean;
+  largeSm?: boolean;
   letterSpacing?: number;
   leftAligned?: boolean;
   lineHeight?: number;
@@ -63,6 +66,7 @@ export type TextProps = {
   title?: string;
   underline?: boolean;
   uppercase?: boolean;
+  warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wind?: boolean;
   whiteSpaceNormal?: boolean;
@@ -71,6 +75,14 @@ export type TextProps = {
   xlarge?: boolean;
   xsmall?: boolean;
 };
+
+export const SHARED_LARGE_TEXT_RESPONSIVE_STYLES = css<{
+  largeSm?: boolean;
+  large?: boolean;
+  largeLg?: boolean;
+  xlarge?: boolean;
+}>`
+`;
 
 export const SHARED_TEXT_STYLES = css<TextProps>`
   ${props => !props.xsmall && !props.small && !props.large && !props.xlarge && `

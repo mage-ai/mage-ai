@@ -9,6 +9,7 @@ export const HERO_LINE_HEIGHT = 72;
 export const XXLARGE_LINE_HEIGHT = 48;
 export const XLARGE_LINE_HEIGHT = 42;
 export const LARGE_LG_LINE_HEIGHT = 34;
+export const LARGE_SM_LINE_HEIGHT = 28;
 export const LARGE_LINE_HEIGHT = 28;
 
 export const HERO = `
@@ -34,6 +35,11 @@ export const HEADLINE_SIZE = `
 export const LARGE_LG = `
   font-size: 24px;
   line-height: ${LARGE_LG_LINE_HEIGHT}px;
+`;
+
+export const LARGE_SM = `
+  font-size: 18px;
+  line-height: ${LARGE_SM_LINE_HEIGHT}px;
 `;
 
 export const LARGE = `

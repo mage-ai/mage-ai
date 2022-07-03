@@ -51,6 +51,7 @@ export type InputWrapperProps = {
   info?: boolean;
   inputWidth?: number;
   invertedTheme?: boolean;
+  isFocused?: boolean;
   label?: any;
   labelDescription?: any;
   labelFixed?: string;
@@ -92,6 +93,7 @@ export type InputWrapperProps = {
   warning?: boolean;
   water?: boolean;
   width?: number;
+  wind?: boolean;
 };
 
 type InputWrapperInternalProps = {
@@ -104,7 +106,10 @@ type IconContainerProps = {
   top?: boolean;
 };
 
-const ContainerStyle = styled.div`
+const ContainerStyle = styled.div<{
+  fullWidth?: boolean;
+  visible?: boolean;
+}>`
   .label-enter {
     opacity: 0;
     transform: translate(0, ${UNIT}px);
@@ -139,7 +144,10 @@ const ContainerStyle = styled.div`
   `}
 `;
 
-const LabelContainerStyle = styled.div`
+const LabelContainerStyle = styled.div<{
+  beforeIcon?: any;
+  compact?: boolean;
+}>`
   position: absolute;
 
   ${props => !props.compact && !props.beforeIcon && `
@@ -171,7 +179,7 @@ const IconContainerStyle = styled.div<IconContainerProps>`
   `}
 `;
 
-export const SHARED_INPUT_STYLES = css`
+export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   ${browser('appearance', 'none')}
   ${browser('transition', 'background 300ms ease 0s, border 300ms ease 0s, color 300ms ease 0s')}
   ${transition('200ms box-shadow linear')}
@@ -245,15 +253,6 @@ export const SHARED_INPUT_STYLES = css`
     }
   `}
 
-  ${props => !props.disabled && props.invertedTheme && `
-    border-color: ${(props.theme.interactive || dark.interactive).invertedDefaultBorder};
-    color: ${(props.theme.contentInverted || dark.contentInverted).active};
-
-    ::placeholder {
-      color: ${(props.theme.monotone || dark.monotone).grey400};
-    }
-  `}
-
   ${props => !props.disabled && !props.noBackground && `
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverOverlay};
@@ -266,20 +265,6 @@ export const SHARED_INPUT_STYLES = css`
 
     &:active {
       background-color: ${(props.theme.interactive || dark.interactive).activeOverlay};
-    }
-  `}
-
-  ${props => !props.disabled && props.invertedTheme && `
-    border-color: ${(props.theme.interactive || dark.interactive).activeOverlay};
-    color: ${(props.theme.contentInverted || dark.contentInverted).active};
-
-    &:hover {
-      background-color: ${(props.theme.monotone || dark.monotone).grey200};
-      border-color: ${(props.theme.monotone || dark.monotone).black};
-    }
-
-    ::placeholder {
-      color: ${(props.theme.monotone || dark.monotone).grey400};
     }
   `}
 
@@ -305,15 +290,6 @@ export const SHARED_INPUT_STYLES = css`
 
     ::placeholder {
       color: ${(props.theme.content || dark.content).disabled};
-    }
-  `}
-
-  ${props => props.disabled && props.invertedTheme && `
-    background-color: ${(props.theme.monotone || dark.monotone).grey100};
-    color: ${(props.theme.monotone || dark.monotone).grey500};
-
-    ::placeholder {
-      color: ${(props.theme.monotone || dark.monotone).grey400};
     }
   `}
 
@@ -508,20 +484,6 @@ export const SHARED_INPUT_STYLES = css`
     &:focus,
     &:hover {
       color: ${(props.theme.brand || dark.brand).water500} !important;
-    }
-  `}
-
-  ${props => props.borderTheme && `
-    border-color: ${(props.theme.interactive || dark.interactive).activeOverlay};
-    color: ${(props.theme.contentInverted || dark.contentInverted).active};
-
-    &:hover {
-      background-color: ${(props.theme.monotone || dark.monotone).white};
-      border-color: ${(props.theme.monotone || dark.monotone).grey200};
-    }
-
-    ::placeholder {
-      color: ${(props.theme.monotone || dark.monotone).grey400};
     }
   `}
 

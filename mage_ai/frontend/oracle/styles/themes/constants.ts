@@ -87,6 +87,9 @@ export type ThemeType = {
     disabled: string;
     muted: string;
   };
+  contentInverted: {
+    active: string;
+  };
   elevation: {
     visualizationAccent: string;
     visualizationAccentAlt: string;
