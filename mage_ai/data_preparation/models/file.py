@@ -1,4 +1,8 @@
+from typing import Dict
 import os
+
+MAX_DEPTH = 30
+INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 
 
 class File:
@@ -24,27 +28,12 @@ class File:
 
     @classmethod
     def get_all_files(self, repo_path):
-        file_paths = []
-        for r, d, f in os.walk(repo_path):
-            if '.variables' in r:
-                continue
-            for file in f:
-                file_paths.append(os.path.join(r, file))
-        file_relpaths = [os.path.relpath(p, repo_path) for p in file_paths]
-        files_dict = dict()
-
-        for path in file_relpaths:
-            d = files_dict
-            path_parts = path.split('/')
-            for i in range(len(path_parts) - 1):
-                d = d.setdefault(path_parts[0], {})
-            d.setdefault(path_parts[-1], None)
-        return files_dict
+        return traverse(os.path.basename(repo_path), True, repo_path)
 
     def content(self):
         with open(self.file_path) as fp:
             file_content = fp.read()
-        return file_content 
+        return file_content
 
     def update_content(self, content):
         with open(self.file_path, 'w') as fp:
@@ -54,10 +43,28 @@ class File:
         os.remove(self.file_path)
 
     def to_dict(self, include_content=False):
-        data = dict(
-            name=self.filename,
-            path=os.path.join(self.dir_path, self.filename)
-        )
+        data = dict(name=self.filename, path=os.path.join(self.dir_path, self.filename))
         if include_content:
             data['content'] = self.content()
         return data
+
+
+def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
+    tree_entry = dict(name=name)
+    if not is_dir:
+        tree_entry['disabled'] = disabled
+        return tree_entry
+    if depth >= MAX_DEPTH:
+        return tree_entry
+    can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
+    tree_entry['children'] = list(
+        traverse(
+            entry.name,
+            entry.is_dir(follow_symlinks=False),
+            entry.path,
+            can_access_children,
+            depth + 1,
+        )
+        for entry in sorted(os.scandir(path), key=lambda entry: entry.name)
+    )
+    return tree_entry
