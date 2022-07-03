@@ -185,7 +185,7 @@ class Block:
 
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
-            self.__update_name()
+            self.__update_name(data['name'])
         if 'upstream_blocks' in data and \
                 set(data['upstream_blocks']) != set(self.upstream_block_uuids):
             self.__update_upstream_blocks(data['upstream_blocks'])
@@ -260,14 +260,22 @@ class Block:
                 data,
             )
 
-    # TODO: implement this method
-    def __update_name(self):
+    # TODO: Update all pipelines that use this block
+    def __update_name(self, name):
         """
         1. Rename block file
         2. Update the folder of variable
         3. Update upstream and downstream relationships
         """
-        return
+        old_uuid = self.uuid
+        old_file_path = self.file_path
+        new_uuid = clean_name(name)
+        self.name = name
+        self.uuid = new_uuid
+        new_file_path = self.file_path
+        os.rename(old_file_path, new_file_path)
+        if self.pipeline is not None:
+            self.pipeline.update_block_uuid(self, old_uuid)
 
     def __update_pipeline_block(self):
         if self.pipeline is None:

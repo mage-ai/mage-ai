@@ -36,6 +36,10 @@ class Variable:
             os.makedirs(self.variable_dir_path)
         self.variable_type = variable_type
 
+    @classmethod
+    def dir_path(self, pipeline_path, block_uuid):
+        return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
+
     def write_data(self, data: Any) -> None:
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
