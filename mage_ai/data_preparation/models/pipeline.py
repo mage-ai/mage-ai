@@ -193,10 +193,12 @@ class Pipeline:
         new_uuid = block.uuid
         if new_uuid == old_uuid:
             return
-        os.rename(
-            Variable.dir_path(self.dir_path, old_uuid),
-            Variable.dir_path(self.dir_path, new_uuid),
-        )
+        old_variables_path = Variable.dir_path(self.dir_path, old_uuid)
+        if os.path.exists(old_variables_path):
+            os.rename(
+                old_variables_path,
+                Variable.dir_path(self.dir_path, new_uuid),
+            )
         if old_uuid in self.blocks_by_uuid:
             del self.blocks_by_uuid[old_uuid]
         self.blocks_by_uuid[new_uuid] = block
