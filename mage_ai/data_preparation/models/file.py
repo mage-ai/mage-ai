@@ -28,7 +28,7 @@ class File:
 
     @classmethod
     def get_all_files(self, repo_path):
-        return traverse(repo_path)
+        return traverse(os.path.basename(repo_path), True, repo_path)
 
     def content(self):
         with open(self.file_path) as fp:
@@ -49,39 +49,22 @@ class File:
         return data
 
 
-def traverse(directory: str) -> Dict:
-    """
-    Traverses directory tree and returns the underlying file structure
-
-    Args:
-        directory (str): Top-level directory to generate tree from
-
-    Returns:
-        Dict: Directory tree payload representation
-    """
-    name = os.path.splitext(os.path.basename(directory))[0]
-    disabled = name[0] == '.' or name in INACCESSIBLE_DIRS
-    children = []
-    entries = os.scandir(directory)
-    children.extend(
-        _traverse(entry, disabled, 1) for entry in sorted(entries, key=lambda entry: entry.name)
-    )
-    return dict(name=name, children=children)
-
-
-def _traverse(entry, disabled=True, depth=1) -> Dict:
-    name = entry.name
+def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict:
     tree_entry = dict(name=name)
-    if entry.is_file():
+    if not is_dir:
         tree_entry['disabled'] = disabled
-    if not entry.is_dir():
         return tree_entry
-    entries = os.scandir(entry.path)
-    children = []
+    if depth == MAX_DEPTH:
+        return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
-    children.extend(
-        _traverse(entry, can_access_children, depth + 1)
-        for entry in sorted(entries, key=lambda entry: entry.name)
+    tree_entry['children'] = list(
+        traverse(
+            entry.name,
+            entry.is_dir(follow_symlinks=False),
+            entry.path,
+            can_access_children,
+            depth + 1,
+        )
+        for entry in sorted(os.scandir(path), key=lambda entry: entry.name)
     )
-    tree_entry['children'] = children
     return tree_entry
