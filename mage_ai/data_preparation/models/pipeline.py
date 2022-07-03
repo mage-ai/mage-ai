@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.templates.utils import copy_templates
 from queue import Queue
 import asyncio
@@ -177,6 +178,20 @@ class Pipeline:
                         [db for db in b.downstream_blocks if db.uuid != block.uuid]
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids)
         self.blocks_by_uuid[block.uuid] = block
+        self.__save()
+        return block
+
+    def update_block_uuid(self, block, old_uuid):
+        new_uuid = block.uuid
+        if new_uuid == old_uuid:
+            return
+        os.rename(
+            Variable.dir_path(self.dir_path, old_uuid),
+            Variable.dir_path(self.dir_path, new_uuid),
+        )
+        if old_uuid in self.blocks_by_uuid:
+            del self.blocks_by_uuid[old_uuid]
+        self.blocks_by_uuid[new_uuid] = block
         self.__save()
         return block
 
