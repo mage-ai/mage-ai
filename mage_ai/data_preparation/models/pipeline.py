@@ -1,12 +1,8 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
-<<<<<<< HEAD
-from mage_ai.data_preparation.models.variable import Variable
-from mage_ai.data_preparation.templates.utils import copy_templates
-=======
 from mage_ai.data_preparation.models.constants import PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
+from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.templates.template import copy_template_directory
->>>>>>> 13e47df ([sk] Refactored constants out of models package)
 from queue import Queue
 import asyncio
 import os
