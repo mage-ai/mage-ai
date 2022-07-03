@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_loader.base import DataSource
+from mage_ai.io.base import DataSource
 from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.templates.template import (
     build_template_from_suggestion,

@@ -1,4 +1,4 @@
-from mage_ai.data_loader.base import BaseSQL
+from mage_ai.io.base import BaseSQL
 from pandas import DataFrame
 from snowflake.connector import connect
 

@@ -1,4 +1,4 @@
-from mage_ai.data_loader.base import BaseFile
+from mage_ai.io.base import BaseFile
 from pandas import DataFrame
 
 

@@ -1,6 +1,6 @@
 from google.cloud.bigquery import Client
 from google.oauth2 import service_account
-from mage_ai.data_loader.base import BaseLoader
+from mage_ai.io.base import BaseLoader
 from pandas import DataFrame
 from typing import Mapping
 

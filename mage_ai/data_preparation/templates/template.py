@@ -4,7 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     OUTPUT_TYPES,
 )
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_loader.base import DataSource
+from mage_ai.io.base import DataSource
 from typing import Mapping, Union
 import jinja2
 import json

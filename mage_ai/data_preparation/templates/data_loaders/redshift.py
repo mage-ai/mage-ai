@@ -1,4 +1,4 @@
-from mage_ai.data_loader.redshift import Redshift
+from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 
 

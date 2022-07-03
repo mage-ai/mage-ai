@@ -1,4 +1,4 @@
-from mage_ai.data_loader.bigquery import BigQuery
+from mage_ai.io.bigquery import BigQuery
 from pandas import DataFrame
 
 

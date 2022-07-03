@@ -1,5 +1,5 @@
 from io import BytesIO
-from mage_ai.data_loader.base import BaseFile, FileFormat
+from mage_ai.io.base import BaseFile, FileFormat
 from pandas import DataFrame
 import boto3
 

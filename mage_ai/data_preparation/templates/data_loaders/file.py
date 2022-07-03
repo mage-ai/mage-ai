@@ -1,4 +1,4 @@
-from mage_ai.data_loader.file import FileLoader
+from mage_ai.io.file import FileLoader
 from pandas import DataFrame
 
 

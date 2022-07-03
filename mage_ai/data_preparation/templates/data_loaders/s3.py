@@ -1,4 +1,4 @@
-from mage_ai.data_loader.s3 import S3
+from mage_ai.io.s3 import S3
 from pandas import DataFrame
 
 
