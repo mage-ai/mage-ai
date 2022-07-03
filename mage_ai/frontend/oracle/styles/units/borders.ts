@@ -1,6 +1,7 @@
 import { GRAY_LINES, DARK_GRAY_LINES, NAVY } from '../colors/main';
 
 export const BORDER_WIDTH: number = 1;
+export const BORDER_WIDTH_THICK: number = 2;
 export const BORDER_STYLE = 'solid';
 
 export const BORDER_RADIUS_LARGE: number = 10;

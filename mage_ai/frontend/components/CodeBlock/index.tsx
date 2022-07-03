@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
@@ -24,9 +25,13 @@ import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
+import Link from '@oracle/elements/Link';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
   BlockDivider,
@@ -45,6 +50,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -61,6 +67,7 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
   }) => void;
+  pipeline: PipelineType;
 } & CodeEditorSharedProps & CommandButtonsSharedProps;
 
 function CodeBlockProps({
@@ -74,6 +81,7 @@ function CodeBlockProps({
   mainContainerRef,
   messages = [],
   noDivider,
+  pipeline,
   runBlock,
   selected,
   setSelected,
@@ -83,6 +91,8 @@ function CodeBlockProps({
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
+  const [isEditingBlock, setIsEditingBlock] = useState(false);
+  const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(0);
   const [runStartTime, setRunStartTime] = useState<Number>(0);
@@ -213,6 +223,27 @@ function CodeBlockProps({
     setSelected,
   ]);
 
+  const [updateBlock] = useMutation(
+    api.blocks.pipelines.useUpdate(pipeline?.uuid, block.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setIsEditingBlock(false);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <div
       style={{ position: 'relative' }}
@@ -256,9 +287,43 @@ function CodeBlockProps({
 
             <Spacing mr={1} />
 
-            <Text monospace muted>
-              {block.uuid}
-            </Text>
+            <FlexContainer alignItems="center">
+              <LabelWithValueClicker
+                bold={false}
+                inputValue={newBlockUuid}
+                muted
+                monospace
+                notRequired
+                onBlur={() => setTimeout(() => setIsEditingBlock(false), 100)}
+                onChange={(e) => {
+                  setNewBlockUuid(e.target.value);
+                }}
+                onClick={() => setIsEditingBlock(true)}
+                onFocus={() => setIsEditingBlock(true)}
+                stacked
+                value={!isEditingBlock && block.uuid}
+              />
+
+              {isEditingBlock && (
+                <>
+                  <Spacing ml={1} />
+                  <Link
+                    // @ts-ignore
+                    onClick={() => updateBlock({
+                      block: {
+                        ...block,
+                        name: newBlockUuid,
+                      },
+                    })}
+                    preventDefault
+                    sameColorAsText
+                    small
+                  >
+                    Update name
+                  </Link>
+                </>
+              )}
+            </FlexContainer>
           </Flex>
 
           <div>
