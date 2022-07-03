@@ -119,7 +119,6 @@ function PipelineDetail({
     createBlock({
       block: {
         name,
-        uuid: `${name}.py`,
         ...block,
       },
     }).then((response: {
@@ -387,6 +386,7 @@ function PipelineDetail({
             mainContainerRef={mainContainerRef}
             messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
+            pipeline={pipeline}
             runBlock={runBlock}
             selected={selected}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}

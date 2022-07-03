@@ -3,6 +3,7 @@ import { useMutation } from 'react-query';
 import {
   fetchCreate,
   fetchCreateWithParent,
+  fetchUpdateWithParent,
   fetchDetailAsync,
   fetchListAsync,
   fetchListWithParentAsync,
@@ -90,6 +91,9 @@ RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
 
     apis[resource][parentResource].useCreateWithParentIdLater = (opts?: any) => async (opts2: any) =>
       fetchCreateWithParent(resource, parentResource, opts2.parentId, opts2.body, opts);
+
+    apis[resource][parentResource].useUpdate = (parentId: string, id: string, opts?: any) => async (body: any) =>
+      fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
 
     apis[resource][parentResource].listAsync = async (ctx: any, parentId: string, query: any = {}) => {
       const response = await fetchListWithParentAsync(ctx, resource, parentResource, parentId, query);
