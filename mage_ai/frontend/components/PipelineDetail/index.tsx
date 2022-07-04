@@ -49,6 +49,7 @@ function PipelineDetail({
   mainContainerRef,
   pipeline,
 }: PipelineDetailProps) {
+  const [anyInputFocused, setAnyInputFocused] = useState(false);
   const [blocks, setBlocks] = useState<BlockType[]>(pipeline.blocks);
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
@@ -375,10 +376,13 @@ function PipelineDetail({
               addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               setTextareaFocused(true);
             }}
-            deleteBlock={(b: BlockType) => setBlocks(removeAtIndex(
-              blocks,
-              blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
-            ))}
+            deleteBlock={(b: BlockType) => {
+              setBlocks(removeAtIndex(
+                blocks,
+                blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
+              ));
+              setAnyInputFocused(false);
+            }}
             block={block}
             executionState={executionState}
             key={uuid}
@@ -389,6 +393,7 @@ function PipelineDetail({
             pipeline={pipeline}
             runBlock={runBlock}
             selected={selected}
+            setAnyInputFocused={setAnyInputFocused}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={selected && textareaFocused}

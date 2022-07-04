@@ -10,6 +10,8 @@ export function parseError(res) {
   if (errors) {
     if (errors?.__all__) {
       messages = errors?.__all__;
+    } else if (Array.isArray(errors)) {
+      messages = errors;
     } else {
       messages = Object.entries(errors).reduce((acc, [k, v]) => acc.concat(`${k}: ${v[0]}`), []);
     }
@@ -18,6 +20,7 @@ export function parseError(res) {
   }
 
   return {
+    ...error,
     code,
     errors,
     message,
@@ -46,25 +49,33 @@ function parseErrorFromResponse(res, opts: OptsProps = {}) {
   const {
     code,
     errors,
+    exception,
     message,
     messages,
   } = parseError(res);
 
-  const msgs = [];
+  let msgs = [];
   if (message) {
     msgs.push(message);
   }
-  const toastErrMessage = opts.errorMessage || (messages?.[0] || errors);
-  if (toastErrMessage) {
-    msgs.push(toastErrMessage);
+
+  if (messages?.length >= 1) {
+    msgs.push(...messages);
+  } else {
+    const toastErrMessage = opts.errorMessage || (messages?.[0] || errors);
+    if (toastErrMessage) {
+      msgs.push(toastErrMessage);
+    }
   }
 
-  // Replace with some error notification
-  // console.error(msgs.join(' '));
-  // toast.error(msgs.join(' '), {
-  //   position: toast.POSITION.BOTTOM_RIGHT,
-  //   toastId: code,
-  // });
+  if (exception) {
+    msgs.push(exception);
+  }
+
+  return {
+    code,
+    messages: msgs,
+  }
 }
 
 export function errorOrSuccess(response, opts: OptsProps = {}) {
@@ -77,9 +88,9 @@ export function errorOrSuccess(response, opts: OptsProps = {}) {
   const { error } = response;
 
   if (error && !acceptErrorStatuses.includes(error?.code)) {
-    parseErrorFromResponse(response);
+    onErrorCallback?.(response);
 
-    return onErrorCallback?.(response);
+    return parseErrorFromResponse(response);
   } else {
     // Replace with some success notification
     // console.log(successMessage);
@@ -113,9 +124,9 @@ export function onError(error: any, opts: OptsProps = {}) {
     callback,
   } = opts;
 
-  parseErrorFromResponse(resp, opts);
+  callback?.(resp);
 
-  return callback?.(resp);
+  return parseErrorFromResponse(resp, opts);
 }
 
 export function onSuccess(response: any, opts = {}) {
