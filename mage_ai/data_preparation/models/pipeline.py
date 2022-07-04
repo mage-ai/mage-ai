@@ -200,8 +200,8 @@ class Pipeline:
                 Variable.dir_path(self.dir_path, new_uuid),
             )
         if old_uuid in self.blocks_by_uuid:
-            del self.blocks_by_uuid[old_uuid]
-        self.blocks_by_uuid[new_uuid] = block
+            self.blocks_by_uuid = \
+                {new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()}
         self.__save()
         return block
 
