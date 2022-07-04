@@ -30,7 +30,6 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -57,6 +56,7 @@ import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
+import { usePipelineContext } from '@context/Pipeline';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
@@ -70,7 +70,6 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
   }) => void;
-  pipeline: PipelineType;
   setAnyInputFocused: (value: boolean) => void;
 } & CodeEditorSharedProps & CommandButtonsSharedProps;
 
@@ -85,7 +84,6 @@ function CodeBlockProps({
   mainContainerRef,
   messages = [],
   noDivider,
-  pipeline,
   runBlock,
   selected,
   setAnyInputFocused,
@@ -93,6 +91,10 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
+  const {
+    fetchPipeline,
+    pipeline,
+  } = usePipelineContext();
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
@@ -216,6 +218,7 @@ function CodeBlockProps({
         response, {
           callback: () => {
             setIsEditingBlock(false);
+            fetchPipeline();
           },
           onErrorCallback: ({
             error: {
@@ -249,15 +252,18 @@ function CodeBlockProps({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (selected) {
-        if (isEditingBlock && onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-          updateBlock({
-            block: {
-              ...block,
-              name: newBlockUuid,
-            },
-          })
-        } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
+      if (isEditingBlock
+        && keyHistory[0] === KEY_CODE_ENTER
+        && keyHistory[1] !== KEY_CODE_META
+      ) {
+        updateBlock({
+          block: {
+            ...block,
+            name: newBlockUuid,
+          },
+        })
+      } else if (selected) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();

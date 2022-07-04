@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 
 import Head from '@oracle/elements/Head';
+import PipelineContext from '@context/Pipeline';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
@@ -16,7 +17,11 @@ function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
   const mainContainerRef = useRef(null);
-  const { data, isLoading } = api.pipelines.detail(pipelineProp.uuid);
+  const {
+    data,
+    isLoading,
+    mutate: fetchPipeline,
+  } = api.pipelines.detail(pipelineProp.uuid);
   const pipeline = data?.pipeline;
 
   return (
@@ -28,12 +33,16 @@ function PipelineDetailPage({
         before={<div style={{ height: 9999 }} />}
         mainContainerRef={mainContainerRef}
       >
-        {pipeline && (
-          <PipelineDetail
-            mainContainerRef={mainContainerRef}
-            pipeline={pipeline}
-          />
-        )}
+        <PipelineContext.Provider
+          value={{
+            fetchPipeline,
+            pipeline,
+          }}
+        >
+          {pipeline && (
+            <PipelineDetail mainContainerRef={mainContainerRef} />
+          )}
+        </PipelineContext.Provider>
       </TripleLayout>
     </>
   );

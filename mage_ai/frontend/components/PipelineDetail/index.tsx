@@ -12,7 +12,6 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelStatus from './KernelStatus';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -39,18 +38,19 @@ import {
 } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
+import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
-  pipeline: PipelineType;
 };
 
 function PipelineDetail({
   mainContainerRef,
-  pipeline,
 }: PipelineDetailProps) {
+  const { pipeline } = usePipelineContext();
+
   const [anyInputFocused, setAnyInputFocused] = useState(false);
-  const [blocks, setBlocks] = useState<BlockType[]>(pipeline.blocks);
+  const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
@@ -68,6 +68,13 @@ function PipelineDetail({
   });
   const kernels = dataKernels?.kernels;
   const kernel = kernels?.[0];
+
+  useEffect(() => {
+    setBlocks(pipeline.blocks);
+  }, [
+    pipeline.blocks,
+    setBlocks,
+  ]);
 
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
@@ -390,7 +397,6 @@ function PipelineDetail({
             mainContainerRef={mainContainerRef}
             messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
-            pipeline={pipeline}
             runBlock={runBlock}
             selected={selected}
             setAnyInputFocused={setAnyInputFocused}
