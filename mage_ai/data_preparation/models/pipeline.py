@@ -1,6 +1,10 @@
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
+from mage_ai.data_preparation.models.constants import (
+    BlockType,
+    PIPELINE_CONFIG_FILE,
+    PIPELINES_FOLDER,
+)
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import copy_template_directory
@@ -157,10 +161,14 @@ class Pipeline:
             os.rename(old_pipeline_path, new_pipeline_path)
         if update_content and 'blocks' in data:
             for block_data in data['blocks']:
-                if 'uuid' in block_data and 'content' in block_data:
+                if 'uuid' in block_data:
                     block = self.blocks_by_uuid.get(block_data['uuid'])
-                    if block is not None:
+                    if block is None:
+                        continue
+                    if 'content' in block_data:
                         block.update_content(block_data['content'])
+                    if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
+                        block.save_outputs(block_data['outputs'])
 
     def add_block(self, block, upstream_block_uuids=[]):
         upstream_blocks = self.get_blocks(upstream_block_uuids)

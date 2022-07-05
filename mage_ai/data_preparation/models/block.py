@@ -207,13 +207,25 @@ class Block:
         return analyses
 
     def get_outputs(self, sample_count=None):
-        if self.status == BlockStatus.NOT_EXECUTED:
-            return []
-        if len(self.output_variables) == 0:
-            return []
+        if self.pipeline is None:
+            return
+        if self.type != BlockType.SCRATCHPAD:
+            if self.status == BlockStatus.NOT_EXECUTED:
+                return []
+            if len(self.output_variables) == 0:
+                return []
         outputs = []
         variable_manager = VariableManager(self.pipeline.repo_path)
-        for v, _ in self.output_variables.items():
+        if self.type == BlockType.SCRATCHPAD:
+            # For scratchpad blocks, return all variables in block variable folder
+            all_variables = variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                self.uuid
+            )
+        else:
+            # For non-scratchpad blocks, return all variables in output_variables
+            all_variables = self.output_variables.keys()
+        for v in all_variables:
             data = variable_manager.get_variable(
                 self.pipeline.uuid,
                 self.uuid,
@@ -229,8 +241,20 @@ class Block:
                         rows=data.to_numpy().tolist(),
                     ),
                 )
+            elif type(data) is str:
+                data = dict(
+                    variable_uuid=v,
+                    text_data=data,
+                )
             outputs.append(data)
         return outputs
+
+    def save_outputs(self, outputs):
+        variable_mapping = dict()
+        for o in outputs:
+            if all(k in o for k in ['variable_uuid', 'text_data']):
+                variable_mapping[o['variable_uuid']] = o['text_data']
+        self.__store_variables(variable_mapping)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
