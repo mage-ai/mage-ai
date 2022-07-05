@@ -1,13 +1,17 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 import { useMutation } from 'react-query';
 
+import BlockContext from '@context/Block';
+import BlockType from '@interfaces/BlockType';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineContext from '@context/Pipeline';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
@@ -16,6 +20,8 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { onSuccess } from '@api/utils/response';
+import { pushAtIndex } from '@utils/array';
+import { randomNameGenerator } from '@utils/string';
 
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
@@ -24,14 +30,24 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
-  const [selectedBlock, setSelectedBlock] = useState(null);
   const mainContainerRef = useRef(null);
+  const pipelineUUID = pipelineProp.uuid;
+
+  // Blocks
+  const [blocks, setBlocks] = useState<BlockType[]>([]);
+  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
+  const [selectedBlock, setSelectedBlock] = useState(null);
+
+  // Kernels
+  const [messages, setMessages] = useState<{
+    [uuid: string]: KernelOutputType[];
+  }>({});
 
   const {
     data,
     isLoading,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineProp.uuid);
+  } = api.pipelines.detail(pipelineUUID);
   const pipeline = data?.pipeline;
   const {
     data: dataKernels,
@@ -42,6 +58,24 @@ function PipelineDetailPage({
   });
   const kernels = dataKernels?.kernels;
   const kernel = kernels?.[0];
+
+  const [updatePipeline] = useMutation(
+    api.pipelines.useUpdate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
@@ -89,6 +123,60 @@ function PipelineDetailPage({
     }
   }, [restartKernel]);
 
+  const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
+  const addNewBlockAtIndex = useCallback((
+    block: BlockType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+  ) => {
+    const name = randomNameGenerator();
+    // @ts-ignore
+    createBlock({
+      block: {
+        name,
+        ...block,
+      },
+    }).then((response: {
+      data: {
+        block: BlockType;
+      };
+    }) => {
+      onSuccess(
+        response, {
+          callback: () => {
+            const {
+              data: {
+                block,
+              },
+            } = response;
+            setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
+            onCreateCallback?.(block);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      );
+    });
+  }, [
+    createBlock,
+    setBlocks,
+  ]);
+
+  useEffect(() => {
+    if (typeof pipeline?.blocks !== 'undefined') {
+      setBlocks(pipeline.blocks);
+    }
+  }, [
+    pipeline?.blocks,
+    setBlocks,
+  ]);
+
   return (
     <>
       <Head title={pipeline?.name} />
@@ -97,6 +185,7 @@ function PipelineDetailPage({
         value={{
           fetchPipeline,
           pipeline,
+          updatePipeline,
         }}
       >
         <KernelContext.Provider
@@ -104,23 +193,33 @@ function PipelineDetailPage({
             fetchKernels,
             interruptKernel,
             kernel,
+            messages,
             restartKernel: restartKernelWithConfirm,
+            setMessages,
           }}
         >
-          <TripleLayout
-            after={<Sidekick views={SIDEKICK_VIEWS} />}
-            before={<div style={{ height: 9999 }} />}
-            beforeHeader={<FileHeaderMenu />}
-            mainContainerRef={mainContainerRef}
+          <BlockContext.Provider
+            value={{
+              addNewBlockAtIndex,
+              blocks,
+              runningBlocks,
+              selectedBlock,
+              setBlocks,
+              setRunningBlocks,
+              setSelectedBlock,
+            }}
           >
-            {pipeline && (
-              <PipelineDetail
-                mainContainerRef={mainContainerRef}
-                selectedBlock={selectedBlock}
-                setSelectedBlock={setSelectedBlock}
-              />
-            )}
-          </TripleLayout>
+            <TripleLayout
+              after={<Sidekick views={SIDEKICK_VIEWS} />}
+              before={<div style={{ height: 9999 }} />}
+              beforeHeader={<FileHeaderMenu />}
+              mainContainerRef={mainContainerRef}
+            >
+              {pipeline && (
+                <PipelineDetail mainContainerRef={mainContainerRef} />
+              )}
+            </TripleLayout>
+          </BlockContext.Provider>
         </KernelContext.Provider>
       </PipelineContext.Provider>
     </>

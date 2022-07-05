@@ -50,8 +50,8 @@ import {
   KEY_CODE_META,
   KEY_CODE_SHIFT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';

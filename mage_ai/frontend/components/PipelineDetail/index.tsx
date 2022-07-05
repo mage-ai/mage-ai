@@ -32,95 +32,39 @@ import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import {
-  pushAtIndex,
-  removeAtIndex,
-} from '@utils/array';
-import { randomNameGenerator } from '@utils/string';
+import { removeAtIndex } from '@utils/array';
+import { useBlockContext } from '@context/Block';
 import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
-  selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
 };
 
 function PipelineDetail({
   mainContainerRef,
-  selectedBlock,
-  setSelectedBlock,
 }: PipelineDetailProps) {
   const { pipeline } = usePipelineContext();
   const {
     interruptKernel,
+    messages,
     kernel,
     restartKernel,
+    setMessages,
   } = useKernelContext();
+  const {
+    addNewBlockAtIndex,
+    blocks,
+    runningBlocks,
+    selectedBlock,
+    setBlocks,
+    setRunningBlocks,
+    setSelectedBlock,
+  } = useBlockContext();
 
   const [anyInputFocused, setAnyInputFocused] = useState(false);
-  const [blocks, setBlocks] = useState<BlockType[]>([]);
-  const [messages, setMessages] = useState<{
-    [uuid: string]: KernelOutputType[];
-  }>({});
-  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-
   const [textareaFocused, setTextareaFocused] = useState(false);
-  const selectedBlockPrevious = usePrevious(selectedBlock);
-
-  useEffect(() => {
-    setBlocks(pipeline.blocks);
-  }, [
-    pipeline.blocks,
-    setBlocks,
-  ]);
-
-  const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
-  const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipeline?.uuid));
-  const addNewBlockAtIndex = useCallback((
-    block: BlockType,
-    idx: number,
-    onCreate?: (block: BlockType) => void,
-  ) => {
-    const name = randomNameGenerator();
-    // @ts-ignore
-    createBlock({
-      block: {
-        name,
-        ...block,
-      },
-    }).then((response: {
-      data: {
-        block: BlockType;
-      };
-    }) => {
-      onSuccess(
-        response, {
-          callback: () => {
-            const {
-              data: {
-                block,
-              },
-            } = response;
-            setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
-            onCreate?.(block);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      );
-    });
-  }, [
-    createBlock,
-    setBlocks,
-  ]);
 
   const {
     lastMessage,
@@ -144,6 +88,7 @@ function PipelineDetail({
         uuid,
       } = message;
 
+      // @ts-ignore
       setMessages((messagesPrevious) => {
         const messagesFromUUID = messagesPrevious[uuid] || [];
 
@@ -154,6 +99,7 @@ function PipelineDetail({
       });
 
       if (ExecutionStateEnum.IDLE === executionState) {
+        // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
         );
@@ -164,14 +110,6 @@ function PipelineDetail({
     setMessages,
     setRunningBlocks,
   ]);
-
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
 
   const runBlock = useCallback((payload: {
     block: BlockType;
@@ -192,6 +130,7 @@ function PipelineDetail({
           uuid,
         }));
 
+        // @ts-ignore
         setMessages((messagesPrevious) => {
           delete messagesPrevious[uuid];
 
@@ -200,6 +139,7 @@ function PipelineDetail({
 
         setTextareaFocused(false);
 
+        // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) => {
           if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
             return runningBlocksPrevious;
@@ -230,6 +170,9 @@ function PipelineDetail({
       priority: idx,
     },
   }), {}), [runningBlocks]);
+
+  const selectedBlockPrevious = usePrevious(selectedBlock);
+  const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
@@ -312,6 +255,65 @@ function PipelineDetail({
     ],
   );
 
+  const blockElements = useMemo(() => blocks.map((block: BlockType, idx: number) => {
+    const {
+      uuid,
+    } = block;
+    const selected: boolean = selectedBlock?.uuid === uuid;
+    const runningBlock = runningBlocksByUUID[uuid];
+    const executionState = runningBlock
+      ? (runningBlock.priority === 0
+        ? ExecutionStateEnum.BUSY
+        : ExecutionStateEnum.QUEUED
+       )
+      : ExecutionStateEnum.IDLE;
+
+    return (
+      <CodeBlock
+        addNewBlock={(b: BlockType) => {
+          addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
+        deleteBlock={(b: BlockType) => {
+          // @ts-ignore
+          setBlocks((blocksPrevious) => removeAtIndex(
+            blocksPrevious,
+            blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
+          ));
+          setAnyInputFocused(false);
+        }}
+        block={block}
+        executionState={executionState}
+        key={uuid}
+        interruptKernel={interruptKernel}
+        mainContainerRef={mainContainerRef}
+        messages={messages[uuid]}
+        noDivider={idx === numberOfBlocks - 1}
+        runBlock={runBlock}
+        selected={selected}
+        setAnyInputFocused={setAnyInputFocused}
+        setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+        setTextareaFocused={setTextareaFocused}
+        textareaFocused={selected && textareaFocused}
+      />
+    );
+  }), [
+    addNewBlockAtIndex,
+    blocks,
+    interruptKernel,
+    mainContainerRef,
+    messages,
+    numberOfBlocks,
+    runBlock,
+    runningBlocksByUUID,
+    selectedBlock,
+    setAnyInputFocused,
+    setBlocks,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+  ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={1}>
@@ -322,48 +324,7 @@ function PipelineDetail({
         />
       </Spacing>
 
-      {blocks.map((block: BlockType, idx: number) => {
-        const {
-          uuid,
-        } = block;
-        const selected: boolean = selectedBlock?.uuid === uuid;
-        const runningBlock = runningBlocksByUUID[uuid];
-        const executionState = runningBlock
-          ? (runningBlock.priority === 0
-            ? ExecutionStateEnum.BUSY
-            : ExecutionStateEnum.QUEUED
-           )
-          : ExecutionStateEnum.IDLE;
-
-        return (
-          <CodeBlock
-            addNewBlock={(b: BlockType) => {
-              addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
-              setTextareaFocused(true);
-            }}
-            deleteBlock={(b: BlockType) => {
-              setBlocks(removeAtIndex(
-                blocks,
-                blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
-              ));
-              setAnyInputFocused(false);
-            }}
-            block={block}
-            executionState={executionState}
-            key={uuid}
-            interruptKernel={interruptKernel}
-            mainContainerRef={mainContainerRef}
-            messages={messages[uuid]}
-            noDivider={idx === numberOfBlocks - 1}
-            runBlock={runBlock}
-            selected={selected}
-            setAnyInputFocused={setAnyInputFocused}
-            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={selected && textareaFocused}
-          />
-        );
-      })}
+      {blockElements}
 
       <Spacing mt={PADDING_UNITS}>
         <AddNewBlocks
