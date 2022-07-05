@@ -1,7 +1,6 @@
 from mage_ai.io.base import BaseSQL
 from pandas import DataFrame, read_sql
-from psycopg2 import connect
-from typing import Mapping, Sequence, Union
+from sqlalchemy import create_engine
 
 
 class Postgres(BaseSQL):
@@ -9,10 +8,11 @@ class Postgres(BaseSQL):
     Loads data from a PostgreSQL database.
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self, dbname: str, user: str, password: str, host: str, port: str = None, **kwargs
+    ) -> None:
         """
-        Initializes the data loader. Below are some sample arguments, for the full
-        list see libpq parameter keywords.
+        Initializes the data loader.
 
         Args:
             dbname (str): The name of the database to connect to.
@@ -20,26 +20,28 @@ class Postgres(BaseSQL):
             password (str): The login password for the user.
             host (str): Path to host address for database.
             port (str): Port on which the database is running.
+            **kwargs: Additional settings for creating SQLAlchemy engine and connection
         """
+        self.dburl = (
+            f'postgresql+psycopg2://{user}:{password}@{host}{":"+port if port else ""}/{dbname}'
+        )
         super().__init__(**kwargs)
 
     def open(self) -> None:
         """
         Opens a connection to the PostgreSQL database specified by the parameters.
         """
-        self._ctx = connect(**self.settings)
+        self._ctx = create_engine(self.dburl, **self.settings).connect(**self.settings)
 
-    def query(self, query_string: str, query_vars: Union[Sequence, Mapping] = None) -> None:
+    def query(self, query_string: str, **query_vars) -> None:
         """
         Sends query to the connected database.
 
         Args:
             query_string (str): SQL query string to apply on the connected database.
-            query_vars (Union[Sequence, Mapping], optional): Variable values to fill
-            in when using format strings in query. Defaults to None.
+            query_vars: Variable values to fill in when using format strings in query.
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, query_vars)
+        self.conn.execute(query_string, **query_vars)
 
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
@@ -54,3 +56,22 @@ class Postgres(BaseSQL):
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
         return read_sql(query_string, self.conn, **kwargs)
+
+    def export(
+        self, df: DataFrame, name: str, index: bool = False, if_exists: str = 'replace', **kwargs
+    ) -> None:
+        """
+        Exports dataframe to the connected database from a Pandas data frame.
+
+        Args:
+            query_string (str): Query to execute on the database.
+            name (str): Name of the table to insert rows from this data frame into.
+            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
+            if_exists (str): Specifies export policy if table exists. Either
+                - 'fail' (throw an error),
+                - 'replace' (drops existing table and creates new table of same name),
+                - 'append' (appends data frame to existing table).
+            Defaults to 'replace'.
+            **kwargs: Additional query parameters.
+        """
+        df.to_sql(name, self.conn, index=index, if_exists=if_exists, **kwargs)
