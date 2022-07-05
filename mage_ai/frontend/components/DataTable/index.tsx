@@ -107,7 +107,7 @@ const Styles = styled.div<{
       margin: 0;
 
       ${props => `
-        background-color: ${(props.theme.monotone || light.monotone).white};
+        background-color: ${(props.theme.background || light.background).table};
         border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
         border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
       `}

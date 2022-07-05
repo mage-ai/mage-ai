@@ -15,7 +15,7 @@ export const BEFORE_DEFAULT_WIDTH = UNIT * 35;
 export const DRAGGABLE_WIDTH = UNIT * 0.5;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
-const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
+export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
 
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;

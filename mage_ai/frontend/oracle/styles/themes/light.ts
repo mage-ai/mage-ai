@@ -54,6 +54,7 @@ export default {
     scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
     sidePanel: '#232429',
     success: LIME_XLIGHT,
+    table: WHITE,
   },
   brand: {
     earth100: '#C6EEDB',
