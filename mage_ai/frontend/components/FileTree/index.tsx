@@ -170,7 +170,9 @@ function FileTree({
 
   return (
     <FlexContainer flexDirection="column">
-      {buildTreeEl(tree)}
+      <Spacing pb={4}>
+        {buildTreeEl(tree)}
+      </Spacing>
     </FlexContainer>
   );
 }
