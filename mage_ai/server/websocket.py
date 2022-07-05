@@ -53,7 +53,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             error = None
             if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 try:
-                    block_output = asyncio.run(block.execute(custom_code=code))
+                    output = asyncio.run(block.execute(custom_code=code))
+                    if len(output) > 0:
+                        for out in output:
+                            if type(out) == pd.DataFrame \
+                                and out.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
+
+                                out = out.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
+                            block_output.append(out)
                 except Exception as err:
                     error = traceback.format_exc()
                 # Run with no code because we still need to send a message
@@ -85,8 +92,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             output_dict['msg_type'] = 'error'
         elif len(output) > 0:
             df = find(lambda val: type(val) == pd.DataFrame, output)
-            if df.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
-                df = df.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
             output_dict['data'] = [
                 df.columns.to_list(),
                 *df.values.tolist(),
