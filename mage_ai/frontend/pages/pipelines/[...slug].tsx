@@ -8,6 +8,7 @@ import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
 import BlockType, { BlockTypeEnum, OutputType } from '@interfaces/BlockType';
+import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
@@ -72,6 +73,7 @@ function PipelineDetailPage({
   } = api.pipelines.detail(pipelineUUID, {
     include_content: true,
   });
+  const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const pipeline = data?.pipeline;
   const {
     data: dataKernels,
@@ -232,6 +234,7 @@ function PipelineDetailPage({
             } = response;
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
+            fetchFileTree();
           },
           onErrorCallback: ({
             error: {
@@ -275,12 +278,16 @@ function PipelineDetailPage({
     setMessages,
   ]);
 
+  // TODO: API should report filesystem as FileNodeType[], not FileNodeType
+  const files = filesData ? [filesData?.files] : [];
+  const blockRefs = useRef({});
+
   return (
     <>
       <Head title={pipeline?.name} />
-
       <PipelineContext.Provider
         value={{
+          fetchFileTree,
           fetchPipeline,
           pipeline,
           savePipelineContent,
@@ -306,14 +313,16 @@ function PipelineDetailPage({
           >
             <TripleLayout
               after={<Sidekick views={SIDEKICK_VIEWS} />}
-              before={<div style={{ height: 9999 }} />}
+              before={<FileTree blockRefs={blockRefs} tree={files} />}
               beforeHeader={<FileHeaderMenu />}
               mainContainerRef={mainContainerRef}
             >
               {pipeline && (
                 <PipelineDetail
                   blocks={blocks}
+                  blockRefs={blockRefs}
                   deleteBlock={deleteBlock}
+                  fetchFileTree={fetchFileTree}
                   isPipelineUpdating={isPipelineUpdating}
                   mainContainerRef={mainContainerRef}
                   messages={messages}

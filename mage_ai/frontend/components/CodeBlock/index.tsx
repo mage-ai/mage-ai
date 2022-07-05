@@ -1,4 +1,4 @@
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -92,8 +92,9 @@ function CodeBlockProps({
   setSelected,
   setTextareaFocused,
   textareaFocused,
-}: CodeBlockProps) {
+}: CodeBlockProps, ref) {
   const {
+    fetchFileTree,
     fetchPipeline,
     pipeline,
   } = usePipelineContext();
@@ -221,6 +222,7 @@ function CodeBlockProps({
           callback: () => {
             setIsEditingBlock(false);
             fetchPipeline();
+            fetchFileTree();
           },
           onErrorCallback: ({
             error: {
@@ -264,7 +266,7 @@ function CodeBlockProps({
             ...block,
             name: newBlockUuid,
           },
-        })
+        });
       } else if (selected) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();
@@ -288,7 +290,7 @@ function CodeBlockProps({
   );
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={ref} style={{ position: 'relative' }}>
       <FlexContainer
         alignItems="center"
         justifyContent="space-between"
@@ -462,4 +464,4 @@ function CodeBlockProps({
   );
 }
 
-export default CodeBlockProps;
+export default React.forwardRef(CodeBlockProps);

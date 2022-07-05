@@ -1,18 +1,18 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import styled, { ThemeContext } from 'styled-components';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import styled, { ThemeContext } from 'styled-components';
 import { ArrowDown, ArrowRight, FileFill, Folder } from '@oracle/icons';
 import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { useState } from 'react';
 import { equals } from '@utils/array';
 
 export type FileTreeProps = {
+  blockRefs?: any;
   tree: FileNodeType[];
 };
 
@@ -36,6 +36,7 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 `;
 
 function FileTree({
+  blockRefs,
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
@@ -55,6 +56,8 @@ function FileTree({
 
   const [tree, setTree] = useState(initialTree);
   const [selectedPath, setSelectedPath] = useState([]);
+
+  useEffect(() => setTree(initialTree), [initialTree]);
 
   const setTreeState = (path: string[], payload: TreeOperationType) => {
     const searchPath: string[] = [];
@@ -95,8 +98,15 @@ function FileTree({
   
   const selectFile = (path: string[]) => setSelectedPath([...path]);
 
+  const scrollToBlock = (path: string[]) => {
+    const blockPath = path.slice(1).join('/');
+    const blockEl = blockRefs.current[blockPath];
+    blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const fileTreeHandler = (path, isFolder) => (e) => {
     e.preventDefault();
+    scrollToBlock(path);
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
@@ -104,7 +114,7 @@ function FileTree({
   const path: string[] = [];
   const buildTreeEl = (tree: FileNodeType[]) => {
     depth++;
-    const el = tree.map(({ name, children, collapsed }: {
+    const el = tree?.map(({ name, children, collapsed }: {
       name: ReservedFolderEnum,
       children: FileNodeType[],
       collapsed: boolean,

@@ -102,10 +102,10 @@ export const TEST_FILE_TREE: FileNodeType[] = [
 
 export enum ReservedFolderEnum {
   DATA_LOADERS = 'data_loaders',
-  EXPORTERS = 'exporters',
+  DATA_EXPORTERS = 'data_exporters',
   GLOBAL_VARIABLES = 'global_variables',
   PIPELINES = 'pipelines',
-  SCRATCHPAD = 'scratchpad',
+  SCRATCHPADS = 'scratchpads',
   TRANSFORMERS = 'transformers',
 }
 
@@ -130,7 +130,7 @@ export const getFileNodeColor: (
         iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button1,
       },
-      [ReservedFolderEnum.EXPORTERS]: {
+      [ReservedFolderEnum.DATA_EXPORTERS]: {
         iconColor: (themeType?.chart || dark.chart).button2,
         iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button2,
@@ -145,7 +145,7 @@ export const getFileNodeColor: (
         iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button4,
       },
-      [ReservedFolderEnum.SCRATCHPAD]: {
+      [ReservedFolderEnum.SCRATCHPADS]: {
         iconColor: (themeType?.chart || dark.chart).button5,
         iconType: RoundedSquare,
         textColor: (themeType?.chart || dark.chart).button5,
