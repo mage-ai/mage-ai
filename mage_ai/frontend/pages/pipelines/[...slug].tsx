@@ -28,6 +28,13 @@ type PipelineDetailPageProps = {
   pipeline: PipelineType;
 };
 
+function buildContentByBlockUUID(pipeline: PipelineType) {
+  return pipeline.blocks.reduce((acc, block: BlockType) => ({
+    ...acc,
+    [block.uuid]: block.content,
+  }), {});
+}
+
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
@@ -49,7 +56,11 @@ function PipelineDetailPage({
     if (pipelineUUID !== pipelineUUIDPrev) {
       contentByBlockUUID.current = {};
     }
-  }, [pipelineUUID, pipelineUUIDPrev])
+  }, [pipelineUUID, pipelineUUIDPrev]);
+
+  // Pipeline
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
+  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
@@ -79,11 +90,12 @@ function PipelineDetailPage({
   const kernels = dataKernels?.kernels;
   const kernel = kernels?.[0];
 
-  const [updatePipeline] = useMutation(
+  const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
+          callback: () => setPipelineContentTouched(false),
           onErrorCallback: ({
             error: {
               errors,
@@ -96,19 +108,24 @@ function PipelineDetailPage({
       ),
     },
   );
-  // @ts-ignore
-  const savePipelineContent = useCallback(() => updatePipeline({
-    pipeline: {
-      ...pipeline,
-      blocks: blocks.map((block: BlockType) => ({
-        ...block,
-        content: contentByBlockUUID.current[block.uuid] || block.content,
-      })),
-    },
-  }), [
+  const savePipelineContent = useCallback(() => {
+    setPipelineLastSaved(new Date());
+
+    // @ts-ignore
+    return updatePipeline({
+      pipeline: {
+        ...pipeline,
+        blocks: blocks.map((block: BlockType) => ({
+          ...block,
+          content: contentByBlockUUID.current[block.uuid] || block.content,
+        })),
+      },
+    });
+  }, [
     blocks,
     contentByBlockUUID.current,
     pipeline,
+    setPipelineLastSaved,
     updatePipeline,
   ]);
 
@@ -234,10 +251,7 @@ function PipelineDetailPage({
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
-      contentByBlockUUID.current = pipeline.blocks.reduce((acc, block: BlockType) => ({
-        ...acc,
-        [block.uuid]: block.content,
-      }), {});
+      contentByBlockUUID.current = buildContentByBlockUUID(pipeline);
     }
   }, [
     pipeline?.blocks,
@@ -261,7 +275,6 @@ function PipelineDetailPage({
             fetchKernels,
             interruptKernel,
             kernel,
-            messages,
             restartKernel: restartKernelWithConfirm,
             setMessages,
           }}
@@ -269,9 +282,6 @@ function PipelineDetailPage({
           <BlockContext.Provider
             value={{
               addNewBlockAtIndex,
-              blocks,
-              runningBlocks,
-              selectedBlock,
               setBlocks,
               setRunningBlocks,
               setSelectedBlock,
@@ -285,9 +295,17 @@ function PipelineDetailPage({
             >
               {pipeline && (
                 <PipelineDetail
+                  blocks={blocks}
                   deleteBlock={deleteBlock}
+                  isPipelineUpdating={isPipelineUpdating}
                   mainContainerRef={mainContainerRef}
+                  messages={messages}
+                  pipelineContentTouched={pipelineContentTouched}
+                  pipelineLastSaved={pipelineLastSaved}
+                  runningBlocks={runningBlocks}
+                  selectedBlock={selectedBlock}
                   setContentByBlockUUID={setContentByBlockUUID}
+                  setPipelineContentTouched={setPipelineContentTouched}
                 />
               )}
             </TripleLayout>

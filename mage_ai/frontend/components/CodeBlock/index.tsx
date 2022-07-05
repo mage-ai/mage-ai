@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -93,6 +94,7 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
+  const contentRef = useRef(defaultValue);
   const {
     fetchPipeline,
     pipeline,
@@ -110,13 +112,13 @@ function CodeBlockProps({
   const runBlockAndTrack = useCallback((code?: string) => {
     runBlock({
       block,
-      code: code || content,
+      code: code || contentRef.current,
     });
     setRunCount(1 + Number(runCount));
     setRunEndTime(null);
   }, [
     block,
-    content,
+    contentRef.current,
     runCount,
     runBlock,
     setRunCount,
@@ -417,7 +419,8 @@ function CodeBlockProps({
             autoHeight
             height={height}
             onChange={(val: string) => {
-              setContent(val);
+              // setContent(val);
+              contentRef.current = val;
               onChange?.(val);
             }}
             onDidChangeCursorPosition={onDidChangeCursorPosition}
@@ -427,7 +430,7 @@ function CodeBlockProps({
             setSelected={setSelected}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}
-            value={content}
+            value={contentRef.current}
             width="100%"
           />
         </CodeContainerStyle>
