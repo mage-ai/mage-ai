@@ -60,6 +60,17 @@ class VariableManager:
                 variables_by_block[d] = sorted([v.split('.')[0] for v in variables])
         return variables_by_block
 
+    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> Dict[str, List[str]]:
+        variable_dir_path = os.path.join(
+            self.__pipeline_path(pipeline_uuid),
+            VARIABLE_DIR,
+            block_uuid,
+        )
+        if not os.path.exists(variable_dir_path):
+            return []
+        variables = os.listdir(variable_dir_path)
+        return sorted([v.split('.')[0] for v in variables])
+
     def __pipeline_path(self, pipeline_uuid: str) -> str:
         return os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
 

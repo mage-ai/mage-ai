@@ -113,7 +113,11 @@ class ApiPipelineHandler(BaseHandler):
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
-        self.write(dict(pipeline=pipeline.to_dict(include_content=update_content)))
+        self.write(dict(pipeline=pipeline.to_dict(
+            include_content=update_content,
+            include_outputs=update_content,
+            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        )))
 
 
 class ApiPipelineExecuteHandler(BaseHandler):
