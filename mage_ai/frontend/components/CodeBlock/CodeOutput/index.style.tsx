@@ -66,7 +66,7 @@ export const ExtraInfoStyle = styled.div<BorderColorShareProps>`
 export const ExtraInfoContentStyle = styled.div`
   padding-bottom: ${UNIT}px;
   padding-left: ${LEFT_PADDING}px;
-  padding-right: ${UNIT* PADDING_UNITS}px;
+  padding-right: ${UNIT * PADDING_UNITS}px;
   padding-top: ${UNIT}px;
 `;
 

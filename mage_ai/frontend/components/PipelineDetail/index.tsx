@@ -12,7 +12,6 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelStatus from './KernelStatus';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -38,74 +37,44 @@ import {
   removeAtIndex,
 } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
+import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
+import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
-  pipeline: PipelineType;
+  selectedBlock: BlockType;
+  setSelectedBlock: (block: BlockType) => void;
 };
 
 function PipelineDetail({
   mainContainerRef,
-  pipeline,
+  selectedBlock,
+  setSelectedBlock,
 }: PipelineDetailProps) {
-  const [blocks, setBlocks] = useState<BlockType[]>(pipeline.blocks);
+  const { pipeline } = usePipelineContext();
+  const {
+    interruptKernel,
+    kernel,
+    restartKernel,
+  } = useKernelContext();
+
+  const [anyInputFocused, setAnyInputFocused] = useState(false);
+  const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-  const [selectedBlock, setSelectedBlock] = useState(null);
+
   const [textareaFocused, setTextareaFocused] = useState(false);
   const selectedBlockPrevious = usePrevious(selectedBlock);
 
-  const {
-    data: dataKernels,
-    mutate: fetchKernels,
-  } = api.kernels.list({}, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-  });
-  const kernels = dataKernels?.kernels;
-  const kernel = kernels?.[0];
-
-  const [restartKernel] = useMutation(
-    api.restart.kernels.useCreate(kernel?.id),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => fetchKernels(),
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(kernel?.id),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: (response) => {
-
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
+  useEffect(() => {
+    setBlocks(pipeline.blocks);
+  }, [
+    pipeline.blocks,
+    setBlocks,
+  ]);
 
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipeline?.uuid));
@@ -324,10 +293,7 @@ function PipelineDetail({
         }
 
         if (keyHistory[0] === KEY_CODE_NUMBER_0 && keyHistory[1] === KEY_CODE_NUMBER_0) {
-          const warning = 'Do you want to restart the kernel? All variables will be cleared.';
-          if (typeof window !== 'undefined' && window.confirm(warning)) {
-            restartKernel();
-          }
+          restartKernel();
         }
       }
     },
@@ -375,10 +341,13 @@ function PipelineDetail({
               addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               setTextareaFocused(true);
             }}
-            deleteBlock={(b: BlockType) => setBlocks(removeAtIndex(
-              blocks,
-              blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
-            ))}
+            deleteBlock={(b: BlockType) => {
+              setBlocks(removeAtIndex(
+                blocks,
+                blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
+              ));
+              setAnyInputFocused(false);
+            }}
             block={block}
             executionState={executionState}
             key={uuid}
@@ -386,9 +355,9 @@ function PipelineDetail({
             mainContainerRef={mainContainerRef}
             messages={messages[uuid]}
             noDivider={idx === numberOfBlocks - 1}
-            pipeline={pipeline}
             runBlock={runBlock}
             selected={selected}
+            setAnyInputFocused={setAnyInputFocused}
             setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={selected && textareaFocused}

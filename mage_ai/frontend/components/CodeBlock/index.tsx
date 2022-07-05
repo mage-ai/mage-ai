@@ -24,10 +24,12 @@ import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -50,10 +52,11 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { onSuccess } from '@api/utils/response';
+import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
+import { usePipelineContext } from '@context/Pipeline';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
@@ -67,7 +70,7 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
   }) => void;
-  pipeline: PipelineType;
+  setAnyInputFocused: (value: boolean) => void;
 } & CodeEditorSharedProps & CommandButtonsSharedProps;
 
 function CodeBlockProps({
@@ -81,16 +84,21 @@ function CodeBlockProps({
   mainContainerRef,
   messages = [],
   noDivider,
-  pipeline,
   runBlock,
   selected,
+  setAnyInputFocused,
   setSelected,
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps) {
+  const {
+    fetchPipeline,
+    pipeline,
+  } = usePipelineContext();
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
+  const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
   const [runCount, setRunCount] = useState<Number>(0);
@@ -170,10 +178,66 @@ function CodeBlockProps({
     mainContainerRef,
   ]);
 
-  const messagesWithType = useMemo(() => messages.filter(({ type }: KernelOutputType) => type), [
+  const messagesWithType = useMemo(() => {
+    if (errorMessages?.length >= 0) {
+      return errorMessages.map((errorMessage: string) => ({
+        data: errorMessage,
+        execution_state: ExecutionStateEnum.IDLE,
+        type: DataTypeEnum.TEXT_PLAIN,
+      }));
+    }
+    return messages.filter(({ type }: KernelOutputType) => type);
+  }, [
+    errorMessages,
     messages,
   ]);
   const hasError = !!messagesWithType.find(({ error }) => error);
+
+  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
+  const borderColorShareProps = {
+    blockType: block.type,
+    hasError,
+    selected,
+  };
+  const hasOutput = messagesWithType.length >= 1;
+  const onClickSelectBlock = useCallback(() => {
+    if (!selected) {
+      setAnyInputFocused(false);
+      setSelected(true);
+    }
+  }, [
+    setAnyInputFocused,
+    setSelected,
+  ]);
+
+  const [updateBlock] = useMutation(
+    api.blocks.pipelines.useUpdate(pipeline?.uuid, block.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setIsEditingBlock(false);
+            fetchPipeline();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+      onError: (response: any) => {
+        const {
+          messages,
+        } = onError(response);
+        setErrorMessages(messages);
+      },
+    },
+  );
 
   const uuidKeyboard = `CodeBlock/${block.uuid}`;
   const {
@@ -188,7 +252,18 @@ function CodeBlockProps({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (selected) {
+      if (isEditingBlock
+        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
+        && String(keyHistory[1]) !== String(KEY_CODE_META)
+      ) {
+        // @ts-ignore
+        updateBlock({
+          block: {
+            ...block,
+            name: newBlockUuid,
+          },
+        })
+      } else if (selected) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
@@ -201,161 +276,123 @@ function CodeBlockProps({
     },
     [
       addNewBlock,
+      block,
+      isEditingBlock,
+      newBlockUuid,
       runBlockAndTrack,
       selected,
+      updateBlock,
     ],
   );
 
-  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
-  const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const borderColorShareProps = {
-    blockType: block.type,
-    hasError,
-    selected,
-  };
-  const hasOutput = messagesWithType.length >= 1;
-  const onClickSelectBlock = useCallback(() => {
-    if (!selected) {
-      setSelected(true);
-    }
-  }, [
-    selected,
-    setSelected,
-  ]);
-
-  const [updateBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, block.uuid),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            setIsEditingBlock(false);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-
   return (
-    <div
-      style={{ position: 'relative' }}
-    >
-      <div
-        onClick={() => onClickSelectBlock()}
-        style={{ marginBottom: UNIT / 4 }}
+    <div style={{ position: 'relative' }}>
+      <FlexContainer
+        alignItems="center"
+        justifyContent="space-between"
+        style={{
+          marginBottom: UNIT / 4,
+        }}
       >
-        <FlexContainer
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Flex alignItems="center" flex={1}>
-            <Tooltip
-              block
-              label={BLOCK_TYPE_NAME_MAPPING[block.type]}
-              size={null}
-              widthFitContent
+        <Flex alignItems="center" flex={1}>
+          <Tooltip
+            block
+            label={BLOCK_TYPE_NAME_MAPPING[block.type]}
+            size={null}
+            widthFitContent
+          >
+            <FlexContainer alignItems="center">
+              <Circle
+                color={color}
+                size={UNIT * 1.5}
+                square
+              />
+
+              <Spacing mr={1} />
+
+              <Text
+                color={color}
+                monospace
+              >
+                {BLOCK_TYPE_ABBREVIATION_MAPPING[block.type]}
+              </Text>
+            </FlexContainer>
+          </Tooltip>
+
+          <Spacing mr={PADDING_UNITS} />
+
+          <FileFill size={UNIT * 1.5} />
+
+          <Spacing mr={1} />
+
+          <FlexContainer alignItems="center">
+            <LabelWithValueClicker
+              bold={false}
+              inputValue={newBlockUuid}
+              muted
+              monospace
+              notRequired
+              onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
+              onChange={(e) => {
+                setNewBlockUuid(e.target.value);
+              }}
+              onClick={() => setIsEditingBlock(true)}
+              onFocus={() => setIsEditingBlock(true)}
+              stacked
+              value={!isEditingBlock && block.uuid}
+            />
+
+            {isEditingBlock && (
+              <>
+                <Spacing ml={1} />
+                <Link
+                  // @ts-ignore
+                  onClick={() => updateBlock({
+                    block: {
+                      ...block,
+                      name: newBlockUuid,
+                    },
+                  })}
+                  preventDefault
+                  sameColorAsText
+                  small
+                >
+                  Update name
+                </Link>
+              </>
+            )}
+          </FlexContainer>
+        </Flex>
+
+        <div>
+          <Tooltip
+            appearBefore
+            block
+            label={`
+              ${pluralize('parent block', numberOfParentBlocks)}${numberOfParentBlocks === 0 && '. Click to select 1 or more blocks to depend on.'}
+            `}
+            size={null}
+            widthFitContent
+          >
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              // onClick={() => toggleBefore()}
             >
               <FlexContainer alignItems="center">
-                <Circle
-                  color={color}
-                  size={UNIT * 1.5}
-                  square
-                />
+                <Text monospace>
+                  {numberOfParentBlocks}
+                </Text>
 
                 <Spacing mr={1} />
 
-                <Text
-                  color={color}
-                  monospace
-                >
-                  {BLOCK_TYPE_ABBREVIATION_MAPPING[block.type]}
-                </Text>
+                <Stack size={UNIT * 2} />
               </FlexContainer>
-            </Tooltip>
-
-            <Spacing mr={PADDING_UNITS} />
-
-            <FileFill size={UNIT * 1.5} />
-
-            <Spacing mr={1} />
-
-            <FlexContainer alignItems="center">
-              <LabelWithValueClicker
-                bold={false}
-                inputValue={newBlockUuid}
-                muted
-                monospace
-                notRequired
-                onBlur={() => setTimeout(() => setIsEditingBlock(false), 100)}
-                onChange={(e) => {
-                  setNewBlockUuid(e.target.value);
-                }}
-                onClick={() => setIsEditingBlock(true)}
-                onFocus={() => setIsEditingBlock(true)}
-                stacked
-                value={!isEditingBlock && block.uuid}
-              />
-
-              {isEditingBlock && (
-                <>
-                  <Spacing ml={1} />
-                  <Link
-                    // @ts-ignore
-                    onClick={() => updateBlock({
-                      block: {
-                        ...block,
-                        name: newBlockUuid,
-                      },
-                    })}
-                    preventDefault
-                    sameColorAsText
-                    small
-                  >
-                    Update name
-                  </Link>
-                </>
-              )}
-            </FlexContainer>
-          </Flex>
-
-          <div>
-            <Tooltip
-              appearBefore
-              block
-              label={`
-                ${pluralize('parent block', numberOfParentBlocks)}${numberOfParentBlocks === 0 && '. Click to select 1 or more blocks to depend on.'}
-              `}
-              size={null}
-              widthFitContent
-            >
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                // onClick={() => toggleBefore()}
-              >
-                <FlexContainer alignItems="center">
-                  <Text monospace>
-                    {numberOfParentBlocks}
-                  </Text>
-
-                  <Spacing mr={1} />
-
-                  <Stack size={UNIT * 2} />
-                </FlexContainer>
-              </Button>
-            </Tooltip>
-          </div>
-        </FlexContainer>
-      </div>
+            </Button>
+          </Tooltip>
+        </div>
+      </FlexContainer>
 
       {(selected || isInProgress) && (
         <CommandButtons

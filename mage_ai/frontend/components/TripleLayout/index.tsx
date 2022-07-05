@@ -5,8 +5,6 @@ import React, {
   useState,
 } from 'react';
 import NextHead from 'next/head';
-import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
@@ -14,7 +12,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
-import api from '@api';
+import Tooltip from '@oracle/components/Tooltip';
 import {
   AFTER_DEFAULT_WIDTH,
   AFTER_MIN_WIDTH,
@@ -46,13 +44,12 @@ import {
   get,
   set,
 } from '@storage/localStorage';
-import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
   before?: any;
+  beforeHeader?: any;
   children: any;
   mainContainerRef: any;
 };
@@ -60,10 +57,10 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   before,
+  beforeHeader,
   children,
   mainContainerRef,
 }: TripleLayoutProps) {
-  const router = useRouter();
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
@@ -185,31 +182,6 @@ function TripleLayout({
   const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
 
-  const [createPipeline] = useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-
   return (
     <ClientOnly>
       {((afterMousedownActive && !afterHidden) || (beforeMousedownActive && !beforeHidden)) && (
@@ -252,47 +224,39 @@ function TripleLayout({
               justifyContent="space-between"
             >
               <Flex>
-                <Spacing pl={beforeHidden ? 1 : 2} />
+                <Spacing pl={beforeHidden ? 1 : 0} />
 
-                {!beforeHidden && (
-                  <Spacing pr={PADDING_UNITS}>
-                    <KeyboardShortcutButton
-                      beforeElement={<GraphWithNodes />}
-                      compact
-                      // @ts-ignore
-                      onClick={() => createPipeline({
-                        pipeline: {
-                          name: randomNameGenerator(),
-                        },
-                      })}
-                      uuid="TripleLayout/NewPipeline"
-                    >
-                      New pipeline
-                    </KeyboardShortcutButton>
-                  </Spacing>
-                )}
+                {!beforeHidden && beforeHeader}
               </Flex>
 
               <Flex>
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => toggleBefore()}
+                <Tooltip
+                  block
+                  key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
+                  label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
+                  size={null}
+                  widthFitContent
                 >
-                  {beforeHidden && (
-                    <ChevronRight
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                  {!beforeHidden && (
-                    <ChevronLeft
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                </Button>
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => toggleBefore()}
+                  >
+                    {beforeHidden && (
+                      <ChevronRight
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                    {!beforeHidden && (
+                      <ChevronLeft
+                        neutral
+                        size={UNIT * 2}
+                      />
+                    )}
+                  </Button>
+                </Tooltip>
 
                 <Spacing pr={beforeHidden ? 1 : 2} />
               </Flex>

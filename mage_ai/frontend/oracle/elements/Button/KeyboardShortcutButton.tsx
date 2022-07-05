@@ -271,6 +271,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
 
   ${props => !props.inverted && !props.noBackground && `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    }
   `}
 
   ${props => props.noBackground && `
