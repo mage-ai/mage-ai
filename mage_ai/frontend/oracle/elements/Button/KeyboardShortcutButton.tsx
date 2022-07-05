@@ -82,6 +82,7 @@ export type KeyboardShortcutButtonProps = {
   secondary?: boolean;
   selected?: boolean;
   shadow?: boolean;
+  small?: boolean;
   spacious?: boolean;
   shortWidth?: boolean;
   type?: ButtonTypeEnum;
@@ -104,11 +105,11 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   text-align: left;
   z-index: 0;
 
-  ${props => !props.large1 && !props.large2 && !props.compact && `
+  ${props => !props.large1 && !props.large2 && `
     ${REGULAR}
   `}
 
-  ${props => props.compact && `
+  ${props => props.small && `
     ${SMALL}
   `}
 
