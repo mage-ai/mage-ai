@@ -131,14 +131,15 @@ class Pipeline:
                 self.blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
             ]
 
-    def to_dict(self):
+    def to_dict(self, include_content=False):
         return dict(
             name=self.name,
             uuid=self.uuid,
-            blocks=[b.to_dict() for b in self.blocks_by_uuid.values()],
+            blocks=[b.to_dict(include_content=include_content)
+                    for b in self.blocks_by_uuid.values()],
         )
 
-    def update(self, data):
+    def update(self, data, update_content=False):
         if 'name' in data and data['name'] != self.name:
             """
             Rename pipeline folder
@@ -150,6 +151,12 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
+        if update_content and 'blocks' in data:
+            for block_data in data['blocks']:
+                if 'uuid' in block_data and 'content' in block_data:
+                    block = self.blocks_by_uuid.get(block_data['uuid'])
+                    if block is not None:
+                        block.update_content(block_data['content'])
 
     def add_block(self, block, upstream_block_uuids=[]):
         upstream_blocks = self.get_blocks(upstream_block_uuids)

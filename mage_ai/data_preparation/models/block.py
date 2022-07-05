@@ -1,6 +1,7 @@
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
@@ -53,6 +54,10 @@ class Block:
             repo_path or os.getcwd(),
             f'{self.type}s/{self.uuid}.py',
         )
+
+    @property
+    def file(self):
+        return File.from_path(self.file_path)
 
     @classmethod
     def create(
@@ -217,7 +222,7 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def to_dict(self, include_outputs=False):
+    def to_dict(self, include_content=False, include_outputs=False):
         data = dict(
             name=self.name,
             uuid=self.uuid,
@@ -226,6 +231,8 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
         )
+        if include_content:
+            data['content'] = self.file.content()
         if include_outputs:
             data['outputs'] = self.get_outputs()
         return data
@@ -237,6 +244,10 @@ class Block:
             self.upstream_block_uuids
         ):
             self.__update_upstream_blocks(data['upstream_blocks'])
+        return self
+
+    def update_content(self, content):
+        self.file.update_content(content)
         return self
 
     def __analyze_outputs(self, variable_mapping):

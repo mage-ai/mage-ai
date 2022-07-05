@@ -83,7 +83,8 @@ class ApiFileContentHandler(BaseHandler):
 class ApiPipelineHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        self.write(dict(pipeline=pipeline.to_dict()))
+        include_content = self.get_argument('include_content', False)
+        self.write(dict(pipeline=pipeline.to_dict(include_content=include_content)))
         self.finish()
 
     def put(self, pipeline_uuid):
@@ -91,9 +92,10 @@ class ApiPipelineHandler(BaseHandler):
         Allow updating pipeline name and uuid
         """
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        update_content = self.get_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
-        pipeline.update(data)
-        self.write(dict(pipeline=pipeline.to_dict()))
+        pipeline.update(data, update_content=update_content)
+        self.write(dict(pipeline=pipeline.to_dict(include_content=update_content)))
 
 
 class ApiPipelineExecuteHandler(BaseHandler):
