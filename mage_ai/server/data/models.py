@@ -1,8 +1,8 @@
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
-from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
-from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.data.base import Model
+from mage_ai.shared.constants import SAMPLE_SIZE
+from mage_ai.shared.hash import merge_dict
 import logging
 import os
 import os.path

@@ -7,13 +7,18 @@ INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 
 
 class File:
-    def __init__(self, filename, dir_path, repo_path):
+    def __init__(
+        self,
+        filename: str,
+        dir_path: str,
+        repo_path: str,
+    ) -> None:
         self.filename = filename
         self.dir_path = dir_path
         self.repo_path = repo_path
 
     @property
-    def file_path(self):
+    def file_path(self) -> str:
         return os.path.join(self.repo_path, self.dir_path, self.filename)
 
     @classmethod

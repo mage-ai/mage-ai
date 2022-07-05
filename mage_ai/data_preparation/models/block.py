@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.shared.logger import VerboseFunctionExec
 import os
 import pandas as pd
 
@@ -131,14 +132,16 @@ class Block:
             p.delete_block(p.get_block(self.uuid))
         os.remove(self.file_path)
 
-    async def execute(self, custom_code=None):
-        outputs = await self.execute_block(custom_code)
-        self.__verify_outputs(outputs)
-        variable_mapping = dict(zip(self.output_variables.keys(), outputs))
-        self.__store_variables(variable_mapping)
-        self.status = BlockStatus.EXECUTED
-        self.__update_pipeline_block()
-        self.__analyze_outputs(variable_mapping)
+    async def execute(self, analyze_outputs=True, custom_code=None):
+        with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
+            outputs = await self.execute_block(custom_code)
+            self.__verify_outputs(outputs)
+            variable_mapping = dict(zip(self.output_variables.keys(), outputs))
+            self.__store_variables(variable_mapping)
+            self.status = BlockStatus.EXECUTED
+            self.__update_pipeline_block()
+            if analyze_outputs:
+                self.__analyze_outputs(variable_mapping)
         return outputs
 
     async def execute_block(self, custom_code=None):
@@ -261,6 +264,7 @@ class Block:
                 analysis = clean_data(
                     data.reset_index(drop=True),
                     transform=False,
+                    verbose=False,
                 )
                 VariableManager(self.pipeline.repo_path).add_variable(
                     self.pipeline.uuid,

@@ -4,10 +4,10 @@ from mage_ai.data_cleaner.analysis.constants import (
     DATA_KEY_CORRELATION,
     DATA_KEY_TIME_SERIES,
 )
-from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
-from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
-from mage_ai.data_cleaner.shared.hash import merge_dict
 from mage_ai.data_cleaner.column_types.constants import ColumnType
+from mage_ai.data_cleaner.shared.utils import clean_dataframe, is_numeric_dtype
+from mage_ai.shared.logger import timer, VerboseFunctionExec
+from mage_ai.shared.hash import merge_dict
 import logging
 
 DD_KEY = 'lambda.analysis_calculator'

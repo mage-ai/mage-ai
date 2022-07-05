@@ -1,9 +1,9 @@
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
-from mage_ai.data_cleaner.shared.constants import SAMPLE_SIZE
-from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
+from mage_ai.shared.constants import SAMPLE_SIZE
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.logger import timer, VerboseFunctionExec
 import math
 import numpy as np
 import pandas as pd

@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
-from mage_ai.data_cleaner.shared.multi import run_parallel_multiple_args
+from mage_ai.shared.multi import run_parallel_multiple_args
 from mage_ai.data_cleaner.transformer_actions.constants import (
     CONSTANT_IMPUTATION_DEFAULTS,
     INVALID_VALUE_PLACEHOLDERS,

@@ -3,12 +3,12 @@ from flask_cors import CORS
 from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
 from mage_ai.data_cleaner.data_cleaner import analyze, clean as clean_data
 from mage_ai.data_cleaner.pipelines.base import BasePipeline
-from mage_ai.data_cleaner.shared.logger import VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.transformer_actions.utils import generate_action_titles
 from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
+from mage_ai.shared.logger import VerboseFunctionExec
 from numpyencoder import NumpyEncoder
 import argparse
 import json

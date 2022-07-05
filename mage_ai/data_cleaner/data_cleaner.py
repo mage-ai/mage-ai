@@ -1,10 +1,10 @@
 from mage_ai.data_cleaner.analysis.calculator import AnalysisCalculator
 from mage_ai.data_cleaner.column_types import column_type_detector
 from mage_ai.data_cleaner.pipelines.base import DEFAULT_RULES, BasePipeline
-from mage_ai.data_cleaner.shared.hash import merge_dict
-from mage_ai.data_cleaner.shared.logger import timer, VerboseFunctionExec
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.logger import timer, VerboseFunctionExec
 
 
 def analyze(df):

@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from mage_ai.data_cleaner.shared.conversions import fd_to_df, np_to_fd
 from mage_ai.data_cleaner.estimators.base import BaseEstimator
-from mage_ai.data_cleaner.shared.multi import execute_parallel
+from mage_ai.shared.conversions import fd_to_df, np_to_fd
+from mage_ai.shared.multi import execute_parallel
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 
