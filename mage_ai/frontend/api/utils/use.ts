@@ -50,8 +50,8 @@ export function fetchListWithParentAsync(
   return buildFetch(buildUrl(parentResource, parentId, resource), { ctx, query, method: GET });
 }
 
-export function fetchUpdate(resource: string, id: string, body: any) {
-  const url: string = buildUrl(resource, id);
+export function fetchUpdate(resource: string, id: string, body: any, query: any = {}) {
+  const url: string = buildUrl(resource, id, null, null, query);
 
   return buildFetch(url, { body, method: PUT });
 }

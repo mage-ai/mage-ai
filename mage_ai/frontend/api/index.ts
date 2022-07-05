@@ -79,7 +79,7 @@ RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
 
         return await handle(response);
       },
-      useUpdate: (id) => async (body: any) => fetchUpdate(resource, id, body),
+      useUpdate: (id, query: any = {}) => async (body: any) => fetchUpdate(resource, id, body, query),
     };
   }
 

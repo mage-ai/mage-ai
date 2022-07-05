@@ -66,6 +66,7 @@ type CodeBlockProps = {
   mainContainerRef?: any;
   noDivider?: boolean;
   messages: KernelOutputType[];
+  onChange?: (value: string) => void;
   runBlock: (payload: {
     block: BlockType;
     code: string;
@@ -84,6 +85,7 @@ function CodeBlockProps({
   mainContainerRef,
   messages = [],
   noDivider,
+  onChange,
   runBlock,
   selected,
   setAnyInputFocused,
@@ -414,7 +416,10 @@ function CodeBlockProps({
             // autoSave
             autoHeight
             height={height}
-            onChange={(val: string) => setContent(val)}
+            onChange={(val: string) => {
+              setContent(val);
+              onChange?.(val);
+            }}
             onDidChangeCursorPosition={onDidChangeCursorPosition}
             placeholder="Start typing here..."
             runBlock={runBlockAndTrack}

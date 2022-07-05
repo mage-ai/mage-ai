@@ -25,6 +25,7 @@ import {
   KEY_CODE_ESCAPE,
   KEY_CODE_I,
   KEY_CODE_META,
+  KEY_CODE_S,
   KEY_CODE_NUMBER_0,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
@@ -40,12 +41,19 @@ import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
+  setContentByBlockUUID: (data: {
+    [uuid: string]: string;
+  }) => void;
 };
 
 function PipelineDetail({
   mainContainerRef,
+  setContentByBlockUUID,
 }: PipelineDetailProps) {
-  const { pipeline } = usePipelineContext();
+  const {
+    pipeline,
+    savePipelineContent,
+  } = usePipelineContext();
   const {
     interruptKernel,
     messages,
@@ -187,7 +195,10 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (textareaFocused) {
+      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
+        event.preventDefault();
+        savePipelineContent();
+      } else if (textareaFocused) {
         if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
         }
@@ -220,11 +231,11 @@ function PipelineDetail({
             setSelectedBlock(blocks[selectedBlockIndex + 1]);
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
-          } else if (keyMapping[KEY_CODE_A]) {
+          } else if (onlyKeysPresent([KEY_CODE_A], keyMapping)) {
             addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
             }, selectedBlockIndex, setSelectedBlock);
-          } else if (keyMapping[KEY_CODE_B]) {
+          } else if (onlyKeysPresent([KEY_CODE_B], keyMapping)) {
             addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
             }, selectedBlockIndex + 1, setSelectedBlock);
@@ -246,6 +257,7 @@ function PipelineDetail({
       interruptKernel,
       numberOfBlocks,
       restartKernel,
+      savePipelineContent,
       selectedBlock,
       selectedBlockPrevious,
       setBlocks,
@@ -274,6 +286,7 @@ function PipelineDetail({
           addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
           setTextareaFocused(true);
         }}
+        defaultValue={block.content}
         deleteBlock={(b: BlockType) => {
           // @ts-ignore
           setBlocks((blocksPrevious) => removeAtIndex(
@@ -289,6 +302,7 @@ function PipelineDetail({
         mainContainerRef={mainContainerRef}
         messages={messages[uuid]}
         noDivider={idx === numberOfBlocks - 1}
+        onChange={(value: string) => setContentByBlockUUID({ [uuid]: value })}
         runBlock={runBlock}
         selected={selected}
         setAnyInputFocused={setAnyInputFocused}
@@ -308,6 +322,7 @@ function PipelineDetail({
     runningBlocksByUUID,
     selectedBlock,
     setAnyInputFocused,
+    setContentByBlockUUID,
     setBlocks,
     setSelectedBlock,
     setTextareaFocused,

@@ -4,6 +4,7 @@ import PipelineType from '@interfaces/PipelineType';
 type PipelineContextType = {
   fetchPipeline: () => void;
   pipeline: PipelineType;
+  savePipelineContent: () => void;
   updatePipeline: (payload: {
     pipeline: PipelineType;
   }) => void;
@@ -16,6 +17,7 @@ const PipelineContext = React.createContext<PipelineContextType>({
     blocks: [],
     metadata: null,
   },
+  savePipelineContent: null,
   updatePipeline: null,
 });
 
