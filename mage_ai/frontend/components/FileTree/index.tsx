@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
@@ -56,6 +56,8 @@ function FileTree({
   const [tree, setTree] = useState(initialTree);
   const [selectedPath, setSelectedPath] = useState([]);
 
+  useEffect(() => setTree(initialTree), [initialTree]);
+
   const setTreeState = (path: string[], payload: TreeOperationType) => {
     const searchPath: string[] = [];
     const { key, type, value } = payload;
@@ -104,7 +106,7 @@ function FileTree({
   const path: string[] = [];
   const buildTreeEl = (tree: FileNodeType[]) => {
     depth++;
-    const el = tree.map(({ name, children, collapsed }: {
+    const el = tree?.map(({ name, children, collapsed }: {
       name: ReservedFolderEnum,
       children: FileNodeType[],
       collapsed: boolean,

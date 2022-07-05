@@ -21,7 +21,6 @@ import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
-import { TEST_FILE_TREE } from '@components/FileTree/constants';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
@@ -74,6 +73,7 @@ function PipelineDetailPage({
   } = api.pipelines.detail(pipelineUUID, {
     include_content: true,
   });
+  const { data: filesData } = api.files.list();
   const pipeline = data?.pipeline;
   const {
     data: dataKernels,
@@ -276,11 +276,12 @@ function PipelineDetailPage({
     setBlocks,
     setMessages,
   ]);
+  // TODO: API should report filesystem as FileNodeType[], not FileNodeType
+  const files = filesData ? [filesData?.files] : [];
 
   return (
     <>
       <Head title={pipeline?.name} />
-
       <PipelineContext.Provider
         value={{
           fetchPipeline,
@@ -308,7 +309,7 @@ function PipelineDetailPage({
           >
             <TripleLayout
               after={<Sidekick views={SIDEKICK_VIEWS} />}
-              before={<FileTree tree={TEST_FILE_TREE} />}
+              before={<FileTree tree={files} />}
               beforeHeader={<FileHeaderMenu />}
               mainContainerRef={mainContainerRef}
             >
