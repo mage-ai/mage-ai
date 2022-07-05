@@ -253,9 +253,10 @@ function CodeBlockProps({
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
       if (isEditingBlock
-        && keyHistory[0] === KEY_CODE_ENTER
-        && keyHistory[1] !== KEY_CODE_META
+        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
+        && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
+        // @ts-ignore
         updateBlock({
           block: {
             ...block,

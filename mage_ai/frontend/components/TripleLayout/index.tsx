@@ -231,9 +231,8 @@ function TripleLayout({
 
               <Flex>
                 <Tooltip
-                  appearAfter
                   block
-                  key={beforeHidden}
+                  key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
                   label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
                   size={null}
                   widthFitContent

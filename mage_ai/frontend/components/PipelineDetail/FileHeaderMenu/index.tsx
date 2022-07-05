@@ -70,6 +70,7 @@ function FileHeaderMenu() {
   const fileItems = [
     {
       label: () => 'New pipeline',
+      // @ts-ignore
       onClick: () => createPipeline({
         pipeline: {
           name: randomNameGenerator(),
@@ -84,19 +85,20 @@ function FileHeaderMenu() {
     },
   ];
   const runItems = [
-    {
-      label: () => 'Run selected block',
-      keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]],
-      uuid: 'Run selected block',
-    },
-    {
-      label: () => 'Delete selected block',
-      keyTextGroups: [
-        [KEY_SYMBOL_D],
-        [KEY_SYMBOL_D],
-      ],
-      uuid: 'Delete selected block',
-    },
+    // TODO (tommy dang): add onClick functions to these 2 menu items
+    // {
+    //   label: () => 'Run selected block',
+    //   keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]],
+    //   uuid: 'Run selected block',
+    // },
+    // {
+    //   label: () => 'Delete selected block',
+    //   keyTextGroups: [
+    //     [KEY_SYMBOL_D],
+    //     [KEY_SYMBOL_D],
+    //   ],
+    //   uuid: 'Delete selected block',
+    // },
     {
       label: () => 'Interrupt kernel',
       keyTextGroups: [

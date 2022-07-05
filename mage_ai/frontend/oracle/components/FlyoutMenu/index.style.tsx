@@ -12,10 +12,10 @@ export const FlyoutMenuContainerStyle = styled.div`
   min-width: ${UNIT * 34}px;
 
   ${props => `
-    box-shadow: ${(props.theme.shadow || light.shadow).popup};
+    box-shadow: ${(props.theme.shadow || dark.shadow).popup};
 
     &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
   `}
 `;
@@ -31,14 +31,14 @@ export const LinkStyle = styled.div<LinkProps>`
   }
 
   ${props => `
-    background-color: ${(props.theme.background || light.background).popup};
+    background-color: ${(props.theme.background || dark.background).popup};
 
     &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
   `}
 
   ${props => props.highlighted && `
-    background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 `;

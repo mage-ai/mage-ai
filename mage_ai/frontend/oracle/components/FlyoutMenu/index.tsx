@@ -20,7 +20,10 @@ export type FlyoutMenuItemType = {
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
   label: () => string | any;
-  linkProps?: LinkProps;
+  linkProps?: {
+    as?: string;
+    href: string;
+  };
   onClick?: () => void;
   uuid: string;
 };
@@ -77,6 +80,10 @@ function FlyoutMenu({
       } else if (keyMapping[KEY_CODE_ENTER] && typeof currentIndex !== 'undefined') {
         items[currentIndex]?.onClick?.();
         onClickCallback?.();
+      } else {
+        items.forEach(({ keyboardShortcutValidation }) => {
+          keyboardShortcutValidation?.({ keyHistory, keyMapping });
+        });
       }
     },
     [

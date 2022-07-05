@@ -9,7 +9,9 @@ type PipelineContextType = {
 const PipelineContext = React.createContext<PipelineContextType>({
   fetchPipeline: () => false,
   pipeline: {
+    actions: [],
     blocks: [],
+    metadata: null,
   },
 });
 

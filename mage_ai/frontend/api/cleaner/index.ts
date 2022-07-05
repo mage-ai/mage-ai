@@ -177,6 +177,7 @@ export function useCustomFetchRequest({
       },
     ),
     {
+      // @ts-ignore
       onError: (error) => onError(
         error, {
           errorMessage,

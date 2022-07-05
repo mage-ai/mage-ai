@@ -9,7 +9,10 @@ type KernelContextType = {
 };
 
 const KernelContext = React.createContext<KernelContextType>({
+  fetchKernels: null,
+  interruptKernel: null,
   kernel: null,
+  restartKernel: null,
 });
 
 export const useKernelContext = () => useContext(KernelContext);
