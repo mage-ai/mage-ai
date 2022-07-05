@@ -32,95 +32,39 @@ import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import {
-  pushAtIndex,
-  removeAtIndex,
-} from '@utils/array';
-import { randomNameGenerator } from '@utils/string';
+import { removeAtIndex } from '@utils/array';
+import { useBlockContext } from '@context/Block';
 import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   mainContainerRef: any;
-  selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
 };
 
 function PipelineDetail({
   mainContainerRef,
-  selectedBlock,
-  setSelectedBlock,
 }: PipelineDetailProps) {
   const { pipeline } = usePipelineContext();
   const {
     interruptKernel,
+    messages,
     kernel,
     restartKernel,
+    setMessages,
   } = useKernelContext();
+  const {
+    addNewBlockAtIndex,
+    blocks,
+    runningBlocks,
+    selectedBlock,
+    setBlocks,
+    setRunningBlocks,
+    setSelectedBlock,
+  } = useBlockContext();
 
   const [anyInputFocused, setAnyInputFocused] = useState(false);
-  const [blocks, setBlocks] = useState<BlockType[]>([]);
-  const [messages, setMessages] = useState<{
-    [uuid: string]: KernelOutputType[];
-  }>({});
-  const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-
   const [textareaFocused, setTextareaFocused] = useState(false);
-  const selectedBlockPrevious = usePrevious(selectedBlock);
-
-  useEffect(() => {
-    setBlocks(pipeline.blocks);
-  }, [
-    pipeline.blocks,
-    setBlocks,
-  ]);
-
-  const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
-  const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipeline?.uuid));
-  const addNewBlockAtIndex = useCallback((
-    block: BlockType,
-    idx: number,
-    onCreate?: (block: BlockType) => void,
-  ) => {
-    const name = randomNameGenerator();
-    // @ts-ignore
-    createBlock({
-      block: {
-        name,
-        ...block,
-      },
-    }).then((response: {
-      data: {
-        block: BlockType;
-      };
-    }) => {
-      onSuccess(
-        response, {
-          callback: () => {
-            const {
-              data: {
-                block,
-              },
-            } = response;
-            setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
-            onCreate?.(block);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      );
-    });
-  }, [
-    createBlock,
-    setBlocks,
-  ]);
 
   const {
     lastMessage,
@@ -164,14 +108,6 @@ function PipelineDetail({
     setMessages,
     setRunningBlocks,
   ]);
-
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
 
   const runBlock = useCallback((payload: {
     block: BlockType;
@@ -230,6 +166,9 @@ function PipelineDetail({
       priority: idx,
     },
   }), {}), [runningBlocks]);
+
+  const selectedBlockPrevious = usePrevious(selectedBlock);
+  const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
   const uuidKeyboard = 'PipelineDetail/index';
   const {
