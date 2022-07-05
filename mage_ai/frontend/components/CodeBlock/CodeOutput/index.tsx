@@ -42,6 +42,7 @@ function CodeOutput({
   const primaryDataType = messages[0].type;
   const executedAndIdle = !isInProgress && runCount >= 1 && runEndTime >= runStartTime;
 
+  console.log(messages)
   if (DataTypeEnum.TABLE === primaryDataType) {
 
   }

@@ -7,6 +7,7 @@ import json
 import os
 import pandas as pd
 import tornado.websocket
+import traceback
 
 from mage_ai.data_preparation.models.block import Block, BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -50,16 +51,21 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             pipeline = Pipeline(pipeline_uuid, os.path.join(os.getcwd(), 'default_repo'))
             block = pipeline.get_block(block_uuid)
             block_output = []
+            error = None
             if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
-                block_output = asyncio.run(block.execute(code))
+                try:
+                    block_output = asyncio.run(block.execute(code))
+                except:
+                    error = traceback.format_exc()
                 # Run with no code because we still need to send a message
-                msg_id = client.execute(add_internal_output_info(code))
+                msg_id = client.execute('')
             else:
                 msg_id = client.execute(add_internal_output_info(code))
 
             value = dict(
                 block_uuid=block_uuid,
                 block_output=block_output,
+                error=error,
             )
 
             WebSocketServer.running_executions_mapping[msg_id] = value
@@ -72,9 +78,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
         uuid = msg_id_value['block_uuid']
         output = msg_id_value['block_output']
+        error = msg_id_value['error']
 
         output_dict = dict(uuid=uuid)
-        if len(output) > 0:
+        if error is not None:
+            output_dict['data'] = error
+            output_dict['msg_type'] = 'error'
+        elif len(output) > 0:
             df = find(lambda val: type(val) == pd.DataFrame, output)
             if df.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
                 df = df.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
