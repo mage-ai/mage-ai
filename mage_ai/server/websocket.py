@@ -1,4 +1,7 @@
 from jupyter_client import KernelManager
+from mage_ai.data_preparation.models.block import BlockType
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from utils.output_display import add_internal_output_info
@@ -8,10 +11,6 @@ import os
 import pandas as pd
 import tornado.websocket
 import traceback
-
-from mage_ai.data_preparation.models.block import Block, BlockType
-from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
 
 DATAFRAME_OUTPUT_SAMPLE_COUNT = 10
 
@@ -54,8 +53,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             error = None
             if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 try:
-                    block_output = asyncio.run(block.execute(code))
-                except:
+                    block_output = asyncio.run(block.execute(custom_code=code))
+                except Exception as err:
                     error = traceback.format_exc()
                 # Run with no code because we still need to send a message
                 msg_id = client.execute('')
@@ -92,6 +91,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 df.columns.to_list(),
                 *df.values.tolist(),
             ]
+            output_dict['msg_type'] = 'data_frame'
 
         message_final = merge_dict(
             message,
