@@ -7,7 +7,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
@@ -27,13 +27,6 @@ import { randomNameGenerator } from '@utils/string';
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
 };
-
-function buildContentByBlockUUID(pipeline: PipelineType) {
-  return pipeline.blocks.reduce((acc, block: BlockType) => ({
-    ...acc,
-    [block.uuid]: block.content,
-  }), {});
-}
 
 function PipelineDetailPage({
   pipeline: pipelineProp,
@@ -118,12 +111,16 @@ function PipelineDetailPage({
         blocks: blocks.map((block: BlockType) => ({
           ...block,
           content: contentByBlockUUID.current[block.uuid] || block.content,
+          outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
+            ? messages[block.uuid].map(d => JSON.stringify(d))
+            : block.output,
         })),
       },
     });
   }, [
     blocks,
     contentByBlockUUID.current,
+    messages,
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
@@ -251,11 +248,25 @@ function PipelineDetailPage({
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
-      contentByBlockUUID.current = buildContentByBlockUUID(pipeline);
+
+      const messagesInit = {};
+      contentByBlockUUID.current = {};
+
+      pipeline.blocks.forEach(({
+        content,
+        outputs,
+        uuid,
+      }: BlockType) => {
+        messagesInit[uuid] = outputs.map(output => JSON.parse(output));
+        contentByBlockUUID.current[uuid] = content;
+      });
+
+      setMessages(messagesInit);
     }
   }, [
     pipeline?.blocks,
     setBlocks,
+    setMessages,
   ]);
 
   return (
