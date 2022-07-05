@@ -62,7 +62,6 @@ type PipelineDetailProps = {
 function PipelineDetail({
   blocks = [],
   deleteBlock,
-  fetchFileTree,
   isPipelineUpdating,
   mainContainerRef,
   messages,
@@ -74,6 +73,7 @@ function PipelineDetail({
   setPipelineContentTouched,
 }: PipelineDetailProps) {
   const {
+    fetchFileTree,
     pipeline,
     savePipelineContent,
   } = usePipelineContext();

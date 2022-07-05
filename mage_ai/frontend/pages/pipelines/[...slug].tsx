@@ -284,6 +284,7 @@ function PipelineDetailPage({
       <Head title={pipeline?.name} />
       <PipelineContext.Provider
         value={{
+          fetchFileTree,
           fetchPipeline,
           pipeline,
           savePipelineContent,

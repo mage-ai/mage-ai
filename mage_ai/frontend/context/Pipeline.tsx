@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import PipelineType from '@interfaces/PipelineType';
 
 type PipelineContextType = {
+  fetchFileTree: () => void;
   fetchPipeline: () => void;
   pipeline: PipelineType;
   savePipelineContent: () => void;
@@ -11,6 +12,7 @@ type PipelineContextType = {
 };
 
 const PipelineContext = React.createContext<PipelineContextType>({
+  fetchFileTree: () => false,
   fetchPipeline: () => false,
   pipeline: {
     actions: [],
