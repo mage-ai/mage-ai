@@ -67,10 +67,10 @@ class PipelineTest(TestCase):
             ]
         ))
 
-    def test_remove_block(self):
+    def test_delete_block(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
         block = pipeline.blocks_by_uuid['block4']
-        pipeline.remove_block(block)
+        pipeline.delete_block(block)
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 3',

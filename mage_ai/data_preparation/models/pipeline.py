@@ -2,6 +2,7 @@ from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PIPELINE_CONFIG_FILE, PIPELINES_FOLDER
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import copy_template_directory
 from queue import Queue
 import asyncio
@@ -10,8 +11,8 @@ import yaml
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path):
-        self.repo_path = repo_path
+    def __init__(self, uuid, repo_path=None):
+        self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
         self.load_config_from_yaml()
 
@@ -56,6 +57,26 @@ class Pipeline:
             for d in os.listdir(pipelines_folder)
             if os.path.isdir(os.path.join(pipelines_folder, d))
         ]
+
+    @classmethod
+    def get_pipelines_by_block(self, block, repo_path=None):
+        repo_path = repo_path or get_repo_path()
+        pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
+        pipelines = []
+        for entry in os.scandir(pipelines_folder):
+            if entry.is_dir():
+                try:
+                    p = Pipeline(entry.name, repo_path)
+                    if block.uuid in p.blocks_by_uuid:
+                        pipelines.append(p)
+                except Exception:
+                    pass
+        return pipelines
+
+    def block_deletable(self, block):
+        if block.uuid not in self.blocks_by_uuid:
+            return True
+        return len(self.blocks_by_uuid[block.uuid].downstream_blocks) == 0
 
     async def execute(self):
         """
@@ -149,24 +170,6 @@ class Pipeline:
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
 
-    def remove_block(self, block):
-        if block.uuid not in self.blocks_by_uuid:
-            raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
-        if len(block.downstream_blocks) > 0:
-            downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
-            raise Exception(
-                f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
-                '. Please remove the these blocks first.'
-            )
-        upstream_blocks = block.upstream_blocks
-        for upstream_block in upstream_blocks:
-            upstream_block.downstream_blocks = [
-                b for b in upstream_block.downstream_blocks if b.uuid != block.uuid
-            ]
-        del self.blocks_by_uuid[block.uuid]
-        self.__save()
-        return block
-
     def update_block(self, block, upstream_block_uuids=None):
         if upstream_block_uuids is not None:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
@@ -207,6 +210,27 @@ class Pipeline:
 
     def delete(self):
         pass
+
+    def delete_block(self, block):
+        if block.uuid not in self.blocks_by_uuid:
+            raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
+        if len(block.downstream_blocks) > 0:
+            downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
+            raise Exception(
+                f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
+                '. Please remove these blocks first.'
+            )
+        upstream_blocks = block.upstream_blocks
+        for upstream_block in upstream_blocks:
+            upstream_block.downstream_blocks = [
+                b for b in upstream_block.downstream_blocks if b.uuid != block.uuid
+            ]
+        variables_path = Variable.dir_path(self.dir_path, block.uuid)
+        if os.path.exists(variables_path):
+            os.rmdir(variables_path)
+        del self.blocks_by_uuid[block.uuid]
+        self.__save()
+        return block
 
     def __save(self):
         with open(self.config_path, 'w') as fp:

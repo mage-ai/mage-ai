@@ -46,6 +46,15 @@ class BaseHandler(tornado.web.RequestHandler):
             )
 
 
+class ApiBlockHandler(BaseHandler):
+    def delete(self, block_type, block_uuid):
+        block = Block(block_uuid, block_uuid, block_type)
+        if not block.exists():
+            raise Exception(f'Block {block_uuid} does not exist')
+        block.delete()
+        self.write(dict(block=block.to_dict()))
+
+
 class ApiFileListHandler(BaseHandler):
     def get(self):
         self.write(dict(files=File.get_all_files(get_repo_path())))
@@ -124,6 +133,14 @@ class ApiPipelineBlockHandler(BaseHandler):
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         block.update(data)
+        self.write(dict(block=block.to_dict()))
+
+    def delete(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        block.delete()
         self.write(dict(block=block.to_dict()))
 
 
@@ -232,6 +249,7 @@ def make_app():
     return tornado.web.Application(
         [
             (r'/websocket/', WebSocketServer),
+            (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_content', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
