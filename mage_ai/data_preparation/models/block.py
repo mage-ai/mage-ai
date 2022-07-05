@@ -1,6 +1,10 @@
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
-from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
+from mage_ai.data_preparation.models.constants import (
+    BlockStatus,
+    BlockType,
+    DATAFRAME_ANALYSIS_MAX_ROWS,
+)
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -202,7 +206,7 @@ class Block:
             analyses.append(data)
         return analyses
 
-    def get_outputs(self):
+    def get_outputs(self, sample_count=None):
         if self.status == BlockStatus.NOT_EXECUTED:
             return []
         if len(self.output_variables) == 0:
@@ -215,6 +219,7 @@ class Block:
                 self.uuid,
                 v,
                 sample=True,
+                sample_count=sample_count,
             )
             if type(data) is pd.DataFrame:
                 data = dict(
@@ -227,7 +232,7 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def to_dict(self, include_content=False, include_outputs=False):
+    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
             name=self.name,
             uuid=self.uuid,
@@ -239,7 +244,7 @@ class Block:
         if include_content:
             data['content'] = self.file.content()
         if include_outputs:
-            data['outputs'] = self.get_outputs()
+            data['outputs'] = self.get_outputs(sample_count=sample_count)
         return data
 
     def update(self, data):
@@ -261,8 +266,14 @@ class Block:
         for uuid, data in variable_mapping.items():
             vtype = self.output_variables[uuid]
             if vtype is pd.DataFrame:
+                if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
+                    data_for_analysis = data.sample(DATAFRAME_ANALYSIS_MAX_ROWS).reset_index(
+                        drop=True,
+                    )
+                else:
+                    data_for_analysis = data.reset_index(drop=True)
                 analysis = clean_data(
-                    data.reset_index(drop=True),
+                    data_for_analysis,
                     transform=False,
                     verbose=False,
                 )

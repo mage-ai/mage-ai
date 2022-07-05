@@ -131,11 +131,15 @@ class Pipeline:
                 self.blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
             ]
 
-    def to_dict(self, include_content=False):
+    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         return dict(
             name=self.name,
             uuid=self.uuid,
-            blocks=[b.to_dict(include_content=include_content)
+            blocks=[b.to_dict(
+                        include_content=include_content,
+                        include_outputs=include_outputs,
+                        sample_count=sample_count,
+                    )
                     for b in self.blocks_by_uuid.values()],
         )
 
