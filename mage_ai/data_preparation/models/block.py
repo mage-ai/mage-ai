@@ -127,6 +127,8 @@ class Block:
                     f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
                     'Please remove the dependencies before deleting the block.'
                 )
+        for p in pipelines:
+            p.delete_block(p.get_block(self.uuid))
         os.remove(self.file_path)
 
     async def execute(self, custom_code=None):
