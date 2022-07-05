@@ -27,6 +27,7 @@ import {
   KEY_CODE_I,
   KEY_CODE_META,
   KEY_CODE_NUMBER_0,
+  KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
@@ -128,10 +129,13 @@ function PipelineDetail({
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
         );
       }
+
+      setPipelineContentTouched(true);
     }
   }, [
     lastMessage,
     setMessages,
+    setPipelineContentTouched,
     setRunningBlocks,
   ]);
 
@@ -151,6 +155,7 @@ function PipelineDetail({
       if (!isAlreadyRunning) {
         sendMessage(JSON.stringify({
           code,
+          pipeline_uuid: pipeline.uuid,
           uuid,
         }));
 
@@ -174,6 +179,7 @@ function PipelineDetail({
       }
     }
   }, [
+    pipeline,
     runningBlocks,
     sendMessage,
     setMessages,
@@ -211,7 +217,13 @@ function PipelineDetail({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
+      if (pipelineContentTouched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
+        event.preventDefault();
+        const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
+        if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
+          location.reload();
+        }
+      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
         event.preventDefault();
         savePipelineContent();
       } else if (textareaFocused) {
@@ -343,6 +355,22 @@ function PipelineDetail({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
+  ]);
+
+  useEffect(() => {
+
+    const autoSaveInterval = setInterval(() => {
+      if (pipelineContentTouched) {
+        savePipelineContent();
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(autoSaveInterval);
+    };
+  }, [
+    pipelineContentTouched,
+    savePipelineContent,
   ]);
 
   return (
