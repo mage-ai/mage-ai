@@ -114,7 +114,10 @@ class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         asyncio.run(pipeline.execute())
-        self.write(dict(pipeline=pipeline.to_dict()))
+        self.write(dict(pipeline=pipeline.to_dict(
+            include_outputs=True,
+            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        )))
         self.finish()
 
 
