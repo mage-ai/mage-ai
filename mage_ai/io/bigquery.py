@@ -1,4 +1,4 @@
-from google.cloud.bigquery import Client
+from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
 from mage_ai.io.base import BaseLoader
 from pandas import DataFrame
@@ -58,6 +58,44 @@ class BigQuery(BaseLoader):
             DataFrame: Data frame associated with the given query.
         """
         return self.client.query(query_string, *kwargs).to_dataframe()
+
+    def export(
+        self,
+        df: DataFrame,
+        table_name: str,
+        if_exists: str = 'replace',
+        **configuration_params,
+    ) -> None:
+        """
+        Exports a data frame to a Google BigQuery warehouse. If the table to export to exists,
+        the table will be appended to the end of the table.
+
+        Args:
+            df (DataFrame): Data frame to export
+            table_name (str): Name of the table to export the data frame to. If this table exists,
+            the table schema must match the data frame schema. If this table doesn't exist,
+            the table schema is automatically inferred.
+            if_exists (str): Specifies export policy if table exists. Either
+                - 'fail' (throw an error),
+                - 'replace' (drops existing table and creates new table of same name),
+                - 'append' (appends data frame to existing table).
+            Defaults to 'replace'. If 'write_disposition` is specified as a keyword argument, this parameter
+            is ignored.
+            **configuration_params: Configuration parameters for export job
+        """
+        config = LoadJobConfig(**configuration_params)
+        if 'write_disposition' not in configuration_params:
+            if if_exists == 'replace':
+                config.write_disposition = WriteDisposition.WRITE_TRUNCATE
+            elif if_exists == 'append':
+                config.write_disposition = WriteDisposition.WRITE_APPEND
+            elif if_exists == 'fail':
+                config.write_disposition = WriteDisposition.WRITE_EMPTY
+            else:
+                raise ValueError(
+                    f'Invalid policy specified upon existence of table: \'{if_exists}\''
+                )
+        self.client.load_table_from_dataframe(df, table_name, job_config=config).result()
 
     @classmethod
     def with_credentials_file(cls, path_to_credentials: str, **kwargs):
