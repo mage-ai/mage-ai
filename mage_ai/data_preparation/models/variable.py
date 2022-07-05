@@ -42,7 +42,7 @@ class Variable:
         else:
             self.__write_json(data)
 
-    def read_data(self, sample: bool = False) -> Any:
+    def read_data(self, sample: bool = False, sample_count: int = None) -> Any:
         if self.variable_type is None and os.path.exists(
             os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
         ):
@@ -51,8 +51,10 @@ class Variable:
 
         if self.variable_type == VariableType.DATAFRAME:
             df = self.__read_parquet()
-            if sample and df.shape[0] > DATAFRAME_SAMPLE_COUNT:
-                df = df.iloc[:DATAFRAME_SAMPLE_COUNT]
+            if sample:
+                sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+                if df.shape[0] > sample_count:
+                    df = df.iloc[:sample_count]
             return df
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()

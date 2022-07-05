@@ -34,7 +34,8 @@ class VariableManager:
         block_uuid: str,
         variable_uuid: str,
         variable_type: VariableType = None,
-        sample: bool = False
+        sample: bool = False,
+        sample_count: int = None,
     ) -> Any:
         variable = Variable(
             variable_uuid,
@@ -42,7 +43,7 @@ class VariableManager:
             block_uuid,
             variable_type=variable_type,
         )
-        return variable.read_data(sample=sample)
+        return variable.read_data(sample=sample, sample_count=sample_count)
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)

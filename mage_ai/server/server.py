@@ -1,5 +1,6 @@
 from jupyter_client import KernelManager
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
@@ -20,6 +21,12 @@ manager = KernelManager()
 class BaseHandler(tornado.web.RequestHandler):
     def check_origin(self, origin):
         return True
+
+    def get_bool_argument(self, name, default_value=None):
+        value = self.get_argument(name, default_value)
+        if type(value) is not str:
+            return value
+        return value.lower() in ('yes', 'true', 't', '1')
 
     def options(self, **kwargs):
         self.set_status(204)
@@ -83,8 +90,13 @@ class ApiFileContentHandler(BaseHandler):
 class ApiPipelineHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        include_content = self.get_argument('include_content', True)
-        self.write(dict(pipeline=pipeline.to_dict(include_content=include_content)))
+        include_content = self.get_bool_argument('include_content', True)
+        include_outputs = self.get_bool_argument('include_outputs', True)
+        self.write(dict(pipeline=pipeline.to_dict(
+            include_content=include_content,
+            include_outputs=include_outputs,
+            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        )))
         self.finish()
 
     def put(self, pipeline_uuid):
@@ -92,7 +104,7 @@ class ApiPipelineHandler(BaseHandler):
         Allow updating pipeline name and uuid
         """
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        update_content = self.get_argument('update_content', False)
+        update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
         self.write(dict(pipeline=pipeline.to_dict(include_content=update_content)))
@@ -102,7 +114,10 @@ class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         asyncio.run(pipeline.execute())
-        self.write(dict(pipeline=pipeline.to_dict()))
+        self.write(dict(pipeline=pipeline.to_dict(
+            include_outputs=True,
+            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        )))
         self.finish()
 
 
@@ -123,9 +138,13 @@ class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         block = pipeline.get_block(block_uuid)
+        include_outputs = self.get_bool_argument('include_outputs', True)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        self.write(dict(block=block.to_dict(include_content=True)))
+        self.write(dict(block=block.to_dict(
+            include_content=True,
+            include_outputs=include_outputs,
+        )))
         self.finish()
 
     def put(self, pipeline_uuid, block_uuid):
@@ -156,14 +175,21 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         asyncio.run(block.execute())
-        self.write(dict(block=block.to_dict(include_outputs=True)))
+        self.write(dict(block=block.to_dict(
+            include_outputs=True,
+        )))
         self.finish()
 
 
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        self.write(dict(blocks=pipeline.to_dict(include_content=True)['blocks']))
+        include_outputs = self.get_bool_argument('include_outputs', True)
+        self.write(dict(blocks=pipeline.to_dict(
+            include_content=True,
+            include_outputs=include_outputs,
+            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+        )['blocks']))
         self.finish()
 
     def post(self, pipeline_uuid):
