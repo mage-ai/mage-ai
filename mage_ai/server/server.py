@@ -83,7 +83,7 @@ class ApiFileContentHandler(BaseHandler):
 class ApiPipelineHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        include_content = self.get_argument('include_content', False)
+        include_content = self.get_argument('include_content', True)
         self.write(dict(pipeline=pipeline.to_dict(include_content=include_content)))
         self.finish()
 
@@ -122,7 +122,10 @@ class ApiPipelineListHandler(BaseHandler):
 class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        self.write(dict(block=pipeline.get_block(block_uuid).to_dict()))
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        self.write(dict(block=block.to_dict(include_content=True)))
         self.finish()
 
     def put(self, pipeline_uuid, block_uuid):
@@ -135,7 +138,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
         block.update(data)
-        self.write(dict(block=block.to_dict()))
+        self.write(dict(block=block.to_dict(include_content=True)))
 
     def delete(self, pipeline_uuid, block_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
@@ -160,7 +163,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        self.write(dict(blocks=pipeline.to_dict()['blocks']))
+        self.write(dict(blocks=pipeline.to_dict(include_content=True)['blocks']))
         self.finish()
 
     def post(self, pipeline_uuid):
@@ -178,7 +181,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
             config=block_data.get('config'),
         )
         pipeline.add_block(block, block_data.get('upstream_blocks', []))
-        self.write(dict(block=block.to_dict()))
+        self.write(dict(block=block.to_dict(include_content=True)))
 
 
 class ApiPipelineBlockAnalysisHandler(BaseHandler):
