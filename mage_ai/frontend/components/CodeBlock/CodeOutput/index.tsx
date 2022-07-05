@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Circle from '@oracle/elements/Circle';
+import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
@@ -12,12 +14,14 @@ import {
   ExtraInfoBorderStyle,
   ExtraInfoContentStyle,
   ExtraInfoStyle,
+  OutputRowStyle,
 } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type CodeOutputProps = {
   isInProgress: boolean;
   messages: KernelOutputType[];
+  refContainer: any;
   runCount: Number;
   runEndTime: Number;
   runStartTime: Number;
@@ -28,11 +32,13 @@ function CodeOutput({
   hasError,
   isInProgress,
   messages,
+  refContainer,
   runCount,
   runEndTime,
   runStartTime,
   selected,
 }: CodeOutputProps) {
+  const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const primaryDataType = messages[0].type;
   const executedAndIdle = !isInProgress && runCount >= 1 && runEndTime >= runStartTime;
 
@@ -63,23 +69,76 @@ function CodeOutput({
             dataArray = [dataInit];
           }
 
-          return dataArray.map((data: string) => (
-            <div key={data}>
-              {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
-                <Text monospace>
-                  <Ansi>
-                    {data}
-                  </Ansi>
-                </Text>
-              )}
-              {dataType === DataTypeEnum.IMAGE_PNG && (
-                <img
-                  alt={`Image {idx} from code output`}
-                  src={`data:image/png;base64, ${data}`}
-                />
-              )}
-            </div>
-          ));
+          const dataArrayLength = dataArray.length;
+
+          return dataArray.reduce((acc, data: string, idxInner: number) => {
+            if (!data) {
+              return acc;
+            }
+
+            let displayElement;
+            const internalOutputRegex = /^\[__internal_output__\]/;
+            const outputRowSharedProps = {
+              first: idx === 0 && idxInner === 0,
+              last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
+            };
+
+            if (data.match(internalOutputRegex)) {
+              const rawString = data.replace(internalOutputRegex, '');
+              const {
+                data: dataDisplay,
+                type: typeDisplay,
+              } = JSON.parse(rawString);
+
+              if (DataTypeEnum.TABLE === typeDisplay) {
+                const {
+                  columns,
+                  rows,
+                } = dataDisplay;
+                const {
+                  width,
+                } = refContainer?.current?.getBoundingClientRect();
+
+                displayElement = (
+                  <DataTable
+                    columns={columns}
+                    height={UNIT * 40}
+                    // invalidValues={invalidValuesAll}
+                    // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
+                    // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
+                    rows={rows}
+                    // Remove border 2px from each side
+                    width={width - 4}
+                  />
+                );
+              }
+            } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  <Text monospace>
+                    <Ansi>
+                      {data}
+                    </Ansi>
+                  </Text>
+                </OutputRowStyle>
+              );
+            } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  <img
+                    alt={`Image {idx} from code output`}
+                    src={`data:image/png;base64, ${data}`}
+                  />
+                </OutputRowStyle>
+              );
+            }
+
+            return acc.concat(
+              <div key={data}>
+                {displayElement}
+              </div>
+            );
+          }, []);
         })}
       </ContainerStyle>
 

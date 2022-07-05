@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -93,6 +94,7 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps, ref) {
+  const refContainer = useRef(null);
   const {
     fetchFileTree,
     fetchPipeline,
@@ -408,7 +410,10 @@ function CodeBlockProps({
         />
       )}
 
-      <ContainerStyle onClick={() => onClickSelectBlock()}>
+      <ContainerStyle
+        onClick={() => onClickSelectBlock()}
+        ref={refContainer}
+      >
         <CodeContainerStyle
           {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
@@ -439,6 +444,7 @@ function CodeBlockProps({
             {...borderColorShareProps}
             isInProgress={isInProgress}
             messages={messagesWithType}
+            refContainer={refContainer}
             runCount={runCount}
             runEndTime={runEndTime}
             runStartTime={runStartTime}

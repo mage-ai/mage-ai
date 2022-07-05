@@ -1,6 +1,7 @@
 from jupyter_client import KernelManager
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
+from utils.output_display import add_internal_output_info
 import json
 import os
 import tornado.websocket
@@ -39,7 +40,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             manager = KernelManager(**connection)
             client = manager.client()
 
-            msg_id = client.execute(code)
+            msg_id = client.execute(add_internal_output_info(code))
 
             WebSocketServer.running_executions_mapping.add((msg_id, block_uuid))
         elif output:
