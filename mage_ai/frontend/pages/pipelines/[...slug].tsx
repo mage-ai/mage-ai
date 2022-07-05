@@ -96,17 +96,16 @@ function PipelineDetailPage({
       ),
     },
   );
-  const savePipelineContent = useCallback(() => {
-    return updatePipeline({
-      pipeline: {
-        ...pipeline,
-        blocks: blocks.map((block: BlockType) => ({
-          ...block,
-          content: contentByBlockUUID.current[block.uuid] || block.content,
-        })),
-      },
-    });
-  }, [
+  // @ts-ignore
+  const savePipelineContent = useCallback(() => updatePipeline({
+    pipeline: {
+      ...pipeline,
+      blocks: blocks.map((block: BlockType) => ({
+        ...block,
+        content: contentByBlockUUID.current[block.uuid] || block.content,
+      })),
+    },
+  }), [
     blocks,
     contentByBlockUUID.current,
     pipeline,
