@@ -39,7 +39,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
-  deleteBlock: (blockUUID: string) => void;
+  deleteBlock: (block: BlockType) => void;
   mainContainerRef: any;
   setContentByBlockUUID: (data: {
     [uuid: string]: string;
