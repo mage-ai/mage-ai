@@ -16,6 +16,7 @@ import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
+  KEY_CODES_SYSTEM,
   KEY_CODE_A,
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
@@ -25,8 +26,8 @@ import {
   KEY_CODE_ESCAPE,
   KEY_CODE_I,
   KEY_CODE_META,
-  KEY_CODE_S,
   KEY_CODE_NUMBER_0,
+  KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
@@ -39,17 +40,35 @@ import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
+  blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
+  isPipelineUpdating: boolean;
   mainContainerRef: any;
+  messages: {
+    [uuid: string]: KernelOutputType[];
+  };
+  pipelineContentTouched: boolean;
+  pipelineLastSaved: Date;
+  runningBlocks: BlockType[];
+  selectedBlock: BlockType;
   setContentByBlockUUID: (data: {
     [uuid: string]: string;
   }) => void;
+  setPipelineContentTouched: (value: boolean) => void;
 };
 
 function PipelineDetail({
+  blocks = [],
   deleteBlock,
+  isPipelineUpdating,
   mainContainerRef,
+  messages,
+  pipelineContentTouched,
+  pipelineLastSaved,
+  runningBlocks = [],
+  selectedBlock,
   setContentByBlockUUID,
+  setPipelineContentTouched,
 }: PipelineDetailProps) {
   const {
     pipeline,
@@ -57,23 +76,19 @@ function PipelineDetail({
   } = usePipelineContext();
   const {
     interruptKernel,
-    messages,
     kernel,
     restartKernel,
     setMessages,
   } = useKernelContext();
   const {
     addNewBlockAtIndex,
-    blocks,
-    runningBlocks,
-    selectedBlock,
     setBlocks,
     setRunningBlocks,
     setSelectedBlock,
   } = useBlockContext();
 
-  const [anyInputFocused, setAnyInputFocused] = useState(false);
-  const [textareaFocused, setTextareaFocused] = useState(false);
+  const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
+  const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
 
   const {
     lastMessage,
@@ -202,6 +217,8 @@ function PipelineDetail({
       } else if (textareaFocused) {
         if (keyMapping[KEY_CODE_ESCAPE]) {
           setTextareaFocused(false);
+        } else if (!pipelineContentTouched && !KEY_CODES_SYSTEM.find(key => keyMapping[key])) {
+          setPipelineContentTouched(true);
         }
       } else {
         if (selectedBlock) {
@@ -257,11 +274,13 @@ function PipelineDetail({
       blocks,
       interruptKernel,
       numberOfBlocks,
+      pipelineContentTouched,
       restartKernel,
       savePipelineContent,
       selectedBlock,
       selectedBlockPrevious,
       setBlocks,
+      setPipelineContentTouched,
       setSelectedBlock,
       setTextareaFocused,
       textareaFocused,
@@ -331,7 +350,10 @@ function PipelineDetail({
       <Spacing mb={1}>
         <KernelStatus
           isBusy={runningBlocks.length >= 1}
+          isPipelineUpdating={isPipelineUpdating}
           kernel={kernel}
+          pipelineContentTouched={pipelineContentTouched}
+          pipelineLastSaved={pipelineLastSaved}
           restartKernel={restartKernel}
         />
       </Spacing>
