@@ -234,6 +234,7 @@ function PipelineDetailPage({
             } = response;
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
+            fetchFileTree();
           },
           onErrorCallback: ({
             error: {
