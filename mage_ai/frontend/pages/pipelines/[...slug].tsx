@@ -7,7 +7,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, OutputType } from '@interfaces/BlockType';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
@@ -112,8 +112,11 @@ function PipelineDetailPage({
           ...block,
           content: contentByBlockUUID.current[block.uuid] || block.content,
           outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
-            ? messages[block.uuid].map(d => JSON.stringify(d))
-            : block.output,
+            ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
+              text_data: JSON.stringify(d),
+              variable_uuid: `${block.uuid}_${idx}`,
+            }))
+            : block.outputs,
         })),
       },
     });
@@ -211,6 +214,7 @@ function PipelineDetailPage({
     createBlock({
       block: {
         name,
+        priority: idx,
         ...block,
       },
     }).then((response: {
@@ -257,7 +261,9 @@ function PipelineDetailPage({
         outputs,
         uuid,
       }: BlockType) => {
-        messagesInit[uuid] = outputs.map(output => JSON.parse(output));
+        messagesInit[uuid] = outputs.map(({
+          text_data: textDataJsonString,
+        }: OutputType) => JSON.parse(textDataJsonString));
         contentByBlockUUID.current[uuid] = content;
       });
 

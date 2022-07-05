@@ -10,11 +10,17 @@ export enum StatusTypeEnum {
   NOT_EXECUTED = 'not_executed',
 }
 
+export interface OutputType {
+  text_data: string;
+  variable_uuid: string;
+}
+
 export default interface BlockType {
   content?: string;
   downstream_blocks?: string[];
   file?: string;
   name?: string;
+  outputs?: OutputType[];
   priority?: number;
   status?: StatusTypeEnum;
   type?: BlockTypeEnum;
