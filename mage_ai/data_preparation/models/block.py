@@ -338,6 +338,8 @@ class Block:
         self.name = name
         self.uuid = new_uuid
         new_file_path = self.file_path
+        if os.path.exists(new_file_path):
+            raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
         os.rename(old_file_path, new_file_path)
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid)
