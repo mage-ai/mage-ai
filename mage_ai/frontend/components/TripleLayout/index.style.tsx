@@ -66,7 +66,7 @@ const ASIDE_STYLE = css`
   height: calc(100% - ${ASIDE_HEADER_HEIGHT}px);
   position: fixed;
   top: ${ASIDE_HEADER_HEIGHT}px;
-  z-index: 1;
+  z-index: 2;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).sidePanel};
@@ -115,7 +115,6 @@ export const AsideHeaderStyle = styled.div<{
   position: fixed;
   top: 0;
   z-index: 4;
-  overflow-x: auto;
 
   ${hideScrollBar()}
 

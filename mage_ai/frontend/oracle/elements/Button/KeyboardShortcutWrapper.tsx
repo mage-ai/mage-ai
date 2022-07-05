@@ -13,7 +13,7 @@ import Tracking from '@oracle/elements/Tracking';
 import UserPropertiesType from '@interfaces/UserPropertiesType';
 import { useKeyboardContext } from '@context/Keyboard';
 
-type LinkProps = {
+export type LinkProps = {
   as?: string;
   href: string;
 };
