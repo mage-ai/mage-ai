@@ -33,13 +33,13 @@ import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import { removeAtIndex } from '@utils/array';
 import { useBlockContext } from '@context/Block';
 import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
+  deleteBlock: (block: BlockType) => void;
   mainContainerRef: any;
   setContentByBlockUUID: (data: {
     [uuid: string]: string;
@@ -47,6 +47,7 @@ type PipelineDetailProps = {
 };
 
 function PipelineDetail({
+  deleteBlock,
   mainContainerRef,
   setContentByBlockUUID,
 }: PipelineDetailProps) {
@@ -224,7 +225,7 @@ function PipelineDetail({
             } else {
               setSelectedBlock(null);
             }
-            setBlocks(removeAtIndex(blocks, selectedBlockIndex))
+            deleteBlock(selectedBlock);
           } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
             setSelectedBlock(blocks[selectedBlockIndex - 1]);
           } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
@@ -288,11 +289,7 @@ function PipelineDetail({
         }}
         defaultValue={block.content}
         deleteBlock={(b: BlockType) => {
-          // @ts-ignore
-          setBlocks((blocksPrevious) => removeAtIndex(
-            blocksPrevious,
-            blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
-          ));
+          deleteBlock(b);
           setAnyInputFocused(false);
         }}
         block={block}

@@ -117,6 +117,14 @@ export function useDelete(resource: string, id: string) {
   return buildFetch(buildUrl(resource, id), { method: DELETE });
 }
 
+export function useDeleteWithParent(resource: string,
+  parentResource: string,
+  parentId: string,
+  id: string,
+) {
+  return buildFetch(buildUrl(parentResource, parentId, resource, id), { method: DELETE });
+}
+
 export function useList(
   resource: string,
   query: object = {},

@@ -9,6 +9,7 @@ import {
   fetchListWithParentAsync,
   fetchUpdate,
   useDelete,
+  useDeleteWithParent,
   useDetail,
   useDetailWithParent,
   useList,
@@ -94,6 +95,12 @@ RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
 
     apis[resource][parentResource].useUpdate = (parentId: string, id: string, opts?: any) => async (body: any) =>
       fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
+
+    apis[resource][parentResource].useDelete = (parentId: string, id: string) => async () => {
+      const response = await useDeleteWithParent(resource, parentResource, parentId, id);
+
+      return await handle(response);
+    },
 
     apis[resource][parentResource].listAsync = async (ctx: any, parentId: string, query: any = {}) => {
       const response = await fetchListWithParentAsync(ctx, resource, parentResource, parentId, query);
