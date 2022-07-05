@@ -2,6 +2,8 @@ from jupyter_client import KernelManager
 from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.server.constants import DATAFRAME_OUTPUT_SAMPLE_COUNT
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from utils.output_display import add_internal_output_info
@@ -11,8 +13,6 @@ import os
 import pandas as pd
 import tornado.websocket
 import traceback
-
-DATAFRAME_OUTPUT_SAMPLE_COUNT = 10
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -47,7 +47,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             manager = KernelManager(**connection)
             client = manager.client()
 
-            pipeline = Pipeline(pipeline_uuid, os.path.join(os.getcwd(), 'default_repo'))
+            pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid)
             block_output = []
             error = None
@@ -61,7 +61,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
                                 out = out.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
                             block_output.append(out)
-                except Exception as err:
+                except:
                     error = traceback.format_exc()
                 # Run with no code because we still need to send a message
                 msg_id = client.execute('')
@@ -80,6 +80,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_message(self, message: dict) -> None:
+        msg_type = message['msg_type']
         msg_id = message['msg_id']
         msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
         uuid = msg_id_value['block_uuid']
@@ -88,15 +89,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         output_dict = dict(uuid=uuid)
         if error is not None:
-            output_dict['data'] = error
-            output_dict['msg_type'] = 'error'
+            output_dict['traceback'] = error
         elif len(output) > 0:
             df = find(lambda val: type(val) == pd.DataFrame, output)
-            output_dict['data'] = [
-                df.columns.to_list(),
-                *df.values.tolist(),
-            ]
-            output_dict['msg_type'] = 'data_frame'
+            if msg_type == 'execute_input':
+                output_dict['data'] = json.dumps(dict(
+                    columns=df.columns.to_list(),
+                    rows=df.to_numpy().tolist(),
+                ))
+                output_dict['type'] = DataType.TABLE
 
         message_final = merge_dict(
             message,

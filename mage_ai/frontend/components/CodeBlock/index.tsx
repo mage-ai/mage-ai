@@ -191,7 +191,11 @@ function CodeBlockProps({
         type: DataTypeEnum.TEXT_PLAIN,
       }));
     }
+<<<<<<< HEAD
     return messages.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
+=======
+    return messages.filter((message: KernelOutputType) => message?.type);
+>>>>>>> 977c138 ([dy] Address comments)
   }, [
     errorMessages,
     messages,
