@@ -125,7 +125,6 @@ class Pipeline:
             for c in self.block_configs
         ]
         self.blocks_by_uuid = {b.uuid: b for b in blocks}
-        # breakpoint()
         for b in self.block_configs:
             block = self.blocks_by_uuid[b['uuid']]
             block.downstream_blocks = [
@@ -170,13 +169,18 @@ class Pipeline:
                     if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                         block.save_outputs(block_data['outputs'])
 
-    def add_block(self, block, upstream_block_uuids=[]):
+    def add_block(self, block, upstream_block_uuids=[], priority=None):
         upstream_blocks = self.get_blocks(upstream_block_uuids)
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
         block.upstream_blocks = upstream_blocks
         block.pipeline = self
-        self.blocks_by_uuid[block.uuid] = block
+        if priority is None or priority >= len(self.blocks_by_uuid.keys()):
+            self.blocks_by_uuid[block.uuid] = block
+        else:
+            block_list = list(self.blocks_by_uuid.items())
+            block_list.insert(priority, (block.uuid, block))
+            self.blocks_by_uuid = dict(block_list)
         self.__save()
         return block
 
