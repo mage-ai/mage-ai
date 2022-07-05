@@ -43,6 +43,7 @@ import { usePipelineContext } from '@context/Pipeline';
 type PipelineDetailProps = {
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
+  fetchFileTree: () => void;
   isPipelineUpdating: boolean;
   mainContainerRef: any;
   messages: {
@@ -61,6 +62,7 @@ type PipelineDetailProps = {
 function PipelineDetail({
   blocks = [],
   deleteBlock,
+  fetchFileTree,
   isPipelineUpdating,
   mainContainerRef,
   messages,

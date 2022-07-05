@@ -73,7 +73,7 @@ function PipelineDetailPage({
   } = api.pipelines.detail(pipelineUUID, {
     include_content: true,
   });
-  const { data: filesData } = api.files.list();
+  const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const pipeline = data?.pipeline;
   const {
     data: dataKernels,
@@ -317,6 +317,7 @@ function PipelineDetailPage({
                 <PipelineDetail
                   blocks={blocks}
                   deleteBlock={deleteBlock}
+                  fetchFileTree={fetchFileTree}
                   isPipelineUpdating={isPipelineUpdating}
                   mainContainerRef={mainContainerRef}
                   messages={messages}
