@@ -277,8 +277,10 @@ function PipelineDetailPage({
     setBlocks,
     setMessages,
   ]);
+
   // TODO: API should report filesystem as FileNodeType[], not FileNodeType
   const files = filesData ? [filesData?.files] : [];
+  const blockRefs = useRef({});
 
   return (
     <>
@@ -311,13 +313,14 @@ function PipelineDetailPage({
           >
             <TripleLayout
               after={<Sidekick views={SIDEKICK_VIEWS} />}
-              before={<FileTree tree={files} />}
+              before={<FileTree blockRefs={blockRefs} tree={files} />}
               beforeHeader={<FileHeaderMenu />}
               mainContainerRef={mainContainerRef}
             >
               {pipeline && (
                 <PipelineDetail
                   blocks={blocks}
+                  blockRefs={blockRefs}
                   deleteBlock={deleteBlock}
                   fetchFileTree={fetchFileTree}
                   isPipelineUpdating={isPipelineUpdating}

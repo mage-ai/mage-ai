@@ -1,4 +1,4 @@
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -92,7 +92,7 @@ function CodeBlockProps({
   setSelected,
   setTextareaFocused,
   textareaFocused,
-}: CodeBlockProps) {
+}: CodeBlockProps, ref) {
   const {
     fetchFileTree,
     fetchPipeline,
@@ -290,7 +290,7 @@ function CodeBlockProps({
   );
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={ref} style={{ position: 'relative' }}>
       <FlexContainer
         alignItems="center"
         justifyContent="space-between"
@@ -464,4 +464,4 @@ function CodeBlockProps({
   );
 }
 
-export default CodeBlockProps;
+export default React.forwardRef(CodeBlockProps);

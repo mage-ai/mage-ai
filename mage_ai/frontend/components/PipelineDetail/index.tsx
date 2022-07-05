@@ -1,4 +1,5 @@
 import {
+  createRef,
   useCallback,
   useEffect,
   useMemo,
@@ -42,6 +43,7 @@ import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   blocks: BlockType[];
+  blockRefs: any;
   deleteBlock: (block: BlockType) => void;
   fetchFileTree: () => void;
   isPipelineUpdating: boolean;
@@ -61,6 +63,7 @@ type PipelineDetailProps = {
 
 function PipelineDetail({
   blocks = [],
+  blockRefs,
   deleteBlock,
   isPipelineUpdating,
   mainContainerRef,
@@ -303,6 +306,7 @@ function PipelineDetail({
 
   const blockElements = useMemo(() => blocks.map((block: BlockType, idx: number) => {
     const {
+      type,
       uuid,
     } = block;
     const selected: boolean = selectedBlock?.uuid === uuid;
@@ -313,6 +317,9 @@ function PipelineDetail({
         : ExecutionStateEnum.QUEUED
        )
       : ExecutionStateEnum.IDLE;
+
+      const path = `${type}s/${uuid}.py`;
+      blockRefs.current[path] = createRef();
 
     return (
       <CodeBlock
@@ -333,6 +340,7 @@ function PipelineDetail({
         messages={messages[uuid]}
         noDivider={idx === numberOfBlocks - 1}
         onChange={(value: string) => setContentByBlockUUID({ [uuid]: value })}
+        ref={blockRefs.current[path]}
         runBlock={runBlock}
         selected={selected}
         setAnyInputFocused={setAnyInputFocused}

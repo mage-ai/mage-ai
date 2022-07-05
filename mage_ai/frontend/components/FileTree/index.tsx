@@ -12,6 +12,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
 
 export type FileTreeProps = {
+  blockRefs?: { [path: string]: { current: any } };
   tree: FileNodeType[];
 };
 
@@ -35,6 +36,7 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 `;
 
 function FileTree({
+  blockRefs,
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
@@ -96,8 +98,15 @@ function FileTree({
   
   const selectFile = (path: string[]) => setSelectedPath([...path]);
 
+  const scrollToBlock = () => {
+    const blockPath = path.slice(1).join('/');
+    const blockEl = blockRefs.current[blockPath];
+    blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const fileTreeHandler = (path, isFolder) => (e) => {
     e.preventDefault();
+    scrollToBlock();
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
