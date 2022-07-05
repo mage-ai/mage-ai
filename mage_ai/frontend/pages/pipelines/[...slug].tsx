@@ -7,7 +7,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, OutputType } from '@interfaces/BlockType';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
@@ -27,13 +27,6 @@ import { randomNameGenerator } from '@utils/string';
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
 };
-
-function buildContentByBlockUUID(pipeline: PipelineType) {
-  return pipeline.blocks.reduce((acc, block: BlockType) => ({
-    ...acc,
-    [block.uuid]: block.content,
-  }), {});
-}
 
 function PipelineDetailPage({
   pipeline: pipelineProp,
@@ -118,12 +111,19 @@ function PipelineDetailPage({
         blocks: blocks.map((block: BlockType) => ({
           ...block,
           content: contentByBlockUUID.current[block.uuid] || block.content,
+          outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
+            ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
+              text_data: JSON.stringify(d),
+              variable_uuid: `${block.uuid}_${idx}`,
+            }))
+            : block.outputs,
         })),
       },
     });
   }, [
     blocks,
     contentByBlockUUID.current,
+    messages,
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
@@ -214,6 +214,7 @@ function PipelineDetailPage({
     createBlock({
       block: {
         name,
+        priority: idx,
         ...block,
       },
     }).then((response: {
@@ -251,11 +252,27 @@ function PipelineDetailPage({
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
-      contentByBlockUUID.current = buildContentByBlockUUID(pipeline);
+
+      const messagesInit = {};
+      contentByBlockUUID.current = {};
+
+      pipeline.blocks.forEach(({
+        content,
+        outputs,
+        uuid,
+      }: BlockType) => {
+        messagesInit[uuid] = outputs.map(({
+          text_data: textDataJsonString,
+        }: OutputType) => JSON.parse(textDataJsonString));
+        contentByBlockUUID.current[uuid] = content;
+      });
+
+      setMessages(messagesInit);
     }
   }, [
     pipeline?.blocks,
     setBlocks,
+    setMessages,
   ]);
 
   return (
