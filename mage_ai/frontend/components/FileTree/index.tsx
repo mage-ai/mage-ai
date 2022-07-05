@@ -101,7 +101,6 @@ function FileTree({
   const scrollToBlock = (path: string[]) => {
     const blockPath = path.slice(1).join('/');
     const blockEl = blockRefs.current[blockPath];
-    console.log(blockPath, blockEl);
     blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
