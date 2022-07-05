@@ -11,6 +11,7 @@ from mage_ai.server.websocket import WebSocketServer
 import asyncio
 import json
 import os
+import simplejson
 import tornado.ioloop
 import tornado.web
 import traceback
@@ -37,6 +38,11 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header('Access-Control-Allow-Methods', 'DELETE, GET, PATCH, POST, PUT, OPTIONS')
         self.set_header('Access-Control-Allow-Origin', '*')
         self.set_header('Content-Type', 'application/json')
+
+    def write(self, chunk):
+        if type(chunk) is dict:
+            chunk = simplejson.dumps(chunk, ignore_nan=True)
+        super().write(chunk)
 
     def write_error(self, status_code, **kwargs):
         if status_code == 500:
