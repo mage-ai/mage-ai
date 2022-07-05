@@ -108,10 +108,10 @@ function PipelineDetailPage({
       ),
     },
   );
-  // @ts-ignore
   const savePipelineContent = useCallback(() => {
     setPipelineLastSaved(new Date());
 
+    // @ts-ignore
     return updatePipeline({
       pipeline: {
         ...pipeline,
