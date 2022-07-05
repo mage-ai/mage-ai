@@ -1,7 +1,9 @@
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 import os
@@ -47,11 +49,15 @@ class Block:
 
     @property
     def file_path(self):
-        repo_path = self.pipeline.repo_path if self.pipeline is not None else None
+        repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
         return os.path.join(
             repo_path or os.getcwd(),
             f'{self.type}s/{self.uuid}.py',
         )
+
+    @property
+    def file(self):
+        return File.from_path(self.file_path)
 
     @classmethod
     def create(
@@ -103,6 +109,28 @@ class Block:
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
+    def delete(self):
+        """
+        1. If pipeline is not None, delete the block from the pipeline but not delete the block
+        file.
+        2. If pipeline is None, check whether block is used in any pipelines. If block is being
+        used, throw error. Otherwise, delete the block files.
+        """
+        if self.pipeline is not None:
+            self.pipeline.delete_block(self)
+            return
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+        pipelines = Pipeline.get_pipelines_by_block(self)
+        for p in pipelines:
+            if not p.block_deletable(self):
+                raise Exception(
+                    f'Block {self.uuid} has downstream dependencies in pipeline {p.uuid}. '
+                    'Please remove the dependencies before deleting the block.'
+                )
+        for p in pipelines:
+            p.delete_block(p.get_block(self.uuid))
+        os.remove(self.file_path)
+
     async def execute(self, custom_code=None):
         outputs = await self.execute_block(custom_code)
         self.__verify_outputs(outputs)
@@ -112,6 +140,44 @@ class Block:
         self.__update_pipeline_block()
         self.__analyze_outputs(variable_mapping)
         return outputs
+
+    async def execute_block(self, custom_code=None):
+        def block_decorator(decorated_functions):
+            def custom_code(function):
+                decorated_functions.append(function)
+                return function
+
+            return custom_code
+
+        input_vars = []
+        if self.pipeline is not None:
+            repo_path = self.pipeline.repo_path
+            for upstream_block_uuid, vars in self.input_variables.items():
+                input_vars += [
+                    VariableManager(repo_path).get_variable(
+                        self.pipeline.uuid,
+                        upstream_block_uuid,
+                        var,
+                    )
+                    for var in vars
+                ]
+        outputs = []
+        decorated_functions = []
+        if custom_code is not None:
+            exec(custom_code, {self.type: block_decorator(decorated_functions)})
+        elif os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), {self.type: block_decorator(decorated_functions)})
+        if len(decorated_functions) > 0:
+            outputs = decorated_functions[0](*input_vars)
+            if outputs is None:
+                outputs = []
+            if type(outputs) is not list:
+                outputs = [outputs]
+        return outputs
+
+    def exists(self):
+        return os.path.exists(self.file_path)
 
     def get_analyses(self):
         if self.status == BlockStatus.NOT_EXECUTED:
@@ -158,7 +224,7 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def to_dict(self, include_outputs=False):
+    def to_dict(self, include_content=False, include_outputs=False):
         data = dict(
             name=self.name,
             uuid=self.uuid,
@@ -167,6 +233,8 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
         )
+        if include_content:
+            data['content'] = self.file.content()
         if include_outputs:
             data['outputs'] = self.get_outputs()
         return data
@@ -180,40 +248,9 @@ class Block:
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
-    async def execute_block(self, custom_code=None):
-        def block_decorator(decorated_functions):
-            def custom_code(function):
-                decorated_functions.append(function)
-                return function
-
-            return custom_code
-
-        input_vars = []
-        if self.pipeline is not None:
-            repo_path = self.pipeline.repo_path
-            for upstream_block_uuid, vars in self.input_variables.items():
-                input_vars += [
-                    VariableManager(repo_path).get_variable(
-                        self.pipeline.uuid,
-                        upstream_block_uuid,
-                        var,
-                    )
-                    for var in vars
-                ]
-        outputs = []
-        decorated_functions = []
-        if custom_code is not None:
-            exec(custom_code, {self.type: block_decorator(decorated_functions)})
-        elif os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), {self.type: block_decorator(decorated_functions)})
-        if len(decorated_functions) > 0:
-            outputs = decorated_functions[0](*input_vars)
-            if outputs is None:
-                outputs = []
-            if type(outputs) is not list:
-                outputs = [outputs]
-        return outputs
+    def update_content(self, content):
+        self.file.update_content(content)
+        return self
 
     def __analyze_outputs(self, variable_mapping):
         if self.pipeline is None:

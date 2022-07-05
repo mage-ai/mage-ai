@@ -1,3 +1,4 @@
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
 import os
 
@@ -16,14 +17,16 @@ class File:
         return os.path.join(self.repo_path, self.dir_path, self.filename)
 
     @classmethod
-    def create(self, filename, dir_path, repo_path):
+    def create(self, filename, dir_path, repo_path=None):
+        repo_path = repo_path or get_repo_path()
         file = File(filename, dir_path, repo_path)
         with open(file.file_path, 'w'):
             pass
         return file
 
     @classmethod
-    def from_path(self, file_path, repo_path):
+    def from_path(self, file_path, repo_path=None):
+        repo_path = repo_path or get_repo_path()
         return File(os.path.basename(file_path), os.path.dirname(file_path), repo_path)
 
     @classmethod
