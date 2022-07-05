@@ -129,10 +129,13 @@ function PipelineDetail({
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
         );
       }
+
+      setPipelineContentTouched(true);
     }
   }, [
     lastMessage,
     setMessages,
+    setPipelineContentTouched,
     setRunningBlocks,
   ]);
 
