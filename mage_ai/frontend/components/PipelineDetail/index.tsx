@@ -88,6 +88,7 @@ function PipelineDetail({
         uuid,
       } = message;
 
+      // @ts-ignore
       setMessages((messagesPrevious) => {
         const messagesFromUUID = messagesPrevious[uuid] || [];
 
@@ -98,6 +99,7 @@ function PipelineDetail({
       });
 
       if (ExecutionStateEnum.IDLE === executionState) {
+        // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
         );
@@ -128,6 +130,7 @@ function PipelineDetail({
           uuid,
         }));
 
+        // @ts-ignore
         setMessages((messagesPrevious) => {
           delete messagesPrevious[uuid];
 
@@ -136,6 +139,7 @@ function PipelineDetail({
 
         setTextareaFocused(false);
 
+        // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) => {
           if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
             return runningBlocksPrevious;
@@ -251,6 +255,65 @@ function PipelineDetail({
     ],
   );
 
+  const blockElements = useMemo(() => blocks.map((block: BlockType, idx: number) => {
+    const {
+      uuid,
+    } = block;
+    const selected: boolean = selectedBlock?.uuid === uuid;
+    const runningBlock = runningBlocksByUUID[uuid];
+    const executionState = runningBlock
+      ? (runningBlock.priority === 0
+        ? ExecutionStateEnum.BUSY
+        : ExecutionStateEnum.QUEUED
+       )
+      : ExecutionStateEnum.IDLE;
+
+    return (
+      <CodeBlock
+        addNewBlock={(b: BlockType) => {
+          addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+          setTextareaFocused(true);
+        }}
+        deleteBlock={(b: BlockType) => {
+          // @ts-ignore
+          setBlocks((blocksPrevious) => removeAtIndex(
+            blocksPrevious,
+            blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
+          ));
+          setAnyInputFocused(false);
+        }}
+        block={block}
+        executionState={executionState}
+        key={uuid}
+        interruptKernel={interruptKernel}
+        mainContainerRef={mainContainerRef}
+        messages={messages[uuid]}
+        noDivider={idx === numberOfBlocks - 1}
+        runBlock={runBlock}
+        selected={selected}
+        setAnyInputFocused={setAnyInputFocused}
+        setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+        setTextareaFocused={setTextareaFocused}
+        textareaFocused={selected && textareaFocused}
+      />
+    );
+  }), [
+    addNewBlockAtIndex,
+    blocks,
+    interruptKernel,
+    mainContainerRef,
+    messages,
+    numberOfBlocks,
+    runBlock,
+    runningBlocksByUUID,
+    selectedBlock,
+    setAnyInputFocused,
+    setBlocks,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+  ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={1}>
@@ -261,48 +324,7 @@ function PipelineDetail({
         />
       </Spacing>
 
-      {blocks.map((block: BlockType, idx: number) => {
-        const {
-          uuid,
-        } = block;
-        const selected: boolean = selectedBlock?.uuid === uuid;
-        const runningBlock = runningBlocksByUUID[uuid];
-        const executionState = runningBlock
-          ? (runningBlock.priority === 0
-            ? ExecutionStateEnum.BUSY
-            : ExecutionStateEnum.QUEUED
-           )
-          : ExecutionStateEnum.IDLE;
-
-        return (
-          <CodeBlock
-            addNewBlock={(b: BlockType) => {
-              addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
-              setTextareaFocused(true);
-            }}
-            deleteBlock={(b: BlockType) => {
-              setBlocks(removeAtIndex(
-                blocks,
-                blocks.findIndex(({ uuid: uuid2 }: BlockType) => b.uuid === uuid2),
-              ));
-              setAnyInputFocused(false);
-            }}
-            block={block}
-            executionState={executionState}
-            key={uuid}
-            interruptKernel={interruptKernel}
-            mainContainerRef={mainContainerRef}
-            messages={messages[uuid]}
-            noDivider={idx === numberOfBlocks - 1}
-            runBlock={runBlock}
-            selected={selected}
-            setAnyInputFocused={setAnyInputFocused}
-            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={selected && textareaFocused}
-          />
-        );
-      })}
+      {blockElements}
 
       <Spacing mt={PADDING_UNITS}>
         <AddNewBlocks

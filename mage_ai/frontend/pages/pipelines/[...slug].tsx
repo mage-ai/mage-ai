@@ -202,7 +202,6 @@ function PipelineDetailPage({
             value={{
               addNewBlockAtIndex,
               blocks,
-              createBlock,
               runningBlocks,
               selectedBlock,
               setBlocks,
