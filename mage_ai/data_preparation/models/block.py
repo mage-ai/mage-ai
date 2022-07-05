@@ -232,6 +232,13 @@ class Block:
             outputs.append(data)
         return outputs
 
+    def save_outputs(self, outputs):
+        variable_mapping = dict()
+        for o in outputs:
+            if all(k in o for k in ['variable_uuid', 'text_data']):
+                variable_mapping[o['variable_uuid']] = o['text_data']
+        self.__store_variables(variable_mapping)
+
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
             name=self.name,
