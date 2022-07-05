@@ -12,7 +12,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
 
 export type FileTreeProps = {
-  blockRefs?: { [path: string]: { current: any } };
+  blockRefs?: any;
   tree: FileNodeType[];
 };
 
