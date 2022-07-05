@@ -355,14 +355,20 @@ function PipelineDetail({
   ]);
 
   useEffect(() => {
+
     const autoSaveInterval = setInterval(() => {
-      savePipelineContent();
+      if (pipelineContentTouched) {
+        savePipelineContent();
+      }
     }, 5000);
 
     return () => {
       clearInterval(autoSaveInterval);
     };
-  }, [savePipelineContent]);
+  }, [
+    pipelineContentTouched,
+    savePipelineContent,
+  ]);
 
   return (
     <Spacing p={PADDING_UNITS}>
