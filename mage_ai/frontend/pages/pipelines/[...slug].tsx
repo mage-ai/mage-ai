@@ -21,7 +21,7 @@ import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { onSuccess } from '@api/utils/response';
-import { pushAtIndex } from '@utils/array';
+import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
 
 type PipelineDetailPageProps = {
@@ -111,6 +111,34 @@ function PipelineDetailPage({
     pipeline,
     updatePipeline,
   ]);
+
+  const [deleteBlock] = useMutation(
+    ({ uuid }: BlockType) => api.blocks.pipelines.useDelete(pipelineUUID, uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            block: {
+              uuid,
+            },
+          }) => {
+            setBlocks((blocksPrevious) => removeAtIndex(
+              blocksPrevious,
+              blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
+            ));
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
@@ -257,6 +285,7 @@ function PipelineDetailPage({
             >
               {pipeline && (
                 <PipelineDetail
+                  deleteBlock={deleteBlock}
                   mainContainerRef={mainContainerRef}
                   setContentByBlockUUID={setContentByBlockUUID}
                 />
