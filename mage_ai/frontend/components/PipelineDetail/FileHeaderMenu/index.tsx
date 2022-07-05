@@ -29,10 +29,12 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { randomNameGenerator } from '@utils/string';
 import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
+import { usePipelineContext } from '@context/Pipeline';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
 function FileHeaderMenu() {
+  const { savePipelineContent } = usePipelineContext();
   const {
     interruptKernel,
     restartKernel,
@@ -81,6 +83,7 @@ function FileHeaderMenu() {
     {
       label: () => 'Save pipeline',
       keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_S]],
+      onClick: () => savePipelineContent(),
       uuid: 'save pipeline',
     },
   ];

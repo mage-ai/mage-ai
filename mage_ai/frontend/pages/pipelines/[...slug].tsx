@@ -18,6 +18,7 @@ import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex } from '@utils/array';
@@ -30,8 +31,25 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
+  const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
+  const pipelineUUIDPrev = usePrevious(pipelineUUID);
+
+  const setContentByBlockUUID = (data: {
+    [uuid: string]: string;
+  }) => {
+    contentByBlockUUID.current = {
+      ...contentByBlockUUID.current,
+      ...data,
+    };
+  };
+
+  useEffect(() => {
+    if (pipelineUUID !== pipelineUUIDPrev) {
+      contentByBlockUUID.current = {};
+    }
+  }, [pipelineUUID, pipelineUUIDPrev])
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
@@ -47,7 +65,9 @@ function PipelineDetailPage({
     data,
     isLoading,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID);
+  } = api.pipelines.detail(pipelineUUID, {
+    include_content: true,
+  });
   const pipeline = data?.pipeline;
   const {
     data: dataKernels,
@@ -60,7 +80,7 @@ function PipelineDetailPage({
   const kernel = kernels?.[0];
 
   const [updatePipeline] = useMutation(
-    api.pipelines.useUpdate(pipelineUUID),
+    api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -76,6 +96,21 @@ function PipelineDetailPage({
       ),
     },
   );
+  // @ts-ignore
+  const savePipelineContent = useCallback(() => updatePipeline({
+    pipeline: {
+      ...pipeline,
+      blocks: blocks.map((block: BlockType) => ({
+        ...block,
+        content: contentByBlockUUID.current[block.uuid] || block.content,
+      })),
+    },
+  }), [
+    blocks,
+    contentByBlockUUID.current,
+    pipeline,
+    updatePipeline,
+  ]);
 
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
@@ -171,6 +206,10 @@ function PipelineDetailPage({
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
+      contentByBlockUUID.current = pipeline.blocks.reduce((acc, block: BlockType) => ({
+        ...acc,
+        [block.uuid]: block.content,
+      }), {});
     }
   }, [
     pipeline?.blocks,
@@ -185,6 +224,7 @@ function PipelineDetailPage({
         value={{
           fetchPipeline,
           pipeline,
+          savePipelineContent,
           updatePipeline,
         }}
       >
@@ -216,7 +256,10 @@ function PipelineDetailPage({
               mainContainerRef={mainContainerRef}
             >
               {pipeline && (
-                <PipelineDetail mainContainerRef={mainContainerRef} />
+                <PipelineDetail
+                  mainContainerRef={mainContainerRef}
+                  setContentByBlockUUID={setContentByBlockUUID}
+                />
               )}
             </TripleLayout>
           </BlockContext.Provider>
