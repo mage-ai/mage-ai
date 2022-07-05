@@ -19,6 +19,7 @@ import {
 import { handle } from '@api/utils/response';
 import { onError, onSuccess } from '@api/utils/response';
 
+export const ANALYSES = 'analyses';
 export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
 export const DOWNLOADS: 'downloads' = 'downloads';
@@ -29,6 +30,7 @@ export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_version
 export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
+export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
@@ -37,6 +39,8 @@ export const VERSIONS: 'versions' = 'versions';
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [BLOCKS, PIPELINES],
+  [BLOCKS, PIPELINES, ANALYSES],
+  [BLOCKS, PIPELINES, OUTPUTS],
   [COLUMNS, FEATURE_SETS],
   [DOWNLOADS, FEATURE_SETS],
   [FEATURE_SETS],
@@ -51,7 +55,7 @@ const RESOURCES: any[][] = [
 
 const apis: any = {};
 
-RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
+RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) => {
   if (!apis[resource]) {
     apis[resource] = {
       deleteAsync: async (id: string) => {
@@ -86,7 +90,26 @@ RESOURCES.forEach(([resource, parentResource, swrOptions]) => {
     };
   }
 
-  if (parentResource) {
+  if (grandchildResource) {
+    apis[resource][parentResource][grandchildResource] = {};
+    apis[resource][parentResource][grandchildResource].detail = (
+      parentId: string,
+      id: string,
+      query?: any,
+      swrOptionsRuntime?: any,
+    ) => useDetailWithParent(
+      resource,
+      id,
+      parentResource,
+      parentId,
+      query,
+      {
+        ...swrOptions,
+        ...swrOptionsRuntime,
+      },
+      grandchildResource,
+    );
+  } else if (parentResource) {
     apis[resource][parentResource] = {};
 
     apis[resource][parentResource].useCreate = (parentId, opts?: any) => async (body: any) =>

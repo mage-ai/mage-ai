@@ -89,19 +89,21 @@ export function useDetailWithParent(
   parentId: string,
   query: any = {},
   swrOptions: any = {},
+  grandchildResource?: string,
 ) {
   const {
     data,
     error,
     mutate,
   } = useSWR(
-    id && parentId ? buildUrl(
+    id && (parentId ? buildUrl(
       parentResource,
       parentId,
       resource,
       id,
       query,
-    ) : null,
+      grandchildResource,
+    ) : null),
     url => fetcher(url, { method: GET, query }),
     swrOptions,
   );
