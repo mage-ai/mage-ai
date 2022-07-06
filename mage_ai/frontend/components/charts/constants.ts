@@ -1,5 +1,5 @@
-import { ThemeType } from '@oracle/styles/themes/constants';
 import light from '@oracle/styles/themes/light';
+import { ThemeType } from '@oracle/styles/themes/constants';
 
 export const getChartColors = (themeContext: ThemeType) => {
   const {
