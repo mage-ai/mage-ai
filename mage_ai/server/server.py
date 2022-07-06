@@ -54,7 +54,8 @@ class BaseHandler(tornado.web.RequestHandler):
                         errors=traceback.format_stack(),
                         exception=str(exception),
                         message=traceback.format_exc(),
-                    )
+                    ),
+                    url_parameters=self.path_kwargs,
                 )
             )
 

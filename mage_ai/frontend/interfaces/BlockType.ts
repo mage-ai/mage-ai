@@ -1,3 +1,5 @@
+import { DataTypeEnum } from './KernelOutputType';
+
 export enum BlockTypeEnum {
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
@@ -11,7 +13,12 @@ export enum StatusTypeEnum {
 }
 
 export interface OutputType {
+  sample_data: {
+    columns: string[];
+    rows: string[] | number[];
+  };
   text_data: string;
+  type: DataTypeEnum;
   variable_uuid: string;
 }
 

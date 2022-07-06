@@ -5,7 +5,9 @@ import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export function getColorsForBlockType(blockType: BlockTypeEnum, props) {
+export function getColorsForBlockType(blockType: BlockTypeEnum, props): {
+  accent?: string;
+} {
   let accent = (props.theme.borders || dark.borders).light;
 
   if (BlockTypeEnum.TRANSFORMER === blockType) {

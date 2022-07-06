@@ -199,7 +199,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.muted && `
-    color: ${(props.theme.monotone || light.monotone).grey400};
+    color: ${(props.theme.content || light.content).muted};
   `}
 
   ${props => props.noColor && `

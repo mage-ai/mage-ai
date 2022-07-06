@@ -1,3 +1,4 @@
+from datetime import datetime
 from jupyter_client import KernelManager
 from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
@@ -11,8 +12,10 @@ import asyncio
 import json
 import os
 import pandas as pd
+import simplejson
 import tornado.websocket
 import traceback
+
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -97,10 +100,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 output_dict['type'] = DataType.TEXT
             elif len(output) > 0:
                 df = find(lambda val: type(val) == pd.DataFrame, output)
-                output_dict['data'] = json.dumps(dict(
-                    columns=df.columns.to_list(),
-                    rows=df.to_numpy().tolist(),
-                ))
+                output_dict['data'] = simplejson.dumps(
+                    dict(
+                        columns=df.columns.to_list(),
+                        rows=df.to_numpy().tolist(),
+                    ),
+                    default=datetime.isoformat,
+                    ignore_nan=True,
+                )
                 output_dict['type'] = DataType.TABLE
 
         message_final = merge_dict(

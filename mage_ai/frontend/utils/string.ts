@@ -5,6 +5,16 @@ import { randomSample } from '@utils/array';
 
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 
+export function isJsonString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+
+  return true;
+}
+
 export function isString(data) {
   return (typeof data === 'string');
 }

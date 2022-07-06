@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 import os
 import pandas as pd
@@ -242,16 +243,18 @@ class Block:
             )
             if type(data) is pd.DataFrame:
                 data = dict(
-                    variable_uuid=v,
                     sample_data=dict(
                         columns=data.columns.tolist(),
                         rows=data.to_numpy().tolist(),
                     ),
+                    type=DataType.TABLE,
+                    variable_uuid=v,
                 )
             elif type(data) is str:
                 data = dict(
-                    variable_uuid=v,
                     text_data=data,
+                    type=DataType.TEXT,
+                    variable_uuid=v,
                 )
             outputs.append(data)
         return outputs

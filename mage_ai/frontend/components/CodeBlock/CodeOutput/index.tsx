@@ -18,6 +18,7 @@ import {
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
   isInProgress: boolean;
@@ -94,18 +95,20 @@ function CodeOutput({
               last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
             };
 
-            if (data.match(internalOutputRegex)) {
+            if (typeof data === 'string' && data.match(internalOutputRegex)) {
               const rawString = data.replace(internalOutputRegex, '');
-              const {
-                data: dataDisplay,
-                type: typeDisplay,
-              } = JSON.parse(rawString);
+              if (isJsonString) {
+                const {
+                  data: dataDisplay,
+                  type: typeDisplay,
+                } = JSON.parse(rawString);
 
-              if (DataTypeEnum.TABLE === typeDisplay) {
-                displayElement = createDataTableElement(dataDisplay)
+                if (DataTypeEnum.TABLE === typeDisplay) {
+                  displayElement = createDataTableElement(dataDisplay)
+                }
               }
             } else if (dataType === DataTypeEnum.TABLE) {
-              displayElement = createDataTableElement(JSON.parse(data))
+              displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
             } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
