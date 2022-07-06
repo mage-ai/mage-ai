@@ -109,7 +109,7 @@ function CodeOutput({
             } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
-                  <Text monospace>
+                  <Text monospace preWrap>
                     <Ansi>
                       {data}
                     </Ansi>
