@@ -125,8 +125,8 @@ export default {
   },
   chart: {
     backgroundPrimary: PURPLE_DARK,
-    backgroundSecondary: RED_LIGHT,
-    backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
+    backgroundSecondary: RED,
+    backgroundTertiary: BLUE_HIGHLIGHT,
     button1: BLUE_DARK,
     button2: YELLOW,
     button3: LIME_DARK,
@@ -135,7 +135,7 @@ export default {
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
-    tertiary: BLUE_HIGHLIGHT,
+    tertiary: BLUE,
   },
   content: {
     active: DARK_CONTENT_ACTIVE,
