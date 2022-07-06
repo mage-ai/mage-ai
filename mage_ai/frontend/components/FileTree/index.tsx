@@ -140,7 +140,7 @@ function FileTree({
               <Spacing py={`${0.75 * UNIT}px`}>
                 <FlexContainer alignItems="center">
                   {children && (
-                    collapsed ? <ArrowRight /> : <ArrowDown />
+                    collapsed ? <ArrowRight muted /> : <ArrowDown muted />
                   )}
                   &nbsp;
                   <FileTreeIcon fill={iconColor} />
