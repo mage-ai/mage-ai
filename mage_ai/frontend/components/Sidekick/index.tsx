@@ -1,7 +1,13 @@
 import { useCallback, useMemo } from 'react';
 
 import BlockCharts from '@components/BlockCharts';
-import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
+import BlockType, {
+  InsightType,
+  MetadataType,
+  SampleDataType,
+  SetEditingBlockType,
+  StatisticsType,
+} from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -36,9 +42,13 @@ export type SidekickProps = {
     };
   };
   fetchPipeline: () => void;
+  insights: InsightType[][];
+  metadata: MetadataType;
   pipeline: PipelineType;
+  sampleData: SampleDataType;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
+  statistics: StatisticsType;
   views: {
     key: string;
     label: string;
@@ -51,25 +61,24 @@ function Sidekick({
   blockRefs,
   editingBlock,
   fetchPipeline,
+  insights,
+  metadata,
   pipeline,
+  sampleData,
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
+  statistics,
 }: SidekickProps) {
   const {
     height: heightWindow,
   } = useWindowSize();
   const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
-  const { data: blockSampleData } = api.blocks.pipelines.outputs.detail(pipelineUUID, blockUUID);
-  const { data: blockAnalysis } = api.blocks.pipelines.analyses.detail(pipelineUUID, blockUUID);
 
-  const sampleData = blockSampleData?.outputs?.[0]?.sample_data;
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
-  const columnTypes = blockAnalysis?.analyses?.[0]?.metadata?.column_types || {};
-  const statistics = blockAnalysis?.analyses?.[0]?.statistics || {};
-  const insights = blockAnalysis?.analyses?.[0]?.insights;
+  const columnTypes = metadata?.column_types || {};
   const features = insights?.[0]?.map(({ feature }) => feature) || [];
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
@@ -120,6 +129,8 @@ function Sidekick({
           columns={columns}
           height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
           noBorderBottom
+          noBorderLeft
+          noBorderRight
           noBorderTop
           renderColumnHeader={renderColumnHeader}
           rows={rows}

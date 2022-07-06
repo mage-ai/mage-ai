@@ -48,8 +48,6 @@ type SharedProps = {
   disableScrolling?: boolean;
   height?: number;
   invalidValues?: InvalidValueType;
-  noBorderBottom?: boolean;
-  noBorderTop?: boolean;
   previewIndexes?: {
     removedRows?: number[];
   };
@@ -70,6 +68,10 @@ type TableProps = {
 
 type DataTableProps = {
   columns: string[];
+  noBorderBottom?: boolean;
+  noBorderLeft?: boolean;
+  noBorderRight?: boolean;
+  noBorderTop?: boolean;
   rows: string[][] | number[][];
 } & SharedProps;
 
@@ -78,6 +80,8 @@ const Styles = styled.div<{
   disableScrolling?: boolean;
   height?: number;
   noBorderBottom?: boolean;
+  noBorderLeft?: boolean;
+  noBorderRight?: boolean;
   noBorderTop?: boolean;
 }>`
   ${props => props.disableScrolling && `
@@ -96,13 +100,16 @@ const Styles = styled.div<{
     border-spacing: 0;
     display: inline-block;
 
-    ${props => `
-      border-left: 1px solid ${(props.theme.borders || light.borders).medium};
-      border-right: 1px solid ${(props.theme.borders || light.borders).medium};
-    `}
-
     ${props => !props.noBorderBottom && `
       border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
+    `}
+
+    ${props => !props.noBorderLeft && `
+      border-left: 1px solid ${(props.theme.borders || light.borders).medium};
+    `}
+
+    ${props => !props.noBorderRight && `
+      border-right: 1px solid ${(props.theme.borders || light.borders).medium};
     `}
 
     ${props => !props.noBorderTop && `
@@ -433,6 +440,8 @@ function DataTable({
   height,
   invalidValues,
   noBorderBottom,
+  noBorderLeft,
+  noBorderRight,
   noBorderTop,
   previewIndexes,
   renderColumnHeader,
@@ -463,6 +472,8 @@ function DataTable({
       disableScrolling={disableScrolling}
       height={height}
       noBorderBottom={noBorderBottom}
+      noBorderLeft={noBorderLeft}
+      noBorderRight={noBorderRight}
       noBorderTop={noBorderTop}
     >
       <Table
@@ -472,8 +483,6 @@ function DataTable({
         disableScrolling={disableScrolling}
         height={height}
         invalidValues={invalidValues}
-        noBorderBottom={noBorderBottom}
-        noBorderTop={noBorderTop}
         previewIndexes={previewIndexes}
         renderColumnHeader={renderColumnHeader}
         width={width}

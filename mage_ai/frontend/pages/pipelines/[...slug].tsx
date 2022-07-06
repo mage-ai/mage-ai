@@ -8,7 +8,11 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockContext from '@context/Block';
-import BlockType, { BlockTypeEnum, OutputType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockTypeEnum,
+  OutputType,
+  SampleDataType,
+} from '@interfaces/BlockType';
 import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
@@ -145,6 +149,38 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
+
+  const {
+    data: blockSampleData,
+    mutate: fetchSampleData,
+  } = api.blocks.pipelines.outputs.detail(
+    !afterHidden && pipelineUUID,
+    selectedBlock?.uuid,
+  );
+  const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
+  const {
+    data: blockAnalysis,
+    mutate: fetchAnalysis,
+  } = api.blocks.pipelines.analyses.detail(
+    !afterHidden && pipelineUUID,
+    selectedBlock?.uuid,
+  );
+  const {
+    insights,
+    metadata,
+    statistics = {},
+  } = blockAnalysis?.analyses?.[0] || {};
+
+  useEffect(() => {
+    if (runningBlocks.length === 0) {
+      fetchAnalysis();
+      fetchSampleData();
+    }
+  }, [
+    fetchAnalysis,
+    fetchSampleData,
+    runningBlocks,
+  ]);
 
   useEffect(() => {
     if (editingBlock.upstreamBlocks?.block) {
@@ -418,10 +454,14 @@ function PipelineDetailPage({
       blockRefs={blockRefs}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
+      insights={insights}
+      metadata={metadata}
       pipeline={pipeline}
+      sampleData={sampleData}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
+      statistics={statistics}
       views={SIDEKICK_VIEWS}
     />
   ), [
@@ -429,9 +469,13 @@ function PipelineDetailPage({
     blockRefs,
     editingBlock,
     fetchPipeline,
+    insights,
+    metadata,
     pipeline,
+    sampleData,
     selectedBlock,
     setEditingBlock,
+    statistics,
   ]);
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
