@@ -29,7 +29,7 @@ function RowDataTable({
     <>
       <TitleStyle>
         <FlexContainer alignItems="center" justifyContent="space-between">
-          <Text bold>
+          <Text bold default>
             {headerTitle}
           </Text>
           {headerDetails &&
