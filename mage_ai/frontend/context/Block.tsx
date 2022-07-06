@@ -15,7 +15,6 @@ type BlockContextType = {
 const BlockContext = React.createContext<BlockContextType>({
   addNewBlockAtIndex: null,
   setBlocks: null,
-  setEditingBlock: null,
   setRunningBlocks: null,
   setSelectedBlock: null,
 });

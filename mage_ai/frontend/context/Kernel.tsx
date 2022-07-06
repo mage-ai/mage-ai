@@ -14,7 +14,6 @@ const KernelContext = React.createContext<KernelContextType>({
   interruptKernel: null,
   kernel: null,
   restartKernel: null,
-  setMessages: null,
 });
 
 export const useKernelContext = () => useContext(KernelContext);

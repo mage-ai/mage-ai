@@ -10,7 +10,7 @@ import { CSSTransition } from 'react-transition-group';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelStatus from './KernelStatus';

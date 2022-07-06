@@ -1,3 +1,5 @@
+import KernelOutputType from './KernelOutputType';
+
 export default interface KernelType {
   alive: boolean;
   id: string;
