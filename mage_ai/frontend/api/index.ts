@@ -19,6 +19,7 @@ import {
 import { handle } from '@api/utils/response';
 import { onError, onSuccess } from '@api/utils/response';
 
+export const ACTION_EXECUTE = 'execute';
 export const ANALYSES = 'analyses';
 export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
@@ -38,6 +39,7 @@ export const VERSIONS: 'versions' = 'versions';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
+  [ACTION_EXECUTE, PIPELINES],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCKS, PIPELINES, OUTPUTS],

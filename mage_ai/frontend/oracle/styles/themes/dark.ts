@@ -75,7 +75,7 @@ export default {
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
     scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
     sidePanel: '#232429',
-    success: LIME_XLIGHT,
+    success: LIME_DARK,
     table: '#292A2F',
   },
   borders: {
