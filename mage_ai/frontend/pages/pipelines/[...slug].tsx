@@ -18,6 +18,7 @@ import PipelineContext from '@context/Pipeline';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
+import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -32,9 +33,10 @@ import {
   set,
 } from '@storage/localStorage';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { pluralize, randomNameGenerator } from '@utils/string';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
-import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -44,7 +46,10 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
-  const { width: widthWindow } = useWindowSize();
+  const {
+    height: heightWindow,
+    width: widthWindow,
+  } = useWindowSize();
   const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
   const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
   const [afterHidden, setAfterHidden] =
@@ -375,24 +380,29 @@ function PipelineDetailPage({
               setBeforeHidden={setBeforeHidden}
               setBeforeWidth={setBeforeWidth}
             >
-              {pipeline && (
-                <PipelineDetail
-                  blocks={blocks}
-                  blockRefs={blockRefs}
-                  deleteBlock={deleteBlock}
-                  fetchFileTree={fetchFileTree}
-                  isPipelineUpdating={isPipelineUpdating}
-                  mainContainerRef={mainContainerRef}
-                  mainContainerWidth={mainContainerWidth}
-                  messages={messages}
-                  pipelineContentTouched={pipelineContentTouched}
-                  pipelineLastSaved={pipelineLastSaved}
-                  runningBlocks={runningBlocks}
-                  selectedBlock={selectedBlock}
-                  setContentByBlockUUID={setContentByBlockUUID}
-                  setPipelineContentTouched={setPipelineContentTouched}
-                />
-              )}
+              <PipelineDetail
+                blocks={blocks}
+                blockRefs={blockRefs}
+                deleteBlock={deleteBlock}
+                fetchFileTree={fetchFileTree}
+                isPipelineUpdating={isPipelineUpdating}
+                mainContainerRef={mainContainerRef}
+                mainContainerWidth={mainContainerWidth}
+                messages={messages}
+                pipelineContentTouched={pipelineContentTouched}
+                pipelineLastSaved={pipelineLastSaved}
+                runningBlocks={runningBlocks}
+                selectedBlock={selectedBlock}
+                setContentByBlockUUID={setContentByBlockUUID}
+                setPipelineContentTouched={setPipelineContentTouched}
+              />
+
+              <Spacing
+                pb={Math.max(
+                  Math.floor((heightWindow / 2) / UNIT),
+                  0,
+                )}
+              />
             </TripleLayout>
           </BlockContext.Provider>
         </KernelContext.Provider>

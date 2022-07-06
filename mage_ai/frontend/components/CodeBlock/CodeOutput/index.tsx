@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Circle from '@oracle/elements/Circle';
@@ -16,6 +16,7 @@ import {
   ExtraInfoStyle,
   OutputRowStyle,
 } from './index.style';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeOutputProps = {
@@ -46,18 +47,19 @@ function CodeOutput({
 
   }
 
-  const createDataTableElement = ({ columns, rows}) => (
+  const createDataTableElement = useCallback(({ columns, rows}) => (
     <DataTable
       columns={columns}
+      disableScrolling={!selected}
       height={UNIT * 40}
-      // invalidValues={invalidValuesAll}
-      // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
-      // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
       rows={rows}
       // Remove border 2px and padding from each side
-      width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2)}
+      width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
     />
-  )
+  ), [
+    selected,
+    mainContainerWidth,
+  ]);
 
   return (
     <>

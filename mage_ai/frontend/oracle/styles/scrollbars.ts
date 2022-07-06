@@ -25,6 +25,7 @@ export const ScrollbarStyledCss = css<{
 }>`
   ${props => `
     ::-webkit-scrollbar {
+      height: ${SCROLLBAR_WIDTH}px;
       width: ${SCROLLBAR_WIDTH}px;
     }
 

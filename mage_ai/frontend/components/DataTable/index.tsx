@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -17,6 +18,7 @@ import { useSticky } from 'react-table-sticky';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import scrollbarWidth from './scrollbarWidth';
 import {
@@ -29,6 +31,7 @@ import {
 } from '@oracle/styles/fonts/sizes';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { TAB_REPORTS } from '@components/datasets/overview/constants';
+import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
 
@@ -42,6 +45,7 @@ type InvalidValueType = {
 
 type SharedProps = {
   columnHeaderHeight?: number;
+  disableScrolling?: boolean;
   height?: number;
   invalidValues?: InvalidValueType;
   previewIndexes?: {
@@ -69,8 +73,13 @@ type DataTableProps = {
 
 const Styles = styled.div<{
   columnHeaderHeight?: number;
+  disableScrolling?: boolean;
   height?: number;
 }>`
+  ${props => props.disableScrolling && `
+    overflow: hidden;
+  `}
+
   ${props => props.height && `
     height: ${props.height}px;
   `}
@@ -154,12 +163,14 @@ function Table({
   columnHeaderHeight,
   columns,
   data,
+  disableScrolling,
   height,
   invalidValues,
   previewIndexes,
   renderColumnHeader,
   width,
 }: TableProps) {
+  const themeContext = useContext(ThemeContext);
   const refHeader = useRef(null);
   const refListOuter = useRef(null);
 
@@ -365,6 +376,7 @@ function Table({
                   });
                 } else {
                   el = column.render('Header');
+                  columnStyle.color = (themeContext || dark).content.default;
                   columnStyle.padding = UNIT * 1;
                 }
 
@@ -391,7 +403,7 @@ function Table({
           itemSize={(idx: number) => estimateCellHeight(rows[idx])}
           outerRef={refListOuter}
           style={{
-            overflow: 'auto',
+            overflow: disableScrolling ? 'hidden' : 'auto',
           }}
         >
           {RenderRow}
@@ -404,6 +416,7 @@ function Table({
 function DataTable({
   columnHeaderHeight,
   columns: columnsProp,
+  disableScrolling,
   height,
   invalidValues,
   previewIndexes,
@@ -432,12 +445,14 @@ function DataTable({
   return (
     <Styles
       columnHeaderHeight={columnHeaderHeight}
+      disableScrolling={disableScrolling}
       height={height}
     >
       <Table
         columnHeaderHeight={columnHeaderHeight}
         columns={columns}
         data={rowsProp}
+        disableScrolling={disableScrolling}
         height={height}
         invalidValues={invalidValues}
         previewIndexes={previewIndexes}
