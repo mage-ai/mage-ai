@@ -6,7 +6,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   ScrollbarStyledCss,
 } from '@oracle/styles/scrollbars';
-import { hideScrollBar } from '@oracle/styles/mixins';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 50;
 export const AFTER_MIN_WIDTH = PADDING_UNITS * 3 * UNIT;
@@ -15,7 +15,7 @@ export const BEFORE_DEFAULT_WIDTH = UNIT * 35;
 export const DRAGGABLE_WIDTH = UNIT * 0.5;
 export const MAIN_MIN_WIDTH = UNIT * 13;
 
-const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
+export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
 
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;

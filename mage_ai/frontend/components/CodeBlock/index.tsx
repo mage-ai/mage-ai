@@ -191,7 +191,7 @@ function CodeBlockProps({
         type: DataTypeEnum.TEXT_PLAIN,
       }));
     }
-    return messages.filter(({ type }: KernelOutputType) => type);
+    return messages.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
   }, [
     errorMessages,
     messages,

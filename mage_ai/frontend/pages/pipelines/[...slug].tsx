@@ -356,7 +356,12 @@ function PipelineDetailPage({
             }}
           >
             <TripleLayout
-              after={<Sidekick views={SIDEKICK_VIEWS} />}
+              after={
+                <Sidekick
+                  selectedBlock={selectedBlock}
+                  views={SIDEKICK_VIEWS}
+                />
+              }
               afterHidden={afterHidden}
               afterWidth={afterWidth}
               before={fileTree}

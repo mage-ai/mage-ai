@@ -27,6 +27,7 @@ import {
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
+import { DARK_CONTENT_DEFAULT } from '@oracle/styles/colors/content';
 import { StatRow } from '../StatsTable';
 import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -218,6 +219,7 @@ export function buildRenderColumnHeader({
   columns,
   insightsByFeatureUUID,
   insightsOverview,
+  noColumnLinks = false,
   statistics,
 }) {
   return (cell, columnIndex, { width: columnWidth }) => {
@@ -227,7 +229,7 @@ export function buildRenderColumnHeader({
 
     const {
       charts,
-    } = insightsByFeatureUUID[columnUUID];
+    } = insightsByFeatureUUID[columnUUID] || {};
 
     const {
       time_series: timeSeries,
@@ -404,7 +406,6 @@ export function buildRenderColumnHeader({
           getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
           getY={([, value]) => value}
           height={COLUMN_HEADER_CHART_HEIGHT}
-          textColor={light.monotone.black}
         />
       );
     }
@@ -437,21 +438,32 @@ export function buildRenderColumnHeader({
               width: columnWidth - (UNIT * 4.5),
             }}
           >
-            <NextLink
-              as={createDatasetTabRedirectLink(TAB_VISUALIZATIONS, columnIndex)}
-              href="/datasets/[...slug]"
-              passHref
-            >
-              <Link
-                bold
-                monospace
-                secondary
-                small
-                title={columns[columnIndex]}
-              >
-                {columns[columnIndex]}
-              </Link>
-            </NextLink>
+            {noColumnLinks
+              ?
+                <Text
+                  bold
+                  default
+                  title={columns[columnIndex]}
+                >
+                  {columns[columnIndex]}
+                </Text>
+              :
+                <NextLink
+                  as={createDatasetTabRedirectLink(TAB_VISUALIZATIONS, columnIndex)}
+                  href="/datasets/[...slug]"
+                  passHref
+                >
+                  <Link
+                    bold
+                    monospace
+                    secondary
+                    small
+                    title={columns[columnIndex]}
+                  >
+                    {columns[columnIndex]}
+                  </Link>
+                </NextLink>
+            }
           </div>
         </div>
 

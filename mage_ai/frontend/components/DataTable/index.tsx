@@ -27,6 +27,7 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
@@ -74,15 +75,25 @@ const Styles = styled.div<{
     height: ${props.height}px;
   `}
 
+  .body > div {
+    ${ScrollbarStyledCss}
+  }
+
   .table {
     border-spacing: 0;
     display: inline-block;
 
     ${props => `
-      border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+      border: 1px solid ${(props.theme.borders || light.borders).medium};
     `}
 
     .tr {
+      .td:first-child {
+        ${props => `
+          color: ${(props.theme.content || light.content).default};
+        `}
+      }
+
       :last-child {
         .td {
           border-bottom: 0;
@@ -107,9 +118,9 @@ const Styles = styled.div<{
       margin: 0;
 
       ${props => `
-        background-color: ${(props.theme.monotone || light.monotone).white};
-        border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
-        border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+        background-color: ${(props.theme.background || light.background).table};
+        border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
+        border-right: 1px solid ${(props.theme.borders || light.borders).medium};
       `}
       :last-child {
         ${props => `
@@ -267,7 +278,7 @@ function Table({
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
                 <FlexContainer justifyContent="space-between">
-                  <Text danger={isInvalid} wordBreak>
+                  <Text danger={isInvalid} default wordBreak>
                     {cellValue === true && 'true'}
                     {cellValue === false && 'false'}
                     {(cellValue === null || cellValue === 'null') && 'null'}

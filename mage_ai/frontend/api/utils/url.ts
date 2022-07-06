@@ -49,6 +49,7 @@ export function buildUrl(
   childResource: string = null,
   childId: string = null,
   query: any = {},
+  grandchildResource: string = null,
 ): string {
   let path: string =`${getHost()}/${resource}`;
 
@@ -60,6 +61,9 @@ export function buildUrl(
   }
   if (childId) {
     path = `${path}/${childId}`;
+  }
+  if (grandchildResource) {
+    path = `${path}/${grandchildResource}`;
   }
 
   if (Object.values(query).length >= 1) {

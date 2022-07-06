@@ -191,6 +191,10 @@ export const SHARED_STYLES = css<TextProps>`
     color: ${(props.theme.content || light.content).active};
   `}
 
+  ${props => props.default && `
+    color: ${(props.theme.content || light.content).default};
+  `}
+
   ${props => props.inverted && `
     color: ${(props.theme.monotone || light.monotone).white};
   `}

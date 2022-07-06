@@ -309,11 +309,9 @@ function TripleLayout({
             }}
             visible={afterHidden}
           >
-            <Spacing
-              px={afterHidden ? 1 : 2}
-              py={after ? '10.5px' : 2}
-            >
-              <FlexContainer>
+            <FlexContainer alignItems="center" fullHeight fullWidth>
+              <Flex>
+                <Spacing pl={afterHidden ? 1 : 2} />
                 <Button
                   noBackground
                   noBorder
@@ -333,28 +331,27 @@ function TripleLayout({
                     />
                   )}
                 </Button>
-                {sidekickViews.map(({ key, label }: any) => {
-                  const active = key === activeSidekickView;
-                  const Icon = NAV_ICON_MAPPING[key];
+              </Flex>
+              {sidekickViews.map(({ key, label }: any) => {
+                const active = key === activeSidekickView;
+                const Icon = NAV_ICON_MAPPING[key];
 
-                  return (
-                    <Spacing key={key} pl={1}>
-                      <KeyboardShortcutButton
-                        beforeElement={<Icon />}
-                        blackBorder
-                        compact
-                        inline
-                        onClick={() => setActiveSidekickView(key)}
-                        selected={active}
-                        uuid={key}
-                      >
-                        {label}
-                      </KeyboardShortcutButton>
-                    </Spacing>
-                  );
-                })}
-              </FlexContainer>
-            </Spacing>
+                return (
+                  <Spacing key={key} pl={1}>
+                    <KeyboardShortcutButton
+                      beforeElement={<Icon />}
+                      blackBorder
+                      compact
+                      onClick={() => setActiveSidekickView(key)}
+                      selected={active}
+                      uuid={key}
+                    >
+                      {label}
+                    </KeyboardShortcutButton>
+                  </Spacing>
+                );
+              })}
+            </FlexContainer>
           </AsideHeaderStyle>
 
           <AfterInnerStyle ref={refAfterInner}>

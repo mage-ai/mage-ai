@@ -1,13 +1,16 @@
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import Pie, { ProvidedProps, PieArcDatum } from '@visx/shape/lib/shapes/Pie';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Group } from '@visx/group';
+import { ThemeContext } from 'styled-components';
 import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
+import light from '@oracle/styles/themes/light';
 import { COLORS_IN_ORDER } from './constants';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 const defaultMargin = {
@@ -63,7 +66,7 @@ function AnimatedPie<Datum>({
   getKey,
   getColor,
   onClickDatum,
-  textColor = 'white',
+  textColor,
 }: AnimatedPieProps<Datum>) {
   const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(arcs, {
     enter: enterUpdateTransition,
@@ -124,6 +127,8 @@ function PieChart({
   width,
 }: PieProps) {
   const [selectedData, setSelectedData] = useState(null);
+  const themeContext: ThemeType = useContext(ThemeContext);
+  const finalTextColor = textColor || (themeContext?.content.active || light.content.active);
 
   if (width < 10) {
     return null;
@@ -173,7 +178,7 @@ function PieChart({
                   selectedData && JSON.stringify(selectedData) === JSON.stringify(data) ? null : data,
                 )
               }
-              textColor={textColor}
+              textColor={finalTextColor}
             />
           )}
         </Pie>

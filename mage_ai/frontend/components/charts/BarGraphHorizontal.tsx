@@ -118,7 +118,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     });
 
     const colors = {
-      active: themeContext?.content.active || light.content.active,
+      active: themeContext?.content.default || light.content.default,
       backgroundPrimary: themeContext?.chart.backgroundPrimary || light.chart.backgroundPrimary,
       backgroundSecondary: themeContext?.chart.backgroundSecondary || light.chart.backgroundSecondary,
       muted: themeContext?.content.muted || light.content.muted,
@@ -289,7 +289,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
             }}
             top={tooltipTop}
           >
-            <Text small>
+            <Text black small>
               {renderTooltipContent?.(tooltipData)}
               {!renderTooltipContent && getX(tooltipData).toFixed(4)}
             </Text>

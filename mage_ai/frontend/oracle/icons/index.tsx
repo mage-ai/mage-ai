@@ -75,7 +75,7 @@ export const Binary = build([{
   cx: 6,
   cy: 6,
   r: 5,
-  fill: '#FFF',
+  fill: 'transparent',
 }, {
   clipRule: 'evenodd',
   d: 'M6 11c2.76142 0 5-2.23858 5-5S8.76142 1 6 1 1 3.23858 1 6s2.23858 5 5 5zm0 1c3.31371 0 6-2.68629 6-6S9.31371 0 6 0 0 2.68629 0 6s2.68629 6 6 6z',
