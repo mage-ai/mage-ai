@@ -330,6 +330,7 @@ function CodeBlockProps({
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
+      selected={selected}
     />
   ), [
     borderColorShareProps,
@@ -340,6 +341,7 @@ function CodeBlockProps({
     runCount,
     runEndTime,
     runStartTime,
+    selected,
   ]);
 
   return (
