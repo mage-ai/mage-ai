@@ -41,7 +41,10 @@ type OptsProps = {
   acceptErrorStatuses?: number[];
   callback?: any;
   errorMessage?: string;
-  onErrorCallback?: (resp: any) => void;
+  onErrorCallback?: (resp: any, err: {
+    code: number;
+    messages: string[];
+  }) => void;
   successMessage?: string;
 };
 

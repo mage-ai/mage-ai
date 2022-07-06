@@ -223,6 +223,7 @@ function PipelineDetailPage({
               blocksPrevious,
               blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
+            fetchPipeline();
           },
           onErrorCallback: ({
             url_parameters: urlParameters,
