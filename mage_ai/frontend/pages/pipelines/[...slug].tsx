@@ -289,6 +289,7 @@ function PipelineDetailPage({
 
   useEffect(() => {
     if (typeof pipeline?.blocks !== 'undefined') {
+      console.log("WTF SET BLOCKS")
       setBlocks(pipeline.blocks);
 
       const messagesInit = {};
