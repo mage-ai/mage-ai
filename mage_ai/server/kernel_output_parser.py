@@ -21,7 +21,6 @@ def parse_output_message(message: dict) -> dict:
     content = message['content']
     execution_state = content.get('execution_state')
 
-    df = content.get('df')
     traceback = content.get('traceback')
     data = content.get('data', {})
     metadata = content.get('metadata')
