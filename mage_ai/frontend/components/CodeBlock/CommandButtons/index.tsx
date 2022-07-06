@@ -111,7 +111,6 @@ function CommandButtons({
 
         <Spacing mt={PADDING_UNITS}>
           <Tooltip
-            appearAbove
             appearBefore
             default
             label={(

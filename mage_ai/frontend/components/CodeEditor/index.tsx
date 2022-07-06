@@ -16,6 +16,7 @@ import {
 import { MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR_FONT_SIZE as DEFAULT_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import {
+  ContainerStyle,
   PlaceholderStyle,
   SINGLE_LINE_HEIGHT,
 } from './index.style';
@@ -85,6 +86,7 @@ function CodeEditor({
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
 
+  const [mounted, setMounted] = useState<boolean>(false);
   const [heightOfContent, setHeightOfContent] = useState(height);
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
@@ -162,6 +164,8 @@ function CodeEditor({
         });
       });
     }
+
+    setMounted(true);
   }, [
     autoHeight,
     height,
@@ -170,6 +174,7 @@ function CodeEditor({
     refBottomOfEditor.current,
     runBlock,
     selected,
+    setMounted,
     setSelected,
     setTextareaFocused,
     textareaFocused,
@@ -227,7 +232,11 @@ function CodeEditor({
   ]);
 
   return (
-    <>
+    <ContainerStyle
+      style={{
+        display: mounted ? null : 'none',
+      }}
+    >
       {placeholder && !value?.length && (
         <PlaceholderStyle>
           <Text monospace muted>
@@ -265,7 +274,7 @@ function CodeEditor({
         width={width}
       />
       <div ref={refBottomOfEditor} />
-    </>
+    </ContainerStyle>
   );
 }
 

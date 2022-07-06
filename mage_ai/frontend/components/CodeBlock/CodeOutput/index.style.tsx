@@ -21,6 +21,7 @@ export const ContainerStyle = styled.div<{
   border-left-width: 2px;
   border-right-style: solid;
   border-right-width: 2px;
+  overflow: hidden;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).table};
