@@ -11,6 +11,7 @@ from mage_ai.data_preparation.templates.template import copy_template_directory
 from queue import Queue
 import asyncio
 import os
+import shutil
 import yaml
 
 
@@ -250,7 +251,7 @@ class Pipeline:
             ]
         variables_path = Variable.dir_path(self.dir_path, block.uuid)
         if os.path.exists(variables_path):
-            os.rmdir(variables_path)
+            shutil.rmtree(variables_path)
         del self.blocks_by_uuid[block.uuid]
         self.__save()
         return block
