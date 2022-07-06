@@ -1,16 +1,13 @@
 import Xarrow, { useXarrow, Xwrapper } from 'react-xarrows';
-import styled from 'styled-components';
 import { ThemeContext } from 'styled-components';
 import {
   useCallback,
   useContext,
-  useEffect,
   useMemo,
 } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -18,13 +15,14 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+
 import { ContainerStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getFinalLevelIndex } from './utils';
-import { onError, onSuccess } from '@api/utils/response';
+import { onSuccess } from '@api/utils/response';
 
 export type DependencyGraphProps = {
   blockRefs?: {
@@ -162,7 +160,7 @@ function DependencyGraph({
   return (
     <>
       {blockEditing && (
-        <Spacing px={1} pt={PADDING_UNITS}>
+        <Spacing pt={PADDING_UNITS} px={1}>
           <Spacing mb={1} px={1}>
             <Text bold>
               Currently editing block
@@ -189,34 +187,37 @@ function DependencyGraph({
 
       <ContainerStyle onScroll={updateXarrow}>
         <Xwrapper>
-          {nodeLevels.map((nodeLevel, index) => (
-            <FlexContainer alignItems="center" key={index}>
-              <Spacing mr={(index === nodeLevels.length - 1) ? 0 : 6}>
-                {nodeLevel.map((block: BlockType) => (
-                  <GraphNode
-                    block={block}
-                    disabled={blockEditing?.uuid === block.uuid}
-                    onClick={blockEditing
-                      ? onClickWhenEditingUpstreamBlocks
-                      : onClick
-                    }
-                    selected={blockEditing
-                      ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                      : selectedBlock?.uuid === block.uuid
-                    }
-                  />
-                ))}
+          <FlexContainer alignItems="flex-start" flexDirection="column">
+            {nodeLevels.map((nodeLevel, index) => (
+              <Spacing key={index} mb={(index === nodeLevels.length - 1) ? 0 : 6}>
+                <FlexContainer alignItems="center">
+                  {nodeLevel.map((block: BlockType) => (
+                    <GraphNode
+                      block={block}
+                      disabled={blockEditing?.uuid === block.uuid}
+                      key={block.uuid}
+                      onClick={blockEditing
+                        ? onClickWhenEditingUpstreamBlocks
+                        : onClick
+                      }
+                      selected={blockEditing
+                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
+                    />
+                  ))}
+                </FlexContainer>
               </Spacing>
-            </FlexContainer>
-          ))}
+            ))}
+          </FlexContainer>
           {arrows.map(({ color, end, start }) => (
             <Xarrow
               animateDrawing={0.2}
               color={color}
-              curveness={0.6}
+              curveness={0.8}
               dashness={false}
               end={end}
-              headSize={5}
+              headSize={7}
               key={`${start}_${end}`}
               start={start}
               strokeWidth={1}

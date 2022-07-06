@@ -3,7 +3,7 @@ import { Meta, Story } from '@storybook/react';
 
 import ThemeBlock from '../ThemeBlock';
 import DependencyGraph, { DependencyGraphProps } from '@components/DependencyGraph';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import { BlockTypeEnum, StatusTypeEnum } from '@interfaces/BlockType';
 
 export default {
   component: DependencyGraph,
@@ -27,17 +27,18 @@ const samplePipeline = {
   blocks: [
     {
       name: 'Data loader 1', // level 0
+      status: StatusTypeEnum.EXECUTED,
       type: BlockTypeEnum.DATA_LOADER,
       uuid: 'loader_1',
       upstream_blocks: [],
       downstream_blocks: [
         'exporter_1',
-        'scratchpad_1',
         'transformer_1',
       ],
     },
     {
       name: 'Data exporter 1', // level 1
+      status: StatusTypeEnum.NOT_EXECUTED,
       type: BlockTypeEnum.DATA_EXPORTER,
       uuid: 'exporter_1',
       upstream_blocks: [
@@ -46,16 +47,8 @@ const samplePipeline = {
       downstream_blocks: [],
     },
     {
-      name: 'Scratchpad 1', // level 1
-      type: BlockTypeEnum.SCRATCHPAD,
-      uuid: 'scratchpad_1',
-      upstream_blocks: [
-        'loader_1',
-      ],
-      downstream_blocks: [],
-    },
-    {
       name: 'Transformer 1', // level 1
+      status: StatusTypeEnum.EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_1',
       upstream_blocks: [
@@ -65,10 +58,12 @@ const samplePipeline = {
         'transformer_2',
         'transformer_3',
         'transformer_4',
+        'transformer_6',
       ],
     },
     {
       name: 'Transformer 2', // level 2
+      status: StatusTypeEnum.NOT_EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_2',
       upstream_blocks: [
@@ -78,6 +73,7 @@ const samplePipeline = {
     },
     {
       name: 'Transformer 3', // level 2
+      status: StatusTypeEnum.EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_3',
       upstream_blocks: [
@@ -89,6 +85,7 @@ const samplePipeline = {
     },
     {
       name: 'Transformer 4', // level 2
+      status: StatusTypeEnum.NOT_EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_4',
       upstream_blocks: [
@@ -97,7 +94,18 @@ const samplePipeline = {
       downstream_blocks: [],
     },
     {
+      name: 'Transformer 6', // level 2
+      status: StatusTypeEnum.NOT_EXECUTED,
+      type: BlockTypeEnum.TRANSFORMER,
+      uuid: 'transformer_6',
+      upstream_blocks: [
+        'transformer_1',
+      ],
+      downstream_blocks: [],
+    },
+    {
       name: 'Transformer 5', // level 3
+      status: StatusTypeEnum.NOT_EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_5',
       upstream_blocks: [
@@ -109,6 +117,7 @@ const samplePipeline = {
     },
     {
       name: 'Data exporter 2', // level 4
+      status: StatusTypeEnum.EXECUTED,
       type: BlockTypeEnum.DATA_EXPORTER,
       uuid: 'exporter_2',
       upstream_blocks: [
