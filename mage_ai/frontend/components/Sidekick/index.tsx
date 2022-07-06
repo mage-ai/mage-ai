@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import BlockCharts from '@components/BlockCharts';
@@ -79,6 +79,7 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
+  const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState(false);
   const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
 
@@ -130,6 +131,10 @@ function Sidekick({
           callback: () => {
             fetchPipeline();
             setErrorMessages?.(null);
+            setIsDisplayingSuccessMessage(true);
+            setTimeout(() => {
+              setIsDisplayingSuccessMessage(false);
+            }, 2500);
           },
         },
       ),
@@ -145,8 +150,15 @@ function Sidekick({
           onClick={() => executePipeline()}
           success
         >
-          <Text bold inverted>
-            Execute pipeline
+          <Text
+            bold
+            inverted
+            primary={isDisplayingSuccessMessage}
+          >
+            {isDisplayingSuccessMessage
+              ? 'Successfully executed!'
+              : 'Execute pipeline'
+            }
           </Text>
         </Button>
       </Spacing>
