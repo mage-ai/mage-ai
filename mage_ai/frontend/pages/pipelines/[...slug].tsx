@@ -154,7 +154,7 @@ function PipelineDetailPage({
     data: blockSampleData,
     mutate: fetchSampleData,
   } = api.blocks.pipelines.outputs.detail(
-    (!afterHidden && ViewKeyEnum.DATA === activeSidekickView) && pipelineUUID,
+    !afterHidden && pipelineUUID,
     selectedBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
@@ -162,7 +162,7 @@ function PipelineDetailPage({
     data: blockAnalysis,
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
-    (!afterHidden && (ViewKeyEnum.REPORTS === activeSidekickView || ViewKeyEnum.GRAPHS === activeSidekickView)) && pipelineUUID,
+    !afterHidden && pipelineUUID,
     selectedBlock?.uuid,
   );
   const {

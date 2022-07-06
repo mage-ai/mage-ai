@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
-  InsightsType,
+  InsightType,
   MetadataType,
   SampleDataType,
   SetEditingBlockType,
@@ -42,7 +42,7 @@ export type SidekickProps = {
     };
   };
   fetchPipeline: () => void;
-  insights: InsightsType;
+  insights: InsightType[][];
   metadata: MetadataType;
   pipeline: PipelineType;
   sampleData: SampleDataType;

@@ -1,3 +1,4 @@
+import FeatureType from '@interfaces/FeatureType';
 import { DataTypeEnum } from './KernelOutputType';
 
 export enum BlockTypeEnum {
@@ -24,8 +25,8 @@ export interface OutputType {
   variable_uuid: string;
 }
 
-export interface InsightsType {
-  [uuid: string]: string | number;
+export interface InsightType {
+  feature: FeatureType;
 }
 
 export interface MetadataType {
@@ -39,7 +40,7 @@ export interface StatisticsType {
 }
 
 export interface AnalysisType {
-  insights: InsightsType;
+  insights: InsightType[][];
   metadata: MetadataType;
   statistics: StatisticsType;
   suggestions: any;
