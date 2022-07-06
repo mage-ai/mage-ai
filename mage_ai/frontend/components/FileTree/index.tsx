@@ -10,9 +10,12 @@ import { ArrowDown, ArrowRight, FileFill, Folder } from '@oracle/icons';
 import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
+import { findBlockByPath } from './utils';
+import { useBlockContext } from '@context/Block';
+import { usePipelineContext } from '@context/Pipeline';
 
 export type FileTreeProps = {
-  blockRefs?: any;
+  blockRefs: any;
   tree: FileNodeType[];
 };
 
@@ -40,6 +43,8 @@ function FileTree({
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
+  const { pipeline } = usePipelineContext();
+  const { setSelectedBlock } = useBlockContext();
 
   enum TreeOperationEnum {
     CUSTOM_VAL,
@@ -56,6 +61,8 @@ function FileTree({
 
   const [tree, setTree] = useState(initialTree);
   const [selectedPath, setSelectedPath] = useState([]);
+
+  const blocks = pipeline?.blocks || [];
 
   useEffect(() => setTree(initialTree), [initialTree]);
 
@@ -101,12 +108,13 @@ function FileTree({
   const scrollToBlock = (path: string[]) => {
     const blockPath = path.slice(1).join('/');
     const blockEl = blockRefs.current[blockPath];
-    blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
+    blockEl?.current.scrollIntoView({ behavior: 'smooth' });
   };
 
   const fileTreeHandler = (path, isFolder) => (e) => {
     e.preventDefault();
     scrollToBlock(path);
+    setSelectedBlock(findBlockByPath(blocks, path));
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
