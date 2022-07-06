@@ -76,11 +76,11 @@ class BigQuery(BaseLoader):
             the table schema must match the data frame schema. If this table doesn't exist,
             the table schema is automatically inferred.
             if_exists (str): Specifies export policy if table exists. Either
-                - 'fail': throw an error.
-                - 'replace': drops existing table and creates new table of same name.
-                - 'append': appends data frame to existing table. In this case the schema must match the original table.
-            Defaults to 'replace'. If 'write_disposition` is specified as a keyword argument, this parameter
-            is ignored.
+                - `'fail'`: throw an error.
+                - `'replace'`: drops existing table and creates new table of same name.
+                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+            Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument, this parameter
+            is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
         config = LoadJobConfig(**configuration_params)

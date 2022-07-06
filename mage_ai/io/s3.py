@@ -72,7 +72,7 @@ class S3(BaseFile):
         Exports data frame to an S3 bucket.
 
         Args:
-            df (DataFrame): _description_
+            df (DataFrame): Data frame to export
             write_config (Mapping, optional): Configuration settings for writing data frame to
             specified format. Defaults to None.
             export_config (Mapping, optional): Configuration settings for exporting data frame

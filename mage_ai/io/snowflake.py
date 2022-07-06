@@ -64,10 +64,11 @@ class Snowflake(BaseSQL):
             df (DataFrame): Data frame to export to a Snowflake warehouse.
             table_name (str): Name of the table to export the data to (excludes database name, schema name).
             if_exists (str): Specifies export policy if table exists. Either
-                - 'fail': throw an error.
-                - 'replace': drops existing table and creates new table of same name.
-                - 'append': appends data frame to existing table. In this case the schema must match the original table.
-            Defaults to 'append'.
+                - `'fail'`: throw an error.
+                - `'replace'`: drops existing table and creates new table of same name.
+                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+            Defaults to `'append'`.
+            **kwargs: Additional arguments (such as `database` or `schema` to specify the database and schema to use)
         """
         exists = False
         with self._ctx.cursor() as cur:
