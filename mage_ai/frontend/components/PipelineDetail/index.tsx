@@ -304,21 +304,20 @@ function PipelineDetail({
     ],
   );
 
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      if (pipelineContentTouched) {
+        savePipelineContent();
+      }
+    }, 5000);
 
-  // useEffect(() => {
-  //   const autoSaveInterval = setInterval(() => {
-  //     if (pipelineContentTouched) {
-  //       savePipelineContent();
-  //     }
-  //   }, 5000);
-
-  //   return () => {
-  //     clearInterval(autoSaveInterval);
-  //   };
-  // }, [
-  //   pipelineContentTouched,
-  //   savePipelineContent,
-  // ]);
+    return () => {
+      clearInterval(autoSaveInterval);
+    };
+  }, [
+    pipelineContentTouched,
+    savePipelineContent,
+  ]);
 
   const onChangeCodeBlock = useCallback(
     (uuid: string, value: string) => setContentByBlockUUID({ [uuid]: value }),

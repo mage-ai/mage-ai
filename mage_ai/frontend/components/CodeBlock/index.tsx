@@ -324,7 +324,6 @@ function CodeBlockProps({
   const codeOutputEl = useMemo(() => hasOutput && (
     <CodeOutput
       {...borderColorShareProps}
-      block={block}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -335,7 +334,6 @@ function CodeBlockProps({
   ), [
     borderColorShareProps,
     hasOutput,
-    block,
     isInProgress,
     mainContainerWidth,
     messagesWithType,

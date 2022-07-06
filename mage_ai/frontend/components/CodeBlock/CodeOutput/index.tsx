@@ -28,7 +28,6 @@ type CodeOutputProps = {
 } & BorderColorShareProps;
 
 function CodeOutput({
-  block,
   blockType,
   hasError,
   isInProgress,
