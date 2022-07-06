@@ -88,6 +88,7 @@ function DependencyGraph({
                       backgroundColor={nodeColor}
                       id={uuid}
                       minWidth={MIN_NODE_WIDTH}
+                      noBorder
                       onClick={() => setSelectedBlockFinal(block)}
                       selectedAlt={selectedBlock?.uuid === uuid}
                       smallBorderRadius
