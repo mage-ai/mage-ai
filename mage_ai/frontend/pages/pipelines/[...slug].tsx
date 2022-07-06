@@ -20,10 +20,21 @@ import Sidekick from '@components/Sidekick';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import {
+  AFTER_DEFAULT_WIDTH,
+  BEFORE_DEFAULT_WIDTH,
+} from '@components/TripleLayout/index.style';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
+  get,
+  set,
+} from '@storage/localStorage';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { onSuccess } from '@api/utils/response';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { randomNameGenerator } from '@utils/string';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
@@ -32,6 +43,14 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
+  const { width: widthWindow } = useWindowSize();
+  const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
+  const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
+  const [afterHidden, setAfterHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  const [beforeHidden, setBeforeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+
   const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
@@ -51,6 +70,21 @@ function PipelineDetailPage({
       contentByBlockUUID.current = {};
     }
   }, [pipelineUUID, pipelineUUIDPrev]);
+
+  const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
+  useEffect(() => {
+    if (mainContainerRef?.current) {
+      setMainContainerWidth(mainContainerRef.current.getBoundingClientRect().width);
+    }
+  }, [
+    afterHidden,
+    afterWidth,
+    beforeHidden,
+    beforeWidth,
+    mainContainerRef?.current,
+    setMainContainerWidth,
+    widthWindow,
+  ])
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -313,9 +347,17 @@ function PipelineDetailPage({
           >
             <TripleLayout
               after={<Sidekick views={SIDEKICK_VIEWS} />}
+              afterHidden={afterHidden}
+              afterWidth={afterWidth}
               before={<FileTree blockRefs={blockRefs} tree={files} />}
               beforeHeader={<FileHeaderMenu />}
+              beforeHidden={beforeHidden}
+              beforeWidth={beforeWidth}
               mainContainerRef={mainContainerRef}
+              setAfterHidden={setAfterHidden}
+              setAfterWidth={setAfterWidth}
+              setBeforeHidden={setBeforeHidden}
+              setBeforeWidth={setBeforeWidth}
             >
               {pipeline && (
                 <PipelineDetail
@@ -325,6 +367,7 @@ function PipelineDetailPage({
                   fetchFileTree={fetchFileTree}
                   isPipelineUpdating={isPipelineUpdating}
                   mainContainerRef={mainContainerRef}
+                  mainContainerWidth={mainContainerWidth}
                   messages={messages}
                   pipelineContentTouched={pipelineContentTouched}
                   pipelineLastSaved={pipelineLastSaved}

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import Circle from '@oracle/elements/Circle';
+import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
@@ -12,11 +14,13 @@ import {
   ExtraInfoBorderStyle,
   ExtraInfoContentStyle,
   ExtraInfoStyle,
+  OutputRowStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeOutputProps = {
   isInProgress: boolean;
+  mainContainerWidth: number;
   messages: KernelOutputType[];
   runCount: Number;
   runEndTime: Number;
@@ -27,12 +31,14 @@ function CodeOutput({
   blockType,
   hasError,
   isInProgress,
+  mainContainerWidth,
   messages,
   runCount,
   runEndTime,
   runStartTime,
   selected,
 }: CodeOutputProps) {
+  const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const primaryDataType = messages[0].type;
   const executedAndIdle = !isInProgress && runCount >= 1 && runEndTime >= runStartTime;
 
@@ -62,24 +68,70 @@ function CodeOutput({
           } else {
             dataArray = [dataInit];
           }
+          dataArray = dataArray.filter(d => d);
+          const dataArrayLength = dataArray.length;
 
-          return dataArray.map((data: string) => (
-            <div key={data}>
-              {(dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) && (
-                <Text monospace>
-                  <Ansi>
-                    {data}
-                  </Ansi>
-                </Text>
-              )}
-              {dataType === DataTypeEnum.IMAGE_PNG && (
-                <img
-                  alt={`Image {idx} from code output`}
-                  src={`data:image/png;base64, ${data}`}
-                />
-              )}
-            </div>
-          ));
+          return dataArray.map((data: string, idxInner: number) => {
+            let displayElement;
+            const internalOutputRegex = /^\[__internal_output__\]/;
+            const outputRowSharedProps = {
+              first: idx === 0 && idxInner === 0,
+              last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
+            };
+
+            if (data.match(internalOutputRegex)) {
+              const rawString = data.replace(internalOutputRegex, '');
+              const {
+                data: dataDisplay,
+                type: typeDisplay,
+              } = JSON.parse(rawString);
+
+              if (DataTypeEnum.TABLE === typeDisplay) {
+                const {
+                  columns,
+                  rows,
+                } = dataDisplay;
+
+                displayElement = (
+                  <DataTable
+                    columns={columns}
+                    height={UNIT * 40}
+                    // invalidValues={invalidValuesAll}
+                    // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
+                    // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
+                    rows={rows}
+                    // Remove border 2px and padding from each side
+                    width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2)}
+                  />
+                );
+              }
+            } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  <Text monospace>
+                    <Ansi>
+                      {data}
+                    </Ansi>
+                  </Text>
+                </OutputRowStyle>
+              );
+            } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+              displayElement = (
+                <OutputRowStyle {...outputRowSharedProps}>
+                  <img
+                    alt={`Image {idx} from code output`}
+                    src={`data:image/png;base64, ${data}`}
+                  />
+                </OutputRowStyle>
+              );
+            }
+
+            return (
+              <div key={data}>
+                {displayElement}
+              </div>
+            );
+          });
         })}
       </ContainerStyle>
 

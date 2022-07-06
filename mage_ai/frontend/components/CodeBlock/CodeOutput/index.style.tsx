@@ -21,10 +21,6 @@ export const ContainerStyle = styled.div<{
   border-left-width: 2px;
   border-right-style: solid;
   border-right-width: 2px;
-  padding-left: ${LEFT_PADDING}px;
-  padding-bottom: ${UNIT * PADDING_UNITS}px;
-  padding-right: ${UNIT * PADDING_UNITS}px;
-  padding-top: ${UNIT * PADDING_UNITS}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).table};
@@ -39,6 +35,22 @@ export const ContainerStyle = styled.div<{
     border-bottom-right-radius: ${BORDER_RADIUS}px;
     border-bottom-style: solid;
     border-bottom-width: 2px;
+  `}
+`;
+
+export const OutputRowStyle = styled.div<{
+  first?: boolean;
+  last?: boolean;
+}>`
+  padding-left: ${LEFT_PADDING}px;
+  padding-right: ${UNIT * PADDING_UNITS}px;
+
+  ${props => props.first && `
+    padding-top: ${UNIT * PADDING_UNITS}px;
+  `}
+
+  ${props => props.last && `
+    padding-bottom: ${UNIT * PADDING_UNITS}px;
   `}
 `;
 

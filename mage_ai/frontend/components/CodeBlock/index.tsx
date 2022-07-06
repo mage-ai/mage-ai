@@ -64,6 +64,7 @@ type CodeBlockProps = {
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   mainContainerRef?: any;
+  mainContainerWidth: number;
   noDivider?: boolean;
   messages: KernelOutputType[];
   onChange?: (value: string) => void;
@@ -83,6 +84,7 @@ function CodeBlockProps({
   height,
   interruptKernel,
   mainContainerRef,
+  mainContainerWidth,
   messages = [],
   noDivider,
   onChange,
@@ -438,6 +440,7 @@ function CodeBlockProps({
           <CodeOutput
             {...borderColorShareProps}
             isInProgress={isInProgress}
+            mainContainerWidth={mainContainerWidth}
             messages={messagesWithType}
             runCount={runCount}
             runEndTime={runEndTime}

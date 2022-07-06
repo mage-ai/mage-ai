@@ -233,7 +233,7 @@ function Table({
           const firstColumn = idx === 0;
           const cellProps = cell.getCellProps();
           const header = cell.column.id;
-          const isInvalid = invalidValues[header]?.includes(index);
+          const isInvalid = invalidValues?.[header]?.includes(index);
           const cellStyle: {
             [key: string]: number | string;
           } = {

@@ -48,6 +48,7 @@ type PipelineDetailProps = {
   fetchFileTree: () => void;
   isPipelineUpdating: boolean;
   mainContainerRef: any;
+  mainContainerWidth: number;
   messages: {
     [uuid: string]: KernelOutputType[];
   };
@@ -67,6 +68,7 @@ function PipelineDetail({
   deleteBlock,
   isPipelineUpdating,
   mainContainerRef,
+  mainContainerWidth,
   messages,
   pipelineContentTouched,
   pipelineLastSaved,
@@ -337,6 +339,7 @@ function PipelineDetail({
         key={uuid}
         interruptKernel={interruptKernel}
         mainContainerRef={mainContainerRef}
+        mainContainerWidth={mainContainerWidth}
         messages={messages[uuid]}
         noDivider={idx === numberOfBlocks - 1}
         onChange={(value: string) => setContentByBlockUUID({ [uuid]: value })}
