@@ -358,14 +358,14 @@ def export_data_to_big_query(df: DataFrame) -> None:
     BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
     ```
     \"\"\"
-    table_name = 'your_table_name_in_bigquery'
+    table_id = 'your-project.your_dataset.your_table_name'
     config = {
         # Specify any other configuration settings here to pass to BigQuery client
         'project': 'your_project_name',
     }
     return BigQuery(**config).export(
         df,
-        table_name,
+        table_id,
         if_exists='replace',  # Specify resolution policy if table name already exists
     )
 """
