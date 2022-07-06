@@ -124,7 +124,7 @@ export default {
     wind500: '#4E32BC',
   },
   chart: {
-    backgroundPrimary: PURPLE_LIGHT,
+    backgroundPrimary: PURPLE_DARK,
     backgroundSecondary: RED_LIGHT,
     backgroundTertiary: BLUE_HIGHLIGHT_LIGHT,
     button1: BLUE_DARK,
@@ -133,7 +133,7 @@ export default {
     button4: PINK,
     button5: PEACH,
     lines: '#9B6CA7',
-    primary: PURPLE_DARK,
+    primary: PURPLE,
     secondary: RED,
     tertiary: BLUE_HIGHLIGHT,
   },
