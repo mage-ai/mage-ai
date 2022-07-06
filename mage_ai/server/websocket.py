@@ -51,6 +51,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             block = pipeline.get_block(block_uuid)
             block_output = []
             error = None
+            trace = None
             if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
                 try:
                     output = asyncio.run(block.execute(custom_code=code))
@@ -61,8 +62,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
                                 out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
                             block_output.append(out)
-                except:
-                    error = traceback.format_exc()
+                except Exception as err:
+                    error = err
+                    trace = traceback.format_exc().splitlines()
                 # Run with no code because we still need to send a message
                 msg_id = client.execute('')
             else:
@@ -72,6 +74,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 block_uuid=block_uuid,
                 block_output=block_output,
                 error=error,
+                traceback=trace,
             )
 
             WebSocketServer.running_executions_mapping[msg_id] = value
@@ -85,14 +88,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
         uuid = msg_id_value['block_uuid']
         output = msg_id_value['block_output']
-        error = msg_id_value['error']
+        trace = msg_id_value['traceback']
 
         output_dict = dict(uuid=uuid)
-        if error is not None:
-            output_dict['traceback'] = error
-        elif len(output) > 0:
-            df = find(lambda val: type(val) == pd.DataFrame, output)
-            if msg_type == 'execute_input':
+        if msg_type == 'execute_input':
+            if trace is not None:
+                output_dict['data'] = trace
+                output_dict['type'] = DataType.TEXT
+            elif len(output) > 0:
+                df = find(lambda val: type(val) == pd.DataFrame, output)
                 output_dict['data'] = json.dumps(dict(
                     columns=df.columns.to_list(),
                     rows=df.to_numpy().tolist(),
