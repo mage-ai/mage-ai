@@ -19,7 +19,7 @@ export type BlockOverviewProps = {
   statistics: any;
 };
 
-function BlockGraphs({
+function BlockCharts({
   features,
   insightsOverview,
   statistics,
@@ -118,4 +118,4 @@ function BlockGraphs({
   );
 }
 
-export default BlockGraphs;
+export default BlockCharts;
