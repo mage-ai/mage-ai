@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
@@ -145,6 +145,7 @@ function TooltipWrapper({
   content: any;
   minWidth?: number;
 }) {
+  const [visibleInterval, setVisibleInterval] = useState(false);
   const [visible, setVisible] = useState(false);
   const leftPosition = (minWidth - size) / -2;
   const ContainerEl = inline ? ContainerSpanStyle : ContainerStyle;
@@ -156,16 +157,34 @@ function TooltipWrapper({
       href="#"
       noHoverOutline={noHoverOutline}
       onClick={e => e.preventDefault()}
-      onMouseEnter={() => setVisible(true)}
+      onMouseEnter={() => setVisibleInterval(true)}
       size={size}
     >
       {children}
     </El>
   );
 
+  useEffect(() => {
+    const interval = setInterval(() => setVisible(true), 1000);
+
+    if (!visibleInterval) {
+      clearInterval(interval);
+    }
+
+    return () => {
+      return clearInterval(interval);
+    };
+  }, [
+    setVisible,
+    visibleInterval,
+  ])
+
   return (
     <ContainerEl
-      onMouseLeave={() => setVisible(false)}
+      onMouseLeave={() => {
+        setVisibleInterval(false);
+        setVisible(false);
+      }}
       size={size}
     >
       {elRendered}
