@@ -48,6 +48,8 @@ type SharedProps = {
   disableScrolling?: boolean;
   height?: number;
   invalidValues?: InvalidValueType;
+  noBorderBottom?: boolean;
+  noBorderTop?: boolean;
   previewIndexes?: {
     removedRows?: number[];
   };
@@ -75,6 +77,8 @@ const Styles = styled.div<{
   columnHeaderHeight?: number;
   disableScrolling?: boolean;
   height?: number;
+  noBorderBottom?: boolean;
+  noBorderTop?: boolean;
 }>`
   ${props => props.disableScrolling && `
     overflow: hidden;
@@ -93,7 +97,16 @@ const Styles = styled.div<{
     display: inline-block;
 
     ${props => `
-      border: 1px solid ${(props.theme.borders || light.borders).medium};
+      border-left: 1px solid ${(props.theme.borders || light.borders).medium};
+      border-right: 1px solid ${(props.theme.borders || light.borders).medium};
+    `}
+
+    ${props => !props.noBorderBottom && `
+      border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
+    `}
+
+    ${props => !props.noBorderTop && `
+      border-top: 1px solid ${(props.theme.borders || light.borders).medium};
     `}
 
     .tr {
@@ -419,6 +432,8 @@ function DataTable({
   disableScrolling,
   height,
   invalidValues,
+  noBorderBottom,
+  noBorderTop,
   previewIndexes,
   renderColumnHeader,
   rows: rowsProp,
@@ -447,6 +462,8 @@ function DataTable({
       columnHeaderHeight={columnHeaderHeight}
       disableScrolling={disableScrolling}
       height={height}
+      noBorderBottom={noBorderBottom}
+      noBorderTop={noBorderTop}
     >
       <Table
         columnHeaderHeight={columnHeaderHeight}
@@ -455,6 +472,8 @@ function DataTable({
         disableScrolling={disableScrolling}
         height={height}
         invalidValues={invalidValues}
+        noBorderBottom={noBorderBottom}
+        noBorderTop={noBorderTop}
         previewIndexes={previewIndexes}
         renderColumnHeader={renderColumnHeader}
         width={width}

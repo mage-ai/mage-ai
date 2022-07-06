@@ -1,26 +1,30 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import BlockCharts from '@components/BlockCharts';
 import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
-import {
-  ContainerStyle,
-  TABLE_COLUMN_HEADER_HEIGHT,
-} from './index.style';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
+import Text from '@oracle/elements/Text';
 import api from '@api';
+import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import {
+  ContainerStyle,
+  TABLE_COLUMN_HEADER_HEIGHT,
+} from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
+import { useWindowSize } from '@utils/sizes';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
+  afterWidth: number;
   blockRefs?: {
     [current: string]: any;
   };
@@ -42,6 +46,7 @@ export type SidekickProps = {
 
 function Sidekick({
   activeView,
+  afterWidth,
   blockRefs,
   editingBlock,
   fetchPipeline,
@@ -50,7 +55,9 @@ function Sidekick({
   setEditingBlock,
   setSelectedBlock,
 }: SidekickProps) {
-  const containerRef = useRef(null);
+  const {
+    height: heightWindow,
+  } = useWindowSize();
   const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
   const { data: blockSampleData } = api.blocks.pipelines.outputs.detail(pipelineUUID, blockUUID);
@@ -62,7 +69,6 @@ function Sidekick({
   const columnTypes = blockAnalysis?.analyses?.[0]?.metadata?.column_types || {};
   const statistics = blockAnalysis?.analyses?.[0]?.statistics || {};
   const insights = blockAnalysis?.analyses?.[0]?.insights;
-  const features = insights?.[0]?.map(({ feature }) => feature) || [];
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
@@ -77,19 +83,6 @@ function Sidekick({
     columnTypes,
     statistics,
   });
-
-  const {
-    height: dataTableHeightInit,
-    width: dataTableWidthInit,
-  } = containerRef?.current?.getBoundingClientRect?.() || {};
-  let dataTableHeight = 0;
-  let dataTableWidth = 0;
-  if (dataTableHeightInit) {
-    dataTableHeight = dataTableHeightInit;
-  }
-  if (dataTableWidthInit) {
-    dataTableWidth = dataTableWidthInit;
-  }
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -107,10 +100,7 @@ function Sidekick({
   ]);
 
   return (
-    <ContainerStyle
-      fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
-      ref={containerRef}
-    >
+    <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
       {activeView === ViewKeyEnum.TREE &&
         <DependencyGraph
           blockRefs={blockRefs}
@@ -126,10 +116,12 @@ function Sidekick({
         <DataTable
           columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
           columns={columns}
-          height={dataTableHeight}
+          height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
+          noBorderBottom
+          noBorderTop
           renderColumnHeader={renderColumnHeader}
           rows={rows}
-          width={dataTableWidth}
+          width={afterWidth}
         />
       )}
       {activeView === ViewKeyEnum.REPORTS &&
@@ -152,11 +144,9 @@ function Sidekick({
         </Spacing>
       }
       {activeView === ViewKeyEnum.GRAPHS &&
-        <BlockCharts
-          features={features}
-          insightsOverview={insightsOverview}
-          statistics={statistics}
-        />
+        <Text>
+          Graphs
+        </Text>
       }
     </ContainerStyle>
   );
