@@ -212,9 +212,10 @@ class ApiPipelineBlockListHandler(BaseHandler):
             block_data.get('name') or block_data.get('uuid'),
             block_data.get('type'),
             get_repo_path(),
-            pipeline=pipeline,
-            upstream_block_uuids=block_data.get('upstream_blocks', []),
             config=block_data.get('config'),
+            pipeline=pipeline,
+            priority=block_data.get('priority'),
+            upstream_block_uuids=block_data.get('upstream_blocks', []),
         )
         pipeline.add_block(block, block_data.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict(include_content=True)))

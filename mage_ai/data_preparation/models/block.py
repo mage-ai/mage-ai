@@ -66,7 +66,14 @@ class Block:
 
     @classmethod
     def create(
-        self, name, block_type, repo_path, pipeline=None, upstream_block_uuids=None, config=None
+        self,
+        name,
+        block_type,
+        repo_path,
+        pipeline=None,
+        priority=None,
+        upstream_block_uuids=None,
+        config=None,
     ):
         """
         1. Create a new folder for block_type if not exist
@@ -93,7 +100,7 @@ class Block:
 
         block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
         if pipeline is not None:
-            pipeline.add_block(block, upstream_block_uuids)
+            pipeline.add_block(block, upstream_block_uuids, priority=priority)
         return block
 
     @classmethod
