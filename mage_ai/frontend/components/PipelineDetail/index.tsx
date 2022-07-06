@@ -12,8 +12,10 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
-import KernelStatus from './KernelStatus';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import KernelStatus from './KernelStatus';
+import KernelType, { SetMessagesType } from '@interfaces/KernelType';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -45,53 +47,61 @@ import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
-  blocks: BlockType[];
+  addNewBlockAtIndex: (
+    block: BlockType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+  ) => void;
   blockRefs: any;
+  blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
   fetchFileTree: () => void;
+  fetchPipeline: () => void;
+  interruptKernel: () => void;
   isPipelineUpdating: boolean;
+  kernel: KernelType;
   mainContainerRef: any;
   mainContainerWidth: number;
-  messages: {
-    [uuid: string]: KernelOutputType[];
-  };
+  messages: { [uuid: string]: KernelOutputType[]; };
+  pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
+  restartKernel: () => void;
   runningBlocks: BlockType[];
+  savePipelineContent: () => void;
   selectedBlock: BlockType;
-  setContentByBlockUUID: (data: {
-    [uuid: string]: string;
-  }) => void;
+  setContentByBlockUUID: (data: { [uuid: string]: string; }) => void;
   setPipelineContentTouched: (value: boolean) => void;
-};
+  setRunningBlocks: (blocks: BlockType[]) => void;
+  setSelectedBlock: (block: BlockType) => void;
+} & SetEditingBlockType & SetMessagesType;
 
 function PipelineDetail({
-  blocks = [],
+  addNewBlockAtIndex,
   blockRefs,
+  blocks = [],
   deleteBlock,
+  fetchFileTree,
+  fetchPipeline,
+  interruptKernel,
   isPipelineUpdating,
+  kernel,
   mainContainerRef,
   mainContainerWidth,
   messages,
+  pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
+  restartKernel,
   runningBlocks = [],
+  savePipelineContent,
   selectedBlock,
   setContentByBlockUUID,
+  setEditingBlock,
+  setMessages,
   setPipelineContentTouched,
-
-    fetchPipeline,
-    fetchFileTree,
-    pipeline,
-    savePipelineContent,
-    interruptKernel,
-    kernel,
-    restartKernel,
-    setMessages,
-    addNewBlockAtIndex,
-    setRunningBlocks,
-    setSelectedBlock,
-    setEditingBlock,
+  setRunningBlocks,
+  setSelectedBlock,
 }: PipelineDetailProps) {
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);

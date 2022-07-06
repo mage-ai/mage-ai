@@ -31,11 +31,17 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
+type FileHeaderMenuProps = {
+  interruptKernel: () => void;
+  restartKernel: () => void;
+  savePipelineContent: () => void;
+};
+
 function FileHeaderMenu({
-  savePipelineContent,
   interruptKernel,
   restartKernel,
-}) {
+  savePipelineContent,
+}: FileHeaderMenuProps) {
   const router = useRouter();
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);

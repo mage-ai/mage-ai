@@ -423,60 +423,58 @@ function PipelineDetailPage({
   ]);
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
+      addNewBlockAtIndex={addNewBlockAtIndex}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
+      fetchPipeline={fetchPipeline}
+      interruptKernel={interruptKernel}
       isPipelineUpdating={isPipelineUpdating}
+      kernel={kernel}
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
       messages={messages}
+      pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
+      restartKernel={restartKernel}
       runningBlocks={runningBlocks}
+      savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
       setContentByBlockUUID={setContentByBlockUUID}
-      setPipelineContentTouched={setPipelineContentTouched}
-
-      fetchPipeline={fetchPipeline}
-      pipeline={pipeline}
-      savePipelineContent={savePipelineContent}
-      interruptKernel={interruptKernel}
-      kernel={kernel}
-      restartKernel={restartKernel}
+      setEditingBlock={setEditingBlock}
       setMessages={setMessages}
-      addNewBlockAtIndex={addNewBlockAtIndex}
+      setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
-      setEditingBlock={setEditingBlock}
     />
   ), [
+    addNewBlockAtIndex,
     blockRefs,
     blocks,
     deleteBlock,
     fetchFileTree,
+    fetchPipeline,
+    interruptKernel,
     isPipelineUpdating,
+    kernel,
     mainContainerRef,
     mainContainerWidth,
     messages,
+    pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
+    restartKernel,
     runningBlocks,
+    savePipelineContent,
     selectedBlock,
     setContentByBlockUUID,
-    setPipelineContentTouched,
-
-    fetchPipeline,
-    pipeline,
-    savePipelineContent,
-    interruptKernel,
-    kernel,
-    restartKernel,
+    setEditingBlock,
     setMessages,
-    addNewBlockAtIndex,
+    setPipelineContentTouched,
     setRunningBlocks,
     setSelectedBlock,
-    setEditingBlock,
   ]);
 
   return (

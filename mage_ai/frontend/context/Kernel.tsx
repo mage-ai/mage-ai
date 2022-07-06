@@ -7,9 +7,6 @@ type KernelContextType = {
   interruptKernel: () => void;
   kernel: KernelType;
   restartKernel: () => void;
-  setMessages: (messages: {
-    [uuid: string]: KernelOutputType[];
-  }) => void;
 };
 
 const KernelContext = React.createContext<KernelContextType>({

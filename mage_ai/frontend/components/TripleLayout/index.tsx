@@ -46,17 +46,21 @@ type TripleLayoutProps = {
   activeSidekickView: ViewKeyEnum;
   after?: any;
   afterHidden: boolean;
+  afterMousedownActive: boolean;
   afterWidth: number;
   before?: any;
   beforeHeader?: any;
   beforeHidden: boolean;
+  beforeMousedownActive: boolean;
   beforeWidth: number;
   children: any;
   mainContainerRef: any;
   setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAfterHidden: (value: boolean) => void;
+  setAfterMousedownActive: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
   setBeforeHidden: (value: boolean) => void;
+  setBeforeMousedownActive: (value: boolean) => void;
   setBeforeWidth: (width: number) => void;
 };
 
@@ -64,22 +68,22 @@ function TripleLayout({
   activeSidekickView,
   after,
   afterHidden,
+  afterMousedownActive,
   afterWidth,
   before,
   beforeHeader,
   beforeHidden,
+  beforeMousedownActive,
   beforeWidth,
   children,
   mainContainerRef,
   setActiveSidekickView,
   setAfterHidden,
+  setAfterMousedownActive,
   setAfterWidth,
   setBeforeHidden,
-  setBeforeWidth,
-  afterMousedownActive,
-  setAfterMousedownActive,
-  beforeMousedownActive,
   setBeforeMousedownActive,
+  setBeforeWidth,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);

@@ -3,3 +3,9 @@ export default interface KernelType {
   id: string;
   name: string;
 }
+
+export type SetMessagesType = {
+  setMessages: (messages: {
+    [uuid: string]: KernelOutputType[];
+  }) => void;
+};

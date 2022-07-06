@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
+import BlockType from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
@@ -14,6 +16,8 @@ import { findBlockByPath } from './utils';
 
 export type FileTreeProps = {
   blockRefs: any;
+  pipeline: PipelineType;
+  setSelectedBlock: (block: BlockType) => void;
   tree: FileNodeType[];
 };
 
