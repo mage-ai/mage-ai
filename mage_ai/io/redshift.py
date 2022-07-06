@@ -16,7 +16,7 @@ class Redshift(BaseSQL):
         super().__init__(**kwargs)
 
     @classmethod
-    def from_config(cls, config: Mapping[str, Any]) -> 'Redshift':
+    def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
         aws_config = config['AWS']
         redshift_config = aws_config['Redshift']
         credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']

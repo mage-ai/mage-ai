@@ -42,7 +42,7 @@ class BaseIO(ABC):
 
     @classmethod
     @abstractmethod
-    def from_config(cls, config: Mapping[str, Any]) -> None:
+    def with_config(cls, config: Mapping[str, Any]) -> None:
         pass
 
     @abstractmethod

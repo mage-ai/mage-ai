@@ -111,7 +111,7 @@ class S3(BaseFile):
                 )
 
     @classmethod
-    def from_config(cls, config: Mapping[str, Any]) -> 'S3':
+    def with_config(cls, config: Mapping[str, Any]) -> 'S3':
         aws_config = config['AWS']
         s3_config = aws_config['S3']
         credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']

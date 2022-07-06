@@ -18,19 +18,19 @@ class IOConfig:
         """
         self.filepath = pathlib.Path(filepath)
 
-    def use(self, profile: str = 'default') -> Mapping[str, Any]:
+    def use(self, profile: str) -> Mapping[str, Any]:
         """
         Specifies the profile to use. Profiles are sets of configuration settings.
 
         Args:
-            profile (str, optional): Name of the profile to use. Defaults to 'default'.
+            profile (str): Name of the profile to use.
 
         Returns:
             Mapping[str, Any]: Configuration settings for this profile
         """
         with self.filepath.open('r') as fin:
-            config = yaml.full_load(fin)
+            config = yaml.full_load(fin.read())
         profile_settings = config.get(profile)
         if profile_settings is None:
-            raise ValueError(f'Invalid config profile specified: \'{profile}\'')
+            raise ValueError(f'Invalid configuration profile specified: \'{profile}\'')
         return profile_settings

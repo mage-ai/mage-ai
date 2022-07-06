@@ -101,7 +101,7 @@ class BigQuery(BaseIO):
             self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
     @classmethod
-    def from_config(cls, config: Mapping[str, Any]) -> 'BigQuery':
+    def with_config(cls, config: Mapping[str, Any]) -> 'BigQuery':
         return cls(**config['BigQuery'])
 
     @classmethod
