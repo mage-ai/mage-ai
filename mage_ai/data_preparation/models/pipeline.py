@@ -168,7 +168,7 @@ class Pipeline:
                     if 'content' in block_data:
                         block.update_content(block_data['content'])
                     if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
-                        block.save_outputs(block_data['outputs'])
+                        block.save_outputs(block_data['outputs'], override=True)
 
     def add_block(self, block, upstream_block_uuids=[], priority=None):
         upstream_blocks = self.get_blocks(upstream_block_uuids)

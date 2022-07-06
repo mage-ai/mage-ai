@@ -32,6 +32,18 @@ class Variable:
     def dir_path(self, pipeline_path, block_uuid):
         return os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
 
+    def delete(self):
+        if self.variable_type is None and os.path.exists(
+            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
+        ):
+            # If parquet file exists for given variable, set the variable type to DATAFRAME
+            self.variable_type = VariableType.DATAFRAME
+        if self.variable_type == VariableType.DATAFRAME:
+            self.__delete_parquet()
+        elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
+            return self.__delete_dataframe_analysis()
+        return self.__delete_json()
+
     def write_data(self, data: Any) -> None:
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
@@ -59,6 +71,20 @@ class Variable:
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
+
+    def __delete_dataframe_analysis(self):
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')        
+        for k in DATAFRAME_ANALYSIS_KEYS:
+            os.remove(os.path.join(variable_path, f'{k}.json'))
+
+    def __delete_json(self):
+        file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
+        os.remove(file_path)
+
+    def __delete_parquet(self):
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
+        file_path = os.path.join(variable_path, 'data.parquet')
+        os.remove(file_path)
 
     def __read_json(self, default_value={}):
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')

@@ -28,6 +28,20 @@ class VariableManager:
         )
         variable.write_data(data)
 
+    def delete_variable(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        variable_type: VariableType = None,
+    ) -> None:
+        Variable(
+            variable_uuid,
+            self.__pipeline_path(pipeline_uuid),
+            block_uuid,
+            variable_type=variable_type,
+        ).delete()
+
     def get_variable(
         self,
         pipeline_uuid: str,

@@ -259,12 +259,12 @@ class Block:
             outputs.append(data)
         return outputs
 
-    def save_outputs(self, outputs):
+    def save_outputs(self, outputs, override=False):
         variable_mapping = dict()
         for o in outputs:
             if all(k in o for k in ['variable_uuid', 'text_data']):
                 variable_mapping[o['variable_uuid']] = o['text_data']
-        self.__store_variables(variable_mapping)
+        self.__store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
@@ -324,15 +324,27 @@ class Block:
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
 
-    def __store_variables(self, variable_mapping):
+    def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
+        variable_manager = VariableManager(self.pipeline.repo_path)
+        all_variables = variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid
+        )
+        removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
-            VariableManager(self.pipeline.repo_path).add_variable(
+            variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 uuid,
                 data,
+            )
+        for uuid in removed_variables:
+            variable_manager.delete_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                uuid,
             )
 
     # TODO: Update all pipelines that use this block
