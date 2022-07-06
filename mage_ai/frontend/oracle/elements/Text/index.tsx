@@ -54,6 +54,7 @@ export type TextProps = {
   noWrapping?: boolean;
   overflow?: string;
   overflowWrap?: boolean;
+  preWrap?: boolean;
   primary?: boolean;
   raw?: boolean;
   rightAligned?: boolean;
@@ -307,6 +308,10 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.whiteSpaceNormal && `
     white-space: normal;
+  `}
+
+  ${props => props.preWrap && `
+    white-space: pre-wrap;
   `}
 `;
 
