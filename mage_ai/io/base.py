@@ -30,7 +30,7 @@ FORMAT_TO_FUNCTION = {
 }
 
 
-class BaseLoader(ABC):
+class BaseIO(ABC):
     """
     Data loader interface. All data loaders must inherit from this interface.
     """
@@ -58,7 +58,7 @@ class BaseLoader(ABC):
         pass
 
 
-class BaseFile(BaseLoader):
+class BaseFile(BaseIO):
     """
     Data loader for file-like data sources (for example, loading from local
     filesystem or external file storages such as AWS S3)
@@ -117,7 +117,7 @@ class BaseFile(BaseLoader):
         return writer
 
 
-class BaseSQL(BaseLoader):
+class BaseSQL(BaseIO):
     """
     Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
     to the SQL data source after data loading is complete.

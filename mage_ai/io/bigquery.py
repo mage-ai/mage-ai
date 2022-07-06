@@ -1,11 +1,11 @@
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseLoader
+from mage_ai.io.base import BaseIO
 from pandas import DataFrame
 from typing import Mapping
 
 
-class BigQuery(BaseLoader):
+class BigQuery(BaseIO):
     """
     Handles data transfer betwee a BigQuery data warehouse and the Mage app.
     """
