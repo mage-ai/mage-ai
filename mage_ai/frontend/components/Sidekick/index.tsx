@@ -1,10 +1,14 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { ContainerStyle } from './index.style';
+import {
+  ContainerStyle,
+  TABLE_COLUMN_HEADER_HEIGHT,
+  TOTAL_PADDING,
+} from './index.style';
 import { ViewKeyEnum } from './constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
@@ -23,6 +27,7 @@ function Sidekick({
   activeView,
   selectedBlock,
 }: SidekickProps) {
+  const containerRef = useRef(null);
   const blockUUID = selectedBlock?.uuid;
   const selectedPipeline = usePipelineContext();
   const pipelineUUID = selectedPipeline?.pipeline?.uuid;
@@ -44,6 +49,19 @@ function Sidekick({
     insights,
   ]);
 
+  const {
+    height: dataTableHeightInit,
+    width: dataTableWidthInit,
+  } = containerRef?.current?.getBoundingClientRect?.() || {};
+  let dataTableHeight = 0;
+  let dataTableWidth = 0;
+  if (dataTableHeightInit) {
+    dataTableHeight = dataTableHeightInit - TOTAL_PADDING;
+  }
+  if (dataTableWidthInit) {
+    dataTableWidth = dataTableWidthInit - TOTAL_PADDING;
+  }
+
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
     columns,
@@ -59,7 +77,7 @@ function Sidekick({
   ]);
 
   return (
-    <ContainerStyle>
+    <ContainerStyle ref={containerRef}>
       {activeView === ViewKeyEnum.TREE &&
         <Text>
           Tree
@@ -67,14 +85,12 @@ function Sidekick({
       }
       {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
         <DataTable
-          columnHeaderHeight={150}
+          columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
           columns={columns}
-          height={1000}
-          invalidValues={{}}
-          // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
+          height={dataTableHeight}
           renderColumnHeader={renderColumnHeader}
           rows={rows}
-          // width={dataTableWidth}
+          width={dataTableWidth}
         />
       )}
       {activeView === ViewKeyEnum.REPORTS &&

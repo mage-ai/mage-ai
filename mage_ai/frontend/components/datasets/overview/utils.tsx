@@ -227,7 +227,7 @@ export function buildRenderColumnHeader({
 
     const {
       charts,
-    } = insightsByFeatureUUID[columnUUID];
+    } = insightsByFeatureUUID[columnUUID] || {};
 
     const {
       time_series: timeSeries,
