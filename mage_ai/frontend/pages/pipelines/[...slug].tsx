@@ -301,7 +301,10 @@ function PipelineDetailPage({
       }: BlockType) => {
         messagesInit[uuid] = outputs.map(({
           text_data: textDataJsonString,
-        }: OutputType) => JSON.parse(textDataJsonString));
+        }: OutputType) => textDataJsonString
+          ? JSON.parse(textDataJsonString)
+          : textDataJsonString
+        );
         contentByBlockUUID.current[uuid] = content;
       });
 
