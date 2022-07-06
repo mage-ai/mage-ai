@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 
+import BlockOverview from '@components/BlockOverview';
 import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -151,9 +152,7 @@ function Sidekick({
         </Spacing>
       }
       {activeView === ViewKeyEnum.GRAPHS &&
-        <Text>
-          Graphs
-        </Text>
+        <BlockOverview insightsOverview={insightsOverview} />
       }
     </ContainerStyle>
   );
