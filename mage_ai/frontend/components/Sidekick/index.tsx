@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -13,11 +14,21 @@ import {
 import { ViewKeyEnum } from './constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
-import { usePipelineContext } from '@context/Pipeline';
 
 export type SidekickProps = {
   activeView?: string;
+  blockRefs?: {
+    [current: string]: any;
+  };
+  editingBlock: {
+    upstreamBlocks: {
+      block: BlockType;
+      values: BlockType[];
+    };
+  };
+  pipeline: PipelineType;
   selectedBlock: BlockType;
+  setSelectedBlock: (block: BlockType) => void;
   views: {
     key: string;
     label: string;
@@ -26,12 +37,15 @@ export type SidekickProps = {
 
 function Sidekick({
   activeView,
+  blockRefs,
+  editingBlock,
+  pipeline,
   selectedBlock,
+  setSelectedBlock,
 }: SidekickProps) {
   const containerRef = useRef(null);
   const blockUUID = selectedBlock?.uuid;
-  const selectedPipeline = usePipelineContext();
-  const pipelineUUID = selectedPipeline?.pipeline?.uuid;
+  const pipelineUUID = pipeline?.uuid;
   const { data: blockSampleData } = api.blocks.pipelines.outputs.detail(pipelineUUID, blockUUID);
   const { data: blockAnalysis } = api.blocks.pipelines.analyses.detail(pipelineUUID, blockUUID);
 
@@ -82,8 +96,11 @@ function Sidekick({
     <ContainerStyle ref={containerRef}>
       {activeView === ViewKeyEnum.TREE &&
         <DependencyGraph
-          pipeline={selectedPipeline?.pipeline}
+          blockRefs={blockRefs}
+          editingBlock={editingBlock}
+          pipeline={pipeline}
           selectedBlock={selectedBlock}
+          setSelectedBlock={setSelectedBlock}
         />
       }
       {activeView === ViewKeyEnum.DATA && columns.length > 0 && (

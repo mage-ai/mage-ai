@@ -34,9 +34,12 @@ import {
 } from '@storage/localStorage';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { pluralize, randomNameGenerator } from '@utils/string';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
+import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -56,6 +59,26 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+
+  const qFromUrl = queryFromUrl();
+  const activeSidekickView = qFromUrl[VIEW_QUERY_PARAM];
+  const setActiveSidekickView = useCallback((
+    newView: ViewKeyEnum,
+    pushHistory: boolean = true,
+  ) => {
+    goToWithQuery({
+      [VIEW_QUERY_PARAM]: newView,
+    }, {
+      pushHistory,
+    });
+  }, [
+    activeSidekickView,
+  ]);
+  useEffect(() => {
+    if (!activeSidekickView) {
+      setActiveSidekickView(ViewKeyEnum.TREE, false);
+    }
+  }, [activeSidekickView]);
 
   const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
@@ -98,8 +121,23 @@ function PipelineDetailPage({
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
+  const [editingBlock, setEditingBlock] = useState<{
+    upstreamBlocks: {
+      block: BlockType;
+      values: BlockType[];
+    };
+  }>({
+    upstreamBlocks: null,
+  });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
+
+  useEffect(() => {
+    if (editingBlock.upstreamBlocks?.block) {
+      setAfterHidden(false);
+      setActiveSidekickView(ViewKeyEnum.TREE);
+    };
+  }, [editingBlock.upstreamBlocks]);
 
   // Kernels
   const [messages, setMessages] = useState<{
@@ -275,6 +313,7 @@ function PipelineDetailPage({
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
             fetchFileTree();
+            fetchPipeline();
           },
           onErrorCallback: ({
             error: {
@@ -330,6 +369,21 @@ function PipelineDetailPage({
     blockRefs,
     files,
   ]);
+  const sideKick = useMemo(() => (
+    <Sidekick
+      blockRefs={blockRefs}
+      editingBlock={editingBlock}
+      pipeline={pipeline}
+      selectedBlock={selectedBlock}
+      setSelectedBlock={setSelectedBlock}
+      views={SIDEKICK_VIEWS}
+    />
+  ), [
+    blockRefs,
+    editingBlock,
+    pipeline,
+    selectedBlock,
+  ]);
 
   return (
     <>
@@ -356,17 +410,14 @@ function PipelineDetailPage({
             value={{
               addNewBlockAtIndex,
               setBlocks,
+              setEditingBlock,
               setRunningBlocks,
               setSelectedBlock,
             }}
           >
             <TripleLayout
-              after={
-                <Sidekick
-                  selectedBlock={selectedBlock}
-                  views={SIDEKICK_VIEWS}
-                />
-              }
+              activeSidekickView={activeSidekickView}
+              after={sideKick}
               afterHidden={afterHidden}
               afterWidth={afterWidth}
               before={fileTree}
@@ -374,6 +425,7 @@ function PipelineDetailPage({
               beforeHidden={beforeHidden}
               beforeWidth={beforeWidth}
               mainContainerRef={mainContainerRef}
+              setActiveSidekickView={setActiveSidekickView}
               setAfterHidden={setAfterHidden}
               setAfterWidth={setAfterWidth}
               setBeforeHidden={setBeforeHidden}
