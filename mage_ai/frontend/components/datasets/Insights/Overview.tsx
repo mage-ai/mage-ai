@@ -40,8 +40,10 @@ export const ChartStyle = styled.div`
 export const ChartHeaderStyle = styled.div`
 `;
 
-export const HeaderStyle = styled.div`
-  background: ${SILVER};
+export const HeaderStyle = styled.div<any>`
+  ${props => `
+    background: ${(props.theme.background || light.background).header};
+  `}
   padding: ${PADDING}px;
   border-bottom: 1px solid ${GRAY_LINES};
   border-top-left-radius: ${BORDER_RADIUS_LARGE}px;
