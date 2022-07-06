@@ -14,6 +14,11 @@ export enum ViewKeyEnum {
   TREE = 'tree',
 }
 
+export const FULL_WIDTH_VIEWS = [
+  ViewKeyEnum.REPORTS,
+  ViewKeyEnum.DATA,
+];
+
 export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.TREE, label: 'Tree' },
   { key: ViewKeyEnum.DATA, label: 'Data' },

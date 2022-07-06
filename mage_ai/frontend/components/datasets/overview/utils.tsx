@@ -27,7 +27,6 @@ import {
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { ChartTypeEnum } from '@interfaces/InsightsType';
 import { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
-import { DARK_CONTENT_DEFAULT } from '@oracle/styles/colors/content';
 import { StatRow } from '../StatsTable';
 import { TAB_VISUALIZATIONS } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -91,7 +90,7 @@ export function createMetricsSample({
   return metricRows;
 }
 
-function getColumnTypeCounts(
+export function getColumnTypeCounts(
   columnTypes: string[],
 ): {
   countCategory?: number,

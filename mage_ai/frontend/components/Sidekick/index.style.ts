@@ -9,7 +9,11 @@ const SCROLLBAR_HEIGHT = UNIT * 2;
 export const TOTAL_PADDING = UNIT * 4;
 export const TABLE_COLUMN_HEADER_HEIGHT = COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3) + REGULAR_LINE_HEIGHT
 
-export const ContainerStyle = styled.div`
+export const ContainerStyle = styled.div<{ fullWidth: boolean }>`
   height: calc(100vh - ${ASIDE_HEADER_HEIGHT}px - ${SCROLLBAR_HEIGHT}px);
   width: fit-content;
+
+  ${props => props.fullWidth && `
+    width: 100%;
+  `}
 `;

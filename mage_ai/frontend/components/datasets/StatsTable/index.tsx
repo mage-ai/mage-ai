@@ -64,18 +64,18 @@ function StatsTable({ stats, title }: StatsTableProps) {
             condensed={!!change}
             key={`${name}_${idx}`}
           >
-            <Text>{name}</Text>
+            <Text default>{name}</Text>
             <>
               {value !== undefined &&
                 <Spacing pr={1}>
-                  <Text {...warn}>
+                  <Text default {...warn}>
                     {value}
                   </Text>
                 </Spacing>
               }
               {rate !== undefined &&
                 <Spacing pr={1}>
-                  <Text {...warn}>
+                  <Text default {...warn}>
                     {stylePercent(value, rate)}
                   </Text>
                 </Spacing>
