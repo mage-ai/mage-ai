@@ -41,6 +41,7 @@ import {
 } from '@storage/localStorage';
 import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { pauseEvent } from '@utils/events';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
@@ -120,6 +121,7 @@ function TripleLayout({
         && e.offsetX <= e.target.offsetWidth + DRAGGABLE_WIDTH
       ) {
         setBeforeMousedownActive(true);
+      pauseEvent(e);
         document?.addEventListener?.('mousemove', resizeBefore, false);
       }
     };
@@ -162,6 +164,7 @@ function TripleLayout({
     const addMousedown = (e) => {
       if (e.offsetX >= -1 * DRAGGABLE_WIDTH && e.offsetX <= DRAGGABLE_WIDTH) {
         setAfterMousedownActive(true);
+        pauseEvent(e);
         document?.addEventListener?.('mousemove', resizeAfter, false);
       }
     };

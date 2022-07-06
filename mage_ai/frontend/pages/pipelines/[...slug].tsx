@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -313,8 +314,14 @@ function PipelineDetailPage({
   ]);
 
   // TODO: API should report filesystem as FileNodeType[], not FileNodeType
-  const files = filesData ? [filesData?.files] : [];
+  const files = useMemo(() => filesData ? [filesData?.files] : [], [
+    filesData?.files,
+  ]);
   const blockRefs = useRef({});
+  const fileTree = useMemo(() => <FileTree blockRefs={blockRefs} tree={files} />, [
+    blockRefs,
+    files,
+  ]);
 
   return (
     <>
@@ -349,7 +356,7 @@ function PipelineDetailPage({
               after={<Sidekick views={SIDEKICK_VIEWS} />}
               afterHidden={afterHidden}
               afterWidth={afterWidth}
-              before={<FileTree blockRefs={blockRefs} tree={files} />}
+              before={fileTree}
               beforeHeader={<FileHeaderMenu />}
               beforeHidden={beforeHidden}
               beforeWidth={beforeWidth}
