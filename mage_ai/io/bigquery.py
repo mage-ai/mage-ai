@@ -72,7 +72,8 @@ class BigQuery(BaseIO):
 
         Args:
             df (DataFrame): Data frame to export
-            table_id (str): ID of the table to export the data frame to. If this table exists,
+            table_id (str): ID of the table to export the data frame to. If of the format
+            `"your-project.your_dataset.your_table_name"`. If this table exists,
             the table schema must match the data frame schema. If this table doesn't exist,
             the table schema is automatically inferred.
             if_exists (str): Specifies export policy if table exists. Either
