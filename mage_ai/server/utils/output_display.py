@@ -13,11 +13,22 @@ def add_internal_output_info(code: str) -> str:
     if re.findall(r'print\(', last_line):
         is_print_statement = True
 
-    code_without_last_line = '\n'.join(code_lines[:-1])
+    last_line_in_block = False
+    if len(code_lines) >= 2:
+        line_before_last_line = code_lines[-2]
+        if re.search(r'^[ ]{2,}[\w]+', line_before_last_line) and \
+           re.search(r'^[ ]{2,}[\w]+', code_lines[-1]):
+            last_line_in_block = True
 
-    print(last_line)
+    code_lines_final = []
 
-    internal_output = f"""
+    print('last_line_in_block', last_line_in_block)
+
+    if last_line_in_block:
+        code_lines_final.append(code)
+    else:
+        code_without_last_line = '\n'.join(code_lines[:-1])
+        internal_output = f"""
 from datetime import datetime
 import pandas as pd
 import simplejson
@@ -46,8 +57,7 @@ def __custom_output():
 
 __custom_output()
 """
+        code_lines_final.append(code_without_last_line)
+        code_lines_final.append(internal_output)
 
-    return f"""
-{code_without_last_line}
-{internal_output}
-"""
+    return '\n'.join(code_lines_final)
