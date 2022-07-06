@@ -27,6 +27,7 @@ import {
   REGULAR,
   REGULAR_LINE_HEIGHT,
 } from '@oracle/styles/fonts/sizes';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
@@ -73,6 +74,10 @@ const Styles = styled.div<{
   ${props => props.height && `
     height: ${props.height}px;
   `}
+
+  .body > div {
+    ${ScrollbarStyledCss}
+  }
 
   .table {
     border-spacing: 0;

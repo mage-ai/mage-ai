@@ -6,7 +6,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   ScrollbarStyledCss,
 } from '@oracle/styles/scrollbars';
-import { hideScrollBar } from '@oracle/styles/mixins';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 50;
 export const AFTER_MIN_WIDTH = PADDING_UNITS * 3 * UNIT;

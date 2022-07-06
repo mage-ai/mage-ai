@@ -7,6 +7,19 @@ import { transition } from '@oracle/styles/mixins';
 
 export const SCROLLBAR_WIDTH = UNIT * 1;
 
+export function hideScrollBar() {
+  return `
+    // for Internet Explorer, Edge
+    -ms-overflow-style: none;
+    // for Firefox
+    scrollbar-width: none;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  `;
+}
+
 export const ScrollbarStyledCss = css<{
   scrollbarBorderRadiusLarge?: boolean;
 }>`
