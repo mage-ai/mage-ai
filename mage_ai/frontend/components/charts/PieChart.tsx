@@ -7,11 +7,11 @@ import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
 import light from '@oracle/styles/themes/light';
-import { COLORS_IN_ORDER } from './constants';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { getChartColors } from './constants';
 
 const defaultMargin = {
   bottom: 0,
@@ -136,7 +136,7 @@ function PieChart({
 
   const getColor = scaleOrdinal({
     domain: data.map(d => getX(d)),
-    range: COLORS_IN_ORDER,
+    range: getChartColors(themeContext),
   });
 
   const innerWidth = width - margin.left - margin.right;

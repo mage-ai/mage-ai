@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
-import styled from 'styled-components';
+import styled, { ThemeContext } from 'styled-components';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { Bar, Line, LinePath } from '@visx/shape';
 import { GridRows, GridColumns } from '@visx/grid';
@@ -22,13 +22,13 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BLUE } from '@oracle/styles/colors/main';
-import { COLORS } from './constants';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
-import { AxisEnum } from '@interfaces/ActionPayloadType';
+import { getChartColors } from './constants';
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: light.background.navigation,
@@ -100,6 +100,8 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   yLabelFormat,
   // @ts-ignore
 }: LineSeriesProps & WithTooltipProvidedProps) => {
+  const themeContext = useContext(ThemeContext);
+
   const getX = getXProp || (d => d?.x);
   const getY = getYProp || ((d, idx = 0) => d?.y[idx]);
 
@@ -143,7 +145,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
     ? (increasedXTicks ? 20 : 10)
     : (increasedXTicks ? 10 : 5);
 
-  const strokeColors = COLORS;
+  const strokeColors = getChartColors(themeContext);
   const axisStrokeColor = text;
   const linePathProps = strokeColors.map(color => ({ stroke: color }));
 
