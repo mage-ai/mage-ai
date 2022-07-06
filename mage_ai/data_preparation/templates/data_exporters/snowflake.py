@@ -1,3 +1,4 @@
+from mage_ai.io.io_config import IOConfig
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 
@@ -13,13 +14,10 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     table_name = 'your_table_name'
     database = 'your_database_name'
     schema = 'your_schema_name'
-    config = {
-        'user': 'your_snowflake_username',
-        'password': 'your_snowflake_password',
-        'account': 'your_snowflake_account_identifier',
-    }
+    config_path = 'path/to/your/io/config/file.yaml'
+    config_profile = 'default'
 
-    with Snowflake(**config) as loader:
+    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
         return loader.export(
             df,
             table_name,

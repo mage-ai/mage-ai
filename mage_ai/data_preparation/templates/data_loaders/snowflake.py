@@ -1,3 +1,4 @@
+from mage_ai.io.io_config import IOConfig
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 
@@ -10,12 +11,9 @@ def load_data_from_snowflake() -> DataFrame:
     """
     Template code for loading data from a Snowflake warehouse
     """
-    config = {
-        'user': 'your_snowflake_username',
-        'password': 'your_snowflake_password',
-        'account': 'your_snowflake_account_identifier',
-    }
     query = 'your_snowflake_query'
+    config_path = 'path/to/your/io/config/file.yaml'
+    config_profile = 'default'
 
-    with Snowflake(**config) as loader:
+    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
         return loader.load(query)

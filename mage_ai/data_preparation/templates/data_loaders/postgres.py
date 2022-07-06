@@ -1,3 +1,4 @@
+from mage_ai.io.io_config import IOConfig
 from mage_ai.io.postgres import Postgres
 from pandas import DataFrame
 
@@ -11,15 +12,8 @@ def load_data_from_postgres() -> DataFrame:
     Template code for loading data from PostgreSQL database
     """
     query = 'your PostgreSQL query'  # Specify your SQL query here
+    config_path = 'path/to/your/io/config/file.yaml'
+    config_profile = 'default'
 
-    config = {
-        # Specify all database connection configuration settings here
-        'dbname': 'name of your database',
-        'user': 'login username',
-        'password': 'login password',
-        'host': 'path to host address',
-        'port': 'database port on host address',
-    }
-
-    with Postgres(**config) as loader:
+    with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
         return loader.load(query)
