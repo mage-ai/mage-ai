@@ -24,16 +24,13 @@ import {
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
-  HeaderStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
-  TabStyle,
 } from './index.style';
 import {
   ChevronLeft,
   ChevronRight,
-  GraphWithNodes,
 } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
@@ -41,7 +38,7 @@ import {
   set,
 } from '@storage/localStorage';
 import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useWindowSize } from '@utils/sizes';
 
