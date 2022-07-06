@@ -33,3 +33,13 @@ export const buildNullValueData = (features: FeatureType[], statistics) => (
     'value',
   )
 );
+
+export const buildUniqueValueData = (features: FeatureType[], statistics) => (
+  sortByKey(
+    features?.map(feature => ({
+      feature,
+      value: statistics[`${feature.uuid}/count_distinct`],
+    })),
+    'value',
+  )
+);
