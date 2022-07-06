@@ -96,7 +96,7 @@ def load_data() -> DataFrame:
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_loader_specific(self):
-        redshift_template = """from mage_ai.data_loader.redshift import Redshift
+        redshift_template = """from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 
 
@@ -106,6 +106,7 @@ def load_data_from_redshift() -> DataFrame:
     Template code for loading data from Redshift cluster. Additional
     configuration parameters can be added to the `config` dictionary.
     \"\"\"
+    query = 'your_redshift_selection_query'
     config = {
         'database': 'your_redshift_database_name',
         'user': 'database_login_username',
@@ -113,12 +114,11 @@ def load_data_from_redshift() -> DataFrame:
         'host': 'database_host',
         'port': 'database_port',
     }
-    query = 'your_redshift_selection_query'
 
     with Redshift.with_temporary_credentials(**config) as loader:
         return loader.load(query)
 """
-        s3_template = """from mage_ai.data_loader.s3 import S3
+        s3_template = """from mage_ai.io.s3 import S3
 from pandas import DataFrame
 
 
