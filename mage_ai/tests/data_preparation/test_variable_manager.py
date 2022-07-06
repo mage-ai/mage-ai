@@ -81,12 +81,12 @@ class VariableManagerTest(TestCase):
     def test_get_variables_by_pipeline(self):
         self.__create_pipeline('test pipeline 2')
         variable_manager = VariableManager(self.repo_path)
-        variable_manager.add_variable('test_pipeline_1', 'block1', 'var1', 1)
-        variable_manager.add_variable('test_pipeline_1', 'block1', 'var2', 2)
-        variable_manager.add_variable('test_pipeline_1', 'block2', 'var3', 3)
-        variable_manager.add_variable('test_pipeline_1', 'block2', 'var4', 4)
+        variable_manager.add_variable('test_pipeline_2', 'block1', 'var1', 1)
+        variable_manager.add_variable('test_pipeline_2', 'block1', 'var2', 2)
+        variable_manager.add_variable('test_pipeline_2', 'block2', 'var3', 3)
+        variable_manager.add_variable('test_pipeline_2', 'block2', 'var4', 4)
         self.assertEqual(
-            variable_manager.get_variables_by_pipeline('test_pipeline_1'),
+            variable_manager.get_variables_by_pipeline('test_pipeline_2'),
             dict(block1=['var1', 'var2'], block2=['var3', 'var4']),
         )
 
