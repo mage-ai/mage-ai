@@ -74,11 +74,11 @@ export const RowStyle = styled.div<RowStyleProps>`
   `}
 
   ${props => !props.secondary && `
-    background-color: ${(props.theme.background || light.background).page};
+    background-color: ${(props.theme.background || light.background).row};
   `}
 
   ${props => props.secondary && `
-    background-color: ${(props.theme.background || light.background).row};
+    background-color: ${(props.theme.background || light.background).row2};
   `}
 
   ${props => props.last && `

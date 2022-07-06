@@ -35,6 +35,12 @@ export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
 export const YELLOW_LIGHT = '#FFEBA3';
 
+export const GREY100 = '#F2F2F2';
+export const GREY200 = '#D5D7DC';
+export const GREY300 = '#B4B8C0';
+export const GREY400 = '#70747C';
+export const GREY500 = '#51535C';
+
 // CSS background
 export const PURPLE_GRADIENT = 'linear-gradient(180deg, rgba(127, 79, 235, 0.3) 0%, rgba(127, 79, 235, 0) 100%);';
 export const RED_GRADIENT = 'linear-gradient(180deg, rgba(255, 5, 5, 0.3) 0%, rgba(255, 5, 5, 0) 100%);';
