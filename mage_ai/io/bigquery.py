@@ -105,7 +105,7 @@ class BigQuery(BaseIO):
         return cls(**config['BigQuery'])
 
     @classmethod
-    def with_credentials_file(cls, path_to_credentials: str, **kwargs):
+    def with_credentials_file(cls, path_to_credentials: str, **kwargs) -> 'BigQuery':
         """
         Constructs BigQuery data loader using the file containing the service account key.
 
@@ -118,7 +118,7 @@ class BigQuery(BaseIO):
         return cls(path_to_credentials=path_to_credentials, **kwargs)
 
     @classmethod
-    def with_credentials_object(cls, credentials: Mapping[str, str], **kwargs):
+    def with_credentials_object(cls, credentials: Mapping[str, str], **kwargs) -> 'BigQuery':
         """
         Constructs BigQuery data loader using manually specified authentication credentials object.
 

@@ -15,16 +15,6 @@ class Redshift(BaseSQL):
         """
         super().__init__(**kwargs)
 
-    @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
-        aws_config = config['AWS']
-        redshift_config = aws_config['Redshift']
-        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
-        for credential in credentials:
-            if credential in aws_config:
-                redshift_config[credential] = aws_config[credential]
-        return cls(**redshift_config)
-
     def open(self) -> None:
         """
         Opens a connection to the Redshift cluster.
@@ -88,7 +78,7 @@ class Redshift(BaseSQL):
     @classmethod
     def with_temporary_credentials(
         cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
-    ):
+    ) -> 'Redshift':
         """
         Creates a Redshift data loader from temporary database credentials
 
@@ -113,7 +103,7 @@ class Redshift(BaseSQL):
         db_user: str,
         profile: str = 'default',
         **kwargs,
-    ):
+    ) -> 'Redshift':
         """
         Creates a Redshift data loader using an IAM profile from `~/.aws`.
 
