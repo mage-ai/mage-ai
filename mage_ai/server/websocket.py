@@ -1,8 +1,8 @@
 from jupyter_client import KernelManager
 from mage_ai.data_preparation.models.block import BlockType
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.server.constants import DATAFRAME_OUTPUT_SAMPLE_COUNT
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
@@ -57,9 +57,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     if len(output) > 0:
                         for out in output:
                             if type(out) == pd.DataFrame \
-                                and out.shape[0] > DATAFRAME_OUTPUT_SAMPLE_COUNT:
+                                and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW:
 
-                                out = out.iloc[:DATAFRAME_OUTPUT_SAMPLE_COUNT]
+                                out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
                             block_output.append(out)
                 except:
                     error = traceback.format_exc()
