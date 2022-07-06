@@ -11,8 +11,6 @@ import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants'
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
 import { findBlockByPath } from './utils';
-import { useBlockContext } from '@context/Block';
-import { usePipelineContext } from '@context/Pipeline';
 
 export type FileTreeProps = {
   blockRefs: any;
@@ -40,11 +38,11 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 
 function FileTree({
   blockRefs,
+  pipeline,
+  setSelectedBlock,
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
-  const { pipeline } = usePipelineContext();
-  const { setSelectedBlock } = useBlockContext();
 
   enum TreeOperationEnum {
     CUSTOM_VAL,

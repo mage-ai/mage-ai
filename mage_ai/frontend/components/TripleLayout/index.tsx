@@ -76,14 +76,17 @@ function TripleLayout({
   setAfterWidth,
   setBeforeHidden,
   setBeforeWidth,
+  afterMousedownActive,
+  setAfterMousedownActive,
+  beforeMousedownActive,
+  setBeforeMousedownActive,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
-  const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+
 
   const sidekickViews = after?.props?.views || [];
 

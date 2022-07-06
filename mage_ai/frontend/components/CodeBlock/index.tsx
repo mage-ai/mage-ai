@@ -55,9 +55,7 @@ import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
-import { useBlockContext } from '@context/Block';
 import { useKeyboardContext } from '@context/Keyboard';
-import { usePipelineContext } from '@context/Pipeline';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
@@ -95,13 +93,11 @@ function CodeBlockProps({
   setSelected,
   setTextareaFocused,
   textareaFocused,
+  fetchFileTree,
+  fetchPipeline,
+  pipeline,
+  setEditingBlock,
 }: CodeBlockProps, ref) {
-  const {
-    fetchFileTree,
-    fetchPipeline,
-    pipeline,
-  } = usePipelineContext();
-  const { setEditingBlock } = useBlockContext();
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)

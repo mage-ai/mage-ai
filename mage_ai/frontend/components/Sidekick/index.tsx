@@ -46,6 +46,8 @@ function Sidekick({
   pipeline,
   selectedBlock,
   setSelectedBlock,
+  fetchPipeline,
+  setEditingBlock,
 }: SidekickProps) {
   const containerRef = useRef(null);
   const blockUUID = selectedBlock?.uuid;
@@ -111,8 +113,10 @@ function Sidekick({
         <DependencyGraph
           blockRefs={blockRefs}
           editingBlock={editingBlock}
+          fetchPipeline={fetchPipeline}
           pipeline={pipeline}
           selectedBlock={selectedBlock}
+          setEditingBlock={setEditingBlock}
           setSelectedBlock={setSelectedBlock}
         />
       }
@@ -120,10 +124,10 @@ function Sidekick({
         <DataTable
           columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
           columns={columns}
-          height={dataTableHeight}
+          // height={dataTableHeight}
           renderColumnHeader={renderColumnHeader}
           rows={rows}
-          width={dataTableWidth}
+          // width={dataTableWidth}
         />
       )}
       {activeView === ViewKeyEnum.REPORTS &&

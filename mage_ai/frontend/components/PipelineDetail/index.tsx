@@ -42,10 +42,7 @@ import { WEBSOCKT_URL } from '@utils/constants';
 import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { onSuccess } from '@api/utils/response';
-import { useBlockContext } from '@context/Block';
-import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
-import { usePipelineContext } from '@context/Pipeline';
 
 type PipelineDetailProps = {
   blocks: BlockType[];
@@ -82,24 +79,20 @@ function PipelineDetail({
   selectedBlock,
   setContentByBlockUUID,
   setPipelineContentTouched,
-}: PipelineDetailProps) {
-  const {
+
+    fetchPipeline,
     fetchFileTree,
     pipeline,
     savePipelineContent,
-  } = usePipelineContext();
-  const {
     interruptKernel,
     kernel,
     restartKernel,
     setMessages,
-  } = useKernelContext();
-  const {
     addNewBlockAtIndex,
     setRunningBlocks,
     setSelectedBlock,
-  } = useBlockContext();
-
+    setEditingBlock,
+}: PipelineDetailProps) {
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
@@ -408,6 +401,11 @@ function PipelineDetail({
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={selected && textareaFocused}
+
+              fetchFileTree={fetchFileTree}
+              fetchPipeline={fetchPipeline}
+              pipeline={pipeline}
+              setEditingBlock={setEditingBlock}
             />
           );
         })}

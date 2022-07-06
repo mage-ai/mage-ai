@@ -25,8 +25,6 @@ import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getFinalLevelIndex } from './utils';
 import { onError, onSuccess } from '@api/utils/response';
-import { useBlockContext } from '@context/Block';
-import { usePipelineContext } from '@context/Pipeline';
 
 export type DependencyGraphProps = {
   blockRefs?: {
@@ -49,9 +47,9 @@ function DependencyGraph({
   pipeline,
   selectedBlock,
   setSelectedBlock,
+  fetchPipeline,
+  setEditingBlock,
 }: DependencyGraphProps) {
-  const { setEditingBlock } = useBlockContext();
-  const { fetchPipeline } = usePipelineContext();
   const themeContext: ThemeType = useContext(ThemeContext);
   const updateXarrow = useXarrow();
   const {
