@@ -88,9 +88,10 @@ export function errorOrSuccess(response, opts: OptsProps = {}) {
   const { error } = response;
 
   if (error && !acceptErrorStatuses.includes(error?.code)) {
-    onErrorCallback?.(response);
+    const parsedErrors = parseErrorFromResponse(response);
+    onErrorCallback?.(response, parsedErrors);
 
-    return parseErrorFromResponse(response);
+    return parsedErrors;
   } else {
     // Replace with some success notification
     // console.log(successMessage);

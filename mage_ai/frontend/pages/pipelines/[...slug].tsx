@@ -13,7 +13,7 @@ import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KernelContext from '@context/Kernel';
-import KernelOutputType from '@interfaces/KernelOutputType';
+import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import PipelineContext from '@context/Pipeline';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
@@ -36,7 +36,7 @@ import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
 import { goToWithQuery } from '@utils/routing';
-import { onSuccess } from '@api/utils/response';
+import { onError, onSuccess } from '@api/utils/response';
 import { pluralize, randomNameGenerator } from '@utils/string';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
@@ -225,12 +225,21 @@ function PipelineDetailPage({
             ));
           },
           onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
+            url_parameters: urlParameters,
+          }: {
+            url_parameters: {
+              block_uuid: string;
+            };
+          }, {
+            messages,
           }) => {
-            console.log(errors, message);
+            setMessages(messagesPrev => ({
+              ...messagesPrev,
+              [urlParameters.block_uuid]: messages.map(msg => ({
+                data: msg,
+                type: DataTypeEnum.TEXT_PLAIN,
+              })),
+            }));
           },
         },
       ),
@@ -369,8 +378,6 @@ function PipelineDetailPage({
     setBlocks,
     setMessages,
   ]);
-
-  console.log(messages)
 
   // TODO: API should report filesystem as FileNodeType[], not FileNodeType
   const files = useMemo(() => filesData ? [filesData?.files] : [], [
