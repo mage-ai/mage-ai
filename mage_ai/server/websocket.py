@@ -1,11 +1,18 @@
 from jupyter_client import KernelManager
+from mage_ai.data_preparation.models.block import BlockType
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 from utils.output_display import add_internal_output_info
+import asyncio
 import json
 import os
+import pandas as pd
 import tornado.websocket
-
+import traceback
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -13,7 +20,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     # Note that `clients` is a class variable and `send_message` is a
     # classmethod.
     clients = set()
-    running_executions_mapping = set()
+    running_executions_mapping = dict()
 
     def open(self):
         WebSocketServer.clients.add(self)
@@ -40,25 +47,64 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             manager = KernelManager(**connection)
             client = manager.client()
 
-            msg_id = client.execute(add_internal_output_info(code))
+            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            block = pipeline.get_block(block_uuid)
+            block_output = []
+            error = None
+            if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+                try:
+                    output = asyncio.run(block.execute(custom_code=code))
+                    if len(output) > 0:
+                        for out in output:
+                            if type(out) == pd.DataFrame \
+                                and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW:
 
-            WebSocketServer.running_executions_mapping.add((msg_id, block_uuid))
+                                out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
+                            block_output.append(out)
+                except:
+                    error = traceback.format_exc()
+                # Run with no code because we still need to send a message
+                msg_id = client.execute('')
+            else:
+                msg_id = client.execute(add_internal_output_info(code))
+
+            value = dict(
+                block_uuid=block_uuid,
+                block_output=block_output,
+                error=error,
+            )
+
+            WebSocketServer.running_executions_mapping[msg_id] = value
         elif output:
             self.send_message(output)
 
     @classmethod
     def send_message(self, message: dict) -> None:
+        msg_type = message['msg_type']
         msg_id = message['msg_id']
-        msg_id_uuid_tuple = find(
-            lambda tup: tup[0] == msg_id,
-            list(WebSocketServer.running_executions_mapping),
-        )
-        uuid = msg_id_uuid_tuple[1]
+        msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
+        uuid = msg_id_value['block_uuid']
+        output = msg_id_value['block_output']
+        error = msg_id_value['error']
 
-        print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message}')
+        output_dict = dict(uuid=uuid)
+        if error is not None:
+            output_dict['traceback'] = error
+        elif len(output) > 0:
+            df = find(lambda val: type(val) == pd.DataFrame, output)
+            if msg_type == 'execute_input':
+                output_dict['data'] = json.dumps(dict(
+                    columns=df.columns.to_list(),
+                    rows=df.to_numpy().tolist(),
+                ))
+                output_dict['type'] = DataType.TABLE
+
+        message_final = merge_dict(
+            message,
+            output_dict,
+        )
+
+        print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message_final}')
 
         for client in self.clients:
-            client.write_message(json.dumps(merge_dict(
-                message,
-                dict(uuid=uuid),
-            )))
+            client.write_message(json.dumps(message_final))

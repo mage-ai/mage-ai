@@ -46,6 +46,19 @@ function CodeOutput({
 
   }
 
+  const createDataTableElement = ({ columns, rows}) => (
+    <DataTable
+      columns={columns}
+      height={UNIT * 40}
+      // invalidValues={invalidValuesAll}
+      // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
+      // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
+      rows={rows}
+      // Remove border 2px and padding from each side
+      width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2)}
+    />
+  )
+
   return (
     <>
       <ContainerStyle
@@ -87,24 +100,10 @@ function CodeOutput({
               } = JSON.parse(rawString);
 
               if (DataTypeEnum.TABLE === typeDisplay) {
-                const {
-                  columns,
-                  rows,
-                } = dataDisplay;
-
-                displayElement = (
-                  <DataTable
-                    columns={columns}
-                    height={UNIT * 40}
-                    // invalidValues={invalidValuesAll}
-                    // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
-                    // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
-                    rows={rows}
-                    // Remove border 2px and padding from each side
-                    width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2)}
-                  />
-                );
+                displayElement = createDataTableElement(dataDisplay)
               }
+            } else if (dataType === DataTypeEnum.TABLE) {
+              displayElement = createDataTableElement(JSON.parse(data))
             } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
