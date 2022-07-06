@@ -43,3 +43,18 @@ export const buildUniqueValueData = (features: FeatureType[], statistics) => (
     'value',
   )
 );
+
+export const buildValueDistributionData = (features: FeatureType[], statistics) => (
+  sortByKey(
+    features?.map(feature => {
+      const [value, frequency] = Object.entries(statistics[`${feature.uuid}/value_counts`])[0];
+      const percentage = Number(frequency) / statistics.count;
+      return {
+        feature,
+        percentage,
+        value,
+      };
+    }),
+    'percentage',
+  )
+);

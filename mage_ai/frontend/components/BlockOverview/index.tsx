@@ -9,6 +9,7 @@ import {
   buildHeatmapData,
   buildNullValueData,
   buildUniqueValueData,
+  buildValueDistributionData,
 } from './utils';
 import { formatPercent } from '@utils/string';
 
@@ -31,6 +32,7 @@ function BlockOverview({
   const { heatmapData, xyLabels } = buildHeatmapData(correlations);
   const nullValueData = buildNullValueData(features, statistics);
   const uniqueValueData = buildUniqueValueData(features, statistics);
+  const distributionData = buildValueDistributionData(features, statistics);
 
   return (
     <Spacing p={2}>
@@ -63,6 +65,34 @@ function BlockOverview({
               }))}
               height={Math.max(3 * nullValueData.length * UNIT, UNIT * 50)}
               renderTooltipContent={({ x }) => `${x} unique values`}
+              xNumTicks={2}
+              ySerialize={({ y }) => y}
+            />
+          </ChartContainer>
+        )}
+
+        {distributionData.length >= 1 && (
+          <ChartContainer
+            title="Distribution of values"
+          >
+            <BarGraphHorizontal
+              data={distributionData.map(({
+                feature,
+                percentage,
+                value,
+              }) => ({
+                feature,
+                value,
+                x: percentage,
+                y: feature.uuid,
+              }))}
+              height={Math.max(3 * distributionData.length * UNIT, UNIT * 50)}
+              renderTooltipContent={({
+                value,
+                x,
+              }) =>
+                `${value} is ${formatPercent(x)} of all rows`
+              }
               xNumTicks={2}
               ySerialize={({ y }) => y}
             />
