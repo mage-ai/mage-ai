@@ -22,13 +22,13 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
+import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BLUE } from '@oracle/styles/colors/main';
-import { getChartColors } from './constants';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
-import { AxisEnum } from '@interfaces/ActionPayloadType';
+import { getChartColors } from './constants';
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: light.background.navigation,
