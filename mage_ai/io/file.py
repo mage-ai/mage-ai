@@ -1,5 +1,6 @@
 from mage_ai.io.base import BaseFile
 from pandas import DataFrame
+from typing import Any, Mapping
 
 
 class FileIO(BaseFile):
@@ -27,3 +28,8 @@ class FileIO(BaseFile):
         """
         with self.printer.print_msg(f'Exporting data frame to \'{self.filepath}\''):
             self._write(df, self.filepath, **kwargs)
+        return self._write(df, self.filepath, **kwargs)
+
+    @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'FileIO':
+        return cls(**config['File'])

@@ -76,6 +76,16 @@ class Redshift(BaseSQL):
                 cur.write_dataframe(df, table_name)
 
     @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
+        aws_config = config['AWS']
+        redshift_config = aws_config['Redshift']
+        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
+        for credential in credentials:
+            if credential in aws_config:
+                redshift_config[credential] = aws_config[credential]
+        return cls(**redshift_config)
+
+    @classmethod
     def with_temporary_credentials(
         cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
     ):

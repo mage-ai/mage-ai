@@ -2,6 +2,7 @@ from mage_ai.io.base import BaseSQL
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
+from typing import Any, Mapping
 
 
 class Snowflake(BaseSQL):
@@ -117,3 +118,7 @@ class Snowflake(BaseSQL):
                 auto_create_table=auto_create_table,
                 **kwargs,
             )
+
+    @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'Snowflake':
+        return cls(**config['Snowflake'])
