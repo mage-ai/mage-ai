@@ -2,8 +2,8 @@ import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import FeatureType from '@interfaces/FeatureType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import HeatMap from '@components/charts/HeatMap';
+import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import { ChartContainer } from '@components/datasets/Insights/Overview';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   buildHeatmapData,
@@ -38,8 +38,8 @@ function BlockGraphs({
     <Spacing p={2}>
       <FlexContainer flexDirection="column">
         {nullValueData?.length >= 1 && (
-          <ChartContainer
-            title="Data completion"
+          <RowDataTable
+            headerTitle="Data completion"
           >
             <BarGraphHorizontal
               data={nullValueData.map(({ feature, value }) => ({
@@ -51,12 +51,12 @@ function BlockGraphs({
               xNumTicks={2}
               ySerialize={({ y }) => y}
             />
-          </ChartContainer>
+          </RowDataTable>
         )}
 
         {uniqueValueData?.length >= 1 && (
-          <ChartContainer
-            title="Number of unique values"
+          <RowDataTable
+            headerTitle="Number of unique values"
           >
             <BarGraphHorizontal
               data={uniqueValueData.map(({ feature, value }) => ({
@@ -68,12 +68,12 @@ function BlockGraphs({
               xNumTicks={2}
               ySerialize={({ y }) => y}
             />
-          </ChartContainer>
+          </RowDataTable>
         )}
 
         {distributionData.length >= 1 && (
-          <ChartContainer
-            title="Distribution of values"
+          <RowDataTable
+            headerTitle="Distribution of values"
           >
             <BarGraphHorizontal
               data={distributionData.map(({
@@ -96,11 +96,13 @@ function BlockGraphs({
               xNumTicks={2}
               ySerialize={({ y }) => y}
             />
-          </ChartContainer>
+          </RowDataTable>
         )}
 
         {correlations && heatmapData?.length >= 1 && (
-          <ChartContainer title="Correlations">
+          <RowDataTable
+            headerTitle="Correlations"
+          >
             <HeatMap
               countMidpoint={0}
               data={heatmapData}
@@ -109,7 +111,7 @@ function BlockGraphs({
               xLabels={xyLabels}
               yLabels={xyLabels}
             />
-          </ChartContainer>
+          </RowDataTable>
         )}
       </FlexContainer>
     </Spacing>
