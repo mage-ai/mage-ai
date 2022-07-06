@@ -188,7 +188,7 @@ export const SHARED_STYLES = css<TextProps>`
   ${SHARED_TEXT_STYLES}
 
   ${props => !(props.default && props.disabled  && props.muted) && !props.noColor && `
-    color: ${(props.theme.content || light.content).active};
+    color: ${(props.theme.content || light.content).default};
   `}
 
   ${props => props.inverted && `

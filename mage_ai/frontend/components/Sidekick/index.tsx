@@ -67,6 +67,7 @@ function Sidekick({
     columns,
     insightsByFeatureUUID,
     insightsOverview,
+    noColumnLinks: true,
     statistics,
   }), [
     columnTypes,

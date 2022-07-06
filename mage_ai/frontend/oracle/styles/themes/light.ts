@@ -7,6 +7,7 @@ import {
   DARK_GRAY_LINES,
   GRAY_LINES,
   GRAY,
+  GREEN,
   LIGHT,
   LIME,
   LIME_XLIGHT,
@@ -55,6 +56,14 @@ export default {
     sidePanel: '#232429',
     success: LIME_XLIGHT,
     table: WHITE,
+  },
+  borders: {
+    danger: RED,
+    dark: '#000000',
+    info: YELLOW,
+    light: '#2F3034',
+    medium: '#D5D7DC',
+    success: GREEN,
   },
   brand: {
     earth100: '#C6EEDB',
@@ -109,8 +118,9 @@ export default {
   },
   content: {
     active: BLACK,
-    default: WHITE,
+    default: BLACK,
     disabled: GRAY_LINES,
+    inverted: WHITE,
     muted: GRAY,
   },
   elevation: {

@@ -84,10 +84,16 @@ const Styles = styled.div<{
     display: inline-block;
 
     ${props => `
-      border: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+      border: 1px solid ${(props.theme.borders || light.borders).medium};
     `}
 
     .tr {
+      .td:first-child {
+        ${props => `
+          color: ${(props.theme.content || light.content).default};
+        `}
+      }
+
       :last-child {
         .td {
           border-bottom: 0;
@@ -113,8 +119,8 @@ const Styles = styled.div<{
 
       ${props => `
         background-color: ${(props.theme.background || light.background).table};
-        border-bottom: 1px solid ${(props.theme.monotone || light.monotone).grey200};
-        border-right: 1px solid ${(props.theme.monotone || light.monotone).grey200};
+        border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
+        border-right: 1px solid ${(props.theme.borders || light.borders).medium};
       `}
       :last-child {
         ${props => `
