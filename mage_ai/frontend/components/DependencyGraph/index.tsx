@@ -14,11 +14,12 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFinalLevelIndex, getNodeColor } from './utils';
 import { indexBy } from '@utils/array';
+import { useBlockContext } from '@context/Block';
 
 export type DependencyGraphProps = {
   pipeline: PipelineType;
   selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
+  setSelectedBlock?: (block: BlockType) => void;
 };
 
 const ContainerStyle = styled.div`
@@ -38,6 +39,9 @@ function DependencyGraph({
   const updateXarrow = useXarrow();
   const blocks = pipeline?.blocks || [];
   const blockUUIDMapping = indexBy(blocks, ({ uuid }) => uuid);
+
+  const blockContext = useBlockContext();
+  const setSelectedBlockFinal = setSelectedBlock || blockContext?.setSelectedBlock;
 
   const arrows: {
     color: string;
@@ -84,7 +88,7 @@ function DependencyGraph({
                       backgroundColor={nodeColor}
                       id={uuid}
                       minWidth={MIN_NODE_WIDTH}
-                      onClick={() => setSelectedBlock(block)}
+                      onClick={() => setSelectedBlockFinal(block)}
                       selectedAlt={selectedBlock?.uuid === uuid}
                       smallBorderRadius
                     >
