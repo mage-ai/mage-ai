@@ -1,6 +1,7 @@
 from mage_ai.io.base import BaseSQL
 from pandas import DataFrame
 from redshift_connector import connect
+from typing import Any, Mapping
 
 
 class Redshift(BaseSQL):
@@ -13,6 +14,16 @@ class Redshift(BaseSQL):
         Initializes settings for connecting to a cluster.
         """
         super().__init__(**kwargs)
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> 'Redshift':
+        aws_config = config['AWS']
+        redshift_config = aws_config['Redshift']
+        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
+        for credential in credentials:
+            if credential in aws_config:
+                redshift_config[credential] = aws_config[credential]
+        return cls(**redshift_config)
 
     def open(self) -> None:
         """

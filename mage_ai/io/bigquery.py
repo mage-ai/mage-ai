@@ -2,7 +2,7 @@ from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
 from mage_ai.io.base import BaseIO
 from pandas import DataFrame
-from typing import Mapping
+from typing import Any, Mapping
 
 
 class BigQuery(BaseIO):
@@ -99,6 +99,10 @@ class BigQuery(BaseIO):
                         f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                     )
             self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> 'BigQuery':
+        return cls(**config['BigQuery'])
 
     @classmethod
     def with_credentials_file(cls, path_to_credentials: str, **kwargs):

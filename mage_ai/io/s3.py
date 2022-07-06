@@ -3,6 +3,7 @@ from typing import Mapping
 from mage_ai.io.base import BaseFile, FileFormat
 from pandas import DataFrame
 from pathlib import Path
+from typing import Any, Mapping
 import boto3
 
 
@@ -108,6 +109,16 @@ class S3(BaseFile):
                 self.client.put_object(
                     Body=buffer, Bucket=self.bucket_name, Key=self.filepath, **export_config
                 )
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> 'S3':
+        aws_config = config['AWS']
+        s3_config = aws_config['S3']
+        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
+        for credential in credentials:
+            if credential in aws_config:
+                s3_config[credential] = aws_config[credential]
+        return cls(**s3_config)
 
     @classmethod
     def with_credentials(
