@@ -184,7 +184,8 @@ def incorrect_function(df1):
             ''')
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
-        self.assertRaises(Exception, asyncio.run(block3.execute()))
+        with self.assertRaises(Exception):
+            asyncio.run(block3.execute())
 
         with open(block3.file_path, 'w') as file:
             file.write('''import pandas as pd
@@ -192,7 +193,8 @@ def incorrect_function(df1):
 def incorrect_function(df1, df2, df3):
     return df1
             ''')
-        self.assertRaises(Exception, asyncio.run(block3.execute()))
+        with self.assertRaises(Exception):
+            asyncio.run(block3.execute())
 
     def test_to_dict(self):
         block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
