@@ -5,7 +5,7 @@ from redshift_connector import connect
 
 class Redshift(BaseSQL):
     """
-    Loads data from a Redshift data warehouse.
+    Handles data transfer between a Redshift cluster and the Mage app.
     """
 
     def __init__(self, **kwargs) -> None:

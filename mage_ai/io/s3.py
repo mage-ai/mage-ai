@@ -8,7 +8,7 @@ import boto3
 
 class S3(BaseFile):
     """
-    Loads data from a S3 bucket into a Pandas data frame. Supports loading files
+    Handles data transfer between a S3 bucket and the Mage app. Supports loading files
     of any of the following types:
     - ".csv"
     - ".json"

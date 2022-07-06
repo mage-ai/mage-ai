@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 
 class Postgres(BaseSQL):
     """
-    Loads data from a PostgreSQL database.
+    Handles data transfer between a PostgreSQL database and the Mage app.
     """
 
     def __init__(
@@ -61,7 +61,8 @@ class Postgres(BaseSQL):
         self, df: DataFrame, name: str, index: bool = False, if_exists: str = 'replace', **kwargs
     ) -> None:
         """
-        Exports dataframe to the connected database from a Pandas data frame.
+        Exports dataframe to the connected database from a Pandas data frame.  If table doesn't
+        exist, the table is automatically created.
 
         Args:
             query_string (str): Query to execute on the database.

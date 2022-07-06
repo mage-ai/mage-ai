@@ -7,7 +7,7 @@ from typing import Mapping
 
 class BigQuery(BaseLoader):
     """
-    Loads data from a BigQuery data warehouse.
+    Handles data transfer betwee a BigQuery data warehouse and the Mage app.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -62,17 +62,17 @@ class BigQuery(BaseLoader):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
+        table_id: str,
         if_exists: str = 'replace',
         **configuration_params,
     ) -> None:
         """
-        Exports a data frame to a Google BigQuery warehouse. If the table to export to exists,
-        the table will be appended to the end of the table.
+        Exports a data frame to a Google BigQuery warehouse.  If table doesn't
+        exist, the table is automatically created.
 
         Args:
             df (DataFrame): Data frame to export
-            table_name (str): Name of the table to export the data frame to. If this table exists,
+            table_id (str): ID of the table to export the data frame to. If this table exists,
             the table schema must match the data frame schema. If this table doesn't exist,
             the table schema is automatically inferred.
             if_exists (str): Specifies export policy if table exists. Either
@@ -95,7 +95,7 @@ class BigQuery(BaseLoader):
                 raise ValueError(
                     f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                 )
-        self.client.load_table_from_dataframe(df, table_name, job_config=config).result()
+        self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
     @classmethod
     def with_credentials_file(cls, path_to_credentials: str, **kwargs):

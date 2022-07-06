@@ -6,7 +6,7 @@ from snowflake.connector.pandas_tools import write_pandas
 
 class Snowflake(BaseSQL):
     """
-    Loads data from a Snowflake data warehouse.
+    Handles data transfer between a Snowflake data warehouse and the Mage app.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -55,24 +55,34 @@ class Snowflake(BaseSQL):
         with self.conn.cursor() as cur:
             return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
 
-    def export(self, df: DataFrame, table_name: str, if_exists: str = 'append', **kwargs) -> None:
+    def export(
+        self,
+        df: DataFrame,
+        table_name: str,
+        database: str,
+        schema: str,
+        if_exists: str = 'append',
+        **kwargs,
+    ) -> None:
         """
         Exports a Pandas data frame to a Snowflake warehouse based on the table name. If table doesn't
         exist, the table is automatically created.
 
         Args:
             df (DataFrame): Data frame to export to a Snowflake warehouse.
-            table_name (str): Name of the table to export the data to (excludes database name, schema name).
-            if_exists (str): Specifies export policy if table exists. Either
+            table_name (str): Name of the table to export data to (excluding database and schema).
+            database (str): Name of the database in which the table is located.
+            schema (str): Name of the schema in which the table is located.
+            if_exists (str, optional): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
-                - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+                - `'append'`: appends data frame to existing table.
             Defaults to `'append'`.
-            **kwargs: Additional arguments (such as `database` or `schema` to specify the database and schema to use)
+            **kwargs: Additional arguments to pass to writer
         """
         exists = False
         with self._ctx.cursor() as cur:
-            cur.execute(f'SHOW TABLES LIKE \'{table_name}\'')
+            cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
             if cur.rowcount == 1:
                 exists = True
             elif cur.rowcount > 1:
@@ -95,4 +105,12 @@ class Snowflake(BaseSQL):
             if auto_create_table is None:
                 auto_create_table = True
 
-        write_pandas(self.conn, df, table_name, auto_create_table=auto_create_table, **kwargs)
+        write_pandas(
+            self.conn,
+            df,
+            table_name,
+            database=database,
+            schema=schema,
+            auto_create_table=auto_create_table,
+            **kwargs,
+        )

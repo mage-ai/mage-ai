@@ -3,6 +3,10 @@ from pandas import DataFrame
 
 
 class FileIO(BaseFile):
+    """
+    Handles data transfer between the filesystem and the Mage app.
+    """
+
     def load(self, *args, **kwargs) -> DataFrame:
         """
         Loads the data frame from the file specified.
