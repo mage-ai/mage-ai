@@ -32,7 +32,6 @@ const samplePipeline = {
       upstream_blocks: [],
       downstream_blocks: [
         'exporter_1',
-        'scratchpad_1',
         'transformer_1',
       ],
     },
@@ -40,15 +39,6 @@ const samplePipeline = {
       name: 'Data exporter 1', // level 1
       type: BlockTypeEnum.DATA_EXPORTER,
       uuid: 'exporter_1',
-      upstream_blocks: [
-        'loader_1',
-      ],
-      downstream_blocks: [],
-    },
-    {
-      name: 'Scratchpad 1', // level 1
-      type: BlockTypeEnum.SCRATCHPAD,
-      uuid: 'scratchpad_1',
       upstream_blocks: [
         'loader_1',
       ],

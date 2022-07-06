@@ -29,6 +29,7 @@ import {
 export default {
   accent: {
     alert: '#F6540B',
+    blue: BLUE_DARK,
     cyan: '#65E3FF',
     cyanTransparent: 'rgba(101, 227, 255, 0.12)',
     info: '#00ABFF',
@@ -37,8 +38,10 @@ export default {
     negativeTransparent: 'rgba(255, 30, 89, 0.3)',
     positive: '#00A81A',
     primaryTransparent: 'rgb(155, 108, 167, 0.5)',
+    purple: PURPLE,
     warning: '#DD9900',
     warningTransparent: 'rgba(221, 153, 0, 0.5)',
+    yellow: YELLOW,
   },
   background: {
     codeArea: '#161617',
