@@ -189,7 +189,7 @@ class Pipeline:
         return self.blocks_by_uuid.get(block_uuid)
 
     def get_blocks(self, block_uuids):
-        return [self.blocks_by_uuid[uuid] for uuid in block_uuids]
+        return [self.blocks_by_uuid[uuid] for uuid in block_uuids if uuid in self.blocks_by_uuid]
 
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
@@ -206,7 +206,7 @@ class Pipeline:
                     curr_upstream_block_uuids - new_upstream_block_uuids,
                 )
                 for b in upstream_blocks_added:
-                    b.downstream_blocks = b.downstream_blocks.append(block)
+                    b.downstream_blocks.append(block)
                 for b in upstream_blocks_removed:
                     b.downstream_blocks = [
                         db for db in b.downstream_blocks if db.uuid != block.uuid
@@ -257,5 +257,6 @@ class Pipeline:
         return block
 
     def __save(self):
+        pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
-            yaml.dump(self.to_dict(), fp)
+            yaml.dump(pipeline_dict, fp)
