@@ -1,7 +1,10 @@
 from datetime import datetime
 from jupyter_client import KernelManager
 from mage_ai.data_preparation.models.block import BlockType
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import (
+    CUSTOM_EXECUTION_BLOCK_TYPES,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
@@ -55,7 +58,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             block_output = []
             error = None
             trace = None
-            if block is not None and block.type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+            if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
                 try:
                     output = asyncio.run(block.execute(custom_code=code))
                     if len(output) > 0:

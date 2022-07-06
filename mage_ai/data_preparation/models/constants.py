@@ -28,3 +28,10 @@ class BlockType(str, Enum):
     DATA_LOADER = 'data_loader'
     SCRATCHPAD = 'scratchpad'
     TRANSFORMER = 'transformer'
+
+
+CUSTOM_EXECUTION_BLOCK_TYPES = [
+    BlockType.DATA_EXPORTER,
+    BlockType.DATA_LOADER,
+    BlockType.TRANSFORMER,
+]
