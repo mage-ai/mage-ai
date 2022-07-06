@@ -47,6 +47,19 @@ class Redshift(BaseSQL):
         with self.conn.cursor() as cur:
             return cur.execute(query_string, *args, **kwargs).fetch_dataframe()
 
+    def export(self, df: DataFrame, table_name: str) -> None:
+        """
+        Exports a Pandas data frame to a Redshift cluster given table name.
+
+        Args:
+            df (DataFrame): Data frame to export to a Redshift cluster.
+            table_name (str): Name of the table to export the data to.
+            Table must already exist.
+        """
+        # TODO: Add support for creating new tables if table doesn't exist
+        with self.conn.cursor() as cur:
+            cur.write_dataframe(df, table_name)
+
     @classmethod
     def with_temporary_credentials(
         cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
@@ -74,7 +87,7 @@ class Redshift(BaseSQL):
         database: str,
         db_user: str,
         profile: str = 'default',
-        **kwargs
+        **kwargs,
     ):
         """
         Creates a Redshift data loader using an IAM profile from `~/.aws`.
@@ -100,5 +113,5 @@ class Redshift(BaseSQL):
             profile=profile,
             db_user=db_user,
             iam=True,
-            **kwargs
+            **kwargs,
         )
