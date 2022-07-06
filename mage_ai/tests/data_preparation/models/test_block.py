@@ -149,6 +149,53 @@ def union_datasets(df1, df2):
         self.assertTrue(len(analysis['insights']) > 0)
         self.assertTrue(len(analysis['suggestions']) > 0)
 
+    def test_execute_validation(self):
+        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline)
+        block3 = Block.create(
+            'test_transformer',
+            'transformer',
+            self.repo_path,
+            pipeline,
+            upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
+        )
+        with open(block1.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [1, 3], 'col2': [2, 4]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block2.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@data_loader
+def load_data():
+    data = {'col1': [5], 'col2': [6]}
+    df = pd.DataFrame(data)
+    return [df]
+            ''')
+        with open(block3.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@transformer
+def incorrect_function(df1):
+    return df1
+            ''')
+        asyncio.run(block1.execute())
+        asyncio.run(block2.execute())
+        with self.assertRaises(Exception):
+            asyncio.run(block3.execute())
+
+        with open(block3.file_path, 'w') as file:
+            file.write('''import pandas as pd
+@transformer
+def incorrect_function(df1, df2, df3):
+    return df1
+            ''')
+        with self.assertRaises(Exception):
+            asyncio.run(block3.execute())
+
     def test_to_dict(self):
         block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
         block2 = Block.create('test_data_exporter', 'data_exporter', self.repo_path)

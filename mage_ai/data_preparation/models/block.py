@@ -1,8 +1,10 @@
+from inspect import signature
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
+    CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_ROWS,
 )
 from mage_ai.data_preparation.models.file import File
@@ -156,6 +158,62 @@ class Block:
                 self.__analyze_outputs(variable_mapping)
         return outputs
 
+    def __validate_execution(self, decorated_functions, input_vars):
+        not_executed_upstream_blocks = \
+            list(filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks))
+        if len(not_executed_upstream_blocks) > 0:
+            raise Exception(
+                f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
+                'before running the current block.'
+            )
+
+        if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
+            return None
+
+        if len(decorated_functions) == 0:
+            raise Exception(
+                f'Block {self.uuid} does not have any decorated functions. '
+                f'Make sure that a function in the block is decorated with @{self.type}.'
+            )
+        else:
+            block_function = decorated_functions[0]
+            sig = signature(block_function)
+
+            num_args = len(sig.parameters)
+            num_inputs = len(input_vars)
+            num_upstream = len(self.upstream_block_uuids)
+
+            if num_args > num_inputs:
+                if num_upstream < num_args:
+                    raise Exception(
+                        f'Block {self.uuid} may be missing upstream dependencies. '
+                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+                else:
+                    raise Exception(
+                        f'Block {self.uuid} is missing input arguments. '
+                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
+                        f'Double check the @{self.type} method declaration has the correct number of arguments '
+                        f'and that the upstream blocks have been executed.'
+                    )
+            elif num_args < num_inputs:
+                if num_upstream > num_args:
+                    raise Exception(
+                        f'Block {self.uuid} may have too many upstream dependencies. '
+                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+                else:
+                    raise Exception(
+                        f'Block {self.uuid} has too many input arguments. '
+                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+        
+            return block_function
+
     async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
             def custom_code(function):
@@ -183,8 +241,9 @@ class Block:
         elif os.path.exists(self.file_path):
             with open(self.file_path) as file:
                 exec(file.read(), {self.type: block_decorator(decorated_functions)})
-        if len(decorated_functions) > 0:
-            outputs = decorated_functions[0](*input_vars)
+        block_function = self.__validate_execution(decorated_functions, input_vars)
+        if block_function is not None:
+            outputs = block_function(*input_vars)
             if outputs is None:
                 outputs = []
             if type(outputs) is not list:
