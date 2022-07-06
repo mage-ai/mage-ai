@@ -48,3 +48,12 @@ export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
   [BlockTypeEnum.SCRATCHPAD]: 'SP',
   [BlockTypeEnum.TRANSFORMER]: 'TF',
 };
+
+export type SetEditingBlockType = {
+  setEditingBlock: (data: {
+    upstreamBlocks: {
+      block: BlockType;
+      values: BlockType[];
+    };
+  }) => void;
+};

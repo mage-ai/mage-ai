@@ -13,6 +13,7 @@ import BlockType, {
   BLOCK_TYPE_ABBREVIATION_MAPPING,
   BLOCK_TYPE_NAME_MAPPING,
   BlockTypeEnum,
+  SetEditingBlockType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
@@ -30,6 +31,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -62,17 +64,20 @@ type CodeBlockProps = {
   block: BlockType;
   defaultValue?: string;
   executionState: ExecutionStateEnum;
+  fetchFileTree: () => void;
+  fetchPipeline: () => void;
   mainContainerRef?: any;
   mainContainerWidth: number;
-  noDivider?: boolean;
   messages: KernelOutputType[];
+  noDivider?: boolean;
   onChange?: (value: string) => void;
+  pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
     code: string;
   }) => void;
   setAnyInputFocused: (value: boolean) => void;
-} & CodeEditorSharedProps & CommandButtonsSharedProps;
+} & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
 function CodeBlockProps({
   addNewBlock,
@@ -80,6 +85,8 @@ function CodeBlockProps({
   defaultValue = '',
   deleteBlock,
   executionState,
+  fetchFileTree,
+  fetchPipeline,
   height,
   interruptKernel,
   mainContainerRef,
@@ -87,16 +94,14 @@ function CodeBlockProps({
   messages = [],
   noDivider,
   onChange,
+  pipeline,
   runBlock,
   selected,
   setAnyInputFocused,
+  setEditingBlock,
   setSelected,
   setTextareaFocused,
   textareaFocused,
-  fetchFileTree,
-  fetchPipeline,
-  pipeline,
-  setEditingBlock,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);

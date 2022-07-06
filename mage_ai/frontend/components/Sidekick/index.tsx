@@ -124,10 +124,10 @@ function Sidekick({
         <DataTable
           columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
           columns={columns}
-          // height={dataTableHeight}
+          height={dataTableHeight}
           renderColumnHeader={renderColumnHeader}
           rows={rows}
-          // width={dataTableWidth}
+          width={dataTableWidth}
         />
       )}
       {activeView === ViewKeyEnum.REPORTS &&
