@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_loader.base import DataSource
+from mage_ai.io.base import DataSource
 from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.templates.template import (
     build_template_from_suggestion,
@@ -96,7 +96,7 @@ def load_data() -> DataFrame:
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_loader_specific(self):
-        redshift_template = """from mage_ai.data_loader.redshift import Redshift
+        redshift_template = """from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 
 
@@ -106,6 +106,7 @@ def load_data_from_redshift() -> DataFrame:
     Template code for loading data from Redshift cluster. Additional
     configuration parameters can be added to the `config` dictionary.
     \"\"\"
+    query = 'your_redshift_selection_query'
     config = {
         'database': 'your_redshift_database_name',
         'user': 'database_login_username',
@@ -113,12 +114,11 @@ def load_data_from_redshift() -> DataFrame:
         'host': 'database_host',
         'port': 'database_port',
     }
-    query = 'your_redshift_selection_query'
 
     with Redshift.with_temporary_credentials(**config) as loader:
         return loader.load(query)
 """
-        s3_template = """from mage_ai.data_loader.s3 import S3
+        s3_template = """from mage_ai.io.s3 import S3
 from pandas import DataFrame
 
 
@@ -306,3 +306,100 @@ def execute_transformer_action(df: DataFrame) -> DataFrame:
         config = {'action_type': ActionType.ADD.value, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
+
+    def test_template_generation_data_exporter_default(self):
+        expected_template = """from pandas import DataFrame
+
+
+@data_exporter
+def export_data(df: DataFrame) -> None:
+    \"\"\"
+    Exports data to some source
+
+    Args:
+        df (DataFrame): Data frame to export to
+    \"\"\"
+    # Specify your data exporting logic here
+"""
+
+        config1 = {'data_source': 'default'}
+        config2 = {}
+        new_template1 = fetch_template_source(BlockType.DATA_EXPORTER, config1)
+        new_template2 = fetch_template_source(BlockType.DATA_EXPORTER, config2)
+        self.assertEqual(expected_template, new_template1)
+        self.assertEqual(expected_template, new_template2)
+
+    def test_template_generation_data_exporter_specific(self):
+        bigquery_template = """from mage_ai.io.bigquery import BigQuery
+from pandas import DataFrame
+
+
+@data_exporter
+def export_data_to_big_query(df: DataFrame) -> None:
+    \"\"\"
+    Template code for exporting data to Google BigQuery.
+
+    Depending on your preferred method of providing service account credentials,
+    there are three options for initializing a Google BigQuery data loader:
+
+    1. (Default) If the environment variable `GOOGLE_APPLICATION_CREDENTIALS` contains the path
+    to the service account key, construct the data loader using the default constructor. Any
+    additional parameters can still be specified as a keyword argument.
+
+    2. If the path to the service account key is manually specified, construct the data loader
+    using the factory method `with_credentials_file`. Example:
+    ```
+    BigQuery.with_credentials_file('path/to/service/account/key.json', **kwargs)
+    ```
+
+    3. If the contents of the service account key are manually specified in a dictionary-like
+    object, construct the data loader using this factory method `with_credentials_object`. Example:
+    ```
+    BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
+    ```
+    \"\"\"
+    table_id = 'your-project.your_dataset.your_table_name'
+    config = {
+        # Specify any other configuration settings here to pass to BigQuery client
+        'project': 'your_project_name',
+    }
+    return BigQuery(**config).export(
+        df,
+        table_id,
+        if_exists='replace',  # Specify resolution policy if table name already exists
+    )
+"""
+        snowflake_template = """from mage_ai.io.snowflake import Snowflake
+from pandas import DataFrame
+
+
+@data_exporter
+def export_data_to_snowflake(df: DataFrame) -> None:
+    \"\"\"
+    Template code for exporting data to a table in a Snowflake warehouse
+    \"\"\"
+    table_name = 'your_table_name'
+    database = 'your_database_name'
+    schema = 'your_schema_name'
+    config = {
+        'user': 'your_snowflake_username',
+        'password': 'your_snowflake_password',
+        'account': 'your_snowflake_account_identifier',
+    }
+
+    with Snowflake(**config) as loader:
+        return loader.export(
+            df,
+            table_name,
+            database,
+            schema,
+            if_exists='replace',  # Specify resolution policy if table already exists
+        )
+"""
+
+        config1 = {'data_source': DataSource.BIGQUERY}
+        config2 = {'data_source': DataSource.SNOWFLAKE}
+        new_bigquery_template = fetch_template_source(BlockType.DATA_EXPORTER, config1)
+        new_snowflake_template = fetch_template_source(BlockType.DATA_EXPORTER, config2)
+        self.assertEqual(bigquery_template, new_bigquery_template)
+        self.assertEqual(snowflake_template, new_snowflake_template)

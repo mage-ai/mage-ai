@@ -2,13 +2,13 @@ from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 
 
-@data_loader
-def load_data_from_redshift() -> DataFrame:
+@data_exporter
+def export_data_to_redshift(df: DataFrame) -> None:
     """
-    Template code for loading data from Redshift cluster. Additional
+    Template code for exporting data to a table in a Redshift cluster. Additional
     configuration parameters can be added to the `config` dictionary.
     """
-    query = 'your_redshift_selection_query'
+    table_name = 'your_table_name'
     config = {
         'database': 'your_redshift_database_name',
         'user': 'database_login_username',
@@ -18,4 +18,4 @@ def load_data_from_redshift() -> DataFrame:
     }
 
     with Redshift.with_temporary_credentials(**config) as loader:
-        return loader.load(query)
+        return loader.export(df, table_name)

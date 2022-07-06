@@ -1,4 +1,4 @@
-from mage_ai.data_loader.snowflake import Snowflake
+from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 
 

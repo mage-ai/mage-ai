@@ -1,12 +1,14 @@
 from io import BytesIO
-from mage_ai.data_loader.base import BaseFile, FileFormat
+from typing import Mapping
+from mage_ai.io.base import BaseFile, FileFormat
 from pandas import DataFrame
+from pathlib import Path
 import boto3
 
 
 class S3(BaseFile):
     """
-    Loads data from a S3 bucket into a Pandas data frame. Supports loading files
+    Handles data transfer between a S3 bucket and the Mage app. Supports loading files
     of any of the following types:
     - ".csv"
     - ".json"
@@ -38,16 +40,69 @@ class S3(BaseFile):
         self.bucket_name = bucket_name
         self.client = boto3.client('s3', **kwargs)
 
-    def load(self, **kwargs) -> DataFrame:
+    def load(self, read_config: Mapping = None, import_config: Mapping = None) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame.
 
+        Args:
+            read_config (Mapping, optional): Configuration settings for reading file into data
+            frame. Defaults to None.
+            import_config (Mapping, optional): Configuration settings for importing file from
+            S3. Defaults to None.
+
         Returns:
-            DataFrame: The data frame constructed from the file in the S3 bucket
+            DataFrame: The data frame constructed from the file in the S3 bucket.
         """
-        response = self.client.get_object(Bucket=self.bucket_name, Key=self.filepath)
+
+        if read_config is None:
+            read_config = {}
+        if import_config is None:
+            import_config = {}
+
+        response = self.client.get_object(
+            Bucket=self.bucket_name, Key=self.filepath, **import_config
+        )
         buffer = BytesIO(response['Body'].read())
-        return self.reader(buffer, **kwargs)
+        return self.reader(buffer, **read_config)
+
+    def export(
+        self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None
+    ) -> None:
+        """
+        Exports data frame to an S3 bucket.
+
+        Args:
+            df (DataFrame): Data frame to export
+            write_config (Mapping, optional): Configuration settings for writing data frame to
+            specified format. Defaults to None.
+            export_config (Mapping, optional): Configuration settings for exporting data frame
+            to S3. Defaults to None.
+        """
+        if write_config is None:
+            write_config = {}
+        if export_config is None:
+            export_config = {}
+
+        if self.format == FileFormat.HDF5:
+            temp_dir = Path.cwd() / '.tmp'
+            temp_dir.mkdir(parents=True, exist_ok=True)
+            obj_loc = temp_dir / f'{self.name}.hdf5'
+
+            self._write(df, obj_loc, **write_config)
+            with obj_loc.open('rb') as fin:
+                self.client.put_object(
+                    Body=fin, Bucket=self.bucket_name, Key=self.filepath, **export_config
+                )
+
+            obj_loc.unlink()
+            temp_dir.rmdir()
+        else:
+            buffer = BytesIO()
+            self._write(df, buffer, **write_config)
+            buffer.seek(0)
+            self.client.put_object(
+                Body=buffer, Bucket=self.bucket_name, Key=self.filepath, **export_config
+            )
 
     @classmethod
     def with_credentials(

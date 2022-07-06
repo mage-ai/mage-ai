@@ -1,4 +1,4 @@
-from mage_ai.data_loader.file import FileLoader
+from mage_ai.io.file import FileIO
 from pandas import DataFrame
 
 
@@ -8,4 +8,4 @@ def load_data_from_file() -> DataFrame:
     Template code for loading data from local filesytem
     """
     filepath = 'path/to/your/file.ext'  # Specify the path to your file.
-    return FileLoader(filepath).load()
+    return FileIO(filepath).load()

@@ -1,4 +1,4 @@
-from mage_ai.data_loader.postgres import Postgres
+from mage_ai.io.postgres import Postgres
 from pandas import DataFrame
 
 

@@ -4,7 +4,7 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     OUTPUT_TYPES,
 )
 from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_loader.base import DataSource
+from mage_ai.io.base import DataSource
 from typing import Mapping, Union
 import jinja2
 import json
@@ -144,4 +144,11 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
 
 
 def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
-    return template_env.get_template('data_exporters/default.py').render() + '\n'
+    data_source = config.get('data_source')
+    try:
+        _ = DataSource(data_source)
+        template_path = f'data_exporters/{data_source.lower()}.py'
+    except ValueError:
+        template_path = 'data_exporters/default.py'
+
+    return template_env.get_template(template_path).render() + '\n'

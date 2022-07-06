@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from pandas import DataFrame
-from typing import Any, Union
+from typing import IO, Any, Callable, Union
 import pandas as pd
 import os
 
@@ -30,7 +30,7 @@ FORMAT_TO_FUNCTION = {
 }
 
 
-class BaseLoader(ABC):
+class BaseIO(ABC):
     """
     Data loader interface. All data loaders must inherit from this interface.
     """
@@ -46,8 +46,19 @@ class BaseLoader(ABC):
         """
         pass
 
+    @abstractmethod
+    def export(self, df: DataFrame, *args, **kwargs) -> None:
+        """
+        Exports the input dataframe to the specified source. Subclasses must override
+        this method to specify of this data frame should be exported.
 
-class BaseFile(BaseLoader):
+        Args:
+            df (DataFrame): Data frame to export.
+        """
+        pass
+
+
+class BaseFile(BaseIO):
     """
     Data loader for file-like data sources (for example, loading from local
     filesystem or external file storages such as AWS S3)
@@ -61,14 +72,52 @@ class BaseFile(BaseLoader):
             filepath (os.PathLike): Path to the file
             format (FileFormat, optional): File format for the data being loaded. Defaults to None.
         """
+        parts = os.path.splitext(os.path.basename(filepath))
         if format is None:
-            format = os.path.splitext(filepath)[-1][1:]
+            format = parts[-1][1:]
+        self.name = parts[0]
         self.reader = FORMAT_TO_FUNCTION[format]
         self.filepath = filepath
         self.format = format
 
+    def _write(self, df: DataFrame, output: Union[IO, os.PathLike], **kwargs) -> None:
+        """
+        Base method for writing a data frame to some buffer or file.
 
-class BaseSQL(BaseLoader):
+        Args:
+            df (DataFrame): Data frame to write.
+            output (Union[IO, os.PathLike]): Output to write data frame to
+            (can be a filepath or a buffer in memory).
+        """
+        writer = self.__get_writer(df)
+        if self.format == FileFormat.HDF5:
+            kwargs.setdefault('key', self.name)
+        writer(output, **kwargs)
+
+    def __get_writer(self, df: DataFrame) -> Callable:
+        """
+        Fetches the appropriate file writer based on format
+
+        Args:
+            df (DataFrame): Data frame to get file writer for
+
+        Returns:
+            Callable: File writer method
+        """
+        if self.format == FileFormat.CSV:
+            writer = df.to_csv
+        elif self.format == FileFormat.JSON:
+            writer = df.to_json
+        elif self.format == FileFormat.PARQUET:
+            writer = df.to_parquet
+        elif self.format == FileFormat.HDF5:
+            writer = df.to_hdf
+        else:
+            raise ValueError(f'Unexpected format provided: {self.format}')
+        return writer
+
+
+class BaseSQL(BaseIO):
     """
     Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
     to the SQL data source after data loading is complete.
