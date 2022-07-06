@@ -12,13 +12,37 @@ export enum StatusTypeEnum {
   NOT_EXECUTED = 'not_executed',
 }
 
+export interface SampleDataType {
+  columns: string[];
+  rows: string[][] | number[][];
+}
+
 export interface OutputType {
-  sample_data: {
-    columns: string[];
-    rows: string[] | number[];
-  };
+  sample_data: SampleDataType;
   text_data: string;
   type: DataTypeEnum;
+  variable_uuid: string;
+}
+
+export interface InsightsType {
+  [uuid: string]: string | number;
+}
+
+export interface MetadataType {
+  [uuid: string]: string | number;
+}
+
+export interface StatisticsType {
+  [key: string]: {
+    [key: string]: number;
+  };
+}
+
+export interface AnalysisType {
+  insights: InsightsType;
+  metadata: MetadataType;
+  statistics: StatisticsType;
+  suggestions: any;
   variable_uuid: string;
 }
 
