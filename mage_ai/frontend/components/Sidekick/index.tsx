@@ -3,7 +3,10 @@ import { useCallback, useMemo, useRef } from 'react';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
+import Spacing from '@oracle/elements/Spacing';
+import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -11,8 +14,10 @@ import {
   TABLE_COLUMN_HEADER_HEIGHT,
   TOTAL_PADDING,
 } from './index.style';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from './constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
+import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 
 export type SidekickProps = {
@@ -64,6 +69,12 @@ function Sidekick({
     insights,
   ]);
 
+  const qualityMetrics: StatRowType[] = createMetricsSample({ statistics });
+  const statsSample: StatRowType[] = createStatisticsSample({
+    columnTypes,
+    statistics,
+  });
+
   const {
     height: dataTableHeightInit,
     width: dataTableWidthInit,
@@ -114,9 +125,23 @@ function Sidekick({
         />
       )}
       {activeView === ViewKeyEnum.REPORTS &&
-        <Text>
-          Reports
-        </Text>
+        <Spacing p={2}>
+          <FlexContainer flexDirection="column" fullWidth>
+            {qualityMetrics && (
+              <StatsTable
+                stats={qualityMetrics}
+                title="Quality metrics"
+              />
+            )}
+            <Spacing mb={PADDING_UNITS} />
+            {statsSample && (
+              <StatsTable
+                stats={statsSample}
+                title="Statistics"
+              />
+            )}
+          </FlexContainer>
+        </Spacing>
       }
       {activeView === ViewKeyEnum.GRAPHS &&
         <Text>
