@@ -103,14 +103,16 @@ function BlockCharts({
           <RowDataTable
             headerTitle="Correlations"
           >
-            <HeatMap
-              countMidpoint={0}
-              data={heatmapData}
-              height={UNIT * 8 * xyLabels.length}
-              minCount={-1}
-              xLabels={xyLabels}
-              yLabels={xyLabels}
-            />
+            <Spacing p={1}>
+              <HeatMap
+                countMidpoint={0}
+                data={heatmapData}
+                height={UNIT * 8 * xyLabels.length}
+                minCount={-1}
+                xLabels={xyLabels}
+                yLabels={xyLabels}
+              />
+            </Spacing>
           </RowDataTable>
         )}
       </FlexContainer>
