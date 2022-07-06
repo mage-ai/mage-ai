@@ -1,19 +1,18 @@
 import { useCallback, useMemo, useRef } from 'react';
 
-import BlockOverview from '@components/BlockOverview';
+import BlockCharts from '@components/BlockCharts';
 import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
+import {
+  ContainerStyle,
+  TABLE_COLUMN_HEADER_HEIGHT,
+} from './index.style';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
-import Text from '@oracle/elements/Text';
 import api from '@api';
-import {
-  ContainerStyle,
-  TABLE_COLUMN_HEADER_HEIGHT,
-} from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
@@ -153,7 +152,7 @@ function Sidekick({
         </Spacing>
       }
       {activeView === ViewKeyEnum.GRAPHS &&
-        <BlockOverview
+        <BlockCharts
           features={features}
           insightsOverview={insightsOverview}
           statistics={statistics}
