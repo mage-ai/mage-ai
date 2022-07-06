@@ -34,10 +34,12 @@ import {
 } from '@storage/localStorage';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { pluralize, randomNameGenerator } from '@utils/string';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
+import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -57,7 +59,26 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
-  const [activeSidekickView, setActiveSidekickView] = useState(ViewKeyEnum.TREE);
+
+  const qFromUrl = queryFromUrl();
+  const activeSidekickView = qFromUrl[VIEW_QUERY_PARAM];
+  const setActiveSidekickView = useCallback((
+    newView: ViewKeyEnum,
+    pushHistory: boolean = true,
+  ) => {
+    goToWithQuery({
+      [VIEW_QUERY_PARAM]: newView,
+    }, {
+      pushHistory,
+    });
+  }, [
+    activeSidekickView,
+  ]);
+  useEffect(() => {
+    if (!activeSidekickView) {
+      setActiveSidekickView(ViewKeyEnum.TREE, false);
+    }
+  }, [activeSidekickView]);
 
   const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
@@ -112,8 +133,10 @@ function PipelineDetailPage({
   const [selectedBlock, setSelectedBlock] = useState(null);
 
   useEffect(() => {
-    setAfterHidden(false);
-    setActiveSidekickView(ViewKeyEnum.TREE);
+    if (editingBlock.upstreamBlocks?.block) {
+      setAfterHidden(false);
+      setActiveSidekickView(ViewKeyEnum.TREE);
+    };
   }, [editingBlock.upstreamBlocks]);
 
   // Kernels
