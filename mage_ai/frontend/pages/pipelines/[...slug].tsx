@@ -7,22 +7,22 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockContext from '@context/Block';
 import BlockType, {
   BlockTypeEnum,
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
-import KernelContext from '@context/Kernel';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
-import PipelineContext from '@context/Pipeline';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -30,18 +30,18 @@ import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
 } from '@components/TripleLayout/index.style';
+import { Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   get,
-  set,
 } from '@storage/localStorage';
 import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
 import { goToWithQuery } from '@utils/routing';
-import { onError, onSuccess } from '@api/utils/response';
-import { pluralize, randomNameGenerator } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { randomNameGenerator } from '@utils/string';
 import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
@@ -136,6 +136,7 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const [errorMessages, setErrorMessages] = useState(null);
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
@@ -460,6 +461,7 @@ function PipelineDetailPage({
       sampleData={sampleData}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
+      setErrorMessages={setErrorMessages}
       setSelectedBlock={setSelectedBlock}
       statistics={statistics}
       views={SIDEKICK_VIEWS}
@@ -541,6 +543,7 @@ function PipelineDetailPage({
         activeSidekickView={activeSidekickView}
         after={sideKick}
         afterHidden={afterHidden}
+        afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}
         before={fileTree}
         beforeHeader={(
@@ -551,18 +554,43 @@ function PipelineDetailPage({
           />
         )}
         beforeHidden={beforeHidden}
+        beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         mainContainerRef={mainContainerRef}
         setActiveSidekickView={setActiveSidekickView}
         setAfterHidden={setAfterHidden}
+        setAfterMousedownActive={setAfterMousedownActive}
         setAfterWidth={setAfterWidth}
         setBeforeHidden={setBeforeHidden}
-        setBeforeWidth={setBeforeWidth}
-        setAfterMousedownActive={setAfterMousedownActive}
-        afterMousedownActive={afterMousedownActive}
-        beforeMousedownActive={beforeMousedownActive}
         setBeforeMousedownActive={setBeforeMousedownActive}
+        setBeforeWidth={setBeforeWidth}
       >
+        {errorMessages?.length >= 1 && (
+          <Spacing mb={3} mt={2} mx={2}>
+            <FlexContainer justifyContent="space-between">
+              <Text bold>
+                Errors
+              </Text>
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setErrorMessages(null)}
+                transparent
+              >
+                <Close muted />
+              </Button>
+            </FlexContainer>
+            {errorMessages?.map((msg: string) => (
+              <Spacing key={msg} pb={1}>
+                <Text monospace xsmall>
+                  {msg}
+                </Text>
+              </Spacing>
+            ))}
+          </Spacing>
+        )}
+
         {pipelineDetailMemo}
 
         <Spacing
