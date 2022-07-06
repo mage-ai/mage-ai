@@ -5,6 +5,8 @@ import {
   NavTree,
 } from '@oracle/icons';
 
+export const VIEW_QUERY_PARAM = 'sideview';
+
 export enum ViewKeyEnum {
   DATA = 'data',
   GRAPHS = 'graphs',

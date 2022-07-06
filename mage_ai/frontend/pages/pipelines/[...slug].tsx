@@ -380,8 +380,8 @@ function PipelineDetailPage({
               setBeforeWidth={setBeforeWidth}
             >
               <PipelineDetail
-                blocks={blocks}
                 blockRefs={blockRefs}
+                blocks={blocks}
                 deleteBlock={deleteBlock}
                 fetchFileTree={fetchFileTree}
                 isPipelineUpdating={isPipelineUpdating}

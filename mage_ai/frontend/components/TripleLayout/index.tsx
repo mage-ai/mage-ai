@@ -23,25 +23,24 @@ import {
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
-  HeaderStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
-  TabStyle,
 } from './index.style';
 import {
   ChevronLeft,
   ChevronRight,
-  GraphWithNodes,
 } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   set,
 } from '@storage/localStorage';
-import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { NAV_ICON_MAPPING, VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { goToWithQuery } from '@utils/routing';
 import { pauseEvent } from '@utils/events';
+import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
@@ -82,8 +81,21 @@ function TripleLayout({
   const refBeforeInnerDraggable = useRef(null);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [activeSidekickView, setActiveSidekickView] = useState(ViewKeyEnum.TREE);
   const sidekickViews = after?.props?.views || [];
+
+  const qFromUrl = queryFromUrl();
+  const viewFromUrlInit = qFromUrl[VIEW_QUERY_PARAM];
+  const viewFromUrl = viewFromUrlInit || ViewKeyEnum.TREE;
+  const setSidekickView = useCallback((
+    newView: ViewKeyEnum,
+    pushHistory: boolean = true,
+  ) => {
+    goToWithQuery({
+      [VIEW_QUERY_PARAM]: newView,
+    }, {
+      pushHistory,
+    });
+  }, [viewFromUrlInit]);
 
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
@@ -229,8 +241,8 @@ function TripleLayout({
           >
             <FlexContainer
               alignItems="center"
-              fullWidth
               fullHeight
+              fullWidth
               justifyContent="space-between"
             >
               <Flex>
@@ -333,7 +345,7 @@ function TripleLayout({
                 </Button>
               </Flex>
               {sidekickViews.map(({ key, label }: any) => {
-                const active = key === activeSidekickView;
+                const active = key === viewFromUrl;
                 const Icon = NAV_ICON_MAPPING[key];
 
                 return (
@@ -342,7 +354,7 @@ function TripleLayout({
                       beforeElement={<Icon />}
                       blackBorder
                       compact
-                      onClick={() => setActiveSidekickView(key)}
+                      onClick={() => setSidekickView(key)}
                       selected={active}
                       uuid={key}
                     >
@@ -355,7 +367,7 @@ function TripleLayout({
           </AsideHeaderStyle>
 
           <AfterInnerStyle ref={refAfterInner}>
-            {!afterHidden && React.cloneElement(after, { activeView: activeSidekickView })}
+            {!afterHidden && React.cloneElement(after, { activeView: viewFromUrl })}
           </AfterInnerStyle>
         </AfterStyle>
       )}
