@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
+import BlockType from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
@@ -11,11 +13,11 @@ import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants'
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
 import { findBlockByPath } from './utils';
-import { useBlockContext } from '@context/Block';
-import { usePipelineContext } from '@context/Pipeline';
 
 export type FileTreeProps = {
   blockRefs: any;
+  pipeline: PipelineType;
+  setSelectedBlock: (block: BlockType) => void;
   tree: FileNodeType[];
 };
 
@@ -40,11 +42,11 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 
 function FileTree({
   blockRefs,
+  pipeline,
+  setSelectedBlock,
   tree: initialTree,
 }: FileTreeProps) {
   const themeContext = useContext(ThemeContext);
-  const { pipeline } = usePipelineContext();
-  const { setSelectedBlock } = useBlockContext();
 
   enum TreeOperationEnum {
     CUSTOM_VAL,

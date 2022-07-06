@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
@@ -25,8 +25,6 @@ import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getFinalLevelIndex } from './utils';
 import { onError, onSuccess } from '@api/utils/response';
-import { useBlockContext } from '@context/Block';
-import { usePipelineContext } from '@context/Pipeline';
 
 export type DependencyGraphProps = {
   blockRefs?: {
@@ -38,20 +36,21 @@ export type DependencyGraphProps = {
       values: BlockType[];
     };
   };
+  fetchPipeline: () => void;
   pipeline: PipelineType;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
-};
+} & SetEditingBlockType;
 
 function DependencyGraph({
   blockRefs,
   editingBlock,
+  fetchPipeline,
   pipeline,
   selectedBlock,
+  setEditingBlock,
   setSelectedBlock,
 }: DependencyGraphProps) {
-  const { setEditingBlock } = useBlockContext();
-  const { fetchPipeline } = usePipelineContext();
   const themeContext: ThemeType = useContext(ThemeContext);
   const updateXarrow = useXarrow();
   const {

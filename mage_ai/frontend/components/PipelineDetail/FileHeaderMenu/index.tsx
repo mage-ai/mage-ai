@@ -27,18 +27,21 @@ import {
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { randomNameGenerator } from '@utils/string';
-import { useKernelContext } from '@context/Kernel';
 import { useKeyboardContext } from '@context/Keyboard';
-import { usePipelineContext } from '@context/Pipeline';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
-function FileHeaderMenu() {
-  const { savePipelineContent } = usePipelineContext();
-  const {
-    interruptKernel,
-    restartKernel,
-  } = useKernelContext();
+type FileHeaderMenuProps = {
+  interruptKernel: () => void;
+  restartKernel: () => void;
+  savePipelineContent: () => void;
+};
+
+function FileHeaderMenu({
+  interruptKernel,
+  restartKernel,
+  savePipelineContent,
+}: FileHeaderMenuProps) {
   const router = useRouter();
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);

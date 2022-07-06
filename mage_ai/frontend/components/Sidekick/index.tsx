@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -30,6 +30,7 @@ export type SidekickProps = {
       values: BlockType[];
     };
   };
+  fetchPipeline: () => void;
   pipeline: PipelineType;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
@@ -37,14 +38,16 @@ export type SidekickProps = {
     key: string;
     label: string;
   }[];
-};
+} & SetEditingBlockType;
 
 function Sidekick({
   activeView,
   blockRefs,
   editingBlock,
+  fetchPipeline,
   pipeline,
   selectedBlock,
+  setEditingBlock,
   setSelectedBlock,
 }: SidekickProps) {
   const containerRef = useRef(null);
@@ -111,8 +114,10 @@ function Sidekick({
         <DependencyGraph
           blockRefs={blockRefs}
           editingBlock={editingBlock}
+          fetchPipeline={fetchPipeline}
           pipeline={pipeline}
           selectedBlock={selectedBlock}
+          setEditingBlock={setEditingBlock}
           setSelectedBlock={setSelectedBlock}
         />
       }

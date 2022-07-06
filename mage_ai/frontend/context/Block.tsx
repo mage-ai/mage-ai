@@ -8,12 +8,6 @@ type BlockContextType = {
     onCreateCallback?: (block: BlockType) => void,
   ) => void;
   setBlocks: (blocks: BlockType[]) => void;
-  setEditingBlock: (data: {
-    upstreamBlocks: {
-      block: BlockType;
-      values: BlockType[];
-    };
-  }) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
 };
@@ -21,7 +15,6 @@ type BlockContextType = {
 const BlockContext = React.createContext<BlockContextType>({
   addNewBlockAtIndex: null,
   setBlocks: null,
-  setEditingBlock: null,
   setRunningBlocks: null,
   setSelectedBlock: null,
 });

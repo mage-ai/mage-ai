@@ -59,6 +59,8 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [beforeHidden, setBeforeHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+  const [afterMousedownActive, setAfterMousedownActive] = useState(false);
+  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
   const qFromUrl = queryFromUrl();
   const activeSidekickView = qFromUrl[VIEW_QUERY_PARAM];
@@ -85,14 +87,14 @@ function PipelineDetailPage({
   const pipelineUUID = pipelineProp.uuid;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
 
-  const setContentByBlockUUID = (data: {
+  const setContentByBlockUUID = useCallback((data: {
     [uuid: string]: string;
   }) => {
     contentByBlockUUID.current = {
       ...contentByBlockUUID.current,
       ...data,
     };
-  };
+  }, [contentByBlockUUID]);
 
   useEffect(() => {
     if (pipelineUUID !== pipelineUUIDPrev) {
@@ -102,10 +104,12 @@ function PipelineDetailPage({
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
   useEffect(() => {
-    if (mainContainerRef?.current) {
+    if (mainContainerRef?.current && !afterMousedownActive && !beforeMousedownActive) {
       setMainContainerWidth(mainContainerRef.current.getBoundingClientRect().width);
     }
   }, [
+    afterMousedownActive,
+    beforeMousedownActive,
     afterHidden,
     afterWidth,
     beforeHidden,
@@ -385,99 +389,133 @@ function PipelineDetailPage({
     filesData?.files,
   ]);
   const blockRefs = useRef({});
-  const fileTree = useMemo(() => <FileTree blockRefs={blockRefs} tree={files} />, [
+  const fileTree = useMemo(() => (
+    <FileTree
+      blockRefs={blockRefs}
+      pipeline={pipeline}
+      setSelectedBlock={setSelectedBlock}
+      tree={files}
+    />
+  ), [
     blockRefs,
     files,
+    pipeline,
+    setSelectedBlock,
   ]);
   const sideKick = useMemo(() => (
     <Sidekick
       blockRefs={blockRefs}
       editingBlock={editingBlock}
+      fetchPipeline={fetchPipeline}
       pipeline={pipeline}
       selectedBlock={selectedBlock}
+      setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
       views={SIDEKICK_VIEWS}
     />
   ), [
     blockRefs,
     editingBlock,
+    fetchPipeline,
     pipeline,
     selectedBlock,
+    setEditingBlock,
+  ]);
+  const pipelineDetailMemo = useMemo(() => (
+    <PipelineDetail
+      addNewBlockAtIndex={addNewBlockAtIndex}
+      blockRefs={blockRefs}
+      blocks={blocks}
+      deleteBlock={deleteBlock}
+      fetchFileTree={fetchFileTree}
+      fetchPipeline={fetchPipeline}
+      interruptKernel={interruptKernel}
+      isPipelineUpdating={isPipelineUpdating}
+      kernel={kernel}
+      mainContainerRef={mainContainerRef}
+      mainContainerWidth={mainContainerWidth}
+      messages={messages}
+      pipeline={pipeline}
+      pipelineContentTouched={pipelineContentTouched}
+      pipelineLastSaved={pipelineLastSaved}
+      restartKernel={restartKernel}
+      runningBlocks={runningBlocks}
+      savePipelineContent={savePipelineContent}
+      selectedBlock={selectedBlock}
+      setContentByBlockUUID={setContentByBlockUUID}
+      setEditingBlock={setEditingBlock}
+      setMessages={setMessages}
+      setPipelineContentTouched={setPipelineContentTouched}
+      setRunningBlocks={setRunningBlocks}
+      setSelectedBlock={setSelectedBlock}
+    />
+  ), [
+    addNewBlockAtIndex,
+    blockRefs,
+    blocks,
+    deleteBlock,
+    fetchFileTree,
+    fetchPipeline,
+    interruptKernel,
+    isPipelineUpdating,
+    kernel,
+    mainContainerRef,
+    mainContainerWidth,
+    messages,
+    pipeline,
+    pipelineContentTouched,
+    pipelineLastSaved,
+    restartKernel,
+    runningBlocks,
+    savePipelineContent,
+    selectedBlock,
+    setContentByBlockUUID,
+    setEditingBlock,
+    setMessages,
+    setPipelineContentTouched,
+    setRunningBlocks,
+    setSelectedBlock,
   ]);
 
   return (
     <>
       <Head title={pipeline?.name} />
-      <PipelineContext.Provider
-        value={{
-          fetchFileTree,
-          fetchPipeline,
-          pipeline,
-          savePipelineContent,
-          updatePipeline,
-        }}
-      >
-        <KernelContext.Provider
-          value={{
-            fetchKernels,
-            interruptKernel,
-            kernel,
-            restartKernel: restartKernelWithConfirm,
-            setMessages,
-          }}
-        >
-          <BlockContext.Provider
-            value={{
-              addNewBlockAtIndex,
-              setBlocks,
-              setEditingBlock,
-              setRunningBlocks,
-              setSelectedBlock,
-            }}
-          >
-            <TripleLayout
-              activeSidekickView={activeSidekickView}
-              after={sideKick}
-              afterHidden={afterHidden}
-              afterWidth={afterWidth}
-              before={fileTree}
-              beforeHeader={<FileHeaderMenu />}
-              beforeHidden={beforeHidden}
-              beforeWidth={beforeWidth}
-              mainContainerRef={mainContainerRef}
-              setActiveSidekickView={setActiveSidekickView}
-              setAfterHidden={setAfterHidden}
-              setAfterWidth={setAfterWidth}
-              setBeforeHidden={setBeforeHidden}
-              setBeforeWidth={setBeforeWidth}
-            >
-              <PipelineDetail
-                blockRefs={blockRefs}
-                blocks={blocks}
-                deleteBlock={deleteBlock}
-                fetchFileTree={fetchFileTree}
-                isPipelineUpdating={isPipelineUpdating}
-                mainContainerRef={mainContainerRef}
-                mainContainerWidth={mainContainerWidth}
-                messages={messages}
-                pipelineContentTouched={pipelineContentTouched}
-                pipelineLastSaved={pipelineLastSaved}
-                runningBlocks={runningBlocks}
-                selectedBlock={selectedBlock}
-                setContentByBlockUUID={setContentByBlockUUID}
-                setPipelineContentTouched={setPipelineContentTouched}
-              />
 
-              <Spacing
-                pb={Math.max(
-                  Math.floor((heightWindow / 2) / UNIT),
-                  0,
-                )}
-              />
-            </TripleLayout>
-          </BlockContext.Provider>
-        </KernelContext.Provider>
-      </PipelineContext.Provider>
+      <TripleLayout
+        activeSidekickView={activeSidekickView}
+        after={sideKick}
+        afterHidden={afterHidden}
+        afterWidth={afterWidth}
+        before={fileTree}
+        beforeHeader={(
+          <FileHeaderMenu
+            interruptKernel={interruptKernel}
+            restartKernel={restartKernel}
+            savePipelineContent={savePipelineContent}
+          />
+        )}
+        beforeHidden={beforeHidden}
+        beforeWidth={beforeWidth}
+        mainContainerRef={mainContainerRef}
+        setActiveSidekickView={setActiveSidekickView}
+        setAfterHidden={setAfterHidden}
+        setAfterWidth={setAfterWidth}
+        setBeforeHidden={setBeforeHidden}
+        setBeforeWidth={setBeforeWidth}
+        setAfterMousedownActive={setAfterMousedownActive}
+        afterMousedownActive={afterMousedownActive}
+        beforeMousedownActive={beforeMousedownActive}
+        setBeforeMousedownActive={setBeforeMousedownActive}
+      >
+        {pipelineDetailMemo}
+
+        <Spacing
+          pb={Math.max(
+            Math.floor((heightWindow / 2) / UNIT),
+            0,
+          )}
+        />
+      </TripleLayout>
     </>
   );
 }
