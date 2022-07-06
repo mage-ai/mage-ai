@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 

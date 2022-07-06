@@ -45,6 +45,7 @@ type InvalidValueType = {
 
 type SharedProps = {
   columnHeaderHeight?: number;
+  disableScrolling?: boolean;
   height?: number;
   invalidValues?: InvalidValueType;
   previewIndexes?: {
@@ -63,7 +64,6 @@ type TableProps = {
     sticky?: string;
   }[];
   data: string[][] | number[][];
-  disableScrolling?: boolean;
 } & SharedProps;
 
 type DataTableProps = {
