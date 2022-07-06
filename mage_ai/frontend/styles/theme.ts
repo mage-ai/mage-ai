@@ -55,5 +55,5 @@ export const theme = {
     lg: `${BREAKPOINT_LARGE}px`,
     xl: `${BREAKPOINT_X_LARGE}px`,
   },
-  space: range(100).map(i => i * 8),
+  space: range(200).map(i => i * 8),
 };

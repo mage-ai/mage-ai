@@ -22,8 +22,6 @@ def add_internal_output_info(code: str) -> str:
 
     code_lines_final = []
 
-    print('last_line_in_block', last_line_in_block)
-
     if last_line_in_block:
         code_lines_final.append(code)
     else:

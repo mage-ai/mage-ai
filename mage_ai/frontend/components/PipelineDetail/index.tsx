@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { CSSTransition } from 'react-transition-group';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
@@ -16,6 +17,11 @@ import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputTy
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import {
+  ANIMATION_DURATION,
+  OverlayStyle,
+  PipelineContainerStyle,
+} from './index.style';
 import {
   KEY_CODES_SYSTEM,
   KEY_CODE_A,
@@ -96,6 +102,8 @@ function PipelineDetail({
 
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
+  const [visible, setVisible] = useState<boolean>(false);
+  const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
 
   const {
     lastMessage,
@@ -326,71 +334,94 @@ function PipelineDetail({
     ],
   );
 
+  useEffect(() => {
+    setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
+  }, [pipeline]);
+
   return (
-    <Spacing p={PADDING_UNITS}>
-      <Spacing mb={1}>
-        <KernelStatus
-          isBusy={runningBlocks.length >= 1}
-          isPipelineUpdating={isPipelineUpdating}
-          kernel={kernel}
-          pipelineContentTouched={pipelineContentTouched}
-          pipelineLastSaved={pipelineLastSaved}
-          restartKernel={restartKernel}
-        />
-      </Spacing>
+    <>
+      <PipelineContainerStyle>
+        {visibleOverlay && (
+          <CSSTransition
+            classNames="pipeline-detail"
+            in={visible}
+            onEntered={() => setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION)}
+          >
+            <OverlayStyle />
+          </CSSTransition>
+        )}
+      </PipelineContainerStyle>
 
-      {blocks.map((block: BlockType, idx: number) => {
-        const {
-          type,
-          uuid,
-        } = block;
-        const selected: boolean = selectedBlock?.uuid === uuid;
-        const runningBlock = runningBlocksByUUID[uuid];
-        const executionState = ExecutionStateEnum.IDLE
+      <Spacing p={PADDING_UNITS}>
+        <Spacing mb={1}>
+          <KernelStatus
+            isBusy={runningBlocks.length >= 1}
+            isPipelineUpdating={isPipelineUpdating}
+            kernel={kernel}
+            pipelineContentTouched={pipelineContentTouched}
+            pipelineLastSaved={pipelineLastSaved}
+            restartKernel={restartKernel}
+          />
+        </Spacing>
 
-        const path = `${type}s/${uuid}.py`;
-        blockRefs.current[path] = createRef();
+        {blocks.map((block: BlockType, idx: number) => {
+          const {
+            type,
+            uuid,
+          } = block;
+          const selected: boolean = selectedBlock?.uuid === uuid;
+          const runningBlock = runningBlocksByUUID[uuid];
+          const executionState = runningBlock
+            ? (runningBlock.priority === 0
+              ? ExecutionStateEnum.BUSY
+              : ExecutionStateEnum.QUEUED
+             )
+            : ExecutionStateEnum.IDLE;
 
-        return (
-          <CodeBlock
+          const path = `${type}s/${uuid}.py`;
+          blockRefs.current[path] = createRef();
+
+          return (
+            <CodeBlock
+              addNewBlock={(b: BlockType) => {
+                addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+                setTextareaFocused(true);
+              }}
+              defaultValue={block.content}
+              deleteBlock={(b: BlockType) => {
+                deleteBlock(b);
+                setAnyInputFocused(false);
+              }}
+              block={block}
+              executionState={executionState}
+              key={uuid}
+              interruptKernel={interruptKernel}
+              mainContainerRef={mainContainerRef}
+              mainContainerWidth={mainContainerWidth}
+              messages={messages[uuid]}
+              noDivider={idx === numberOfBlocks - 1}
+              onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+              ref={blockRefs.current[path]}
+              runBlock={runBlock}
+              selected={selected}
+              setAnyInputFocused={setAnyInputFocused}
+              setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={selected && textareaFocused}
+            />
+          );
+        })}
+
+        <Spacing mt={PADDING_UNITS}>
+          <AddNewBlocks
             addNewBlock={(b: BlockType) => {
-              addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+              addNewBlockAtIndex(b, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
-            defaultValue={block.content}
-            deleteBlock={(b: BlockType) => {
-              deleteBlock(b);
-              setAnyInputFocused(false);
-            }}
-            block={block}
-            executionState={executionState}
-            key={uuid}
-            interruptKernel={interruptKernel}
-            mainContainerRef={mainContainerRef}
-            mainContainerWidth={mainContainerWidth}
-            messages={messages[uuid]}
-            noDivider={idx === numberOfBlocks - 1}
-            onChange={(value: string) => onChangeCodeBlock(uuid, value)}
-            ref={blockRefs.current[path]}
-            runBlock={runBlock}
-            selected={selected}
-            setAnyInputFocused={setAnyInputFocused}
-            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={selected && textareaFocused}
           />
-        );
-      })}
-
-      <Spacing mt={PADDING_UNITS}>
-        <AddNewBlocks
-          addNewBlock={(b: BlockType) => {
-            addNewBlockAtIndex(b, numberOfBlocks, setSelectedBlock);
-            setTextareaFocused(true);
-          }}
-        />
+        </Spacing>
       </Spacing>
-    </Spacing>
+    </>
   );
 }
 
