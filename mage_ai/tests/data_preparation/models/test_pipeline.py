@@ -113,7 +113,7 @@ class PipelineTest(TestCase):
         pipeline.add_block(block2, upstream_block_uuids=['block1'])
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
-        asyncio.run(pipeline.execute())
+        asyncio.run(pipeline.execute(run_all_blocks=True))
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 3',
             uuid='test_pipeline_3',
@@ -169,7 +169,7 @@ class PipelineTest(TestCase):
         pipeline.add_block(block5, upstream_block_uuids=['block4'])
         pipeline.add_block(block6, upstream_block_uuids=['block5'])
         pipeline.add_block(block7, upstream_block_uuids=['block2', 'block3', 'block6'])
-        asyncio.run(pipeline.execute())
+        asyncio.run(pipeline.execute(run_all_blocks=True))
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 4',
             uuid='test_pipeline_4',

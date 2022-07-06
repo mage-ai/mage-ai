@@ -83,7 +83,7 @@ class Pipeline:
             return True
         return len(self.blocks_by_uuid[block.uuid].downstream_blocks) == 0
 
-    async def execute(self, analyze_outputs=True):
+    async def execute(self, analyze_outputs=True, run_all_blocks=False):
         """
         Async function for parallel processing
         This function will schedule the block execution in topological
@@ -97,6 +97,8 @@ class Pipeline:
                 tasks[b.uuid] = None
         while not blocks.empty():
             block = blocks.get()
+            if not run_all_blocks and block.type == BlockType.SCRATCHPAD:
+                continue
             skip = False
             for upstream_block in block.upstream_blocks:
                 if tasks.get(upstream_block.uuid) is None:
