@@ -76,9 +76,9 @@ class BigQuery(BaseLoader):
             the table schema must match the data frame schema. If this table doesn't exist,
             the table schema is automatically inferred.
             if_exists (str): Specifies export policy if table exists. Either
-                - 'fail' (throw an error),
-                - 'replace' (drops existing table and creates new table of same name),
-                - 'append' (appends data frame to existing table).
+                - 'fail': throw an error.
+                - 'replace': drops existing table and creates new table of same name.
+                - 'append': appends data frame to existing table. In this case the schema must match the original table.
             Defaults to 'replace'. If 'write_disposition` is specified as a keyword argument, this parameter
             is ignored.
             **configuration_params: Configuration parameters for export job
@@ -93,7 +93,7 @@ class BigQuery(BaseLoader):
                 config.write_disposition = WriteDisposition.WRITE_EMPTY
             else:
                 raise ValueError(
-                    f'Invalid policy specified upon existence of table: \'{if_exists}\''
+                    f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                 )
         self.client.load_table_from_dataframe(df, table_name, job_config=config).result()
 

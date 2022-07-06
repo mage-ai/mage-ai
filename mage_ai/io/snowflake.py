@@ -1,6 +1,7 @@
 from mage_ai.io.base import BaseSQL
 from pandas import DataFrame
 from snowflake.connector import connect
+from snowflake.connector.pandas_tools import write_pandas
 
 
 class Snowflake(BaseSQL):
@@ -53,3 +54,44 @@ class Snowflake(BaseSQL):
         """
         with self.conn.cursor() as cur:
             return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
+
+    def export(self, df: DataFrame, table_name: str, if_exists: str = 'append', **kwargs) -> None:
+        """
+        Exports a Pandas data frame to a Snowflake warehouse based on the table name. If table doesn't
+        exist, the table is automatically created.
+
+        Args:
+            df (DataFrame): Data frame to export to a Snowflake warehouse.
+            table_name (str): Name of the table to export the data to (excludes database name, schema name).
+            if_exists (str): Specifies export policy if table exists. Either
+                - 'fail': throw an error.
+                - 'replace': drops existing table and creates new table of same name.
+                - 'append': appends data frame to existing table. In this case the schema must match the original table.
+            Defaults to 'append'.
+        """
+        exists = False
+        with self._ctx.cursor() as cur:
+            cur.execute(f'SHOW TABLES LIKE \'{table_name}\'')
+            if cur.rowcount == 1:
+                exists = True
+            elif cur.rowcount > 1:
+                raise ValueError(f'Two or more tables with the name {table_name} are found.')
+            if exists:
+                if if_exists == 'fail':
+                    raise RuntimeError(
+                        f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
+                    )
+                elif if_exists == 'replace':
+                    cur.execute(f'DROP TABLE {table_name}')
+                elif if_exists != 'append':
+                    raise ValueError(
+                        f'Invalid policy specified for handling existence of table: \'{if_exists}\''
+                    )
+
+        auto_create_table = True
+        if 'auto_create_table' in kwargs:
+            auto_create_table = kwargs.pop(auto_create_table)
+            if auto_create_table is None:
+                auto_create_table = True
+
+        write_pandas(self.conn, df, table_name, auto_create_table=auto_create_table, **kwargs)

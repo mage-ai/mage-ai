@@ -68,9 +68,9 @@ class Postgres(BaseSQL):
             name (str): Name of the table to insert rows from this data frame into.
             index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             if_exists (str): Specifies export policy if table exists. Either
-                - 'fail' (throw an error),
-                - 'replace' (drops existing table and creates new table of same name),
-                - 'append' (appends data frame to existing table).
+                - 'fail': throw an error.
+                - 'replace': drops existing table and creates new table of same name.
+                - 'append': appends data frame to existing table. In this case the schema must match the original table.
             Defaults to 'replace'.
             **kwargs: Additional query parameters.
         """

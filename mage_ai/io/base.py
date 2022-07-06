@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from pandas import DataFrame
-from typing import IO, Any, Callable, Mapping, Union
+from typing import IO, Any, Callable, Union
 import pandas as pd
 import os
 
