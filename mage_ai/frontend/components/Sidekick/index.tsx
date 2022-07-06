@@ -129,6 +129,8 @@ function Sidekick({
           columns={columns}
           height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
           noBorderBottom
+          noBorderLeft
+          noBorderRight
           noBorderTop
           renderColumnHeader={renderColumnHeader}
           rows={rows}

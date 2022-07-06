@@ -53,6 +53,10 @@ function CodeOutput({
       columns={columns}
       disableScrolling={!selected}
       height={UNIT * 40}
+      noBorderBottom
+      noBorderLeft
+      noBorderRight
+      noBorderTop
       rows={rows}
       // Remove border 2px and padding from each side
       width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
