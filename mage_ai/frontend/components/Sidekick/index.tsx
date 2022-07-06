@@ -143,25 +143,27 @@ function Sidekick({
 
   return (
     <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
-      <Spacing p={2}>
-        <Button
-          beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-          loading={isLoadingExecute}
-          onClick={() => executePipeline()}
-          success
-        >
-          <Text
-            bold
-            inverted
-            primary={isDisplayingSuccessMessage}
+      {activeView === ViewKeyEnum.TREE &&
+        <Spacing p={2}>
+          <Button
+            beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+            loading={isLoadingExecute}
+            onClick={() => executePipeline()}
+            success
           >
-            {isDisplayingSuccessMessage
-              ? 'Successfully executed!'
-              : 'Execute pipeline'
-            }
-          </Text>
-        </Button>
-      </Spacing>
+            <Text
+              bold
+              inverted
+              primary={isDisplayingSuccessMessage}
+            >
+              {isDisplayingSuccessMessage
+                ? 'Successfully executed!'
+                : 'Execute pipeline'
+              }
+            </Text>
+          </Button>
+        </Spacing>
+      }
       {activeView === ViewKeyEnum.TREE &&
         <DependencyGraph
           blockRefs={blockRefs}
