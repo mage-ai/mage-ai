@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
+import DependencyGraph from '@components/DependencyGraph';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -80,9 +81,10 @@ function Sidekick({
   return (
     <ContainerStyle ref={containerRef}>
       {activeView === ViewKeyEnum.TREE &&
-        <Text>
-          Tree
-        </Text>
+        <DependencyGraph
+          pipeline={selectedPipeline?.pipeline}
+          selectedBlock={selectedBlock}
+        />
       }
       {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
         <DataTable
