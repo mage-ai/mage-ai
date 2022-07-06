@@ -7,7 +7,7 @@ import Text from '@oracle/elements/Text';
 import { INVERTED_TEXT_COLOR_BLOCK_TYPES, MIN_NODE_WIDTH } from './constants';
 import { NodeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { getNodeColor } from './utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 type GraphNodeProps = {
   block: BlockType;
@@ -30,7 +30,7 @@ function GraphNode({
 
   return (
     <NodeStyle
-      backgroundColor={getNodeColor(type, themeContext)}
+      backgroundColor={getColorsForBlockType(type, { theme: themeContext }).accent}
       disabled={disabled}
       key={uuid}
       selected={selected}

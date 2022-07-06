@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
@@ -22,7 +22,8 @@ import { ContainerStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
-import { getFinalLevelIndex, getNodeColor } from './utils';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getFinalLevelIndex } from './utils';
 import { onError, onSuccess } from '@api/utils/response';
 import { useBlockContext } from '@context/Block';
 import { usePipelineContext } from '@context/Pipeline';
@@ -58,7 +59,7 @@ function DependencyGraph({
     values: upstreamBlocksEditing = [],
   } = editingBlock?.upstreamBlocks || {};
   const blocks = useMemo(
-    () => pipeline?.blocks || [],
+    () => pipeline?.blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type) || [],
     [
       pipeline?.blocks,
     ],
@@ -82,7 +83,7 @@ function DependencyGraph({
       uuid: startBlockUUID,
     } = block;
     const arrowsToDownstreamBlocks = downstreamBlocks.map(endBlockUUID => ({
-      color: getNodeColor(type, themeContext),
+      color: getColorsForBlockType(type, { theme: themeContext }).accent,
       end: endBlockUUID,
       start: startBlockUUID,
     }));

@@ -98,7 +98,6 @@ function KeyboardText({
     <Text
       center
       inline
-      inverted
       monospace={monospace}
       muted={disabled || mutedDisabled}
       // @ts-ignore

@@ -344,11 +344,21 @@ function PipelineDetailPage({
         uuid,
       }: BlockType) => {
         messagesInit[uuid] = outputs.map(({
+          sample_data: sampleData,
           text_data: textDataJsonString,
-        }: OutputType) => textDataJsonString
-          ? JSON.parse(textDataJsonString)
-          : textDataJsonString
-        );
+          type,
+        }: OutputType) => {
+          if (sampleData) {
+            return {
+              data: sampleData,
+              type,
+            };
+          } else if (textDataJsonString) {
+            return JSON.parse(textDataJsonString);
+          }
+
+          return textDataJsonString;
+        });
         contentByBlockUUID.current[uuid] = content;
       });
 
@@ -359,6 +369,8 @@ function PipelineDetailPage({
     setBlocks,
     setMessages,
   ]);
+
+  console.log(messages)
 
   // TODO: API should report filesystem as FileNodeType[], not FileNodeType
   const files = useMemo(() => filesData ? [filesData?.files] : [], [
