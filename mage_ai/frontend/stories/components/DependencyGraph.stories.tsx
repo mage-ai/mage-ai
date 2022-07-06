@@ -58,6 +58,7 @@ const samplePipeline = {
         'transformer_2',
         'transformer_3',
         'transformer_4',
+        'transformer_6',
       ],
     },
     {
@@ -87,6 +88,16 @@ const samplePipeline = {
       status: StatusTypeEnum.NOT_EXECUTED,
       type: BlockTypeEnum.TRANSFORMER,
       uuid: 'transformer_4',
+      upstream_blocks: [
+        'transformer_1',
+      ],
+      downstream_blocks: [],
+    },
+    {
+      name: 'Transformer 6', // level 2
+      status: StatusTypeEnum.NOT_EXECUTED,
+      type: BlockTypeEnum.TRANSFORMER,
+      uuid: 'transformer_6',
       upstream_blocks: [
         'transformer_1',
       ],

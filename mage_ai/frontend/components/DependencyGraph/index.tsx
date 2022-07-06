@@ -187,35 +187,37 @@ function DependencyGraph({
 
       <ContainerStyle onScroll={updateXarrow}>
         <Xwrapper>
-          {nodeLevels.map((nodeLevel, index) => (
-            <FlexContainer alignItems="center" key={index}>
-              <Spacing mr={(index === nodeLevels.length - 1) ? 0 : 6}>
-                {nodeLevel.map((block: BlockType) => (
-                  <GraphNode
-                    block={block}
-                    disabled={blockEditing?.uuid === block.uuid}
-                    key={block.uuid}
-                    onClick={blockEditing
-                      ? onClickWhenEditingUpstreamBlocks
-                      : onClick
-                    }
-                    selected={blockEditing
-                      ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                      : selectedBlock?.uuid === block.uuid
-                    }
-                  />
-                ))}
+          <FlexContainer alignItems="flex-start" flexDirection="column">
+            {nodeLevels.map((nodeLevel, index) => (
+              <Spacing key={index} mb={(index === nodeLevels.length - 1) ? 0 : 6}>
+                <FlexContainer alignItems="center">
+                  {nodeLevel.map((block: BlockType) => (
+                    <GraphNode
+                      block={block}
+                      disabled={blockEditing?.uuid === block.uuid}
+                      key={block.uuid}
+                      onClick={blockEditing
+                        ? onClickWhenEditingUpstreamBlocks
+                        : onClick
+                      }
+                      selected={blockEditing
+                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
+                    />
+                  ))}
+                </FlexContainer>
               </Spacing>
-            </FlexContainer>
-          ))}
+            ))}
+          </FlexContainer>
           {arrows.map(({ color, end, start }) => (
             <Xarrow
               animateDrawing={0.2}
               color={color}
-              curveness={0.6}
+              curveness={0.8}
               dashness={false}
               end={end}
-              headSize={5}
+              headSize={7}
               key={`${start}_${end}`}
               start={start}
               strokeWidth={1}
