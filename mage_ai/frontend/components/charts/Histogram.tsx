@@ -34,6 +34,8 @@ import {
   getXScalePadding,
 } from './utils/date';
 import { formatNumberLabel } from './utils/label';
+import { getChartColors } from './constants';
+
 type TooltipData = {
   bar: any;
   color: string;
@@ -182,11 +184,13 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
       round: true,
     });
 
+    const chartColors = getChartColors(themeContext);
+
     const colors = {
-      active: themeContext?.content.active || light.content.active,
-      default: themeContext?.elevation.visualizationAccentAlt || light.elevation.visualizationAccentAlt,
-      muted: themeContext?.monotone.gray || light.monotone.gray,
-      selected: themeContext?.elevation.visualizationAccent || light.elevation.visualizationAccent,
+      active: (themeContext?.content || light.content).active,
+      default: chartColors[0],
+      muted: (themeContext?.monotone || light.monotone).gray,
+      selected: (themeContext?.elevation || light.elevation).visualizationAccent,
     };
 
     let barColor = colors['default'];
