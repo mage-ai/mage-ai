@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import BlockCharts from '@components/BlockCharts';
 import BlockType, { SetEditingBlockType } from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
@@ -69,6 +70,7 @@ function Sidekick({
   const columnTypes = blockAnalysis?.analyses?.[0]?.metadata?.column_types || {};
   const statistics = blockAnalysis?.analyses?.[0]?.statistics || {};
   const insights = blockAnalysis?.analyses?.[0]?.insights;
+  const features = insights?.[0]?.map(({ feature }) => feature) || [];
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
@@ -144,9 +146,11 @@ function Sidekick({
         </Spacing>
       }
       {activeView === ViewKeyEnum.GRAPHS &&
-        <Text>
-          Graphs
-        </Text>
+        <BlockCharts
+          features={features}
+          insightsOverview={insightsOverview}
+          statistics={statistics}
+        />
       }
     </ContainerStyle>
   );
