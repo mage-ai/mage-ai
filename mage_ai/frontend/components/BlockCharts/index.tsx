@@ -19,7 +19,7 @@ export type BlockOverviewProps = {
   statistics: any;
 };
 
-function BlockGraphs({
+function BlockCharts({
   features,
   insightsOverview,
   statistics,
@@ -103,14 +103,16 @@ function BlockGraphs({
           <RowDataTable
             headerTitle="Correlations"
           >
-            <HeatMap
-              countMidpoint={0}
-              data={heatmapData}
-              height={UNIT * 8 * xyLabels.length}
-              minCount={-1}
-              xLabels={xyLabels}
-              yLabels={xyLabels}
-            />
+            <Spacing p={1}>
+              <HeatMap
+                countMidpoint={0}
+                data={heatmapData}
+                height={UNIT * 8 * xyLabels.length}
+                minCount={-1}
+                xLabels={xyLabels}
+                yLabels={xyLabels}
+              />
+            </Spacing>
           </RowDataTable>
         )}
       </FlexContainer>
@@ -118,4 +120,4 @@ function BlockGraphs({
   );
 }
 
-export default BlockGraphs;
+export default BlockCharts;

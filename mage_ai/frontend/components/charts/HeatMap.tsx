@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
-import styled from 'styled-components';
+import styled, { ThemeContext } from 'styled-components';
 import { Group } from '@visx/group';
 import { HeatmapRect } from '@visx/heatmap';
 import { scaleLinear } from '@visx/scale';
@@ -12,12 +12,8 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT as unit } from '@oracle/styles/units/spacing';
-
-const border = light.monotone.grey300;
-const purple = light.brand.wind400;
-const text = light.monotone.black;
-const white = light.monotone.white;
 
 const title1Size = 14;
 
@@ -80,6 +76,12 @@ function HeatMap ({
   width,
   yLabels,
 }: HeatmapProps) {
+  const themeContext: ThemeType = useContext(ThemeContext);
+  const border = (themeContext.monotone || light.monotone).grey300;
+  const purple = (themeContext.brand || light.brand).wind400;
+  const text = (themeContext.content || light.content).default;
+  const white = (themeContext.monotone || light.monotone).white;
+
   const margin = {
     ...defaultMargin,
     ...marginArgs,
