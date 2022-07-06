@@ -406,7 +406,6 @@ export function buildRenderColumnHeader({
           getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
           getY={([, value]) => value}
           height={COLUMN_HEADER_CHART_HEIGHT}
-          textColor={light.monotone.black}
         />
       );
     }
@@ -443,6 +442,7 @@ export function buildRenderColumnHeader({
               ?
                 <Text
                   bold
+                  default
                   title={columns[columnIndex]}
                 >
                   {columns[columnIndex]}

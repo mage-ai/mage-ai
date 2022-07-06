@@ -278,7 +278,7 @@ function Table({
               {firstColumn && cell.render('Cell')}
               {!firstColumn && (
                 <FlexContainer justifyContent="space-between">
-                  <Text danger={isInvalid} wordBreak>
+                  <Text danger={isInvalid} default wordBreak>
                     {cellValue === true && 'true'}
                     {cellValue === false && 'false'}
                     {(cellValue === null || cellValue === 'null') && 'null'}
