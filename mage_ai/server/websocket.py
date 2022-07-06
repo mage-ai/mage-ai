@@ -8,9 +8,9 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.server.utils.output_display import add_internal_output_info
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
-from utils.output_display import add_internal_output_info
 import asyncio
 import json
 import os
