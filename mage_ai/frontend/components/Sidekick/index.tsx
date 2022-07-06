@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
@@ -25,6 +26,7 @@ export type SidekickProps = {
       values: BlockType[];
     };
   };
+  pipeline: PipelineType;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
   views: {

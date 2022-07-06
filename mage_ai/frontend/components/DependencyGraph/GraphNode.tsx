@@ -11,7 +11,7 @@ import { getNodeColor } from './utils';
 
 type GraphNodeProps = {
   block: BlockType;
-  disabled: boolean;
+  disabled?: boolean;
   onClick?: (block: BlockType) => void;
   selected?: boolean;
 };

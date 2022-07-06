@@ -14,6 +14,7 @@ export const ContainerStyle = styled.div`
 `;
 
 export const NodeStyle = styled.div<{
+  backgroundColor?: string;
   disabled: boolean;
   selected: boolean;
 }>`
@@ -22,7 +23,7 @@ export const NodeStyle = styled.div<{
   margin: ${UNIT}px;
 
   ${props => props.selected && `
-    border-color: ${(props.theme.content || light.content).active};
+    border-color: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.backgroundColor && `
