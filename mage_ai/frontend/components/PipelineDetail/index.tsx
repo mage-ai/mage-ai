@@ -90,7 +90,6 @@ function PipelineDetail({
   } = useKernelContext();
   const {
     addNewBlockAtIndex,
-    setBlocks,
     setRunningBlocks,
     setSelectedBlock,
   } = useBlockContext();
@@ -298,7 +297,6 @@ function PipelineDetail({
       savePipelineContent,
       selectedBlock,
       selectedBlockPrevious,
-      setBlocks,
       setPipelineContentTouched,
       setSelectedBlock,
       setTextareaFocused,
@@ -306,72 +304,7 @@ function PipelineDetail({
     ],
   );
 
-  const blockElements = useMemo(() => blocks.map((block: BlockType, idx: number) => {
-    const {
-      type,
-      uuid,
-    } = block;
-    const selected: boolean = selectedBlock?.uuid === uuid;
-    const runningBlock = runningBlocksByUUID[uuid];
-    const executionState = runningBlock
-      ? (runningBlock.priority === 0
-        ? ExecutionStateEnum.BUSY
-        : ExecutionStateEnum.QUEUED
-       )
-      : ExecutionStateEnum.IDLE;
-
-      const path = `${type}s/${uuid}.py`;
-      blockRefs.current[path] = createRef();
-
-    return (
-      <CodeBlock
-        addNewBlock={(b: BlockType) => {
-          addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
-          setTextareaFocused(true);
-        }}
-        defaultValue={block.content}
-        deleteBlock={(b: BlockType) => {
-          deleteBlock(b);
-          setAnyInputFocused(false);
-        }}
-        block={block}
-        executionState={executionState}
-        key={uuid}
-        interruptKernel={interruptKernel}
-        mainContainerRef={mainContainerRef}
-        mainContainerWidth={mainContainerWidth}
-        messages={messages[uuid]}
-        noDivider={idx === numberOfBlocks - 1}
-        onChange={(value: string) => setContentByBlockUUID({ [uuid]: value })}
-        ref={blockRefs.current[path]}
-        runBlock={runBlock}
-        selected={selected}
-        setAnyInputFocused={setAnyInputFocused}
-        setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-        setTextareaFocused={setTextareaFocused}
-        textareaFocused={selected && textareaFocused}
-      />
-    );
-  }), [
-    addNewBlockAtIndex,
-    blocks,
-    interruptKernel,
-    mainContainerRef,
-    messages,
-    numberOfBlocks,
-    runBlock,
-    runningBlocksByUUID,
-    selectedBlock,
-    setAnyInputFocused,
-    setContentByBlockUUID,
-    setBlocks,
-    setSelectedBlock,
-    setTextareaFocused,
-    textareaFocused,
-  ]);
-
   useEffect(() => {
-
     const autoSaveInterval = setInterval(() => {
       if (pipelineContentTouched) {
         savePipelineContent();
@@ -386,6 +319,13 @@ function PipelineDetail({
     savePipelineContent,
   ]);
 
+  const onChangeCodeBlock = useCallback(
+    (uuid: string, value: string) => setContentByBlockUUID({ [uuid]: value }),
+    [
+      setContentByBlockUUID,
+    ],
+  );
+
   return (
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={1}>
@@ -399,7 +339,48 @@ function PipelineDetail({
         />
       </Spacing>
 
-      {blockElements}
+      {blocks.map((block: BlockType, idx: number) => {
+        const {
+          type,
+          uuid,
+        } = block;
+        const selected: boolean = selectedBlock?.uuid === uuid;
+        const runningBlock = runningBlocksByUUID[uuid];
+        const executionState = ExecutionStateEnum.IDLE
+
+        const path = `${type}s/${uuid}.py`;
+        blockRefs.current[path] = createRef();
+
+        return (
+          <CodeBlock
+            addNewBlock={(b: BlockType) => {
+              addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+              setTextareaFocused(true);
+            }}
+            defaultValue={block.content}
+            deleteBlock={(b: BlockType) => {
+              deleteBlock(b);
+              setAnyInputFocused(false);
+            }}
+            block={block}
+            executionState={executionState}
+            key={uuid}
+            interruptKernel={interruptKernel}
+            mainContainerRef={mainContainerRef}
+            mainContainerWidth={mainContainerWidth}
+            messages={messages[uuid]}
+            noDivider={idx === numberOfBlocks - 1}
+            onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+            ref={blockRefs.current[path]}
+            runBlock={runBlock}
+            selected={selected}
+            setAnyInputFocused={setAnyInputFocused}
+            setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={selected && textareaFocused}
+          />
+        );
+      })}
 
       <Spacing mt={PADDING_UNITS}>
         <AddNewBlocks

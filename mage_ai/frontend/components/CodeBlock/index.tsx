@@ -200,11 +200,15 @@ function CodeBlockProps({
 
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
   const numberOfParentBlocks = block?.upstream_blocks?.length || 0;
-  const borderColorShareProps = {
+  const borderColorShareProps = useMemo(() => ({
     blockType: block.type,
     hasError,
     selected,
-  };
+  }), [
+    block.type,
+    hasError,
+    selected,
+  ]);
   const hasOutput = messagesWithType.length >= 1;
   const onClickSelectBlock = useCallback(() => {
     if (!selected) {
@@ -273,6 +277,7 @@ function CodeBlockProps({
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)) {
           runBlockAndTrack();
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
+          event.preventDefault();
           runBlockAndTrack();
           addNewBlock({
             type: block.type,
@@ -290,6 +295,52 @@ function CodeBlockProps({
       updateBlock,
     ],
   );
+
+  const codeEditorEl = useMemo(() => (
+    <CodeEditor
+      autoHeight
+      height={height}
+      onChange={(val: string) => {
+        setContent(val);
+        onChange?.(val);
+      }}
+      onDidChangeCursorPosition={onDidChangeCursorPosition}
+      placeholder="Start typing here..."
+      runBlock={runBlockAndTrack}
+      selected={selected}
+      setSelected={setSelected}
+      setTextareaFocused={setTextareaFocused}
+      textareaFocused={textareaFocused}
+      value={content}
+      width="100%"
+    />
+  ), [
+    content,
+    height,
+    selected,
+    textareaFocused,
+  ]);
+
+  const codeOutputEl = useMemo(() => hasOutput && (
+    <CodeOutput
+      {...borderColorShareProps}
+      isInProgress={isInProgress}
+      mainContainerWidth={mainContainerWidth}
+      messages={messagesWithType}
+      runCount={runCount}
+      runEndTime={runEndTime}
+      runStartTime={runStartTime}
+    />
+  ), [
+    borderColorShareProps,
+    hasOutput,
+    isInProgress,
+    mainContainerWidth,
+    messagesWithType,
+    runCount,
+    runEndTime,
+    runStartTime,
+  ]);
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -416,37 +467,10 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          <CodeEditor
-            // autoSave
-            autoHeight
-            height={height}
-            onChange={(val: string) => {
-              setContent(val);
-              onChange?.(val);
-            }}
-            onDidChangeCursorPosition={onDidChangeCursorPosition}
-            placeholder="Start typing here..."
-            runBlock={runBlockAndTrack}
-            selected={selected}
-            setSelected={setSelected}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={textareaFocused}
-            value={content}
-            width="100%"
-          />
+          {codeEditorEl}
         </CodeContainerStyle>
 
-        {hasOutput && (
-          <CodeOutput
-            {...borderColorShareProps}
-            isInProgress={isInProgress}
-            mainContainerWidth={mainContainerWidth}
-            messages={messagesWithType}
-            runCount={runCount}
-            runEndTime={runEndTime}
-            runStartTime={runStartTime}
-          />
-        )}
+        {codeOutputEl}
       </ContainerStyle>
 
       {!noDivider && (
