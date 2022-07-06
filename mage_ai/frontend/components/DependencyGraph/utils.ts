@@ -7,7 +7,7 @@ export const getFinalLevelIndex = (
   blockUUIDMapping: { [key: string]: BlockType },
   checkedBlocks: string[] = [],
 ) => {
-  if (uptreamBlockUUIDs.length === 0) {
+  if (!uptreamBlockUUIDs?.length) {
     return 0;
   }
 
@@ -15,7 +15,7 @@ export const getFinalLevelIndex = (
     .filter((uuid) => !checkedBlocks.includes(uuid))
     .map((uuid) => (1
       + getFinalLevelIndex(
-        blockUUIDMapping[uuid].upstream_blocks,
+        blockUUIDMapping[uuid]?.upstream_blocks,
         blockUUIDMapping,
         [...checkedBlocks, uuid],
       )

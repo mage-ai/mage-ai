@@ -60,13 +60,21 @@ export type ButtonProps = {
   width?: number;
 };
 
-const ButtonStyle = styled.button<ButtonProps>`
+const ButtonStyle = styled.button<{
+  hasOnClick?: boolean;
+} & ButtonProps>`
   border: none;
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
   padding: 7px ${UNIT * 2}px;
   position: relative;
   z-index: 0;
+
+  ${props => !props.hasOnClick && `
+    &:hover {
+      cursor: default;
+    }
+  `}
 
   ${props => `
     border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
@@ -219,6 +227,7 @@ const Button = ({
     <ButtonStyle
       {...props}
       disabled={disabled}
+      hasOnClick={!!onClick}
       id={id}
       onClick={(e) => {
         e?.preventDefault();

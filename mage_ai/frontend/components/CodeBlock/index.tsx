@@ -55,6 +55,7 @@ import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
+import { useBlockContext } from '@context/Block';
 import { useKeyboardContext } from '@context/Keyboard';
 import { usePipelineContext } from '@context/Pipeline';
 
@@ -100,6 +101,7 @@ function CodeBlockProps({
     fetchPipeline,
     pipeline,
   } = usePipelineContext();
+  const { setEditingBlock } = useBlockContext();
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
@@ -423,34 +425,44 @@ function CodeBlockProps({
           </FlexContainer>
         </Flex>
 
-        <div>
-          <Tooltip
-            appearBefore
-            block
-            label={`
-              ${pluralize('parent block', numberOfParentBlocks)}${numberOfParentBlocks === 0 && '. Click to select 1 or more blocks to depend on.'}
-            `}
-            size={null}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              // onClick={() => toggleBefore()}
+        {BlockTypeEnum.SCRATCHPAD !== block.type && (
+          <div>
+            <Tooltip
+              appearBefore
+              block
+              label={`
+                ${pluralize('parent block', numberOfParentBlocks)}. ${numberOfParentBlocks === 0 ? 'Click to select 1 or more blocks to depend on.' : 'Edit parent blocks.'}
+              `}
+              size={null}
+              widthFitContent
             >
-              <FlexContainer alignItems="center">
-                <Text monospace>
-                  {numberOfParentBlocks}
-                </Text>
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => {
+                  setEditingBlock({
+                    upstreamBlocks: {
+                      block,
+                      values: block.upstream_blocks?.map(uuid => ({ uuid })),
+                    },
+                  });
+                  setSelected(true);
+                }}
+              >
+                <FlexContainer alignItems="center">
+                  <Text monospace>
+                    {numberOfParentBlocks}
+                  </Text>
 
-                <Spacing mr={1} />
+                  <Spacing mr={1} />
 
-                <Stack size={UNIT * 2} />
-              </FlexContainer>
-            </Button>
-          </Tooltip>
-        </div>
+                  <Stack size={UNIT * 2} />
+                </FlexContainer>
+              </Button>
+            </Tooltip>
+          </div>
+        )}
       </FlexContainer>
 
       {(selected || isInProgress) && (

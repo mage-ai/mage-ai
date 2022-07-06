@@ -149,6 +149,12 @@ export function binarySearch(array, pred) {
   return hi;
 }
 
+export function remove(arr, func) {
+  const idx = arr.findIndex(func);
+
+  return removeAtIndex(arr, idx);
+}
+
 export function removeAtIndex(items, i) {
   return items.slice(0, i).concat(items.slice(i + 1, items.length));
 }

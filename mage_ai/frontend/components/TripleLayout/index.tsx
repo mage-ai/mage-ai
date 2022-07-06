@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -23,27 +24,29 @@ import {
   BeforeStyle,
   DRAGGABLE_WIDTH,
   DraggableStyle,
+  HeaderStyle,
   MAIN_MIN_WIDTH,
   MainContentInnerStyle,
   MainContentStyle,
+  TabStyle,
 } from './index.style';
 import {
   ChevronLeft,
   ChevronRight,
+  GraphWithNodes,
 } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   set,
 } from '@storage/localStorage';
-import { NAV_ICON_MAPPING, VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { goToWithQuery } from '@utils/routing';
+import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
-import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
+  activeSidekickView: ViewKeyEnum;
   after?: any;
   afterHidden: boolean;
   afterWidth: number;
@@ -53,6 +56,7 @@ type TripleLayoutProps = {
   beforeWidth: number;
   children: any;
   mainContainerRef: any;
+  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAfterHidden: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
   setBeforeHidden: (value: boolean) => void;
@@ -60,6 +64,7 @@ type TripleLayoutProps = {
 };
 
 function TripleLayout({
+  activeSidekickView,
   after,
   afterHidden,
   afterWidth,
@@ -69,6 +74,7 @@ function TripleLayout({
   beforeWidth,
   children,
   mainContainerRef,
+  setActiveSidekickView,
   setAfterHidden,
   setAfterWidth,
   setBeforeHidden,
@@ -81,21 +87,8 @@ function TripleLayout({
   const refBeforeInnerDraggable = useRef(null);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const sidekickViews = after?.props?.views || [];
 
-  const qFromUrl = queryFromUrl();
-  const viewFromUrlInit = qFromUrl[VIEW_QUERY_PARAM];
-  const viewFromUrl = viewFromUrlInit || ViewKeyEnum.TREE;
-  const setSidekickView = useCallback((
-    newView: ViewKeyEnum,
-    pushHistory: boolean = true,
-  ) => {
-    goToWithQuery({
-      [VIEW_QUERY_PARAM]: newView,
-    }, {
-      pushHistory,
-    });
-  }, [viewFromUrlInit]);
+  const sidekickViews = after?.props?.views || [];
 
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
@@ -203,6 +196,10 @@ function TripleLayout({
 
   const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
+  const afterMemo = useMemo(() => React.cloneElement(after, { activeView: activeSidekickView }), [
+    activeSidekickView,
+    after,
+  ]);
 
   return (
     <ClientOnly>
@@ -241,8 +238,8 @@ function TripleLayout({
           >
             <FlexContainer
               alignItems="center"
-              fullHeight
               fullWidth
+              fullHeight
               justifyContent="space-between"
             >
               <Flex>
@@ -345,7 +342,7 @@ function TripleLayout({
                 </Button>
               </Flex>
               {sidekickViews.map(({ key, label }: any) => {
-                const active = key === viewFromUrl;
+                const active = key === activeSidekickView;
                 const Icon = NAV_ICON_MAPPING[key];
 
                 return (
@@ -354,7 +351,7 @@ function TripleLayout({
                       beforeElement={<Icon />}
                       blackBorder
                       compact
-                      onClick={() => setSidekickView(key)}
+                      onClick={() => setActiveSidekickView(key)}
                       selected={active}
                       uuid={key}
                     >
@@ -367,7 +364,7 @@ function TripleLayout({
           </AsideHeaderStyle>
 
           <AfterInnerStyle ref={refAfterInner}>
-            {!afterHidden && React.cloneElement(after, { activeView: viewFromUrl })}
+            {!afterHidden && afterMemo}
           </AfterInnerStyle>
         </AfterStyle>
       )}
