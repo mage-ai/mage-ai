@@ -62,7 +62,7 @@ function FileTree({
   const setTreeState = (path: string[], payload: TreeOperationType) => {
     const searchPath: string[] = [];
     const { key, type, value } = payload;
-    
+
     const updateTree = (subtree: FileNodeType) => {
       if (equals(path, searchPath)) {
         const updateMap = {
@@ -95,7 +95,7 @@ function FileTree({
     });
     setSelectedPath([...path]);
   };
-  
+
   const selectFile = (path: string[]) => setSelectedPath([...path]);
 
   const scrollToBlock = (path: string[]) => {
