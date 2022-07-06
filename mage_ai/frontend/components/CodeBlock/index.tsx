@@ -56,6 +56,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
+import { pauseEvent } from '@utils/events';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -353,7 +354,7 @@ function CodeBlockProps({
         alignItems="center"
         justifyContent="space-between"
         style={{
-          marginBottom: UNIT / 4,
+          marginBottom: UNIT / 2,
         }}
       >
         <Flex alignItems="center" flex={1}>
@@ -397,6 +398,7 @@ function CodeBlockProps({
               onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
               onChange={(e) => {
                 setNewBlockUuid(e.target.value);
+                pauseEvent(e);
               }}
               onClick={() => setIsEditingBlock(true)}
               onFocus={() => setIsEditingBlock(true)}
@@ -453,7 +455,7 @@ function CodeBlockProps({
               >
                 <FlexContainer alignItems="center">
                   <Text monospace>
-                    {numberOfParentBlocks}
+                    {pluralize('parent block', numberOfParentBlocks)}
                   </Text>
 
                   <Spacing mr={1} />

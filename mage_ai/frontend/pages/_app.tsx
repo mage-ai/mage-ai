@@ -7,9 +7,11 @@ import App, { AppProps } from 'next/app';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
 
+import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
 import Head from '@oracle/elements/Head';
 import KeyboardContext from '@context/Keyboard';
+import ToastWrapper from '@components/Toast/ToastWrapper';
 import light from '@oracle/styles/themes/light';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ModalProvider } from '@context/Modal';
@@ -124,6 +126,7 @@ function MyApp(props: MyAppProps & AppProps) {
             </SheetProvider>
           </ModalProvider>
         </GridThemeProvider>
+        <ToastWrapper />
       </ThemeProvider>
     </KeyboardContext.Provider>
   );

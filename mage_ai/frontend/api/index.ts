@@ -35,6 +35,7 @@ export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
+export const VARIABLES: 'variables' = 'variables';
 export const VERSIONS: 'versions' = 'versions';
 
 // Update this as routes get added
@@ -52,6 +53,7 @@ const RESOURCES: any[][] = [
   [KERNEL_ACTION_RESTART, KERNELS],
   [PIPELINES],
   [STATUS],
+  [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
 ];
 

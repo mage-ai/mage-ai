@@ -8,7 +8,7 @@ import {
 } from '@oracle/styles/scrollbars';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
-export const AFTER_DEFAULT_WIDTH = UNIT * 50;
+export const AFTER_DEFAULT_WIDTH = UNIT * 64;
 export const AFTER_MIN_WIDTH = PADDING_UNITS * 3 * UNIT;
 export const BEFORE_MIN_WIDTH = AFTER_MIN_WIDTH;
 export const BEFORE_DEFAULT_WIDTH = UNIT * 35;

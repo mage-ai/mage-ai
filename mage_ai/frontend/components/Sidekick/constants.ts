@@ -1,4 +1,5 @@
 import {
+  Alphabet,
   NavData,
   NavGraph,
   NavReport,
@@ -12,6 +13,7 @@ export enum ViewKeyEnum {
   GRAPHS = 'graphs',
   REPORTS = 'reports',
   TREE = 'tree',
+  VARIABLES = 'variables',
 }
 
 export const FULL_WIDTH_VIEWS = [
@@ -25,6 +27,7 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.DATA, label: 'Data' },
   { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
+  { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
 ];
 
 export const NAV_ICON_MAPPING = {
@@ -32,4 +35,5 @@ export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
   [ViewKeyEnum.TREE]: NavTree,
+  [ViewKeyEnum.VARIABLES]: Alphabet,
 };

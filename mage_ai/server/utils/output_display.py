@@ -1,9 +1,22 @@
 import re
 
 
+def remove_comments(code_lines):
+    return list(filter(
+        lambda x: not re.search(r'^\#', str(x).strip()),
+        code_lines,
+    ))
+
+
 def add_internal_output_info(code: str) -> str:
-    code_lines = code.split('\n')
-    last_line = code_lines[-1]
+    code_lines = remove_comments(code.split('\n'))
+
+    idx = len(code_lines) - 1
+    last_line = code_lines[idx]
+    while idx >= 0 and len(str(last_line).strip()) == 0:
+        idx -= 1
+        last_line = code_lines[idx]
+
     parts = last_line.split('=')
     if len(parts) == 2:
         last_line = parts[0]
@@ -22,17 +35,21 @@ def add_internal_output_info(code: str) -> str:
 
     code_lines_final = []
 
-    if last_line_in_block:
+    if not last_line or last_line_in_block:
         code_lines_final.append(code)
     else:
-        code_without_last_line = '\n'.join(code_lines[:-1])
+        end_index = len(code_lines) if len(parts) >= 2 else -1
+        code_without_last_line = '\n'.join(code_lines[:end_index])
         internal_output = f"""
-from datetime import datetime
-import pandas as pd
-import simplejson
+# Post processing code below (source: output_display.py)
 
 
 def __custom_output():
+    from datetime import datetime
+    import pandas as pd
+    import simplejson
+
+
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame):

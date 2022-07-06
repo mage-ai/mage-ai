@@ -67,7 +67,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.muted && !props.disabled && `
-    fill: ${(props.theme.monotone || light.monotone).grey400};
+    fill: ${(props.theme.monotone || light.monotone).grey400} !important;
   `}
 
   ${props => !props.useStroke && props.default && !props.disabled && `
@@ -91,7 +91,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => props.useStroke && props.muted && !props.disabled && `
-    stroke: ${(props.theme.monotone || light.monotone).gray};
+    stroke: ${(props.theme.monotone || light.monotone).gray} !important;
   `}
 
   ${props => props.useStroke && props.default && !props.disabled && `
@@ -154,6 +154,7 @@ export const EllipseStyle = styled.ellipse`
 const BaseIcon = ({
   children,
   fill,
+  muted,
   opacity,
   size = DEFAULT_SIZE,
   style,
@@ -162,6 +163,7 @@ const BaseIcon = ({
   <SVGStyle
     fill={fill}
     height={size}
+    muted={muted}
     opacity={opacity}
     style={style}
     viewBox={viewBox}
