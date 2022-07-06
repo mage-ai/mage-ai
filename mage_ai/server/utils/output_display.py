@@ -15,6 +15,7 @@ import simplejson
 
 
 _internal_output_return = {last_line}
+_internal_output_return_lambda = lambda: _internal_output_return
 
 if isinstance(_internal_output_return, pd.DataFrame):
     columns = _internal_output_return.columns.tolist()
@@ -28,9 +29,9 @@ if isinstance(_internal_output_return, pd.DataFrame):
         default=datetime.isoformat,
         ignore_nan=True,
     )
-    print(f'[__internal_output__]{{json_string}}')
-else:
-    _internal_output_return
+    _internal_output_return_lambda = lambda: print(f'[__internal_output__]{{json_string}}')
+
+_internal_output_return_lambda()
 """
 
     return f"""

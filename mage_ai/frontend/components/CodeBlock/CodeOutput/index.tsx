@@ -16,12 +16,12 @@ import {
   ExtraInfoStyle,
   OutputRowStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type CodeOutputProps = {
   isInProgress: boolean;
+  mainContainerWidth: number;
   messages: KernelOutputType[];
-  refContainer: any;
   runCount: Number;
   runEndTime: Number;
   runStartTime: Number;
@@ -31,8 +31,8 @@ function CodeOutput({
   blockType,
   hasError,
   isInProgress,
+  mainContainerWidth,
   messages,
-  refContainer,
   runCount,
   runEndTime,
   runStartTime,
@@ -68,14 +68,10 @@ function CodeOutput({
           } else {
             dataArray = [dataInit];
           }
-
+          dataArray = dataArray.filter(d => d);
           const dataArrayLength = dataArray.length;
 
-          return dataArray.reduce((acc, data: string, idxInner: number) => {
-            if (!data) {
-              return acc;
-            }
-
+          return dataArray.map((data: string, idxInner: number) => {
             let displayElement;
             const internalOutputRegex = /^\[__internal_output__\]/;
             const outputRowSharedProps = {
@@ -95,9 +91,6 @@ function CodeOutput({
                   columns,
                   rows,
                 } = dataDisplay;
-                const {
-                  width,
-                } = refContainer?.current?.getBoundingClientRect();
 
                 displayElement = (
                   <DataTable
@@ -107,8 +100,8 @@ function CodeOutput({
                     // previewIndexes={{ removedRows: suggestionPreviewIndexes }}
                     // renderColumnHeader={selectedColumn ? null : renderColumnHeader}
                     rows={rows}
-                    // Remove border 2px from each side
-                    width={width - 4}
+                    // Remove border 2px and padding from each side
+                    width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2)}
                   />
                 );
               }
@@ -133,12 +126,12 @@ function CodeOutput({
               );
             }
 
-            return acc.concat(
+            return (
               <div key={data}>
                 {displayElement}
               </div>
             );
-          }, []);
+          });
         })}
       </ContainerStyle>
 

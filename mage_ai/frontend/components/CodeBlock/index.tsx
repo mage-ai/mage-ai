@@ -3,7 +3,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -65,6 +64,7 @@ type CodeBlockProps = {
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   mainContainerRef?: any;
+  mainContainerWidth: number;
   noDivider?: boolean;
   messages: KernelOutputType[];
   onChange?: (value: string) => void;
@@ -84,6 +84,7 @@ function CodeBlockProps({
   height,
   interruptKernel,
   mainContainerRef,
+  mainContainerWidth,
   messages = [],
   noDivider,
   onChange,
@@ -94,7 +95,6 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps, ref) {
-  const refContainer = useRef(null);
   const {
     fetchFileTree,
     fetchPipeline,
@@ -410,10 +410,7 @@ function CodeBlockProps({
         />
       )}
 
-      <ContainerStyle
-        onClick={() => onClickSelectBlock()}
-        ref={refContainer}
-      >
+      <ContainerStyle onClick={() => onClickSelectBlock()}>
         <CodeContainerStyle
           {...borderColorShareProps}
           className={selected && textareaFocused ? 'selected' : null}
@@ -443,8 +440,8 @@ function CodeBlockProps({
           <CodeOutput
             {...borderColorShareProps}
             isInProgress={isInProgress}
+            mainContainerWidth={mainContainerWidth}
             messages={messagesWithType}
-            refContainer={refContainer}
             runCount={runCount}
             runEndTime={runEndTime}
             runStartTime={runStartTime}

@@ -14,12 +14,10 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
 import {
-  AFTER_DEFAULT_WIDTH,
   AFTER_MIN_WIDTH,
   AfterInnerStyle,
   AfterStyle,
   AsideHeaderStyle,
-  BEFORE_DEFAULT_WIDTH,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
   BeforeStyle,
@@ -36,44 +34,53 @@ import {
   ChevronRight,
   GraphWithNodes,
 } from '@oracle/icons';
-import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
-  get,
   set,
 } from '@storage/localStorage';
+import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
   after?: any;
+  afterHidden: boolean;
+  afterWidth: number;
   before?: any;
   beforeHeader?: any;
+  beforeHidden: boolean;
+  beforeWidth: number;
   children: any;
   mainContainerRef: any;
+  setAfterHidden: (value: boolean) => void;
+  setAfterWidth: (width: number) => void;
+  setBeforeHidden: (value: boolean) => void;
+  setBeforeWidth: (width: number) => void;
 };
 
 function TripleLayout({
   after,
+  afterHidden,
+  afterWidth,
   before,
   beforeHeader,
+  beforeHidden,
+  beforeWidth,
   children,
   mainContainerRef,
+  setAfterHidden,
+  setAfterWidth,
+  setBeforeHidden,
+  setBeforeWidth,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
-  const [afterHidden, setAfterHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
   const [activeSidekickView, setActiveSidekickView] = useState(ViewKeyEnum.TREE);
   const sidekickViews = after?.props?.views || [];
 
