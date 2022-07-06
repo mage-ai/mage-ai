@@ -54,6 +54,7 @@ function PipelineDetailPage({
     width: widthWindow,
   } = useWindowSize();
   const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
+  const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
@@ -117,7 +118,16 @@ function PipelineDetailPage({
     mainContainerRef?.current,
     setMainContainerWidth,
     widthWindow,
-  ])
+  ]);
+  useEffect(() => {
+    if (!afterMousedownActive) {
+      setAfterWidthForChildren(afterWidth);
+    }
+  }, [
+    afterMousedownActive,
+    afterWidth,
+    setAfterWidthForChildren,
+  ]);
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -404,6 +414,7 @@ function PipelineDetailPage({
   ]);
   const sideKick = useMemo(() => (
     <Sidekick
+      afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
@@ -414,6 +425,7 @@ function PipelineDetailPage({
       views={SIDEKICK_VIEWS}
     />
   ), [
+    afterWidthForChildren,
     blockRefs,
     editingBlock,
     fetchPipeline,
