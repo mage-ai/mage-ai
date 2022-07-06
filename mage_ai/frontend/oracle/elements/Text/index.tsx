@@ -1,5 +1,4 @@
 import styled, { css } from 'styled-components';
-import { media } from 'styled-bootstrap-grid';
 
 import light from '@oracle/styles/themes/light';
 import {
@@ -14,7 +13,6 @@ import {
 import {
   HEADLINE_SIZE,
   LARGE,
-  LARGE_SM,
   REGULAR,
   SMALL,
   XLARGE,
@@ -196,7 +194,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.inverted && `
-    color: ${(props.theme.monotone || light.monotone).white};
+    color: ${(props.theme.content || light.content).inverted};
   `}
 
   ${props => props.muted && `
