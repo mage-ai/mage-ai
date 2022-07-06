@@ -21,6 +21,8 @@ class Variable:
         self, uuid: str, pipeline_path: str, block_uuid: str, variable_type: VariableType = None
     ) -> None:
         self.uuid = uuid
+        if not os.path.exists(pipeline_path):
+            raise Exception(f'Pipeline {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
         self.variable_dir_path = os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)

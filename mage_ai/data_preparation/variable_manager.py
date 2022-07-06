@@ -93,5 +93,9 @@ def get_global_variable(pipeline_uuid: str, key: str) -> Any:
     return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
 
 
+def get_variable(pipeline_uuid: str, block_uuid: str, key: str) -> Any:
+    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, block_uuid, key)
+
+
 def set_global_variable(pipeline_uuid: str, key: str, value: Any) -> None:
     VariableManager(get_repo_path()).add_variable(pipeline_uuid, 'global', key, value)
