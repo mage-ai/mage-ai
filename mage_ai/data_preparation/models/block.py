@@ -1,5 +1,5 @@
 from contextlib import redirect_stdout
-from inspect import signature
+from inspect import Parameter, signature
 from io import StringIO
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
@@ -187,7 +187,42 @@ class Block:
                 f'Make sure that a function in the block is decorated with @{self.type}.'
             )
         else:
-            return decorated_functions[0]
+            block_function = decorated_functions[0]
+            sig = signature(block_function)
+
+            num_args = sum(arg.kind != Parameter.VAR_POSITIONAL for arg in sig.parameters.values())
+            num_inputs = len(input_vars)
+            num_upstream = len(self.upstream_block_uuids)
+
+            if num_args > num_inputs:
+                if num_upstream < num_args:
+                    raise Exception(
+                        f'Block {self.uuid} may be missing upstream dependencies. '
+                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+                else:
+                    raise Exception(
+                        f'Block {self.uuid} is missing input arguments. '
+                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
+                        f'Double check the @{self.type} method declaration has the correct number of arguments '
+                        f'and that the upstream blocks have been executed.'
+                    )
+            elif num_args < num_inputs and num_args == len(sig.parameters):
+                if num_upstream > num_args:
+                    raise Exception(
+                        f'Block {self.uuid} may have too many upstream dependencies. '
+                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+                else:
+                    raise Exception(
+                        f'Block {self.uuid} has too many input arguments. '
+                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
+                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
+                    )
+
+            return block_function
 
     async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
