@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from enum import Enum
+from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Union
 import pandas as pd
@@ -31,25 +31,6 @@ FORMAT_TO_FUNCTION = {
 }
 
 
-class IOPrintHandler:
-    def __init__(self, start_msg, verbose=False):
-        self.verbose = verbose
-        if verbose:
-            print(start_msg)
-        self.exists_previous_message = False
-
-    @contextmanager
-    def print_msg(self, msg):
-        if self.verbose:
-            if self.exists_previous_message:
-                print(f'\r├─ ')
-            print(f'└─ {msg}...', end='')
-        yield msg
-        if self.verbose:
-            print('DONE', end='')
-            self.exists_previous_message = True
-
-
 class BaseIO(ABC):
     """
     Data loader interface. All data loaders must inherit from this interface.
@@ -57,7 +38,7 @@ class BaseIO(ABC):
 
     def __init__(self, verbose=False) -> None:
         self.verbose = verbose
-        self.printer = IOPrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
+        self.printer = VerbosePrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
 
     @abstractmethod
     def load(self, *args, **kwargs) -> DataFrame:
