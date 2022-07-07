@@ -45,11 +45,11 @@ class IOPrintHandler:
     def print_msg(self, msg):
         if self.verbose:
             if self.exists_previous_message:
-                print(f'\r├─ ', flush=True)
-            print(f'└─ {msg}...', end='', flush=True)
+                print(f'\r├─ ')
+            print(f'└─ {msg}...', end='')
         yield msg
         if self.verbose:
-            print('DONE', end='', flush=True)
+            print('DONE', end='')
             self.exists_previous_message = True
 
 
