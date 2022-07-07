@@ -1,4 +1,5 @@
 export enum FileExtensionEnum {
+  PY = 'py',
   TXT = 'txt',
 }
 

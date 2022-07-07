@@ -2,6 +2,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BaseIconProps } from '@oracle/icons/BaseIcon';
 import { FileFill, RoundedSquare } from '@oracle/icons';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { getBlockFilename } from './utils';
 
 export type FileNodeProps = {
   textColor?: string;
@@ -16,90 +17,6 @@ export type FileNodeType = {
   selected?: boolean;
 };
 
-export const TEST_FILE_TREE: FileNodeType[] = [
-  {
-    children: [
-      {
-        name: '__init__.py',
-      },
-      {
-        name: 'requirements.txt',
-      },
-      {
-        children: [
-          {
-            name: '__init__.py',
-          },
-          {
-            children: [
-              {
-                name: '__init__.py',
-              },
-              {
-                name: 'metadata.json',
-              },
-              {
-                name: 'requirements.txt',
-              },
-            ],
-            name: 'prepare_sales_data',
-          },
-        ],
-        name: 'pipelines',
-      },
-      {
-        children: [
-          {
-            name: '__init__.py',
-          },
-          {
-            name: 'upload_to_s3.py',
-          },
-        ],
-        name: 'exporters',
-      },
-      {
-        children: [
-          {
-            name: '__init__.py',
-          },
-          {
-            name: 'sales_data.py',
-          },
-        ],
-        name: 'data_loaders',
-      },
-      {
-        children: [
-          {
-            name: '__init__.py',
-          },
-          {
-            name: 'summary_statistics.py',
-          },
-        ],
-        name: 'global_variables',
-      },
-      {
-        children: [
-          {
-            name: '__init__.py',
-          },
-          {
-            name: 'average_purchase_price.py',
-          },
-        ],
-        name: 'transformers',
-      },
-      {
-        children: [],
-        name: 'scratchpad',
-      },
-    ],
-    name: 'demo_project',
-  },
-];
-
 export enum ReservedFolderEnum {
   DATA_LOADERS = 'data_loaders',
   DATA_EXPORTERS = 'data_exporters',
@@ -109,13 +26,16 @@ export enum ReservedFolderEnum {
   TRANSFORMERS = 'transformers',
 }
 
+export enum SpecialFileEnum {
+  INIT_PY = '__init__.py',
+}
+
 export const getFileNodeColor: (
   path: string[],
   themeType: ThemeType
 ) => FileNodeProps = (path, themeType) => {
-  const nodeName = path.at(-1);
-  
-  if (nodeName === '__init__.py') {
+  const nodeName = getBlockFilename(path);
+  if (nodeName === SpecialFileEnum.INIT_PY) {
     return {
       iconColor: (themeType?.monotone || dark.monotone).grey500,
       iconType: FileFill,
