@@ -151,7 +151,7 @@ function CodeBlockProps({
     setRunStartTime,
   ]);
 
-  const isInProgress = runningBlocks.find(({ uuid }) => uuid === block.uuid)
+  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
     || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   const finalExecutionStatePrevious = usePrevious(executionState);
