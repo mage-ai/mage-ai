@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
 export const ANIMATION_DURATION = 300;
@@ -27,5 +27,15 @@ export const OverlayStyle = styled.div`
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
+  `}
+`;
+
+export const PipelineHeaderStyle = styled.div`
+  height: ${UNIT * 6}px;
+  padding-left: ${PADDING_UNITS * UNIT}px;
+  padding-right: ${PADDING_UNITS * UNIT}px;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;
