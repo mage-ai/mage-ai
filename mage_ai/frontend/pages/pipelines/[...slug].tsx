@@ -12,6 +12,7 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import FileEditor from '@components/FileEditor';
 import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
@@ -248,6 +249,7 @@ function PipelineDetailPage({
   const {
     data: dataFileContents,
   } = api.file_contents.detail(file_path);
+  const selectedFile = dataFileContents?.file;
 
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
@@ -636,7 +638,8 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        {pipelineDetailMemo}
+        {!selectedFile && pipelineDetailMemo}
+        {selectedFile && <FileEditor selectedFile={selectedFile} />}
 
         <Spacing
           pb={Math.max(
