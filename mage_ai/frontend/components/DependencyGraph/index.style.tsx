@@ -20,7 +20,8 @@ export const NodeStyle = styled.div<{
 }>`
   border: 2px solid transparent;
   border-radius: ${BORDER_RADIUS_SMALL}px;
-  margin: ${UNIT}px;
+  margin-left: ${UNIT}px;
+  margin-right: ${UNIT}px;
 
   ${props => props.selected && `
     border-color: ${(props.theme.content || dark.content).active};

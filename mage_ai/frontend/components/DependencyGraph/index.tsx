@@ -7,7 +7,11 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockTypeEnum,
+  SetEditingBlockType,
+  StatusTypeEnum,
+} from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -36,6 +40,7 @@ export type DependencyGraphProps = {
   };
   fetchPipeline: () => void;
   pipeline: PipelineType;
+  runningBlocks: BlockType[];
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
 } & SetEditingBlockType;
@@ -45,6 +50,7 @@ function DependencyGraph({
   editingBlock,
   fetchPipeline,
   pipeline,
+  runningBlocks,
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
@@ -68,6 +74,8 @@ function DependencyGraph({
       upstreamBlocksEditing,
     ],
   );
+  const runningBlocksMapping =
+    useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
   const arrows: {
     color: string;
@@ -195,6 +203,13 @@ function DependencyGraph({
                     <GraphNode
                       block={block}
                       disabled={blockEditing?.uuid === block.uuid}
+                      isInProgress={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid === block.uuid
+                      }
+                      isQueued={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid !== block.uuid
+                      }
+                      isSuccessful={StatusTypeEnum.EXECUTED === block.status}
                       key={block.uuid}
                       onClick={blockEditing
                         ? onClickWhenEditingUpstreamBlocks
