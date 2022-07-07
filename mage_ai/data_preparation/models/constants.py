@@ -20,7 +20,9 @@ VARIABLE_DIR = '.variables'
 
 class BlockStatus(str, Enum):
     EXECUTED = 'executed'
+    FAILED = 'failed'
     NOT_EXECUTED = 'not_executed'
+    UPDATED = 'updated'
 
 
 class BlockType(str, Enum):
