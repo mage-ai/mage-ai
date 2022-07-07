@@ -58,12 +58,14 @@ class S3(BaseFile):
             read_config = {}
         if import_config is None:
             import_config = {}
-
-        response = self.client.get_object(
-            Bucket=self.bucket_name, Key=self.filepath, **import_config
-        )
-        buffer = BytesIO(response['Body'].read())
-        return self.reader(buffer, **read_config)
+        with self.printer.print_msg(
+            f'Loading data frame from bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
+        ):
+            response = self.client.get_object(
+                Bucket=self.bucket_name, Key=self.filepath, **import_config
+            )
+            buffer = BytesIO(response['Body'].read())
+            return self.reader(buffer, **read_config)
 
     def export(
         self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None
@@ -83,26 +85,29 @@ class S3(BaseFile):
         if export_config is None:
             export_config = {}
 
-        if self.format == FileFormat.HDF5:
-            temp_dir = Path.cwd() / '.tmp'
-            temp_dir.mkdir(parents=True, exist_ok=True)
-            obj_loc = temp_dir / f'{self.name}.hdf5'
+        with self.printer.print_msg(
+            f'Exporting data frame to bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
+        ):
+            if self.format == FileFormat.HDF5:
+                temp_dir = Path.cwd() / '.tmp'
+                temp_dir.mkdir(parents=True, exist_ok=True)
+                obj_loc = temp_dir / f'{self.name}.hdf5'
 
-            self._write(df, obj_loc, **write_config)
-            with obj_loc.open('rb') as fin:
+                self._write(df, obj_loc, **write_config)
+                with obj_loc.open('rb') as fin:
+                    self.client.put_object(
+                        Body=fin, Bucket=self.bucket_name, Key=self.filepath, **export_config
+                    )
+
+                obj_loc.unlink()
+                temp_dir.rmdir()
+            else:
+                buffer = BytesIO()
+                self._write(df, buffer, **write_config)
+                buffer.seek(0)
                 self.client.put_object(
-                    Body=fin, Bucket=self.bucket_name, Key=self.filepath, **export_config
+                    Body=buffer, Bucket=self.bucket_name, Key=self.filepath, **export_config
                 )
-
-            obj_loc.unlink()
-            temp_dir.rmdir()
-        else:
-            buffer = BytesIO()
-            self._write(df, buffer, **write_config)
-            buffer.seek(0)
-            self.client.put_object(
-                Body=buffer, Bucket=self.bucket_name, Key=self.filepath, **export_config
-            )
 
     @classmethod
     def with_credentials(

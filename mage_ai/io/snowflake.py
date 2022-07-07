@@ -27,7 +27,8 @@ class Snowflake(BaseSQL):
         """
         Opens a connection to Snowflake.
         """
-        self._ctx = connect(**self.settings)
+        with self.printer.print_msg('Connecting to Snowflake warehouse'):
+            self._ctx = connect(**self.settings)
 
     def query(self, query_string: str, **kwargs) -> None:
         """
@@ -37,8 +38,9 @@ class Snowflake(BaseSQL):
             query_string (str): The query to execute on Snowflake's platform.
             **kwargs: Additional parameters to provide to the query
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, **kwargs)
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            with self.conn.cursor() as cur:
+                return cur.execute(query_string, **kwargs)
 
     def load(self, query_string: str, *args, **kwargs) -> DataFrame:
         """
@@ -52,8 +54,9 @@ class Snowflake(BaseSQL):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
+        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            with self.conn.cursor() as cur:
+                return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
 
     def export(
         self,
@@ -80,37 +83,37 @@ class Snowflake(BaseSQL):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
-        exists = False
-        with self._ctx.cursor() as cur:
-            cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
-            if cur.rowcount == 1:
-                exists = True
-            elif cur.rowcount > 1:
-                raise ValueError(f'Two or more tables with the name {table_name} are found.')
-            if exists:
-                if if_exists == 'fail':
-                    raise RuntimeError(
-                        f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
-                    )
-                elif if_exists == 'replace':
-                    cur.execute(f'DROP TABLE {table_name}')
-                elif if_exists != 'append':
-                    raise ValueError(
-                        f'Invalid policy specified for handling existence of table: \'{if_exists}\''
-                    )
+        with self.printer.print_msg(
+            f'Exporting data frame to table \'{database}.{schema}.{table_name}\''
+        ):
+            with self._ctx.cursor() as cur:
+                cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
+                if cur.rowcount == 1:
+                    if if_exists == 'fail':
+                        raise RuntimeError(
+                            f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
+                        )
+                    elif if_exists == 'replace':
+                        cur.execute(f'DROP TABLE {table_name}')
+                    elif if_exists != 'append':
+                        raise ValueError(
+                            f'Invalid policy specified for handling existence of table: \'{if_exists}\''
+                        )
+                elif cur.rowcount > 1:
+                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
 
-        auto_create_table = True
-        if 'auto_create_table' in kwargs:
-            auto_create_table = kwargs.pop(auto_create_table)
-            if auto_create_table is None:
-                auto_create_table = True
+            auto_create_table = True
+            if 'auto_create_table' in kwargs:
+                auto_create_table = kwargs.pop(auto_create_table)
+                if auto_create_table is None:
+                    auto_create_table = True
 
-        write_pandas(
-            self.conn,
-            df,
-            table_name,
-            database=database,
-            schema=schema,
-            auto_create_table=auto_create_table,
-            **kwargs,
-        )
+            write_pandas(
+                self.conn,
+                df,
+                table_name,
+                database=database,
+                schema=schema,
+                auto_create_table=auto_create_table,
+                **kwargs,
+            )

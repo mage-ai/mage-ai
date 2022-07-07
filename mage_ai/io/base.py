@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Union
 import pandas as pd
@@ -35,6 +36,10 @@ class BaseIO(ABC):
     Data loader interface. All data loaders must inherit from this interface.
     """
 
+    def __init__(self, verbose=False) -> None:
+        self.verbose = verbose
+        self.printer = VerbosePrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
+
     @abstractmethod
     def load(self, *args, **kwargs) -> DataFrame:
         """
@@ -64,7 +69,9 @@ class BaseFile(BaseIO):
     filesystem or external file storages such as AWS S3)
     """
 
-    def __init__(self, filepath: os.PathLike, format: Union[FileFormat, str] = None) -> None:
+    def __init__(
+        self, filepath: os.PathLike, format: Union[FileFormat, str] = None, verbose=False
+    ) -> None:
         """
         Initializes the file data loader
 
@@ -72,6 +79,7 @@ class BaseFile(BaseIO):
             filepath (os.PathLike): Path to the file
             format (FileFormat, optional): File format for the data being loaded. Defaults to None.
         """
+        super().__init__(verbose=verbose)
         parts = os.path.splitext(os.path.basename(filepath))
         if format is None:
             format = parts[-1][1:]
@@ -116,6 +124,10 @@ class BaseFile(BaseIO):
             raise ValueError(f'Unexpected format provided: {self.format}')
         return writer
 
+    def __del__(self):
+        if self.verbose and self.printer.exists_previous_message:
+            print('')
+
 
 class BaseSQL(BaseIO):
     """
@@ -126,10 +138,11 @@ class BaseSQL(BaseIO):
     manager when connecting to external data sources.
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, verbose=False, **kwargs) -> None:
         """
         Initializes the connection with the settings given as keyword arguments. Specific data loaders will have access to different settings.
         """
+        super().__init__(verbose=verbose)
         self.settings = kwargs
 
     def close(self) -> None:
@@ -139,6 +152,8 @@ class BaseSQL(BaseIO):
         if '_ctx' in self.__dict__:
             self._ctx.close()
             del self._ctx
+        if self.verbose and self.printer.exists_previous_message:
+            print('')
 
     @property
     def conn(self) -> Any:

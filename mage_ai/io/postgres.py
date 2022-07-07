@@ -9,7 +9,14 @@ class Postgres(BaseSQL):
     """
 
     def __init__(
-        self, dbname: str, user: str, password: str, host: str, port: str = None, **kwargs
+        self,
+        dbname: str,
+        user: str,
+        password: str,
+        host: str,
+        port: str = None,
+        verbose=True,
+        **kwargs,
     ) -> None:
         """
         Initializes the data loader.
@@ -25,13 +32,14 @@ class Postgres(BaseSQL):
         self.dburl = (
             f'postgresql+psycopg2://{user}:{password}@{host}{":"+port if port else ""}/{dbname}'
         )
-        super().__init__(**kwargs)
+        super().__init__(verbose=verbose, **kwargs)
 
     def open(self) -> None:
         """
         Opens a connection to the PostgreSQL database specified by the parameters.
         """
-        self._ctx = create_engine(self.dburl, **self.settings).connect(**self.settings)
+        with self.printer.print_msg('Opening connection to PostgreSQL database'):
+            self._ctx = create_engine(self.dburl, **self.settings).connect(**self.settings)
 
     def query(self, query_string: str, **query_vars) -> None:
         """
@@ -41,7 +49,8 @@ class Postgres(BaseSQL):
             query_string (str): SQL query string to apply on the connected database.
             query_vars: Variable values to fill in when using format strings in query.
         """
-        self.conn.execute(query_string, **query_vars)
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            self.conn.execute(query_string, **query_vars)
 
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
@@ -55,7 +64,8 @@ class Postgres(BaseSQL):
         Returns:
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
-        return read_sql(query_string, self.conn, **kwargs)
+        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            return read_sql(query_string, self.conn, **kwargs)
 
     def export(
         self, df: DataFrame, name: str, index: bool = False, if_exists: str = 'replace', **kwargs
@@ -65,7 +75,6 @@ class Postgres(BaseSQL):
         exist, the table is automatically created.
 
         Args:
-            query_string (str): Query to execute on the database.
             name (str): Name of the table to insert rows from this data frame into.
             index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             if_exists (str): Specifies export policy if table exists. Either
@@ -75,4 +84,5 @@ class Postgres(BaseSQL):
             Defaults to `'replace'`.
             **kwargs: Additional query parameters.
         """
-        df.to_sql(name, self.conn, index=index, if_exists=if_exists, **kwargs)
+        with self.printer.print_msg(f'Exporting data frame to table \'{name}\''):
+            df.to_sql(name, self.conn, index=index, if_exists=if_exists, **kwargs)

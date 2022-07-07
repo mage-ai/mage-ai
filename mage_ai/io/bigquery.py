@@ -42,8 +42,8 @@ class BigQuery(BaseIO):
                     credentials = service_account.Credentials.from_service_account_file(path)
             if 'credentials' in kwargs:
                 kwargs.pop('credentials')
-
-        self.client = Client(credentials=credentials, **kwargs)
+        with self.printer.print_msg(f'Connecting to BigQuery warehouse'):
+            self.client = Client(credentials=credentials, **kwargs)
 
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
@@ -57,7 +57,8 @@ class BigQuery(BaseIO):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        return self.client.query(query_string, *kwargs).to_dataframe()
+        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            return self.client.query(query_string, *kwargs).to_dataframe()
 
     def export(
         self,
@@ -84,19 +85,20 @@ class BigQuery(BaseIO):
             is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
-        config = LoadJobConfig(**configuration_params)
-        if 'write_disposition' not in configuration_params:
-            if if_exists == 'replace':
-                config.write_disposition = WriteDisposition.WRITE_TRUNCATE
-            elif if_exists == 'append':
-                config.write_disposition = WriteDisposition.WRITE_APPEND
-            elif if_exists == 'fail':
-                config.write_disposition = WriteDisposition.WRITE_EMPTY
-            else:
-                raise ValueError(
-                    f'Invalid policy specified for handling existence of table: \'{if_exists}\''
-                )
-        self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+        with self.printer.print_msg(f'Exporting data frame to table \'{table_id}\''):
+            config = LoadJobConfig(**configuration_params)
+            if 'write_disposition' not in configuration_params:
+                if if_exists == 'replace':
+                    config.write_disposition = WriteDisposition.WRITE_TRUNCATE
+                elif if_exists == 'append':
+                    config.write_disposition = WriteDisposition.WRITE_APPEND
+                elif if_exists == 'fail':
+                    config.write_disposition = WriteDisposition.WRITE_EMPTY
+                else:
+                    raise ValueError(
+                        f'Invalid policy specified for handling existence of table: \'{if_exists}\''
+                    )
+            self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
     @classmethod
     def with_credentials_file(cls, path_to_credentials: str, **kwargs):
