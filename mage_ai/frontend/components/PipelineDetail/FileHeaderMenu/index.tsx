@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -35,12 +36,16 @@ type FileHeaderMenuProps = {
   interruptKernel: () => void;
   restartKernel: () => void;
   savePipelineContent: () => void;
+  setMessages: (message: {
+    [uuid: string]: KernelOutputType[];
+  }) => void;
 };
 
 function FileHeaderMenu({
   interruptKernel,
   restartKernel,
   savePipelineContent,
+  setMessages,
 }: FileHeaderMenuProps) {
   const router = useRouter();
   const [highlightedIndex, setHighlightedIndex] = useState(null);
@@ -123,6 +128,18 @@ function FileHeaderMenu({
       onClick: () => restartKernel(),
       uuid: 'Restart kernel',
     },
+    {
+      label: () => 'Clear all outputs',
+      // @ts-ignore
+      onClick: () => setMessages(messagesByUUID => Object
+        .keys(messagesByUUID)
+        .reduce((acc, uuid) => ({
+          ...acc,
+          [uuid]: [],
+        }), {}),
+      ),
+      uuid: 'Clear all outputs',
+    }
   ];
 
   const uuidKeyboard = 'FileHeaderMenu/index';
