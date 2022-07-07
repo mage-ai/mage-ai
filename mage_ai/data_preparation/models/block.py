@@ -148,14 +148,19 @@ class Block:
 
     async def execute(self, analyze_outputs=True, custom_code=None):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
-            outputs = await self.execute_block(custom_code)
-            self.__verify_outputs(outputs)
-            variable_mapping = dict(zip(self.output_variables.keys(), outputs))
-            self.__store_variables(variable_mapping)
-            self.status = BlockStatus.EXECUTED
-            self.__update_pipeline_block()
-            if analyze_outputs:
-                self.__analyze_outputs(variable_mapping)
+            try:
+                outputs = await self.execute_block(custom_code)
+                self.__verify_outputs(outputs)
+                variable_mapping = dict(zip(self.output_variables.keys(), outputs))
+                self.__store_variables(variable_mapping)
+                self.status = BlockStatus.EXECUTED
+                if analyze_outputs:
+                    self.__analyze_outputs(variable_mapping)
+            except Exception as err:
+                self.status = BlockStatus.FAILED
+                raise err
+            finally:
+                self.__update_pipeline_block()
         return outputs
 
     def __validate_execution(self, decorated_functions, input_vars):
