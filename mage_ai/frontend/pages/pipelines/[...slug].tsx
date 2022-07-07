@@ -12,10 +12,8 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
 import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
-import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
@@ -23,7 +21,6 @@ import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
@@ -31,7 +28,6 @@ import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
 } from '@components/TripleLayout/index.style';
-import { Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
@@ -156,7 +152,6 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-  const [errorMessages, setErrorMessages] = useState<string[]>(null);
 
   // Variables
   const {
@@ -216,7 +211,7 @@ function PipelineDetailPage({
     if (editingBlock.upstreamBlocks?.block) {
       setAfterHidden(false);
       setActiveSidekickView(ViewKeyEnum.TREE);
-    };
+    }
   }, [editingBlock.upstreamBlocks]);
 
   // Kernels
@@ -493,7 +488,6 @@ function PipelineDetailPage({
       sampleData={sampleData}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
-      setErrorMessages={setErrorMessages}
       setSelectedBlock={setSelectedBlock}
       statistics={statistics}
       views={SIDEKICK_VIEWS}
@@ -576,7 +570,6 @@ function PipelineDetailPage({
 
       <TripleLayout
         after={sideKick}
-        afterMousedownActive={afterMousedownActive}
         afterHeader={(
           <>
             {SIDEKICK_VIEWS.map(({ key, label }: any) => {
@@ -601,9 +594,9 @@ function PipelineDetailPage({
           </>
         )}
         afterHidden={afterHidden}
+        afterMousedownActive={afterMousedownActive}
         afterWidth={afterWidth}
         before={fileTree}
-        beforeMousedownActive={beforeMousedownActive}
         beforeHeader={(
           <FileHeaderMenu
             interruptKernel={interruptKernel}
@@ -613,6 +606,7 @@ function PipelineDetailPage({
           />
         )}
         beforeHidden={beforeHidden}
+        beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}
@@ -622,31 +616,7 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        {errorMessages?.length >= 1 && (
-          <Spacing mb={3} mt={2} mx={2}>
-            <FlexContainer justifyContent="space-between">
-              <Text bold>
-                Errors
-              </Text>
-              <Button
-                basic
-                iconOnly
-                noPadding
-                onClick={() => setErrorMessages(null)}
-                transparent
-              >
-                <Close muted />
-              </Button>
-            </FlexContainer>
-            {errorMessages?.map((msg: string) => (
-              <Spacing key={msg} pb={1}>
-                <Text monospace xsmall>
-                  {msg}
-                </Text>
-              </Spacing>
-            ))}
-          </Spacing>
-        )}
+
 
         {pipelineDetailMemo}
 
