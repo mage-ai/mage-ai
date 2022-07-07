@@ -187,7 +187,7 @@ function DependencyGraph({
 
       <ContainerStyle onScroll={updateXarrow}>
         <Xwrapper>
-          <FlexContainer alignItems="flex-start" flexDirection="column">
+          <FlexContainer alignItems="center" flexDirection="column">
             {nodeLevels.map((nodeLevel, index) => (
               <Spacing key={index} mb={(index === nodeLevels.length - 1) ? 0 : 6}>
                 <FlexContainer alignItems="center">
