@@ -4,7 +4,9 @@ import { ActionTypeEnum } from '@interfaces/ActionPayloadType';
 
 export const LOCAL_STORAGE_KEY_CUSTOM_CODE = 'custom_code';
 export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN = 'pipeline_editor_after_hidden';
+export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH = 'pipeline_editor_after_width';
 export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN = 'pipeline_editor_before_hidden';
+export const LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH = 'pipeline_editor_before_width';
 const LOCAL_STORAGE_KEY_OBJECT_COUNTS = 'object_counts';
 
 function getCustomCodeKey(featureSetId: string) {

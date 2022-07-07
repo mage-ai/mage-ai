@@ -111,8 +111,8 @@ function CodeBlockProps({
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
   const [runCount, setRunCount] = useState<Number>(0);
-  const [runEndTime, setRunEndTime] = useState<Number>(0);
-  const [runStartTime, setRunStartTime] = useState<Number>(0);
+  const [runEndTime, setRunEndTime] = useState<Number>(null);
+  const [runStartTime, setRunStartTime] = useState<Number>(null);
 
   const runBlockAndTrack = useCallback((code?: string) => {
     runBlock({
@@ -328,6 +328,7 @@ function CodeBlockProps({
   const codeOutputEl = useMemo(() => hasOutput && (
     <CodeOutput
       {...borderColorShareProps}
+      block={block}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -337,6 +338,7 @@ function CodeBlockProps({
       selected={selected}
     />
   ), [
+    block,
     borderColorShareProps,
     hasOutput,
     isInProgress,

@@ -34,7 +34,9 @@ import {
 import { Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH,
   get,
   set,
 } from '@storage/localStorage';
@@ -63,9 +65,11 @@ function PipelineDetailPage({
     height: heightWindow,
     width: widthWindow,
   } = useWindowSize();
-  const [afterWidth, setAfterWidth] = useState(AFTER_DEFAULT_WIDTH);
+  const [afterWidth, setAfterWidth] = useState(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, AFTER_DEFAULT_WIDTH));
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
-  const [beforeWidth, setBeforeWidth] = useState(BEFORE_DEFAULT_WIDTH);
+  const [beforeWidth, setBeforeWidth] = useState(
+    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, BEFORE_DEFAULT_WIDTH));
   const [afterHidden, setAfterHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [beforeHidden, setBeforeHidden] =
@@ -129,14 +133,24 @@ function PipelineDetailPage({
     setMainContainerWidth,
     widthWindow,
   ]);
+
   useEffect(() => {
     if (!afterMousedownActive) {
       setAfterWidthForChildren(afterWidth);
+      set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, afterWidth);
     }
   }, [
     afterMousedownActive,
     afterWidth,
     setAfterWidthForChildren,
+  ]);
+  useEffect(() => {
+    if (!beforeMousedownActive) {
+      set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, beforeWidth);
+    }
+  }, [
+    beforeMousedownActive,
+    beforeWidth,
   ]);
 
   // Pipeline

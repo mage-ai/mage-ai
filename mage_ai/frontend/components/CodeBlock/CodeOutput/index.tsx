@@ -1,12 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
+import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import { BorderColorShareProps } from '../index.style';
 import { Check } from '@oracle/icons';
 import {
@@ -21,6 +26,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
+  block: BlockType;
   isInProgress: boolean;
   mainContainerWidth: number;
   messages: KernelOutputType[];
@@ -30,7 +36,7 @@ type CodeOutputProps = {
 } & BorderColorShareProps;
 
 function CodeOutput({
-  blockType,
+  block,
   hasError,
   isInProgress,
   mainContainerWidth,
@@ -40,9 +46,15 @@ function CodeOutput({
   runStartTime,
   selected,
 }: CodeOutputProps) {
+  const {
+    status,
+    type: blockType,
+  } = block;
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
   const primaryDataType = messages[0].type;
-  const executedAndIdle = !isInProgress && runCount >= 1 && runEndTime >= runStartTime;
+  const executedAndIdle = StatusTypeEnum.EXECUTED === status
+    || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
+    || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
   if (DataTypeEnum.TABLE === primaryDataType) {
 
@@ -160,23 +172,45 @@ function CodeOutput({
               fullWidth
               justifyContent="flex-end"
             >
-              <Text small>
-                {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-              </Text>
+              <Tooltip
+                appearAbove
+                appearBefore
+                block
+                label={runCount >= 1 && runStartTime
+                  ? `Last run at ${runStartTime}`
+                  : (
+                    hasError
+                      ? 'Block executed with errors'
+                      : 'Block executed successfully'
+                  )
+                }
+                size={null}
+                widthFitContent
+              >
+                <FlexContainer alignItems="center">
+                  {runCount >= 1 && (
+                    <>
+                      <Text small>
+                        {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+                      </Text>
 
-              <Spacing mr={1} />
+                      <Spacing mr={1} />
+                    </>
+                  )}
 
-              {!hasError && <Check size={UNIT * 2} success />}
-              {hasError && (
-                <Circle
-                  danger
-                  size={UNIT * 2}
-                >
-                  <Text bold monospace small>
-                    !
-                  </Text>
-                </Circle>
-              )}
+                  {!hasError && <Check size={UNIT * 2} success />}
+                  {hasError && (
+                    <Circle
+                      danger
+                      size={UNIT * 2}
+                    >
+                      <Text bold monospace small>
+                        !
+                      </Text>
+                    </Circle>
+                  )}
+                </FlexContainer>
+              </Tooltip>
             </FlexContainer>
           </ExtraInfoContentStyle>
         </ExtraInfoStyle>
