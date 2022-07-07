@@ -59,8 +59,23 @@ class VariableTest(TestCase):
         )
         variable1.write_data(df1)
         variable2.write_data(df2)
+        variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block1', 'var1', 'data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block1', 'var1', 'sample_data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block2', 'var2', 'data.parquet'),
+        ))
+        self.assertTrue(os.path.exists(
+            os.path.join(variable_dir_path, 'block2', 'var2', 'sample_data.parquet'),
+        ))
         assert_frame_equal(variable1.read_data(), df1)
+        assert_frame_equal(variable1.read_data(sample=True, sample_count=1), df1.iloc[:1])
         assert_frame_equal(variable2.read_data(), df2)
+        assert_frame_equal(variable2.read_data(sample=True, sample_count=1), df2.iloc[:1])
 
     def test_write_and_read_dataframe_analysis(self):
         pipeline = self.__create_pipeline('test pipeline 3')
