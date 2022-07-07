@@ -18,3 +18,16 @@ export const findBlockByPath = (blocks: BlockType[], path: string[]) => (
 export const isBlockType = (path: string[]) => (
   getBlockFilename(path).slice(-2) === FileExtensionEnum.PY
 );
+
+export function getPipelineUUID(path: string[]) {
+  console.log(path)
+  const idx = path.indexOf('pipelines');
+
+  if (idx !== -1 && idx === path.length - 2) {
+    return path[path.length - 1];
+  };
+}
+
+export function isPipelineFilePath(path: string[]) {
+  return !!getPipelineUUID(path);
+}
