@@ -117,7 +117,7 @@ def load_data_from_redshift() -> DataFrame:
     configuration parameters can be defined in your configuration file.
     \"\"\"
     query = 'your_redshift_selection_query'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:
@@ -139,7 +139,7 @@ def load_from_s3_bucket() -> DataFrame:
     If user credentials are not specified in `~/.aws`, you must specify your
     user credentials manually in your configuration file.
     \"\"\"
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     return S3.with_config(IOConfig(config_path).use(config_profile)).load()
@@ -400,7 +400,7 @@ def export_data_to_big_query(df: DataFrame) -> None:
     Alternatively, all parameters can be specified in the configuration file.
     \"\"\"
     table_id = 'your-project.your_dataset.your_table_name'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     BigQuery.with_config(IOConfig(config_path).use(config_profile)).export(
@@ -425,7 +425,7 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     table_name = 'your_table_name'
     database = 'your_database_name'
     schema = 'your_schema_name'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
