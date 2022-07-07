@@ -58,11 +58,10 @@ function parseErrorFromResponse(res, opts: OptsProps = {}) {
   } = parseError(res);
 
   let msgs = [];
-  if (message) {
-    msgs.push(message);
-  }
 
-  if (messages?.length >= 1) {
+  if (message) {
+    msgs.push(...message.split('\n'));
+  } else if (messages?.length >= 1) {
     msgs.push(...messages);
   } else {
     const toastErrMessage = opts.errorMessage || (messages?.[0] || errors);

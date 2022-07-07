@@ -595,6 +595,7 @@ function PipelineDetailPage({
             interruptKernel={interruptKernel}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
+            setMessages={setMessages}
           />
         )}
         beforeHidden={beforeHidden}
