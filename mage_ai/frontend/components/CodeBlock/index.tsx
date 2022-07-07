@@ -509,11 +509,13 @@ function CodeBlockProps({
 
               <Spacing mt={1}>
                 <Text monospace muted>
+                  {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
                   {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
                   {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
                 </Text>
                 <Text monospace muted>
-                  def {(BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
+                  def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
+                    || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
                     || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
                   ({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
                 </Text>
