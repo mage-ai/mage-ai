@@ -26,7 +26,7 @@ export function getColorsForBlockType(blockType: BlockTypeEnum, props): {
 }
 
 export type BorderColorShareProps = {
-  blockType: BlockTypeEnum;
+  blockType?: BlockTypeEnum;
   hasError?: boolean;
   selected: boolean;
 };
