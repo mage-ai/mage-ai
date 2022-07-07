@@ -34,7 +34,8 @@ export const getFileNodeColor: (
   path: string[],
   themeType: ThemeType
 ) => FileNodeProps = (path, themeType) => {
-  if (getBlockFilename(path) === SpecialFileEnum.INIT_PY) {
+  const nodeName = getBlockFilename(path);
+  if (nodeName === SpecialFileEnum.INIT_PY) {
     return {
       iconColor: (themeType?.monotone || dark.monotone).grey500,
       iconType: FileFill,
