@@ -191,27 +191,28 @@ class Block:
             sig = signature(block_function)
 
             num_args = sum(arg.kind != Parameter.VAR_POSITIONAL for arg in sig.parameters.values())
-            includes_var_args = num_args != len(sig.parameters)
             num_inputs = len(input_vars)
             num_upstream = len(self.upstream_block_uuids)
+
+            has_var_args = num_args != len(sig.parameters)
 
             if num_args > num_inputs:
                 if num_upstream < num_args:
                     raise Exception(
                         f'Block {self.uuid} may be missing upstream dependencies. '
-                        f'It expected to have {"at least " if includes_var_args else ""}{num_args} arguments, '
+                        f'It expected to have {"at least " if has_var_args else ""}{num_args} arguments, '
                         f'but only received {num_inputs}. '
                         f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
                     )
                 else:
                     raise Exception(
                         f'Block {self.uuid} is missing input arguments. '
-                        f'It expected to have {"at least " if includes_var_args else ""}{num_args} arguments, '
+                        f'It expected to have {"at least " if has_var_args else ""}{num_args} arguments, '
                         f'but only received {num_inputs}. '
                         f'Double check the @{self.type} method declaration has the correct number of arguments '
                         f'and that the upstream blocks have been executed.'
                     )
-            elif num_args < num_inputs and not includes_var_args:
+            elif num_args < num_inputs and not has_var_args:
                 if num_upstream > num_args:
                     raise Exception(
                         f'Block {self.uuid} may have too many upstream dependencies. '
