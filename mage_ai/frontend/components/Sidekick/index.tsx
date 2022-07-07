@@ -20,14 +20,15 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { Close, PlayButton } from '@oracle/icons';
 import {
   ContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { PlayButton } from '@oracle/icons';
 import { SCROLLBAR_WIDTH } from '@styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
@@ -55,7 +56,6 @@ export type SidekickProps = {
   pipeline: PipelineType;
   sampleData: SampleDataType;
   selectedBlock: BlockType;
-  setErrorMessages?: (errorMessages: string[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
   views: {
@@ -77,7 +77,6 @@ function Sidekick({
   pipeline,
   sampleData,
   selectedBlock,
-  setErrorMessages,
   setEditingBlock,
   setSelectedBlock,
   statistics,
@@ -85,9 +84,9 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
+  const [errorMessages, setErrorMessages] = useState<string[]>(null);
 
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
@@ -162,81 +161,108 @@ function Sidekick({
   );
 
   return (
-    <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
-      {activeView === ViewKeyEnum.TREE &&
-        <Spacing p={2}>
-          <Button
-            beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-            loading={isLoadingExecute}
-            onClick={() => executePipeline()}
-            success
-          >
-            <Text
-              bold
-              inverted
-              primary={isDisplayingSuccessMessage}
-            >
-              {isDisplayingSuccessMessage
-                ? 'Successfully executed!'
-                : 'Execute pipeline'
-              }
+    <>
+      {(activeView === ViewKeyEnum.TREE && errorMessages?.length >= 1) &&
+        <Spacing mb={3} mt={2} mx={2}>
+          <FlexContainer justifyContent="space-between">
+            <Text bold danger>
+              Errors
             </Text>
-          </Button>
-        </Spacing>
-      }
-      {activeView === ViewKeyEnum.TREE &&
-        <DependencyGraph
-          blockRefs={blockRefs}
-          editingBlock={editingBlock}
-          fetchPipeline={fetchPipeline}
-          pipeline={pipeline}
-          selectedBlock={selectedBlock}
-          setEditingBlock={setEditingBlock}
-          setSelectedBlock={setSelectedBlock}
-        />
-      }
-      {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
-        <DataTable
-          columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
-          columns={columns}
-          height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
-          noBorderBottom
-          noBorderLeft
-          noBorderRight
-          noBorderTop
-          renderColumnHeader={renderColumnHeader}
-          rows={rows}
-          width={afterWidth}
-        />
-      )}
-      {activeView === ViewKeyEnum.REPORTS &&
-        <Spacing p={2}>
-          <FlexContainer flexDirection="column" fullWidth>
-            {qualityMetrics && (
-              <StatsTable
-                stats={qualityMetrics}
-                title="Quality metrics"
-              />
-            )}
-            <Spacing mb={PADDING_UNITS} />
-            {statsSample && (
-              <StatsTable
-                stats={statsSample}
-                title="Statistics"
-              />
-            )}
+            <Button
+              basic
+              iconOnly
+              noPadding
+              onClick={() => setErrorMessages(null)}
+              transparent
+            >
+              <Close muted />
+            </Button>
           </FlexContainer>
+          {errorMessages?.map((msg: string) => (
+            <Spacing key={msg} pb={1}>
+              <Text monospace xsmall>
+                {msg}
+              </Text>
+            </Spacing>
+          ))}
         </Spacing>
       }
-      {activeView === ViewKeyEnum.GRAPHS &&
-        <BlockCharts
-          features={features}
-          insightsOverview={insightsOverview}
-          statistics={statistics}
-        />
-      }
-      {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
-    </ContainerStyle>
+      <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+        {activeView === ViewKeyEnum.TREE &&
+          <>
+            <Spacing p={2}>
+              <Button
+                beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+                loading={isLoadingExecute}
+                onClick={() => executePipeline()}
+                success
+              >
+                <Text
+                  bold
+                  inverted
+                  primary={isDisplayingSuccessMessage}
+                >
+                  {isDisplayingSuccessMessage
+                    ? 'Successfully executed!'
+                    : 'Execute pipeline'
+                  }
+                </Text>
+              </Button>
+            </Spacing>
+            <DependencyGraph
+              blockRefs={blockRefs}
+              editingBlock={editingBlock}
+              fetchPipeline={fetchPipeline}
+              pipeline={pipeline}
+              selectedBlock={selectedBlock}
+              setEditingBlock={setEditingBlock}
+              setSelectedBlock={setSelectedBlock}
+            />
+          </>
+        }
+        {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
+          <DataTable
+            columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
+            columns={columns}
+            height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
+            noBorderBottom
+            noBorderLeft
+            noBorderRight
+            noBorderTop
+            renderColumnHeader={renderColumnHeader}
+            rows={rows}
+            width={afterWidth}
+          />
+        )}
+        {activeView === ViewKeyEnum.REPORTS &&
+          <Spacing p={2}>
+            <FlexContainer flexDirection="column" fullWidth>
+              {qualityMetrics && (
+                <StatsTable
+                  stats={qualityMetrics}
+                  title="Quality metrics"
+                />
+              )}
+              <Spacing mb={PADDING_UNITS} />
+              {statsSample && (
+                <StatsTable
+                  stats={statsSample}
+                  title="Statistics"
+                />
+              )}
+            </FlexContainer>
+          </Spacing>
+        }
+        {activeView === ViewKeyEnum.GRAPHS &&
+          <BlockCharts
+            features={features}
+            insightsOverview={insightsOverview}
+            statistics={statistics}
+          />
+        }
+        {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
+      </ContainerStyle>
+    </>
   );
 }
 
