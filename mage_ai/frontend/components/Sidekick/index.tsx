@@ -1,4 +1,5 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
@@ -8,6 +9,7 @@ import BlockType, {
   SetEditingBlockType,
   StatisticsType,
 } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -24,11 +26,13 @@ import {
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PlayButton } from '@oracle/icons';
 import { SCROLLBAR_WIDTH } from '@styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
+import { onError, onSuccess } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
 
 export type SidekickProps = {
@@ -51,6 +55,7 @@ export type SidekickProps = {
   pipeline: PipelineType;
   sampleData: SampleDataType;
   selectedBlock: BlockType;
+  setErrorMessages?: (errorMessages: string[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
   views: {
@@ -72,6 +77,7 @@ function Sidekick({
   pipeline,
   sampleData,
   selectedBlock,
+  setErrorMessages,
   setEditingBlock,
   setSelectedBlock,
   statistics,
@@ -81,6 +87,7 @@ function Sidekick({
   } = useWindowSize();
   const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
+  const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
 
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
@@ -130,8 +137,53 @@ function Sidekick({
     setSelectedBlock,
   ]);
 
+  const [executePipeline, { isLoading: isLoadingExecute }] = useMutation(
+    api.execute.pipelines.useCreate(pipelineUUID),
+    {
+      onError: (response: any) => {
+        const {
+          messages,
+        } = onError(response);
+        setErrorMessages?.(messages);
+      },
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+            setErrorMessages?.(null);
+            setIsDisplayingSuccessMessage(true);
+            setTimeout(() => {
+              setIsDisplayingSuccessMessage(false);
+            }, 2500);
+          },
+        },
+      ),
+    },
+  );
+
   return (
     <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+      {activeView === ViewKeyEnum.TREE &&
+        <Spacing p={2}>
+          <Button
+            beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+            loading={isLoadingExecute}
+            onClick={() => executePipeline()}
+            success
+          >
+            <Text
+              bold
+              inverted
+              primary={isDisplayingSuccessMessage}
+            >
+              {isDisplayingSuccessMessage
+                ? 'Successfully executed!'
+                : 'Execute pipeline'
+              }
+            </Text>
+          </Button>
+        </Spacing>
+      }
       {activeView === ViewKeyEnum.TREE &&
         <DependencyGraph
           blockRefs={blockRefs}
