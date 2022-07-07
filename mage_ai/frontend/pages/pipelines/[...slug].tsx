@@ -223,9 +223,7 @@ function PipelineDetailPage({
     data,
     isLoading,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID, {
-    include_content: true,
-  });
+  } = api.pipelines.detail(pipelineUUID);
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const pipeline = data?.pipeline;
   const {
@@ -428,26 +426,31 @@ function PipelineDetailPage({
         outputs,
         uuid,
       }: BlockType) => {
-        messagesInit[uuid] = outputs.map(({
-          sample_data: sampleData,
-          text_data: textDataJsonString,
-          type,
-        }: OutputType) => {
-          if (sampleData) {
-            return {
-              data: sampleData,
-              type,
-            };
-          } else if (textDataJsonString) {
-            return JSON.parse(textDataJsonString);
-          }
+        if (outputs.length >= 1) {
+          messagesInit[uuid] = outputs.map(({
+            sample_data: sampleData,
+            text_data: textDataJsonString,
+            type,
+          }: OutputType) => {
+            if (sampleData) {
+              return {
+                data: sampleData,
+                type,
+              };
+            } else if (textDataJsonString) {
+              return JSON.parse(textDataJsonString);
+            }
 
-          return textDataJsonString;
-        });
+            return textDataJsonString;
+          });
+        }
         contentByBlockUUID.current[uuid] = content;
       });
 
-      setMessages(messagesInit);
+      setMessages((messagesPrev) => ({
+        ...messagesInit,
+        ...messagesPrev,
+      }));
     }
   }, [
     pipeline?.blocks,
