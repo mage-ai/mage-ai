@@ -48,7 +48,10 @@ function CodeOutput({
 
   }
 
-  const createDataTableElement = useCallback(({ columns, rows}) => (
+  const createDataTableElement = useCallback(({
+    columns,
+    rows,
+  }) => rows.length >= 1 && (
     <DataTable
       columns={columns}
       disableScrolling={!selected}

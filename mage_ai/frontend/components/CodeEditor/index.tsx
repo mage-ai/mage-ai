@@ -268,6 +268,7 @@ function CodeEditor({
             alwaysConsumeMouseWheel: false,
             vertical: 'hidden',
           },
+          wordBasedSuggestions: false,
         }}
         theme={theme}
         value={value}
