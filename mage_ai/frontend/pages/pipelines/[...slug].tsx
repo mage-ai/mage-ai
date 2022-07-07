@@ -12,6 +12,7 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import FileEditor from '@components/FileEditor';
 import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
@@ -73,8 +74,10 @@ function PipelineDetailPage({
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
-  const qFromUrl = queryFromUrl();
-  const activeSidekickView = qFromUrl[VIEW_QUERY_PARAM];
+  const {
+    [VIEW_QUERY_PARAM]: activeSidekickView,
+    file_path,
+  } = queryFromUrl();
   const setActiveSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
@@ -235,6 +238,18 @@ function PipelineDetailPage({
   });
   const kernels = dataKernels?.kernels;
   const kernel = kernels?.[0];
+
+  // Files
+  const openFile = useCallback((filePath: string) => {
+    goToWithQuery({
+      file_path: encodeURIComponent(filePath),
+    });
+  }, []);
+
+  const {
+    data: dataFileContents,
+  } = api.file_contents.detail(file_path);
+  const selectedFile = dataFileContents?.file;
 
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
@@ -467,6 +482,7 @@ function PipelineDetailPage({
     <FileTree
       addNewBlockAtIndex={addNewBlockAtIndex}
       blockRefs={blockRefs}
+      openFile={openFile}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
       tree={files}
@@ -622,9 +638,8 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-
-
-        {pipelineDetailMemo}
+        {!selectedFile && pipelineDetailMemo}
+        {selectedFile && <FileEditor selectedFile={selectedFile} />}
 
         <Spacing
           pb={Math.max(

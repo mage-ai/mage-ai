@@ -9,6 +9,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { ArrowDown, ArrowRight, FileFill, Folder } from '@oracle/icons';
+import { FileExtensionEnum } from '@interfaces/FileType';
 import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
@@ -22,6 +23,7 @@ export type FileTreeProps = {
     name?: string,
   ) => void;
   blockRefs: any;
+  openFile: (path: string) => void;
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
   tree: FileNodeType[];
@@ -50,6 +52,7 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 function FileTree({
   addNewBlockAtIndex,
   blockRefs,
+  openFile: openFileProp,
   pipeline,
   setSelectedBlock,
   tree: initialTree,
@@ -125,7 +128,7 @@ function FileTree({
     blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const onClickHandler = (path: string[], isFolder) => (e) => {
+  const onClickHandler = (path: string[], isFolder: boolean) => (e) => {
     e.preventDefault();
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
@@ -146,7 +149,12 @@ function FileTree({
       }
     }
     else {
-      // TODO open in file editor
+      const parts = path[path.length - 1].split('.');
+      const fileExtension = parts[parts.length - 1];
+      if (FileExtensionEnum.TXT === fileExtension) {
+        // WARNING: this assumes the first part of a path is the default_repo
+        return openFileProp(path.slice(1).join('/'));
+      }
     }
   };
 
