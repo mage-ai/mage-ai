@@ -1,6 +1,9 @@
 import re
 
 
+REGEX_PATTERN = r'^[ ]{2,}[\w]+'
+
+
 def remove_comments(code_lines):
     return list(filter(
         lambda x: not re.search(r'^\#', str(x).strip()),
@@ -8,14 +11,20 @@ def remove_comments(code_lines):
     ))
 
 
-def add_internal_output_info(code: str) -> str:
-    code_lines = remove_comments(code.split('\n'))
-
+def remove_empty_last_lines(code_lines):
     idx = len(code_lines) - 1
     last_line = code_lines[idx]
     while idx >= 0 and len(str(last_line).strip()) == 0:
         idx -= 1
         last_line = code_lines[idx]
+    return code_lines[:(idx + 1)]
+
+
+def add_internal_output_info(code: str) -> str:
+    code_lines = remove_comments(code.split('\n'))
+    code_lines = remove_empty_last_lines(code_lines)
+
+    last_line = code_lines[len(code_lines) - 1]
 
     parts = last_line.split('=')
     if len(parts) == 2:
@@ -28,17 +37,23 @@ def add_internal_output_info(code: str) -> str:
 
     last_line_in_block = False
     if len(code_lines) >= 2:
-        line_before_last_line = code_lines[-2]
-        if re.search(r'^[ ]{2,}[\w]+', line_before_last_line) and \
-           re.search(r'^[ ]{2,}[\w]+', code_lines[-1]):
+        if re.search(REGEX_PATTERN, code_lines[-2]) or \
+           re.search(REGEX_PATTERN, code_lines[-1]):
             last_line_in_block = True
+    elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
+        last_line_in_block = True
 
-    code_lines_final = []
+    print('last_line_in_block', last_line_in_block)
 
     if not last_line or last_line_in_block:
-        code_lines_final.append(code)
+        return f"""
+{code}
+"""
     else:
-        end_index = len(code_lines) if len(parts) >= 2 else -1
+        if len(parts) >= 2:
+            end_index = len(code_lines)
+        else:
+            end_index = -1
         code_without_last_line = '\n'.join(code_lines[:end_index])
         internal_output = f"""
 # Post processing code below (source: output_display.py)
@@ -72,7 +87,8 @@ def __custom_output():
 
 __custom_output()
 """
-        code_lines_final.append(code_without_last_line)
-        code_lines_final.append(internal_output)
 
-    return '\n'.join(code_lines_final)
+        return f"""
+{code_without_last_line}
+{internal_output}
+"""
