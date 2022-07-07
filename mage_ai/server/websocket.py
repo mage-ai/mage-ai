@@ -55,19 +55,22 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid)
-            block_output = []
+            final_output = []
             error = None
             trace = None
+            stdout = None
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
                 try:
-                    output = asyncio.run(block.execute(custom_code=code))
+                    block_output = asyncio.run(block.execute(custom_code=code))
+                    stdout = block_output['stdout']
+                    output = block_output['output']
                     if len(output) > 0:
                         for out in output:
                             if type(out) == pd.DataFrame \
                                 and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW:
 
                                 out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-                            block_output.append(out)
+                            final_output.append(out)
                 except Exception as err:
                     error = err
                     trace = traceback.format_exc().splitlines()
@@ -78,8 +81,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             value = dict(
                 block_uuid=block_uuid,
-                block_output=block_output,
+                block_output=final_output,
                 error=error,
+                stdout=stdout,
                 traceback=trace,
             )
 
@@ -95,9 +99,23 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         uuid = msg_id_value['block_uuid']
         output = msg_id_value['block_output']
         trace = msg_id_value['traceback']
+        stdout = msg_id_value['stdout']
 
         output_dict = dict(uuid=uuid)
+
+        messages = []
         if msg_type == 'execute_input':
+            if stdout is not None and len(stdout) > 0:
+                stdout_message = merge_dict(
+                    message,
+                    dict(
+                        data=stdout,
+                        type=DataType.TEXT,
+                        uuid=uuid,
+                    )
+                )
+                messages.append(stdout_message)
+
             if trace is not None:
                 output_dict['data'] = trace
                 output_dict['type'] = DataType.TEXT
@@ -113,12 +131,16 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 )
                 output_dict['type'] = DataType.TABLE
 
-        message_final = merge_dict(
-            message,
-            output_dict,
+        messages.append(
+            merge_dict(
+                message,
+                output_dict,
+            )
         )
 
-        print(f'[{uuid}] Sending message {msg_id} to {len(self.clients)} client(s): {message_final}')
+        print(f'[{uuid}] Sending {len(messages)} messages for {msg_id} to '
+              f'{len(self.clients)} client(s): {messages}')
 
         for client in self.clients:
-            client.write_message(json.dumps(message_final))
+            for m in messages:
+                client.write_message(json.dumps(m))

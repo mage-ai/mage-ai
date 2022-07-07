@@ -1,4 +1,6 @@
+from contextlib import redirect_stdout
 from inspect import signature
+from io import StringIO
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
@@ -149,9 +151,10 @@ class Block:
     async def execute(self, analyze_outputs=True, custom_code=None):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
             try:
-                outputs = await self.execute_block(custom_code)
-                self.__verify_outputs(outputs)
-                variable_mapping = dict(zip(self.output_variables.keys(), outputs))
+                output = await self.execute_block(custom_code)
+                block_output = output['output']
+                self.__verify_outputs(block_output)
+                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
                 self.__store_variables(variable_mapping)
                 self.status = BlockStatus.EXECUTED
                 if analyze_outputs:
@@ -161,7 +164,7 @@ class Block:
                 raise err
             finally:
                 self.__update_pipeline_block()
-        return outputs
+        return output
 
     def __validate_execution(self, decorated_functions, input_vars):
         not_executed_upstream_blocks = \
@@ -241,19 +244,24 @@ class Block:
                 ]
         outputs = []
         decorated_functions = []
-        if custom_code is not None:
-            exec(custom_code, {self.type: block_decorator(decorated_functions)})
-        elif os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), {self.type: block_decorator(decorated_functions)})
-        block_function = self.__validate_execution(decorated_functions, input_vars)
-        if block_function is not None:
-            outputs = block_function(*input_vars)
-            if outputs is None:
-                outputs = []
-            if type(outputs) is not list:
-                outputs = [outputs]
-        return outputs
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            if custom_code is not None:
+                exec(custom_code, {self.type: block_decorator(decorated_functions)})
+            elif os.path.exists(self.file_path):
+                with open(self.file_path) as file:
+                    exec(file.read(), {self.type: block_decorator(decorated_functions)})
+            block_function = self.__validate_execution(decorated_functions, input_vars)
+            if block_function is not None:
+                outputs = block_function(*input_vars)
+                if outputs is None:
+                    outputs = []
+                if type(outputs) is not list:
+                    outputs = [outputs]
+        return dict(
+            output=outputs,
+            stdout=stdout.getvalue()
+        )
 
     def exists(self):
         return os.path.exists(self.file_path)
