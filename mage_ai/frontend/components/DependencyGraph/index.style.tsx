@@ -22,6 +22,7 @@ export const NodeStyle = styled.div<{
   border-radius: ${BORDER_RADIUS_SMALL}px;
   margin-left: ${UNIT}px;
   margin-right: ${UNIT}px;
+  min-width: fit-content;
 
   ${props => props.selected && `
     border-color: ${(props.theme.content || dark.content).active};

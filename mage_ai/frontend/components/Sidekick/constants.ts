@@ -17,8 +17,9 @@ export enum ViewKeyEnum {
 }
 
 export const FULL_WIDTH_VIEWS = [
-  ViewKeyEnum.REPORTS,
   ViewKeyEnum.DATA,
+  ViewKeyEnum.REPORTS,
+  ViewKeyEnum.TREE,
 ];
 
 export const SIDEKICK_VIEWS = [
