@@ -34,6 +34,9 @@ from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
 
 @transformer
 def remove_rows_with_missing_entries(df: DataFrame) -> DataFrame:
@@ -75,6 +78,9 @@ def remove_rows_with_missing_entries(df: DataFrame) -> DataFrame:
     def test_template_generation_data_loader_default(self):
         expected_template = """from pandas import DataFrame
 
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
 
 @data_loader
 def load_data() -> DataFrame:
@@ -99,6 +105,9 @@ def load_data() -> DataFrame:
         redshift_template = """from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
 
 @data_loader
 def load_data_from_redshift() -> DataFrame:
@@ -120,6 +129,9 @@ def load_data_from_redshift() -> DataFrame:
 """
         s3_template = """from mage_ai.io.s3 import S3
 from pandas import DataFrame
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
 
 
 @data_loader
@@ -146,6 +158,9 @@ def load_from_s3_bucket() -> DataFrame:
 
     def test_template_generation_transformer_default(self):
         expected_template = """from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
 
 
 @transformer
@@ -178,6 +193,9 @@ def transform_df(df: DataFrame) -> DataFrame:
 
     def test_template_generation_transformer_action_default(self):
         expected_template = """from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
 
 
 @transformer
@@ -214,6 +232,9 @@ from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
 
 @transformer
 def execute_transformer_action(df: DataFrame) -> DataFrame:
@@ -238,6 +259,9 @@ def execute_transformer_action(df: DataFrame) -> DataFrame:
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
 from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
 
 
 @transformer
@@ -265,6 +289,9 @@ from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
 
 @transformer
 def execute_transformer_action(df: DataFrame) -> DataFrame:
@@ -291,6 +318,9 @@ from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
 
 @transformer
 def execute_transformer_action(df: DataFrame) -> DataFrame:
@@ -316,6 +346,9 @@ def execute_transformer_action(df: DataFrame) -> DataFrame:
     def test_template_generation_data_exporter_default(self):
         expected_template = """from pandas import DataFrame
 
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
 
 @data_exporter
 def export_data(df: DataFrame) -> None:
@@ -338,6 +371,9 @@ def export_data(df: DataFrame) -> None:
     def test_template_generation_data_exporter_specific(self):
         bigquery_template = """from mage_ai.io.bigquery import BigQuery
 from pandas import DataFrame
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
 
 
 @data_exporter
@@ -377,6 +413,9 @@ def export_data_to_big_query(df: DataFrame) -> None:
 """
         snowflake_template = """from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
 
 
 @data_exporter
