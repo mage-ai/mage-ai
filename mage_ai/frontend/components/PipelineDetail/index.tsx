@@ -357,18 +357,17 @@ function PipelineDetail({
         )}
       </PipelineContainerStyle>
 
-      <Spacing p={PADDING_UNITS}>
-        <Spacing mb={1}>
-          <KernelStatus
-            isBusy={runningBlocks.length >= 1}
-            isPipelineUpdating={isPipelineUpdating}
-            kernel={kernel}
-            pipelineContentTouched={pipelineContentTouched}
-            pipelineLastSaved={pipelineLastSaved}
-            restartKernel={restartKernel}
-          />
-        </Spacing>
+      <KernelStatus
+        isBusy={runningBlocks.length >= 1}
+        isPipelineUpdating={isPipelineUpdating}
+        kernel={kernel}
+        pipeline={pipeline}
+        pipelineContentTouched={pipelineContentTouched}
+        pipelineLastSaved={pipelineLastSaved}
+        restartKernel={restartKernel}
+      />
 
+      <Spacing mt={1} px={PADDING_UNITS}>
         {blocks.map((block: BlockType, idx: number) => {
           const {
             type,

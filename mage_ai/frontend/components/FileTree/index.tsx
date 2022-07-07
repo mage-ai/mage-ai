@@ -28,6 +28,7 @@ type FileNodeStyleProps = {
 const FileNodeStyle = styled.div<FileNodeStyleProps>`
   align-items: center;
   display: flex;
+  min-width: ${UNIT * 50}px;
 
   ${props => props.highlighted && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
