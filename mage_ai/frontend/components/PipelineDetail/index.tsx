@@ -41,9 +41,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
-import { getNewUUID } from '@utils/string';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
@@ -51,6 +49,7 @@ type PipelineDetailProps = {
     block: BlockType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
+    name?: string,
   ) => void;
   blockRefs: any;
   blocks: BlockType[];

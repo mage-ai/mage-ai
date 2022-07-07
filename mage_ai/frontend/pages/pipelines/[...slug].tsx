@@ -371,8 +371,8 @@ function PipelineDetailPage({
     block: BlockType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
+    name: string = randomNameGenerator(),
   ) => {
-    const name = randomNameGenerator();
     // @ts-ignore
     createBlock({
       block: {
@@ -465,6 +465,7 @@ function PipelineDetailPage({
   const blockRefs = useRef({});
   const fileTree = useMemo(() => (
     <FileTree
+      addNewBlockAtIndex={addNewBlockAtIndex}
       blockRefs={blockRefs}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
