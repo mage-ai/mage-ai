@@ -130,6 +130,29 @@ const samplePipeline = {
 
 Regular.args = {
   pipeline: samplePipeline,
-  selectedBlock: { uuid: 'exporter_1' },
+  runningBlocks: [
+    {
+      name: 'Data loader 1', // level 0
+      status: StatusTypeEnum.EXECUTED,
+      type: BlockTypeEnum.DATA_LOADER,
+      uuid: 'loader_1',
+      upstream_blocks: [],
+      downstream_blocks: [
+        'exporter_1',
+        'transformer_1',
+      ],
+    },
+    {
+      name: 'Data exporter 1', // level 1
+      status: StatusTypeEnum.NOT_EXECUTED,
+      type: BlockTypeEnum.DATA_EXPORTER,
+      uuid: 'exporter_1',
+      upstream_blocks: [
+        'loader_1',
+      ],
+      downstream_blocks: [],
+    },
+  ],
+  selectedBlock: { uuid: 'loader_1' },
   setSelectedBlock: (uuid) => console.log('Selected block:', uuid),
 };

@@ -20,7 +20,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 
-import { ContainerStyle } from './index.style';
+import { GraphContainerStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
@@ -87,8 +87,12 @@ function DependencyGraph({
       type,
       uuid: startBlockUUID,
     } = block;
+    const isSelected = selectedBlock?.uuid === startBlockUUID;
     const arrowsToDownstreamBlocks = downstreamBlocks.map(endBlockUUID => ({
-      color: getColorsForBlockType(type, { theme: themeContext }).accent,
+      color: getColorsForBlockType(
+        type,
+        { isSelected, theme: themeContext },
+      ).accent,
       end: endBlockUUID,
       start: startBlockUUID,
     }));
@@ -193,7 +197,7 @@ function DependencyGraph({
         </Spacing>
       )}
 
-      <ContainerStyle onScroll={updateXarrow}>
+      <GraphContainerStyle onScroll={updateXarrow}>
         <Xwrapper>
           <FlexContainer alignItems="center" flexDirection="column" fullWidth>
             {nodeLevels.map((nodeLevel, index) => (
@@ -239,7 +243,7 @@ function DependencyGraph({
             />
           ))}
         </Xwrapper>
-      </ContainerStyle>
+      </GraphContainerStyle>
 
       {blockEditing && (
         <Spacing my={3} px={PADDING_UNITS}>

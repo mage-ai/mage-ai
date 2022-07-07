@@ -2,15 +2,18 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { transition } from '@oracle/styles/mixins';
 
-export const ContainerStyle = styled.div`
+export const GraphContainerStyle = styled.div`
   display: flex;
   flex: 1;
   overflow: auto;
   padding: ${UNIT}px;
+  padding-bottom: ${UNIT * 3}px;
   width: 100%;
+
+  ${ScrollbarStyledCss}
 `;
 
 export const NodeStyle = styled.div<{

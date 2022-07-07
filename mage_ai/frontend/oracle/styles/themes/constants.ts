@@ -1,6 +1,7 @@
 export type ThemeType = {
   accent: {
     alert: string;
+    blue: string;
     cyan: string;
     cyanTransparent: string;
     info: string;
@@ -9,8 +10,10 @@ export type ThemeType = {
     negativeTransparent: string;
     positive: string;
     primaryTransparent: string;
+    purple: string;
     warning: string;
     warningTransparent: string;
+    yellow: string;
   };
   background: {
     dark: string;
