@@ -1,5 +1,4 @@
 from mage_ai.io.base import BaseSQL
-from mage_ai.shared.logger import VerboseFunctionExec
 from pandas import DataFrame, read_sql
 from sqlalchemy import create_engine
 
