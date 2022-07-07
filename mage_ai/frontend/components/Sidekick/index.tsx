@@ -255,6 +255,7 @@ function Sidekick({
         }
         {activeView === ViewKeyEnum.GRAPHS &&
           <BlockCharts
+            afterWidth={afterWidth}
             features={features}
             insightsOverview={insightsOverview}
             statistics={statistics}
