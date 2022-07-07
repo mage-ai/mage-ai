@@ -86,14 +86,9 @@ class Snowflake(BaseSQL):
         with self.printer.print_msg(
             f'Exporting data frame to table \'{database}.{schema}.{table_name}\''
         ):
-            exists = False
             with self._ctx.cursor() as cur:
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
                 if cur.rowcount == 1:
-                    exists = True
-                elif cur.rowcount > 1:
-                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
-                if exists:
                     if if_exists == 'fail':
                         raise RuntimeError(
                             f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
@@ -104,6 +99,8 @@ class Snowflake(BaseSQL):
                         raise ValueError(
                             f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                         )
+                elif cur.rowcount > 1:
+                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
 
             auto_create_table = True
             if 'auto_create_table' in kwargs:

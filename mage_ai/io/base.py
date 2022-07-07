@@ -207,6 +207,9 @@ class BaseSQL(BaseIO):
         """
         pass
 
+    def __del__(self):
+        self.close()
+
     def __enter__(self):
         self.open()
         return self
