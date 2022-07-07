@@ -77,16 +77,20 @@ class Variable:
     def __delete_dataframe_analysis(self):
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')        
         for k in DATAFRAME_ANALYSIS_KEYS:
-            os.remove(os.path.join(variable_path, f'{k}.json'))
+            file_path = os.path.join(variable_path, f'{k}.json')
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
     def __delete_json(self):
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     def __delete_parquet(self):
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         file_path = os.path.join(variable_path, 'data.parquet')
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
     def __read_json(self, default_value={}):
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
