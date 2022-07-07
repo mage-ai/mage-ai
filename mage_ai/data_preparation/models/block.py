@@ -412,12 +412,13 @@ class Block:
                 uuid,
                 data,
             )
-        for uuid in removed_variables:
-            variable_manager.delete_variable(
-                self.pipeline.uuid,
-                self.uuid,
-                uuid,
-            )
+        if override:
+            for uuid in removed_variables:
+                variable_manager.delete_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    uuid,
+                )
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
