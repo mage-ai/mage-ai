@@ -137,6 +137,7 @@ class Block:
             self.pipeline.delete_block(self)
             return
         from mage_ai.data_preparation.models.pipeline import Pipeline
+
         pipelines = Pipeline.get_pipelines_by_block(self)
         for p in pipelines:
             if not p.block_deletable(self):
@@ -167,8 +168,9 @@ class Block:
         return output
 
     def __validate_execution(self, decorated_functions, input_vars):
-        not_executed_upstream_blocks = \
-            list(filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks))
+        not_executed_upstream_blocks = list(
+            filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
+        )
         if len(not_executed_upstream_blocks) > 0:
             raise Exception(
                 f"Block {self.uuid}'s upstream blocks have not been executed yet. "
@@ -185,42 +187,7 @@ class Block:
                 f'Make sure that a function in the block is decorated with @{self.type}.'
             )
         else:
-            block_function = decorated_functions[0]
-            sig = signature(block_function)
-
-            num_args = len(sig.parameters)
-            num_inputs = len(input_vars)
-            num_upstream = len(self.upstream_block_uuids)
-
-            if num_args > num_inputs:
-                if num_upstream < num_args:
-                    raise Exception(
-                        f'Block {self.uuid} may be missing upstream dependencies. '
-                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
-                    )
-                else:
-                    raise Exception(
-                        f'Block {self.uuid} is missing input arguments. '
-                        f'It expected to have {num_args} arguments, but only received {num_inputs}. '
-                        f'Double check the @{self.type} method declaration has the correct number of arguments '
-                        f'and that the upstream blocks have been executed.'
-                    )
-            elif num_args < num_inputs:
-                if num_upstream > num_args:
-                    raise Exception(
-                        f'Block {self.uuid} may have too many upstream dependencies. '
-                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
-                    )
-                else:
-                    raise Exception(
-                        f'Block {self.uuid} has too many input arguments. '
-                        f'It expected to have {num_args} arguments, but received {num_inputs}. '
-                        f'Confirm that the @{self.type} method declaration has the correct number of arguments.'
-                    )
-        
-            return block_function
+            return decorated_functions[0]
 
     async def execute_block(self, custom_code=None):
         def block_decorator(decorated_functions):
@@ -258,10 +225,7 @@ class Block:
                     outputs = []
                 if type(outputs) is not list:
                     outputs = [outputs]
-        return dict(
-            output=outputs,
-            stdout=stdout.getvalue()
-        )
+        return dict(output=outputs, stdout=stdout.getvalue())
 
     def exists(self):
         return os.path.exists(self.file_path)
@@ -298,10 +262,7 @@ class Block:
         variable_manager = VariableManager(self.pipeline.repo_path)
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
-            all_variables = variable_manager.get_variables_by_block(
-                self.pipeline.uuid,
-                self.uuid
-            )
+            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
         else:
             # For non-scratchpad blocks, return all variables in output_variables
             all_variables = self.output_variables.keys()
@@ -400,10 +361,7 @@ class Block:
         if self.pipeline is None:
             return
         variable_manager = VariableManager(self.pipeline.repo_path)
-        all_variables = variable_manager.get_variables_by_block(
-            self.pipeline.uuid,
-            self.uuid
-        )
+        all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
         removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
             variable_manager.add_variable(

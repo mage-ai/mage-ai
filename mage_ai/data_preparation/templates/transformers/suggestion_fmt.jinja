@@ -8,7 +8,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def {{ title }}(df: DataFrame) -> DataFrame:
+def {{ title }}(df: DataFrame, *args) -> DataFrame:
     """
     Transformer Action: {{ message }}
     """
