@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.constants import (
     VARIABLE_DIR,
 )
 from numpyencoder import NumpyEncoder
-from typing import Any
+from typing import Any, Dict
 import json
 import os
 import pandas as pd
@@ -64,61 +64,65 @@ class Variable:
             self.variable_type = VariableType.DATAFRAME
 
         if self.variable_type == VariableType.DATAFRAME:
-            df = self.__read_parquet()
-            if sample:
-                sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
-                if df.shape[0] > sample_count:
-                    df = df.iloc[:sample_count]
-            return df
+            return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
 
-    def __delete_dataframe_analysis(self):
+    def __delete_dataframe_analysis(self) -> None:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')        
         for k in DATAFRAME_ANALYSIS_KEYS:
             file_path = os.path.join(variable_path, f'{k}.json')
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-    def __delete_json(self):
+    def __delete_json(self) -> None:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def __delete_parquet(self):
+    def __delete_parquet(self) -> None:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         file_path = os.path.join(variable_path, 'data.parquet')
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    def __read_json(self, default_value={}):
+    def __read_json(self, default_value={}) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
         return self.__read_json_file(file_path, default_value)
 
-    def __write_json(self, data):
+    def __write_json(self, data) -> None:
         if not os.path.isdir(self.variable_dir_path):
             os.mkdir(self.variable_dir_path)
         self.__write_json_file(os.path.join(self.variable_dir_path, f'{self.uuid}.json'), data)
 
-    def __read_json_file(self, file_path, default_value={}):
+    def __read_json_file(self, file_path: str, default_value={}) -> Dict:
         if not os.path.exists(file_path):
             return default_value
         with open(file_path) as file:
             return json.load(file)
 
-    def __write_json_file(self, file_path, data):
+    def __write_json_file(self, file_path: str, data) -> None:
         with open(file_path, 'w') as file:
             json.dump(data, file, cls=NumpyEncoder)
 
-    def __read_parquet(self):
+    def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         file_path = os.path.join(variable_path, 'data.parquet')
+        sample_file_path = os.path.join(variable_path, 'sample_data.parquet')
         if not os.path.exists(file_path):
             return pd.DataFrame()
-        return pd.read_parquet(file_path, engine='pyarrow')
+        if sample and os.path.exists(sample_file_path):
+            df = pd.read_parquet(sample_file_path, engine='pyarrow')
+        else:
+            df = pd.read_parquet(file_path, engine='pyarrow')
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if df.shape[0] > sample_count:
+                df = df.iloc[:sample_count]
+        return df
 
-    def __write_parquet(self, data):
+    def __write_parquet(self, data: pd.DataFrame) -> None:
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
         for c in df_output.columns:
@@ -133,8 +137,10 @@ class Variable:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         os.makedirs(variable_path, exist_ok=True)
         df_output.to_parquet(os.path.join(variable_path, 'data.parquet'))
+        df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
+        df_sample_output.to_parquet(os.path.join(variable_path, 'sample_data.parquet'))
 
-    def __read_dataframe_analysis(self):
+    def __read_dataframe_analysis(self) -> Dict[str, Dict]:
         """
         Read the following files
         1. metadata.json
@@ -150,7 +156,7 @@ class Variable:
             result[k] = self.__read_json_file(os.path.join(variable_path, f'{k}.json'))
         return result
 
-    def __write_dataframe_analysis(self, data):
+    def __write_dataframe_analysis(self, data: Dict[str, Dict]) -> None:
         """
         Write the following files
         1. metadata.json
