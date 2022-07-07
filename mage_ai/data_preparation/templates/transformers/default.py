@@ -1,5 +1,8 @@
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
 
 @transformer
 def transform_df(df: DataFrame) -> DataFrame:

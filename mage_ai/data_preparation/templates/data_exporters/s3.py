@@ -1,6 +1,9 @@
 from mage_ai.io.s3 import S3
 from pandas import DataFrame
 
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
 
 @data_exporter
 def export_data_to_s3(df: DataFrame) -> None:
