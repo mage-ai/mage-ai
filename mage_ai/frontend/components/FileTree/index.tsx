@@ -114,7 +114,6 @@ function FileTree({
   };
 
   const selectFile = (path: string[]) => {
-    console.log('Selecting');
     scrollToBlock(path);
     setSelectedBlock(findBlockByPath(blocks, path));
     setSelectedPath([...path]);
@@ -140,10 +139,9 @@ function FileTree({
           uuid: getBlockUUID(path),
         },
         blocks.length,
-        () => { console.log('triggering select'); selectFile(path); },
+        () => selectFile(path),
         getBlockUUID(path),
       );
-      console.log('done');
     }
     else {
       // TODO open in file editor
