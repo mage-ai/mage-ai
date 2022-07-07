@@ -1,10 +1,13 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+
+// Look at the code editor div class "margin" and role "presentation"
+export const LEFT_PADDING = 68;
 
 export function getColorsForBlockType(
   blockType: BlockTypeEnum,
@@ -118,4 +121,14 @@ export const BlockDividerInner = styled.div`
   width: 100%;
   position: absolute;
   z-index: -1;
+`;
+
+export const CodeHelperStyle = styled.div`
+  margin-bottom: ${PADDING_UNITS * UNIT}px;
+  padding-bottom: ${UNIT}px;
+  padding-left: ${LEFT_PADDING}px;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
 `;

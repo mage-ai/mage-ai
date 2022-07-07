@@ -7,10 +7,8 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   BORDER_COLOR_SHARED_STYLES,
   BorderColorShareProps,
+  LEFT_PADDING,
 } from '../index.style';
-
-// Look at the code editor div class "margin" and role "presentation"
-const LEFT_PADDING = 68;
 
 export const ContainerStyle = styled.div<{
   executedAndIdle: boolean;

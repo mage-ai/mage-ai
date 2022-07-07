@@ -40,6 +40,7 @@ import usePrevious from '@utils/usePrevious';
 import {
   BlockDivider,
   BlockDividerInner,
+  CodeHelperStyle,
 } from './index.style';
 import {
   ContainerStyle,
@@ -54,6 +55,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
+import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pauseEvent } from '@utils/events';
@@ -63,6 +65,8 @@ import { useKeyboardContext } from '@context/Keyboard';
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => void;
   block: BlockType;
+  blockRefs: any;
+  blocks: BlockType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   fetchFileTree: () => void;
@@ -77,12 +81,15 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
   }) => void;
+  runningBlocks: BlockType[];
   setAnyInputFocused: (value: boolean) => void;
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
 function CodeBlockProps({
   addNewBlock,
   block,
+  blockRefs,
+  blocks,
   defaultValue = '',
   deleteBlock,
   executionState,
@@ -97,6 +104,7 @@ function CodeBlockProps({
   onChange,
   pipeline,
   runBlock,
+  runningBlocks,
   selected,
   setAnyInputFocused,
   setEditingBlock,
@@ -113,6 +121,8 @@ function CodeBlockProps({
   const [runCount, setRunCount] = useState<Number>(0);
   const [runEndTime, setRunEndTime] = useState<Number>(null);
   const [runStartTime, setRunStartTime] = useState<Number>(null);
+
+  const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const runBlockAndTrack = useCallback((code?: string) => {
     runBlock({
@@ -141,7 +151,8 @@ function CodeBlockProps({
     setRunStartTime,
   ]);
 
-  const isInProgress = messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   const finalExecutionStatePrevious = usePrevious(executionState);
   useEffect(() => {
@@ -446,13 +457,13 @@ function CodeBlockProps({
                 noBorder
                 noPadding
                 onClick={() => {
+                  setSelected(true);
                   setEditingBlock({
                     upstreamBlocks: {
                       block,
                       values: block.upstream_blocks?.map(uuid => ({ uuid })),
                     },
                   });
-                  setSelected(true);
                 }}
               >
                 <FlexContainer alignItems="center">
@@ -490,6 +501,57 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
+          {block.upstream_blocks.length >= 1 && (
+            <CodeHelperStyle>
+              <Text small>
+                Positional arguments for decorated function:
+              </Text>
+
+              <Spacing mt={1}>
+                <Text monospace muted small>
+                  {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
+                  {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
+                  {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
+                </Text>
+                <Text monospace muted small>
+                  def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
+                    || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
+                    || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
+                  ({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                </Text>
+                {block.upstream_blocks.map((blockUUID, i) => {
+                  const b = blocksMapping[blockUUID];
+                  const blockColor =
+                    getColorsForBlockType(b?.type, { theme: themeContext }).accent;
+
+                  return (
+                    <div key={blockUUID}>
+                      <Text inline monospace muted small>
+                        &nbsp;&nbsp;&nbsp;&nbsp;df_{i + 1}
+                      </Text> <Text inline monospace muted small>→</Text> <Link
+                        color={blockColor}
+                        onClick={() => {
+                          const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+                          refBlock?.current?.scrollIntoView();
+                        }}
+                        preventDefault
+                        small
+                      >
+                        <Text
+                          color={blockColor}
+                          inline
+                          monospace
+                          small
+                        >
+                          {blockUUID}
+                        </Text>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </Spacing>
+            </CodeHelperStyle>
+          )}
           {codeEditorEl}
         </CodeContainerStyle>
 
