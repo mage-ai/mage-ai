@@ -18,6 +18,7 @@ export type ThemeType = {
     muted: string;
     navigation: string;
     page: string;
+    popup: string;
     row: string;
   };
   borders: {

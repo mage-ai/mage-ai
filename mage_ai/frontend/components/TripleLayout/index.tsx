@@ -37,14 +37,13 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   set,
 } from '@storage/localStorage';
-import { NAV_ICON_MAPPING, ViewKeyEnum } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
-  activeSidekickView: ViewKeyEnum;
   after?: any;
+  afterHeader?: any;
   afterHidden: boolean;
   afterMousedownActive: boolean;
   afterWidth: number;
@@ -55,7 +54,6 @@ type TripleLayoutProps = {
   beforeWidth: number;
   children: any;
   mainContainerRef: any;
-  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAfterHidden: (value: boolean) => void;
   setAfterMousedownActive: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
@@ -65,8 +63,8 @@ type TripleLayoutProps = {
 };
 
 function TripleLayout({
-  activeSidekickView,
   after,
+  afterHeader,
   afterHidden,
   afterMousedownActive,
   afterWidth,
@@ -77,7 +75,6 @@ function TripleLayout({
   beforeWidth,
   children,
   mainContainerRef,
-  setActiveSidekickView,
   setAfterHidden,
   setAfterMousedownActive,
   setAfterWidth,
@@ -90,9 +87,6 @@ function TripleLayout({
   const refAfterInnerDraggable = useRef(null);
   const refBeforeInner = useRef(null);
   const refBeforeInnerDraggable = useRef(null);
-
-
-  const sidekickViews = after?.props?.views || [];
 
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
@@ -200,10 +194,6 @@ function TripleLayout({
 
   const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
-  const afterMemo = useMemo(() => React.cloneElement(after, { activeView: activeSidekickView }), [
-    activeSidekickView,
-    after,
-  ]);
 
   return (
     <ClientOnly>
@@ -345,30 +335,13 @@ function TripleLayout({
                   )}
                 </Button>
               </Flex>
-              {sidekickViews.map(({ key, label }: any) => {
-                const active = key === activeSidekickView;
-                const Icon = NAV_ICON_MAPPING[key];
 
-                return (
-                  <Spacing key={key} pl={1}>
-                    <KeyboardShortcutButton
-                      beforeElement={<Icon />}
-                      blackBorder
-                      compact
-                      onClick={() => setActiveSidekickView(key)}
-                      selected={active}
-                      uuid={key}
-                    >
-                      {label}
-                    </KeyboardShortcutButton>
-                  </Spacing>
-                );
-              })}
+              {!afterHidden && afterHeader}
             </FlexContainer>
           </AsideHeaderStyle>
 
           <AfterInnerStyle ref={refAfterInner}>
-            {!afterHidden && afterMemo}
+            {!afterHidden && after}
           </AfterInnerStyle>
         </AfterStyle>
       )}

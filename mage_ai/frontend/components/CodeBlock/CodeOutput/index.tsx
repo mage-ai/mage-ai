@@ -125,12 +125,12 @@ function CodeOutput({
               );
             } else if (dataType === DataTypeEnum.IMAGE_PNG) {
               displayElement = (
-                <OutputRowStyle {...outputRowSharedProps}>
+                <div style={{ backgroundColor: 'white' }}>
                   <img
                     alt={`Image {idx} from code output`}
                     src={`data:image/png;base64, ${data}`}
                   />
-                </OutputRowStyle>
+                </div>
               );
             }
 

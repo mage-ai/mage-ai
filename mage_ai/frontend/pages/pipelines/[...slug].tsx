@@ -17,6 +17,7 @@ import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
@@ -35,10 +36,15 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
   get,
+  set,
 } from '@storage/localStorage';
-import { SIDEKICK_VIEWS } from '@components/Sidekick/constants';
+import {
+  NAV_ICON_MAPPING,
+  SIDEKICK_VIEWS,
+  VIEW_QUERY_PARAM,
+  ViewKeyEnum,
+} from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VIEW_QUERY_PARAM, ViewKeyEnum } from '@components/Sidekick/constants';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
@@ -136,7 +142,14 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-  const [errorMessages, setErrorMessages] = useState(null);
+  const [errorMessages, setErrorMessages] = useState<string[]>(null);
+
+  // Variables
+  const {
+    data: dataGlobalVariables,
+    mutate: fetchVariables,
+  } = api.variables.pipelines.list(!afterHidden && pipelineUUID);
+  const globalVariables = dataGlobalVariables?.variables;
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
@@ -156,7 +169,7 @@ function PipelineDetailPage({
     mutate: fetchSampleData,
   } = api.blocks.pipelines.outputs.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
   const {
@@ -164,7 +177,7 @@ function PipelineDetailPage({
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
   );
   const {
     insights,
@@ -176,10 +189,12 @@ function PipelineDetailPage({
     if (runningBlocks.length === 0) {
       fetchAnalysis();
       fetchSampleData();
+      fetchVariables();
     }
   }, [
     fetchAnalysis,
     fetchSampleData,
+    fetchVariables,
     runningBlocks,
   ]);
 
@@ -451,10 +466,13 @@ function PipelineDetailPage({
   ]);
   const sideKick = useMemo(() => (
     <Sidekick
+      activeView={activeSidekickView}
       afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
+      blocks={blocks}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
+      globalVariables={globalVariables}
       insights={insights}
       metadata={metadata}
       pipeline={pipeline}
@@ -467,10 +485,13 @@ function PipelineDetailPage({
       views={SIDEKICK_VIEWS}
     />
   ), [
+    activeSidekickView,
     afterWidthForChildren,
     blockRefs,
+    blocks,
     editingBlock,
     fetchPipeline,
+    globalVariables,
     insights,
     metadata,
     pipeline,
@@ -540,12 +561,35 @@ function PipelineDetailPage({
       <Head title={pipeline?.name} />
 
       <TripleLayout
-        activeSidekickView={activeSidekickView}
         after={sideKick}
-        afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
+        afterHeader={(
+          <>
+            {SIDEKICK_VIEWS.map(({ key, label }: any) => {
+              const active = key === activeSidekickView;
+              const Icon = NAV_ICON_MAPPING[key];
+
+              return (
+                <Spacing key={key} pl={1}>
+                  <KeyboardShortcutButton
+                    beforeElement={<Icon />}
+                    blackBorder
+                    compact
+                    onClick={() => setActiveSidekickView(key)}
+                    selected={active}
+                    uuid={key}
+                  >
+                    {label}
+                  </KeyboardShortcutButton>
+                </Spacing>
+              );
+            })}
+          </>
+        )}
+        afterHidden={afterHidden}
         afterWidth={afterWidth}
         before={fileTree}
+        beforeMousedownActive={beforeMousedownActive}
         beforeHeader={(
           <FileHeaderMenu
             interruptKernel={interruptKernel}
@@ -554,10 +598,8 @@ function PipelineDetailPage({
           />
         )}
         beforeHidden={beforeHidden}
-        beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
         mainContainerRef={mainContainerRef}
-        setActiveSidekickView={setActiveSidekickView}
         setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}
         setAfterWidth={setAfterWidth}

@@ -244,8 +244,13 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
 
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        variables = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
-        self.write(variables)
+        variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
+        variables = [dict(
+            block=dict(uuid=uuid),
+            pipeline=dict(uuid=pipeline_uuid),
+            variables=arr,
+        ) for uuid, arr in variables_dict.items()]
+        self.write(dict(variables=variables))
         self.finish()
 
 

@@ -13,25 +13,27 @@ import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FlexContainer from '@oracle/components/FlexContainer';
+import GlobalVariables from './GlobalVariables';
 import PipelineType from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
-import { PlayButton } from '@oracle/icons';
 import {
   ContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PlayButton } from '@oracle/icons';
 import { SCROLLBAR_WIDTH } from '@styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
-import { useWindowSize } from '@utils/sizes';
 import { onError, onSuccess } from '@api/utils/response';
+import { useWindowSize } from '@utils/sizes';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -39,6 +41,7 @@ export type SidekickProps = {
   blockRefs?: {
     [current: string]: any;
   };
+  blocks: BlockType[];
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
@@ -47,6 +50,7 @@ export type SidekickProps = {
   };
   fetchPipeline: () => void;
   insights: InsightType[][];
+  globalVariables: PipelineVariableType[];
   metadata: MetadataType;
   pipeline: PipelineType;
   sampleData: SampleDataType;
@@ -64,24 +68,26 @@ function Sidekick({
   activeView,
   afterWidth,
   blockRefs,
+  blocks,
   editingBlock,
   fetchPipeline,
+  globalVariables,
   insights,
   metadata,
   pipeline,
   sampleData,
   selectedBlock,
-  setEditingBlock,
   setErrorMessages,
+  setEditingBlock,
   setSelectedBlock,
   statistics,
 }: SidekickProps) {
   const {
     height: heightWindow,
   } = useWindowSize();
-  const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState(false);
   const blockUUID = selectedBlock?.uuid;
   const pipelineUUID = pipeline?.uuid;
+  const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
 
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
@@ -115,6 +121,20 @@ function Sidekick({
     insightsByFeatureUUID,
     insightsOverview,
     statistics,
+  ]);
+
+  const globalVariablesMemo = useMemo(() => (
+    <GlobalVariables
+      blockRefs={blockRefs}
+      blocks={blocks}
+      globalVariables={globalVariables}
+      setSelectedBlock={setSelectedBlock}
+    />
+  ), [
+    blockRefs?.current,
+    blocks,
+    globalVariables,
+    setSelectedBlock,
   ]);
 
   const [executePipeline, { isLoading: isLoadingExecute }] = useMutation(
@@ -215,6 +235,7 @@ function Sidekick({
           statistics={statistics}
         />
       }
+      {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
     </ContainerStyle>
   );
 }
