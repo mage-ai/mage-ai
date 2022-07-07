@@ -32,9 +32,6 @@ FORMAT_TO_FUNCTION = {
 
 
 class IOPrintHandler:
-    REG_ENTRY = '├─ '
-    TERMINAL_ENTRY = '└─ '
-
     def __init__(self, start_msg, verbose=False):
         self.verbose = verbose
         if verbose:
