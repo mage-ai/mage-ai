@@ -457,13 +457,13 @@ function CodeBlockProps({
                 noBorder
                 noPadding
                 onClick={() => {
+                  setSelected(true);
                   setEditingBlock({
                     upstreamBlocks: {
                       block,
                       values: block.upstream_blocks?.map(uuid => ({ uuid })),
                     },
                   });
-                  setSelected(true);
                 }}
               >
                 <FlexContainer alignItems="center">
@@ -509,10 +509,13 @@ function CodeBlockProps({
 
               <Spacing mt={1}>
                 <Text monospace muted>
-                  @transformer
+                  {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
+                  {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
                 </Text>
                 <Text monospace muted>
-                  def transform_df({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                  def {(BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
+                    || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
+                  ({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
                 </Text>
                 {block.upstream_blocks.map((blockUUID, i) => {
                   const b = blocksMapping[blockUUID];
