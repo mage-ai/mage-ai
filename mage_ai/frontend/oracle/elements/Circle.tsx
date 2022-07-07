@@ -6,6 +6,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 
 type CircleProps = {
+  borderColor?: string;
   borderSize?: number;
   children?: any;
   color?: string;
@@ -28,7 +29,7 @@ const CircleStyle = styled.div<CircleProps>`
   `}
 
   ${props => props.borderSize && `
-    border: ${props.borderSize}px solid ${(props.theme.content || dark.content).active};
+    border: ${props.borderSize}px solid ${props.borderColor || (props.theme.content || dark.content).active};
   `}
 
   ${props => props.color && `

@@ -54,6 +54,7 @@ export type SidekickProps = {
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
   pipeline: PipelineType;
+  runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
@@ -75,6 +76,7 @@ function Sidekick({
   insights,
   metadata,
   pipeline,
+  runningBlocks,
   sampleData,
   selectedBlock,
   setEditingBlock,
@@ -214,6 +216,7 @@ function Sidekick({
               editingBlock={editingBlock}
               fetchPipeline={fetchPipeline}
               pipeline={pipeline}
+              runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}
               setEditingBlock={setEditingBlock}
               setSelectedBlock={setSelectedBlock}

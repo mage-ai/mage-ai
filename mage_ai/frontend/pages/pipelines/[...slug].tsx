@@ -488,6 +488,7 @@ function PipelineDetailPage({
       insights={insights}
       metadata={metadata}
       pipeline={pipeline}
+      runningBlocks={runningBlocks}
       sampleData={sampleData}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
@@ -506,6 +507,7 @@ function PipelineDetailPage({
     insights,
     metadata,
     pipeline,
+    runningBlocks,
     sampleData,
     selectedBlock,
     setEditingBlock,
