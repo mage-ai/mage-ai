@@ -52,7 +52,7 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 function FileTree({
   addNewBlockAtIndex,
   blockRefs,
-  openFile,
+  openFile: openFileProp,
   pipeline,
   setSelectedBlock,
   tree: initialTree,
@@ -130,16 +130,6 @@ function FileTree({
 
   const onClickHandler = (path: string[], isFolder: boolean) => (e) => {
     e.preventDefault();
-    scrollToBlock(path);
-    setSelectedBlock(findBlockByPath(blocks, path));
-
-    const parts = path[path.length - 1].split('.');
-    const fileExtension = parts[parts.length - 1];
-    if (FileExtensionEnum.TXT === fileExtension) {
-      // WARNING: this assumes the first part of a path is the default_repo
-      return openFile(path.slice(1).join('/'));
-    }
-
     return isFolder ? toggleFolder(path) : selectFile(path);
   };
 
@@ -159,7 +149,12 @@ function FileTree({
       }
     }
     else {
-      // TODO open in file editor
+      const parts = path[path.length - 1].split('.');
+      const fileExtension = parts[parts.length - 1];
+      if (FileExtensionEnum.TXT === fileExtension) {
+        // WARNING: this assumes the first part of a path is the default_repo
+        return openFileProp(path.slice(1).join('/'));
+      }
     }
   };
 
