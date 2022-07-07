@@ -18,7 +18,8 @@ class Redshift(BaseSQL):
         """
         Opens a connection to the Redshift cluster.
         """
-        self._ctx = connect(**self.settings)
+        with self.printer.print_msg('Connecting to Redshift cluster'):
+            self._ctx = connect(**self.settings)
 
     def query(self, query_string: str, **kwargs) -> None:
         """
@@ -28,8 +29,9 @@ class Redshift(BaseSQL):
             query_string (str): The query to execute on the Redshift cluster.
             **kwargs: Additional parameters to pass to the query.
         """
-        with self.conn.cursor() as cur:
-            cur.execute(query_string, **kwargs)
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            with self.conn.cursor() as cur:
+                cur.execute(query_string, **kwargs)
 
     def load(self, query_string: str, *args, **kwargs) -> DataFrame:
         """
@@ -44,8 +46,9 @@ class Redshift(BaseSQL):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.conn.cursor() as cur:
-            return cur.execute(query_string, *args, **kwargs).fetch_dataframe()
+        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            with self.conn.cursor() as cur:
+                return cur.execute(query_string, *args, **kwargs).fetch_dataframe()
 
     def export(self, df: DataFrame, table_name: str) -> None:
         """
@@ -57,8 +60,9 @@ class Redshift(BaseSQL):
             Table must already exist.
         """
         # TODO: Add support for creating new tables if table doesn't exist
-        with self.conn.cursor() as cur:
-            cur.write_dataframe(df, table_name)
+        with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
+            with self.conn.cursor() as cur:
+                cur.write_dataframe(df, table_name)
 
     @classmethod
     def with_temporary_credentials(

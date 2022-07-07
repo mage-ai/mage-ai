@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.io.base import BaseFile
 from pandas import DataFrame
 
 
@@ -14,7 +14,9 @@ class FileIO(BaseFile):
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
-        return self.reader(self.filepath, *args, **kwargs)
+        with self.printer.print_msg(f'Loading data frame from \'{self.filepath}\''):
+            df = self.reader(self.filepath, *args, **kwargs)
+        return df
 
     def export(self, df: DataFrame, **kwargs) -> None:
         """
@@ -23,4 +25,5 @@ class FileIO(BaseFile):
         Args:
             df (DataFrame): Data frame to export.
         """
-        return self._write(df, self.filepath, **kwargs)
+        with self.printer.print_msg(f'Exporting data frame to \'{self.filepath}\''):
+            self._write(df, self.filepath, **kwargs)
