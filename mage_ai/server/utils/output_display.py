@@ -1,3 +1,6 @@
+from mage_ai.data_preparation.models.constants import (
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+)
 import re
 
 
@@ -66,8 +69,8 @@ def __custom_output():
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame):
-        columns = _internal_output_return.columns.tolist()
-        rows = _internal_output_return.to_numpy().tolist()
+        columns = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}].columns.tolist()
+        rows = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}].to_numpy().tolist()
 
         json_string = simplejson.dumps(
             dict(
