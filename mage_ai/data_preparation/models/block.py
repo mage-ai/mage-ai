@@ -451,7 +451,8 @@ class Block:
     def __verify_outputs(self, outputs):
         if len(outputs) != len(self.output_variables):
             raise Exception(
-                f'The number of output variables does not match the block type: {self.type}',
+                f'Validation error for block {self.uuid}: '
+                f'the number of output variables does not match the block type: {self.type} ',
             )
         variable_names = list(self.output_variables.keys())
         variable_dtypes = list(self.output_variables.values())
@@ -460,8 +461,9 @@ class Block:
             expected_dtype = variable_dtypes[idx]
             if type(output) is not variable_dtypes[idx]:
                 raise Exception(
-                    f'The variable {variable_names[idx]} should be {expected_dtype} type,'
-                    f' but {actual_dtype} type is returned',
+                    f'Validation error for block {self.uuid}: '
+                    f'the variable {variable_names[idx]} should be {expected_dtype} type, '
+                    f'but {actual_dtype} type is returned',
                 )
 
 

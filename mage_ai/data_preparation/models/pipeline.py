@@ -114,7 +114,8 @@ class Pipeline:
                 if downstream_block.uuid not in tasks:
                     tasks[downstream_block.uuid] = None
                     blocks.put(downstream_block)
-        await asyncio.gather(*tasks.values())
+        remaining_tasks = filter(lambda task: task is not None, tasks.values())
+        await asyncio.gather(*remaining_tasks)
 
     def load_config_from_yaml(self):
         if not os.path.exists(self.config_path):
