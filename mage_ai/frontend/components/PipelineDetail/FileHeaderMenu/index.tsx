@@ -130,6 +130,7 @@ function FileHeaderMenu({
     },
     {
       label: () => 'Clear all outputs',
+      // @ts-ignore
       onClick: () => setMessages(messagesByUUID => Object
         .keys(messagesByUUID)
         .reduce((acc, uuid) => ({
