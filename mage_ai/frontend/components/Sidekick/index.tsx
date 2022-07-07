@@ -161,7 +161,7 @@ function Sidekick({
   );
 
   return (
-    <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+    <>
       {(activeView === ViewKeyEnum.TREE && errorMessages?.length >= 1) &&
         <Spacing mb={3} mt={2} mx={2}>
           <FlexContainer justifyContent="space-between">
@@ -187,80 +187,82 @@ function Sidekick({
           ))}
         </Spacing>
       }
-      {activeView === ViewKeyEnum.TREE &&
-        <>
-          <Spacing p={2}>
-            <Button
-              beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-              loading={isLoadingExecute}
-              onClick={() => executePipeline()}
-              success
-            >
-              <Text
-                bold
-                inverted
-                primary={isDisplayingSuccessMessage}
+      <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+        {activeView === ViewKeyEnum.TREE &&
+          <>
+            <Spacing p={2}>
+              <Button
+                beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+                loading={isLoadingExecute}
+                onClick={() => executePipeline()}
+                success
               >
-                {isDisplayingSuccessMessage
-                  ? 'Successfully executed!'
-                  : 'Execute pipeline'
-                }
-              </Text>
-            </Button>
-          </Spacing>
-          <DependencyGraph
-            blockRefs={blockRefs}
-            editingBlock={editingBlock}
-            fetchPipeline={fetchPipeline}
-            pipeline={pipeline}
-            selectedBlock={selectedBlock}
-            setEditingBlock={setEditingBlock}
-            setSelectedBlock={setSelectedBlock}
+                <Text
+                  bold
+                  inverted
+                  primary={isDisplayingSuccessMessage}
+                >
+                  {isDisplayingSuccessMessage
+                    ? 'Successfully executed!'
+                    : 'Execute pipeline'
+                  }
+                </Text>
+              </Button>
+            </Spacing>
+            <DependencyGraph
+              blockRefs={blockRefs}
+              editingBlock={editingBlock}
+              fetchPipeline={fetchPipeline}
+              pipeline={pipeline}
+              selectedBlock={selectedBlock}
+              setEditingBlock={setEditingBlock}
+              setSelectedBlock={setSelectedBlock}
+            />
+          </>
+        }
+        {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
+          <DataTable
+            columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
+            columns={columns}
+            height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
+            noBorderBottom
+            noBorderLeft
+            noBorderRight
+            noBorderTop
+            renderColumnHeader={renderColumnHeader}
+            rows={rows}
+            width={afterWidth}
           />
-        </>
-      }
-      {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
-        <DataTable
-          columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
-          columns={columns}
-          height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
-          noBorderBottom
-          noBorderLeft
-          noBorderRight
-          noBorderTop
-          renderColumnHeader={renderColumnHeader}
-          rows={rows}
-          width={afterWidth}
-        />
-      )}
-      {activeView === ViewKeyEnum.REPORTS &&
-        <Spacing p={2}>
-          <FlexContainer flexDirection="column" fullWidth>
-            {qualityMetrics && (
-              <StatsTable
-                stats={qualityMetrics}
-                title="Quality metrics"
-              />
-            )}
-            <Spacing mb={PADDING_UNITS} />
-            {statsSample && (
-              <StatsTable
-                stats={statsSample}
-                title="Statistics"
-              />
-            )}
-          </FlexContainer>
-        </Spacing>
-      }
-      {activeView === ViewKeyEnum.GRAPHS &&
-        <BlockCharts
-          features={features}
-          insightsOverview={insightsOverview}
-          statistics={statistics}
-        />
-      }
-      {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
-    </ContainerStyle>
+        )}
+        {activeView === ViewKeyEnum.REPORTS &&
+          <Spacing p={2}>
+            <FlexContainer flexDirection="column" fullWidth>
+              {qualityMetrics && (
+                <StatsTable
+                  stats={qualityMetrics}
+                  title="Quality metrics"
+                />
+              )}
+              <Spacing mb={PADDING_UNITS} />
+              {statsSample && (
+                <StatsTable
+                  stats={statsSample}
+                  title="Statistics"
+                />
+              )}
+            </FlexContainer>
+          </Spacing>
+        }
+        {activeView === ViewKeyEnum.GRAPHS &&
+          <BlockCharts
+            features={features}
+            insightsOverview={insightsOverview}
+            statistics={statistics}
+          />
+        }
+        {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
+      </ContainerStyle>
+    </>
   );
 }
 
