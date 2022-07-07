@@ -14,7 +14,7 @@ def load_from_s3_bucket() -> DataFrame:
     If user credentials are not specified in `~/.aws`, you must specify your
     user credentials manually in your configuration file.
     """
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     return S3.with_config(IOConfig(config_path).use(config_profile)).load()

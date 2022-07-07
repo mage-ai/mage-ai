@@ -11,7 +11,7 @@ def load_data_from_file() -> DataFrame:
     """
     Template code for loading data from local filesytem
     """
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     return FileIO.with_config(IOConfig(config_path).use(config_profile)).load()

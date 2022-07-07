@@ -34,7 +34,7 @@ def load_data_from_big_query() -> DataFrame:
     """
 
     query = 'your_gbq_query'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     return BigQuery.with_config(IOConfig(config_path).use(config_profile)).load(query)

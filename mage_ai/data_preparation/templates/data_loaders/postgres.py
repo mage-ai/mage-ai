@@ -12,7 +12,7 @@ def load_data_from_postgres() -> DataFrame:
     Template code for loading data from PostgreSQL database
     """
     query = 'your PostgreSQL query'  # Specify your SQL query here
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:

@@ -11,7 +11,7 @@ def export_data_to_file(df: DataFrame) -> None:
     """
     Template code for exporting data to local filesytem
     """
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     FileIO.with_config(IOConfig(config_path).use(config_profile)).export(df)

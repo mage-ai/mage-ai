@@ -14,7 +14,7 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     table_name = 'your_table_name'
     database = 'your_database_name'
     schema = 'your_schema_name'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:

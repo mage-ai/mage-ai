@@ -13,7 +13,7 @@ def load_data_from_redshift() -> DataFrame:
     configuration parameters can be defined in your configuration file.
     """
     query = 'your_redshift_selection_query'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:

@@ -33,7 +33,7 @@ def export_data_to_big_query(df: DataFrame) -> None:
     Alternatively, all parameters can be specified in the configuration file.
     """
     table_id = 'your-project.your_dataset.your_table_name'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     BigQuery.with_config(IOConfig(config_path).use(config_profile)).export(

@@ -12,7 +12,7 @@ def load_data_from_snowflake() -> DataFrame:
     Template code for loading data from a Snowflake warehouse
     """
     query = 'your_snowflake_query'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:

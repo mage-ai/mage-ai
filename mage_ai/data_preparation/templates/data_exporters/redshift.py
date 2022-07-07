@@ -13,7 +13,7 @@ def export_data_to_redshift(df: DataFrame) -> None:
     configuration parameters can be defined in your configuration file.
     """
     table_name = 'your_table_name'
-    config_path = 'path/to/your/io/config/file.yaml'
+    config_path = './default_repo/io_config.yaml'
     config_profile = 'default'
 
     with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:

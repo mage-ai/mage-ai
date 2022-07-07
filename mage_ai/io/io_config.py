@@ -9,7 +9,7 @@ class IOConfig:
     Wrapper around IO configuration file.
     """
 
-    def __init__(self, filepath: os.PathLike) -> None:
+    def __init__(self, filepath: os.PathLike = './default_repo/io_config.yaml') -> None:
         """
         Initializes IO Configuration loader
 
