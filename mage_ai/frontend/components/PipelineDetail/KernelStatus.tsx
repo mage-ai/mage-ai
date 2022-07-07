@@ -61,28 +61,43 @@ function KernelStatus({
   }
 
   return (
-    <PipelineHeaderStyle
-      onMouseEnter={() => setRestartKernelVisible(true)}
-      onMouseLeave={() => setRestartKernelVisible(false)}
-    >
+    <PipelineHeaderStyle>
       <FlexContainer
         alignItems="center"
         fullHeight
         justifyContent="space-between"
       >
-        <Flex alignItems="center">
-          <Text>
-            Pipeline: {pipeline?.uuid}
-          </Text>
+        <Tooltip
+          label={(
+            <Text>
+              Current working directory is <Text inline monospace>
+                /home/src
+              </Text>
+            </Text>
+          )}
+          size={null}
+          widthFitContent
+        >
+          <Flex alignItems="center">
+            <Text>
+              Pipeline: {pipeline?.uuid}
+            </Text>
 
-          <Spacing mr={PADDING_UNITS} />
+            <Spacing mr={PADDING_UNITS} />
 
-          <Text muted>
-            {saveStatus}
-          </Text>
+            <Text muted>
+              {saveStatus}
+            </Text>
         </Flex>
+        </Tooltip>
 
-        <Flex alignItems="center">
+        <Flex
+          alignItems="center"
+          // @ts-ignore
+          onMouseEnter={() => setRestartKernelVisible(true)}
+          // @ts-ignore
+          onMouseLeave={() => setRestartKernelVisible(false)}
+        >
           {(!alive || restartKernelVisible) && (
             <KeyboardShortcutButton
               compact
@@ -109,7 +124,9 @@ function KernelStatus({
             size={null}
             widthFitContent
           >
-            <FlexContainer alignItems="center">
+            <FlexContainer
+              alignItems="center"
+            >
               <Circle
                 color={isBusy
                   ? (themeContext || dark).borders.info
