@@ -454,8 +454,12 @@ function CodeBlockProps({
                 }}
               >
                 <FlexContainer alignItems="center">
-                  <Text monospace>
-                    {pluralize('parent block', numberOfParentBlocks)}
+                  <Text
+                    monospace={numberOfParentBlocks >= 1}
+                    underline={numberOfParentBlocks === 0}
+                  >
+                    {numberOfParentBlocks === 0 && 'Click to set parent blocks'}
+                    {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
                   </Text>
 
                   <Spacing mr={1} />
