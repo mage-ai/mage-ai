@@ -43,8 +43,6 @@ def add_internal_output_info(code: str) -> str:
     elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
         last_line_in_block = True
 
-    print('last_line_in_block', last_line_in_block)
-
     if not last_line or last_line_in_block:
         return f"""
 {code}

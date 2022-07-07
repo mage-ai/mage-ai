@@ -211,6 +211,7 @@ function Sidekick({
                 </Text>
               </Button>
             </Spacing>
+
             <DependencyGraph
               blockRefs={blockRefs}
               editingBlock={editingBlock}
