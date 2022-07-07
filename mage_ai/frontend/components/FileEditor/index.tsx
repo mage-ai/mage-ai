@@ -1,4 +1,12 @@
-function FileEditor() {
+import FileType from '@interfaces/FileType';
+
+type FileEditorProps = {
+  selectedFile: FileType;
+};
+
+function FileEditor({
+  selectedFile,
+}: FileEditorProps) {
   return (
     <>
     </>
