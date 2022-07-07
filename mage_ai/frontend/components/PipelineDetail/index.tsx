@@ -397,6 +397,8 @@ function PipelineDetail({
                 setAnyInputFocused(false);
               }}
               block={block}
+              blockRefs={blockRefs}
+              blocks={blocks}
               executionState={executionState}
               key={uuid}
               interruptKernel={interruptKernel}
@@ -407,6 +409,7 @@ function PipelineDetail({
               onChange={(value: string) => onChangeCodeBlock(uuid, value)}
               ref={blockRefs.current[path]}
               runBlock={runBlock}
+              runningBlocks={runningBlocks}
               selected={selected}
               setAnyInputFocused={setAnyInputFocused}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}

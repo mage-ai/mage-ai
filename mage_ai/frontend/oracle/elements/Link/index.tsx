@@ -18,6 +18,7 @@ export type LinkProps = {
   bold?: boolean;
   centerAlign?: boolean;
   children?: any;
+  color?: string;
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
@@ -73,8 +74,13 @@ export const SHARED_LINK_STYLES = css<any>`
     !props.noColor &&
     !props.sameColorAsText &&
     !props.secondary &&
+    !props.color &&
     `
     color: ${(props.theme.interactive || light.interactive).linkPrimary};
+  `}
+
+  ${(props) => props.color && `
+    color: ${props.color};
   `}
 
   ${props => props.pointerEventsEnabled && `

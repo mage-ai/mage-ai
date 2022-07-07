@@ -67,7 +67,7 @@ def __custom_output():
 
     if isinstance(_internal_output_return, pd.DataFrame):
         columns = _internal_output_return.columns.tolist()
-        rows = _internal_output_return.to_numpy().tolist()
+        rows = _internal_output_return.head(100).to_numpy().tolist()
 
         json_string = simplejson.dumps(
             dict(

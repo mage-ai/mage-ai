@@ -15,6 +15,8 @@ import simplejson
 import tornado.ioloop
 import tornado.web
 import traceback
+import urllib.parse
+
 
 manager = KernelManager()
 
@@ -80,17 +82,20 @@ class ApiFileListHandler(BaseHandler):
 
 
 class ApiFileContentHandler(BaseHandler):
-    def get(self):
-        file_path = self.get_argument('path', None)
+    def get(self, file_path_encoded):
+        file_path = urllib.parse.unquote(file_path_encoded)
         file = File.from_path(file_path, get_repo_path())
+
         self.write(dict(file=file.to_dict(include_content=True)))
 
-    def post(self):
+    def put(self, file_path_encoded):
+        file_path = urllib.parse.unquote(file_path_encoded)
+        file = File.from_path(file_path, get_repo_path())
+
         data = json.loads(self.request.body).get('file', {})
-        path = data.get('path')
         content = data.get('content')
-        file = File.from_path(path, get_repo_path())
         file.update_content(content)
+
         self.write(dict(file=file.to_dict(include_content=True)))
 
 
@@ -299,7 +304,7 @@ def make_app():
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
-            (r'/api/file_content', ApiFileContentHandler),
+            (r'/api/file_contents(?P<file_path>\w+)', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),
