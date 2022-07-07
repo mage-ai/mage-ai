@@ -6,8 +6,8 @@ import pandas as pd
 
 
 class VariableManager:
-    def __init__(self, repo_path):
-        self.repo_path = repo_path
+    def __init__(self, repo_path=None):
+        self.repo_path = repo_path or get_repo_path()
         # TODO: implement caching logic
 
     def add_variable(
@@ -71,7 +71,8 @@ class VariableManager:
                 variables_by_block[d] = []
             else:
                 variables = os.listdir(os.path.join(variable_dir_path, d))
-                variables_by_block[d] = sorted([v.split('.')[0] for v in variables])
+                variable_names = sorted([v.split('.')[0] for v in variables])
+                variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
 
     def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> Dict[str, List[str]]:
