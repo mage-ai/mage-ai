@@ -154,7 +154,6 @@ export const EllipseStyle = styled.ellipse`
 const BaseIcon = ({
   children,
   fill,
-  muted,
   opacity,
   size = DEFAULT_SIZE,
   style,
@@ -163,7 +162,6 @@ const BaseIcon = ({
   <SVGStyle
     fill={fill}
     height={size}
-    muted={muted}
     opacity={opacity}
     style={style}
     viewBox={viewBox}
