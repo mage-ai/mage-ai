@@ -131,17 +131,19 @@ function FileTree({
   };
 
   const openFile = (path: string[]) => {
-    const block = findBlockByPath(blocks, path);
-    if (!block && isBlockType(path)) {
-      addNewBlockAtIndex(
-        {
-          type: getBlockType(path) as BlockTypeEnum,
-          uuid: getBlockUUID(path),
-        },
-        blocks.length,
-        () => selectFile(path),
-        getBlockUUID(path),
-      );
+    if (isBlockType(path)) {
+      const block = findBlockByPath(blocks, path);
+      if (!block) {
+        addNewBlockAtIndex(
+          {
+            type: getBlockType(path) as BlockTypeEnum,
+            uuid: getBlockUUID(path),
+          },
+          blocks.length,
+          () => selectFile(path),
+          getBlockUUID(path),
+        );
+      }
     }
     else {
       // TODO open in file editor
