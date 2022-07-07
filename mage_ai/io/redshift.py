@@ -69,7 +69,7 @@ class Redshift(BaseSQL):
     def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
         aws_config = config['AWS']
         redshift_config = aws_config['Redshift']
-        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
+        credentials = ['access_key_id', 'secret_access_key', 'region']
         for credential in credentials:
             if credential in aws_config:
                 redshift_config[credential] = aws_config[credential]

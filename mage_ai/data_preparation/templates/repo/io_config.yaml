@@ -22,9 +22,9 @@ default:
       bucket_name: your_bucket_name
       object_key: your_object_key
     # Omit these settings if aws credentials are already configured on file
-    aws_access_key_id: your_aws_access_key_id
-    aws_secret_access_key: your_secret_access_key_id
-    region_name: your_aws_region
+    access_key_id: your_aws_access_key_id
+    secret_access_key: your_secret_access_key_id
+    region: your_aws_region
   PostgreSQL:
     database: your_postgres_database_name
     user: your_postgres_database_username

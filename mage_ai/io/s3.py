@@ -114,10 +114,11 @@ class S3(BaseFile):
     def with_config(cls, config: Mapping[str, Any]) -> 'S3':
         aws_config = config['AWS']
         s3_config = aws_config['S3']
-        credentials = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
-        for credential in credentials:
+        credentials = ['access_key_id', 'secret_access_key', 'region']
+        parameters = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
+        for credential, parameter in zip(credentials, parameters):
             if credential in aws_config:
-                s3_config[credential] = aws_config[credential]
+                s3_config[parameter] = aws_config[credential]
         return cls(**s3_config)
 
     @classmethod
