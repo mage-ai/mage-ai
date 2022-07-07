@@ -305,7 +305,7 @@ class KernelsHandler(BaseHandler):
 
 def make_app():
     settings = {
-        'static_path': os.path.join(os.path.dirname(__file__), 'frontend_dist'),
+        'static_path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static'),
         'template_path': os.path.join(os.path.dirname(__file__), 'frontend_dist'),
     }
 
@@ -313,7 +313,8 @@ def make_app():
 
     return tornado.web.Application(
         [
-            (r'/', MainHandler),
+            (r'/pipelines', MainHandler),
+            # (r'/datasets', MainHandler),
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
