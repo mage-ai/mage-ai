@@ -87,8 +87,12 @@ function DependencyGraph({
       type,
       uuid: startBlockUUID,
     } = block;
+    const isSelected = selectedBlock?.uuid === startBlockUUID;
     const arrowsToDownstreamBlocks = downstreamBlocks.map(endBlockUUID => ({
-      color: getColorsForBlockType(type, { theme: themeContext }).accent,
+      color: getColorsForBlockType(
+        type,
+        { isSelected, theme: themeContext },
+      ).accent,
       end: endBlockUUID,
       start: startBlockUUID,
     }));

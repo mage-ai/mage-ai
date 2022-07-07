@@ -45,7 +45,6 @@ export default {
     cyanTransparent: 'rgba(101, 227, 255, 0.12)',
     info: '#00ABFF',
     infoTransparent: 'rgba(0, 171, 255, 0.5)',
-    inverted: WHITE,
     negative: '#FF1E59',
     negativeTransparent: 'rgba(255, 30, 89, 0.3)',
     positive: '#00A81A',

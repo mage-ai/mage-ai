@@ -153,6 +153,6 @@ Regular.args = {
       downstream_blocks: [],
     },
   ],
-  selectedBlock: { uuid: 'exporter_1' },
+  selectedBlock: { uuid: 'loader_1' },
   setSelectedBlock: (uuid) => console.log('Selected block:', uuid),
 };

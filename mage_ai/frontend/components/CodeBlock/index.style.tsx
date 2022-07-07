@@ -3,21 +3,28 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-export function getColorsForBlockType(blockType: BlockTypeEnum, props): {
+export function getColorsForBlockType(
+  blockType: BlockTypeEnum,
+  props: { isSelected?: boolean, theme: ThemeType },
+): {
   accent?: string;
 } {
   let accent = (props.theme.borders || dark.borders).light;
+  const { isSelected, theme } = props || {};
 
-  if (BlockTypeEnum.TRANSFORMER === blockType) {
-    accent = (props.theme.accent || dark.accent).purple;
+  if (isSelected) {
+    accent = (theme.content || dark.content).active;
+  } else if (BlockTypeEnum.TRANSFORMER === blockType) {
+    accent = (theme.accent || dark.accent).purple;
   } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
-    accent = (props.theme.accent || dark.accent).yellow;
+    accent = (theme.accent || dark.accent).yellow;
   } else if (BlockTypeEnum.DATA_LOADER === blockType) {
-    accent = (props.theme.accent || dark.accent).blue;
+    accent = (theme.accent || dark.accent).blue;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
-    accent = (props.theme.content || dark.content).muted;
+    accent = (theme.content || dark.content).muted;
   }
 
   return {

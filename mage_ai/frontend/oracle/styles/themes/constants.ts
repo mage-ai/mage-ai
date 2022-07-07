@@ -6,7 +6,6 @@ export type ThemeType = {
     cyanTransparent: string;
     info: string;
     infoTransparent: string;
-    inverted: string;
     negative: string;
     negativeTransparent: string;
     positive: string;
