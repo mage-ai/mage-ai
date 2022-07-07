@@ -65,13 +65,14 @@ def find_syntax_errors(series, column_type):
     ):
         str_series = str_series.astype(str)
         pattern = REGEX_NUMBER
-    elif (
-        column_type == ColumnType.DATETIME
-        and not np.issubdtype(dtype, np.datetime64)
-        and not dtype is pd.Timestamp
-    ):
-        str_series = str_series.astype(str)
-        pattern = REGEX_DATETIME
+    elif column_type == ColumnType.DATETIME:
+        if type(dtype) is pd.core.dtypes.dtypes.DatetimeTZDtype:
+            dtype = dtype.base
+        if not (np.issubdtype(dtype, np.datetime64) or dtype is pd.Timestamp):
+            str_series = str_series.astype(str)
+            pattern = REGEX_DATETIME
+        else:
+            check_syntax_errors = False
     else:
         check_syntax_errors = False
         pattern = None
