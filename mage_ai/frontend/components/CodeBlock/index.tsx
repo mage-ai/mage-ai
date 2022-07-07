@@ -503,17 +503,17 @@ function CodeBlockProps({
         >
           {block.upstream_blocks.length >= 1 && (
             <CodeHelperStyle>
-              <Text>
+              <Text small>
                 Positional arguments for decorated function:
               </Text>
 
               <Spacing mt={1}>
-                <Text monospace muted>
+                <Text monospace muted small>
                   {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
                   {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
                   {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
                 </Text>
-                <Text monospace muted>
+                <Text monospace muted small>
                   def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
                     || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
                     || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
@@ -526,20 +526,22 @@ function CodeBlockProps({
 
                   return (
                     <div key={blockUUID}>
-                      <Text inline monospace muted>
+                      <Text inline monospace muted small>
                         &nbsp;&nbsp;&nbsp;&nbsp;df_{i + 1}
-                      </Text> <Text inline monospace muted>→</Text> <Link
+                      </Text> <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}
                         onClick={() => {
                           const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
                           refBlock?.current?.scrollIntoView();
                         }}
                         preventDefault
+                        small
                       >
                         <Text
                           color={blockColor}
                           inline
                           monospace
+                          small
                         >
                           {blockUUID}
                         </Text>
