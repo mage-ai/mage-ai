@@ -304,7 +304,7 @@ def make_app():
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
-            (r'/api/file_contents(?P<file_path>\w+)', ApiFileContentHandler),
+            (r'/api/file_contents(?P<file_path_encoded>.+)', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),

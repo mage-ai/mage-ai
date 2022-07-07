@@ -25,6 +25,7 @@ export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const FEATURES: 'features' = 'features';
+export const FILE_CONTENTS: 'file_contents' = 'file_contents';
 export const FILES: 'files' = 'files';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
@@ -48,6 +49,7 @@ const RESOURCES: any[][] = [
   [DOWNLOADS, FEATURE_SETS],
   [FEATURE_SETS],
   [FILES],
+  [FILE_CONTENTS],
   [KERNELS],
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
