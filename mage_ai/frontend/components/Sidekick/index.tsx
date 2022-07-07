@@ -29,7 +29,7 @@ import {
 } from './index.style';
 import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { SCROLLBAR_WIDTH } from '@styles/scrollbars';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';

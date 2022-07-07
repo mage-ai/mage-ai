@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const GraphContainerStyle = styled.div`
@@ -11,6 +12,8 @@ export const GraphContainerStyle = styled.div`
   padding: ${UNIT}px;
   padding-bottom: ${UNIT * 3}px;
   width: 100%;
+
+  ${ScrollbarStyledCss}
 `;
 
 export const NodeStyle = styled.div<{

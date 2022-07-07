@@ -5,7 +5,7 @@ import { BORDER_RADIUS, BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
-export const SCROLLBAR_WIDTH = UNIT * 1;
+export const SCROLLBAR_WIDTH = UNIT * 1.5;
 
 export function hideScrollBar() {
   return `
