@@ -25,6 +25,12 @@ type RowStyleProps = Pick<
   'border' | 'condensed' | 'last' | 'secondary' | 'noHorizontalPadding'
 >;
 
+export const TableStyle = styled.div<{ width: number }>`
+  ${props => props.width && `
+    width: ${props.width}px;
+  `}
+`;
+
 export const RowContainerStyle = styled.div<RowContainerStyleProps>`
   border-bottom-left-radius: ${BORDER_RADIUS}px;
   border-bottom-right-radius: ${BORDER_RADIUS}px;

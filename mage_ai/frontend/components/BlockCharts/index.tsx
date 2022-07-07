@@ -4,7 +4,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import HeatMap from '@components/charts/HeatMap';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   buildHeatmapData,
   buildNullValueData,
@@ -14,20 +14,22 @@ import {
 import { formatPercent } from '@utils/string';
 
 export type BlockOverviewProps = {
+  afterWidth: number;
   features: FeatureType[];
   insightsOverview: any;
   statistics: any;
 };
 
 function BlockCharts({
+  afterWidth,
   features,
   insightsOverview,
   statistics,
 }: BlockOverviewProps) {
-
   const {
     correlations = [],
   } = insightsOverview;
+  const finalAfterWidth = afterWidth - (2 * (PADDING_UNITS * UNIT));
 
   const { heatmapData, xyLabels } = buildHeatmapData(correlations);
   const nullValueData = buildNullValueData(features, statistics);
@@ -40,6 +42,7 @@ function BlockCharts({
         {nullValueData?.length >= 1 && (
           <RowDataTable
             headerTitle="Data completion"
+            width={finalAfterWidth}
           >
             <BarGraphHorizontal
               data={nullValueData.map(({ feature, value }) => ({
@@ -57,6 +60,7 @@ function BlockCharts({
         {uniqueValueData?.length >= 1 && (
           <RowDataTable
             headerTitle="Number of unique values"
+            width={finalAfterWidth}
           >
             <BarGraphHorizontal
               data={uniqueValueData.map(({ feature, value }) => ({
@@ -74,6 +78,7 @@ function BlockCharts({
         {distributionData.length >= 1 && (
           <RowDataTable
             headerTitle="Distribution of values"
+            width={finalAfterWidth}
           >
             <BarGraphHorizontal
               data={distributionData.map(({

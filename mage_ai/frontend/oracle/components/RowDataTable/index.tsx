@@ -5,6 +5,7 @@ import Text from '@oracle/elements/Text';
 
 import {
   RowContainerStyle,
+  TableStyle,
   TitleStyle,
 } from './index.style';
 
@@ -15,6 +16,7 @@ export type RowDataTableProps = {
   headerTitle: string;
   minHeight?: number;
   scrollable?: boolean;
+  width?: number;
 };
 
 function RowDataTable({
@@ -24,9 +26,10 @@ function RowDataTable({
   headerTitle,
   minHeight,
   scrollable,
+  width,
 }: RowDataTableProps) {
   return (
-    <>
+    <TableStyle width={width}>
       <TitleStyle>
         <FlexContainer alignItems="center" justifyContent="space-between">
           <Text bold default>
@@ -52,7 +55,7 @@ function RowDataTable({
           },
         ))}
       </RowContainerStyle>
-    </>
+    </TableStyle>
   );
 }
 
