@@ -244,7 +244,7 @@ class Pipeline:
             downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
             raise Exception(
                 f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
-                '. Please remove these blocks first.'
+                '. Please remove the downstream blocks first.'
             )
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:
