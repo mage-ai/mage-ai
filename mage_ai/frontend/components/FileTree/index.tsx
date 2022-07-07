@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
@@ -12,9 +12,15 @@ import { ArrowDown, ArrowRight, FileFill, Folder } from '@oracle/icons';
 import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
-import { findBlockByPath } from './utils';
+import { findBlockByPath, getBlockType, getBlockUUID, isBlockType } from './utils';
 
 export type FileTreeProps = {
+  addNewBlockAtIndex: (
+    block: BlockType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+  ) => void;
   blockRefs: any;
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
@@ -42,6 +48,7 @@ const FileNodeStyle = styled.div<FileNodeStyleProps>`
 `;
 
 function FileTree({
+  addNewBlockAtIndex,
   blockRefs,
   pipeline,
   setSelectedBlock,
@@ -106,7 +113,11 @@ function FileTree({
     setSelectedPath([...path]);
   };
 
-  const selectFile = (path: string[]) => setSelectedPath([...path]);
+  const selectFile = (path: string[]) => {
+    scrollToBlock(path);
+    setSelectedBlock(findBlockByPath(blocks, path));
+    setSelectedPath([...path]);
+  };
 
   const scrollToBlock = (path: string[]) => {
     const blockPath = path.slice(1).join('/');
@@ -114,11 +125,34 @@ function FileTree({
     blockEl?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const fileTreeHandler = (path, isFolder) => (e) => {
+  const onClickHandler = (path: string[], isFolder) => (e) => {
     e.preventDefault();
-    scrollToBlock(path);
-    setSelectedBlock(findBlockByPath(blocks, path));
     return isFolder ? toggleFolder(path) : selectFile(path);
+  };
+
+  const openFile = (path: string[]) => {
+    if (isBlockType(path)) {
+      const block = findBlockByPath(blocks, path);
+      if (!block) {
+        addNewBlockAtIndex(
+          {
+            type: getBlockType(path) as BlockTypeEnum,
+            uuid: getBlockUUID(path),
+          },
+          blocks.length,
+          () => selectFile(path),
+          getBlockUUID(path),
+        );
+      }
+    }
+    else {
+      // TODO open in file editor
+    }
+  };
+
+  const onDoubleClickHandler = (path: string[], isFolder) => (e) => {
+    e.preventDefault();
+    return !isFolder ? openFile(path) : undefined;
   };
 
   let depth = 0;
@@ -146,7 +180,8 @@ function FileTree({
               noColor
               noHoverUnderline
               noOutline
-              onClick={fileTreeHandler([...path], !!children)}
+              onClick={onClickHandler([...path], !!children)}
+              onDoubleClick={onDoubleClickHandler([...path], !!children)}
             >
               <Spacing py={`${0.75 * UNIT}px`}>
                 <FlexContainer alignItems="center">

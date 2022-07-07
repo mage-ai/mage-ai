@@ -38,6 +38,7 @@ export type LinkProps = {
   noHoverUnderline?: boolean;
   noOutline?: boolean;
   onClick?: (event: any) => void;
+  onDoubleClick?: (event: any) => void;
   onFocus?: (event: any) => void;
   openNewWindow?: boolean;
   overflow?: string;
@@ -256,6 +257,7 @@ const Link = ({
   disabled,
   href = '#',
   onClick,
+  onDoubleClick,
   onFocus,
   openNewWindow,
   preventDefault,
@@ -279,6 +281,14 @@ const Link = ({
       }
       if (onClick && !disabled) {
         onClick(e);
+      }
+    }}
+    onDoubleClick={(e) => {
+      if (disabled || preventDefault) {
+        e.preventDefault();
+      }
+      if (onDoubleClick && !disabled) {
+        onDoubleClick(e);
       }
     }}
     onFocus={e => onFocus?.(e)}
