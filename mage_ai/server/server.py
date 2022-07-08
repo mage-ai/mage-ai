@@ -63,7 +63,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(tornado.web.RequestHandler):
-    def get(self, pipeline_uuid):
+    def get(self, *args):
         self.render('index.html')
 
 
@@ -306,7 +306,8 @@ class KernelsHandler(BaseHandler):
 def make_app():
     return tornado.web.Application(
         [
-            (r'/pipelines', MainHandler),
+            (r'/', MainHandler),
+            # (r'/pipelines', MainHandler),
             (r'/pipelines/(.*)', MainHandler),
             (
                 r"/_next/static/(.*)",
