@@ -18,7 +18,7 @@ setuptools.setup(
     author='Mage',
     author_email="sales@mage.ai",
     description='Mage - An open-source data management platform that helps you '
-                'clean data and prepare it for training AI/ML models',
+    'clean data and prepare it for training AI/ML models',
     long_description=readme(),
     long_description_content_type="text/markdown",
     url='https://github.com/mage-ai/mage-ai',
@@ -36,5 +36,5 @@ setuptools.setup(
             'mage=mage_ai.command_line:main',
         ],
     },
-    extras_require={}
+    extras_require={},
 )

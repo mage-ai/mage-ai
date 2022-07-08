@@ -11,9 +11,7 @@ import json
 import os
 import shutil
 
-template_env = jinja2.Environment(
-    loader=jinja2.FileSystemLoader('mage_ai/data_preparation/templates')
-)
+template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
 def build_template_from_suggestion(suggestion: Mapping) -> str:
