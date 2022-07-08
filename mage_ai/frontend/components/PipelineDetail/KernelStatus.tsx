@@ -81,6 +81,26 @@ function KernelStatus({
     saveStatus = 'All changes saved';
   }
 
+  const pipelineNameInput = useMemo(() => (
+    <LabelWithValueClicker
+      bold={false}
+      inputValue={newPipelineName}
+      notRequired
+      onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
+      onChange={(e) => {
+        setNewPipelineName(e.target.value);
+      }}
+      onClick={() => setIsEditingPipeline(true)}
+      onFocus={() => setIsEditingPipeline(true)}
+      stacked
+      value={!isEditingPipeline && pipeline?.uuid}
+    />
+  ), [
+    isEditingPipeline,
+    newPipelineName,
+    pipeline,
+  ]);
+
   const pipelineName = useMemo(() => (
     <Flex alignItems="center">
       <Circle
@@ -96,9 +116,12 @@ function KernelStatus({
 
       <Spacing mr={1} />
 
-      <Text>
-        Pipeline: {pipeline?.uuid}
-      </Text>
+      <FlexContainer alignItems="center">
+        <Text>
+          Pipeline:&nbsp;{selectedFilePath && pipeline?.uuid}
+        </Text>
+        {!selectedFilePath && pipelineNameInput}
+      </FlexContainer>
 
       <Spacing mr={3} />
     </Flex>
@@ -106,6 +129,8 @@ function KernelStatus({
     alive,
     isBusy,
     pipeline,
+    pipelineNameInput,
+    selectedFilePath,
     themeContext,
   ]);
 
@@ -138,31 +163,17 @@ function KernelStatus({
 
             {!selectedFilePath && (
               <FlexContainer alignItems="center">
-                <LabelWithValueClicker
-                  bold={false}
-                  inputValue={newPipelineName}
-                  label={(
-                    <Tooltip
-                      block
-                      label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
-                      size={null}
-                      widthFitContent
-                    >
-                      {pipelineName}
-                    </Tooltip>
-                  )}
-                  monospace
-                  notRequired
-                  onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
-                  onChange={(e) => {
-                    setNewPipelineName(e.target.value);
-                  }}
-                  onClick={() => setIsEditingPipeline(true)}
-                  onFocus={() => setIsEditingPipeline(true)}
-                  stacked
-                  value={!isEditingPipeline && pipeline?.uuid}
-                />
-
+                {!isEditingPipeline && (
+                  <Tooltip
+                    block
+                    label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
+                    size={null}
+                    widthFitContent
+                  >
+                    {pipelineName}
+                  </Tooltip>
+                )}
+                {isEditingPipeline && pipelineName}
                 {isEditingPipeline && (
                   <>
                     <Spacing ml={1} />
