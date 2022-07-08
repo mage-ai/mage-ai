@@ -36,7 +36,7 @@ type KernelStatusProps = {
   kernel: KernelType;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
-  pipelineLastSaved: number;
+  pipelineLastSaved: Date;
   restartKernel: () => void;
   selectedFile: FileType;
 };
@@ -59,7 +59,7 @@ function KernelStatus({
     name,
   } = kernel || {};
   const filePaths =
-    useMemo(() => filePathsProp.map(path => decodeURIComponent(path), [filePathsProp]));
+    useMemo(() => filePathsProp.map(path => decodeURIComponent(path)), [filePathsProp]);
   let saveStatus;
 
   if (pipelineContentTouched) {
@@ -119,6 +119,7 @@ function KernelStatus({
                 fullHeight
                 justifyContent="flex-end"
                 key={filePath}
+                // @ts-ignore
                 onClick={(e) => {
                   e.preventDefault();
                   if (!selected) {

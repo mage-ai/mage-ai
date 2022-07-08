@@ -37,6 +37,7 @@ function FileEditor({
       autoHeight
       language="text"
       onSave={(content: string) => {
+        // @ts-ignore
         updateFile({
           file_content: {
             ...file,
