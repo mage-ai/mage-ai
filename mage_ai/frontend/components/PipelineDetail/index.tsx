@@ -279,11 +279,11 @@ function PipelineDetail({
             setSelectedBlock(blocks[selectedBlockIndex + 1]);
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
-          } else if (onlyKeysPresent([KEY_CODE_A], keyMapping)) {
+          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_A], keyMapping)) {
             addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
             }, selectedBlockIndex, setSelectedBlock);
-          } else if (onlyKeysPresent([KEY_CODE_B], keyMapping)) {
+          } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_B], keyMapping)) {
             addNewBlockAtIndex({
               type: BlockTypeEnum.SCRATCHPAD,
             }, selectedBlockIndex + 1, setSelectedBlock);
@@ -301,6 +301,7 @@ function PipelineDetail({
     },
     [
       addNewBlockAtIndex,
+      anyInputFocused,
       blocks,
       interruptKernel,
       numberOfBlocks,
