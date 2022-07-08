@@ -413,6 +413,30 @@ function PipelineDetailPage({
     },
   );
 
+  const [deleteBlockFile] = useMutation(
+    ({ type, uuid }: BlockType) => (
+      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
     {

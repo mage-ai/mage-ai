@@ -45,10 +45,10 @@ function CommandButtons({
   interruptKernel,
   runBlock,
 }: CommandButtonsProps) {
-  const { uuid } = block;
+  const { type, uuid } = block;
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
-  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const color = getColorsForBlockType(type, { theme: themeContext }).accent;
 
   return (
     <ContainerStyle>
