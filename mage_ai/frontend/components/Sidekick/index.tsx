@@ -23,12 +23,13 @@ import api from '@api';
 
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close, PlayButton } from '@oracle/icons';
+import { FULL_WIDTH_VIEWS, MESSAGE_VIEWS, ViewKeyEnum } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
-  ContainerStyle,
+  PaddingContainerStyle,
+  SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
-import { FULL_WIDTH_VIEWS, ViewKeyEnum } from './constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
@@ -86,6 +87,7 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
+  const heightOffset = ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH;
   const pipelineUUID = pipeline?.uuid;
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>(null);
@@ -108,6 +110,7 @@ function Sidekick({
     columnTypes,
     statistics,
   });
+  const hasData = sampleData && insights && Object.keys(statistics).length > 0;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -189,7 +192,7 @@ function Sidekick({
           ))}
         </Spacing>
       }
-      <ContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+      <SidekickContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
         {activeView === ViewKeyEnum.TREE &&
           <>
             <Spacing p={2}>
@@ -228,7 +231,7 @@ function Sidekick({
           <DataTable
             columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
             columns={columns}
-            height={heightWindow - (ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH)}
+            height={heightWindow - heightOffset}
             noBorderBottom
             noBorderLeft
             noBorderRight
@@ -239,7 +242,7 @@ function Sidekick({
           />
         )}
         {activeView === ViewKeyEnum.REPORTS &&
-          <Spacing p={2}>
+          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
             <FlexContainer flexDirection="column" fullWidth>
               {qualityMetrics && (
                 <StatsTable
@@ -247,26 +250,55 @@ function Sidekick({
                   title="Quality metrics"
                 />
               )}
-              <Spacing mb={PADDING_UNITS} />
               {statsSample && (
-                <StatsTable
-                  stats={statsSample}
-                  title="Statistics"
-                />
+                <Spacing mt={PADDING_UNITS}>
+                  <StatsTable
+                    stats={statsSample}
+                    title="Statistics"
+                  />
+                </Spacing>
               )}
             </FlexContainer>
-          </Spacing>
+          </PaddingContainerStyle>
         }
         {activeView === ViewKeyEnum.GRAPHS &&
-          <BlockCharts
-            afterWidth={afterWidth}
-            features={features}
-            insightsOverview={insightsOverview}
-            statistics={statistics}
-          />
+          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
+            <BlockCharts
+              afterWidth={afterWidth}
+              features={features}
+              insightsOverview={insightsOverview}
+              statistics={statistics}
+            />
+          </PaddingContainerStyle>
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
-      </ContainerStyle>
+
+        {(selectedBlock && hasData)
+          ? null
+          : (MESSAGE_VIEWS.includes(activeView) &&
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
+              verticalHeight={90}
+              verticalHeightOffset={heightOffset}
+              width={afterWidth}
+            >
+              <Text
+                center
+                default
+                disableWordBreak
+                large
+                monospace
+              >
+                {!selectedBlock
+                  ? 'Select a block for insights'
+                  : (!hasData && 'No data or insights available')
+                }
+              </Text>
+            </FlexContainer>
+          )
+        }
+      </SidekickContainerStyle>
     </>
   );
 }
