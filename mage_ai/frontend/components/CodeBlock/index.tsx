@@ -113,16 +113,15 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps, ref) {
-  console.log('CodeBlock', block?.uuid)
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
-  const [content, setContent] = useState(defaultValue)
+  const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
-  const [runCount, setRunCount] = useState<Number>(0);
-  const [runEndTime, setRunEndTime] = useState<Number>(null);
-  const [runStartTime, setRunStartTime] = useState<Number>(null);
+  const [runCount, setRunCount] = useState<number>(0);
+  const [runEndTime, setRunEndTime] = useState<number>(null);
+  const [runStartTime, setRunStartTime] = useState<number>(null);
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
@@ -411,8 +410,8 @@ function CodeBlockProps({
             <LabelWithValueClicker
               bold={false}
               inputValue={newBlockUuid}
-              muted
               monospace
+              muted
               notRequired
               onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
               onChange={(e) => {
