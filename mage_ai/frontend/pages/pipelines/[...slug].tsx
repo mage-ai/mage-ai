@@ -390,7 +390,10 @@ function PipelineDetailPage({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => fetchFileTree(),
+          callback: () => {
+            fetchPipeline();
+            fetchFileTree();
+          },
           onErrorCallback: ({
             error: {
               errors,
