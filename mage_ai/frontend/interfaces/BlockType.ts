@@ -17,7 +17,9 @@ export const BLOCK_TYPES = [
 
 export enum StatusTypeEnum {
   EXECUTED = 'executed',
+  FAILED = 'failed',
   NOT_EXECUTED = 'not_executed',
+  UPDATED = 'updated',
 }
 
 export interface SampleDataType {

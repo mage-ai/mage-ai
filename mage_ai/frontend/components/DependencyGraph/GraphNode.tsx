@@ -1,7 +1,7 @@
 import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
 
-import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -9,7 +9,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
-import { Check } from '@oracle/icons';
+import { Check, Close } from '@oracle/icons';
 import { INVERTED_TEXT_COLOR_BLOCK_TYPES, MIN_NODE_WIDTH } from './constants';
 import { NodeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -19,6 +19,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 type GraphNodeProps = {
   block: BlockType;
   disabled?: boolean;
+  hasFailed?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
@@ -29,6 +30,7 @@ type GraphNodeProps = {
 function GraphNode({
   block,
   disabled,
+  hasFailed,
   isInProgress,
   isQueued,
   isSuccessful,
@@ -37,10 +39,23 @@ function GraphNode({
 }: GraphNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
-    status,
     type,
     uuid,
   } = block;
+
+  const noStatus = !(isInProgress || isQueued || hasFailed || isSuccessful);
+  const success = isSuccessful && !(isInProgress || isQueued);
+  const failed = hasFailed && !(isInProgress || isQueued);
+  let tooltipText = '';
+  if (noStatus) {
+    tooltipText = 'No status';
+  } else if (success) {
+    tooltipText = 'Successful execution';
+  } else if (failed) {
+    tooltipText = 'Failed execution';
+  } else if (isInProgress) {
+    tooltipText = 'Currently executiing';
+  }
 
   return (
     <NodeStyle
@@ -67,6 +82,7 @@ function GraphNode({
                 height: UNIT * 2,
                 width: UNIT * 2,
               }}
+              title={tooltipText}
             >
               {isInProgress && (
                 <Spinner
@@ -74,8 +90,9 @@ function GraphNode({
                   small
                 />
               )}
-              {isSuccessful && !(isInProgress || isQueued) && <Check size={UNIT * 2} success />}
-              {!(isInProgress || isQueued || isSuccessful) && (
+              {success && <Check size={UNIT * 2} success />}
+              {failed && <Close danger size={UNIT * 1.5} />}
+              {noStatus && (
                 <Circle
                   borderSize={1}
                   size={UNIT * 1}
