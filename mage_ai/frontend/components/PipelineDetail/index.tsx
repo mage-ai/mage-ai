@@ -5,9 +5,8 @@ import {
   useMemo,
   useState,
 } from 'react';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 import { CSSTransition } from 'react-transition-group';
-import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
@@ -16,7 +15,6 @@ import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputTy
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
   ANIMATION_DURATION,
@@ -192,8 +190,11 @@ function PipelineDetail({
           return runningBlocksPrevious.concat(block);
         });
       }
+
+      fetchPipeline();
     }
   }, [
+    fetchPipeline,
     pipeline,
     runningBlocks,
     sendMessage,
@@ -381,35 +382,34 @@ function PipelineDetail({
                 addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
                 setTextareaFocused(true);
               }}
+              block={block}
+              blockRefs={blockRefs}
+              blocks={blocks}
               defaultValue={block.content}
               deleteBlock={(b: BlockType) => {
                 deleteBlock(b);
                 setAnyInputFocused(false);
               }}
-              block={block}
-              blockRefs={blockRefs}
-              blocks={blocks}
               executionState={executionState}
-              key={uuid}
+              fetchFileTree={fetchFileTree}
+              fetchPipeline={fetchPipeline}
               interruptKernel={interruptKernel}
+              key={uuid}
               mainContainerRef={mainContainerRef}
               mainContainerWidth={mainContainerWidth}
               messages={messages[uuid]}
               noDivider={idx === numberOfBlocks - 1}
               onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+              pipeline={pipeline}
               ref={blockRefs.current[path]}
               runBlock={runBlock}
               runningBlocks={runningBlocks}
               selected={selected}
               setAnyInputFocused={setAnyInputFocused}
+              setEditingBlock={setEditingBlock}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={selected && textareaFocused}
-
-              fetchFileTree={fetchFileTree}
-              fetchPipeline={fetchPipeline}
-              pipeline={pipeline}
-              setEditingBlock={setEditingBlock}
             />
           );
         })}
