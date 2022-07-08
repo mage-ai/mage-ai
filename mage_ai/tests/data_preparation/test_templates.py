@@ -102,8 +102,11 @@ def load_data() -> DataFrame:
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_loader_specific(self):
-        redshift_template = """from mage_ai.io.redshift import Redshift
+        redshift_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
+from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
+from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -113,22 +116,20 @@ if 'data_loader' not in globals():
 def load_data_from_redshift() -> DataFrame:
     \"\"\"
     Template code for loading data from Redshift cluster. Additional
-    configuration parameters can be added to the `config` dictionary.
+    configuration parameters can be defined in your configuration file.
     \"\"\"
     query = 'your_redshift_selection_query'
-    config = {
-        'database': 'your_redshift_database_name',
-        'user': 'database_login_username',
-        'password': 'database_login_password',
-        'host': 'database_host',
-        'port': 'database_port',
-    }
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
 
-    with Redshift.with_temporary_credentials(**config) as loader:
+    with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:
         return loader.load(query)
 """
-        s3_template = """from mage_ai.io.s3 import S3
+        s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
+from mage_ai.io.s3 import S3
 from pandas import DataFrame
+from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -139,14 +140,13 @@ def load_from_s3_bucket() -> DataFrame:
     \"\"\"
     Template code for loading data from S3 bucket.
 
-    This template assumes that user credentials are specified in `~/.aws`.
-    If not, use `S3.with_credentials()` to manually specify AWS credentials or use
-    AWS CLI to configure credentials on system.
+    If user credentials are not specified in `~/.aws`, you must specify your
+    user credentials manually in your configuration file.
     \"\"\"
-    bucket_name = 'your_s3_bucket_name'  # Specify S3 bucket name to pull data from
-    object_key = 'your_object_key'  # Specify object to download from S3 bucket
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
 
-    return S3(bucket_name, object_key).load()
+    return S3.with_config(IOConfig(config_path).use(config_profile)).load()
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -369,8 +369,11 @@ def export_data(df: DataFrame) -> None:
         self.assertEqual(expected_template, new_template2)
 
     def test_template_generation_data_exporter_specific(self):
-        bigquery_template = """from mage_ai.io.bigquery import BigQuery
+        bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.bigquery import BigQuery
+from mage_ai.io.io_config import IOConfig
 from pandas import DataFrame
+from os import path
 
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
@@ -399,20 +402,24 @@ def export_data_to_big_query(df: DataFrame) -> None:
     ```
     BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
     ```
+
+    Alternatively, all parameters can be specified in the configuration file.
     \"\"\"
     table_id = 'your-project.your_dataset.your_table_name'
-    config = {
-        # Specify any other configuration settings here to pass to BigQuery client
-        'project': 'your_project_name',
-    }
-    return BigQuery(**config).export(
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    BigQuery.with_config(IOConfig(config_path).use(config_profile)).export(
         df,
         table_id,
         if_exists='replace',  # Specify resolution policy if table name already exists
     )
 """
-        snowflake_template = """from mage_ai.io.snowflake import Snowflake
+        snowflake_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
+from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
+from os import path
 
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
@@ -426,13 +433,10 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     table_name = 'your_table_name'
     database = 'your_database_name'
     schema = 'your_schema_name'
-    config = {
-        'user': 'your_snowflake_username',
-        'password': 'your_snowflake_password',
-        'account': 'your_snowflake_account_identifier',
-    }
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
 
-    with Snowflake(**config) as loader:
+    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
         return loader.export(
             df,
             table_name,

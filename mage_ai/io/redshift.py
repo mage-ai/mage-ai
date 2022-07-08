@@ -1,6 +1,8 @@
 from mage_ai.io.base import BaseSQL
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from redshift_connector import connect
+from typing import Any, Mapping
 
 
 class Redshift(BaseSQL):
@@ -65,9 +67,25 @@ class Redshift(BaseSQL):
                 cur.write_dataframe(df, table_name)
 
     @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
+        try:
+            aws_config = config[IOConfigKeys.AWS]
+            redshift_config = aws_config[IOConfigKeys.REDSHIFT]
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for '
+                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.REDSHIFT}\' under profile'
+            )
+        credentials = ['access_key_id', 'secret_access_key', 'region']
+        for credential in credentials:
+            if credential in aws_config:
+                redshift_config[credential] = aws_config[credential]
+        return cls(**redshift_config)
+
+    @classmethod
     def with_temporary_credentials(
         cls, database: str, host: str, user: str, password: str, port: int = 5439, **kwargs
-    ):
+    ) -> 'Redshift':
         """
         Creates a Redshift data loader from temporary database credentials
 
@@ -92,7 +110,7 @@ class Redshift(BaseSQL):
         db_user: str,
         profile: str = 'default',
         **kwargs,
-    ):
+    ) -> 'Redshift':
         """
         Creates a Redshift data loader using an IAM profile from `~/.aws`.
 

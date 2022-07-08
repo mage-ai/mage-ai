@@ -1,0 +1,37 @@
+default:
+  #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
+  BigQuery:
+    path_to_credentials: path/to/service/account/credentials
+  File:
+    filepath: filepath
+    format: format
+  AWS:
+    Redshift:
+      database: your_redshift_database_name
+      # Use the settings below if you are using temporary credentials
+      user: your_authentication_user_name
+      password: your_authentication_password
+      host: your_redshift_cluster_hostname
+      port: your_redshift_cluster_port
+      # Use the settings below if you are using IAM credentials
+      cluster_identifier: your_redshift_identifier
+      db_user: your_redshift_username
+      profile: your_aws_credentials_profile
+      iam: True
+    S3:
+      bucket_name: your_bucket_name
+      object_key: your_object_key
+    # Omit these settings if aws credentials are already configured on file
+    access_key_id: your_aws_access_key_id
+    secret_access_key: your_secret_access_key_id
+    region: your_aws_region
+  PostgreSQL:
+    database: your_postgres_database_name
+    user: your_postgres_database_username
+    password: your_postgres_database_password
+    host: your_postgres_database_host
+    port: your_postgres
+  Snowflake:
+    user: your_snowflake_username
+    password: your_snowflake_password
+    account: your_snowflake_account_identifier(with region)

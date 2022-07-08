@@ -1,7 +1,9 @@
 from mage_ai.io.base import BaseSQL
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
+from typing import Any, Mapping
 
 
 class Snowflake(BaseSQL):
@@ -116,4 +118,13 @@ class Snowflake(BaseSQL):
                 schema=schema,
                 auto_create_table=auto_create_table,
                 **kwargs,
+            )
+
+    @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'Snowflake':
+        try:
+            return cls(**config[IOConfigKeys.SNOWFLAKE])
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for \'{IOConfigKeys.SNOWFLAKE}\' under profile'
             )

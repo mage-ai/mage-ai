@@ -1,5 +1,7 @@
 from mage_ai.io.base import BaseFile
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
+from typing import Any, Mapping
 
 
 class FileIO(BaseFile):
@@ -27,3 +29,13 @@ class FileIO(BaseFile):
         """
         with self.printer.print_msg(f'Exporting data frame to \'{self.filepath}\''):
             self._write(df, self.filepath, **kwargs)
+        return self._write(df, self.filepath, **kwargs)
+
+    @classmethod
+    def with_config(cls, config: Mapping[str, Any]) -> 'FileIO':
+        try:
+            return cls(**config[IOConfigKeys.FILE])
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for \'{IOConfigKeys.FILE}\' under profile'
+            )

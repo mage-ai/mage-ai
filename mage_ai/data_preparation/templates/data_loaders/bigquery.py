@@ -1,5 +1,8 @@
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.bigquery import BigQuery
+from mage_ai.io.io_config import IOConfig
 from pandas import DataFrame
+from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -28,11 +31,12 @@ def load_data_from_big_query() -> DataFrame:
     ```
     BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
     ```
+
+    Alternatively, all parameters can be specified in the configuration file.
     """
 
     query = 'your_gbq_query'
-    config = {
-        # Specify any other configuration settings here to pass to BigQuery client
-        'project': 'your_project_name',
-    }
-    return BigQuery(**config).load(query)
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    return BigQuery.with_config(IOConfig(config_path).use(config_profile)).load(query)

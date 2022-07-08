@@ -1,5 +1,8 @@
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
 from mage_ai.io.s3 import S3
 from pandas import DataFrame
+from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -10,11 +13,10 @@ def load_from_s3_bucket() -> DataFrame:
     """
     Template code for loading data from S3 bucket.
 
-    This template assumes that user credentials are specified in `~/.aws`.
-    If not, use `S3.with_credentials()` to manually specify AWS credentials or use
-    AWS CLI to configure credentials on system.
+    If user credentials are not specified in `~/.aws`, you must specify your
+    user credentials manually in your configuration file.
     """
-    bucket_name = 'your_s3_bucket_name'  # Specify S3 bucket name to pull data from
-    object_key = 'your_object_key'  # Specify object to download from S3 bucket
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
 
-    return S3(bucket_name, object_key).load()
+    return S3.with_config(IOConfig(config_path).use(config_profile)).load()

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
-from typing import IO, Any, Callable, Union
+from typing import IO, Any, Callable, Mapping, Union
 import pandas as pd
 import os
 
@@ -39,6 +39,11 @@ class BaseIO(ABC):
     def __init__(self, verbose=False) -> None:
         self.verbose = verbose
         self.printer = VerbosePrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
+
+    @classmethod
+    @abstractmethod
+    def with_config(cls, config: Mapping[str, Any]) -> None:
+        pass
 
     @abstractmethod
     def load(self, *args, **kwargs) -> DataFrame:
