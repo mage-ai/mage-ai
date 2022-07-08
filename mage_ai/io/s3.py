@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import Mapping
 from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from pathlib import Path
 from typing import Any, Mapping
@@ -112,8 +113,14 @@ class S3(BaseFile):
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'S3':
-        aws_config = config['AWS']
-        s3_config = aws_config['S3']
+        try:
+            aws_config = config[IOConfigKeys.AWS]
+            s3_config = aws_config[IOConfigKeys.S3]
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for '
+                '\'{IOConfigKeys.AWS}.{IOConfigKeys.S3}\' under profile'
+            )
         credentials = ['access_key_id', 'secret_access_key', 'region']
         parameters = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
         for credential, parameter in zip(credentials, parameters):

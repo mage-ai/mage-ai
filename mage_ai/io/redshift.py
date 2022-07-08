@@ -1,4 +1,5 @@
 from mage_ai.io.base import BaseSQL
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from redshift_connector import connect
 from typing import Any, Mapping
@@ -67,8 +68,14 @@ class Redshift(BaseSQL):
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
-        aws_config = config['AWS']
-        redshift_config = aws_config['Redshift']
+        try:
+            aws_config = config[IOConfigKeys.AWS]
+            redshift_config = aws_config[IOConfigKeys.REDSHIFT]
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for '
+                '\'{IOConfigKeys.AWS}.{IOConfigKeys.REDSHIFT}\' under profile'
+            )
         credentials = ['access_key_id', 'secret_access_key', 'region']
         for credential in credentials:
             if credential in aws_config:

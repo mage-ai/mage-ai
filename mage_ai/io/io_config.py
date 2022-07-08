@@ -1,7 +1,18 @@
+from enum import Enum
 from typing import Any, Mapping
 import pathlib
 import os
 import yaml
+
+
+class IOConfigKeys(str, Enum):
+    AWS = 'AWS'
+    BIGQUERY = 'BigQuery'
+    FILE = 'File'
+    POSTGRES = 'PostgreSQL'
+    REDSHIFT = 'Redshift'
+    S3 = 'S3'
+    SNOWFLAKE = 'Snowflake'
 
 
 class IOConfig:

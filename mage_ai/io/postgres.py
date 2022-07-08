@@ -1,4 +1,5 @@
 from mage_ai.io.base import BaseSQL
+from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame, read_sql
 from sqlalchemy import create_engine
 from typing import Any, Mapping
@@ -91,4 +92,9 @@ class Postgres(BaseSQL):
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':
-        return cls(**config['PostgreSQL'])
+        try:
+            return cls(**config[IOConfigKeys.POSTGRES])
+        except KeyError:
+            raise KeyError(
+                f'No configuration settings found for \'{IOConfigKeys.POSTGRES}\' under profile'
+            )
