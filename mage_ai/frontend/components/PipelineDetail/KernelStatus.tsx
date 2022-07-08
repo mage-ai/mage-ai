@@ -109,7 +109,6 @@ function KernelStatus({
                   bold={false}
                   inputValue={newPipelineName}
                   monospace
-                  muted
                   notRequired
                   onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
                   onChange={(e) => {
