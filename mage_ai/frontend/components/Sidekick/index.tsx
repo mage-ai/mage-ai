@@ -149,6 +149,7 @@ function Sidekick({
           messages,
         } = onError(response);
         setErrorMessages?.(messages);
+        fetchPipeline();
       },
       onSuccess: (response: any) => onSuccess(
         response, {
