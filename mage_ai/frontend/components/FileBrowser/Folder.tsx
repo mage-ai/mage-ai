@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
-import FileType from '@interface/FileType';
+import FileType from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
@@ -17,7 +17,7 @@ import {
   INDENT_WIDTH,
 } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
@@ -56,7 +56,7 @@ function Folder({
   } = file;
   const disabled = disabledProp
     || name === '__init__.py'
-    || name.match(/^\./);
+    || !!name.match(/^\./);
   const isPipelineFolder = parentFile?.name === 'pipelines';
   const children = useMemo(() =>
     isPipelineFolder
@@ -94,7 +94,7 @@ function Folder({
         ...f,
         parent: file,
       }}
-      key={f.name}
+      key={`${uuid}/${f.name}`}
       level={level + 1}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
@@ -136,6 +136,7 @@ function Folder({
           alignItems: 'center',
           cursor: 'default',
           display: 'flex',
+          minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER),
           paddingLeft: INDENT_WIDTH * level,
         }}
       >

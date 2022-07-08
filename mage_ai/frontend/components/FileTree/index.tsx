@@ -1,4 +1,4 @@
-openFileimport React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';

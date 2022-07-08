@@ -1,7 +1,7 @@
 import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
 
-import FileType from '@interface/FileType';
+import FileType from '@interfaces/FileType';
 import Folder, { FolderSharedProps } from './Folder';
 import { ContainerStyle } from './index.style';
 
@@ -21,7 +21,7 @@ function FileBrowser({
         <Folder
           {...props}
           file={file}
-          key={name}
+          key={file.name}
           level={0}
           theme={themeContext}
         />
