@@ -393,6 +393,9 @@ async def main(repo_path: str = None):
     app = make_app()
     app.listen(6789)
 
+    print('Server started!')
+    print('Mage is running at http://localhost:6789')
+
     get_messages(
         manager.client(),
         lambda content: WebSocketServer.send_message(
@@ -404,6 +407,4 @@ async def main(repo_path: str = None):
 
 
 if __name__ == '__main__':
-    print('Starting server...')
-
     asyncio.run(main())
