@@ -62,6 +62,11 @@ class BaseHandler(tornado.web.RequestHandler):
             )
 
 
+class MainHandler(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.render('index.html')
+
+
 class ApiBlockHandler(BaseHandler):
     def delete(self, block_type, block_uuid):
         block = Block(block_uuid, block_uuid, block_type)
@@ -301,6 +306,14 @@ class KernelsHandler(BaseHandler):
 def make_app():
     return tornado.web.Application(
         [
+            (r'/', MainHandler),
+            # (r'/pipelines', MainHandler),
+            (r'/pipelines/(.*)', MainHandler),
+            (
+                r'/_next/static/(.*)',
+                tornado.web.StaticFileHandler,
+                { "path": os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
+            ),
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
@@ -330,6 +343,7 @@ def make_app():
             (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         ],
         autoreload=True,
+        template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
     )
 
 

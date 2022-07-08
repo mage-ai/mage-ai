@@ -8,9 +8,10 @@ const Home = () => {
   const basePath = completePath.split('?')[0];
   let pathname = '/datasets';
   if (basePath && basePath !== '/') {
-    pathname = !basePath.includes('/datasets')
-      ? `${basePath}/datasets`
-      : basePath;
+    // pathname = !basePath.includes('/datasets')
+    //   ? `${basePath}/datasets`
+    //   : basePath;
+    pathname = basePath;
   }
 
   useEffect(() => {
