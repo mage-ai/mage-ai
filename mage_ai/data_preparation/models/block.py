@@ -269,6 +269,8 @@ class Block:
         output_message = dict(output=outputs)
         if redirect_outputs:
             output_message['stdout'] = stdout.getvalue()
+        else:
+            output_message['stdout'] = ''
 
         return output_message
 
