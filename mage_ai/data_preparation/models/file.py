@@ -39,13 +39,8 @@ class File:
         return traverse(os.path.basename(repo_path), True, repo_path)
 
     def content(self):
-        try:
-            with open(self.file_path) as fp:
-                file_content = fp.read()
-        except IOError:
-            full_path = ''.join([self.repo_path, self.dir_path, '/', self.filename])
-            with open(full_path) as fp:
-                file_content = fp.read()
+        with open(self.file_path) as fp:
+            file_content = fp.read()
         return file_content
 
     def update_content(self, content):

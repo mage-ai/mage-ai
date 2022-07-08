@@ -11,7 +11,6 @@ type GoToWithQueryProps = {
 };
 
 export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
-  console.log('WTFFFFFFFFFFFFFFFFFFFFFFFF')
   const {
     replaceParams,
     pushHistory,
@@ -30,9 +29,7 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
     ...query,
   };
   Object.entries(query).forEach(([k, v]) => {
-    console.log(k, v)
     if (typeof v === 'undefined' || v === null) {
-      console.log('newQuery', newQuery)
       delete newQuery[k];
     }
   });
@@ -41,8 +38,6 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
   if (qString.length >= 1) {
     qString = `?${qString}`;
   }
-
-  console.log('qString', qString)
 
   const newUrl = `${href.split('?')[0]}${qString}`;
 

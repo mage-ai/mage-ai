@@ -46,10 +46,10 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
-import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
@@ -77,16 +77,20 @@ function PipelineDetailPage({
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+  const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
 
   const qUrl = queryFromUrl();
   const {
     [VIEW_QUERY_PARAM]: activeSidekickView,
     file_path: filePathFromUrl,
   } = qUrl;
-  let filePathsFromUrl = qUrl['file_paths[]'] || [];
-  if (!Array.isArray(filePathsFromUrl)) {
-    filePathsFromUrl = [filePathsFromUrl];
-  }
+  const filePathsFromUrl = useMemo(() => {
+    let arr = qUrl['file_paths[]'] || [];
+    if (!Array.isArray(arr)) {
+      arr = [arr];
+    }
+    return arr;
+  }, [qUrl]);
   const setActiveSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
@@ -265,9 +269,9 @@ function PipelineDetailPage({
   // Files
   const openFile = useCallback((filePath: string) => {
     const filePathEncoded = encodeURIComponent(filePath);
-    let filePaths = [];
-    if (filePathsFromUrl) {
-      filePaths = filePathsFromUrl;
+    let filePaths = queryFromUrl()['file_paths[]'] || [];
+    if (!Array.isArray(filePaths)) {
+      filePaths = [filePaths];
     }
     if (!filePaths.includes(filePathEncoded)) {
       filePaths.push(filePathEncoded);
@@ -276,16 +280,23 @@ function PipelineDetailPage({
       'file_paths[]': filePaths,
       file_path: filePathEncoded,
     });
-  }, [filePathsFromUrl]);
+  }, []);
 
   const {
     data: dataFileContents,
   } = api.file_contents.detail(selectedFilePath);
-  const selectedFile = dataFileContents?.file;
+  const selectedFile = dataFileContents?.file_content;
   useEffect(() => {
     setSelectedFilePath(filePathFromUrl);
   }, [
     filePathFromUrl,
+  ]);
+  useEffect(() => {
+    if (!equals(filePathsFromUrl, selectedFilePaths)) {
+      setSelectedFilePaths(filePathsFromUrl);
+    }
+  }, [
+    filePathsFromUrl
   ]);
 
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
@@ -635,7 +646,7 @@ function PipelineDetailPage({
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
-      filePaths={filePathsFromUrl}
+      filePaths={selectedFilePaths}
       isBusy={runningBlocks.length >= 1}
       isPipelineUpdating={isPipelineUpdating}
       kernel={kernel}
@@ -646,7 +657,6 @@ function PipelineDetailPage({
       selectedFile={selectedFile}
     />
   ), [
-    filePathsFromUrl,
     isPipelineUpdating,
     kernel,
     pipeline,
@@ -655,6 +665,7 @@ function PipelineDetailPage({
     restartKernel,
     runningBlocks,
     selectedFile,
+    selectedFilePaths,
   ]);
 
   return (

@@ -112,6 +112,7 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps, ref) {
+  console.log('CodeBlock', block?.uuid)
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
