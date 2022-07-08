@@ -166,6 +166,7 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
+            self.__save()
         if update_content and 'blocks' in data:
             for block_data in data['blocks']:
                 if 'uuid' in block_data:
