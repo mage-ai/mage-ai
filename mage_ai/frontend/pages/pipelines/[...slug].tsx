@@ -503,14 +503,11 @@ function PipelineDetailPage({
         resetState();
         router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
       }}
-      // pipeline={pipeline}
       // setSelectedBlock={setSelectedBlock}
-      // tree={files}
     />
   ), [
     files,
     // blockRefs,
-    // pipeline,
     // setSelectedBlock,
   ]);
   const sideKick = useMemo(() => (
