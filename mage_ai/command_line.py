@@ -14,7 +14,6 @@ def main():
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
     elif command == 'start':
-        print('Starting server...')
         if len(sys.argv) > 2:
             repo_path = os.path.join(os.getcwd(), sys.argv[2])
         else:

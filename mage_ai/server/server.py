@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
@@ -391,7 +392,10 @@ async def main(repo_path: str = None):
     os.environ['CONNECTION_FILE'] = manager.connection_file
 
     app = make_app()
-    app.listen(6789)
+    app.listen(DATA_PREP_SERVER_PORT)
+
+    print('Server started!')
+    print(f'Mage is running at http://localhost:{DATA_PREP_SERVER_PORT}')
 
     get_messages(
         manager.client(),
@@ -404,6 +408,4 @@ async def main(repo_path: str = None):
 
 
 if __name__ == '__main__':
-    print('Starting server...')
-
     asyncio.run(main())

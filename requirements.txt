@@ -14,7 +14,7 @@ ipykernel==6.15.0
 ipython
 itsdangerous==2.1.2
 joblib>=1.1.0
-git+https://github.com/mage-ai/jupyter_client.git#egg=jupyter-client
+jupyter_client @ git+https://github.com/mage-ai/jupyter_client.git#egg=jupyter-client
 google-cloud-bigquery==3.2.0
 jupyter-server-proxy==3.2.1
 numpyencoder==0.3.0
