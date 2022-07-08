@@ -23,10 +23,7 @@ import {
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
-import {
-  executeCode,
-  saveCode,
-} from './keyboard_shortcuts/shortcuts';
+import { saveCode } from './keyboard_shortcuts/shortcuts';
 
 export type OnDidChangeCursorPositionParameterType = {
   editorRect: {
@@ -55,7 +52,7 @@ type CodeEditorProps = {
   onChange?: (value: string) => void;
   onSave?: (value: string) => void;
   placeholder?: string;
-  runBlock: (content: string) => void;
+  shortcuts?: ((monaco: any, editor: any) => void)[];
   showLineNumbers?: boolean;
   theme?: any;
   value?: string;
@@ -72,10 +69,10 @@ function CodeEditor({
   onDidChangeCursorPosition,
   onSave,
   placeholder,
-  runBlock,
   selected,
   setSelected,
   setTextareaFocused,
+  shortcuts: shortcutsProp,
   showLineNumbers,
   textareaFocused,
   theme: themeProp,
@@ -100,16 +97,16 @@ function CodeEditor({
 
     const shortcuts = [];
 
+    shortcutsProp?.forEach((func) => {
+      shortcuts.push(func(monaco, editor));
+    });
+
     // Keyboard shortcuts for saving content: Command + S
     if (onSave) {
       shortcuts.push(saveCode(monaco, () => {
         onSave(editor.getValue());
       }));
     }
-
-    shortcuts.push(executeCode(monaco, () => {
-      runBlock(editor.getValue());
-    }));
 
     addKeyboardShortcut(monaco, editor, shortcuts);
 
@@ -172,11 +169,11 @@ function CodeEditor({
     onDidChangeCursorPosition,
     onSave,
     refBottomOfEditor.current,
-    runBlock,
     selected,
     setMounted,
     setSelected,
     setTextareaFocused,
+    shortcutsProp,
     textareaFocused,
     value,
   ]);

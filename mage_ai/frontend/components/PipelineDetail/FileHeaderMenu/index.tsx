@@ -154,6 +154,10 @@ function FileHeaderMenu({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
+      if (highlightedIndex === null) {
+        return;
+      }
+
       if (keyMapping[KEY_CODE_ARROW_LEFT]) {
         setHighlightedIndex(idx => idx === 0 ? NUMBER_OF_TOP_MENU_ITEMS - 1 : idx - 1);
       } else if (keyMapping[KEY_CODE_ARROW_RIGHT]) {
@@ -161,6 +165,7 @@ function FileHeaderMenu({
       }
     },
     [
+      highlightedIndex,
       setHighlightedIndex,
     ],
   );

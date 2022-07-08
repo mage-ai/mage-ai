@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
-import FileType from '@interfaces/FileType';
+import FileType, { FOLDER_NAME_PIPELINES } from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
@@ -57,13 +57,18 @@ function Folder({
   const disabled = disabledProp
     || name === '__init__.py'
     || !!name.match(/^\./);
-  const isPipelineFolder = parentFile?.name === 'pipelines';
+  const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
   const children = useMemo(() =>
     isPipelineFolder
       ? null
       : (
         childrenProp
-          ? sortByKey(childrenProp, ({ children: arr }) => arr ? 0 : 1)
+          ? sortByKey(childrenProp, ({
+            children: arr,
+            name: nameChild,
+          }) => name === FOLDER_NAME_PIPELINES
+            ? nameChild
+            : (arr ? 0 : 1))
           : childrenProp
       ),
     [
@@ -77,7 +82,7 @@ function Folder({
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
   let IconEl = FileFill;
-  if (isPipelineFolder) {
+  if (isPipelineFolder && !disabled) {
     IconEl = Pipeline;
   } else if (children) {
     IconEl = FolderIcon;
@@ -114,6 +119,10 @@ function Folder({
         onClick={(e) => {
           pauseEvent(e);
 
+          if (disabled) {
+            return;
+          }
+
           if (isPipelineFolder) {
             openPipeline(name);
           } else if (children) {
@@ -136,7 +145,7 @@ function Folder({
           alignItems: 'center',
           cursor: 'default',
           display: 'flex',
-          minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER),
+          minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
           paddingLeft: INDENT_WIDTH * level,
         }}
       >

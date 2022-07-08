@@ -97,17 +97,17 @@ class ApiFileContentHandler(BaseHandler):
         file_path = urllib.parse.unquote(file_path_encoded)
         file = File.from_path(file_path, get_repo_path())
 
-        self.write(dict(file=file.to_dict(include_content=True)))
+        self.write(dict(file_content=file.to_dict(include_content=True)))
 
     def put(self, file_path_encoded):
         file_path = urllib.parse.unquote(file_path_encoded)
         file = File.from_path(file_path, get_repo_path())
 
-        data = json.loads(self.request.body).get('file', {})
+        data = json.loads(self.request.body).get('file_content', {})
         content = data.get('content')
         file.update_content(content)
 
-        self.write(dict(file=file.to_dict(include_content=True)))
+        self.write(dict(file_content=file.to_dict(include_content=True)))
 
 
 class ApiPipelineHandler(BaseHandler):
@@ -350,7 +350,7 @@ def make_app():
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
-            (r'/api/file_contents(?P<file_path_encoded>.+)', ApiFileContentHandler),
+            (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
             (r'/api/pipelines', ApiPipelineListHandler),

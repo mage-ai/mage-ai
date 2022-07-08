@@ -11,3 +11,5 @@ export default interface FileType {
   parent?: FileType;
   path?: string;
 }
+
+export const FOLDER_NAME_PIPELINES = 'pipelines';

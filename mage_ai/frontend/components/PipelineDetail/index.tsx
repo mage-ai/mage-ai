@@ -13,7 +13,6 @@ import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
-import KernelStatus from './KernelStatus';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -357,16 +356,6 @@ function PipelineDetail({
           </CSSTransition>
         )}
       </PipelineContainerStyle>
-
-      <KernelStatus
-        isBusy={runningBlocks.length >= 1}
-        isPipelineUpdating={isPipelineUpdating}
-        kernel={kernel}
-        pipeline={pipeline}
-        pipelineContentTouched={pipelineContentTouched}
-        pipelineLastSaved={pipelineLastSaved}
-        restartKernel={restartKernel}
-      />
 
       <Spacing mt={1} px={PADDING_UNITS}>
         {blocks.map((block: BlockType, idx: number) => {

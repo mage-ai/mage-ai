@@ -17,6 +17,7 @@ import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
+import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
@@ -45,10 +46,10 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
-import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
@@ -75,11 +76,21 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
+  const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
 
+  const qUrl = queryFromUrl();
   const {
     [VIEW_QUERY_PARAM]: activeSidekickView,
-    file_path,
-  } = queryFromUrl();
+    file_path: filePathFromUrl,
+  } = qUrl;
+  const filePathsFromUrl = useMemo(() => {
+    let arr = qUrl['file_paths[]'] || [];
+    if (!Array.isArray(arr)) {
+      arr = [arr];
+    }
+    return arr;
+  }, [qUrl]);
   const setActiveSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
@@ -257,15 +268,36 @@ function PipelineDetailPage({
 
   // Files
   const openFile = useCallback((filePath: string) => {
+    const filePathEncoded = encodeURIComponent(filePath);
+    let filePaths = queryFromUrl()['file_paths[]'] || [];
+    if (!Array.isArray(filePaths)) {
+      filePaths = [filePaths];
+    }
+    if (!filePaths.includes(filePathEncoded)) {
+      filePaths.push(filePathEncoded);
+    }
     goToWithQuery({
-      file_path: encodeURIComponent(filePath),
+      'file_paths[]': filePaths,
+      file_path: filePathEncoded,
     });
   }, []);
 
   const {
     data: dataFileContents,
-  } = api.file_contents.detail(file_path);
-  const selectedFile = dataFileContents?.file;
+  } = api.file_contents.detail(selectedFilePath);
+  const selectedFile = dataFileContents?.file_content;
+  useEffect(() => {
+    setSelectedFilePath(filePathFromUrl);
+  }, [
+    filePathFromUrl,
+  ]);
+  useEffect(() => {
+    if (!equals(filePathsFromUrl, selectedFilePaths)) {
+      setSelectedFilePaths(filePathsFromUrl);
+    }
+  }, [
+    filePathsFromUrl
+  ]);
 
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
@@ -612,6 +644,29 @@ function PipelineDetailPage({
     setRunningBlocks,
     setSelectedBlock,
   ]);
+  const mainContainerHeaderMemo = useMemo(() => (
+    <KernelStatus
+      filePaths={selectedFilePaths}
+      isBusy={runningBlocks.length >= 1}
+      isPipelineUpdating={isPipelineUpdating}
+      kernel={kernel}
+      pipeline={pipeline}
+      pipelineContentTouched={pipelineContentTouched}
+      pipelineLastSaved={pipelineLastSaved}
+      restartKernel={restartKernel}
+      selectedFile={selectedFile}
+    />
+  ), [
+    isPipelineUpdating,
+    kernel,
+    pipeline,
+    pipelineContentTouched,
+    pipelineLastSaved,
+    restartKernel,
+    runningBlocks,
+    selectedFile,
+    selectedFilePaths,
+  ]);
 
   return (
     <>
@@ -657,6 +712,7 @@ function PipelineDetailPage({
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
+        mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}
@@ -666,7 +722,7 @@ function PipelineDetailPage({
         setBeforeWidth={setBeforeWidth}
       >
         {!selectedFile && pipelineDetailMemo}
-        {selectedFile && <FileEditor selectedFile={selectedFile} />}
+        {selectedFile && <FileEditor file={selectedFile} />}
 
         <Spacing
           pb={Math.max(

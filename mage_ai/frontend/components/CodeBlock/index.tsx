@@ -55,6 +55,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
+import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -112,6 +113,7 @@ function CodeBlockProps({
   setTextareaFocused,
   textareaFocused,
 }: CodeBlockProps, ref) {
+  console.log('CodeBlock', block?.uuid)
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [content, setContent] = useState(defaultValue)
@@ -321,10 +323,14 @@ function CodeBlockProps({
       }}
       onDidChangeCursorPosition={onDidChangeCursorPosition}
       placeholder="Start typing here..."
-      runBlock={runBlockAndTrack}
       selected={selected}
       setSelected={setSelected}
       setTextareaFocused={setTextareaFocused}
+      shortcuts={[
+        (monaco, editor) => executeCode(monaco, () => {
+          runBlockAndTrack(editor.getValue());
+        }),
+      ]}
       textareaFocused={textareaFocused}
       value={content}
       width="100%"

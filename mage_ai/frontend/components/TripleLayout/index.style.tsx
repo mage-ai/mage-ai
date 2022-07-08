@@ -166,16 +166,26 @@ export const DraggableStyle = styled.div<{
   `}
 `;
 
-export const MainContentStyle = styled.div<{
-  beforeVisible?: boolean;
-  headerOffset?: number;
-}>`
+export const MainWrapper = styled.div`
   height: 100%;
   position: fixed;
   z-index: 1;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
+  `}
+`;
+
+export const MainContentStyle = styled.div<{
+  beforeVisible?: boolean;
+  headerOffset?: number;
+}>`
+  position: fixed;
+  z-index: 2;
+
+  ${props => `
+    height: calc(100% - ${props.headerOffset || 0}px);
+    top: ${props.headerOffset || 0}px;
   `}
 `;
 
