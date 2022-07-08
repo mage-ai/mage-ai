@@ -22,6 +22,12 @@ export const FULL_WIDTH_VIEWS = [
   ViewKeyEnum.TREE,
 ];
 
+export const MESSAGE_VIEWS = [
+  ViewKeyEnum.DATA,
+  ViewKeyEnum.REPORTS,
+  ViewKeyEnum.GRAPHS,
+];
+
 export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.TREE, label: 'Tree' },
   { key: ViewKeyEnum.DATA, label: 'Data' },
