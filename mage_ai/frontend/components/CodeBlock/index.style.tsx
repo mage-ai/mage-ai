@@ -27,7 +27,7 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.DATA_LOADER === blockType) {
     accent = (theme.accent || dark.accent).blue;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
-    accent = (theme.content || dark.content).muted;
+    accent = (theme.content || dark.content).default;
   }
 
   return {

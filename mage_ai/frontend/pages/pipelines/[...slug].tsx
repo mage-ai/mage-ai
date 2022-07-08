@@ -78,6 +78,9 @@ function PipelineDetailPage({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
+  const [filesTouched, setFilesTouched] = useState<{
+    [filePath: string]: boolean;
+  }>({});
 
   const qUrl = queryFromUrl();
   const {
@@ -282,10 +285,6 @@ function PipelineDetailPage({
     });
   }, []);
 
-  const {
-    data: dataFileContents,
-  } = api.file_contents.detail(selectedFilePath);
-  const selectedFile = dataFileContents?.file_content;
   useEffect(() => {
     setSelectedFilePath(filePathFromUrl);
   }, [
@@ -407,30 +406,6 @@ function PipelineDetailPage({
                 type: DataTypeEnum.TEXT_PLAIN,
               })),
             }));
-          },
-        },
-      ),
-    },
-  );
-
-  const [deleteBlockFile] = useMutation(
-    ({ type, uuid }: BlockType) => (
-      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
-    ),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchPipeline();
-            fetchFileTree();
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
           },
         },
       ),
@@ -701,6 +676,7 @@ function PipelineDetailPage({
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
       filePaths={selectedFilePaths}
+      filesTouched={filesTouched}
       isBusy={runningBlocks.length >= 1}
       isPipelineUpdating={isPipelineUpdating}
       kernel={kernel}
@@ -708,10 +684,11 @@ function PipelineDetailPage({
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
-      selectedFile={selectedFile}
+      selectedFilePath={selectedFilePath}
       updatePipelineName={updatePipelineName}
     />
   ), [
+    filesTouched,
     isPipelineUpdating,
     kernel,
     pipeline,
@@ -719,7 +696,7 @@ function PipelineDetailPage({
     pipelineLastSaved,
     restartKernel,
     runningBlocks,
-    selectedFile,
+    selectedFilePath,
     selectedFilePaths,
     updatePipelineName,
   ]);
@@ -777,8 +754,23 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        {!selectedFile && pipelineDetailMemo}
-        {selectedFile && <FileEditor file={selectedFile} />}
+        {!selectedFilePath && pipelineDetailMemo}
+
+        {filePathsFromUrl?.map((filePath: string) => (
+          <div
+            key={filePath}
+            style={{
+              display: selectedFilePath === filePath
+                ? null
+                : 'none',
+            }}
+          >
+            <FileEditor
+              filePath={filePath}
+              setFilesTouched={setFilesTouched}
+            />
+          </div>
+        ))}
 
         <Spacing
           pb={Math.max(

@@ -33,8 +33,6 @@ export const OverlayStyle = styled.div`
 
 export const PipelineHeaderStyle = styled.div`
   height: ${ASIDE_HEADER_HEIGHT}px;
-  padding-left: ${PADDING_UNITS * UNIT}px;
-  padding-right: ${PADDING_UNITS * UNIT}px;
   position: sticky;
   top: 0;
   width: 100%;
@@ -42,13 +40,14 @@ export const PipelineHeaderStyle = styled.div`
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
-    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 `;
 
 export const FileTabStyle = styled.div<{
   selected: boolean;
 }>`
+  border-left: 1px solid transparent;
   height: 100%;
   padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
 
@@ -65,5 +64,9 @@ export const FileTabStyle = styled.div<{
 
   ${props => props.selected && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+  `}
+
+  ${props => !props.selected && `
+    border-color: ${(props.theme.borders || dark.borders).light} !important;
   `}
 `;
