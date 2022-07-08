@@ -350,6 +350,7 @@ function PipelineDetail({
             classNames="pipeline-detail"
             in={visible}
             onEntered={() => setTimeout(() => setVisibleOverlay(false), ANIMATION_DURATION)}
+            timeout={1}
           >
             <OverlayStyle />
           </CSSTransition>

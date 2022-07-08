@@ -8,6 +8,13 @@ export enum BlockTypeEnum {
   TRANSFORMER = 'transformer',
 }
 
+export const BLOCK_TYPES = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export enum StatusTypeEnum {
   EXECUTED = 'executed',
   NOT_EXECUTED = 'not_executed',

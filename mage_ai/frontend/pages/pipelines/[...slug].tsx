@@ -13,8 +13,8 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
-import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -494,23 +494,24 @@ function PipelineDetailPage({
   ]);
   const blockRefs = useRef({});
   const fileTree = useMemo(() => (
-    <FileTree
-      addNewBlockAtIndex={addNewBlockAtIndex}
-      blockRefs={blockRefs}
+    <FileBrowser
+      files={files}
+      // addNewBlockAtIndex={addNewBlockAtIndex}
+      // blockRefs={blockRefs}
       openFile={openFile}
       openPipeline={(uuid: string) => {
         resetState();
         router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
       }}
-      pipeline={pipeline}
-      setSelectedBlock={setSelectedBlock}
-      tree={files}
+      // pipeline={pipeline}
+      // setSelectedBlock={setSelectedBlock}
+      // tree={files}
     />
   ), [
-    blockRefs,
     files,
-    pipeline,
-    setSelectedBlock,
+    // blockRefs,
+    // pipeline,
+    // setSelectedBlock,
   ]);
   const sideKick = useMemo(() => (
     <Sidekick

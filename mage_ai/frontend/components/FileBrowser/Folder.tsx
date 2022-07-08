@@ -1,0 +1,168 @@
+import { useMemo, useState } from 'react';
+
+import Circle from '@oracle/elements/Circle';
+import FileType from '@interface/FileType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Text from '@oracle/elements/Text';
+import { BLOCK_TYPES } from '@interfaces/BlockType';
+import {
+  ChevronDown,
+  ChevronRight,
+  FileFill,
+  Folder as FolderIcon,
+  Pipeline,
+} from '@oracle/icons';
+import {
+  ICON_SIZE,
+  INDENT_WIDTH,
+} from './index.style';
+import { ThemeType } from '@oracle/styles/themes/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { get, set } from '@storage/localStorage';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { pauseEvent } from '@utils/events';
+import { singularize } from '@utils/string';
+import { sortByKey } from '@utils/array';
+
+export type FolderSharedProps = {
+  openFile: (path: string) => void;
+  openPipeline: (uuid: string) => void;
+};
+
+type FolderProps = {
+  file: FileType;
+  level: number;
+  parentFile?: FileType;
+  theme: ThemeType;
+} & FolderSharedProps;
+
+function Folder({
+  file,
+  level,
+  openFile,
+  openPipeline,
+  parentFile,
+  theme,
+}: FolderProps) {
+  const {
+    children: childrenProp,
+    disabled: disabledProp,
+    name,
+  } = file;
+  const disabled = disabledProp
+    || name === '__init__.py'
+    || name.match(/^\./);
+  const isPipelineFolder = parentFile?.name === 'pipelines';
+  const children = useMemo(() =>
+    isPipelineFolder
+      ? null
+      : (
+        childrenProp
+          ? sortByKey(childrenProp, ({ children: arr }) => arr ? 0 : 1)
+          : childrenProp
+      ),
+    [
+      childrenProp,
+      isPipelineFolder,
+    ],
+  );
+  const uuid = `${level}/${name}`;
+  console.log(`FILE: ${uuid}`);
+
+  const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
+
+  let IconEl = FileFill;
+  if (isPipelineFolder) {
+    IconEl = Pipeline;
+  } else if (children) {
+    IconEl = FolderIcon;
+  }
+
+  let color;
+  if (children && BLOCK_TYPES.includes(singularize(name))) {
+    color = getColorsForBlockType(singularize(name), { theme }).accent;
+  }
+
+  const childrenFiles = useMemo(() => children?.map((f: FileType) => (
+    <Folder
+      file={f}
+      key={f.name}
+      level={level + 1}
+      openPipeline={openPipeline}
+      parentFile={file}
+      theme={theme}
+    />
+  )), [
+    children,
+    openPipeline,
+  ]);
+
+  return (
+    <>
+      <div
+        className="row"
+        onClick={(e) => {
+          pauseEvent(e);
+
+          if (isPipelineFolder) {
+            openPipeline(name);
+          } else if (children) {
+            setCollapsed((collapsedPrev) => {
+              set(uuid, !collapsedPrev);
+
+              return !collapsedPrev;
+            });
+          } else if (name.match(/\.txt$/)) {
+            console.log('openFile')
+          }
+        }}
+        style={{
+          alignItems: 'center',
+          cursor: 'default',
+          display: 'flex',
+          paddingLeft: INDENT_WIDTH * level,
+        }}
+      >
+        {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
+        {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
+        {!children && <div style={{ width: ICON_SIZE }} />}
+
+        <div
+          style={{
+            marginLeft: UNIT / 2,
+            marginRight: UNIT / 2,
+          }}
+        >
+          {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
+          {color && (
+            <Circle
+              color={color}
+              size={ICON_SIZE}
+              square
+            />
+          )}
+        </div>
+
+        <Text
+          color={color}
+          default={!color && !disabled}
+          monospace
+          disabled={disabled}
+          small
+        >
+          {name}
+        </Text>
+      </div>
+
+      <div
+        style={{
+          display: collapsed ? 'none' : 'block',
+        }}
+      >
+        {childrenFiles}
+      </div>
+    </>
+  );
+}
+
+export default Folder;
