@@ -176,6 +176,7 @@ function PipelineDetailPage({
     setEditingBlock({
       upstreamBlocks: {
         block: null,
+        values: [],
       },
     });
     setMessages({});
