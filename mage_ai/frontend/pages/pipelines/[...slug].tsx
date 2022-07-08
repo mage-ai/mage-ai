@@ -98,6 +98,7 @@ function PipelineDetailPage({
     }
   }, [activeSidekickView]);
 
+  const blockRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
@@ -488,27 +489,36 @@ function PipelineDetailPage({
     setMessages,
   ]);
 
-  // TODO: API should report filesystem as FileNodeType[], not FileNodeType
-  const files = useMemo(() => filesData ? [filesData?.files] : [], [
-    filesData?.files,
+  const onSelectBlockFile = useCallback((blockUUID: string, blockType: BlockTypeEnum) => {
+    // Block is in pipeline
+    const block =
+      blocks.find(({ type, uuid }: BlockType) => type === blockType && uuid === blockUUID);
+
+    if (block) {
+      setSelectedBlock(block);
+      if (blockRefs?.current) {
+        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+        blockRef?.current?.scrollIntoView();
+      }
+    }
+    // Block is not in pipeline: open file
+  }, [
+    blocks,
   ]);
-  const blockRefs = useRef({});
+
   const fileTree = useMemo(() => (
     <FileBrowser
-      files={files}
-      // addNewBlockAtIndex={addNewBlockAtIndex}
-      // blockRefs={blockRefs}
+      files={filesData?.files}
+      onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={(uuid: string) => {
         resetState();
         router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
       }}
-      // setSelectedBlock={setSelectedBlock}
     />
   ), [
-    files,
-    // blockRefs,
-    // setSelectedBlock,
+    filesData?.files,
+    onSelectBlockFile,
   ]);
   const sideKick = useMemo(() => (
     <Sidekick

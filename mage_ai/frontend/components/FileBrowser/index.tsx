@@ -17,7 +17,7 @@ function FileBrowser({
 
   return (
     <ContainerStyle>
-      {files.map((file: FileType) => (
+      {files?.map((file: FileType) => (
         <Folder
           {...props}
           file={file}

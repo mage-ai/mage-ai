@@ -4,7 +4,7 @@ import Circle from '@oracle/elements/Circle';
 import FileType from '@interface/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
-import { BLOCK_TYPES } from '@interfaces/BlockType';
+import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   ChevronDown,
   ChevronRight,
@@ -20,12 +20,16 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { getFullPath } from './utils';
+import {
+  getBlockFromFile,
+  getFullPath,
+} from './utils';
 import { pauseEvent } from '@utils/events';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export type FolderSharedProps = {
+  onSelectBlockFile: (blockUUID: string, blockType: BlockTypeEnum) => void;
   openFile: (path: string) => void;
   openPipeline: (uuid: string) => void;
 };
@@ -39,6 +43,7 @@ type FolderProps = {
 function Folder({
   file,
   level,
+  onSelectBlockFile,
   openFile,
   openPipeline,
   theme,
@@ -91,6 +96,7 @@ function Folder({
       }}
       key={f.name}
       level={level + 1}
+      onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={openPipeline}
       theme={theme}
@@ -119,6 +125,11 @@ function Folder({
           } else if (name.match(/\.txt$/)) {
             // WARNING: this assumes the first part of a path is the default_repo
             openFile(getFullPath(file).split('/').slice(1).join('/'));
+          } else {
+            const block = getBlockFromFile(file);
+            if (block) {
+              onSelectBlockFile(block.uuid, block.type);
+            }
           }
         }}
         style={{
