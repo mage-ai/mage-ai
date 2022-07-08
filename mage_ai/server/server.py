@@ -310,7 +310,7 @@ def make_app():
             # (r'/pipelines', MainHandler),
             (r'/pipelines/(.*)', MainHandler),
             (
-                r"/_next/static/(.*)",
+                r'/_next/static/(.*)',
                 tornado.web.StaticFileHandler,
                 { "path": os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
             ),
