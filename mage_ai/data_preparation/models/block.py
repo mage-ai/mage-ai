@@ -133,11 +133,16 @@ class Block:
         2. If pipeline is None, check whether block is used in any pipelines. If block is being
         used, throw error. Otherwise, delete the block files.
         """
+        from mage_ai.data_preparation.models.pipeline import Pipeline
         if self.pipeline is not None:
             self.pipeline.delete_block(self)
+            # For block_type SCRATCHPAD, also delete the file if possible
+            if self.type == BlockType.SCRATCHPAD:
+                pipelines = Pipeline.get_pipelines_by_block(self)
+                if len(pipelines) == 0:
+                    os.remove(self.file_path)
             return
-        from mage_ai.data_preparation.models.pipeline import Pipeline
-
+        # If pipeline is not specified, delete the block from all pipelines and delete the file.
         pipelines = Pipeline.get_pipelines_by_block(self)
         for p in pipelines:
             if not p.block_deletable(self):
