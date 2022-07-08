@@ -13,7 +13,14 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 import { FileNodeType, getFileNodeColor, ReservedFolderEnum } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals } from '@utils/array';
-import { findBlockByPath, getBlockType, getBlockUUID, isBlockType } from './utils';
+import {
+  findBlockByPath,
+  getBlockType,
+  getBlockUUID,
+  getPipelineUUID,
+  isBlockType,
+  isPipelineFilePath,
+} from './utils';
 
 export type FileTreeProps = {
   addNewBlockAtIndex: (
@@ -24,6 +31,7 @@ export type FileTreeProps = {
   ) => void;
   blockRefs: any;
   openFile: (path: string) => void;
+  openPipeline: (uuid: string) => void;
   pipeline: PipelineType;
   setSelectedBlock: (block: BlockType) => void;
   tree: FileNodeType[];
@@ -53,6 +61,7 @@ function FileTree({
   addNewBlockAtIndex,
   blockRefs,
   openFile: openFileProp,
+  openPipeline,
   pipeline,
   setSelectedBlock,
   tree: initialTree,
@@ -147,8 +156,7 @@ function FileTree({
           getBlockUUID(path),
         );
       }
-    }
-    else {
+    } {
       const parts = path[path.length - 1].split('.');
       const fileExtension = parts[parts.length - 1];
       if (FileExtensionEnum.TXT === fileExtension) {
@@ -160,6 +168,11 @@ function FileTree({
 
   const onDoubleClickHandler = (path: string[], isFolder) => (e) => {
     e.preventDefault();
+
+    if (isPipelineFilePath(path)) {
+      return openPipeline(getPipelineUUID(path));
+    }
+
     return !isFolder ? openFile(path) : undefined;
   };
 
@@ -180,7 +193,7 @@ function FileTree({
       } = getFileNodeColor(path, themeContext) || {};
 
       const fileNodeEl = (
-        <>
+        <div key={path.join('/')}>
           <FileNodeStyle highlighted={equals(path, selectedPath)}>
             <Spacing mr={children ? `${depth * 2 * UNIT - 12}px` : `${depth * 2 * UNIT}px`} />
             <Link
@@ -211,7 +224,7 @@ function FileTree({
             </Link>
           </FileNodeStyle>
           {children && !collapsed && buildTreeEl(children)}
-        </>
+        </div>
       );
 
       path.pop();

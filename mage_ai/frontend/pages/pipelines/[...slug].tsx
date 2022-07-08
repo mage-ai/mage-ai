@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import BlockType, {
   BlockTypeEnum,
@@ -58,6 +59,7 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   pipeline: pipelineProp,
 }: PipelineDetailPageProps) {
+  const router = useRouter();
   const {
     height: heightWindow,
     width: widthWindow,
@@ -109,12 +111,6 @@ function PipelineDetailPage({
       ...data,
     };
   }, [contentByBlockUUID]);
-
-  useEffect(() => {
-    if (pipelineUUID !== pipelineUUIDPrev) {
-      contentByBlockUUID.current = {};
-    }
-  }, [pipelineUUID, pipelineUUIDPrev]);
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
   useEffect(() => {
@@ -175,6 +171,25 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
+
+  const resetState = useCallback(() => {
+    setEditingBlock({
+      upstreamBlocks: {
+        block: null,
+        values: [],
+      },
+    });
+    setMessages({});
+    setPipelineContentTouched(false);
+    setPipelineLastSaved(null)
+    setRunningBlocks([]);
+    setSelectedBlock(null);
+  }, []);
+  useEffect(() => {
+    if (pipelineUUID !== pipelineUUIDPrev) {
+      contentByBlockUUID.current = {};
+    }
+  }, [pipelineUUID, pipelineUUIDPrev]);
 
   const {
     data: blockSampleData,
@@ -483,6 +498,10 @@ function PipelineDetailPage({
       addNewBlockAtIndex={addNewBlockAtIndex}
       blockRefs={blockRefs}
       openFile={openFile}
+      openPipeline={(uuid: string) => {
+        resetState();
+        router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+      }}
       pipeline={pipeline}
       setSelectedBlock={setSelectedBlock}
       tree={files}
