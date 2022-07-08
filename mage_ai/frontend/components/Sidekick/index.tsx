@@ -279,7 +279,13 @@ function Sidekick({
             verticalHeightOffset={heightOffset}
             width={afterWidth}
           >
-            <Text default large monospace>
+            <Text
+              center
+              default
+              disableWordBreak
+              large
+              monospace
+            >
               Select a block for insights
             </Text>
           </FlexContainer>
