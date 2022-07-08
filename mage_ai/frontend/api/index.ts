@@ -42,6 +42,7 @@ export const VERSIONS: 'versions' = 'versions';
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
+  [BLOCKS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCKS, PIPELINES, OUTPUTS],
