@@ -74,7 +74,7 @@ class Redshift(BaseSQL):
         except KeyError:
             raise KeyError(
                 f'No configuration settings found for '
-                '\'{IOConfigKeys.AWS}.{IOConfigKeys.REDSHIFT}\' under profile'
+                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.REDSHIFT}\' under profile'
             )
         credentials = ['access_key_id', 'secret_access_key', 'region']
         for credential in credentials:

@@ -119,7 +119,7 @@ class S3(BaseFile):
         except KeyError:
             raise KeyError(
                 f'No configuration settings found for '
-                '\'{IOConfigKeys.AWS}.{IOConfigKeys.S3}\' under profile'
+                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.S3}\' under profile'
             )
         credentials = ['access_key_id', 'secret_access_key', 'region']
         parameters = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
