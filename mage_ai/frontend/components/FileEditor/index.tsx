@@ -66,7 +66,10 @@ function FileEditor({
         content: value,
       },
     });
-    setFilesTouched(prev => ({
+    // @ts-ignore
+    setFilesTouched((prev: {
+      [path: string]: boolean;
+    }) => ({
       ...prev,
       [f?.path]: false,
     }));
@@ -84,7 +87,10 @@ function FileEditor({
       // onDidChangeCursorPosition={onDidChangeCursorPosition}
       onChange={(value: string) => {
         setContent(value);
-        setFilesTouched(prev => ({
+        // @ts-ignore
+        setFilesTouched((prev: {
+          [path: string]: boolean;
+        }) => ({
           ...prev,
           [file?.path]: true,
         }));
