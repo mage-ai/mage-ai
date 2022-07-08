@@ -153,7 +153,9 @@ class Block:
     async def execute(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
             try:
-                output = await self.execute_block(custom_code, redirect_outputs)
+                output = await self.execute_block(
+                    custom_code=custom_code, redirect_outputs=redirect_outputs
+                )
                 block_output = output['output']
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
