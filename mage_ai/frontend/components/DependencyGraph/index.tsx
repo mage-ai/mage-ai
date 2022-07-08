@@ -207,6 +207,7 @@ function DependencyGraph({
                     <GraphNode
                       block={block}
                       disabled={blockEditing?.uuid === block.uuid}
+                      hasFailed={StatusTypeEnum.FAILED === block.status}
                       isInProgress={runningBlocksMapping[block.uuid]
                         && runningBlocks[0]?.uuid === block.uuid
                       }

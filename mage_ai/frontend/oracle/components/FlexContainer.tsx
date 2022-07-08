@@ -17,6 +17,7 @@ type FlexContainerProps = {
     [key: string]: string | number;
   };
   textOverflow?: boolean;
+  title?: string;
   verticalHeight?: number;
   verticalHeightOffset?: number;
   width?: number;

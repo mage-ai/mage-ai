@@ -77,7 +77,6 @@ function Folder({
     ],
   );
   const uuid = `${level}/${name}`;
-  console.log(`FILE: ${uuid}`);
 
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
