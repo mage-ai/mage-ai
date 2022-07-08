@@ -110,6 +110,7 @@ function Sidekick({
     columnTypes,
     statistics,
   });
+  const hasData = sampleData && insights && Object.keys(statistics).length > 0;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -241,7 +242,7 @@ function Sidekick({
           />
         )}
         {activeView === ViewKeyEnum.REPORTS &&
-          <PaddingContainerStyle noPadding={!selectedBlock}>
+          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
             <FlexContainer flexDirection="column" fullWidth>
               {qualityMetrics && (
                 <StatsTable
@@ -261,7 +262,7 @@ function Sidekick({
           </PaddingContainerStyle>
         }
         {activeView === ViewKeyEnum.GRAPHS &&
-          <PaddingContainerStyle noPadding={!selectedBlock}>
+          <PaddingContainerStyle noPadding={!selectedBlock || !hasData}>
             <BlockCharts
               afterWidth={afterWidth}
               features={features}
@@ -271,24 +272,31 @@ function Sidekick({
           </PaddingContainerStyle>
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
-        {!selectedBlock && MESSAGE_VIEWS.includes(activeView) &&
-          <FlexContainer
-            alignItems="center"
-            justifyContent="center"
-            verticalHeight={90}
-            verticalHeightOffset={heightOffset}
-            width={afterWidth}
-          >
-            <Text
-              center
-              default
-              disableWordBreak
-              large
-              monospace
+
+        {(selectedBlock && hasData)
+          ? null
+          : (MESSAGE_VIEWS.includes(activeView) &&
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
+              verticalHeight={90}
+              verticalHeightOffset={heightOffset}
+              width={afterWidth}
             >
-              Select a block for insights
-            </Text>
-          </FlexContainer>
+              <Text
+                center
+                default
+                disableWordBreak
+                large
+                monospace
+              >
+                {!selectedBlock
+                  ? 'Select a block for insights'
+                  : (!hasData && 'No data or insights available')
+                }
+              </Text>
+            </FlexContainer>
+          )
         }
       </SidekickContainerStyle>
     </>
