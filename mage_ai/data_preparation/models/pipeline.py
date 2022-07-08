@@ -83,7 +83,7 @@ class Pipeline:
             return True
         return len(self.blocks_by_uuid[block.uuid].downstream_blocks) == 0
 
-    async def execute(self, analyze_outputs=True, run_all_blocks=False):
+    async def execute(self, analyze_outputs=True, run_all_blocks=False, redirect_outputs=False):
         """
         Async function for parallel processing
         This function will schedule the block execution in topological
@@ -108,7 +108,9 @@ class Pipeline:
             if skip:
                 continue
             await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
-            task = asyncio.create_task(block.execute(analyze_outputs=analyze_outputs))
+            task = asyncio.create_task(
+                block.execute(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
+            )
             tasks[block.uuid] = task
             for downstream_block in block.downstream_blocks:
                 if downstream_block.uuid not in tasks:
@@ -142,12 +144,14 @@ class Pipeline:
         return dict(
             name=self.name,
             uuid=self.uuid,
-            blocks=[b.to_dict(
-                        include_content=include_content,
-                        include_outputs=include_outputs,
-                        sample_count=sample_count,
-                    )
-                    for b in self.blocks_by_uuid.values()],
+            blocks=[
+                b.to_dict(
+                    include_content=include_content,
+                    include_outputs=include_outputs,
+                    sample_count=sample_count,
+                )
+                for b in self.blocks_by_uuid.values()
+            ],
         )
 
     def update(self, data, update_content=False):
@@ -230,8 +234,9 @@ class Pipeline:
                 Variable.dir_path(self.dir_path, new_uuid),
             )
         if old_uuid in self.blocks_by_uuid:
-            self.blocks_by_uuid = \
-                {new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()}
+            self.blocks_by_uuid = {
+                new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()
+            }
         self.__save()
         return block
 
