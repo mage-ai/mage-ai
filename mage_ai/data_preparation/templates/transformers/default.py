@@ -5,7 +5,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame) -> DataFrame:
+def transform_df(df: DataFrame, *args) -> DataFrame:
     """
     Template code for a transformer block.
 

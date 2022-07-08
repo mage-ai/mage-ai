@@ -8,7 +8,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     """
     Execute Transformer Action: {{ action_type }}
     """

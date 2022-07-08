@@ -39,7 +39,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def remove_rows_with_missing_entries(df: DataFrame) -> DataFrame:
+def remove_rows_with_missing_entries(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Transformer Action: Delete 3 rows to remove all missing values from the dataset.
     \"\"\"
@@ -164,7 +164,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame) -> DataFrame:
+def transform_df(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -199,7 +199,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame) -> DataFrame:
+def transform_df(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -237,7 +237,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Execute Transformer Action: clean_column_name
     \"\"\"
@@ -265,7 +265,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Execute Transformer Action: custom
     \"\"\"
@@ -294,7 +294,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Execute Transformer Action: reformat
     \"\"\"
@@ -323,7 +323,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     \"\"\"
     Execute Transformer Action: add
     \"\"\"
