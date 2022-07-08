@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
@@ -31,11 +32,38 @@ export const OverlayStyle = styled.div`
 `;
 
 export const PipelineHeaderStyle = styled.div`
-  height: ${UNIT * 6}px;
+  height: ${ASIDE_HEADER_HEIGHT}px;
   padding-left: ${PADDING_UNITS * UNIT}px;
   padding-right: ${PADDING_UNITS * UNIT}px;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 5;
 
   ${props => `
+    background-color: ${(props.theme.background || dark.background).codeArea};
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+`;
+
+export const FileTabStyle = styled.div<{
+  selected: boolean;
+}>`
+  height: 100%;
+  padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
+
+  ${props => `
+    &:hover {
+      cursor: default;
+
+      p {
+        color: ${(props.theme.content || dark.content).active} !important;
+        cursor: default;
+      }
+    }
+  `}
+
+  ${props => props.selected && `
+    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
 `;
