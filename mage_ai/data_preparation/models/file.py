@@ -2,9 +2,9 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
 import os
 
-MAX_DEPTH = 30
 BLACKLISTED_DIRS = frozenset(['venv', 'env'])
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
+MAX_DEPTH = 30
 
 
 class File:
