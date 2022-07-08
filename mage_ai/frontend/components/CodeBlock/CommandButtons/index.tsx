@@ -4,7 +4,6 @@ import { ThemeContext } from 'styled-components';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
-import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
@@ -32,7 +31,7 @@ export type CommandButtonsSharedProps = {
   deleteBlock: (block: BlockType) => void;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
-}
+};
 
 type CommandButtonsProps = {
   block: BlockType;
@@ -45,8 +44,8 @@ function CommandButtons({
   executionState,
   interruptKernel,
   runBlock,
-}) {
-  const { uuid } = block.uuid;
+}: CommandButtonsProps) {
+  const { uuid } = block;
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
@@ -81,8 +80,8 @@ function CommandButtons({
                 &nbsp;
                 <KeyboardTextGroup
                   inline
-                  monospace
                   keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                  monospace
                   uuidForKey={uuid}
                 />
               </Text>

@@ -190,8 +190,11 @@ function PipelineDetail({
           return runningBlocksPrevious.concat(block);
         });
       }
+
+      fetchPipeline();
     }
   }, [
+    fetchPipeline,
     pipeline,
     runningBlocks,
     sendMessage,
