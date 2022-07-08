@@ -145,7 +145,10 @@ function Folder({
           cursor: 'default',
           display: 'flex',
           minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
-          paddingLeft: INDENT_WIDTH * level,
+          paddingBottom: UNIT / 4,
+          paddingLeft: (UNIT / 4) + (INDENT_WIDTH * level),
+          paddingRight: (UNIT / 4),
+          paddingTop: UNIT / 4,
         }}
       >
         {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}

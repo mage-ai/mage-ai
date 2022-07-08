@@ -32,6 +32,9 @@ import { remove } from '@utils/array';
 
 type KernelStatusProps = {
   filePaths: string[];
+  filesTouched: {
+    [path: string]: boolean;
+  };
   isBusy: boolean;
   isPipelineUpdating: boolean;
   kernel: KernelType;
@@ -39,12 +42,13 @@ type KernelStatusProps = {
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
   restartKernel: () => void;
-  selectedFile: FileType;
+  selectedFilePath?: string;
   updatePipelineName: (name: string) => void;
 };
 
 function KernelStatus({
   filePaths: filePathsProp,
+  filesTouched,
   isBusy,
   isPipelineUpdating,
   kernel,
@@ -52,18 +56,17 @@ function KernelStatus({
   pipelineContentTouched,
   pipelineLastSaved,
   restartKernel,
-  selectedFile,
+  selectedFilePath,
   updatePipelineName,
 }: KernelStatusProps) {
-  const [isEditingPipeline, setIsEditingPipeline] = useState(false);
-  const [newPipelineName, setNewPipelineName] = useState(pipeline?.uuid);
-  
-  const [restartKernelVisible, setRestartKernelVisible] = useState(false);
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
     alive,
     name,
   } = kernel || {};
+  const [isEditingPipeline, setIsEditingPipeline] = useState(false);
+  const [newPipelineName, setNewPipelineName] = useState(pipeline?.uuid);
+
   const filePaths =
     useMemo(() => filePathsProp.map(path => decodeURIComponent(path)), [filePathsProp]);
   let saveStatus;
@@ -78,6 +81,59 @@ function KernelStatus({
     saveStatus = 'All changes saved';
   }
 
+  const pipelineNameInput = useMemo(() => (
+    <LabelWithValueClicker
+      bold={false}
+      inputValue={newPipelineName}
+      notRequired
+      onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
+      onChange={(e) => {
+        setNewPipelineName(e.target.value);
+      }}
+      onClick={() => setIsEditingPipeline(true)}
+      onFocus={() => setIsEditingPipeline(true)}
+      stacked
+      value={!isEditingPipeline && pipeline?.uuid}
+    />
+  ), [
+    isEditingPipeline,
+    newPipelineName,
+    pipeline,
+  ]);
+
+  const pipelineName = useMemo(() => (
+    <Flex alignItems="center">
+      <Circle
+        color={isBusy
+          ? (themeContext || dark).borders.info
+          : (alive
+            ? (themeContext || dark).borders.success
+            : (themeContext || dark).borders.danger
+          )
+        }
+        size={UNIT}
+      />
+
+      <Spacing mr={1} />
+
+      <FlexContainer alignItems="center">
+        <Text>
+          Pipeline:&nbsp;{selectedFilePath && pipeline?.uuid}
+        </Text>
+        {!selectedFilePath && pipelineNameInput}
+      </FlexContainer>
+
+      <Spacing mr={3} />
+    </Flex>
+  ), [
+    alive,
+    isBusy,
+    pipeline,
+    pipelineNameInput,
+    selectedFilePath,
+    themeContext,
+  ]);
+
   return (
     <PipelineHeaderStyle>
       <FlexContainer
@@ -90,36 +146,34 @@ function KernelStatus({
           fullHeight
           justifyContent="flex-start"
         >
-          <Tooltip
-            label={(
-              <Text>
-                Current working directory is <Text inline monospace>
-                  /home/src
-                </Text>
-              </Text>
+          <Spacing px={PADDING_UNITS}>
+            {selectedFilePath && (
+              <Link
+                noHoverUnderline
+                noOutline
+                onClick={selectedFilePath
+                  ? () => goToWithQuery({ file_path: null })
+                  : null
+                }
+                preventDefault
+              >
+                {pipelineName}
+              </Link>
             )}
-            size={null}
-            widthFitContent
-          >
-            <Flex alignItems="center">
-              <Text>Pipeline:&nbsp;</Text>
 
+            {!selectedFilePath && (
               <FlexContainer alignItems="center">
-                <LabelWithValueClicker
-                  bold={false}
-                  inputValue={newPipelineName}
-                  monospace
-                  notRequired
-                  onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
-                  onChange={(e) => {
-                    setNewPipelineName(e.target.value);
-                  }}
-                  onClick={() => setIsEditingPipeline(true)}
-                  onFocus={() => setIsEditingPipeline(true)}
-                  stacked
-                  value={!isEditingPipeline && pipeline?.uuid}
-                />
-
+                {!isEditingPipeline && (
+                  <Tooltip
+                    block
+                    label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
+                    size={null}
+                    widthFitContent
+                  >
+                    {pipelineName}
+                  </Tooltip>
+                )}
+                {isEditingPipeline && pipelineName}
                 {isEditingPipeline && (
                   <>
                     <Spacing ml={1} />
@@ -134,19 +188,11 @@ function KernelStatus({
                   </>
                 )}
               </FlexContainer>
-
-              <Spacing mr={PADDING_UNITS} />
-
-              <Text muted>
-                {saveStatus}
-              </Text>
-            </Flex>
-          </Tooltip>
-
-          {filePaths?.length >= 0 && <Spacing mr={5} />}
+            )}
+          </Spacing>
 
           {filePaths?.map((filePath: string) => {
-            const selected: boolean = selectedFile?.path.includes(filePath);
+            const selected: boolean = selectedFilePath === encodeURIComponent(filePath);
 
             return (
               <FlexContainer
@@ -171,10 +217,27 @@ function KernelStatus({
                     alignItems="center"
                     fullHeight
                   >
-                    <FileFill
-                      muted={!selected}
-                      size={UNIT * 1.5}
-                    />
+                    {!filesTouched[filePath] && (
+                      <FileFill
+                        muted={!selected}
+                        size={UNIT * 1.5}
+                      />
+                    )}
+
+                    {filesTouched[filePath] && (
+                      <Tooltip
+                        label="Unsaved changes"
+                        size={null}
+                        widthFitContent
+                      >
+                        <div style={{ padding: 1 }}>
+                          <Circle
+                            borderColor={(themeContext || dark).borders.danger}
+                            size={UNIT * 1.25}
+                          />
+                        </div>
+                      </Tooltip>
+                    )}
 
                     <Spacing mr={1} />
 
@@ -225,64 +288,13 @@ function KernelStatus({
           })}
         </FlexContainer>
 
-        {!filePaths?.length && (
-          <Flex
-            alignItems="center"
-            // @ts-ignore
-            onMouseEnter={() => setRestartKernelVisible(true)}
-            // @ts-ignore
-            onMouseLeave={() => setRestartKernelVisible(false)}
-          >
-            {(!alive || restartKernelVisible) && (
-              <KeyboardShortcutButton
-                compact
-                inline
-                keyTextGroups={[
-                  [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-                  [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-                ]}
-                onClick={() => restartKernel()}
-                uuid="KernelStatus/restartKernel"
-              >
-                {alive ? 'Restart' : 'Start'} kernel
-              </KeyboardShortcutButton>
-            )}
-
-            <Spacing mr={1} my={2} />
-
-            <Tooltip
-              block
-              label={alive
-                ? 'Kernel is alive and well.'
-                : 'Kernel has not started or died, please restart.'
-              }
-              size={null}
-              widthFitContent
-            >
-              <FlexContainer
-                alignItems="center"
-              >
-                <Circle
-                  color={isBusy
-                    ? (themeContext || dark).borders.info
-                    : (alive
-                      ? (themeContext || dark).borders.success
-                      : (themeContext || dark).borders.danger
-                    )
-                  }
-                  size={UNIT}
-                />
-
-                <Spacing mr={1} />
-
-                <Text>
-                  {alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
-                </Text>
-              </FlexContainer>
-            </Tooltip>
-          </Flex>
+        {!selectedFilePath && (
+          <Spacing px={PADDING_UNITS}>
+            <Text muted>
+              {saveStatus}
+            </Text>
+          </Spacing>
         )}
-
       </FlexContainer>
     </PipelineHeaderStyle>
   );

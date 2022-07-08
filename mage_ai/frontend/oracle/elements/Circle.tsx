@@ -24,12 +24,12 @@ const CircleStyle = styled.div<CircleProps>`
     border-radius: ${BORDER_RADIUS_SMALL}px;
   `}
 
-  ${props => !props.color && !props.borderSize && `
+  ${props => !props.color && !(props.borderSize || props.borderColor) && `
     background-color: ${(props.theme.content || dark.content).muted};
   `}
 
-  ${props => props.borderSize && `
-    border: ${props.borderSize}px solid ${props.borderColor || (props.theme.content || dark.content).active};
+  ${props => (props.borderSize || props.borderColor) && `
+    border: ${props.borderSize || 1}px solid ${props.borderColor || (props.theme.content || dark.content).active};
   `}
 
   ${props => props.color && `
