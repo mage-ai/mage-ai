@@ -11,6 +11,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
@@ -39,6 +40,7 @@ type KernelStatusProps = {
   pipelineLastSaved: Date;
   restartKernel: () => void;
   selectedFile: FileType;
+  updatePipelineName: (name: string) => void;
 };
 
 function KernelStatus({
@@ -51,7 +53,11 @@ function KernelStatus({
   pipelineLastSaved,
   restartKernel,
   selectedFile,
+  updatePipelineName,
 }: KernelStatusProps) {
+  const [isEditingPipeline, setIsEditingPipeline] = useState(false);
+  const [newPipelineName, setNewPipelineName] = useState(pipeline?.uuid);
+  
   const [restartKernelVisible, setRestartKernelVisible] = useState(false);
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -96,9 +102,38 @@ function KernelStatus({
             widthFitContent
           >
             <Flex alignItems="center">
-              <Text>
-                Pipeline: {pipeline?.uuid}
-              </Text>
+              <Text>Pipeline:&nbsp;</Text>
+
+              <FlexContainer alignItems="center">
+                <LabelWithValueClicker
+                  bold={false}
+                  inputValue={newPipelineName}
+                  monospace
+                  notRequired
+                  onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
+                  onChange={(e) => {
+                    setNewPipelineName(e.target.value);
+                  }}
+                  onClick={() => setIsEditingPipeline(true)}
+                  onFocus={() => setIsEditingPipeline(true)}
+                  stacked
+                  value={!isEditingPipeline && pipeline?.uuid}
+                />
+
+                {isEditingPipeline && (
+                  <>
+                    <Spacing ml={1} />
+                    <Link
+                      onClick={() => updatePipelineName(newPipelineName)}
+                      preventDefault
+                      sameColorAsText
+                      small
+                    >
+                      Update name
+                    </Link>
+                  </>
+                )}
+              </FlexContainer>
 
               <Spacing mr={PADDING_UNITS} />
 

@@ -410,8 +410,8 @@ function CodeBlockProps({
             <LabelWithValueClicker
               bold={false}
               inputValue={newBlockUuid}
-              muted
               monospace
+              muted
               notRequired
               onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
               onChange={(e) => {

@@ -317,6 +317,36 @@ function PipelineDetailPage({
       ),
     },
   );
+
+  const [updatePipelineNoContent] = useMutation(api.pipelines.useUpdate(pipelineUUID));
+  const updatePipelineName = useCallback((name: string) => (
+    // @ts-ignore
+    updatePipelineNoContent({
+      pipeline: { name },
+    }).then((response: any) => {
+      onSuccess(
+        response, {
+          callback: ({ pipeline: { uuid } }) => {
+            router.push(`/pipelines/${uuid}`);
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      );
+    },
+  )), [
+    fetchFileTree,
+    updatePipelineNoContent,
+    router,
+  ]);
+
   const savePipelineContent = useCallback(() => {
     setPipelineLastSaved(new Date());
 
@@ -655,6 +685,7 @@ function PipelineDetailPage({
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
       selectedFile={selectedFile}
+      updatePipelineName={updatePipelineName}
     />
   ), [
     isPipelineUpdating,
@@ -666,6 +697,7 @@ function PipelineDetailPage({
     runningBlocks,
     selectedFile,
     selectedFilePaths,
+    updatePipelineName,
   ]);
 
   return (
