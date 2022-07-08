@@ -115,11 +115,15 @@ class ApiPipelineHandler(BaseHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
-        self.write(dict(pipeline=pipeline.to_dict(
-            include_content=include_content,
-            include_outputs=include_outputs,
-            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        )))
+        self.write(
+            dict(
+                pipeline=pipeline.to_dict(
+                    include_content=include_content,
+                    include_outputs=include_outputs,
+                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )
+            )
+        )
         self.finish()
 
     def put(self, pipeline_uuid):
@@ -130,21 +134,29 @@ class ApiPipelineHandler(BaseHandler):
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
-        self.write(dict(pipeline=pipeline.to_dict(
-            include_content=update_content,
-            include_outputs=update_content,
-            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        )))
+        self.write(
+            dict(
+                pipeline=pipeline.to_dict(
+                    include_content=update_content,
+                    include_outputs=update_content,
+                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )
+            )
+        )
 
 
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         asyncio.run(pipeline.execute())
-        self.write(dict(pipeline=pipeline.to_dict(
-            include_outputs=True,
-            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        )))
+        self.write(
+            dict(
+                pipeline=pipeline.to_dict(
+                    include_outputs=True,
+                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )
+            )
+        )
         self.finish()
 
 
@@ -168,10 +180,14 @@ class ApiPipelineBlockHandler(BaseHandler):
         include_outputs = self.get_bool_argument('include_outputs', True)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        self.write(dict(block=block.to_dict(
-            include_content=True,
-            include_outputs=include_outputs,
-        )))
+        self.write(
+            dict(
+                block=block.to_dict(
+                    include_content=True,
+                    include_outputs=include_outputs,
+                )
+            )
+        )
         self.finish()
 
     def put(self, pipeline_uuid, block_uuid):
@@ -201,10 +217,14 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        asyncio.run(block.execute())
-        self.write(dict(block=block.to_dict(
-            include_outputs=True,
-        )))
+        asyncio.run(block.execute(redirect_outputs=True))
+        self.write(
+            dict(
+                block=block.to_dict(
+                    include_outputs=True,
+                )
+            )
+        )
         self.finish()
 
 
@@ -212,11 +232,15 @@ class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         include_outputs = self.get_bool_argument('include_outputs', True)
-        self.write(dict(blocks=pipeline.to_dict(
-            include_content=True,
-            include_outputs=include_outputs,
-            sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-        )['blocks']))
+        self.write(
+            dict(
+                blocks=pipeline.to_dict(
+                    include_content=True,
+                    include_outputs=include_outputs,
+                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )['blocks']
+            )
+        )
         self.finish()
 
     def post(self, pipeline_uuid):
@@ -261,11 +285,14 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
-        variables = [dict(
-            block=dict(uuid=uuid),
-            pipeline=dict(uuid=pipeline_uuid),
-            variables=arr,
-        ) for uuid, arr in variables_dict.items()]
+        variables = [
+            dict(
+                block=dict(uuid=uuid),
+                pipeline=dict(uuid=pipeline_uuid),
+                variables=arr,
+            )
+            for uuid, arr in variables_dict.items()
+        ]
         self.write(dict(variables=variables))
         self.finish()
 

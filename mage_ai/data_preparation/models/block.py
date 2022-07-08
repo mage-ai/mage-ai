@@ -18,6 +18,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 import os
 import pandas as pd
+import sys
 
 
 class Block:
@@ -154,10 +155,12 @@ class Block:
             p.delete_block(p.get_block(self.uuid))
         os.remove(self.file_path)
 
-    async def execute(self, analyze_outputs=True, custom_code=None):
+    async def execute(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
             try:
-                output = await self.execute_block(custom_code)
+                output = await self.execute_block(
+                    custom_code=custom_code, redirect_outputs=redirect_outputs
+                )
                 block_output = output['output']
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
@@ -233,7 +236,7 @@ class Block:
 
             return block_function
 
-    async def execute_block(self, custom_code=None):
+    async def execute_block(self, custom_code=None, redirect_outputs=False):
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
@@ -255,7 +258,7 @@ class Block:
                 ]
         outputs = []
         decorated_functions = []
-        stdout = StringIO()
+        stdout = StringIO() if redirect_outputs else sys.stdout
         with redirect_stdout(stdout):
             if custom_code is not None:
                 exec(custom_code, {self.type: block_decorator(decorated_functions)})
@@ -269,7 +272,14 @@ class Block:
                     outputs = []
                 if type(outputs) is not list:
                     outputs = [outputs]
-        return dict(output=outputs, stdout=stdout.getvalue())
+
+        output_message = dict(output=outputs)
+        if redirect_outputs:
+            output_message['stdout'] = stdout.getvalue()
+        else:
+            output_message['stdout'] = ''
+
+        return output_message
 
     def exists(self):
         return os.path.exists(self.file_path)

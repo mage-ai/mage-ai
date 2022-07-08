@@ -61,13 +61,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             stdout = None
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
                 try:
-                    block_output = asyncio.run(block.execute(custom_code=code))
+                    block_output = asyncio.run(
+                        block.execute(custom_code=code, redirect_outputs=True)
+                    )
                     stdout = block_output['stdout']
                     output = block_output['output']
                     if len(output) > 0:
                         for out in output:
-                            if type(out) == pd.DataFrame \
-                                and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW:
+                            if (
+                                type(out) == pd.DataFrame
+                                and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW
+                            ):
 
                                 out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
                             final_output.append(out)
@@ -112,7 +116,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         data=stdout,
                         type=DataType.TEXT,
                         uuid=uuid,
-                    )
+                    ),
                 )
                 messages.append(stdout_message)
 
@@ -138,8 +142,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
         )
 
-        print(f'[{uuid}] Sending {len(messages)} messages for {msg_id} to '
-              f'{len(self.clients)} client(s): {messages}')
+        print(
+            f'[{uuid}] Sending {len(messages)} messages for {msg_id} to '
+            f'{len(self.clients)} client(s): {messages}'
+        )
 
         for client in self.clients:
             for m in messages:
