@@ -3,6 +3,7 @@ from typing import Dict
 import os
 
 MAX_DEPTH = 30
+BLACKLISTED_DIRS = frozenset(['venv', 'env'])
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 
 
@@ -73,6 +74,9 @@ def traverse(name: str, is_dir: str, path: str, disabled=False, depth=1) -> Dict
             can_access_children,
             depth + 1,
         )
-        for entry in sorted(os.scandir(path), key=lambda entry: entry.name)
+        for entry in sorted(
+            filter(lambda entry: entry.name not in BLACKLISTED_DIRS, os.scandir(path)),
+            key=lambda entry: entry.name,
+        )
     )
     return tree_entry
