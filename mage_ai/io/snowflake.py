@@ -5,6 +5,9 @@ from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 from typing import Any, Mapping
 
+DEFAULT_LOGIN_TIMEOUT = 20
+DEFAULT_NETWORK_TIMEOUT = 20
+
 
 class Snowflake(BaseSQL):
     """
@@ -23,6 +26,10 @@ class Snowflake(BaseSQL):
             account (str): Snowflake account identifier (excluding
             `snowflake-computing.com` suffix).
         """
+        if 'login_timeout' not in kwargs:
+            kwargs['login_timeout'] = DEFAULT_LOGIN_TIMEOUT
+        if 'network_timeout' not in kwargs:
+            kwargs['network_timeout'] = DEFAULT_NETWORK_TIMEOUT
         super().__init__(**kwargs)
 
     def open(self) -> None:
