@@ -20,6 +20,7 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getFullPath } from './utils';
 import { pauseEvent } from '@utils/events';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -32,7 +33,6 @@ export type FolderSharedProps = {
 type FolderProps = {
   file: FileType;
   level: number;
-  parentFile?: FileType;
   theme: ThemeType;
 } & FolderSharedProps;
 
@@ -41,13 +41,13 @@ function Folder({
   level,
   openFile,
   openPipeline,
-  parentFile,
   theme,
 }: FolderProps) {
   const {
     children: childrenProp,
     disabled: disabledProp,
     name,
+    parent: parentFile,
   } = file;
   const disabled = disabledProp
     || name === '__init__.py'
@@ -85,15 +85,19 @@ function Folder({
 
   const childrenFiles = useMemo(() => children?.map((f: FileType) => (
     <Folder
-      file={f}
+      file={{
+        ...f,
+        parent: file,
+      }}
       key={f.name}
       level={level + 1}
+      openFile={openFile}
       openPipeline={openPipeline}
-      parentFile={file}
       theme={theme}
     />
   )), [
     children,
+    openFile,
     openPipeline,
   ]);
 
@@ -113,7 +117,8 @@ function Folder({
               return !collapsedPrev;
             });
           } else if (name.match(/\.txt$/)) {
-            console.log('openFile')
+            // WARNING: this assumes the first part of a path is the default_repo
+            openFile(getFullPath(file).split('/').slice(1).join('/'));
           }
         }}
         style={{

@@ -8,5 +8,6 @@ export default interface FileType {
   content?: string;
   disabled?: boolean;
   name: string;
+  parent?: FileType;
   path?: string;
 }
