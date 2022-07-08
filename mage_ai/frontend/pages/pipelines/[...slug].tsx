@@ -193,7 +193,7 @@ function PipelineDetailPage({
     });
     setMessages({});
     setPipelineContentTouched(false);
-    setPipelineLastSaved(null)
+    setPipelineLastSaved(null);
     setRunningBlocks([]);
     setSelectedBlock(null);
   }, []);
