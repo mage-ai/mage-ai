@@ -290,13 +290,21 @@ function Table({
             cellStyle.width = maxWidthOfFirstColumn;
           }
 
-          const cellValue = original[idx - 1];
+          let cellValue = original[idx - 1];
           const columnIndex = columnsAll.indexOf(header);
           if (isInvalid) {
             cellStyle.color = light.interactive.dangerBorder;
           }
           if (rowToBeRemoved) {
             cellStyle.backgroundColor = light.background.danger;
+          }
+
+          if (Array.isArray(cellValue) || typeof cellValue === 'object') {
+            try {
+              cellValue = JSON.stringify(cellValue);
+            } catch {
+              cellValue = 'Error: cannot display value';
+            }
           }
 
           return (

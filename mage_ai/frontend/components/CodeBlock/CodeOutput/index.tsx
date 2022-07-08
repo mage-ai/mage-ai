@@ -116,7 +116,7 @@ function CodeOutput({
 
             if (typeof data === 'string' && data.match(internalOutputRegex)) {
               const rawString = data.replace(internalOutputRegex, '');
-              if (isJsonString) {
+              if (isJsonString(rawString)) {
                 const {
                   data: dataDisplay,
                   type: typeDisplay,
@@ -150,7 +150,7 @@ function CodeOutput({
             }
 
             return (
-              <div key={data}>
+              <div key={`code-output-${idx}-${idxInner}`}>
                 {displayElement}
               </div>
             );
