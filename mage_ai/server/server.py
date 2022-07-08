@@ -68,7 +68,13 @@ class MainHandler(tornado.web.RequestHandler):
 
 
 class ApiBlockHandler(BaseHandler):
-    def delete(self, block_type, block_uuid):
+    def delete(self, block_type_and_uuid_encoded):
+        block_type_and_uuid = urllib.parse.unquote(block_type_and_uuid_encoded)
+        parts = block_type_and_uuid.split('/')
+        if len(parts) != 2:
+            raise Exception('The url path should be in block_type/block_uuid format.')
+        block_type = parts[0]
+        block_uuid = parts[1]
         block = Block(block_uuid, block_uuid, block_type)
         if not block.exists():
             raise Exception(f'Block {block_uuid} does not exist')
@@ -312,10 +318,10 @@ def make_app():
             (
                 r'/_next/static/(.*)',
                 tornado.web.StaticFileHandler,
-                { "path": os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
+                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
             ),
             (r'/websocket/', WebSocketServer),
-            (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
+            (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_contents(?P<file_path_encoded>.+)', ApiFileContentHandler),
             (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
