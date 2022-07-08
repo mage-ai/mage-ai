@@ -13,8 +13,8 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
-import FileTree from '@components/FileTree';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Head from '@oracle/elements/Head';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -98,6 +98,7 @@ function PipelineDetailPage({
     }
   }, [activeSidekickView]);
 
+  const blockRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
@@ -488,29 +489,36 @@ function PipelineDetailPage({
     setMessages,
   ]);
 
-  // TODO: API should report filesystem as FileNodeType[], not FileNodeType
-  const files = useMemo(() => filesData ? [filesData?.files] : [], [
-    filesData?.files,
+  const onSelectBlockFile = useCallback((blockUUID: string, blockType: BlockTypeEnum) => {
+    // Block is in pipeline
+    const block =
+      blocks.find(({ type, uuid }: BlockType) => type === blockType && uuid === blockUUID);
+
+    if (block) {
+      setSelectedBlock(block);
+      if (blockRefs?.current) {
+        const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
+        blockRef?.current?.scrollIntoView();
+      }
+    }
+    // Block is not in pipeline: open file
+  }, [
+    blocks,
   ]);
-  const blockRefs = useRef({});
+
   const fileTree = useMemo(() => (
-    <FileTree
-      addNewBlockAtIndex={addNewBlockAtIndex}
-      blockRefs={blockRefs}
+    <FileBrowser
+      files={filesData?.files}
+      onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={(uuid: string) => {
         resetState();
         router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
       }}
-      pipeline={pipeline}
-      setSelectedBlock={setSelectedBlock}
-      tree={files}
     />
   ), [
-    blockRefs,
-    files,
-    pipeline,
-    setSelectedBlock,
+    filesData?.files,
+    onSelectBlockFile,
   ]);
   const sideKick = useMemo(() => (
     <Sidekick

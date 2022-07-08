@@ -75,7 +75,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.disabled && `
-    fill: ${(props.theme.content || light.content).disabled};
+    fill: ${(props.theme.content || dark.content).disabled};
   `}
 
   ${props => !props.useStroke && props.black && `

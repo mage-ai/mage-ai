@@ -4,7 +4,10 @@ export enum FileExtensionEnum {
 }
 
 export default interface FileType {
-  content: string;
+  children: FileType[];
+  content?: string;
+  disabled?: boolean;
   name: string;
-  path: string;
+  parent?: FileType;
+  path?: string;
 }

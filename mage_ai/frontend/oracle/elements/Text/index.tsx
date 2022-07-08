@@ -1,5 +1,6 @@
 import styled, { css } from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import {
   FONT_FAMILY_BOLD,
@@ -212,7 +213,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.disabled && `
-    color: ${(props.theme.content || light.content).disabled};
+    color: ${(props.theme.content || dark.content).disabled};
   `}
 
   ${props => props.black && `

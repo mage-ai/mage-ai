@@ -84,7 +84,7 @@ class ApiBlockHandler(BaseHandler):
 
 class ApiFileListHandler(BaseHandler):
     def get(self):
-        self.write(dict(files=File.get_all_files(get_repo_path())))
+        self.write(dict(files=[File.get_all_files(get_repo_path())]))
 
     def post(self):
         data = json.loads(self.request.body).get('file', {})
