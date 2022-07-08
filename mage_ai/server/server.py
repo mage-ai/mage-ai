@@ -63,7 +63,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(tornado.web.RequestHandler):
-    def get(self):
+    def get(self, pipeline_uuid):
         self.render('index.html')
 
 
@@ -304,17 +304,15 @@ class KernelsHandler(BaseHandler):
 
 
 def make_app():
-    settings = {
-        'static_path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static'),
-        'template_path': os.path.join(os.path.dirname(__file__), 'frontend_dist'),
-    }
-
-    print('settings:', settings)
-
     return tornado.web.Application(
         [
             (r'/pipelines', MainHandler),
-            # (r'/datasets', MainHandler),
+            (r'/pipelines/(.*)', MainHandler),
+            (
+                r"/_next/static/(.*)",
+                tornado.web.StaticFileHandler,
+                { "path": os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
+            ),
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type>\w+)/(?P<block_uuid>\w+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
@@ -344,7 +342,7 @@ def make_app():
             (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         ],
         autoreload=True,
-        **settings,
+        template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
     )
 
 
@@ -358,7 +356,7 @@ async def main(repo_path: str = None):
     manager.start_kernel()
     os.environ['CONNECTION_FILE'] = manager.connection_file
 
-    app = make_app() 
+    app = make_app()
     app.listen(6789)
 
     get_messages(
