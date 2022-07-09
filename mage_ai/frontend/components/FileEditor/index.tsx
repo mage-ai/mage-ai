@@ -7,7 +7,8 @@ import {
 import { useMutation } from 'react-query';
 
 import CodeEditor from '@components/CodeEditor';
-import FileType from '@interfaces/FileType';
+import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import PipelineType from '@interfaces/PipelineType';
 import api from '@api';
 import {
   KEY_CODE_META,
@@ -20,6 +21,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
   filePath: string;
+  pipeline: PipelineType;
   setFilesTouched: (data: {
     [path: string]: boolean;
   }) => void;
@@ -27,6 +29,7 @@ type FileEditorProps = {
 
 function FileEditor({
   filePath,
+  pipeline,
   setFilesTouched,
 }: FileEditorProps) {
   const [file, setFile] = useState<FileType>(null);
@@ -76,32 +79,44 @@ function FileEditor({
     setTouched(false);
   };
 
-  const codeEditorEl = useMemo(() => file?.path && (
-    <CodeEditor
-      autoHeight
-      language="text"
-      onSave={(value: string) => {
-        saveFile(value, file);
-      }}
-      // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
-      // onDidChangeCursorPosition={onDidChangeCursorPosition}
-      onChange={(value: string) => {
-        setContent(value);
-        // @ts-ignore
-        setFilesTouched((prev: {
-          [path: string]: boolean;
-        }) => ({
-          ...prev,
-          [file?.path]: true,
-        }));
-        setTouched(true);
-      }}
-      selected
-      textareaFocused
-      value={file?.content}
-      width="100%"
-    />
-  ), [
+  const codeEditorEl = useMemo(() => {
+    if (file?.path) {
+      const regex =
+        new RegExp(
+          Object
+            .keys(FILE_EXTENSION_TO_LANGUAGE_MAPPING)
+            .map(ext => `\.(${ext})$`).join('|'),
+          );
+      const fileExtension = file.path.match(regex)[0]?.split('.')[1];
+
+      return (
+        <CodeEditor
+          autoHeight
+          language={FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension]}
+          onSave={(value: string) => {
+            saveFile(value, file);
+          }}
+          // TODO (tommy dang): implement later; see Codeblock/index.tsx for example
+          // onDidChangeCursorPosition={onDidChangeCursorPosition}
+          onChange={(value: string) => {
+            setContent(value);
+            // @ts-ignore
+            setFilesTouched((prev: {
+              [path: string]: boolean;
+            }) => ({
+              ...prev,
+              [file?.path]: true,
+            }));
+            setTouched(true);
+          }}
+          selected
+          textareaFocused
+          value={file?.content}
+          width="100%"
+        />
+      );
+    }
+  }, [
     file,
     saveFile,
     setFilesTouched,

@@ -29,7 +29,11 @@ import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export type FolderSharedProps = {
-  onSelectBlockFile: (blockUUID: string, blockType: BlockTypeEnum) => void;
+  onSelectBlockFile: (
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => void;
   openFile: (path: string) => void;
   openPipeline: (uuid: string) => void;
 };
@@ -136,7 +140,11 @@ function Folder({
           } else {
             const block = getBlockFromFile(file);
             if (block) {
-              onSelectBlockFile(block.uuid, block.type);
+              onSelectBlockFile(
+                block.uuid,
+                block.type,
+                getFullPath(file).split('/').slice(1).join('/'),
+              );
             }
           }
         }}

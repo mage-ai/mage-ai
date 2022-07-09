@@ -507,7 +507,12 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if (typeof pipeline?.blocks !== 'undefined') {
+    if ((typeof pipelineUUIDPrev === 'undefined'
+      || pipelineUUIDPrev !== pipelineUUID
+      || !blocks.length
+    )
+      && typeof pipeline?.blocks !== 'undefined'
+    ) {
       setBlocks(pipeline.blocks);
 
       const messagesInit = {};
@@ -545,12 +550,19 @@ function PipelineDetailPage({
       }));
     }
   }, [
+    blocks,
+    pipelineUUID,
+    pipelineUUIDPrev,
     pipeline?.blocks,
     setBlocks,
     setMessages,
   ]);
 
-  const onSelectBlockFile = useCallback((blockUUID: string, blockType: BlockTypeEnum) => {
+  const onSelectBlockFile = useCallback((
+    blockUUID: string,
+    blockType: BlockTypeEnum,
+    filePath: string,
+  ) => {
     // Block is in pipeline
     const block =
       blocks.find(({ type, uuid }: BlockType) => type === blockType && uuid === blockUUID);
@@ -561,8 +573,9 @@ function PipelineDetailPage({
         const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
         blockRef?.current?.scrollIntoView();
       }
+    } else {
+      openFile(filePath);
     }
-    // Block is not in pipeline: open file
   }, [
     blocks,
   ]);
@@ -767,6 +780,7 @@ function PipelineDetailPage({
           >
             <FileEditor
               filePath={filePath}
+              pipeline={pipeline}
               setFilesTouched={setFilesTouched}
             />
           </div>
