@@ -13,3 +13,7 @@ export default interface FileType {
 }
 
 export const FOLDER_NAME_PIPELINES = 'pipelines';
+export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
+  [FileExtensionEnum.PY]: 'python',
+  [FileExtensionEnum.TXT]: 'text',
+};
