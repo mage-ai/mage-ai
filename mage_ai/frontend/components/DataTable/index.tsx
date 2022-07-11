@@ -49,6 +49,7 @@ type SharedProps = {
   height?: number;
   index?: number[] | string[];
   invalidValues?: InvalidValueType;
+  maxHeight?: number;
   previewIndexes?: {
     removedRows?: number[];
   };
