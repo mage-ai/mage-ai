@@ -6,7 +6,7 @@ const Home = () => {
   const queryParams = router.query;
   const completePath = router.asPath;
   const basePath = completePath.split('?')[0];
-  let pathname = '/datasets';
+  let pathname = '/pipelines/new';
   if (basePath && basePath !== '/') {
     // pathname = !basePath.includes('/datasets')
     //   ? `${basePath}/datasets`
