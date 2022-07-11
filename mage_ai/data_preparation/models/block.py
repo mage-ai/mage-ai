@@ -393,9 +393,7 @@ class Block:
         decorated_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
         if self.type in runtime_vars:
-            raise ValueError(
-                f'Cannot use reserved variable name \'{self.type}\' in block of type \'{self.type}\''
-            )
+            raise ValueError(f'Runtime variables cannot use reserved variable name \'{self.type}\'')
         runtime_vars[self.type] = block_decorator(decorated_functions)
         with redirect_stdout(stdout):
             if custom_code is not None:
@@ -410,6 +408,7 @@ class Block:
                     outputs = []
                 if type(outputs) is not list:
                     outputs = [outputs]
+        runtime_vars.pop(self.type)
 
         output_message = dict(output=outputs)
         if redirect_outputs:
