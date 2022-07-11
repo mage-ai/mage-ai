@@ -56,18 +56,16 @@ function CodeOutput({
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
-  if (DataTypeEnum.TABLE === primaryDataType) {
-
-  }
-
   const createDataTableElement = useCallback(({
     columns,
+    index,
     rows,
   }) => rows.length >= 1 && (
     <DataTable
       columns={columns}
       disableScrolling={!selected}
-      height={UNIT * 40}
+      maxHeight={UNIT * 49.5}
+      index={index}
       noBorderBottom
       noBorderLeft
       noBorderRight

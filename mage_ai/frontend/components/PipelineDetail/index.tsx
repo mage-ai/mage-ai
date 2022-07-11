@@ -230,8 +230,6 @@ function PipelineDetail({
     unregisterOnKeyDown(uuidKeyboard);
   }, [unregisterOnKeyDown, uuidKeyboard]);
 
-  console.log('anyInputFocused', anyInputFocused)
-
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {

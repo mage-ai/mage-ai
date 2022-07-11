@@ -507,12 +507,16 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if ((typeof pipelineUUIDPrev === 'undefined'
-      || pipelineUUIDPrev !== pipelineUUID
-      || !blocks.length
-    )
-      && typeof pipeline?.blocks !== 'undefined'
-    ) {
+    if (pipelineUUIDPrev !== pipelineUUID) {
+      setBlocks([]);
+    }
+  }, [
+    pipelineUUID,
+    pipelineUUIDPrev,
+  ]);
+
+  useEffect(() => {
+    if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
 
       const messagesInit = {};
@@ -551,8 +555,6 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
-    pipelineUUID,
-    pipelineUUIDPrev,
     pipeline?.blocks,
     setBlocks,
     setMessages,
