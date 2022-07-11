@@ -204,7 +204,7 @@ function FeatureProfiles({
       <FlexContainer>
         <ColumnProfileStyle>
           <Flex flex={1} flexDirection="column" style={{ background: themeContext.background.table }} >
-            <Spacing mr={1.25 * UNIT} mt={'52px'} />
+            <Spacing mr={1.25 * UNIT} mt={`${52 + 1}px`} />
             {entryTypes.map((entry, idx) => (
               <CellStyle key={`${entry}-${idx}`}>
                 <Text secondary>{entry}</Text>
