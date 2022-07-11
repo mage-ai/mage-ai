@@ -7,7 +7,7 @@
 Run the below script to build the Docker image and run all the services:
 
 ```bash
-$ ./scripts/dev.sh
+$ ./scripts/dev.sh --project [project]
 ```
 
 Or run the following command to build the Docker image:

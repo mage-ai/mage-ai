@@ -21,3 +21,5 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 : "${PROJECT:=""}"
 
 PROJECT_PATH=$PROJECT docker-compose -f docker-compose.yml up
+
+# docker-compose run server python mage_ai/command_line.py start [project]

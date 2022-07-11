@@ -5,20 +5,7 @@
 
 # Intro
 
-Mage is an open-source data management platform
-that helps you
-<b>clean data</b> and
-prepare it for training AI/ML models.
-
-<kbd>
-  <img
-    alt="Mage demo"
-    src="media/quick-demo.gif"
-  />
-</kbd>
-
-<br />
-<br />
+Mage is an open-source code editor for <b>transforming data</b> and building <b>ML pipelines</b>.
 
 > Join us on
 > **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
@@ -27,131 +14,84 @@ prepare it for training AI/ML models.
 
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Features](#-features)
-1. [Roadmap](#%EF%B8%8F-roadmap)
 1. [Contributing](#%EF%B8%8F-contributing)
 1. [Community](#-community)
 
 # 🏃‍♀️ Quick start
 
-- Try a **[demo of Mage](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)** in Google Colab.
-- Try a **[hosted version of Mage](http://18.237.55.91:5789/)**
-
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
-### 1. Install Mage
+### Using Docker
+
+##### 1. Create new project
+```bash
+$ ./scripts/init.sh --project [project_name]
+```
+
+##### 2. Launch editor
+```bash
+$ ./scripts/start.sh --project [project_name]
+```
+
+Open [http://localhost:6789](http://localhost:6789) in your browser.
+
+### Using pip
+
+##### 1. Install Mage
 ```bash
 $ pip install mage-ai
 ```
 
-### 2. Load and connect data
-```python
-import mage_ai
-from mage_ai.sample_datasets import load_dataset
-
-
-df = load_dataset('titanic_survival.csv')
-mage_ai.connect_data(df, name='titanic dataset')
+##### 2. Create new project
+```bash
+$ mage init [project_name]
 ```
 
-### 3. Launch tool
-```python
-mage_ai.launch()
+##### 3. Launch editor
+```bash
+$ mage start [project_name]
 ```
 
-Open [http://localhost:5789](http://localhost:5789) in your browser to access the tool locally.
-
-If you’re launching Mage in a notebook, the tool will render in an iFrame.
-
-### 4. Clean data
-After building a data cleaning pipeline from the UI,
-you can clean your data anywhere you can execute Python code:
-
-```python
-mage_ai.clean(df, pipeline_uuid='pipeline name')
-```
-
-## Demo video (2 min)
-
-[![Mage quick start demo](media/mage-demo-quick-start-youtube-preview.png)](https://www.youtube.com/watch?v=cRib1zOaqWs "Mage quick start demo")
-
-## More resources
-
-Here is a [🗺️ step-by-step](docs/tutorials/quick-start.md) guide on how to use the tool.
-
-1. [Jupyter notebook example](docs/tutorials/assets/quick-start.ipynb)
-1. [Google Colaboratory (Colab) example](https://colab.research.google.com/drive/1Pc6dpAolwuSKuoOEpWSWgx6MbNraSMVE?usp=sharing)
-
-Check out the [📚 tutorials](docs/tutorials/README.md) to quickly become a master of magic.
+Open [http://localhost:6789](http://localhost:6789) in your browser.
 
 # 🔮 Features
 
-1. [Data visualizations](#1-data-visualizations)
-1. [Reports](#2-reports)
-1. [Cleaning actions](#3-cleaning-actions)
-1. [Data cleaning suggestions](#4-data-cleaning-suggestions)
+1. [Data centric editor](#1-data-centric-editor)
+1. [Production ready code](#2-production-ready-code)
+1. [Extensible](#3-extensible)
 
-### 1. Data visualizations
-Inspect your data using different charts (e.g. time series, bar chart, box plot, etc.).
+### 1. Data centric editor
+An interactive coding experience designed for preparing data to train ML models.
 
-Here’s a list of available [charts](docs/charts/README.md).
+Visualize the impact of your code every time you load, clean, and transform data.
 
-<kbd>
-  <img
-    alt="dataset visualizations"
-    src="media/dataset-overview-visualizations.png"
-  />
-</kbd>
+<img
+  alt="Data centric editor"
+  src="media/data-centric-editor.png"
+/>
 
-### 2. Reports
-Quickly diagnose data quality issues with summary reports.
+### 2. Production ready code
+No more writing throw away code or trying to turn notebooks into scripts.
 
-Here’s a list of available [reports](docs/reports/README.md).
+Each cell block in this editor is a modular file that can be tested, reused,
+and chained together to create an executable data pipeline locally or in any environment.
 
-<kbd>
-  <img
-    alt="dataset reports"
-    src="media/dataset-overview-reports.png"
-  />
-</kbd>
+<img
+  alt="Production ready code"
+  src="media/production-ready-code.png"
+/>
 
-### 3. Cleaning actions
-Easily add common cleaning functions to your pipeline with a few clicks.
-Cleaning actions include imputing missing values, reformatting strings, removing duplicates,
-and many more.
+### 3. Extensible
+Easily add new functionality directly in the source code or through plug-ins (coming soon).
 
-If a cleaning action you need doesn’t exist in the library,
-you can write and save custom cleaning functions in the UI.
+Adding new API endpoints ([Tornado](https://www.tornadoweb.org/en/stable/)),
+transformations (Python, PySpark, SQL),
+and charts (using [React](https://reactjs.org/)) is easy to do (tutorial coming soon).
 
-Here’s a list of available [cleaning actions](docs/actions/README.md).
-
-<kbd>
-  <img
-    alt="cleaning actions"
-    src="media/dataset-overview-actions-preview.png"
-  />
-</kbd>
-
-### 4. Data cleaning suggestions
-The tool will automatically suggest different ways to clean your data and improve quality metrics.
-
-Here’s a list of available [suggestions](docs/suggestions/README.md).
-
-<kbd>
-  <img
-    alt="suggested cleaning actions"
-    src="media/dataset-overview.png"
-  />
-</kbd>
-
-# 🗺️ Roadmap
-Big features being worked on or in the design phase.
-
-1. Encoding actions (e.g. one-hot encoding, label hasher, ordinal encoding, embeddings, etc.)
-1. Data quality monitoring and alerting
-1. Apply cleaning actions to columns and values that match a condition
-
-Here’s a detailed list of [🪲 features and bugs](https://airtable.com/shrwN5wDuDuPScPut/tblAlH31g7dYRjmoZ)
-that are in progress or upcoming.
+<img
+  alt="Extensible charts"
+  src="media/extensible-charts.png"
+/>
 
 # 🙋‍♀️ Contributing
 We welcome all contributions to Mage;
