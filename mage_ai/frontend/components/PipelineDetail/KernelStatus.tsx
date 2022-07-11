@@ -85,35 +85,6 @@ function KernelStatus({
     saveStatus = 'All changes saved';
   }
 
-  const uuidKeyboard = 'PipelineDetail/KernelStatus';
-  const {
-    registerOnKeyDown,
-    unregisterOnKeyDown,
-  } = useKeyboardContext();
-
-  useEffect(() => () => {
-    unregisterOnKeyDown(uuidKeyboard);
-  }, [unregisterOnKeyDown, uuidKeyboard]);
-
-  registerOnKeyDown(
-    uuidKeyboard,
-    (event, keyMapping, keyHistory) => {
-      if (isEditingPipeline
-        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
-        && String(keyHistory[1]) !== String(KEY_CODE_META)
-      ) {
-        setIsEditingPipeline(false);
-        updatePipelineName(newPipelineName);
-      }
-    },
-    [
-      isEditingPipeline,
-      newPipelineName,
-      setIsEditingPipeline,
-      updatePipelineName,
-    ],
-  );
-
   const pipelineNameInput = useMemo(() => (
     <LabelWithValueClicker
       bold={false}
@@ -210,8 +181,8 @@ function KernelStatus({
                     <Spacing ml={1} />
                     <Link
                       onClick={() => {
-                        setIsEditingPipeline(false);
                         updatePipelineName(newPipelineName);
+                        setIsEditingPipeline(false);
                       }}
                       preventDefault
                       sameColorAsText

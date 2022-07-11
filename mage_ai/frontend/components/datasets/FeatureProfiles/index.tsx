@@ -7,7 +7,6 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, pluralize, roundNumber } from '@utils/string';
