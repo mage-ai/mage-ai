@@ -109,6 +109,8 @@ function KernelStatus({
     [
       isEditingPipeline,
       newPipelineName,
+      setIsEditingPipeline,
+      updatePipelineName,
     ],
   );
 

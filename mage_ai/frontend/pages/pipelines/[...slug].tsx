@@ -326,6 +326,7 @@ function PipelineDetailPage({
       onSuccess(
         response, {
           callback: ({ pipeline: { uuid } }) => {
+            if (pipelineUUID !== uuid) return;
             router.push(`/pipelines/${uuid}`);
             fetchFileTree();
           },
