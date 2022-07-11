@@ -347,7 +347,17 @@ def make_app():
             (
                 r'/_next/static/(.*)',
                 tornado.web.StaticFileHandler,
-                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static') },
+                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
+            ),
+            (
+                r'/fonts/(.*)',
+                tornado.web.StaticFileHandler,
+                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
+            ),
+            (
+                r'/(favicon.ico)',
+                tornado.web.StaticFileHandler,
+                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
             ),
             (r'/websocket/', WebSocketServer),
             (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
