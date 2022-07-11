@@ -19,6 +19,7 @@ from mage_ai.shared.logger import VerboseFunctionExec
 import os
 import pandas as pd
 import sys
+import traceback
 
 
 class Block:
@@ -400,23 +401,27 @@ class Block:
                     )
                 else:
                     data_for_analysis = data.reset_index(drop=True)
-                analysis = clean_data(
-                    data_for_analysis,
-                    transform=False,
-                    verbose=False,
-                )
-                VariableManager(self.pipeline.repo_path).add_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    uuid,
-                    dict(
-                        metadata=dict(column_types=analysis['column_types']),
-                        statistics=analysis['statistics'],
-                        insights=analysis['insights'],
-                        suggestions=analysis['suggestions'],
-                    ),
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
-                )
+                try:
+                    analysis = clean_data(
+                        data_for_analysis,
+                        transform=False,
+                        verbose=False,
+                    )
+                    VariableManager(self.pipeline.repo_path).add_variable(
+                        self.pipeline.uuid,
+                        self.uuid,
+                        uuid,
+                        dict(
+                            metadata=dict(column_types=analysis['column_types']),
+                            statistics=analysis['statistics'],
+                            insights=analysis['insights'],
+                            suggestions=analysis['suggestions'],
+                        ),
+                        variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    )
+                except Exception:
+                    print('\nFailed to analyze dataframe:')
+                    print(traceback.format_exc())
 
     def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
