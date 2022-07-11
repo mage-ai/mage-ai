@@ -533,3 +533,38 @@ textarea {
   font-weight: 700;
   src: url('/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf') format('truetype');
 }
+
+@font-face {
+  font-family: 'Fira Code Light';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code Regular';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code Medium';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code Semibold';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fira Code Bold';
+  src: url('/fonts/Fira_Code/ttf/FiraCode-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}

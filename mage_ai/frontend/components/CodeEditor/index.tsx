@@ -252,6 +252,7 @@ function CodeEditor({
         // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html
         options={{
           fontFamily: MONO_FONT_FAMILY_REGULAR,
+          fontLigatures: true,
           fontSize,
           hideCursorInOverviewRuler: true,
           minimap: {

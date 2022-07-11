@@ -7,20 +7,24 @@ import re
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
 
-def remove_comments(code_lines):
+def remove_comments(code_lines: list[str]) -> list[str]:
     return list(filter(
         lambda x: not re.search(r'^\#', str(x).strip()),
         code_lines,
     ))
 
 
-def remove_empty_last_lines(code_lines):
+def remove_empty_last_lines(code_lines: list[str]) -> list[str]:
     idx = len(code_lines) - 1
     last_line = code_lines[idx]
     while idx >= 0 and len(str(last_line).strip()) == 0:
         idx -= 1
         last_line = code_lines[idx]
     return code_lines[:(idx + 1)]
+
+
+def find_last_expression_lines(code_lines):
+    pass
 
 
 def add_internal_output_info(code: str) -> str:
