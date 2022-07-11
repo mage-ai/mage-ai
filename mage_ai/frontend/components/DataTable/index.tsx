@@ -220,9 +220,9 @@ function Table({
     refListOuter,
   ]);
 
-  const shouldUseIndexProp = useMemo(() => indexProp && rows && indexProp.length === rows.length, [
+  const shouldUseIndexProp = useMemo(() => indexProp && data && indexProp.length === data.length, [
+    data,
     indexProp,
-    rows,
   ]);
 
   const maxWidthOfFirstColumn =
