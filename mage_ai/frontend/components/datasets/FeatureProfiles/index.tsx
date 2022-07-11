@@ -129,7 +129,6 @@ function FeatureProfile({
   const [ ROW, ROW_ALT ] = [
     themeContext.background.row,
     themeContext.background.row2,
-    themeContext.background.table,
   ];
 
   const FeatureStyle = shouldLink ? Link : Text;

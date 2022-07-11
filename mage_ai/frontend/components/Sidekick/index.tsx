@@ -12,6 +12,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import PipelineType from '@interfaces/PipelineType';
@@ -36,7 +37,6 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
-import FeatureProfiles from '@components/datasets/FeatureProfiles';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -96,7 +96,10 @@ function Sidekick({
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
-  const features = insights?.[0]?.map(({ feature }) => feature) || [];
+  const features = columns?.map(uuid => ({
+    columnType: columnTypes[uuid],
+    uuid,
+  }));
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
