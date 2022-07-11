@@ -177,7 +177,7 @@ function CodeOutput({
                 appearBefore
                 block
                 label={runCount >= 1 && runStartTime
-                  ? `Last run at ${runStartTime}`
+                  ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
                   : (
                     hasError
                       ? 'Block executed with errors'
