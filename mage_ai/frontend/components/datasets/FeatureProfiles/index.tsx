@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import styled, { ThemeContext } from 'styled-components';
+import { ThemeContext } from 'styled-components';
 
 import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
@@ -8,57 +8,13 @@ import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
-import {
-  GRAY_LINES,
-  SILVER,
-} from '@oracle/styles/colors/main';
-import { PADDING, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, pluralize, roundNumber } from '@utils/string';
 import { getFeatureStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
 import RowDataTable from '@oracle/components/RowDataTable';
-
-export const ContainerStyle = styled.div`
-  border: 1px solid ${GRAY_LINES};
-  border-radius: ${BORDER_RADIUS_LARGE}px;
-`;
-
-export const ColumnProfileStyle = styled.div`
-  background: ${SILVER};
-  border-bottom: 1px solid ${GRAY_LINES};
-  border-right: 1px solid ${GRAY_LINES};
-`;
-
-export const HeaderStyle = styled.div`
-  background: ${SILVER};
-  padding: ${UNIT * 1.75}px ${PADDING}px;
-  border-bottom: 1px solid ${GRAY_LINES};
-  border-top-left-radius: ${BORDER_RADIUS_LARGE}px;
-  border-top-right-radius: ${BORDER_RADIUS_LARGE}px;
-`;
-
-export const FeatureProfileStyle = styled.div`
-  border-bottom: 1px solid ${GRAY_LINES};
-`;
-
-export const BodyStyle = styled.div`
-  border-bottom-left-radius: ${BORDER_RADIUS_LARGE}px;
-  border-bottom-right-radius: ${BORDER_RADIUS_LARGE}px;
-  overflow-y: scroll;
-`;
-
-export const CellStyle = styled.div<any>`
-  ${props => props.backgroundColor && `
-    background-color: ${props.backgroundColor};
-  `}
-  padding: ${UNIT}px;
-`;
-
-export const ScrollOverflowStyle = styled.div`
-  overflow-x: scroll;
-`;
+import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle } from './index.style';
 
 type FeatureProfileProps = {
   columns: string[];
