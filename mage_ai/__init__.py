@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.server.app import (
     clean_df,
     clean_df_with_pipeline,
@@ -20,7 +21,9 @@ import logging
 import os
 import sys
 
-
+RESERVED_VARIABLE_NAMES = frozenset(
+    [BlockType.DATA_LOADER, BlockType.TRANSFORMER, BlockType.DATA_EXPORTER]
+)
 MAX_NUM_OF_ROWS = 100_000
 
 logger = logging.getLogger(__name__)
@@ -122,8 +125,13 @@ def clean(
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, project_path: str = None, **kwargs) -> None:
+def run(pipeline_uuid: str, project_path: str = None, **runtime_vars) -> None:
+    for variable in runtime_vars:
+        if variable in RESERVED_VARIABLE_NAMES:
+            raise ValueError(f'Cannot use reserved variable name \'{variable}\'')
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
-    asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False, runtime_vars=kwargs))
+    asyncio.run(
+        pipeline.execute(analyze_outputs=False, update_status=False, runtime_vars=runtime_vars)
+    )
