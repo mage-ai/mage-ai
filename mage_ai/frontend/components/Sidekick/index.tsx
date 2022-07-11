@@ -36,6 +36,7 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
+import FeatureProfiles from '@components/datasets/FeatureProfiles';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -256,6 +257,14 @@ function Sidekick({
                   <StatsTable
                     stats={statsSample}
                     title="Statistics"
+                  />
+                </Spacing>
+              )}
+              {features.length > 0 && (
+                <Spacing mt={PADDING_UNITS}>
+                  <FeatureProfiles
+                    features={features}
+                    statistics={statistics}
                   />
                 </Spacing>
               )}

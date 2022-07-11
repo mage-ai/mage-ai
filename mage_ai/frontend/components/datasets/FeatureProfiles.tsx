@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
+import React, { useContext, useMemo } from 'react';
+import styled, { ThemeContext } from 'styled-components';
 
-import FeatureSetType from '@interfaces/FeatureSetType';
 import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from '@interfaces/FeatureType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -13,14 +12,13 @@ import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
 import {
   GRAY_LINES,
-  LIGHT,
   SILVER,
-  WHITE,
 } from '@oracle/styles/colors/main';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, pluralize, roundNumber } from '@utils/string';
-import { getFeatureSetStatistics } from '@utils/models/featureSet';
+import { getFeatureStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
+import RowDataTable from '@oracle/components/RowDataTable';
 
 export const ContainerStyle = styled.div`
   border: 1px solid ${GRAY_LINES};
@@ -65,12 +63,12 @@ export const ScrollOverflowStyle = styled.div`
 type FeatureProfileProps = {
   columns: string[];
   feature: FeatureType,
-  featureSet: FeatureSetType,
+  statistics: any,
 };
 
 type FeatureProfilesProps = {
   features: FeatureType[],
-  featureSet: FeatureSetType,
+  statistics: any,
 };
 
 const entryTypes = [
@@ -100,14 +98,16 @@ const warnings = {
 function FeatureProfile({
   columns,
   feature,
-  featureSet,
+  statistics,
 }: FeatureProfileProps) {
+  const themeContext = useContext(ThemeContext);
+
   const {
     columnType,
     uuid,
   } = feature;
 
-  const featureSetStats = getFeatureSetStatistics(featureSet, uuid);
+  const featureSetStats = getFeatureStatistics(statistics, uuid);
   const {
     average: meanValue,
     avg_string_length: avgStringLength,
@@ -167,6 +167,12 @@ function FeatureProfile({
 
   const ColumnTypeIcon = COLUMN_TYPE_ICON_MAPPING[columnType];
 
+  const [ ROW, ROW_ALT ] = [
+    themeContext.background.row,
+    themeContext.background.row2,
+    themeContext.background.table,
+  ];
+
   return (
     <Flex flexDirection="column">
       <FeatureProfileStyle>
@@ -188,7 +194,7 @@ function FeatureProfile({
               secondary
             >
               <Text
-                backgroundColor={light.feature.active}
+                backgroundColor={(themeContext.feature || light.feature).active}
                 bold
                 maxWidth={25 * UNIT}
                 monospace
@@ -210,10 +216,11 @@ function FeatureProfile({
         const shouldWarn = entry in warnings && (val/rowCount) > warnings[entry];
 
         return (
-          <CellStyle backgroundColor={idx % 2 === 0 ? WHITE : LIGHT} key={idx}>
+          <CellStyle backgroundColor={idx % 2 === 0 ? ROW : ROW_ALT} key={idx}>
             <Text
               bold={shouldWarn}
               danger={shouldWarn}
+              default
               textOverflow
               title={isTextStat ? textTooltips[entry] : ''}
             >
@@ -229,45 +236,41 @@ function FeatureProfile({
 
 function FeatureProfiles({
   features = [],
-  featureSet,
+  statistics,
 }: FeatureProfilesProps) {
+  const themeContext = useContext(ThemeContext);
   const columns = useMemo(() => features.map(({ uuid }) => uuid), [features]);
 
   return (
-    <ContainerStyle>
-      <HeaderStyle>
-        <Text bold>
-          Feature Profiles
-        </Text>
-      </HeaderStyle>
-      <BodyStyle>
-        <FlexContainer>
-          <ColumnProfileStyle>
-            <Flex flex={1} flexDirection="column" style={{ background: '#F9FAFC' }} >
-              <Spacing mr={1.25 * UNIT} mt={'52px'} />
-              {entryTypes.map((entry, idx) => (
-                <CellStyle key={`${entry}-${idx}`}>
-                  <Text secondary>{entry}</Text>
-                </CellStyle>
-              ))}
-            </Flex>
-          </ColumnProfileStyle>
-          <ScrollOverflowStyle>
-            <FlexContainer>
-              {features.map((feature, idx) => (
-                <FeatureProfileStyle key={`${feature}-${idx}`}>
-                  <FeatureProfile
-                    columns={columns}
-                    feature={feature}
-                    featureSet={featureSet}
-                  />
-                </FeatureProfileStyle>
-              ))}
-            </FlexContainer>
-          </ScrollOverflowStyle>
-        </FlexContainer>
-      </BodyStyle>
-    </ContainerStyle>
+    <RowDataTable
+      headerTitle="Feature profiles"
+    >
+      <FlexContainer>
+        <ColumnProfileStyle>
+          <Flex flex={1} flexDirection="column" style={{ background: themeContext.background.table }} >
+            <Spacing mr={1.25 * UNIT} mt={'52px'} />
+            {entryTypes.map((entry, idx) => (
+              <CellStyle key={`${entry}-${idx}`}>
+                <Text secondary>{entry}</Text>
+              </CellStyle>
+            ))}
+          </Flex>
+        </ColumnProfileStyle>
+        <ScrollOverflowStyle>
+          <FlexContainer>
+            {features.map((feature, idx) => (
+              <FeatureProfileStyle key={`${feature}-${idx}`}>
+                <FeatureProfile
+                  columns={columns}
+                  feature={feature}
+                  statistics={statistics}
+                />
+              </FeatureProfileStyle>
+            ))}
+          </FlexContainer>
+        </ScrollOverflowStyle>
+      </FlexContainer>
+    </RowDataTable>
   );
 }
 

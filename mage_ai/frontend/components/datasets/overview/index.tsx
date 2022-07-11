@@ -327,8 +327,8 @@ function DatasetOverview({
 
               <Spacing mt={PADDING_UNITS}>
                 <FeatureProfiles
-                  featureSet={featureSet}
                   features={features}
+                  statistics={statistics}
                 />
               </Spacing>
             </>

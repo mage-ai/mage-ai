@@ -52,13 +52,7 @@ export function getOverallStatistics(featureSet) {
   };
 }
 
-
-export function getFeatureSetStatistics(featureSet, featureUUID) {
-  if (!featureSet || !featureSet.statistics) {
-    return {};
-  }
-
-  const { statistics } = featureSet;
+export function getFeatureStatistics(statistics, featureUUID) {
   return {
     average: statistics[`${featureUUID}/average`],
     avg_string_length: statistics[`${featureUUID}/avg_string_length`],
@@ -92,6 +86,14 @@ export function getFeatureSetStatistics(featureSet, featureUUID) {
     validity: statistics[`${featureUUID}/validity`],
     value_counts: statistics[`${featureUUID}/value_counts`],
   };
+}
+
+export function getFeatureSetStatistics(featureSet, featureUUID) {
+  if (!featureSet || !featureSet.statistics) {
+    return {};
+  }
+
+  return getFeatureStatistics(featureSet.statistics, featureUUID);
 }
 
 export function getFeatureSetInvalidValuesAll(featureSet, features) {
