@@ -25,12 +25,12 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
 
 ##### 1. Create new project
 ```bash
-$ ./scripts/init.sh --project [project]
+$ ./scripts/init.sh --project [project_name]
 ```
 
 ##### 2. Launch editor
 ```bash
-$ ./scripts/start.sh --project [project]
+$ ./scripts/start.sh --project [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
@@ -44,12 +44,12 @@ $ pip install mage-ai
 
 ##### 2. Create new project
 ```bash
-$ mage init [project]
+$ mage init [project_name]
 ```
 
 ##### 3. Launch editor
 ```bash
-$ mage start [project]
+$ mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
