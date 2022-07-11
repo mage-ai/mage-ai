@@ -136,6 +136,7 @@ class Block:
         used, throw error. Otherwise, delete the block files.
         """
         from mage_ai.data_preparation.models.pipeline import Pipeline
+
         if self.pipeline is not None:
             self.pipeline.delete_block(self)
             # For block_type SCRATCHPAD, also delete the file if possible
@@ -158,9 +159,7 @@ class Block:
 
     def execute_sync(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
         try:
-            output = self.execute_block(
-                custom_code=custom_code, redirect_outputs=redirect_outputs
-            )
+            output = self.execute_block(custom_code=custom_code, redirect_outputs=redirect_outputs)
             block_output = output['output']
             self.__verify_outputs(block_output)
             variable_mapping = dict(zip(self.output_variables.keys(), block_output))
@@ -457,6 +456,11 @@ class Block:
         self.name = name
         self.uuid = new_uuid
         new_file_path = self.file_path
+        if self.pipeline is not None:
+            if self.pipeline.has_block(new_uuid):
+                raise Exception(
+                    f'Block {new_uuid} already exists in pipeline. Please use a different name.'
+                )
         if os.path.exists(new_file_path):
             raise Exception(f'Block {new_uuid} already exists. Please use a different name.')
         os.rename(old_file_path, new_file_path)
