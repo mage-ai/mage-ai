@@ -12,6 +12,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import PipelineType from '@interfaces/PipelineType';
@@ -99,7 +100,10 @@ function Sidekick({
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
-  const features = insights?.[0]?.map(({ feature }) => feature) || [];
+  const features = columns?.map(uuid => ({
+    columnType: columnTypes[uuid],
+    uuid,
+  }));
   const insightsOverview = insights?.[1] || {};
   const insightsByFeatureUUID = useMemo(() => indexBy(insights?.[0] || [], ({
     feature: {
@@ -262,6 +266,14 @@ function Sidekick({
                   <StatsTable
                     stats={statsSample}
                     title="Statistics"
+                  />
+                </Spacing>
+              )}
+              {features.length > 0 && (
+                <Spacing mt={PADDING_UNITS}>
+                  <FeatureProfiles
+                    features={features}
+                    statistics={statistics}
                   />
                 </Spacing>
               )}

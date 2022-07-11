@@ -7,11 +7,9 @@ import {
 import { ThemeContext } from 'styled-components';
 
 import Circle from '@oracle/elements/Circle';
-import FileType from '@interfaces/FileType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelType from '@interfaces/KernelType';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
@@ -21,15 +19,12 @@ import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import { Close, FileFill } from '@oracle/icons';
 import { FileTabStyle, PipelineHeaderStyle } from './index.style';
-import {
-  KEY_CODE_NUMBERS_TO_NUMBER,
-  KEY_CODE_NUMBER_0,
-} from '@utils/hooks/keyboardShortcuts/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLongFromUnixTimestamp } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
+import { pauseEvent } from '@utils/events';
 
 type KernelStatusProps = {
   filePaths: string[];
@@ -70,9 +65,9 @@ function KernelStatus({
 
   useEffect(() => {
     if (pipeline?.uuid) {
-      setNewPipelineName(pipeline.uuid)
+      setNewPipelineName(pipeline.uuid);
     }
-  }, [pipeline?.uuid])
+  }, [pipeline?.uuid]);
 
   const filePaths =
     useMemo(() => filePathsProp.map(path => decodeURIComponent(path)), [filePathsProp]);
@@ -96,6 +91,7 @@ function KernelStatus({
       onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
       onChange={(e) => {
         setNewPipelineName(e.target.value);
+        pauseEvent(e);
       }}
       onClick={() => setIsEditingPipeline(true)}
       onFocus={() => setIsEditingPipeline(true)}

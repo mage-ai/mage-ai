@@ -2,6 +2,7 @@ import InsightsType from './InsightsType';
 import PipelineType from './PipelineType';
 import SuggestionType from './SuggestionType';
 import { MetadataType } from './MetadataType';
+import { StatisticsType } from './BlockType';
 
 export default interface FeatureSetType {
   id: string | number;
@@ -12,9 +13,7 @@ export default interface FeatureSetType {
     columns: string[];
     rows: string[][];
   };
-  statistics: {
-    [key: string]: any;
-  };
+  statistics: StatisticsType;
   suggestions: SuggestionType[];
 }
 
