@@ -155,25 +155,32 @@ class Block:
             p.delete_block(p.get_block(self.uuid))
         os.remove(self.file_path)
 
+    def execute_sync(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
+        try:
+            output = self.execute_block(
+                custom_code=custom_code, redirect_outputs=redirect_outputs
+            )
+            block_output = output['output']
+            self.__verify_outputs(block_output)
+            variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+            self.__store_variables(variable_mapping)
+            self.status = BlockStatus.EXECUTED
+            if analyze_outputs:
+                self.__analyze_outputs(variable_mapping)
+        except Exception as err:
+            self.status = BlockStatus.FAILED
+            raise Exception(f'Exception encountered in block {self.uuid}') from err
+        finally:
+            self.__update_pipeline_block()
+        return output
+
     async def execute(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
-            try:
-                output = await self.execute_block(
-                    custom_code=custom_code, redirect_outputs=redirect_outputs
-                )
-                block_output = output['output']
-                self.__verify_outputs(block_output)
-                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
-                self.__store_variables(variable_mapping)
-                self.status = BlockStatus.EXECUTED
-                if analyze_outputs:
-                    self.__analyze_outputs(variable_mapping)
-            except Exception as err:
-                self.status = BlockStatus.FAILED
-                raise err
-            finally:
-                self.__update_pipeline_block()
-        return output
+            return self.execute_sync(
+                analyze_outputs=analyze_outputs,
+                custom_code=custom_code,
+                redirect_outputs=redirect_outputs,
+            )
 
     def __validate_execution(self, decorated_functions, input_vars):
         not_executed_upstream_blocks = list(
@@ -236,7 +243,7 @@ class Block:
 
             return block_function
 
-    async def execute_block(self, custom_code=None, redirect_outputs=False):
+    def execute_block(self, custom_code=None, redirect_outputs=False):
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)

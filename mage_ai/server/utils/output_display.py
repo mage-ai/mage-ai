@@ -99,3 +99,27 @@ __custom_output()
 {code_without_last_line}
 {internal_output}
 """
+
+def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
+    return f"""
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.shared.array import find
+import pandas as pd
+
+def execute_custom_code():
+    pipeline_uuid=\'{pipeline_uuid}\'
+    block_uuid=\'{block_uuid}\'
+    pipeline = Pipeline(pipeline_uuid, get_repo_path())
+    block = pipeline.get_block(block_uuid)
+
+    code = \'\'\'
+{code}
+    \'\'\'
+
+    block_output = block.execute_sync(custom_code=code)
+    output = block_output['output']
+    return find(lambda val: type(val) == pd.DataFrame, output)
+
+execute_custom_code()
+    """

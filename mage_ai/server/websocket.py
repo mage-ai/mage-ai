@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.utils.output_display import add_internal_output_info
+from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
 import asyncio
@@ -39,10 +39,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
-        code = message.get('code')
+        custom_code = message.get('code')
         output = message.get('output')
 
-        if code:
+        if custom_code:
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
 
@@ -55,40 +55,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid)
-            final_output = []
-            error = None
-            trace = None
-            stdout = None
+            code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                try:
-                    block_output = asyncio.run(
-                        block.execute(custom_code=code, redirect_outputs=True)
-                    )
-                    stdout = block_output['stdout']
-                    output = block_output['output']
-                    if len(output) > 0:
-                        for out in output:
-                            if (
-                                type(out) == pd.DataFrame
-                                and out.shape[0] > DATAFRAME_SAMPLE_COUNT_PREVIEW
-                            ):
+                code = add_execution_code(pipeline_uuid, block_uuid, custom_code)
 
-                                out = out.iloc[:DATAFRAME_SAMPLE_COUNT_PREVIEW]
-                            final_output.append(out)
-                except Exception as err:
-                    error = err
-                    trace = traceback.format_exc().splitlines()
-                # Run with no code because we still need to send a message
-                msg_id = client.execute('')
-            else:
-                msg_id = client.execute(add_internal_output_info(code))
+            msg_id = client.execute(add_internal_output_info(code))            
 
             value = dict(
                 block_uuid=block_uuid,
-                block_output=final_output,
-                error=error,
-                stdout=stdout,
-                traceback=trace,
             )
 
             WebSocketServer.running_executions_mapping[msg_id] = value
@@ -97,56 +71,21 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_message(self, message: dict) -> None:
-        msg_type = message['msg_type']
         msg_id = message['msg_id']
         msg_id_value = WebSocketServer.running_executions_mapping[msg_id]
         uuid = msg_id_value['block_uuid']
-        output = msg_id_value['block_output']
-        trace = msg_id_value['traceback']
-        stdout = msg_id_value['stdout']
 
         output_dict = dict(uuid=uuid)
 
-        messages = []
-        if msg_type == 'execute_input':
-            if stdout is not None and len(stdout) > 0:
-                stdout_message = merge_dict(
-                    message,
-                    dict(
-                        data=stdout,
-                        type=DataType.TEXT,
-                        uuid=uuid,
-                    ),
-                )
-                messages.append(stdout_message)
-
-            if trace is not None:
-                output_dict['data'] = trace
-                output_dict['type'] = DataType.TEXT
-            elif len(output) > 0:
-                df = find(lambda val: type(val) == pd.DataFrame, output)
-                output_dict['data'] = simplejson.dumps(
-                    dict(
-                        columns=df.columns.to_list(),
-                        rows=df.to_numpy().tolist(),
-                    ),
-                    default=datetime.isoformat,
-                    ignore_nan=True,
-                )
-                output_dict['type'] = DataType.TABLE
-
-        messages.append(
-            merge_dict(
-                message,
-                output_dict,
-            )
+        message_final = merge_dict(
+            message,
+            output_dict,
         )
 
         print(
-            f'[{uuid}] Sending {len(messages)} messages for {msg_id} to '
-            f'{len(self.clients)} client(s): {messages}'
+            f'[{uuid}] Sending message for {msg_id} to '
+            f'{len(self.clients)} client(s): {message_final}'
         )
 
         for client in self.clients:
-            for m in messages:
-                client.write_message(json.dumps(m))
+            client.write_message(json.dumps(message_final))
