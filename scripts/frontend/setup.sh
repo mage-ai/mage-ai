@@ -1,1 +1,1 @@
-docker run --workdir=/home/src/mage_ai/frontend mage/data yarn install
+docker-compose run app yarn install
