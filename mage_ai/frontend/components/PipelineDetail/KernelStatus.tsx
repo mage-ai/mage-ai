@@ -166,22 +166,22 @@ function KernelStatus({
 
             {!selectedFilePath && (
               <FlexContainer alignItems="center">
-                {!isEditingPipeline && (
-                  <Tooltip
-                    block
-                    label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
-                    size={null}
-                    widthFitContent
-                  >
-                    {pipelineName}
-                  </Tooltip>
-                )}
-                {isEditingPipeline && pipelineName}
+                <Tooltip
+                  block
+                  label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
+                  size={null}
+                  widthFitContent
+                >
+                  {pipelineName}
+                </Tooltip>
                 {isEditingPipeline && (
                   <>
                     <Spacing ml={1} />
                     <Link
-                      onClick={() => updatePipelineName(newPipelineName)}
+                      onClick={() => {
+                        updatePipelineName(newPipelineName);
+                        setIsEditingPipeline(false);
+                      }}
                       preventDefault
                       sameColorAsText
                       small
