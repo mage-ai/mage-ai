@@ -19,12 +19,14 @@ import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import { Close, FileFill } from '@oracle/icons';
 import { FileTabStyle, PipelineHeaderStyle } from './index.style';
+import { KEY_CODE_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLongFromUnixTimestamp } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 import { pauseEvent } from '@utils/events';
+import { useKeyboardContext } from '@context/Keyboard';
 
 type KernelStatusProps = {
   filePaths: string[];
@@ -82,6 +84,33 @@ function KernelStatus({
   } else {
     saveStatus = 'All changes saved';
   }
+
+  const uuidKeyboard = 'PipelineDetail/KernelStatus';
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping, keyHistory) => {
+      if (isEditingPipeline
+        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
+        && String(keyHistory[1]) !== String(KEY_CODE_META)
+      ) {
+        setIsEditingPipeline(false);
+        updatePipelineName(newPipelineName);
+      }
+    },
+    [
+      isEditingPipeline,
+      newPipelineName,
+    ],
+  );
 
   const pipelineNameInput = useMemo(() => (
     <LabelWithValueClicker
@@ -181,7 +210,10 @@ function KernelStatus({
                   <>
                     <Spacing ml={1} />
                     <Link
-                      onClick={() => updatePipelineName(newPipelineName)}
+                      onClick={() => {
+                        setIsEditingPipeline(false);
+                        updatePipelineName(newPipelineName);
+                      }}
                       preventDefault
                       sameColorAsText
                       small
