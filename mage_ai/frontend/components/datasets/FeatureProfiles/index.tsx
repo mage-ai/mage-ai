@@ -145,7 +145,7 @@ function FeatureProfile({
           <FlexContainer alignItems="center">
             {ColumnTypeIcon && 
               <Flex title={COLUMN_TYPE_HUMAN_READABLE_MAPPING[columnType]}>
-                <ColumnTypeIcon size={UNIT * 2} />
+                <ColumnTypeIcon size={UNIT * 2} />&nbsp;
               </Flex>
             }
             <FeatureStyle
@@ -155,7 +155,6 @@ function FeatureProfile({
               secondary
             >
               <Text
-                backgroundColor={(themeContext.feature || light.feature).active}
                 bold
                 maxWidth={25 * UNIT}
                 monospace
