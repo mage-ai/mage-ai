@@ -160,7 +160,13 @@ class Block:
             output = self.execute_block(
                 custom_code=custom_code, redirect_outputs=redirect_outputs
             )
-            self.process_output(output, analyze_outputs)
+            block_output = output['output']
+            self.__verify_outputs(block_output)
+            variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+            self.__store_variables(variable_mapping)
+            self.status = BlockStatus.EXECUTED
+            if analyze_outputs:
+                self.__analyze_outputs(variable_mapping)
         except Exception as err:
             self.status = BlockStatus.FAILED
             raise Exception(f'Exception encountered in block {self.uuid}') from err
@@ -170,16 +176,11 @@ class Block:
 
     async def execute(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
-            return self.execute_sync(analyze_outputs, custom_code, redirect_outputs)
-
-    def process_output(self, output, analyze_outputs=True):
-        block_output = output['output']
-        self.__verify_outputs(block_output)
-        variable_mapping = dict(zip(self.output_variables.keys(), block_output))
-        self.__store_variables(variable_mapping)
-        self.status = BlockStatus.EXECUTED
-        if analyze_outputs:
-            self.__analyze_outputs(variable_mapping)
+            return self.execute_sync(
+                analyze_outputs=analyze_outputs,
+                custom_code=custom_code,
+                redirect_outputs=redirect_outputs,
+            )
 
     def __validate_execution(self, decorated_functions, input_vars):
         not_executed_upstream_blocks = list(

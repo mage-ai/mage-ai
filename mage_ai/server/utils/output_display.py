@@ -96,9 +96,6 @@ __custom_output()
 
 def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
     return f"""
-from mage_ai.data_preparation.models.constants import (
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
-)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
@@ -109,7 +106,6 @@ block_uuid=\'{block_uuid}\'
 
 pipeline = Pipeline(pipeline_uuid, get_repo_path())
 block = pipeline.get_block(block_uuid)
-final_output = []
 code = \'\'\'
 {code}
 \'\'\'
