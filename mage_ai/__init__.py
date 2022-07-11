@@ -118,12 +118,12 @@ def clean(
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
+
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, project_path: str = None) -> None:
+def run(pipeline_uuid: str, project_path: str = None, **kwargs) -> None:
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
-
-    asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False))
+    asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False, runtime_vars=kwargs))

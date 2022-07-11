@@ -89,9 +89,8 @@ class Pipeline:
 
     @classmethod
     def is_valid_pipeline(self, pipeline_path):
-        return (
-            os.path.isdir(pipeline_path) and
-            os.path.exists(os.path.join(pipeline_path, METADATA_FILE_NAME))
+        return os.path.isdir(pipeline_path) and os.path.exists(
+            os.path.join(pipeline_path, METADATA_FILE_NAME)
         )
 
     def block_deletable(self, block, widget=False):
@@ -104,6 +103,7 @@ class Pipeline:
         self,
         analyze_outputs=True,
         redirect_outputs=False,
+        runtime_vars=None,
         update_status=True,
     ):
         """
@@ -139,7 +139,8 @@ class Pipeline:
                 c.get('type'),
                 c.get('status'),
                 self,
-            ) for c in self.block_configs
+            )
+            for c in self.block_configs
         ]
         widgets = [
             Widget.get_block(
@@ -149,7 +150,8 @@ class Pipeline:
                 c.get('status'),
                 self,
                 configuration=c.get('configuration'),
-            ) for c in self.widget_configs
+            )
+            for c in self.widget_configs
         ]
         all_blocks = blocks + widgets
 

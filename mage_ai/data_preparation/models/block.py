@@ -262,10 +262,15 @@ class Block:
         analyze_outputs=True,
         custom_code=None,
         redirect_outputs=False,
+        runtime_vars=None,
         update_status=True,
     ):
         try:
-            output = self.execute_block(custom_code=custom_code, redirect_outputs=redirect_outputs)
+            output = self.execute_block(
+                custom_code=custom_code,
+                redirect_outputs=redirect_outputs,
+                runtime_vars=runtime_vars,
+            )
             block_output = output['output']
             self.__verify_outputs(block_output)
             variable_mapping = dict(zip(self.output_variables.keys(), block_output))
@@ -288,6 +293,7 @@ class Block:
         analyze_outputs=True,
         custom_code=None,
         redirect_outputs=False,
+        runtime_vars=None,
         update_status=True,
     ):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
@@ -295,6 +301,7 @@ class Block:
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
                 redirect_outputs=redirect_outputs,
+                runtime_vars=runtime_vars,
                 update_status=update_status,
             )
 
@@ -359,7 +366,10 @@ class Block:
 
             return block_function
 
-    def execute_block(self, custom_code=None, redirect_outputs=False):
+    def execute_block(self, custom_code=None, redirect_outputs=False, runtime_vars=None):
+        if runtime_vars is None:
+            runtime_vars = {}
+
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
@@ -382,12 +392,17 @@ class Block:
         outputs = []
         decorated_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
+        if self.type in runtime_vars:
+            raise ValueError(
+                f'Cannot use reserved variable name \'{self.type}\' in block of type \'{self.type}\''
+            )
+        runtime_vars[self.type] = block_decorator(decorated_functions)
         with redirect_stdout(stdout):
             if custom_code is not None:
-                exec(custom_code, {self.type: block_decorator(decorated_functions)})
+                exec(custom_code, runtime_vars)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
-                    exec(file.read(), {self.type: block_decorator(decorated_functions)})
+                    exec(file.read(), runtime_vars)
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
                 outputs = block_function(*input_vars)
@@ -498,8 +513,11 @@ class Block:
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
-        if 'type' in data and self.type == BlockType.SCRATCHPAD and \
-                data['type'] != BlockType.SCRATCHPAD:
+        if (
+            'type' in data
+            and self.type == BlockType.SCRATCHPAD
+            and data['type'] != BlockType.SCRATCHPAD
+        ):
             self.__update_type(data['type'])
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
@@ -636,8 +654,10 @@ class Block:
         self.type = block_type
         new_file_path = self.file_path
         if os.path.exists(new_file_path):
-            raise Exception(f'Block {self.type}/{self.uuid} already exists.'
-                            ' Please rename it before changing the type.')
+            raise Exception(
+                f'Block {self.type}/{self.uuid} already exists.'
+                ' Please rename it before changing the type.'
+            )
         os.rename(old_file_path, new_file_path)
         if self.pipeline is not None:
             self.pipeline.update_block(self)
