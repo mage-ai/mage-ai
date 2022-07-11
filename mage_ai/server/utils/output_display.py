@@ -101,16 +101,19 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
 import pandas as pd
 
-pipeline_uuid=\'{pipeline_uuid}\'
-block_uuid=\'{block_uuid}\'
+def execute_custom_code():
+    pipeline_uuid=\'{pipeline_uuid}\'
+    block_uuid=\'{block_uuid}\'
+    pipeline = Pipeline(pipeline_uuid, get_repo_path())
+    block = pipeline.get_block(block_uuid)
 
-pipeline = Pipeline(pipeline_uuid, get_repo_path())
-block = pipeline.get_block(block_uuid)
-code = \'\'\'
+    code = \'\'\'
 {code}
-\'\'\'
-block_output = block.execute_sync(custom_code=code)
-output = block_output['output']
-df = find(lambda val: type(val) == pd.DataFrame, output)
-df
+    \'\'\'
+
+    block_output = block.execute_sync(custom_code=code)
+    output = block_output['output']
+    return find(lambda val: type(val) == pd.DataFrame, output)
+
+execute_custom_code()
     """
