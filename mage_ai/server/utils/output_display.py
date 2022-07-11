@@ -7,14 +7,14 @@ import re
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
 
-def remove_comments(code_lines):
+def remove_comments(code_lines: list[str]) -> list[str]:
     return list(filter(
         lambda x: not re.search(r'^\#', str(x).strip()),
         code_lines,
     ))
 
 
-def remove_empty_last_lines(code_lines):
+def remove_empty_last_lines(code_lines: list[str]) -> list[str]:
     idx = len(code_lines) - 1
     last_line = code_lines[idx]
     while idx >= 0 and len(str(last_line).strip()) == 0:
@@ -23,15 +23,20 @@ def remove_empty_last_lines(code_lines):
     return code_lines[:(idx + 1)]
 
 
+def find_last_expression_lines(code_lines):
+    pass
+
+
 def add_internal_output_info(code: str) -> str:
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)
 
     last_line = code_lines[len(code_lines) - 1]
 
-    parts = last_line.split('=')
-    if len(parts) == 2:
-        last_line = parts[0]
+    matches = re.search('^[ ]*([^=^ ]+)[ ]*=[ ]*', last_line)
+    if matches:
+        # Get the variable name in the last line if the last line is a variable assignment
+        last_line = matches.group(1)
     last_line = last_line.strip()
 
     is_print_statement = False
@@ -51,7 +56,7 @@ def add_internal_output_info(code: str) -> str:
 {code}
 """
     else:
-        if len(parts) >= 2:
+        if matches:
             end_index = len(code_lines)
         else:
             end_index = -1

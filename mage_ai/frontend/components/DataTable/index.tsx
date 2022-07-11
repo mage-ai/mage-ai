@@ -220,12 +220,19 @@ function Table({
     refListOuter,
   ]);
 
+  const shouldUseIndexProp = useMemo(() => indexProp && data && indexProp.length === data.length, [
+    data,
+    indexProp,
+  ]);
+
   const maxWidthOfFirstColumn =
-    useMemo(() => (indexProp
+    useMemo(() => (shouldUseIndexProp
       ? Math.max(...indexProp.map(i => String(i).length)) * WIDTH_OF_CHARACTER
       : String(data?.length).length * WIDTH_OF_CHARACTER
     ) + (UNIT * 2), [
       data,
+      indexProp,
+      shouldUseIndexProp,
     ]);
 
   const columnsAll = columns.map(col => col?.Header).slice(1);
@@ -326,8 +333,8 @@ function Table({
               key={`${idx}-${cellValue}`}
               style={cellStyle}
             >
-              {firstColumn && !indexProp && cell.render('Cell')}
-              {firstColumn && indexProp && indexProp[index]}
+              {firstColumn && !shouldUseIndexProp && cell.render('Cell')}
+              {firstColumn && shouldUseIndexProp && indexProp[index]}
               {!firstColumn && (
                 <FlexContainer justifyContent="space-between">
                   <Text danger={isInvalid} default wordBreak>
@@ -485,8 +492,8 @@ function DataTable({
     sticky: 'left',
     // @ts-ignore
   }].concat(columnsProp?.map(col => ({
-    Header: col,
-    accessor: col,
+    Header: String(col),
+    accessor: String(col),
   }))), [columnsProp]);
 
   const data = useMemo(() => rowsProp?.map(row => row.reduce((acc, v, i) => ({

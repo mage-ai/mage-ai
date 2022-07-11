@@ -93,13 +93,17 @@ Visualize the impact of your code every time you load, clean, and transform data
 ### 2. Production ready code
 No more writing throw away code or trying to turn notebooks into scripts.
 
-Each cell block in this editor is a modular file that can be tested, reused,
+Each block (aka cell) in this editor is a modular file that can be tested, reused,
 and chained together to create an executable data pipeline locally or in any environment.
+
+Read more about <b>[blocks](docs/blocks/README.md)</b> and how they work.
 
 <img
   alt="Production ready code"
   src="media/production-ready-code.png"
 />
+
+Run your data pipeline end-to-end using the command line function: `$ mage run [project] [pipeline]`
 
 ### 3. Extensible
 Easily add new functionality directly in the source code or through plug-ins (coming soon).
