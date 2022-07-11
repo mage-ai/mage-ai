@@ -1,5 +1,5 @@
 import Router from 'next/router';
-import type { NextPage } from 'next';
+import { NextPage } from 'next';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import Layout from '@oracle/components/Layout';
