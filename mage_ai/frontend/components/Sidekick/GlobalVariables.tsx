@@ -1,10 +1,7 @@
 import { ThemeContext } from 'styled-components';
 import { useContext, useMemo } from 'react';
 
-import BlockType, {
-  BLOCK_TYPE_ABBREVIATION_MAPPING,
-  BlockTypeEnum,
-} from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@oracle/elements/Circle';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';

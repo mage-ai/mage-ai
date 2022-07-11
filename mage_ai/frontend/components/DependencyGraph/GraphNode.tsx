@@ -18,6 +18,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 type GraphNodeProps = {
   block: BlockType;
+  children: any;
   disabled?: boolean;
   hasFailed?: boolean;
   isInProgress?: boolean;
@@ -29,6 +30,7 @@ type GraphNodeProps = {
 
 function GraphNode({
   block,
+  children,
   disabled,
   hasFailed,
   isInProgress,
@@ -107,7 +109,7 @@ function GraphNode({
               monospace
               small
             >
-              {uuid}
+              {children}
             </Text>
           </FlexContainer>
         </Spacing>

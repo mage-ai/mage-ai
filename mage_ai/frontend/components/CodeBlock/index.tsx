@@ -10,7 +10,6 @@ import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
-  BLOCK_TYPE_ABBREVIATION_MAPPING,
   BLOCK_TYPE_NAME_MAPPING,
   BlockTypeEnum,
   SetEditingBlockType,
@@ -395,7 +394,26 @@ function CodeBlockProps({
                 color={color}
                 monospace
               >
-                {BLOCK_TYPE_ABBREVIATION_MAPPING[block.type]}
+                {BlockTypeEnum.DATA_EXPORTER === block.type && (
+                  <>
+                    DATA EXPORTER
+                  </>
+                )}
+                {BlockTypeEnum.DATA_LOADER === block.type && (
+                  <>
+                    DATA LOADER&nbsp;&nbsp;
+                  </>
+                )}
+                {BlockTypeEnum.SCRATCHPAD === block.type && (
+                  <>
+                    SCRATCHPAD&nbsp;&nbsp;&nbsp;
+                  </>
+                )}
+                {BlockTypeEnum.TRANSFORMER === block.type && (
+                  <>
+                    TRANSFORMER&nbsp;&nbsp;
+                  </>
+                )}
               </Text>
             </FlexContainer>
           </Tooltip>

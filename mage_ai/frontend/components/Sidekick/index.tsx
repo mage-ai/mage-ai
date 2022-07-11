@@ -92,6 +92,10 @@ function Sidekick({
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>(null);
 
+  const {
+    block: blockEditing,
+  } = editingBlock?.upstreamBlocks || {};
+
   const columns = sampleData?.columns || [];
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
@@ -196,25 +200,27 @@ function Sidekick({
       <SidekickContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
         {activeView === ViewKeyEnum.TREE &&
           <>
-            <Spacing p={2}>
-              <Button
-                beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-                loading={isLoadingExecute}
-                onClick={() => executePipeline()}
-                success
-              >
-                <Text
-                  bold
-                  inverted
-                  primary={isDisplayingSuccessMessage}
+            {!blockEditing && (
+              <Spacing p={2}>
+                <Button
+                  beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+                  loading={isLoadingExecute}
+                  onClick={() => executePipeline()}
+                  success
                 >
-                  {isDisplayingSuccessMessage
-                    ? 'Successfully executed!'
-                    : 'Execute pipeline'
-                  }
-                </Text>
-              </Button>
-            </Spacing>
+                  <Text
+                    bold
+                    inverted
+                    primary={isDisplayingSuccessMessage}
+                  >
+                    {isDisplayingSuccessMessage
+                      ? 'Successfully executed!'
+                      : 'Execute pipeline'
+                    }
+                  </Text>
+                </Button>
+              </Spacing>
+            )}
 
             <DependencyGraph
               blockRefs={blockRefs}
