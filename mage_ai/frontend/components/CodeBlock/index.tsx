@@ -418,8 +418,14 @@ function CodeBlockProps({
                 setNewBlockUuid(e.target.value);
                 pauseEvent(e);
               }}
-              onClick={() => setIsEditingBlock(true)}
-              onFocus={() => setIsEditingBlock(true)}
+              onClick={() => {
+                setAnyInputFocused(true);
+                setIsEditingBlock(true);
+              }}
+              onFocus={() => {
+                setAnyInputFocused(true);
+                setIsEditingBlock(true);
+              }}
               stacked
               value={!isEditingBlock && block.uuid}
             />

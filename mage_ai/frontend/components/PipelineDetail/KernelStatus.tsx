@@ -1,5 +1,6 @@
 import {
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -65,7 +66,13 @@ function KernelStatus({
     name,
   } = kernel || {};
   const [isEditingPipeline, setIsEditingPipeline] = useState(false);
-  const [newPipelineName, setNewPipelineName] = useState(pipeline?.uuid);
+  const [newPipelineName, setNewPipelineName] = useState('');
+
+  useEffect(() => {
+    if (pipeline?.uuid) {
+      setNewPipelineName(pipeline.uuid)
+    }
+  }, [pipeline?.uuid])
 
   const filePaths =
     useMemo(() => filePathsProp.map(path => decodeURIComponent(path)), [filePathsProp]);
@@ -93,7 +100,7 @@ function KernelStatus({
       onClick={() => setIsEditingPipeline(true)}
       onFocus={() => setIsEditingPipeline(true)}
       stacked
-      value={!isEditingPipeline && pipeline?.uuid}
+      value={isEditingPipeline ? null : (pipeline?.uuid || '')}
     />
   ), [
     isEditingPipeline,
