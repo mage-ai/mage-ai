@@ -12,6 +12,9 @@ def init_repo(repo_path: str) -> None:
 
     copy_template_directory('repo', repo_path)
 
+    from mage_ai.data_preparation.models.pipeline import Pipeline
+    Pipeline.create('default_pipeline', repo_path)
+
 
 def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR)
