@@ -5,6 +5,7 @@ import HeatMap from '@components/charts/HeatMap';
 import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import {
   buildHeatmapData,
   buildNullValueData,
@@ -29,7 +30,7 @@ function BlockCharts({
   const {
     correlations = [],
   } = insightsOverview;
-  const finalAfterWidth = afterWidth - (2 * (PADDING_UNITS * UNIT));
+  const finalAfterWidth = afterWidth - ((2 * PADDING_UNITS * UNIT) + SCROLLBAR_WIDTH);
 
   const { heatmapData, xyLabels } = buildHeatmapData(correlations);
   const nullValueData = buildNullValueData(features, statistics);
