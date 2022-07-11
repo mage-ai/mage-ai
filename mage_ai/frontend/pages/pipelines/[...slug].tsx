@@ -516,9 +516,15 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
+    if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
+    }
+  }, [
+    pipeline?.blocks,
+  ]);
 
+  useEffect(() => {
+    if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
       const messagesInit = {};
       contentByBlockUUID.current = {};
 
