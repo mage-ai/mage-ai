@@ -383,7 +383,9 @@ def make_app():
 
 
 async def main(project_path: str = None):
-    if project_path is None:
+    if project_path:
+        project_path = project_path = os.path.abspath(project_path)
+    else:
         project_path = os.path.join(os.getcwd(), 'default_repo')
     if not os.path.exists(project_path):
         init_repo(project_path)
@@ -396,7 +398,7 @@ async def main(project_path: str = None):
     app.listen(DATA_PREP_SERVER_PORT)
 
     print('Server started!')
-    print(f'Mage is running at http://localhost:{DATA_PREP_SERVER_PORT}')
+    print(f'Mage is running at http://localhost:{DATA_PREP_SERVER_PORT} and serving project {project_path}')
 
     get_messages(
         manager.client(),
