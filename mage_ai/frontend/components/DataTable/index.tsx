@@ -47,7 +47,9 @@ type SharedProps = {
   columnHeaderHeight?: number;
   disableScrolling?: boolean;
   height?: number;
+  index?: number[] | string[];
   invalidValues?: InvalidValueType;
+  maxHeight?: number;
   previewIndexes?: {
     removedRows?: number[];
   };
@@ -79,6 +81,7 @@ const Styles = styled.div<{
   columnHeaderHeight?: number;
   disableScrolling?: boolean;
   height?: number;
+  maxHeight?: number;
   noBorderBottom?: boolean;
   noBorderLeft?: boolean;
   noBorderRight?: boolean;
@@ -90,6 +93,10 @@ const Styles = styled.div<{
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: ${props.maxHeight}px;
   `}
 
   .body > div {
@@ -185,7 +192,9 @@ function Table({
   data,
   disableScrolling,
   height,
+  index: indexProp,
   invalidValues,
+  maxHeight,
   previewIndexes,
   renderColumnHeader,
   width,
@@ -212,7 +221,10 @@ function Table({
   ]);
 
   const maxWidthOfFirstColumn =
-    useMemo(() => (String(data?.length).length * WIDTH_OF_CHARACTER) + (UNIT * 2), [
+    useMemo(() => (indexProp
+      ? Math.max(...indexProp.map(i => String(i).length)) * WIDTH_OF_CHARACTER
+      : String(data?.length).length * WIDTH_OF_CHARACTER
+    ) + (UNIT * 2), [
       data,
     ]);
 
@@ -314,7 +326,8 @@ function Table({
               key={`${idx}-${cellValue}`}
               style={cellStyle}
             >
-              {firstColumn && cell.render('Cell')}
+              {firstColumn && !indexProp && cell.render('Cell')}
+              {firstColumn && indexProp && indexProp[index]}
               {!firstColumn && (
                 <FlexContainer justifyContent="space-between">
                   <Text danger={isInvalid} default wordBreak>
@@ -349,17 +362,24 @@ function Table({
   }, [invalidValues, maxWidthOfFirstColumn, prepareRow, rows, slug]);
 
   const listHeight = useMemo(() => {
-    let val = height;
-    if (columnHeaderHeight) {
-      val -= columnHeaderHeight;
+    let val
+    if (maxHeight) {
+      val = rows.length * BASE_ROW_HEIGHT;
     } else {
-      val -= BASE_ROW_HEIGHT;
+      val = height;
+      if (columnHeaderHeight) {
+        val -= columnHeaderHeight;
+      } else {
+        val -= BASE_ROW_HEIGHT;
+      }
     }
 
     return val;
   }, [
     columnHeaderHeight,
     height,
+    maxHeight,
+    rows,
   ]);
 
   return (
@@ -431,6 +451,7 @@ function Table({
           itemSize={(idx: number) => estimateCellHeight(rows[idx])}
           outerRef={refListOuter}
           style={{
+            maxHeight: maxHeight,
             overflow: disableScrolling ? 'hidden' : 'auto',
           }}
         >
@@ -446,7 +467,9 @@ function DataTable({
   columns: columnsProp,
   disableScrolling,
   height,
+  index,
   invalidValues,
+  maxHeight,
   noBorderBottom,
   noBorderLeft,
   noBorderRight,
@@ -479,6 +502,7 @@ function DataTable({
       columnHeaderHeight={columnHeaderHeight}
       disableScrolling={disableScrolling}
       height={height}
+      maxHeight={maxHeight}
       noBorderBottom={noBorderBottom}
       noBorderLeft={noBorderLeft}
       noBorderRight={noBorderRight}
@@ -490,7 +514,9 @@ function DataTable({
         data={rowsProp}
         disableScrolling={disableScrolling}
         height={height}
+        index={index}
         invalidValues={invalidValues}
+        maxHeight={maxHeight}
         previewIndexes={previewIndexes}
         renderColumnHeader={renderColumnHeader}
         width={width}

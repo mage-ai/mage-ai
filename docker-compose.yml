@@ -13,20 +13,6 @@ services:
     restart: on-failure:5
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging
-  lab:
-    image: mage/data
-    build: .
-    depends_on:
-      - server_kernel
-    environment:
-      - HOME_DIR=/home/src
-    command: "jupyter lab --allow-root --ip=0.0.0.0"
-    ports:
-      - 8888:8888
-    volumes:
-      - .:/home/src
-    mem_limit: 99999m
-    oom_kill_disable: true
   server:
     image: mage/data
     build: .

@@ -69,12 +69,18 @@ def __custom_output():
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame):
-        columns = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}].columns.tolist()
-        rows = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}].to_numpy().tolist()
+        sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+        columns = sample.columns.tolist()
+        rows = sample.to_numpy().tolist()
+        index = sample.index.tolist()
 
         json_string = simplejson.dumps(
             dict(
-                data=dict(columns=columns, rows=rows),
+                data=dict(
+                    columns=columns,
+                    index=index,
+                    rows=rows,
+                ),
                 type='table',
             ),
             default=datetime.isoformat,
