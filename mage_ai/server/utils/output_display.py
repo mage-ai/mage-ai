@@ -29,9 +29,10 @@ def add_internal_output_info(code: str) -> str:
 
     last_line = code_lines[len(code_lines) - 1]
 
-    parts = last_line.split('=')
-    if len(parts) == 2:
-        last_line = parts[0]
+    matches = re.search('^[ ]*([^=^ ]+)[ ]*=[ ]*', last_line)
+    if matches:
+        # Get the variable name in the last line if the last line is a variable assignment
+        last_line = matches.group(1)
     last_line = last_line.strip()
 
     is_print_statement = False
@@ -51,7 +52,7 @@ def add_internal_output_info(code: str) -> str:
 {code}
 """
     else:
-        if len(parts) >= 2:
+        if matches:
             end_index = len(code_lines)
         else:
             end_index = -1
