@@ -7,6 +7,11 @@
 
 Mage is an open-source code editor for <b>transforming data</b> and building <b>ML pipelines</b>.
 
+<img
+  alt="Mage"
+  src="media/tool-overview.png"
+/>
+
 > Join us on
 > **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
 
@@ -23,17 +28,27 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
 
 ### Using Docker
 
-##### 1. Create new project
+##### 1. Clone repository
+```bash
+$ git clone https://github.com/mage-ai/mage-ai.git && cd mage-ai
+```
+
+##### 2. Create new project
 ```bash
 $ ./scripts/init.sh --project [project_name]
 ```
 
-##### 2. Launch editor
+##### 3. Launch editor
 ```bash
 $ ./scripts/start.sh --project [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
+
+##### 4. Run pipeline
+```bash
+$ ./scripts/run.sh --project [project_name]
+```
 
 ### Using pip
 
@@ -53,6 +68,11 @@ $ mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
+
+##### 4. Run pipeline
+```bash
+$ mage run [project_name] [pipeline]
+```
 
 # 🔮 Features
 

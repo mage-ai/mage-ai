@@ -20,9 +20,10 @@ def main():
             repo_path = os.getcwd()
         asyncio.run(start_server(repo_path))
     elif command == 'run':
-        pipeline_uuid = sys.argv[2]
-        pipeline = Pipeline(pipeline_uuid, os.getcwd())
-        
+        project_path = sys.argv[2]
+        pipeline_uuid = sys.argv[3]
+        pipeline = Pipeline(pipeline_uuid, os.path.abspath(project_path))
+
         asyncio.run(pipeline.execute(analyze_outputs=False))
 
 
