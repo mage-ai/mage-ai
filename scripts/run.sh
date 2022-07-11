@@ -10,6 +10,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --pipeline)
+    PIPELINE="$2"
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -18,6 +23,7 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-: "${PROJECT:="default_repo"}"
+: "${PROJECT:=""}"
+: "${PIPELINE:=""}"
 
-PROJECT_PATH=$PROJECT docker-compose run server python mage_ai/command_line.py init $PROJECT
+PROJECT_PATH=$PROJECT docker-compose run server python mage_ai/command_line.py run $PROJECT $PIPELINE

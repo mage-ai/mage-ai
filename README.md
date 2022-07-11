@@ -45,6 +45,11 @@ $ ./scripts/start.sh --project [project_name]
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
 
+##### 4. Run pipeline
+```bash
+$ ./scripts/run.sh --project [project_name]
+```
+
 ### Using pip
 
 ##### 1. Install Mage
@@ -63,6 +68,11 @@ $ mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
+
+##### 4. Run pipeline
+```bash
+$ mage run [project_name] [pipeline]
+```
 
 # 🔮 Features
 
