@@ -13,6 +13,7 @@ import asyncio
 import json
 import os
 import simplejson
+import sys
 import tornado.ioloop
 import tornado.web
 import traceback
@@ -381,12 +382,12 @@ def make_app():
     )
 
 
-async def main(repo_path: str = None):
-    if repo_path is None:
-        repo_path = os.path.join(os.getcwd(), 'default_repo')
-    if not os.path.exists(repo_path):
-        init_repo(repo_path)
-    set_repo_path(repo_path)
+async def main(project_path: str = None):
+    if project_path is None:
+        project_path = os.path.join(os.getcwd(), 'default_repo')
+    if not os.path.exists(project_path):
+        init_repo(project_path)
+    set_repo_path(project_path)
 
     manager.start_kernel()
     os.environ['CONNECTION_FILE'] = manager.connection_file
@@ -408,4 +409,8 @@ async def main(repo_path: str = None):
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    project_path = None
+    if len(sys.argv) >= 2:
+        project_path = sys.argv[1]
+
+    asyncio.run(main(project_path))

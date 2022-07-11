@@ -25,12 +25,12 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
 
 ##### 1. Create new project
 ```bash
-$ docker-compose run server python mage_ai/command_line.py init [project]
+$ ./scripts/init.sh --project [project]
 ```
 
 ##### 2. Launch editor
 ```bash
-$ docker-compose run server python mage_ai/command_line.py start [project]
+$ ./scripts/start.sh --project [project]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
