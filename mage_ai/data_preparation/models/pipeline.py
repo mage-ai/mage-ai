@@ -14,6 +14,8 @@ import os
 import shutil
 import yaml
 
+METADATA_FILE_NAME = 'metadata.yaml'
+
 
 class Pipeline:
     def __init__(self, uuid, repo_path=None):
@@ -48,7 +50,7 @@ class Pipeline:
         # Copy pipeline files from template folder
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
-        with open(os.path.join(pipeline_path, 'metadata.yaml'), 'w') as fp:
+        with open(os.path.join(pipeline_path, METADATA_FILE_NAME), 'w') as fp:
             yaml.dump(dict(name=name, uuid=uuid), fp)
         return Pipeline(uuid, repo_path)
 
@@ -60,7 +62,7 @@ class Pipeline:
         return [
             d
             for d in os.listdir(pipelines_folder)
-            if os.path.isdir(os.path.join(pipelines_folder, d))
+            if self.is_valid_pipeline(os.path.join(pipelines_folder, d))
         ]
 
     @classmethod
@@ -77,6 +79,13 @@ class Pipeline:
                 except Exception:
                     pass
         return pipelines
+
+    @classmethod
+    def is_valid_pipeline(self, pipeline_path):
+        return (
+            os.path.isdir(pipeline_path) and
+            os.path.exists(os.path.join(pipeline_path, METADATA_FILE_NAME))
+        )
 
     def block_deletable(self, block):
         if block.uuid not in self.blocks_by_uuid:
