@@ -328,6 +328,7 @@ function DatasetOverview({
               <Spacing mt={PADDING_UNITS}>
                 <FeatureProfiles
                   features={features}
+                  shouldLink
                   statistics={statistics}
                 />
               </Spacing>

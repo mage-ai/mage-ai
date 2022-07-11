@@ -18,13 +18,15 @@ import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle
 
 type FeatureProfileProps = {
   columns: string[];
-  feature: FeatureType,
-  statistics: any,
+  feature: FeatureType;
+  shouldLink?: boolean;
+  statistics: any;
 };
 
 type FeatureProfilesProps = {
-  features: FeatureType[],
-  statistics: any,
+  shouldLink?: boolean;
+  features: FeatureType[];
+  statistics: any;
 };
 
 const entryTypes = [
@@ -54,6 +56,7 @@ const warnings = {
 function FeatureProfile({
   columns,
   feature,
+  shouldLink,
   statistics,
 }: FeatureProfileProps) {
   const themeContext = useContext(ThemeContext);
@@ -129,6 +132,13 @@ function FeatureProfile({
     themeContext.background.table,
   ];
 
+  const FeatureStyle = shouldLink ? Link : Text;
+  const jumpToColumn = () => goToWithQuery({
+    column: columns.indexOf(uuid),
+  }, {
+    pushHistory: true,
+  });
+
   return (
     <Flex flexDirection="column">
       <FeatureProfileStyle>
@@ -139,13 +149,9 @@ function FeatureProfile({
                 <ColumnTypeIcon size={UNIT * 2} />
               </Flex>
             }
-            <Link
+            <FeatureStyle
               inline
-              onClick={() => goToWithQuery({
-                column: columns.indexOf(uuid),
-              }, {
-                pushHistory: true,
-              })}
+              onClick={shouldLink ? jumpToColumn : undefined}
               preventDefault
               secondary
             >
@@ -160,7 +166,7 @@ function FeatureProfile({
               >
                 {uuid}
               </Text>
-            </Link>
+            </FeatureStyle>
           </FlexContainer>
         </Spacing>
       </FeatureProfileStyle>
@@ -192,6 +198,7 @@ function FeatureProfile({
 
 function FeatureProfiles({
   features = [],
+  shouldLink,
   statistics,
 }: FeatureProfilesProps) {
   const themeContext = useContext(ThemeContext);
@@ -219,6 +226,7 @@ function FeatureProfiles({
                 <FeatureProfile
                   columns={columns}
                   feature={feature}
+                  shouldLink={shouldLink}
                   statistics={statistics}
                 />
               </FeatureProfileStyle>
