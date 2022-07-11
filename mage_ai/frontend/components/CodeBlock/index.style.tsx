@@ -5,6 +5,7 @@ import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { transition } from '@oracle/styles/mixins';
 
 // Look at the code editor div class "margin" and role "presentation"
 export const LEFT_PADDING = 68;
@@ -14,24 +15,31 @@ export function getColorsForBlockType(
   props: { isSelected?: boolean, theme: ThemeType },
 ): {
   accent?: string;
+  accentLight?: string;
 } {
   let accent = (props.theme.borders || dark.borders).light;
+  let accentLight = (props.theme.monotone || dark.monotone).grey500;
   const { isSelected, theme } = props || {};
 
   if (isSelected) {
     accent = (theme.content || dark.content).active;
   } else if (BlockTypeEnum.TRANSFORMER === blockType) {
     accent = (theme.accent || dark.accent).purple;
+    accentLight = (theme.accent || dark.accent).purpleLight;
   } else if (BlockTypeEnum.DATA_EXPORTER === blockType) {
     accent = (theme.accent || dark.accent).yellow;
+    accentLight = (theme.accent || dark.accent).yellowLight;
   } else if (BlockTypeEnum.DATA_LOADER === blockType) {
     accent = (theme.accent || dark.accent).blue;
+    accentLight = (theme.accent || dark.accent).blueLight;
   } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
     accent = (theme.content || dark.content).default;
+    accentLight = (theme.accent || dark.accent).contentDefaultTransparent;
   }
 
   return {
     accent,
+    accentLight,
   };
 }
 
@@ -42,6 +50,12 @@ export type BorderColorShareProps = {
 };
 
 export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
+  ${transition()}
+
+  ${props => !props.selected && !props.hasError && `
+    border-color: ${getColorsForBlockType(props.blockType, props).accentLight};
+  `}
+
   ${props => props.selected && !props.hasError && `
     border-color: ${getColorsForBlockType(props.blockType, props).accent};
   `}
@@ -75,10 +89,6 @@ export const CodeContainerStyle = styled.div<{
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
-  `}
-
-  ${props => !props.selected && !props.hasError && `
-    border-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
   ${props => !props.hasOutput && `

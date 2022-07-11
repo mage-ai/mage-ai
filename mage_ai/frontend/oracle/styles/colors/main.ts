@@ -1,5 +1,6 @@
 export const BLACK = '#060606';
 export const BLUE = '#2A60FE';
+export const BLUE_TRANSPARENT = 'rgba(72, 119, 255, 0.5)';
 export const BLUE_DARK = '#4877FF';
 export const BLUE_HIGHLIGHT = '#86E2FF';
 export const BLUE_HIGHLIGHT_LIGHT = '#CFF3FF';
@@ -21,6 +22,7 @@ export const PEACH = '#B98D95';
 export const PINK = '#FF4FF8';
 export const PINK_LIGHT = '#FFB9FC';
 export const PURPLE = '#6B50D7';
+export const PURPLE_TRANSPARENT = 'rgba(125, 85, 236, 0.5)';
 export const PURPLE_ALT = 'rgba(247, 244, 254, 0.06)';
 export const PURPLE_DARK = '#7D55EC';
 export const PURPLE_DISABLED = 'rgba(201, 206, 218, 0.12)';
@@ -34,6 +36,7 @@ export const SILVER = '#F9FAFC';
 export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
 export const YELLOW_LIGHT = '#FFEBA3';
+export const YELLOW_TRANSPARENT = 'rgba(255, 204, 25, 0.5)';
 
 export const GREY100 = '#F2F2F2';
 export const GREY200 = '#D5D7DC';

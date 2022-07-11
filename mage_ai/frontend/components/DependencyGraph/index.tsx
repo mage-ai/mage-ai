@@ -171,7 +171,7 @@ function DependencyGraph({
 
   return (
     <>
-      {blockEditing && (
+      {/*{blockEditing && (
         <Spacing pt={PADDING_UNITS} px={1}>
           <Spacing mb={1} px={1}>
             <Text bold>
@@ -195,56 +195,7 @@ function DependencyGraph({
             </Text>
           </Spacing>
         </Spacing>
-      )}
-
-      <GraphContainerStyle onScroll={updateXarrow}>
-        <Xwrapper>
-          <FlexContainer alignItems="center" flexDirection="column" fullWidth>
-            {nodeLevels.map((nodeLevel, index) => (
-              <Spacing key={index} mb={(index === nodeLevels.length - 1) ? 0 : 6}>
-                <FlexContainer alignItems="center">
-                  {nodeLevel.map((block: BlockType) => (
-                    <GraphNode
-                      block={block}
-                      disabled={blockEditing?.uuid === block.uuid}
-                      hasFailed={StatusTypeEnum.FAILED === block.status}
-                      isInProgress={runningBlocksMapping[block.uuid]
-                        && runningBlocks[0]?.uuid === block.uuid
-                      }
-                      isQueued={runningBlocksMapping[block.uuid]
-                        && runningBlocks[0]?.uuid !== block.uuid
-                      }
-                      isSuccessful={StatusTypeEnum.EXECUTED === block.status}
-                      key={block.uuid}
-                      onClick={blockEditing
-                        ? onClickWhenEditingUpstreamBlocks
-                        : onClick
-                      }
-                      selected={blockEditing
-                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                        : selectedBlock?.uuid === block.uuid
-                      }
-                    />
-                  ))}
-                </FlexContainer>
-              </Spacing>
-            ))}
-          </FlexContainer>
-          {arrows.map(({ color, end, start }) => (
-            <Xarrow
-              animateDrawing={0.2}
-              color={color}
-              curveness={0.8}
-              dashness={false}
-              end={end}
-              headSize={5}
-              key={`${start}_${end}`}
-              start={start}
-              strokeWidth={1.5}
-            />
-          ))}
-        </Xwrapper>
-      </GraphContainerStyle>
+      )}*/}
 
       {blockEditing && (
         <Spacing my={3} px={PADDING_UNITS}>
@@ -283,6 +234,57 @@ function DependencyGraph({
           </FlexContainer>
         </Spacing>
       )}
+
+      <GraphContainerStyle onScroll={updateXarrow}>
+        <Xwrapper>
+          <FlexContainer alignItems="center" flexDirection="column" fullWidth>
+            {nodeLevels.map((nodeLevel, index) => (
+              <Spacing key={index} mb={(index === nodeLevels.length - 1) ? 0 : 6}>
+                <FlexContainer alignItems="center">
+                  {nodeLevel.map((block: BlockType) => (
+                    <GraphNode
+                      block={block}
+                      disabled={blockEditing?.uuid === block.uuid}
+                      hasFailed={StatusTypeEnum.FAILED === block.status}
+                      isInProgress={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid === block.uuid
+                      }
+                      isQueued={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid !== block.uuid
+                      }
+                      isSuccessful={StatusTypeEnum.EXECUTED === block.status}
+                      key={block.uuid}
+                      onClick={blockEditing
+                        ? onClickWhenEditingUpstreamBlocks
+                        : onClick
+                      }
+                      selected={blockEditing
+                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
+                    >
+                      {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
+                    </GraphNode>
+                  ))}
+                </FlexContainer>
+              </Spacing>
+            ))}
+          </FlexContainer>
+          {arrows.map(({ color, end, start }) => (
+            <Xarrow
+              animateDrawing={0.2}
+              color={color}
+              curveness={0.8}
+              dashness={false}
+              end={end}
+              headSize={5}
+              key={`${start}_${end}`}
+              start={start}
+              strokeWidth={1.5}
+            />
+          ))}
+        </Xwrapper>
+      </GraphContainerStyle>
     </>
   );
 }

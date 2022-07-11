@@ -25,10 +25,6 @@ export const ContainerStyle = styled.div<{
     background-color: ${(props.theme.background || dark.background).table};
   `}
 
-  ${props => !props.selected && !props.hasError && `
-    border-color: ${(props.theme.background || dark.background).table};
-  `}
-
   ${props => !props.executedAndIdle && `
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
@@ -67,10 +63,6 @@ export const ExtraInfoStyle = styled.div<BorderColorShareProps>`
     background-color: ${(props.theme.borders || dark.borders).light};
     border-bottom-left-radius: ${BORDER_RADIUS}px;
     border-bottom-right-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => !props.selected && !props.hasError && `
-    border-color: ${(props.theme.borders || dark.borders).light};
   `}
 `;
 

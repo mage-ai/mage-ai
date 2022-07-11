@@ -11,6 +11,7 @@ export const DARK_CONTENT_DISABLED: 'rgba(255, 255, 255, 0.3)' = 'rgba(255, 255,
 export const DARK_CONTENT_MUTED = '#787A85';
 // table text
 export const DARK_CONTENT_DEFAULT = '#AEAEAE';
+export const DARK_CONTENT_DEFAULT_TRANSPARENT = 'rgba(174, 174, 174, 0.5)';
 // selected links, important text
 export const DARK_CONTENT_ACTIVE = '#FFFFFF';
 
