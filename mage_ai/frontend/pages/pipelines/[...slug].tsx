@@ -757,6 +757,7 @@ function PipelineDetailPage({
         before={fileTree}
         beforeHeader={(
           <FileHeaderMenu
+            fetchFileTree={fetchFileTree}
             interruptKernel={interruptKernel}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}

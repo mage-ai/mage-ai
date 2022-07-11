@@ -6,16 +6,11 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import {
-  KEY_CODE_META,
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
-  KEY_CODE_S,
-  KEY_SYMBOL_D,
-  KEY_SYMBOL_ENTER,
   KEY_SYMBOL_I,
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
@@ -26,13 +21,13 @@ import {
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { onSuccess } from '@api/utils/response';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
 type FileHeaderMenuProps = {
+  fetchFileTree: () => void;
   interruptKernel: () => void;
   restartKernel: () => void;
   savePipelineContent: () => void;
@@ -42,6 +37,7 @@ type FileHeaderMenuProps = {
 };
 
 function FileHeaderMenu({
+  fetchFileTree,
   interruptKernel,
   restartKernel,
   savePipelineContent,
@@ -63,6 +59,7 @@ function FileHeaderMenu({
             },
           }) => {
             router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            fetchFileTree();
           },
           onErrorCallback: ({
             error: {
