@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
-import FileType, { FOLDER_NAME_PIPELINES } from '@interfaces/FileType';
+import FileType, {
+  FOLDER_NAME_PIPELINES,
+  SUPPORTED_FILE_EXTENSIONS_REGEX,
+} from '@interfaces/FileType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
@@ -134,7 +137,7 @@ function Folder({
 
               return !collapsedPrev;
             });
-          } else if (name.match(/\.txt$/)) {
+          } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
             // WARNING: this assumes the first part of a path is the default_repo
             openFile(getFullPath(file).split('/').slice(1).join('/'));
           } else {
