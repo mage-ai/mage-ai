@@ -100,7 +100,7 @@ Read more about <b>[blocks](docs/blocks/README.md)</b> and how they work.
 
 <img
   alt="Production ready code"
-  src="media/production-ready-code.png"
+  src="media/data-pipeline.png"
 />
 
 Run your data pipeline end-to-end using the command line function: `$ mage run [project] [pipeline]`
