@@ -47,7 +47,7 @@ type PipelineDetailProps = {
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
-  ) => void;
+  ) => Promise<any>;
   blockRefs: any;
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
@@ -379,8 +379,9 @@ function PipelineDetail({
           return (
             <CodeBlock
               addNewBlock={(b: BlockType) => {
-                addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
                 setTextareaFocused(true);
+
+                return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               }}
               block={block}
               blockRefs={blockRefs}
