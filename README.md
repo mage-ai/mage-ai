@@ -35,19 +35,19 @@ $ git clone https://github.com/mage-ai/mage-ai.git && cd mage-ai
 
 ##### 2. Create new project
 ```bash
-$ ./scripts/init.sh --project [project_name]
+$ ./scripts/init.sh [project_name]
 ```
 
 ##### 3. Launch editor
 ```bash
-$ ./scripts/start.sh --project [project_name]
+$ ./scripts/start.sh [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser.
 
 ##### 4. Run pipeline
 ```bash
-$ ./scripts/run.sh --project [project_name]
+$ ./scripts/run.sh [project_name] [pipeline]
 ```
 
 ### Using pip
