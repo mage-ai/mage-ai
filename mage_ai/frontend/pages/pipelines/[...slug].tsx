@@ -464,9 +464,9 @@ function PipelineDetailPage({
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name: string = randomNameGenerator(),
-  ) => {
+  ): Promise<any> => {
     // @ts-ignore
-    createBlock({
+    return createBlock({
       block: {
         name,
         priority: idx,

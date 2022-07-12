@@ -14,7 +14,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name='mage-ai',
-    version='0.1.1',
+    version='0.1.2',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is an open-source code editor for transforming data and building ML pipelines.',

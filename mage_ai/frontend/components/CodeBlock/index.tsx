@@ -64,7 +64,7 @@ import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
-  addNewBlock: (block: BlockType) => void;
+  addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
@@ -296,9 +296,10 @@ function CodeBlockProps({
           runBlockAndTrack();
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
           event.preventDefault();
-          runBlockAndTrack();
           addNewBlock({
             type: block.type,
+          }).then(() => {
+            runBlockAndTrack();
           });
         }
       }
