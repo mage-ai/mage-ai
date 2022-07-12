@@ -7,7 +7,7 @@ import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
-  ExecutionStateEnum,
+  DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -30,9 +30,9 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth: number;
   messages: KernelOutputType[];
-  runCount: Number;
-  runEndTime: Number;
-  runStartTime: Number;
+  runCount: number;
+  runEndTime: number;
+  runStartTime: number;
 } & BorderColorShareProps;
 
 function CodeOutput({
@@ -79,6 +79,31 @@ function CodeOutput({
     mainContainerWidth,
   ]);
 
+  const internalOutputRegex = /\[__internal_output__\]/;
+  const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
+
+  const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
+    const last = arr.at(-1);
+    
+    if (DATA_TYPE_TEXTLIKE.includes(last?.type)
+      && last?.type === curr.type
+      && !combineTextData(curr?.data).match(internalOutputRegex)) {
+      last.data += combineTextData(curr.data);
+    } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+      && !combineTextData(curr?.data).match(internalOutputRegex)) {
+      arr.push({
+        ...curr,
+        data: combineTextData(curr.data),
+      });
+    } else {
+      arr.push({ ...curr });
+    }
+
+    return arr;
+  }, []), [
+    messages,
+  ]);
+
   return (
     <>
       <ContainerStyle
@@ -87,7 +112,7 @@ function CodeOutput({
         hasError={hasError}
         selected={selected}
       >
-        {messages?.map(({
+        {combinedMessages?.map(({
           data: dataInit,
           type: dataType,
         }: KernelOutputType, idx: number) => {
@@ -106,7 +131,6 @@ function CodeOutput({
 
           return dataArray.map((data: string, idxInner: number) => {
             let displayElement;
-            const internalOutputRegex = /^\[__internal_output__\]/;
             const outputRowSharedProps = {
               first: idx === 0 && idxInner === 0,
               last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
@@ -121,12 +145,12 @@ function CodeOutput({
                 } = JSON.parse(rawString);
 
                 if (DataTypeEnum.TABLE === typeDisplay) {
-                  displayElement = createDataTableElement(dataDisplay)
+                  displayElement = createDataTableElement(dataDisplay);
                 }
               }
             } else if (dataType === DataTypeEnum.TABLE) {
               displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
-            } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
+            } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
                   <Text monospace preWrap>
@@ -140,7 +164,7 @@ function CodeOutput({
               displayElement = (
                 <div style={{ backgroundColor: 'white' }}>
                   <img
-                    alt={`Image {idx} from code output`}
+                    alt={`Image ${idx} from code output`}
                     src={`data:image/png;base64, ${data}`}
                   />
                 </div>

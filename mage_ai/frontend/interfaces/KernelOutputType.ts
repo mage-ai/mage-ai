@@ -11,6 +11,11 @@ export enum DataTypeEnum {
   TEXT_PLAIN = 'text/plain',
 }
 
+export const DATA_TYPE_TEXTLIKE = [
+  DataTypeEnum.TEXT,
+  DataTypeEnum.TEXT_PLAIN,
+];
+
 export enum MsgType {
   STATUS = 'status',
   STREAM = 'stream',
