@@ -106,7 +106,7 @@ def __custom_output():
 
     if isinstance(_internal_output_return, pd.DataFrame):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
-        _columns = _sample.columns.tolist()
+        _columns = _sample.columns.tolist()[:40]
         _rows = _sample.to_numpy().tolist()
         _index = _sample.index.tolist()
 
