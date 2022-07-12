@@ -10,6 +10,7 @@ from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
+import argparse
 import asyncio
 import json
 import os
@@ -394,23 +395,34 @@ def make_app():
     )
 
 
-async def main(project_path: str = None):
-    if project_path:
-        project_path = project_path = os.path.abspath(project_path)
+async def main(
+    host: str = None,
+    port: str = None,
+    project: str = None,
+):
+    host = host if host else None
+    port = port if port else DATA_PREP_SERVER_PORT
+    project = project if project else None
+
+    if project:
+        project = project = os.path.abspath(project)
     else:
-        project_path = os.path.join(os.getcwd(), 'default_repo')
-    if not os.path.exists(project_path):
-        init_repo(project_path)
-    set_repo_path(project_path)
+        project = os.path.join(os.getcwd(), 'default_repo')
+
+    if not os.path.exists(project):
+        init_repo(project)
+    set_repo_path(project)
 
     manager.start_kernel()
     os.environ['CONNECTION_FILE'] = manager.connection_file
 
     app = make_app()
-    app.listen(DATA_PREP_SERVER_PORT)
+    app.listen(
+        port,
+        address=host,
+    )
 
-    print('Server started!')
-    print(f'Mage is running at http://localhost:{DATA_PREP_SERVER_PORT} and serving project {project_path}')
+    print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
     get_messages(
         manager.client(),
@@ -423,8 +435,18 @@ async def main(project_path: str = None):
 
 
 if __name__ == '__main__':
-    project_path = None
-    if len(sys.argv) >= 2:
-        project_path = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host', type=str, default=None)
+    parser.add_argument('--port', type=str, default=None)
+    parser.add_argument('--project', type=str, default=None)
+    args = parser.parse_args()
 
-    asyncio.run(main(project_path))
+    host = args.host
+    port = args.port
+    project = args.project
+
+    asyncio.run(main(
+        host=host,
+        port=port,
+        project=project,
+    ))

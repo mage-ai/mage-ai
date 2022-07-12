@@ -1,6 +1,9 @@
 # !/bin/bash
-PROJECT="$1"
+PROJECT_NAME="$1"
 
-: "${PROJECT:="default_repo"}"
+: "${PROJECT_NAME:="default_repo"}"
 
-PROJECT_PATH=$PROJECT docker-compose run server python mage_ai/command_line.py init $PROJECT
+HOST='' \
+PORT='' \
+PROJECT='' \
+docker-compose run server python mage_ai/command_line.py init $PROJECT_NAME

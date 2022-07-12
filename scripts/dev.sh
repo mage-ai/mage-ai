@@ -1,6 +1,35 @@
 # !/bin/bash
-PROJECT="$1"
+PROJECT_NAME="$1"
 
-: "${PROJECT:=""}"
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$2"
 
-PROJECT_PATH=$PROJECT docker-compose -f docker-compose.yml up
+case $key in
+    --host)
+    HOST="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --port)
+    PORT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    POSITIONAL+=("$1") # save it in an array for later
+    shift # past argument
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+: "${HOST:="''"}"
+: "${PORT:="''"}"
+: "${PROJECT_NAME:="''"}"
+
+HOST=$HOST \
+PORT=$PORT \
+PROJECT=$PROJECT_NAME \
+docker-compose -f docker-compose.yml up

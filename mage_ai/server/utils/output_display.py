@@ -65,7 +65,7 @@ def add_internal_output_info(code: str) -> str:
     else:
         last_line = code_lines[len(code_lines) - 1]
 
-    matches = re.search('^[ ]*([^=^ ]+)[ ]*=[ ]*', last_line)
+    matches = re.search('^[ ]*([^{^(^\[^=^ ]+)[ ]*=[ ]*', last_line)
     if matches:
         # Get the variable name in the last line if the last line is a variable assignment
         last_line = matches.group(1)

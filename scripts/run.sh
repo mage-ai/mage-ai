@@ -1,8 +1,8 @@
 # !/bin/bash
-PROJECT="$1"
+PROJECT_NAME="$1"
 PIPELINE="$2"
 
-: "${PROJECT:=""}"
-: "${PIPELINE:=""}"
-
-PROJECT_PATH=$PROJECT docker-compose run server python mage_ai/command_line.py run $PROJECT $PIPELINE
+HOST='' \
+PORT='' \
+PROJECT='' \
+docker-compose run server python mage_ai/command_line.py run $PROJECT_NAME $PIPELINE

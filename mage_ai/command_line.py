@@ -14,11 +14,22 @@ def main():
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
     elif command == 'start':
-        if len(sys.argv) > 2:
+        host = None
+        port = None
+        if len(sys.argv) >= 3:
             repo_path = os.path.join(os.getcwd(), sys.argv[2])
+            if len(sys.argv) >= 4:
+                host = sys.argv[3]
+            if len(sys.argv) >= 5:
+                port = sys.argv[4]
         else:
             repo_path = os.getcwd()
-        asyncio.run(start_server(repo_path))
+
+        asyncio.run(start_server(
+            host=host,
+            port=port,
+            project=repo_path,
+        ))
     elif command == 'run':
         project_path = sys.argv[2]
         pipeline_uuid = sys.argv[3]
