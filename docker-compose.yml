@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    command: "python mage_ai/server/server.py ${PROJECT_PATH}"
+    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT}"
     ports:
       - 6789:6789
     volumes:
