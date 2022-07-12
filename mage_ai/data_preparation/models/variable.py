@@ -113,7 +113,10 @@ class Variable:
         if not os.path.exists(file_path):
             return pd.DataFrame()
         if sample and os.path.exists(sample_file_path):
-            df = pd.read_parquet(sample_file_path, engine='pyarrow')
+            try:
+                df = pd.read_parquet(sample_file_path, engine='pyarrow')
+            except Exception:
+                df = pd.read_parquet(file_path, engine='pyarrow')
         else:
             df = pd.read_parquet(file_path, engine='pyarrow')
         if sample:
