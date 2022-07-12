@@ -105,24 +105,24 @@ def __custom_output():
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame):
-        sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
-        columns = sample.columns.tolist()
-        rows = sample.to_numpy().tolist()
-        index = sample.index.tolist()
+        _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
+        _columns = _sample.columns.tolist()
+        _rows = _sample.to_numpy().tolist()
+        _index = _sample.index.tolist()
 
-        json_string = simplejson.dumps(
+        _json_string = simplejson.dumps(
             dict(
                 data=dict(
-                    columns=columns,
-                    index=index,
-                    rows=rows,
+                    columns=_columns,
+                    index=_index,
+                    rows=_rows,
                 ),
                 type='table',
             ),
             default=datetime.isoformat,
             ignore_nan=True,
         )
-        return print(f'[__internal_output__]{{json_string}}')
+        return print(f'[__internal_output__]{{_json_string}}')
     elif not {is_print_statement}:
         return _internal_output_return
 
