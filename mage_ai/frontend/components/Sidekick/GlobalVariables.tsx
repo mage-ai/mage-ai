@@ -69,7 +69,7 @@ function GlobalVariables({
     <Spacing p={PADDING_UNITS}>
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          The variables listed blow can be used in any <Text
+          The variables listed below can be used in any <Text
             bold
             inline
             monospace
