@@ -396,6 +396,35 @@ class StatisticsCalculatorTest(TestCase):
         }
         self.assertEquals(expected_element_distribution, data['lists/element_distribution'])
 
+    def test_calculate_statistics_list_data_with_dictionaries(self):
+        lists = [
+            [{'e': 2}, 'string', False, None],
+            None,
+            [np.nan, 2.0, 'string', '3'],
+            ['not string?', True, True, 8, False, np.nan, None, {'another_dictionary': -2342.21}],
+            "['not string?'     ,  True,True   ,8, False, np.nan, None]",
+            [{'dictionary': 'weird'}],
+            [8, 9, 9, 8, 'pop', 'string'],
+        ]
+        df = pd.DataFrame({'lists': lists})
+        column_types = infer_column_types(df)
+        calculator = StatisticsCalculator(column_types)
+        data = calculator.calculate_statistics_overview(df, is_clean=False)
+        self.assertTrue(data['lists/most_frequent_element'] is np.nan)
+        self.assertEqual(data['lists/least_frequent_element'], 'pop')
+        self.assertEqual(data['lists/max_list_length'], 8)
+        self.assertEqual(data['lists/min_list_length'], 1)
+        self.assertAlmostEqual(data['lists/avg_list_length'], 5, 3)
+
+        expected_list_length_distribution = {
+            4: 2,
+            7: 1,
+            6: 1,
+            1: 1,
+            8: 1,
+        }
+        self.assertEquals(expected_list_length_distribution, data['lists/length_distribution'])
+
     def test_calculate_statistics_box_plot(self):
         df = pd.DataFrame(
             [
