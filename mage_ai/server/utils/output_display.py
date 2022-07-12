@@ -1,29 +1,32 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
+from typing import List
 import re
 
 
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
 
-def remove_comments(code_lines: list[str]) -> list[str]:
-    return list(filter(
-        lambda x: not re.search(r'^\#', str(x).strip()),
-        code_lines,
-    ))
+def remove_comments(code_lines: List[str]) -> List[str]:
+    return list(
+        filter(
+            lambda x: not re.search(r'^\#', str(x).strip()),
+            code_lines,
+        )
+    )
 
 
-def remove_empty_last_lines(code_lines: list[str]) -> list[str]:
+def remove_empty_last_lines(code_lines: List[str]) -> List[str]:
     idx = len(code_lines) - 1
     last_line = code_lines[idx]
     while idx >= 0 and len(str(last_line).strip()) == 0:
         idx -= 1
         last_line = code_lines[idx]
-    return code_lines[:(idx + 1)]
+    return code_lines[: (idx + 1)]
 
 
-def find_index_of_last_expression_lines(code_lines: list[str]) -> int:
+def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
     starting_index = len(code_lines) - 1
 
     brackets_close = code_lines[starting_index].count('}')
@@ -34,9 +37,9 @@ def find_index_of_last_expression_lines(code_lines: list[str]) -> int:
     square_brackets_open = code_lines[starting_index].count('[')
 
     while starting_index >= 0 and (
-        brackets_close > brackets_open or
-        paranthesis_close > paranthesis_open or
-        square_brackets_close > square_brackets_open
+        brackets_close > brackets_open
+        or paranthesis_close > paranthesis_open
+        or square_brackets_close > square_brackets_open
     ):
 
         starting_index -= 1
@@ -74,8 +77,7 @@ def add_internal_output_info(code: str) -> str:
 
     last_line_in_block = False
     if len(code_lines) >= 2:
-        if re.search(REGEX_PATTERN, code_lines[-2]) or \
-           re.search(REGEX_PATTERN, code_lines[-1]):
+        if re.search(REGEX_PATTERN, code_lines[-2]) or re.search(REGEX_PATTERN, code_lines[-1]):
             last_line_in_block = True
     elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
         last_line_in_block = True
