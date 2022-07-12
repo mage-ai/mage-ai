@@ -66,7 +66,7 @@ function GraphNode({
       key={uuid}
       selected={selected}
     >
-      <Button
+      {/*<Button
         basic
         disabled={disabled}
         id={uuid}
@@ -75,35 +75,41 @@ function GraphNode({
         noPadding
         onClick={(onClick && !disabled) ? () => onClick(block) : null}
       >
-        <Spacing p={1}>
-          <FlexContainer alignItems="center">
-            <FlexContainer
-              alignItems="center"
-              justifyContent="center"
-              style={{
-                height: UNIT * 2,
-                width: UNIT * 2,
-              }}
-              title={tooltipText}
-            >
-              {isInProgress && (
-                <Spinner
-                  color={(themeContext || dark).content.active}
-                  small
-                />
-              )}
-              {success && <Check size={UNIT * 2} success />}
-              {failed && <Close danger size={UNIT * 1.5} />}
-              {noStatus && (
-                <Circle
-                  borderSize={1}
-                  size={UNIT * 1}
-                />
-              )}
-            </FlexContainer>
+      </Button>*/}
+      <Spacing p={1}>
+        <FlexContainer alignItems="center">
+          <FlexContainer
+            alignItems="center"
+            justifyContent="center"
+            style={{
+              height: UNIT * 2,
+              width: UNIT * 2,
+            }}
+            title={tooltipText}
+          >
+            {isInProgress && (
+              <Spinner
+                color={(themeContext || dark).content.active}
+                small
+              />
+            )}
+            {success && <Check size={UNIT * 2} success />}
+            {failed && <Close danger size={UNIT * 1.5} />}
+            {noStatus && (
+              <Circle
+                borderSize={1}
+                size={UNIT * 1}
+              />
+            )}
+          </FlexContainer>
 
-            <Spacing ml={1} />
+          <Spacing ml={1} />
 
+          <FlexContainer
+            alignItems="center"
+            fullWidth
+            justifyContent="center"
+          >
             <Text
               inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
               monospace
@@ -112,8 +118,8 @@ function GraphNode({
               {children}
             </Text>
           </FlexContainer>
-        </Spacing>
-      </Button>
+        </FlexContainer>
+      </Spacing>
     </NodeStyle>
   );
 }

@@ -168,7 +168,7 @@ function PipelineDetail({
       if (!isAlreadyRunning) {
         sendMessage(JSON.stringify({
           code,
-          pipeline_uuid: pipeline.uuid,
+          pipeline_uuid: pipeline?.uuid,
           uuid,
         }));
 
