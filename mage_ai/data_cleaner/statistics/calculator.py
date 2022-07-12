@@ -341,7 +341,7 @@ class StatisticsCalculator:
                 data[f'{col}/mode'] = mode
 
             data[f'{col}/mode_ratio'] = (
-                df_value_counts.iloc[mode_idx].item() / df_value_counts.sum() if mode else 0
+                df_value_counts[mode].item() / df_value_counts.sum() if mode else 0
             )
 
         # Detect mismatched formats for some column types
