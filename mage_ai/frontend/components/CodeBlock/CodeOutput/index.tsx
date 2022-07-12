@@ -85,13 +85,13 @@ function CodeOutput({
   const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
     const last = arr.at(-1);
     
-    if (DATA_TYPE_TEXTLIKE.includes(last?.type) && last?.type === curr.type) {
+    if (DATA_TYPE_TEXTLIKE.includes(last?.type)
+      && last?.type === curr.type
+      && !combineTextData(curr?.data).match(internalOutputRegex)) {
       last.data += combineTextData(curr.data);
     }
-    else if (
-      DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
-      !combineTextData(curr?.data).match(internalOutputRegex)
-    ) {
+    else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+      && !combineTextData(curr?.data).match(internalOutputRegex)) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
@@ -105,6 +105,8 @@ function CodeOutput({
   }, []), [
     messages,
   ]);
+
+  console.log({ combinedMessages, messages });
 
   return (
     <>
