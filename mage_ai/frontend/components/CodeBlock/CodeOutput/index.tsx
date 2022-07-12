@@ -30,9 +30,9 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth: number;
   messages: KernelOutputType[];
-  runCount: Number;
-  runEndTime: Number;
-  runStartTime: Number;
+  runCount: number;
+  runEndTime: number;
+  runStartTime: number;
 } & BorderColorShareProps;
 
 function CodeOutput({
@@ -121,7 +121,7 @@ function CodeOutput({
                 } = JSON.parse(rawString);
 
                 if (DataTypeEnum.TABLE === typeDisplay) {
-                  displayElement = createDataTableElement(dataDisplay)
+                  displayElement = createDataTableElement(dataDisplay);
                 }
               }
             } else if (dataType === DataTypeEnum.TABLE) {
@@ -140,7 +140,7 @@ function CodeOutput({
               displayElement = (
                 <div style={{ backgroundColor: 'white' }}>
                   <img
-                    alt={`Image {idx} from code output`}
+                    alt={`Image ${idx} from code output`}
                     src={`data:image/png;base64, ${data}`}
                   />
                 </div>
