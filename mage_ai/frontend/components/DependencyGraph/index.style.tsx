@@ -23,8 +23,6 @@ export const NodeStyle = styled.div<{
 }>`
   border: 2px solid transparent;
   border-radius: ${BORDER_RADIUS_SMALL}px;
-  margin-left: ${UNIT}px;
-  margin-right: ${UNIT}px;
   min-width: fit-content;
 
   ${props => props.selected && `

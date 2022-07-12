@@ -59,6 +59,7 @@
     "react-use-websocket": "^4.2.0",
     "react-window": "^1.8.7",
     "react-xarrows": "^2.0.2",
+    "reaflow": "^5.0.6",
     "storybook": "^6.5.3",
     "styled-bootstrap-grid": "^3.1.2",
     "styled-components": "^5.3.5",

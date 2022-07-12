@@ -230,6 +230,7 @@ function Sidekick({
               blockRefs={blockRefs}
               editingBlock={editingBlock}
               fetchPipeline={fetchPipeline}
+              height={heightWindow - heightOffset}
               pipeline={pipeline}
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}

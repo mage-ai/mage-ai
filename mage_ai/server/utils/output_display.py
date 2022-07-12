@@ -55,8 +55,6 @@ def add_internal_output_info(code: str) -> str:
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)
 
-    print('WTF', code_lines)
-
     starting_index = find_index_of_last_expression_lines(code_lines)
     if starting_index < len(code_lines) - 1:
         last_line = ' '.join(code_lines[starting_index:])
