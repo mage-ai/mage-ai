@@ -1,4 +1,5 @@
 from jupyter_client import KernelManager
+from jupyter_client.session import Session
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
@@ -20,7 +21,8 @@ import traceback
 import urllib.parse
 
 
-manager = KernelManager()
+session = Session(key=bytes())
+manager = KernelManager(session=session)
 
 
 class BaseHandler(tornado.web.RequestHandler):

@@ -1,5 +1,6 @@
 from datetime import datetime
 from jupyter_client import KernelManager
+from jupyter_client.session import Session
 from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -50,7 +51,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             with open(connection_file) as f:
                 connection = json.loads(f.read())
 
-            manager = KernelManager(**connection)
+            session = Session(key=bytes())
+            manager = KernelManager(**connection, session=session)
             client = manager.client()
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
