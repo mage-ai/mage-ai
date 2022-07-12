@@ -1,6 +1,6 @@
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
-from mage_ai.shared.custom_types import FrozenDict
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
+from mage_ai.shared.custom_types import FrozenDict
 from pandas.core.indexes.frozen import FrozenList
 from typing import Any, List, Union
 import pandas as pd
@@ -88,10 +88,9 @@ def __parse_element(element: str) -> Any:
         return np.nan
     else:
         try:
-            parsed_element = eval(element)
+            return __resolve_type(eval(element))
         except:
-            parsed_element = None
-    return __resolve_type(parsed_element)
+            return None
 
 
 def __resolve_type(element: Any) -> Any:
@@ -105,9 +104,7 @@ def parse_list(list_literal: Union[str, List[Any]]) -> FrozenList:
     if dtype is FrozenList:
         return list_literal
     elif dtype in LIST_TYPES:
-        if any(not pd.api.types.is_hashable(literal) for literal in list_literal):
-            return FrozenList([__resolve_type(literal) for literal in list_literal])
-        return FrozenList(list_literal)
+        return FrozenList([__resolve_type(literal) for literal in list_literal])
     elif list_literal in NONE_TYPES:
         return list_literal
     elif dtype is not str:
