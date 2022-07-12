@@ -2,6 +2,7 @@ from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_e
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.shared.constants import SAMPLE_SIZE
+from mage_ai.shared.custom_types import FrozenDict
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.logger import timer, VerboseFunctionExec
 import math
@@ -311,6 +312,12 @@ class StatisticsCalculator:
                 element_value_counts = elements.value_counts(dropna=False)
                 data[f'{col}/most_frequent_element'] = element_value_counts.index[0]
                 data[f'{col}/least_frequent_element'] = element_value_counts.index[-1]
+                if any(
+                    isinstance(idx, FrozenDict)
+                    for idx in element_value_counts.index[:VALUE_COUNT_LIMIT]
+                ):
+                    str_index = element_value_counts.index.astype(str)
+                    element_value_counts.index = str_index
                 data[f'{col}/element_distribution'] = element_value_counts.head(
                     VALUE_COUNT_LIMIT
                 ).to_dict()
