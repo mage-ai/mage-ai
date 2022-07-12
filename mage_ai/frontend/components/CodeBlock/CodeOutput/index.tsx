@@ -104,8 +104,6 @@ function CodeOutput({
     messages,
   ]);
 
-  console.log({ combinedMessages, messages });
-
   return (
     <>
       <ContainerStyle
