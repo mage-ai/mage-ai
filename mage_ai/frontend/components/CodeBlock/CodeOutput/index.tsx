@@ -90,7 +90,7 @@ function CodeOutput({
     }
     else if (
       DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
-      combineTextData(curr?.data).match(internalOutputRegex) === null
+      !combineTextData(curr?.data).match(internalOutputRegex)
     ) {
       arr.push({
         ...curr,
