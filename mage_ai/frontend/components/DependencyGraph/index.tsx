@@ -404,7 +404,7 @@ function DependencyGraph({
               <Edge
                 {...edge}
                 style={{
-                  stroke: getColorsForBlockType(block?.type, { theme: ThemeContext })?.accent,
+                  stroke: getColorsForBlockType(block?.type, { theme: themeContext })?.accent,
                 }}
               />
             );
@@ -440,11 +440,11 @@ function DependencyGraph({
                 //   />
                 // )}
                 port={null}
-                // style={{
-                //   stroke: '#1a192b',
-                //   fill: 'black',
-                //   strokeWidth: 1,
-                // }}
+                style={{
+                  stroke: 'transparent',
+                  fill: 'transparent',
+                  strokeWidth: 0,
+                }}
                 // label={<div style={{ display: 'none' }} />}
               >
                 {(event) => {
@@ -493,7 +493,7 @@ function DependencyGraph({
             );
           }}
           nodes={nodes}
-          zoomable={false}
+          zoomable
         />
       </div>
     </>
