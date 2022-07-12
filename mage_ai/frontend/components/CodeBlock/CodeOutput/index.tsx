@@ -79,6 +79,7 @@ function CodeOutput({
     mainContainerWidth,
   ]);
 
+  const internalOutputRegex = /\[__internal_output__\]/;
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
   const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
@@ -87,7 +88,10 @@ function CodeOutput({
     if (DATA_TYPE_TEXTLIKE.includes(last?.type) && last?.type === curr.type) {
       last.data += combineTextData(curr.data);
     }
-    else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)) {
+    else if (
+      DATA_TYPE_TEXTLIKE.includes(curr?.type) &&
+      combineTextData(curr?.data).match(internalOutputRegex) === null
+    ) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
@@ -129,7 +133,6 @@ function CodeOutput({
 
           return dataArray.map((data: string, idxInner: number) => {
             let displayElement;
-            const internalOutputRegex = /^\[__internal_output__\]/;
             const outputRowSharedProps = {
               first: idx === 0 && idxInner === 0,
               last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
@@ -149,7 +152,7 @@ function CodeOutput({
               }
             } else if (dataType === DataTypeEnum.TABLE) {
               displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
-            } else if (dataType === DataTypeEnum.TEXT || dataType === DataTypeEnum.TEXT_PLAIN) {
+            } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
               displayElement = (
                 <OutputRowStyle {...outputRowSharedProps}>
                   <Text monospace preWrap>
