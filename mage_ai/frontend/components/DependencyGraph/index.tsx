@@ -1,4 +1,3 @@
-import Xarrow, { useXarrow, Xwrapper } from 'react-xarrows';
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
 import {
@@ -30,7 +29,6 @@ import {
 } from '@oracle/styles/units/spacing';
 import { find, indexBy, removeAtIndex } from '@utils/array';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { getFinalLevelIndex } from './utils';
 import { onSuccess } from '@api/utils/response';
 
 const Canvas = dynamic(
@@ -114,7 +112,6 @@ function DependencyGraph({
   setSelectedBlock,
 }: DependencyGraphProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
-  const updateXarrow = useXarrow();
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -138,39 +135,6 @@ function DependencyGraph({
   const runningBlocksMapping =
     useMemo(() => indexBy(runningBlocks, ({ uuid }) => uuid), [runningBlocks]);
 
-  const arrows: {
-    color: string;
-    end: string;
-    start: string;
-  }[] = blocks.reduce((acc, block) => {
-    const {
-      downstream_blocks: downstreamBlocks,
-      type,
-      uuid: startBlockUUID,
-    } = block;
-    const isSelected = selectedBlock?.uuid === startBlockUUID;
-    const arrowsToDownstreamBlocks = downstreamBlocks.map(endBlockUUID => ({
-      color: getColorsForBlockType(
-        type,
-        { isSelected, theme: themeContext },
-      ).accent,
-      end: endBlockUUID,
-      start: startBlockUUID,
-    }));
-
-    return [...acc, ...arrowsToDownstreamBlocks];
-  }, []);
-
-  const nodeLevels: BlockType[][] = blocks.reduce((acc, block) => {
-    const {
-      upstream_blocks: upstreamBlocks,
-    } = block;
-    const finalLevelIndex = getFinalLevelIndex(upstreamBlocks, blockUUIDMapping);
-    acc[finalLevelIndex] = [...(acc[finalLevelIndex] || []), block];
-
-    return acc;
-  }, []);
-
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(pipeline?.uuid, blockEditing?.uuid),
     {
@@ -180,10 +144,7 @@ function DependencyGraph({
             setEditingBlock({
               upstreamBlocks: null,
             });
-            // @ts-ignore
-            fetchPipeline().then(() => {
-              updateXarrow();
-            });
+            fetchPipeline();
           },
           onErrorCallback: ({
             error: {
@@ -269,7 +230,7 @@ function DependencyGraph({
           id: `${uuid}-${block2.uuid}-from`,
           side: 'SOUTH',
           width: 10,
-        })))
+        })));
       }
 
       upstreamBlocks?.forEach((uuidUp: string) => {
@@ -290,11 +251,11 @@ function DependencyGraph({
       });
 
       nodesInner.push({
-        id: uuid,
         data: {
           block,
         },
         height: 37,
+        id: uuid,
         ports,
         width: (block.uuid.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
           + (UNIT * 5)
@@ -304,9 +265,9 @@ function DependencyGraph({
     });
 
     return {
-      nodes: nodesInner,
       edges: edgesInner,
-    }
+      nodes: nodesInner,
+    };
   }, [
     blockEditing,
     blocks,
@@ -392,7 +353,7 @@ function DependencyGraph({
         </Spacing>
       )}
 
-      <div style={{ height: height - (UNIT * 10) }}>
+      <GraphContainerStyle height={height - (UNIT * 10) }>
         <Canvas
           // arrow={<MarkerArrow style={{ fill: '#b1b1b7' }} />}
           arrow={null}
@@ -411,91 +372,90 @@ function DependencyGraph({
           }}
           edges={edges}
           fit
-          node={(node) => {
-            return (
-              <Node
-                {...node}
-                onClick={(event, {
-                  data: {
-                    block,
-                  },
-                }) => {
-                  const disabled = blockEditing?.uuid === block.uuid;
-                  if (!disabled) {
-                    if (blockEditing) {
-                      onClickWhenEditingUpstreamBlocks(block);
-                    } else {
-                      onClick(block);
-                    }
+          node={(node) => (
+            <Node
+              {...node}
+              linkable={false}
+              onClick={(event, {
+                data: {
+                  block,
+                },
+              }) => {
+                const disabled = blockEditing?.uuid === block.uuid;
+                if (!disabled) {
+                  if (blockEditing) {
+                    onClickWhenEditingUpstreamBlocks(block);
+                  } else {
+                    onClick(block);
                   }
-                }}
-                // port={(
-                //   <Port
-                //     rx={10}
-                //     ry={10}
-                //     style={{
-                //       fill: themeContext.accent.alert,
-                //       stroke: themeContext.accent.alert,
-                //     }}
-                //   />
-                // )}
-                port={null}
-                style={{
-                  stroke: 'transparent',
-                  fill: 'transparent',
-                  strokeWidth: 0,
-                }}
-                // label={<div style={{ display: 'none' }} />}
-              >
-                {(event) => {
-                  const {
-                    node: {
-                      data: {
-                        block,
-                      },
+                }
+              }}
+              // port={(
+              //   <Port
+              //     rx={10}
+              //     ry={10}
+              //     style={{
+              //       fill: themeContext.accent.alert,
+              //       stroke: themeContext.accent.alert,
+              //     }}
+              //   />
+              // )}
+              port={null}
+              style={{
+                fill: 'transparent',
+                stroke: 'transparent',
+                strokeWidth: 0,
+              }}
+              // label={<div style={{ display: 'none' }} />}
+            >
+              {(event) => {
+                const {
+                  node: {
+                    data: {
+                      block,
                     },
-                  } = event;
+                  },
+                } = event;
 
-                  return (
-                    <foreignObject
-                      height={event.height}
-                      width={event.width}
-                      x={0}
-                      y={0}
-                      style={{
-                        // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
-                        pointerEvents: 'none',
-                      }}
+                return (
+                  <foreignObject
+                    height={event.height}
+                    style={{
+                      // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
+                      pointerEvents: 'none',
+                    }}
+                    width={event.width}
+                    x={0}
+                    y={0}
+                  >
+                    <GraphNode
+                      block={block}
+                      disabled={blockEditing?.uuid === block.uuid}
+                      hasFailed={StatusTypeEnum.FAILED === block.status}
+                      isInProgress={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid === block.uuid
+                      }
+                      isQueued={runningBlocksMapping[block.uuid]
+                        && runningBlocks[0]?.uuid !== block.uuid
+                      }
+                      isSuccessful={StatusTypeEnum.EXECUTED === block.status}
+                      key={block.uuid}
+                      selected={blockEditing
+                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        : selectedBlock?.uuid === block.uuid
+                      }
                     >
-                      <GraphNode
-                        block={block}
-                        disabled={blockEditing?.uuid === block.uuid}
-                        hasFailed={StatusTypeEnum.FAILED === block.status}
-                        isInProgress={runningBlocksMapping[block.uuid]
-                          && runningBlocks[0]?.uuid === block.uuid
-                        }
-                        isQueued={runningBlocksMapping[block.uuid]
-                          && runningBlocks[0]?.uuid !== block.uuid
-                        }
-                        isSuccessful={StatusTypeEnum.EXECUTED === block.status}
-                        key={block.uuid}
-                        selected={blockEditing
-                          ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
-                          : selectedBlock?.uuid === block.uuid
-                        }
-                      >
-                        {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
-                      </GraphNode>
-                    </foreignObject>
-                  );
-                }}
-              </Node>
-            );
-          }}
+                      {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
+                    </GraphNode>
+                  </foreignObject>
+                );
+              }}
+            </Node>
+          )}
           nodes={nodes}
           zoomable
         />
-      </div>
+      </GraphContainerStyle>
     </>
   );
 }
