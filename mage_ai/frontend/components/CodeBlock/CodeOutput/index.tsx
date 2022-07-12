@@ -7,7 +7,7 @@ import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
-  ExecutionStateEnum,
+  DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -79,6 +79,29 @@ function CodeOutput({
     mainContainerWidth,
   ]);
 
+  const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
+
+  const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
+    const last = arr.at(-1);
+    
+    if (DATA_TYPE_TEXTLIKE.includes(last?.type) && last?.type === curr.type) {
+      last.data += combineTextData(curr.data);
+    }
+    else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)) {
+      arr.push({
+        ...curr,
+        data: combineTextData(curr.data),
+      });
+    }
+    else {
+      arr.push({ ...curr });
+    }
+
+    return arr;
+  }, []), [
+    messages,
+  ]);
+
   return (
     <>
       <ContainerStyle
@@ -87,7 +110,7 @@ function CodeOutput({
         hasError={hasError}
         selected={selected}
       >
-        {messages?.map(({
+        {combinedMessages?.map(({
           data: dataInit,
           type: dataType,
         }: KernelOutputType, idx: number) => {
