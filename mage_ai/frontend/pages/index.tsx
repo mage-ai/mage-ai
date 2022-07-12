@@ -14,8 +14,7 @@ const Home = () => {
   let pathname = '';
   if (basePath && basePath !== '/') {
     pathname = basePath;
-  }
-  if (pipelines?.length >= 1) {
+  } else if (pipelines?.length >= 1) {
     pathname += `/pipelines/${pipelines[0]}`;
   }
 
