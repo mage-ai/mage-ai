@@ -23,15 +23,46 @@ def remove_empty_last_lines(code_lines: list[str]) -> list[str]:
     return code_lines[:(idx + 1)]
 
 
-def find_last_expression_lines(code_lines):
-    pass
+def find_index_of_last_expression_lines(code_lines: list[str]) -> int:
+    starting_index = len(code_lines) - 1
+
+    brackets_close = code_lines[starting_index].count('}')
+    brackets_open = code_lines[starting_index].count('{')
+    paranthesis_close = code_lines[starting_index].count(')')
+    paranthesis_open = code_lines[starting_index].count('(')
+    square_brackets_close = code_lines[starting_index].count(']')
+    square_brackets_open = code_lines[starting_index].count('[')
+
+    while starting_index >= 0 and (
+        brackets_close > brackets_open or
+        paranthesis_close > paranthesis_open or
+        square_brackets_close > square_brackets_open
+    ):
+
+        starting_index -= 1
+
+        brackets_close += code_lines[starting_index].count('}')
+        brackets_open += code_lines[starting_index].count('{')
+        paranthesis_close += code_lines[starting_index].count(')')
+        paranthesis_open += code_lines[starting_index].count('(')
+        square_brackets_close += code_lines[starting_index].count(']')
+        square_brackets_open += code_lines[starting_index].count('[')
+
+    return starting_index
 
 
 def add_internal_output_info(code: str) -> str:
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)
 
-    last_line = code_lines[len(code_lines) - 1]
+    print('WTF', code_lines)
+
+    starting_index = find_index_of_last_expression_lines(code_lines)
+    if starting_index < len(code_lines) - 1:
+        last_line = ' '.join(code_lines[starting_index:])
+        code_lines = code_lines[:starting_index] + [last_line]
+    else:
+        last_line = code_lines[len(code_lines) - 1]
 
     matches = re.search('^[ ]*([^=^ ]+)[ ]*=[ ]*', last_line)
     if matches:
@@ -100,10 +131,13 @@ def __custom_output():
 __custom_output()
 """
 
-        return f"""
+        custom_code = f"""
 {code_without_last_line}
 {internal_output}
 """
+
+        return custom_code
+
 
 def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
     return f"""
