@@ -140,7 +140,7 @@ __custom_output()
 
 
 def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
-    escaped_code = re.escape(code)
+    escaped_code = code.replace("'", "\\'")
 
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
