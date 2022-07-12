@@ -140,6 +140,8 @@ __custom_output()
 
 
 def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
+    escaped_code = code.replace("'", "\\'")
+
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -153,7 +155,7 @@ def execute_custom_code():
     block = pipeline.get_block(block_uuid)
 
     code = \'\'\'
-{code}
+{escaped_code}
     \'\'\'
 
     block_output = block.execute_sync(custom_code=code)
