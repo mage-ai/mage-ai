@@ -89,15 +89,13 @@ function CodeOutput({
       && last?.type === curr.type
       && !combineTextData(curr?.data).match(internalOutputRegex)) {
       last.data += combineTextData(curr.data);
-    }
-    else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
+    } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
       && !combineTextData(curr?.data).match(internalOutputRegex)) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
       });
-    }
-    else {
+    } else {
       arr.push({ ...curr });
     }
 
