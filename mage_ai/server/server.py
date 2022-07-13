@@ -445,10 +445,8 @@ if __name__ == '__main__':
     port = args.port
     project = args.project
 
-    asyncio.run(
-        main(
-            host=host,
-            port=port,
-            project=project,
-        )
-    )
+    asyncio.run(main(
+        host=host,
+        port=port,
+        project=project,
+    ))
