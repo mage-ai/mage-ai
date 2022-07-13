@@ -19,8 +19,6 @@ const TemplateWithTheme = ({ ...props }) => (
 const Template: Story<FeatureProfilesProps> =
   (args) => <TemplateWithTheme {...args} />;
 
-export const Regular = Template.bind({});
-
 const statistics = {
   'count': 891,
   'PassengerId/count': 891,
@@ -679,7 +677,15 @@ const featureData = {
 
 const features = Object.entries(featureData).map(([uuid, columnType]) => ({ columnType, uuid }));
 
+export const Regular = Template.bind({});
 Regular.args = {
   features,
+  statistics,
+};
+
+export const Linked = Template.bind({});
+Linked.args = {
+  features,
+  shouldLink: true,
   statistics,
 };

@@ -155,9 +155,10 @@ function FeatureProfile({
             >
               <Text
                 bold
-                color={themeContext.chart.feature}
+                default={!shouldLink}
                 maxWidth={25 * UNIT}
                 monospace
+                secondary={shouldLink}
                 textOverflow
                 title={uuid}
               >
@@ -211,7 +212,10 @@ function FeatureProfiles({
             <Spacing mr={1.25 * UNIT} mt={`${52 + 1}px`} />
             {entryTypes.map((entry, idx) => (
               <CellStyle key={`${entry}-${idx}`}>
-                <Text color={themeContext.chart.feature}>
+                <Text
+                  default={!shouldLink}
+                  secondary={shouldLink}
+                >
                   {entry}
                 </Text>
               </CellStyle>
