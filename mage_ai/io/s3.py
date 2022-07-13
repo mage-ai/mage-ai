@@ -64,6 +64,8 @@ class S3(BaseFile):
             read_config = {}
         if import_config is None:
             import_config = {}
+        if self.can_limit:
+            read_config['nrows'] = limit
         with self.printer.print_msg(
             f'Loading data frame from bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
         ):
@@ -71,7 +73,10 @@ class S3(BaseFile):
                 Bucket=self.bucket_name, Key=self.filepath, **import_config
             )
             buffer = BytesIO(response['Body'].read())
-            return self._trim_df(self.reader(buffer, **read_config), limit)
+        df = self.reader(buffer, **read_config)
+        if not self.can_limit:
+            df = self._trim_df(df, limit)
+        return df
 
     def export(
         self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None

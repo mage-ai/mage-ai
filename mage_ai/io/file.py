@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseFile
+from mage_ai.io.base import BaseFile, FileFormat
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from typing import Any, Mapping
@@ -19,9 +19,13 @@ class FileIO(BaseFile):
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
+        if self.can_limit:
+            kwargs['nrows'] = limit
         with self.printer.print_msg(f'Loading data frame from \'{self.filepath}\''):
             df = self.reader(self.filepath, *args, **kwargs)
-        return self._trim_df(df, limit)
+        if not self.can_limit:
+            df = self._trim_df(df, limit)
+        return df
 
     def export(self, df: DataFrame, **kwargs) -> None:
         """

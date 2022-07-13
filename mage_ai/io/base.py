@@ -137,6 +137,7 @@ class BaseFile(BaseIO):
         self.reader = FORMAT_TO_FUNCTION[format]
         self.filepath = filepath
         self.format = format
+        self.can_limit = self.format in (FileFormat.CSV, FileFormat.JSON)
 
     def _trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
         """
