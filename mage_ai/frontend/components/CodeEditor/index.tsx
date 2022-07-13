@@ -216,8 +216,8 @@ function CodeEditor({
         const textarea = ReactDOM
           .findDOMNode(editorRef.current._domElement)
           // @ts-ignore
-          .getElementsByClassName('inputarea')
-        textarea[0].blur()
+          .getElementsByClassName('inputarea');
+        textarea[0].blur();
       }
     }
   }, [

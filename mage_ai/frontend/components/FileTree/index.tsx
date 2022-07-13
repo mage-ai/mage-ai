@@ -148,7 +148,7 @@ function FileTree({
       if (!block) {
         addNewBlockAtIndex(
           {
-            type: getBlockType(path) as BlockTypeEnum,
+            type: getBlockType(path),
             uuid: getBlockUUID(path),
           },
           blocks.length,

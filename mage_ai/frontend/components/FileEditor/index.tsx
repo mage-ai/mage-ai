@@ -1,25 +1,29 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react';
 import { useMutation } from 'react-query';
 
+import BlockType from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
-import FileType, { FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType';
+import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import {
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { getBlockType, getBlockUUID } from '@components/FileTree/utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
+  addNewBlock: (b: BlockType) => void;
   filePath: string;
   pipeline: PipelineType;
   setFilesTouched: (data: {
@@ -28,6 +32,7 @@ type FileEditorProps = {
 };
 
 function FileEditor({
+  addNewBlock,
   filePath,
   pipeline,
   setFilesTouched,
@@ -40,7 +45,7 @@ function FileEditor({
     }
   }, [data]);
 
-  const [content, setContent] = useState<string>(file?.content)
+  const [content, setContent] = useState<string>(file?.content);
   const [touched, setTouched] = useState<boolean>(false);
 
   const [updateFile] = useMutation(
@@ -79,16 +84,18 @@ function FileEditor({
     setTouched(false);
   };
 
+  const regex = useMemo(() => (
+    new RegExp(
+      Object
+        .keys(FILE_EXTENSION_TO_LANGUAGE_MAPPING)
+        .map(ext => `\.(${ext})$`).join('|'),
+    )
+  ), []);
+
+  const fileExtension = useMemo(() => file?.path.match(regex)[0]?.split('.')[1], [regex, file]);
+
   const codeEditorEl = useMemo(() => {
     if (file?.path) {
-      const regex =
-        new RegExp(
-          Object
-            .keys(FILE_EXTENSION_TO_LANGUAGE_MAPPING)
-            .map(ext => `\.(${ext})$`).join('|'),
-          );
-      const fileExtension = file.path.match(regex)[0]?.split('.')[1];
-
       return (
         <CodeEditor
           autoHeight
@@ -118,10 +125,25 @@ function FileEditor({
     }
   }, [
     file,
+    fileExtension,
     saveFile,
     setFilesTouched,
-    updateFile,
   ]);
+
+  const addToPipelineEl = fileExtension === FileExtensionEnum.PY && (
+    <Spacing p={2}>
+      <KeyboardShortcutButton
+        inline
+        onClick={() => addNewBlock({
+          type: getBlockType(file.path.split('/')),
+          uuid: getBlockUUID(file.path.split('/')),
+        })}
+        uuid="FileEditor/AddToCurrentPipeline"
+      >
+        Add to current pipeline
+      </KeyboardShortcutButton>
+    </Spacing>
+  );
 
   const uuidKeyboard = `FileEditor/${file?.path}`;
   const {
@@ -158,6 +180,7 @@ function FileEditor({
   return (
     <>
       {codeEditorEl}
+      {addToPipelineEl}
     </>
   );
 }
