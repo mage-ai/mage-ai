@@ -125,21 +125,23 @@ function CodeBlockProps({
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const runBlockAndTrack = useCallback((code?: string) => {
-    runBlock({
+  const runBlockAndTrack = useCallback(
+    ({ code, runUpstream }: { code?: boolean, runUpstream?: boolean }) => {
+      runBlock({
+        block,
+        code: code || content,
+        runUpstream: runUpstream || false,
+      });
+      setRunCount(1 + Number(runCount));
+      setRunEndTime(null);
+    }, [
       block,
-      code: code || content,
-    });
-    setRunCount(1 + Number(runCount));
-    setRunEndTime(null);
-  }, [
-    block,
-    content,
-    runCount,
-    runBlock,
-    setRunCount,
-    setRunEndTime,
-  ]);
+      content,
+      runCount,
+      runBlock,
+      setRunCount,
+      setRunEndTime,
+    ]);
 
   const messagesPrevious = usePrevious(messages);
   useEffect(() => {

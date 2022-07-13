@@ -155,10 +155,12 @@ function PipelineDetail({
   const runBlock = useCallback((payload: {
     block: BlockType;
     code: string;
+    runUpstream?: boolean;
   }) => {
     const {
       block,
       code,
+      runUpstream = false,
     } = payload;
 
     if (code) {
@@ -170,6 +172,7 @@ function PipelineDetail({
           code,
           pipeline_uuid: pipeline?.uuid,
           uuid,
+          run_upstream: runUpstream
         }));
 
         // @ts-ignore

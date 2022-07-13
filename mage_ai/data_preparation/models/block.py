@@ -1,6 +1,9 @@
+from collections import deque
 from contextlib import redirect_stdout
 from inspect import Parameter, signature
 from io import StringIO
+from queue import Queue
+from typing import List, Set
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
@@ -16,12 +19,90 @@ from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
+import asyncio
 import os
 import pandas as pd
 import sys
 import traceback
 
+async def run_blocks_in_parallel(
+    root_blocks: List['Block'],
+    analyze_outputs: bool = True,
+    redirect_outputs: bool = False,
+    selected_blocks: Set[str] = None,
+    update_status: bool = False,
+) -> None:
+    tasks = dict()
+    blocks = Queue()
 
+    for block in root_blocks:
+        blocks.put(block)
+        tasks[block.uuid] = None
+
+    while not blocks.empty():
+        block = blocks.get()
+        if block.type == BlockType.SCRATCHPAD:
+            continue
+        skip = False
+        for upstream_block in block.upstream_blocks:
+            if tasks.get(upstream_block.uuid) is None:
+                blocks.put(block)
+                skip = True
+                break
+        if skip:
+            continue
+        await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
+        task = asyncio.create_task(
+            block.execute(
+                analyze_outputs=analyze_outputs,
+                redirect_outputs=redirect_outputs,
+                update_status=update_status,
+            )
+        )
+        tasks[block.uuid] = task
+        for downstream_block in block.downstream_blocks:
+            if downstream_block.uuid not in tasks and \
+                (selected_blocks is None or upstream_block.uuid in selected_blocks):
+
+                tasks[downstream_block.uuid] = None
+                blocks.put(downstream_block)
+    remaining_tasks = filter(lambda task: task is not None, tasks.values())
+    await asyncio.gather(*remaining_tasks)
+
+def run_blocks(
+    root_blocks: List['Block'],
+    analyze_outputs: bool = True,
+    redirect_outputs: bool = False,
+    selected_blocks: Set[str] = None,
+) -> None:
+    tasks = dict()
+    blocks = Queue()
+
+    for block in root_blocks:
+        blocks.put(block)
+        tasks[block.uuid] = False
+
+    while not blocks.empty():
+        block = blocks.get()
+        if block.type == BlockType.SCRATCHPAD:
+            continue
+        skip = False
+        for upstream_block in block.upstream_blocks:
+            upstream_task_status = tasks.get(upstream_block.uuid)
+            if upstream_task_status is None or not upstream_task_status:
+                blocks.put(block)
+                skip = True
+                break
+        if skip:
+            continue
+        block.execute_sync(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
+        tasks[block.uuid] = True
+        for downstream_block in block.downstream_blocks:
+            if downstream_block.uuid not in tasks and \
+                (selected_blocks is None or downstream_block.uuid in selected_blocks):
+
+                tasks[downstream_block.uuid] = None
+                blocks.put(downstream_block)
 class Block:
     def __init__(
         self,
@@ -478,6 +559,25 @@ class Block:
                     self.uuid,
                     uuid,
                 )
+
+    def run_upstream_blocks(self) -> None:
+        queue = Queue()
+        visited = set()
+        root_blocks = []
+        queue.put(self)
+        visited.add(self.uuid)
+        while not queue.empty():
+            current_block = queue.get()
+            if len(current_block.upstream_blocks) == 0:
+                root_blocks.append(current_block)
+                continue
+            for block in current_block.upstream_blocks:
+                if block.uuid not in visited:
+                    queue.put(block)
+                    visited.add(block.uuid)
+        visited.remove(self.uuid)
+
+        run_blocks(root_blocks, selected_blocks=visited)
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import light from '@oracle/styles/themes/light';
 import { BORDER_RADIUS_XLARGE } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
+import dark from '@oracle/styles/themes/dark';
 
 export type MenuContainerProps = {
   bottom?: number;
@@ -21,8 +22,8 @@ const ContainerStyle = styled.div<MenuContainerProps>`
   z-index: 101;
 
   ${props => `
-    background-color: ${(props.theme.monotone || light.monotone).white};
-    box-shadow: ${(props.theme.shadow || light.shadow).menu};
+    background-color: ${(props.theme.monotone || dark.monotone).grey500};
+    box-shadow: ${(props.theme.shadow || dark.shadow).menu};
   `}
 
   ${props => typeof props.left !== 'undefined' && `

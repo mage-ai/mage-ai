@@ -18,6 +18,11 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
     min-width: ${UNIT * 20}px;
   `}
 
+  ${props => props.width && `
+    min-width: 0px;
+    width: ${props.width}px;
+  `}
+
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};
 
@@ -25,6 +30,7 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
   `}
+
 `;
 
 export const LinkStyle = styled.div<LinkProps>`
