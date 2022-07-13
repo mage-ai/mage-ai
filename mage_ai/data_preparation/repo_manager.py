@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from mage_ai.data_preparation.templates.template import copy_template_directory
 import os
+import sys
 
 
 def init_repo(repo_path: str) -> None:
@@ -22,3 +23,4 @@ def get_repo_path() -> str:
 
 def set_repo_path(repo_path: str) -> None:
     os.environ[REPO_PATH_ENV_VAR] = repo_path
+    sys.path.append(os.path.dirname(repo_path))
