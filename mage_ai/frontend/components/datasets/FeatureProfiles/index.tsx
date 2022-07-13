@@ -155,9 +155,9 @@ function FeatureProfile({
             >
               <Text
                 bold
+                color={themeContext.chart.feature}
                 maxWidth={25 * UNIT}
                 monospace
-                secondary
                 textOverflow
                 title={uuid}
               >
@@ -211,7 +211,9 @@ function FeatureProfiles({
             <Spacing mr={1.25 * UNIT} mt={`${52 + 1}px`} />
             {entryTypes.map((entry, idx) => (
               <CellStyle key={`${entry}-${idx}`}>
-                <Text secondary>{entry}</Text>
+                <Text color={themeContext.chart.feature}>
+                  {entry}
+                </Text>
               </CellStyle>
             ))}
           </Flex>

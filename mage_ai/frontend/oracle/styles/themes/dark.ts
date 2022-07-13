@@ -136,6 +136,7 @@ export default {
     button3: LIME_DARK,
     button4: PINK,
     button5: PEACH,
+    feature: DARK_CONTENT_DEFAULT,
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,

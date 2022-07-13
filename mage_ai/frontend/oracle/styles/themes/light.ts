@@ -114,6 +114,7 @@ export default {
     button2: YELLOW,
     button3: LIME,
     danger: RED,
+    feature: PURPLE,
     lines: '#9B6CA7',
     primary: PURPLE,
     secondary: RED,
