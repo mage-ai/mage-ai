@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 
 import light from '@oracle/styles/themes/light';
-import { SILVER } from '@oracle/styles/colors/main';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { SILVER } from '@oracle/styles/colors/main';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT, PADDING } from '@oracle/styles/units/spacing';
 
