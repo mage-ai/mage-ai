@@ -134,7 +134,7 @@ function FileEditor({
     <Spacing p={1}>
       <Button
         onClick={() => addNewBlock({
-          type: getBlockType(file.path.split('/')) as BlockTypeEnum,
+          type: getBlockType(file.path.split('/')),
           uuid: getBlockUUID(file.path.split('/')),
         })}
       >

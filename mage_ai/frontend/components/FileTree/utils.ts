@@ -1,12 +1,12 @@
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { FileExtensionEnum } from '@interfaces/FileType';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);
 
 export const getBlockPath = (b: BlockType) => `${b.type}s/${b.uuid}.py`;
 
-export const getBlockType = (path: string[]) => (
-  path.at(-2).slice(0, -1)
+export const getBlockType = (path: string[]): BlockTypeEnum => (
+  path.at(-2).slice(0, -1) as BlockTypeEnum
 );
 
 export const getBlockUUID = (path: string[]) => (
