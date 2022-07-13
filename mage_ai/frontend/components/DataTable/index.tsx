@@ -369,7 +369,7 @@ function Table({
   }, [invalidValues, maxWidthOfFirstColumn, prepareRow, rows, slug]);
 
   const listHeight = useMemo(() => {
-    let val
+    let val;
     if (maxHeight) {
       val = rows.length * BASE_ROW_HEIGHT;
     } else {
