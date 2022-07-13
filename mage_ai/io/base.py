@@ -8,8 +8,6 @@ import pandas as pd
 import re
 
 QUERY_ROW_LIMIT = 100_000
-REGEX_FOR = re.compile('FOR', flags=re.IGNORECASE)
-REGEX_LIMIT = re.compile('LIMIT(?:\s(\d+|ALL))?', flags=re.IGNORECASE)
 
 
 class DataSource(str, Enum):
