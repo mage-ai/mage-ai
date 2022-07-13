@@ -3,13 +3,13 @@ from enum import Enum
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Mapping, Union
+import os
 import pandas as pd
 import re
-import os
 
-QUERY_ROW_LIMIT = 100000
-REGEX_LIMIT = re.compile('LIMIT(?:\s(\d+|ALL))?', flags=re.IGNORECASE)
+QUERY_ROW_LIMIT = 100_000
 REGEX_FOR = re.compile('FOR', flags=re.IGNORECASE)
+REGEX_LIMIT = re.compile('LIMIT(?:\s(\d+|ALL))?', flags=re.IGNORECASE)
 
 
 class DataSource(str, Enum):
@@ -58,34 +58,7 @@ class BaseIO(ABC):
         Returns:
             str: Modified query with limit on row count returned.
         """
-        if query[:6].lower() != 'select':
-            return query
-
-        limit_match = REGEX_LIMIT.search(query)
-        limit_clause = f'LIMIT {limit}'
-        query = query.strip(';')
-
-        if limit_match is not None:
-            modified_query = ''.join(
-                (query[: limit_match.start()], limit_clause, query[limit_match.end() :])
-            )
-            if limit_match.group(1) is None or limit_match.group(1) == 'ALL':
-                return_query = modified_query
-            elif limit_match.group(1).isnumeric():
-                user_defined_limit = int(limit_match.group(1))
-                if limit < user_defined_limit:
-                    return_query = modified_query
-                else:
-                    return_query = query
-        else:
-            for_match = REGEX_FOR.search(query)
-            if for_match is not None:
-                return_query = ''.join(
-                    (query[: for_match.start()], limit_clause, ' ', query[for_match.start() :])
-                )
-            else:
-                return_query = ''.join((query, ' ', limit_clause))
-        return return_query + ';'
+        return f'SELECT * FROM ({query.strip(";")}) AS subquery LIMIT {limit};'
 
     @classmethod
     @abstractmethod

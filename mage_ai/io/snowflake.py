@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQL
+from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from snowflake.connector import connect
@@ -51,7 +51,7 @@ class Snowflake(BaseSQL):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, **kwargs)
 
-    def load(self, query_string: str, limit: int = None, *args, **kwargs) -> DataFrame:
+    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
         """
         Loads data from Snowflake into a Pandas data frame based on the query given.
         This will fail unless a `SELECT` query is provided. This function will load at

@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.io.base import BaseFile, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from typing import Any, Mapping
@@ -9,7 +9,7 @@ class FileIO(BaseFile):
     Handles data transfer between the filesystem and the Mage app.
     """
 
-    def load(self, limit: int = None, *args, **kwargs) -> DataFrame:
+    def load(self, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
         """
         Loads the data frame from the file specified. This function will load at
         maximum 100,000 rows of data from the specified file.

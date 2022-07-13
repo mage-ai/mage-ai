@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQL
+from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from redshift_connector import connect
@@ -35,7 +35,7 @@ class Redshift(BaseSQL):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
 
-    def load(self, query_string: str, limit: int = None, *args, **kwargs) -> DataFrame:
+    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database. When a

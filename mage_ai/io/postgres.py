@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQL
+from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame, read_sql
 from sqlalchemy import create_engine
@@ -54,7 +54,7 @@ class Postgres(BaseSQL):
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             self.conn.execute(query_string, **query_vars)
 
-    def load(self, query_string: str, limit: int = None, **kwargs) -> DataFrame:
+    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
         """
         Loads data from the connected database into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. This function will load at

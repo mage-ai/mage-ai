@@ -1,6 +1,6 @@
 from io import BytesIO
 from typing import Mapping
-from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from pathlib import Path
@@ -43,7 +43,10 @@ class S3(BaseFile):
         self.client = boto3.client('s3', **kwargs)
 
     def load(
-        self, read_config: Mapping = None, import_config: Mapping = None, limit: int = None
+        self,
+        read_config: Mapping = None,
+        import_config: Mapping = None,
+        limit: int = QUERY_ROW_LIMIT,
     ) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame. This function will load at
