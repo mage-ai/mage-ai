@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { SILVER } from '@oracle/styles/colors/main';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { UNIT, PADDING } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS_LARGE}px;
@@ -12,8 +13,8 @@ export const ContainerStyle = styled.div`
 `;
 
 export const ColumnProfileStyle = styled.div`
-  background: ${SILVER};
   ${props => `
+    background: ${props.theme.background.table};
     border-bottom: 1px solid ${props.theme.interactive.defaultBorder};
     border-right: 1px solid ${props.theme.interactive.defaultBorder};
   `}
@@ -49,5 +50,6 @@ export const CellStyle = styled.div<any>`
 `;
 
 export const ScrollOverflowStyle = styled.div`
-  overflow-x: scroll;
+  ${ScrollbarStyledCss}
+  overflow-x: auto;
 `;
