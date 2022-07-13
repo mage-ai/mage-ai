@@ -5,10 +5,10 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
+import BlockType from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
 import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
@@ -131,15 +131,17 @@ function FileEditor({
   ]);
 
   const addToPipelineEl = fileExtension === FileExtensionEnum.PY && (
-    <Spacing p={1}>
-      <Button
+    <Spacing p={2}>
+      <KeyboardShortcutButton
+        inline
         onClick={() => addNewBlock({
           type: getBlockType(file.path.split('/')),
           uuid: getBlockUUID(file.path.split('/')),
         })}
+        uuid="FileEditor/AddToCurrentPipeline"
       >
         Add to current pipeline
-      </Button>
+      </KeyboardShortcutButton>
     </Spacing>
   );
 
