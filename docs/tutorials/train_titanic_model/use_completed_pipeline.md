@@ -28,5 +28,6 @@ click the pipeline named `titanic_survivors`.
 
 ## 3. Follow the quick start tutorial
 
-Go back to the [quick start tutorial](README.md#3-play-around-with-scratchpad)
+Go back to the [quick start tutorial](README.md), 
+start from step <b>3. Play around with scratchpad</b>,
 and use the existing code to follow along.
