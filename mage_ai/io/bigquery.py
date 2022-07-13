@@ -31,6 +31,7 @@ class BigQuery(BaseIO):
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
         to the Google BigQuery client, accepting all other configuration settings there.
         """
+        super().__init__()
         credentials = kwargs.get('credentials')
         if credentials is None:
             if 'credentials_mapping' in kwargs:
@@ -59,7 +60,7 @@ class BigQuery(BaseIO):
             DataFrame: Data frame associated with the given query.
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
-            return self.client.query(query_string, *kwargs).to_dataframe()
+            return self.client.query(self._enforce_limit(query_string), *kwargs).to_dataframe()
 
     def export(
         self,

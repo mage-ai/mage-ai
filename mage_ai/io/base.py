@@ -7,7 +7,9 @@ import pandas as pd
 import re
 import os
 
-REGEX_LIMIT = re.compile('LIMIT\s?(\d+|ALL)?', flags=re.IGNORECASE)
+QUERY_ROW_LIMIT = 100000
+REGEX_LIMIT = re.compile('LIMIT(?:\s(\d+|ALL))?', flags=re.IGNORECASE)
+REGEX_FOR = re.compile('FOR', flags=re.IGNORECASE)
 
 
 class DataSource(str, Enum):
@@ -42,6 +44,46 @@ class BaseIO(ABC):
     def __init__(self, verbose=False) -> None:
         self.verbose = verbose
         self.printer = VerbosePrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
+
+    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        """
+        Modifies SQL SELECT query to enforce a limit on the number of rows returned by the query.
+        This method is currently supports PostgreSQL syntax, which means it can be used with
+        PostgreSQL, Amazon Redshift, Snowflake, and Google BigQuery.
+
+        Args:
+            query (str): The SQL query to modify
+            limit (int): The limit on the number of rows to return.
+
+        Returns:
+            str: Modified query with limit on row count returned.
+        """
+        if query[:6].lower() != 'select':
+            return query
+        limit_match = REGEX_LIMIT.search(query)
+        limit_clause = f'LIMIT {limit}'
+        query = query.strip(';')
+        if limit_match is not None:
+            modified_query = ''.join(
+                (query[: limit_match.start()], limit_clause, query[limit_match.end() :])
+            )
+            if limit_match.group(1) is None or limit_match.group(1) == 'ALL':
+                return_query = modified_query
+            elif limit_match.group(1).isnumeric():
+                user_defined_limit = int(limit_match.group(1))
+                if limit < user_defined_limit:
+                    return_query = modified_query
+                else:
+                    return_query = query
+        else:
+            for_match = REGEX_FOR.search(query)
+            if for_match is not None:
+                return_query = ''.join(
+                    (query[: for_match.start()], limit_clause, ' ', query[for_match.start() :])
+                )
+            else:
+                return_query = ''.join((query, ' ', limit_clause))
+        return return_query + ';'
 
     @classmethod
     @abstractmethod
@@ -192,34 +234,6 @@ class BaseSQL(BaseIO):
         Opens an underlying connection to the SQL data source.
         """
         pass
-
-    def __enforce_limit(self, query: str, limit: int) -> str:
-        """
-        Modifies SQL query to enforce a limit on the number of rows returned by the query.
-        This method is currently supports PostgreSQL syntax, which means it can be used with
-        PostgreSQL, Amazon Redshift, Snowflake, and Google BigQuery.
-
-        Args:
-            query (str): The SQL query to modify
-            limit (int): The limit on the number of rows to return.
-
-        Returns:
-            str: Modified query with limit on row count returned.
-        """
-        match = REGEX_LIMIT.search(query)
-        limit_clause = f'LIMIT {limit}'
-        if match is not None:
-            if match.group(1) is None:
-                return query[: match.start()] + limit_clause + " " + query[match.end() :]
-            elif match.group(1).isnumeric():
-                user_defined_limit = int(match.group(1))
-                if limit < user_defined_limit:
-                    return query[: match.start()] + limit_clause + " " + query[match.end() :]
-                else:
-                    return query
-            elif match.group(1) == 'ALL':
-                return query[: match.start()] + limit_clause + " " + query[match.end() :]
-        return query.strip(';') + ' ' + limit_clause + ';'
 
     def __del__(self):
         self.close()

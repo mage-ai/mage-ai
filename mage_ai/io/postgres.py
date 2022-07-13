@@ -57,7 +57,8 @@ class Postgres(BaseSQL):
     def load(self, query_string: str, **kwargs) -> DataFrame:
         """
         Loads data from the connected database into a Pandas data frame based on the query given.
-        This will fail if the query returns no data from the database.
+        This will fail if the query returns no data from the database. This function will load
+        at maximum 100,000 rows from the database.
 
         Args:
             query_string (str): Query to execute on the database.
@@ -67,7 +68,7 @@ class Postgres(BaseSQL):
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
-            return read_sql(query_string, self.conn, **kwargs)
+            return read_sql(self._enforce_limit(query_string), self.conn, **kwargs)
 
     def export(
         self, df: DataFrame, name: str, index: bool = False, if_exists: str = 'replace', **kwargs

@@ -65,7 +65,9 @@ class Snowflake(BaseSQL):
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
             with self.conn.cursor() as cur:
-                return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
+                return cur.execute(
+                    self._enforce_limit(query_string), *args, **kwargs
+                ).fetch_pandas_all()
 
     def export(
         self,
