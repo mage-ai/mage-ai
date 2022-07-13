@@ -22,8 +22,17 @@ import tornado.web
 import urllib.parse
 
 
-session = Session(key=bytes())
-manager = KernelManager(session=session)
+DEFAULT_KERNEL_NAME = 'python3'
+
+kernel_managers = dict(
+    python3=KernelManager(
+        session=Session(key=bytes()),
+    ),
+    pysparkkernel=KernelManager(
+        kernel_name='pysparkkernel',
+        session=Session(key=bytes()),
+    ),
+)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -265,12 +274,12 @@ class KernelsHandler(BaseHandler):
     def get(self, kernel_id=None):
         kernels = []
 
-        if manager.has_kernel:
+        if kernel_managers[DEFAULT_KERNEL_NAME].has_kernel:
             kernels.append(
                 dict(
-                    alive=manager.is_alive(),
-                    id=manager.kernel_id,
-                    name=manager.kernel_name,
+                    alive=kernel_managers[DEFAULT_KERNEL_NAME].is_alive(),
+                    id=kernel_managers[DEFAULT_KERNEL_NAME].kernel_id,
+                    name=kernel_managers[DEFAULT_KERNEL_NAME].kernel_name,
                 )
             )
 
@@ -278,16 +287,19 @@ class KernelsHandler(BaseHandler):
         self.write(r)
 
     def post(self, kernel_id, action_type):
+        kernel_name = self.get_argument('kernel_name', DEFAULT_KERNEL_NAME)
+        if kernel_name not in kernel_managers:
+            kernel_name = DEFAULT_KERNEL_NAME
         if 'interrupt' == action_type:
-            manager.interrupt_kernel()
+            kernel_managers[kernel_name].interrupt_kernel()
         elif 'restart' == action_type:
             try:
-                manager.restart_kernel()
+                kernel_managers[kernel_name].restart_kernel()
             except RuntimeError as e:
                 # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
                 if 'start_kernel' in str(e):
-                    manager.start_kernel()
-            os.environ['CONNECTION_FILE'] = manager.connection_file
+                    kernel_managers[kernel_name].start_kernel()
+            os.environ['CONNECTION_FILE'] = kernel_managers[kernel_name].connection_file
 
         r = json.dumps(
             dict(
@@ -381,8 +393,8 @@ async def main(
         init_repo(project)
     set_repo_path(project)
 
-    manager.start_kernel()
-    os.environ['CONNECTION_FILE'] = manager.connection_file
+    kernel_managers[DEFAULT_KERNEL_NAME].start_kernel()
+    os.environ['CONNECTION_FILE'] = kernel_managers[DEFAULT_KERNEL_NAME].connection_file
 
     app = make_app()
 
@@ -409,7 +421,7 @@ async def main(
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
     get_messages(
-        manager.client(),
+        kernel_managers[DEFAULT_KERNEL_NAME].client(),
         lambda content: WebSocketServer.send_message(
             parse_output_message(content),
         ),
