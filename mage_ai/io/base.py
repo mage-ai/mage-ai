@@ -4,7 +4,10 @@ from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Mapping, Union
 import pandas as pd
+import re
 import os
+
+REGEX_LIMIT = re.compile('LIMIT\s?(\d+|ALL)?', flags=re.IGNORECASE)
 
 
 class DataSource(str, Enum):
@@ -189,6 +192,34 @@ class BaseSQL(BaseIO):
         Opens an underlying connection to the SQL data source.
         """
         pass
+
+    def __enforce_limit(self, query: str, limit: int) -> str:
+        """
+        Modifies SQL query to enforce a limit on the number of rows returned by the query.
+        This method is currently supports PostgreSQL syntax, which means it can be used with
+        PostgreSQL, Amazon Redshift, Snowflake, and Google BigQuery.
+
+        Args:
+            query (str): The SQL query to modify
+            limit (int): The limit on the number of rows to return.
+
+        Returns:
+            str: Modified query with limit on row count returned.
+        """
+        match = REGEX_LIMIT.search(query)
+        limit_clause = f'LIMIT {limit}'
+        if match is not None:
+            if match.group(1) is None:
+                return query[: match.start()] + limit_clause + " " + query[match.end() :]
+            elif match.group(1).isnumeric():
+                user_defined_limit = int(match.group(1))
+                if limit < user_defined_limit:
+                    return query[: match.start()] + limit_clause + " " + query[match.end() :]
+                else:
+                    return query
+            elif match.group(1) == 'ALL':
+                return query[: match.start()] + limit_clause + " " + query[match.end() :]
+        return query.strip(';') + ' ' + limit_clause + ';'
 
     def __del__(self):
         self.close()
