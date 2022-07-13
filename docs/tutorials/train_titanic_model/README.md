@@ -11,6 +11,9 @@ In this tutorial, we’ll create a pipeline that does the following:
 2. Select columns and fill in missing values
 4. Train a model to predict which passengers will survive
 
+If you prefer to skip the tutorial and view the finished code,
+follow [this guide](use_completed_pipeline.md).
+
 ## Table of contents
 
 1. [Setup](#1-setup)
