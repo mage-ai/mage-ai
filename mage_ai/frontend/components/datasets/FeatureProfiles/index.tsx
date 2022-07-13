@@ -5,15 +5,15 @@ import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
+import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, pluralize, roundNumber } from '@utils/string';
 import { getFeatureStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import RowDataTable from '@oracle/components/RowDataTable';
-import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle } from './index.style';
 
 type FeatureProfileProps = {
   columns: string[];
