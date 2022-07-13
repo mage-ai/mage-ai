@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQL
+from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from snowflake.connector import connect
@@ -51,13 +51,17 @@ class Snowflake(BaseSQL):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, **kwargs)
 
-    def load(self, query_string: str, *args, **kwargs) -> DataFrame:
+    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
         """
         Loads data from Snowflake into a Pandas data frame based on the query given.
-        This will fail unless a `SELECT` query is provided.
+        This will fail unless a `SELECT` query is provided. This function will load at
+        maximum 100,000 rows of data. To operate on more data, consider performing data
+        transformations in warehouse.
+
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
             *args, **kwargs: Additional parameters to provide to the query
 
         Returns:
@@ -65,7 +69,9 @@ class Snowflake(BaseSQL):
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
             with self.conn.cursor() as cur:
-                return cur.execute(query_string, *args, **kwargs).fetch_pandas_all()
+                return cur.execute(
+                    self._enforce_limit(query_string, limit), *args, **kwargs
+                ).fetch_pandas_all()
 
     def export(
         self,

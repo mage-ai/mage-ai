@@ -1,6 +1,6 @@
 from io import BytesIO
 from typing import Mapping
-from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from pathlib import Path
@@ -42,15 +42,22 @@ class S3(BaseFile):
         self.bucket_name = bucket_name
         self.client = boto3.client('s3', **kwargs)
 
-    def load(self, read_config: Mapping = None, import_config: Mapping = None) -> DataFrame:
+    def load(
+        self,
+        read_config: Mapping = None,
+        import_config: Mapping = None,
+        limit: int = QUERY_ROW_LIMIT,
+    ) -> DataFrame:
         """
-        Loads data from S3 into a Pandas data frame.
+        Loads data from S3 into a Pandas data frame. This function will load at
+        maximum 100,000 rows of data from the specified file.
 
         Args:
-            read_config (Mapping, optional): Configuration settings for reading file into data
-            frame. Defaults to None.
             import_config (Mapping, optional): Configuration settings for importing file from
             S3. Defaults to None.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            read_config (Mapping, optional): Configuration settings for reading file into data
+            frame. Defaults to None.
 
         Returns:
             DataFrame: The data frame constructed from the file in the S3 bucket.
@@ -60,6 +67,8 @@ class S3(BaseFile):
             read_config = {}
         if import_config is None:
             import_config = {}
+        if self.can_limit:
+            read_config['nrows'] = limit
         with self.printer.print_msg(
             f'Loading data frame from bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
         ):
@@ -67,7 +76,10 @@ class S3(BaseFile):
                 Bucket=self.bucket_name, Key=self.filepath, **import_config
             )
             buffer = BytesIO(response['Body'].read())
-            return self.reader(buffer, **read_config)
+        df = self.reader(buffer, **read_config)
+        if not self.can_limit:
+            df = self._trim_df(df, limit)
+        return df
 
     def export(
         self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None

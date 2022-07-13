@@ -3,8 +3,11 @@ from enum import Enum
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Mapping, Union
-import pandas as pd
 import os
+import pandas as pd
+import re
+
+QUERY_ROW_LIMIT = 100_000
 
 
 class DataSource(str, Enum):
@@ -39,6 +42,21 @@ class BaseIO(ABC):
     def __init__(self, verbose=False) -> None:
         self.verbose = verbose
         self.printer = VerbosePrintHandler(f'{type(self).__name__} initialized', verbose=verbose)
+
+    def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
+        """
+        Modifies SQL SELECT query to enforce a limit on the number of rows returned by the query.
+        This method is currently supports PostgreSQL syntax, which means it can be used with
+        PostgreSQL, Amazon Redshift, Snowflake, and Google BigQuery.
+
+        Args:
+            query (str): The SQL query to modify
+            limit (int): The limit on the number of rows to return.
+
+        Returns:
+            str: Modified query with limit on row count returned.
+        """
+        return f'SELECT * FROM ({query.strip(";")}) AS subquery LIMIT {limit};'
 
     @classmethod
     @abstractmethod
@@ -92,6 +110,19 @@ class BaseFile(BaseIO):
         self.reader = FORMAT_TO_FUNCTION[format]
         self.filepath = filepath
         self.format = format
+        self.can_limit = self.format in (FileFormat.CSV, FileFormat.JSON)
+
+    def _trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
+        """
+        Truncates data frame to `limit` rows
+
+        Args:
+            df (DataFrame): Data frame to truncate out.
+
+        Returns:
+            DataFrame: Truncated data frame with removed rows.
+        """
+        return df[:limit]
 
     def _write(self, df: DataFrame, output: Union[IO, os.PathLike], **kwargs) -> None:
         """
