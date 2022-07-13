@@ -792,12 +792,6 @@ function PipelineDetailPage({
               addNewBlock={(b: BlockType) => {
                 addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.uuid);
                 router.push(`/pipelines/${pipelineUUID}`);
-                // TODO this doesn't work, and chaining it to router.push reopens the file editor
-                onSelectBlockFile(
-                  b.uuid,
-                  b.type,
-                  getBlockPath(b),
-                );
               }}
               filePath={filePath}
               pipeline={pipeline}
