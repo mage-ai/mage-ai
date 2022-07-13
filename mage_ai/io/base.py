@@ -60,9 +60,11 @@ class BaseIO(ABC):
         """
         if query[:6].lower() != 'select':
             return query
+
         limit_match = REGEX_LIMIT.search(query)
         limit_clause = f'LIMIT {limit}'
         query = query.strip(';')
+
         if limit_match is not None:
             modified_query = ''.join(
                 (query[: limit_match.start()], limit_clause, query[limit_match.end() :])
