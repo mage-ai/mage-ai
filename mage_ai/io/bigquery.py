@@ -47,7 +47,7 @@ class BigQuery(BaseIO):
         with self.printer.print_msg(f'Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
 
-    def load(self, query_string: str, **kwargs) -> DataFrame:
+    def load(self, query_string: str, limit: int = None, **kwargs) -> DataFrame:
         """
         Loads data from BigQuery into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
@@ -58,13 +58,16 @@ class BigQuery(BaseIO):
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
             **kwargs: Additional arguments to pass to query, such as query configurations
 
         Returns:
             DataFrame: Data frame associated with the given query.
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
-            return self.client.query(self._enforce_limit(query_string), *kwargs).to_dataframe()
+            return self.client.query(
+                self._enforce_limit(query_string, limit), *kwargs
+            ).to_dataframe()
 
     def export(
         self,

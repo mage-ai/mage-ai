@@ -42,16 +42,19 @@ class S3(BaseFile):
         self.bucket_name = bucket_name
         self.client = boto3.client('s3', **kwargs)
 
-    def load(self, read_config: Mapping = None, import_config: Mapping = None) -> DataFrame:
+    def load(
+        self, read_config: Mapping = None, import_config: Mapping = None, limit: int = None
+    ) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame. This function will load at
         maximum 100,000 rows of data from the specified file.
 
         Args:
-            read_config (Mapping, optional): Configuration settings for reading file into data
-            frame. Defaults to None.
             import_config (Mapping, optional): Configuration settings for importing file from
             S3. Defaults to None.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            read_config (Mapping, optional): Configuration settings for reading file into data
+            frame. Defaults to None.
 
         Returns:
             DataFrame: The data frame constructed from the file in the S3 bucket.
@@ -68,7 +71,7 @@ class S3(BaseFile):
                 Bucket=self.bucket_name, Key=self.filepath, **import_config
             )
             buffer = BytesIO(response['Body'].read())
-            return self._trim_df(self.reader(buffer, **read_config))
+            return self._trim_df(self.reader(buffer, **read_config), limit)
 
     def export(
         self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None

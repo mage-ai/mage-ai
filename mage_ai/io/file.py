@@ -9,17 +9,19 @@ class FileIO(BaseFile):
     Handles data transfer between the filesystem and the Mage app.
     """
 
-    def load(self, *args, **kwargs) -> DataFrame:
+    def load(self, limit: int = None, *args, **kwargs) -> DataFrame:
         """
         Loads the data frame from the file specified. This function will load at
         maximum 100,000 rows of data from the specified file.
+
+        limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
 
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
         with self.printer.print_msg(f'Loading data frame from \'{self.filepath}\''):
             df = self.reader(self.filepath, *args, **kwargs)
-        return self._trim_df(df)
+        return self._trim_df(df, limit)
 
     def export(self, df: DataFrame, **kwargs) -> None:
         """
