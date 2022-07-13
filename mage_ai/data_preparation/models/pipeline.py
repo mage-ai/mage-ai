@@ -1,6 +1,6 @@
 from typing import List, Set
 from mage_ai.data_cleaner.shared.utils import clean_name
-from mage_ai.data_preparation.models.block import Block, run_blocks_in_parallel
+from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PIPELINE_CONFIG_FILE,
@@ -116,7 +116,7 @@ class Pipeline:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
 
-        await run_blocks_in_parallel(
+        await run_blocks(
             root_blocks,
             analyze_outputs=analyze_outputs,
             redirect_outputs=redirect_outputs,

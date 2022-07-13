@@ -1,4 +1,3 @@
-from collections import deque
 from contextlib import redirect_stdout
 from inspect import Parameter, signature
 from io import StringIO
@@ -25,7 +24,8 @@ import pandas as pd
 import sys
 import traceback
 
-async def run_blocks_in_parallel(
+
+async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
     redirect_outputs: bool = False,
@@ -69,7 +69,7 @@ async def run_blocks_in_parallel(
     remaining_tasks = filter(lambda task: task is not None, tasks.values())
     await asyncio.gather(*remaining_tasks)
 
-def run_blocks(
+def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
     redirect_outputs: bool = False,
@@ -103,6 +103,7 @@ def run_blocks(
 
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
+
 class Block:
     def __init__(
         self,
@@ -482,6 +483,10 @@ class Block:
             status=self.status.value if type(self.status) is not str else self.status,
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
+            all_upstream_blocks_executed=all(
+                block.status == BlockStatus.EXECUTED
+                for block in self.get_all_upstream_blocks()
+            )
         )
         if include_content:
             data['content'] = self.file.content()
@@ -502,7 +507,10 @@ class Block:
         return self
 
     def update_content(self, content):
+        if content != self.file.content():
+            self.status = BlockStatus.UPDATED
         self.file.update_content(content)
+        self.__update_pipeline_block()
         return self
 
     def __analyze_outputs(self, variable_mapping):
@@ -560,24 +568,35 @@ class Block:
                     uuid,
                 )
 
-    def run_upstream_blocks(self) -> None:
+    def get_all_upstream_blocks(self) -> List['Block']:
         queue = Queue()
         visited = set()
-        root_blocks = []
         queue.put(self)
-        visited.add(self.uuid)
+        visited.add(self)
         while not queue.empty():
             current_block = queue.get()
-            if len(current_block.upstream_blocks) == 0:
-                root_blocks.append(current_block)
-                continue
             for block in current_block.upstream_blocks:
                 if block.uuid not in visited:
                     queue.put(block)
-                    visited.add(block.uuid)
-        visited.remove(self.uuid)
+                    visited.add(block)
+        return visited
 
-        run_blocks(root_blocks, selected_blocks=visited)
+    def run_upstream_blocks(self) -> None:
+        def process_upstream_block(
+            block: 'Block',
+            root_blocks: List['Block'],
+        ) -> List[str]:
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+            return block.uuid            
+
+        upstream_blocks = self.get_all_upstream_blocks()
+        root_blocks = []
+        upstream_block_uuids = \
+            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
+        upstream_block_uuids.remove(self.uuid)
+
+        run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):

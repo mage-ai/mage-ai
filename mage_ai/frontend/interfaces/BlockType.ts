@@ -69,6 +69,7 @@ export interface BlockRequestPayloadType {
 }
 
 export default interface BlockType {
+  all_upstream_blocks_executed?: boolean;
   content?: string;
   downstream_blocks?: string[];
   file?: string;

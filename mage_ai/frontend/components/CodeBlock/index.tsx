@@ -126,7 +126,11 @@ function CodeBlockProps({
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const runBlockAndTrack = useCallback(
-    ({ code, runUpstream }: { code?: boolean, runUpstream?: boolean }) => {
+    (payload?: { code?: boolean, runUpstream?: boolean }) => {
+      const {
+        code,
+        runUpstream,
+      } = payload || {}
       runBlock({
         block,
         code: code || content,

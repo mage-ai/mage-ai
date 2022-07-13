@@ -4,7 +4,9 @@ import { ThemeContext } from 'styled-components';
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
+import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -27,9 +29,6 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '../index.style';
-import ClickOutside from '@oracle/components/ClickOutside';
-import Menu from '@oracle/components/Menu';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
 
 export type CommandButtonsSharedProps = {
   deleteBlock: (block: BlockType) => void;
@@ -39,7 +38,7 @@ export type CommandButtonsSharedProps = {
 
 type CommandButtonsProps = {
   block: BlockType;
-  runBlock: (payload: { code?: boolean, runUpstream?: boolean }) => void;
+  runBlock: (payload?: { code?: boolean, runUpstream?: boolean }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -49,9 +48,15 @@ function CommandButtons({
   interruptKernel,
   runBlock,
 }: CommandButtonsProps) {
-  const { type, uuid } = block;
+  const {
+    all_upstream_blocks_executed: upstreamBlocksExecuted = true,
+    type,
+    uuid,
+  } = block;
+  const refExecuteActions = useRef(null)
   const refMoreActions = useRef(null)
 
+  const [showExecuteActions, setShowExecuteActions] = useState<boolean>(false)
   const [showMoreActions, setShowMoreActions] = useState<boolean>(false)
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
@@ -76,43 +81,80 @@ function CommandButtons({
         )}
 
         {!isInProgress && (
-          <Tooltip
-            appearAbove
-            appearBefore
-            default
-            label={(
-              <Text>
-                Run block
-                &nbsp;
-                &nbsp;
-                <KeyboardTextGroup
-                  inline
-                  keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
-                  monospace
-                  uuidForKey={uuid}
-                />
-              </Text>
-            )}
-            size={UNIT * 3}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => runBlock({})}
+          <>
+            <Tooltip
+              appearAbove
+              appearBefore
+              default
+              label={(
+                <Text>
+                  Run block
+                  &nbsp;
+                  &nbsp;
+                  <KeyboardTextGroup
+                    inline
+                    keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
+                    monospace
+                    uuidForKey={uuid}
+                  />
+                </Text>
+              )}
+              size={UNIT * 3}
+              widthFitContent
             >
-              <Circle
-                color={color}
-                size={UNIT * 3}
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => {
+                  if (upstreamBlocksExecuted) {
+                    runBlock()
+                  } else {
+                    setShowExecuteActions(true)
+                  }
+                }}
               >
-                <PlayButtonFilled
-                  black
-                  size={UNIT * 1.5}
-                />
-              </Circle>
-            </Button>
-          </Tooltip>
+                <Circle
+                  color={color}
+                  size={UNIT * 3}
+                >
+                  <PlayButtonFilled
+                    black
+                    size={UNIT * 1.5}
+                  />
+                </Circle>
+              </Button>
+            </Tooltip>
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowExecuteActions(false)}
+              open={showExecuteActions}
+            >
+              <FlyoutMenu
+                items={
+                  [
+                    {
+                      label: () => 'Execute block',
+                      onClick: () => runBlock(),
+                      uuid: 'execute_block',
+                    },
+                    {
+                      label: () => `Execute with upstream blocks`,
+                      onClick: () => runBlock({ runUpstream: true }),
+                      uuid: 'execute_upstream',
+                    },
+                  ]
+                }
+                left={-UNIT * 25}
+                onClickCallback={() => setShowExecuteActions(false)}
+                open={showExecuteActions}
+                parentRef={refExecuteActions}
+                topOffset={-UNIT * 2}
+                uuid="execute_actions"
+                width={UNIT * 25}
+              />
+            </ClickOutside>
+          </>
         )}
 
         <Spacing mt={PADDING_UNITS}>
@@ -184,6 +226,35 @@ function CommandButtons({
             </Tooltip>
           </Spacing>
         )}
+        <div ref={refMoreActions}>
+          <Spacing mt={PADDING_UNITS}>
+            <Tooltip
+              appearBefore
+              default
+              label={(
+                <Text>
+                  More actions
+                </Text>
+              )}
+              size={UNIT * 2.5}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => setShowMoreActions(!showMoreActions)}
+              >
+                <Circle
+                  borderSize={1.5}
+                  size={UNIT * 2.5}
+                >
+                  <Ellipsis size={UNIT} />
+                </Circle>
+              </Button>
+            </Tooltip>
+          </Spacing>
+        </div>
         <ClickOutside
           disableEscape
           onClickOutside={() => setShowMoreActions(false)}
@@ -193,47 +264,21 @@ function CommandButtons({
             items={
               [
                 {
-                  label: () => 'Execute with upstream blocks',
+                  label: () => `Execute with upstream blocks`,
                   onClick: () => runBlock({ runUpstream: true }),
                   uuid: 'execute_upstream',
                 },
               ]
             }
-            left={-200}
+            left={-UNIT * 25}
             onClickCallback={() => setShowMoreActions(false)}
             open={showMoreActions}
             parentRef={refMoreActions}
+            topOffset={UNIT * 6}
             uuid="FileHeaderMenu/file_items"
-            width={200}
+            width={UNIT * 25}
           />
         </ClickOutside>
-        <Spacing mt={PADDING_UNITS}>
-          <Tooltip
-            appearBefore
-            default
-            label={(
-              <Text>
-                More actions
-              </Text>
-            )}
-            size={UNIT * 2.5}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => setShowMoreActions(true)}
-            >
-              <Circle
-                borderSize={1.5}
-                size={UNIT * 2.5}
-              >
-                <Ellipsis size={UNIT * 1} />
-              </Circle>
-            </Button>
-          </Tooltip>
-        </Spacing>
       </FlexContainer>
     </ContainerStyle>
   );
