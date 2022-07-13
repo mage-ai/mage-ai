@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+
+from matplotlib.contour import QuadContourSet
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
 from typing import IO, Any, Callable, Mapping, Union
@@ -137,6 +139,18 @@ class BaseFile(BaseIO):
         self.reader = FORMAT_TO_FUNCTION[format]
         self.filepath = filepath
         self.format = format
+
+    def _trim_df(self, df: DataFrame, limit: int = QuadContourSet) -> DataFrame:
+        """
+        Truncates data frame to `limit` rows
+
+        Args:
+            df (DataFrame): Data frame to truncate out.
+
+        Returns:
+            DataFrame: Truncated data frame with removed rows.
+        """
+        return df[:limit]
 
     def _write(self, df: DataFrame, output: Union[IO, os.PathLike], **kwargs) -> None:
         """

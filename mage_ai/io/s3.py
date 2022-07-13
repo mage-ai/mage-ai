@@ -67,7 +67,7 @@ class S3(BaseFile):
                 Bucket=self.bucket_name, Key=self.filepath, **import_config
             )
             buffer = BytesIO(response['Body'].read())
-            return self.reader(buffer, **read_config)
+            return self._trim_df(self.reader(buffer, **read_config))
 
     def export(
         self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None

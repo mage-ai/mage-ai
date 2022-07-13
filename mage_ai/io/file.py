@@ -18,7 +18,7 @@ class FileIO(BaseFile):
         """
         with self.printer.print_msg(f'Loading data frame from \'{self.filepath}\''):
             df = self.reader(self.filepath, *args, **kwargs)
-        return df
+        return self._trim_df(df)
 
     def export(self, df: DataFrame, **kwargs) -> None:
         """
