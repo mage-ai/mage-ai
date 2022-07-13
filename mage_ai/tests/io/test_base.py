@@ -1,6 +1,5 @@
-from mage_ai.io.file import FileIO
 from mage_ai.io.postgres import Postgres
-from tests.base_test import TestCase
+from mage_ai.tests.base_test import TestCase
 
 
 class DataLoaderTests(TestCase):
