@@ -33,7 +33,9 @@ def main():
     elif command == 'run':
         project_path = sys.argv[2]
         pipeline_uuid = sys.argv[3]
-        pipeline = Pipeline(pipeline_uuid, os.path.abspath(project_path))
+        project_path = os.path.abspath(project_path)
+        sys.path.append(os.path.dirname(project_path))
+        pipeline = Pipeline(pipeline_uuid, project_path)
 
         asyncio.run(pipeline.execute(analyze_outputs=False))
 
