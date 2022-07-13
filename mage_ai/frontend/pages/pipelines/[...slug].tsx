@@ -47,6 +47,7 @@ import {
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
+import { getBlockPath } from '@components/FileTree/utils';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
@@ -788,6 +789,16 @@ function PipelineDetailPage({
             }}
           >
             <FileEditor
+              addNewBlock={(b: BlockType) => {
+                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.uuid);
+                router.push(`/pipelines/${pipelineUUID}`);
+                // TODO this doesn't work, and chaining it to router.push reopens the file editor
+                onSelectBlockFile(
+                  b.uuid,
+                  b.type,
+                  getBlockPath(b),
+                );
+              }}
               filePath={filePath}
               pipeline={pipeline}
               setFilesTouched={setFilesTouched}

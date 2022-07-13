@@ -3,6 +3,8 @@ import { FileExtensionEnum } from '@interfaces/FileType';
 
 export const getBlockFilename = (path: string[]) => path.at(-1);
 
+export const getBlockPath = (b: BlockType) => `${b.type}s/${b.uuid}.py`;
+
 export const getBlockType = (path: string[]) => (
   path.at(-2).slice(0, -1)
 );
@@ -20,12 +22,11 @@ export const isBlockType = (path: string[]) => (
 );
 
 export function getPipelineUUID(path: string[]) {
-  console.log(path)
   const idx = path.indexOf('pipelines');
 
   if (idx !== -1 && idx === path.length - 2) {
     return path[path.length - 1];
-  };
+  }
 }
 
 export function isPipelineFilePath(path: string[]) {
