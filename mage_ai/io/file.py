@@ -11,7 +11,8 @@ class FileIO(BaseFile):
 
     def load(self, *args, **kwargs) -> DataFrame:
         """
-        Loads the data frame from the file specified.
+        Loads the data frame from the file specified. This function will load at
+        maximum 100,000 rows of data from the specified file.
 
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.

@@ -54,7 +54,10 @@ class Snowflake(BaseSQL):
     def load(self, query_string: str, *args, **kwargs) -> DataFrame:
         """
         Loads data from Snowflake into a Pandas data frame based on the query given.
-        This will fail unless a `SELECT` query is provided.
+        This will fail unless a `SELECT` query is provided. This function will load at
+        maximum 100,000 rows of data. To operate on more data, consider performing data
+        transformations in warehouse.
+
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.

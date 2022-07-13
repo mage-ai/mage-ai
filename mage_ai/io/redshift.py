@@ -38,7 +38,10 @@ class Redshift(BaseSQL):
     def load(self, query_string: str, *args, **kwargs) -> DataFrame:
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
-        This will fail if the query returns no data from the database.
+        This will fail if the query returns no data from the database. When a
+        select query is provided, this function will load at maximum 100,000 rows of data.
+        To operate on more data, consider performing data transformations in warehouse.
+
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.

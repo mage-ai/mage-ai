@@ -44,7 +44,8 @@ class S3(BaseFile):
 
     def load(self, read_config: Mapping = None, import_config: Mapping = None) -> DataFrame:
         """
-        Loads data from S3 into a Pandas data frame.
+        Loads data from S3 into a Pandas data frame. This function will load at
+        maximum 100,000 rows of data from the specified file.
 
         Args:
             read_config (Mapping, optional): Configuration settings for reading file into data
