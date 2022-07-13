@@ -22,7 +22,7 @@ type FeatureProfileProps = {
   statistics: any;
 };
 
-type FeatureProfilesProps = {
+export type FeatureProfilesProps = {
   shouldLink?: boolean;
   features: FeatureType[];
   statistics: any;
