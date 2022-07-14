@@ -13,6 +13,7 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
@@ -594,15 +595,19 @@ function PipelineDetailPage({
   ]);
 
   const fileTree = useMemo(() => (
-    <FileBrowser
-      files={filesData?.files}
-      onSelectBlockFile={onSelectBlockFile}
-      openFile={openFile}
-      openPipeline={(uuid: string) => {
-        resetState();
-        router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-      }}
-    />
+    <ContextMenu
+      context={ContextMenuEnum.FILE_BROWSER}
+    >
+      <FileBrowser
+        files={filesData?.files}
+        onSelectBlockFile={onSelectBlockFile}
+        openFile={openFile}
+        openPipeline={(uuid: string) => {
+          resetState();
+          router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+        }}
+      />
+    </ContextMenu>
   ), [
     filesData?.files,
     onSelectBlockFile,
