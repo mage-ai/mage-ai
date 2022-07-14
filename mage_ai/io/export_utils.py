@@ -79,8 +79,8 @@ def clean_df_for_export(
 
 
 def gen_table_creation_query(
-    df: DataFrame,
     dtypes: Mapping[str, str],
+    schema_name: str,
     table_name: str,
 ) -> str:
     """
@@ -98,4 +98,4 @@ def gen_table_creation_query(
     query = []
     for cname in dtypes:
         query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
-    return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
+    return f'CREATE TABLE {schema_name}.{table_name} (' + ','.join(query) + ');'

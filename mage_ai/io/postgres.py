@@ -1,11 +1,11 @@
 from io import StringIO
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQL, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.export_utils import (
     BadConversionError,
     clean_df_for_export,
-    PandasTypes,
     gen_table_creation_query,
     infer_dtypes,
+    PandasTypes,
 )
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame, read_sql, Series
@@ -90,23 +90,24 @@ class Postgres(BaseSQL):
     def export(
         self,
         df: DataFrame,
+        schema_name: str,
         table_name: str,
+        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
-        if_exists: str = 'replace',
-        **kwargs,
     ) -> None:
         """
-        Exports dataframe to the connected database from a Pandas data frame.  If table doesn't
-        exist, the table is automatically created.
+        Exports dataframe to the connected database from a Pandas data frame. If table doesn't
+        exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
 
         Args:
+            schema_name (str): Name of the schema of the table to export data to.
             table_name (str): Name of the table to insert rows from this data frame into.
-            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
-            if_exists (str): Specifies export policy if table exists. Either
+            if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
                 - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
             Defaults to `'replace'`.
+            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             **kwargs: Additional query parameters.
         """
         if index:
@@ -115,32 +116,66 @@ class Postgres(BaseSQL):
         dtypes = infer_dtypes(df)
         df = clean_df_for_export(df, self.clean, dtypes)
 
-        with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
+        with self.printer.print_msg(
+            f'Exporting data frame to table \'{schema_name}.{table_name}\''
+        ):
             buffer = StringIO()
-            exists = self.__table_exists(table_name)
+            schema_exists = self.__schema_exists(schema_name)
+            table_exists = self.__table_exists(schema_name, table_name)
 
             with self.conn.cursor() as cur:
-                if exists:
-                    if if_exists == 'fail':
-                        raise ValueError(f'Table \'{table_name}\' already exists in database')
-                    elif if_exists == 'replace':
-                        cur.execute(f'DELETE FROM {table_name}')
+                if not schema_exists:
+                    cur.execute(f'CREATE SCHEMA {schema_name};')
+
+                if table_exists:
+                    if if_exists == ExportWritePolicy.FAIL:
+                        raise ValueError(
+                            f'Table \'{schema_name}.{table_name}\' already exists in database'
+                        )
+                    elif if_exists == ExportWritePolicy.REPLACE:
+                        cur.execute(f'DELETE FROM {schema_name}.{table_name}')
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                    query = gen_table_creation_query(df, db_dtypes, table_name)
+                    query = gen_table_creation_query(db_dtypes, table_name, schema_name)
                     cur.execute(query)
 
                 df.to_csv(buffer, index=False, header=False)
                 buffer.seek(0)
                 cur.copy_expert(
-                    f'COPY {table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
+                    f'COPY {schema_name}.{table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
                     buffer,
                 )
             self.conn.commit()
 
-    def __table_exists(self, table_name: str) -> bool:
+    def __table_exists(self, schema_name: str, table_name: str) -> bool:
+        """
+        Returns whether the specified table exists.
+
+        Args:
+            schema_name (str): Name of the schema the table belongs to.
+            table_name (str): Name of the table to check existence of.
+
+        Returns:
+            bool: True if the table exists, else False.
+        """
         with self.conn.cursor() as cur:
-            cur.execute(f'SELECT * FROM pg_tables WHERE tablename = \'{table_name}\'')
+            cur.execute(
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\''
+            )
+            return bool(cur.rowcount)
+
+    def __schema_exists(self, schema_name: str) -> bool:
+        """
+        Returns whether the specified schema exists.
+
+        Args:
+            schema_name (str): Name of the schema to check existence of.
+
+        Returns:
+            bool: True if the schema exists, else False.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(f'SELECT * FROM pg_namespace WHERE nspname = \'{schema_name}\'')
             return bool(cur.rowcount)
 
     def clean(self, column: Series, dtype: str) -> Series:

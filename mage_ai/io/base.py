@@ -5,7 +5,6 @@ from pandas import DataFrame
 from typing import IO, Any, Callable, Mapping, Union
 import os
 import pandas as pd
-import re
 
 QUERY_ROW_LIMIT = 100_000
 
@@ -24,6 +23,12 @@ class FileFormat(str, Enum):
     JSON = 'json'
     PARQUET = 'parquet'
     HDF5 = 'hdf5'
+
+
+class ExportWritePolicy(str, Enum):
+    APPEND = 'append'
+    FAIL = 'fail'
+    REPLACE = 'replace'
 
 
 FORMAT_TO_FUNCTION = {
