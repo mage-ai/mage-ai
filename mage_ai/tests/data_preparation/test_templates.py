@@ -242,6 +242,7 @@ def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     Execute Transformer Action: clean_column_name
     \"\"\"
     action = build_transformer_action(
+        df,
         action_type=ActionType.CLEAN_COLUMN_NAME,
         action_arguments=[],
         axis=Axis.COLUMN,
@@ -270,6 +271,7 @@ def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     Execute Transformer Action: custom
     \"\"\"
     action = build_transformer_action(
+        df,
         action_type=ActionType.CUSTOM,
         action_arguments=[],
         axis=Axis.ROW,
@@ -299,6 +301,7 @@ def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     Execute Transformer Action: reformat
     \"\"\"
     action = build_transformer_action(
+        df,
         action_type=ActionType.REFORMAT,
         action_arguments=[],
         axis=Axis.COLUMN,
@@ -328,6 +331,7 @@ def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
     Execute Transformer Action: add
     \"\"\"
     action = build_transformer_action(
+        df,
         action_type=ActionType.ADD,
         action_arguments=[],
         axis=Axis.COLUMN,
