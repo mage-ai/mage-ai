@@ -75,7 +75,7 @@ def build_transformer_action(
     Returns:
         Dict: Transformer action payload
     """
-    action_variables = build_action_variables(df, action_arguments)
+    action_variables = build_action_variables(df)
     return dict(
         action_type=action_type,
         action_arguments=action_arguments,
