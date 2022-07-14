@@ -118,8 +118,8 @@ def clean(
 
 ### --------------- Data preparation methods --------------- ###
 
-def run(pipeline_uuid: str, repo_name: str = None) -> None:
-    repo_path = os.getcwd() if repo_name is None else os.path.join(os.getcwd(), repo_name)
+def run(pipeline_uuid: str, repo_path: str = None) -> None:
+    repo_path = os.getcwd() if repo_path is None else os.path.abspath(repo_path)
     pipeline = Pipeline(pipeline_uuid, repo_path)
 
     asyncio.run(pipeline.execute())
