@@ -793,7 +793,7 @@ function PipelineDetailPage({
             }}
           >
             <FileEditor
-              addNewBlock={(b: BlockRequestPayloadType) => {
+              addNewBlock={(b: BlockType) => {
                 addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.uuid);
                 router.push(`/pipelines/${pipelineUUID}`);
               }}
