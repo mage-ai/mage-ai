@@ -1,8 +1,8 @@
 Faker==4.14.0
-Flask==2.1.2
-Jinja2==3.1.2
+Flask==1.1.2
+Jinja2~=3.0.3
 MarkupSafe==2.1.1
-Werkzeug==2.1.2
+Werkzeug~=2.0.0
 asyncio==3.4.3
 beautifulsoup4
 boto3==1.24.19
