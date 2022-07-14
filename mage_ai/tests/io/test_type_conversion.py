@@ -20,7 +20,7 @@ class TypeConversionTests(TestCase):
                     np.random.randn() * 100 + 20,
                     True if np.random.uniform() > 0.3 else False,
                     np.random.choice(['Mage', 'Data Cleaning', 'Magic', 'Awesome']),
-                    np.random.randint(0, 100),
+                    np.random.randint(-100, 100),
                     np.random.randint(0, 3),
                     fake.date_this_century(),
                     fake.time_object(),

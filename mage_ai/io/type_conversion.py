@@ -2,15 +2,16 @@ from enum import Enum
 from pandas.api.types import infer_dtype
 from pandas import DataFrame, Series
 from typing import Callable, Dict, Mapping
+import numpy as np
 
 """
 Utilities for managing type conversions between Python data frames and external databases.
 """
 
 
-class ConversionError(Exception):
+class BadConversionError(Exception):
     """
-    Unable convert Python data type to SQL equivalent.
+    Unable to convert Python-based data type to SQL equivalent.
     """
 
     pass
@@ -18,7 +19,7 @@ class ConversionError(Exception):
 
 class PandasTypes(str, Enum):
     """
-    The internal datatypes defined by the pandas Public API
+    Internal datatypes defined by the pandas Public API
     """
 
     BOOLEAN = 'boolean'
@@ -74,7 +75,7 @@ def map_to_postgres(column: Series, dtype: str) -> str:
         PandasTypes.UNKNOWN_ARRAY,
         PandasTypes.COMPLEX,
     ):
-        raise ConversionError(f'Cannot convert {dtype} to a PostgreSQL datatype.')
+        raise BadConversionError(f'Cannot convert {dtype} to a PostgreSQL datatype.')
     elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
         try:
             if column.dt.tz:
@@ -100,10 +101,10 @@ def map_to_postgres(column: Series, dtype: str) -> str:
     elif dtype in (PandasTypes.FLOATING, PandasTypes.DECIMAL, PandasTypes.MIXED_INTEGER_FLOAT):
         return 'double precision'
     elif dtype == PandasTypes.INTEGER:
-        max_int = column.max()
-        if max_int < 2**16:
+        max_int, min_int = column.max(), column.min()
+        if np.int16(max_int) == max_int and np.int16(min_int) == min_int:
             return 'smallint'
-        elif max_int < 2**32:
+        elif np.int32(max_int) == max_int and np.int32(min_int) == min_int:
             return 'integer'
         else:
             return 'bigint'
@@ -126,8 +127,10 @@ def gen_table_creation_query(
 
     Args:
         df (DataFrame): Data frame to generate a table creation query for.
-        column_modifiers (Mapping[str, str], optional): Constraints and modifiers to apply to columns. Defaults to None.
-        type_mapper (Callable[[Series, str], str]):  Function that maps columns of data frame to the database datatype
+        column_modifiers (Mapping[str, str], optional): Constraints and modifiers to apply to
+        columns. Defaults to None.
+        type_mapper (Callable[[Series, str], str]):  Function that maps columns of data frame
+        to the database datatype
         table_name (str): Name of the new table to create
 
     Returns:
