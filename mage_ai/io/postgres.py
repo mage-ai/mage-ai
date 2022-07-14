@@ -104,25 +104,27 @@ class Postgres(BaseSQL):
         """
         with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
             buffer = StringIO()
+            exists = self.__table_exists(table_name)
+
             with self.conn.cursor() as cur:
-                cur.execute(
-                    f'SELECT * FROM information_schema.tables WHERE table_name = \'{table_name}\''
-                )
-                exists = cur.rowcount
                 if exists:
                     if if_exists == TableExportPolicy.FAIL:
                         raise TableExistsError(f'Table \'{table_name}\' already exists in database')
                     elif if_exists == TableExportPolicy.REPLACE:
                         cur.execute(f'DELETE FROM {table_name}')
                 else:
-                    # TODO find a way to integrate column modifiers
                     query = gen_table_creation_query(df, map_to_postgres, table_name)
                     cur.execute(query)
 
                 df.to_csv(buffer, index=index, header=False)
                 buffer.seek(0)
-                cur.copy_from(buffer, table=table_name, sep=',', null='')
+                cur.copy_from(buffer, table=table_name, sep=',', null='', **kwargs)
             self.conn.commit()
+
+    def __table_exists(self, table_name: str) -> bool:
+        with self.conn.cursor() as cur:
+            cur.execute(f'SELECT * FROM pg_tables WHERE tablename = \'{table_name}\'')
+            return bool(cur.rowcount)
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':

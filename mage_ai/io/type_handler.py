@@ -17,22 +17,28 @@ class ConversionError(Exception):
 
 
 class PandasTypes(str, Enum):
-    STRING = 'string'
+    """
+    The internal datatypes defined by the pandas Public API
+    """
+
+    BOOLEAN = 'boolean'
     BYTES = 'bytes'
-    FLOATING = 'integer'
+    CATEGORICAL = 'categorical'
+    COMPLEX = 'complex'
+    DATE = 'date'
+    DATETIME = 'datetime'
+    DATETIME64 = 'datetime64'
+    DECIMAL = 'decimal'
+    INTEGER = 'integer'
+    FLOATING = 'floating'
+    MIXED = 'mixed'
     MIXED_INTEGER = 'mixed=integer'
     MIXED_INTEGER_FLOAT = 'mixed-integer-float'
-    DECIMAL = 'decimal'
-    COMPLEX = 'complex'
-    CATEGORICAL = 'categorical'
-    BOOLEAN = 'boolean'
-    DATETIME64 = 'datetime64'
-    DATETIME = 'datetime'
-    DATE = 'date'
+    PERIOD = 'period'
+    STRING = 'string'
+    TIME = 'time'
     TIMEDELTA64 = 'timedelta64'
     TIMEDELTA = 'timedelta'
-    PERIOD = 'period'
-    MIXED = 'mixed'
     UNKNOWN_ARRAY = 'unknown-array'
 
 
@@ -70,13 +76,21 @@ def map_to_postgres(column: Series, dtype: str) -> str:
     ):
         raise ConversionError(f'Cannot convert {dtype} to a PostgreSQL datatype.')
     elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
-        if column.dt.tz:
-            return 'timestamptz'
+        try:
+            if column.dt.tz:
+                return 'timestamptz'
+        except AttributeError:
+            pass
         return 'timestamp'
-    elif dtype == PandasTypes.DATE:
-        if column.dt.tz:
-            return 'timetz'
+    elif dtype == PandasTypes.TIME:
+        try:
+            if column.dt.tz:
+                return 'timetz'
+        except AttributeError:
+            pass
         return 'time'
+    elif dtype == PandasTypes.DATE:
+        return 'date'
     elif dtype == PandasTypes.STRING:
         return 'text'
     elif dtype == PandasTypes.CATEGORICAL:
