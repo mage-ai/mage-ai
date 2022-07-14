@@ -1,7 +1,7 @@
 from io import StringIO
 from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT, TableExistsError, TableExportPolicy
 from mage_ai.io.io_config import IOConfigKeys
-from mage_ai.io.type_handler import gen_table_creation_query, map_to_postgres
+from mage_ai.io.type_conversion import gen_table_creation_query, map_to_postgres
 from pandas import DataFrame, read_sql
 from psycopg2 import connect
 from typing import Any, Mapping, Union
