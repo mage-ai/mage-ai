@@ -87,9 +87,9 @@ def gen_table_creation_query(
     Generates a database table creation query from a data frame.
 
     Args:
-        df (DataFrame): Data frame to generate a table creation query for.
         dtypes (Mapping[str, str]): Database relative data types for each column of
         the data frame.
+        schema_name (str): Name of schema to create new table in.
         table_name (str): Name of the new table to create.
 
     Returns:
