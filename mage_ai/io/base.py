@@ -34,20 +34,6 @@ FORMAT_TO_FUNCTION = {
 }
 
 
-class TableExportPolicy(str, Enum):
-    APPEND = 'append'
-    FAIL = 'fail'
-    REPLACE = 'replace'
-
-
-class TableExistsError(Exception):
-    """
-    Table already exists in external database
-    """
-
-    pass
-
-
 class BaseIO(ABC):
     """
     Data loader interface. All data loaders must inherit from this interface.

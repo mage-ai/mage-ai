@@ -1,5 +1,5 @@
 from io import StringIO
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT, TableExistsError, TableExportPolicy
+from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from mage_ai.io.type_conversion import gen_table_creation_query, map_to_postgres
 from pandas import DataFrame, read_sql
@@ -85,7 +85,7 @@ class Postgres(BaseSQL):
         df: DataFrame,
         table_name: str,
         index: bool = False,
-        if_exists: Union[TableExportPolicy, str] = 'replace',
+        if_exists: str = 'replace',
         **kwargs,
     ) -> None:
         """
@@ -108,9 +108,9 @@ class Postgres(BaseSQL):
 
             with self.conn.cursor() as cur:
                 if exists:
-                    if if_exists == TableExportPolicy.FAIL:
-                        raise TableExistsError(f'Table \'{table_name}\' already exists in database')
-                    elif if_exists == TableExportPolicy.REPLACE:
+                    if if_exists == 'fail':
+                        raise ValueError(f'Table \'{table_name}\' already exists in database')
+                    elif if_exists == 'replace':
                         cur.execute(f'DELETE FROM {table_name}')
                 else:
                     query = gen_table_creation_query(df, map_to_postgres, table_name)
