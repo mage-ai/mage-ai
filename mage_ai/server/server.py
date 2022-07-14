@@ -15,7 +15,7 @@ import asyncio
 import json
 import os
 import simplejson
-import sys
+import socket
 import tornado.ioloop
 import tornado.web
 import traceback
@@ -417,6 +417,22 @@ async def main(
     os.environ['CONNECTION_FILE'] = manager.connection_file
 
     app = make_app()
+
+    def is_port_in_use(port: int) -> bool:
+        print(f'Checking port {port}...')
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
+
+    port = int(port)
+    max_port = port + 100
+    while is_port_in_use(port):
+        if port > max_port:
+            raise Exception(
+                f'Unable to find an open port'
+                'please clear your running processes if possible.'
+            )
+        port += 1
+
     app.listen(
         port,
         address=host,
