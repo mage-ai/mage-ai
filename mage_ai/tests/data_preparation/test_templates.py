@@ -91,6 +91,7 @@ def load_data() -> DataFrame:
         DataFrame: Returned pandas data frame.
     \"\"\"
     # Specify your data loading logic here
+
     return DataFrame({})
 """
 
@@ -178,6 +179,7 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
         DataFrame: Transformed data frame
     \"\"\"
     # Specify your transformation logic here
+
     return df
 """
 
@@ -213,6 +215,7 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
         DataFrame: Transformed data frame
     \"\"\"
     # Specify your transformation logic here
+
     return df
 """
 
@@ -363,6 +366,7 @@ def export_data(df: DataFrame) -> None:
         df (DataFrame): Data frame to export to
     \"\"\"
     # Specify your data exporting logic here
+
 """
 
         config1 = {'data_source': 'default'}
