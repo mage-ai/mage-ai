@@ -9,7 +9,7 @@ import useWebSocket from 'react-use-websocket';
 import { CSSTransition } from 'react-transition-group';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
-import BlockType, { BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
@@ -43,7 +43,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type PipelineDetailProps = {
   addNewBlockAtIndex: (
-    block: BlockType,
+    block: BlockRequestPayloadType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
@@ -378,7 +378,7 @@ function PipelineDetail({
 
           return (
             <CodeBlock
-              addNewBlock={(b: BlockType) => {
+              addNewBlock={(b: BlockRequestPayloadType) => {
                 setTextareaFocused(true);
 
                 return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
@@ -417,7 +417,7 @@ function PipelineDetail({
 
         <Spacing mt={PADDING_UNITS}>
           <AddNewBlocks
-            addNewBlock={(b: BlockType) => {
+            addNewBlock={(b: BlockRequestPayloadType) => {
               addNewBlockAtIndex(b, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
