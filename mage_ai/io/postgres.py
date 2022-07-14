@@ -120,13 +120,10 @@ class Postgres(BaseSQL):
             f'Exporting data frame to table \'{schema_name}.{table_name}\''
         ):
             buffer = StringIO()
-            schema_exists = self.__schema_exists(schema_name)
             table_exists = self.__table_exists(schema_name, table_name)
 
             with self.conn.cursor() as cur:
-                if not schema_exists:
-                    cur.execute(f'CREATE SCHEMA {schema_name};')
-
+                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
                 if table_exists:
                     if if_exists == ExportWritePolicy.FAIL:
                         raise ValueError(
@@ -162,20 +159,6 @@ class Postgres(BaseSQL):
             cur.execute(
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\''
             )
-            return bool(cur.rowcount)
-
-    def __schema_exists(self, schema_name: str) -> bool:
-        """
-        Returns whether the specified schema exists.
-
-        Args:
-            schema_name (str): Name of the schema to check existence of.
-
-        Returns:
-            bool: True if the schema exists, else False.
-        """
-        with self.conn.cursor() as cur:
-            cur.execute(f'SELECT * FROM pg_namespace WHERE nspname = \'{schema_name}\'')
             return bool(cur.rowcount)
 
     def clean(self, column: Series, dtype: str) -> Series:
