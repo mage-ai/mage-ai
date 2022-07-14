@@ -1,8 +1,17 @@
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from io import StringIO
+from mage_ai.io.base import BaseSQL, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.export_utils import (
+    BadConversionError,
+    clean_df_for_export,
+    gen_table_creation_query,
+    infer_dtypes,
+    PandasTypes,
+)
 from mage_ai.io.io_config import IOConfigKeys
-from pandas import DataFrame, read_sql
-from sqlalchemy import create_engine
+from pandas import DataFrame, read_sql, Series
+from psycopg2 import connect
 from typing import Any, Mapping
+import numpy as np
 
 
 class Postgres(BaseSQL):
@@ -31,17 +40,22 @@ class Postgres(BaseSQL):
             port (str): Port on which the database is running.
             **kwargs: Additional settings for creating SQLAlchemy engine and connection
         """
-        self.dburl = (
-            f'postgresql+psycopg2://{user}:{password}@{host}{":"+port if port else ""}/{dbname}'
+        super().__init__(
+            verbose=verbose,
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            **kwargs,
         )
-        super().__init__(verbose=verbose, **kwargs)
 
     def open(self) -> None:
         """
         Opens a connection to the PostgreSQL database specified by the parameters.
         """
         with self.printer.print_msg('Opening connection to PostgreSQL database'):
-            self._ctx = create_engine(self.dburl, **self.settings).connect(**self.settings)
+            self._ctx = connect(**self.settings)
 
     def query(self, query_string: str, **query_vars) -> None:
         """
@@ -52,7 +66,8 @@ class Postgres(BaseSQL):
             query_vars: Variable values to fill in when using format strings in query.
         """
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
-            self.conn.execute(query_string, **query_vars)
+            with self.conn.cursor() as cur:
+                cur.execute(query_string, **query_vars)
 
     def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
         """
@@ -73,25 +88,157 @@ class Postgres(BaseSQL):
             return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
     def export(
-        self, df: DataFrame, name: str, index: bool = False, if_exists: str = 'replace', **kwargs
+        self,
+        df: DataFrame,
+        schema_name: str,
+        table_name: str,
+        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
+        index: bool = False,
     ) -> None:
         """
-        Exports dataframe to the connected database from a Pandas data frame.  If table doesn't
-        exist, the table is automatically created.
+        Exports dataframe to the connected database from a Pandas data frame. If table doesn't
+        exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
 
         Args:
-            name (str): Name of the table to insert rows from this data frame into.
-            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
-            if_exists (str): Specifies export policy if table exists. Either
+            schema_name (str): Name of the schema of the table to export data to.
+            table_name (str): Name of the table to insert rows from this data frame into.
+            if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
                 - `'fail'`: throw an error.
                 - `'replace'`: drops existing table and creates new table of same name.
                 - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
             Defaults to `'replace'`.
+            index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             **kwargs: Additional query parameters.
         """
-        with self.printer.print_msg(f'Exporting data frame to table \'{name}\''):
-            df.to_sql(name, self.conn, index=index, if_exists=if_exists, **kwargs)
-        df.to_sql(name, self.conn, index=index, if_exists=if_exists, **kwargs)
+        if index:
+            df = df.reset_index()
+
+        dtypes = infer_dtypes(df)
+        df = clean_df_for_export(df, self.clean, dtypes)
+
+        with self.printer.print_msg(
+            f'Exporting data frame to table \'{schema_name}.{table_name}\''
+        ):
+            buffer = StringIO()
+            table_exists = self.__table_exists(schema_name, table_name)
+
+            with self.conn.cursor() as cur:
+                cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+                if table_exists:
+                    if if_exists == ExportWritePolicy.FAIL:
+                        raise ValueError(
+                            f'Table \'{schema_name}.{table_name}\' already exists in database'
+                        )
+                    elif if_exists == ExportWritePolicy.REPLACE:
+                        cur.execute(f'DELETE FROM {schema_name}.{table_name}')
+                else:
+                    db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
+                    query = gen_table_creation_query(db_dtypes, schema_name, table_name)
+                    cur.execute(query)
+
+                df.to_csv(buffer, index=False, header=False)
+                buffer.seek(0)
+                cur.copy_expert(
+                    f'COPY {schema_name}.{table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
+                    buffer,
+                )
+            self.conn.commit()
+
+    def __table_exists(self, schema_name: str, table_name: str) -> bool:
+        """
+        Returns whether the specified table exists.
+
+        Args:
+            schema_name (str): Name of the schema the table belongs to.
+            table_name (str): Name of the table to check existence of.
+
+        Returns:
+            bool: True if the table exists, else False.
+        """
+        with self.conn.cursor() as cur:
+            cur.execute(
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\''
+            )
+            return bool(cur.rowcount)
+
+    def clean(self, column: Series, dtype: str) -> Series:
+        """
+        Cleans column in order to write data frame to PostgreSQL database
+
+        Args:
+            column (Series): Column to clean
+            dtype (str): The pandas data types of this column
+
+        Returns:
+            Series: Cleaned column
+        """
+        if dtype == PandasTypes.CATEGORICAL:
+            return column.astype(str)
+        elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
+            return column.view(int)
+        else:
+            return column
+
+    def get_type(self, column: Series, dtype: str) -> str:
+        """
+        Maps pandas Data Frame column to PostgreSQL type
+
+        Args:
+            series (Series): Column to map
+            dtype (str): Pandas data type of this column
+
+        Raises:
+            ConversionError: Returned if this type cannot be converted to a PostgreSQL data type
+
+        Returns:
+            str: PostgreSQL data type for this column
+        """
+        if dtype in (
+            PandasTypes.MIXED,
+            PandasTypes.UNKNOWN_ARRAY,
+            PandasTypes.COMPLEX,
+        ):
+            raise BadConversionError(
+                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to a PostgreSQL datatype.'
+            )
+        elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
+            try:
+                if column.dt.tz:
+                    return 'timestamptz'
+            except AttributeError:
+                pass
+            return 'timestamp'
+        elif dtype == PandasTypes.TIME:
+            try:
+                if column.dt.tz:
+                    return 'timetz'
+            except AttributeError:
+                pass
+            return 'time'
+        elif dtype == PandasTypes.DATE:
+            return 'date'
+        elif dtype == PandasTypes.STRING:
+            return 'text'
+        elif dtype == PandasTypes.CATEGORICAL:
+            return 'text'
+        elif dtype == PandasTypes.BYTES:
+            return 'bytea'
+        elif dtype in (PandasTypes.FLOATING, PandasTypes.DECIMAL, PandasTypes.MIXED_INTEGER_FLOAT):
+            return 'double precision'
+        elif dtype == PandasTypes.INTEGER:
+            max_int, min_int = column.max(), column.min()
+            if np.int16(max_int) == max_int and np.int16(min_int) == min_int:
+                return 'smallint'
+            elif np.int32(max_int) == max_int and np.int32(min_int) == min_int:
+                return 'integer'
+            else:
+                return 'bigint'
+        elif dtype == PandasTypes.BOOLEAN:
+            return 'boolean'
+        elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
+            return 'bigint'
+        else:
+            raise ValueError(f'Invalid datatype provided: {dtype}')
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':
