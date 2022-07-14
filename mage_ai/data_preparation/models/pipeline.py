@@ -66,6 +66,21 @@ class Pipeline:
         ]
 
     @classmethod
+    def get_blocks_by_pipelines(self, repo_path=None):
+        repo_path = repo_path or get_repo_path()
+        pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
+        blocks_by_pipeliens = dict()
+        for entry in os.scandir(pipelines_folder):
+            if entry.is_dir():
+                try:
+                    p = Pipeline(entry.name, repo_path)
+                    blocks_by_pipeliens[p.uuid] = \
+                        [dict(uuid=k, type=v.type) for k, v in p.blocks_by_uuid.items()]
+                except Exception:
+                    pass
+        return blocks_by_pipeliens
+
+    @classmethod
     def get_pipelines_by_block(self, block, repo_path=None):
         repo_path = repo_path or get_repo_path()
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)

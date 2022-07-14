@@ -15,6 +15,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.shared.array import flatten
 from mage_ai.shared.logger import VerboseFunctionExec
 import os
 import pandas as pd
@@ -127,6 +128,26 @@ class Block:
     def get_block(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED, pipeline=None):
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
+
+    @classmethod
+    def get_blocks(self, block_type=None, unused=None):
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+        all_blocks = self.get_all_blocks(get_repo_path())
+        filtered_blocks = all_blocks
+        if block_type is not None:
+            filtered_blocks = all_blocks.get(block_type, [])
+            filtered_blocks = [dict(uuid=b, type=block_type) for b in filtered_blocks]
+        else:
+            filtered_blocks = flatten(
+                [dict(uuid=b, type=k) for k, v in filtered_blocks.items() for b in v]
+            )
+        if len(filtered_blocks) == 0:
+            return filtered_blocks
+        if unused is True:
+            all_blocks_from_pipelines = Pipeline.get_blocks_by_pipelines()
+            filtered_blocks = list(set(filtered_blocks) -
+                                   set(flatten(all_blocks_from_pipelines.values())))
+        return filtered_blocks
 
     def delete(self):
         """

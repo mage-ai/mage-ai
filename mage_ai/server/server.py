@@ -87,6 +87,14 @@ class ApiBlockHandler(BaseHandler):
         self.write(dict(block=block.to_dict()))
 
 
+class ApiBlockListHandler(BaseHandler):
+    def get(self, *args):
+        block_type = self.get_argument('block_type', None)
+        unused = self.get_bool_argument('unused', False)
+        blocks = Block.get_blocks(block_type=block_type, unused=unused)
+        self.write(dict(blocks=blocks))
+
+
 class ApiFileListHandler(BaseHandler):
     def get(self):
         self.write(dict(files=[File.get_all_files(get_repo_path())]))
@@ -363,6 +371,7 @@ def make_app():
                 {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
             ),
             (r'/websocket/', WebSocketServer),
+            (r'/api/blocks', ApiBlockListHandler),
             (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
             (r'/api/files', ApiFileListHandler),
             (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
