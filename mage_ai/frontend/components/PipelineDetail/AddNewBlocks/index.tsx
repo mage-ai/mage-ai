@@ -21,6 +21,9 @@ type AddNewBlocksProps = {
   compact?: boolean;
 };
 
+const TRANSFORMER_BUTTON_INDEX = 0;
+const DATA_LOADER_BUTTON_INDEX = 1;
+
 function AddNewBlocks({
   addNewBlock,
   compact,
@@ -70,7 +73,7 @@ function AddNewBlocks({
       <FlyoutMenuWrapper
         items={dataLoaderMenuItems}
         onClickOutside={() => setButtonMenuOpenIndex(null)}
-        open={buttonMenuOpenIndex === 1}
+        open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
         parentRef={dataLoaderButtonRef}
         uuid="data_loader_button"
       >
@@ -83,7 +86,11 @@ function AddNewBlocks({
           }
           onClick={(e) => {
             e.preventDefault();
-            setButtonMenuOpenIndex(val => (val === 1) ? null : 1);
+            setButtonMenuOpenIndex(val =>
+              val === DATA_LOADER_BUTTON_INDEX
+                ? null
+                : DATA_LOADER_BUTTON_INDEX,
+            );
           }}
           uuid="AddNewBlocks/Data_loader"
         >
