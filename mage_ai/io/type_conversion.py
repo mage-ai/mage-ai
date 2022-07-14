@@ -1,7 +1,7 @@
 from enum import Enum
 from pandas.api.types import infer_dtype
 from pandas import DataFrame, Series
-from typing import Callable, Dict, Mapping
+from typing import Callable, Dict
 import numpy as np
 
 """

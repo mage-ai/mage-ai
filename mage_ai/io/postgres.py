@@ -102,6 +102,9 @@ class Postgres(BaseSQL):
             Defaults to `'replace'`.
             **kwargs: Additional query parameters.
         """
+        if index:
+            df = df.reset_index()
+
         with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
             buffer = StringIO()
             exists = self.__table_exists(table_name)
@@ -116,7 +119,7 @@ class Postgres(BaseSQL):
                     query = gen_table_creation_query(df, map_to_postgres, table_name)
                     cur.execute(query)
 
-                df.to_csv(buffer, index=index, header=False)
+                df.to_csv(buffer, index=False, header=False)
                 buffer.seek(0)
                 cur.copy_from(buffer, table=table_name, sep=',', null='', **kwargs)
             self.conn.commit()
