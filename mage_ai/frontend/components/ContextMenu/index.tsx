@@ -69,10 +69,10 @@ function ContextMenu({
     };
   });
 
-  const handleClick = useCallback(() => (
-    visible && setVisible(false)
-  ), [
-    visible,
+  const handleClick = useCallback((e) => {
+    e.preventDefault();
+    setVisible(false);
+  }, [
     setVisible,
   ]);
 

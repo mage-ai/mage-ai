@@ -123,7 +123,7 @@ function Folder({
       <div
         className="row"
         onClick={(e) => {
-          pauseEvent(e);
+          e.preventDefault();
 
           if (disabled) {
             return;

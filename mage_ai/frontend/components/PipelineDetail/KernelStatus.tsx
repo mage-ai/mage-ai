@@ -91,7 +91,7 @@ function KernelStatus({
       onBlur={() => setTimeout(() => setIsEditingPipeline(false), 300)}
       onChange={(e) => {
         setNewPipelineName(e.target.value);
-        pauseEvent(e);
+        e.preventDefault();
       }}
       onClick={() => setIsEditingPipeline(true)}
       onFocus={() => setIsEditingPipeline(true)}
