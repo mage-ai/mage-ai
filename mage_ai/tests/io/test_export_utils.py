@@ -1,4 +1,5 @@
-from mage_ai.io.type_conversion import infer_dtypes, map_to_postgres
+from mage_ai.io.postgres import Postgres
+from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.tests.base_test import TestCase
 import datetime
 import faker
@@ -67,7 +68,8 @@ class TypeConversionTests(TestCase):
             'bigint',
             'bigint',
         ]
+        psql = Postgres('test', 'test', 'test', 'test', 'test', True)
         for column, expected_dtype in zip(self.data.columns, expected_dtypes):
             dtype = self.dtypes[column]
-            psql_type = map_to_postgres(self.data[column], dtype)
+            psql_type = psql.get_type(self.data[column], dtype)
             self.assertEqual(psql_type, expected_dtype)

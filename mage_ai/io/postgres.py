@@ -1,10 +1,17 @@
 from io import StringIO
 from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from mage_ai.io.export_utils import (
+    BadConversionError,
+    clean_df_for_export,
+    PandasTypes,
+    gen_table_creation_query,
+    infer_dtypes,
+)
 from mage_ai.io.io_config import IOConfigKeys
-from mage_ai.io.type_conversion import gen_table_creation_query, map_to_postgres
-from pandas import DataFrame, read_sql
+from pandas import DataFrame, read_sql, Series
 from psycopg2 import connect
-from typing import Any, Mapping, Union
+from typing import Any, Mapping
+import numpy as np
 
 
 class Postgres(BaseSQL):
@@ -105,6 +112,9 @@ class Postgres(BaseSQL):
         if index:
             df = df.reset_index()
 
+        dtypes = infer_dtypes(df)
+        df = clean_df_for_export(df, self.clean, dtypes)
+
         with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
             buffer = StringIO()
             exists = self.__table_exists(table_name)
@@ -116,7 +126,8 @@ class Postgres(BaseSQL):
                     elif if_exists == 'replace':
                         cur.execute(f'DELETE FROM {table_name}')
                 else:
-                    query = gen_table_creation_query(df, map_to_postgres, table_name)
+                    db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
+                    query = gen_table_creation_query(df, db_dtypes, table_name)
                     cur.execute(query)
 
                 df.to_csv(buffer, index=False, header=False)
@@ -128,6 +139,83 @@ class Postgres(BaseSQL):
         with self.conn.cursor() as cur:
             cur.execute(f'SELECT * FROM pg_tables WHERE tablename = \'{table_name}\'')
             return bool(cur.rowcount)
+
+    def clean(self, column: Series, dtype: str) -> Series:
+        """
+        Cleans column in order to write data frame to PostgreSQL database
+
+        Args:
+            column (Series): Column to clean
+            dtype (str): The pandas data types of this column
+
+        Returns:
+            Series: Cleaned column
+        """
+        if dtype == PandasTypes.CATEGORICAL:
+            return column.astype(str)
+        elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
+            return column.view(int)
+        else:
+            return column
+
+    def get_type(self, column: Series, dtype: str) -> str:
+        """
+        Maps pandas Data Frame column to PostgreSQL type
+
+        Args:
+            series (Series): Column to map
+            dtype (str): Pandas data type of this column
+
+        Raises:
+            ConversionError: Returned if this type cannot be converted to a PostgreSQL data type
+
+        Returns:
+            str: PostgreSQL data type for this column
+        """
+        if dtype in (
+            PandasTypes.MIXED,
+            PandasTypes.UNKNOWN_ARRAY,
+            PandasTypes.COMPLEX,
+        ):
+            raise BadConversionError(f'Cannot convert {dtype} to a PostgreSQL datatype.')
+        elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
+            try:
+                if column.dt.tz:
+                    return 'timestamptz'
+            except AttributeError:
+                pass
+            return 'timestamp'
+        elif dtype == PandasTypes.TIME:
+            try:
+                if column.dt.tz:
+                    return 'timetz'
+            except AttributeError:
+                pass
+            return 'time'
+        elif dtype == PandasTypes.DATE:
+            return 'date'
+        elif dtype == PandasTypes.STRING:
+            return 'text'
+        elif dtype == PandasTypes.CATEGORICAL:
+            return 'text'
+        elif dtype == PandasTypes.BYTES:
+            return 'bytea'
+        elif dtype in (PandasTypes.FLOATING, PandasTypes.DECIMAL, PandasTypes.MIXED_INTEGER_FLOAT):
+            return 'double precision'
+        elif dtype == PandasTypes.INTEGER:
+            max_int, min_int = column.max(), column.min()
+            if np.int16(max_int) == max_int and np.int16(min_int) == min_int:
+                return 'smallint'
+            elif np.int32(max_int) == max_int and np.int32(min_int) == min_int:
+                return 'integer'
+            else:
+                return 'bigint'
+        elif dtype == PandasTypes.BOOLEAN:
+            return 'boolean'
+        elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
+            return 'bigint'
+        else:
+            raise ValueError(f'Invalid datatype provided: {dtype}')
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':
