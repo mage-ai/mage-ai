@@ -120,15 +120,12 @@ def gen_table_creation_query(
     df: DataFrame,
     type_mapper: Callable[[Series], str],
     table_name: str,
-    column_modifiers: Mapping[str, str] = None,
 ) -> str:
     """
     Generates a database table creation query from a data frame.
 
     Args:
         df (DataFrame): Data frame to generate a table creation query for.
-        column_modifiers (Mapping[str, str], optional): Constraints and modifiers to apply to
-        columns. Defaults to None.
         type_mapper (Callable[[Series, str], str]):  Function that maps columns of data frame
         to the database datatype
         table_name (str): Name of the new table to create
@@ -136,13 +133,9 @@ def gen_table_creation_query(
     Returns:
         str: Table creation query for this table.
     """
-    if column_modifiers is None:
-        column_modifiers = {}
-
     dtypes = infer_dtypes(df)
     query = []
     for cname in dtypes:
         psql_type = type_mapper(df[cname], dtypes[cname])
-        modifiers = column_modifiers.get(cname)
-        query.append(f'{cname} {psql_type}{" " + modifiers if modifiers else ""}')
+        query.append(f'{cname} {psql_type}')
     return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
