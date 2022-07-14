@@ -136,7 +136,7 @@ class Postgres(BaseSQL):
                         cur.execute(f'DELETE FROM {schema_name}.{table_name}')
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                    query = gen_table_creation_query(db_dtypes, table_name, schema_name)
+                    query = gen_table_creation_query(db_dtypes, schema_name, table_name)
                     cur.execute(query)
 
                 df.to_csv(buffer, index=False, header=False)
