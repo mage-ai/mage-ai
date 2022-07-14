@@ -41,12 +41,12 @@ class DataCleaner:
         3. Calculate analysis
         """
         with timer('data_cleaner.infer_column_types'):
-            with VerboseFunctionExec('Inferring variable type from dataset', self.verbose):
+            with VerboseFunctionExec('Inferring variable type from dataset', verbose=self.verbose):
                 column_types = column_type_detector.infer_column_types(
                     df, column_types=column_types
                 )
         with timer('data_cleaner.clean_series'):
-            with VerboseFunctionExec('Converting entries to correct datatype', self.verbose):
+            with VerboseFunctionExec('Converting entries to correct datatype', verbose=self.verbose):
                 df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types, verbose=self.verbose).process(

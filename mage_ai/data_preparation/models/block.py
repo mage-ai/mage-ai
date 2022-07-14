@@ -2,7 +2,7 @@ from contextlib import redirect_stdout
 from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
-from typing import List, Set
+from typing import Callable, List, Set
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
@@ -32,6 +32,7 @@ async def run_blocks(
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = False,
+    publish_message: Callable = None,
 ) -> None:
     tasks = dict()
     blocks = Queue()
@@ -59,6 +60,7 @@ async def run_blocks(
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
+                log_func=publish_message
             )
         )
         tasks[block.uuid] = task
@@ -300,15 +302,27 @@ class Block:
         global_vars=None,
         redirect_outputs=False,
         update_status=True,
+        log_func: Callable = None,
     ):
-        with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
-            return self.execute_sync(
+        with VerboseFunctionExec(
+            f'Executing {self.type} block',
+            prefix=f'[{self.uuid}]',
+            print_func=log_func,
+        ):
+            output = self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
+            stdout = output['stdout'].strip('\n')
+            prefixed_stdout = '\n'.join([
+                f'[{self.uuid}] {s}'
+                for s in stdout.split('\n')
+            ])
+            if log_func is not None and len(stdout) > 0:
+                log_func(prefixed_stdout)
 
     def __validate_execution(self, decorated_functions, input_vars):
         not_executed_upstream_blocks = list(

@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Callable, List, Set
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
@@ -101,6 +101,7 @@ class Pipeline:
 
     async def execute(
         self,
+        publish_message: Callable = None,
         analyze_outputs=True,
         global_vars=None,
         redirect_outputs=False,
@@ -122,6 +123,7 @@ class Pipeline:
             global_vars=global_vars,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
+            publish_message=publish_message
         )
 
     def load_config_from_yaml(self):

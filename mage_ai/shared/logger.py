@@ -29,20 +29,22 @@ class timer(object):
 
 
 class VerboseFunctionExec:
-    def __init__(self, message, verbose=True):
+    def __init__(self, message, verbose=True, prefix='', print_func=print):
         self.message = message
         self.verbose = verbose
+        self.prefix = prefix
+        self.print_func = print_func
 
     def __enter__(self):
         if self.verbose:
-            print(f'{self.message}...', end='')
+            self.print_func(f'{self.prefix} {self.message}...')
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.verbose:
             if exc_type is None:
-                print('DONE')
+                self.print_func(f'{self.prefix} DONE')
             else:
-                print('FAILED')
+                self.print_func(f'{self.prefix} FAILED')
 
 
 class VerbosePrintHandler:

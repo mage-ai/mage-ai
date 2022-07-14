@@ -86,7 +86,7 @@ class BasePipeline:
             action = action_queue.pop(0)
             title = action['title']
             payload = action['action_payload']
-            with VerboseFunctionExec(f'Executing cleaning action: {title}', self.verbose):
+            with VerboseFunctionExec(f'Executing cleaning action: {title}', verbose=self.verbose):
                 df_transformed = BaseAction(payload).execute(df_transformed)
             action['status'] = STATUS_COMPLETED
             completed_queue.append(action)

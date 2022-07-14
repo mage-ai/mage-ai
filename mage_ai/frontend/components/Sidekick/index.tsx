@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import useWebSocket from 'react-use-websocket';
 import { useMutation } from 'react-query';
 
 import BlockCharts from '@components/BlockCharts';
@@ -37,6 +38,8 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
+import { WEBSOCKT_URL } from '@utils/constants';
+import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -149,30 +152,29 @@ function Sidekick({
     setSelectedBlock,
   ]);
 
-  const [executePipeline, { isLoading: isLoadingExecute }] = useMutation(
-    api.execute.pipelines.useCreate(pipelineUUID),
-    {
-      onError: (response: any) => {
-        const {
-          messages,
-        } = onError(response);
-        setErrorMessages?.(messages);
-        fetchPipeline();
-      },
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            fetchPipeline();
-            setErrorMessages?.(null);
-            setIsDisplayingSuccessMessage(true);
-            setTimeout(() => {
-              setIsDisplayingSuccessMessage(false);
-            }, 2500);
-          },
-        },
-      ),
+  const {
+    lastMessage,
+    readyState,
+    sendMessage,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
     },
-  );
+  });
+
+  const executePipeline = useCallback(() => {
+    sendMessage(JSON.stringify({
+      pipeline_uuid: pipelineUUID,
+      execute_pipeline: true,
+    }))
+  }, [
+    pipelineUUID,
+    sendMessage,
+  ])
 
   return (
     <>
@@ -206,23 +208,9 @@ function Sidekick({
           <>
             {!blockEditing && (
               <Spacing p={2}>
-                <Button
-                  beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-                  loading={isLoadingExecute}
-                  onClick={() => executePipeline()}
-                  success
-                >
-                  <Text
-                    bold
-                    inverted
-                    primary={isDisplayingSuccessMessage}
-                  >
-                    {isDisplayingSuccessMessage
-                      ? 'Successfully executed!'
-                      : 'Execute pipeline'
-                    }
-                  </Text>
-                </Button>
+                <PipelineExecution
+                  pipeline={pipeline}
+                />
               </Spacing>
             )}
 
@@ -230,7 +218,7 @@ function Sidekick({
               blockRefs={blockRefs}
               editingBlock={editingBlock}
               fetchPipeline={fetchPipeline}
-              height={heightWindow - heightOffset}
+              height={heightWindow - heightOffset - 400}
               pipeline={pipeline}
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}
