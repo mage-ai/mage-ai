@@ -417,6 +417,16 @@ async def main(
     os.environ['CONNECTION_FILE'] = manager.connection_file
 
     app = make_app()
+
+    def is_port_in_use(port: int) -> bool:
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
+
+    port = 6789
+    while is_port_in_use(port) and port < 7000:
+        port += 1
+
     app.listen(
         port,
         address=host,
