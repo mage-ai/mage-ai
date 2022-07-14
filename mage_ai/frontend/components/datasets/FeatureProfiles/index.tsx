@@ -5,15 +5,15 @@ import FeatureType, { ColumnTypeEnum, COLUMN_TYPE_HUMAN_READABLE_MAPPING } from 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import RowDataTable from '@oracle/components/RowDataTable';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { COLUMN_TYPE_ICON_MAPPING } from '@components/constants';
+import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { formatPercent, pluralize, roundNumber } from '@utils/string';
 import { getFeatureStatistics } from '@utils/models/featureSet';
 import { goToWithQuery } from '@utils/routing';
-import RowDataTable from '@oracle/components/RowDataTable';
-import { FeatureProfileStyle, CellStyle, ColumnProfileStyle, ScrollOverflowStyle } from './index.style';
 
 type FeatureProfileProps = {
   columns: string[];
@@ -22,7 +22,7 @@ type FeatureProfileProps = {
   statistics: any;
 };
 
-type FeatureProfilesProps = {
+export type FeatureProfilesProps = {
   shouldLink?: boolean;
   features: FeatureType[];
   statistics: any;
@@ -155,9 +155,10 @@ function FeatureProfile({
             >
               <Text
                 bold
+                default={!shouldLink}
                 maxWidth={25 * UNIT}
                 monospace
-                secondary
+                secondary={shouldLink}
                 textOverflow
                 title={uuid}
               >
@@ -211,7 +212,12 @@ function FeatureProfiles({
             <Spacing mr={1.25 * UNIT} mt={`${52 + 1}px`} />
             {entryTypes.map((entry, idx) => (
               <CellStyle key={`${entry}-${idx}`}>
-                <Text secondary>{entry}</Text>
+                <Text
+                  default={!shouldLink}
+                  secondary={shouldLink}
+                >
+                  {entry}
+                </Text>
               </CellStyle>
             ))}
           </Flex>
