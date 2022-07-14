@@ -378,6 +378,9 @@ class Block:
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
+        if 'type' in data and self.type == BlockType.SCRATCHPAD and \
+                data['type'] != BlockType.SCRATCHPAD:
+            self.__update_type(data['type'])
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
         ):
@@ -471,6 +474,29 @@ class Block:
         if self.pipeline is None:
             return
         self.pipeline.update_block(self)
+
+    def __update_type(self, block_type):
+        """
+        1. Move block file to another folder
+        2. Update the block type in pipeline metadata.yaml
+        3. Update the code in block file
+        """
+        old_file_path = self.file_path
+        self.type = block_type
+        new_file_path = self.file_path
+        if os.path.exists(new_file_path):
+            raise Exception(f'Block {self.type}/{self.uuid} already exists.'
+                            ' Please rename it before changing the type.')
+        os.rename(old_file_path, new_file_path)
+        if self.pipeline is not None:
+            self.pipeline.update_block(self)
+        with open(new_file_path) as f:
+            existing_code = f.read()
+        load_template(
+            block_type,
+            dict(existing_code='    ' + existing_code.replace('\n', '\n    ')),
+            new_file_path,
+        )
 
     def __update_upstream_blocks(self, upstream_blocks):
         if self.pipeline is None:

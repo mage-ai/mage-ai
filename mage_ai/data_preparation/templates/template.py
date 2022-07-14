@@ -108,9 +108,11 @@ def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
         _ = DataSource(data_source)
         template_path = f'data_loaders/{data_source.lower()}.py'
     except ValueError:
-        template_path = 'data_loaders/default.py'
+        template_path = 'data_loaders/default.jinja'
 
-    return template_env.get_template(template_path).render() + '\n'
+    return template_env.get_template(template_path).render(
+        code=config.get('existing_code', ''),
+    ) + '\n'
 
 
 def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
@@ -138,7 +140,9 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
             template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
         )
     else:
-        return template_env.get_template('transformers/default.py').render() + '\n'
+        return template_env.get_template('transformers/default.jinja').render(
+            code=config.get('existing_code', ''),
+        ) + '\n'
 
 
 def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
@@ -147,6 +151,8 @@ def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
         _ = DataSource(data_source)
         template_path = f'data_exporters/{data_source.lower()}.py'
     except ValueError:
-        template_path = 'data_exporters/default.py'
+        template_path = 'data_exporters/default.jinja'
 
-    return template_env.get_template(template_path).render() + '\n'
+    return template_env.get_template(template_path).render(
+        code=config.get('existing_code', ''),
+    ) + '\n'

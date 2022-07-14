@@ -197,7 +197,7 @@ class ApiPipelineBlockHandler(BaseHandler):
 
     def put(self, pipeline_uuid, block_uuid):
         """
-        Allow updating block name, uuid, upstream_block, and downstream_blocks
+        Allow updating block name, uuid, type, upstream_block, and downstream_blocks
         """
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         data = json.loads(self.request.body).get('block', {})
