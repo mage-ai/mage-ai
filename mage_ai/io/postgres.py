@@ -132,7 +132,10 @@ class Postgres(BaseSQL):
 
                 df.to_csv(buffer, index=False, header=False)
                 buffer.seek(0)
-                cur.copy_from(buffer, table=table_name, sep=',', null='', **kwargs)
+                cur.copy_expert(
+                    f'COPY {table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
+                    buffer,
+                )
             self.conn.commit()
 
     def __table_exists(self, table_name: str) -> bool:
@@ -177,7 +180,9 @@ class Postgres(BaseSQL):
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
         ):
-            raise BadConversionError(f'Cannot convert {dtype} to a PostgreSQL datatype.')
+            raise BadConversionError(
+                f'Cannot convert column \'{column.name}\' with data type \'{dtype}\' to a PostgreSQL datatype.'
+            )
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
             try:
                 if column.dt.tz:

@@ -1,9 +1,8 @@
 from enum import Enum
-from pandas.api.types import infer_dtype
-from pandas import DataFrame, Series
 from mage_ai.data_cleaner.shared.utils import clean_name
-from typing import Callable, Dict, Mapping, Tuple
-import numpy as np
+from pandas import DataFrame, Series
+from pandas.api.types import infer_dtype
+from typing import Callable, Dict, Mapping
 
 """
 Utilities for exporting Python data frames to external databases.
@@ -34,13 +33,13 @@ class PandasTypes(str, Enum):
     INTEGER = 'integer'
     FLOATING = 'floating'
     MIXED = 'mixed'
-    MIXED_INTEGER = 'mixed=integer'
+    MIXED_INTEGER = 'mixed-integer'
     MIXED_INTEGER_FLOAT = 'mixed-integer-float'
     PERIOD = 'period'
     STRING = 'string'
     TIME = 'time'
-    TIMEDELTA64 = 'timedelta64'
     TIMEDELTA = 'timedelta'
+    TIMEDELTA64 = 'timedelta64'
     UNKNOWN_ARRAY = 'unknown-array'
 
 
@@ -98,5 +97,5 @@ def gen_table_creation_query(
     """
     query = []
     for cname in dtypes:
-        query.append(f'{clean_name(cname)} {dtypes[cname]}')
+        query.append(f'"{clean_name(cname)}" {dtypes[cname]}')
     return f'CREATE TABLE {table_name} (' + ','.join(query) + ');'
