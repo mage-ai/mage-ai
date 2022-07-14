@@ -1,7 +1,7 @@
 from enum import Enum
-from pandas._libs.lib import infer_dtype
+from pandas.api.types import infer_dtype
 from pandas import DataFrame, Series
-from typing import Callable, Dict, Mapping, Tuple
+from typing import Callable, Dict, Mapping
 
 """
 Utilities for managing type conversions between Python data frames and external databases.
