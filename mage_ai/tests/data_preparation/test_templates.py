@@ -116,8 +116,8 @@ if 'data_loader' not in globals():
 @data_loader
 def load_data_from_redshift() -> DataFrame:
     \"\"\"
-    Template code for loading data from Redshift cluster. Additional
-    configuration parameters can be defined in your configuration file.
+    Template for loading data from a Redshift cluster.
+    Specify your configuration settings in 'io_config.yaml'.
     \"\"\"
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -139,10 +139,8 @@ if 'data_loader' not in globals():
 @data_loader
 def load_from_s3_bucket() -> DataFrame:
     \"\"\"
-    Template code for loading data from S3 bucket.
-
-    If user credentials are not specified in `~/.aws`, you must specify your
-    user credentials manually in your configuration file.
+    Template for loading data from a S3 bucket.
+    Specify your configuration settings in 'io_config.yaml'.
     \"\"\"
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -390,28 +388,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_big_query(df: DataFrame) -> None:
     \"\"\"
-    Template code for exporting data to Google BigQuery.
-
-    Depending on your preferred method of providing service account credentials,
-    there are three options for initializing a Google BigQuery data loader:
-
-    1. (Default) If the environment variable `GOOGLE_APPLICATION_CREDENTIALS` contains the path
-    to the service account key, construct the data loader using the default constructor. Any
-    additional parameters can still be specified as a keyword argument.
-
-    2. If the path to the service account key is manually specified, construct the data loader
-    using the factory method `with_credentials_file`. Example:
-    ```
-    BigQuery.with_credentials_file('path/to/service/account/key.json', **kwargs)
-    ```
-
-    3. If the contents of the service account key are manually specified in a dictionary-like
-    object, construct the data loader using this factory method `with_credentials_object`. Example:
-    ```
-    BigQuery.with_credentials_object({'service_key': ...}, **kwargs)
-    ```
-
-    Alternatively, all parameters can be specified in the configuration file.
+    Template for exporting data to a BigQuery warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
     \"\"\"
     table_id = 'your-project.your_dataset.your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -436,7 +414,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_snowflake(df: DataFrame) -> None:
     \"\"\"
-    Template code for exporting data to a table in a Snowflake warehouse
+    Template for exporting data to a Snowflake warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
     \"\"\"
     table_name = 'your_table_name'
     database = 'your_database_name'

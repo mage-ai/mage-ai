@@ -11,10 +11,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_s3(df: DataFrame) -> None:
     """
-    Template code for exporting data to a S3 bucket.
-
-    If user credentials are not specified in `~/.aws`, you must specify your
-    user credentials manually in your configuration file.
+    Template for exporting data to a S3 bucket.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

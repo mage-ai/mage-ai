@@ -11,7 +11,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_snowflake(df: DataFrame) -> None:
     """
-    Template code for exporting data to a table in a Snowflake warehouse
+    Template for exporting data to a Snowflake warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     table_name = 'your_table_name'
     database = 'your_database_name'

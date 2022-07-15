@@ -11,8 +11,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_redshift(df: DataFrame) -> None:
     """
-    Template code for exporting data to a table in a Redshift cluster.  Additional
-    configuration parameters can be defined in your configuration file.
+    Template for exporting data to a Redshift cluster.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     table_name = 'your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
