@@ -5,34 +5,41 @@ from unittest import mock
 
 
 class ConfigLoaderTests(TestCase):
-    def test_config_file_map(self):
-        input_keys = [
-            ConfigKey.AWS_ACCESS_KEY_ID,
-            ConfigKey.GOOGLE_SERVICE_ACC_KEY,
-            ConfigKey.POSTGRES_PASSWORD,
-            ConfigKey.REDSHIFT_CLUSTER_ID,
-            ConfigKey.SNOWFLAKE_DEFAULT_DB,
-        ]
-        expected_keys = [
-            ('aws', 'access_key_id'),
-            ('google', 'service_acc_key'),
-            ('postgres', 'password'),
-            ('redshift', 'cluster_id'),
-            ('snowflake', 'default_db'),
-        ]
-        config = ConfigFileLoader('./test')
-        for input_key, expected_key in zip(input_keys, expected_keys):
-            expected_parent, expected_child = expected_key
-            actual_parent, actual_child = config.map_keys(input_key)
-            self.assertEqual(expected_parent, actual_parent)
-            self.assertEqual(expected_child, actual_child)
+    def setUp(self):
+        self.test_path = Path('./test')
+        self.test_path.mkdir(parents=True)
+        self.test_config_path = self.test_path / 'io_config.yaml'
+        sample_yaml = """default:
+  AWS_REGION: test_region
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH: "path/to/test/key.json"
+  POSTGRES_DBNAME: my_psql_db
+  REDSHIFT_TEMP_CRED_PASSWORD: a_strong_password
+  REDSHIFT_PORT: 5439
+  SNOWFLAKE_DEFAULT_SCHEMA: sample_schema
+contains_check:
+  AWS_REGION: region_test
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH: "a/path/to/nowhere"
+  REDSHIFT_TEMP_CRED_PASSWORD: a_strong_password
+  REDSHIFT_PORT: 5439
+  SNOWFLAKE_DEFAULT_SCHEMA: sample_schema
+a_diff_profile:
+  AWS_REGION: region_test
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH: "a/path/to/nowhere"
+  POSTGRES_DBNAME: another_psql_db
+  REDSHIFT_TEMP_CRED_PASSWORD: another_strong_password
+  REDSHIFT_PORT: 9453
+  SNOWFLAKE_DEFAULT_SCHEMA: schema_two
+"""
+        with self.test_config_path.open('w') as fout:
+            fout.write(sample_yaml)
+        return super().setUp()
+
+    def tearDown(self):
+        self.test_config_path.unlink()
+        self.test_path.rmdir()
+        return super().tearDown()
 
     def test_config_map_contains(self):
-
-        test_path = Path('./test')
-        test_path.mkdir(parents=True)
-        test_config_path = test_path / 'io_config.yaml'
-
         expected_keys = [
             ConfigKey.AWS_REGION,
             ConfigKey.GOOGLE_SERVICE_ACC_KEY,
@@ -43,34 +50,12 @@ class ConfigLoaderTests(TestCase):
             ConfigKey.REDSHIFT_CLUSTER_ID,
         ]
         default_expected_values = [True, False, True, False, False, True, False]
-        sample_yaml = """default:
-  aws:
-    region: test_region
-  google:
-    service_acc_key_filepath: path/to/test/key.json
-  redshift:
-    temp_cred_password: a_strong_password
-    port: 5439
-  snowflake:
-    default_schema: sample_schema
-"""
 
-        with test_config_path.open('w') as fout:
-            fout.write(sample_yaml)
-
-        config = ConfigFileLoader(test_config_path, profile='default')
+        config = ConfigFileLoader(self.test_config_path, profile='contains_check')
         for expected_key, expected_value in zip(expected_keys, default_expected_values):
             self.assertTrue((expected_key in config) == expected_value)
 
-        test_config_path.unlink()
-        test_path.rmdir()
-
     def test_config_map_get(self):
-
-        test_path = Path('./test')
-        test_path.mkdir(parents=True)
-        test_config_path = test_path / 'io_config.yaml'
-
         expected_keys = [
             ConfigKey.AWS_REGION.value,
             ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH.value,
@@ -95,47 +80,16 @@ class ConfigLoaderTests(TestCase):
             'another_psql_db',
             'schema_two',
         ]
-        sample_yaml = """default:
-  aws:
-    region: test_region
-  google:
-    service_acc_key_filepath: path/to/test/key.json
-  postgres:
-    dbname: my_psql_db
-  redshift:
-    temp_cred_password: a_strong_password
-    port: 5439
-  snowflake:
-    default_schema: sample_schema
-a_diff_profile:
-  aws:
-    region: region_test
-  google:
-    service_acc_key_filepath: a/path/to/nowhere
-  postgres:
-    dbname: another_psql_db
-  redshift:
-    temp_cred_password: another_strong_password
-    port: 9453
-  snowflake:
-    default_schema: schema_two
-"""
-
-        with test_config_path.open('w') as fout:
-            fout.write(sample_yaml)
 
         expected_keys.append(ConfigKey.REDSHIFT_CLUSTER_ID)
         default_expected_values.append(None)
         diff_expected_values.append(None)
-        config = ConfigFileLoader(test_config_path, profile='default')
+        config = ConfigFileLoader(self.test_config_path, profile='default')
         for expected_key, expected_value in zip(expected_keys, default_expected_values):
             self.assertEqual(config[expected_key], expected_value)
-        config = ConfigFileLoader(test_config_path, profile='a_diff_profile')
+        config = ConfigFileLoader(self.test_config_path, profile='a_diff_profile')
         for expected_key, expected_value in zip(expected_keys, diff_expected_values):
             self.assertEqual(config[expected_key], expected_value)
-
-        test_config_path.unlink()
-        test_path.rmdir()
 
     @mock.patch('mage_ai.io.config.os')
     def test_env_map_contains(self, mock_os):

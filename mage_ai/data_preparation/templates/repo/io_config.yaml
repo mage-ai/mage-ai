@@ -1,35 +1,27 @@
 default:
-  #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
-  google:
-    service_acc_key_filepath: path/to/service/account/credentials
-    service_acc_key: None # Create a new YAML object to manually define your service account key
-  aws:
-    # Omit these settings if aws credentials are already configured on file
-    access_key_id: your_aws_access_key_id
-    secret_access_key: your_secret_access_key_id
-    session_token: your_aws_session_token
-    region: your_aws_region
-  redshift:
-    dbname: your_redshift_database_name
-    # Use the settings below if you are using temporary credentials
-    temp_cred_user: your_authentication_user_name
-    temp_cred_password: your_authentication_password
-    host: your_redshift_cluster_hostname
-    port: your_redshift_cluster_port
-    # Use the settings below if want to auto generate temporary credentials from IAM profile
-    cluster_id: your_redshift_identifier
-    dbuser: your_redshift_username
-    iam_profile: your_aws_iam_profile
-  postgres:
-    dbname: your_postgres_database_name
-    user: your_postgres_database_username
-    password: your_postgres_database_password
-    host: your_postgres_database_host
-    port: your_postgres_port # optional
-  snowflake:
-    user: your_snowflake_username
-    password: your_snowflake_password
-    account: your_snowflake_account_identifier(with region)
-    default_db: your_default_snowflake_database # optional
-    default_schema: your_default_snowflake_schema # optional
-    default_wh: your_default_snowflake_warehouse # optional
+  # Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
+  AWS_ACCESS_KEY_ID = AWS Access Key ID credential
+  AWS_SECRET_ACCESS_KEY = AWS Secret Access Key credential
+  AWS_SESSION_TOKEN = AWS Session Token (used to generate temp DB credentials)
+  AWS_REGION = AWS Region
+  GOOGLE_SERVICE_ACC_KEY = GOOGLE_SERVICE_ACC_KEY
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH = GOOGLE_SERVICE_ACC_KEY_FILEPATH
+  POSTGRES_DBNAME = Database name
+  POSTGRES_USER = Database login username
+  POSTGRES_PASSWORD = Database login password
+  POSTGRES_HOST = Database hostname
+  POSTGRES_PORT = PostgreSQL database port
+  REDSHIFT_DBNAME = Name of Redshift database to connect to
+  REDSHIFT_HOST = Redshift Cluster hostname
+  REDSHIFT_PORT = Redshift Cluster port. If not specified. Defaults to 5439.
+  REDSHIFT_TEMP_CRED_USER = Redshift temp credentials username
+  REDSHIFT_TEMP_CRED_PASSWORD = Redshift temp credentials password
+  REDSHIFT_DBUSER = Redshift database user to generate credentials for
+  REDSHIFT_CLUSTER_ID = Redshift cluster ID
+  REDSHIFT_IAM_PROFILE = Name of the IAM profile to generate temp credentials with
+  SNOWFLAKE_USER = Snowflake username
+  SNOWFLAKE_PASSWORD = Snowflake password
+  SNOWFLAKE_ACCOUNT = Snowflake account ID (including region)
+  SNOWFLAKE_DEFAULT_WH = Default warehouse to use
+  SNOWFLAKE_DEFAULT_DB = Default database to use
+  SNOWFLAKE_DEFAULT_SCHEMA = Default schema to use

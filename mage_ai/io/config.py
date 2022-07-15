@@ -205,6 +205,8 @@ class ConfigFileLoader(BaseConfigLoader):
         """
         self.filepath = Path(filepath)
         self.profile = profile
+        with self.filepath.open('r') as fin:
+            self.config = yaml.full_load(fin.read())[profile]
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """
@@ -213,7 +215,7 @@ class ConfigFileLoader(BaseConfigLoader):
         Args:
             key (str): Name of the configuration setting to check.
         """
-        return self.get(key) is not None
+        return key in self.config
 
     def get(self, key: Union[ConfigKey, str]) -> Any:
         """
@@ -222,36 +224,4 @@ class ConfigFileLoader(BaseConfigLoader):
         Args:
             key (str): Key name of the configuration setting to load
         """
-        try:
-            with self.filepath.open('r') as fin:
-                config = yaml.full_load(fin.read())[self.profile]
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                f'Error loading config: configuration file not found at \'{self.filepath}\''
-            )
-        parent, child = self.map_keys(key)
-        loader_settings = config.get(parent)
-        if loader_settings is None:
-            return None
-        return loader_settings.get(child)
-
-    def map_keys(self, key: Union[ConfigKey, str]) -> Tuple[str, str]:
-        """
-        Maps ConfigKey string to the (parent, child) key pair format used
-        by IOConfig.
-
-        Args:
-            key (str): Input configuration setting key to convert.
-
-        Raises:
-            ValueError: Raised if unable to separate key into (parent, child) format, indicating
-            that the key is improperly formatted.
-
-        Returns:
-            Tuple[str, str]: The mapped (parent, child) key pair to use with configuration file.
-        """
-        parts = key.split('_', maxsplit=1)
-        try:
-            return parts[0].lower(), parts[1].lower()
-        except:
-            raise ValueError(f'Error loading config: key \'{key}\' is improperly formatted')
+        return self.config.get(key)
