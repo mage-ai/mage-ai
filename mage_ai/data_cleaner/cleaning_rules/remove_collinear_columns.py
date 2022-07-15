@@ -1,13 +1,11 @@
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
-from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 import numpy as np
 
-
 class RemoveCollinearColumns(BaseRule):
-    EPSILON = 1e-12
+    EPSILON = 1e-15
     MIN_ENTRIES = 3
-    ROW_SAMPLE_SIZE = 300
+    VIF_UB = 5
 
     default_config = dict(
         vif_ub=3,
@@ -22,19 +20,23 @@ class RemoveCollinearColumns(BaseRule):
         suggestions = []
         if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
             return suggestions
+
+        C = self.numeric_df.corr().to_numpy()
         collinear_columns = []
-        self.numeric_df['intercept'] = np.ones(len(self.numeric_df))
-        for column in self.numeric_columns[:-1]:
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.config('vif_ub'):
-                collinear_columns.append(column)
-                self.numeric_df.drop(column, axis=1, inplace=True)
-        if len(collinear_columns) != len(self.numeric_columns) - 1:
-            # check the final column if and only if there are other columns to compare it to
-            column = self.numeric_columns[-1]
-            variance_inflation_factor = self.get_variance_inflation_factor(column)
-            if variance_inflation_factor > self.config('vif_ub'):
-                collinear_columns.append(column)
+        good_columns = self.numeric_columns.copy()
+        while True:
+            e_vals = np.linalg.eigvalsh(C)
+            vifs = np.sign(e_vals) / (abs(e_vals) + self.EPSILON)
+            collinearity = vifs >= self.VIF_UB
+
+            i = collinearity.argmax()
+            if i == 0 and collinearity[0] == 0:
+                break
+            else:
+                C = np.delete(C, i, axis=0)
+                C = np.delete(C, i, axis=1)
+                collinear_columns.append(good_columns.pop(i))
+
         if len(collinear_columns) != 0:
             suggestions.append(
                 self._build_transformer_action_suggestion(
@@ -46,29 +48,3 @@ class RemoveCollinearColumns(BaseRule):
                 )
             )
         return suggestions
-
-    def get_variance_inflation_factor(self, column):
-        """
-        Variance Inflation Factor = 1 / (1 - <coefficient of determination on column k>)
-        Measures increase in regression model variance due to collinearity
-        => column k is multicollinear with others if model predicting its value
-        has this variance inflation greater than some amount
-        """
-        if self.numeric_df.empty:
-            raise RuntimeError('No other columns to compare \'{column}\' against')
-        if len(self.numeric_df) > self.ROW_SAMPLE_SIZE:
-            sample = self.numeric_df.sample(self.ROW_SAMPLE_SIZE)
-        else:
-            sample = self.numeric_df
-
-        responses = sample[column].to_numpy()
-        predictors = sample.drop(column, axis=1).to_numpy()
-        params, _, _, _ = np.linalg.lstsq(predictors, responses, rcond=None)
-
-        mean = responses.mean()
-        centered_predictions = predictors @ params - mean
-        sum_sq_model = np.sum(centered_predictions * centered_predictions)
-        centered_responses = responses - mean
-        sum_sq_to = np.sum(centered_responses * centered_responses)
-        r_sq = sum_sq_model / sum_sq_to if sum_sq_to else 0
-        return 1 / (1 - r_sq + self.EPSILON)
