@@ -1,4 +1,6 @@
 import FeatureType from '@interfaces/FeatureType';
+import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
+import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
 export enum BlockTypeEnum {
@@ -54,6 +56,16 @@ export interface AnalysisType {
   statistics: StatisticsType;
   suggestions: any;
   variable_uuid: string;
+}
+
+export interface BlockRequestPayloadType {
+  name?: string;
+  type: BlockTypeEnum;
+  config?: {
+    data_source?: DataSourceTypeEnum;
+    action_type?: ActionTypeEnum;
+    axis?: AxisEnum;
+  };
 }
 
 export default interface BlockType {

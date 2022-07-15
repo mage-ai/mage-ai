@@ -9,6 +9,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlockType, {
+  BlockRequestPayloadType,
   BlockTypeEnum,
   OutputType,
   SampleDataType,
@@ -47,7 +48,6 @@ import {
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
-import { getBlockPath } from '@components/FileTree/utils';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';

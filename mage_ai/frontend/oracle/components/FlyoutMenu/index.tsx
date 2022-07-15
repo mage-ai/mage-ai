@@ -28,7 +28,7 @@ export type FlyoutMenuItemType = {
   uuid: string;
 };
 
-type FlyoutMenuProps = {
+export type FlyoutMenuProps = {
   items: FlyoutMenuItemType[];
   onClickCallback?: () => void;
   open: boolean;
