@@ -1,8 +1,8 @@
 default:
   #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
   google:
-    path_to_credentials: path/to/service/account/credentials
-    service_acc_credentials: None # Create a new YAML object to manually introduce your service account credentials
+    service_acc_key_filepath: path/to/service/account/credentials
+    service_acc_key: None # Create a new YAML object to manually definee your service account key
   file:
     filepath: filepath
     format: format
