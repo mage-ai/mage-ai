@@ -481,14 +481,15 @@ def transform_in_postgres(*args) -> DataFrame:
     config_profile = 'default'
 
     # Specify table to sample data from. Use to visualize changes to table.
-    sample_table = 'table_to_sample_data_from (include schema name if applicable)'
+    sample_table = 'table_to_sample_data_from'
+    sample_schema = 'schema_of_table_to_sample'
     sample_size = 10_000
 
     with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.query('your transformation_query')
         loader.commit() # Permanently apply database changes
-        return loader.sample(sample_table, sample_size)
+        return loader.sample(sample_schema, sample_size, sample_table)
 """
 
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -510,13 +511,14 @@ def transform_in_bigquery(*args) -> DataFrame:
     config_profile = 'default'
 
     # Specify table to sample data from. Use to visualize changes to table.
-    sample_table = 'table_to_sample_data_from (include schema name if applicable)'
+    sample_table = 'table_to_sample_data_from'
+    sample_schema = 'schema_of_table_to_sample'
     sample_size = 10_000
 
     with BigQuery.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.query('your transformation_query')
-        return loader.sample(sample_table, sample_size)
+        return loader.sample(sample_schema, sample_size, sample_table)
 """
 
         config1 = {'data_source': DataSource.POSTGRES}

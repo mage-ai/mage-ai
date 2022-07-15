@@ -187,20 +187,20 @@ class BaseSQLDatabase(BaseIO):
         """
         pass
 
-    @abstractmethod
-    def sample(self, table: str, size: int, **kwargs) -> DataFrame:
+    def sample(self, schema: str, size: int, table: str, **kwargs) -> DataFrame:
         """
         Sample data from a table in the connected database. Sample is not
         guaranteed to be random.
 
         Args:
+            schema (str): The schema to select the table from.
+            size (int): The number of rows to sample.
             table (str): The table to sample from in the connected database.
-            size (int): The number of rows to sample
 
         Returns:
             DataFrame: Sampled data from the data frame.
         """
-        pass
+        return self.load(f'SELECT * FROM {schema}.{table} LIMIT {str(size)};', **kwargs)
 
 
 class BaseSQLConnection(BaseSQLDatabase):
