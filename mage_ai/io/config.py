@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
 from jinja2 import Template
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from pathlib import Path
 from typing import Any, Dict, Union
 import boto3
@@ -193,17 +194,17 @@ class EnvironmentVariableLoader(BaseConfigLoader):
 
 
 class ConfigFileLoader(BaseConfigLoader):
-    def __init__(
-        self, filepath: os.PathLike = './default_repo/io_config.yaml', profile='default'
-    ) -> None:
+    def __init__(self, filepath: os.PathLike = None, profile='default') -> None:
         """
         Initializes IO Configuration loader
 
         Args:
             filepath (os.PathLike, optional): Path to IO configuration file.
-            Defaults to './default_repo/io_config.yaml'
+            Defaults to '[repo_path]/io_config.yaml'
             profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
         """
+        if filepath is None:
+            filepath = get_repo_path() / 'io_config.yaml'
         self.filepath = Path(filepath)
         self.profile = profile
         with self.filepath.open('r') as fin:
