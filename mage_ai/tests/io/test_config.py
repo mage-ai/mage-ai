@@ -27,7 +27,45 @@ class ConfigLoaderTests(TestCase):
             self.assertEqual(expected_parent, actual_parent)
             self.assertEqual(expected_child, actual_child)
 
-    def test_config_map(self):
+    def test_config_map_contains(self):
+
+        test_path = Path('./test')
+        test_path.mkdir(parents=True)
+        test_config_path = test_path / 'io_config.yaml'
+
+        expected_keys = [
+            ConfigKey.AWS_REGION,
+            ConfigKey.GOOGLE_SERVICE_ACC_KEY,
+            ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD,
+            ConfigKey.REDSHIFT_DBUSER,
+            ConfigKey.POSTGRES_DBNAME,
+            ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA,
+            ConfigKey.REDSHIFT_CLUSTER_ID,
+        ]
+        default_expected_values = [True, False, True, False, False, True, False]
+        sample_yaml = """default:
+  aws:
+    region: test_region
+  google:
+    service_acc_key_filepath: path/to/test/key.json
+  redshift:
+    temp_cred_password: a_strong_password
+    port: 5439
+  snowflake:
+    default_schema: sample_schema
+"""
+
+        with test_config_path.open('w') as fout:
+            fout.write(sample_yaml)
+
+        config = ConfigFileLoader(test_config_path, profile='default')
+        for expected_key, expected_value in zip(expected_keys, default_expected_values):
+            self.assertTrue((expected_key in config) == expected_value)
+
+        test_config_path.unlink()
+        test_path.rmdir()
+
+    def test_config_map_get(self):
 
         test_path = Path('./test')
         test_path.mkdir(parents=True)
@@ -100,13 +138,44 @@ a_diff_profile:
         test_path.rmdir()
 
     @mock.patch('mage_ai.io.config.os')
-    def test_env_map(self, mock_os):
+    def test_env_map_contains(self, mock_os):
         expected_keys = [
-            ConfigKey.AWS_SECRET_ACCESS_KEY.value,
-            ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH.value,
-            ConfigKey.REDSHIFT_DBNAME.value,
-            ConfigKey.POSTGRES_HOST.value,
-            ConfigKey.SNOWFLAKE_PASSWORD.value,
+            ConfigKey.AWS_SECRET_ACCESS_KEY,
+            ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH,
+            ConfigKey.REDSHIFT_DBNAME,
+            ConfigKey.POSTGRES_HOST,
+            ConfigKey.SNOWFLAKE_PASSWORD,
+        ]
+        values = [
+            'aws_secret_access_key',
+            'filepath',
+            'test_db',
+            'url_to_db',
+            'a_snowflake_password',
+        ]
+
+        test_env_vars = dict(zip(expected_keys, values))
+        mock_os.environ = test_env_vars
+
+        expected_keys.append(ConfigKey.REDSHIFT_CLUSTER_ID)
+        expected_keys.append(ConfigKey.SNOWFLAKE_ACCOUNT)
+        expected_keys.append(ConfigKey.POSTGRES_USER)
+        expected_keys.append(ConfigKey.POSTGRES_DBNAME)
+
+        expected_values = [True] * 5 + [False] * 4
+
+        env_loader = EnvironmentVariableLoader()
+        for expected_key, expected_value in zip(expected_keys, expected_values):
+            self.assertTrue((expected_key in env_loader) == expected_value)
+
+    @mock.patch('mage_ai.io.config.os')
+    def test_env_map_get(self, mock_os):
+        expected_keys = [
+            ConfigKey.AWS_SECRET_ACCESS_KEY,
+            ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH,
+            ConfigKey.REDSHIFT_DBNAME,
+            ConfigKey.POSTGRES_HOST,
+            ConfigKey.SNOWFLAKE_PASSWORD,
         ]
         expected_values = [
             'aws_secret_access_key',

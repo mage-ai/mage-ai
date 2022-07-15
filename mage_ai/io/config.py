@@ -2,10 +2,9 @@ from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
 from pathlib import Path
-from typing import Any, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 import boto3
 import os
-import re
 import yaml
 
 
@@ -32,6 +31,7 @@ class ConfigKey(str, Enum):
     REDSHIFT_TEMP_CRED_PASSWORD = 'REDSHIFT_TEMP_CRED_PASSWORD'
     REDSHIFT_DBUSER = 'REDSHIFT_DBUSER'
     REDSHIFT_CLUSTER_ID = 'REDSHIFT_CLUSTER_ID'
+    REDSHIFT_IAM_PROFILE = 'REDSHIFT_IAM_PROFILE'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
     SNOWFLAKE_PASSWORD = 'SNOWFLAKE_PASSWORD'
     SNOWFLAKE_ACCOUNT = 'SNOWFLAKE_ACCOUNT'
@@ -47,18 +47,33 @@ class BaseConfigLoader(ABC):
     """
 
     @abstractmethod
+    def contains(self, key: Union[ConfigKey, str], **kwargs) -> bool:
+        """
+        Checks if the configuration setting stored under `key` is contained.
+        Args:
+            key (Union[ConfigKey, str]): Name of the configuration setting to check existence of.
+
+        Returns:
+            bool: Returns true if configuration setting exists, otherwise returns false.
+        """
+        pass
+
+    @abstractmethod
     def get(self, key: Union[ConfigKey, str], **kwargs) -> Any:
         """
         Loads the configuration setting stored under `key`.
 
         Args:
-            key (str): Key name of the configuration setting to load
+            key (Union[ConfigKey, str]): Name of the configuration setting to load
 
         Returns:
             Any: The configuration setting stored under `key` in the configuration manager. If key
-                 doesn't exist, return None
+                 doesn't exist, returns None.
         """
         pass
+
+    def __contains__(self, key: Union[ConfigKey, str]) -> bool:
+        return self.contains(key)
 
     def __getitem__(self, key: str) -> Any:
         return self.get(key)
@@ -67,6 +82,28 @@ class BaseConfigLoader(ABC):
 class AWSSecretLoader(BaseConfigLoader):
     def __init__(self, **kwargs):
         self.client = boto3.client('secretsmanager', **kwargs)
+
+    def contains(
+        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
+    ) -> bool:
+        """
+        Check if there is a secret with ID `secret_id` contained. Can also specify the version of the
+        secret to check. If
+        - both `version_id` and `version_stage_label` are specified, both must agree on the secret version
+        - neither of `version_id` or `version_stage_label` are specified, any version is checked
+        - one of `version_id` and `version_stage_label` are specified, the associated version is checked
+
+        Args:
+            secret_id (str): ID of the secret to load
+            version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
+            version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.
+
+        Returns:
+            Union(bytes, str): The secret stored under `secret_id` in AWS secret manager. If secret is:
+            - a binary value, returns a `bytes` object
+            - a string value, returns a `string` object
+        """
+        return self.__get_secret(secret_id, version_id, version_stage_label) is not None
 
     def get(
         self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
@@ -88,24 +125,58 @@ class AWSSecretLoader(BaseConfigLoader):
             - a binary value, returns a `bytes` object
             - a string value, returns a `string` object
         """
-        try:
-            response = self.client.get_secret_value(
-                SecretID=secret_id,
-                VersionId=version_id,
-                VersionStage=version_stage_label,
-            )
-        except ClientError as error:
-            if error.response['Error']['Code'] == 'InternalServiceError':
-                print(f'Error loading config: server error - {error.response["Error"]["Message"]}')
-            return None
-
+        response = self.__get_secret(secret_id, version_id, version_stage_label)
         if 'SecretBinary' in response:
             return response['SecretBinary']
         else:
             return response['SecretString']
 
+    def __get_secret(
+        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
+    ) -> Dict:
+        """
+        Get secret with ID `secret_id`. Can also specify the version of the secret to get.
+        If
+        - both `version_id` and `version_stage_label` are specified, both must agree on the
+          secret version
+        - neither of `version_id` or `version_stage_label` are specified, a check is made for
+          the current version
+        - one of `version_id` and `version_stage_label` are specified, the associated version
+          is loaded
+
+        Args:
+            secret_id (str): ID of the secret to load
+            version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
+            version_stage_label (str, Optional): Staging label of the version of the secret to load.
+            Defaults to None.
+
+        Returns:
+            Dict: response object returned by AWS Secrets Manager API
+        """
+        try:
+            return self.client.get_secret_value(
+                SecretID=secret_id,
+                VersionId=version_id,
+                VersionStage=version_stage_label,
+            )
+        except ClientError as error:
+            if error.response['Error']['Code'] == 'ResourceNotFoundException':
+                return None
+            raise RuntimeError(f'Error loading config: {error.response["Error"]["Message"]}')
+
 
 class EnvironmentVariableLoader(BaseConfigLoader):
+    def contains(self, env_var: Union[ConfigKey, str]) -> bool:
+        """
+        Checks if the environment variable is defined.
+        Args:
+            key (Union[ConfigKey, str]): Name of the configuration setting to check existence of.
+
+        Returns:
+            bool: Returns true if configuration setting exists, otherwise returns false.
+        """
+        return env_var in os.environ
+
     def get(self, env_var: Union[ConfigKey, str]) -> Any:
         """
         Loads the config setting stored under the environment variable
@@ -121,8 +192,6 @@ class EnvironmentVariableLoader(BaseConfigLoader):
 
 
 class ConfigFileLoader(BaseConfigLoader):
-    KEY_PARENT = re.compile(r'^\S+_')
-
     def __init__(
         self, filepath: os.PathLike = './default_repo/io_config.yaml', profile='default'
     ) -> None:
@@ -130,10 +199,41 @@ class ConfigFileLoader(BaseConfigLoader):
         Initializes IO Configuration loader
 
         Args:
-            filepath (os.PathLike): Path to IO configuration file.
+            filepath (os.PathLike, optional): Path to IO configuration file.
+            Defaults to './default_repo/io_config.yaml'
+            profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
         """
         self.filepath = Path(filepath)
         self.profile = profile
+
+    def contains(self, key: Union[ConfigKey, str]) -> Any:
+        """
+        Checks of the configuration setting stored under `key` is contained.
+
+        Args:
+            key (str): Name of the configuration setting to check.
+        """
+        return self.get(key) is not None
+
+    def get(self, key: Union[ConfigKey, str]) -> Any:
+        """
+        Loads the configuration setting stored under `key`.
+
+        Args:
+            key (str): Key name of the configuration setting to load
+        """
+        try:
+            with self.filepath.open('r') as fin:
+                config = yaml.full_load(fin.read())[self.profile]
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f'Error loading config: configuration file not found at \'{self.filepath}\''
+            )
+        parent, child = self.map_keys(key)
+        loader_settings = config.get(parent)
+        if loader_settings is None:
+            return None
+        return loader_settings.get(child)
 
     def map_keys(self, key: Union[ConfigKey, str]) -> Tuple[str, str]:
         """
@@ -155,22 +255,3 @@ class ConfigFileLoader(BaseConfigLoader):
             return parts[0].lower(), parts[1].lower()
         except:
             raise ValueError(f'Error loading config: key \'{key}\' is improperly formatted')
-
-    def get(self, key: Union[ConfigKey, str]) -> Any:
-        """
-        Loads the configuration setting stored under `key`.
-
-        Args:
-            key (str): Key name of the configuration setting to load
-            profile (str, optional): Profile to load the configuration setting from. Defaults to 'default'.
-        """
-        try:
-            with self.filepath.open('r') as fin:
-                config = yaml.full_load(fin.read())[self.profile]
-        except FileNotFoundError:
-            print(f'Error loading config: configuration file not found at \'{self.filepath}\'')
-        parent, child = self.map_keys(key)
-        loader_settings = config.get(parent)
-        if loader_settings is None:
-            return None
-        return loader_settings.get(child)

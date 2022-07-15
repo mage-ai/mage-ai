@@ -2,31 +2,34 @@ default:
   #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
   google:
     service_acc_key_filepath: path/to/service/account/credentials
-    service_acc_key: None # Create a new YAML object to manually definee your service account key
+    service_acc_key: None # Create a new YAML object to manually define your service account key
   aws:
     # Omit these settings if aws credentials are already configured on file
     access_key_id: your_aws_access_key_id
     secret_access_key: your_secret_access_key_id
+    session_token: your_aws_session_token
     region: your_aws_region
   redshift:
-    database: your_redshift_database_name
+    dbname: your_redshift_database_name
     # Use the settings below if you are using temporary credentials
     temp_cred_user: your_authentication_user_name
     temp_cred_password: your_authentication_password
     host: your_redshift_cluster_hostname
     port: your_redshift_cluster_port
-    # Use the settings below if you are using IAM credentials
+    # Use the settings below if want to auto generate temporary credentials from IAM profile
     cluster_id: your_redshift_identifier
     dbuser: your_redshift_username
-    profile: your_aws_credentials_profile
-    iam: True
+    iam_profile: your_aws_iam_profile
   postgres:
     dbname: your_postgres_database_name
     user: your_postgres_database_username
     password: your_postgres_database_password
     host: your_postgres_database_host
-    port: your_postgres
+    port: your_postgres_port # optional
   snowflake:
     user: your_snowflake_username
     password: your_snowflake_password
     account: your_snowflake_account_identifier(with region)
+    default_db: your_default_snowflake_database # optional
+    default_schema: your_default_snowflake_schema # optional
+    default_wh: your_default_snowflake_warehouse # optional
