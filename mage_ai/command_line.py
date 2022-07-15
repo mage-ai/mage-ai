@@ -37,7 +37,7 @@ def main():
         sys.path.append(os.path.dirname(project_path))
         pipeline = Pipeline(pipeline_uuid, project_path)
 
-        asyncio.run(pipeline.execute(analyze_outputs=False))
+        asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False))
 
 
 if __name__ == "__main__":

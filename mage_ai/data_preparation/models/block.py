@@ -157,29 +157,45 @@ class Block:
             p.delete_block(p.get_block(self.uuid))
         os.remove(self.file_path)
 
-    def execute_sync(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
+    def execute_sync(
+        self,
+        analyze_outputs=True,
+        custom_code=None,
+        redirect_outputs=False,
+        update_status=True,
+    ):
         try:
             output = self.execute_block(custom_code=custom_code, redirect_outputs=redirect_outputs)
             block_output = output['output']
             self.__verify_outputs(block_output)
             variable_mapping = dict(zip(self.output_variables.keys(), block_output))
             self.__store_variables(variable_mapping)
-            self.status = BlockStatus.EXECUTED
+            if update_status:
+                self.status = BlockStatus.EXECUTED
             if analyze_outputs:
                 self.__analyze_outputs(variable_mapping)
         except Exception as err:
-            self.status = BlockStatus.FAILED
+            if update_status:
+                self.status = BlockStatus.FAILED
             raise Exception(f'Exception encountered in block {self.uuid}') from err
         finally:
-            self.__update_pipeline_block()
+            if update_status:
+                self.__update_pipeline_block()
         return output
 
-    async def execute(self, analyze_outputs=True, custom_code=None, redirect_outputs=False):
+    async def execute(
+        self,
+        analyze_outputs=True,
+        custom_code=None,
+        redirect_outputs=False,
+        update_status=True,
+    ):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
             return self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
                 redirect_outputs=redirect_outputs,
+                update_status=update_status,
             )
 
     def __validate_execution(self, decorated_functions, input_vars):
