@@ -29,6 +29,8 @@ a_diff_profile:
   REDSHIFT_TEMP_CRED_PASSWORD: another_strong_password
   REDSHIFT_PORT: 9453
   SNOWFLAKE_DEFAULT_SCHEMA: schema_two
+template:
+  REDSHIFT_CLUSTER_ID: "{{ env_var('REDSHIFT_CLUSTER') }}"
 """
         with self.test_config_path.open('w') as fout:
             fout.write(sample_yaml)
@@ -148,3 +150,11 @@ a_diff_profile:
         env_loader = EnvironmentVariableLoader()
         for expected_key, expected_value in zip(expected_keys, expected_values):
             self.assertEqual(env_loader[expected_key], expected_value)
+
+    @mock.patch('mage_ai.io.config.os')
+    def test_env_map_get(self, mock_os):
+        test_env_vars = {'REDSHIFT_CLUSTER': 'env_var_cluster'}
+        mock_os.getenv = test_env_vars.get
+        config = ConfigFileLoader(self.test_config_path, profile='template')
+        self.assertEqual(config[ConfigKey.REDSHIFT_CLUSTER_ID], 'env_var_cluster')
+        self.assertEqual(config[ConfigKey.REDSHIFT_DBUSER], None)

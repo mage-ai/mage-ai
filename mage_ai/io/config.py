@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
+from jinja2 import Template
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Union
 import boto3
 import os
 import yaml
@@ -206,7 +207,8 @@ class ConfigFileLoader(BaseConfigLoader):
         self.filepath = Path(filepath)
         self.profile = profile
         with self.filepath.open('r') as fin:
-            self.config = yaml.full_load(fin.read())[profile]
+            config_file = Template(fin.read()).render(env_var=os.getenv)
+            self.config = yaml.full_load(config_file)[profile]
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """
