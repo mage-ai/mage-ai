@@ -39,7 +39,7 @@ class Snowflake(BaseSQLConnection):
         with self.printer.print_msg('Connecting to Snowflake warehouse'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Executes any query in the Snowflake data warehouse.
 

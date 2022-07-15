@@ -109,7 +109,7 @@ class BigQuery(BaseSQLDatabase):
                     )
             self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Sends query to the connected BigQuery warehouse.
 

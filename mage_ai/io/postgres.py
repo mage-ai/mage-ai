@@ -57,7 +57,7 @@ class Postgres(BaseSQLConnection):
         with self.printer.print_msg('Opening connection to PostgreSQL database'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **query_vars) -> None:
+    def execute(self, query_string: str, **query_vars) -> None:
         """
         Sends query to the connected database.
 

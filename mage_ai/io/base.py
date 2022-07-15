@@ -177,7 +177,7 @@ class BaseSQLDatabase(BaseIO):
     """
 
     @abstractmethod
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Sends query to the connected database
 
@@ -187,14 +187,14 @@ class BaseSQLDatabase(BaseIO):
         """
         pass
 
-    def sample(self, schema: str, size: int, table: str, **kwargs) -> DataFrame:
+    def sample(self, schema: str, table: str, size: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
         """
         Sample data from a table in the connected database. Sample is not
         guaranteed to be random.
 
         Args:
             schema (str): The schema to select the table from.
-            size (int): The number of rows to sample.
+            size (int): The number of rows to sample. Defaults to 100,000
             table (str): The table to sample from in the connected database.
 
         Returns:
@@ -247,16 +247,6 @@ class BaseSQLConnection(BaseSQLDatabase):
             raise ConnectionError(
                 'No connection currently open. Open a new connection to access this property.'
             )
-
-    @abstractmethod
-    def query(self, query_string: str, *args, **kwargs) -> None:
-        """
-        Executes the query on the SQL database connected to this data loader.
-
-        Args:
-            query_string (str): SQL query string to apply to the connected data source.
-        """
-        pass
 
     @abstractmethod
     def open(self) -> None:

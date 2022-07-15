@@ -23,7 +23,7 @@ class Redshift(BaseSQLConnection):
         with self.printer.print_msg('Connecting to Redshift cluster'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Sends query to the connected Redshift cluster.
 
