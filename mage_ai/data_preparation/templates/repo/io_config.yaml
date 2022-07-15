@@ -1,11 +1,12 @@
 default:
-  # Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
+  # Default profile created for data IO access.
+  # Add your credentials for the source you use, and delete the rest.
   AWS_ACCESS_KEY_ID = AWS Access Key ID credential
   AWS_SECRET_ACCESS_KEY = AWS Secret Access Key credential
   AWS_SESSION_TOKEN = AWS Session Token (used to generate temp DB credentials)
   AWS_REGION = AWS Region
-  GOOGLE_SERVICE_ACC_KEY = GOOGLE_SERVICE_ACC_KEY
-  GOOGLE_SERVICE_ACC_KEY_FILEPATH = GOOGLE_SERVICE_ACC_KEY_FILEPATH
+  GOOGLE_SERVICE_ACC_KEY = Service account key (add nested object here)
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH = Path to service account key
   POSTGRES_DBNAME = Database name
   POSTGRES_USER = Database login username
   POSTGRES_PASSWORD = Database login password
@@ -13,7 +14,7 @@ default:
   POSTGRES_PORT = PostgreSQL database port
   REDSHIFT_DBNAME = Name of Redshift database to connect to
   REDSHIFT_HOST = Redshift Cluster hostname
-  REDSHIFT_PORT = Redshift Cluster port. If not specified. Defaults to 5439.
+  REDSHIFT_PORT = Redshift Cluster port. Optional, defaults to 5439
   REDSHIFT_TEMP_CRED_USER = Redshift temp credentials username
   REDSHIFT_TEMP_CRED_PASSWORD = Redshift temp credentials password
   REDSHIFT_DBUSER = Redshift database user to generate credentials for
@@ -22,6 +23,6 @@ default:
   SNOWFLAKE_USER = Snowflake username
   SNOWFLAKE_PASSWORD = Snowflake password
   SNOWFLAKE_ACCOUNT = Snowflake account ID (including region)
-  SNOWFLAKE_DEFAULT_WH = Default warehouse to use
-  SNOWFLAKE_DEFAULT_DB = Default database to use
-  SNOWFLAKE_DEFAULT_SCHEMA = Default schema to use
+  SNOWFLAKE_DEFAULT_WH = Default warehouse to use. Optional
+  SNOWFLAKE_DEFAULT_DB = Default database to use. Optional
+  SNOWFLAKE_DEFAULT_SCHEMA = Default schema to use. Optional
