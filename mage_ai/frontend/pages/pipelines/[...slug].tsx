@@ -594,9 +594,13 @@ function PipelineDetailPage({
     blocks,
   ]);
 
+  const fileTreeRef = useRef(null);
+  console.log(fileTreeRef);
+
   const fileTree = useMemo(() => (
     <ContextMenu
       context={ContextMenuEnum.FILE_BROWSER}
+      contextRef={fileTreeRef}
     >
       <FileBrowser
         files={filesData?.files}
@@ -606,6 +610,7 @@ function PipelineDetailPage({
           resetState();
           router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
         }}
+        ref={fileTreeRef}
       />
     </ContextMenu>
   ), [

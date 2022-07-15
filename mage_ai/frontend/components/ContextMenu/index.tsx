@@ -7,7 +7,8 @@ import { HEADER_HEIGHT, HEADER_Z_INDEX } from '@components/constants';
 
 export type ContextMenuProps = {
   children: any;
-  context: ContextMenuEnum;
+  contextRef: any;
+  contextType: ContextMenuEnum;
 };
 
 export enum ContextMenuEnum {
@@ -55,7 +56,8 @@ const ContainerStyle = styled.div<{
 
 function ContextMenu({
   children,
-  context,
+  contextRef,
+  contextType,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
   const [visible, setVisible] = useState(false);
@@ -77,9 +79,13 @@ function ContextMenu({
   ]);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
-    e.preventDefault();
-    setAnchorPoint({ x: e.pageX, y: e.pageY });
-    setVisible(true);
+    if (contextRef.current.contains(e.target)) {
+      e.preventDefault();
+      setAnchorPoint({ x: e.pageX, y: e.pageY });
+      setVisible(true);
+    } else {
+      setVisible(false);
+    }
   }, [
     setAnchorPoint,
     setVisible,
@@ -102,7 +108,7 @@ function ContextMenu({
         top={anchorPoint.y}
       >
         <FlyoutMenu
-          items={contextItems[context]}
+          items={contextItems[contextType]}
           open={visible}
           parentRef={undefined}
           uuid="ContextMenu"

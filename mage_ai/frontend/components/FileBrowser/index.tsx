@@ -1,5 +1,5 @@
+import React, { useContext } from 'react';
 import { ThemeContext } from 'styled-components';
-import { useContext } from 'react';
 
 import FileType from '@interfaces/FileType';
 import Folder, { FolderSharedProps } from './Folder';
@@ -12,11 +12,11 @@ type FileBrowserProps = {
 function FileBrowser({
   files,
   ...props
-}: FileBrowserProps) {
+}: FileBrowserProps, ref) {
   const themeContext = useContext(ThemeContext);
 
   return (
-    <ContainerStyle>
+    <ContainerStyle ref={ref}>
       {files?.map((file: FileType) => (
         <Folder
           {...props}
@@ -30,4 +30,4 @@ function FileBrowser({
   );
 }
 
-export default FileBrowser;
+export default React.forwardRef(FileBrowser);
