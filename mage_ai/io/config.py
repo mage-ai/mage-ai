@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
 from jinja2 import Template
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from pathlib import Path
 from typing import Any, Dict, Union
 import boto3
@@ -204,7 +204,7 @@ class ConfigFileLoader(BaseConfigLoader):
             profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
         """
         if filepath is None:
-            filepath = get_repo_path() / 'io_config.yaml'
+            filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
         self.filepath = Path(filepath)
         self.profile = profile
         with self.filepath.open('r') as fin:
