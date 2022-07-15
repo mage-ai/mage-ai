@@ -599,8 +599,8 @@ function PipelineDetailPage({
 
   const fileTree = useMemo(() => (
     <ContextMenu
-      context={ContextMenuEnum.FILE_BROWSER}
       contextRef={fileTreeRef}
+      contextType={ContextMenuEnum.FILE_BROWSER}
     >
       <FileBrowser
         files={filesData?.files}
