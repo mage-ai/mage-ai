@@ -26,19 +26,19 @@ const ContainerStyle = styled.div<{
   z-index: ${HEADER_Z_INDEX + 100};
 
   ${props => typeof props.left !== 'undefined' && `
-    left: ${(props.left) + 5}px;
+    left: ${props.left + 5}px;
   `}
 
   ${props => typeof props.right !== 'undefined' && `
-    right: ${(props.right)}px;
+    right: ${props.right}px;
   `}
 
   ${props => typeof props.top !== 'undefined' && `
-    top: ${(props.top)}px;
+    top: ${props.top}px;
   `}
 
   ${props => typeof props.bottom !== 'undefined' && `
-    bottom: ${(props.bottom)}px;
+    bottom: ${props.bottom}px;
   `}
 
   ${props => typeof props.top === 'undefined' && typeof props.bottom === 'undefined' && `

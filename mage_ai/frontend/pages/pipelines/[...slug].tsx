@@ -595,8 +595,6 @@ function PipelineDetailPage({
   ]);
 
   const fileTreeRef = useRef(null);
-  console.log(fileTreeRef);
-
   const fileTree = useMemo(() => (
     <ContextMenu
       contextRef={fileTreeRef}
