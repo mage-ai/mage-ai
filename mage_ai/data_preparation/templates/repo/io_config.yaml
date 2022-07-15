@@ -3,9 +3,6 @@ default:
   google:
     service_acc_key_filepath: path/to/service/account/credentials
     service_acc_key: None # Create a new YAML object to manually definee your service account key
-  file:
-    filepath: filepath
-    format: format
   aws:
     # Omit these settings if aws credentials are already configured on file
     access_key_id: your_aws_access_key_id
