@@ -418,6 +418,31 @@ function PipelineDetailPage({
     },
   );
 
+  const [deleteBlockFile] = useMutation(
+    ({ type, uuid }: BlockType) => (
+      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+            alert('Error deleting block file. Check that there are no downstream blocks, then try again.');
+          },
+        },
+      ),
+    },
+  );
+
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
     {
@@ -597,8 +622,10 @@ function PipelineDetailPage({
   const fileTreeRef = useRef(null);
   const fileTree = useMemo(() => (
     <ContextMenu
-      contextRef={fileTreeRef}
-      contextType={ContextMenuEnum.FILE_BROWSER}
+      areaRef={fileTreeRef}
+      deleteBlockFile={deleteBlockFile}
+      type={ContextMenuEnum.FILE_BROWSER}
+      useContextItem
     >
       <FileBrowser
         files={filesData?.files}

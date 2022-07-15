@@ -1,18 +1,34 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import styled from 'styled-components';
+import { FileContextEnum } from '@components/FileBrowser';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { HEADER_HEIGHT, HEADER_Z_INDEX } from '@components/constants';
 
-export type ContextMenuProps = {
-  children: any;
-  contextRef: any;
-  contextType: ContextMenuEnum;
+export type ContextMenuSharedProps = {
+  deleteBlockFile: (b: BlockType) => void;
 };
 
+export type ContextMenuProps = {
+  children: any;
+  areaRef: any;
+  type: ContextMenuEnum;
+  useContextItem: boolean;
+} & ContextMenuSharedProps;
+
 export enum ContextMenuEnum {
-  FILE_BROWSER,
+  FILE_BROWSER = 'file_browser',
+}
+
+export interface ContextAreaProps {
+  setContextItem?: (item: any) => void;
+}
+
+export interface ContextItemType {
+  data: any;
+  type: any;
 }
 
 const ContainerStyle = styled.div<{
@@ -55,11 +71,14 @@ const ContainerStyle = styled.div<{
 `;
 
 function ContextMenu({
+  areaRef,
   children,
-  contextRef,
-  contextType,
+  deleteBlockFile,
+  type,
+  useContextItem,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
+  const [contextItem, setContextItem] = useState({} as ContextItemType);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -79,8 +98,10 @@ function ContextMenu({
   ]);
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
-    if (contextRef.current.contains(e.target)) {
-      e.preventDefault();
+    if (areaRef.current.contains(e.target)) {
+      if (!useContextItem) {
+        e.preventDefault();
+      }
       setAnchorPoint({ x: e.pageX, y: e.pageY });
       setVisible(true);
     } else {
@@ -92,10 +113,10 @@ function ContextMenu({
   ]);
 
   const contextItems = {
-    [ContextMenuEnum.FILE_BROWSER]: [
+    [FileContextEnum.BLOCK_FILE]: [
       {
         label: () => 'Delete',
-        onClick: () => console.log('delete'),
+        onClick: () => deleteBlockFile(contextItem.data.block),
         uuid: 'delete block file',
       },
     ],
@@ -108,13 +129,16 @@ function ContextMenu({
         top={anchorPoint.y}
       >
         <FlyoutMenu
-          items={contextItems[contextType]}
+          items={contextItems[useContextItem ? contextItem.type : type]}
           open={visible}
           parentRef={undefined}
           uuid="ContextMenu"
         />
       </ContainerStyle>
-      {children}
+
+      {React.Children.map(children, child => (
+        React.cloneElement(child, { setContextItem })
+      ))}
     </>
   );
 }
