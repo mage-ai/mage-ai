@@ -12,7 +12,6 @@ flask-cors==3.0.10
 importlib-metadata==4.11.3
 ipykernel==6.15.0
 ipython
-itsdangerous==2.1.2
 joblib>=1.1.0
 jupyter_client==7.3.4
 google-cloud-bigquery==3.2.0
@@ -34,3 +33,4 @@ snowflake-connector-python==2.7.9
 tables==3.7.0
 tornado==6.1
 zipp==3.8.0
+itsdangerous==1.1.0
