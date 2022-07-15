@@ -1,5 +1,5 @@
 from io import StringIO
-from mage_ai.io.base import BaseSQL, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.export_utils import (
     BadConversionError,
     clean_df_for_export,
@@ -14,7 +14,7 @@ from typing import Any, Mapping
 import numpy as np
 
 
-class Postgres(BaseSQL):
+class Postgres(BaseSQLConnection):
     """
     Handles data transfer between a PostgreSQL database and the Mage app.
     """
@@ -239,6 +239,21 @@ class Postgres(BaseSQL):
             return 'bigint'
         else:
             raise ValueError(f'Invalid datatype provided: {dtype}')
+
+    def sample(self, table: str, size: int, **kwargs) -> DataFrame:
+        """
+        Sample data from a table in the connected database. Sample is not
+        guaranteed to be random.
+
+        Args:
+            table (str): The table to sample from in the connected database.
+            size (int): The number of rows to sample
+
+        Returns:
+            DataFrame: Sampled data from the data frame.
+        """
+        with self.printer.print_msg(f'Sampling data from table \'{table}\''):
+            return read_sql(f'SELECT * FROM {table} LIMIT {str(size)};', self.conn, **kwargs)
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':

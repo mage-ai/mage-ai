@@ -1,11 +1,11 @@
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from redshift_connector import connect
 from typing import Any, Mapping
 
 
-class Redshift(BaseSQL):
+class Redshift(BaseSQLConnection):
     """
     Handles data transfer between a Redshift cluster and the Mage app.
     """
@@ -71,6 +71,24 @@ class Redshift(BaseSQL):
         with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
             with self.conn.cursor() as cur:
                 cur.write_dataframe(df, table_name)
+
+    def sample(self, table: str, size: int, **kwargs) -> DataFrame:
+        """
+        Sample data from a table in the connected database. Sample is not
+        guaranteed to be random.
+
+        Args:
+            table (str): The table to sample from in the connected database.
+            size (int): The number of rows to sample
+
+        Returns:
+            DataFrame: Sampled data from the data frame.
+        """
+        with self.printer.print_msg(f'Sampling data from table \'{table}\''):
+            with self.conn.cursor() as cur:
+                return cur.execute(
+                    f'SELECT * FROM {table} LIMIT {str(size)};', **kwargs
+                ).fetch_dataframe()
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':

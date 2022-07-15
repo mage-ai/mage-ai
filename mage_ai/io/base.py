@@ -170,9 +170,9 @@ class BaseFile(BaseIO):
             print('')
 
 
-class BaseDatabase(BaseIO):
+class BaseSQLDatabase(BaseIO):
     """
-    Base data loader for connecting to a database. This adds `query` method which allows a user
+    Base data loader for connecting to a SQL database. This adds `query` method which allows a user
     to send queries to the databse server.
     """
 
@@ -187,8 +187,23 @@ class BaseDatabase(BaseIO):
         """
         pass
 
+    @abstractmethod
+    def sample(self, table: str, size: int, **kwargs) -> DataFrame:
+        """
+        Sample data from a table in the connected database. Sample is not
+        guaranteed to be random.
 
-class BaseSQL(BaseDatabase):
+        Args:
+            table (str): The table to sample from in the connected database.
+            size (int): The number of rows to sample
+
+        Returns:
+            DataFrame: Sampled data from the data frame.
+        """
+        pass
+
+
+class BaseSQLConnection(BaseSQLDatabase):
     """
     Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
     to the SQL data source after data loading is complete.

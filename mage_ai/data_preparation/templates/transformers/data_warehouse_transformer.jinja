@@ -15,9 +15,12 @@ def transform_in_{{ data_source }}(*args) -> DataFrame:
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
+
+    # Specify table to sample data from. Use to visualize changes to table.
     sample_table = 'table_to_sample_data_from'
+    sample_size = 10_000
 
     with {{ data_source_handler }}.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.query('your transformation_query'){{ additional_args }}
-        return loader.load(f'SELECT * FROM {sample_table};')
+        return loader.sample(sample_table, sample_size)
