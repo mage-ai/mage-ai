@@ -133,9 +133,9 @@ class Snowflake(BaseSQLConnection):
             )
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader) -> 'Snowflake':
+    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Snowflake':
         """
-        Initializes Snowflake loader from configuration loader
+        Initializes Snowflake client from configuration loader.
 
         Args:
             config (BaseConfigLoader): Configuration loader object
@@ -147,4 +147,5 @@ class Snowflake(BaseSQLConnection):
             warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
             database=config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
             schema=config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
+            **kwargs,
         )

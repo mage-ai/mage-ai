@@ -1,9 +1,9 @@
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
 from mage_ai.io.base import BaseSQLDatabase, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
-from typing import Any, Mapping
+from typing import Mapping
 
 
 class BigQuery(BaseSQLDatabase):
@@ -31,7 +31,11 @@ class BigQuery(BaseSQLDatabase):
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
         to the Google BigQuery client, accepting all other configuration settings there.
         """
-        super().__init__()
+        verbose = kwargs.get('verbose')
+        if verbose is not None:
+            kwargs.pop('verbose')
+        super().__init__(verbose=verbose)
+
         credentials = kwargs.get('credentials')
         if credentials is None:
             if 'credentials_mapping' in kwargs:
@@ -121,13 +125,23 @@ class BigQuery(BaseSQLDatabase):
             self.client.query(query_string, **kwargs)
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'BigQuery':
-        try:
-            return cls(**config[IOConfigKeys.BIGQUERY])
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for \'{IOConfigKeys.BIGQUERY}\' under profile'
+    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'BigQuery':
+        """
+        Initializes BigQuery client from configuration loader
+
+        Args:
+            config (BaseConfigLoader): Configuration loader object
+        """
+        if ConfigKey.GOOGLE_SERVICE_ACC_KEY in config:
+            kwargs['credentials_mapping'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY]
+        elif ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH in config:
+            kwargs['path_to_credentials'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH]
+        else:
+            ValueError(
+                'No valid configuration settings found for Google BigQuery. You must specify '
+                'either your service account key or the filepath to your service account key.'
             )
+        return cls(**kwargs)
 
     @classmethod
     def with_credentials_file(cls, path_to_credentials: str, **kwargs) -> 'BigQuery':
