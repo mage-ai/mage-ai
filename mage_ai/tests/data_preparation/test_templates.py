@@ -104,7 +104,7 @@ def load_data() -> DataFrame:
 
     def test_template_generation_data_loader_specific(self):
         redshift_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 from os import path
@@ -123,11 +123,11 @@ def load_data_from_redshift() -> DataFrame:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
 """
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from pandas import DataFrame
 from os import path
@@ -145,7 +145,7 @@ def load_from_s3_bucket() -> DataFrame:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    return S3.with_config(IOConfig(config_path).use(config_profile)).load()
+    return S3.with_config(ConfigFileLoader(config_path, config_profile)).load()
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -377,7 +377,7 @@ def export_data(df: DataFrame) -> None:
     def test_template_generation_data_exporter_specific(self):
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.bigquery import BigQuery
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from pandas import DataFrame
 from os import path
 
@@ -395,14 +395,14 @@ def export_data_to_big_query(df: DataFrame) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    BigQuery.with_config(IOConfig(config_path).use(config_profile)).export(
+    BigQuery.with_config(ConfigFileLoader(config_path, config_profile)).export(
         df,
         table_id,
         if_exists='replace',  # Specify resolution policy if table name already exists
     )
 """
         snowflake_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 from os import path
@@ -423,7 +423,7 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.export(
             df,
             table_name,
