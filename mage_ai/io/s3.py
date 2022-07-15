@@ -1,10 +1,10 @@
 from io import BytesIO
 from typing import Mapping
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Mapping
 import boto3
 
 
@@ -124,21 +124,33 @@ class S3(BaseFile):
                 )
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'S3':
-        try:
-            aws_config = config[IOConfigKeys.AWS]
-            s3_config = aws_config[IOConfigKeys.S3]
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for '
-                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.S3}\' under profile'
-            )
-        credentials = ['access_key_id', 'secret_access_key', 'region']
-        parameters = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
-        for credential, parameter in zip(credentials, parameters):
-            if credential in aws_config:
-                s3_config[parameter] = aws_config[credential]
-        return cls(**s3_config)
+    def with_config(
+        cls,
+        bucket_name: str,
+        object_key: str,
+        config: BaseConfigLoader,
+        format: FileFormat = None,
+        **kwargs,
+    ) -> 'S3':
+        """
+        Initializes S3 client from configuration loader.
+
+        Args:
+            bucket_name (str): Bucket to load resource from
+            object_key (str): Object key of resource to load
+            format (FileFormat, optional): File format of object. Defaults to None,
+            in which case the format is inferred.
+            config (BaseConfigLoader): Configuration loader object
+        """
+        return cls(
+            bucket_name=bucket_name,
+            object_key=object_key,
+            format=format,
+            aws_access_key_id=config[ConfigKey.AWS_ACCESS_KEY_ID],
+            aws_secret_access_key=config[ConfigKey.AWS_SECRET_ACCESS_KEY],
+            region_name=config[ConfigKey.AWS_REGION],
+            **kwargs,
+        )
 
     @classmethod
     def with_credentials(
