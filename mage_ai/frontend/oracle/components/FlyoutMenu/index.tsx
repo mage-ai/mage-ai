@@ -10,6 +10,7 @@ import {
   FlyoutMenuContainerStyle,
   LinkStyle,
   MENU_WIDTH,
+  TitleContainerStyle,
 } from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -19,6 +20,7 @@ import {
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
+  indent?: boolean;
   items?: FlyoutMenuItemType[];
   keyTextGroups?: NumberOrString[][];
   keyboardShortcutValidation?: (ks: KeyboardShortcutType, index?: number) => boolean;
@@ -27,6 +29,7 @@ export type FlyoutMenuItemType = {
     as?: string;
     href: string;
   };
+  isGroupingTitle?: boolean;
   onClick?: () => void;
   uuid: string;
 };
@@ -134,6 +137,8 @@ function FlyoutMenu({
     >
       {items?.map(({
         items,
+        indent,
+        isGroupingTitle,
         keyTextGroups,
         label,
         onClick,
@@ -141,42 +146,50 @@ function FlyoutMenu({
       }: FlyoutMenuItemType, idx0: number) => {
         depth++;
 
-        return (
-          <LinkStyle
-            highlighted={highlightedIndices[0] === idx0}
-            key={uuid}
-            onClick={(e) => {
-              e.preventDefault();
-              onClick?.();
-              onClickCallback?.();
-            }}
-            onMouseEnter={() => (
-              setSubmenuVisible({
-                ...submenuVisible,
-                [uuid]: true,
-              })
-            )}
-            onMouseLeave={() => (
-              setSubmenuVisible({
-                ...submenuVisible,
-                [uuid]: false,
-              })
-            )}
-          >
-            <FlexContainer
-              alignItems="center"
-              fullWidth
-              justifyContent="space-between"
-            >
-              <Text>
-                {label()} 
+        return (isGroupingTitle
+          ?
+            <TitleContainerStyle>
+              <Text bold key={uuid} muted>
+                {label()}
               </Text>
-              {items && <ArrowRight />}
-            </FlexContainer>
+            </TitleContainerStyle>
+          :
+            <LinkStyle
+              highlighted={highlightedIndices[0] === idx0}
+              indent={indent}
+              key={uuid}
+              onClick={(e) => {
+                e.preventDefault();
+                onClick?.();
+                onClickCallback?.();
+              }}
+              onMouseEnter={() => (
+                setSubmenuVisible({
+                  ...submenuVisible,
+                  [uuid]: true,
+                })
+              )}
+              onMouseLeave={() => (
+                setSubmenuVisible({
+                  ...submenuVisible,
+                  [uuid]: false,
+                })
+              )}
+            >
+              <FlexContainer
+                alignItems="center"
+                fullWidth
+                justifyContent="space-between"
+              >
+                <Text>
+                  {label()} 
+                </Text>
+                {items && <ArrowRight />}
+              </FlexContainer>
 
-            {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
-            {items && buildMenuEl(items, uuid, false)}
-          </LinkStyle>
+              {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
+              {items && buildMenuEl(items, uuid, false)}
+            </LinkStyle>
         );
       })}
     </FlyoutMenuContainerStyle>

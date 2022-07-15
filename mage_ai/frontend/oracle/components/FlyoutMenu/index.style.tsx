@@ -5,6 +5,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
   highlighted: boolean;
+  indent?: boolean;
 };
 
 export const MENU_WIDTH = UNIT * 34;
@@ -38,6 +39,15 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
 
 `;
 
+export const TitleContainerStyle = styled.div`
+  padding: ${UNIT}px;
+  padding-bottom: 0;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).popup};
+  `}
+`;
+
 export const LinkStyle = styled.div<LinkProps>`
   align-items: center;
   display: flex;
@@ -54,6 +64,10 @@ export const LinkStyle = styled.div<LinkProps>`
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
+  `}
+
+  ${props => props.indent && `
+    padding-left: ${UNIT * 2}px;
   `}
 
   ${props => props.highlighted && `

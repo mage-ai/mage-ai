@@ -9,9 +9,9 @@ export function createActionMenuItems(
   blockCallback: (block: BlockRequestPayloadType) => void,
 ): FlyoutMenuItemType[] {
   return actions.map((action: ActionTypeEnum) => ({
+    indent: true,
     label: () => ACTION_TYPE_HUMAN_READABLE_MAPPING[axis][action],
     onClick: () => {
-      console.log('blockCallback called ---------------------');
       blockCallback({
         config: {
           action_type: action,
