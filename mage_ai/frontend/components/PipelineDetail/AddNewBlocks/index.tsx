@@ -1,11 +1,16 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
+import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import {
+  COLUMN_ACTIONS,
+  ROW_ACTIONS,
+} from '@interfaces/TransformerActionType';
 import {
   DATA_SOURCE_TYPES,
   DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING,
@@ -15,6 +20,7 @@ import {
   ICON_SIZE,
   IconContainerStyle,
 } from './index.style';
+import { createActionMenuItems } from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -30,6 +36,7 @@ function AddNewBlocks({
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
+  const transformerButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -48,31 +55,67 @@ function AddNewBlocks({
     uuid: sourceType,
   }));
 
+  const columnActionMenuItems = createActionMenuItems(
+    COLUMN_ACTIONS,
+    AxisEnum.COLUMN,
+    addNewBlock,
+  );
+  const rowActionMenuItems = createActionMenuItems(
+    ROW_ACTIONS,
+    AxisEnum.ROW,
+    addNewBlock,
+  );
+  const allActionMenuItems = [
+    {
+      isGroupingTitle: true,
+      label: () => 'Column actions',
+      uuid: 'column_actions_grouping',
+    },
+    ...columnActionMenuItems,
+    {
+      isGroupingTitle: true,
+      label: () => 'Row actions',
+      uuid: 'row_actions_grouping',
+    },
+    ...rowActionMenuItems,
+  ];
+  const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
+
   return (
     <FlexContainer inline>
-      <KeyboardShortcutButton
-        {...sharedProps}
-        beforeElement={
-          <IconContainerStyle compact={compact} purple >
-            <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
-          </IconContainerStyle>
-        }
-        onClick={(e) => {
-          e.preventDefault();
-          addNewBlock({
-            type: BlockTypeEnum.TRANSFORMER,
-          });
-        }}
-        uuid="AddNewBlocks/Transformer"
+      <FlyoutMenuWrapper
+        items={allActionMenuItems}
+        onClickOutside={closeButtonMenu}
+        open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
+        parentRef={transformerButtonRef}
+        uuid="transformer_button"
       >
-        Transformer
-      </KeyboardShortcutButton>
+        <KeyboardShortcutButton
+          {...sharedProps}
+          beforeElement={
+            <IconContainerStyle compact={compact} purple>
+              <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
+            </IconContainerStyle>
+          }
+          onClick={(e) => {
+            e.preventDefault();
+            setButtonMenuOpenIndex(val =>
+              val === TRANSFORMER_BUTTON_INDEX
+                ? null
+                : TRANSFORMER_BUTTON_INDEX,
+            );
+          }}
+          uuid="AddNewBlocks/Transformer"
+        >
+          Transformer
+        </KeyboardShortcutButton>
+      </FlyoutMenuWrapper>
 
       <Spacing ml={1} />
 
       <FlyoutMenuWrapper
         items={dataLoaderMenuItems}
-        onClickOutside={() => setButtonMenuOpenIndex(null)}
+        onClickOutside={closeButtonMenu}
         open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
         parentRef={dataLoaderButtonRef}
         uuid="data_loader_button"
