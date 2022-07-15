@@ -12,6 +12,8 @@ export const COMPACT_MENU_WIDTH = UNIT * 20;
 
 export const FlyoutMenuContainerStyle = styled.div<any>`
   position: absolute;
+  max-height: ${UNIT * 74}px;
+  overflow: auto;
 
   ${props => !props.compact && `
     min-width: ${MENU_WIDTH}px;
