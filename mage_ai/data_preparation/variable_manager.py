@@ -7,7 +7,8 @@ import pandas as pd
 
 class VariableManager:
     def __init__(self, repo_path=None):
-        self.repo_path = repo_path or get_repo_path()
+        # self.repo_path = repo_path or get_repo_path()
+        self.repo_path = '/tmp'
         # TODO: implement caching logic
 
     def add_variable(
