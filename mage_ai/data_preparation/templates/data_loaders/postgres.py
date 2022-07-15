@@ -11,7 +11,8 @@ if 'data_loader' not in globals():
 @data_loader
 def load_data_from_postgres() -> DataFrame:
     """
-    Template code for loading data from PostgreSQL database
+    Template for loading data from a PostgreSQL database.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     query = 'your PostgreSQL query'  # Specify your SQL query here
     config_path = path.join(get_repo_path(), 'io_config.yaml')

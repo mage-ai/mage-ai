@@ -11,10 +11,8 @@ if 'data_loader' not in globals():
 @data_loader
 def load_from_s3_bucket() -> DataFrame:
     """
-    Template code for loading data from S3 bucket.
-
-    If user credentials are not specified in `~/.aws`, you must specify your
-    user credentials manually in your configuration file.
+    Template for loading data from a S3 bucket.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

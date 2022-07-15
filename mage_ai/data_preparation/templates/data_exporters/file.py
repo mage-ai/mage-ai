@@ -11,7 +11,8 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_file(df: DataFrame) -> None:
     """
-    Template code for exporting data to local filesytem
+    Template for exporting data to filesystem.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

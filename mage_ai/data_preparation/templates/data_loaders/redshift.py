@@ -11,8 +11,8 @@ if 'data_loader' not in globals():
 @data_loader
 def load_data_from_redshift() -> DataFrame:
     """
-    Template code for loading data from Redshift cluster. Additional
-    configuration parameters can be defined in your configuration file.
+    Template for loading data from a Redshift cluster.
+    Specify your configuration settings in 'io_config.yaml'.
     """
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
