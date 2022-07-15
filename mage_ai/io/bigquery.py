@@ -1,12 +1,12 @@
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseIO, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLDatabase, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from typing import Any, Mapping
 
 
-class BigQuery(BaseIO):
+class BigQuery(BaseSQLDatabase):
     """
     Handles data transfer betwee a BigQuery data warehouse and the Mage app.
     """
@@ -108,6 +108,17 @@ class BigQuery(BaseIO):
                         f'Invalid policy specified for handling existence of table: \'{if_exists}\''
                     )
             self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+
+    def execute(self, query_string: str, **kwargs) -> None:
+        """
+        Sends query to the connected BigQuery warehouse.
+
+        Args:
+            query_string (str): Query to execute on the BigQuery warehouse.
+            **kwargs: Additional arguments to pass to query, such as query configurations
+        """
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            self.client.query(query_string, **kwargs)
 
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'BigQuery':

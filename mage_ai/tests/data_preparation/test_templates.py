@@ -439,3 +439,76 @@ def export_data_to_snowflake(df: DataFrame) -> None:
         new_snowflake_template = fetch_template_source(BlockType.DATA_EXPORTER, config2)
         self.assertEqual(bigquery_template, new_bigquery_template)
         self.assertEqual(snowflake_template, new_snowflake_template)
+
+    def test_template_generation_transformer_dwh(self):
+        postgres_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
+from mage_ai.io.postgres import Postgres
+from pandas import DataFrame
+from os import path
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def transform_in_postgres(*args) -> DataFrame:
+    \"\"\"
+    Performs a transformation in Postgres
+    \"\"\"
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    # Specify your SQL transformation query
+    query = 'your transformation_query'
+
+    # Specify table to sample data from. Use to visualize changes to table.
+    sample_table = 'table_to_sample_data_from'
+    sample_schema = 'schema_of_table_to_sample'
+    sample_size = 10_000
+
+    with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
+        # Write queries to transform your dataset with
+        loader.execute(query)
+        loader.commit() # Permanently apply database changes
+        return loader.sample(sample_schema, sample_size, sample_table)
+"""
+
+        bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.io_config import IOConfig
+from mage_ai.io.bigquery import BigQuery
+from pandas import DataFrame
+from os import path
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def transform_in_bigquery(*args) -> DataFrame:
+    \"\"\"
+    Performs a transformation in BigQuery
+    \"\"\"
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    # Specify your SQL transformation query
+    query = 'your transformation_query'
+
+    # Specify table to sample data from. Use to visualize changes to table.
+    sample_table = 'table_to_sample_data_from'
+    sample_schema = 'schema_of_table_to_sample'
+    sample_size = 10_000
+
+    with BigQuery.with_config(IOConfig(config_path).use(config_profile)) as loader:
+        # Write queries to transform your dataset with
+        loader.execute(query)
+        return loader.sample(sample_schema, sample_size, sample_table)
+"""
+
+        config1 = {'data_source': DataSource.POSTGRES}
+        config2 = {'data_source': DataSource.BIGQUERY}
+        expected_postgres_template = fetch_template_source(BlockType.TRANSFORMER, config1)
+        expected_bigquery_template = fetch_template_source(BlockType.TRANSFORMER, config2)
+        self.assertEqual(postgres_template, expected_postgres_template)
+        self.assertEqual(bigquery_template, expected_bigquery_template)

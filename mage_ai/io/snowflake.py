@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from snowflake.connector import connect
@@ -9,7 +9,7 @@ DEFAULT_LOGIN_TIMEOUT = 20
 DEFAULT_NETWORK_TIMEOUT = 20
 
 
-class Snowflake(BaseSQL):
+class Snowflake(BaseSQLConnection):
     """
     Handles data transfer between a Snowflake data warehouse and the Mage app.
     """
@@ -39,7 +39,7 @@ class Snowflake(BaseSQL):
         with self.printer.print_msg('Connecting to Snowflake warehouse'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Executes any query in the Snowflake data warehouse.
 

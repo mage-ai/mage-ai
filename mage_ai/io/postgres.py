@@ -1,5 +1,5 @@
 from io import StringIO
-from mage_ai.io.base import BaseSQL, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.export_utils import (
     BadConversionError,
     clean_df_for_export,
@@ -14,7 +14,7 @@ from typing import Any, Mapping
 import numpy as np
 
 
-class Postgres(BaseSQL):
+class Postgres(BaseSQLConnection):
     """
     Handles data transfer between a PostgreSQL database and the Mage app.
     """
@@ -57,7 +57,7 @@ class Postgres(BaseSQL):
         with self.printer.print_msg('Opening connection to PostgreSQL database'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **query_vars) -> None:
+    def execute(self, query_string: str, **query_vars) -> None:
         """
         Sends query to the connected database.
 

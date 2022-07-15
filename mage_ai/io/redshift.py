@@ -1,11 +1,11 @@
-from mage_ai.io.base import BaseSQL, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
 from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame
 from redshift_connector import connect
 from typing import Any, Mapping
 
 
-class Redshift(BaseSQL):
+class Redshift(BaseSQLConnection):
     """
     Handles data transfer between a Redshift cluster and the Mage app.
     """
@@ -23,7 +23,7 @@ class Redshift(BaseSQL):
         with self.printer.print_msg('Connecting to Redshift cluster'):
             self._ctx = connect(**self.settings)
 
-    def query(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs) -> None:
         """
         Sends query to the connected Redshift cluster.
 

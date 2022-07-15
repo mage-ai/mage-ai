@@ -1,6 +1,8 @@
 from mage_ai.data_cleaner.transformer_actions.constants import (
+    ActionType,
     ACTION_CODE_TYPES,
     ACTION_OPTION_TYPES,
+    Axis,
     OUTPUT_TYPES,
 )
 from mage_ai.data_preparation.models.constants import BlockType
@@ -10,6 +12,13 @@ import jinja2
 import json
 import os
 import shutil
+
+MAP_DATASOURCE_TO_HANDLER = {
+    DataSource.BIGQUERY: 'BigQuery',
+    DataSource.POSTGRES: 'Postgres',
+    DataSource.REDSHIFT: 'Redshift',
+    DataSource.SNOWFLAKE: 'Snowflake',
+}
 
 template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
@@ -110,39 +119,71 @@ def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
     except ValueError:
         template_path = 'data_loaders/default.jinja'
 
-    return template_env.get_template(template_path).render(
-        code=config.get('existing_code', ''),
-    ) + '\n'
+    return (
+        template_env.get_template(template_path).render(
+            code=config.get('existing_code', ''),
+        )
+        + '\n'
+    )
 
 
 def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
     action_type = config.get('action_type')
     axis = config.get('axis')
+    data_source = config.get('data_source')
     suggested_action = config.get('suggested_action')
 
     if suggested_action:
         return build_template_from_suggestion(suggested_action)
 
-    if action_type is not None and axis is not None:
-        template = template_env.get_template('transformers/transformer_action_fmt.jinja')
-        additional_params = []
-        if action_type in ACTION_CODE_TYPES:
-            additional_params = ['action_code=\'your_action_code\'']
-        if action_type in ACTION_OPTION_TYPES:
-            # TODO: Automatically generate action options from action type
-            additional_params.append('action_options={\'your_action_option\': None}')
-        if action_type in OUTPUT_TYPES:
-            additional_params.append('outputs=[\'your_output_metadata\']')
-        additional_params_str = ',\n        '.join(additional_params)
-        if additional_params_str != '':
-            additional_params_str = '\n        ' + additional_params_str
-        return (
-            template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
-        )
+    if data_source is not None:
+        return __fetch_transformer_data_warehouse_template(data_source)
+    elif action_type is not None and axis is not None:
+        return __fetch_transformer_action_template(action_type, axis)
     else:
-        return template_env.get_template('transformers/default.jinja').render(
-            code=config.get('existing_code', ''),
-        ) + '\n'
+        return (
+            template_env.get_template('transformers/default.jinja').render(
+                code=config.get('existing_code', ''),
+            )
+            + '\n'
+        )
+
+
+def __fetch_transformer_data_warehouse_template(data_source: DataSource):
+    template = template_env.get_template('transformers/data_warehouse_transformer.jinja')
+    data_source_handler = MAP_DATASOURCE_TO_HANDLER.get(data_source)
+    if data_source_handler is None:
+        raise ValueError(f'No associated database/warehouse for data source \'{data_source}\'')
+
+    if data_source != DataSource.BIGQUERY:
+        additional_args = '\n        loader.commit() # Permanently apply database changes'
+    else:
+        additional_args = ''
+
+    return (
+        template.render(
+            additional_args=additional_args,
+            data_source=data_source.value,
+            data_source_handler=data_source_handler,
+        )
+        + '\n'
+    )
+
+
+def __fetch_transformer_action_template(action_type: ActionType, axis: Axis):
+    template = template_env.get_template('transformers/transformer_action_fmt.jinja')
+    additional_params = []
+    if action_type in ACTION_CODE_TYPES:
+        additional_params = ['action_code=\'your_action_code\'']
+    if action_type in ACTION_OPTION_TYPES:
+        # TODO: Automatically generate action options from action type
+        additional_params.append('action_options={\'your_action_option\': None}')
+    if action_type in OUTPUT_TYPES:
+        additional_params.append('outputs=[\'your_output_metadata\']')
+    additional_params_str = ',\n        '.join(additional_params)
+    if additional_params_str != '':
+        additional_params_str = '\n        ' + additional_params_str
+    return template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
 
 
 def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
@@ -153,6 +194,9 @@ def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
     except ValueError:
         template_path = 'data_exporters/default.jinja'
 
-    return template_env.get_template(template_path).render(
-        code=config.get('existing_code', ''),
-    ) + '\n'
+    return (
+        template_env.get_template(template_path).render(
+            code=config.get('existing_code', ''),
+        )
+        + '\n'
+    )

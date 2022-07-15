@@ -170,7 +170,40 @@ class BaseFile(BaseIO):
             print('')
 
 
-class BaseSQL(BaseIO):
+class BaseSQLDatabase(BaseIO):
+    """
+    Base data loader for connecting to a SQL database. This adds `query` method which allows a user
+    to send queries to the databse server.
+    """
+
+    @abstractmethod
+    def execute(self, query_string: str, **kwargs) -> None:
+        """
+        Sends query to the connected database
+
+        Args:
+            query_string (str): Query to send to the connected database.
+            **kwargs: Additional arguments to pass to query, such as query configurations
+        """
+        pass
+
+    def sample(self, schema: str, table: str, size: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
+        """
+        Sample data from a table in the connected database. Sample is not
+        guaranteed to be random.
+
+        Args:
+            schema (str): The schema to select the table from.
+            size (int): The number of rows to sample. Defaults to 100,000
+            table (str): The table to sample from in the connected database.
+
+        Returns:
+            DataFrame: Sampled data from the data frame.
+        """
+        return self.load(f'SELECT * FROM {schema}.{table} LIMIT {str(size)};', **kwargs)
+
+
+class BaseSQLConnection(BaseSQLDatabase):
     """
     Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
     to the SQL data source after data loading is complete.
@@ -196,6 +229,12 @@ class BaseSQL(BaseIO):
         if self.verbose and self.printer.exists_previous_message:
             print('')
 
+    def commit(self) -> None:
+        """
+        Commits all changes made to database since last commit
+        """
+        self.conn.commit()
+
     @property
     def conn(self) -> Any:
         """
@@ -210,21 +249,17 @@ class BaseSQL(BaseIO):
             )
 
     @abstractmethod
-    def query(self, query_string: str, *args, **kwargs) -> None:
-        """
-        Executes the query on the SQL database connected to this data loader.
-
-        Args:
-            query_string (str): SQL query string to apply to the connected data source.
-        """
-        pass
-
-    @abstractmethod
     def open(self) -> None:
         """
         Opens an underlying connection to the SQL data source.
         """
         pass
+
+    def rollback(self) -> None:
+        """
+        Rolls back (deletes) all changes made to database since last commit.
+        """
+        self.conn.rollback()
 
     def __del__(self):
         self.close()
