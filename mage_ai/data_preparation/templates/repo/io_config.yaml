@@ -1,37 +1,28 @@
 default:
-  #  Default profile created for data IO access. Add credentials for the sources you use and remove the rest.
-  BigQuery:
-    path_to_credentials: path/to/service/account/credentials
-  File:
-    filepath: filepath
-    format: format
-  AWS:
-    Redshift:
-      database: your_redshift_database_name
-      # Use the settings below if you are using temporary credentials
-      user: your_authentication_user_name
-      password: your_authentication_password
-      host: your_redshift_cluster_hostname
-      port: your_redshift_cluster_port
-      # Use the settings below if you are using IAM credentials
-      cluster_identifier: your_redshift_identifier
-      db_user: your_redshift_username
-      profile: your_aws_credentials_profile
-      iam: True
-    S3:
-      bucket_name: your_bucket_name
-      object_key: your_object_key
-    # Omit these settings if aws credentials are already configured on file
-    access_key_id: your_aws_access_key_id
-    secret_access_key: your_secret_access_key_id
-    region: your_aws_region
-  PostgreSQL:
-    database: your_postgres_database_name
-    user: your_postgres_database_username
-    password: your_postgres_database_password
-    host: your_postgres_database_host
-    port: your_postgres
-  Snowflake:
-    user: your_snowflake_username
-    password: your_snowflake_password
-    account: your_snowflake_account_identifier(with region)
+  # Default profile created for data IO access.
+  # Add your credentials for the source you use, and delete the rest.
+  AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+  AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+  AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
+  AWS_REGION: AWS Region
+  GOOGLE_SERVICE_ACC_KEY: Service account key (add nested object here)
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH: Path to service account key
+  POSTGRES_DBNAME: Database name
+  POSTGRES_USER: Database login username
+  POSTGRES_PASSWORD: Database login password
+  POSTGRES_HOST: Database hostname
+  POSTGRES_PORT: PostgreSQL database port
+  REDSHIFT_DBNAME: Name of Redshift database to connect to
+  REDSHIFT_HOST: Redshift Cluster hostname
+  REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
+  REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
+  REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
+  REDSHIFT_DBUSER: Redshift database user to generate credentials for
+  REDSHIFT_CLUSTER_ID: Redshift cluster ID
+  REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with
+  SNOWFLAKE_USER: Snowflake username
+  SNOWFLAKE_PASSWORD: Snowflake password
+  SNOWFLAKE_ACCOUNT: Snowflake account ID (including region)
+  SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional
+  SNOWFLAKE_DEFAULT_DB: Default database to use. Optional
+  SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional
