@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from mage_ai.io.config import BaseConfigLoader
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
-from typing import IO, Any, Callable, Mapping, Union
+from typing import IO, Any, Callable, Union
 import os
 import pandas as pd
 
@@ -65,7 +66,13 @@ class BaseIO(ABC):
 
     @classmethod
     @abstractmethod
-    def with_config(cls, config: Mapping[str, Any]) -> None:
+    def with_config(cls, config: BaseConfigLoader) -> None:
+        """
+        Initializes BaseIO Object from configuration loader
+
+        Args:
+            config (BaseConfigLoader): Configuration loader object
+        """
         pass
 
     @abstractmethod
