@@ -88,8 +88,10 @@ class VariableManager:
         return sorted([v.split('.')[0] for v in variables])
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
-        return os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
-
+        path = os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+        return path
 
 def get_global_variable(pipeline_uuid: str, key: str) -> Any:
     return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
