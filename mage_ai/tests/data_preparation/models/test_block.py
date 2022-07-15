@@ -46,29 +46,30 @@ class BlockTest(TestCase):
             upstream_block_uuids=['test_data_loader'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 1, 3], 'col2': [2, 2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            '''
+            )
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @transformer
 def remove_duplicate_rows(df):
     df_transformed = df.drop_duplicates()
     return [df_transformed]
-            ''')
+            '''
+            )
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
 
         variable_manager = VariableManager(pipeline.repo_path)
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block2.uuid,
-            'df',
-            variable_type='dataframe'
+            pipeline.uuid, block2.uuid, 'df', variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
@@ -97,38 +98,41 @@ def remove_duplicate_rows(df):
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            '''
+            )
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [5], 'col2': [6]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            '''
+            )
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @transformer
 def union_datasets(df1, df2):
     df_union = pd.concat([df1, df2])
     return [df_union]
-            ''')
+            '''
+            )
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
         asyncio.run(block3.execute())
 
         variable_manager = VariableManager(pipeline.repo_path)
         data = variable_manager.get_variable(
-            pipeline.uuid,
-            block3.uuid,
-            'df',
-            variable_type='dataframe'
+            pipeline.uuid, block3.uuid, 'df', variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
@@ -136,10 +140,12 @@ def union_datasets(df1, df2):
             'df',
             variable_type='dataframe_analysis',
         )
-        df_final = pd.concat([
-            pd.DataFrame({'col1': [1, 3], 'col2': [2, 4]}),
-            pd.DataFrame({'col1': [5], 'col2': [6]}),
-        ])
+        df_final = pd.concat(
+            [
+                pd.DataFrame({'col1': [1, 3], 'col2': [2, 4]}),
+                pd.DataFrame({'col1': [5], 'col2': [6]}),
+            ]
+        )
         assert_frame_equal(data, df_final)
         self.assertEqual(
             analysis['metadata']['column_types'],
@@ -147,7 +153,7 @@ def union_datasets(df1, df2):
         )
         self.assertTrue(len(analysis['statistics']) > 0)
         self.assertTrue(len(analysis['insights']) > 0)
-        self.assertTrue(len(analysis['suggestions']) > 0)
+        self.assertTrue(len(analysis['suggestions']) == 0)
 
     def test_execute_validation(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
@@ -161,38 +167,46 @@ def union_datasets(df1, df2):
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [1, 3], 'col2': [2, 4]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            '''
+            )
         with open(block2.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @data_loader
 def load_data():
     data = {'col1': [5], 'col2': [6]}
     df = pd.DataFrame(data)
     return [df]
-            ''')
+            '''
+            )
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @transformer
 def incorrect_function(df1):
     return df1
-            ''')
+            '''
+            )
         asyncio.run(block1.execute())
         asyncio.run(block2.execute())
         with self.assertRaises(Exception):
             asyncio.run(block3.execute())
 
         with open(block3.file_path, 'w') as file:
-            file.write('''import pandas as pd
+            file.write(
+                '''import pandas as pd
 @transformer
 def incorrect_function(df1, df2, df3):
     return df1
-            ''')
+            '''
+            )
         with self.assertRaises(Exception):
             asyncio.run(block3.execute())
 
@@ -201,19 +215,25 @@ def incorrect_function(df1, df2, df3):
         block2 = Block.create('test_data_exporter', 'data_exporter', self.repo_path)
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
-        self.assertEqual(block1.to_dict(), dict(
-            name='test_transformer_2',
-            uuid='test_transformer_2',
-            type='transformer',
-            status='not_executed',
-            upstream_blocks=[],
-            downstream_blocks=['test_data_exporter'],
-        ))
-        self.assertEqual(block2.to_dict(), dict(
-            name='test_data_exporter',
-            uuid='test_data_exporter',
-            type='data_exporter',
-            status='not_executed',
-            upstream_blocks=['test_transformer_2'],
-            downstream_blocks=[],
-        ))
+        self.assertEqual(
+            block1.to_dict(),
+            dict(
+                name='test_transformer_2',
+                uuid='test_transformer_2',
+                type='transformer',
+                status='not_executed',
+                upstream_blocks=[],
+                downstream_blocks=['test_data_exporter'],
+            ),
+        )
+        self.assertEqual(
+            block2.to_dict(),
+            dict(
+                name='test_data_exporter',
+                uuid='test_data_exporter',
+                type='data_exporter',
+                status='not_executed',
+                upstream_blocks=['test_transformer_2'],
+                downstream_blocks=[],
+            ),
+        )
