@@ -1,8 +1,42 @@
 from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
+from enum import Enum
 from typing import Any, Union
 import boto3
 import os
+
+
+class ConfigKeys(str, Enum):
+    """
+    List of configuration settings for use with data IO clients.
+    """
+
+    AWS_ACCESS_KEY_ID = 'AWS_ACCESS_KEY_ID'
+    AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY'
+    AWS_SESSION_TOKEN = 'AWS_SESSION_TOKEN'
+    AWS_REGION = 'AWS_REGION'
+    FILE_PATH = 'FILE_PATH'
+    FILE_FORMAT = 'FILE_FORMAT'
+    GOOGLE_SERVICE_ACC_CREDENTIALS = 'GOOGLE_SERVICE_ACC_CREDENTIALS'
+    GOOGLE_ACCOUNT_CREDENTIALS = 'GOOGLE_ACCOUNT_CREDENTIALS'
+    POSTGRES_DB = 'POSTGRES_DB'
+    POSTGRES_USER = 'POSTGRES_USER'
+    POSTGRES_PASSWORD = 'POSTGRES_PASSWORD'
+    POSTGRES_HOST = 'POSTGRES_HOST'
+    POSTGRES_PORT = 'POSTGRES_PORT'
+    REDSHIFT_DB = 'REDSHIFT_DB'
+    REDSHIFT_HOST = 'REDSHIFT_HOST'
+    REDSHIFT_PORT = 'REDSHIFT_PORT'
+    REDSHIFT_TEMP_CRED_USER = 'REDSHIFT_TEMP_CRED_USER'
+    REDSHIFT_TEMP_CRED_PASSWORD = 'REDSHIFT_TEMP_CRED_PASSWORD'
+    REDSHIFT_DB_USER = 'REDSHIFT_DB_USER'
+    REDSHIFT_CLUSTER_ID = 'REDSHIFT_CLUSTER_ID'
+    SNOWFLAKE_USER = 'SNOWFLAKE_USER'
+    SNOWFLAKE_PASSWORD = 'SNOWFLAKE_PASSWORD'
+    SNOWFLAKE_ACCOUNT = 'SNOWFLAKE_ACCOUNT'
+    SNOWFLAKE_DEFAULT_WH = 'SNOWFLAKE_DEFAULT_WH'
+    SNOWFLAKE_DEFAULT_DB = 'SNOWFLAKE_DEFAULT_DB'
+    SNOWFLAKE_DEFAULT_SCHEMA = 'SNOWFLAKE_DEFAULT_SCHEMA'
 
 
 class BaseConfigLoader(ABC):
@@ -86,3 +120,17 @@ class EnvironmentVariableLoader(BaseConfigLoader):
             return os.environ[env_var]
         except KeyError:
             raise KeyError(f'Unable to load config:  environment variable \'{env_var}\' not found')
+
+
+class ConfigFileLoader(BaseConfigLoader):
+    def get(self, key: str, **kwargs) -> Any:
+        """
+        Loads the secret stored under `key`.
+
+        Args:
+            key (str): The key value of the secret to load
+
+        Returns:
+            Any: The secret stored under `key` in the secret manager
+        """
+        pass
