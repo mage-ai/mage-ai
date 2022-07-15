@@ -17,7 +17,7 @@ def transform_in_{{ data_source }}(*args) -> DataFrame:
     config_profile = 'default'
 
     # Specify table to sample data from. Use to visualize changes to table.
-    sample_table = 'table_to_sample_data_from'
+    sample_table = 'table_to_sample_data_from (include schema name if applicable)'
     sample_size = 10_000
 
     with {{ data_source_handler }}.with_config(IOConfig(config_path).use(config_profile)) as loader:

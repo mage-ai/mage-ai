@@ -479,7 +479,7 @@ def transform_in_postgres(*args) -> DataFrame:
     \"\"\"
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
-    sample_table = 'table_to_sample_data_from'
+    sample_table = 'table_to_sample_data_from (include schema name if applicable)'
 
     with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
@@ -505,7 +505,7 @@ def transform_in_bigquery(*args) -> DataFrame:
     \"\"\"
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
-    sample_table = 'table_to_sample_data_from'
+    sample_table = 'table_to_sample_data_from (include schema name if applicable)'
 
     with BigQuery.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
