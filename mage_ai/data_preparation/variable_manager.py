@@ -3,11 +3,23 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Any, Dict, List
 import os
 import pandas as pd
+import yaml
 
 
 class VariableManager:
     def __init__(self, repo_path=None):
         self.repo_path = repo_path or get_repo_path()
+        self.variables_dir = self.repo_path
+        try:
+            with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
+                repo_config = yaml.full_load(f) or {}
+                variables_dir = repo_config.get('variables_dir')
+                if variables_dir is not None:
+                    self.variables_dir = os.path.abspath(
+                        os.path.join(self.repo_path, variables_dir),
+                    )
+        except Exception:
+            pass
         # TODO: implement caching logic
 
     def add_variable(
@@ -87,7 +99,10 @@ class VariableManager:
         return sorted([v.split('.')[0] for v in variables])
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
-        return os.path.join(self.repo_path, 'pipelines', pipeline_uuid)
+        path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+        return path
 
 
 def get_global_variable(pipeline_uuid: str, key: str) -> Any:
