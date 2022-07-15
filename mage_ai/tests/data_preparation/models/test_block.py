@@ -147,7 +147,7 @@ def union_datasets(df1, df2):
         )
         self.assertTrue(len(analysis['statistics']) > 0)
         self.assertTrue(len(analysis['insights']) > 0)
-        self.assertTrue(len(analysis['suggestions']) > 0)
+        self.assertTrue(len(analysis['suggestions']) == 0)
 
     def test_execute_validation(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
