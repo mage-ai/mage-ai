@@ -2,14 +2,14 @@ from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Tuple, Union
 import boto3
 import os
 import re
 import yaml
 
 
-class ConfigKeys(str, Enum):
+class ConfigKey(str, Enum):
     """
     List of configuration settings for use with data IO clients.
     """
@@ -47,7 +47,7 @@ class BaseConfigLoader(ABC):
     """
 
     @abstractmethod
-    def get(self, key: str, **kwargs) -> Any:
+    def get(self, key: Union[ConfigKey, str], **kwargs) -> Any:
         """
         Loads the configuration setting stored under `key`.
 
@@ -68,7 +68,9 @@ class AWSSecretLoader(BaseConfigLoader):
     def __init__(self, **kwargs):
         self.client = boto3.client('secretsmanager', **kwargs)
 
-    def get(self, secret_id: str, version_id=None, version_stage_label=None) -> Union[bytes, str]:
+    def get(
+        self, secret_id: Union[ConfigKey, str], version_id=None, version_stage_label=None
+    ) -> Union[bytes, str]:
         """
         Loads the secret stored under `secret_id`. Can also specify the version of the
         secret to fetch. If
@@ -104,7 +106,7 @@ class AWSSecretLoader(BaseConfigLoader):
 
 
 class EnvironmentVariableLoader(BaseConfigLoader):
-    def get(self, env_var: str) -> Any:
+    def get(self, env_var: Union[ConfigKey, str]) -> Any:
         """
         Loads the config setting stored under the environment variable
         `env_var`.
@@ -115,7 +117,7 @@ class EnvironmentVariableLoader(BaseConfigLoader):
         Returns:
             Any: The configuration setting stored under `env_var`
         """
-        return os.environ.get(env_var)
+        return os.getenv(env_var)
 
 
 class ConfigFileLoader(BaseConfigLoader):
@@ -133,14 +135,28 @@ class ConfigFileLoader(BaseConfigLoader):
         self.filepath = Path(filepath)
         self.profile = profile
 
-    def map_keys(self, key: str) -> Any:
+    def map_keys(self, key: Union[ConfigKey, str]) -> Tuple[str, str]:
+        """
+        Maps ConfigKey string to the (parent, child) key pair format used
+        by IOConfig.
+
+        Args:
+            key (str): Input configuration setting key to convert.
+
+        Raises:
+            ValueError: Raised if unable to separate key into (parent, child) format, indicating
+            that the key is improperly formatted.
+
+        Returns:
+            Tuple[str, str]: The mapped (parent, child) key pair to use with configuration file.
+        """
         parts = key.split('_', maxsplit=1)
         try:
             return parts[0].lower(), parts[1].lower()
         except:
             raise ValueError(f'Error loading config: key \'{key}\' is improperly formatted')
 
-    def get(self, key: str) -> Any:
+    def get(self, key: Union[ConfigKey, str]) -> Any:
         """
         Loads the configuration setting stored under `key`.
 
