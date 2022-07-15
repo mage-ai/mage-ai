@@ -1,7 +1,7 @@
-from mage_ai.io.base import BaseFile, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from pandas import DataFrame
-from typing import Any, Mapping
+from typing import Any, Mapping, Union
+from os import PathLike
 
 
 class FileIO(BaseFile):
@@ -38,10 +38,15 @@ class FileIO(BaseFile):
             self._write(df, self.filepath, **kwargs)
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'FileIO':
-        try:
-            return cls(**config[IOConfigKeys.FILE])
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for \'{IOConfigKeys.FILE}\' under profile'
-            )
+    def with_config(
+        cls,
+        config: Mapping[str, Any],
+        filepath: PathLike,
+        format: Union[FileFormat, str] = None,
+        verbose=False,
+    ) -> 'FileIO':
+        """
+        Initializes FileIO client from configuration loader. This method is identical to the
+        main constructor is and kept for compatibility.
+        """
+        return cls(filepath, format, verbose)

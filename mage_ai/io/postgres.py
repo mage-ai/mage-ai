@@ -8,10 +8,8 @@ from mage_ai.io.export_utils import (
     infer_dtypes,
     PandasTypes,
 )
-from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame, read_sql, Series
 from psycopg2 import connect
-from typing import Any, Mapping
 import numpy as np
 
 
