@@ -6,6 +6,7 @@ from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
 )
 from mage_ai.data_preparation.models.variable import Variable
+from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import copy_template_directory
 from queue import Queue
@@ -19,8 +20,12 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 class Pipeline:
     def __init__(self, uuid, repo_path=None):
+        self.block_configs = []
+        self.blocks_by_uuid = {}
+        self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
+        self.widget_configs = []
         self.load_config_from_yaml()
 
     @property
@@ -144,20 +149,42 @@ class Pipeline:
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
         self.name = config.get('name')
+
         self.block_configs = config.get('blocks', [])
-        blocks = [
-            Block.get_block(c.get('name'), c.get('uuid'), c.get('type'), c.get('status'), self)
-            for c in self.block_configs
-        ]
-        self.blocks_by_uuid = {b.uuid: b for b in blocks}
-        for b in self.block_configs:
-            block = self.blocks_by_uuid[b['uuid']]
+        self.blocks_by_uuid = self.__initialize_blocks_by_uuid(self.block_configs, [
+            Block.get_block(
+                c.get('name'),
+                c.get('uuid'),
+                c.get('type'),
+                c.get('status'),
+                self,
+            ) for c in self.block_configs
+        ])
+
+        self.widget_configs = config.get('widgets', [])
+        self.widgets_by_uuid = self.__initialize_blocks_by_uuid(self.widget_configs, [
+            Widget.get_block(
+                c.get('name'),
+                c.get('uuid'),
+                c.get('type'),
+                c.get('status'),
+                self,
+                configuration=c.get('configuration'),
+            ) for c in self.widget_configs
+        ])
+
+    def __initialize_blocks_by_uuid(self, configs, blocks):
+        blocks_by_uuid = {b.uuid: b for b in blocks}
+        for b in configs:
+            block = blocks_by_uuid[b['uuid']]
             block.downstream_blocks = [
-                self.blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
+                blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
             ]
             block.upstream_blocks = [
-                self.blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
+                blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
             ]
+
+        return blocks_by_uuid
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         return dict(

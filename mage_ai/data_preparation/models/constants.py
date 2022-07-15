@@ -26,6 +26,7 @@ class BlockStatus(str, Enum):
 
 
 class BlockType(str, Enum):
+    CHART = 'chart'
     DATA_EXPORTER = 'data_exporter'
     DATA_LOADER = 'data_loader'
     SCRATCHPAD = 'scratchpad'
@@ -33,6 +34,7 @@ class BlockType(str, Enum):
 
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [
+    BlockType.CHART,
     BlockType.DATA_EXPORTER,
     BlockType.DATA_LOADER,
     BlockType.TRANSFORMER,
