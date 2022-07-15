@@ -154,8 +154,15 @@ def __fetch_transformer_data_warehouse_template(data_source: DataSource):
     data_source_handler = MAP_DATASOURCE_TO_HANDLER.get(data_source)
     if data_source_handler is None:
         raise ValueError(f'No associated database/warehouse for data source \'{data_source}\'')
+
+    if data_source != DataSource.BIGQUERY:
+        additional_args = '\n        loader.commit() # Permanently apply database changes'
+    else:
+        additional_args = ''
+
     return (
         template.render(
+            additional_args=additional_args,
             data_source=data_source.value,
             data_source_handler=data_source_handler,
         )

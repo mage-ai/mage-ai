@@ -109,6 +109,17 @@ class BigQuery(BaseIO):
                     )
             self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
+    def query(self, query_string: str, **kwargs) -> None:
+        """
+        Sends query to the connected BigQuery warehouse.
+
+        Args:
+            query_string (str): Query to execute on the BigQuery warehouse.
+            **kwargs: Additional arguments to pass to query, such as query configurations
+        """
+        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            self.client.query(query_string, *kwargs)
+
     @classmethod
     def with_config(cls, config: Mapping[str, Any]) -> 'BigQuery':
         try:

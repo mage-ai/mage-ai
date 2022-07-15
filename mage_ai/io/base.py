@@ -170,7 +170,25 @@ class BaseFile(BaseIO):
             print('')
 
 
-class BaseSQL(BaseIO):
+class BaseDatabase(BaseIO):
+    """
+    Base data loader for connecting to a database. This adds `query` method which allows a user
+    to send queries to the databse server.
+    """
+
+    @abstractmethod
+    def query(self, query_string: str, **kwargs) -> None:
+        """
+        Sends query to the connected database
+
+        Args:
+            query_string (str): Query to send to the connected database.
+            **kwargs: Additional arguments to pass to query, such as query configurations
+        """
+        pass
+
+
+class BaseSQL(BaseDatabase):
     """
     Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
     to the SQL data source after data loading is complete.
@@ -195,6 +213,12 @@ class BaseSQL(BaseIO):
             del self._ctx
         if self.verbose and self.printer.exists_previous_message:
             print('')
+
+    def commit(self) -> None:
+        """
+        Commits all changes made to database since last commit
+        """
+        self.conn.commit()
 
     @property
     def conn(self) -> Any:
@@ -225,6 +249,12 @@ class BaseSQL(BaseIO):
         Opens an underlying connection to the SQL data source.
         """
         pass
+
+    def rollback(self) -> None:
+        """
+        Rolls back (deletes) all changes made to database since last commit.
+        """
+        self.conn.rollback()
 
     def __del__(self):
         self.close()

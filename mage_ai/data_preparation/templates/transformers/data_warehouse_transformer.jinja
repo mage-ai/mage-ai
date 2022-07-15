@@ -19,6 +19,5 @@ def transform_in_{{ data_source }}(*args) -> DataFrame:
 
     with {{ data_source_handler }}.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
-        loader.query('your transformation_query')
-        loader.commit() # Permanently write your changes
+        loader.query('your transformation_query'){{ additional_args }}
         return loader.load(f'SELECT * FROM {sample_table};')

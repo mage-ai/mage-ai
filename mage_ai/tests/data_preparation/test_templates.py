@@ -484,7 +484,7 @@ def transform_in_postgres(*args) -> DataFrame:
     with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.query('your transformation_query')
-        loader.commit() # Permanently write your changes
+        loader.commit() # Permanently apply database changes
         return loader.load(f'SELECT * FROM {sample_table};')
 """
 
@@ -510,7 +510,6 @@ def transform_in_bigquery(*args) -> DataFrame:
     with BigQuery.with_config(IOConfig(config_path).use(config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.query('your transformation_query')
-        loader.commit() # Permanently write your changes
         return loader.load(f'SELECT * FROM {sample_table};')
 """
 
