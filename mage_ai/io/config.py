@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
+from pathlib import Path
 from typing import Any, Union
 import boto3
 import os
+import re
+import yaml
 
 
 class ConfigKeys(str, Enum):
@@ -15,21 +18,19 @@ class ConfigKeys(str, Enum):
     AWS_SECRET_ACCESS_KEY = 'AWS_SECRET_ACCESS_KEY'
     AWS_SESSION_TOKEN = 'AWS_SESSION_TOKEN'
     AWS_REGION = 'AWS_REGION'
-    FILE_PATH = 'FILE_PATH'
-    FILE_FORMAT = 'FILE_FORMAT'
     GOOGLE_SERVICE_ACC_CREDENTIALS = 'GOOGLE_SERVICE_ACC_CREDENTIALS'
     GOOGLE_ACCOUNT_CREDENTIALS = 'GOOGLE_ACCOUNT_CREDENTIALS'
-    POSTGRES_DB = 'POSTGRES_DB'
+    POSTGRES_DBNAME = 'POSTGRES_DB'
     POSTGRES_USER = 'POSTGRES_USER'
     POSTGRES_PASSWORD = 'POSTGRES_PASSWORD'
     POSTGRES_HOST = 'POSTGRES_HOST'
     POSTGRES_PORT = 'POSTGRES_PORT'
-    REDSHIFT_DB = 'REDSHIFT_DB'
+    REDSHIFT_DBNAME = 'REDSHIFT_DB'
     REDSHIFT_HOST = 'REDSHIFT_HOST'
     REDSHIFT_PORT = 'REDSHIFT_PORT'
     REDSHIFT_TEMP_CRED_USER = 'REDSHIFT_TEMP_CRED_USER'
     REDSHIFT_TEMP_CRED_PASSWORD = 'REDSHIFT_TEMP_CRED_PASSWORD'
-    REDSHIFT_DB_USER = 'REDSHIFT_DB_USER'
+    REDSHIFT_DBUSER = 'REDSHIFT_DB_USER'
     REDSHIFT_CLUSTER_ID = 'REDSHIFT_CLUSTER_ID'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
     SNOWFLAKE_PASSWORD = 'SNOWFLAKE_PASSWORD'
@@ -41,20 +42,21 @@ class ConfigKeys(str, Enum):
 
 class BaseConfigLoader(ABC):
     """
-    Base configuration loader class. This base class is no more than a read-only
-    mapping that defines an interface for reading configuration settings.
+    Base configuration loader class. A configuration loader is a read-only storage of configuration
+    settings. The source of the configuration settings is dependent on the specific loader.
     """
 
     @abstractmethod
     def get(self, key: str, **kwargs) -> Any:
         """
-        Loads the secret stored under `key`.
+        Loads the configuration setting stored under `key`.
 
         Args:
-            key (str): The key value of the secret to load
+            key (str): Key name of the configuration setting to load
 
         Returns:
-            Any: The secret stored under `key` in the secret manager
+            Any: The configuration setting stored under `key` in the configuration manager. If key
+                 doesn't exist, return None
         """
         pass
 
@@ -77,7 +79,7 @@ class AWSSecretLoader(BaseConfigLoader):
         Args:
             secret_id (str): ID of the secret to load
             version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
-            version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.s
+            version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.
 
         Returns:
             Union(bytes, str): The secret stored under `secret_id` in AWS secret manager. If secret is:
@@ -91,12 +93,9 @@ class AWSSecretLoader(BaseConfigLoader):
                 VersionStage=version_stage_label,
             )
         except ClientError as error:
-            if error.response['Error']['Code'] == 'ResourceNotFoundException':
-                raise KeyError(f'Unable to load config:  secret \'{secret_id}\' not found')
-            elif error.response['Error']['Code'] == 'InternalServiceError':
-                raise RuntimeError(f'Unable to load config: {error.response["Error"]["Message"]}')
-            else:
-                raise ClientError(error.response['Error']['Message'])
+            if error.response['Error']['Code'] == 'InternalServiceError':
+                print(f'Error loading config: server error - {error.response["Error"]["Message"]}')
+            return None
 
         if 'SecretBinary' in response:
             return response['SecretBinary']
@@ -116,21 +115,46 @@ class EnvironmentVariableLoader(BaseConfigLoader):
         Returns:
             Any: The configuration setting stored under `env_var`
         """
-        try:
-            return os.environ[env_var]
-        except KeyError:
-            raise KeyError(f'Unable to load config:  environment variable \'{env_var}\' not found')
+        return os.environ.get(env_var)
 
 
 class ConfigFileLoader(BaseConfigLoader):
-    def get(self, key: str, **kwargs) -> Any:
+    KEY_PARENT = re.compile(r'^\S+_')
+
+    def __init__(
+        self, filepath: os.PathLike = './default_repo/io_config.yaml', profile='default'
+    ) -> None:
         """
-        Loads the secret stored under `key`.
+        Initializes IO Configuration loader
 
         Args:
-            key (str): The key value of the secret to load
-
-        Returns:
-            Any: The secret stored under `key` in the secret manager
+            filepath (os.PathLike): Path to IO configuration file.
         """
-        pass
+        self.filepath = Path(filepath)
+        self.profile = profile
+
+    def map_keys(self, key: str) -> Any:
+        parts = key.split('_', maxsplit=1)
+        try:
+            return parts[0].lower(), parts[1].lower()
+        except:
+            raise ValueError(f'Error loading config: key \'{key}\' is improperly formatted')
+
+    def get(self, key: str) -> Any:
+        """
+        Loads the configuration setting stored under `key`.
+
+        Args:
+            key (str): Key name of the configuration setting to load
+            profile (str, optional): Profile to load the configuration setting from. Defaults to 'default'.
+        """
+        try:
+            with self.filepath.open('r') as fin:
+                config = yaml.full_load(fin.read())[self.profile]
+        except FileNotFoundError:
+            print(f'Error loading config: configuration file not found at \'{self.filepath}\'')
+        parent, child = self.map_keys(key)
+        loader_settings = config.get(parent)
+        if loader_settings is None:
+            return None
+        return loader_settings.get(child)
