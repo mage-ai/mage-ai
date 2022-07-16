@@ -5,7 +5,6 @@ import FileType, {
   FOLDER_NAME_PIPELINES,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
-import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import { BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
 import {
@@ -15,10 +14,13 @@ import {
   Folder as FolderIcon,
   Pipeline,
 } from '@oracle/icons';
+import { ContextAreaProps } from '@components/ContextMenu';
+import { FileContextEnum } from './index';
 import {
   ICON_SIZE,
   INDENT_WIDTH,
 } from './index.style';
+import { SpecialFileEnum } from '@components/FileTree/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { get, set } from '@storage/localStorage';
@@ -27,7 +29,6 @@ import {
   getBlockFromFile,
   getFullPath,
 } from './utils';
-import { pauseEvent } from '@utils/events';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -45,7 +46,7 @@ type FolderProps = {
   file: FileType;
   level: number;
   theme: ThemeType;
-} & FolderSharedProps;
+} & FolderSharedProps & ContextAreaProps;
 
 function Folder({
   file,
@@ -53,6 +54,7 @@ function Folder({
   onSelectBlockFile,
   openFile,
   openPipeline,
+  setContextItem,
   theme,
 }: FolderProps) {
   const {
@@ -110,6 +112,7 @@ function Folder({
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={openPipeline}
+      setContextItem={setContextItem}
       theme={theme}
     />
   )), [
@@ -123,7 +126,7 @@ function Folder({
       <div
         className="row"
         onClick={(e) => {
-          pauseEvent(e);
+          e.preventDefault();
 
           if (disabled) {
             return;
@@ -149,6 +152,27 @@ function Folder({
                 getFullPath(file).split('/').slice(1).join('/'),
               );
             }
+          }
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+
+          const contextPayload = {
+            data: {
+              block: getBlockFromFile(file),
+            },
+          };
+
+          if (disabled) {
+            setContextItem({ type: FileContextEnum.DISABLED, ...contextPayload });
+          } else if (isPipelineFolder) {
+            setContextItem({ type: FileContextEnum.PIPELINE, ...contextPayload });
+          } else if (children) {
+            setContextItem({ type: FileContextEnum.FOLDER, ...contextPayload });
+          } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+            setContextItem({ type: FileContextEnum.FILE, ...contextPayload });
+          } else {
+            setContextItem({ type: FileContextEnum.BLOCK_FILE, ...contextPayload });
           }
         }}
         style={{

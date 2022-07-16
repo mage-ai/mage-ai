@@ -438,7 +438,7 @@ function CodeBlockProps({
               onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
               onChange={(e) => {
                 setNewBlockUuid(e.target.value);
-                pauseEvent(e);
+                e.preventDefault();
               }}
               onClick={() => {
                 setAnyInputFocused(true);

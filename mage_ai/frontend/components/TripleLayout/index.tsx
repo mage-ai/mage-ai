@@ -128,7 +128,7 @@ function TripleLayout({
         && e.offsetX <= e.target.offsetWidth + DRAGGABLE_WIDTH
       ) {
         setBeforeMousedownActive(true);
-      pauseEvent(e);
+        e.preventDefault();
         document?.addEventListener?.('mousemove', resizeBefore, false);
       }
     };
@@ -171,7 +171,7 @@ function TripleLayout({
     const addMousedown = (e) => {
       if (e.offsetX >= -1 * DRAGGABLE_WIDTH && e.offsetX <= DRAGGABLE_WIDTH) {
         setAfterMousedownActive(true);
-        pauseEvent(e);
+        e.preventDefault();
         document?.addEventListener?.('mousemove', resizeAfter, false);
       }
     };

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
-import LinkType from '@interfaces/LinkType';
 import Text from '@oracle/elements/Text';
 import {
   FlyoutMenuContainerStyle,
@@ -109,7 +108,7 @@ function FlyoutMenu({
         top: height,
       }}
     >
-      {items.map(({
+      {items?.map(({
         keyTextGroups,
         label,
         onClick,

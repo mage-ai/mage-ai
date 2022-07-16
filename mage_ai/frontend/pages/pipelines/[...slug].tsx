@@ -14,6 +14,7 @@ import BlockType, {
   OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
@@ -417,6 +418,31 @@ function PipelineDetailPage({
     },
   );
 
+  const [deleteBlockFile] = useMutation(
+    ({ type, uuid }: BlockType) => (
+      api.blocks.useDelete(encodeURIComponent(`${type}/${uuid}`))()
+    ),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipeline();
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+            alert('Error deleting block file. Check that there are no downstream blocks, then try again.');
+          },
+        },
+      ),
+    },
+  );
+
   const [restartKernel] = useMutation(
     api.restart.kernels.useCreate(kernel?.id),
     {
@@ -593,16 +619,25 @@ function PipelineDetailPage({
     blocks,
   ]);
 
+  const fileTreeRef = useRef(null);
   const fileTree = useMemo(() => (
-    <FileBrowser
-      files={filesData?.files}
-      onSelectBlockFile={onSelectBlockFile}
-      openFile={openFile}
-      openPipeline={(uuid: string) => {
-        resetState();
-        router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-      }}
-    />
+    <ContextMenu
+      areaRef={fileTreeRef}
+      deleteBlockFile={deleteBlockFile}
+      enableContextItem
+      type={ContextMenuEnum.FILE_BROWSER}
+    >
+      <FileBrowser
+        files={filesData?.files}
+        onSelectBlockFile={onSelectBlockFile}
+        openFile={openFile}
+        openPipeline={(uuid: string) => {
+          resetState();
+          router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+        }}
+        ref={fileTreeRef}
+      />
+    </ContextMenu>
   ), [
     filesData?.files,
     onSelectBlockFile,
