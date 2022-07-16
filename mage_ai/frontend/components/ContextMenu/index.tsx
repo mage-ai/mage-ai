@@ -88,7 +88,7 @@ function ContextMenu({
       document.addEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  });
+  }, []);
 
   const handleClick = useCallback((e) => {
     e.preventDefault();
