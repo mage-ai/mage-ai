@@ -131,6 +131,7 @@ function ContextMenu({
         top={anchorPoint.y}
       >
         <FlyoutMenu
+          compact
           items={contextItems[enableContextItem ? contextItem.type : type]}
           open={visible}
           parentRef={undefined}
