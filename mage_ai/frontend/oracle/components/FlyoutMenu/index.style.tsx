@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
@@ -13,8 +14,9 @@ export const COMPACT_MENU_WIDTH = UNIT * 20;
 
 export const FlyoutMenuContainerStyle = styled.div<any>`
   position: absolute;
-  max-height: ${UNIT * 74}px;
+  max-height: ${UNIT * 58}px;
   overflow: auto;
+  ${ScrollbarStyledCss}
 
   ${props => !props.compact && `
     min-width: ${MENU_WIDTH}px;
