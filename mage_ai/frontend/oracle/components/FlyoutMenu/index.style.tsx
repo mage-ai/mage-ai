@@ -9,6 +9,7 @@ type LinkProps = {
 
 export const FlyoutMenuContainerStyle = styled.div<any>`
   position: absolute;
+
   ${props => !props.compact && `
     min-width: ${UNIT * 34}px;
   `}
