@@ -15,7 +15,7 @@ import {
   Pipeline,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
-import { FileContextEnum } from '.';
+import { FileContextEnum } from './index';
 import {
   ICON_SIZE,
   INDENT_WIDTH,

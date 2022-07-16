@@ -624,8 +624,8 @@ function PipelineDetailPage({
     <ContextMenu
       areaRef={fileTreeRef}
       deleteBlockFile={deleteBlockFile}
+      enableContextItem
       type={ContextMenuEnum.FILE_BROWSER}
-      useContextItem
     >
       <FileBrowser
         files={filesData?.files}

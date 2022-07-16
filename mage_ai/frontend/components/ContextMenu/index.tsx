@@ -4,18 +4,18 @@ import BlockType from '@interfaces/BlockType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import styled from 'styled-components';
 import { FileContextEnum } from '@components/FileBrowser';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { HEADER_HEIGHT, HEADER_Z_INDEX } from '@components/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ContextMenuSharedProps = {
-  deleteBlockFile: (b: BlockType) => void;
+  deleteBlockFile?: (b: BlockType) => void;
 };
 
 export type ContextMenuProps = {
-  children: any;
   areaRef: any;
+  children: any;
+  enableContextItem: boolean;
   type: ContextMenuEnum;
-  useContextItem: boolean;
 } & ContextMenuSharedProps;
 
 export enum ContextMenuEnum {
@@ -32,10 +32,10 @@ export interface ContextItemType {
 }
 
 const ContainerStyle = styled.div<{
-  top?: number;
+  bottom?: number;
   left?: number;
   right?: number;
-  bottom?: number;
+  top?: number;
   width?: number;
 }>`
   position: fixed;
@@ -74,8 +74,8 @@ function ContextMenu({
   areaRef,
   children,
   deleteBlockFile,
+  enableContextItem,
   type,
-  useContextItem,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
   const [contextItem, setContextItem] = useState({} as ContextItemType);
@@ -99,7 +99,7 @@ function ContextMenu({
 
   const handleContextMenu = useCallback((e: MouseEvent) => {
     if (areaRef.current.contains(e.target)) {
-      if (!useContextItem) {
+      if (!enableContextItem) {
         e.preventDefault();
       }
       setAnchorPoint({ x: e.pageX, y: e.pageY });
@@ -108,6 +108,8 @@ function ContextMenu({
       setVisible(false);
     }
   }, [
+    areaRef,
+    enableContextItem,
     setAnchorPoint,
     setVisible,
   ]);
@@ -129,7 +131,7 @@ function ContextMenu({
         top={anchorPoint.y}
       >
         <FlyoutMenu
-          items={contextItems[useContextItem ? contextItem.type : type]}
+          items={contextItems[enableContextItem ? contextItem.type : type]}
           open={visible}
           parentRef={undefined}
           uuid="ContextMenu"
