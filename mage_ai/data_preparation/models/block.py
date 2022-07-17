@@ -72,6 +72,18 @@ class Block:
         return File.from_path(self.file_path)
 
     @classmethod
+    def block_class_from_type(self, block_type: str) -> str:
+        return BLOCK_TYPE_TO_CLASS.get(block_type)
+
+    @classmethod
+    def after_create(self, block, **kwargs):
+        pipeline = kwargs.get('pipeline')
+        if pipeline is not None:
+            priority = kwargs.get('priority')
+            upstream_block_uuids = kwargs.get('upstream_block_uuids')
+            pipeline.add_block(block, upstream_block_uuids, priority=priority)
+
+    @classmethod
     def create(
         self,
         name,
@@ -105,9 +117,14 @@ class Block:
         else:
             load_template(block_type, config, file_path)
 
-        block = BLOCK_TYPE_TO_CLASS[block_type](name, uuid, block_type, pipeline=pipeline)
-        if pipeline is not None:
-            pipeline.add_block(block, upstream_block_uuids, priority=priority)
+        block = self.block_class_from_type(block_type)(name, uuid, block_type, pipeline=pipeline)
+        self.after_create(
+            block,
+            config=config,
+            pipeline=pipeline,
+            priority=priority,
+            upstream_block_uuids=upstream_block_uuids,
+        )
         return block
 
     @classmethod
@@ -125,10 +142,10 @@ class Block:
 
     @classmethod
     def get_block(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED, pipeline=None):
-        block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
+        block_class = self.block_class_from_type(block_type) or Block
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
-    def delete(self):
+    def delete(self, widget=False):
         """
         1. If pipeline is not None, delete the block from the pipeline but not delete the block
         file.
@@ -138,15 +155,15 @@ class Block:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         if self.pipeline is not None:
-            self.pipeline.delete_block(self)
+            self.pipeline.delete_block(self, widget=widget)
             # For block_type SCRATCHPAD, also delete the file if possible
             if self.type == BlockType.SCRATCHPAD:
-                pipelines = Pipeline.get_pipelines_by_block(self)
+                pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
             return
         # If pipeline is not specified, delete the block from all pipelines and delete the file.
-        pipelines = Pipeline.get_pipelines_by_block(self)
+        pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
         for p in pipelines:
             if not p.block_deletable(self):
                 raise Exception(
@@ -154,7 +171,7 @@ class Block:
                     'Please remove the dependencies before deleting the block.'
                 )
         for p in pipelines:
-            p.delete_block(p.get_block(self.uuid))
+            p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget)
         os.remove(self.file_path)
 
     def execute_sync(

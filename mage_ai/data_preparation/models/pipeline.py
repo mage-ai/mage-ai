@@ -71,7 +71,7 @@ class Pipeline:
         ]
 
     @classmethod
-    def get_pipelines_by_block(self, block, repo_path=None):
+    def get_pipelines_by_block(self, block, repo_path=None, widget=False):
         repo_path = repo_path or get_repo_path()
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         pipelines = []
@@ -79,7 +79,8 @@ class Pipeline:
             if entry.is_dir():
                 try:
                     p = Pipeline(entry.name, repo_path)
-                    if block.uuid in p.blocks_by_uuid:
+                    mapping = p.widgets_by_uuid if widget else p.blocks_by_uuid
+                    if block.uuid in mapping:
                         pipelines.append(p)
                 except Exception:
                     pass
@@ -92,10 +93,11 @@ class Pipeline:
             os.path.exists(os.path.join(pipeline_path, METADATA_FILE_NAME))
         )
 
-    def block_deletable(self, block):
-        if block.uuid not in self.blocks_by_uuid:
+    def block_deletable(self, block, widget=False):
+        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+        if block.uuid not in mapping:
             return True
-        return len(self.blocks_by_uuid[block.uuid].downstream_blocks) == 0
+        return len(mapping[block.uuid].downstream_blocks) == 0
 
     async def execute(
         self,
@@ -186,7 +188,12 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+    def to_dict(
+        self,
+        include_content=False,
+        include_outputs=False,
+        sample_count=None,
+    ):
         return dict(
             name=self.name,
             uuid=self.uuid,
@@ -197,6 +204,14 @@ class Pipeline:
                     sample_count=sample_count,
                 )
                 for b in self.blocks_by_uuid.values()
+            ],
+            widgets=[
+                b.to_dict(
+                    include_content=include_content,
+                    include_outputs=include_outputs,
+                    sample_count=sample_count,
+                )
+                for b in self.widgets_by_uuid.values()
             ],
         )
 
@@ -212,7 +227,7 @@ class Pipeline:
             self.uuid = new_uuid
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
-            self.__save()
+            self.save()
         if update_content and 'blocks' in data:
             for block_data in data['blocks']:
                 if 'uuid' in block_data:
@@ -224,26 +239,55 @@ class Pipeline:
                     if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                         block.save_outputs(block_data['outputs'], override=True)
 
-    def add_block(self, block, upstream_block_uuids=[], priority=None):
-        upstream_blocks = self.get_blocks(upstream_block_uuids)
+    def __add_block_to_mapping(
+        self,
+        blocks_by_uuid,
+        block,
+        upstream_blocks,
+        priority=None,
+    ):
+        mapping = blocks_by_uuid.copy()
+
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks.append(block)
         block.upstream_blocks = upstream_blocks
         block.pipeline = self
-        if priority is None or priority >= len(self.blocks_by_uuid.keys()):
-            self.blocks_by_uuid[block.uuid] = block
+        if priority is None or priority >= len(mapping.keys()):
+            mapping[block.uuid] = block
         else:
-            block_list = list(self.blocks_by_uuid.items())
+            block_list = list(mapping.items())
             block_list.insert(priority, (block.uuid, block))
-            self.blocks_by_uuid = dict(block_list)
-        self.__save()
+            mapping = dict(block_list)
+
+        return mapping
+
+    def add_block(self, block, upstream_block_uuids=[], priority=None, widget=False):
+        if widget:
+            self.widgets_by_uuid = self.__add_block_to_mapping(
+                self.widgets_by_uuid,
+                block,
+                upstream_blocks=self.get_blocks(upstream_block_uuids, widget=widget),
+                priority=priority,
+            )
+        else:
+            self.blocks_by_uuid = self.__add_block_to_mapping(
+                self.blocks_by_uuid,
+                block,
+                upstream_blocks=self.get_blocks(upstream_block_uuids),
+                priority=priority,
+            )
+
+        self.save()
+        return block
         return block
 
-    def get_block(self, block_uuid):
-        return self.blocks_by_uuid.get(block_uuid)
+    def get_block(self, block_uuid, widget=False):
+        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+        return mapping.get(block_uuid)
 
-    def get_blocks(self, block_uuids):
-        return [self.blocks_by_uuid[uuid] for uuid in block_uuids if uuid in self.blocks_by_uuid]
+    def get_blocks(self, block_uuids, widget=False):
+        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+        return [mapping[uuid] for uuid in block_uuids if uuid in mapping]
 
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
@@ -267,7 +311,7 @@ class Pipeline:
                     ]
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids)
         self.blocks_by_uuid[block.uuid] = block
-        self.__save()
+        self.save()
         return block
 
     def update_block_uuid(self, block, old_uuid):
@@ -284,14 +328,16 @@ class Pipeline:
             self.blocks_by_uuid = {
                 new_uuid if k == old_uuid else k: v for k, v in self.blocks_by_uuid.items()
             }
-        self.__save()
+        self.save()
         return block
 
     def delete(self):
         pass
 
-    def delete_block(self, block):
-        if block.uuid not in self.blocks_by_uuid:
+    def delete_block(self, block, widget=False):
+        mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+
+        if block.uuid not in mapping:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
         if len(block.downstream_blocks) > 0:
             downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
@@ -307,11 +353,15 @@ class Pipeline:
         variables_path = Variable.dir_path(self.dir_path, block.uuid)
         if os.path.exists(variables_path):
             shutil.rmtree(variables_path)
-        del self.blocks_by_uuid[block.uuid]
-        self.__save()
+
+        if widget:
+            del self.widgets_by_uuid[block.uuid]
+        else:
+            del self.blocks_by_uuid[block.uuid]
+        self.save()
         return block
 
-    def __save(self):
+    def save(self):
         pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)

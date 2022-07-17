@@ -13,6 +13,23 @@ class Widget(Block):
         self.configuration = kwargs.get('configuration', {})
 
     @classmethod
+    def after_create(self, block, **kwargs):
+        pipeline = kwargs.get('pipeline')
+        if pipeline is not None:
+            priority = kwargs.get('priority')
+            upstream_block_uuids = kwargs.get('upstream_block_uuids')
+            pipeline.add_block(
+                block,
+                upstream_block_uuids,
+                priority=priority,
+                widget=True,
+            )
+
+    @classmethod
+    def block_class_from_type(self, block_type: str) -> str:
+        return BLOCK_TYPE_TO_CLASS.get(block_type)
+
+    @classmethod
     def get_block(
         self,
         name,
@@ -31,6 +48,9 @@ class Widget(Block):
             pipeline=pipeline,
             configuration=configuration,
         )
+
+    def delete(self):
+        super().delete(widget=True)
 
     def to_dict(self, **kwargs):
         return merge_dict(super().to_dict(**kwargs), dict(

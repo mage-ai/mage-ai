@@ -1,9 +1,12 @@
+import json
 import simplejson
 import tornado.web
 import traceback
 
 
 class BaseHandler(tornado.web.RequestHandler):
+    model_class = None
+
     def check_origin(self, origin):
         return True
 
@@ -43,3 +46,10 @@ class BaseHandler(tornado.web.RequestHandler):
                     url_parameters=self.path_kwargs,
                 )
             )
+
+    def get_payload(self):
+        key = ''
+        if self.model_class:
+            key = self.model_class.__name__.lower()
+
+        return json.loads(self.request.body).get(key, {})
