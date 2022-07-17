@@ -7,9 +7,16 @@ type LinkProps = {
   highlighted: boolean;
 };
 
-export const FlyoutMenuContainerStyle = styled.div`
+export const FlyoutMenuContainerStyle = styled.div<any>`
   position: absolute;
-  min-width: ${UNIT * 34}px;
+
+  ${props => !props.compact && `
+    min-width: ${UNIT * 34}px;
+  `}
+
+  ${props => props.compact && `
+    min-width: ${UNIT * 20}px;
+  `}
 
   ${props => `
     box-shadow: ${(props.theme.shadow || dark.shadow).popup};

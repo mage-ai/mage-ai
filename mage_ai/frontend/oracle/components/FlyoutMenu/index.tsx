@@ -28,6 +28,7 @@ export type FlyoutMenuItemType = {
 };
 
 export type FlyoutMenuProps = {
+  compact?: boolean;
   items: FlyoutMenuItemType[];
   onClickCallback?: () => void;
   open: boolean;
@@ -36,6 +37,7 @@ export type FlyoutMenuProps = {
 };
 
 function FlyoutMenu({
+  compact,
   items,
   onClickCallback,
   open,
@@ -102,6 +104,7 @@ function FlyoutMenu({
 
   return (
     <FlyoutMenuContainerStyle
+      compact={compact}
       style={{
         display: !open ? 'none' : null,
         left: 0,
