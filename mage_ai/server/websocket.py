@@ -43,12 +43,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         custom_code = message.get('code')
         output = message.get('output')
         global_vars = message.get('global_vars')
-<<<<<<< HEAD
-
         run_upstream = message.get('run_upstream')
 
-=======
->>>>>>> e662dc5 ([sk] Some cleanup)
         if custom_code:
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
@@ -65,16 +61,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             block = pipeline.get_block(block_uuid)
             code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-<<<<<<< HEAD
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
                     custom_code,
+                    global_vars,
                     run_upstream=run_upstream,
                 )
-=======
-                code = add_execution_code(pipeline_uuid, block_uuid, custom_code, global_vars)
->>>>>>> a700585 ([sk] Added global variables to kernel-based execution)
 
             msg_id = client.execute(add_internal_output_info(code))
 
