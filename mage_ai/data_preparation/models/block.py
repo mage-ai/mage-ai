@@ -539,7 +539,6 @@ class Block:
         root_blocks = []
         upstream_block_uuids = \
             list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
-        upstream_block_uuids.remove(self.uuid)
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
