@@ -1,5 +1,5 @@
-from api.base import BaseHandler
-from api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
+from mage_ai.server.api.base import BaseHandler
+from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
 from mage_ai.data_preparation.models.block import Block
