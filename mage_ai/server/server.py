@@ -1,3 +1,5 @@
+from api.base import BaseHandler
+from api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
 from mage_ai.data_preparation.models.block import Block
@@ -14,57 +16,14 @@ import argparse
 import asyncio
 import json
 import os
-import simplejson
 import socket
 import tornado.ioloop
 import tornado.web
-import traceback
 import urllib.parse
 
 
 session = Session(key=bytes())
 manager = KernelManager(session=session)
-
-
-class BaseHandler(tornado.web.RequestHandler):
-    def check_origin(self, origin):
-        return True
-
-    def get_bool_argument(self, name, default_value=None):
-        value = self.get_argument(name, default_value)
-        if type(value) is not str:
-            return value
-        return value.lower() in ('yes', 'true', 't', '1')
-
-    def options(self, **kwargs):
-        self.set_status(204)
-        self.finish()
-
-    def set_default_headers(self):
-        self.set_header('Access-Control-Allow-Headers', '*')
-        self.set_header('Access-Control-Allow-Methods', 'DELETE, GET, PATCH, POST, PUT, OPTIONS')
-        self.set_header('Access-Control-Allow-Origin', '*')
-        self.set_header('Content-Type', 'application/json')
-
-    def write(self, chunk):
-        if type(chunk) is dict:
-            chunk = simplejson.dumps(chunk, ignore_nan=True)
-        super().write(chunk)
-
-    def write_error(self, status_code, **kwargs):
-        if status_code == 500:
-            exception = kwargs['exc_info'][1]
-            self.write(
-                dict(
-                    error=dict(
-                        code=status_code,
-                        errors=traceback.format_stack(),
-                        exception=str(exception),
-                        message=traceback.format_exc(),
-                    ),
-                    url_parameters=self.path_kwargs,
-                )
-            )
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -342,54 +301,63 @@ class KernelsHandler(BaseHandler):
 
 
 def make_app():
+    routes = [
+        (r'/', MainHandler),
+        # (r'/pipelines', MainHandler),
+        (r'/pipelines/(.*)', MainHandler),
+        (
+            r'/_next/static/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
+        ),
+        (
+            r'/fonts/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
+        ),
+        (
+            r'/(favicon.ico)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
+        ),
+        (r'/websocket/', WebSocketServer),
+        (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
+        (r'/api/files', ApiFileListHandler),
+        (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
+        (r'/api/pipelines', ApiPipelineListHandler),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
+            ApiPipelineBlockExecuteHandler,
+        ),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
+            ApiPipelineBlockHandler,
+        ),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
+            ApiPipelineBlockAnalysisHandler,
+        ),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
+            ApiPipelineBlockOutputHandler,
+        ),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables', ApiPipelineVariableListHandler),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets/(?P<block_uuid>\w+)',
+            ApiPipelineWidgetDetailHandler,
+        ),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets',
+            ApiPipelineWidgetListHandler,
+        ),
+        (r'/api/kernels', KernelsHandler),
+        (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
+    ]
     return tornado.web.Application(
-        [
-            (r'/', MainHandler),
-            # (r'/pipelines', MainHandler),
-            (r'/pipelines/(.*)', MainHandler),
-            (
-                r'/_next/static/(.*)',
-                tornado.web.StaticFileHandler,
-                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
-            ),
-            (
-                r'/fonts/(.*)',
-                tornado.web.StaticFileHandler,
-                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
-            ),
-            (
-                r'/(favicon.ico)',
-                tornado.web.StaticFileHandler,
-                {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
-            ),
-            (r'/websocket/', WebSocketServer),
-            (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
-            (r'/api/files', ApiFileListHandler),
-            (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)', ApiPipelineHandler),
-            (r'/api/pipelines', ApiPipelineListHandler),
-            (
-                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/execute',
-                ApiPipelineBlockExecuteHandler,
-            ),
-            (
-                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)',
-                ApiPipelineBlockHandler,
-            ),
-            (
-                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/analyses',
-                ApiPipelineBlockAnalysisHandler,
-            ),
-            (
-                r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks/(?P<block_uuid>\w+)/outputs',
-                ApiPipelineBlockOutputHandler,
-            ),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
-            (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables', ApiPipelineVariableListHandler),
-            (r'/api/kernels', KernelsHandler),
-            (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
-        ],
+        routes,
         autoreload=True,
         template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
     )
