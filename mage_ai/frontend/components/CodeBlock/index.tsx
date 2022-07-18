@@ -89,6 +89,7 @@ type CodeBlockProps = {
 
 function CodeBlockProps({
   addNewBlock,
+  addWidget,
   block,
   blockRefs,
   blocks,
@@ -527,6 +528,7 @@ function CodeBlockProps({
 
       {(selected || isInProgress) && (
         <CommandButtons
+          addWidget={addWidget}
           block={block}
           deleteBlock={deleteBlock}
           executionState={executionState}

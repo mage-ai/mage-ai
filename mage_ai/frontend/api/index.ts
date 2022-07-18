@@ -38,6 +38,7 @@ export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const VARIABLES: 'variables' = 'variables';
 export const VERSIONS: 'versions' = 'versions';
+export const WIDGETS: 'widgets' = 'widgets';
 
 // Update this as routes get added
 const RESOURCES: any[][] = [
@@ -58,6 +59,7 @@ const RESOURCES: any[][] = [
   [STATUS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],
+  [WIDGETS, PIPELINES],
 ];
 
 const apis: any = {};

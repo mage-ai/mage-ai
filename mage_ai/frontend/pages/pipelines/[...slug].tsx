@@ -537,6 +537,45 @@ function PipelineDetailPage({
     setBlocks,
   ]);
 
+  const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
+  const addWidgetAtIndex = useCallback((
+    widget: blockType,
+    idx: number,
+    onCreateCallback?: (widget: BlockType) => void,
+    name: string = randomNameGenerator(),
+  ) => createWidget({
+    widget: {
+      name,
+      priority: idx,
+      ...widget,
+    },
+  }).then(response => onSuccess(
+    response, {
+      callback: () => {
+        const {
+          data: {
+            widget,
+          },
+        } = response;
+        console.log(response)
+        // setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
+        onCreateCallback?.(widget);
+        fetchFileTree();
+        fetchPipeline();
+      },
+      onErrorCallback: ({
+        error: {
+          errors,
+          message,
+        },
+      }) => {
+        console.log(errors, message);
+      },
+    },
+  )), [
+    createWidget,
+  ]);
+
   useEffect(() => {
     if (pipelineUUIDPrev !== pipelineUUID) {
       setBlocks([]);
@@ -682,6 +721,7 @@ function PipelineDetailPage({
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndex}
+      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, 0)}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
@@ -709,6 +749,7 @@ function PipelineDetailPage({
     />
   ), [
     addNewBlockAtIndex,
+    addWidgetAtIndex,
     blockRefs,
     blocks,
     deleteBlock,

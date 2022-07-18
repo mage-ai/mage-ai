@@ -4,6 +4,7 @@ import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
 export enum BlockTypeEnum {
+  CHART = 'chart',
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   SCRATCHPAD = 'scratchpad',
@@ -68,8 +69,18 @@ export interface BlockRequestPayloadType {
   };
 }
 
+enum ChartTypeEnum {
+  HISTOGRAM = 'histogram',
+}
+
+interface ConfigurationType {
+  chart_type: ChartTypeEnum;
+  width_percentage: number;
+}
+
 export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
+  configuration?: ConfigurationType;
   content?: string;
   downstream_blocks?: string[];
   file?: string;
