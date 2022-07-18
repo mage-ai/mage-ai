@@ -208,6 +208,7 @@ def incorrect_function(df1, df2, df3):
             status='not_executed',
             upstream_blocks=[],
             downstream_blocks=['test_data_exporter'],
+            all_upstream_blocks_executed=True,
         ))
         self.assertEqual(block2.to_dict(), dict(
             name='test_data_exporter',
@@ -216,4 +217,5 @@ def incorrect_function(df1, df2, df3):
             status='not_executed',
             upstream_blocks=['test_transformer_2'],
             downstream_blocks=[],
+            all_upstream_blocks_executed=False,
         ))

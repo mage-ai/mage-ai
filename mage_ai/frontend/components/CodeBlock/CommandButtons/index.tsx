@@ -38,7 +38,7 @@ export type CommandButtonsSharedProps = {
 
 type CommandButtonsProps = {
   block: BlockType;
-  runBlock: (payload?: { code?: boolean, runUpstream?: boolean }) => void;
+  runBlock: (payload?: { code?: string, runUpstream?: boolean }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({

@@ -518,7 +518,6 @@ class Block:
         queue = Queue()
         visited = set()
         queue.put(self)
-        visited.add(self)
         while not queue.empty():
             current_block = queue.get()
             for block in current_block.upstream_blocks:
