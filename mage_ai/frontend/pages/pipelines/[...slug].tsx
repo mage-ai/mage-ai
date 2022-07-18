@@ -18,6 +18,8 @@ import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
+import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -29,6 +31,7 @@ import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import { Add } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
@@ -548,6 +551,7 @@ function PipelineDetailPage({
     widget: {
       name,
       priority: idx,
+      type: BlockTypeEnum.CHART,
       ...widget,
     },
   }).then((response: {
@@ -815,27 +819,45 @@ function PipelineDetailPage({
       <TripleLayout
         after={sideKick}
         afterHeader={(
-          <>
-            {SIDEKICK_VIEWS.map(({ key, label }: any) => {
-              const active = key === activeSidekickView;
-              const Icon = NAV_ICON_MAPPING[key];
+          <FlexContainer
+            alignItems="center"
+            fullWidth
+            justifyContent="space-between"
+          >
+            <Flex>
+              {SIDEKICK_VIEWS.map(({ key, label }: any) => {
+                const active = key === activeSidekickView;
+                const Icon = NAV_ICON_MAPPING[key];
 
-              return (
-                <Spacing key={key} pl={1}>
-                  <KeyboardShortcutButton
-                    beforeElement={<Icon />}
-                    blackBorder
-                    compact
-                    onClick={() => setActiveSidekickView(key)}
-                    selected={active}
-                    uuid={key}
-                  >
-                    {label}
-                  </KeyboardShortcutButton>
-                </Spacing>
-              );
-            })}
-          </>
+                return (
+                  <Spacing key={key} pl={1}>
+                    <KeyboardShortcutButton
+                      beforeElement={<Icon />}
+                      blackBorder
+                      compact
+                      onClick={() => setActiveSidekickView(key)}
+                      selected={active}
+                      uuid={key}
+                    >
+                      {label}
+                    </KeyboardShortcutButton>
+                  </Spacing>
+                );
+              })}
+            </Flex>
+
+            <Spacing pr={1}>
+              <KeyboardShortcutButton
+                beforeElement={<Add />}
+                blackBorder
+                compact
+                onClick={() => addWidgetAtIndex({}, 0)}
+                uuid="Pipeline/afterHeader/add_chart"
+              >
+                Add chart
+              </KeyboardShortcutButton>
+              </Spacing>
+          </FlexContainer>
         )}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
