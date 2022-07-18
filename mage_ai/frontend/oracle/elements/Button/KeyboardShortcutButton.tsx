@@ -417,10 +417,10 @@ function KeyboardShortcutButton({
           <ElToUse
             {...props}
             {...(useModelTheme ? sharedProps : {})}
-            center={centerText}
-            compact={compact}
             bold={useModelTheme || bold}
             borderless={useModelTheme || borderless}
+            center={centerText}
+            compact={compact}
             disabled={disabled || mutedDisabled}
             fitContentWidth={fitContentWidth}
             inverted={inverted}

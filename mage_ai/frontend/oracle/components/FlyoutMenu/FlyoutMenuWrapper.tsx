@@ -1,4 +1,5 @@
-import ClickOutside from '@oracle/components/ClickOutside';
+import React from 'react';
+
 import FlyoutMenu, { FlyoutMenuProps } from './index';
 
 type FlyoutMenuWrapperProps = {
@@ -16,27 +17,18 @@ function FlyoutMenuWrapper({
   uuid,
 }: FlyoutMenuWrapperProps) {
   return (
-    <ClickOutside
-      onClickOutside={onClickOutside}
-      open
-    >
-      <div style={{
-        position: 'relative',
-        zIndex: 100,
-      }}>
-        <div ref={parentRef}>
-          {children}
-        </div>
-        <FlyoutMenu
-          compact={compact}
-          items={items}
-          onClickCallback={onClickOutside}
-          open={open}
-          parentRef={parentRef}
-          uuid={uuid}
-        />
+    <div style={{ position: 'relative' }}>
+      <div ref={parentRef}>
+        {children}
       </div>
-    </ClickOutside>
+      <FlyoutMenu
+        items={items}
+        onClickCallback={onClickOutside}
+        open={open}
+        parentRef={parentRef}
+        uuid={uuid}
+      />
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -83,63 +84,70 @@ function AddNewBlocks({
 
   return (
     <FlexContainer inline>
-      <FlyoutMenuWrapper
-        items={allActionMenuItems}
+      <ClickOutside
         onClickOutside={closeButtonMenu}
-        open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
-        parentRef={transformerButtonRef}
-        uuid="transformer_button"
+        open
       >
-        <KeyboardShortcutButton
-          {...sharedProps}
-          beforeElement={
-            <IconContainerStyle compact={compact} purple>
-              <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
-            </IconContainerStyle>
-          }
-          onClick={(e) => {
-            e.preventDefault();
-            setButtonMenuOpenIndex(val =>
-              val === TRANSFORMER_BUTTON_INDEX
-                ? null
-                : TRANSFORMER_BUTTON_INDEX,
-            );
-          }}
-          uuid="AddNewBlocks/Transformer"
-        >
-          Transformer
-        </KeyboardShortcutButton>
-      </FlyoutMenuWrapper>
+        <FlexContainer>
+          <FlyoutMenuWrapper
+            items={allActionMenuItems}
+            onClickOutside={closeButtonMenu}
+            open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
+            parentRef={transformerButtonRef}
+            uuid="transformer_button"
+          >
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle compact={compact} purple>
+                  <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                setButtonMenuOpenIndex(val =>
+                  val === TRANSFORMER_BUTTON_INDEX
+                    ? null
+                    : TRANSFORMER_BUTTON_INDEX,
+                );
+              }}
+              uuid="AddNewBlocks/Transformer"
+            >
+              Transformer
+            </KeyboardShortcutButton>
+          </FlyoutMenuWrapper>
 
-      <Spacing ml={1} />
+          <Spacing ml={1} />
 
-      <FlyoutMenuWrapper
-        items={dataLoaderMenuItems}
-        onClickOutside={closeButtonMenu}
-        open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
-        parentRef={dataLoaderButtonRef}
-        uuid="data_loader_button"
-      >
-        <KeyboardShortcutButton
-          {...sharedProps}
-          beforeElement={
-            <IconContainerStyle blue compact={compact}>
-              <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
-            </IconContainerStyle>
-          }
-          onClick={(e) => {
-            e.preventDefault();
-            setButtonMenuOpenIndex(val =>
-              val === DATA_LOADER_BUTTON_INDEX
-                ? null
-                : DATA_LOADER_BUTTON_INDEX,
-            );
-          }}
-          uuid="AddNewBlocks/Data_loader"
-        >
-          Data loader
-        </KeyboardShortcutButton>
-      </FlyoutMenuWrapper>
+          <FlyoutMenuWrapper
+            items={dataLoaderMenuItems}
+            onClickOutside={closeButtonMenu}
+            open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
+            parentRef={dataLoaderButtonRef}
+            uuid="data_loader_button"
+          >
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle blue compact={compact}>
+                  <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                setButtonMenuOpenIndex(val =>
+                  val === DATA_LOADER_BUTTON_INDEX
+                    ? null
+                    : DATA_LOADER_BUTTON_INDEX,
+                );
+              }}
+              uuid="AddNewBlocks/Data_loader"
+            >
+              Data loader
+            </KeyboardShortcutButton>
+          </FlyoutMenuWrapper>
+        </FlexContainer>
+      </ClickOutside>
 
       <Spacing ml={1} />
 
