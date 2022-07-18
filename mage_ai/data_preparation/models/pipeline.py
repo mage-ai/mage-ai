@@ -228,16 +228,20 @@ class Pipeline:
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
             self.save()
-        if update_content and 'blocks' in data:
-            for block_data in data['blocks']:
-                if 'uuid' in block_data:
-                    block = self.blocks_by_uuid.get(block_data['uuid'])
-                    if block is None:
-                        continue
-                    if 'content' in block_data:
-                        block.update_content(block_data['content'])
-                    if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
-                        block.save_outputs(block_data['outputs'], override=True)
+        if update_content:
+            for key in ['blocks', 'widgets']:
+                if key in data:
+                    for block_data in data[key]:
+                        if 'uuid' in block_data:
+                            widget = key == 'widgets'
+                            mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
+                            block = mapping.get(block_data['uuid'])
+                            if block is None:
+                                continue
+                            if 'content' in block_data:
+                                block.update_content(block_data['content'])
+                            if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
+                                block.save_outputs(block_data['outputs'], override=True)
 
     def __add_block_to_mapping(
         self,
