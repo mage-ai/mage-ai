@@ -1,5 +1,6 @@
+from typing import List, Set
 from mage_ai.data_cleaner.shared.utils import clean_name
-from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PIPELINE_CONFIG_FILE,
@@ -102,7 +103,6 @@ class Pipeline:
     async def execute(
         self,
         analyze_outputs=True,
-        run_all_blocks=False,
         redirect_outputs=False,
         update_status=True,
     ):
@@ -111,39 +111,17 @@ class Pipeline:
         This function will schedule the block execution in topological
         order based on a block's upstream dependencies.
         """
-        tasks = dict()
-        blocks = Queue()
-        for b in self.blocks_by_uuid.values():
-            if len(b.upstream_blocks) == 0:
-                blocks.put(b)
-                tasks[b.uuid] = None
-        while not blocks.empty():
-            block = blocks.get()
-            if not run_all_blocks and block.type == BlockType.SCRATCHPAD:
-                continue
-            skip = False
-            for upstream_block in block.upstream_blocks:
-                if tasks.get(upstream_block.uuid) is None:
-                    blocks.put(block)
-                    skip = True
-                    break
-            if skip:
-                continue
-            await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
-            task = asyncio.create_task(
-                block.execute(
-                    analyze_outputs=analyze_outputs,
-                    redirect_outputs=redirect_outputs,
-                    update_status=update_status,
-                )
-            )
-            tasks[block.uuid] = task
-            for downstream_block in block.downstream_blocks:
-                if downstream_block.uuid not in tasks:
-                    tasks[downstream_block.uuid] = None
-                    blocks.put(downstream_block)
-        remaining_tasks = filter(lambda task: task is not None, tasks.values())
-        await asyncio.gather(*remaining_tasks)
+        root_blocks = []
+        for block in self.blocks_by_uuid.values():
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+
+        await run_blocks(
+            root_blocks,
+            analyze_outputs=analyze_outputs,
+            redirect_outputs=redirect_outputs,
+            update_status=update_status,
+        )
 
     def load_config_from_yaml(self):
         if not os.path.exists(self.config_path):

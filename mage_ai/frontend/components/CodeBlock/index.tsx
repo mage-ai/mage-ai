@@ -81,6 +81,7 @@ type CodeBlockProps = {
   runBlock: (payload: {
     block: BlockType;
     code: string;
+    runUpstream: boolean;
   }) => void;
   runningBlocks: BlockType[];
   setAnyInputFocused: (value: boolean) => void;
@@ -125,21 +126,27 @@ function CodeBlockProps({
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const runBlockAndTrack = useCallback((code?: string) => {
-    runBlock({
+  const runBlockAndTrack = useCallback(
+    (payload?: { code?: string, runUpstream?: boolean }) => {
+      const {
+        code,
+        runUpstream,
+      } = payload || {}
+      runBlock({
+        block,
+        code: code || content,
+        runUpstream: runUpstream || false,
+      });
+      setRunCount(1 + Number(runCount));
+      setRunEndTime(null);
+    }, [
       block,
-      code: code || content,
-    });
-    setRunCount(1 + Number(runCount));
-    setRunEndTime(null);
-  }, [
-    block,
-    content,
-    runCount,
-    runBlock,
-    setRunCount,
-    setRunEndTime,
-  ]);
+      content,
+      runCount,
+      runBlock,
+      setRunCount,
+      setRunEndTime,
+    ]);
 
   const messagesPrevious = usePrevious(messages);
   useEffect(() => {

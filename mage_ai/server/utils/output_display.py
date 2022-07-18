@@ -139,7 +139,12 @@ __custom_output()
         return custom_code
 
 
-def add_execution_code(pipeline_uuid: str, block_uuid: str, code: str) -> str:
+def add_execution_code(
+    pipeline_uuid: str,
+    block_uuid: str,
+    code: str,
+    run_upstream: bool = False,
+) -> str:
     escaped_code = code.replace("'", "\\'")
 
     return f"""
@@ -151,12 +156,16 @@ import pandas as pd
 def execute_custom_code():
     pipeline_uuid=\'{pipeline_uuid}\'
     block_uuid=\'{block_uuid}\'
+    run_upstream={str(run_upstream)}
     pipeline = Pipeline(pipeline_uuid, get_repo_path())
     block = pipeline.get_block(block_uuid)
 
     code = \'\'\'
 {escaped_code}
     \'\'\'
+    
+    if run_upstream:
+        block.run_upstream_blocks()
 
     block_output = block.execute_sync(custom_code=code)
     output = block_output['output']

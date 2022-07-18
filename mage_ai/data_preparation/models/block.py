@@ -1,6 +1,8 @@
 from contextlib import redirect_stdout
 from inspect import Parameter, signature
 from io import StringIO
+from queue import Queue
+from typing import List, Set
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
@@ -16,10 +18,91 @@ from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
+import asyncio
 import os
 import pandas as pd
 import sys
 import traceback
+
+
+async def run_blocks(
+    root_blocks: List['Block'],
+    analyze_outputs: bool = True,
+    redirect_outputs: bool = False,
+    selected_blocks: Set[str] = None,
+    update_status: bool = False,
+) -> None:
+    tasks = dict()
+    blocks = Queue()
+
+    for block in root_blocks:
+        blocks.put(block)
+        tasks[block.uuid] = None
+
+    while not blocks.empty():
+        block = blocks.get()
+        if block.type == BlockType.SCRATCHPAD:
+            continue
+        skip = False
+        for upstream_block in block.upstream_blocks:
+            if tasks.get(upstream_block.uuid) is None:
+                blocks.put(block)
+                skip = True
+                break
+        if skip:
+            continue
+        await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
+        task = asyncio.create_task(
+            block.execute(
+                analyze_outputs=analyze_outputs,
+                redirect_outputs=redirect_outputs,
+                update_status=update_status,
+            )
+        )
+        tasks[block.uuid] = task
+        for downstream_block in block.downstream_blocks:
+            if downstream_block.uuid not in tasks and \
+                (selected_blocks is None or upstream_block.uuid in selected_blocks):
+
+                tasks[downstream_block.uuid] = None
+                blocks.put(downstream_block)
+    remaining_tasks = filter(lambda task: task is not None, tasks.values())
+    await asyncio.gather(*remaining_tasks)
+
+def run_blocks_sync(
+    root_blocks: List['Block'],
+    analyze_outputs: bool = True,
+    redirect_outputs: bool = False,
+    selected_blocks: Set[str] = None,
+) -> None:
+    tasks = dict()
+    blocks = Queue()
+
+    for block in root_blocks:
+        blocks.put(block)
+        tasks[block.uuid] = False
+
+    while not blocks.empty():
+        block = blocks.get()
+        if block.type == BlockType.SCRATCHPAD:
+            continue
+        skip = False
+        for upstream_block in block.upstream_blocks:
+            upstream_task_status = tasks.get(upstream_block.uuid)
+            if upstream_task_status is None or not upstream_task_status:
+                blocks.put(block)
+                skip = True
+                break
+        if skip:
+            continue
+        block.execute_sync(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
+        tasks[block.uuid] = True
+        for downstream_block in block.downstream_blocks:
+            if downstream_block.uuid not in tasks and \
+                (selected_blocks is None or downstream_block.uuid in selected_blocks):
+
+                tasks[downstream_block.uuid] = None
+                blocks.put(downstream_block)
 
 
 class Block:
@@ -401,6 +484,10 @@ class Block:
             status=self.status.value if type(self.status) is not str else self.status,
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
+            all_upstream_blocks_executed=all(
+                block.status == BlockStatus.EXECUTED
+                for block in self.get_all_upstream_blocks()
+            )
         )
         if include_content:
             data['content'] = self.file.content()
@@ -421,8 +508,40 @@ class Block:
         return self
 
     def update_content(self, content):
+        if content != self.file.content():
+            self.status = BlockStatus.UPDATED
         self.file.update_content(content)
+        self.__update_pipeline_block()
         return self
+
+    def get_all_upstream_blocks(self) -> List['Block']:
+        queue = Queue()
+        visited = set()
+        queue.put(self)
+        while not queue.empty():
+            current_block = queue.get()
+            for block in current_block.upstream_blocks:
+                if block.uuid not in visited:
+                    queue.put(block)
+                    visited.add(block)
+        return visited
+
+    def run_upstream_blocks(self) -> None:
+        def process_upstream_block(
+            block: 'Block',
+            root_blocks: List['Block'],
+        ) -> List[str]:
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+            return block.uuid            
+
+        upstream_blocks = self.get_all_upstream_blocks()
+        root_blocks = []
+        upstream_block_uuids = \
+            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
+        upstream_block_uuids.remove(self.uuid)
+
+        run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
     def __analyze_outputs(self, variable_mapping):
         if self.pipeline is None:

@@ -43,6 +43,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         custom_code = message.get('code')
         output = message.get('output')
 
+        run_upstream = message.get('run_upstream')
+
         if custom_code:
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
@@ -59,7 +61,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             block = pipeline.get_block(block_uuid)
             code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                code = add_execution_code(pipeline_uuid, block_uuid, custom_code)
+                code = add_execution_code(
+                    pipeline_uuid,
+                    block_uuid,
+                    custom_code,
+                    run_upstream=run_upstream,
+                )
 
             msg_id = client.execute(add_internal_output_info(code))            
 
