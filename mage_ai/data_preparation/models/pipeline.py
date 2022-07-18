@@ -153,7 +153,8 @@ class Pipeline:
         self.name = config.get('name')
 
         self.block_configs = config.get('blocks', [])
-        self.blocks_by_uuid = self.__initialize_blocks_by_uuid(self.block_configs, [
+        self.widget_configs = config.get('widgets', [])
+        blocks = [
             Block.get_block(
                 c.get('name'),
                 c.get('uuid'),
@@ -161,10 +162,8 @@ class Pipeline:
                 c.get('status'),
                 self,
             ) for c in self.block_configs
-        ])
-
-        self.widget_configs = config.get('widgets', [])
-        self.widgets_by_uuid = self.__initialize_blocks_by_uuid(self.widget_configs, [
+        ]
+        widgets = [
             Widget.get_block(
                 c.get('name'),
                 c.get('uuid'),
@@ -173,17 +172,36 @@ class Pipeline:
                 self,
                 configuration=c.get('configuration'),
             ) for c in self.widget_configs
-        ])
+        ]
+        all_blocks = blocks + widgets
 
-    def __initialize_blocks_by_uuid(self, configs, blocks):
+        self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
+            self.block_configs,
+            blocks,
+            all_blocks,
+        )
+        self.widgets_by_uuid = self.__initialize_blocks_by_uuid(
+            self.widget_configs,
+            widgets,
+            all_blocks,
+        )
+
+    def __initialize_blocks_by_uuid(
+        self,
+        configs,
+        blocks,
+        all_blocks,
+    ):
         blocks_by_uuid = {b.uuid: b for b in blocks}
+        all_blocks_by_uuid = {b.uuid: b for b in all_blocks}
+
         for b in configs:
             block = blocks_by_uuid[b['uuid']]
             block.downstream_blocks = [
-                blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
+                all_blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
             ]
             block.upstream_blocks = [
-                blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
+                all_blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
             ]
 
         return blocks_by_uuid
@@ -270,7 +288,7 @@ class Pipeline:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
                 block,
-                upstream_blocks=self.get_blocks(upstream_block_uuids, widget=widget),
+                upstream_blocks=self.get_blocks(upstream_block_uuids),
                 priority=priority,
             )
         else:

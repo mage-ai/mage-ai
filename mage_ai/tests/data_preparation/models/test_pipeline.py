@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import TestCase
 import asyncio
 import os
@@ -28,6 +29,9 @@ class PipelineTest(TestCase):
     def test_add_block(self):
         self.__create_pipeline_with_blocks('test pipeline 2')
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
+
+        print(pipeline.to_dict())
+
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 2',
             uuid='test_pipeline_2',
@@ -62,14 +66,27 @@ class PipelineTest(TestCase):
                     type='data_exporter',
                     status='not_executed',
                     upstream_blocks=['block2', 'block3'],
+                    downstream_blocks=['widget1'],
+                ),
+            ],
+            widgets=[
+                dict(
+                    name='widget1',
+                    uuid='widget1',
+                    type='chart',
+                    status='not_executed',
+                    upstream_blocks=['block4'],
                     downstream_blocks=[],
-                )
-            ]
+                    configuration={},
+                ),
+            ],
         ))
 
     def test_delete_block(self):
         pipeline = self.__create_pipeline_with_blocks('test pipeline 3')
         block = pipeline.blocks_by_uuid['block4']
+        widget = pipeline.widgets_by_uuid['widget1']
+        pipeline.delete_block(widget, widget=True)
         pipeline.delete_block(block)
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
         self.assertEquals(pipeline.to_dict(), dict(
@@ -100,7 +117,8 @@ class PipelineTest(TestCase):
                     upstream_blocks=['block1'],
                     downstream_blocks=[],
                 )
-            ]
+            ],
+            widgets=[],
         ))
 
     def test_execute(self):
@@ -150,7 +168,8 @@ class PipelineTest(TestCase):
                     upstream_blocks=['block2', 'block3'],
                     downstream_blocks=[],
                 )
-            ]
+            ],
+            widgets=[],
         ))
 
     def test_execute_multiple_paths(self):
@@ -230,7 +249,8 @@ class PipelineTest(TestCase):
                     upstream_blocks=['block2', 'block3', 'block6'],
                     downstream_blocks=[],
                 )
-            ]
+            ],
+            widgets=[],
         ))
 
     def __create_pipeline_with_blocks(self, name):
@@ -239,8 +259,10 @@ class PipelineTest(TestCase):
         block2 = Block.create('block2', 'transformer', self.repo_path)
         block3 = Block.create('block3', 'transformer', self.repo_path)
         block4 = Block.create('block4', 'data_exporter', self.repo_path)
+        widget1 = Widget.create('widget1', 'chart', self.repo_path)
         pipeline.add_block(block1)
         pipeline.add_block(block2, upstream_block_uuids=['block1'])
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
+        pipeline.add_block(widget1, upstream_block_uuids=['block4'], widget=True)
         return pipeline
