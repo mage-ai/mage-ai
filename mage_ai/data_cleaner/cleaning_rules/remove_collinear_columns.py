@@ -2,6 +2,7 @@ from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 import numpy as np
 
+
 class RemoveCollinearColumns(BaseRule):
     EPSILON = 1e-15
     MIN_ENTRIES = 3
@@ -21,7 +22,11 @@ class RemoveCollinearColumns(BaseRule):
         if self.numeric_df.empty or len(self.numeric_df) < self.MIN_ENTRIES:
             return suggestions
 
-        C = self.numeric_df.corr().to_numpy()
+        sigma = self.numeric_df.cov().to_numpy()
+        std = self.numeric_df.std().to_numpy()
+        pairwise_std = std * np.expand_dims(std, axis=1)
+        C = sigma / (pairwise_std + self.EPSILON)
+
         collinear_columns = []
         good_columns = self.numeric_columns.copy()
         while True:
