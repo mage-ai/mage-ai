@@ -103,7 +103,7 @@ class Pipeline:
         self,
         analyze_outputs=True,
         redirect_outputs=False,
-        runtime_vars=None,
+        global_vars=None,
         update_status=True,
     ):
         """
@@ -119,6 +119,7 @@ class Pipeline:
         await run_blocks(
             root_blocks,
             analyze_outputs=analyze_outputs,
+            global_vars=global_vars,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
         )

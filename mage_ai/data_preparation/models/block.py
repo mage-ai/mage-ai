@@ -28,6 +28,7 @@ import traceback
 async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
+    global_vars=None,
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = False,
@@ -55,19 +56,22 @@ async def run_blocks(
         task = asyncio.create_task(
             block.execute(
                 analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
         )
         tasks[block.uuid] = task
         for downstream_block in block.downstream_blocks:
-            if downstream_block.uuid not in tasks and \
-                (selected_blocks is None or upstream_block.uuid in selected_blocks):
+            if downstream_block.uuid not in tasks and (
+                selected_blocks is None or upstream_block.uuid in selected_blocks
+            ):
 
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
     remaining_tasks = filter(lambda task: task is not None, tasks.values())
     await asyncio.gather(*remaining_tasks)
+
 
 def run_blocks_sync(
     root_blocks: List['Block'],
@@ -98,8 +102,9 @@ def run_blocks_sync(
         block.execute_sync(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
-            if downstream_block.uuid not in tasks and \
-                (selected_blocks is None or downstream_block.uuid in selected_blocks):
+            if downstream_block.uuid not in tasks and (
+                selected_blocks is None or downstream_block.uuid in selected_blocks
+            ):
 
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
@@ -262,14 +267,14 @@ class Block:
         analyze_outputs=True,
         custom_code=None,
         redirect_outputs=False,
-        runtime_vars=None,
+        global_vars=None,
         update_status=True,
     ):
         try:
             output = self.execute_block(
                 custom_code=custom_code,
                 redirect_outputs=redirect_outputs,
-                runtime_vars=runtime_vars,
+                global_vars=global_vars,
             )
             block_output = output['output']
             self.__verify_outputs(block_output)
@@ -293,7 +298,7 @@ class Block:
         analyze_outputs=True,
         custom_code=None,
         redirect_outputs=False,
-        runtime_vars=None,
+        global_vars=None,
         update_status=True,
     ):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
@@ -301,7 +306,7 @@ class Block:
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
                 redirect_outputs=redirect_outputs,
-                runtime_vars=runtime_vars,
+                global_vars=global_vars,
                 update_status=update_status,
             )
 
@@ -366,9 +371,9 @@ class Block:
 
             return block_function
 
-    def execute_block(self, custom_code=None, redirect_outputs=False, runtime_vars=None):
-        if runtime_vars is None:
-            runtime_vars = {}
+    def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
+        if global_vars is None:
+            global_vars = {}
 
         def block_decorator(decorated_functions):
             def custom_code(function):
@@ -392,13 +397,13 @@ class Block:
         outputs = []
         decorated_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
-        runtime_vars[self.type] = block_decorator(decorated_functions)
+        global_vars[self.type] = block_decorator(decorated_functions)
         with redirect_stdout(stdout):
             if custom_code is not None:
-                exec(custom_code, runtime_vars)
+                exec(custom_code, global_vars)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
-                    exec(file.read(), runtime_vars)
+                    exec(file.read(), global_vars)
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
                 outputs = block_function(*input_vars)
@@ -406,7 +411,7 @@ class Block:
                     outputs = []
                 if type(outputs) is not list:
                     outputs = [outputs]
-        runtime_vars.pop(self.type)
+        global_vars.pop(self.type)
 
         output_message = dict(output=outputs)
         if redirect_outputs:
@@ -497,9 +502,8 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
             all_upstream_blocks_executed=all(
-                block.status == BlockStatus.EXECUTED
-                for block in self.get_all_upstream_blocks()
-            )
+                block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
+            ),
         )
         if include_content:
             data['content'] = self.file.content()
@@ -548,12 +552,13 @@ class Block:
         ) -> List[str]:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
-            return block.uuid            
+            return block.uuid
 
         upstream_blocks = self.get_all_upstream_blocks()
         root_blocks = []
-        upstream_block_uuids = \
-            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
+        upstream_block_uuids = list(
+            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks)
+        )
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 

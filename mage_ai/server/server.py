@@ -119,9 +119,9 @@ class ApiPipelineHandler(BaseHandler):
 
 
 class ApiPipelineExecuteHandler(BaseHandler):
-    def post(self, pipeline_uuid):
+    def post(self, pipeline_uuid, global_vars):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        asyncio.run(pipeline.execute())
+        asyncio.run(pipeline.execute(global_vars=global_vars))
         self.write(
             dict(
                 pipeline=pipeline.to_dict(
@@ -408,8 +408,7 @@ async def main(
     while is_port_in_use(port):
         if port > max_port:
             raise Exception(
-                f'Unable to find an open port'
-                'please clear your running processes if possible.'
+                f'Unable to find an open port' 'please clear your running processes if possible.'
             )
         port += 1
 
@@ -441,8 +440,10 @@ if __name__ == '__main__':
     port = args.port
     project = args.project
 
-    asyncio.run(main(
-        host=host,
-        port=port,
-        project=project,
-    ))
+    asyncio.run(
+        main(
+            host=host,
+            port=port,
+            project=project,
+        )
+    )

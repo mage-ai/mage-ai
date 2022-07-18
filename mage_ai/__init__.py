@@ -16,15 +16,13 @@ from mage_ai.server.utils.frontend_renderer import (
     infer_notebook_type,
     update_frontend_urls,
 )
+from mage_ai.shared.globals import validate_global_names
 import asyncio
 import logging
 import os
 import sys
 
 MAX_NUM_OF_ROWS = 100_000
-RESERVED_VARIABLE_NAMES = frozenset(
-    [BlockType.DATA_LOADER, BlockType.TRANSFORMER, BlockType.DATA_EXPORTER]
-)
 
 logger = logging.getLogger(__name__)
 
@@ -125,13 +123,13 @@ def clean(
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, project_path: str = None, **runtime_vars) -> None:
-    for variable in runtime_vars:
-        if variable in RESERVED_VARIABLE_NAMES:
-            raise ValueError(f'Cannot use reserved variable name \'{variable}\'')
+def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
+    is_valid, bad_name = validate_global_names(global_vars)
+    if not is_valid:
+        raise ValueError(f'Cannot use reserved variable name \'{bad_name}\'')
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
     asyncio.run(
-        pipeline.execute(analyze_outputs=False, update_status=False, runtime_vars=runtime_vars)
+        pipeline.execute(analyze_outputs=False, update_status=False, global_vars=global_vars)
     )

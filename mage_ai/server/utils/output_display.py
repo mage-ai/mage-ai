@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from typing import List
+from typing import List, Mapping
 import re
 
 
@@ -143,6 +143,7 @@ def add_execution_code(
     pipeline_uuid: str,
     block_uuid: str,
     code: str,
+    global_vars,
     run_upstream: bool = False,
 ) -> str:
     escaped_code = code.replace("'", "\\'")
@@ -151,6 +152,7 @@ def add_execution_code(
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.globals import validate_global_names
 import pandas as pd
 
 def execute_custom_code():
@@ -167,7 +169,13 @@ def execute_custom_code():
     if run_upstream:
         block.run_upstream_blocks()
 
-    block_output = block.execute_sync(custom_code=code)
+    global_vars = {global_vars}
+    if global_vars is not None:
+        is_valid, bad_name = validate_global_names(global_vars)
+        if not is_valid:
+            raise ValueError(f'Cannot use name \\'' + bad_name + '\\' for global variables')
+
+    block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']
     return find(lambda val: type(val) == pd.DataFrame, output)
 
