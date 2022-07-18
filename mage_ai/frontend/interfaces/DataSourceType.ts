@@ -1,6 +1,7 @@
 export enum DataSourceTypeEnum {
   BIGQUERY = 'bigquery',
   FILE = 'file',
+  GENERIC = 'generic',
   POSTGRES = 'postgres',
   REDSHIFT = 'redshift',
   S3 = 's3',
@@ -10,6 +11,7 @@ export enum DataSourceTypeEnum {
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.BIGQUERY]: 'Google BigQuery',
   [DataSourceTypeEnum.FILE]: 'Local file',
+  [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
   [DataSourceTypeEnum.POSTGRES]: 'PostgreSQL',
   [DataSourceTypeEnum.REDSHIFT]: 'Amazon Redshift',
   [DataSourceTypeEnum.S3]: 'Amazon S3',
@@ -17,6 +19,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
 };
 
 export const DATA_SOURCE_TYPES: DataSourceTypeEnum[] = [
+  DataSourceTypeEnum.GENERIC,
   DataSourceTypeEnum.FILE,
   DataSourceTypeEnum.BIGQUERY,
   DataSourceTypeEnum.POSTGRES,
