@@ -104,6 +104,7 @@ def run_blocks_sync(
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
 
+
 class Block:
     def __init__(
         self,
@@ -513,6 +514,36 @@ class Block:
         self.__update_pipeline_block()
         return self
 
+    def get_all_upstream_blocks(self) -> List['Block']:
+        queue = Queue()
+        visited = set()
+        queue.put(self)
+        visited.add(self)
+        while not queue.empty():
+            current_block = queue.get()
+            for block in current_block.upstream_blocks:
+                if block.uuid not in visited:
+                    queue.put(block)
+                    visited.add(block)
+        return visited
+
+    def run_upstream_blocks(self) -> None:
+        def process_upstream_block(
+            block: 'Block',
+            root_blocks: List['Block'],
+        ) -> List[str]:
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+            return block.uuid            
+
+        upstream_blocks = self.get_all_upstream_blocks()
+        root_blocks = []
+        upstream_block_uuids = \
+            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
+        upstream_block_uuids.remove(self.uuid)
+
+        run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
+
     def __analyze_outputs(self, variable_mapping):
         if self.pipeline is None:
             return
@@ -567,36 +598,6 @@ class Block:
                     self.uuid,
                     uuid,
                 )
-
-    def get_all_upstream_blocks(self) -> List['Block']:
-        queue = Queue()
-        visited = set()
-        queue.put(self)
-        visited.add(self)
-        while not queue.empty():
-            current_block = queue.get()
-            for block in current_block.upstream_blocks:
-                if block.uuid not in visited:
-                    queue.put(block)
-                    visited.add(block)
-        return visited
-
-    def run_upstream_blocks(self) -> None:
-        def process_upstream_block(
-            block: 'Block',
-            root_blocks: List['Block'],
-        ) -> List[str]:
-            if len(block.upstream_blocks) == 0:
-                root_blocks.append(block)
-            return block.uuid            
-
-        upstream_blocks = self.get_all_upstream_blocks()
-        root_blocks = []
-        upstream_block_uuids = \
-            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
-        upstream_block_uuids.remove(self.uuid)
-
-        run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
