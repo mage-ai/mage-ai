@@ -17,6 +17,7 @@ import {
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
@@ -75,6 +76,7 @@ function FlyoutMenu({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
+      pauseEvent(event);
       if (!open) {
         return;
       }
