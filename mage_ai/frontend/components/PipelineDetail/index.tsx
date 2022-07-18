@@ -332,10 +332,13 @@ function PipelineDetail({
     savePipelineContent,
   ]);
 
-  const onChangeCodeBlock = useCallback(
-    (uuid: string, value: string) => setContentByBlockUUID({ [uuid]: value }),
+  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
+    setContentByBlockUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
     [
       setContentByBlockUUID,
+      setPipelineContentTouched,
     ],
   );
 
