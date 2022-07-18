@@ -160,27 +160,29 @@ function CommandButtons({
           </>
         )}
 
-        <Spacing mt={PADDING_UNITS}>
-          <Tooltip
-            appearBefore
-            default
-            label="Add chart"
-            size={UNIT * 2.25}
-            widthFitContent
-          >
-            <Button
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => addWidget({
-                type: BlockTypeEnum.CHART,
-                upstream_blocks: [block.uuid],
-              })}
+        {false && (
+          <Spacing mt={PADDING_UNITS}>
+            <Tooltip
+              appearBefore
+              default
+              label="Add chart"
+              size={UNIT * 2.25}
+              widthFitContent
             >
-              <NavGraph size={UNIT * 2.25} />
-            </Button>
-          </Tooltip>
-        </Spacing>
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => addWidget({
+                  type: BlockTypeEnum.CHART,
+                  upstream_blocks: [block.uuid],
+                })}
+              >
+                <NavGraph size={UNIT * 2.25} />
+              </Button>
+            </Tooltip>
+          </Spacing>
+        )}
 
         <Spacing mt={PADDING_UNITS}>
           <Tooltip

@@ -35,7 +35,7 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
-  { key: ViewKeyEnum.CHARTS, label: 'Charts' },
+  // { key: ViewKeyEnum.CHARTS, label: 'Charts' },
 ];
 
 export const NAV_ICON_MAPPING = {

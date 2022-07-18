@@ -846,17 +846,19 @@ function PipelineDetailPage({
               })}
             </Flex>
 
-            <Spacing pr={1}>
-              <KeyboardShortcutButton
-                beforeElement={<Add />}
-                blackBorder
-                compact
-                onClick={() => addWidgetAtIndex({}, 0)}
-                uuid="Pipeline/afterHeader/add_chart"
-              >
-                Add chart
-              </KeyboardShortcutButton>
+            {false && (
+              <Spacing pr={1}>
+                <KeyboardShortcutButton
+                  beforeElement={<Add />}
+                  blackBorder
+                  compact
+                  onClick={() => addWidgetAtIndex({}, 0)}
+                  uuid="Pipeline/afterHeader/add_chart"
+                >
+                  Add chart
+                </KeyboardShortcutButton>
               </Spacing>
+            )}
           </FlexContainer>
         )}
         afterHidden={afterHidden}
