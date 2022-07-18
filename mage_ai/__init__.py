@@ -124,9 +124,9 @@ def clean(
 
 
 def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
-    is_valid, bad_name = validate_global_names(global_vars)
-    if not is_valid:
-        raise ValueError(f'Cannot use reserved variable name \'{bad_name}\'')
+    error = validate_global_names(global_vars)
+    if error:
+        raise ValueError(error)
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)

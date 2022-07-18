@@ -171,9 +171,9 @@ def execute_custom_code():
 
     global_vars = {global_vars}
     if global_vars is not None:
-        is_valid, bad_name = validate_global_names(global_vars)
-        if not is_valid:
-            raise ValueError(f'Cannot use name \\'' + bad_name + '\\' for global variables')
+        error = validate_global_names(global_vars)
+        if error:
+            raise ValueError(error)
 
     block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']

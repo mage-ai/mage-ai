@@ -43,9 +43,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         custom_code = message.get('code')
         output = message.get('output')
         global_vars = message.get('global_vars')
+<<<<<<< HEAD
 
         run_upstream = message.get('run_upstream')
 
+=======
+>>>>>>> e662dc5 ([sk] Some cleanup)
         if custom_code:
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
