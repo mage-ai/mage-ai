@@ -539,17 +539,22 @@ function PipelineDetailPage({
 
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
-    widget: blockType,
+    widget: BlockType,
     idx: number,
     onCreateCallback?: (widget: BlockType) => void,
     name: string = randomNameGenerator(),
+    // @ts-ignore
   ) => createWidget({
     widget: {
       name,
       priority: idx,
       ...widget,
     },
-  }).then(response => onSuccess(
+  }).then((response: {
+    data: {
+      widget: BlockType;
+    };
+  }) => onSuccess(
     response, {
       callback: () => {
         const {
