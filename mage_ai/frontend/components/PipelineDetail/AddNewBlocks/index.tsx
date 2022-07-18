@@ -40,7 +40,7 @@ function AddNewBlocks({
     onClick: () => {
       addNewBlock({
         config: {
-          data_source: sourceType,
+          data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
         },
         type: BlockTypeEnum.DATA_LOADER,
       });
