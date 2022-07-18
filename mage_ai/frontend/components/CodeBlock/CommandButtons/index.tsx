@@ -1,7 +1,7 @@
 import { useContext, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -18,6 +18,7 @@ import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Close,
   Ellipsis,
+  NavGraph,
   PlayButtonFilled,
   Trash,
 } from '@oracle/icons';
@@ -31,6 +32,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
+  addWidget: (widget: BlockType) => Promise<any>;
   deleteBlock: (block: BlockType) => void;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
@@ -42,6 +44,7 @@ type CommandButtonsProps = {
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
+  addWidget,
   block,
   deleteBlock,
   executionState,
@@ -155,6 +158,30 @@ function CommandButtons({
               />
             </ClickOutside>
           </>
+        )}
+
+        {false && (
+          <Spacing mt={PADDING_UNITS}>
+            <Tooltip
+              appearBefore
+              default
+              label="Add chart"
+              size={UNIT * 2.25}
+              widthFitContent
+            >
+              <Button
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => addWidget({
+                  type: BlockTypeEnum.CHART,
+                  upstream_blocks: [block.uuid],
+                })}
+              >
+                <NavGraph size={UNIT * 2.25} />
+              </Button>
+            </Tooltip>
+          </Spacing>
         )}
 
         <Spacing mt={PADDING_UNITS}>

@@ -48,6 +48,7 @@ type PipelineDetailProps = {
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
   ) => Promise<any>;
+  addWidget: (widget: BlockType) => Promise<any>;
   blockRefs: any;
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
@@ -74,6 +75,7 @@ type PipelineDetailProps = {
 
 function PipelineDetail({
   addNewBlockAtIndex,
+  addWidget,
   blockRefs,
   blocks = [],
   deleteBlock,
@@ -389,6 +391,7 @@ function PipelineDetail({
 
                 return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               }}
+              addWidget={addWidget}
               block={block}
               blockRefs={blockRefs}
               blocks={blocks}

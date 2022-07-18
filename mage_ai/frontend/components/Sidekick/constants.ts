@@ -9,6 +9,7 @@ import {
 export const VIEW_QUERY_PARAM = 'sideview';
 
 export enum ViewKeyEnum {
+  CHARTS = 'charts',
   DATA = 'data',
   GRAPHS = 'graphs',
   REPORTS = 'reports',
@@ -34,9 +35,11 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
+  // { key: ViewKeyEnum.CHARTS, label: 'Charts' },
 ];
 
 export const NAV_ICON_MAPPING = {
+  [ViewKeyEnum.CHARTS]: NavGraph,
   [ViewKeyEnum.DATA]: NavData,
   [ViewKeyEnum.GRAPHS]: NavGraph,
   [ViewKeyEnum.REPORTS]: NavReport,
