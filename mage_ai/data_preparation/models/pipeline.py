@@ -102,8 +102,9 @@ class Pipeline:
     async def execute(
         self,
         analyze_outputs=True,
-        redirect_outputs=False,
         global_vars=None,
+        redirect_outputs=False,
+        run_all_blocks=False,
         update_status=True,
     ):
         """

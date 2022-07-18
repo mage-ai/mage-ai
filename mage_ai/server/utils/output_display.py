@@ -171,9 +171,7 @@ def execute_custom_code():
 
     global_vars = {global_vars}
     if global_vars is not None:
-        error = validate_global_names(global_vars)
-        if error:
-            raise ValueError(error)
+        validate_global_names(global_vars)
 
     block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']

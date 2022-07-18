@@ -266,15 +266,15 @@ class Block:
         self,
         analyze_outputs=True,
         custom_code=None,
-        redirect_outputs=False,
         global_vars=None,
+        redirect_outputs=False,
         update_status=True,
     ):
         try:
             output = self.execute_block(
                 custom_code=custom_code,
-                redirect_outputs=redirect_outputs,
                 global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
             )
             block_output = output['output']
             self.__verify_outputs(block_output)
@@ -297,16 +297,16 @@ class Block:
         self,
         analyze_outputs=True,
         custom_code=None,
-        redirect_outputs=False,
         global_vars=None,
+        redirect_outputs=False,
         update_status=True,
     ):
         with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
             return self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
-                redirect_outputs=redirect_outputs,
                 global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
 
