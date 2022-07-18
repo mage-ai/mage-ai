@@ -68,6 +68,15 @@ function AddNewBlocks({
   );
   const allActionMenuItems = [
     {
+      label: () => 'Generic (no template)',
+      onClick: () => {
+        addNewBlock({
+          type: BlockTypeEnum.TRANSFORMER,
+        });
+      },
+      uuid: 'generic_transformer_action',
+    },
+    {
       isGroupingTitle: true,
       label: () => 'Column actions',
       uuid: 'column_actions_grouping',
