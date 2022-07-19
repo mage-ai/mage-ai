@@ -177,7 +177,10 @@ def infer_object_type(series, column_name, kwargs):
                     clean_series.astype(int)
                     return ColumnType.NUMBER
                 except OverflowError:
-                    return ColumnType.CATEGORY_HIGH_CARDINALITY
+                    if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):
+                        return ColumnType.CATEGORY
+                    else:
+                        return ColumnType.CATEGORY_HIGH_CARDINALITY
 
     else:
         matches = clean_series.str.match(REGEX_DATETIME).sum()
