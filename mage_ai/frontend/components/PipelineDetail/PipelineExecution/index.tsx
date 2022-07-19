@@ -15,7 +15,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
-import { OUTPUT_HEIGHT } from './index.style';
+import { OutputContainerStyle } from './index.style';
 import { PlayButton } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
@@ -107,7 +107,7 @@ function PipelineExecution({
           Execute pipeline
         </Text>
       </Button>
-      <div style={{ height: `${OUTPUT_HEIGHT}px`, overflowY: 'scroll' }}>
+      <OutputContainerStyle>
         <CodeBlockStyle
           // blockType={BlockTypeEnum.DATA_EXPORTER}
           executedAndIdle
@@ -165,7 +165,7 @@ function PipelineExecution({
             });
           })}
         </CodeBlockStyle>
-      </div>
+      </OutputContainerStyle>
     </>
   )
 }
