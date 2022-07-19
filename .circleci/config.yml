@@ -47,22 +47,9 @@ jobs:
             git commit -m "[CI] Update production build"
             git push origin master
 
-  test:
-    docker:
-      - image: cimg/python:3.8
-    resource_class: small
-    steps:
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip
-      - run:
-          command: python3 -m unittest discover
-          name: Unit tests
-
 workflows:
-  build_and_test:
+  build_and_export:
     jobs:
-      - test
       - build_frontend
       - hold:
           type: approval
