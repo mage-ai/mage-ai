@@ -18,6 +18,7 @@ from mage_ai.server.utils.frontend_renderer import (
 import asyncio
 import logging
 import os
+import sys
 
 
 MAX_NUM_OF_ROWS = 100_000
@@ -120,8 +121,9 @@ def clean(
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, repo_path: str = None) -> None:
-    repo_path = os.getcwd() if repo_path is None else os.path.abspath(repo_path)
-    pipeline = Pipeline(pipeline_uuid, repo_path)
+def run(pipeline_uuid: str, project_path: str = None) -> None:
+    project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
+    sys.path.append(os.path.dirname(project_path))
+    pipeline = Pipeline(pipeline_uuid, project_path)
 
     asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False))
