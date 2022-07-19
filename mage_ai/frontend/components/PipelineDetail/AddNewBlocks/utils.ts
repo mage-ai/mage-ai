@@ -21,5 +21,5 @@ export function createActionMenuItems(
       });
     },
     uuid: `${axis}_${action}`,
-  }));
+  })).sort((a, b) => (a.label()).localeCompare(b.label()));
 }

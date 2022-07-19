@@ -6,7 +6,6 @@ export default interface TransformerActionType extends SuggestionType {
 }
 
 export const COLUMN_ACTIONS: ActionTypeEnum[] = [
-  ActionTypeEnum.ADD,
   ActionTypeEnum.AVERAGE,
   ActionTypeEnum.CLEAN_COLUMN_NAME,
   ActionTypeEnum.COUNT,
@@ -44,11 +43,11 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.CLEAN_COLUMN_NAME]: 'Clean column name',
     [ActionTypeEnum.COUNT_DISTINCT]: 'Aggregate by distinct count',
     [ActionTypeEnum.COUNT]: 'Aggregate by total count',
-    [ActionTypeEnum.CUSTOM]: 'Custom column action',
+    [ActionTypeEnum.CUSTOM]: 'Custom code column action',
     [ActionTypeEnum.DIFF]: 'Difference',
     [ActionTypeEnum.FIRST]: 'Aggregate by first value',
     [ActionTypeEnum.FIX_SYNTAX_ERRORS]: 'Fix syntax errors',
-    [ActionTypeEnum.IMPUTE]: 'Impute',
+    [ActionTypeEnum.IMPUTE]: 'Fill in missing values',
     [ActionTypeEnum.LAST]: 'Aggregate by last value',
     [ActionTypeEnum.MAX]: 'Aggregate by maximum value',
     [ActionTypeEnum.MEDIAN]: 'Aggregate by median value',
@@ -62,7 +61,7 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.SUM]: 'Aggregate by sum of values',
   },
   [AxisEnum.ROW]: {
-    [ActionTypeEnum.CUSTOM]: 'Custom row action',
+    [ActionTypeEnum.CUSTOM]: 'Custom code row action',
     [ActionTypeEnum.DROP_DUPLICATE]: 'Drop duplicates',
     [ActionTypeEnum.FILTER]: 'Filter',
     [ActionTypeEnum.SORT]: 'Sort',
