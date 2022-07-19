@@ -239,6 +239,10 @@ class Pipeline:
                             if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                                 block.save_outputs(block_data['outputs'], override=True)
 
+                            if widget and block_data.get('configuration'):
+                                block.configuration = block_data['configuration']
+                                self.save()
+
     def __add_block_to_mapping(
         self,
         blocks_by_uuid,

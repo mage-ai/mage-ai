@@ -2,12 +2,16 @@ import BlockType from '@interfaces/BlockType';
 import ChartBlock from '@components/ChartBlock';
 import FlexContainer from '@oracle/components/FlexContainer';
 
-type ChartsProps = {
-  blocks: BlockType[];
+export type ChartPropsShared = {
   fetchWidgets: () => void;
   onChangeChartBlock: (uuid: string, value: string) => void;
   savePipelineContent: () => void;
+  updateWidget: (block: BlockType) => void;
   widgets: BlockType[];
+};
+
+type ChartsProps = {
+  blocks: BlockType[];
 };
 
 function Charts({
@@ -15,6 +19,7 @@ function Charts({
   fetchWidgets,
   onChangeChartBlock,
   savePipelineContent,
+  updateWidget,
   widgets,
 }: ChartsProps) {
   return (
@@ -28,6 +33,7 @@ function Charts({
           blocks={blocks}
           key={block.uuid}
           onChangeContent={(value: string) => onChangeChartBlock(block.uuid, value)}
+          updateWidget={updateWidget}
         />
       ))}
     </FlexContainer>

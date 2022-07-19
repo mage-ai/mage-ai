@@ -8,12 +8,9 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       uuid: 'buckets',
     },
     {
-      label: () => 'x values variable name',
+      label: () => 'variable name of values',
+      monospace: true,
       uuid: 'x',
-    },
-    {
-      label: () => 'y values variable name',
-      uuid: 'y',
     },
   ],
 };

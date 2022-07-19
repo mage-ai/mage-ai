@@ -18,33 +18,34 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import { CONFIGURATIONS_BY_CHART_TYPE } from './constants';
 import {
   ChartBlockStyle,
-  CodeContainerStyle,
   CodeStyle,
   ConfigurationOptionsStyle,
 } from './index.style';
 import { Edit } from '@oracle/icons';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 
 type ChartBlockType = {
   block: BlockType;
   blocks: BlockType[];
   onChangeContent: (value: string) => void;
+  updateWidget: (block: BlockType) => void;
 };
 
 function ChartBlock({
   block,
   blocks,
   onChangeContent,
+  updateWidget,
 }: ChartBlockType) {
   const {
     configuration = {},
-    upstream_blocks: upstreamBlocks = [],
   } = block;
-  const [chartType, setChartType] = useState<ChartTypeEnum>(configuration.chart_type);
+  const {
+    chart_type: chartType,
+  } = configuration;
   const [content, setContent] = useState<string>(block.content);
-  const [isEditing, setIsEditing] = useState<boolean>(true);
-  const [sourceBlockUUID, setSourceBlockUUID] = useState<string>(upstreamBlocks?.[0]);
+  const [isEditing, setIsEditing] = useState<boolean>(!chartType);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
   const blocksOfType = useMemo(() => blocks?.filter(({
@@ -86,32 +87,21 @@ function ChartBlock({
 
   return (
     <ChartBlockStyle>
-      <FlexContainer
-        alignItems="center"
-        justifyContent="space-between"
-        fullWidth
-      >
-        <Select
-          compact
-          onChange={e => setChartType(e.target.value)}
-          placeholder="Select chart type"
-          small
-          value={chartType}
+      <Spacing mt={1} px={1}>
+        <FlexContainer
+          alignItems="center"
+          justifyContent="space-between"
+          fullWidth
         >
-          {CHART_TYPES.map((chartType: string) => (
-            <option key={chartType} value={chartType}>
-              {capitalize(chartType)}
-            </option>
-          ))}
-        </Select>
-
-        <FlexContainer>
           <Select
             compact
-            onChange={e => setSourceBlockUUID(e.target.value)}
+            onChange={e => updateWidget({
+              ...block,
+              upstream_blocks: [e.target.value],
+            })}
             placeholder="Source block"
             small
-            value={sourceBlockUUID}
+            value={block.upstream_blocks?.[0] || ''}
           >
             {blocksOfType?.map(({ uuid }: BlockType) => (
               <option key={uuid} value={uuid}>
@@ -120,28 +110,28 @@ function ChartBlock({
             ))}
           </Select>
 
-          <Spacing mr={1} />
-
-          <KeyboardShortcutButton
-            blackBorder
-            compact
-            inline
-            onClick={() => setIsEditing(prev => !prev)}
-            selected={isEditing}
-            uuid={`ChartBlock/edit/${block.uuid}`}
-          >
-            <Edit size={UNIT * 2} />
-          </KeyboardShortcutButton>
+          <FlexContainer>
+            <KeyboardShortcutButton
+              blackBorder
+              compact
+              inline
+              onClick={() => setIsEditing(prev => !prev)}
+              selected={isEditing}
+              uuid={`ChartBlock/edit/${block.uuid}`}
+            >
+              <Edit size={UNIT * 2} />
+            </KeyboardShortcutButton>
+          </FlexContainer>
         </FlexContainer>
-      </FlexContainer>
+      </Spacing>
 
-      <Spacing mt={PADDING_UNITS} />
+      <Spacing mt={1} />
 
       <FlexContainer
         justifyContent="space-between"
         fullWidth
       >
-        <Flex>
+        <Flex flex={2}>
           Chart
         </Flex>
 
@@ -149,23 +139,54 @@ function ChartBlock({
           <ConfigurationOptionsStyle>
             <FlexContainer
               flexDirection="column"
+              fullWidth
             >
+              <Spacing mb={1}>
+                <Select
+                  onChange={e => updateWidget({
+                    ...block,
+                    configuration: {
+                      ...configuration,
+                      chart_type: e.target.value,
+                    },
+                  })}
+                  placeholder="Select chart type"
+                  value={chartType}
+                >
+                  {CHART_TYPES.map((chartType: string) => (
+                    <option key={chartType} value={chartType}>
+                      {capitalize(chartType)}
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
+
               {configurationOptions?.map(({
                 label,
+                monospace,
                 type,
                 uuid,
-              }, idx: number) => {
+              }) => {
                 const el = (
                   <TextInput
+                    fullWidth
                     key={uuid}
                     label={label()}
-                    small
+                    monospace={monospace}
+                    onChange={e => updateWidget({
+                    ...block,
+                    configuration: {
+                      ...configuration,
+                      [uuid]: e.target.value,
+                    },
+                  })}
                     type={type}
+                    value={configuration?.[uuid]}
                   />
                 );
 
                 return (
-                  <Spacing key={uuid} mt={idx >= 1 ? 1 : 0}>
+                  <Spacing key={uuid} mb={1}>
                     {el}
                   </Spacing>
                 );
@@ -176,11 +197,9 @@ function ChartBlock({
       </FlexContainer>
 
       {isEditing && (
-        <CodeContainerStyle>
-          <CodeStyle>
-            {codeEditorEl}
-          </CodeStyle>
-        </CodeContainerStyle>
+        <CodeStyle>
+          {codeEditorEl}
+        </CodeStyle>
       )}
     </ChartBlockStyle>
   );

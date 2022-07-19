@@ -210,6 +210,20 @@ function PipelineDetailPage({
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [widgets, setWidgets] = useState<BlockType[]>([]);
+  const updateWidget = useCallback((block: BlockType) => setWidgets((widgetsPrev) => {
+    const idx = widgetsPrev.findIndex(({ uuid }: BlockType) => block.uuid === uuid);
+
+    if (idx >= 0) {
+      setPipelineContentTouched(true);
+      widgetsPrev[idx] = block;
+    }
+
+    return widgetsPrev;
+  }), [
+    setPipelineContentTouched,
+    setWidgets,
+  ]);
+
   const [editingBlock, setEditingBlock] = useState<{
     upstreamBlocks: {
       block: BlockType;
@@ -423,6 +437,7 @@ function PipelineDetailPage({
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
+    widgets,
   ]);
 
   const [deleteBlock] = useMutation(
@@ -767,7 +782,7 @@ function PipelineDetailPage({
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
       statistics={statistics}
-      views={SIDEKICK_VIEWS}
+      updateWidget={updateWidget}
       widgets={widgets}
     />
   ), [
@@ -789,6 +804,7 @@ function PipelineDetailPage({
     selectedBlock,
     setEditingBlock,
     statistics,
+    updateWidget,
     widgets,
   ]);
   const pipelineDetailMemo = useMemo(() => (

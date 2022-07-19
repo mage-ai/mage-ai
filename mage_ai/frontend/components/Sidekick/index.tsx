@@ -10,7 +10,7 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Charts from './Charts';
+import Charts, { ChartPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -53,24 +53,16 @@ export type SidekickProps = {
     };
   };
   fetchPipeline: () => void;
-  fetchWidgets: () => void;
   insights: InsightType[][];
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
-  onChangeChartBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
-  savePipelineContent: () => void;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
-  views: {
-    key: string;
-    label: string;
-  }[];
-  widgets: BlockType[];
-} & SetEditingBlockType;
+} & SetEditingBlockType & ChartPropsShared;
 
 function Sidekick({
   activeView,
@@ -92,6 +84,7 @@ function Sidekick({
   setEditingBlock,
   setSelectedBlock,
   statistics,
+  updateWidget,
   widgets,
 }: SidekickProps) {
   const {
@@ -334,6 +327,7 @@ function Sidekick({
             fetchWidgets={fetchWidgets}
             onChangeChartBlock={onChangeChartBlock}
             savePipelineContent={savePipelineContent}
+            updateWidget={updateWidget}
             widgets={widgets}
           />
         )}
