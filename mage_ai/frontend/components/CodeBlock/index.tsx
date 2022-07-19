@@ -137,7 +137,7 @@ function CodeBlockProps({
       const {
         code,
         runUpstream,
-      } = payload || {}
+      } = payload || {};
       runBlock({
         block,
         code: code || content,
