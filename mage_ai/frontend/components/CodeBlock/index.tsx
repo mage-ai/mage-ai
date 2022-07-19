@@ -12,7 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
-  BLOCK_TYPE_PERMANENT,
+  BLOCK_TYPE_CONVERTIBLE,
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
@@ -333,7 +333,7 @@ function CodeBlockProps({
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
         {
-          items: BLOCK_TYPE_PERMANENT.map(blockType => ({
+          items: BLOCK_TYPE_CONVERTIBLE.map(blockType => ({
             label: () => BLOCK_TYPE_NAME_MAPPING[blockType],
             // @ts-ignore
             onClick: () => updateBlock({
