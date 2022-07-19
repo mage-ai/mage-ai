@@ -6,15 +6,16 @@ import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardText
 import Text from '@oracle/elements/Text';
 import { ArrowRight } from '@oracle/icons';
 import {
+  COMPACT_MENU_WIDTH,
   FlyoutMenuContainerStyle,
   LinkStyle,
+  MENU_WIDTH,
 } from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
@@ -121,7 +122,7 @@ function FlyoutMenu({
         left: (
           depth === 0
             ? left || 0
-            : compact ? (depth * UNIT * 20) : (depth * UNIT * 34)
+            : compact ? (depth * COMPACT_MENU_WIDTH) : (depth * MENU_WIDTH)
         ),
         top: (
           depth === 0
