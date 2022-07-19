@@ -39,7 +39,13 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { ArrowDown, FileFill, Stack } from '@oracle/icons';
+import {
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  FileFill,
+  Stack,
+} from '@oracle/icons';
 import {
   BlockDivider,
   BlockDividerInner,
@@ -120,10 +126,12 @@ function CodeBlockProps({
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
+  const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
@@ -387,6 +395,7 @@ function CodeBlockProps({
     <CodeOutput
       {...borderColorShareProps}
       block={block}
+      collapsed={outputCollapsed}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -394,6 +403,7 @@ function CodeBlockProps({
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
+      setCollapsed={setOutputCollapsed}
     />
   ), [
     block,
@@ -402,6 +412,7 @@ function CodeBlockProps({
     isInProgress,
     mainContainerWidth,
     messagesWithType,
+    outputCollapsed,
     runCount,
     runEndTime,
     runStartTime,
@@ -530,7 +541,7 @@ function CodeBlockProps({
         </Flex>
 
         {BlockTypeEnum.SCRATCHPAD !== block.type && (
-          <div>
+          <FlexContainer alignItems="center">
             <Tooltip
               appearBefore
               block
@@ -553,12 +564,12 @@ function CodeBlockProps({
                     },
                   });
                 }}
-              >
+                >
                 <FlexContainer alignItems="center">
                   <Text
                     monospace={numberOfParentBlocks >= 1}
                     underline={numberOfParentBlocks === 0}
-                  >
+                    >
                     {numberOfParentBlocks === 0 && 'Click to set parent blocks'}
                     {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
                   </Text>
@@ -569,8 +580,31 @@ function CodeBlockProps({
                 </FlexContainer>
               </Button>
             </Tooltip>
-          </div>
+          </FlexContainer>
         )}
+        <Spacing mr={1} />
+
+        <Spacing px={1}>
+          <Button
+            basic
+            iconOnly
+            noPadding
+            onClick={() => {
+              if (!codeCollapsed) {
+                setCodeCollapsed(true);
+                setOutputCollapsed(true);
+              } else {
+                setCodeCollapsed(false);
+              }
+            }}
+            transparent
+          >
+            {codeCollapsed
+              ? <ChevronDown muted size={UNIT * 2} />
+              : <ChevronUp muted size={UNIT * 2} />
+            }
+          </Button>
+        </Spacing>
       </FlexContainer>
 
       {(selected || isInProgress) && (
@@ -590,7 +624,7 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {block.upstream_blocks.length >= 1 && (
+          {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>
                 Positional arguments for decorated function:
@@ -641,7 +675,16 @@ function CodeBlockProps({
               </Spacing>
             </CodeHelperStyle>
           )}
-          {codeEditorEl}
+          {!codeCollapsed
+            ? codeEditorEl
+            : (
+              <Spacing px={1}>
+                <Text monospace muted>
+                  ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
+                </Text>
+              </Spacing>
+            )
+          }
         </CodeContainerStyle>
 
         {codeOutputEl}
