@@ -342,10 +342,10 @@ function CodeBlockProps({
                 type: blockType,
               },
             }),
-            uuid: `block_menu/scratchpad/turn_into/${blockType}`,
+            uuid: `block_menu/scratchpad/convert_to/${blockType}`,
           })),
-          label: () => 'Turn into',
-          uuid: 'block_menu/scratchpad/turn_into',
+          label: () => 'Convert to',
+          uuid: 'block_menu/scratchpad/convert_to',
         },
       ],
     };
