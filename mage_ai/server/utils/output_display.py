@@ -165,14 +165,11 @@ def execute_custom_code():
     code = \'\'\'
 {escaped_code}
     \'\'\'
-    
+
     if run_upstream:
         block.run_upstream_blocks()
 
     global_vars = {global_vars}
-    if global_vars is not None:
-        validate_global_names(global_vars)
-
     block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']
     return find(lambda val: type(val) == pd.DataFrame, output)

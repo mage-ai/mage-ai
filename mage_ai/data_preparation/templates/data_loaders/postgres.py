@@ -9,7 +9,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data_from_postgres() -> DataFrame:
+def load_data_from_postgres(**kwargs) -> DataFrame:
     """
     Template for loading data from a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.

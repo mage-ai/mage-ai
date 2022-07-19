@@ -123,10 +123,9 @@ class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
-        global_vars = {}
+        global_vars = None
         if len(self.request.body) != 0:
-            global_vars = json.loads(self.request.body).get('global_vars', {})
-            validate_global_names(global_vars)
+            global_vars = json.loads(self.request.body).get('global_vars')
 
         asyncio.run(pipeline.execute(global_vars=global_vars))
         self.write(

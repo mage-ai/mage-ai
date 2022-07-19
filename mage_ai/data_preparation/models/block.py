@@ -333,7 +333,10 @@ class Block:
             block_function = decorated_functions[0]
             sig = signature(block_function)
 
-            num_args = sum(arg.kind != Parameter.VAR_POSITIONAL for arg in sig.parameters.values())
+            num_args = sum(
+                arg.kind not in (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
+                for arg in sig.parameters.values()
+            )
             num_inputs = len(input_vars)
             num_upstream = len(self.upstream_block_uuids)
 
@@ -373,7 +376,7 @@ class Block:
 
     def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
         if global_vars is None:
-            global_vars = {}
+            x = {}
 
         def block_decorator(decorated_functions):
             def custom_code(function):
@@ -397,21 +400,22 @@ class Block:
         outputs = []
         decorated_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
-        global_vars[self.type] = block_decorator(decorated_functions)
         with redirect_stdout(stdout):
             if custom_code is not None:
-                exec(custom_code, global_vars)
+                exec(custom_code, {self.type: block_decorator(decorated_functions)})
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
-                    exec(file.read(), global_vars)
+                    exec(file.read(), {self.type: block_decorator(decorated_functions)})
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
-                outputs = block_function(*input_vars)
+                if global_vars is not None:
+                    outputs = block_function(*input_vars, **global_vars)
+                else:
+                    outputs = block_function(*input_vars)
                 if outputs is None:
                     outputs = []
                 if type(outputs) is not list:
                     outputs = [outputs]
-        global_vars.pop(self.type)
 
         output_message = dict(output=outputs)
         if redirect_outputs:

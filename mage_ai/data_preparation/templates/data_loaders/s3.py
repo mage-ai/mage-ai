@@ -9,7 +9,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_from_s3_bucket() -> DataFrame:
+def load_from_s3_bucket(**kwargs) -> DataFrame:
     """
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.

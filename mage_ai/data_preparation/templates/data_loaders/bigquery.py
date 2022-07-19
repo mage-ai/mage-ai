@@ -9,7 +9,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data_from_big_query() -> DataFrame:
+def load_data_from_big_query(**kwargs) -> DataFrame:
     """
     Template for loading data from a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
