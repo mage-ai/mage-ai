@@ -118,7 +118,11 @@ function FlyoutMenu({
       compact={compact}
       style={{
         display: !visible && !submenuVisible[uuid] ? 'none' : null,
-        left: depth === 0 ? left || 0 : (compact ? (depth * UNIT * 20) : (depth * UNIT * 34)),
+        left: (
+          depth === 0
+            ? left || 0
+            : compact ? (depth * UNIT * 20) : (depth * UNIT * 34)
+        ),
         top: depth === 0 ? (height || 0) + topOffset : 0,
       }}
       width={width}
