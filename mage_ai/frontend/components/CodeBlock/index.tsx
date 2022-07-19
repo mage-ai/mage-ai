@@ -589,7 +589,14 @@ function CodeBlockProps({
             basic
             iconOnly
             noPadding
-            onClick={() => setCodeCollapsed(!codeCollapsed)}
+            onClick={() => {
+              if (!codeCollapsed) {
+                setCodeCollapsed(true);
+                setOutputCollapsed(true);
+              } else {
+                setCodeCollapsed(false);
+              }
+            }}
             transparent
           >
             {codeCollapsed
