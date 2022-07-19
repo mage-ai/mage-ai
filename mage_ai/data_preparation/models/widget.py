@@ -13,17 +13,20 @@ class Widget(Block):
         self.configuration = kwargs.get('configuration', {})
 
     @classmethod
-    def after_create(self, block, **kwargs):
-        pipeline = kwargs.get('pipeline')
-        if pipeline is not None:
-            priority = kwargs.get('priority')
-            upstream_block_uuids = kwargs.get('upstream_block_uuids')
-            pipeline.add_block(
-                block,
-                upstream_block_uuids,
-                priority=priority,
-                widget=True,
-            )
+    def create(
+        self,
+        name,
+        block_type,
+        repo_path,
+        **kwargs,
+    ):
+        return super().create(
+            name,
+            block_type,
+            repo_path,
+            widget=True,
+            **kwargs,
+        )
 
     @classmethod
     def block_class_from_type(self, block_type: str) -> str:

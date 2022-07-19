@@ -160,11 +160,12 @@ class Block:
 
     @classmethod
     def after_create(self, block, **kwargs):
+        widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids')
-            pipeline.add_block(block, upstream_block_uuids, priority=priority)
+            pipeline.add_block(block, upstream_block_uuids, priority=priority, widget=widget)
 
     @classmethod
     def create(
@@ -176,6 +177,7 @@ class Block:
         priority=None,
         upstream_block_uuids=None,
         config=None,
+        widget=False,
     ):
         """
         1. Create a new folder for block_type if not exist
@@ -207,6 +209,7 @@ class Block:
             pipeline=pipeline,
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
+            widget=widget,
         )
         return block
 
@@ -507,11 +510,11 @@ class Block:
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
-    def update_content(self, content):
+    def update_content(self, content, widget=False):
         if content != self.file.content():
             self.status = BlockStatus.UPDATED
         self.file.update_content(content)
-        self.__update_pipeline_block()
+        self.__update_pipeline_block(widget=widget)
         return self
 
     def get_all_upstream_blocks(self) -> List['Block']:
@@ -533,7 +536,7 @@ class Block:
         ) -> List[str]:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
-            return block.uuid            
+            return block.uuid
 
         upstream_blocks = self.get_all_upstream_blocks()
         root_blocks = []
@@ -621,10 +624,10 @@ class Block:
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid)
 
-    def __update_pipeline_block(self):
+    def __update_pipeline_block(self, widget=False):
         if self.pipeline is None:
             return
-        self.pipeline.update_block(self)
+        self.pipeline.update_block(self, widget=widget)
 
     def __update_type(self, block_type):
         """

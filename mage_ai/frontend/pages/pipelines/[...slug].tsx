@@ -358,16 +358,22 @@ function PipelineDetailPage({
     return updatePipeline({
       pipeline: {
         ...pipeline,
-        blocks: blocks.map((block: BlockType) => ({
-          ...block,
-          content: contentByBlockUUID.current[block.uuid] || block.content,
-          outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
-            ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
-              text_data: JSON.stringify(d),
-              variable_uuid: `${block.uuid}_${idx}`,
-            }))
-            : block.outputs,
-        })),
+        blocks: blocks.map((block: BlockType) => {
+          let contentToSave = contentByBlockUUID.current[block.uuid];
+          if (typeof contentToSave === 'undefined') {
+            contentToSave = block.content;
+          }
+          return {
+            ...block,
+            content: contentToSave,
+            outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
+              ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
+                text_data: JSON.stringify(d),
+                variable_uuid: `${block.uuid}_${idx}`,
+              }))
+              : block.outputs,
+          };
+        }),
       },
     });
   }, [
@@ -540,6 +546,12 @@ function PipelineDetailPage({
     setBlocks,
   ]);
 
+  // Widgets
+  const {
+    data: dataWidgets,
+    mutate: fetchWidgets,
+  } = api.widgets.pipelines.list(!afterHidden && pipelineUUID);
+  const widgets = dataWidgets?.widgets;
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
     widget: BlockType,
@@ -698,6 +710,7 @@ function PipelineDetailPage({
       blocks={blocks}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
+      fetchWidgets={fetchWidgets}
       globalVariables={globalVariables}
       insights={insights}
       metadata={metadata}
@@ -709,6 +722,7 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       statistics={statistics}
       views={SIDEKICK_VIEWS}
+      widgets={widgets}
     />
   ), [
     activeSidekickView,
@@ -717,6 +731,7 @@ function PipelineDetailPage({
     blocks,
     editingBlock,
     fetchPipeline,
+    fetchWidgets,
     globalVariables,
     insights,
     metadata,
@@ -726,6 +741,7 @@ function PipelineDetailPage({
     selectedBlock,
     setEditingBlock,
     statistics,
+    widgets,
   ]);
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
@@ -846,19 +862,17 @@ function PipelineDetailPage({
               })}
             </Flex>
 
-            {false && (
-              <Spacing pr={1}>
-                <KeyboardShortcutButton
-                  beforeElement={<Add />}
-                  blackBorder
-                  compact
-                  onClick={() => addWidgetAtIndex({}, 0)}
-                  uuid="Pipeline/afterHeader/add_chart"
-                >
-                  Add chart
-                </KeyboardShortcutButton>
-              </Spacing>
-            )}
+            <Spacing px={1}>
+              <KeyboardShortcutButton
+                beforeElement={<Add />}
+                blackBorder
+                compact
+                onClick={() => addWidgetAtIndex({}, 0)}
+                uuid="Pipeline/afterHeader/add_chart"
+              >
+                Add chart
+              </KeyboardShortcutButton>
+            </Spacing>
           </FlexContainer>
         )}
         afterHidden={afterHidden}

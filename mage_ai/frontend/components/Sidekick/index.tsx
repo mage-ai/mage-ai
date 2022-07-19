@@ -10,6 +10,7 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Charts from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -52,6 +53,7 @@ export type SidekickProps = {
     };
   };
   fetchPipeline: () => void;
+  fetchWidgets: () => void;
   insights: InsightType[][];
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
@@ -65,6 +67,7 @@ export type SidekickProps = {
     key: string;
     label: string;
   }[];
+  widgets: BlockType[];
 } & SetEditingBlockType;
 
 function Sidekick({
@@ -74,6 +77,7 @@ function Sidekick({
   blocks,
   editingBlock,
   fetchPipeline,
+  fetchWidgets,
   globalVariables,
   insights,
   metadata,
@@ -84,6 +88,7 @@ function Sidekick({
   setEditingBlock,
   setSelectedBlock,
   statistics,
+  widgets,
 }: SidekickProps) {
   const {
     height: heightWindow,
@@ -318,6 +323,13 @@ function Sidekick({
             </FlexContainer>
           )
         }
+
+        {ViewKeyEnum.CHARTS === activeView && (
+          <Charts
+            fetchWidgets={fetchWidgets}
+            widgets={widgets}
+          />
+        )}
       </SidekickContainerStyle>
     </>
   );

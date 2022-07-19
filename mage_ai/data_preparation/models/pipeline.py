@@ -235,7 +235,7 @@ class Pipeline:
                             if block is None:
                                 continue
                             if 'content' in block_data:
-                                block.update_content(block_data['content'])
+                                block.update_content(block_data['content'], widget=widget)
                             if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                                 block.save_outputs(block_data['outputs'], override=True)
 
@@ -279,7 +279,6 @@ class Pipeline:
 
         self.save()
         return block
-        return block
 
     def get_block(self, block_uuid, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
@@ -292,16 +291,18 @@ class Pipeline:
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
 
-    def update_block(self, block, upstream_block_uuids=None):
+    def update_block(self, block, upstream_block_uuids=None, widget=False):
         if upstream_block_uuids is not None:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids:
                 upstream_blocks_added = self.get_blocks(
                     new_upstream_block_uuids - curr_upstream_block_uuids,
+                    widget=widget,
                 )
                 upstream_blocks_removed = self.get_blocks(
                     curr_upstream_block_uuids - new_upstream_block_uuids,
+                    widget=widget,
                 )
                 for b in upstream_blocks_added:
                     b.downstream_blocks.append(block)
@@ -309,8 +310,12 @@ class Pipeline:
                     b.downstream_blocks = [
                         db for db in b.downstream_blocks if db.uuid != block.uuid
                     ]
-                block.upstream_blocks = self.get_blocks(upstream_block_uuids)
-        self.blocks_by_uuid[block.uuid] = block
+                block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=widget)
+        if widget:
+            self.widgets_by_uuid[block.uuid] = block
+        else:
+            self.blocks_by_uuid[block.uuid] = block
+
         self.save()
         return block
 
