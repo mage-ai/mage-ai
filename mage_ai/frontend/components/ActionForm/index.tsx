@@ -161,7 +161,7 @@ function ActionForm({
     >
       {!noHeader &&
         <>
-          <FlexContainer justifyContent={'space-between'}>
+          <FlexContainer justifyContent="space-between">
             <Spacing p={2}>
               <Text>
                 {title}
