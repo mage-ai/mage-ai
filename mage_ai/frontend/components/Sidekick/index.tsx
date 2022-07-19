@@ -57,9 +57,11 @@ export type SidekickProps = {
   insights: InsightType[][];
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
+  onChangeChartBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
+  savePipelineContent: () => void;
   selectedBlock: BlockType;
   setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
@@ -81,9 +83,11 @@ function Sidekick({
   globalVariables,
   insights,
   metadata,
+  onChangeChartBlock,
   pipeline,
   runningBlocks,
   sampleData,
+  savePipelineContent,
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
@@ -326,7 +330,10 @@ function Sidekick({
 
         {ViewKeyEnum.CHARTS === activeView && (
           <Charts
+            blocks={blocks}
             fetchWidgets={fetchWidgets}
+            onChangeChartBlock={onChangeChartBlock}
+            savePipelineContent={savePipelineContent}
             widgets={widgets}
           />
         )}

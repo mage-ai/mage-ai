@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react';
+import {
+  useMemo,
+  useState,
+} from 'react';
 
 import BlockType, {
+  BlockTypeEnum,
   CHART_TYPES,
   ChartTypeEnum,
 } from '@interfaces/BlockType';
@@ -24,19 +28,31 @@ import { capitalize } from '@utils/string';
 
 type ChartBlockType = {
   block: BlockType;
+  blocks: BlockType[];
+  onChangeContent: (value: string) => void;
 };
 
 function ChartBlock({
   block,
+  blocks,
+  onChangeContent,
 }: ChartBlockType) {
   const {
     configuration = {},
+    upstream_blocks: upstreamBlocks = [],
   } = block;
   const [chartType, setChartType] = useState<ChartTypeEnum>(configuration.chart_type);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(true);
+  const [sourceBlockUUID, setSourceBlockUUID] = useState<string>(upstreamBlocks?.[0]);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
+  const blocksOfType = useMemo(() => blocks?.filter(({
+    type,
+  }: BlockType) => [BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(type),
+  ), [
+    blocks,
+  ]);
 
   const codeEditorEl = useMemo(() => (
     <CodeEditor
@@ -44,6 +60,7 @@ function ChartBlock({
       // height={height}
       onChange={(val: string) => {
         setContent(val);
+        onChangeContent(val);
       }}
       showLineNumbers={false}
       // onDidChangeCursorPosition={onDidChangeCursorPosition}
@@ -81,7 +98,6 @@ function ChartBlock({
           small
           value={chartType}
         >
-          <option value="" />
           {CHART_TYPES.map((chartType: string) => (
             <option key={chartType} value={chartType}>
               {capitalize(chartType)}
@@ -89,16 +105,34 @@ function ChartBlock({
           ))}
         </Select>
 
-        <KeyboardShortcutButton
-          blackBorder
-          compact
-          inline
-          onClick={() => setIsEditing(prev => !prev)}
-          selected={isEditing}
-          uuid={`ChartBlock/edit/${block.uuid}`}
-        >
-          <Edit size={UNIT * 2} />
-        </KeyboardShortcutButton>
+        <FlexContainer>
+          <Select
+            compact
+            onChange={e => setSourceBlockUUID(e.target.value)}
+            placeholder="Source block"
+            small
+            value={sourceBlockUUID}
+          >
+            {blocksOfType?.map(({ uuid }: BlockType) => (
+              <option key={uuid} value={uuid}>
+                {uuid}
+              </option>
+            ))}
+          </Select>
+
+          <Spacing mr={1} />
+
+          <KeyboardShortcutButton
+            blackBorder
+            compact
+            inline
+            onClick={() => setIsEditing(prev => !prev)}
+            selected={isEditing}
+            uuid={`ChartBlock/edit/${block.uuid}`}
+          >
+            <Edit size={UNIT * 2} />
+          </KeyboardShortcutButton>
+        </FlexContainer>
       </FlexContainer>
 
       <Spacing mt={PADDING_UNITS} />

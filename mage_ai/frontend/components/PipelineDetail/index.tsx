@@ -60,6 +60,7 @@ type PipelineDetailProps = {
   mainContainerRef: any;
   mainContainerWidth: number;
   messages: { [uuid: string]: KernelOutputType[]; };
+  onChangeCodeBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
@@ -67,7 +68,6 @@ type PipelineDetailProps = {
   runningBlocks: BlockType[];
   savePipelineContent: () => void;
   selectedBlock: BlockType;
-  setContentByBlockUUID: (data: { [uuid: string]: string; }) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
@@ -87,6 +87,7 @@ function PipelineDetail({
   mainContainerRef,
   mainContainerWidth,
   messages,
+  onChangeCodeBlock,
   pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
@@ -94,7 +95,6 @@ function PipelineDetail({
   runningBlocks = [],
   savePipelineContent,
   selectedBlock,
-  setContentByBlockUUID,
   setEditingBlock,
   setMessages,
   setPipelineContentTouched,
@@ -336,16 +336,6 @@ function PipelineDetail({
     pipelineContentTouched,
     savePipelineContent,
   ]);
-
-  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
-    setContentByBlockUUID({ [uuid]: value });
-    setPipelineContentTouched(true);
-  },
-    [
-      setContentByBlockUUID,
-      setPipelineContentTouched,
-    ],
-  );
 
   useEffect(() => {
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);

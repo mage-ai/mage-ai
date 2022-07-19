@@ -53,6 +53,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
+import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -87,6 +88,10 @@ function PipelineDetailPage({
     [filePath: string]: boolean;
   }>({});
 
+  // Pipeline
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
+  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+
   const qUrl = queryFromUrl();
   const {
     [VIEW_QUERY_PARAM]: activeSidekickView,
@@ -119,6 +124,7 @@ function PipelineDetailPage({
 
   const blockRefs = useRef({});
   const contentByBlockUUID = useRef({});
+  const contentByWidgetUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
@@ -131,6 +137,32 @@ function PipelineDetailPage({
       ...data,
     };
   }, [contentByBlockUUID]);
+  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
+    setContentByBlockUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
+    [
+      setContentByBlockUUID,
+      setPipelineContentTouched,
+    ],
+  );
+  const setContentByWidgetUUID = useCallback((data: {
+    [uuid: string]: string;
+  }) => {
+    contentByWidgetUUID.current = {
+      ...contentByWidgetUUID.current,
+      ...data,
+    };
+  }, [contentByWidgetUUID]);
+  const onChangeChartBlock = useCallback((uuid: string, value: string) => {
+    setContentByWidgetUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
+    [
+      setContentByWidgetUUID,
+      setPipelineContentTouched,
+    ],
+  );
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
   useEffect(() => {
@@ -168,10 +200,6 @@ function PipelineDetailPage({
     beforeWidth,
   ]);
 
-  // Pipeline
-  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
-  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-
   // Variables
   const {
     data: dataGlobalVariables,
@@ -181,6 +209,7 @@ function PipelineDetailPage({
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
+  const [widgets, setWidgets] = useState<BlockType[]>([]);
   const [editingBlock, setEditingBlock] = useState<{
     upstreamBlocks: {
       block: BlockType;
@@ -374,11 +403,22 @@ function PipelineDetailPage({
               : block.outputs,
           };
         }),
+        widgets: widgets.map((block: BlockType) => {
+          let contentToSave = contentByWidgetUUID.current[block.uuid];
+          if (typeof contentToSave === 'undefined') {
+            contentToSave = block.content;
+          }
+          return {
+            ...block,
+            content: contentToSave,
+          };
+        }),
       },
     });
   }, [
     blocks,
     contentByBlockUUID.current,
+    contentByWidgetUUID.current,
     messages,
     pipeline,
     setPipelineLastSaved,
@@ -551,7 +591,6 @@ function PipelineDetailPage({
     data: dataWidgets,
     mutate: fetchWidgets,
   } = api.widgets.pipelines.list(!afterHidden && pipelineUUID);
-  const widgets = dataWidgets?.widgets;
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
     widget: BlockType,
@@ -600,6 +639,7 @@ function PipelineDetailPage({
   useEffect(() => {
     if (pipelineUUIDPrev !== pipelineUUID) {
       setBlocks([]);
+      setWidgets([]);
     }
   }, [
     pipelineUUID,
@@ -615,35 +655,20 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
+    if (typeof pipeline?.widgets !== 'undefined') {
+      setWidgets(pipeline.widgets);
+    }
+  }, [
+    pipeline?.widgets,
+  ]);
+
+  useEffect(() => {
     if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
-      const messagesInit = {};
-      contentByBlockUUID.current = {};
-
-      pipeline.blocks.forEach(({
-        content,
-        outputs,
-        uuid,
-      }: BlockType) => {
-        if (outputs.length >= 1) {
-          messagesInit[uuid] = outputs.map(({
-            sample_data: sampleData,
-            text_data: textDataJsonString,
-            type,
-          }: OutputType) => {
-            if (sampleData) {
-              return {
-                data: sampleData,
-                type,
-              };
-            } else if (textDataJsonString) {
-              return JSON.parse(textDataJsonString);
-            }
-
-            return textDataJsonString;
-          });
-        }
-        contentByBlockUUID.current[uuid] = content;
-      });
+      const {
+        content: contentByBlockUUIDResults,
+        messages: messagesInit,
+      } = initializeContentAndMessages(pipeline.blocks);
+      contentByBlockUUID.current = contentByBlockUUIDResults;
 
       setMessages((messagesPrev) => ({
         ...messagesInit,
@@ -655,6 +680,25 @@ function PipelineDetailPage({
     pipeline?.blocks,
     setBlocks,
     setMessages,
+  ]);
+  useEffect(() => {
+    if (!widgets.length && typeof pipeline?.widgets !== 'undefined') {
+      const {
+        content: contentByBlockUUIDResults,
+        messages: messagesInit,
+      } = initializeContentAndMessages(pipeline.widgets);
+      contentByWidgetUUID.current = contentByBlockUUIDResults;
+
+      setMessages((messagesPrev) => ({
+        ...messagesInit,
+        ...messagesPrev,
+      }));
+    }
+  }, [
+    pipeline?.widgets,
+    setBlocks,
+    setMessages,
+    widgets,
   ]);
 
   const onSelectBlockFile = useCallback((
@@ -714,9 +758,11 @@ function PipelineDetailPage({
       globalVariables={globalVariables}
       insights={insights}
       metadata={metadata}
+      onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
+      savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
@@ -735,9 +781,11 @@ function PipelineDetailPage({
     globalVariables,
     insights,
     metadata,
+    onChangeChartBlock,
     pipeline,
     runningBlocks,
     sampleData,
+    savePipelineContent,
     selectedBlock,
     setEditingBlock,
     statistics,
@@ -758,6 +806,7 @@ function PipelineDetailPage({
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
       messages={messages}
+      onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
@@ -765,7 +814,6 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
-      setContentByBlockUUID={setContentByBlockUUID}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
       setPipelineContentTouched={setPipelineContentTouched}
@@ -786,6 +834,7 @@ function PipelineDetailPage({
     mainContainerRef,
     mainContainerWidth,
     messages,
+    onChangeCodeBlock,
     pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
@@ -793,7 +842,6 @@ function PipelineDetailPage({
     runningBlocks,
     savePipelineContent,
     selectedBlock,
-    setContentByBlockUUID,
     setEditingBlock,
     setMessages,
     setPipelineContentTouched,
