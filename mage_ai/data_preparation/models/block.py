@@ -28,6 +28,7 @@ import traceback
 async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
+    global_vars=None,
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = False,
@@ -55,19 +56,22 @@ async def run_blocks(
         task = asyncio.create_task(
             block.execute(
                 analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
         )
         tasks[block.uuid] = task
         for downstream_block in block.downstream_blocks:
-            if downstream_block.uuid not in tasks and \
-                (selected_blocks is None or upstream_block.uuid in selected_blocks):
+            if downstream_block.uuid not in tasks and (
+                selected_blocks is None or upstream_block.uuid in selected_blocks
+            ):
 
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
     remaining_tasks = filter(lambda task: task is not None, tasks.values())
     await asyncio.gather(*remaining_tasks)
+
 
 def run_blocks_sync(
     root_blocks: List['Block'],
@@ -98,8 +102,9 @@ def run_blocks_sync(
         block.execute_sync(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
-            if downstream_block.uuid not in tasks and \
-                (selected_blocks is None or downstream_block.uuid in selected_blocks):
+            if downstream_block.uuid not in tasks and (
+                selected_blocks is None or downstream_block.uuid in selected_blocks
+            ):
 
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
@@ -261,11 +266,16 @@ class Block:
         self,
         analyze_outputs=True,
         custom_code=None,
+        global_vars=None,
         redirect_outputs=False,
         update_status=True,
     ):
         try:
-            output = self.execute_block(custom_code=custom_code, redirect_outputs=redirect_outputs)
+            output = self.execute_block(
+                custom_code=custom_code,
+                global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
+            )
             block_output = output['output']
             self.__verify_outputs(block_output)
             variable_mapping = dict(zip(self.output_variables.keys(), block_output))
@@ -287,6 +297,7 @@ class Block:
         self,
         analyze_outputs=True,
         custom_code=None,
+        global_vars=None,
         redirect_outputs=False,
         update_status=True,
     ):
@@ -294,6 +305,7 @@ class Block:
             return self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
+                global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
@@ -321,7 +333,10 @@ class Block:
             block_function = decorated_functions[0]
             sig = signature(block_function)
 
-            num_args = sum(arg.kind != Parameter.VAR_POSITIONAL for arg in sig.parameters.values())
+            num_args = sum(
+                arg.kind not in (Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD)
+                for arg in sig.parameters.values()
+            )
             num_inputs = len(input_vars)
             num_upstream = len(self.upstream_block_uuids)
 
@@ -359,7 +374,7 @@ class Block:
 
             return block_function
 
-    def execute_block(self, custom_code=None, redirect_outputs=False):
+    def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
@@ -390,7 +405,10 @@ class Block:
                     exec(file.read(), {self.type: block_decorator(decorated_functions)})
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
-                outputs = block_function(*input_vars)
+                if global_vars is not None and len(global_vars) != 0:
+                    outputs = block_function(*input_vars, **global_vars)
+                else:
+                    outputs = block_function(*input_vars)
                 if outputs is None:
                     outputs = []
                 if type(outputs) is not list:
@@ -485,9 +503,8 @@ class Block:
             upstream_blocks=self.upstream_block_uuids,
             downstream_blocks=self.downstream_block_uuids,
             all_upstream_blocks_executed=all(
-                block.status == BlockStatus.EXECUTED
-                for block in self.get_all_upstream_blocks()
-            )
+                block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
+            ),
         )
         if include_content:
             data['content'] = self.file.content()
@@ -498,8 +515,11 @@ class Block:
     def update(self, data):
         if 'name' in data and data['name'] != self.name:
             self.__update_name(data['name'])
-        if 'type' in data and self.type == BlockType.SCRATCHPAD and \
-                data['type'] != BlockType.SCRATCHPAD:
+        if (
+            'type' in data
+            and self.type == BlockType.SCRATCHPAD
+            and data['type'] != BlockType.SCRATCHPAD
+        ):
             self.__update_type(data['type'])
         if 'upstream_blocks' in data and set(data['upstream_blocks']) != set(
             self.upstream_block_uuids
@@ -533,12 +553,13 @@ class Block:
         ) -> List[str]:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
-            return block.uuid            
+            return block.uuid
 
         upstream_blocks = self.get_all_upstream_blocks()
         root_blocks = []
-        upstream_block_uuids = \
-            list(map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks))
+        upstream_block_uuids = list(
+            map(lambda x: process_upstream_block(x, root_blocks), upstream_blocks)
+        )
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
@@ -636,8 +657,10 @@ class Block:
         self.type = block_type
         new_file_path = self.file_path
         if os.path.exists(new_file_path):
-            raise Exception(f'Block {self.type}/{self.uuid} already exists.'
-                            ' Please rename it before changing the type.')
+            raise Exception(
+                f'Block {self.type}/{self.uuid} already exists.'
+                ' Please rename it before changing the type.'
+            )
         os.rename(old_file_path, new_file_path)
         if self.pipeline is not None:
             self.pipeline.update_block(self)

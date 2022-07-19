@@ -6,7 +6,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data_from_file() -> DataFrame:
+def load_data_from_file(**kwargs) -> DataFrame:
     """
     Template for loading data from filesystem.
     """

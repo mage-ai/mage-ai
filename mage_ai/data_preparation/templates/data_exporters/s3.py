@@ -9,7 +9,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data_to_s3(df: DataFrame) -> None:
+def export_data_to_s3(df: DataFrame, **kwargs) -> None:
     """
     Template for exporting data to a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.

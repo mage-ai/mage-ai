@@ -1,5 +1,6 @@
 from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.server.app import (
     clean_df,
     clean_df_with_pipeline,
@@ -19,7 +20,6 @@ import asyncio
 import logging
 import os
 import sys
-
 
 MAX_NUM_OF_ROWS = 100_000
 
@@ -118,12 +118,14 @@ def clean(
         _, df_clean = clean_df(df, name=name, verbose=verbose)
     return df_clean
 
+
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, project_path: str = None) -> None:
+def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
-
-    asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False))
+    asyncio.run(
+        pipeline.execute(analyze_outputs=False, global_vars=global_vars, update_status=False)
+    )

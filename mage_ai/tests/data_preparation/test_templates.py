@@ -39,7 +39,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def remove_rows_with_missing_entries(df: DataFrame, *args) -> DataFrame:
+def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Transformer Action: Delete 3 rows to remove all missing values from the dataset.
     \"\"\"
@@ -83,7 +83,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data() -> DataFrame:
+def load_data(**kwargs) -> DataFrame:
     \"\"\"
     Template code for loading data from any source.
 
@@ -114,7 +114,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data_from_redshift() -> DataFrame:
+def load_data_from_redshift(**kwargs) -> DataFrame:
     \"\"\"
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
@@ -137,7 +137,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_from_s3_bucket() -> DataFrame:
+def load_from_s3_bucket(**kwargs) -> DataFrame:
     \"\"\"
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
@@ -163,7 +163,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame, *args) -> DataFrame:
+def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -199,7 +199,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame, *args) -> DataFrame:
+def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -238,7 +238,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: clean_column_name
     \"\"\"
@@ -267,7 +267,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: custom
     \"\"\"
@@ -297,7 +297,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: reformat
     \"\"\"
@@ -327,7 +327,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: add
     \"\"\"
@@ -356,7 +356,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data(df: DataFrame) -> None:
+def export_data(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Exports data to some source
 
@@ -386,7 +386,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data_to_big_query(df: DataFrame) -> None:
+def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
@@ -412,7 +412,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data_to_snowflake(df: DataFrame) -> None:
+def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Template for exporting data to a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
@@ -452,7 +452,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_in_postgres(*args) -> DataFrame:
+def transform_in_postgres(*args, **kwargs) -> DataFrame:
     \"\"\"
     Performs a transformation in Postgres
     \"\"\"
@@ -485,7 +485,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_in_bigquery(*args) -> DataFrame:
+def transform_in_bigquery(*args, **kwargs) -> DataFrame:
     \"\"\"
     Performs a transformation in BigQuery
     \"\"\"

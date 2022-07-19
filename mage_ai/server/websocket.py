@@ -42,7 +42,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         message = json.loads(raw_message)
         custom_code = message.get('code')
         output = message.get('output')
-
+        global_vars = message.get('global_vars')
         run_upstream = message.get('run_upstream')
 
         if custom_code:
@@ -65,10 +65,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     pipeline_uuid,
                     block_uuid,
                     custom_code,
+                    global_vars,
                     run_upstream=run_upstream,
                 )
 
-            msg_id = client.execute(add_internal_output_info(code))            
+            msg_id = client.execute(add_internal_output_info(code))
 
             value = dict(
                 block_uuid=block_uuid,
