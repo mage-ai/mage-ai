@@ -9,7 +9,6 @@ type FlyoutMenuWrapperProps = {
 
 function FlyoutMenuWrapper({
   children,
-  compact,
   items,
   open,
   onClickOutside,
