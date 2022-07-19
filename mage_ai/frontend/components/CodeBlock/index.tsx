@@ -617,7 +617,7 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {block.upstream_blocks.length >= 1 && (
+          {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>
                 Positional arguments for decorated function:
