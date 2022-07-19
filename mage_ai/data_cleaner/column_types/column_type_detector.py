@@ -9,6 +9,8 @@ import pandas as pd
 import re
 
 DATETIME_MATCHES_THRESHOLD = 0.5
+MAX_SIGNED_INTEGER_VALUE = np.iinfo(np.int).max
+MAX_UNSIGNED_INTEGER_VALUE = np.iinfo(np.uint).max
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
 NUMBER_TYPE_MATCHES_THRESHOLD = 0.8
@@ -172,11 +174,15 @@ def infer_object_type(series, column_name, kwargs):
             ):
                 return ColumnType.ZIP_CODE
             else:
-                try:
-                    clean_series.astype(float).astype(int)
-                    return ColumnType.NUMBER
-                except OverflowError:
+                clean_series = clean_series.astype(float)
+                if clean_series.min() > 0:
+                    max_val = MAX_UNSIGNED_INTEGER_VALUE
+                else:
+                    max_val = MAX_SIGNED_INTEGER_VALUE
+                if clean_series.max() > max_val:
                     return ColumnType.CATEGORY_HIGH_CARDINALITY
+                else:
+                    return ColumnType.NUMBER
     else:
         matches = clean_series.str.match(REGEX_DATETIME).sum()
         if matches / length >= DATETIME_MATCHES_THRESHOLD:
