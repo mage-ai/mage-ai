@@ -205,8 +205,8 @@ class ColumnTypeDetectorTests(TestCase):
             large_integers='number',
             large_integers_unsigned='number',
             str_large_integers='number',
-            too_large_integers='category_high_cardinality',
-            too_large_integers_version_2='category_high_cardinality',
+            too_large_integers='category',
+            too_large_integers_version_2='category',
         )
         self.assertEquals(ctypes, expected_ctypes)
 
