@@ -182,9 +182,7 @@ function FlyoutMenu({
   );
 
   return (
-    <>
-      {items && buildMenuEl(items, undefined, open)}
-    </>
+    items && buildMenuEl(items, undefined, open)
   );
 }
 
