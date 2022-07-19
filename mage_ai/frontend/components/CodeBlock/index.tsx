@@ -73,6 +73,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
+  addWidget: (widget: BlockType) => Promise<any>;
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
