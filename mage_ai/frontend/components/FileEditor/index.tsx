@@ -5,7 +5,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
 import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -130,7 +130,8 @@ function FileEditor({
     setFilesTouched,
   ]);
 
-  const addToPipelineEl = fileExtension === FileExtensionEnum.PY && (
+  const addToPipelineEl = fileExtension === FileExtensionEnum.PY
+    && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
     <Spacing p={2}>
       <KeyboardShortcutButton
         inline

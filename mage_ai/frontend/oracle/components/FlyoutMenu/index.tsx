@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
 import Text from '@oracle/elements/Text';
+import { ArrowRight } from '@oracle/icons';
 import {
+  COMPACT_MENU_WIDTH,
   FlyoutMenuContainerStyle,
   LinkStyle,
+  MENU_WIDTH,
 } from './index.style';
 import {
   KEY_CODE_ARROW_DOWN,
@@ -51,6 +55,7 @@ function FlyoutMenu({
   width,
 }: FlyoutMenuProps) {
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
+  const [submenuVisible, setSubmenuVisible] = useState({} as { [uuid: string]: boolean });
   const {
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
@@ -108,41 +113,77 @@ function FlyoutMenu({
     }
   }, [open]);
 
-  return (
+  let depth = 0;
+  const buildMenuEl = (items: FlyoutMenuItemType[], uuid: string, visible: boolean) => (
     <FlyoutMenuContainerStyle
       compact={compact}
       style={{
-        display: !open ? 'none' : null,
-        left: left || 0,
-        top: (height || 0) + topOffset,
+        display: (visible || submenuVisible[uuid]) ? null : 'none',
+        left: (
+          depth === 0
+            ? left || 0
+            : compact ? (depth * COMPACT_MENU_WIDTH) : (depth * MENU_WIDTH)
+        ),
+        top: (
+          depth === 0
+            ? (height || 0) + topOffset
+            : 0
+        ),
       }}
       width={width}
     >
       {items?.map(({
+        items,
         keyTextGroups,
         label,
         onClick,
         uuid,
       }: FlyoutMenuItemType, idx0: number) => {
+        depth++;
+
         return (
           <LinkStyle
             highlighted={highlightedIndices[0] === idx0}
+            key={uuid}
             onClick={(e) => {
               e.preventDefault();
               onClick?.();
               onClickCallback?.();
             }}
-            key={uuid}
+            onMouseEnter={() => (
+              setSubmenuVisible({
+                ...submenuVisible,
+                [uuid]: true,
+              })
+            )}
+            onMouseLeave={() => (
+              setSubmenuVisible({
+                ...submenuVisible,
+                [uuid]: false,
+              })
+            )}
           >
-            <Text>
-              {label()}
-            </Text>
+            <FlexContainer
+              alignItems="center"
+              fullWidth
+              justifyContent="space-between"
+            >
+              <Text>
+                {label()} 
+              </Text>
+              {items && <ArrowRight />}
+            </FlexContainer>
 
             {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
+            {items && buildMenuEl(items, uuid, false)}
           </LinkStyle>
         );
       })}
     </FlyoutMenuContainerStyle>
+  );
+
+  return (
+    items && buildMenuEl(items, undefined, open)
   );
 }
 

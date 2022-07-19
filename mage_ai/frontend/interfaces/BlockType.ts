@@ -100,6 +100,12 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
+export const BLOCK_TYPE_CONVERTIBLE = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: 'DE',
   [BlockTypeEnum.DATA_LOADER]: 'DL',

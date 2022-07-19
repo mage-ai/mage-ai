@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -11,6 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
+  BLOCK_TYPE_CONVERTIBLE,
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
@@ -24,6 +26,7 @@ import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenuClickOutside from '@oracle/components/FlyoutMenu/FlyoutMenuClickOutside';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -36,6 +39,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import { ArrowDown, FileFill, Stack } from '@oracle/icons';
 import {
   BlockDivider,
   BlockDividerInner,
@@ -46,7 +50,6 @@ import {
   CodeContainerStyle,
   getColorsForBlockType,
 } from './index.style';
-import { FileFill, Stack } from '@oracle/icons';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -59,7 +62,6 @@ import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pauseEvent } from '@utils/events';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -117,6 +119,7 @@ function CodeBlockProps({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
+  const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
@@ -125,6 +128,8 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
+  const blockMenuRef = useRef(null);
+
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const runBlockAndTrack = useCallback(
@@ -132,7 +137,7 @@ function CodeBlockProps({
       const {
         code,
         runUpstream,
-      } = payload || {}
+      } = payload || {};
       runBlock({
         block,
         code: code || content,
@@ -249,10 +254,11 @@ function CodeBlockProps({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({ block: { content } }) => {
             setIsEditingBlock(false);
             fetchPipeline();
             fetchFileTree();
+            setContent(content);
           },
           onErrorCallback: ({
             error: {
@@ -323,6 +329,31 @@ function CodeBlockProps({
     ],
   );
 
+  const buildBlockMenu = (b: BlockType) => {
+    const blockMenuItems = {
+      [BlockTypeEnum.SCRATCHPAD]: [
+        {
+          items: BLOCK_TYPE_CONVERTIBLE.map(blockType => ({
+            label: () => BLOCK_TYPE_NAME_MAPPING[blockType],
+            // @ts-ignore
+            onClick: () => updateBlock({
+              block: {
+                ...b,
+                type: blockType,
+              },
+            }),
+            uuid: `block_menu/scratchpad/convert_to/${blockType}`,
+          })),
+          label: () => 'Convert to',
+          uuid: 'block_menu/scratchpad/convert_to',
+        },
+      ],
+    };
+
+    return blockMenuItems[b.type];
+  };
+
+
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
@@ -387,21 +418,23 @@ function CodeBlockProps({
         }}
       >
         <Flex alignItems="center" flex={1}>
-          <Tooltip
-            block
-            label={BLOCK_TYPE_NAME_MAPPING[block.type]}
-            size={null}
-            widthFitContent
-          >
-            <FlexContainer alignItems="center">
-              <Circle
-                color={color}
-                size={UNIT * 1.5}
-                square
-              />
+          <FlexContainer alignItems="center">
+            <Circle
+              color={color}
+              size={UNIT * 1.5}
+              square
+            />
 
-              <Spacing mr={1} />
+            <Spacing mr={1} />
 
+            <FlyoutMenuClickOutside
+              compact
+              items={buildBlockMenu(block)}
+              onClickOutside={() => setBlockMenuVisible(false)}
+              open={blockMenuVisible}
+              parentRef={blockMenuRef}
+              uuid="CodeBlock/block_menu"
+            >
               <Text
                 color={color}
                 monospace
@@ -413,22 +446,36 @@ function CodeBlockProps({
                 )}
                 {BlockTypeEnum.DATA_LOADER === block.type && (
                   <>
-                    DATA LOADER&nbsp;&nbsp;
+                    DATA LOADER&nbsp;
                   </>
                 )}
                 {BlockTypeEnum.SCRATCHPAD === block.type && (
                   <>
-                    SCRATCHPAD&nbsp;&nbsp;&nbsp;
+                    SCRATCHPAD&nbsp;
                   </>
                 )}
                 {BlockTypeEnum.TRANSFORMER === block.type && (
                   <>
-                    TRANSFORMER&nbsp;&nbsp;
+                    TRANSFORMER&nbsp;
                   </>
                 )}
               </Text>
-            </FlexContainer>
-          </Tooltip>
+            </FlyoutMenuClickOutside>
+
+            {BlockTypeEnum.SCRATCHPAD === block.type && (
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setBlockMenuVisible(true)}
+                transparent
+              >
+                <ArrowDown muted />
+              </Button>
+            )}
+
+            <Spacing mr={1} />
+          </FlexContainer>
 
           <Spacing mr={PADDING_UNITS} />
 
