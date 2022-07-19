@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import useWebSocket from 'react-use-websocket';
-import { useMutation } from 'react-query';
 
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
@@ -16,30 +15,29 @@ import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
+import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
-import { Close, PlayButton } from '@oracle/icons';
+import { Close } from '@oracle/icons';
 import { FULL_WIDTH_VIEWS, MESSAGE_VIEWS, ViewKeyEnum } from './constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
   PaddingContainerStyle,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { WEBSOCKT_URL } from '@utils/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
-import { onError, onSuccess } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
-import { WEBSOCKT_URL } from '@utils/constants';
-import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -218,7 +216,7 @@ function Sidekick({
               blockRefs={blockRefs}
               editingBlock={editingBlock}
               fetchPipeline={fetchPipeline}
-              height={heightWindow - heightOffset - 400}
+              height={heightWindow - heightOffset - OUTPUT_HEIGHT}
               pipeline={pipeline}
               runningBlocks={runningBlocks}
               selectedBlock={selectedBlock}

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import logging
 import time
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,17 @@ class timer(object):
 
 
 class VerboseFunctionExec:
-    def __init__(self, message, verbose=True, prefix='', print_func=print):
+    def __init__(
+        self,
+        message: str,
+        verbose: bool = True,
+        prefix: str = '',
+        print_func: Callable[[str], None] = None,
+    ):
         self.message = message
         self.verbose = verbose
         self.prefix = prefix
-        self.print_func = print_func
+        self.print_func = print if print_func is None else print_func
 
     def __enter__(self):
         if self.verbose:
