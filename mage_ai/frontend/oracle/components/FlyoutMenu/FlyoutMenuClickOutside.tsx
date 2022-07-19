@@ -1,12 +1,12 @@
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlyoutMenu, { FlyoutMenuProps } from './index';
 
-type FlyoutMenuInteractiveProps = {
+type FlyoutMenuClickOutsideProps = {
   children: JSX.Element;
   onClickOutside: () => void;
 } & FlyoutMenuProps;
 
-function FlyoutMenuInteractive({
+function FlyoutMenuClickOutside({
   children,
   compact,
   items,
@@ -14,7 +14,7 @@ function FlyoutMenuInteractive({
   onClickOutside,
   parentRef,
   uuid,
-}: FlyoutMenuInteractiveProps) {
+}: FlyoutMenuClickOutsideProps) {
   return (
     <ClickOutside
       onClickOutside={onClickOutside}
@@ -40,4 +40,4 @@ function FlyoutMenuInteractive({
   );
 }
 
-export default FlyoutMenuInteractive;
+export default FlyoutMenuClickOutside;
