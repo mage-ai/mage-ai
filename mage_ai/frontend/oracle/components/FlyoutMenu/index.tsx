@@ -117,7 +117,7 @@ function FlyoutMenu({
     <FlyoutMenuContainerStyle
       compact={compact}
       style={{
-        display: !visible && !submenuVisible[uuid] ? 'none' : null,
+        display: (visible || submenuVisible[uuid]) ? null : 'none',
         left: (
           depth === 0
             ? left || 0
