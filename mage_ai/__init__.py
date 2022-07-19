@@ -16,7 +16,6 @@ from mage_ai.server.utils.frontend_renderer import (
     infer_notebook_type,
     update_frontend_urls,
 )
-from mage_ai.shared.globals import validate_global_names
 import asyncio
 import logging
 import os

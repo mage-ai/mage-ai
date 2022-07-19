@@ -12,7 +12,6 @@ from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
-from mage_ai.shared.globals import validate_global_names
 import argparse
 import asyncio
 import json
