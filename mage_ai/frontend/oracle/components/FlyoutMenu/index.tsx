@@ -123,7 +123,11 @@ function FlyoutMenu({
             ? left || 0
             : compact ? (depth * UNIT * 20) : (depth * UNIT * 34)
         ),
-        top: depth === 0 ? (height || 0) + topOffset : 0,
+        top: (
+          depth === 0
+            ? (height || 0) + topOffset
+            : 0
+        ),
       }}
       width={width}
     >
