@@ -172,7 +172,11 @@ def infer_object_type(series, column_name, kwargs):
             ):
                 return ColumnType.ZIP_CODE
             else:
-                return ColumnType.NUMBER
+                try:
+                    clean_series.astype(float).astype(int)
+                    return ColumnType.NUMBER
+                except OverflowError:
+                    return ColumnType.CATEGORY_HIGH_CARDINALITY
     else:
         matches = clean_series.str.match(REGEX_DATETIME).sum()
         if matches / length >= DATETIME_MATCHES_THRESHOLD:
