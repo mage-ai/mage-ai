@@ -104,7 +104,6 @@ class Pipeline:
         analyze_outputs=True,
         global_vars=None,
         redirect_outputs=False,
-        run_all_blocks=False,
         update_status=True,
     ):
         """
