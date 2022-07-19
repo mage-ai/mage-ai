@@ -8,6 +8,7 @@ type FlyoutMenuWrapperProps = {
 
 function FlyoutMenuWrapper({
   children,
+  compact,
   items,
   open,
   onClickOutside,
@@ -24,6 +25,7 @@ function FlyoutMenuWrapper({
           {children}
         </div>
         <FlyoutMenu
+          compact={compact}
           items={items}
           onClickCallback={onClickOutside}
           open={open}
