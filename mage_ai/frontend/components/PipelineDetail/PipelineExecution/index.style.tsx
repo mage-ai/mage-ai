@@ -1,1 +1,1 @@
-export const OUTPUT_HEIGHT = 400;
+export const OUTPUT_HEIGHT = 300;

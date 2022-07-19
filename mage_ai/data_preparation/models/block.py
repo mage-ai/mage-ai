@@ -32,7 +32,7 @@ async def run_blocks(
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = False,
-    publish_message: Callable = None,
+    publish_message: Callable[[str], None] = None,
 ) -> None:
     tasks = dict()
     blocks = Queue()
@@ -60,7 +60,7 @@ async def run_blocks(
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
-                log_func=publish_message
+                log_func=publish_message,
             )
         )
         tasks[block.uuid] = task
@@ -297,13 +297,13 @@ class Block:
 
     async def execute(
         self,
-        analyze_outputs=True,
-        custom_code=None,
+        analyze_outputs: bool = True,
+        custom_code: str = None,
         global_vars=None,
-        redirect_outputs=False,
-        update_status=True,
-        log_func: Callable = None,
-    ):
+        redirect_outputs: bool = False,
+        update_status: bool = True,
+        log_func: Callable[[str], None] = None,
+    ) -> None:
         with VerboseFunctionExec(
             f'Executing {self.type} block',
             prefix=f'[{self.uuid}]',

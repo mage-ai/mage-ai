@@ -101,12 +101,12 @@ class Pipeline:
 
     async def execute(
         self,
-        publish_message: Callable = None,
-        analyze_outputs=True,
+        publish_message: Callable[[str], None] = None,
+        analyze_outputs: bool = True,
         global_vars=None,
-        redirect_outputs=False,
-        update_status=True,
-    ):
+        redirect_outputs: bool = False,
+        update_status: bool = True,
+    ) -> None:
         """
         Async function for parallel processing
         This function will schedule the block execution in topological
@@ -123,7 +123,7 @@ class Pipeline:
             global_vars=global_vars,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
-            publish_message=publish_message
+            publish_message=publish_message,
         )
 
     def load_config_from_yaml(self):

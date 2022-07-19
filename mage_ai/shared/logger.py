@@ -1,7 +1,8 @@
 from contextlib import contextmanager
+from typing import Callable
+
 import logging
 import time
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 
