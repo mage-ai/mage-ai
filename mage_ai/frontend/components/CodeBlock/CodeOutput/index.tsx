@@ -27,17 +27,21 @@ import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
   block: BlockType;
+  contained?: boolean;
+  hideExtraInfo?: boolean;
   isInProgress: boolean;
-  mainContainerWidth: number;
+  mainContainerWidth?: number;
   messages: KernelOutputType[];
-  runCount: number;
-  runEndTime: number;
-  runStartTime: number;
+  runCount?: number;
+  runEndTime?: number;
+  runStartTime?: number;
 } & BorderColorShareProps;
 
 function CodeOutput({
   block,
+  contained = true,
   hasError,
+  hideExtraInfo,
   isInProgress,
   mainContainerWidth,
   messages,
@@ -84,7 +88,7 @@ function CodeOutput({
 
   const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
     const last = arr.at(-1);
-    
+
     if (DATA_TYPE_TEXTLIKE.includes(last?.type)
       && last?.type === curr.type
       && !combineTextData(curr?.data).match(internalOutputRegex)) {
@@ -104,83 +108,93 @@ function CodeOutput({
     messages,
   ]);
 
+  const content = useMemo(() => combinedMessages?.map(({
+    data: dataInit,
+    type: dataType,
+  }: KernelOutputType, idx: number) => {
+    if (!dataInit || dataInit?.length === 0) {
+      return;
+    }
+
+    let dataArray: string[] = [];
+    if (Array.isArray(dataInit)) {
+      dataArray = dataInit;
+    } else {
+      dataArray = [dataInit];
+    }
+    dataArray = dataArray.filter(d => d);
+    const dataArrayLength = dataArray.length;
+
+    return dataArray.map((data: string, idxInner: number) => {
+      let displayElement;
+      const outputRowSharedProps = {
+        contained,
+        first: idx === 0 && idxInner === 0,
+        last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
+      };
+
+      if (typeof data === 'string' && data.match(internalOutputRegex)) {
+        const rawString = data.replace(internalOutputRegex, '');
+        if (isJsonString(rawString)) {
+          const {
+            data: dataDisplay,
+            type: typeDisplay,
+          } = JSON.parse(rawString);
+
+          if (DataTypeEnum.TABLE === typeDisplay) {
+            displayElement = createDataTableElement(dataDisplay);
+          }
+        }
+      } else if (dataType === DataTypeEnum.TABLE) {
+        displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
+      } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
+        displayElement = (
+          <OutputRowStyle {...outputRowSharedProps}>
+            <Text monospace preWrap>
+              <Ansi>
+                {data}
+              </Ansi>
+            </Text>
+          </OutputRowStyle>
+        );
+      } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+        displayElement = (
+          <div style={{ backgroundColor: 'white' }}>
+            <img
+              alt={`Image ${idx} from code output`}
+              src={`data:image/png;base64, ${data}`}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div key={`code-output-${idx}-${idxInner}`}>
+          {displayElement}
+        </div>
+      );
+    });
+  }), [
+    combinedMessages,
+    contained,
+  ]);
+
   return (
     <>
-      <ContainerStyle
-        blockType={blockType}
-        executedAndIdle={executedAndIdle}
-        hasError={hasError}
-        selected={selected}
-      >
-        {combinedMessages?.map(({
-          data: dataInit,
-          type: dataType,
-        }: KernelOutputType, idx: number) => {
-          if (!dataInit || dataInit?.length === 0) {
-            return;
-          }
+      {contained && (
+        <ContainerStyle
+          blockType={blockType}
+          executedAndIdle={executedAndIdle}
+          hasError={hasError}
+          selected={selected}
+        >
+          {content}
+        </ContainerStyle>
+      )}
 
-          let dataArray: string[] = [];
-          if (Array.isArray(dataInit)) {
-            dataArray = dataInit;
-          } else {
-            dataArray = [dataInit];
-          }
-          dataArray = dataArray.filter(d => d);
-          const dataArrayLength = dataArray.length;
+      {!contained && content}
 
-          return dataArray.map((data: string, idxInner: number) => {
-            let displayElement;
-            const outputRowSharedProps = {
-              first: idx === 0 && idxInner === 0,
-              last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
-            };
-
-            if (typeof data === 'string' && data.match(internalOutputRegex)) {
-              const rawString = data.replace(internalOutputRegex, '');
-              if (isJsonString(rawString)) {
-                const {
-                  data: dataDisplay,
-                  type: typeDisplay,
-                } = JSON.parse(rawString);
-
-                if (DataTypeEnum.TABLE === typeDisplay) {
-                  displayElement = createDataTableElement(dataDisplay);
-                }
-              }
-            } else if (dataType === DataTypeEnum.TABLE) {
-              displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
-            } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
-              displayElement = (
-                <OutputRowStyle {...outputRowSharedProps}>
-                  <Text monospace preWrap>
-                    <Ansi>
-                      {data}
-                    </Ansi>
-                  </Text>
-                </OutputRowStyle>
-              );
-            } else if (dataType === DataTypeEnum.IMAGE_PNG) {
-              displayElement = (
-                <div style={{ backgroundColor: 'white' }}>
-                  <img
-                    alt={`Image ${idx} from code output`}
-                    src={`data:image/png;base64, ${data}`}
-                  />
-                </div>
-              );
-            }
-
-            return (
-              <div key={`code-output-${idx}-${idxInner}`}>
-                {displayElement}
-              </div>
-            );
-          });
-        })}
-      </ContainerStyle>
-
-      {executedAndIdle && (
+      {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle
           blockType={blockType}
           hasError={hasError}

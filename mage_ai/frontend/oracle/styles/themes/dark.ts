@@ -63,6 +63,7 @@ export default {
     yellowLight: YELLOW_TRANSPARENT,
   },
   background: {
+    chartBlock: '#2E3036',
     codeArea: '#1E1F24',
     codeTextarea: '#000000',
     danger: RED_XLIGHT,

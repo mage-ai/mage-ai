@@ -5,7 +5,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import useWebSocket from 'react-use-websocket';
 import { CSSTransition } from 'react-transition-group';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
@@ -37,7 +36,6 @@ import {
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { WEBSOCKT_URL } from '@utils/constants';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -59,18 +57,27 @@ type PipelineDetailProps = {
   kernel: KernelType;
   mainContainerRef: any;
   mainContainerWidth: number;
-  messages: { [uuid: string]: KernelOutputType[]; };
+  messages: {
+    [uuid: string]: KernelOutputType[];
+  };
+  onChangeCodeBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
   restartKernel: () => void;
+  runBlock: (payload: {
+    block: BlockType;
+    code: string;
+    runUpstream?: boolean;
+  }) => void;
   runningBlocks: BlockType[];
   savePipelineContent: () => void;
   selectedBlock: BlockType;
-  setContentByBlockUUID: (data: { [uuid: string]: string; }) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
+  setTextareaFocused: (value: boolean) => void;
+  textareaFocused: boolean;
 } & SetEditingBlockType & SetMessagesType;
 
 function PipelineDetail({
@@ -87,126 +94,26 @@ function PipelineDetail({
   mainContainerRef,
   mainContainerWidth,
   messages,
+  onChangeCodeBlock,
   pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
   restartKernel,
+  runBlock,
   runningBlocks = [],
   savePipelineContent,
   selectedBlock,
-  setContentByBlockUUID,
   setEditingBlock,
   setMessages,
   setPipelineContentTouched,
   setRunningBlocks,
   setSelectedBlock,
+  setTextareaFocused,
+  textareaFocused,
 }: PipelineDetailProps) {
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
-  const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
-
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(WEBSOCKT_URL, {
-    onOpen: () => console.log('socketUrlPublish opened'),
-    shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
-
-      return true;
-    },
-  });
-
-  useEffect(() => {
-    if (lastMessage) {
-      const message: KernelOutputType = JSON.parse(lastMessage.data);
-      const {
-        execution_state: executionState,
-        uuid,
-      } = message;
-
-      // @ts-ignore
-      setMessages((messagesPrevious) => {
-        const messagesFromUUID = messagesPrevious[uuid] || [];
-
-        return {
-          ...messagesPrevious,
-          [uuid]: messagesFromUUID.concat(message),
-        };
-      });
-
-      if (ExecutionStateEnum.IDLE === executionState) {
-        // @ts-ignore
-        setRunningBlocks((runningBlocksPrevious) =>
-          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
-        );
-      }
-
-      setPipelineContentTouched(true);
-    }
-  }, [
-    lastMessage,
-    setMessages,
-    setPipelineContentTouched,
-    setRunningBlocks,
-  ]);
-
-  const runBlock = useCallback((payload: {
-    block: BlockType;
-    code: string;
-    runUpstream?: boolean;
-  }) => {
-    const {
-      block,
-      code,
-      runUpstream = false,
-    } = payload;
-
-    if (code) {
-      const { uuid } = block;
-      const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
-
-      if (!isAlreadyRunning) {
-        sendMessage(JSON.stringify({
-          code,
-          pipeline_uuid: pipeline?.uuid,
-          uuid,
-          run_upstream: runUpstream
-        }));
-
-        // @ts-ignore
-        setMessages((messagesPrevious) => {
-          delete messagesPrevious[uuid];
-
-          return messagesPrevious;
-        });
-
-        setTextareaFocused(false);
-
-        // @ts-ignore
-        setRunningBlocks((runningBlocksPrevious) => {
-          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
-            return runningBlocksPrevious;
-          }
-
-          return runningBlocksPrevious.concat(block);
-        });
-      }
-
-      fetchPipeline();
-    }
-  }, [
-    fetchPipeline,
-    pipeline,
-    runningBlocks,
-    sendMessage,
-    setMessages,
-    setRunningBlocks,
-    setTextareaFocused,
-  ]);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -336,16 +243,6 @@ function PipelineDetail({
     pipelineContentTouched,
     savePipelineContent,
   ]);
-
-  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
-    setContentByBlockUUID({ [uuid]: value });
-    setPipelineContentTouched(true);
-  },
-    [
-      setContentByBlockUUID,
-      setPipelineContentTouched,
-    ],
-  );
 
   useEffect(() => {
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);

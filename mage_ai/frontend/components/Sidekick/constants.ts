@@ -18,6 +18,7 @@ export enum ViewKeyEnum {
 }
 
 export const FULL_WIDTH_VIEWS = [
+  ViewKeyEnum.CHARTS,
   ViewKeyEnum.DATA,
   ViewKeyEnum.REPORTS,
   ViewKeyEnum.TREE,
@@ -31,11 +32,11 @@ export const MESSAGE_VIEWS = [
 
 export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.TREE, label: 'Tree' },
-  { key: ViewKeyEnum.DATA, label: 'Data' },
-  { key: ViewKeyEnum.REPORTS, label: 'Reports' },
-  { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
+  { key: ViewKeyEnum.CHARTS, label: 'Charts' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
-  // { key: ViewKeyEnum.CHARTS, label: 'Charts' },
+  { key: ViewKeyEnum.DATA, label: 'Data' },
+  // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
+  // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];
 
 export const NAV_ICON_MAPPING = {

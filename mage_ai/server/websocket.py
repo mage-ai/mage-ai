@@ -1,24 +1,16 @@
-from datetime import datetime
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
-from mage_ai.data_preparation.models.block import BlockType
 from mage_ai.data_preparation.models.constants import (
+    BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
-    DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
-from mage_ai.shared.array import find
 from mage_ai.shared.hash import merge_dict
-import asyncio
 import json
 import os
-import pandas as pd
-import simplejson
 import tornado.websocket
-import traceback
 
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
@@ -46,8 +38,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         run_upstream = message.get('run_upstream')
 
         if custom_code:
+            block_type = message.get('type')
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
+            widget = BlockType.CHART == block_type
 
             connection_file = os.getenv('CONNECTION_FILE')
             with open(connection_file) as f:
@@ -58,7 +52,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             client = manager.client()
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
-            block = pipeline.get_block(block_uuid)
+            block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
                 code = add_execution_code(
@@ -66,9 +60,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     run_upstream=run_upstream,
+                    widget=widget,
                 )
 
-            msg_id = client.execute(add_internal_output_info(code))            
+            msg_id = client.execute(add_internal_output_info(code))
 
             value = dict(
                 block_uuid=block_uuid,

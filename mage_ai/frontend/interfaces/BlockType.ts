@@ -69,13 +69,21 @@ export interface BlockRequestPayloadType {
   };
 }
 
-enum ChartTypeEnum {
+export enum ChartTypeEnum {
   HISTOGRAM = 'histogram',
+  // PIE_CHART = 'pie chart',
 }
 
-interface ConfigurationType {
+export const CHART_TYPES = [
+  ChartTypeEnum.HISTOGRAM,
+  // ChartTypeEnum.PIE_CHART,
+];
+
+export interface ConfigurationType {
   chart_type: ChartTypeEnum;
-  width_percentage: number;
+  width_percentage?: number;
+  x?: string[] | number[];
+  y?: string[] | number[];
 }
 
 export default interface BlockType {
