@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import BlockType, {
   CHART_TYPES,
   ChartTypeEnum,
 } from '@interfaces/BlockType';
+import CodeEditor from '@components/CodeEditor';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -11,7 +12,12 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import { CONFIGURATIONS_BY_CHART_TYPE } from './constants';
-import { ChartBlockStyle } from './index.style';
+import {
+  ChartBlockStyle,
+  CodeContainerStyle,
+  CodeStyle,
+  ConfigurationOptionsStyle,
+} from './index.style';
 import { Edit } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
@@ -26,10 +32,40 @@ function ChartBlock({
   const {
     configuration = {},
   } = block;
-  const [isEditing, setIsEditing] = useState<boolean>(true);
   const [chartType, setChartType] = useState<ChartTypeEnum>(configuration.chart_type);
+  const [content, setContent] = useState<string>(block.content);
+  const [isEditing, setIsEditing] = useState<boolean>(true);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
+
+  const codeEditorEl = useMemo(() => (
+    <CodeEditor
+      autoHeight
+      // height={height}
+      onChange={(val: string) => {
+        setContent(val);
+      }}
+      showLineNumbers={false}
+      // onDidChangeCursorPosition={onDidChangeCursorPosition}
+      // placeholder="Start typing here..."
+      // selected={selected}
+      // setSelected={setSelected}
+      // setTextareaFocused={setTextareaFocused}
+      // shortcuts={[
+      //   (monaco, editor) => executeCode(monaco, () => {
+      //     runBlockAndTrack(editor.getValue());
+      //   }),
+      // ]}
+      // textareaFocused={textareaFocused}
+      value={content}
+      width="100%"
+    />
+  ), [
+    content,
+    // height,
+    // selected,
+    // textareaFocused,
+  ]);
 
   return (
     <ChartBlockStyle>
@@ -42,6 +78,7 @@ function ChartBlock({
           compact
           onChange={e => setChartType(e.target.value)}
           placeholder="Select chart type"
+          small
           value={chartType}
         >
           <option value="" />
@@ -75,31 +112,42 @@ function ChartBlock({
         </Flex>
 
         {isEditing && (
-          <FlexContainer
-            flexDirection="column"
-          >
-            {configurationOptions?.map(({
-              label,
-              type,
-              uuid,
-            }, idx: number) => {
-              const el = (
-                <TextInput
-                  key={uuid}
-                  label={label()}
-                  type={type}
-                />
-              );
+          <ConfigurationOptionsStyle>
+            <FlexContainer
+              flexDirection="column"
+            >
+              {configurationOptions?.map(({
+                label,
+                type,
+                uuid,
+              }, idx: number) => {
+                const el = (
+                  <TextInput
+                    key={uuid}
+                    label={label()}
+                    small
+                    type={type}
+                  />
+                );
 
-              return (
-                <Spacing key={uuid} mt={idx >= 1 ? 1 : 0}>
-                  {el}
-                </Spacing>
-              );
-            })}
-          </FlexContainer>
+                return (
+                  <Spacing key={uuid} mt={idx >= 1 ? 1 : 0}>
+                    {el}
+                  </Spacing>
+                );
+              })}
+            </FlexContainer>
+          </ConfigurationOptionsStyle>
         )}
       </FlexContainer>
+
+      {isEditing && (
+        <CodeContainerStyle>
+          <CodeStyle>
+            {codeEditorEl}
+          </CodeStyle>
+        </CodeContainerStyle>
+      )}
     </ChartBlockStyle>
   );
 }

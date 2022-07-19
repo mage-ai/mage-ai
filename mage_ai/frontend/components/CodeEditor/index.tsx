@@ -73,7 +73,7 @@ function CodeEditor({
   setSelected,
   setTextareaFocused,
   shortcuts: shortcutsProp,
-  showLineNumbers,
+  showLineNumbers = true,
   textareaFocused,
   theme: themeProp,
   value,
@@ -255,6 +255,7 @@ function CodeEditor({
           fontLigatures: true,
           fontSize,
           hideCursorInOverviewRuler: true,
+          lineNumbers: showLineNumbers,
           minimap: {
             enabled: false,
           },
