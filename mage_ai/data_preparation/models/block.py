@@ -375,9 +375,6 @@ class Block:
             return block_function
 
     def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
-        if global_vars is None:
-            x = {}
-
         def block_decorator(decorated_functions):
             def custom_code(function):
                 decorated_functions.append(function)
@@ -408,7 +405,7 @@ class Block:
                     exec(file.read(), {self.type: block_decorator(decorated_functions)})
             block_function = self.__validate_execution(decorated_functions, input_vars)
             if block_function is not None:
-                if global_vars is not None:
+                if global_vars is not None and len(global_vars) != 0:
                     outputs = block_function(*input_vars, **global_vars)
                 else:
                     outputs = block_function(*input_vars)
