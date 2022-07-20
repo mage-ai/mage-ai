@@ -164,6 +164,13 @@ class BaseFile(BaseIO):
         """
         Base method for writing a data frame to some buffer or file.
 
+        Two caveats if the format is HDF5:
+        - Data frames can only be written to files, not to buffers
+        - The default key under which the data frame is stored is the
+          stem of the filename. For example, if the file to write the HDF5 file
+          to is 'storage/my_dataframe.hdf5', the key would be 'my_dataframe'. This
+          can be overridden using the `key` keyword argument.
+
         Args:
             df (DataFrame): Data frame to write.
             format (Union[FileFormat, str]): Format to write the data frame as.
@@ -171,7 +178,10 @@ class BaseFile(BaseIO):
         """
         writer = self.__get_writer(df, format)
         if format == FileFormat.HDF5:
-            kwargs.setdefault('key', self.name)
+            if isinstance(output, IO):
+                raise ValueError('Cannot write HDF5 file to buffer of any type.')
+            name = os.path.splitext(os.path.basename(output))[0]
+            kwargs.setdefault('key', name)
         writer(output, **kwargs)
 
     def __get_writer(

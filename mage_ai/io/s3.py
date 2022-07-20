@@ -1,9 +1,11 @@
+from contextlib import contextmanager
 from io import BytesIO
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from pathlib import Path
 import boto3
+import os
 
 
 class S3(BaseFile):
@@ -64,8 +66,16 @@ class S3(BaseFile):
             f'Loading data frame from bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
             response = self.client.get_object(Bucket=bucket_name, Key=object_key)
+        if format == FileFormat.HDF5:
+            name = os.path.splitext(os.path.basename(object_key))[0]
+            with self.open_temporary_directory() as temp_dir:
+                obj_loc = temp_dir / f'{name}.hdf5'
+                with obj_loc.open('wb') as fin:
+                    fin.write(response['Body'].read())
+                return self._read(obj_loc, format, limit, **kwargs)
+        else:
             buffer = BytesIO(response['Body'].read())
-        return self._read(buffer, format, limit, **kwargs)
+            return self._read(buffer, format, limit, **kwargs)
 
     def export(
         self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
@@ -86,22 +96,27 @@ class S3(BaseFile):
         with self.printer.print_msg(
             f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
-            if self.format == FileFormat.HDF5:
-                temp_dir = Path.cwd() / '.tmp'
-                temp_dir.mkdir(parents=True, exist_ok=True)
-                obj_loc = temp_dir / f'{self.name}.hdf5'
-
-                self._write(df, format, obj_loc, **kwargs)
-                with obj_loc.open('rb') as fin:
-                    self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
-
-                obj_loc.unlink()
-                temp_dir.rmdir()
+            if format == FileFormat.HDF5:
+                name = os.path.splitext(os.path.basename(object_key))[0]
+                with self.open_temporary_directory() as temp_dir:
+                    obj_loc = temp_dir / f'{name}.hdf5'
+                    self._write(df, format, obj_loc, **kwargs)
+                    with obj_loc.open('rb') as fin:
+                        self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
             else:
                 buffer = BytesIO()
                 self._write(df, format, buffer, **kwargs)
                 buffer.seek(0)
                 self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+
+    @contextmanager
+    def open_temporary_directory(self):
+        temp_dir = Path.cwd() / '.tmp'
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        yield temp_dir
+        for file in temp_dir.iterdir():
+            file.unlink()
+        temp_dir.rmdir()
 
     @classmethod
     def with_config(
@@ -110,7 +125,11 @@ class S3(BaseFile):
         **kwargs,
     ) -> 'S3':
         """
-        Initializes S3 client from configuration loader.
+        Initializes S3 client from configuration loader. This client accepts the following AWS
+        IAM credential secrets:
+        - Access Key ID
+        - Secret Access Key
+        - Region Name
 
         Args:
             config (BaseConfigLoader): Configuration loader object
