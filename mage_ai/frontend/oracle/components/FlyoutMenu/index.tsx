@@ -78,19 +78,20 @@ function FlyoutMenu({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      pauseEvent(event);
       if (!open) {
         return;
       }
 
       const currentIndex = highlightedIndices[0];
       if (keyMapping[KEY_CODE_ARROW_DOWN]) {
+        pauseEvent(event);
         if (typeof currentIndex === 'undefined' || currentIndex === items.length - 1) {
           setHighlightedIndices([0]);
         } else {
           setHighlightedIndices([currentIndex + 1]);
         }
       } else if (keyMapping[KEY_CODE_ARROW_UP]) {
+        pauseEvent(event);
         if (typeof currentIndex === 'undefined' || currentIndex === 0) {
           setHighlightedIndices([items.length - 1]);
         } else {
