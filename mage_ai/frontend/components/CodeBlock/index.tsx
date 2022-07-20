@@ -26,7 +26,7 @@ import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenuClickOutside from '@oracle/components/FlyoutMenu/FlyoutMenuClickOutside';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -73,6 +73,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
+  addWidget: (widget: BlockType) => Promise<any>;
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
@@ -419,6 +420,8 @@ function CodeBlockProps({
     selected,
   ]);
 
+  const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <FlexContainer
@@ -438,10 +441,11 @@ function CodeBlockProps({
 
             <Spacing mr={1} />
 
-            <FlyoutMenuClickOutside
+            <FlyoutMenuWrapper
               compact
               items={buildBlockMenu(block)}
-              onClickOutside={() => setBlockMenuVisible(false)}
+              onClickCallback={closeBlockMenu}
+              onClickOutside={closeBlockMenu}
               open={blockMenuVisible}
               parentRef={blockMenuRef}
               uuid="CodeBlock/block_menu"
@@ -471,7 +475,7 @@ function CodeBlockProps({
                   </>
                 )}
               </Text>
-            </FlyoutMenuClickOutside>
+            </FlyoutMenuWrapper>
 
             {BlockTypeEnum.SCRATCHPAD === block.type && (
               <Button
