@@ -9,8 +9,8 @@ import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import {
-  COLUMN_ACTIONS,
-  ROW_ACTIONS,
+  COLUMN_ACTION_GROUPINGS,
+  ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
 import {
   DATA_SOURCE_TYPES,
@@ -21,7 +21,7 @@ import {
   ICON_SIZE,
   IconContainerStyle,
 } from './index.style';
-import { createActionMenuItems } from './utils';
+import { createActionMenuGroupings } from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -56,13 +56,13 @@ function AddNewBlocks({
     uuid: sourceType,
   }));
 
-  const columnActionMenuItems = createActionMenuItems(
-    COLUMN_ACTIONS,
+  const columnActionMenuItems = createActionMenuGroupings(
+    COLUMN_ACTION_GROUPINGS,
     AxisEnum.COLUMN,
     addNewBlock,
   );
-  const rowActionMenuItems = createActionMenuItems(
-    ROW_ACTIONS,
+  const rowActionMenuItems = createActionMenuGroupings(
+    ROW_ACTION_GROUPINGS,
     AxisEnum.ROW,
     addNewBlock,
   );
