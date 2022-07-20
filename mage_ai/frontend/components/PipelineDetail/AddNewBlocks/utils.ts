@@ -45,7 +45,7 @@ export function createActionMenuGroupings(
           blockCallback,
         ),
         label: () => grouping,
-        uuid: `${axis}_${addUnderscores(grouping)}`,
+        uuid: `${axis}_grouping_${addUnderscores(grouping)}`,
       });
     } else {
       const miscActionMenuItems = createActionMenuItems(

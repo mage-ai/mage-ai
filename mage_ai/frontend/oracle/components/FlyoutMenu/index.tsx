@@ -171,18 +171,18 @@ function FlyoutMenu({
                 onClick?.();
                 onClickCallback?.();
               }}
-              onMouseEnter={() => (
-                setSubmenuVisible({
-                  ...submenuVisible,
+              onMouseEnter={() => {
+                setSubmenuVisible((prevState) => ({
+                  ...prevState,
                   [uuid]: true,
-                })
-              )}
-              onMouseLeave={() => (
-                setSubmenuVisible({
-                  ...submenuVisible,
+                }));
+              }}
+              onMouseLeave={() => {
+                setSubmenuVisible((prevState) => ({
+                  ...prevState,
                   [uuid]: false,
-                })
-              )}
+                }));
+              }}
             >
               <FlexContainer
                 alignItems="center"
