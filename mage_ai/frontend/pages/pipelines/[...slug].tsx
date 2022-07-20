@@ -414,6 +414,32 @@ function PipelineDetailPage({
     filePathsFromUrl
   ]);
 
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
     {
@@ -1332,7 +1358,7 @@ function PipelineDetailPage({
         before={fileTree}
         beforeHeader={(
           <FileHeaderMenu
-            fetchFileTree={fetchFileTree}
+            createPipeline={createPipeline}
             interruptKernel={interruptKernel}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
