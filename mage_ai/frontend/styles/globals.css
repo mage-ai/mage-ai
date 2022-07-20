@@ -122,6 +122,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 
   overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 ol,
