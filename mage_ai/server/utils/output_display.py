@@ -173,7 +173,7 @@ def execute_custom_code():
         block.run_upstream_blocks()
 
     global_vars = {global_vars}
-    block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
+    block_output = block.execute_sync(custom_code=code, global_vars=global_vars, analyze_outputs=False)
     output = block_output['output']
 
     if {widget}:
