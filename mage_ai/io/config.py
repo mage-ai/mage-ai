@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from botocore.exceptions import ClientError
 from enum import Enum
 from jinja2 import Template
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from pathlib import Path
 from typing import Any, Dict, Union
 import boto3
@@ -193,10 +193,74 @@ class EnvironmentVariableLoader(BaseConfigLoader):
         return os.getenv(env_var)
 
 
+class VerboseConfigKey(str, Enum):
+    """
+    Config key headers for the verbose configuration file format.
+    """
+
+    AWS = 'AWS'
+    BIGQUERY = 'BigQuery'
+    POSTGRES = 'PostgreSQL'
+    REDSHIFT = 'Redshift'
+    SNOWFLAKE = 'Snowflake'
+
+
 class ConfigFileLoader(BaseConfigLoader):
+    KEY_MAP = {
+        ConfigKey.AWS_ACCESS_KEY_ID: (VerboseConfigKey.AWS, 'access_key_id'),
+        ConfigKey.AWS_REGION: (VerboseConfigKey.AWS, 'region'),
+        ConfigKey.AWS_SECRET_ACCESS_KEY: (VerboseConfigKey.AWS, 'secret_access_key'),
+        ConfigKey.AWS_SESSION_TOKEN: (VerboseConfigKey.AWS, 'session_token'),
+        ConfigKey.GOOGLE_SERVICE_ACC_KEY: (VerboseConfigKey.BIGQUERY, 'credentials_mapping'),
+        ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH: (
+            VerboseConfigKey.BIGQUERY,
+            'path_to_credentials',
+        ),
+        ConfigKey.REDSHIFT_CLUSTER_ID: (
+            VerboseConfigKey.AWS,
+            VerboseConfigKey.REDSHIFT,
+            'cluster_identifier',
+        ),
+        ConfigKey.REDSHIFT_DBNAME: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'database'),
+        ConfigKey.REDSHIFT_DBUSER: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'db_user'),
+        ConfigKey.REDSHIFT_HOST: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'host'),
+        ConfigKey.REDSHIFT_IAM_PROFILE: (
+            VerboseConfigKey.AWS,
+            VerboseConfigKey.REDSHIFT,
+            'profile',
+        ),
+        ConfigKey.REDSHIFT_PORT: (VerboseConfigKey.AWS, VerboseConfigKey.REDSHIFT, 'port'),
+        ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD: (
+            VerboseConfigKey.AWS,
+            VerboseConfigKey.REDSHIFT,
+            'password',
+        ),
+        ConfigKey.REDSHIFT_TEMP_CRED_USER: (
+            VerboseConfigKey.AWS,
+            VerboseConfigKey.REDSHIFT,
+            'user',
+        ),
+        ConfigKey.POSTGRES_DBNAME: (VerboseConfigKey.POSTGRES, 'database'),
+        ConfigKey.POSTGRES_HOST: (VerboseConfigKey.POSTGRES, 'host'),
+        ConfigKey.POSTGRES_PASSWORD: (VerboseConfigKey.POSTGRES, 'password'),
+        ConfigKey.POSTGRES_PORT: (VerboseConfigKey.POSTGRES, 'port'),
+        ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
+        ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
+        ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
+        ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
+        ConfigKey.SNOWFLAKE_DEFAULT_WH: (VerboseConfigKey.SNOWFLAKE, 'warehouse'),
+        ConfigKey.SNOWFLAKE_PASSWORD: (VerboseConfigKey.SNOWFLAKE, 'password'),
+        ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
+    }
+
     def __init__(self, filepath: os.PathLike = None, profile='default') -> None:
         """
-        Initializes IO Configuration loader
+        Initializes IO Configuration loader. Input configuration file can have two formats:
+        - Standard: contains a subset of the configuration keys specified in `ConfigKeys`. This
+          is the default and recommended format
+        - Verbose: Instead of configuration keys, each profiles stores an object of settings associated with
+          each data migration client. This format was used in previous versions of this tool, and exists
+          for backwards compatibility.
 
         Args:
             filepath (os.PathLike, optional): Path to IO configuration file.
@@ -204,12 +268,13 @@ class ConfigFileLoader(BaseConfigLoader):
             profile (str, optional): Profile to load configuration settings from. Defaults to 'default'.
         """
         if filepath is None:
-            filepath = get_repo_path() / 'io_config.yaml'
+            filepath = os.environ[REPO_PATH_ENV_VAR] / 'io_config.yaml'
         self.filepath = Path(filepath)
         self.profile = profile
         with self.filepath.open('r') as fin:
             config_file = Template(fin.read()).render(env_var=os.getenv)
             self.config = yaml.full_load(config_file)[profile]
+        self.use_verbose_format = any(source in self.config.keys() for source in VerboseConfigKey)
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """
@@ -218,6 +283,8 @@ class ConfigFileLoader(BaseConfigLoader):
         Args:
             key (str): Name of the configuration setting to check.
         """
+        if self.use_verbose_format:
+            return self.__traverse_verbose_config(key) is not None
         return key in self.config
 
     def get(self, key: Union[ConfigKey, str]) -> Any:
@@ -227,4 +294,21 @@ class ConfigFileLoader(BaseConfigLoader):
         Args:
             key (str): Key name of the configuration setting to load
         """
+        if self.use_verbose_format:
+            return self.__traverse_verbose_config(key)
         return self.config.get(key)
+
+    def __traverse_verbose_config(self, key: Union[ConfigKey, str]) -> Any:
+        """
+        Traverses a configuration file in verbose format to fetch the
+        value if exists; else returns None.
+        """
+        keys = self.KEY_MAP.get(key)
+        if keys is None:
+            return None
+        branch = self.config
+        for key in keys:
+            if branch is None:
+                return None
+            branch = branch.get(key)
+        return branch

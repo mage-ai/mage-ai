@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 from os import path
@@ -20,7 +20,7 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.export(
             df,
             table_name,

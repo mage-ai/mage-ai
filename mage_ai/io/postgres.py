@@ -1,5 +1,6 @@
 from io import StringIO
 from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import (
     BadConversionError,
     clean_df_for_export,
@@ -7,10 +8,8 @@ from mage_ai.io.export_utils import (
     infer_dtypes,
     PandasTypes,
 )
-from mage_ai.io.io_config import IOConfigKeys
 from pandas import DataFrame, read_sql, Series
 from psycopg2 import connect
-from typing import Any, Mapping
 import numpy as np
 
 
@@ -241,10 +240,17 @@ class Postgres(BaseSQLConnection):
             raise ValueError(f'Invalid datatype provided: {dtype}')
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'Postgres':
-        try:
-            return cls(**config[IOConfigKeys.POSTGRES])
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for \'{IOConfigKeys.POSTGRES}\' under profile'
-            )
+    def with_config(cls, config: BaseConfigLoader) -> 'Postgres':
+        """
+        Initializes PostgreSQL loader from configuration loader
+
+        Args:
+            config (BaseConfigLoader): Configuration loader object
+        """
+        return cls(
+            dbname=config[ConfigKey.POSTGRES_DBNAME],
+            user=config[ConfigKey.POSTGRES_USER],
+            password=config[ConfigKey.POSTGRES_PASSWORD],
+            host=config[ConfigKey.POSTGRES_HOST],
+            port=config[ConfigKey.POSTGRES_PORT],
+        )

@@ -1,3 +1,4 @@
+version: 0.1.0
 default:
   # Default profile created for data IO access.
   # Add your credentials for the source you use, and delete the rest.

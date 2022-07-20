@@ -11,4 +11,4 @@ def load_data_from_file(**kwargs) -> DataFrame:
     Template for loading data from filesystem.
     """
     filepath = 'path/to/your/file.csv'
-    return FileIO(filepath).load()
+    return FileIO().load(filepath)
