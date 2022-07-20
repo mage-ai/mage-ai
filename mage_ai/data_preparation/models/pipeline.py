@@ -10,8 +10,6 @@ from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import copy_template_directory
-from queue import Queue
-import asyncio
 import os
 import shutil
 import yaml
@@ -282,7 +280,6 @@ class Pipeline:
 
         self.save()
         return block
-        return block
 
     def get_block(self, block_uuid, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
@@ -296,6 +293,7 @@ class Pipeline:
         return block_uuid in self.blocks_by_uuid
 
     def update_block(self, block, upstream_block_uuids=None):
+        save_kwargs = dict()
         if upstream_block_uuids is not None:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
@@ -313,8 +311,10 @@ class Pipeline:
                         db for db in b.downstream_blocks if db.uuid != block.uuid
                     ]
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids)
+        else:
+            save_kwargs['block_uuid'] = block.uuid
         self.blocks_by_uuid[block.uuid] = block
-        self.save()
+        self.save(**save_kwargs)
         return block
 
     def update_block_uuid(self, block, old_uuid):
@@ -364,7 +364,12 @@ class Pipeline:
         self.save()
         return block
 
-    def save(self):
-        pipeline_dict = self.to_dict()
+    def save(self, block_uuid: str = None):
+        if block_uuid is not None:
+            current_pipeline = Pipeline(self.uuid, self.repo_path)
+            current_pipeline.blocks_by_uuid[block_uuid] = self.get_block(block_uuid)
+            pipeline_dict = current_pipeline.to_dict()
+        else:
+            pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
