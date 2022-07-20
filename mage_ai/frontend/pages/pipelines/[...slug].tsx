@@ -219,7 +219,15 @@ function PipelineDetailPage({
   const widgetTempData = useRef({});
   const updateWidget = useCallback((block: BlockType) => {
     setPipelineContentTouched(true);
-    widgetTempData.current[block.uuid] = block;
+    const blockPrev = widgetTempData.current[block.uuid] || {};
+    widgetTempData.current[block.uuid] = {
+      ...blockPrev,
+      ...block,
+      configuration: {
+        ...blockPrev.configuration,
+        ...block.configuration,
+      },
+    };
   }, [
     setPipelineContentTouched,
     widgetTempData.current,
@@ -426,13 +434,15 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
+          console.log(tempData);
+
           return {
             ...block,
             ...tempData,
             content: contentToSave,
             configuration: {
               ...block.configuration,
-              ...tempData.configuration
+              ...tempData.configuration,
             },
           };
         }),
