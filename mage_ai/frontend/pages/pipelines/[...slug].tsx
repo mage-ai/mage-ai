@@ -1,3 +1,4 @@
+import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
@@ -23,7 +24,10 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
@@ -51,6 +55,7 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { WEBSOCKT_URL } from '@utils/constants';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
@@ -87,6 +92,7 @@ function PipelineDetailPage({
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
+  const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -481,6 +487,47 @@ function PipelineDetailPage({
       ),
     },
   );
+  const [deleteWidget] = useMutation(
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            widget: {
+              type,
+              uuid,
+            },
+          }) => {
+            setWidgets((widgetsPrevious) => removeAtIndex(
+              widgetsPrevious,
+              widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
+            ));
+            fetchPipeline();
+            if (type === BlockTypeEnum.SCRATCHPAD) {
+              fetchFileTree();
+            }
+          },
+          onErrorCallback: ({
+            url_parameters: urlParameters,
+          }: {
+            url_parameters: {
+              block_uuid: string;
+            };
+          }, {
+            messages,
+          }) => {
+            setMessages(messagesPrev => ({
+              ...messagesPrev,
+              [urlParameters.block_uuid]: messages.map(msg => ({
+                data: msg,
+                type: DataTypeEnum.TEXT_PLAIN,
+              })),
+            }));
+          },
+        },
+      ),
+    },
+  );
 
   const [deleteBlockFile] = useMutation(
     ({ type, uuid }: BlockType) => (
@@ -738,6 +785,109 @@ function PipelineDetailPage({
     blocks,
   ]);
 
+  // WebSocket
+  const {
+    lastMessage,
+    readyState,
+    sendMessage,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  useEffect(() => {
+    if (lastMessage) {
+      const message: KernelOutputType = JSON.parse(lastMessage.data);
+      const {
+        execution_state: executionState,
+        uuid,
+      } = message;
+
+      // @ts-ignore
+      setMessages((messagesPrevious) => {
+        const messagesFromUUID = messagesPrevious[uuid] || [];
+
+        return {
+          ...messagesPrevious,
+          [uuid]: messagesFromUUID.concat(message),
+        };
+      });
+
+      if (ExecutionStateEnum.IDLE === executionState) {
+        // @ts-ignore
+        setRunningBlocks((runningBlocksPrevious) =>
+          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+        );
+      }
+
+      setPipelineContentTouched(true);
+    }
+  }, [
+    lastMessage,
+    setMessages,
+    setPipelineContentTouched,
+    setRunningBlocks,
+  ]);
+
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+    runUpstream?: boolean;
+  }) => {
+    const {
+      block,
+      code,
+      runUpstream = false,
+    } = payload;
+
+    if (code) {
+      const { uuid } = block;
+      const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+
+      if (!isAlreadyRunning) {
+        sendMessage(JSON.stringify({
+          code,
+          pipeline_uuid: pipeline?.uuid,
+          uuid,
+          run_upstream: runUpstream
+        }));
+
+        // @ts-ignore
+        setMessages((messagesPrevious) => {
+          delete messagesPrevious[uuid];
+
+          return messagesPrevious;
+        });
+
+        setTextareaFocused(false);
+
+        // @ts-ignore
+        setRunningBlocks((runningBlocksPrevious) => {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+            return runningBlocksPrevious;
+          }
+
+          return runningBlocksPrevious.concat(block);
+        });
+      }
+
+      fetchPipeline();
+    }
+  }, [
+    fetchPipeline,
+    pipeline,
+    runningBlocks,
+    sendMessage,
+    setMessages,
+    setRunningBlocks,
+    setTextareaFocused,
+  ]);
+
   const fileTreeRef = useRef(null);
   const fileTree = useMemo(() => (
     <ContextMenu
@@ -767,6 +917,7 @@ function PipelineDetailPage({
       afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
       blocks={blocks}
+      deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
       fetchWidgets={fetchWidgets}
@@ -775,6 +926,7 @@ function PipelineDetailPage({
       metadata={metadata}
       onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
+      runBlock={runBlock}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
@@ -790,6 +942,7 @@ function PipelineDetailPage({
     afterWidthForChildren,
     blockRefs,
     blocks,
+    deleteWidget,
     editingBlock,
     fetchPipeline,
     fetchWidgets,
@@ -798,6 +951,7 @@ function PipelineDetailPage({
     metadata,
     onChangeChartBlock,
     pipeline,
+    runBlock,
     runningBlocks,
     sampleData,
     savePipelineContent,
@@ -810,7 +964,7 @@ function PipelineDetailPage({
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndex}
-      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, 0)}
+      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, widgets.length)}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
@@ -827,6 +981,7 @@ function PipelineDetailPage({
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
+      runBlock={runBlock}
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
@@ -835,6 +990,8 @@ function PipelineDetailPage({
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
+      setTextareaFocused={setTextareaFocused}
+      textareaFocused={textareaFocused}
     />
   ), [
     addNewBlockAtIndex,
@@ -855,6 +1012,7 @@ function PipelineDetailPage({
     pipelineContentTouched,
     pipelineLastSaved,
     restartKernel,
+    runBlock,
     runningBlocks,
     savePipelineContent,
     selectedBlock,
@@ -863,6 +1021,8 @@ function PipelineDetailPage({
     setPipelineContentTouched,
     setRunningBlocks,
     setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
@@ -931,7 +1091,7 @@ function PipelineDetailPage({
                 beforeElement={<Add />}
                 blackBorder
                 compact
-                onClick={() => addWidgetAtIndex({}, 0)}
+                onClick={() => addWidgetAtIndex({}, widgets.length)}
                 uuid="Pipeline/afterHeader/add_chart"
               >
                 Add chart

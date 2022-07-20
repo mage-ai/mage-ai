@@ -10,7 +10,7 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Charts, { ChartPropsShared } from './Charts';
+import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -60,15 +60,15 @@ export type SidekickProps = {
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
-} & SetEditingBlockType & ChartPropsShared;
+} & SetEditingBlockType & ChartsPropsShared;
 
 function Sidekick({
   activeView,
   afterWidth,
   blockRefs,
   blocks,
+  deleteWidget,
   editingBlock,
   fetchPipeline,
   fetchWidgets,
@@ -77,6 +77,7 @@ function Sidekick({
   metadata,
   onChangeChartBlock,
   pipeline,
+  runBlock,
   runningBlocks,
   sampleData,
   savePipelineContent,
@@ -324,9 +325,12 @@ function Sidekick({
         {ViewKeyEnum.CHARTS === activeView && (
           <Charts
             blocks={blocks}
+            deleteWidget={deleteWidget}
             fetchWidgets={fetchWidgets}
             onChangeChartBlock={onChangeChartBlock}
+            runBlock={runBlock}
             savePipelineContent={savePipelineContent}
+            setSelectedBlock={setSelectedBlock}
             updateWidget={updateWidget}
             widgets={widgets}
           />

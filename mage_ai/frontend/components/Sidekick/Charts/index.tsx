@@ -1,27 +1,25 @@
 import BlockType from '@interfaces/BlockType';
-import ChartBlock from '@components/ChartBlock';
+import ChartBlock, { ChartPropsShared } from '@components/ChartBlock';
 import FlexContainer from '@oracle/components/FlexContainer';
 
-export type ChartPropsShared = {
+export type ChartsPropsShared = {
   fetchWidgets: () => void;
   onChangeChartBlock: (uuid: string, value: string) => void;
-  savePipelineContent: () => void;
   updateWidget: (block: BlockType) => void;
   widgets: BlockType[];
-};
-
-type ChartsProps = {
-  blocks: BlockType[];
-};
+} & ChartPropsShared;
 
 function Charts({
   blocks,
+  deleteWidget,
   fetchWidgets,
   onChangeChartBlock,
+  runBlock,
   savePipelineContent,
+  setSelectedBlock,
   updateWidget,
   widgets,
-}: ChartsProps) {
+}: ChartsPropsShared) {
   return (
     <FlexContainer
       flexDirection="column"
@@ -31,8 +29,12 @@ function Charts({
         <ChartBlock
           block={block}
           blocks={blocks}
+          deleteWidget={deleteWidget}
           key={block.uuid}
           onChangeContent={(value: string) => onChangeChartBlock(block.uuid, value)}
+          runBlock={runBlock}
+          savePipelineContent={savePipelineContent}
+          setSelectedBlock={setSelectedBlock}
           updateWidget={updateWidget}
         />
       ))}
