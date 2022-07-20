@@ -34,18 +34,21 @@ export const ContainerStyle = styled.div<{
 `;
 
 export const OutputRowStyle = styled.div<{
+  contained?: boolean;
   first?: boolean;
   last?: boolean;
 }>`
-  padding-left: ${LEFT_PADDING}px;
-  padding-right: ${UNIT * PADDING_UNITS}px;
-
   ${props => props.first && `
     padding-top: ${UNIT * PADDING_UNITS}px;
   `}
 
   ${props => props.last && `
     padding-bottom: ${UNIT * PADDING_UNITS}px;
+  `}
+
+  ${props => props.contained && `
+    padding-left: ${LEFT_PADDING}px;
+    padding-right: ${UNIT * PADDING_UNITS}px;
   `}
 `;
 

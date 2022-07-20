@@ -1,7 +1,9 @@
 import {
+  useContext,
   useMemo,
   useState,
 } from 'react';
+import { ThemeContext } from 'styled-components';
 
 import BlockType, {
   BlockTypeEnum,
@@ -11,8 +13,10 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor from '@components/CodeEditor';
+import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -31,6 +35,7 @@ import {
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 export type ChartPropsShared = {
   blocks: BlockType[];
@@ -40,6 +45,7 @@ export type ChartPropsShared = {
     code: string;
     runUpstream?: boolean;
   }) => void;
+  runningBlocks: BlockType[];
   savePipelineContent: () => Promise<any>;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
@@ -47,6 +53,8 @@ export type ChartPropsShared = {
 
 type ChartBlockType = {
   block: BlockType;
+  executionState: ExecutionStateEnum;
+  messages: KernelOutputType[];
   onChangeContent: (value: string) => void;
 } & ChartPropsShared;
 
@@ -54,12 +62,16 @@ function ChartBlock({
   block,
   blocks,
   deleteWidget,
+  executionState,
+  messages = [],
   onChangeContent,
   runBlock,
+  runningBlocks,
   savePipelineContent,
   setSelectedBlock,
   updateWidget,
 }: ChartBlockType) {
+  const themeContext = useContext(ThemeContext);
   const {
     configuration = {},
     outputs = [],
@@ -112,6 +124,54 @@ function ChartBlock({
     // selected,
     // textareaFocused,
   ]);
+
+  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+  const messagesWithType = useMemo(() => {
+    return messages?.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
+  }, [
+    messages,
+  ]);
+  const hasError = !!messagesWithType.find(({ error }) => error);
+  const hasOutput = messagesWithType.length >= 1;
+  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const selected = false;
+  const borderColorShareProps = useMemo(() => ({
+    blockType: block.type,
+    hasError,
+    selected,
+  }), [
+    block.type,
+    hasError,
+    selected,
+  ]);
+  const codeOutputEl = useMemo(() => hasOutput && (
+    <CodeOutput
+      {...borderColorShareProps}
+      block={block}
+      contained={false}
+      isInProgress={isInProgress}
+      messages={messagesWithType}
+      // runCount={runCount}
+      // runEndTime={runEndTime}
+      // runStartTime={runStartTime}
+      selected={selected}
+    />
+  ), [
+    block,
+    borderColorShareProps,
+    hasOutput,
+    isInProgress,
+    // mainContainerWidth,
+    messagesWithType,
+    // runCount,
+    // runEndTime,
+    // runStartTime,
+    selected,
+  ]);
+
+  console.log(messagesWithType)
 
   return (
     <ChartBlockStyle>
@@ -279,6 +339,12 @@ function ChartBlock({
         <CodeStyle>
           {codeEditorEl}
         </CodeStyle>
+      )}
+
+      {hasOutput && (
+        <Spacing px={1}>
+          {codeOutputEl}
+        </Spacing>
       )}
     </ChartBlockStyle>
   );

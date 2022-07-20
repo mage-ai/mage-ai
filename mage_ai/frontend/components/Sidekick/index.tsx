@@ -74,6 +74,7 @@ function Sidekick({
   fetchWidgets,
   globalVariables,
   insights,
+  messages,
   metadata,
   onChangeChartBlock,
   pipeline,
@@ -327,8 +328,10 @@ function Sidekick({
             blocks={blocks}
             deleteWidget={deleteWidget}
             fetchWidgets={fetchWidgets}
+            messages={messages}
             onChangeChartBlock={onChangeChartBlock}
             runBlock={runBlock}
+            runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
             setSelectedBlock={setSelectedBlock}
             updateWidget={updateWidget}

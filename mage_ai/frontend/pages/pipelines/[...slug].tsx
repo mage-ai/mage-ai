@@ -853,6 +853,7 @@ function PipelineDetailPage({
         sendMessage(JSON.stringify({
           code,
           pipeline_uuid: pipeline?.uuid,
+          type: block.type,
           uuid,
           run_upstream: runUpstream
         }));
@@ -923,6 +924,7 @@ function PipelineDetailPage({
       fetchWidgets={fetchWidgets}
       globalVariables={globalVariables}
       insights={insights}
+      messages={messages}
       metadata={metadata}
       onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
@@ -948,6 +950,7 @@ function PipelineDetailPage({
     fetchWidgets,
     globalVariables,
     insights,
+    messages,
     metadata,
     onChangeChartBlock,
     pipeline,

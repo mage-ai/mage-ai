@@ -57,7 +57,9 @@ type PipelineDetailProps = {
   kernel: KernelType;
   mainContainerRef: any;
   mainContainerWidth: number;
-  messages: { [uuid: string]: KernelOutputType[]; };
+  messages: {
+    [uuid: string]: KernelOutputType[];
+  };
   onChangeCodeBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
