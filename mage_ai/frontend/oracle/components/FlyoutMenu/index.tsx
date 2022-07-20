@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createRef, useEffect, useRef, useState } from 'react';
 
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
@@ -60,9 +60,11 @@ function FlyoutMenu({
 }: FlyoutMenuProps) {
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [submenuVisible, setSubmenuVisible] = useState<{ [uuid: string]: boolean }>({});
+  const [submenuTopOffset, setSubmenuTopOffset] = useState<number>(0);
   const {
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
+  const menuRefs = useRef({});
 
   const {
     registerOnKeyDown,
@@ -123,6 +125,7 @@ function FlyoutMenu({
     uuid: string,
     visible: boolean,
     depth: number = 0,
+    refArg: React.RefObject<any>,
   ) => {
     depth += 1;
 
@@ -141,7 +144,7 @@ function FlyoutMenu({
           top: (
             depth === 1
               ? (height || 0) + topOffset
-              : 0
+              : (submenuTopOffset || 0)
           ),
         }}
         width={width}
@@ -154,58 +157,66 @@ function FlyoutMenu({
           label,
           onClick,
           uuid,
-        }: FlyoutMenuItemType, idx0: number) => (isGroupingTitle
-          ?
-            <TitleContainerStyle>
-              <Text bold key={uuid} muted>
-                {label()}
-              </Text>
-            </TitleContainerStyle>
-          :
-            <LinkStyle
-              highlighted={highlightedIndices[0] === idx0}
-              indent={indent}
-              key={uuid}
-              onClick={(e) => {
-                e.preventDefault();
-                onClick?.();
-                onClickCallback?.();
-              }}
-              onMouseEnter={() => {
-                setSubmenuVisible((prevState) => ({
-                  ...prevState,
-                  [uuid]: true,
-                }));
-              }}
-              onMouseLeave={() => {
-                setSubmenuVisible((prevState) => ({
-                  ...prevState,
-                  [uuid]: false,
-                }));
-              }}
-            >
-              <FlexContainer
-                alignItems="center"
-                fullWidth
-                justifyContent="space-between"
-              >
-                <Text>
+        }: FlyoutMenuItemType, idx0: number) => {
+          refArg.current[uuid] = createRef();
+
+          return (isGroupingTitle
+            ?
+              <TitleContainerStyle>
+                <Text bold key={uuid} muted>
                   {label()}
                 </Text>
-                {items && <ArrowRight />}
-              </FlexContainer>
+              </TitleContainerStyle>
+            :
+              <LinkStyle
+                highlighted={highlightedIndices[0] === idx0}
+                indent={indent}
+                key={uuid}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onClick?.();
+                  onClickCallback?.();
+                }}
+                onMouseEnter={() => {
+                  setSubmenuVisible((prevState) => ({
+                    ...prevState,
+                    [uuid]: true,
+                  }));
+                  if (depth === 1) {
+                    setSubmenuTopOffset(refArg.current[uuid]?.current?.offsetTop || 0);
+                  }
+                }}
+                onMouseLeave={() => {
+                  setSubmenuVisible((prevState) => ({
+                    ...prevState,
+                    [uuid]: false,
+                  }));
+                }}
+                ref={refArg.current[uuid]}
+              >
+                <FlexContainer
+                  alignItems="center"
+                  fullWidth
+                  justifyContent="space-between"
+                >
+                  <Text>
+                    {label()}
+                  </Text>
+                  {items && <ArrowRight />}
+                </FlexContainer>
 
-              {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
-              {items && buildMenuEl(items, uuid, false, depth)}
-            </LinkStyle>
-          ),
-        )}
+                {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
+                {items && buildMenuEl(items, uuid, false, depth, refArg)}
+              </LinkStyle>
+          );
+        })}
       </FlyoutMenuContainerStyle>
     );
   };
 
-  return (
-    items && buildMenuEl(items, undefined, open, 0)
+  return (items
+    ? buildMenuEl(items, undefined, open, 0, menuRefs)
+    : null
   );
 }
 

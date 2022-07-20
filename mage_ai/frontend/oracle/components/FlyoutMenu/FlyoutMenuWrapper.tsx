@@ -23,7 +23,7 @@ function FlyoutMenuWrapper({
     <div
       style={{
         position: 'relative',
-        zIndex: 100,
+        zIndex: 10,
       }}
     >
       <div ref={parentRef}>
