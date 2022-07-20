@@ -5,6 +5,8 @@ import {
   remove,
   set,
 } from '@storage/localStorage';
+import api from '@api';
+import { NextRouter } from 'next/router';
 import { indexBy } from '@utils/array';
 import { isJsonString } from '@utils/string';
 
@@ -103,3 +105,15 @@ export function convertBlockUUIDstoBlockTypes(
     .map(uuid => blockUUIDMapping[uuid])
     .filter(block => !!block);
 }
+export const redirectToFirstPipeline = (router: NextRouter) => {
+	const { data: { pipelines } } = api.pipelines.list();
+	const pathname = `/pipelines/${pipelines?.[0]}`;
+	const query = router.query;
+
+	if (pipelines?.length >= 1) {
+		router.push({
+			pathname,
+			query,
+		});
+	}
+};
