@@ -420,6 +420,8 @@ function CodeBlockProps({
     selected,
   ]);
 
+  const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <FlexContainer
@@ -442,7 +444,8 @@ function CodeBlockProps({
             <FlyoutMenuWrapper
               compact
               items={buildBlockMenu(block)}
-              onClickOutside={() => setBlockMenuVisible(false)}
+              onClickCallback={closeBlockMenu}
+              onClickOutside={closeBlockMenu}
               open={blockMenuVisible}
               parentRef={blockMenuRef}
               uuid="CodeBlock/block_menu"
