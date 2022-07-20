@@ -204,14 +204,6 @@ function Sidekick({
       <SidekickContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
         {activeView === ViewKeyEnum.TREE &&
           <>
-            {!blockEditing && (
-              <Spacing p={2}>
-                <PipelineExecution
-                  pipeline={pipeline}
-                />
-              </Spacing>
-            )}
-
             <DependencyGraph
               blockRefs={blockRefs}
               editingBlock={editingBlock}
@@ -223,6 +215,13 @@ function Sidekick({
               setEditingBlock={setEditingBlock}
               setSelectedBlock={setSelectedBlock}
             />
+            {!blockEditing && (
+              <Spacing p={2}>
+                <PipelineExecution
+                  pipeline={pipeline}
+                />
+              </Spacing>
+            )}
           </>
         }
         {activeView === ViewKeyEnum.DATA && columns.length > 0 && (
