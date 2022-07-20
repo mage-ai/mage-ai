@@ -17,4 +17,9 @@ def export_data_to_s3(df: DataFrame) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    S3.with_config(ConfigFileLoader(config_path, config_profile)).export(df)
+    bucket_name = 'your_bucket_name'
+    object_key = 'your_object_key'
+
+    S3.with_config(ConfigFileLoader(config_path, config_profile)).export(
+        df, bucket_name, object_key
+    )

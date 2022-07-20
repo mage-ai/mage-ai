@@ -17,4 +17,9 @@ def load_from_s3_bucket() -> DataFrame:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    return S3.with_config(ConfigFileLoader(config_path, config_profile)).load()
+    bucket_name = 'your_bucket_name'
+    object_key = 'your_object_key'
+
+    return S3.with_config(ConfigFileLoader(config_path, config_profile)).load(
+        bucket_name, object_key
+    )

@@ -11,4 +11,4 @@ def export_data_to_file(df: DataFrame) -> None:
     Template for exporting data to filesystem.
     """
     filepath = 'path/to/write/dataframe/to.csv'
-    FileIO(filepath).export(df)
+    FileIO().export(df, filepath)
