@@ -34,25 +34,33 @@ class VerboseFunctionExec:
     def __init__(
         self,
         message: str,
-        verbose: bool = True,
+        log_func: Callable[[str], None] = None,
         prefix: str = '',
-        print_func: Callable[[str], None] = None,
+        verbose: bool = True,
     ):
         self.message = message
         self.verbose = verbose
         self.prefix = prefix
-        self.print_func = print if print_func is None else print_func
+        self.log_func = log_func
 
     def __enter__(self):
         if self.verbose:
-            self.print_func(f'{self.prefix} {self.message}...')
+            enter_message = f'{self.prefix} {self.message}...'
+            if self.log_func is None:
+                print_kwargs=dict()
+                if self.prefix is None or len(self.prefix) == 0:
+                    print_kwargs['end'] = ''
+                print(enter_message, **print_kwargs)
+            else:
+                self.log_func(enter_message)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.verbose:
+            log_func = self.log_func or print
             if exc_type is None:
-                self.print_func(f'{self.prefix} DONE')
+                log_func(f'{self.prefix} DONE')
             else:
-                self.print_func(f'{self.prefix} FAILED')
+                log_func(f'{self.prefix} FAILED')
 
 
 class VerbosePrintHandler:

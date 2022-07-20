@@ -73,7 +73,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         )
                     )
 
-                asyncio.run(pipeline.execute(publish_message=publish_message, redirect_outputs=True))
+                asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
                 publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
 
             threading.Thread(target=run_pipeline).start()

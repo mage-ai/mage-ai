@@ -101,9 +101,9 @@ class Pipeline:
 
     async def execute(
         self,
-        publish_message: Callable[[str], None] = None,
         analyze_outputs: bool = True,
         global_vars=None,
+        log_func: Callable[[str], None] = None,
         redirect_outputs: bool = False,
         update_status: bool = True,
     ) -> None:
@@ -121,9 +121,9 @@ class Pipeline:
             root_blocks,
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
+            log_func=log_func,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
-            publish_message=publish_message,
         )
 
     def load_config_from_yaml(self):
