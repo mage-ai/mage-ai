@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useRouter } from 'next/router';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import Text from '@oracle/elements/Text';
-import api from '@api';
 import {
   KEY_CODE_NUMBERS_TO_NUMBER,
   KEY_CODE_NUMBER_0,
@@ -20,14 +17,13 @@ import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
 type FileHeaderMenuProps = {
-  fetchFileTree: () => void;
+  createPipeline: (data: any) => void;
   interruptKernel: () => void;
   restartKernel: () => void;
   savePipelineContent: () => void;
@@ -37,42 +33,15 @@ type FileHeaderMenuProps = {
 };
 
 function FileHeaderMenu({
-  fetchFileTree,
+  createPipeline,
   interruptKernel,
   restartKernel,
   savePipelineContent,
   setMessages,
 }: FileHeaderMenuProps) {
-  const router = useRouter();
   const [highlightedIndex, setHighlightedIndex] = useState(null);
   const refFile = useRef(null);
   const refRun = useRef(null);
-
-  const [createPipeline] = useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-            fetchFileTree();
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
 
   const fileItems = [
     {
