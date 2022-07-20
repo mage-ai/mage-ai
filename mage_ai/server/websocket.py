@@ -60,6 +60,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     run_upstream=run_upstream,
+                    widget=widget,
                 )
 
             msg_id = client.execute(add_internal_output_info(code))

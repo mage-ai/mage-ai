@@ -28,6 +28,7 @@ import { isJsonString } from '@utils/string';
 type CodeOutputProps = {
   block: BlockType;
   contained?: boolean;
+  hideExtraInfo?: boolean;
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
@@ -40,6 +41,7 @@ function CodeOutput({
   block,
   contained = true,
   hasError,
+  hideExtraInfo,
   isInProgress,
   mainContainerWidth,
   messages,
@@ -192,7 +194,7 @@ function CodeOutput({
 
       {!contained && content}
 
-      {executedAndIdle && (
+      {executedAndIdle && !hideExtraInfo && (
         <ExtraInfoStyle
           blockType={blockType}
           hasError={hasError}

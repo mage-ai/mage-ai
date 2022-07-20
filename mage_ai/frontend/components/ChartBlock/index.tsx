@@ -1,6 +1,8 @@
 import {
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -11,17 +13,22 @@ import BlockType, {
   ChartTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import ChartController from './ChartController';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import usePrevious from '@utils/usePrevious';
 import { CONFIGURATIONS_BY_CHART_TYPE } from './constants';
 import {
   ChartBlockStyle,
@@ -34,8 +41,9 @@ import {
   Trash,
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalize } from '@utils/string';
+import { capitalize, isJsonString } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { isEmptyObject } from '@utils/hash';
 
 export type ChartPropsShared = {
   blocks: BlockType[];
@@ -71,16 +79,17 @@ function ChartBlock({
   setSelectedBlock,
   updateWidget,
 }: ChartBlockType) {
+  const refChartContainer = useRef(null);
   const themeContext = useContext(ThemeContext);
   const {
     configuration = {},
     outputs = [],
   } = block;
-  const {
-    chart_type: chartType,
-  } = configuration;
+  const [chartType, setChartType] = useState<string>(configuration?.chart_type);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
+  const [chartWidth, setChartWidth] = useState<number>(null);
+  const [upstreamBlocks, setUpstreamBlocks] = useState<string[]>(block?.upstream_blocks);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
   const blocksOfType = useMemo(() => blocks?.filter(({
@@ -146,11 +155,12 @@ function ChartBlock({
     hasError,
     selected,
   ]);
-  const codeOutputEl = useMemo(() => hasOutput && (
+  const codeOutputEl = useMemo(() => hasError && hasOutput && (
     <CodeOutput
       {...borderColorShareProps}
       block={block}
       contained={false}
+      hideExtraInfo
       isInProgress={isInProgress}
       messages={messagesWithType}
       // runCount={runCount}
@@ -161,6 +171,7 @@ function ChartBlock({
   ), [
     block,
     borderColorShareProps,
+    hasError,
     hasOutput,
     isInProgress,
     // mainContainerWidth,
@@ -171,7 +182,39 @@ function ChartBlock({
     selected,
   ]);
 
-  console.log(messagesWithType)
+  let chartData = {};
+  let chartDataRaw = messagesWithType?.[0]?.data?.[0];
+  if (chartDataRaw) {
+    chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
+    if (isJsonString(chartDataRaw)) {
+      chartData = JSON.parse(chartDataRaw);
+    }
+  } else if (outputs?.length >= 1) {
+    outputs.forEach(({
+      text_data: textData,
+      type: outputType,
+      variable_uuid: variableUUID,
+    }) => {
+      if (DataTypeEnum.TEXT === outputType) {
+        chartData[variableUUID] = JSON.parse(textData);
+      }
+    });
+  }
+
+  const isEditingPrevious = usePrevious(isEditing);
+  useEffect(() => {
+    const rect = refChartContainer?.current?.getBoundingClientRect();
+    if (isEditingPrevious !== isEditing) {
+      setChartWidth(0);
+    } else if (rect) {
+      setChartWidth(rect.width);
+    }
+  }, [
+    isEditing,
+    isEditingPrevious,
+    refChartContainer.current,
+    setChartWidth,
+  ]);
 
   return (
     <ChartBlockStyle>
@@ -183,13 +226,17 @@ function ChartBlock({
         >
           <Select
             compact
-            onChange={e => updateWidget({
-              ...block,
-              upstream_blocks: [e.target.value],
-            })}
+            onChange={(e) => {
+              const value = [e.target.value];
+              updateWidget({
+                ...block,
+                upstream_blocks: value,
+              });
+              setUpstreamBlocks(value)
+            }}
             placeholder="Source block"
             small
-            value={block.upstream_blocks?.[0] || ''}
+            value={upstreamBlocks?.[0] || ''}
           >
             {blocksOfType?.map(({ uuid }: BlockType) => (
               <option key={uuid} value={uuid}>
@@ -270,8 +317,19 @@ function ChartBlock({
         justifyContent="space-between"
         fullWidth
       >
-        <Flex flex={2}>
-          Chart
+        <Flex
+          flex={2}
+          ref={refChartContainer}
+        >
+          {!isEmptyObject(chartData) && (
+            <Spacing pb={3}>
+              <ChartController
+                block={block}
+                data={chartData}
+                width={chartWidth}
+              />
+            </Spacing>
+          )}
         </Flex>
 
         {isEditing && (
@@ -282,13 +340,17 @@ function ChartBlock({
             >
               <Spacing mb={1}>
                 <Select
-                  onChange={e => updateWidget({
-                    ...block,
-                    configuration: {
-                      ...configuration,
-                      chart_type: e.target.value,
-                    },
-                  })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    updateWidget({
+                      ...block,
+                      configuration: {
+                        ...configuration,
+                        chart_type: value,
+                      },
+                    });
+                    setChartType(value);
+                  }}
                   placeholder="Select chart type"
                   value={chartType}
                 >
@@ -308,19 +370,19 @@ function ChartBlock({
               }) => {
                 const el = (
                   <TextInput
+                    defaultValue={configuration?.[uuid]}
                     fullWidth
                     key={uuid}
                     label={label()}
                     monospace={monospace}
                     onChange={e => updateWidget({
-                    ...block,
-                    configuration: {
-                      ...configuration,
-                      [uuid]: e.target.value,
-                    },
-                  })}
+                      ...block,
+                      configuration: {
+                        ...configuration,
+                        [uuid]: e.target.value,
+                      },
+                    })}
                     type={type}
-                    value={configuration?.[uuid]}
                   />
                 );
 
@@ -341,7 +403,7 @@ function ChartBlock({
         </CodeStyle>
       )}
 
-      {hasOutput && (
+      {codeOutputEl && (
         <Spacing px={1}>
           {codeOutputEl}
         </Spacing>

@@ -216,18 +216,13 @@ function PipelineDetailPage({
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [widgets, setWidgets] = useState<BlockType[]>([]);
-  const updateWidget = useCallback((block: BlockType) => setWidgets((widgetsPrev) => {
-    const idx = widgetsPrev.findIndex(({ uuid }: BlockType) => block.uuid === uuid);
-
-    if (idx >= 0) {
-      setPipelineContentTouched(true);
-      widgetsPrev[idx] = block;
-    }
-
-    return widgetsPrev;
-  }), [
+  const widgetTempData = useRef({});
+  const updateWidget = useCallback((block: BlockType) => {
+    setPipelineContentTouched(true);
+    widgetTempData.current[block.uuid] = block;
+  }, [
     setPipelineContentTouched,
-    setWidgets,
+    widgetTempData.current,
   ]);
 
   const [editingBlock, setEditingBlock] = useState<{
@@ -425,11 +420,15 @@ function PipelineDetailPage({
         }),
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
+          const tempData = widgetTempData.current[block.uuid] || {};
+
           if (typeof contentToSave === 'undefined') {
             contentToSave = block.content;
           }
+
           return {
             ...block,
+            ...tempData,
             content: contentToSave,
           };
         }),
@@ -443,6 +442,7 @@ function PipelineDetailPage({
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
+    widgetTempData.current,
     widgets,
   ]);
 
