@@ -36,6 +36,58 @@ export const ROW_ACTIONS: ActionTypeEnum[] = [
   ActionTypeEnum.REMOVE,
 ];
 
+export enum ActionGroupingEnum {
+  AGGREGATE = 'Aggregate',
+  FORMATTING = 'Formatting',
+  COLUMN_REMOVAL = 'Column removal',
+  SHIFT_ROWS = 'Shift rows in a column',
+  MISC = 'Miscellaneous',
+}
+
+export const ACTION_GROUPING_MAPPING = {
+  [AxisEnum.COLUMN]: {
+    [ActionGroupingEnum.AGGREGATE]: [
+      ActionTypeEnum.AVERAGE,
+      ActionTypeEnum.COUNT,
+      ActionTypeEnum.COUNT_DISTINCT,
+      ActionTypeEnum.FIRST,
+      ActionTypeEnum.LAST,
+      ActionTypeEnum.MAX,
+      ActionTypeEnum.MEDIAN,
+      ActionTypeEnum.MIN,
+      ActionTypeEnum.SUM,
+    ],
+    [ActionGroupingEnum.FORMATTING]: [
+      ActionTypeEnum.CLEAN_COLUMN_NAME,
+      ActionTypeEnum.FIX_SYNTAX_ERRORS,
+      ActionTypeEnum.REFORMAT,
+    ],
+    [ActionGroupingEnum.COLUMN_REMOVAL]: [
+      ActionTypeEnum.REMOVE,
+      ActionTypeEnum.SELECT,
+    ],
+    [ActionGroupingEnum.SHIFT_ROWS]: [
+      ActionTypeEnum.SHIFT_DOWN,
+      ActionTypeEnum.SHIFT_UP,
+    ],
+    [ActionGroupingEnum.MISC]: [
+      ActionTypeEnum.CUSTOM,
+      ActionTypeEnum.DIFF,
+      ActionTypeEnum.IMPUTE,
+      ActionTypeEnum.REMOVE_OUTLIERS,
+    ],
+  },
+  [AxisEnum.ROW]: {
+    [ActionGroupingEnum.MISC]: [
+      ...ROW_ACTIONS,
+    ],
+  },
+};
+
+export const COLUMN_ACTION_GROUPINGS: ActionGroupingEnum[] =
+  Object.keys(ACTION_GROUPING_MAPPING[AxisEnum.COLUMN]) as ActionGroupingEnum[];
+export const ROW_ACTION_GROUPINGS: ActionGroupingEnum[] = [ActionGroupingEnum.MISC];
+
 export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
   [AxisEnum.COLUMN]: {
     [ActionTypeEnum.ADD]: 'Add column',
