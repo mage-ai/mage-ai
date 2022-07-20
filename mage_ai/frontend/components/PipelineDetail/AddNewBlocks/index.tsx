@@ -100,7 +100,7 @@ function AddNewBlocks({
         <FlexContainer>
           <FlyoutMenuWrapper
             items={allActionMenuItems}
-            onClickOutside={closeButtonMenu}
+            onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
             parentRef={transformerButtonRef}
             uuid="transformer_button"
@@ -130,7 +130,7 @@ function AddNewBlocks({
 
           <FlyoutMenuWrapper
             items={dataLoaderMenuItems}
-            onClickOutside={closeButtonMenu}
+            onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
             uuid="data_loader_button"

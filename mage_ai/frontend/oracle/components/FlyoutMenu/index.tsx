@@ -59,7 +59,7 @@ function FlyoutMenu({
   width,
 }: FlyoutMenuProps) {
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
-  const [submenuVisible, setSubmenuVisible] = useState({} as { [uuid: string]: boolean });
+  const [submenuVisible, setSubmenuVisible] = useState<{ [uuid: string]: boolean }>({});
   const {
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
@@ -118,37 +118,43 @@ function FlyoutMenu({
     }
   }, [open]);
 
-  let depth = 0;
-  const buildMenuEl = (items: FlyoutMenuItemType[], uuid: string, visible: boolean) => (
-    <FlyoutMenuContainerStyle
-      compact={compact}
-      style={{
-        display: (visible || submenuVisible[uuid]) ? null : 'none',
-        left: (
-          depth === 0
-            ? left || 0
-            : compact ? (depth * COMPACT_MENU_WIDTH) : (depth * MENU_WIDTH)
-        ),
-        top: (
-          depth === 0
-            ? (height || 0) + topOffset
-            : 0
-        ),
-      }}
-      width={width}
-    >
-      {items?.map(({
-        items,
-        indent,
-        isGroupingTitle,
-        keyTextGroups,
-        label,
-        onClick,
-        uuid,
-      }: FlyoutMenuItemType, idx0: number) => {
-        depth++;
+  const buildMenuEl = (
+    items: FlyoutMenuItemType[],
+    uuid: string,
+    visible: boolean,
+    depth: number = 0,
+  ) => {
+    depth += 1;
 
-        return (isGroupingTitle
+    return (
+      <FlyoutMenuContainerStyle
+        compact={compact}
+        style={{
+          display: (visible || submenuVisible[uuid]) ? null : 'none',
+          left: (
+            depth === 1
+              ? (left || 0)
+              : (compact
+                ? ((depth - 1) * COMPACT_MENU_WIDTH)
+                : ((depth - 1) * MENU_WIDTH))
+          ),
+          top: (
+            depth === 1
+              ? (height || 0) + topOffset
+              : 0
+          ),
+        }}
+        width={width}
+      >
+        {items?.map(({
+          items,
+          indent,
+          isGroupingTitle,
+          keyTextGroups,
+          label,
+          onClick,
+          uuid,
+        }: FlyoutMenuItemType, idx0: number) => (isGroupingTitle
           ?
             <TitleContainerStyle>
               <Text bold key={uuid} muted>
@@ -184,21 +190,22 @@ function FlyoutMenu({
                 justifyContent="space-between"
               >
                 <Text>
-                  {label()} 
+                  {label()}
                 </Text>
                 {items && <ArrowRight />}
               </FlexContainer>
 
               {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
-              {items && buildMenuEl(items, uuid, false)}
+              {items && buildMenuEl(items, uuid, false, depth)}
             </LinkStyle>
-        );
-      })}
-    </FlyoutMenuContainerStyle>
-  );
+          ),
+        )}
+      </FlyoutMenuContainerStyle>
+    );
+  };
 
   return (
-    items && buildMenuEl(items, undefined, open)
+    items && buildMenuEl(items, undefined, open, 0)
   );
 }
 
