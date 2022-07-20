@@ -1,33 +1,55 @@
 import React from 'react';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import FlyoutMenu, { FlyoutMenuProps } from './index';
 
 type FlyoutMenuWrapperProps = {
   children: JSX.Element;
-  onClickOutside: () => void;
+  onClickCallback: () => void;
+  onClickOutside?: () => void;
 } & FlyoutMenuProps;
 
 function FlyoutMenuWrapper({
   children,
+  compact,
   items,
   open,
+  onClickCallback,
   onClickOutside,
   parentRef,
   uuid,
 }: FlyoutMenuWrapperProps) {
-  return (
-    <div style={{ position: 'relative' }}>
+  const flyoutMenuEl = (
+    <div
+      style={{
+        position: 'relative',
+        zIndex: 100,
+      }}
+    >
       <div ref={parentRef}>
         {children}
       </div>
       <FlyoutMenu
+        compact={compact}
         items={items}
-        onClickCallback={onClickOutside}
+        onClickCallback={onClickCallback}
         open={open}
         parentRef={parentRef}
         uuid={uuid}
       />
     </div>
+  );
+
+  return (onClickOutside
+    ?
+      <ClickOutside
+        onClickOutside={onClickOutside}
+        open
+      >
+        {flyoutMenuEl}
+      </ClickOutside>
+    :
+      flyoutMenuEl
   );
 }
 

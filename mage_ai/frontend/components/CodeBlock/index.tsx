@@ -26,7 +26,7 @@ import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenuClickOutside from '@oracle/components/FlyoutMenu/FlyoutMenuClickOutside';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -439,7 +439,7 @@ function CodeBlockProps({
 
             <Spacing mr={1} />
 
-            <FlyoutMenuClickOutside
+            <FlyoutMenuWrapper
               compact
               items={buildBlockMenu(block)}
               onClickOutside={() => setBlockMenuVisible(false)}
@@ -472,7 +472,7 @@ function CodeBlockProps({
                   </>
                 )}
               </Text>
-            </FlyoutMenuClickOutside>
+            </FlyoutMenuWrapper>
 
             {BlockTypeEnum.SCRATCHPAD === block.type && (
               <Button
