@@ -430,6 +430,10 @@ function PipelineDetailPage({
             ...block,
             ...tempData,
             content: contentToSave,
+            configuration: {
+              ...block.configuration,
+              ...tempData.configuration
+            },
           };
         }),
       },
