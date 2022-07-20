@@ -434,8 +434,6 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
-          console.log(tempData);
-
           return {
             ...block,
             ...tempData,
