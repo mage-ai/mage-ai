@@ -2,7 +2,7 @@ from contextlib import redirect_stdout
 from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
-from typing import List, Set
+from typing import Callable, List, Set
 from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
@@ -29,6 +29,7 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
     global_vars=None,
+    log_func: Callable[[str], None] = None,
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = False,
@@ -59,6 +60,7 @@ async def run_blocks(
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
+                log_func=log_func,
             )
         )
         tasks[block.uuid] = task
@@ -295,20 +297,32 @@ class Block:
 
     async def execute(
         self,
-        analyze_outputs=True,
-        custom_code=None,
+        analyze_outputs: bool = True,
+        custom_code: str = None,
         global_vars=None,
-        redirect_outputs=False,
-        update_status=True,
-    ):
-        with VerboseFunctionExec(f'Executing {self.type} block: {self.uuid}'):
-            return self.execute_sync(
+        log_func: Callable[[str], None] = None,
+        redirect_outputs: bool = False,
+        update_status: bool = True,
+    ) -> None:
+        with VerboseFunctionExec(
+            f'Executing {self.type} block',
+            log_func=log_func,
+            prefix=f'[{self.uuid}]',
+        ):
+            output = self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 custom_code=custom_code,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
                 update_status=update_status,
             )
+            stdout = output['stdout'].strip('\n')
+            prefixed_stdout = '\n'.join([
+                f'[{self.uuid}] {s}'
+                for s in stdout.split('\n')
+            ])
+            if log_func is not None and len(stdout) > 0:
+                log_func(prefixed_stdout)
 
     def __validate_execution(self, decorated_functions, input_vars):
         not_executed_upstream_blocks = list(

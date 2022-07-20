@@ -1,4 +1,6 @@
 from contextlib import contextmanager
+from typing import Callable
+
 import logging
 import time
 
@@ -29,20 +31,36 @@ class timer(object):
 
 
 class VerboseFunctionExec:
-    def __init__(self, message, verbose=True):
+    def __init__(
+        self,
+        message: str,
+        log_func: Callable[[str], None] = None,
+        prefix: str = '',
+        verbose: bool = True,
+    ):
         self.message = message
         self.verbose = verbose
+        self.prefix = prefix
+        self.log_func = log_func
 
     def __enter__(self):
         if self.verbose:
-            print(f'{self.message}...', end='')
+            enter_message = f'{self.prefix} {self.message}...'
+            if self.log_func is None:
+                print_kwargs=dict()
+                if self.prefix is None or len(self.prefix) == 0:
+                    print_kwargs['end'] = ''
+                print(enter_message, **print_kwargs)
+            else:
+                self.log_func(enter_message)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.verbose:
+            log_func = self.log_func or print
             if exc_type is None:
-                print('DONE')
+                log_func(f'{self.prefix} DONE')
             else:
-                print('FAILED')
+                log_func(f'{self.prefix} FAILED')
 
 
 class VerbosePrintHandler:

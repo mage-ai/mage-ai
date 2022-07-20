@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Callable, List, Set
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
@@ -99,11 +99,12 @@ class Pipeline:
 
     async def execute(
         self,
-        analyze_outputs=True,
+        analyze_outputs: bool = True,
         global_vars=None,
-        redirect_outputs=False,
-        update_status=True,
-    ):
+        log_func: Callable[[str], None] = None,
+        redirect_outputs: bool = False,
+        update_status: bool = True,
+    ) -> None:
         """
         Async function for parallel processing
         This function will schedule the block execution in topological
@@ -118,6 +119,7 @@ class Pipeline:
             root_blocks,
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
+            log_func=log_func,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
         )

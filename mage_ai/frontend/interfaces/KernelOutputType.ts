@@ -19,6 +19,7 @@ export const DATA_TYPE_TEXTLIKE = [
 export enum MsgType {
   STATUS = 'status',
   STREAM = 'stream',
+  STREAM_PIPELINE = 'stream_pipeline',
 }
 
 export default interface KernelOutputType {
@@ -30,6 +31,7 @@ export default interface KernelOutputType {
   };
   msg_id: string;
   msg_type: MsgType;
+  pipeline_uuid: string;
   type: DataTypeEnum;
   uuid: string;
 }
