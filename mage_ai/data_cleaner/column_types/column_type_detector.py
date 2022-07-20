@@ -172,7 +172,16 @@ def infer_object_type(series, column_name, kwargs):
             ):
                 return ColumnType.ZIP_CODE
             else:
-                return ColumnType.NUMBER
+                clean_series = clean_series.str.replace(r'\.0*', '')
+                try:
+                    clean_series.astype(int)
+                    return ColumnType.NUMBER
+                except OverflowError:
+                    if clean_series_nunique <= kwargs.get('category_cardinality_threshold', 255):
+                        return ColumnType.CATEGORY
+                    else:
+                        return ColumnType.CATEGORY_HIGH_CARDINALITY
+
     else:
         matches = clean_series.str.match(REGEX_DATETIME).sum()
         if matches / length >= DATETIME_MATCHES_THRESHOLD:

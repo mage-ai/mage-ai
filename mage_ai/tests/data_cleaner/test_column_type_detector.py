@@ -150,6 +150,9 @@ class ColumnTypeDetectorTests(TestCase):
         )
 
     def test_integer_recognition(self):
+        max_int = np.iinfo(np.int).max
+        max_int_unsigned = np.iinfo(np.uint).max
+        min_int = np.iinfo(np.int).min
         df = pd.DataFrame(
             dict(
                 integers=[1, 2, 3, 4, 5],
@@ -159,6 +162,35 @@ class ColumnTypeDetectorTests(TestCase):
                 not_integers_with_null=[1.1, np.nan, 2.0, 3.0, np.nan],
                 str_integers=['1.0', None, '2.0', '3.0', None],
                 str_not_integers=['1.000', None, '2.0002', '3.000', None],
+                large_integers=[max_int, min_int, max_int - 1, min_int + 1, max_int],
+                large_integers_unsigned=[
+                    max_int,
+                    max_int_unsigned,
+                    max_int - 1,
+                    0,
+                    max_int_unsigned,
+                ],
+                str_large_integers=[
+                    str(max_int),
+                    str(min_int),
+                    str(max_int - 1),
+                    str(min_int + 1),
+                    str(max_int),
+                ],
+                too_large_integers=[
+                    str(max_int),
+                    str(min_int),
+                    str(max_int + 1),
+                    str(min_int - 1),
+                    str(max_int),
+                ],
+                too_large_integers_version_2=[
+                    str(max_int),
+                    str(min_int),
+                    str(max_int_unsigned),
+                    str(min_int - 1),
+                    str(max_int),
+                ],
             )
         )
         ctypes = infer_column_types(df)
@@ -170,6 +202,11 @@ class ColumnTypeDetectorTests(TestCase):
             not_integers_with_null='number_with_decimals',
             str_integers='number',
             str_not_integers='number_with_decimals',
+            large_integers='number',
+            large_integers_unsigned='number',
+            str_large_integers='number',
+            too_large_integers='category',
+            too_large_integers_version_2='category',
         )
         self.assertEquals(ctypes, expected_ctypes)
 
