@@ -29,7 +29,7 @@ import Button from '@oracle/elements/Button';
 
 type CodeOutputProps = {
   block: BlockType;
-  collapsed: boolean;
+  collapsed?: boolean;
   contained?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
@@ -38,7 +38,7 @@ type CodeOutputProps = {
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
-  setCollapsed: (boolean) => void;
+  setCollapsed?: (boolean) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
@@ -208,27 +208,29 @@ function CodeOutput({
           <ExtraInfoBorderStyle />
 
           <FlexContainer justifyContent="space-between">
-            <Flex alignItems="center" px={1}>
-              <Button
-                basic
-                iconOnly
-                noPadding
-                onClick={() => setCollapsed(!collapsed)}
-              >
-                {collapsed
-                  ? <ChevronDown muted size={UNIT * 2} />
-                  : <ChevronUp muted size={UNIT * 2} />
-                }
-              </Button>
+            {setCollapsed && (
+              <Flex alignItems="center" px={1}>
+                <Button
+                  basic
+                  iconOnly
+                  noPadding
+                  onClick={() => setCollapsed(!collapsed)}
+                >
+                  {collapsed
+                    ? <ChevronDown muted size={UNIT * 2} />
+                    : <ChevronUp muted size={UNIT * 2} />
+                  }
+                </Button>
 
-              {collapsed && (
-                <Spacing ml={1}>
-                  <Text default>
-                    Expand output
-                  </Text>
-                </Spacing>
-              )}
-            </Flex>
+                {collapsed && (
+                  <Spacing ml={1}>
+                    <Text default>
+                      Expand output
+                    </Text>
+                  </Spacing>
+                )}
+              </Flex>
+            )}
             <ExtraInfoContentStyle>
               <FlexContainer
                 alignItems="center"
