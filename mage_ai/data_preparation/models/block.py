@@ -732,7 +732,11 @@ class Block:
     def __update_upstream_blocks(self, upstream_blocks):
         if self.pipeline is None:
             return
-        self.pipeline.update_block(self, upstream_block_uuids=upstream_blocks)
+        self.pipeline.update_block(
+            self,
+            upstream_block_uuids=upstream_blocks,
+            widget=BlockType.CHART == self.type,
+        )
 
     def __verify_outputs(self, outputs):
         if len(outputs) != len(self.output_variables):

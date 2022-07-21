@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -36,6 +37,7 @@ import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
   CONFIGURATIONS_BY_CHART_TYPE,
+  DEFAULT_SETTINGS_BY_CHART_TYPE,
   VARIABLE_INFO_BY_CHART_TYPE,
   VARIABLE_NAMES,
 } from './constants';
@@ -110,6 +112,7 @@ function ChartBlock({
   const [upstreamBlocks, setUpstreamBlocks] = useState<string[]>(block?.upstream_blocks);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
+  const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
   const blocksOfType = useMemo(() => blocks?.filter(({
     type,
   }: BlockType) => [BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(type),
@@ -120,24 +123,39 @@ function ChartBlock({
     blocksOfType,
   ]);
 
+  const updateContent = useCallback((val: string) => {
+    setContent(val);
+    onChangeContent(val);
+  }, [
+    onChangeContent,
+    setContent,
+  ]);
+  const updateConfiguration = useCallback((data: { [key: string]: string }) => {
+    updateWidget({
+      ...block,
+      configuration: {
+        ...configuration,
+        ...data,
+      },
+    });
+    setConfiguration(config => ({
+      ...config,
+      ...data,
+    }));
+  }, [
+    block,
+    configuration,
+    setConfiguration,
+    updateWidget,
+  ]);
+
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
-      // height={height}
-      onChange={(val: string) => {
-        setContent(val);
-        onChangeContent(val);
-      }}
+      onChange={updateContent}
       showLineNumbers={false}
-      // onDidChangeCursorPosition={onDidChangeCursorPosition}
-      // placeholder="Write custom logic for your chart..."
       selected={selected}
       setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-      // shortcuts={[
-      //   (monaco, editor) => executeCode(monaco, () => {
-      //     runBlockAndTrack(editor.getValue());
-      //   }),
-      // ]}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
       value={content}
@@ -145,9 +163,11 @@ function ChartBlock({
     />
   ), [
     content,
-    // height,
-    // selected,
-    // textareaFocused,
+    selected,
+    setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
+    updateContent,
   ]);
 
   const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
@@ -178,9 +198,6 @@ function ChartBlock({
       hideExtraInfo
       isInProgress={isInProgress}
       messages={messagesWithType}
-      // runCount={runCount}
-      // runEndTime={runEndTime}
-      // runStartTime={runStartTime}
       selected={selected}
     />
   ), [
@@ -189,11 +206,7 @@ function ChartBlock({
     hasError,
     hasOutput,
     isInProgress,
-    // mainContainerWidth,
     messagesWithType,
-    // runCount,
-    // runEndTime,
-    // runStartTime,
     selected,
   ]);
 
@@ -328,6 +341,31 @@ function ChartBlock({
   }, [
     configuration,
     configurationOptions,
+  ]);
+
+  const chartTypePrevious = usePrevious(chartType);
+  const upstreamBlocksPrevious = usePrevious(upstreamBlocks);
+  useEffect(() => {
+    if ((!chartTypePrevious && chartType && upstreamBlocks?.length) || (!upstreamBlocksPrevious?.length && upstreamBlocks?.length >= 1) && chartType) {
+      if (!content && isEmptyObject(configuration) && defaultSettings) {
+        const blockUpdated = {
+          ...block,
+          upstream_blocks: upstreamBlocks,
+        };
+        updateConfiguration(defaultSettings.configuration(blockUpdated));
+        updateContent(defaultSettings.content(blockUpdated));
+      }
+    }
+  }, [
+    block,
+    chartType,
+    chartTypePrevious,
+    configuration,
+    content,
+    updateConfiguration,
+    updateContent,
+    upstreamBlocks,
+    upstreamBlocksPrevious,
   ]);
 
   return (
@@ -504,19 +542,7 @@ function ChartBlock({
                     key={uuid}
                     label={label()}
                     monospace={monospace}
-                    onChange={(e) => {
-                      updateWidget({
-                        ...block,
-                        configuration: {
-                          ...configuration,
-                          [uuid]: e.target.value,
-                        },
-                      });
-                      setConfiguration(config => ({
-                        ...config,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
+                    onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                     type={type}
                     value={configuration?.[uuid]}
                   />

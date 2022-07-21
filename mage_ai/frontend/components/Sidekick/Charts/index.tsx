@@ -3,9 +3,7 @@ import { useMemo } from 'react';
 import BlockType from '@interfaces/BlockType';
 import ChartBlock, { ChartPropsShared } from '@components/ChartBlock';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KernelOutputType, {
-  ExecutionStateEnum,
-} from '@interfaces/KernelOutputType';
+import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 
 export type ChartsPropsShared = {
   fetchWidgets: () => void;
@@ -90,6 +88,8 @@ function Charts({
           />
         );
       })}
+
+      <div style={{ height: '80vh' }} />
     </FlexContainer>
   );
 }
