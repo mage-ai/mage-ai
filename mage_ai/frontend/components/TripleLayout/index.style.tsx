@@ -135,6 +135,11 @@ export const BeforeStyle = styled.aside`
 
 export const BeforeInnerStyle = styled.div`
   ${ASIDE_INNER_STYLE}
+  overflow: hidden;
+
+  &:hover {
+    overflow: auto;
+  }
 `;
 
 export const AfterStyle = styled.aside`
