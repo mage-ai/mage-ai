@@ -1,11 +1,13 @@
 from enum import Enum
 
+
 class DataType(str, Enum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
     TABLE = 'table'
     TEXT = 'text'
     TEXT_PLAIN = 'text/plain'
+
 
 def parse_output_message(message: dict) -> dict:
     data_content = None

@@ -1,4 +1,5 @@
 from contextlib import redirect_stdout
+from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
@@ -21,6 +22,7 @@ from mage_ai.shared.logger import VerboseFunctionExec
 import asyncio
 import os
 import pandas as pd
+import simplejson
 import sys
 import traceback
 
@@ -167,11 +169,12 @@ class Block:
 
     @classmethod
     def after_create(self, block, **kwargs):
+        widget = kwargs.get('widget')
         pipeline = kwargs.get('pipeline')
         if pipeline is not None:
             priority = kwargs.get('priority')
             upstream_block_uuids = kwargs.get('upstream_block_uuids')
-            pipeline.add_block(block, upstream_block_uuids, priority=priority)
+            pipeline.add_block(block, upstream_block_uuids, priority=priority, widget=widget)
 
     @classmethod
     def create(
@@ -183,6 +186,7 @@ class Block:
         priority=None,
         upstream_block_uuids=None,
         config=None,
+        widget=False,
     ):
         """
         1. Create a new folder for block_type if not exist
@@ -214,6 +218,7 @@ class Block:
             pipeline=pipeline,
             priority=priority,
             upstream_block_uuids=upstream_block_uuids,
+            widget=widget,
         )
         return block
 
@@ -279,12 +284,22 @@ class Block:
                 redirect_outputs=redirect_outputs,
             )
             block_output = output['output']
-            self.__verify_outputs(block_output)
-            variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+            if BlockType.CHART == self.type:
+                variable_mapping = block_output
+                output = dict(output=simplejson.dumps(
+                    block_output,
+                    default=datetime.isoformat,
+                    ignore_nan=True,
+                ))
+            else:
+                self.__verify_outputs(block_output)
+                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
             self.__store_variables(variable_mapping)
+
             if update_status:
                 self.status = BlockStatus.EXECUTED
-            if analyze_outputs:
+
+            if analyze_outputs and BlockType.CHART != self.type:
                 self.__analyze_outputs(variable_mapping)
         except Exception as err:
             if update_status:
@@ -292,7 +307,7 @@ class Block:
             raise Exception(f'Exception encountered in block {self.uuid}') from err
         finally:
             if update_status:
-                self.__update_pipeline_block()
+                self.__update_pipeline_block(widget=BlockType.CHART == self.type)
         return output
 
     async def execute(
@@ -396,37 +411,53 @@ class Block:
 
             return custom_code
 
+        upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
             repo_path = self.pipeline.repo_path
-            for upstream_block_uuid, vars in self.input_variables.items():
+            for upstream_block_uuid, variables in self.input_variables.items():
+                upstream_block_uuids.append(upstream_block_uuid)
                 input_vars += [
                     VariableManager(repo_path).get_variable(
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
                     )
-                    for var in vars
+                    for var in variables
                 ]
         outputs = []
         decorated_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
+        results = {}
+        outputs_from_input_vars = {}
+
+        for idx, input_var in enumerate(input_vars):
+            upstream_block_uuid = upstream_block_uuids[idx]
+            outputs_from_input_vars[upstream_block_uuid] = input_var
+
         with redirect_stdout(stdout):
             if custom_code is not None:
-                exec(custom_code, {self.type: block_decorator(decorated_functions)})
+                results = {self.type: block_decorator(decorated_functions)}
+                results.update(outputs_from_input_vars)
+                exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
                     exec(file.read(), {self.type: block_decorator(decorated_functions)})
-            block_function = self.__validate_execution(decorated_functions, input_vars)
-            if block_function is not None:
-                if global_vars is not None and len(global_vars) != 0:
-                    outputs = block_function(*input_vars, **global_vars)
-                else:
-                    outputs = block_function(*input_vars)
-                if outputs is None:
-                    outputs = []
-                if type(outputs) is not list:
-                    outputs = [outputs]
+
+            if BlockType.CHART == self.type:
+                variables = self.get_variables_from_code_execution(results)
+                outputs = self.post_process_variables(variables)
+            else:
+                block_function = self.__validate_execution(decorated_functions, input_vars)
+                if block_function is not None:
+                    if global_vars is not None and len(global_vars) != 0:
+                        outputs = block_function(*input_vars, **global_vars)
+                    else:
+                        outputs = block_function(*input_vars)
+                    if outputs is None:
+                        outputs = []
+                    if type(outputs) is not list:
+                        outputs = [outputs]
 
         output_message = dict(output=outputs)
         if redirect_outputs:
@@ -462,7 +493,7 @@ class Block:
     def get_outputs(self, sample_count=None):
         if self.pipeline is None:
             return
-        if self.type != BlockType.SCRATCHPAD:
+        if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
             if self.status == BlockStatus.NOT_EXECUTED:
                 return []
             if len(self.output_variables) == 0:
@@ -471,6 +502,8 @@ class Block:
         variable_manager = VariableManager(self.pipeline.repo_path)
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
+            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+        elif BlockType.CHART == self.type:
             all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
         else:
             # For non-scratchpad blocks, return all variables in output_variables
@@ -495,6 +528,16 @@ class Block:
             elif type(data) is str:
                 data = dict(
                     text_data=data,
+                    type=DataType.TEXT,
+                    variable_uuid=v,
+                )
+            elif type(data) is dict or type(data) is list:
+                data = dict(
+                    text_data=simplejson.dumps(
+                        data,
+                        default=datetime.isoformat,
+                        ignore_nan=True,
+                    ),
                     type=DataType.TEXT,
                     variable_uuid=v,
                 )
@@ -541,11 +584,11 @@ class Block:
             self.__update_upstream_blocks(data['upstream_blocks'])
         return self
 
-    def update_content(self, content):
+    def update_content(self, content, widget=False):
         if content != self.file.content():
             self.status = BlockStatus.UPDATED
         self.file.update_content(content)
-        self.__update_pipeline_block()
+        self.__update_pipeline_block(widget=widget)
         return self
 
     def get_all_upstream_blocks(self) -> List['Block']:
@@ -656,10 +699,10 @@ class Block:
         if self.pipeline is not None:
             self.pipeline.update_block_uuid(self, old_uuid)
 
-    def __update_pipeline_block(self):
+    def __update_pipeline_block(self, widget=False):
         if self.pipeline is None:
             return
-        self.pipeline.update_block(self)
+        self.pipeline.update_block(self, widget=widget)
 
     def __update_type(self, block_type):
         """

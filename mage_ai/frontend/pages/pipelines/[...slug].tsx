@@ -1,3 +1,4 @@
+import useWebSocket from 'react-use-websocket';
 import {
   useCallback,
   useEffect,
@@ -23,7 +24,10 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
+import KernelOutputType, {
+  DataTypeEnum,
+  ExecutionStateEnum,
+} from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
@@ -51,8 +55,10 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { WEBSOCKT_URL } from '@utils/constants';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
+import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -86,6 +92,11 @@ function PipelineDetailPage({
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
+  const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
+
+  // Pipeline
+  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
+  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
 
   const qUrl = queryFromUrl();
   const {
@@ -119,6 +130,7 @@ function PipelineDetailPage({
 
   const blockRefs = useRef({});
   const contentByBlockUUID = useRef({});
+  const contentByWidgetUUID = useRef({});
   const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
@@ -131,6 +143,32 @@ function PipelineDetailPage({
       ...data,
     };
   }, [contentByBlockUUID]);
+  const onChangeCodeBlock = useCallback((uuid: string, value: string) => {
+    setContentByBlockUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
+    [
+      setContentByBlockUUID,
+      setPipelineContentTouched,
+    ],
+  );
+  const setContentByWidgetUUID = useCallback((data: {
+    [uuid: string]: string;
+  }) => {
+    contentByWidgetUUID.current = {
+      ...contentByWidgetUUID.current,
+      ...data,
+    };
+  }, [contentByWidgetUUID]);
+  const onChangeChartBlock = useCallback((uuid: string, value: string) => {
+    setContentByWidgetUUID({ [uuid]: value });
+    setPipelineContentTouched(true);
+  },
+    [
+      setContentByWidgetUUID,
+      setPipelineContentTouched,
+    ],
+  );
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
   useEffect(() => {
@@ -168,10 +206,6 @@ function PipelineDetailPage({
     beforeWidth,
   ]);
 
-  // Pipeline
-  const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
-  const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-
   // Variables
   const {
     data: dataGlobalVariables,
@@ -181,6 +215,31 @@ function PipelineDetailPage({
 
   // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
+  const [widgets, setWidgets] = useState<BlockType[]>([]);
+  const widgetTempData = useRef({});
+  const updateWidget = useCallback((block: BlockType) => {
+    setPipelineContentTouched(true);
+    const blockPrev = widgetTempData.current[block.uuid] || {};
+
+    let upstreamBlocks = blockPrev.upstream_blocks;
+    if (block?.upstream_blocks?.length >= 1) {
+      upstreamBlocks = block.upstream_blocks;
+    }
+
+    widgetTempData.current[block.uuid] = {
+      ...blockPrev,
+      ...block,
+      configuration: {
+        ...blockPrev.configuration,
+        ...block.configuration,
+      },
+      upstream_blocks: upstreamBlocks,
+    };
+  }, [
+    setPipelineContentTouched,
+    widgetTempData.current,
+  ]);
+
   const [editingBlock, setEditingBlock] = useState<{
     upstreamBlocks: {
       block: BlockType;
@@ -216,7 +275,9 @@ function PipelineDetailPage({
     mutate: fetchSampleData,
   } = api.blocks.pipelines.outputs.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedBlock?.type !== BlockTypeEnum.CHART
+      && selectedBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
   const {
@@ -224,7 +285,9 @@ function PipelineDetailPage({
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedBlock?.type !== BlockTypeEnum.CHART
+      && selectedBlock?.uuid,
   );
   const {
     insights,
@@ -358,25 +421,52 @@ function PipelineDetailPage({
     return updatePipeline({
       pipeline: {
         ...pipeline,
-        blocks: blocks.map((block: BlockType) => ({
-          ...block,
-          content: contentByBlockUUID.current[block.uuid] || block.content,
-          outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
-            ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
-              text_data: JSON.stringify(d),
-              variable_uuid: `${block.uuid}_${idx}`,
-            }))
-            : block.outputs,
-        })),
+        blocks: blocks.map((block: BlockType) => {
+          let contentToSave = contentByBlockUUID.current[block.uuid];
+          if (typeof contentToSave === 'undefined') {
+            contentToSave = block.content;
+          }
+          return {
+            ...block,
+            content: contentToSave,
+            outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
+              ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
+                text_data: JSON.stringify(d),
+                variable_uuid: `${block.uuid}_${idx}`,
+              }))
+              : block.outputs,
+          };
+        }),
+        widgets: widgets.map((block: BlockType) => {
+          let contentToSave = contentByWidgetUUID.current[block.uuid];
+          const tempData = widgetTempData.current[block.uuid] || {};
+
+          if (typeof contentToSave === 'undefined') {
+            contentToSave = block.content;
+          }
+
+          return {
+            ...block,
+            ...tempData,
+            content: contentToSave,
+            configuration: {
+              ...block.configuration,
+              ...tempData.configuration,
+            },
+          };
+        }),
       },
     });
   }, [
     blocks,
     contentByBlockUUID.current,
+    contentByWidgetUUID.current,
     messages,
     pipeline,
     setPipelineLastSaved,
     updatePipeline,
+    widgetTempData.current,
+    widgets,
   ]);
 
   const [deleteBlock] = useMutation(
@@ -393,6 +483,47 @@ function PipelineDetailPage({
             setBlocks((blocksPrevious) => removeAtIndex(
               blocksPrevious,
               blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
+            ));
+            fetchPipeline();
+            if (type === BlockTypeEnum.SCRATCHPAD) {
+              fetchFileTree();
+            }
+          },
+          onErrorCallback: ({
+            url_parameters: urlParameters,
+          }: {
+            url_parameters: {
+              block_uuid: string;
+            };
+          }, {
+            messages,
+          }) => {
+            setMessages(messagesPrev => ({
+              ...messagesPrev,
+              [urlParameters.block_uuid]: messages.map(msg => ({
+                data: msg,
+                type: DataTypeEnum.TEXT_PLAIN,
+              })),
+            }));
+          },
+        },
+      ),
+    },
+  );
+  const [deleteWidget] = useMutation(
+    ({ uuid }: BlockType) => api.widgets.pipelines.useDelete(pipelineUUID, uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            widget: {
+              type,
+              uuid,
+            },
+          }) => {
+            setWidgets((widgetsPrevious) => removeAtIndex(
+              widgetsPrevious,
+              widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
             if (type === BlockTypeEnum.SCRATCHPAD) {
@@ -540,6 +671,11 @@ function PipelineDetailPage({
     setBlocks,
   ]);
 
+  // Widgets
+  const {
+    data: dataWidgets,
+    mutate: fetchWidgets,
+  } = api.widgets.pipelines.list(!afterHidden && pipelineUUID);
   const [createWidget] = useMutation(api.widgets.pipelines.useCreate(pipelineUUID));
   const addWidgetAtIndex = useCallback((
     widget: BlockType,
@@ -566,11 +702,13 @@ function PipelineDetailPage({
             widget,
           },
         } = response;
-        console.log(response)
-        // setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
         onCreateCallback?.(widget);
         fetchFileTree();
         fetchPipeline();
+
+        if (ViewKeyEnum.CHARTS !== activeSidekickView) {
+          setActiveSidekickView(ViewKeyEnum.CHARTS);
+        }
       },
       onErrorCallback: ({
         error: {
@@ -582,12 +720,15 @@ function PipelineDetailPage({
       },
     },
   )), [
+    activeSidekickView,
     createWidget,
+    setActiveSidekickView,
   ]);
 
   useEffect(() => {
     if (pipelineUUIDPrev !== pipelineUUID) {
       setBlocks([]);
+      setWidgets([]);
     }
   }, [
     pipelineUUID,
@@ -603,35 +744,20 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
+    if (typeof pipeline?.widgets !== 'undefined') {
+      setWidgets(pipeline.widgets);
+    }
+  }, [
+    pipeline?.widgets,
+  ]);
+
+  useEffect(() => {
     if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
-      const messagesInit = {};
-      contentByBlockUUID.current = {};
-
-      pipeline.blocks.forEach(({
-        content,
-        outputs,
-        uuid,
-      }: BlockType) => {
-        if (outputs.length >= 1) {
-          messagesInit[uuid] = outputs.map(({
-            sample_data: sampleData,
-            text_data: textDataJsonString,
-            type,
-          }: OutputType) => {
-            if (sampleData) {
-              return {
-                data: sampleData,
-                type,
-              };
-            } else if (textDataJsonString) {
-              return JSON.parse(textDataJsonString);
-            }
-
-            return textDataJsonString;
-          });
-        }
-        contentByBlockUUID.current[uuid] = content;
-      });
+      const {
+        content: contentByBlockUUIDResults,
+        messages: messagesInit,
+      } = initializeContentAndMessages(pipeline.blocks);
+      contentByBlockUUID.current = contentByBlockUUIDResults;
 
       setMessages((messagesPrev) => ({
         ...messagesInit,
@@ -643,6 +769,25 @@ function PipelineDetailPage({
     pipeline?.blocks,
     setBlocks,
     setMessages,
+  ]);
+  useEffect(() => {
+    if (!widgets.length && typeof pipeline?.widgets !== 'undefined') {
+      const {
+        content: contentByBlockUUIDResults,
+        messages: messagesInit,
+      } = initializeContentAndMessages(pipeline.widgets);
+      contentByWidgetUUID.current = contentByBlockUUIDResults;
+
+      setMessages((messagesPrev) => ({
+        ...messagesInit,
+        ...messagesPrev,
+      }));
+    }
+  }, [
+    pipeline?.widgets,
+    setBlocks,
+    setMessages,
+    widgets,
   ]);
 
   const onSelectBlockFile = useCallback((
@@ -665,6 +810,110 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+  ]);
+
+  // WebSocket
+  const {
+    lastMessage,
+    readyState,
+    sendMessage,
+  } = useWebSocket(WEBSOCKT_URL, {
+    onOpen: () => console.log('socketUrlPublish opened'),
+    shouldReconnect: (closeEvent) => {
+      // Will attempt to reconnect on all close events, such as server shutting down
+      console.log('Attempting to reconnect...');
+
+      return true;
+    },
+  });
+
+  useEffect(() => {
+    if (lastMessage) {
+      const message: KernelOutputType = JSON.parse(lastMessage.data);
+      const {
+        execution_state: executionState,
+        uuid,
+      } = message;
+
+      // @ts-ignore
+      setMessages((messagesPrevious) => {
+        const messagesFromUUID = messagesPrevious[uuid] || [];
+
+        return {
+          ...messagesPrevious,
+          [uuid]: messagesFromUUID.concat(message),
+        };
+      });
+
+      if (ExecutionStateEnum.IDLE === executionState) {
+        // @ts-ignore
+        setRunningBlocks((runningBlocksPrevious) =>
+          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+        );
+      }
+
+      setPipelineContentTouched(true);
+    }
+  }, [
+    lastMessage,
+    setMessages,
+    setPipelineContentTouched,
+    setRunningBlocks,
+  ]);
+
+  const runBlock = useCallback((payload: {
+    block: BlockType;
+    code: string;
+    runUpstream?: boolean;
+  }) => {
+    const {
+      block,
+      code,
+      runUpstream = false,
+    } = payload;
+
+    if (code) {
+      const { uuid } = block;
+      const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+
+      if (!isAlreadyRunning) {
+        sendMessage(JSON.stringify({
+          code,
+          pipeline_uuid: pipeline?.uuid,
+          type: block.type,
+          uuid,
+          run_upstream: runUpstream
+        }));
+
+        // @ts-ignore
+        setMessages((messagesPrevious) => {
+          delete messagesPrevious[uuid];
+
+          return messagesPrevious;
+        });
+
+        setTextareaFocused(false);
+
+        // @ts-ignore
+        setRunningBlocks((runningBlocksPrevious) => {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+            return runningBlocksPrevious;
+          }
+
+          return runningBlocksPrevious.concat(block);
+        });
+      }
+
+      fetchPipeline();
+    }
+  }, [
+    fetchPipeline,
+    pipeline,
+    runningBlocks,
+    sendMessage,
+    setMessages,
+    setRunningBlocks,
+    setTextareaFocused,
   ]);
 
   const fileTreeRef = useRef(null);
@@ -696,41 +945,60 @@ function PipelineDetailPage({
       afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
       blocks={blocks}
+      deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
+      fetchWidgets={fetchWidgets}
       globalVariables={globalVariables}
       insights={insights}
+      messages={messages}
       metadata={metadata}
+      onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
+      runBlock={runBlock}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
+      savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
+      setTextareaFocused={setTextareaFocused}
       statistics={statistics}
-      views={SIDEKICK_VIEWS}
+      textareaFocused={textareaFocused}
+      updateWidget={updateWidget}
+      widgets={widgets}
     />
   ), [
     activeSidekickView,
     afterWidthForChildren,
     blockRefs,
     blocks,
+    deleteWidget,
     editingBlock,
     fetchPipeline,
+    fetchWidgets,
     globalVariables,
     insights,
+    messages,
     metadata,
+    onChangeChartBlock,
     pipeline,
+    runBlock,
     runningBlocks,
     sampleData,
+    savePipelineContent,
     selectedBlock,
     setEditingBlock,
+    setTextareaFocused,
     statistics,
+    textareaFocused,
+    updateWidget,
+    widgets,
   ]);
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndex}
-      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, 0)}
+      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, widgets.length)}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
@@ -742,19 +1010,22 @@ function PipelineDetailPage({
       mainContainerRef={mainContainerRef}
       mainContainerWidth={mainContainerWidth}
       messages={messages}
+      onChangeCodeBlock={onChangeCodeBlock}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
+      runBlock={runBlock}
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
-      setContentByBlockUUID={setContentByBlockUUID}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
+      setTextareaFocused={setTextareaFocused}
+      textareaFocused={textareaFocused}
     />
   ), [
     addNewBlockAtIndex,
@@ -770,19 +1041,22 @@ function PipelineDetailPage({
     mainContainerRef,
     mainContainerWidth,
     messages,
+    onChangeCodeBlock,
     pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
     restartKernel,
+    runBlock,
     runningBlocks,
     savePipelineContent,
     selectedBlock,
-    setContentByBlockUUID,
     setEditingBlock,
     setMessages,
     setPipelineContentTouched,
     setRunningBlocks,
     setSelectedBlock,
+    setTextareaFocused,
+    textareaFocused,
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
@@ -846,19 +1120,17 @@ function PipelineDetailPage({
               })}
             </Flex>
 
-            {false && (
-              <Spacing pr={1}>
-                <KeyboardShortcutButton
-                  beforeElement={<Add />}
-                  blackBorder
-                  compact
-                  onClick={() => addWidgetAtIndex({}, 0)}
-                  uuid="Pipeline/afterHeader/add_chart"
-                >
-                  Add chart
-                </KeyboardShortcutButton>
-              </Spacing>
-            )}
+            <Spacing px={1}>
+              <KeyboardShortcutButton
+                beforeElement={<Add />}
+                blackBorder
+                compact
+                onClick={() => addWidgetAtIndex({}, widgets.length)}
+                uuid="Pipeline/afterHeader/add_chart"
+              >
+                Add chart
+              </KeyboardShortcutButton>
+            </Spacing>
           </FlexContainer>
         )}
         afterHidden={afterHidden}

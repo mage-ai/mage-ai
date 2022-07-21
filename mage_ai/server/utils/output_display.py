@@ -145,6 +145,7 @@ def add_execution_code(
     code: str,
     global_vars,
     run_upstream: bool = False,
+    widget: bool = False,
 ) -> str:
     escaped_code = code.replace("'", "\\'")
 
@@ -159,7 +160,7 @@ def execute_custom_code():
     block_uuid=\'{block_uuid}\'
     run_upstream={str(run_upstream)}
     pipeline = Pipeline(pipeline_uuid, get_repo_path())
-    block = pipeline.get_block(block_uuid)
+    block = pipeline.get_block(block_uuid, widget={widget})
 
     code = \'\'\'
 {escaped_code}
@@ -171,7 +172,11 @@ def execute_custom_code():
     global_vars = {global_vars}
     block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']
-    return find(lambda val: type(val) == pd.DataFrame, output)
+
+    if {widget}:
+        return output
+    else:
+        return find(lambda val: type(val) == pd.DataFrame, output)
 
 execute_custom_code()
     """

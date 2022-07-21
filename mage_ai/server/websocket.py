@@ -1,14 +1,13 @@
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.session import Session
 from mage_ai.data_preparation.models.constants import (
+    BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
 from mage_ai.shared.hash import merge_dict
-import asyncio
 import json
 import os
 import threading
@@ -78,13 +77,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             threading.Thread(target=run_pipeline).start()
         elif custom_code:
+            block_type = message.get('type')
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
-
+            widget = BlockType.CHART == block_type
+          
             client = self.init_kernel_client()
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
-            block = pipeline.get_block(block_uuid)
+            block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
                 code = add_execution_code(
@@ -93,6 +94,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     custom_code,
                     global_vars,
                     run_upstream=run_upstream,
+                    widget=widget,
                 )
 
             msg_id = client.execute(add_internal_output_info(code))

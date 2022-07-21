@@ -160,7 +160,10 @@ function CommandButtons({
           </>
         )}
 
-        {false && (
+        {[
+          BlockTypeEnum.DATA_LOADER,
+          BlockTypeEnum.TRANSFORMER,
+        ].includes(block.type) && (
           <Spacing mt={PADDING_UNITS}>
             <Tooltip
               appearBefore

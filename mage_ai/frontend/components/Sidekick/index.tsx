@@ -10,6 +10,7 @@ import BlockType, {
   StatisticsType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
@@ -60,31 +61,36 @@ export type SidekickProps = {
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
   statistics: StatisticsType;
-  views: {
-    key: string;
-    label: string;
-  }[];
-} & SetEditingBlockType;
+} & SetEditingBlockType & ChartsPropsShared;
 
 function Sidekick({
   activeView,
   afterWidth,
   blockRefs,
   blocks,
+  deleteWidget,
   editingBlock,
   fetchPipeline,
+  fetchWidgets,
   globalVariables,
   insights,
+  messages,
   metadata,
+  onChangeChartBlock,
   pipeline,
+  runBlock,
   runningBlocks,
   sampleData,
+  savePipelineContent,
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
+  setTextareaFocused,
   statistics,
+  textareaFocused,
+  updateWidget,
+  widgets,
 }: SidekickProps) {
   const {
     height: heightWindow,
@@ -303,6 +309,27 @@ function Sidekick({
             </FlexContainer>
           )
         }
+
+        {ViewKeyEnum.CHARTS === activeView && (
+          <Charts
+            blockRefs={blockRefs}
+            blocks={blocks}
+            deleteWidget={deleteWidget}
+            fetchWidgets={fetchWidgets}
+            messages={messages}
+            onChangeChartBlock={onChangeChartBlock}
+            runBlock={runBlock}
+            runningBlocks={runningBlocks}
+            savePipelineContent={savePipelineContent}
+            selectedBlock={selectedBlock}
+            setSelectedBlock={setSelectedBlock}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={textareaFocused}
+            updateWidget={updateWidget}
+            widgets={widgets}
+            width={afterWidth}
+          />
+        )}
       </SidekickContainerStyle>
     </>
   );
