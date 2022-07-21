@@ -49,7 +49,7 @@ type CommandButtonsProps = {
   block: BlockType;
   runBlock: (payload: {
     block: BlockType;
-    code: string;
+    code?: string;
     runUpstream?: boolean;
   }) => void;
 } & CommandButtonsSharedProps;
