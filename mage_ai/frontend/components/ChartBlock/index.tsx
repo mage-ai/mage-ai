@@ -68,6 +68,7 @@ export type ChartPropsShared = {
   savePipelineContent: () => Promise<any>;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
+  width: number;
 } & CodeEditorSharedProps;
 
 type ChartBlockType = {
@@ -93,6 +94,7 @@ function ChartBlock({
   setTextareaFocused,
   textareaFocused,
   updateWidget,
+  width,
 }: ChartBlockType) {
   const refChartContainer = useRef(null);
   const themeContext = useContext(ThemeContext);
@@ -216,9 +218,10 @@ function ChartBlock({
   }
 
   const isEditingPrevious = usePrevious(isEditing);
+  const widthPrevious = usePrevious(width);
   useEffect(() => {
     const rect = refChartContainer?.current?.getBoundingClientRect();
-    if (isEditingPrevious !== isEditing) {
+    if (isEditingPrevious !== isEditing || widthPrevious !== width) {
       setChartWidth(0);
     } else if (rect) {
       setChartWidth(rect.width);
@@ -228,6 +231,8 @@ function ChartBlock({
     isEditingPrevious,
     refChartContainer.current,
     setChartWidth,
+    width,
+    widthPrevious,
   ]);
 
   const availableVariables = useMemo(() => {

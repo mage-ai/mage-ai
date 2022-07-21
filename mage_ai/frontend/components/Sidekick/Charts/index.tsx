@@ -34,6 +34,7 @@ function Charts({
   textareaFocused,
   updateWidget,
   widgets,
+  width,
 }: ChartsPropsShared) {
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -85,6 +86,7 @@ function Charts({
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}
             updateWidget={updateWidget}
+            width={width}
           />
         );
       })}

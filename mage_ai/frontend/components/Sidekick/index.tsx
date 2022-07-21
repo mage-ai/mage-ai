@@ -342,6 +342,7 @@ function Sidekick({
             textareaFocused={textareaFocused}
             updateWidget={updateWidget}
             widgets={widgets}
+            width={afterWidth}
           />
         )}
       </SidekickContainerStyle>
