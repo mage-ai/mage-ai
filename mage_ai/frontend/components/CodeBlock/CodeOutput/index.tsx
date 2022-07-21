@@ -32,9 +32,9 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
-  runCount: number;
-  runEndTime: number;
-  runStartTime: number;
+  runCount?: number;
+  runEndTime?: number;
+  runStartTime?: number;
 } & BorderColorShareProps;
 
 function CodeOutput({

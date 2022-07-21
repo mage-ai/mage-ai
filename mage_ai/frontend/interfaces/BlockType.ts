@@ -76,12 +76,14 @@ export enum ChartTypeEnum {
 
 export const CHART_TYPES = [
   ChartTypeEnum.HISTOGRAM,
-  ChartTypeEnum.PIE_CHART,
+  // ChartTypeEnum.PIE_CHART,
 ];
 
-interface ConfigurationType {
+export interface ConfigurationType {
   chart_type: ChartTypeEnum;
-  width_percentage: number;
+  width_percentage?: number;
+  x?: string[] | number[];
+  y?: string[] | number[];
 }
 
 export default interface BlockType {

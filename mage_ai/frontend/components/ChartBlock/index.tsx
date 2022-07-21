@@ -11,6 +11,7 @@ import BlockType, {
   BlockTypeEnum,
   CHART_TYPES,
   ChartTypeEnum,
+  ConfigurationType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ChartController from './ChartController';
@@ -68,7 +69,7 @@ export type ChartPropsShared = {
   savePipelineContent: () => Promise<any>;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
-  width: number;
+  width?: number;
 } & CodeEditorSharedProps;
 
 type ChartBlockType = {
@@ -102,9 +103,7 @@ function ChartBlock({
     outputs = [],
   } = block;
   const [chartType, setChartType] = useState<string>(block.configuration?.chart_type);
-  const [configuration, setConfiguration] = useState<{
-    [key: string]: string | number;
-  }>(block.configuration);
+  const [configuration, setConfiguration] = useState<ConfigurationType>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
   const [chartWidth, setChartWidth] = useState<number>(null);
@@ -117,7 +116,7 @@ function ChartBlock({
   ), [
     blocks,
   ]);
-  const blocksMapping = useMemo(() => indexBy(blocksOfType, ({ uuid }: BLockType) => uuid), [
+  const blocksMapping = useMemo(() => indexBy(blocksOfType, ({ uuid }: BlockType) => uuid), [
     blocksOfType,
   ]);
 
@@ -310,7 +309,7 @@ function ChartBlock({
                   muted
                   small
                 >
-                  ->
+                  {'->'}
                 </Text> <Text
                   default
                   inline
@@ -501,7 +500,6 @@ function ChartBlock({
               }) => {
                 const el = (
                   <TextInput
-                    defaultValue={configuration?.[uuid]}
                     fullWidth
                     key={uuid}
                     label={label()}
@@ -520,6 +518,7 @@ function ChartBlock({
                       }));
                     }}
                     type={type}
+                    value={configuration?.[uuid]}
                   />
                 );
 

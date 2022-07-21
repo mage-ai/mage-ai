@@ -276,7 +276,7 @@ function PipelineDetailPage({
   } = api.blocks.pipelines.outputs.detail(
     !afterHidden && pipelineUUID,
     selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
-      && selectedBlock?.type !== BlockTypeEnum.CHARTS
+      && selectedBlock?.type !== BlockTypeEnum.CHART
       && selectedBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
@@ -286,7 +286,7 @@ function PipelineDetailPage({
   } = api.blocks.pipelines.analyses.detail(
     !afterHidden && pipelineUUID,
     selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
-      && selectedBlock?.type !== BlockTypeEnum.CHARTS
+      && selectedBlock?.type !== BlockTypeEnum.CHART
       && selectedBlock?.uuid,
   );
   const {

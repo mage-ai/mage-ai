@@ -1,4 +1,4 @@
-import BlockType from '@interfaces/BlockType';
+import BlockType, { OutputType } from '@interfaces/BlockType';
 
 export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
