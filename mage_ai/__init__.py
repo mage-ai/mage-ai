@@ -130,3 +130,6 @@ def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
     asyncio.run(
         pipeline.execute(analyze_outputs=False, global_vars=global_vars, update_status=False)
     )
+
+
+def test()

@@ -40,6 +40,12 @@ def main():
         pipeline = Pipeline(pipeline_uuid, project_path)
 
         asyncio.run(pipeline.execute(analyze_outputs=False, update_status=False))
+    elif command == 'test':
+        project_path = sys.argv[2]
+        pipeline_uuid = sys.argv[3]
+        project_path = os.path.abspath(project_path)
+        sys.path.append(os.path.dirname(project_path))
+        pipeline = Pipeline(pipeline_uuid, project_path)
 
 
 if __name__ == "__main__":
