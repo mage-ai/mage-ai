@@ -243,6 +243,7 @@ function CodeOutput({
                   iconOnly
                   noPadding
                   onClick={() => setCollapsed(!collapsed)}
+                  transparent
                 >
                   {collapsed
                     ? <ChevronDown muted size={UNIT * 2} />
