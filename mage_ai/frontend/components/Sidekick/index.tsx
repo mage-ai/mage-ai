@@ -85,7 +85,9 @@ function Sidekick({
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
+  setTextareaFocused,
   statistics,
+  textareaFocused,
   updateWidget,
   widgets,
 }: SidekickProps) {
@@ -325,6 +327,7 @@ function Sidekick({
 
         {ViewKeyEnum.CHARTS === activeView && (
           <Charts
+            blockRefs={blockRefs}
             blocks={blocks}
             deleteWidget={deleteWidget}
             fetchWidgets={fetchWidgets}
@@ -333,7 +336,10 @@ function Sidekick({
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
+            selectedBlock={selectedBlock}
             setSelectedBlock={setSelectedBlock}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={textareaFocused}
             updateWidget={updateWidget}
             widgets={widgets}
           />

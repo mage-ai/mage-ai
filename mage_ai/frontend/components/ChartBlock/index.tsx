@@ -15,7 +15,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ChartController from './ChartController';
 import Circle from '@oracle/elements/Circle';
-import CodeEditor from '@components/CodeEditor';
+import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -24,14 +24,23 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
+import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
-import { CONFIGURATIONS_BY_CHART_TYPE } from './constants';
+import {
+  CONFIGURATIONS_BY_CHART_TYPE,
+  VARIABLE_INFO_BY_CHART_TYPE,
+  VARIABLE_NAMES,
+} from './constants';
 import {
   ChartBlockStyle,
+  CodeHelperStyle,
   CodeStyle,
   ConfigurationOptionsStyle,
 } from './index.style';
@@ -43,9 +52,11 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize, isJsonString } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { indexBy } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 
 export type ChartPropsShared = {
+  blockRefs: any;
   blocks: BlockType[];
   deleteWidget: (block: BlockType) => void;
   runBlock: (payload: {
@@ -57,7 +68,7 @@ export type ChartPropsShared = {
   savePipelineContent: () => Promise<any>;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
-};
+} & CodeEditorSharedProps;
 
 type ChartBlockType = {
   block: BlockType;
@@ -68,6 +79,7 @@ type ChartBlockType = {
 
 function ChartBlock({
   block,
+  blockRefs,
   blocks,
   deleteWidget,
   executionState,
@@ -76,16 +88,21 @@ function ChartBlock({
   runBlock,
   runningBlocks,
   savePipelineContent,
+  selected,
   setSelectedBlock,
+  setTextareaFocused,
+  textareaFocused,
   updateWidget,
 }: ChartBlockType) {
   const refChartContainer = useRef(null);
   const themeContext = useContext(ThemeContext);
   const {
-    configuration = {},
     outputs = [],
   } = block;
-  const [chartType, setChartType] = useState<string>(configuration?.chart_type);
+  const [chartType, setChartType] = useState<string>(block.configuration?.chart_type);
+  const [configuration, setConfiguration] = useState<{
+    [key: string]: string | number;
+  }>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
   const [chartWidth, setChartWidth] = useState<number>(null);
@@ -98,6 +115,9 @@ function ChartBlock({
   ), [
     blocks,
   ]);
+  const blocksMapping = useMemo(() => indexBy(blocksOfType, ({ uuid }: BLockType) => uuid), [
+    blocksOfType,
+  ]);
 
   const codeEditorEl = useMemo(() => (
     <CodeEditor
@@ -107,23 +127,18 @@ function ChartBlock({
         setContent(val);
         onChangeContent(val);
       }}
-      setTextareaFocused={(value: boolean) => {
-        if (value) {
-          setSelectedBlock(null);
-        }
-      }}
       showLineNumbers={false}
       // onDidChangeCursorPosition={onDidChangeCursorPosition}
-      // placeholder="Start typing here..."
-      // selected={selected}
-      // setSelected={setSelected}
-      // setTextareaFocused={setTextareaFocused}
+      // placeholder="Write custom logic for your chart..."
+      selected={selected}
+      setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
       // shortcuts={[
       //   (monaco, editor) => executeCode(monaco, () => {
       //     runBlockAndTrack(editor.getValue());
       //   }),
       // ]}
-      // textareaFocused={textareaFocused}
+      setTextareaFocused={setTextareaFocused}
+      textareaFocused={textareaFocused}
       value={content}
       width="100%"
     />
@@ -145,7 +160,6 @@ function ChartBlock({
   const hasError = !!messagesWithType.find(({ error }) => error);
   const hasOutput = messagesWithType.length >= 1;
   const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
-  const selected = false;
   const borderColorShareProps = useMemo(() => ({
     blockType: block.type,
     hasError,
@@ -216,6 +230,102 @@ function ChartBlock({
     setChartWidth,
   ]);
 
+  const availableVariables = useMemo(() => {
+    const arr = [];
+    const numberOfUpstreamBlocks = upstreamBlocks.length;
+
+    upstreamBlocks.forEach((blockUUID: string, i: number) => {
+      const b = blocksMapping[blockUUID];
+      const blockColor =
+        getColorsForBlockType(b?.type, { theme: themeContext }).accent;
+
+      arr.push(
+        <Link
+          color={blockColor}
+          key={blockUUID}
+          onClick={() => {
+            const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+            refBlock?.current?.scrollIntoView();
+          }}
+          preventDefault
+          small
+        >
+          <Text
+            color={blockColor}
+            inline
+            monospace
+            small
+          >
+            {blockUUID}
+          </Text>
+        </Link>
+      );
+
+      if (i <= numberOfUpstreamBlocks - 2 && numberOfUpstreamBlocks >= 2) {
+        arr.push(
+          <>,&nbsp;</>
+        );
+      }
+    });
+
+    return arr;
+  }, [
+    blocksMapping,
+    upstreamBlocks,
+  ]);
+
+  const variablesMustDefine = useMemo(() => {
+    const arr = [];
+
+    const vars = configurationOptions.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
+      ? acc.concat(uuid)
+      : acc
+    , []);
+    const varsCount = vars.length;
+
+    vars.forEach((varName: string, idx: number) => {
+      const varNameValue = configuration[varName];
+      if (varNameValue) {
+        const info = VARIABLE_INFO_BY_CHART_TYPE[chartType]?.[varName]?.();
+
+        arr.push(
+          <Spacing key={varNameValue} ml={2}>
+            <Text
+              bold
+              inline
+              monospace
+              small
+            >
+              {varNameValue}
+            </Text> {info && (
+              <>
+                <Text
+                  inline
+                  monospace
+                  muted
+                  small
+                >
+                  ->
+                </Text> <Text
+                  default
+                  inline
+                  small
+                >
+                  {info}
+                </Text>
+              </>
+            )}
+          </Spacing>
+        );
+      }
+    });
+
+    return arr;
+  }, [
+    configuration,
+    configurationOptions,
+  ]);
+
   return (
     <ChartBlockStyle>
       <Spacing mt={1} px={1}>
@@ -245,27 +355,43 @@ function ChartBlock({
             ))}
           </Select>
 
-          <FlexContainer>
-            <Tooltip
-              appearBefore
-              default
-              label="Run chart block"
-              size={null}
-              widthFitContent
-            >
-              <KeyboardShortcutButton
-                blackBorder
-                compact
-                inline
-                onClick={() => savePipelineContent().then(() => runBlock({
-                  block,
-                  code: content,
-                }))}
-                uuid={`ChartBlock/run/${block.uuid}`}
+          <FlexContainer alignItems="center">
+            {!isInProgress && (
+              <Tooltip
+                appearBefore
+                default
+                label="Run chart block"
+                size={null}
+                widthFitContent
               >
-                <PlayButtonFilled size={UNIT * 2} />
-              </KeyboardShortcutButton>
-            </Tooltip>
+                <KeyboardShortcutButton
+                  blackBorder
+                  compact
+                  inline
+                  onClick={() => savePipelineContent().then(() => runBlock({
+                    block,
+                    code: content,
+                  }))}
+                  uuid={`ChartBlock/run/${block.uuid}`}
+                >
+                  <PlayButtonFilled size={UNIT * 2} />
+                </KeyboardShortcutButton>
+              </Tooltip>
+            )}
+
+            {ExecutionStateEnum.QUEUED === executionState && (
+              <Spinner
+                color={(themeContext || dark).content.active}
+                small
+                type="cylon"
+              />
+            )}
+            {ExecutionStateEnum.BUSY === executionState && (
+              <Spinner
+                color={(themeContext || dark).content.active}
+                small
+              />
+            )}
 
             <Spacing mr={1} />
 
@@ -375,13 +501,19 @@ function ChartBlock({
                     key={uuid}
                     label={label()}
                     monospace={monospace}
-                    onChange={e => updateWidget({
-                      ...block,
-                      configuration: {
-                        ...configuration,
+                    onChange={(e) => {
+                      updateWidget({
+                        ...block,
+                        configuration: {
+                          ...configuration,
+                          [uuid]: e.target.value,
+                        },
+                      });
+                      setConfiguration(config => ({
+                        ...config,
                         [uuid]: e.target.value,
-                      },
-                    })}
+                      }));
+                    }}
                     type={type}
                   />
                 );
@@ -399,6 +531,17 @@ function ChartBlock({
 
       {isEditing && (
         <CodeStyle>
+          {upstreamBlocks.length >= 1 && (
+            <CodeHelperStyle>
+              <Text muted small>
+                Variables you can use in your code: {availableVariables}
+              </Text>
+              <Text muted small>
+                Variables that you must define: {variablesMustDefine}
+              </Text>
+            </CodeHelperStyle>
+          )}
+
           {codeEditorEl}
         </CodeStyle>
       )}

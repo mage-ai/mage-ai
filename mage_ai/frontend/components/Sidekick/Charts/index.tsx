@@ -13,11 +13,13 @@ export type ChartsPropsShared = {
     [uuid: string]: KernelOutputType[];
   };
   onChangeChartBlock: (uuid: string, value: string) => void;
+  selectedBlock: BlockType;
   updateWidget: (block: BlockType) => void;
   widgets: BlockType[];
 } & ChartPropsShared;
 
 function Charts({
+  blockRefs,
   blocks,
   deleteWidget,
   fetchWidgets,
@@ -26,7 +28,10 @@ function Charts({
   runBlock,
   runningBlocks,
   savePipelineContent,
+  selectedBlock,
   setSelectedBlock,
+  setTextareaFocused,
+  textareaFocused,
   updateWidget,
   widgets,
 }: ChartsPropsShared) {
@@ -65,6 +70,7 @@ function Charts({
         return (
           <ChartBlock
             block={block}
+            blockRefs={blockRefs}
             blocks={blocks}
             deleteWidget={deleteWidget}
             executionState={executionState}
@@ -74,7 +80,10 @@ function Charts({
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
+            selected={selectedBlock?.uuid === uuid}
             setSelectedBlock={setSelectedBlock}
+            setTextareaFocused={setTextareaFocused}
+            textareaFocused={textareaFocused}
             updateWidget={updateWidget}
           />
         );

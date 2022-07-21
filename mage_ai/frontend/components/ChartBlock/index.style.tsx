@@ -3,8 +3,8 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import {UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
 export const ChartBlockStyle = styled.div`
@@ -37,5 +37,15 @@ export const CodeStyle = styled.div`
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+`;
+
+export const CodeHelperStyle = styled.div`
+  margin-bottom: ${PADDING_UNITS * UNIT}px;
+  padding-bottom: ${UNIT}px;
+  padding-left: ${UNIT}px;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;

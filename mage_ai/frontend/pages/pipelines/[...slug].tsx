@@ -691,11 +691,13 @@ function PipelineDetailPage({
             widget,
           },
         } = response;
-        console.log(response)
-        // setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
         onCreateCallback?.(widget);
         fetchFileTree();
         fetchPipeline();
+
+        if (ViewKeyEnum.CHARTS !== activeSidekickView) {
+          setActiveSidekickView(ViewKeyEnum.CHARTS);
+        }
       },
       onErrorCallback: ({
         error: {
@@ -707,7 +709,9 @@ function PipelineDetailPage({
       },
     },
   )), [
+    activeSidekickView,
     createWidget,
+    setActiveSidekickView,
   ]);
 
   useEffect(() => {
@@ -947,7 +951,9 @@ function PipelineDetailPage({
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
+      setTextareaFocused={setTextareaFocused}
       statistics={statistics}
+      textareaFocused={textareaFocused}
       updateWidget={updateWidget}
       widgets={widgets}
     />
@@ -972,7 +978,9 @@ function PipelineDetailPage({
     savePipelineContent,
     selectedBlock,
     setEditingBlock,
+    setTextareaFocused,
     statistics,
+    textareaFocused,
     updateWidget,
     widgets,
   ]);
