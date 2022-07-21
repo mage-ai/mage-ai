@@ -108,6 +108,7 @@ def __custom_output():
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:40]
         _rows = _sample.to_numpy().tolist()
+        _shape = _internal_output_return.shape
         _index = _sample.index.tolist()
 
         _json_string = simplejson.dumps(
@@ -116,6 +117,7 @@ def __custom_output():
                     columns=_columns,
                     index=_index,
                     rows=_rows,
+                    shape=_shape,
                 ),
                 type='table',
             ),
