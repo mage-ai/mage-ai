@@ -34,37 +34,39 @@ function ChartController({
       y,
     } = data;
 
-    return (
-      <Histogram
-        data={x.map(({
-          max: maxValue,
-          min: minValue,
-        } , idx: number) => [
-          maxValue,
-          y?.[idx]?.value,
-          minValue,
-        ])}
-        height={CHART_HEIGHT_DEFAULT}
-        width={width}
-        large
-        margin={{
-          left: UNIT * 5,
-          right: UNIT * 1,
-        }}
-        noPadding
-        renderTooltipContent={([maxValue, value, minValue]) => (
-          <Text inverted monospace small>
-            Count : {value}
-            <br />
-            Bucket: {minValue}-{maxValue}
-          </Text>
-        )}
-        showAxisLabels
-        showYAxisLabels
-        showZeroes
-        sortData={d => sortByKey(d, '[0]')}
-      />
-    );
+    if (x && y && Array.isArray(x)) {
+      return (
+        <Histogram
+          data={x.map(({
+            max: maxValue,
+            min: minValue,
+          } , idx: number) => [
+            maxValue,
+            y?.[idx]?.value,
+            minValue,
+          ])}
+          height={CHART_HEIGHT_DEFAULT}
+          width={width}
+          large
+          margin={{
+            left: UNIT * 5,
+            right: UNIT * 1,
+          }}
+          noPadding
+          renderTooltipContent={([maxValue, value, minValue]) => (
+            <Text inverted monospace small>
+              Count : {value}
+              <br />
+              Bucket: {minValue}-{maxValue}
+            </Text>
+          )}
+          showAxisLabels
+          showYAxisLabels
+          showZeroes
+          sortData={d => sortByKey(d, '[0]')}
+        />
+      );
+    }
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
     const varName = String(configuration[VARIABLE_NAME_X]);
     const chartData = data[varName];
@@ -82,11 +84,7 @@ function ChartController({
     }
   }
 
-  return (
-    <Text>
-      {chartType} not yet supported.
-    </Text>
-  );
+  return <div />;
 }
 
 export default ChartController;

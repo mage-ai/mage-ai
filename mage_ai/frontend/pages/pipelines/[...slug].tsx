@@ -864,11 +864,13 @@ function PipelineDetailPage({
   const runBlock = useCallback((payload: {
     block: BlockType;
     code: string;
+    ignoreAlreadyRunning?: boolean;
     runUpstream?: boolean;
   }) => {
     const {
       block,
       code,
+      ignoreAlreadyRunning,
       runUpstream = false,
     } = payload;
 
@@ -876,7 +878,7 @@ function PipelineDetailPage({
       const { uuid } = block;
       const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
-      if (!isAlreadyRunning) {
+      if (!isAlreadyRunning || ignoreAlreadyRunning) {
         sendMessage(JSON.stringify({
           code,
           pipeline_uuid: pipeline?.uuid,
