@@ -302,7 +302,7 @@ class Pipeline:
 
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
-      
+
     def update_block(self, block, upstream_block_uuids=None, widget=False):
         save_kwargs = dict()
 
@@ -326,7 +326,7 @@ class Pipeline:
                     ]
 
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=widget)
-          else:
+        else:
             save_kwargs['block_uuid'] = block.uuid
 
         if widget:
