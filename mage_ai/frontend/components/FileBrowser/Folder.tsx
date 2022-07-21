@@ -176,28 +176,26 @@ function Folder({
         onContextMenu={(e) => {
           e.preventDefault();
 
-          const blockContextPayload = {
-            data: {
-              block: getBlockFromFile(file),
-            },
-          };
-
-          const pipelineContextPayload = {
-            data: {
-              name,
-            },
-          };
-
           if (disabled) {
             setContextItem({ type: FileContextEnum.DISABLED });
           } else if (isPipelineFolder) {
-            setContextItem({ type: FileContextEnum.PIPELINE, ...pipelineContextPayload });
+            setContextItem({
+              data: {
+                name,
+              },
+              type: FileContextEnum.PIPELINE,
+            });
           } else if (children) {
             setContextItem({ type: FileContextEnum.FOLDER });
           } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-            setContextItem({ type: FileContextEnum.FILE, ...blockContextPayload });
+            setContextItem({ type: FileContextEnum.FILE });
           } else {
-            setContextItem({ type: FileContextEnum.BLOCK_FILE, ...blockContextPayload });
+            setContextItem({
+              data: {
+                block: getBlockFromFile(file),
+              },
+              type: FileContextEnum.BLOCK_FILE,
+            });
           }
         }}
         style={{
