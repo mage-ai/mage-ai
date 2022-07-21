@@ -76,9 +76,9 @@ export default {
     popup: '#27292E',
     row: DARK_CONTENT_INVERTED,
     row2: GREY500,
-    scrollbarThumb: 'rgba(0, 0, 0, 0.5)',
+    scrollbarThumb: 'rgba(100, 100, 100, 0.5)',
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
-    scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
+    scrollbarTrack: '#2E3036', // defaultBackground
     sidePanel: '#232429',
     success: LIME_DARK,
     table: '#292A2F',
