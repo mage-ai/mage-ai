@@ -805,11 +805,6 @@ function PipelineDetailPage({
             widget,
           },
         } = response;
-<<<<<<< HEAD
-=======
-        console.log(response);
-        // setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
->>>>>>> 20e72cba ([sp] add delete and duplicate pipelines API calls)
         onCreateCallback?.(widget);
         fetchFileTree();
         fetchPipeline();
