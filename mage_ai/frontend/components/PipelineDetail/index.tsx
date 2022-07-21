@@ -46,7 +46,9 @@ type PipelineDetailProps = {
     onCreateCallback?: (block: BlockType) => void,
     name?: string,
   ) => Promise<any>;
-  addWidget: (widget: BlockType) => Promise<any>;
+  addWidget: (widget: BlockType, opts?: {
+    onCreateCallback?: (block: BlockType) => void;
+  }) => Promise<any>;
   blockRefs: any;
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;

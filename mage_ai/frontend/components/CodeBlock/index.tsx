@@ -73,7 +73,6 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
-  addWidget: (widget: BlockType) => Promise<any>;
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
@@ -142,20 +141,20 @@ function CodeBlockProps({
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const runBlockAndTrack = useCallback(
-    (payload?: { code?: string, runUpstream?: boolean }) => {
+    (payload?: { block: BlockType, code?: string, runUpstream?: boolean }) => {
       const {
+        block: blockPayload,
         code,
         runUpstream,
       } = payload || {};
       runBlock({
-        block,
+        block: blockPayload,
         code: code || content,
         runUpstream: runUpstream || false,
       });
       setRunCount(1 + Number(runCount));
       setRunEndTime(null);
     }, [
-      block,
       content,
       runCount,
       runBlock,
@@ -316,13 +315,13 @@ function CodeBlockProps({
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
         ) {
-          runBlockAndTrack();
+          runBlockAndTrack({ block });
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
           event.preventDefault();
           addNewBlock({
             type: block.type,
           }).then(() => {
-            runBlockAndTrack();
+            runBlockAndTrack({ block });
           });
         }
       }
@@ -378,7 +377,10 @@ function CodeBlockProps({
       setTextareaFocused={setTextareaFocused}
       shortcuts={[
         (monaco, editor) => executeCode(monaco, () => {
-          runBlockAndTrack(editor.getValue());
+          runBlockAndTrack({
+            block,
+            code: editor.getValue(),
+          });
         }),
       ]}
       textareaFocused={textareaFocused}

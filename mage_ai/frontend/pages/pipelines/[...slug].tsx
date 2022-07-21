@@ -998,7 +998,14 @@ function PipelineDetailPage({
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndex}
-      addWidget={(widget: BlockType) => addWidgetAtIndex(widget, widgets.length)}
+      addWidget={(
+        widget: BlockType,
+        {
+          onCreateCallback,
+        }: {
+          onCreateCallback?: (block: BlockType) => void;
+        },
+      ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
