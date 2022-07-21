@@ -38,7 +38,7 @@ function ChartController({
           min: minValue,
         } , idx: number) => [
           maxValue,
-          y[idx].value,
+          y[idx]?.value,
           minValue,
         ])}
         height={UNIT * 50}

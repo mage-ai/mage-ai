@@ -249,7 +249,7 @@ class Pipeline:
                                 if block_data.get('upstream_blocks'):
                                     block.update(dict(upstream_blocks=block_data['upstream_blocks']))
 
-                                self.save()
+                                self.save(widget=widget)
 
     def __add_block_to_mapping(
         self,
@@ -278,7 +278,8 @@ class Pipeline:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
                 block,
-                upstream_blocks=self.get_blocks(upstream_block_uuids, widget=widget),
+                # All blocks will depend on non-widget type blocks
+                upstream_blocks=self.get_blocks(upstream_block_uuids, widget=False),
                 priority=priority,
             )
         else:
@@ -325,7 +326,8 @@ class Pipeline:
                         db for db in b.downstream_blocks if db.uuid != block.uuid
                     ]
 
-                block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=widget)
+                # All blocks will depend on non-widget type blocks
+                block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=False)
         else:
             save_kwargs['block_uuid'] = block.uuid
 
