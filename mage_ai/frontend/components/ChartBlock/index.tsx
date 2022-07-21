@@ -130,7 +130,7 @@ function ChartBlock({
     onChangeContent,
     setContent,
   ]);
-  const updateConfiguration = useCallback((data: { [uuid]: string }) => {
+  const updateConfiguration = useCallback((data: { [key: string]: string }) => {
     updateWidget({
       ...block,
       configuration: {
