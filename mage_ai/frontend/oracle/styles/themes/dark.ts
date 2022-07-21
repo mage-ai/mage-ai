@@ -72,6 +72,7 @@ export default {
     menu: NAVY,
     muted: SILVER,
     navigation: '#EDEDED',
+    output: '#2E3036',
     page: '#1E1F24',
     popup: '#27292E',
     row: DARK_CONTENT_INVERTED,

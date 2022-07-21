@@ -21,6 +21,7 @@ export function hideScrollBar() {
 }
 
 export const ScrollbarStyledCss = css<{
+  noScrollbarTrackBackground?: boolean;
   scrollbarBorderRadiusLarge?: boolean;
 }>`
   ${props => `
@@ -50,6 +51,15 @@ export const ScrollbarStyledCss = css<{
   ${props => !props.scrollbarBorderRadiusLarge && `
     ::-webkit-scrollbar-track {
       background: ${(props.theme.background || dark.background).scrollbarTrack};
+    }
+  `}
+
+  ${props => props.noScrollbarTrackBackground && `
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
     }
   `}
 

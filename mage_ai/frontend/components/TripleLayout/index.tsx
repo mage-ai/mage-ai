@@ -236,8 +236,8 @@ function TripleLayout({
           >
             <FlexContainer
               alignItems="center"
-              fullWidth
               fullHeight
+              fullWidth
               justifyContent="space-between"
             >
               <Flex>
@@ -280,7 +280,10 @@ function TripleLayout({
             </FlexContainer>
           </AsideHeaderStyle>
 
-          <BeforeInnerStyle ref={refBeforeInner}>
+          <BeforeInnerStyle
+            noScrollbarTrackBackground
+            ref={refBeforeInner}
+          >
             {!beforeHidden && before}
           </BeforeInnerStyle>
         </BeforeStyle>
@@ -300,7 +303,10 @@ function TripleLayout({
             width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
           }}
         >
-          <MainContentInnerStyle ref={mainContainerRef}>
+          <MainContentInnerStyle
+            noScrollbarTrackBackground
+            ref={mainContainerRef}
+          >
             {children}
           </MainContentInnerStyle>
         </MainContentStyle>
@@ -353,7 +359,10 @@ function TripleLayout({
             </FlexContainer>
           </AsideHeaderStyle>
 
-          <AfterInnerStyle ref={refAfterInner}>
+          <AfterInnerStyle
+            noScrollbarTrackBackground
+            ref={refAfterInner}
+          >
             {!afterHidden && after}
           </AfterInnerStyle>
         </AfterStyle>

@@ -107,7 +107,7 @@ function PipelineExecution({
           Execute pipeline
         </Text>
       </Button>
-      <OutputContainerStyle>
+      <OutputContainerStyle noScrollbarTrackBackground>
         <CodeBlockStyle
           // blockType={BlockTypeEnum.DATA_EXPORTER}
           executedAndIdle
