@@ -220,6 +220,12 @@ function PipelineDetailPage({
   const updateWidget = useCallback((block: BlockType) => {
     setPipelineContentTouched(true);
     const blockPrev = widgetTempData.current[block.uuid] || {};
+
+    let upstreamBlocks = blockPrev.upstream_blocks;
+    if (block?.upstream_blocks?.length >= 1) {
+      upstreamBlocks = block.upstream_blocks;
+    }
+
     widgetTempData.current[block.uuid] = {
       ...blockPrev,
       ...block,
@@ -227,6 +233,7 @@ function PipelineDetailPage({
         ...blockPrev.configuration,
         ...block.configuration,
       },
+      upstream_blocks: upstreamBlocks,
     };
   }, [
     setPipelineContentTouched,
@@ -268,7 +275,9 @@ function PipelineDetailPage({
     mutate: fetchSampleData,
   } = api.blocks.pipelines.outputs.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedBlock?.type !== BlockTypeEnum.CHARTS
+      && selectedBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
   const {
@@ -276,7 +285,9 @@ function PipelineDetailPage({
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD && selectedBlock?.uuid,
+    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedBlock?.type !== BlockTypeEnum.CHARTS
+      && selectedBlock?.uuid,
   );
   const {
     insights,
