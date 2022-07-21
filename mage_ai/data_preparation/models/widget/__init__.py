@@ -108,7 +108,10 @@ class Widget(Block):
                     list(zip(value_counts.values(), value_counts.keys())),
                     reverse=True,
                 )[:buckets]
-                variables = {k: v for v, k in arr}
+                value_counts_top = {k: v for v, k in arr}
+                variables = {
+                    var_name: value_counts_top
+                }
 
         return variables
 

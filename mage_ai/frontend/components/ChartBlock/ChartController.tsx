@@ -46,7 +46,6 @@ function ChartController({
         ])}
         height={CHART_HEIGHT_DEFAULT}
         width={width}
-        // key={column}
         large
         margin={{
           left: UNIT * 5,
@@ -69,7 +68,7 @@ function ChartController({
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
     return (
       <PieChart
-        data={Object.entries(data)}
+        data={Object.entries(data[configuration[VARIABLE_NAME_X]])}
         getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
         getY={([, value]) => value}
         height={CHART_HEIGHT_DEFAULT}
