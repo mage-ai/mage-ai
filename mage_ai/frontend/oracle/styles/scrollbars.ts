@@ -5,7 +5,7 @@ import { BORDER_RADIUS, BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
-export const SCROLLBAR_WIDTH = UNIT * 1.5;
+export const SCROLLBAR_WIDTH = UNIT * 1.25;
 
 export function hideScrollBar() {
   return `
@@ -21,6 +21,7 @@ export function hideScrollBar() {
 }
 
 export const ScrollbarStyledCss = css<{
+  noScrollbarTrackBackground?: boolean;
   scrollbarBorderRadiusLarge?: boolean;
 }>`
   ${props => `
@@ -50,6 +51,15 @@ export const ScrollbarStyledCss = css<{
   ${props => !props.scrollbarBorderRadiusLarge && `
     ::-webkit-scrollbar-track {
       background: ${(props.theme.background || dark.background).scrollbarTrack};
+    }
+  `}
+
+  ${props => props.noScrollbarTrackBackground && `
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
     }
   `}
 

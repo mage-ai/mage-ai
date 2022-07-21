@@ -17,6 +17,10 @@ export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
 
+type ScrollbarTrackType = {
+  noScrollbarTrackBackground?: boolean;
+};
+
 export const HeaderStyle = styled.div<{
   beforeVisible?: boolean;
 }>`
@@ -133,8 +137,13 @@ export const BeforeStyle = styled.aside`
   left: 0;
 `;
 
-export const BeforeInnerStyle = styled.div`
+export const BeforeInnerStyle = styled.div<ScrollbarTrackType>`
   ${ASIDE_INNER_STYLE}
+  overflow: hidden;
+
+  &:hover {
+    overflow: auto;
+  }
 `;
 
 export const AfterStyle = styled.aside`
@@ -143,7 +152,7 @@ export const AfterStyle = styled.aside`
   right: 0;
 `;
 
-export const AfterInnerStyle = styled.div`
+export const AfterInnerStyle = styled.div<ScrollbarTrackType>`
   ${ASIDE_INNER_STYLE}
 `;
 
