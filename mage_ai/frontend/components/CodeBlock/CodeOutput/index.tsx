@@ -69,20 +69,30 @@ function CodeOutput({
     columns,
     index,
     rows,
+    shape,
   }) => rows.length >= 1 && (
-    <DataTable
-      columns={columns}
-      disableScrolling={!selected}
-      maxHeight={UNIT * 49.5}
-      index={index}
-      noBorderBottom
-      noBorderLeft
-      noBorderRight
-      noBorderTop
-      rows={rows}
-      // Remove border 2px and padding from each side
-      width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
-    />
+    <>
+      <DataTable
+        columns={columns}
+        disableScrolling={!selected}
+        maxHeight={UNIT * 49.5}
+        index={index}
+        noBorderBottom
+        noBorderLeft
+        noBorderRight
+        noBorderTop
+        rows={rows}
+        // Remove border 2px and padding from each side
+        width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
+      />
+      {shape && (
+        <Spacing ml={1} my={1}>
+          <Text>
+            {`${shape[0]} rows x ${shape[1]} columns`}
+          </Text>
+        </Spacing>
+      )}
+    </>
   ), [
     selected,
     mainContainerWidth,
