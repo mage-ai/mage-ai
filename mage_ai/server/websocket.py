@@ -100,6 +100,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
+                    pipeline_config=pipeline.get_config_from_yaml(),
                     run_upstream=run_upstream,
                     widget=widget,
                 )

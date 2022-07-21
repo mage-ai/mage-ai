@@ -18,14 +18,17 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None):
+    def __init__(self, uuid, repo_path=None, config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
         self.widget_configs = []
-        self.load_config_from_yaml()
+        if config is None:
+            self.load_config_from_yaml()
+        else:
+            self.load_config(config)
 
     @property
     def config_path(self):
@@ -161,11 +164,19 @@ class Pipeline:
             update_status=update_status,
         )
 
-    def load_config_from_yaml(self):
+    def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist.')
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
+        return config
+
+    def load_config_from_yaml(self):
+        print('load_config_from_yaml')
+        self.load_config(self.get_config_from_yaml())
+
+    def load_config(self, config):
+        print(config)
         self.name = config.get('name')
 
         self.block_configs = config.get('blocks', [])

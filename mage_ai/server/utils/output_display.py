@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from typing import List
+from typing import Dict, List
 import re
 
 
@@ -147,6 +147,7 @@ def add_execution_code(
     block_uuid: str,
     code: str,
     global_vars,
+    pipeline_config: Dict = None,
     run_upstream: bool = False,
     widget: bool = False,
 ) -> str:
@@ -159,10 +160,12 @@ from mage_ai.shared.array import find
 import pandas as pd
 
 def execute_custom_code():
-    pipeline_uuid=\'{pipeline_uuid}\'
     block_uuid=\'{block_uuid}\'
     run_upstream={str(run_upstream)}
-    pipeline = Pipeline(pipeline_uuid, get_repo_path())
+    pipeline = Pipeline(
+        uuid=\'{pipeline_uuid}\',
+        config={pipeline_config},
+    )
     block = pipeline.get_block(block_uuid, widget={widget})
 
     code = \'\'\'

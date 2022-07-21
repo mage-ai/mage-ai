@@ -282,6 +282,7 @@ class Block:
         global_vars=None,
         redirect_outputs=False,
         run_all_blocks=False,
+        should_save_outputs=True,
         update_status=True,
     ):
         try:
@@ -311,7 +312,8 @@ class Block:
             else:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
-            self.__store_variables(variable_mapping)
+            if should_save_outputs:
+                self.__store_variables(variable_mapping)
 
             if update_status:
                 self.status = BlockStatus.EXECUTED
