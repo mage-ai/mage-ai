@@ -7,6 +7,7 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
 from mage_ai.shared.hash import merge_dict
 import asyncio
@@ -49,6 +50,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         output = message.get('output')
         global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
+        kernel_name = message.get('kernel_name', DEFAULT_KERNEL_NAME)
 
         run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
@@ -102,7 +104,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     widget=widget,
                 )
 
-            msg_id = client.execute(add_internal_output_info(code))
+            if kernel_name == KernelName.PYTHON3:
+                msg_id = client.execute(add_internal_output_info(code))
+            else:
+                msg_id = client.execute(code)
 
             value = dict(
                 block_uuid=block_uuid,
