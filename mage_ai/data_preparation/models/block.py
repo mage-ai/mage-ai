@@ -310,8 +310,9 @@ class Block:
                     ignore_nan=True,
                 ))
             else:
-                self.__verify_outputs(block_output)
-                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+                if should_save_outputs:
+                    self.__verify_outputs(block_output)
+                    variable_mapping = dict(zip(self.output_variables.keys(), block_output))
             if should_save_outputs:
                 self.__store_variables(variable_mapping)
 
@@ -323,6 +324,7 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
+            print(traceback.format_exc())
             raise Exception(f'Exception encountered in block {self.uuid}') from err
         finally:
             if update_status:
