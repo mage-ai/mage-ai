@@ -34,7 +34,7 @@ async def run_blocks(
     log_func: Callable[[str], None] = None,
     redirect_outputs: bool = False,
     selected_blocks: Set[str] = None,
-    update_status: bool = False,
+    update_status: bool = True,
 ) -> None:
     tasks = dict()
     blocks = Queue()
@@ -60,9 +60,10 @@ async def run_blocks(
             block.execute(
                 analyze_outputs=analyze_outputs,
                 global_vars=global_vars,
-                redirect_outputs=redirect_outputs,
-                update_status=update_status,
                 log_func=log_func,
+                redirect_outputs=redirect_outputs,
+                run_all_blocks=True,
+                update_status=update_status,
             )
         )
         tasks[block.uuid] = task
@@ -103,7 +104,11 @@ def run_blocks_sync(
                 break
         if skip:
             continue
-        block.execute_sync(analyze_outputs=analyze_outputs, redirect_outputs=redirect_outputs)
+        block.execute_sync(
+            analyze_outputs=analyze_outputs,
+            redirect_outputs=redirect_outputs,
+            run_all_blocks=True,
+        )
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
@@ -275,9 +280,20 @@ class Block:
         custom_code=None,
         global_vars=None,
         redirect_outputs=False,
+        run_all_blocks=False,
         update_status=True,
     ):
         try:
+            if not run_all_blocks:
+                not_executed_upstream_blocks = list(
+                    filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
+                )
+                if len(not_executed_upstream_blocks) > 0:
+                    raise Exception(
+                        f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                        f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
+                        'before running the current block.'
+                    )
             output = self.execute_block(
                 custom_code=custom_code,
                 global_vars=global_vars,
@@ -317,6 +333,7 @@ class Block:
         global_vars=None,
         log_func: Callable[[str], None] = None,
         redirect_outputs: bool = False,
+        run_all_blocks: bool = False,
         update_status: bool = True,
     ) -> None:
         with VerboseFunctionExec(
@@ -329,27 +346,19 @@ class Block:
                 custom_code=custom_code,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
+                run_all_blocks=run_all_blocks,
                 update_status=update_status,
             )
-            stdout = output['stdout'].strip('\n')
-            prefixed_stdout = '\n'.join([
-                f'[{self.uuid}] {s}'
-                for s in stdout.split('\n')
-            ])
+            stdout = output['stdout']
             if log_func is not None and len(stdout) > 0:
+                stdout_stripped = stdout.strip('\n')
+                prefixed_stdout = '\n'.join([
+                    f'[{self.uuid}] {s}'
+                    for s in stdout_stripped.split('\n')
+                ])
                 log_func(prefixed_stdout)
 
     def __validate_execution(self, decorated_functions, input_vars):
-        not_executed_upstream_blocks = list(
-            filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
-        )
-        if len(not_executed_upstream_blocks) > 0:
-            raise Exception(
-                f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
-                'before running the current block.'
-            )
-
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
             return None
 
