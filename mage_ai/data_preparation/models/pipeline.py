@@ -81,8 +81,8 @@ class Pipeline:
                 source_widget.type,
                 configuration=source_widget.configuration,
             )
-            duplicate_pipeline.widgets_by_uuid = duplicate_pipeline.__add_block_to_mapping(
-                duplicate_pipeline.widgets_by_uuid, new_widget, source_widget.upstream_blocks
+            duplicate_pipeline.add_block(
+                new_widget, source_widget.upstream_block_uuids, widget=True
             )
         duplicate_pipeline.save()
         return duplicate_pipeline
