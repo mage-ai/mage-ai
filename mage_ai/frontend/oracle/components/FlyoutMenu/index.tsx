@@ -102,7 +102,7 @@ function FlyoutMenu({
         items[currentIndex]?.onClick?.();
         onClickCallback?.();
       } else {
-        items.forEach(({ keyboardShortcutValidation }) => {
+        items?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
         });
       }
