@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from typing import List
+from typing import List, Mapping
 import re
 
 
@@ -143,6 +143,7 @@ def add_execution_code(
     pipeline_uuid: str,
     block_uuid: str,
     code: str,
+    global_vars,
     run_upstream: bool = False,
     widget: bool = False,
 ) -> str:
@@ -168,7 +169,8 @@ def execute_custom_code():
     if run_upstream:
         block.run_upstream_blocks()
 
-    block_output = block.execute_sync(custom_code=code)
+    global_vars = {global_vars}
+    block_output = block.execute_sync(custom_code=code, global_vars=global_vars)
     output = block_output['output']
 
     if {widget}:

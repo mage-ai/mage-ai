@@ -9,7 +9,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_in_{{ data_source }}(*args) -> DataFrame:
+def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
     """
     Performs a transformation in {{ data_source_handler }}
     """

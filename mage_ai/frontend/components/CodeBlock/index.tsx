@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -11,6 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
+  BLOCK_TYPE_CONVERTIBLE,
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
@@ -24,6 +26,7 @@ import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
@@ -37,6 +40,13 @@ import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import {
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  FileFill,
+  Stack,
+} from '@oracle/icons';
+import {
   BlockDivider,
   BlockDividerInner,
   CodeHelperStyle,
@@ -46,7 +56,6 @@ import {
   CodeContainerStyle,
   getColorsForBlockType,
 } from './index.style';
-import { FileFill, Stack } from '@oracle/icons';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -59,12 +68,12 @@ import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pauseEvent } from '@utils/events';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
+  addWidget: (widget: BlockType) => Promise<any>;
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
@@ -117,13 +126,18 @@ function CodeBlockProps({
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
+  const [blockMenuVisible, setBlockMenuVisible] = useState(false);
+  const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
+
+  const blockMenuRef = useRef(null);
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
@@ -132,7 +146,7 @@ function CodeBlockProps({
       const {
         code,
         runUpstream,
-      } = payload || {}
+      } = payload || {};
       runBlock({
         block,
         code: code || content,
@@ -249,10 +263,11 @@ function CodeBlockProps({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
+          callback: ({ block: { content } }) => {
             setIsEditingBlock(false);
             fetchPipeline();
             fetchFileTree();
+            setContent(content);
           },
           onErrorCallback: ({
             error: {
@@ -323,6 +338,31 @@ function CodeBlockProps({
     ],
   );
 
+  const buildBlockMenu = (b: BlockType) => {
+    const blockMenuItems = {
+      [BlockTypeEnum.SCRATCHPAD]: [
+        {
+          items: BLOCK_TYPE_CONVERTIBLE.map(blockType => ({
+            label: () => BLOCK_TYPE_NAME_MAPPING[blockType],
+            // @ts-ignore
+            onClick: () => updateBlock({
+              block: {
+                ...b,
+                type: blockType,
+              },
+            }),
+            uuid: `block_menu/scratchpad/convert_to/${blockType}`,
+          })),
+          label: () => 'Convert to',
+          uuid: 'block_menu/scratchpad/convert_to',
+        },
+      ],
+    };
+
+    return blockMenuItems[b.type];
+  };
+
+
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
@@ -356,6 +396,7 @@ function CodeBlockProps({
     <CodeOutput
       {...borderColorShareProps}
       block={block}
+      collapsed={outputCollapsed}
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
@@ -363,6 +404,7 @@ function CodeBlockProps({
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
+      setCollapsed={setOutputCollapsed}
     />
   ), [
     block,
@@ -371,11 +413,14 @@ function CodeBlockProps({
     isInProgress,
     mainContainerWidth,
     messagesWithType,
+    outputCollapsed,
     runCount,
     runEndTime,
     runStartTime,
     selected,
   ]);
+
+  const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -387,21 +432,24 @@ function CodeBlockProps({
         }}
       >
         <Flex alignItems="center" flex={1}>
-          <Tooltip
-            block
-            label={BLOCK_TYPE_NAME_MAPPING[block.type]}
-            size={null}
-            widthFitContent
-          >
-            <FlexContainer alignItems="center">
-              <Circle
-                color={color}
-                size={UNIT * 1.5}
-                square
-              />
+          <FlexContainer alignItems="center">
+            <Circle
+              color={color}
+              size={UNIT * 1.5}
+              square
+            />
 
-              <Spacing mr={1} />
+            <Spacing mr={1} />
 
+            <FlyoutMenuWrapper
+              compact
+              items={buildBlockMenu(block)}
+              onClickCallback={closeBlockMenu}
+              onClickOutside={closeBlockMenu}
+              open={blockMenuVisible}
+              parentRef={blockMenuRef}
+              uuid="CodeBlock/block_menu"
+            >
               <Text
                 color={color}
                 monospace
@@ -413,22 +461,36 @@ function CodeBlockProps({
                 )}
                 {BlockTypeEnum.DATA_LOADER === block.type && (
                   <>
-                    DATA LOADER&nbsp;&nbsp;
+                    DATA LOADER&nbsp;
                   </>
                 )}
                 {BlockTypeEnum.SCRATCHPAD === block.type && (
                   <>
-                    SCRATCHPAD&nbsp;&nbsp;&nbsp;
+                    SCRATCHPAD&nbsp;
                   </>
                 )}
                 {BlockTypeEnum.TRANSFORMER === block.type && (
                   <>
-                    TRANSFORMER&nbsp;&nbsp;
+                    TRANSFORMER&nbsp;
                   </>
                 )}
               </Text>
-            </FlexContainer>
-          </Tooltip>
+            </FlyoutMenuWrapper>
+
+            {BlockTypeEnum.SCRATCHPAD === block.type && (
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setBlockMenuVisible(true)}
+                transparent
+              >
+                <ArrowDown muted />
+              </Button>
+            )}
+
+            <Spacing mr={1} />
+          </FlexContainer>
 
           <Spacing mr={PADDING_UNITS} />
 
@@ -483,7 +545,7 @@ function CodeBlockProps({
         </Flex>
 
         {BlockTypeEnum.SCRATCHPAD !== block.type && (
-          <div>
+          <FlexContainer alignItems="center">
             <Tooltip
               appearBefore
               block
@@ -506,12 +568,12 @@ function CodeBlockProps({
                     },
                   });
                 }}
-              >
+                >
                 <FlexContainer alignItems="center">
                   <Text
                     monospace={numberOfParentBlocks >= 1}
                     underline={numberOfParentBlocks === 0}
-                  >
+                    >
                     {numberOfParentBlocks === 0 && 'Click to set parent blocks'}
                     {numberOfParentBlocks >= 1 && pluralize('parent block', numberOfParentBlocks)}
                   </Text>
@@ -522,8 +584,31 @@ function CodeBlockProps({
                 </FlexContainer>
               </Button>
             </Tooltip>
-          </div>
+          </FlexContainer>
         )}
+        <Spacing mr={1} />
+
+        <Spacing px={1}>
+          <Button
+            basic
+            iconOnly
+            noPadding
+            onClick={() => {
+              if (!codeCollapsed) {
+                setCodeCollapsed(true);
+                setOutputCollapsed(true);
+              } else {
+                setCodeCollapsed(false);
+              }
+            }}
+            transparent
+          >
+            {codeCollapsed
+              ? <ChevronDown muted size={UNIT * 2} />
+              : <ChevronUp muted size={UNIT * 2} />
+            }
+          </Button>
+        </Spacing>
       </FlexContainer>
 
       {(selected || isInProgress) && (
@@ -543,7 +628,7 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {block.upstream_blocks.length >= 1 && (
+          {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>
                 Positional arguments for decorated function:
@@ -594,7 +679,16 @@ function CodeBlockProps({
               </Spacing>
             </CodeHelperStyle>
           )}
-          {codeEditorEl}
+          {!codeCollapsed
+            ? codeEditorEl
+            : (
+              <Spacing px={1}>
+                <Text monospace muted>
+                  ({pluralize('line', content?.split(/\r\n|\r|\n/).length)} collapsed)
+                </Text>
+              </Spacing>
+            )
+          }
         </CodeContainerStyle>
 
         {codeOutputEl}

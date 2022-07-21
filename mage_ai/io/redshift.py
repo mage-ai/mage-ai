@@ -1,8 +1,7 @@
 from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from redshift_connector import connect
-from typing import Any, Mapping
 
 
 class Redshift(BaseSQLConnection):
@@ -73,20 +72,45 @@ class Redshift(BaseSQLConnection):
                 cur.write_dataframe(df, table_name)
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'Redshift':
-        try:
-            aws_config = config[IOConfigKeys.AWS]
-            redshift_config = aws_config[IOConfigKeys.REDSHIFT]
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for '
-                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.REDSHIFT}\' under profile'
+    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Redshift':
+        """
+        Initializes Redshift client from configuration loader.
+
+        Args:
+            config (BaseConfigLoader): Configuration loader object
+        """
+        if ConfigKey.REDSHIFT_DBNAME not in config:
+            raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting to connect.')
+        kwargs['database'] = config[ConfigKey.REDSHIFT_DBNAME]
+        if (
+            ConfigKey.REDSHIFT_CLUSTER_ID in config
+            and ConfigKey.REDSHIFT_DBUSER in config
+            and ConfigKey.REDSHIFT_IAM_PROFILE in config
+        ):
+            kwargs['cluster_identifier'] = config[ConfigKey.REDSHIFT_CLUSTER_ID]
+            kwargs['db_user'] = config[ConfigKey.REDSHIFT_DBUSER]
+            kwargs['profile'] = config[ConfigKey.REDSHIFT_IAM_PROFILE]
+            kwargs['iam'] = True
+        elif (
+            ConfigKey.REDSHIFT_TEMP_CRED_USER in config
+            and ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD in config
+            and ConfigKey.REDSHIFT_HOST in config
+        ):
+            kwargs['user'] = config[ConfigKey.REDSHIFT_TEMP_CRED_USER]
+            kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
+            kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
+            kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
+        else:
+            raise ValueError(
+                'No valid configuration found for initializing AWS Redshift client. '
+                'Either specify your temporary database '
+                'credentials or provide your IAM Profile and Redshift cluster information to '
+                'automatically generate temporary database credentials.'
             )
-        credentials = ['access_key_id', 'secret_access_key', 'region']
-        for credential in credentials:
-            if credential in aws_config:
-                redshift_config[credential] = aws_config[credential]
-        return cls(**redshift_config)
+        kwargs['access_key_id'] = config[ConfigKey.AWS_ACCESS_KEY_ID]
+        kwargs['secret_access_key'] = config[ConfigKey.AWS_SECRET_ACCESS_KEY]
+        kwargs['region'] = config[ConfigKey.AWS_REGION]
+        return cls(**kwargs)
 
     @classmethod
     def with_temporary_credentials(

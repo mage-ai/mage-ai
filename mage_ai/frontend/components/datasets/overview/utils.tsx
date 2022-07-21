@@ -273,7 +273,6 @@ export function buildRenderColumnHeader({
             x.min,
             x.max,
           ])}
-          getBarColor={([]) => light.brand.wind300}
           height={COLUMN_HEADER_CHART_HEIGHT}
           key={columnUUID}
           large
@@ -284,13 +283,13 @@ export function buildRenderColumnHeader({
             top: 0,
           }}
           renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
-            <Text small>
+            <p>
               Rows: {count}
               <br />
               Start: {xLabelMin}
               <br />
               End: {xLabelMax}
-            </Text>
+            </p>
           )}
           sortData={d => sortByKey(d, '[4]')}
         />

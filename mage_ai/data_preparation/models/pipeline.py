@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Callable, List, Set
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
@@ -10,8 +10,6 @@ from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import copy_template_directory
-from queue import Queue
-import asyncio
 import os
 import shutil
 import yaml
@@ -89,9 +87,8 @@ class Pipeline:
 
     @classmethod
     def is_valid_pipeline(self, pipeline_path):
-        return (
-            os.path.isdir(pipeline_path) and
-            os.path.exists(os.path.join(pipeline_path, METADATA_FILE_NAME))
+        return os.path.isdir(pipeline_path) and os.path.exists(
+            os.path.join(pipeline_path, METADATA_FILE_NAME)
         )
 
     def block_deletable(self, block, widget=False):
@@ -102,10 +99,12 @@ class Pipeline:
 
     async def execute(
         self,
-        analyze_outputs=True,
-        redirect_outputs=False,
-        update_status=True,
-    ):
+        analyze_outputs: bool = True,
+        global_vars=None,
+        log_func: Callable[[str], None] = None,
+        redirect_outputs: bool = False,
+        update_status: bool = True,
+    ) -> None:
         """
         Async function for parallel processing
         This function will schedule the block execution in topological
@@ -119,6 +118,8 @@ class Pipeline:
         await run_blocks(
             root_blocks,
             analyze_outputs=analyze_outputs,
+            global_vars=global_vars,
+            log_func=log_func,
             redirect_outputs=redirect_outputs,
             update_status=update_status,
         )
@@ -139,7 +140,8 @@ class Pipeline:
                 c.get('type'),
                 c.get('status'),
                 self,
-            ) for c in self.block_configs
+            )
+            for c in self.block_configs
         ]
         widgets = [
             Widget.get_block(
@@ -149,7 +151,8 @@ class Pipeline:
                 c.get('status'),
                 self,
                 configuration=c.get('configuration'),
-            ) for c in self.widget_configs
+            )
+            for c in self.widget_configs
         ]
         all_blocks = blocks + widgets
 
@@ -299,8 +302,10 @@ class Pipeline:
 
     def has_block(self, block_uuid):
         return block_uuid in self.blocks_by_uuid
-
+      
     def update_block(self, block, upstream_block_uuids=None, widget=False):
+        save_kwargs = dict()
+
         if upstream_block_uuids is not None:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
@@ -319,13 +324,18 @@ class Pipeline:
                     b.downstream_blocks = [
                         db for db in b.downstream_blocks if db.uuid != block.uuid
                     ]
+
                 block.upstream_blocks = self.get_blocks(upstream_block_uuids, widget=widget)
+          else:
+            save_kwargs['block_uuid'] = block.uuid
+
         if widget:
             self.widgets_by_uuid[block.uuid] = block
         else:
             self.blocks_by_uuid[block.uuid] = block
 
-        self.save()
+        self.save(**save_kwargs)
+
         return block
 
     def update_block_uuid(self, block, old_uuid):
@@ -375,7 +385,12 @@ class Pipeline:
         self.save()
         return block
 
-    def save(self):
-        pipeline_dict = self.to_dict()
+    def save(self, block_uuid: str = None):
+        if block_uuid is not None:
+            current_pipeline = Pipeline(self.uuid, self.repo_path)
+            current_pipeline.blocks_by_uuid[block_uuid] = self.get_block(block_uuid)
+            pipeline_dict = current_pipeline.to_dict()
+        else:
+            pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)

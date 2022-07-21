@@ -13,7 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BorderColorShareProps } from '../index.style';
-import { Check } from '@oracle/icons';
+import { Check, ChevronDown, ChevronUp } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -24,9 +24,12 @@ import {
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { isJsonString } from '@utils/string';
+import Flex from '@oracle/components/Flex';
+import Button from '@oracle/elements/Button';
 
 type CodeOutputProps = {
   block: BlockType;
+  collapsed: boolean;
   contained?: boolean;
   hideExtraInfo?: boolean;
   isInProgress: boolean;
@@ -35,10 +38,12 @@ type CodeOutputProps = {
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  setCollapsed: (boolean) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
   block,
+  collapsed,
   contained = true,
   hasError,
   hideExtraInfo,
@@ -49,13 +54,13 @@ function CodeOutput({
   runEndTime,
   runStartTime,
   selected,
+  setCollapsed,
 }: CodeOutputProps) {
   const {
     status,
     type: blockType,
   } = block;
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
-  const primaryDataType = messages[0].type;
   const executedAndIdle = StatusTypeEnum.EXECUTED === status
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
@@ -188,7 +193,7 @@ function CodeOutput({
           hasError={hasError}
           selected={selected}
         >
-          {content}
+          {!collapsed && content}
         </ContainerStyle>
       )}
 
@@ -202,53 +207,76 @@ function CodeOutput({
         >
           <ExtraInfoBorderStyle />
 
-          <ExtraInfoContentStyle>
-            <FlexContainer
-              alignItems="center"
-              fullWidth
-              justifyContent="flex-end"
-            >
-              <Tooltip
-                appearAbove
-                appearBefore
-                block
-                label={runCount >= 1 && runStartTime
-                  ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
-                  : (
-                    hasError
-                      ? 'Block executed with errors'
-                      : 'Block executed successfully'
-                  )
-                }
-                size={null}
-                widthFitContent
+          <FlexContainer justifyContent="space-between">
+            <Flex alignItems="center" px={1}>
+              <Button
+                basic
+                iconOnly
+                noPadding
+                onClick={() => setCollapsed(!collapsed)}
               >
-                <FlexContainer alignItems="center">
-                  {runCount >= 1 && (
-                    <>
-                      <Text small>
-                        {(Number(runEndTime) - Number(runStartTime)) / 1000}s
-                      </Text>
+                {collapsed
+                  ? <ChevronDown muted size={UNIT * 2} />
+                  : <ChevronUp muted size={UNIT * 2} />
+                }
+              </Button>
 
-                      <Spacing mr={1} />
-                    </>
-                  )}
+              {collapsed && (
+                <Spacing ml={1}>
+                  <Text default>
+                    Expand output
+                  </Text>
+                </Spacing>
+              )}
+            </Flex>
+            <ExtraInfoContentStyle>
+              <FlexContainer
+                alignItems="center"
+                fullWidth
+                justifyContent="flex-end"
+              >
+                <Tooltip
+                  appearAbove
+                  appearBefore
+                  block
+                  label={runCount >= 1 && runStartTime
+                    ? `Last run at ${new Date(runStartTime.valueOf()).toLocaleString()}`
+                    : (
+                      hasError
+                        ? 'Block executed with errors'
+                        : 'Block executed successfully'
+                    )
+                  }
+                  size={null}
+                  widthFitContent
+                >
+                  <FlexContainer alignItems="center">
+                    {runCount >= 1 && (
+                      <>
+                        <Text small>
+                          {(Number(runEndTime) - Number(runStartTime)) / 1000}s
+                        </Text>
 
-                  {!hasError && <Check size={UNIT * 2} success />}
-                  {hasError && (
-                    <Circle
-                      danger
-                      size={UNIT * 2}
-                    >
-                      <Text bold monospace small>
-                        !
-                      </Text>
-                    </Circle>
-                  )}
-                </FlexContainer>
-              </Tooltip>
-            </FlexContainer>
-          </ExtraInfoContentStyle>
+                        <Spacing mr={1} />
+                      </>
+                    )}
+
+                    {!hasError && <Check size={UNIT * 2} success />}
+                    {hasError && (
+                      <Circle
+                        danger
+                        size={UNIT * 2}
+                      >
+                        <Text bold monospace small>
+                          !
+                        </Text>
+                      </Circle>
+                    )}
+                  </FlexContainer>
+                </Tooltip>
+              </FlexContainer>
+            </ExtraInfoContentStyle>
+          </FlexContainer>
         </ExtraInfoStyle>
       )}
     </>

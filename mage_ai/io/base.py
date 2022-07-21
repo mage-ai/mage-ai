@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from mage_ai.shared.logger import VerbosePrintHandler
 from pandas import DataFrame
-from typing import IO, Any, Callable, Mapping, Union
+from typing import IO, Any, Callable, Union
 import os
 import pandas as pd
 
@@ -31,14 +31,6 @@ class ExportWritePolicy(str, Enum):
     REPLACE = 'replace'
 
 
-FORMAT_TO_FUNCTION = {
-    FileFormat.CSV: pd.read_csv,
-    FileFormat.JSON: pd.read_json,
-    FileFormat.PARQUET: pd.read_parquet,
-    FileFormat.HDF5: pd.read_hdf,
-}
-
-
 class BaseIO(ABC):
     """
     Data loader interface. All data loaders must inherit from this interface.
@@ -62,11 +54,6 @@ class BaseIO(ABC):
             str: Modified query with limit on row count returned.
         """
         return f'SELECT * FROM ({query.strip(";")}) AS subquery LIMIT {limit};'
-
-    @classmethod
-    @abstractmethod
-    def with_config(cls, config: Mapping[str, Any]) -> None:
-        pass
 
     @abstractmethod
     def load(self, *args, **kwargs) -> DataFrame:
@@ -97,27 +84,65 @@ class BaseFile(BaseIO):
     filesystem or external file storages such as AWS S3)
     """
 
-    def __init__(
-        self, filepath: os.PathLike, format: Union[FileFormat, str] = None, verbose=False
-    ) -> None:
+    def _get_file_format(self, filepath):
+        return os.path.splitext(os.path.basename(filepath))[-1][1:]
+
+    def __get_reader(self, format: Union[FileFormat, str]) -> Callable:
         """
-        Initializes the file data loader
+        Gets data frame reader based on file format
 
         Args:
-            filepath (os.PathLike): Path to the file
-            format (FileFormat, optional): File format for the data being loaded. Defaults to None.
-        """
-        super().__init__(verbose=verbose)
-        parts = os.path.splitext(os.path.basename(filepath))
-        if format is None:
-            format = parts[-1][1:]
-        self.name = parts[0]
-        self.reader = FORMAT_TO_FUNCTION[format]
-        self.filepath = filepath
-        self.format = format
-        self.can_limit = self.format in (FileFormat.CSV, FileFormat.JSON)
+            format (Union[FileFormat, str]): Format to get reader for.
 
-    def _trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
+        Raises:
+            ValueError: Raised if invalid format specified.
+
+        Returns:
+            Callable: Returns the reader function that reads a dataframe from file
+        """
+        if format == FileFormat.CSV:
+            return pd.read_csv
+        elif format == FileFormat.JSON:
+            return pd.read_json
+        elif format == FileFormat.PARQUET:
+            return pd.read_parquet
+        elif format == FileFormat.HDF5:
+            return pd.read_hdf
+        else:
+            raise ValueError(f'Invalid format \'{format}\' specified.')
+
+    def _read(
+        self,
+        input: Union[IO, os.PathLike],
+        format: Union[FileFormat, str],
+        limit: int = QUERY_ROW_LIMIT,
+        **kwargs,
+    ) -> DataFrame:
+        """
+        Loads the data frame from the filepath or buffer specified. This function will load at
+        maximum 100,000 rows of data from the specified file.
+
+        Args:
+            input (Union[IO, os.PathLike]): Input buffer to read dataframe from.
+            Can be a stream or a filepath.
+            format (Union[FileFormat, str]): Format of the data frame as stored
+            in stream or filepath.
+            limit (int, optional): The number of rows to limit the loaded dataframe to.
+            Defaults to 100000.
+
+        Returns:
+            DataFrame: Data frame object loaded from the specified data frame.
+        """
+        reader = self.__get_reader(format)
+        can_limit = format == FileFormat.CSV
+        if can_limit:
+            kwargs['nrows'] = limit
+        df = reader(input, **kwargs)
+        if not can_limit:
+            df = self.__trim_df(df, limit)
+        return df
+
+    def __trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
         """
         Truncates data frame to `limit` rows
 
@@ -129,41 +154,61 @@ class BaseFile(BaseIO):
         """
         return df[:limit]
 
-    def _write(self, df: DataFrame, output: Union[IO, os.PathLike], **kwargs) -> None:
+    def _write(
+        self,
+        df: DataFrame,
+        format: Union[FileFormat, str],
+        output: Union[IO, os.PathLike],
+        **kwargs,
+    ) -> None:
         """
         Base method for writing a data frame to some buffer or file.
 
+        Two caveats if the format is HDF5:
+        - Data frames can only be written to files, not to buffers
+        - The default key under which the data frame is stored is the
+          stem of the filename. For example, if the file to write the HDF5 file
+          to is 'storage/my_dataframe.hdf5', the key would be 'my_dataframe'. This
+          can be overridden using the `key` keyword argument.
+
         Args:
             df (DataFrame): Data frame to write.
-            output (Union[IO, os.PathLike]): Output to write data frame to
-            (can be a filepath or a buffer in memory).
+            format (Union[FileFormat, str]): Format to write the data frame as.
+            output (Union[IO, os.PathLike]): Output stream/filepath to write data frame to.
         """
-        writer = self.__get_writer(df)
-        if self.format == FileFormat.HDF5:
-            kwargs.setdefault('key', self.name)
+        writer = self.__get_writer(df, format)
+        if format == FileFormat.HDF5:
+            if isinstance(output, IO):
+                raise ValueError('Cannot write HDF5 file to buffer of any type.')
+            name = os.path.splitext(os.path.basename(output))[0]
+            kwargs.setdefault('key', name)
         writer(output, **kwargs)
 
-    def __get_writer(self, df: DataFrame) -> Callable:
+    def __get_writer(
+        self,
+        df: DataFrame,
+        format: Union[FileFormat, str],
+    ) -> Callable:
         """
         Fetches the appropriate file writer based on format
 
         Args:
-            df (DataFrame): Data frame to get file writer for
+            df (DataFrame): Data frame to get file writer for.
+            format (Union[FileFormat, str]): Format to write the data frame as.
 
         Returns:
             Callable: File writer method
         """
-        if self.format == FileFormat.CSV:
-            writer = df.to_csv
-        elif self.format == FileFormat.JSON:
-            writer = df.to_json
-        elif self.format == FileFormat.PARQUET:
-            writer = df.to_parquet
-        elif self.format == FileFormat.HDF5:
-            writer = df.to_hdf
+        if format == FileFormat.CSV:
+            return df.to_csv
+        elif format == FileFormat.JSON:
+            return df.to_json
+        elif format == FileFormat.PARQUET:
+            return df.to_parquet
+        elif format == FileFormat.HDF5:
+            return df.to_hdf
         else:
             raise ValueError(f'Unexpected format provided: {self.format}')
-        return writer
 
     def __del__(self):
         if self.verbose and self.printer.exists_previous_message:

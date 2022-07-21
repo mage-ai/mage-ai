@@ -39,7 +39,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def remove_rows_with_missing_entries(df: DataFrame, *args) -> DataFrame:
+def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Transformer Action: Delete 3 rows to remove all missing values from the dataset.
     \"\"\"
@@ -83,7 +83,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data() -> DataFrame:
+def load_data(**kwargs) -> DataFrame:
     \"\"\"
     Template code for loading data from any source.
 
@@ -104,7 +104,7 @@ def load_data() -> DataFrame:
 
     def test_template_generation_data_loader_specific(self):
         redshift_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
 from pandas import DataFrame
 from os import path
@@ -114,7 +114,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_data_from_redshift() -> DataFrame:
+def load_data_from_redshift(**kwargs) -> DataFrame:
     \"\"\"
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
@@ -123,11 +123,11 @@ def load_data_from_redshift() -> DataFrame:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    with Redshift.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
 """
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
 from pandas import DataFrame
 from os import path
@@ -137,7 +137,7 @@ if 'data_loader' not in globals():
 
 
 @data_loader
-def load_from_s3_bucket() -> DataFrame:
+def load_from_s3_bucket(**kwargs) -> DataFrame:
     \"\"\"
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
@@ -145,7 +145,12 @@ def load_from_s3_bucket() -> DataFrame:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    return S3.with_config(IOConfig(config_path).use(config_profile)).load()
+    bucket_name = 'your_bucket_name'
+    object_key = 'your_object_key'
+
+    return S3.with_config(ConfigFileLoader(config_path, config_profile)).load(
+        bucket_name, object_key
+    )
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -163,7 +168,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame, *args) -> DataFrame:
+def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -199,7 +204,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_df(df: DataFrame, *args) -> DataFrame:
+def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Template code for a transformer block.
 
@@ -238,7 +243,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: clean_column_name
     \"\"\"
@@ -267,7 +272,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: custom
     \"\"\"
@@ -297,7 +302,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: reformat
     \"\"\"
@@ -327,7 +332,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def execute_transformer_action(df: DataFrame, *args) -> DataFrame:
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: add
     \"\"\"
@@ -356,7 +361,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data(df: DataFrame) -> None:
+def export_data(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Exports data to some source
 
@@ -377,7 +382,7 @@ def export_data(df: DataFrame) -> None:
     def test_template_generation_data_exporter_specific(self):
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.bigquery import BigQuery
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from pandas import DataFrame
 from os import path
 
@@ -386,7 +391,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data_to_big_query(df: DataFrame) -> None:
+def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
@@ -395,14 +400,14 @@ def export_data_to_big_query(df: DataFrame) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    BigQuery.with_config(IOConfig(config_path).use(config_profile)).export(
+    BigQuery.with_config(ConfigFileLoader(config_path, config_profile)).export(
         df,
         table_id,
         if_exists='replace',  # Specify resolution policy if table name already exists
     )
 """
         snowflake_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.snowflake import Snowflake
 from pandas import DataFrame
 from os import path
@@ -412,7 +417,7 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data_to_snowflake(df: DataFrame) -> None:
+def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     \"\"\"
     Template for exporting data to a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
@@ -423,7 +428,7 @@ def export_data_to_snowflake(df: DataFrame) -> None:
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
-    with Snowflake.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.export(
             df,
             table_name,
@@ -452,7 +457,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_in_postgres(*args) -> DataFrame:
+def transform_in_postgres(*args, **kwargs) -> DataFrame:
     \"\"\"
     Performs a transformation in Postgres
     \"\"\"
@@ -485,7 +490,7 @@ if 'transformer' not in globals():
 
 
 @transformer
-def transform_in_bigquery(*args) -> DataFrame:
+def transform_in_bigquery(*args, **kwargs) -> DataFrame:
     \"\"\"
     Performs a transformation in BigQuery
     \"\"\"

@@ -1,9 +1,8 @@
 from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
-from typing import Any, Mapping
 
 DEFAULT_LOGIN_TIMEOUT = 20
 DEFAULT_NETWORK_TIMEOUT = 20
@@ -134,10 +133,19 @@ class Snowflake(BaseSQLConnection):
             )
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'Snowflake':
-        try:
-            return cls(**config[IOConfigKeys.SNOWFLAKE])
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for \'{IOConfigKeys.SNOWFLAKE}\' under profile'
-            )
+    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Snowflake':
+        """
+        Initializes Snowflake client from configuration loader.
+
+        Args:
+            config (BaseConfigLoader): Configuration loader object
+        """
+        return cls(
+            user=config[ConfigKey.SNOWFLAKE_USER],
+            password=config[ConfigKey.SNOWFLAKE_PASSWORD],
+            account=config[ConfigKey.SNOWFLAKE_ACCOUNT],
+            warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
+            database=config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
+            schema=config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
+            **kwargs,
+        )

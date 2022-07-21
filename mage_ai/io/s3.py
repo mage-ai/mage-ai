@@ -1,11 +1,11 @@
+from contextlib import contextmanager
 from io import BytesIO
-from typing import Mapping
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.io_config import IOConfigKeys
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from pathlib import Path
-from typing import Any, Mapping
 import boto3
+import os
 
 
 class S3(BaseFile):
@@ -16,37 +16,35 @@ class S3(BaseFile):
     - ".json"
     - ".parquet"
     - ".hdf5"
+
+    If profile is stored on file (in `~/.aws`), no further arguments are needed other than those
+    specified below. Otherwise, use the factory method `with_credentials` to construct
+    the data loader using manually specified credentials.
     """
 
     def __init__(
         self,
-        bucket_name: str,
-        object_key: str,
-        format: FileFormat = None,
+        verbose=False,
         **kwargs,
     ) -> None:
         """
-        Initializes data loader from an S3 bucket. If profile is stored on
+        Initializes data loader from an S3 bucket. If IAM profile is stored on
         file (in `~/.aws`), no further arguments are needed other than those
-        specified below. Otherwise, use the factory method `with_credentials` to construct
-        the data loader using manually specified credentials.
-
-        Args:
-            bucket_name (str): Bucket to load resource from
-            object_key (str): Object key of resource to load
-            format (FileFormat, optional): File format of object. Defaults to None, in which
-            case the format is inferred.
-            **kwargs: all other keyword arguments to pass to the client
+        specified below. Otherwise, specify:
+        - `aws_access_key_id` - AWS IAM access key ID
+        - `aws_secret_access_key` - AWS IAM secret access key
+        - `region_name` - name of AWS Region associated with profile
         """
-        super().__init__(object_key, format)
-        self.bucket_name = bucket_name
+        super().__init__(verbose=verbose)
         self.client = boto3.client('s3', **kwargs)
 
     def load(
         self,
-        read_config: Mapping = None,
-        import_config: Mapping = None,
+        bucket_name: str,
+        object_key: str,
+        format: FileFormat = None,
         limit: int = QUERY_ROW_LIMIT,
+        **kwargs,
     ) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame. This function will load at
@@ -62,27 +60,25 @@ class S3(BaseFile):
         Returns:
             DataFrame: The data frame constructed from the file in the S3 bucket.
         """
-
-        if read_config is None:
-            read_config = {}
-        if import_config is None:
-            import_config = {}
-        if self.can_limit:
-            read_config['nrows'] = limit
+        if format is None:
+            format = self._get_file_format(object_key)
         with self.printer.print_msg(
-            f'Loading data frame from bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
+            f'Loading data frame from bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
-            response = self.client.get_object(
-                Bucket=self.bucket_name, Key=self.filepath, **import_config
-            )
+            response = self.client.get_object(Bucket=bucket_name, Key=object_key)
+        if format == FileFormat.HDF5:
+            name = os.path.splitext(os.path.basename(object_key))[0]
+            with self.open_temporary_directory() as temp_dir:
+                obj_loc = temp_dir / f'{name}.hdf5'
+                with obj_loc.open('wb') as fin:
+                    fin.write(response['Body'].read())
+                return self._read(obj_loc, format, limit, **kwargs)
+        else:
             buffer = BytesIO(response['Body'].read())
-        df = self.reader(buffer, **read_config)
-        if not self.can_limit:
-            df = self._trim_df(df, limit)
-        return df
+            return self._read(buffer, format, limit, **kwargs)
 
     def export(
-        self, df: DataFrame, write_config: Mapping = None, export_config: Mapping = None
+        self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
     ) -> None:
         """
         Exports data frame to an S3 bucket.
@@ -94,84 +90,53 @@ class S3(BaseFile):
             export_config (Mapping, optional): Configuration settings for exporting data frame
             to S3. Defaults to None.
         """
-        if write_config is None:
-            write_config = {}
-        if export_config is None:
-            export_config = {}
+        if format is None:
+            format = self._get_file_format(object_key)
 
         with self.printer.print_msg(
-            f'Exporting data frame to bucket \'{self.bucket_name}\' at key \'{self.filepath}\''
+            f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
-            if self.format == FileFormat.HDF5:
-                temp_dir = Path.cwd() / '.tmp'
-                temp_dir.mkdir(parents=True, exist_ok=True)
-                obj_loc = temp_dir / f'{self.name}.hdf5'
-
-                self._write(df, obj_loc, **write_config)
-                with obj_loc.open('rb') as fin:
-                    self.client.put_object(
-                        Body=fin, Bucket=self.bucket_name, Key=self.filepath, **export_config
-                    )
-
-                obj_loc.unlink()
-                temp_dir.rmdir()
+            if format == FileFormat.HDF5:
+                name = os.path.splitext(os.path.basename(object_key))[0]
+                with self.open_temporary_directory() as temp_dir:
+                    obj_loc = temp_dir / f'{name}.hdf5'
+                    self._write(df, format, obj_loc, **kwargs)
+                    with obj_loc.open('rb') as fin:
+                        self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
             else:
                 buffer = BytesIO()
-                self._write(df, buffer, **write_config)
+                self._write(df, format, buffer, **kwargs)
                 buffer.seek(0)
-                self.client.put_object(
-                    Body=buffer, Bucket=self.bucket_name, Key=self.filepath, **export_config
-                )
+                self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+
+    @contextmanager
+    def open_temporary_directory(self):
+        temp_dir = Path.cwd() / '.tmp'
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        yield temp_dir
+        for file in temp_dir.iterdir():
+            file.unlink()
+        temp_dir.rmdir()
 
     @classmethod
-    def with_config(cls, config: Mapping[str, Any]) -> 'S3':
-        try:
-            aws_config = config[IOConfigKeys.AWS]
-            s3_config = aws_config[IOConfigKeys.S3]
-        except KeyError:
-            raise KeyError(
-                f'No configuration settings found for '
-                f'\'{IOConfigKeys.AWS}.{IOConfigKeys.S3}\' under profile'
-            )
-        credentials = ['access_key_id', 'secret_access_key', 'region']
-        parameters = ['aws_access_key_id', 'aws_secret_access_key', 'region_name']
-        for credential, parameter in zip(credentials, parameters):
-            if credential in aws_config:
-                s3_config[parameter] = aws_config[credential]
-        return cls(**s3_config)
-
-    @classmethod
-    def with_credentials(
+    def with_config(
         cls,
-        bucket_name: str,
-        object_key: str,
-        access_key_id: str,
-        secret_access_key: str,
-        region: str,
-        format: FileFormat = None,
+        config: BaseConfigLoader,
+        **kwargs,
     ) -> 'S3':
         """
-        Initializes data loader from an S3 bucket using manually specified credentials.
-        If credentials are stored on file under `~/.aws/`, do not use this
-        factory method, the default constructor will automatically load the credentials.
+        Initializes S3 client from configuration loader. This client accepts the following AWS
+        IAM credential secrets:
+        - Access Key ID
+        - Secret Access Key
+        - Region Name
 
         Args:
-            bucket_name (str): Bucket to load resource from
-            object_key (str): Object key of resource to load
-            format (FileFormat, optional): File format of object. Defaults to None,
-            in which case the format is inferred.
-            access_key_id (str, optional): AWS Access Key ID credential. Specify if IAM
-            credentials are not configured. Defaults to None.
-            secret_access_key (str, optional): AWS Secret Access Key credential. Specify
-            if IAM credentials are not configured. Defaults to None.
-            region (str, optional): AWS Region. Specify if IAM credentials are not configured.
-            Defaults to None.
+            config (BaseConfigLoader): Configuration loader object
         """
         return cls(
-            bucket_name=bucket_name,
-            object_key=object_key,
-            format=format,
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            region_name=region,
+            aws_access_key_id=config[ConfigKey.AWS_ACCESS_KEY_ID],
+            aws_secret_access_key=config[ConfigKey.AWS_SECRET_ACCESS_KEY],
+            region_name=config[ConfigKey.AWS_REGION],
+            **kwargs,
         )
