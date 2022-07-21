@@ -1,4 +1,4 @@
-from typing import Callable, List, Set
+from typing import Callable
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
@@ -247,7 +247,9 @@ class Pipeline:
                                     block.configuration = block_data['configuration']
 
                                 if block_data.get('upstream_blocks'):
-                                    block.update(dict(upstream_blocks=block_data['upstream_blocks']))
+                                    block.update(
+                                        dict(upstream_blocks=block_data['upstream_blocks'])
+                                    )
 
                                 self.save()
 
@@ -356,7 +358,12 @@ class Pipeline:
         return block
 
     def delete(self):
-        pass
+        for block_uuid in list(self.blocks_by_uuid.keys()):
+            block = self.blocks_by_uuid[block_uuid]
+            if block.type == BlockType.SCRATCHPAD:
+                self.delete_block(block)
+                os.remove(block.file_path)
+        shutil.rmtree(self.dir_path)
 
     def delete_block(self, block, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

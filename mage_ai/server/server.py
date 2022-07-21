@@ -84,6 +84,12 @@ class ApiFileContentHandler(BaseHandler):
 
 
 class ApiPipelineHandler(BaseHandler):
+    def delete(self, pipeline_uuid):
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        response = dict(pipeline=pipeline.to_dict())
+        pipeline.delete()
+        self.write(response)
+
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         include_content = self.get_bool_argument('include_content', True)
@@ -98,6 +104,9 @@ class ApiPipelineHandler(BaseHandler):
             )
         )
         self.finish()
+
+    def post(self, pipeline_uuid):
+        pass
 
     def put(self, pipeline_uuid):
         """
