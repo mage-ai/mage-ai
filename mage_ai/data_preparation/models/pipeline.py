@@ -59,6 +59,35 @@ class Pipeline:
         return Pipeline(uuid, repo_path)
 
     @classmethod
+    def duplicate(cls, source_pipeline: "Pipeline", duplicate_pipeline_name: str):
+        duplicate_pipeline = cls.create(duplicate_pipeline_name, source_pipeline.repo_path)
+        # first pass to load blocks
+        for block_uuid in source_pipeline.blocks_by_uuid:
+            source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
+            duplicate_pipeline.add_block(new_block)
+        # second pass to make connections
+        for block_uuid in source_pipeline.blocks_by_uuid:
+            source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
+            duplicate_block.upstream_blocks = source_block.upstream_blocks
+            duplicate_block.downstream_blocks = source_block.downstream_blocks
+        # Add widgets
+        for widget_uuid in source_pipeline.widgets_by_uuid:
+            source_widget = source_pipeline.widgets_by_uuid[widget_uuid]
+            new_widget = Widget.get_block(
+                source_widget.name,
+                source_widget.uuid,
+                source_widget.type,
+                configuration=source_widget.configuration,
+            )
+            duplicate_pipeline.widgets_by_uuid = duplicate_pipeline.__add_block_to_mapping(
+                duplicate_pipeline.widgets_by_uuid, new_widget, source_widget.upstream_blocks
+            )
+        duplicate_pipeline.save()
+        return duplicate_pipeline
+
+    @classmethod
     def get_all_pipelines(self, repo_path):
         pipelines_folder = os.path.join(repo_path, PIPELINES_FOLDER)
         if not os.path.exists(pipelines_folder):

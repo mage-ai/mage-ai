@@ -105,9 +105,6 @@ class ApiPipelineHandler(BaseHandler):
         )
         self.finish()
 
-    def post(self, pipeline_uuid):
-        pass
-
     def put(self, pipeline_uuid):
         """
         Allow updating pipeline name and uuid
@@ -154,6 +151,14 @@ class ApiPipelineListHandler(BaseHandler):
         self.finish()
 
     def post(self):
+        pipeline = json.loads(self.request.body).get('pipeline', {})
+        clone_pipeline_uuid = pipeline.get('clone_pipeline_uuid')
+        duplicate_name = pipeline.get('name')
+        source = Pipeline(clone_pipeline_uuid, get_repo_path())
+        duplicate = Pipeline.duplicate(source, duplicate_name)
+        self.write(dict(pipeline=duplicate.to_dict()))
+
+    def put(self):
         data = json.loads(self.request.body)
         name = data.get('pipeline', {}).get('name')
         pipeline = Pipeline.create(name, get_repo_path())

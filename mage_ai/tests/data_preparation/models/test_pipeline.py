@@ -282,7 +282,7 @@ class PipelineTest(TestCase):
             ),
         )
 
-    def test_delete_pipeline(self):
+    def test_delete(self):
         pipeline = Pipeline.create('test pipeline 4', self.repo_path)
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
         block2 = self.__create_dummy_transformer_block('block2', pipeline)
@@ -301,6 +301,28 @@ class PipelineTest(TestCase):
         self.assertTrue(os.access(block3.file_path, os.F_OK))
         self.assertFalse(os.access(block4.file_path, os.F_OK))
         self.assertFalse(os.access(block5.file_path, os.F_OK))
+
+    def test_duplicate(self):
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 4')
+        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate pipeline')
+        for block_uuid in pipeline.blocks_by_uuid:
+            original = pipeline.blocks_by_uuid[block_uuid]
+            duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
+            print(original.type)
+            self.assertEqual(original.name, duplicate.name)
+            self.assertEqual(original.uuid, duplicate.uuid)
+            self.assertEqual(original.type, duplicate.type)
+            self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+            self.assertEqual(original.downstream_block_uuids, duplicate.downstream_block_uuids)
+        for widget_uuid in pipeline.widgets_by_uuid:
+            original = pipeline.widgets_by_uuid[widget_uuid]
+            duplicate = duplicate_pipeline.widgets_by_uuid[widget_uuid]
+            print(original.type)
+            self.assertEqual(original.name, duplicate.name)
+            self.assertEqual(original.uuid, duplicate.uuid)
+            self.assertEqual(original.type, duplicate.type)
+            self.assertEqual(original.chart_type, duplicate.chart_type)
+            self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(name, self.repo_path)
