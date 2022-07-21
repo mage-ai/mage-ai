@@ -94,6 +94,24 @@ class Widget(Block):
                     values,
                     int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
                 )
+        elif ChartType.PIE_CHART == self.chart_type:
+            for var_name in self.output_variable_names:
+                values = [v for v in variables[var_name] if v is not None]
+                value_counts = {}
+                for key in values:
+                    if not value_counts.get(key):
+                        value_counts[key] = 0
+                    value_counts[key] += 1
+
+                buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+                arr = sorted(
+                    list(zip(value_counts.values(), value_counts.keys())),
+                    reverse=True,
+                )[:buckets]
+                value_counts_top = {k: v for v, k in arr}
+                variables = {
+                    var_name: value_counts_top
+                }
 
         return variables
 

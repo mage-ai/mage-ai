@@ -71,12 +71,12 @@ export interface BlockRequestPayloadType {
 
 export enum ChartTypeEnum {
   HISTOGRAM = 'histogram',
-  // PIE_CHART = 'pie chart',
+  PIE_CHART = 'pie chart',
 }
 
 export const CHART_TYPES = [
   ChartTypeEnum.HISTOGRAM,
-  // ChartTypeEnum.PIE_CHART,
+  ChartTypeEnum.PIE_CHART,
 ];
 
 export interface ConfigurationType {

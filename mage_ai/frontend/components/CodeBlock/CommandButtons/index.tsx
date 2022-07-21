@@ -1,7 +1,10 @@
-import { useContext, useRef, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BlockTypeEnum,
+  CHART_TYPES,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -13,6 +16,7 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
+import { DEFAULT_SETTINGS_BY_CHART_TYPE } from '@components/ChartBlock/constants';
 import { ContainerStyle } from './index.style';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
@@ -30,9 +34,12 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '../index.style';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 export type CommandButtonsSharedProps = {
-  addWidget: (widget: BlockType) => Promise<any>;
+  addWidget: (widget: BlockType, opts?: {
+    onCreateCallback?: (block: BlockType) => void;
+  }) => Promise<any>;
   deleteBlock: (block: BlockType) => void;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
@@ -40,7 +47,11 @@ export type CommandButtonsSharedProps = {
 
 type CommandButtonsProps = {
   block: BlockType;
-  runBlock: (payload?: { code?: string, runUpstream?: boolean }) => void;
+  runBlock: (payload: {
+    block: BlockType;
+    code?: string;
+    runUpstream?: boolean;
+  }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -56,14 +67,50 @@ function CommandButtons({
     type,
     uuid,
   } = block;
-  const refExecuteActions = useRef(null)
-  const refMoreActions = useRef(null)
+  const refAddChart = useRef(null);
+  const refExecuteActions = useRef(null);
+  const refMoreActions = useRef(null);
 
-  const [showExecuteActions, setShowExecuteActions] = useState<boolean>(false)
-  const [showMoreActions, setShowMoreActions] = useState<boolean>(false)
+  const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
+  const [showExecuteActions, setShowExecuteActions] = useState<boolean>(false);
+  const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
+
+  const chartMenuItems = useMemo(() => CHART_TYPES.map((chartType: string) => {
+    const widget = {
+      configuration: {
+        chart_type: chartType,
+      },
+      type: BlockTypeEnum.CHART,
+      upstream_blocks: [block.uuid],
+    };
+    const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
+    const configuration = defaultSettings?.configuration(widget) || {};
+    const content = defaultSettings?.content(widget) || null;
+
+    return {
+      label: () => capitalizeRemoveUnderscoreLower(chartType),
+      onClick: () => addWidget({
+        ...widget,
+        configuration: {
+          ...widget.configuration,
+          ...configuration,
+        },
+        content,
+      }, {
+        onCreateCallback: (widget: BlockType) => runBlock({
+          block: widget,
+          code: content,
+        }),
+      }),
+      uuid: chartType,
+    };
+  }), [
+    CHART_TYPES,
+    runBlock,
+  ]);
 
   return (
     <ContainerStyle>
@@ -111,9 +158,9 @@ function CommandButtons({
                 noPadding
                 onClick={() => {
                   if (upstreamBlocksExecuted) {
-                    runBlock()
+                    runBlock({ block });
                   } else {
-                    setShowExecuteActions(true)
+                    setShowExecuteActions(true);
                   }
                 }}
               >
@@ -138,12 +185,12 @@ function CommandButtons({
                   [
                     {
                       label: () => 'Execute block',
-                      onClick: () => runBlock(),
+                      onClick: () => runBlock({ block }),
                       uuid: 'execute_block',
                     },
                     {
                       label: () => `Execute with upstream blocks`,
-                      onClick: () => runBlock({ runUpstream: true }),
+                      onClick: () => runBlock({ block, runUpstream: true }),
                       uuid: 'execute_upstream',
                     },
                   ]
@@ -164,27 +211,46 @@ function CommandButtons({
           BlockTypeEnum.DATA_LOADER,
           BlockTypeEnum.TRANSFORMER,
         ].includes(block.type) && (
-          <Spacing mt={PADDING_UNITS}>
-            <Tooltip
-              appearBefore
-              default
-              label="Add chart"
-              size={UNIT * 2.25}
-              widthFitContent
+          <>
+            <Spacing
+              mt={PADDING_UNITS}
+              ref={refAddChart}
             >
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => addWidget({
-                  type: BlockTypeEnum.CHART,
-                  upstream_blocks: [block.uuid],
-                })}
+              <Tooltip
+                appearBefore
+                default
+                label="Add chart"
+                size={UNIT * 2.25}
+                widthFitContent
               >
-                <NavGraph size={UNIT * 2.25} />
-              </Button>
-            </Tooltip>
-          </Spacing>
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowAddCharts(true)}
+                >
+                  <NavGraph size={UNIT * 2.25} />
+                </Button>
+              </Tooltip>
+            </Spacing>
+
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowAddCharts(false)}
+              open={showAddCharts}
+            >
+              <FlyoutMenu
+                items={chartMenuItems}
+                left={-UNIT * 25}
+                onClickCallback={() => setShowAddCharts(false)}
+                open={showAddCharts}
+                parentRef={refAddChart}
+                topOffset={UNIT * 6}
+                uuid="CommandButtons/add_charts"
+                width={UNIT * 25}
+              />
+            </ClickOutside>
+          </>
         )}
 
         <Spacing mt={PADDING_UNITS}>
@@ -295,7 +361,7 @@ function CommandButtons({
               [
                 {
                   label: () => `Execute with upstream blocks`,
-                  onClick: () => runBlock({ runUpstream: true }),
+                  onClick: () => runBlock({ block, runUpstream: true }),
                   uuid: 'execute_upstream',
                 },
               ]

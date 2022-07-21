@@ -196,10 +196,10 @@ export default function PieChartContainer({
     height?: number;
     width?: number;
   } = {};
-  if (heightProp) {
+  if (typeof heightProp !== 'undefined') {
     style.height = heightProp;
   }
-  if (widthProp) {
+  if (typeof widthProp !== 'undefined') {
     style.width = widthProp;
   }
 

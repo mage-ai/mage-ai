@@ -2,8 +2,9 @@
 
 1. [Set up development environment](#set-up-development-environment)
 1. [Debugging](#debugging)
+1. [Guides](#guides)
 
-### Set up development environment
+## Set up development environment
 
 First, create a new project:
 
@@ -17,7 +18,7 @@ Run the below script to build the Docker image and run all the services:
 $ ./scripts/dev.sh [project]
 ```
 
-### Debugging
+## Debugging
 
 Instead of using `breakpoint()`, add the following line to your code where you
 want a debug:
@@ -39,3 +40,7 @@ Code for the web server is in `mage_ai/server/`.
 ### Front-end app
 
 Code for the front-end app is in `mage_ai/frontend/`.
+
+## Guides
+
+1. [How to add a new chart type](./how_to_add.md)

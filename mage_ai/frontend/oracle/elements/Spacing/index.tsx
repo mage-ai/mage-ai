@@ -29,15 +29,16 @@ function Spacing({
   children,
   inline,
   ...props
-}: SpacingProps) {
+}: SpacingProps, ref) {
   return (
     <SpacingStyle
       {...props}
       inline={inline}
+      ref={ref}
     >
       {children}
     </SpacingStyle>
   );
 }
 
-export default Spacing;
+export default React.forwardRef(Spacing);

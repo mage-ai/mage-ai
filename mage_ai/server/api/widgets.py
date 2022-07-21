@@ -61,4 +61,11 @@ class ApiPipelineWidgetListHandler(BaseHandler):
             upstream_block_uuids=payload.get('upstream_blocks', []),
         )
 
+        if payload.get('content'):
+            resource.update_content(payload['content'], widget=True)
+
+        if payload.get('configuration'):
+            resource.configuration = payload['configuration']
+            pipeline.save()
+
         self.write(dict(widget=resource.to_dict(include_content=True)))
