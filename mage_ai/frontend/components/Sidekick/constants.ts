@@ -34,7 +34,7 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.TREE, label: 'Tree' },
   { key: ViewKeyEnum.CHARTS, label: 'Charts' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
-  // { key: ViewKeyEnum.DATA, label: 'Data' },
+  { key: ViewKeyEnum.DATA, label: 'Data' },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];

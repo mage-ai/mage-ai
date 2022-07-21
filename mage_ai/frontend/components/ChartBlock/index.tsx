@@ -277,13 +277,13 @@ function ChartBlock({
   const variablesMustDefine = useMemo(() => {
     const arr = [];
 
-    const vars = configurationOptions.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
+    const vars = configurationOptions?.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
       ? acc.concat(uuid)
       : acc
     , []);
-    const varsCount = vars.length;
+    const varsCount = vars?.length;
 
-    vars.forEach((varName: string, idx: number) => {
+    vars?.forEach((varName: string, idx: number) => {
       const varNameValue = configuration[varName];
       if (varNameValue) {
         const info = VARIABLE_INFO_BY_CHART_TYPE[chartType]?.[varName]?.();
