@@ -66,15 +66,20 @@ function ChartController({
       />
     );
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
-    return (
-      <PieChart
-        data={Object.entries(data[configuration[VARIABLE_NAME_X]])}
-        getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
-        getY={([, value]) => value}
-        height={CHART_HEIGHT_DEFAULT}
-        width={width}
-      />
-    );
+    const varName = String(configuration[VARIABLE_NAME_X]);
+    const chartData = data[varName];
+
+    if (chartData) {
+      return (
+        <PieChart
+          data={Object.entries(chartData)}
+          getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
+          getY={([, value]) => value}
+          height={CHART_HEIGHT_DEFAULT}
+          width={width}
+        />
+      );
+    }
   }
 
   return (
