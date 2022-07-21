@@ -20,6 +20,18 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       uuid: VARIABLE_NAME_X,
     },
   ],
+  [ChartTypeEnum.PIE_CHART]: [
+    {
+      label: () => 'Number of slices',
+      type: 'number',
+      uuid: VARIABLE_NAME_BUCKETS,
+    },
+    {
+      label: () => 'variable name of values',
+      monospace: true,
+      uuid: VARIABLE_NAME_X,
+    },
+  ],
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -39,10 +51,26 @@ x = ${uuid}[col]
 `;
     },
   },
+  [ChartTypeEnum.PIE_CHART]: {
+    configuration: () => ({
+      [VARIABLE_NAME_BUCKETS]: 7,
+      [VARIABLE_NAME_X]: 'x',
+    }),
+    content: ({
+      upstream_blocks: upstreamBlocks = [],
+    }: BlockType) => {
+      const uuid = upstreamBlocks[0];
+
+      return `x = ${uuid}[${uuid}.columns[0]]`;
+    },
+  },
 };
 
 export const VARIABLE_INFO_BY_CHART_TYPE = {
   [ChartTypeEnum.HISTOGRAM]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
+  },
+  [ChartTypeEnum.PIE_CHART]: {
+    [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
   },
 };

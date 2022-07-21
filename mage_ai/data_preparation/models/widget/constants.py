@@ -13,4 +13,7 @@ VARIABLE_NAMES_BY_CHART_TYPE = {
   ChartType.HISTOGRAM: [
     VARIABLE_NAME_X,
   ],
+  ChartType.PIE_CHART: [
+    VARIABLE_NAME_X,
+  ],
 }
