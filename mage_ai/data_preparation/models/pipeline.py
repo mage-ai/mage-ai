@@ -278,7 +278,7 @@ class Pipeline:
             self.widgets_by_uuid = self.__add_block_to_mapping(
                 self.widgets_by_uuid,
                 block,
-                upstream_blocks=self.get_blocks(upstream_block_uuids),
+                upstream_blocks=self.get_blocks(upstream_block_uuids, widget=widget),
                 priority=priority,
             )
         else:
@@ -334,7 +334,7 @@ class Pipeline:
         else:
             self.blocks_by_uuid[block.uuid] = block
 
-        self.save(**save_kwargs)
+        self.save(**save_kwargs, widget=widget)
 
         return block
 
@@ -385,10 +385,14 @@ class Pipeline:
         self.save()
         return block
 
-    def save(self, block_uuid: str = None):
+    def save(self, block_uuid: str = None, widget: bool = False):
         if block_uuid is not None:
             current_pipeline = Pipeline(self.uuid, self.repo_path)
-            current_pipeline.blocks_by_uuid[block_uuid] = self.get_block(block_uuid)
+            block = self.get_block(block_uuid, widget=widget)
+            if widget:
+                current_pipeline.widgets_by_uuid[block_uuid] = block
+            else:
+                current_pipeline.blocks_by_uuid[block_uuid] = block
             pipeline_dict = current_pipeline.to_dict()
         else:
             pipeline_dict = self.to_dict()
