@@ -63,7 +63,7 @@ class Variable:
         else:
             self.__write_json(data)
 
-    def read_data(self, sample: bool = False, sample_count: int = None) -> Any:
+    def read_data(self, sample: bool = False, sample_count: int = None, spark=None) -> Any:
         if self.variable_type is None and os.path.exists(
             os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
         ):
@@ -73,7 +73,7 @@ class Variable:
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
-            return self.__read_spark_parquet(sample=sample, sample_count=sample_count)
+            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
@@ -134,7 +134,9 @@ class Variable:
                 df = df.iloc[:sample_count]
         return df
 
-    def __read_spark_parquet(self, sample: bool = False, sample_count: int = None):
+    def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
+        if spark is None:
+            return None
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         return (
             spark.read

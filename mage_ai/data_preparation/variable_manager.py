@@ -57,6 +57,7 @@ class VariableManager:
         variable_type: VariableType = None,
         sample: bool = False,
         sample_count: int = None,
+        spark=None,
     ) -> Any:
         if variable_type == VariableType.DATAFRAME and 'spark' in globals():
             variable_type = VariableType.SPARK_DATAFRAME
@@ -66,7 +67,7 @@ class VariableManager:
             block_uuid,
             variable_type=variable_type,
         )
-        return variable.read_data(sample=sample, sample_count=sample_count)
+        return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)

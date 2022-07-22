@@ -437,6 +437,7 @@ class Block:
                         upstream_block_uuid,
                         var,
                         variable_type=VariableType.DATAFRAME,
+                        spark=(global_vars or dict()).get('spark'),
                     )
                     for var in variables
                 ]
