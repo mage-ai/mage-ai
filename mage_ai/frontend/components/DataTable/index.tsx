@@ -235,7 +235,7 @@ function Table({
       let maxLength = String(data?.length).length * WIDTH_OF_CHARACTER;
 
       if (shouldUseIndexProp) {
-        const charLengths = indexProp.map((i: number | number[] | string | number[]) => {
+        const charLengths = indexProp.map((i: number | number[] | string | string[]) => {
           let charLength;
           if (numberOfIndexes >= 2) {
             return String(i[idx]).length;

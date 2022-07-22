@@ -85,7 +85,6 @@ function CodeOutput({
         // Remove border 2px and padding from each side
         width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
       />
-      {console.log(index)}
       {shape && (
         <Spacing ml={1} my={1}>
           <Text>
