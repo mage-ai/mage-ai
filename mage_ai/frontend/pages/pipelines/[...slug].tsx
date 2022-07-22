@@ -865,12 +865,14 @@ function PipelineDetailPage({
     block: BlockType;
     code: string;
     ignoreAlreadyRunning?: boolean;
+    runDownstream?: boolean;
     runUpstream?: boolean;
   }) => {
     const {
       block,
       code,
       ignoreAlreadyRunning,
+      runDownstream = false,
       runUpstream = false,
     } = payload;
 
@@ -884,6 +886,7 @@ function PipelineDetailPage({
           pipeline_uuid: pipeline?.uuid,
           type: block.type,
           uuid,
+          run_downstream: runDownstream,
           run_upstream: runUpstream
         }));
 
@@ -1035,6 +1038,7 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
+      widgets={widgets}
     />
   ), [
     addNewBlockAtIndex,
@@ -1066,6 +1070,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
+    widgets,
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus

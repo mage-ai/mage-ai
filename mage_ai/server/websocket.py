@@ -50,6 +50,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
 
+        run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
 
         if execute_pipeline:
@@ -107,6 +108,15 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
             WebSocketServer.running_executions_mapping[msg_id] = value
+
+            if run_downstream:
+                for block in block.downstream_blocks:
+                    self.on_message(json.dumps(dict(
+                        code=block.file.content(),
+                        pipeline_uuid=pipeline_uuid,
+                        type=block.type,
+                        uuid=block.uuid,
+                    )))
         elif output:
             self.send_message(output)
 

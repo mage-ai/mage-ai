@@ -80,6 +80,7 @@ type PipelineDetailProps = {
   setSelectedBlock: (block: BlockType) => void;
   setTextareaFocused: (value: boolean) => void;
   textareaFocused: boolean;
+  widgets: BlockType[];
 } & SetEditingBlockType & SetMessagesType;
 
 function PipelineDetail({
@@ -112,6 +113,7 @@ function PipelineDetail({
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
+  widgets,
 }: PipelineDetailProps) {
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
@@ -319,6 +321,7 @@ function PipelineDetail({
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={selected && textareaFocused}
+              widgets={widgets}
             />
           );
         })}

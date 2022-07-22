@@ -146,7 +146,11 @@ function ChartBlock({
   ]);
 
   let chartData;
-  let chartDataRaw = messagesWithType?.[0]?.data?.[0];
+  let chartDataRaw;
+  if (messagesWithType?.length) {
+    const messagesIndex = messagesWithType.length - 1;
+    chartDataRaw = messagesWithType?.[messagesIndex]?.data?.[0];
+  }
   if (chartDataRaw) {
     chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
     if (isJsonString(chartDataRaw)) {
