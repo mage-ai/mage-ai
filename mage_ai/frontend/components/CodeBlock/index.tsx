@@ -150,16 +150,22 @@ function CodeBlockProps({
     widgets,
   ]);
   const runBlockAndTrack = useCallback(
-    (payload?: { block: BlockType, code?: string, runUpstream?: boolean }) => {
+    (payload?: {
+      block: BlockType;
+      code?: string;
+      runDownstream?: boolean;
+      runUpstream?: boolean;
+    }) => {
       const {
         block: blockPayload,
         code,
+        runDownstream,
         runUpstream,
       } = payload || {};
       runBlock({
         block: blockPayload,
         code: code || content,
-        runDownstream: hasDownstreamWidgets,
+        runDownstream: runDownstream || hasDownstreamWidgets,
         runUpstream: runUpstream || false,
       });
       setRunCount(1 + Number(runCount));
