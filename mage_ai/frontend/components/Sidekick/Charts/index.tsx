@@ -4,6 +4,8 @@ import BlockType from '@interfaces/BlockType';
 import ChartBlock, { ChartPropsShared } from '@components/ChartBlock';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
+import Row from '@components/shared/Grid/Row';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ChartsPropsShared = {
   fetchWidgets: () => void;
@@ -53,41 +55,48 @@ function Charts({
       flexDirection="column"
       fullWidth
     >
-      {widgets?.map((block: BlockType) => {
-        const {
-          uuid,
-        } = block;
-        const runningBlock = runningBlocksByUUID[uuid];
-        const executionState = runningBlock
-          ? (runningBlock.priority === 0
-            ? ExecutionStateEnum.BUSY
-            : ExecutionStateEnum.QUEUED
-           )
-          : ExecutionStateEnum.IDLE;
+      <Row
+        fullHeight
+        style={{
+          marginLeft: UNIT * 0.5,
+          marginRight: UNIT * 0.5,
+        }}
+      >
+        {widgets?.map((block: BlockType) => {
+          const {
+            uuid,
+          } = block;
+          const runningBlock = runningBlocksByUUID[uuid];
+          const executionState = runningBlock
+            ? (runningBlock.priority === 0
+              ? ExecutionStateEnum.BUSY
+              : ExecutionStateEnum.QUEUED
+             )
+            : ExecutionStateEnum.IDLE;
 
-        return (
-          <ChartBlock
-            block={block}
-            blockRefs={blockRefs}
-            blocks={blocks}
-            deleteWidget={deleteWidget}
-            executionState={executionState}
-            key={uuid}
-            messages={messages[uuid]}
-            onChangeContent={(value: string) => onChangeChartBlock(uuid, value)}
-            runBlock={runBlock}
-            runningBlocks={runningBlocks}
-            savePipelineContent={savePipelineContent}
-            selected={selectedBlock?.uuid === uuid}
-            setSelectedBlock={setSelectedBlock}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={textareaFocused}
-            updateWidget={updateWidget}
-            width={width}
-          />
-        );
-      })}
-
+          return (
+            <ChartBlock
+              block={block}
+              blockRefs={blockRefs}
+              blocks={blocks}
+              deleteWidget={deleteWidget}
+              executionState={executionState}
+              key={uuid}
+              messages={messages[uuid]}
+              onChangeContent={(value: string) => onChangeChartBlock(uuid, value)}
+              runBlock={runBlock}
+              runningBlocks={runningBlocks}
+              savePipelineContent={savePipelineContent}
+              selected={selectedBlock?.uuid === uuid}
+              setSelectedBlock={setSelectedBlock}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+              updateWidget={updateWidget}
+              width={width}
+            />
+          );
+        })}
+      </Row>
       <div style={{ height: '80vh' }} />
     </FlexContainer>
   );

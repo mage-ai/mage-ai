@@ -17,6 +17,7 @@ import ChartController from './ChartController';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
+import Col from '@components/shared/Grid/Col';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
@@ -37,6 +38,7 @@ import {
   CHART_TYPES,
   ChartTypeEnum,
   ConfigurationType,
+  VARIABLE_NAME_WIDTH_PERCENTAGE,
 } from '@interfaces/ChartBlockType';
 import {
   CONFIGURATIONS_BY_CHART_TYPE,
@@ -435,43 +437,82 @@ function ChartBlock({
     upstreamBlocksPrevious,
   ]);
 
-  return (
-    <ChartBlockStyle>
-      <Spacing mt={1} px={1}>
-        <FlexContainer
-          alignItems="center"
-          justifyContent="space-between"
-          fullWidth
-        >
-          <Select
-            compact
-            onChange={(e) => {
-              const value = [e.target.value];
-              const widget = {
-                ...block,
-                upstream_blocks: value,
-              };
-              updateWidget(widget);
-              saveAndRun(widget);
-              setUpstreamBlocks(value)
-            }}
-            placeholder="Source block"
-            small
-            value={upstreamBlocks?.[0] || ''}
-          >
-            {blocksOfType?.map(({ uuid }: BlockType) => (
-              <option key={uuid} value={uuid}>
-                {uuid}
-              </option>
-            ))}
-          </Select>
+  const widthPercentage =
+    useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
 
-          <FlexContainer alignItems="center">
-            {!isInProgress && (
+  return (
+    <Col sm={12} md={12 * widthPercentage}>
+      <ChartBlockStyle>
+        <Spacing mt={1} px={1}>
+          <FlexContainer
+            alignItems="center"
+            justifyContent="space-between"
+            fullWidth
+          >
+            <Select
+              compact
+              onChange={(e) => {
+                const value = [e.target.value];
+                const widget = {
+                  ...block,
+                  upstream_blocks: value,
+                };
+                updateWidget(widget);
+                saveAndRun(widget);
+                setUpstreamBlocks(value)
+              }}
+              placeholder="Source block"
+              small
+              value={upstreamBlocks?.[0] || ''}
+            >
+              {blocksOfType?.map(({ uuid }: BlockType) => (
+                <option key={uuid} value={uuid}>
+                  {uuid}
+                </option>
+              ))}
+            </Select>
+
+            <FlexContainer alignItems="center">
+              {!isInProgress && (
+                <Tooltip
+                  appearBefore
+                  default
+                  label="Run chart block"
+                  size={null}
+                  widthFitContent
+                >
+                  <KeyboardShortcutButton
+                    blackBorder
+                    compact
+                    inline
+                    onClick={() => saveAndRun(block)}
+                    uuid={`ChartBlock/run/${block.uuid}`}
+                  >
+                    <PlayButtonFilled size={UNIT * 2} />
+                  </KeyboardShortcutButton>
+                </Tooltip>
+              )}
+
+              {ExecutionStateEnum.QUEUED === executionState && (
+                <Spinner
+                  color={(themeContext || dark).content.active}
+                  small
+                  type="cylon"
+                />
+              )}
+              {ExecutionStateEnum.BUSY === executionState && (
+                <Spinner
+                  color={(themeContext || dark).content.active}
+                  small
+                />
+              )}
+
+              <Spacing mr={1} />
+
               <Tooltip
                 appearBefore
                 default
-                label="Run chart block"
+                label="Edit chart"
                 size={null}
                 widthFitContent
               >
@@ -479,198 +520,183 @@ function ChartBlock({
                   blackBorder
                   compact
                   inline
-                  onClick={() => saveAndRun(block)}
-                  uuid={`ChartBlock/run/${block.uuid}`}
+                  onClick={() => setIsEditing(prev => !prev)}
+                  selected={isEditing}
+                  uuid={`ChartBlock/edit/${block.uuid}`}
                 >
-                  <PlayButtonFilled size={UNIT * 2} />
+                  <Edit size={UNIT * 2} />
                 </KeyboardShortcutButton>
               </Tooltip>
-            )}
 
-            {ExecutionStateEnum.QUEUED === executionState && (
-              <Spinner
-                color={(themeContext || dark).content.active}
-                small
-                type="cylon"
-              />
-            )}
-            {ExecutionStateEnum.BUSY === executionState && (
-              <Spinner
-                color={(themeContext || dark).content.active}
-                small
-              />
-            )}
+              <Spacing mr={1} />
 
-            <Spacing mr={1} />
-
-            <Tooltip
-              appearBefore
-              default
-              label="Edit chart"
-              size={null}
-              widthFitContent
-            >
-              <KeyboardShortcutButton
-                blackBorder
-                compact
-                inline
-                onClick={() => setIsEditing(prev => !prev)}
-                selected={isEditing}
-                uuid={`ChartBlock/edit/${block.uuid}`}
+              <Tooltip
+                appearBefore
+                default
+                label="Delete chart"
+                size={null}
+                widthFitContent
               >
-                <Edit size={UNIT * 2} />
-              </KeyboardShortcutButton>
-            </Tooltip>
-
-            <Spacing mr={1} />
-
-            <Tooltip
-              appearBefore
-              default
-              label="Delete chart"
-              size={null}
-              widthFitContent
-            >
-              <KeyboardShortcutButton
-                blackBorder
-                compact
-                inline
-                onClick={() => deleteWidget(block)}
-                uuid={`ChartBlock/delete/${block.uuid}`}
-              >
-                <Trash size={UNIT * 2} />
-              </KeyboardShortcutButton>
-            </Tooltip>
+                <KeyboardShortcutButton
+                  blackBorder
+                  compact
+                  inline
+                  onClick={() => deleteWidget(block)}
+                  uuid={`ChartBlock/delete/${block.uuid}`}
+                >
+                  <Trash size={UNIT * 2} />
+                </KeyboardShortcutButton>
+              </Tooltip>
+            </FlexContainer>
           </FlexContainer>
-        </FlexContainer>
-      </Spacing>
+        </Spacing>
 
-      <Spacing mt={1} />
+        <Spacing mt={1} />
 
-      <FlexContainer
-        justifyContent="space-between"
-        fullWidth
-      >
-        <Flex
-          flex={2}
-          ref={refChartContainer}
+        <FlexContainer
+          justifyContent="space-between"
+          fullWidth
         >
-          {chartData && !isEmptyObject(chartData) && (
-            <Spacing pb={3}>
-              <ChartController
-                block={block}
-                data={chartData}
-                width={chartWidth}
-              />
-            </Spacing>
+          <Flex
+            flex={2}
+            ref={refChartContainer}
+          >
+            {chartData && !isEmptyObject(chartData) && (
+              <Spacing pb={3}>
+                <ChartController
+                  block={block}
+                  data={chartData}
+                  width={chartWidth}
+                />
+              </Spacing>
+            )}
+          </Flex>
+
+          {isEditing && (
+            <ConfigurationOptionsStyle>
+              <FlexContainer
+                flexDirection="column"
+                fullWidth
+              >
+                <Spacing mb={1}>
+                  <Select
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const widget = {
+                        ...block,
+                        configuration: {
+                          ...configuration,
+                          chart_type: value,
+                        },
+                      };
+                      updateWidget(widget);
+                      saveAndRun(widget);
+                      setChartType(value);
+                    }}
+                    placeholder="Select chart type"
+                    value={chartType}
+                  >
+                    {CHART_TYPES.map((chartType: string) => (
+                      <option key={chartType} value={chartType}>
+                        {capitalize(chartType)}
+                      </option>
+                    ))}
+                  </Select>
+                </Spacing>
+
+                <Spacing mb={1}>
+                  <Select
+                    onChange={e => updateConfiguration({
+                      [VARIABLE_NAME_WIDTH_PERCENTAGE]: e.target.value,
+                    })}
+                    placeholder="Chart width"
+                    value={configuration?.[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1}
+                  >
+                    {[
+                      ['1/2 width', 0.5],
+                      ['full width', 1],
+                    ].map(([label, value]) => (
+                      <option key={label} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </Spacing>
+
+                {configurationOptions?.map(({
+                  label,
+                  monospace,
+                  options,
+                  type,
+                  uuid,
+                }) => {
+                  let el;
+                  if (options) {
+                    el = (
+                      <Select
+                        fullWidth
+                        key={uuid}
+                        label={capitalize(label())}
+                        monospace={monospace}
+                        onChange={e => updateConfiguration({ [uuid]: e.target.value })}
+                        value={configuration?.[uuid]}
+                      >
+                        {options.map((val: string) => (
+                          <option key={val} value={val}>
+                            {val}
+                          </option>
+                        ))}
+                      </Select>
+                    );
+                  } else {
+                    el = (
+                      <TextInput
+                        fullWidth
+                        key={uuid}
+                        label={capitalize(label())}
+                        monospace={monospace}
+                        onChange={e => updateConfiguration({ [uuid]: e.target.value })}
+                        type={type}
+                        value={configuration?.[uuid]}
+                      />
+                    );
+                  }
+
+                  return (
+                    <Spacing key={uuid} mb={1}>
+                      {el}
+                    </Spacing>
+                  );
+                })}
+              </FlexContainer>
+            </ConfigurationOptionsStyle>
           )}
-        </Flex>
+        </FlexContainer>
 
         {isEditing && (
-          <ConfigurationOptionsStyle>
-            <FlexContainer
-              flexDirection="column"
-              fullWidth
-            >
-              <Spacing mb={1}>
-                <Select
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const widget = {
-                      ...block,
-                      configuration: {
-                        ...configuration,
-                        chart_type: value,
-                      },
-                    };
-                    updateWidget(widget);
-                    saveAndRun(widget);
-                    setChartType(value);
-                  }}
-                  placeholder="Select chart type"
-                  value={chartType}
-                >
-                  {CHART_TYPES.map((chartType: string) => (
-                    <option key={chartType} value={chartType}>
-                      {capitalize(chartType)}
-                    </option>
-                  ))}
-                </Select>
-              </Spacing>
+          <CodeStyle>
+            {upstreamBlocks.length >= 1 && (
+              <CodeHelperStyle>
+                <Text muted small>
+                  Variables you can use in your code: {availableVariables}
+                </Text>
+                <Text muted small>
+                  Variables that you must define: {variablesMustDefine}
+                </Text>
+              </CodeHelperStyle>
+            )}
 
-              {configurationOptions?.map(({
-                label,
-                monospace,
-                options,
-                type,
-                uuid,
-              }) => {
-                let el;
-                if (options) {
-                  el = (
-                    <Select
-                      fullWidth
-                      key={uuid}
-                      label={capitalize(label())}
-                      monospace={monospace}
-                      onChange={e => updateConfiguration({ [uuid]: e.target.value })}
-                      value={configuration?.[uuid]}
-                    >
-                      {options.map((val: string) => (
-                        <option key={val} value={val}>
-                          {val}
-                        </option>
-                      ))}
-                    </Select>
-                  );
-                } else {
-                  el = (
-                    <TextInput
-                      fullWidth
-                      key={uuid}
-                      label={capitalize(label())}
-                      monospace={monospace}
-                      onChange={e => updateConfiguration({ [uuid]: e.target.value })}
-                      type={type}
-                      value={configuration?.[uuid]}
-                    />
-                  );
-                }
-
-                return (
-                  <Spacing key={uuid} mb={1}>
-                    {el}
-                  </Spacing>
-                );
-              })}
-            </FlexContainer>
-          </ConfigurationOptionsStyle>
+            {codeEditorEl}
+          </CodeStyle>
         )}
-      </FlexContainer>
 
-      {isEditing && (
-        <CodeStyle>
-          {upstreamBlocks.length >= 1 && (
-            <CodeHelperStyle>
-              <Text muted small>
-                Variables you can use in your code: {availableVariables}
-              </Text>
-              <Text muted small>
-                Variables that you must define: {variablesMustDefine}
-              </Text>
-            </CodeHelperStyle>
-          )}
-
-          {codeEditorEl}
-        </CodeStyle>
-      )}
-
-      {codeOutputEl && (
-        <Spacing px={1}>
-          {codeOutputEl}
-        </Spacing>
-      )}
-    </ChartBlockStyle>
+        {codeOutputEl && (
+          <Spacing px={1}>
+            {codeOutputEl}
+          </Spacing>
+        )}
+      </ChartBlockStyle>
+    </Col>
   );
 }
 

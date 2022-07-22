@@ -419,7 +419,6 @@ class Pipeline:
                 '. Please remove the downstream blocks first.'
             )
         upstream_blocks = block.upstream_blocks
-        print('upstream_blocks', upstream_blocks)
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks = [
                 b for b in upstream_block.downstream_blocks if b.uuid != block.uuid
