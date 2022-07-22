@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.shared.utils import clean_name
 from typing import Callable
@@ -18,7 +18,7 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None, config=None):
+    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
@@ -29,6 +29,10 @@ class Pipeline:
             self.load_config_from_yaml()
         else:
             self.load_config(config)
+        if repo_config is None:
+            self.repo_config = get_repo_config()
+        else:
+            self.repo_config = repo_config
 
     @property
     def config_path(self):
@@ -42,6 +46,10 @@ class Pipeline:
     @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
+    @property
+    def variables_dir(self):
+        return self.repo_config.variables_dir
 
     @classmethod
     def create(self, name, repo_path):
@@ -172,11 +180,9 @@ class Pipeline:
         return config
 
     def load_config_from_yaml(self):
-        print('load_config_from_yaml')
         self.load_config(self.get_config_from_yaml())
 
     def load_config(self, config):
-        print(config)
         self.name = config.get('name')
 
         self.block_configs = config.get('blocks', [])

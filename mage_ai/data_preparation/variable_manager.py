@@ -1,25 +1,18 @@
+from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.data_preparation.models.variable import Variable, VariableType, VARIABLE_DIR
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Any, Dict, List
 import os
 import pandas as pd
-import yaml
 
 
 class VariableManager:
-    def __init__(self, repo_path=None):
+    def __init__(self, repo_path=None, variables_dir=None):
         self.repo_path = repo_path or get_repo_path()
-        self.variables_dir = self.repo_path
-        try:
-            with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
-                repo_config = yaml.full_load(f) or {}
-                variables_dir = repo_config.get('variables_dir')
-                if variables_dir is not None:
-                    self.variables_dir = os.path.abspath(
-                        os.path.join(self.repo_path, variables_dir),
-                    )
-        except Exception:
-            pass
+        if variables_dir is None:
+            self.variables_dir = self.repo_path
+        else:
+            self.variables_dir = variables_dir
         # TODO: implement caching logic
 
     def add_variable(
@@ -32,6 +25,8 @@ class VariableManager:
     ) -> None:
         if type(data) is pd.DataFrame:
             variable_type = VariableType.DATAFRAME
+        elif is_spark_dataframe(data):
+            variable_type = VariableType.SPARK_DATAFRAME
         variable = Variable(
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),
@@ -63,6 +58,8 @@ class VariableManager:
         sample: bool = False,
         sample_count: int = None,
     ) -> Any:
+        if variable_type == VariableType.DATAFRAME and 'spark' in globals():
+            variable_type = VariableType.SPARK_DATAFRAME
         variable = Variable(
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),

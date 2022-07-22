@@ -436,6 +436,7 @@ class Block:
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
+                        variable_type=VariableType.DATAFRAME,
                     )
                     for var in variables
                 ]
@@ -681,9 +682,12 @@ class Block:
     def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
-        variable_manager = VariableManager(self.pipeline.repo_path)
-        all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
-        removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
+        variable_manager = VariableManager(
+            self.pipeline.repo_path,
+            self.pipeline.variables_dir,
+        )
+        # all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+        # removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
             variable_manager.add_variable(
                 self.pipeline.uuid,
@@ -691,13 +695,13 @@ class Block:
                 uuid,
                 data,
             )
-        if override:
-            for uuid in removed_variables:
-                variable_manager.delete_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    uuid,
-                )
+        # if override:
+        #     for uuid in removed_variables:
+        #         variable_manager.delete_variable(
+        #             self.pipeline.uuid,
+        #             self.uuid,
+        #             uuid,
+        #         )
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
