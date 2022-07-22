@@ -16,7 +16,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { numberWithCommas, roundNumber } from '@utils/string';
-import { sortByKey } from '@utils/array';
+import { range, sortByKey } from '@utils/array';
 
 type ChartControllerProps = {
   block: BlockType;
@@ -154,47 +154,52 @@ function ChartController({
       x,
       y,
     } = data;
-    const legendNames = [String(configuration[VARIABLE_NAME_Y])];
 
-    return x && y && Array.isArray(x) && Array.isArray(y) && (
-      <LineSeries
-        data={x.map((val, idx) => ({
-          x: val,
-          y: [y[idx]],
-        }))}
-        height={CHART_HEIGHT_DEFAULT}
-        lineLegendNames={legendNames}
-        margin={{
-          bottom: 8 * UNIT,
-        }}
-        noCurve
-        renderXTooltipContent={({ index, x }) => {
-          // const xCurrent = x[index];
-          // const {
-          //   min: xMin,
-          //   max: xMax,
-          // } = xCurrent;
+    if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
+      const legendNames = range(y.length || []).map((_, idx) => String(idx));
+      const dataParsed = x.map((val, idx) => ({
+        x: val,
+        y: range(y.length).map((_, idx2) => y[idx2][idx]),
+      }));
 
-          return (
+      return (
+        <LineSeries
+          data={dataParsed}
+          height={CHART_HEIGHT_DEFAULT}
+          lineLegendNames={legendNames}
+          margin={{
+            bottom: 8 * UNIT,
+            left: 5 * UNIT,
+          }}
+          noCurve
+          renderXTooltipContent={({ index, x }) => {
+            // const xCurrent = x[index];
+            // const {
+            //   min: xMin,
+            //   max: xMax,
+            // } = xCurrent;
+
+            return (
+              <Text inverted small>
+                {/*{moment.unix(xMin).format(DATE_FORMAT)} - {moment.unix(xMax).format(DATE_FORMAT)}*/}
+                {configuration[VARIABLE_NAME_X]}: {x}
+              </Text>
+            );
+          }}
+          renderYTooltipContent={({ y }, idx) => (
             <Text inverted small>
-              {/*{moment.unix(xMin).format(DATE_FORMAT)} - {moment.unix(xMax).format(DATE_FORMAT)}*/}
-              {configuration[VARIABLE_NAME_X]}: {x}
+              {legendNames[idx] && `${legendNames[idx]}: `}{numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
-          );
-        }}
-        renderYTooltipContent={({ y }, idx) => (
-          <Text inverted small>
-            {legendNames[idx] && `${legendNames[idx]}: `}{numberWithCommas(roundNumber(y[idx], 4))}
-          </Text>
-        )}
-        xAxisLabel={String(configuration[VARIABLE_NAME_X])}
-        // xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
-        xLabelFormat={v => v}
-        yAxisLabel={String(configuration[VARIABLE_NAME_Y])}
-        yLabelFormat={v => v}
-        width={width}
-      />
-    );
+          )}
+          xAxisLabel={String(configuration[VARIABLE_NAME_X])}
+          // xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
+          xLabelFormat={v => v}
+          yAxisLabel={String(configuration[VARIABLE_NAME_Y])}
+          yLabelFormat={v => v}
+          width={width ? width - (3 * UNIT) : width}
+        />
+      );
+    }
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
     const varName = String(configuration[VARIABLE_NAME_X]);
     const chartData = data[varName];

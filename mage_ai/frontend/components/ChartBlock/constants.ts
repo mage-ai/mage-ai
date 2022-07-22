@@ -168,7 +168,7 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
   },
   [ChartTypeEnum.LINE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
-    [VARIABLE_NAME_Y]: (): string => 'must be a list of integers or floats.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats.',
   },
   [ChartTypeEnum.PIE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
