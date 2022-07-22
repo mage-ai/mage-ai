@@ -37,7 +37,6 @@ export interface ConfigurationType {
   [VARIABLE_NAME_Y]?: string[] | number[];
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
-  width_percentage?: number;
 }
 
 export const CHART_TYPES = [

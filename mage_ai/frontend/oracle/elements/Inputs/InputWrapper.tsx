@@ -87,7 +87,7 @@ export type InputWrapperProps = {
   spellCheck?: boolean;
   topPosition?: boolean;
   type?: string;
-  value?: string;
+  value?: string | number;
   borderTheme?: boolean;
   visible?: boolean;
   warning?: boolean;
