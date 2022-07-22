@@ -65,6 +65,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
+import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -129,18 +130,21 @@ function CodeBlockProps({
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
-  const [codeCollapsed, setCodeCollapsed] = useState(false);
+  const [codeCollapsed, setCodeCollapsed] = useState<boolean>(
+    get(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, false),
+  );
   const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
-  const [outputCollapsed, setOutputCollapsed] = useState(false);
+  const [outputCollapsed, setOutputCollapsed] = useState<boolean>(
+    get(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, false),
+  );
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
   const blockMenuRef = useRef(null);
-
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const hasDownstreamWidgets = useMemo(() => !!widgets.find(({
@@ -423,7 +427,12 @@ function CodeBlockProps({
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
-      setCollapsed={setOutputCollapsed}
+      setCollapsed={(val: boolean) => {
+        setOutputCollapsed(() => {
+          set(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, val);
+          return val;
+        });
+      }}
     />
   ), [
     block,
@@ -613,11 +622,16 @@ function CodeBlockProps({
             iconOnly
             noPadding
             onClick={() => {
+              setCodeCollapsed((collapsedPrev) => {
+                set(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, !collapsedPrev);
+                return !collapsedPrev;
+              });
+
               if (!codeCollapsed) {
-                setCodeCollapsed(true);
-                setOutputCollapsed(true);
-              } else {
-                setCodeCollapsed(false);
+                setOutputCollapsed(() => {
+                  set(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, true);
+                  return true;
+                });
               }
             }}
             transparent
