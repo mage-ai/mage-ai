@@ -140,9 +140,17 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
+  const codeCollapsedUUID = useMemo(() => (
+    `${pipeline.uuid}/${block.uuid}/codeCollapsed`
+  ), [pipeline.uuid, block.uuid]);
+
+  const outputCollapsedUUID = useMemo(() => (
+    `${pipeline.uuid}/${block.uuid}/outputCollapsed`
+  ), [pipeline.uuid, block.uuid]);
+
   useEffect(() => {
-    setCodeCollapsed(get(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, false));
-    setOutputCollapsed(get(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, false));
+    setCodeCollapsed(get(codeCollapsedUUID, false));
+    setOutputCollapsed(get(outputCollapsedUUID, false));
   }, []);
 
   const blockMenuRef = useRef(null);
@@ -431,7 +439,7 @@ function CodeBlockProps({
       selected={selected}
       setCollapsed={(val: boolean) => {
         setOutputCollapsed(() => {
-          set(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, val);
+          set(outputCollapsedUUID, val);
           return val;
         });
       }}
@@ -625,13 +633,13 @@ function CodeBlockProps({
             noPadding
             onClick={() => {
               setCodeCollapsed((collapsedPrev) => {
-                set(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, !collapsedPrev);
+                set(codeCollapsedUUID, !collapsedPrev);
                 return !collapsedPrev;
               });
 
               if (!codeCollapsed) {
                 setOutputCollapsed(() => {
-                  set(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, true);
+                  set(outputCollapsedUUID, true);
                   return true;
                 });
               }
