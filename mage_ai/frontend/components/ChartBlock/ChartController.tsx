@@ -1,10 +1,9 @@
-import BlockType, {
-  ChartTypeEnum,
-} from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import { CHART_HEIGHT_DEFAULT } from './index.style';
+import { ChartStyleEnum, ChartTypeEnum } from '@interfaces/ChartBlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VARIABLE_NAME_X } from './constants';
 import { numberWithCommas } from '@utils/string';
@@ -24,11 +23,50 @@ function ChartController({
   width,
 }: ChartControllerProps) {
   const {
-    configuration,
+    configuration = {},
   } = block;
-  const chartType = configuration?.chart_type;
+  const {
+    chart_style: chartStyle,
+    chart_type: chartType,
+  } = configuration || {};
 
-  if (ChartTypeEnum.HISTOGRAM === chartType) {
+  if (ChartTypeEnum.BAR_CHART === chartType) {
+    const {
+      x,
+      y,
+    } = data;
+
+    if (x && y && Array.isArray(x)) {
+      if (ChartStyleEnum.VERTICAL === chartStyle) {
+        return (
+          <Histogram
+            data={x.map((xValue , idx: number) => [
+              xValue,
+              y[idx],
+            ])}
+            height={CHART_HEIGHT_DEFAULT}
+            width={width}
+            large
+            margin={{
+              left: UNIT * 5,
+              right: UNIT * 1,
+            }}
+            renderTooltipContent={([, yValue]) => (
+              <Text inverted monospace small>
+                {yValue}
+              </Text>
+            )}
+            showAxisLabels
+            showYAxisLabels
+            showZeroes
+            sortData={d => d}
+          />
+        );
+      }
+
+      return;
+    }
+  } else if (ChartTypeEnum.HISTOGRAM === chartType) {
     const {
       x,
       y,

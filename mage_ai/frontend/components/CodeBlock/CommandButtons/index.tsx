@@ -3,7 +3,6 @@ import { ThemeContext } from 'styled-components';
 
 import BlockType, {
   BlockTypeEnum,
-  CHART_TYPES,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -17,8 +16,9 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
-import { DEFAULT_SETTINGS_BY_CHART_TYPE } from '@components/ChartBlock/constants';
+import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import { ContainerStyle } from './index.style';
+import { DEFAULT_SETTINGS_BY_CHART_TYPE } from '@components/ChartBlock/constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Close,

@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
 from mage_ai.shared.hash import ignore_keys, merge_dict
 import numpy as np
+import pandas as pd
 
 
 class Widget(Block):
@@ -87,7 +88,16 @@ class Widget(Block):
         ))
 
     def post_process_variables(self, variables):
-        if ChartType.HISTOGRAM == self.chart_type:
+        if ChartType.BAR_CHART == self.chart_type:
+            for var_name in self.output_variable_names:
+                arr = variables[var_name]
+                if type(arr) is pd.Series or type(arr) is pd.Index:
+                    arr = arr.tolist()
+
+                variables.update({
+                    var_name: arr,
+                })
+        elif ChartType.HISTOGRAM == self.chart_type:
             for var_name in self.output_variable_names:
                 values = [v for v in variables[var_name] if v is not None and not np.isnan(v)]
                 variables = build_histogram_data(
