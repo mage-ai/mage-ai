@@ -443,6 +443,7 @@ class Block:
         for idx, input_var in enumerate(input_vars):
             upstream_block_uuid = upstream_block_uuids[idx]
             outputs_from_input_vars[upstream_block_uuid] = input_var
+            outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
         with redirect_stdout(stdout):
             if custom_code is not None:

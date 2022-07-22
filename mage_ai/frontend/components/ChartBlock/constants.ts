@@ -92,14 +92,10 @@ export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
       [VARIABLE_NAME_Y]: 'y',
       [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.VERTICAL,
     }),
-    content: ({
-      upstream_blocks: upstreamBlocks = [],
-    }: BlockType) => {
-      const uuid = upstreamBlocks[0];
-
-      return `columns = ${uuid}.columns
-x = ${uuid}.columns[:7]
-y = [len(${uuid}[col].unique()) for col in x]
+    content: (block: BlockType) => {
+      return `columns = df_1.columns
+x = df_1.columns[:7]
+y = [len(df_1[col].unique()) for col in x]
 `;
     },
   },
@@ -108,14 +104,10 @@ y = [len(${uuid}[col].unique()) for col in x]
       [VARIABLE_NAME_BUCKETS]: 10,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: ({
-      upstream_blocks: upstreamBlocks = [],
-    }: BlockType) => {
-      const uuid = upstreamBlocks[0];
-
-      return `columns = ${uuid}.columns
-col = list(filter(lambda x: ${uuid}[x].dtype == float or ${uuid}[x].dtype == int, columns))[0]
-x = ${uuid}[col]
+    content: (block: BlockType) => {
+      return `columns = df_1.columns
+col = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))[0]
+x = df_1[col]
 `;
     },
   },
@@ -124,12 +116,8 @@ x = ${uuid}[col]
       [VARIABLE_NAME_BUCKETS]: 7,
       [VARIABLE_NAME_X]: 'x',
     }),
-    content: ({
-      upstream_blocks: upstreamBlocks = [],
-    }: BlockType) => {
-      const uuid = upstreamBlocks[0];
-
-      return `x = ${uuid}[${uuid}.columns[0]]`;
+    content: (block: BlockType) => {
+      return `x = df_1[df_1.columns[0]]`;
     },
   },
   [ChartTypeEnum.TABLE]: {
@@ -138,13 +126,9 @@ x = ${uuid}[col]
       [VARIABLE_NAME_X]: 'x',
       [VARIABLE_NAME_Y]: 'y',
     }),
-    content: ({
-      upstream_blocks: upstreamBlocks = [],
-    }: BlockType) => {
-      const uuid = upstreamBlocks[0];
-
-      return `x = ${uuid}.columns
-y = ${uuid}.to_numpy()`;
+    content: (block: BlockType) => {
+      return `x = df_1.columns
+y = df_1.to_numpy()`;
     },
   },
 };
