@@ -1,12 +1,16 @@
-import BlockType, {
-  ChartTypeEnum,
-} from '@interfaces/BlockType';
+import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
+import BlockType from '@interfaces/BlockType';
 import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import { CHART_HEIGHT_DEFAULT } from './index.style';
+import {
+  ChartStyleEnum,
+  ChartTypeEnum,
+  SortOrderEnum,
+  VARIABLE_NAME_X,
+} from '@interfaces/ChartBlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VARIABLE_NAME_X } from './constants';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -24,11 +28,85 @@ function ChartController({
   width,
 }: ChartControllerProps) {
   const {
-    configuration,
+    configuration = {},
   } = block;
-  const chartType = configuration?.chart_type;
+  const {
+    chart_style: chartStyle,
+    chart_type: chartType,
+    y_sort_order: ySortOrder,
+  } = configuration || {};
 
-  if (ChartTypeEnum.HISTOGRAM === chartType) {
+  if (ChartTypeEnum.BAR_CHART === chartType) {
+    const {
+      x,
+      y,
+    } = data;
+
+    if (x && y && Array.isArray(x)) {
+      if (ChartStyleEnum.HORIZONTAL === chartStyle) {
+        let xy = x.map((xValue, idx: number) => ({
+          x: y[idx],
+          y: xValue,
+        }));
+
+        if (SortOrderEnum.ASCENDING === ySortOrder) {
+          xy = sortByKey(xy, 'x', { ascending: false });
+        } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+          xy = sortByKey(xy, 'x', { ascending: true });
+        }
+
+        return (
+          <BarGraphHorizontal
+            data={xy}
+            height={CHART_HEIGHT_DEFAULT}
+            margin={{
+              bottom: UNIT * 3,
+              left: UNIT * 1,
+              right: UNIT * 3,
+              top: 0,
+            }}
+            renderTooltipContent={({ x }) => x}
+            width={width}
+            xNumTicks={3}
+            ySerialize={({ y }) => y}
+          />
+        );
+      }
+
+      return (
+        <Histogram
+          data={x.map((xValue , idx: number) => [
+            xValue,
+            y[idx],
+          ])}
+          height={CHART_HEIGHT_DEFAULT}
+          width={width}
+          large
+          margin={{
+            left: UNIT * 5,
+            right: UNIT * 1,
+          }}
+          renderTooltipContent={([, yValue]) => (
+            <Text inverted monospace small>
+              {yValue}
+            </Text>
+          )}
+          showAxisLabels
+          showYAxisLabels
+          showZeroes
+          sortData={(d) => {
+            if (SortOrderEnum.ASCENDING === ySortOrder) {
+              return sortByKey(d, '[1]', { ascending: true });
+            } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+              return sortByKey(d, '[1]', { ascending: false });
+            }
+
+            return d;
+          }}
+        />
+      );
+    }
+  } else if (ChartTypeEnum.HISTOGRAM === chartType) {
     const {
       x,
       y,

@@ -1,5 +1,6 @@
 import FeatureType from '@interfaces/FeatureType';
 import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
+import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
@@ -67,23 +68,6 @@ export interface BlockRequestPayloadType {
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
   };
-}
-
-export enum ChartTypeEnum {
-  HISTOGRAM = 'histogram',
-  PIE_CHART = 'pie chart',
-}
-
-export const CHART_TYPES = [
-  ChartTypeEnum.HISTOGRAM,
-  ChartTypeEnum.PIE_CHART,
-];
-
-export interface ConfigurationType {
-  chart_type?: ChartTypeEnum;
-  width_percentage?: number;
-  x?: string[] | number[];
-  y?: string[] | number[];
 }
 
 export default interface BlockType {

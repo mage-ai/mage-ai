@@ -1,13 +1,46 @@
-import BlockType, { ChartTypeEnum } from '@interfaces/BlockType';
-
-export const VARIABLE_NAME_BUCKETS = 'buckets';
-export const VARIABLE_NAME_X = 'x';
-
-export const VARIABLE_NAMES = [
+import BlockType from '@interfaces/BlockType';
+import {  } from '@interfaces/ChartBlockType';
+import {
+  ChartStyleEnum,
+  ChartTypeEnum,
+  SortOrderEnum,
+  VARIABLE_NAME_BUCKETS,
+  VARIABLE_NAME_CHART_STYLE,
   VARIABLE_NAME_X,
-];
+  VARIABLE_NAME_Y,
+  VARIABLE_NAME_Y_SORT_ORDER,
+} from '@interfaces/ChartBlockType';
 
 export const CONFIGURATIONS_BY_CHART_TYPE = {
+  [ChartTypeEnum.BAR_CHART]: [
+    {
+      label: () => 'variable name of x-axis',
+      monospace: true,
+      uuid: VARIABLE_NAME_X,
+    },
+    {
+      label: () => 'variable name of y-axis',
+      monospace: true,
+      uuid: VARIABLE_NAME_Y,
+    },
+    {
+      label: () => 'y-axis sort direction',
+      options: [
+        null,
+        SortOrderEnum.ASCENDING,
+        SortOrderEnum.DESCENDING,
+      ],
+      uuid: VARIABLE_NAME_Y_SORT_ORDER,
+    },
+    {
+      label: () => 'chart style',
+      options: [
+        ChartStyleEnum.HORIZONTAL,
+        ChartStyleEnum.VERTICAL,
+      ],
+      uuid: VARIABLE_NAME_CHART_STYLE,
+    },
+  ],
   [ChartTypeEnum.HISTOGRAM]: [
     {
       label: () => 'Number of buckets',
@@ -35,6 +68,23 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
+  [ChartTypeEnum.BAR_CHART]: {
+    configuration: (block: BlockType) => ({
+      [VARIABLE_NAME_X]: 'x',
+      [VARIABLE_NAME_Y]: 'y',
+      [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.VERTICAL,
+    }),
+    content: ({
+      upstream_blocks: upstreamBlocks = [],
+    }: BlockType) => {
+      const uuid = upstreamBlocks[0];
+
+      return `columns = ${uuid}.columns
+x = ${uuid}.columns[:7]
+y = [len(${uuid}[col].unique()) for col in x]
+`;
+    },
+  },
   [ChartTypeEnum.HISTOGRAM]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 10,
@@ -67,6 +117,10 @@ x = ${uuid}[col]
 };
 
 export const VARIABLE_INFO_BY_CHART_TYPE = {
+  [ChartTypeEnum.BAR_CHART]: {
+    [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of integers or floats.',
+  },
   [ChartTypeEnum.HISTOGRAM]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
   },

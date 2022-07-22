@@ -15,7 +15,7 @@ class ChartType(str, Enum):
     PIE_CHART = 'pie_chart'
 ```
 
-Add a new type in [`mage_ai/frontend/interfaces/BlockType.ts`](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/frontend/interfaces/BlockType.ts):
+Add a new type in [`mage_ai/frontend/interfaces/ChartBlockType.ts`](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/frontend/interfaces/ChartBlockType.ts):
 
 ```javascript
 export enum ChartTypeEnum {
@@ -46,15 +46,24 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
 };
 ```
 
+Also, add the new variable name to the following constant in the
+file `mage_ai/frontend/interfaces/ChartBlockType.ts`,:
+
+```javascript
+export const VARIABLE_NAMES = [
+  'super_cool_uuid',
+];
+```
+
 If 1 or more of the configuration options is for a variable name that can be defined in the
 chart block’s code and referenced at presentation time, then you must add the following
 in the file `mage_ai/data_preparation/models/widget/constants.py`:
 
 ```python
 VARIABLE_NAMES_BY_CHART_TYPE = {
-  ChartType.PIE_CHART: [
-    'super_cool_uuid',
-  ],
+    ChartType.PIE_CHART: [
+        'super_cool_uuid',
+    ],
 }
 ```
 

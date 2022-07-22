@@ -10,9 +10,6 @@ import { ThemeContext } from 'styled-components';
 
 import BlockType, {
   BlockTypeEnum,
-  CHART_TYPES,
-  ChartTypeEnum,
-  ConfigurationType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -37,10 +34,14 @@ import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
+  CHART_TYPES,
+  ChartTypeEnum,
+  ConfigurationType,
+} from '@interfaces/ChartBlockType';
+import {
   CONFIGURATIONS_BY_CHART_TYPE,
   DEFAULT_SETTINGS_BY_CHART_TYPE,
   VARIABLE_INFO_BY_CHART_TYPE,
-  VARIABLE_NAMES,
 } from './constants';
 import {
   ChartBlockStyle,
@@ -54,6 +55,7 @@ import {
   Trash,
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { VARIABLE_NAMES } from '@interfaces/ChartBlockType';
 import { capitalize, isJsonString } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
@@ -347,6 +349,7 @@ function ChartBlock({
   const variablesMustDefine = useMemo(() => {
     const arr = [];
 
+    // @ts-ignore
     const vars = configurationOptions?.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
       ? acc.concat(uuid)
       : acc
@@ -587,20 +590,41 @@ function ChartBlock({
               {configurationOptions?.map(({
                 label,
                 monospace,
+                options,
                 type,
                 uuid,
               }) => {
-                const el = (
-                  <TextInput
-                    fullWidth
-                    key={uuid}
-                    label={label()}
-                    monospace={monospace}
-                    onChange={e => updateConfiguration({ [uuid]: e.target.value })}
-                    type={type}
-                    value={configuration?.[uuid]}
-                  />
-                );
+                let el;
+                if (options) {
+                  el = (
+                    <Select
+                      fullWidth
+                      key={uuid}
+                      label={label()}
+                      monospace={monospace}
+                      onChange={e => updateConfiguration({ [uuid]: e.target.value })}
+                      value={configuration?.[uuid]}
+                    >
+                      {options.map((val: string) => (
+                        <option key={val} value={val}>
+                          {val}
+                        </option>
+                      ))}
+                    </Select>
+                  );
+                } else {
+                  el = (
+                    <TextInput
+                      fullWidth
+                      key={uuid}
+                      label={label()}
+                      monospace={monospace}
+                      onChange={e => updateConfiguration({ [uuid]: e.target.value })}
+                      type={type}
+                      value={configuration?.[uuid]}
+                    />
+                  );
+                }
 
                 return (
                   <Spacing key={uuid} mb={1}>

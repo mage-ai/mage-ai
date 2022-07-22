@@ -39,15 +39,14 @@ type SharedProps = {
   large?: boolean;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   renderTooltipContent?: (opts: any) => any | number | string;
+  width?: number;
   xAxisLabel?: string;
   xNumTicks?: number;
   yLabelFormat?: any;
   ySerialize: any;
 };
 
-type BarStackHorizontalProps = {
-  width: number;
-} & SharedProps;
+type BarStackHorizontalProps = SharedProps;
 
 export type BarStackHorizontalContainerProps = SharedProps;
 
@@ -129,7 +128,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     const tickValues: string[] = data.map(ySerialize);
     const maxTickValueCharacterLength: number =
       Math.min(
-        Math.max(...tickValues.map(s => s.length)),
+        Math.max(...tickValues.map(s => String(s).length)),
         MAX_LABEL_LENGTH);
     if (maxTickValueCharacterLength * 6 > margin.right * 2) {
       margin.right += maxTickValueCharacterLength * 5.5;
@@ -140,7 +139,6 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
     // bounds
     const xMax = width - margin.left - margin.right;
     const yMax = height - margin.top - margin.bottom;
-
     margin.left += maxTickValueCharacterLength * 7;
 
     xScale.rangeRound([0, xMax]);
@@ -208,7 +206,8 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
                 barStacks.map(barStack =>
                   barStack.bars.map(bar => (
                     <g key={`barstack-horizontal-${barStack.index}-${bar.index}`}>
-                      <>           
+                      <>
+
                         <rect
                           fill={colors.backgroundPrimary}
                           height={bar.height}
@@ -302,10 +301,18 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
 
 function BarStackHorizontalContainer({
   height: parentHeight,
+  width: parentWidth,
   ...props
 }: BarStackHorizontalContainerProps) {
   return (
-    <div style={{ height: parentHeight, width: '100%' }}>
+    <div
+      style={{
+        height: parentHeight,
+        width: typeof parentWidth === 'undefined'
+          ? '100%'
+          : parentWidth,
+      }}
+    >
       <ParentSize>
         {({ width, height }) => (
           <BarChartHorizontal

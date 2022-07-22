@@ -7,7 +7,7 @@ import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
 
-export const CHART_HEIGHT_DEFAULT = UNIT * 50;
+export const CHART_HEIGHT_DEFAULT = UNIT * 40;
 
 export const ChartBlockStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
