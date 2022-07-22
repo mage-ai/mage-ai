@@ -11,8 +11,8 @@ export const CHART_HEIGHT_DEFAULT = UNIT * 40;
 
 export const ChartBlockStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
-  margin-left: ${UNIT * 1}px;
-  margin-right: ${UNIT * 1}px;
+  margin-left: ${UNIT * 0.5}px;
+  margin-right: ${UNIT * 0.5}px;
   margin-top: ${UNIT * 1}px;
   overflow: hidden;
   // padding: ${UNIT * 1}px;
