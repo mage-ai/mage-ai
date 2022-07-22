@@ -33,6 +33,14 @@ export function get(key, value = null) {
   return value;
 }
 
+export function remove(key) {
+  const val = get(key);
+  // @ts-ignore
+  ls.remove(key);
+
+  return val;
+}
+
 export function getCustomCodeState({
   actionType,
   featureSetId,
@@ -66,7 +74,10 @@ export function resetObjectCounts() {
   return set(LOCAL_STORAGE_KEY_OBJECT_COUNTS, {});
 }
 
-export default {
+const localStorage = {
   get,
+  remove,
   set,
 };
+
+export default localStorage;

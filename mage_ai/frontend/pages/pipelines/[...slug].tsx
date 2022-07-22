@@ -58,7 +58,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
+import { initializeContentAndMessages, updateCollapsedBlocks } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -397,8 +397,9 @@ function PipelineDetailPage({
               uuid,
             },
           }) => {
-            router.push(`/pipelines/${uuid}`);
             fetchFileTree();
+            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+            router.push(`/pipelines/${uuid}`);
           },
           onErrorCallback: ({
             error: {
