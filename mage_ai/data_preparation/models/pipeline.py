@@ -64,11 +64,15 @@ class Pipeline:
         # first pass to load blocks
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            if source_block.type == BlockType.SCRATCHPAD:
+                continue
             new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
             duplicate_pipeline.add_block(new_block)
         # second pass to make connections
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            if source_block.type == BlockType.SCRATCHPAD:
+                continue
             duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
             duplicate_block.upstream_blocks = duplicate_pipeline.get_blocks(
                 source_block.upstream_block_uuids
