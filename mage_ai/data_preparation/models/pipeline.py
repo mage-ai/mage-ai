@@ -227,6 +227,7 @@ class Pipeline:
             new_pipeline_path = self.dir_path
             os.rename(old_pipeline_path, new_pipeline_path)
             self.save()
+
         if update_content:
             for key in ['blocks', 'widgets']:
                 if key in data:
@@ -311,13 +312,15 @@ class Pipeline:
             curr_upstream_block_uuids = set(block.upstream_block_uuids)
             new_upstream_block_uuids = set(upstream_block_uuids)
             if curr_upstream_block_uuids != new_upstream_block_uuids:
+                # There are currently no upstream blocks that are widgets (e.g. chart)
                 upstream_blocks_added = self.get_blocks(
                     new_upstream_block_uuids - curr_upstream_block_uuids,
-                    widget=widget,
+                    widget=False,
                 )
+                # There are currently no upstream blocks that are widgets (e.g. chart)
                 upstream_blocks_removed = self.get_blocks(
                     curr_upstream_block_uuids - new_upstream_block_uuids,
-                    widget=widget,
+                    widget=False,
                 )
                 for b in upstream_blocks_added:
                     b.downstream_blocks.append(block)
@@ -372,6 +375,7 @@ class Pipeline:
                 '. Please remove the downstream blocks first.'
             )
         upstream_blocks = block.upstream_blocks
+        print('upstream_blocks', upstream_blocks)
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks = [
                 b for b in upstream_block.downstream_blocks if b.uuid != block.uuid

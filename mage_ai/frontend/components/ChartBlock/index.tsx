@@ -13,6 +13,7 @@ import BlockType, {
   CHART_TYPES,
   ChartTypeEnum,
   ConfigurationType,
+  StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ChartController from './ChartController';
@@ -180,17 +181,26 @@ function ChartBlock({
         ...data.configuration,
       },
     };
-    savePipelineContent().then(() => runBlock({
-      block: widget,
-      code: content,
-      ignoreAlreadyRunning: true,
-    }));
+
+    savePipelineContent().then(() => {
+      runBlock({
+        block: widget,
+        code: content,
+        ignoreAlreadyRunning: true,
+        runUpstream: !!upstreamBlocks.find((uuid: string) => ![
+          StatusTypeEnum.EXECUTED,
+          StatusTypeEnum.UPDATED,
+        ].includes(blocksMapping[uuid]?.status)),
+      });
+    });
 
     setRunCount(runCountPrev => runCountPrev + 1);
   }, [
     block,
+    blocksMapping,
     content,
     setRunCount,
+    upstreamBlocks,
   ]);
 
   const updateContent = useCallback((val: string) => {

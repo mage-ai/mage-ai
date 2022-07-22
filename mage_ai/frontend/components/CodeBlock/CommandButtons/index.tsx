@@ -4,6 +4,7 @@ import { ThemeContext } from 'styled-components';
 import BlockType, {
   BlockTypeEnum,
   CHART_TYPES,
+  StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
@@ -50,6 +51,7 @@ type CommandButtonsProps = {
   runBlock: (payload: {
     block: BlockType;
     code?: string;
+    runDownstream?: boolean;
     runUpstream?: boolean;
   }) => void;
 } & CommandButtonsSharedProps;
@@ -100,15 +102,25 @@ function CommandButtons({
         },
         content,
       }, {
-        onCreateCallback: (widget: BlockType) => runBlock({
-          block: widget,
-          code: content,
-        }),
+        onCreateCallback: (widget: BlockType) => {
+          if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
+            runBlock({
+              block: widget,
+              code: content,
+            });
+          } else {
+            runBlock({
+              block,
+              runDownstream: true,
+            });
+          }
+        },
       }),
       uuid: chartType,
     };
   }), [
     CHART_TYPES,
+    block,
     runBlock,
   ]);
 
