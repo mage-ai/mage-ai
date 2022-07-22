@@ -385,15 +385,18 @@ function PipelineDetailPage({
     },
   );
 
-  const [updatePipelineNoContent] = useMutation(api.pipelines.useUpdate(pipelineUUID));
-  const updatePipelineName = useCallback((name: string) => (
-    // @ts-ignore
-    updatePipelineNoContent({
+  const [updatePipelineName] = useMutation(
+    (name: string) => api.pipelines.useUpdate(pipelineUUID)({
       pipeline: { name },
-    }).then((response: any) => {
-      onSuccess(
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({ pipeline: { uuid } }) => {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
             router.push(`/pipelines/${uuid}`);
             fetchFileTree();
           },
@@ -406,13 +409,9 @@ function PipelineDetailPage({
             console.log(errors, message);
           },
         },
-      );
+      ),
     },
-  )), [
-    fetchFileTree,
-    updatePipelineNoContent,
-    router,
-  ]);
+  );
 
   const savePipelineContent = useCallback(() => {
     setPipelineLastSaved(new Date());
