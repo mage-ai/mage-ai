@@ -80,7 +80,7 @@ export const CHART_TYPES = [
 ];
 
 export interface ConfigurationType {
-  chart_type: ChartTypeEnum;
+  chart_type?: ChartTypeEnum;
   width_percentage?: number;
   x?: string[] | number[];
   y?: string[] | number[];

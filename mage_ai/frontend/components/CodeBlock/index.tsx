@@ -89,10 +89,12 @@ type CodeBlockProps = {
   runBlock: (payload: {
     block: BlockType;
     code: string;
+    runDownstream?: boolean;
     runUpstream: boolean;
   }) => void;
   runningBlocks: BlockType[];
   setAnyInputFocused: (value: boolean) => void;
+  widgets: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
 function CodeBlockProps({
@@ -122,6 +124,7 @@ function CodeBlockProps({
   setSelected,
   setTextareaFocused,
   textareaFocused,
+  widgets,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
@@ -140,6 +143,12 @@ function CodeBlockProps({
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
+  const hasDownstreamWidgets = useMemo(() => !!widgets.find(({
+    upstream_blocks: upstreamBlocks,
+  }: BlockType) => upstreamBlocks.includes(block.uuid)), [
+    block,
+    widgets,
+  ]);
   const runBlockAndTrack = useCallback(
     (payload?: { block: BlockType, code?: string, runUpstream?: boolean }) => {
       const {
@@ -150,12 +159,14 @@ function CodeBlockProps({
       runBlock({
         block: blockPayload,
         code: code || content,
+        runDownstream: hasDownstreamWidgets,
         runUpstream: runUpstream || false,
       });
       setRunCount(1 + Number(runCount));
       setRunEndTime(null);
     }, [
       content,
+      hasDownstreamWidgets,
       runCount,
       runBlock,
       setRunCount,

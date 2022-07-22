@@ -864,11 +864,15 @@ function PipelineDetailPage({
   const runBlock = useCallback((payload: {
     block: BlockType;
     code: string;
+    ignoreAlreadyRunning?: boolean;
+    runDownstream?: boolean;
     runUpstream?: boolean;
   }) => {
     const {
       block,
       code,
+      ignoreAlreadyRunning,
+      runDownstream = false,
       runUpstream = false,
     } = payload;
 
@@ -876,12 +880,13 @@ function PipelineDetailPage({
       const { uuid } = block;
       const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
-      if (!isAlreadyRunning) {
+      if (!isAlreadyRunning || ignoreAlreadyRunning) {
         sendMessage(JSON.stringify({
           code,
           pipeline_uuid: pipeline?.uuid,
           type: block.type,
           uuid,
+          run_downstream: runDownstream,
           run_upstream: runUpstream
         }));
 
@@ -1033,6 +1038,7 @@ function PipelineDetailPage({
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
+      widgets={widgets}
     />
   ), [
     addNewBlockAtIndex,
@@ -1064,6 +1070,7 @@ function PipelineDetailPage({
     setSelectedBlock,
     setTextareaFocused,
     textareaFocused,
+    widgets,
   ]);
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus

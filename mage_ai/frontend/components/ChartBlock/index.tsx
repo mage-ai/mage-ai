@@ -65,6 +65,7 @@ export type ChartPropsShared = {
   runBlock: (payload: {
     block: BlockType;
     code: string;
+    ignoreAlreadyRunning?: boolean;
     runUpstream?: boolean;
   }) => void;
   runningBlocks: BlockType[];
@@ -104,12 +105,13 @@ function ChartBlock({
   const {
     outputs = [],
   } = block;
-  const [chartType, setChartType] = useState<string>(block.configuration?.chart_type);
+  const [chartType, setChartType] = useState<ChartTypeEnum>(block.configuration?.chart_type);
   const [configuration, setConfiguration] = useState<ConfigurationType>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
   const [chartWidth, setChartWidth] = useState<number>(null);
   const [upstreamBlocks, setUpstreamBlocks] = useState<string[]>(block?.upstream_blocks);
+  const [runCount, setRunCount] = useState<number>(outputs?.length || 0);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
   const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
@@ -123,6 +125,74 @@ function ChartBlock({
     blocksOfType,
   ]);
 
+  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
+  const messagesWithType = useMemo(() => {
+    return messages?.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
+  }, [
+    messages,
+  ]);
+  const hasError = !!messagesWithType.find(({ error }) => error);
+  const hasOutput = messagesWithType.length >= 1;
+  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+  const borderColorShareProps = useMemo(() => ({
+    blockType: block.type,
+    hasError,
+    selected,
+  }), [
+    block.type,
+    hasError,
+    selected,
+  ]);
+
+  let chartData;
+  let chartDataRaw;
+  if (messagesWithType?.length) {
+    const messagesIndex = messagesWithType.length - 1;
+    chartDataRaw = messagesWithType?.[messagesIndex]?.data?.[0];
+  }
+  if (chartDataRaw) {
+    chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
+    if (isJsonString(chartDataRaw)) {
+      chartData = JSON.parse(chartDataRaw);
+    }
+  } else if (outputs?.length >= 1) {
+    chartData = {};
+
+    outputs.forEach(({
+      text_data: textData,
+      type: outputType,
+      variable_uuid: variableUUID,
+    }) => {
+      if (DataTypeEnum.TEXT === outputType) {
+        chartData[variableUUID] = JSON.parse(textData);
+      }
+    });
+  }
+
+  const saveAndRun = useCallback((data: BlockType) => {
+    const widget = {
+      ...block,
+      ...data,
+      configuration: {
+        ...block.configuration,
+        ...data.configuration,
+      },
+    };
+    savePipelineContent().then(() => runBlock({
+      block: widget,
+      code: content,
+      ignoreAlreadyRunning: true,
+    }));
+
+    setRunCount(runCountPrev => runCountPrev + 1);
+  }, [
+    block,
+    content,
+    setRunCount,
+  ]);
+
   const updateContent = useCallback((val: string) => {
     setContent(val);
     onChangeContent(val);
@@ -130,21 +200,33 @@ function ChartBlock({
     onChangeContent,
     setContent,
   ]);
-  const updateConfiguration = useCallback((data: { [key: string]: string }) => {
-    updateWidget({
-      ...block,
-      configuration: {
-        ...configuration,
-        ...data,
-      },
-    });
+  const updateConfiguration = useCallback((data: {
+    [key: string]: string | number;
+  }) => {
     setConfiguration(config => ({
       ...config,
       ...data,
     }));
+
+    const widget = {
+      ...block,
+      configuration: {
+        ...configuration,
+        ...data,
+        chart_type: chartType,
+      },
+    };
+    updateWidget(widget);
+
+    if (runCount) {
+      saveAndRun(widget);
+    }
   }, [
     block,
+    chartType,
     configuration,
+    runCount,
+    saveAndRun,
     setConfiguration,
     updateWidget,
   ]);
@@ -170,26 +252,6 @@ function ChartBlock({
     updateContent,
   ]);
 
-  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
-    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
-
-  const messagesWithType = useMemo(() => {
-    return messages?.filter((kernelOutput: KernelOutputType) => kernelOutput?.type);
-  }, [
-    messages,
-  ]);
-  const hasError = !!messagesWithType.find(({ error }) => error);
-  const hasOutput = messagesWithType.length >= 1;
-  const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
-  const borderColorShareProps = useMemo(() => ({
-    blockType: block.type,
-    hasError,
-    selected,
-  }), [
-    block.type,
-    hasError,
-    selected,
-  ]);
   const codeOutputEl = useMemo(() => hasError && hasOutput && (
     <CodeOutput
       {...borderColorShareProps}
@@ -209,25 +271,6 @@ function ChartBlock({
     messagesWithType,
     selected,
   ]);
-
-  let chartData = {};
-  let chartDataRaw = messagesWithType?.[0]?.data?.[0];
-  if (chartDataRaw) {
-    chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
-    if (isJsonString(chartDataRaw)) {
-      chartData = JSON.parse(chartDataRaw);
-    }
-  } else if (outputs?.length >= 1) {
-    outputs.forEach(({
-      text_data: textData,
-      type: outputType,
-      variable_uuid: variableUUID,
-    }) => {
-      if (DataTypeEnum.TEXT === outputType) {
-        chartData[variableUUID] = JSON.parse(textData);
-      }
-    });
-  }
 
   const isEditingPrevious = usePrevious(isEditing);
   const widthPrevious = usePrevious(width);
@@ -380,10 +423,12 @@ function ChartBlock({
             compact
             onChange={(e) => {
               const value = [e.target.value];
-              updateWidget({
+              const widget = {
                 ...block,
                 upstream_blocks: value,
-              });
+              };
+              updateWidget(widget);
+              saveAndRun(widget);
               setUpstreamBlocks(value)
             }}
             placeholder="Source block"
@@ -410,10 +455,7 @@ function ChartBlock({
                   blackBorder
                   compact
                   inline
-                  onClick={() => savePipelineContent().then(() => runBlock({
-                    block,
-                    code: content,
-                  }))}
+                  onClick={() => saveAndRun(block)}
                   uuid={`ChartBlock/run/${block.uuid}`}
                 >
                   <PlayButtonFilled size={UNIT * 2} />
@@ -489,7 +531,7 @@ function ChartBlock({
           flex={2}
           ref={refChartContainer}
         >
-          {!isEmptyObject(chartData) && (
+          {chartData && !isEmptyObject(chartData) && (
             <Spacing pb={3}>
               <ChartController
                 block={block}
@@ -510,13 +552,15 @@ function ChartBlock({
                 <Select
                   onChange={(e) => {
                     const value = e.target.value;
-                    updateWidget({
+                    const widget = {
                       ...block,
                       configuration: {
                         ...configuration,
                         chart_type: value,
                       },
-                    });
+                    };
+                    updateWidget(widget);
+                    saveAndRun(widget);
                     setChartType(value);
                   }}
                   placeholder="Select chart type"

@@ -12,7 +12,6 @@ export type ChartsPropsShared = {
   };
   onChangeChartBlock: (uuid: string, value: string) => void;
   selectedBlock: BlockType;
-  updateWidget: (block: BlockType) => void;
   widgets: BlockType[];
 } & ChartPropsShared;
 
