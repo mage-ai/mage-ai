@@ -59,7 +59,7 @@ class Pipeline:
         return Pipeline(uuid, repo_path)
 
     @classmethod
-    def duplicate(cls, source_pipeline: "Pipeline", duplicate_pipeline_name: str):
+    def duplicate(cls, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
         duplicate_pipeline = cls.create(duplicate_pipeline_name, source_pipeline.repo_path)
         # first pass to load blocks
         for block_uuid in source_pipeline.blocks_by_uuid:
@@ -70,8 +70,12 @@ class Pipeline:
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
             duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
-            duplicate_block.upstream_blocks = source_block.upstream_blocks
-            duplicate_block.downstream_blocks = source_block.downstream_blocks
+            duplicate_block.upstream_blocks = duplicate_pipeline.get_blocks(
+                source_block.upstream_block_uuids
+            )
+            duplicate_block.downstream_blocks = duplicate_pipeline.get_blocks(
+                source_block.downstream_block_uuids
+            )
         # Add widgets
         for widget_uuid in source_pipeline.widgets_by_uuid:
             source_widget = source_pipeline.widgets_by_uuid[widget_uuid]
