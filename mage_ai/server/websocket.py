@@ -56,6 +56,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
+        run_tests = message.get('run_tests')
 
         if execute_pipeline:
             pipeline_uuid = message.get('pipeline_uuid')
@@ -90,17 +91,43 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             threading.Thread(target=run_pipeline).start()
         elif output:
             self.send_message(output)
+        elif run_tests:
+            block_type = message.get('type')
+            block_uuid = message.get('uuid')
+            pipeline_uuid = message.get('pipeline_uuid')
+            widget = BlockType.CHART == block_type
+
+            pipeline = Pipeline(pipeline_uuid, get_repo_path())
+            block = pipeline.get_block(block_uuid, widget=widget)
+            code = custom_code
+            if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
+                value = dict(
+                    block_uuid=block_uuid,
+                    pipeline_uuid=pipeline_uuid,
+                )
+                msg_id = str(uuid.uuid4())
+                test_output = block.run_tests(redirect_outputs=True)
+                self.send_message(
+                    dict(
+                        data=test_output,
+                        execution_state='idle',
+                        msg_id=msg_id,
+                        msg_type='stream',
+                        type=DataType.TEXT_PLAIN,
+                    )
+                )
+                WebSocketServer.running_executions_mapping[msg_id] = value
         else:
             block_type = message.get('type')
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
             widget = BlockType.CHART == block_type
 
-            client = self.init_kernel_client()
-
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
+
+            client = self.init_kernel_client()
 
             if not custom_code and BlockType.SCRATCHPAD == block_type:
                 msg_id = client.execute('')
@@ -120,33 +147,38 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     ),
                 )
             else:
-                if block is not None and \
-                   block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                    code = add_execution_code(
-                        pipeline_uuid,
-                        block_uuid,
-                        custom_code,
-                        global_vars,
-                        analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
-                        kernel_name=kernel_name,
-                        pipeline_config=pipeline.get_config_from_yaml(),
-                        repo_config=get_repo_config().to_dict(),
-                        run_upstream=run_upstream,
-                        update_status=False if kernel_name == KernelName.PYSPARK else True,
-                        widget=widget,
+                if run_tests:
+                    msg_id = str(uuid.uuid4())
+                    test_output = block.run_tests(redirect_outputs=True)
+                    self.send_message(
+                        dict(
+                            data=test_output,
+                            execution_state='idle',
+                            msg_id=msg_id,
+                            msg_type='stream',
+                            type=DataType.TEXT_PLAIN,
+                        )
                     )
+                else:
+                    if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
+                        code = add_execution_code(
+                            pipeline_uuid,
+                            block_uuid,
+                            custom_code,
+                            global_vars,
+                            analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
+                            kernel_name=kernel_name,
+                            pipeline_config=pipeline.get_config_from_yaml(),
+                            repo_config=get_repo_config().to_dict(),
+                            run_upstream=run_upstream,
+                            update_status=False if kernel_name == KernelName.PYSPARK else True,
+                            widget=widget,
+                        )
 
                 if kernel_name == KernelName.PYTHON3:
                     msg_id = client.execute(add_internal_output_info(code))
                 else:
                     msg_id = client.execute(code)
-
-                value = dict(
-                    block_uuid=block_uuid,
-                    pipeline_uuid=pipeline_uuid,
-                )
-
-                WebSocketServer.running_executions_mapping[msg_id] = value
 
                 if run_downstream:
                     for block in block.downstream_blocks:
@@ -156,6 +188,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                             type=block.type,
                             uuid=block.uuid,
                         )))
+            WebSocketServer.running_executions_mapping[msg_id] = dict(
+                block_uuid=block_uuid,
+                pipeline_uuid=pipeline_uuid,
+            )
 
     @classmethod
     def send_message(self, message: dict) -> None:

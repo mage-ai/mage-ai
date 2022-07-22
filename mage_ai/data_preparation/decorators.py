@@ -15,3 +15,7 @@ def data_loader(function):
 
 def transformer(function):
     return function
+
+
+def test(function):
+    return function

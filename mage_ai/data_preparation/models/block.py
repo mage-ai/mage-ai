@@ -34,9 +34,21 @@ async def run_blocks(
     global_vars=None,
     log_func: Callable[[str], None] = None,
     redirect_outputs: bool = False,
+    run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
+    async def create_block_task(block: 'Block', run_tests: bool = False):
+        await block.execute(
+            analyze_outputs=analyze_outputs,
+            global_vars=global_vars,
+            log_func=log_func,
+            redirect_outputs=redirect_outputs,
+            run_all_blocks=True,
+            update_status=update_status,
+        )
+        if run_tests:
+            block.run_tests()
     tasks = dict()
     blocks = Queue()
 
@@ -59,14 +71,7 @@ async def run_blocks(
         upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
         await asyncio.gather(*upstream_tasks)
         task = asyncio.create_task(
-            block.execute(
-                analyze_outputs=analyze_outputs,
-                global_vars=global_vars,
-                log_func=log_func,
-                redirect_outputs=redirect_outputs,
-                run_all_blocks=True,
-                update_status=update_status,
-            )
+            create_block_task(block, run_tests=run_tests)
         )
         tasks[block.uuid] = task
         for downstream_block in block.downstream_blocks:
@@ -447,6 +452,7 @@ class Block:
                 ]
         outputs = []
         decorated_functions = []
+        test_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
         results = {}
         outputs_from_input_vars = {}
@@ -457,7 +463,10 @@ class Block:
             outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
         with redirect_stdout(stdout):
-            results = {self.type: block_decorator(decorated_functions)}
+            results = {
+                self.type: block_decorator(decorated_functions),
+                'test': block_decorator(test_functions),
+            }
             results.update(outputs_from_input_vars)
 
             if custom_code is not None:
@@ -465,7 +474,7 @@ class Block:
                     exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
-                    exec(file.read(), {self.type: block_decorator(decorated_functions)})
+                    exec(file.read(), results)
 
             if BlockType.CHART == self.type:
                 variables = self.get_variables_from_code_execution(results)
@@ -487,7 +496,10 @@ class Block:
                     if type(outputs) is not list:
                         outputs = [outputs]
 
-        output_message = dict(output=outputs)
+        output_message = dict(
+            output=outputs,
+            test_functions=test_functions,
+        )
         if redirect_outputs:
             output_message['stdout'] = stdout.getvalue()
         else:
@@ -656,6 +668,44 @@ class Block:
         )
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
+
+    def run_tests(self, redirect_outputs=False) -> str:
+        def block_decorator(decorated_functions):
+            def custom_code(function):
+                decorated_functions.append(function)
+                return function
+
+            return custom_code
+
+        test_functions = []
+        results = {
+            'test': block_decorator(test_functions),
+        }
+        if os.path.exists(self.file_path):
+            with open(self.file_path) as file:
+                exec(file.read(), results)
+
+        stdout = StringIO() if redirect_outputs else sys.stdout
+        variable_manager = VariableManager(self.pipeline.repo_path)
+        outputs = [
+            variable_manager.get_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                variable,
+            )
+            for variable in self.output_variables.keys()
+        ]
+        with redirect_stdout(stdout):
+            for func in test_functions:
+                try:
+                    func(*outputs)
+                except AssertionError:
+                    print('==============================================================')
+                    print(f'FAIL: {func.__name__} (block: {self.uuid})')
+                    print('--------------------------------------------------------------')
+                    print(traceback.format_exc())
+        if redirect_outputs:
+            return stdout.getvalue()
 
     def __analyze_outputs(self, variable_mapping):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
