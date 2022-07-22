@@ -1,3 +1,4 @@
+import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import BlockType from '@interfaces/BlockType';
 import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
@@ -37,34 +38,46 @@ function ChartController({
     } = data;
 
     if (x && y && Array.isArray(x)) {
-      if (ChartStyleEnum.VERTICAL === chartStyle) {
+      if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         return (
-          <Histogram
-            data={x.map((xValue , idx: number) => [
-              xValue,
-              y[idx],
-            ])}
+          <BarGraphHorizontal
+            data={x.map((xValue, idx: number) => ({
+              x: y[idx],
+              y: xValue,
+            }))}
             height={CHART_HEIGHT_DEFAULT}
+            renderTooltipContent={({ y }) => y}
             width={width}
-            large
-            margin={{
-              left: UNIT * 5,
-              right: UNIT * 1,
-            }}
-            renderTooltipContent={([, yValue]) => (
-              <Text inverted monospace small>
-                {yValue}
-              </Text>
-            )}
-            showAxisLabels
-            showYAxisLabels
-            showZeroes
-            sortData={d => d}
+            xNumTicks={2}
+            ySerialize={({ y }) => y}
           />
         );
       }
 
-      return;
+      return (
+        <Histogram
+          data={x.map((xValue , idx: number) => [
+            xValue,
+            y[idx],
+          ])}
+          height={CHART_HEIGHT_DEFAULT}
+          width={width}
+          large
+          margin={{
+            left: UNIT * 5,
+            right: UNIT * 1,
+          }}
+          renderTooltipContent={([, yValue]) => (
+            <Text inverted monospace small>
+              {yValue}
+            </Text>
+          )}
+          showAxisLabels
+          showYAxisLabels
+          showZeroes
+          sortData={d => d}
+        />
+      );
     }
   } else if (ChartTypeEnum.HISTOGRAM === chartType) {
     const {
