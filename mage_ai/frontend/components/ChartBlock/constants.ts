@@ -3,10 +3,12 @@ import {  } from '@interfaces/ChartBlockType';
 import {
   ChartStyleEnum,
   ChartTypeEnum,
+  SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
+  VARIABLE_NAME_Y_SORT_ORDER,
 } from '@interfaces/ChartBlockType';
 
 export const CONFIGURATIONS_BY_CHART_TYPE = {
@@ -22,8 +24,16 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       uuid: VARIABLE_NAME_Y,
     },
     {
+      label: () => 'y-axis sort direction',
+      options: [
+        null,
+        SortOrderEnum.ASCENDING,
+        SortOrderEnum.DESCENDING,
+      ],
+      uuid: VARIABLE_NAME_Y_SORT_ORDER,
+    },
+    {
       label: () => 'chart style',
-      monospace: true,
       options: [
         ChartStyleEnum.HORIZONTAL,
         ChartStyleEnum.VERTICAL,

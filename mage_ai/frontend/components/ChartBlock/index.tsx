@@ -604,7 +604,6 @@ function ChartBlock({
                       onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                       value={configuration?.[uuid]}
                     >
-                      <option value="" />
                       {options.map((val: string) => (
                         <option key={val} value={val}>
                           {val}

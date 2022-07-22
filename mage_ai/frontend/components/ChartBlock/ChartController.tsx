@@ -4,7 +4,11 @@ import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import { CHART_HEIGHT_DEFAULT } from './index.style';
-import { ChartStyleEnum, ChartTypeEnum } from '@interfaces/ChartBlockType';
+import {
+  ChartStyleEnum,
+  ChartTypeEnum,
+  SortOrderEnum,
+} from '@interfaces/ChartBlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VARIABLE_NAME_X } from './constants';
 import { numberWithCommas } from '@utils/string';
@@ -29,6 +33,7 @@ function ChartController({
   const {
     chart_style: chartStyle,
     chart_type: chartType,
+    y_sort_order: ySortOrder,
   } = configuration || {};
 
   if (ChartTypeEnum.BAR_CHART === chartType) {
@@ -39,16 +44,30 @@ function ChartController({
 
     if (x && y && Array.isArray(x)) {
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
+        let xy = x.map((xValue, idx: number) => ({
+          x: y[idx],
+          y: xValue,
+        }));
+
+        if (SortOrderEnum.ASCENDING === ySortOrder) {
+          xy = sortByKey(xy, 'x', { ascending: false });
+        } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+          xy = sortByKey(xy, 'x', { ascending: true });
+        }
+
         return (
           <BarGraphHorizontal
-            data={x.map((xValue, idx: number) => ({
-              x: y[idx],
-              y: xValue,
-            }))}
+            data={xy}
             height={CHART_HEIGHT_DEFAULT}
-            renderTooltipContent={({ y }) => y}
+            margin={{
+              bottom: UNIT * 3,
+              left: UNIT * 1,
+              right: UNIT * 3,
+              top: 0,
+            }}
+            renderTooltipContent={({ x }) => x}
             width={width}
-            xNumTicks={2}
+            xNumTicks={3}
             ySerialize={({ y }) => y}
           />
         );
@@ -75,7 +94,15 @@ function ChartController({
           showAxisLabels
           showYAxisLabels
           showZeroes
-          sortData={d => d}
+          sortData={(d) => {
+            if (SortOrderEnum.ASCENDING === ySortOrder) {
+              return sortByKey(d, '[1]', { ascending: true });
+            } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+              return sortByKey(d, '[1]', { ascending: false });
+            }
+
+            return d;
+          }}
         />
       );
     }
