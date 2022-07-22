@@ -66,6 +66,14 @@ import {
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
+<<<<<<< HEAD
+=======
+import {
+  initializeContentAndMessages,
+  removeCollapsedBlockStates,
+  updateCollapsedBlockStates,
+} from '@components/PipelineDetail/utils';
+>>>>>>> ece3991 ([sp] delete collapsed state when deleting pipeline)
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -475,7 +483,7 @@ function PipelineDetailPage({
             },
           }) => {
             fetchFileTree();
-            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+            updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
             router.push(`/pipelines/${uuid}`);
           },
           onErrorCallback: ({
@@ -559,6 +567,7 @@ function PipelineDetailPage({
             if (uuid === pipelineUUID) {
               redirectToFirstPipeline(pipelines, router);
             }
+            removeCollapsedBlockStates(blocks, pipelineUUID);
             fetchFileTree();
           },
           onErrorCallback: ({
