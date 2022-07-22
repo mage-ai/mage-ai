@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def convert_to_list(arr, limit=None):
-    if type(arr) is pd.Series or type(arr) is pd.Index:
+    if type(arr) in [pd.Index, pd.RangeIndex, pd.Series]:
         return arr[:limit].tolist()
     elif type(arr) is pd.DataFrame:
         return arr[:limit].to_numpy().tolist()

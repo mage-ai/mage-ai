@@ -15,12 +15,12 @@ import {
 export const CONFIGURATIONS_BY_CHART_TYPE = {
   [ChartTypeEnum.BAR_CHART]: [
     {
-      label: () => 'variable name of x-axis',
+      label: () => 'variable name of x-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
     },
     {
-      label: () => 'variable name of y-axis',
+      label: () => 'variable name of y-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_Y,
     },
@@ -52,6 +52,18 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+    },
+  ],
+  [ChartTypeEnum.LINE_CHART]: [
+    {
+      label: () => 'variable name of x-axis values',
+      monospace: true,
+      uuid: VARIABLE_NAME_X,
+    },
+    {
+      label: () => 'variable name of y-axis values',
+      monospace: true,
+      uuid: VARIABLE_NAME_Y,
     },
   ],
   [ChartTypeEnum.PIE_CHART]: [
@@ -111,6 +123,19 @@ x = df_1[col]
 `;
     },
   },
+  [ChartTypeEnum.LINE_CHART]: {
+    configuration: (block: BlockType) => ({
+      [VARIABLE_NAME_X]: 'x',
+      [VARIABLE_NAME_Y]: 'y',
+    }),
+    content: (block: BlockType) => {
+      return `columns = df_1.columns
+cols = list(filter(lambda x: df_1[x].dtype == float or df_1[x].dtype == int, columns))
+x = df_1[cols[0]]
+y = df_1[cols[1]]
+`;
+    },
+  },
   [ChartTypeEnum.PIE_CHART]: {
     configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 7,
@@ -140,6 +165,10 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
   },
   [ChartTypeEnum.HISTOGRAM]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
+  },
+  [ChartTypeEnum.LINE_CHART]: {
+    [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of integers or floats.',
   },
   [ChartTypeEnum.PIE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',

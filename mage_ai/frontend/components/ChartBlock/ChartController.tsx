@@ -2,6 +2,7 @@ import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import Histogram from '@components/charts/Histogram';
+import LineSeries from '@components/charts/LineSeries';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
 import { CHART_HEIGHT_DEFAULT } from './index.style';
@@ -10,10 +11,11 @@ import {
   ChartTypeEnum,
   SortOrderEnum,
   VARIABLE_NAME_X,
+  VARIABLE_NAME_Y,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { numberWithCommas } from '@utils/string';
+import { numberWithCommas, roundNumber } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 type ChartControllerProps = {
@@ -147,6 +149,52 @@ function ChartController({
         />
       );
     }
+  } else if (ChartTypeEnum.LINE_CHART === chartType) {
+    const {
+      x,
+      y,
+    } = data;
+    const legendNames = [String(configuration[VARIABLE_NAME_Y])];
+
+    return x && y && Array.isArray(x) && Array.isArray(y) && (
+      <LineSeries
+        data={x.map((val, idx) => ({
+          x: val,
+          y: [y[idx]],
+        }))}
+        height={CHART_HEIGHT_DEFAULT}
+        lineLegendNames={legendNames}
+        margin={{
+          bottom: 8 * UNIT,
+        }}
+        noCurve
+        renderXTooltipContent={({ index, x }) => {
+          // const xCurrent = x[index];
+          // const {
+          //   min: xMin,
+          //   max: xMax,
+          // } = xCurrent;
+
+          return (
+            <Text inverted small>
+              {/*{moment.unix(xMin).format(DATE_FORMAT)} - {moment.unix(xMax).format(DATE_FORMAT)}*/}
+              {configuration[VARIABLE_NAME_X]}: {x}
+            </Text>
+          );
+        }}
+        renderYTooltipContent={({ y }, idx) => (
+          <Text inverted small>
+            {legendNames[idx] && `${legendNames[idx]}: `}{numberWithCommas(roundNumber(y[idx], 4))}
+          </Text>
+        )}
+        xAxisLabel={String(configuration[VARIABLE_NAME_X])}
+        // xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
+        xLabelFormat={v => v}
+        yAxisLabel={String(configuration[VARIABLE_NAME_Y])}
+        yLabelFormat={v => v}
+        width={width}
+      />
+    );
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
     const varName = String(configuration[VARIABLE_NAME_X]);
     const chartData = data[varName];

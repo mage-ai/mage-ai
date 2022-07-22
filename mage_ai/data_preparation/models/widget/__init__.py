@@ -76,15 +76,15 @@ class Widget(Block):
     @property
     def output_variable_names(self):
         var_names = VARIABLE_NAMES_BY_CHART_TYPE.get(self.chart_type, [])
-        return [self.configuration.get(var_name_orig) for var_name_orig in var_names]
+        return [(var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names]
 
     def delete(self):
         super().delete(widget=True)
 
     def get_variables_from_code_execution(self, results):
         data = {}
-        for var_name in self.output_variable_names:
-            data[var_name] = results.get(var_name)
+        for var_name_orig, var_name in self.output_variable_names:
+            data[var_name_orig] = results.get(var_name)
 
         return data
 
@@ -94,21 +94,28 @@ class Widget(Block):
         ))
 
     def post_process_variables(self, variables):
+        data = variables.copy()
+
         if ChartType.BAR_CHART == self.chart_type:
-            for var_name in self.output_variable_names:
-                variables.update({
-                    var_name: convert_to_list(variables[var_name]),
+            for var_name_orig, var_name in self.output_variable_names:
+                data.update({
+                    var_name_orig: convert_to_list(variables[var_name_orig]),
                 })
         elif ChartType.HISTOGRAM == self.chart_type:
-            for var_name in self.output_variable_names:
-                values = [v for v in variables[var_name] if v is not None and not np.isnan(v)]
-                variables = build_histogram_data(
+            for var_name_orig, var_name in self.output_variable_names:
+                values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]
+                data = build_histogram_data(
                     values,
                     int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
                 )
+        elif ChartType.LINE_CHART == self.chart_type:
+            for var_name_orig, var_name in self.output_variable_names:
+                data.update({
+                    var_name_orig: convert_to_list(variables[var_name_orig]),
+                })
         elif ChartType.PIE_CHART == self.chart_type:
-            for var_name in self.output_variable_names:
-                values = [v for v in variables[var_name] if v is not None]
+            for var_name_orig, var_name in self.output_variable_names:
+                values = [v for v in variables[var_name_orig] if v is not None]
                 value_counts = {}
                 for key in values:
                     if not value_counts.get(key):
@@ -121,24 +128,24 @@ class Widget(Block):
                     reverse=True,
                 )[:buckets]
                 value_counts_top = {k: v for v, k in arr}
-                variables = {
-                    var_name: value_counts_top
-                }
+                data.update({
+                    var_name_orig: value_counts_top,
+                })
         elif ChartType.TABLE == self.chart_type:
-            for var_name in self.output_variable_names:
-                arr = variables[var_name]
+            for var_name_orig, var_name in self.output_variable_names:
+                arr = variables[var_name_orig]
                 limit = len(arr)
-                if self.configuration.get(VARIABLE_NAME_Y) == var_name:
+                if VARIABLE_NAME_Y == var_name_orig:
                     limit = int(self.configuration.get(
                         VARIABLE_NAME_LIMIT,
                         DATAFRAME_SAMPLE_COUNT_PREVIEW,
                     ))
 
-                variables.update({
-                    var_name: convert_to_list(arr, limit=limit),
+                data.update({
+                    var_name_orig: convert_to_list(arr, limit=limit),
                 })
 
-        return variables
+        return data
 
 
 class ChartBlock(Widget):

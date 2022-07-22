@@ -9,6 +9,7 @@ VARIABLE_NAME_Y = 'y'
 class ChartType(str, Enum):
     BAR_CHART = 'bar chart'
     HISTOGRAM = 'histogram'
+    LINE_CHART = 'line chart'
     PIE_CHART = 'pie chart'
     TABLE = 'table'
 
@@ -20,6 +21,10 @@ VARIABLE_NAMES_BY_CHART_TYPE = {
     ],
     ChartType.HISTOGRAM: [
         VARIABLE_NAME_X,
+    ],
+    ChartType.LINE_CHART: [
+        VARIABLE_NAME_X,
+        VARIABLE_NAME_Y,
     ],
     ChartType.PIE_CHART: [
         VARIABLE_NAME_X,

@@ -10,6 +10,7 @@ import { ThemeContext } from 'styled-components';
 
 import BlockType, {
   BlockTypeEnum,
+  OutputType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -38,6 +39,7 @@ import {
   CHART_TYPES,
   ChartTypeEnum,
   ConfigurationType,
+  VARIABLE_NAMES,
   VARIABLE_NAME_WIDTH_PERCENTAGE,
 } from '@interfaces/ChartBlockType';
 import {
@@ -57,7 +59,6 @@ import {
   Trash,
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VARIABLE_NAMES } from '@interfaces/ChartBlockType';
 import { capitalize, isJsonString } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy } from '@utils/array';
@@ -168,12 +169,13 @@ function ChartBlock({
   } else if (outputs?.length >= 1) {
     chartData = {};
 
-    outputs.forEach(({
-      text_data: textData,
-      type: outputType,
-      variable_uuid: variableUUID,
-    }) => {
-      if (DataTypeEnum.TEXT === outputType) {
+    outputs.forEach((output: OutputType) => {
+      const {
+        text_data: textData,
+        type: outputType,
+        variable_uuid: variableUUID,
+      } = output || {};
+      if (DataTypeEnum.TEXT === outputType && isJsonString(textData)) {
         chartData[variableUUID] = JSON.parse(textData);
       }
     });
@@ -235,7 +237,9 @@ function ChartBlock({
     };
     updateWidget(widget);
 
-    if (runCount) {
+    const keys = Object.keys(data);
+
+    if (runCount && !keys.find(key => VARIABLE_NAMES.includes(key))) {
       saveAndRun(widget);
     }
   }, [
@@ -564,7 +568,13 @@ function ChartBlock({
             {chartData && !isEmptyObject(chartData) && (
               <Spacing pb={3}>
                 <ChartController
-                  block={block}
+                  block={{
+                    ...block,
+                    configuration: {
+                      ...block.configuration,
+                      ...configuration,
+                    },
+                  }}
                   data={chartData}
                   width={chartWidth}
                 />
