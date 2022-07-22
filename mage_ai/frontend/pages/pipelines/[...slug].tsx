@@ -108,6 +108,8 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const { data: pipelinesData } = api.pipelines.list();
+  const pipelines = pipelinesData?.pipelines;
 
   const qUrl = queryFromUrl();
   const {
@@ -575,7 +577,7 @@ function PipelineDetailPage({
             },
           }) => {
             if (uuid === pipelineUUID) {
-              redirectToFirstPipeline(router);
+              redirectToFirstPipeline(pipelines, router);
             }
             fetchFileTree();
           },
