@@ -56,16 +56,17 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
+import { getWebSocket } from '@api/utils/url';
+import { goToWithQuery } from '@utils/routing';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
+  removeCollapsedBlockStates,
   removeDataOutputBlockUUID,
-  updateCollapsedBlocks,
+  updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
-import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
-import { getWebSocket } from '@api/utils/url';
-import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -556,7 +557,7 @@ function PipelineDetailPage({
       if (type !== pipeline?.type) {
         fetchPipeline();
       }
-      updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+      updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
       router.push(`/pipelines/${uuid}`);
     });
   }, [
@@ -564,7 +565,7 @@ function PipelineDetailPage({
     fetchFileTree,
     pipelineUUID,
     savePipelineContent,
-    updateCollapsedBlocks,
+    updateCollapsedBlockStates,
   ]);
   const [deletePipeline] = useMutation(
     (uuid: string) => api.pipelines.useDelete(uuid)(),
@@ -579,6 +580,7 @@ function PipelineDetailPage({
             if (uuid === pipelineUUID) {
               redirectToFirstPipeline(pipelines, router);
             }
+            removeCollapsedBlockStates(blocks, pipelineUUID);
             fetchFileTree();
           },
           onErrorCallback: ({

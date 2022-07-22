@@ -52,7 +52,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   };
 }
 
-export function updateCollapsedBlocks(blocks: BlockType[], pipelineUUID: string, newPipelineUUID: string) {
+export function updateCollapsedBlockStates(blocks: BlockType[], pipelineUUID: string, newPipelineUUID: string) {
   blocks.forEach((b) => {
     set(
       `${newPipelineUUID}/${b.uuid}/codeCollapsed`,
@@ -105,6 +105,13 @@ export function convertBlockUUIDstoBlockTypes(
   return uuids
     .map(uuid => blockUUIDMapping[uuid])
     .filter(block => !!block);
+}
+
+export function removeCollapsedBlockStates(blocks: BlockType[], pipelineUUID: string) {
+  blocks.forEach((b) => {
+    remove(`${pipelineUUID}/${b.uuid}/codeCollapsed`);
+    remove(`${pipelineUUID}/${b.uuid}/outputCollapsed`);
+  });
 }
 
 export const redirectToFirstPipeline = (pipelines: PipelineType[], router: NextRouter) => {
