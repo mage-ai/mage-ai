@@ -65,6 +65,7 @@ export type ChartPropsShared = {
   runBlock: (payload: {
     block: BlockType;
     code: string;
+    ignoreAlreadyRunning?: boolean;
     runUpstream?: boolean;
   }) => void;
   runningBlocks: BlockType[];
@@ -104,7 +105,7 @@ function ChartBlock({
   const {
     outputs = [],
   } = block;
-  const [chartType, setChartType] = useState<string>(block.configuration?.chart_type);
+  const [chartType, setChartType] = useState<ChartTypeEnum>(block.configuration?.chart_type);
   const [configuration, setConfiguration] = useState<ConfigurationType>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
@@ -199,7 +200,9 @@ function ChartBlock({
     onChangeContent,
     setContent,
   ]);
-  const updateConfiguration = useCallback((data: { [key: string]: string }) => {
+  const updateConfiguration = useCallback((data: {
+    [key: string]: string | number;
+  }) => {
     setConfiguration(config => ({
       ...config,
       ...data,

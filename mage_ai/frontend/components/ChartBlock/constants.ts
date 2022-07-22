@@ -36,7 +36,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
   [ChartTypeEnum.HISTOGRAM]: {
-    configuration: () => ({
+    configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 10,
       [VARIABLE_NAME_X]: 'x',
     }),
@@ -52,7 +52,7 @@ x = ${uuid}[col]
     },
   },
   [ChartTypeEnum.PIE_CHART]: {
-    configuration: () => ({
+    configuration: (block: BlockType) => ({
       [VARIABLE_NAME_BUCKETS]: 7,
       [VARIABLE_NAME_X]: 'x',
     }),
