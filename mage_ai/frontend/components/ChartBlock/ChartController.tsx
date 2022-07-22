@@ -178,7 +178,7 @@ function ChartController({
         noBorderRight
         noBorderTop
         rows={y}
-        width={typeof width === 'undefined' ? null : (width - SCROLLBAR_WIDTH)}
+        width={width ? width - SCROLLBAR_WIDTH : width}
       />
     );
   }
