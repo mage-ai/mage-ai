@@ -154,7 +154,7 @@ function ChartController({
       x,
       y,
     } = data;
-    const legendNames = [configuration[VARIABLE_NAME_Y]];
+    const legendNames = [String(configuration[VARIABLE_NAME_Y])];
 
     return x && y && Array.isArray(x) && Array.isArray(y) && (
       <LineSeries
@@ -187,10 +187,10 @@ function ChartController({
             {legendNames[idx] && `${legendNames[idx]}: `}{numberWithCommas(roundNumber(y[idx], 4))}
           </Text>
         )}
-        xAxisLabel={configuration[VARIABLE_NAME_X]}
+        xAxisLabel={String(configuration[VARIABLE_NAME_X])}
         // xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
         xLabelFormat={v => v}
-        yAxisLabel={configuration[VARIABLE_NAME_Y]}
+        yAxisLabel={String(configuration[VARIABLE_NAME_Y])}
         yLabelFormat={v => v}
         width={width}
       />

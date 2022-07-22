@@ -10,6 +10,7 @@ import { ThemeContext } from 'styled-components';
 
 import BlockType, {
   BlockTypeEnum,
+  OutputType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -168,7 +169,7 @@ function ChartBlock({
   } else if (outputs?.length >= 1) {
     chartData = {};
 
-    outputs.forEach((output = {}) => {
+    outputs.forEach((output: OutputType) => {
       const {
         text_data: textData,
         type: outputType,
