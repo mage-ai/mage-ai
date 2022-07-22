@@ -130,19 +130,20 @@ function CodeBlockProps({
   const themeContext = useContext(ThemeContext);
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
-  const [codeCollapsed, setCodeCollapsed] = useState<boolean>(
-    get(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, false),
-  );
+  const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
-  const [outputCollapsed, setOutputCollapsed] = useState<boolean>(
-    get(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, false),
-  );
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
+
+  useEffect(() => {
+    setCodeCollapsed(get(`${pipeline.uuid}/${block.uuid}/codeCollapsed`, false));
+    setOutputCollapsed(get(`${pipeline.uuid}/${block.uuid}/outputCollapsed`, false));
+  }, []);
 
   const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
@@ -153,6 +154,7 @@ function CodeBlockProps({
     block,
     widgets,
   ]);
+
   const runBlockAndTrack = useCallback(
     (payload?: {
       block: BlockType;
