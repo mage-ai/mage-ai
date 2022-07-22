@@ -34,6 +34,7 @@ import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
+import { range } from '@utils/array';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
@@ -47,7 +48,7 @@ type SharedProps = {
   columnHeaderHeight?: number;
   disableScrolling?: boolean;
   height?: number;
-  index?: number[] | string[];
+  index?: number[] | number[][] | string[] | string[][];
   invalidValues?: InvalidValueType;
   maxHeight?: number;
   previewIndexes?: {
@@ -66,6 +67,7 @@ type TableProps = {
     sticky?: string;
   }[];
   data: string[][] | number[][];
+  numberOfIndexes: number;
 } & SharedProps;
 
 type DataTableProps = {
@@ -124,7 +126,7 @@ const Styles = styled.div<{
     `}
 
     .tr {
-      .td:first-child {
+      .td.td-index-column {
         ${props => `
           color: ${(props.theme.content || light.content).default};
         `}
@@ -195,6 +197,7 @@ function Table({
   index: indexProp,
   invalidValues,
   maxHeight,
+  numberOfIndexes,
   previewIndexes,
   renderColumnHeader,
   width,
@@ -225,20 +228,40 @@ function Table({
     indexProp,
   ]);
 
-  const maxWidthOfFirstColumn =
-    useMemo(() => (shouldUseIndexProp
-      ? Math.max(...indexProp.map(i => String(i).length)) * WIDTH_OF_CHARACTER
-      : String(data?.length).length * WIDTH_OF_CHARACTER
-    ) + (UNIT * 2), [
-      data,
-      indexProp,
-      shouldUseIndexProp,
-    ]);
+  const maxWidthOfIndexColumns = useMemo(() => {
+    const arr = [];
+
+    range(numberOfIndexes).forEach((_, idx: number) => {
+      let maxLength = String(data?.length).length * WIDTH_OF_CHARACTER;
+
+      if (shouldUseIndexProp) {
+        const charLengths = indexProp.map((i: number | number[] | string | string[]) => {
+          let charLength;
+          if (numberOfIndexes >= 2) {
+            return String(i[idx]).length;
+          }
+
+          return String(i).length;
+        });
+
+        maxLength = Math.max(...charLengths) * WIDTH_OF_CHARACTER;
+      }
+
+      arr.push(maxLength + (UNIT * 2));
+    });
+
+    return arr;
+  }, [
+    data,
+    indexProp,
+    numberOfIndexes,
+    shouldUseIndexProp,
+  ]);
 
   const columnsAll = columns.map(col => col?.Header).slice(1);
   const scrollBarSize = useMemo(() => scrollbarWidth(), []);
   const defaultColumn = useMemo(() => {
-    const newWidth = width - (maxWidthOfFirstColumn + 2) - scrollBarSize;
+    const newWidth = width - (Math.max(...maxWidthOfIndexColumns) + 2) - scrollBarSize;
     const numberOfColumns = columns.length - 1;
     let defaultColumnWidth = DEFAULT_COLUMN_WIDTH;
 
@@ -251,7 +274,7 @@ function Table({
     };
   }, [
     columns,
-    maxWidthOfFirstColumn,
+    maxWidthOfIndexColumns,
     scrollBarSize,
     width,
   ]);
@@ -291,7 +314,7 @@ function Table({
         className="tr"
       >
         {row.cells.map((cell, idx: number) => {
-          const firstColumn = idx === 0;
+          const indexColumn = idx <= numberOfIndexes - 1;
           const cellProps = cell.getCellProps();
           const header = cell.column.id;
           const isInvalid = invalidValues?.[header]?.includes(index);
@@ -301,15 +324,15 @@ function Table({
             ...cellProps.style,
           };
 
-          if (firstColumn) {
+          if (indexColumn) {
             cellStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
             cellStyle.left = 0;
             cellStyle.position = 'sticky';
             cellStyle.textAlign = 'center';
-            cellStyle.width = maxWidthOfFirstColumn;
+            cellStyle.width = maxWidthOfIndexColumns[idx];
           }
 
-          let cellValue = original[idx - 1];
+          let cellValue = original[idx - numberOfIndexes];
           const columnIndex = columnsAll.indexOf(header);
           if (isInvalid) {
             cellStyle.color = light.interactive.dangerBorder;
@@ -326,16 +349,28 @@ function Table({
             }
           }
 
+          let indexColumnValue;
+
+          if (indexColumn) {
+            if (shouldUseIndexProp) {
+              indexColumnValue = indexProp[index];
+              if (Array.isArray(indexColumnValue)) {
+                indexColumnValue = indexColumnValue[idx];
+              }
+            } else {
+              indexColumnValue = cell.render('Cell');
+            }
+          }
+
           return (
             <div
               {...cellProps}
-              className="td"
+              className={`td ${indexColumn ? 'td-index-column' : ''}`}
               key={`${idx}-${cellValue}`}
               style={cellStyle}
             >
-              {firstColumn && !shouldUseIndexProp && cell.render('Cell')}
-              {firstColumn && shouldUseIndexProp && indexProp[index]}
-              {!firstColumn && (
+              {indexColumnValue}
+              {!indexColumn && (
                 <FlexContainer justifyContent="space-between">
                   <Text danger={isInvalid} default wordBreak>
                     {cellValue === true && 'true'}
@@ -366,7 +401,15 @@ function Table({
         })}
       </div>
     );
-  }, [invalidValues, maxWidthOfFirstColumn, prepareRow, rows, slug]);
+  }, [
+    indexProp,
+    invalidValues,
+    maxWidthOfIndexColumns,
+    numberOfIndexes,
+    prepareRow,
+    rows,
+    slug,
+  ]);
 
   const listHeight = useMemo(() => {
     let val;
@@ -409,7 +452,7 @@ function Table({
               key={`${headerGroup.id}_${groupIdx}`}
             >
               {headerGroup.headers.map((column, idx: number) => {
-                const firstColumn = idx === 0;
+                const indexColumn = idx <= numberOfIndexes - 1;
                 const columnProps = column.getHeaderProps();
                 const columnStyle: {
                   [key: string]: number | string;
@@ -419,14 +462,14 @@ function Table({
 
                 let el;
 
-                if (firstColumn) {
+                if (indexColumn) {
                   columnStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
                   columnStyle.left = 0;
                   columnStyle.position = 'sticky';
                   columnStyle.textAlign = 'center';
-                  columnStyle.width = maxWidthOfFirstColumn;
+                  columnStyle.width = maxWidthOfIndexColumns[idx];
                 } else if (renderColumnHeader) {
-                  el = renderColumnHeader(column, idx - 1, {
+                  el = renderColumnHeader(column, idx - numberOfIndexes, {
                     width: defaultColumn.width,
                   });
                 } else {
@@ -441,7 +484,7 @@ function Table({
                     className="th"
                     key={column.id}
                     style={columnStyle}
-                    title={firstColumn ? 'Row number' : undefined}
+                    title={indexColumn ? 'Row number' : undefined}
                   >
                     {el}
                   </div>
@@ -486,15 +529,25 @@ function DataTable({
   rows: rowsProp,
   width,
 }: DataTableProps) {
-  const columns = useMemo(() => [{
-    Header: ' ',
+  const numberOfIndexes = useMemo(() => index?.length
+    ? (Array.isArray(index[0]) ? index[0].length : 1)
+    : 1
+  , [
+    index,
+  ]);
+
+  const columns = useMemo(() => range(numberOfIndexes).map((i: number, idx: number) => ({
+    Header: range(idx + 1).map(() => ' ').join(' '),
     accessor: (row, i) => i + 1,
     sticky: 'left',
     // @ts-ignore
-  }].concat(columnsProp?.map(col => ({
+  })).concat(columnsProp?.map(col => ({
     Header: String(col),
     accessor: String(col),
-  }))), [columnsProp]);
+  }))), [
+    columnsProp,
+    numberOfIndexes,
+  ]);
 
   const data = useMemo(() => rowsProp?.map(row => row.reduce((acc, v, i) => ({
     ...acc,
@@ -524,6 +577,7 @@ function DataTable({
         index={index}
         invalidValues={invalidValues}
         maxHeight={maxHeight}
+        numberOfIndexes={numberOfIndexes}
         previewIndexes={previewIndexes}
         renderColumnHeader={renderColumnHeader}
         width={width}
