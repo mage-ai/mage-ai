@@ -243,20 +243,19 @@ function CodeOutput({
                   iconOnly
                   noPadding
                   onClick={() => setCollapsed(!collapsed)}
+                  transparent
                 >
-                  {collapsed
-                    ? <ChevronDown muted size={UNIT * 2} />
-                    : <ChevronUp muted size={UNIT * 2} />
-                  }
+                  {collapsed ? (
+                    <FlexContainer alignItems="center">
+                      <ChevronDown muted size={UNIT * 2} />&nbsp;
+                      <Text default>
+                        Expand output
+                      </Text>
+                    </FlexContainer>
+                  ) : (
+                    <ChevronUp muted size={UNIT * 2} />
+                  )}
                 </Button>
-
-                {collapsed && (
-                  <Spacing ml={1}>
-                    <Text default>
-                      Expand output
-                    </Text>
-                  </Spacing>
-                )}
               </Flex>
             )}
             <ExtraInfoContentStyle>

@@ -1,4 +1,5 @@
 import BlockType, { OutputType } from '@interfaces/BlockType';
+import { remove, set } from '@storage/localStorage';
 
 export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
@@ -34,4 +35,18 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     content: contentByBlockUUID,
     messages: messagesInit,
   };
+}
+
+export function updateCollapsedBlocks(blocks: BlockType[], pipelineUUID: string, newPipelineUUID: string) {
+  blocks.forEach((b) => {
+    set(
+      `${newPipelineUUID}/${b.uuid}/codeCollapsed`,
+      remove(`${pipelineUUID}/${b.uuid}/codeCollapsed`),
+    );
+
+    set(
+      `${newPipelineUUID}/${b.uuid}/outputCollapsed`,
+      remove(`${pipelineUUID}/${b.uuid}/outputCollapsed`),
+    );
+  });
 }

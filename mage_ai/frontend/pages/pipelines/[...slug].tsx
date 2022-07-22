@@ -58,7 +58,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
+import { initializeContentAndMessages, updateCollapsedBlocks } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -385,17 +385,21 @@ function PipelineDetailPage({
     },
   );
 
-  const [updatePipelineNoContent] = useMutation(api.pipelines.useUpdate(pipelineUUID));
-  const updatePipelineName = useCallback((name: string) => (
-    // @ts-ignore
-    updatePipelineNoContent({
+  const [updatePipelineName] = useMutation(
+    (name: string) => api.pipelines.useUpdate(pipelineUUID)({
       pipeline: { name },
-    }).then((response: any) => {
-      onSuccess(
+    }),
+    {
+      onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({ pipeline: { uuid } }) => {
-            router.push(`/pipelines/${uuid}`);
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
             fetchFileTree();
+            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+            router.push(`/pipelines/${uuid}`);
           },
           onErrorCallback: ({
             error: {
@@ -406,13 +410,9 @@ function PipelineDetailPage({
             console.log(errors, message);
           },
         },
-      );
+      ),
     },
-  )), [
-    fetchFileTree,
-    updatePipelineNoContent,
-    router,
-  ]);
+  );
 
   const savePipelineContent = useCallback(() => {
     setPipelineLastSaved(new Date());

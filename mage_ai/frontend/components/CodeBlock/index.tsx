@@ -65,6 +65,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
+import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -139,8 +140,20 @@ function CodeBlockProps({
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
-  const blockMenuRef = useRef(null);
+  const codeCollapsedUUID = useMemo(() => (
+    `${pipeline.uuid}/${block.uuid}/codeCollapsed`
+  ), [pipeline.uuid, block.uuid]);
 
+  const outputCollapsedUUID = useMemo(() => (
+    `${pipeline.uuid}/${block.uuid}/outputCollapsed`
+  ), [pipeline.uuid, block.uuid]);
+
+  useEffect(() => {
+    setCodeCollapsed(get(codeCollapsedUUID, false));
+    setOutputCollapsed(get(outputCollapsedUUID, false));
+  }, []);
+
+  const blockMenuRef = useRef(null);
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const hasDownstreamWidgets = useMemo(() => !!widgets.find(({
@@ -149,6 +162,7 @@ function CodeBlockProps({
     block,
     widgets,
   ]);
+
   const runBlockAndTrack = useCallback(
     (payload?: {
       block: BlockType;
@@ -423,7 +437,12 @@ function CodeBlockProps({
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
-      setCollapsed={setOutputCollapsed}
+      setCollapsed={(val: boolean) => {
+        setOutputCollapsed(() => {
+          set(outputCollapsedUUID, val);
+          return val;
+        });
+      }}
     />
   ), [
     block,
@@ -613,11 +632,16 @@ function CodeBlockProps({
             iconOnly
             noPadding
             onClick={() => {
+              setCodeCollapsed((collapsedPrev) => {
+                set(codeCollapsedUUID, !collapsedPrev);
+                return !collapsedPrev;
+              });
+
               if (!codeCollapsed) {
-                setCodeCollapsed(true);
-                setOutputCollapsed(true);
-              } else {
-                setCodeCollapsed(false);
+                setOutputCollapsed(() => {
+                  set(outputCollapsedUUID, true);
+                  return true;
+                });
               }
             }}
             transparent
