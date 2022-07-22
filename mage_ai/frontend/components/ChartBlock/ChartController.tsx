@@ -8,9 +8,9 @@ import {
   ChartStyleEnum,
   ChartTypeEnum,
   SortOrderEnum,
+  VARIABLE_NAME_X,
 } from '@interfaces/ChartBlockType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VARIABLE_NAME_X } from './constants';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 

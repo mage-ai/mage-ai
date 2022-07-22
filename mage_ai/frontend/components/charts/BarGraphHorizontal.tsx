@@ -39,15 +39,14 @@ type SharedProps = {
   large?: boolean;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   renderTooltipContent?: (opts: any) => any | number | string;
+  width?: number;
   xAxisLabel?: string;
   xNumTicks?: number;
   yLabelFormat?: any;
   ySerialize: any;
 };
 
-type BarStackHorizontalProps = {
-  width: number;
-} & SharedProps;
+type BarStackHorizontalProps = SharedProps;
 
 export type BarStackHorizontalContainerProps = SharedProps;
 

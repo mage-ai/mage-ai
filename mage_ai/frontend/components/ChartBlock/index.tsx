@@ -349,6 +349,7 @@ function ChartBlock({
   const variablesMustDefine = useMemo(() => {
     const arr = [];
 
+    // @ts-ignore
     const vars = configurationOptions?.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
       ? acc.concat(uuid)
       : acc
