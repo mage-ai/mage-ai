@@ -84,6 +84,12 @@ class ApiFileContentHandler(BaseHandler):
 
 
 class ApiPipelineHandler(BaseHandler):
+    def delete(self, pipeline_uuid):
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        response = dict(pipeline=pipeline.to_dict())
+        pipeline.delete()
+        self.write(response)
+
     def get(self, pipeline_uuid):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
         include_content = self.get_bool_argument('include_content', True)
@@ -145,6 +151,14 @@ class ApiPipelineListHandler(BaseHandler):
         self.finish()
 
     def post(self):
+        pipeline = json.loads(self.request.body).get('pipeline', {})
+        clone_pipeline_uuid = pipeline.get('clone_pipeline_uuid')
+        duplicate_name = pipeline.get('name')
+        source = Pipeline(clone_pipeline_uuid, get_repo_path())
+        duplicate = Pipeline.duplicate(source, duplicate_name)
+        self.write(dict(pipeline=duplicate.to_dict()))
+
+    def put(self):
         data = json.loads(self.request.body)
         name = data.get('pipeline', {}).get('name')
         pipeline = Pipeline.create(name, get_repo_path())

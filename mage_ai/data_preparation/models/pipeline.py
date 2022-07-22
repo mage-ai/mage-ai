@@ -1,4 +1,4 @@
-from typing import Callable, List, Set
+from typing import Callable
 from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
@@ -57,6 +57,39 @@ class Pipeline:
         with open(os.path.join(pipeline_path, METADATA_FILE_NAME), 'w') as fp:
             yaml.dump(dict(name=name, uuid=uuid), fp)
         return Pipeline(uuid, repo_path)
+
+    @classmethod
+    def duplicate(cls, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
+        duplicate_pipeline = cls.create(duplicate_pipeline_name, source_pipeline.repo_path)
+        # first pass to load blocks
+        for block_uuid in source_pipeline.blocks_by_uuid:
+            source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            new_block = Block.get_block(source_block.name, source_block.uuid, source_block.type)
+            duplicate_pipeline.add_block(new_block)
+        # second pass to make connections
+        for block_uuid in source_pipeline.blocks_by_uuid:
+            source_block = source_pipeline.blocks_by_uuid[block_uuid]
+            duplicate_block = duplicate_pipeline.blocks_by_uuid[block_uuid]
+            duplicate_block.upstream_blocks = duplicate_pipeline.get_blocks(
+                source_block.upstream_block_uuids
+            )
+            duplicate_block.downstream_blocks = duplicate_pipeline.get_blocks(
+                source_block.downstream_block_uuids
+            )
+        # Add widgets
+        for widget_uuid in source_pipeline.widgets_by_uuid:
+            source_widget = source_pipeline.widgets_by_uuid[widget_uuid]
+            new_widget = Widget.get_block(
+                source_widget.name,
+                source_widget.uuid,
+                source_widget.type,
+                configuration=source_widget.configuration,
+            )
+            duplicate_pipeline.add_block(
+                new_widget, source_widget.upstream_block_uuids, widget=True
+            )
+        duplicate_pipeline.save()
+        return duplicate_pipeline
 
     @classmethod
     def get_all_pipelines(self, repo_path):
@@ -248,7 +281,9 @@ class Pipeline:
                                     block.configuration = block_data['configuration']
 
                                 if block_data.get('upstream_blocks'):
-                                    block.update(dict(upstream_blocks=block_data['upstream_blocks']))
+                                    block.update(
+                                        dict(upstream_blocks=block_data['upstream_blocks'])
+                                    )
 
                                 self.save(widget=widget)
 
@@ -361,7 +396,12 @@ class Pipeline:
         return block
 
     def delete(self):
-        pass
+        for block_uuid in list(self.blocks_by_uuid.keys()):
+            block = self.blocks_by_uuid[block_uuid]
+            if block.type == BlockType.SCRATCHPAD:
+                self.delete_block(block)
+                os.remove(block.file_path)
+        shutil.rmtree(self.dir_path)
 
     def delete_block(self, block, widget=False):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid

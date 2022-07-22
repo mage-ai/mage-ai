@@ -270,6 +270,48 @@ class PipelineTest(TestCase):
             widgets=[],
         ))
 
+    def test_delete(self):
+        pipeline = Pipeline.create('test pipeline 4', self.repo_path)
+        block1 = self.__create_dummy_data_loader_block('block1', pipeline)
+        block2 = self.__create_dummy_transformer_block('block2', pipeline)
+        block3 = self.__create_dummy_data_exporter_block('block3', pipeline)
+        block4 = self.__create_dummy_scratchpad('block4', pipeline)
+        block5 = self.__create_dummy_scratchpad('block5', pipeline)
+        pipeline.add_block(block1)
+        pipeline.add_block(block2, upstream_block_uuids=['block1'])
+        pipeline.add_block(block3, upstream_block_uuids=['block2'])
+        pipeline.add_block(block4)
+        pipeline.add_block(block5)
+        pipeline.delete()
+        self.assertFalse(os.access(pipeline.dir_path, os.F_OK))
+        self.assertTrue(os.access(block1.file_path, os.F_OK))
+        self.assertTrue(os.access(block2.file_path, os.F_OK))
+        self.assertTrue(os.access(block3.file_path, os.F_OK))
+        self.assertFalse(os.access(block4.file_path, os.F_OK))
+        self.assertFalse(os.access(block5.file_path, os.F_OK))
+
+    def test_duplicate(self):
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 4')
+        duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate pipeline')
+        for block_uuid in pipeline.blocks_by_uuid:
+            original = pipeline.blocks_by_uuid[block_uuid]
+            duplicate = duplicate_pipeline.blocks_by_uuid[block_uuid]
+            print(original.type)
+            self.assertEqual(original.name, duplicate.name)
+            self.assertEqual(original.uuid, duplicate.uuid)
+            self.assertEqual(original.type, duplicate.type)
+            self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+            self.assertEqual(original.downstream_block_uuids, duplicate.downstream_block_uuids)
+        for widget_uuid in pipeline.widgets_by_uuid:
+            original = pipeline.widgets_by_uuid[widget_uuid]
+            duplicate = duplicate_pipeline.widgets_by_uuid[widget_uuid]
+            print(original.type)
+            self.assertEqual(original.name, duplicate.name)
+            self.assertEqual(original.uuid, duplicate.uuid)
+            self.assertEqual(original.type, duplicate.type)
+            self.assertEqual(original.chart_type, duplicate.chart_type)
+            self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(name, self.repo_path)
         block1 = Block.create('block1', 'data_loader', self.repo_path)
@@ -314,4 +356,13 @@ def transform(df):
 def export_data(df, *args):
     return None
             ''')
+        return block
+
+    def __create_dummy_scratchpad(self, name, pipeline):
+        block = Block.create(name, 'scratchpad', self.repo_path, pipeline)
+        with open(block.file_path, 'w') as file:
+            file.write(
+                '''import antigravity
+            '''
+            )
         return block
