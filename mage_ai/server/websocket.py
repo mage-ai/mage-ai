@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
@@ -103,6 +103,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     custom_code,
                     global_vars,
                     pipeline_config=pipeline.get_config_from_yaml(),
+                    repo_config=get_repo_config().to_dict(),
                     run_upstream=run_upstream,
                     widget=widget,
                 )

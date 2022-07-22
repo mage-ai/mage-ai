@@ -147,7 +147,9 @@ def add_execution_code(
     block_uuid: str,
     code: str,
     global_vars,
+    analyze_outputs: bool = True,
     pipeline_config: Dict = None,
+    repo_config: Dict = None,
     run_upstream: bool = False,
     widget: bool = False,
 ) -> str:
@@ -165,6 +167,7 @@ def execute_custom_code():
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
         config={pipeline_config},
+        repo_config={repo_config},
     )
     block = pipeline.get_block(block_uuid, widget={widget})
 
@@ -176,7 +179,13 @@ def execute_custom_code():
         block.run_upstream_blocks()
 
     global_vars = {global_vars}
-    block_output = block.execute_sync(custom_code=code, global_vars=global_vars, analyze_outputs=False)
+    block_output = block.execute_sync(
+        custom_code=code,
+        global_vars=global_vars,
+        analyze_outputs={analyze_outputs},
+        should_save_outputs=True,
+        update_status=False,
+    )
     output = block_output['output']
 
     if {widget}:

@@ -20,6 +20,19 @@ class RepoConfig:
         except Exception:
             pass
 
+    @classmethod
+    def from_dict(self, config_dict):
+        repo_config = RepoConfig()
+        repo_config.repo_path = config_dict.get('repo_path')
+        repo_config.variables_dir = config_dict.get('variables_dir')
+        return repo_config
+
+    def to_dict(self):
+        return dict(
+            repo_path=self.repo_path,
+            variables_dir=self.variables_dir,
+        )
+
 
 def init_repo(repo_path: str) -> None:
     """

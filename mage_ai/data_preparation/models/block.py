@@ -285,7 +285,6 @@ class Block:
         should_save_outputs=True,
         update_status=True,
     ):
-<<<<<<< HEAD
         try:
             if not run_all_blocks:
                 not_executed_upstream_blocks = list(
