@@ -1,7 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from typing import List, Mapping
+from typing import List
 import re
 
 

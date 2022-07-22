@@ -1,5 +1,6 @@
 import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
 import BlockType from '@interfaces/BlockType';
+import DataTable from '@components/DataTable';
 import Histogram from '@components/charts/Histogram';
 import PieChart from '@components/charts/PieChart';
 import Text from '@oracle/elements/Text';
@@ -10,7 +11,8 @@ import {
   SortOrderEnum,
   VARIABLE_NAME_X,
 } from '@interfaces/ChartBlockType';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { numberWithCommas } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -160,6 +162,25 @@ function ChartController({
         />
       );
     }
+  } else if (ChartTypeEnum.TABLE === chartType) {
+    const {
+      x,
+      y,
+    } = data;
+
+    return Array.isArray(x) && Array.isArray(y) && Array.isArray(y[0]) && (
+      <DataTable
+        columns={x}
+        // index={index}
+        height={CHART_HEIGHT_DEFAULT}
+        noBorderBottom
+        noBorderLeft
+        noBorderRight
+        noBorderTop
+        rows={y}
+        width={width ? width - SCROLLBAR_WIDTH : width}
+      />
+    );
   }
 
   return <div />;

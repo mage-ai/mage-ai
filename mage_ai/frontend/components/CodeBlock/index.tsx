@@ -141,12 +141,12 @@ function CodeBlockProps({
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
   const codeCollapsedUUID = useMemo(() => (
-    `${pipeline.uuid}/${block.uuid}/codeCollapsed`
-  ), [pipeline.uuid, block.uuid]);
+    `${pipeline?.uuid}/${block.uuid}/codeCollapsed`
+  ), [pipeline?.uuid, block.uuid]);
 
   const outputCollapsedUUID = useMemo(() => (
-    `${pipeline.uuid}/${block.uuid}/outputCollapsed`
-  ), [pipeline.uuid, block.uuid]);
+    `${pipeline?.uuid}/${block.uuid}/outputCollapsed`
+  ), [pipeline?.uuid, block.uuid]);
 
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));

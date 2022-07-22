@@ -6,12 +6,18 @@ from .constants import (
     ChartType,
     VARIABLE_NAMES_BY_CHART_TYPE,
     VARIABLE_NAME_BUCKETS,
+    VARIABLE_NAME_LIMIT,
+    VARIABLE_NAME_Y,
 )
+from .utils import convert_to_list
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockStatus, BlockType
+from mage_ai.data_preparation.models.constants import (
+    BlockStatus,
+    BlockType,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+)
 from mage_ai.shared.hash import ignore_keys, merge_dict
 import numpy as np
-import pandas as pd
 
 
 class Widget(Block):
@@ -90,12 +96,8 @@ class Widget(Block):
     def post_process_variables(self, variables):
         if ChartType.BAR_CHART == self.chart_type:
             for var_name in self.output_variable_names:
-                arr = variables[var_name]
-                if type(arr) is pd.Series or type(arr) is pd.Index:
-                    arr = arr.tolist()
-
                 variables.update({
-                    var_name: arr,
+                    var_name: convert_to_list(variables[var_name]),
                 })
         elif ChartType.HISTOGRAM == self.chart_type:
             for var_name in self.output_variable_names:
@@ -122,6 +124,19 @@ class Widget(Block):
                 variables = {
                     var_name: value_counts_top
                 }
+        elif ChartType.TABLE == self.chart_type:
+            for var_name in self.output_variable_names:
+                arr = variables[var_name]
+                limit = len(arr)
+                if self.configuration.get(VARIABLE_NAME_Y) == var_name:
+                    limit = int(self.configuration.get(
+                        VARIABLE_NAME_LIMIT,
+                        DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                    ))
+
+                variables.update({
+                    var_name: convert_to_list(arr, limit=limit),
+                })
 
         return variables
 

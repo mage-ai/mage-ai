@@ -70,7 +70,7 @@ VARIABLE_NAMES_BY_CHART_TYPE = {
 ### Add default settings to the configuration
 
 When a user selects a chart type, you can set default values for these options.
-In the same file as above, add the following:
+In the file `mage_ai/frontend/interfaces/ChartBlockType.ts`, add the following:
 
 ```javascript
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -98,7 +98,7 @@ inputs into the configuration options.
 Each variable can be of a certain type; array/list of strings, integers, etc.
 
 To help the user know how to set the variables properly,
-add the following information into the same file above:
+add the following information into the file `mage_ai/frontend/components/ChartBlock/constants.ts`:
 
 ```javascript
 export const VARIABLE_INFO_BY_CHART_TYPE = {

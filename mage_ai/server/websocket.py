@@ -51,7 +51,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execute_pipeline = message.get('execute_pipeline')
 
         run_downstream = message.get('run_downstream')
-        print('run_downstream', run_downstream)
         run_upstream = message.get('run_upstream')
 
         if execute_pipeline:

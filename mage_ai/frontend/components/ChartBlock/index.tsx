@@ -157,6 +157,9 @@ function ChartBlock({
   }
   if (chartDataRaw) {
     chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
+    chartDataRaw = chartDataRaw
+      .replaceAll('\\"', '\"')
+      .replaceAll("\\'", "\'");
     if (isJsonString(chartDataRaw)) {
       chartData = JSON.parse(chartDataRaw);
     }
@@ -304,40 +307,48 @@ function ChartBlock({
 
   const availableVariables = useMemo(() => {
     const arr = [];
-    const numberOfUpstreamBlocks = upstreamBlocks.length;
 
-    upstreamBlocks.forEach((blockUUID: string, i: number) => {
+    upstreamBlocks.forEach((blockUUID: string, idx: number) => {
       const b = blocksMapping[blockUUID];
       const blockColor =
         getColorsForBlockType(b?.type, { theme: themeContext }).accent;
 
       arr.push(
-        <Link
-          color={blockColor}
-          key={blockUUID}
-          onClick={() => {
-            const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
-            refBlock?.current?.scrollIntoView();
-          }}
-          preventDefault
-          small
-        >
+        <Spacing key={blockUUID} ml={2}>
           <Text
-            color={blockColor}
+            bold
             inline
             monospace
             small
           >
-            {blockUUID}
-          </Text>
-        </Link>
+            df_{idx + 1}
+          </Text> <Text
+            inline
+            monospace
+            muted
+            small
+          >
+            {'->'}
+          </Text> <Link
+            color={blockColor}
+            inline
+            onClick={() => {
+              const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
+              refBlock?.current?.scrollIntoView();
+            }}
+            preventDefault
+            small
+          >
+            <Text
+              color={blockColor}
+              monospace
+              small
+            >
+              {blockUUID}
+            </Text>
+          </Link>
+        </Spacing>
       );
-
-      if (i <= numberOfUpstreamBlocks - 2 && numberOfUpstreamBlocks >= 2) {
-        arr.push(
-          <>,&nbsp;</>
-        );
-      }
     });
 
     return arr;
@@ -600,7 +611,7 @@ function ChartBlock({
                     <Select
                       fullWidth
                       key={uuid}
-                      label={label()}
+                      label={capitalize(label())}
                       monospace={monospace}
                       onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                       value={configuration?.[uuid]}
@@ -617,7 +628,7 @@ function ChartBlock({
                     <TextInput
                       fullWidth
                       key={uuid}
-                      label={label()}
+                      label={capitalize(label())}
                       monospace={monospace}
                       onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                       type={type}
