@@ -157,6 +157,9 @@ function ChartBlock({
   }
   if (chartDataRaw) {
     chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
+    chartDataRaw = chartDataRaw
+      .replaceAll('\\"', '\"')
+      .replaceAll("\\'", "\'");
     if (isJsonString(chartDataRaw)) {
       chartData = JSON.parse(chartDataRaw);
     }
@@ -600,7 +603,7 @@ function ChartBlock({
                     <Select
                       fullWidth
                       key={uuid}
-                      label={label()}
+                      label={capitalize(label())}
                       monospace={monospace}
                       onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                       value={configuration?.[uuid]}
@@ -617,7 +620,7 @@ function ChartBlock({
                     <TextInput
                       fullWidth
                       key={uuid}
-                      label={label()}
+                      label={capitalize(label())}
                       monospace={monospace}
                       onChange={e => updateConfiguration({ [uuid]: e.target.value })}
                       type={type}

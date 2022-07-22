@@ -6,6 +6,7 @@ import {
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
+  VARIABLE_NAME_LIMIT,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
   VARIABLE_NAME_Y_SORT_ORDER,
@@ -65,6 +66,23 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       uuid: VARIABLE_NAME_X,
     },
   ],
+  [ChartTypeEnum.TABLE]: [
+    {
+      label: () => 'variable name of columns',
+      monospace: true,
+      uuid: VARIABLE_NAME_X,
+    },
+    {
+      label: () => 'variable name of rows',
+      monospace: true,
+      uuid: VARIABLE_NAME_Y,
+    },
+    {
+      label: () => 'max number of rows',
+      type: 'number',
+      uuid: VARIABLE_NAME_LIMIT,
+    },
+  ],
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -114,6 +132,21 @@ x = ${uuid}[col]
       return `x = ${uuid}[${uuid}.columns[0]]`;
     },
   },
+  [ChartTypeEnum.TABLE]: {
+    configuration: (block: BlockType) => ({
+      [VARIABLE_NAME_LIMIT]: 10,
+      [VARIABLE_NAME_X]: 'x',
+      [VARIABLE_NAME_Y]: 'y',
+    }),
+    content: ({
+      upstream_blocks: upstreamBlocks = [],
+    }: BlockType) => {
+      const uuid = upstreamBlocks[0];
+
+      return `x = ${uuid}.columns
+y = ${uuid}.to_numpy()`;
+    },
+  },
 };
 
 export const VARIABLE_INFO_BY_CHART_TYPE = {
@@ -126,5 +159,9 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
   },
   [ChartTypeEnum.PIE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
+  },
+  [ChartTypeEnum.TABLE]: {
+    [VARIABLE_NAME_X]: (): string => 'must be a list of strings.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing booleans, dates, integers, floats, or strings.',
   },
 };

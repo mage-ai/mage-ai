@@ -538,7 +538,7 @@ function DataTable({
 
   const columns = useMemo(() => range(numberOfIndexes).map((i: number, idx: number) => ({
     Header: range(idx + 1).map(() => ' ').join(' '),
-    accessor: (row, i) => i + 1,
+    accessor: (row, i) => i,
     sticky: 'left',
     // @ts-ignore
   })).concat(columnsProp?.map(col => ({
