@@ -21,7 +21,7 @@ import { scaleLinear, scaleOrdinal } from '@visx/scale';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BLUE } from '@oracle/styles/colors/main';
 import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary';
@@ -31,7 +31,7 @@ import { binarySearch } from '@utils/array';
 import { getChartColors } from './constants';
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: light.background.navigation,
+  backgroundColor: dark.background.navigation,
   border: 'none',
 };
 
@@ -72,6 +72,7 @@ type LineSeriesProps = {
 } & SharedProps;
 
 export type LineSeriesContainerProps = {
+  width?: number;
   xAxisLabel?: string;
   yAxisLabel?: string;
 } & SharedProps;
@@ -105,10 +106,10 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const getX = getXProp || (d => d?.x);
   const getY = getYProp || ((d, idx = 0) => d?.y[idx]);
 
-  const border = light.monotone.gray;
-  const purplePastel = light.brand.wind200;
-  const text = light.content.active;
-  const { black, gray } = light.monotone;
+  const border = dark.monotone.gray;
+  const purplePastel = dark.brand.wind200;
+  const text = dark.content.active;
+  const { black, gray } = dark.monotone;
 
   const xValues = data.map(d => Number(getX(d)));
 
@@ -314,7 +315,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               <Threshold
                 {...curveProps}
                 aboveAreaProps={{
-                  fill: light.brand.earth400,
+                  fill: dark.brand.earth400,
                   fillOpacity: 0.3,
                 }}
                 belowAreaProps={{
@@ -443,6 +444,7 @@ function LineSeriesContainer({
   height: parentHeight,
   lineLegendNames,
   margin: marginArgs = {},
+  width: parentWidth,
   xAxisLabel,
   xLabelFormat,
   yAxisLabel,
@@ -476,7 +478,14 @@ function LineSeriesContainer({
 
         <Spacing mr={1} />
 
-        <div style={{ height: parentHeight, width: '100%' }}>
+        <div
+          style={{
+            height: parentHeight,
+            width: typeof parentWidth === 'undefined'
+              ? '100%'
+              : parentWidth,
+          }}
+        >
           <ParentSize>
             {({ width, height }) => (
               <LineSeries

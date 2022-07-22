@@ -14,6 +14,7 @@ export const VARIABLE_NAMES = [
 export enum ChartTypeEnum {
   BAR_CHART = 'bar chart',
   HISTOGRAM = 'histogram',
+  LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',
   TABLE = 'table',
 }
@@ -42,6 +43,7 @@ export interface ConfigurationType {
 export const CHART_TYPES = [
   ChartTypeEnum.BAR_CHART,
   ChartTypeEnum.HISTOGRAM,
+  ChartTypeEnum.LINE_CHART,
   ChartTypeEnum.PIE_CHART,
   ChartTypeEnum.TABLE,
 ];

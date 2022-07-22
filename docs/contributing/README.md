@@ -43,4 +43,4 @@ Code for the front-end app is in `mage_ai/frontend/`.
 
 ## Guides
 
-1. [How to add a new chart type](./how_to_add.md)
+1. [How to add a new chart type](./charts/how_to_add.md)
