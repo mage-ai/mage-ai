@@ -33,7 +33,7 @@ export enum SortOrderEnum {
 export interface ConfigurationType {
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
-  [VARIABLE_NAME_LEGEND_LABELS]?: string[];
+  [VARIABLE_NAME_LEGEND_LABELS]?: string;
   [VARIABLE_NAME_LIMIT]?: number;
   [VARIABLE_NAME_WIDTH_PERCENTAGE]?: number;
   [VARIABLE_NAME_X]?: string[] | number[];

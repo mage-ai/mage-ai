@@ -221,7 +221,7 @@ function ChartBlock({
   ]);
   const updateConfiguration = useCallback((data: {
     [key: string]: string | number;
-  }, opts?: {
+  }, opts: {
     disableAutoRun?: boolean;
   } = {}) => {
     const { disableAutoRun = false } = opts || {};

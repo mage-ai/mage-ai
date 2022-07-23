@@ -161,9 +161,9 @@ function ChartController({
     } = data;
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
-      let legendNames = configuration[VARIABLE_NAME_LEGEND_LABELS];
-      if (legendNames) {
-        legendNames = legendNames.split(',').map(s => s.trim());
+      let legendNames;
+      if (configuration[VARIABLE_NAME_LEGEND_LABELS]) {
+        legendNames = configuration[VARIABLE_NAME_LEGEND_LABELS].split(',').map(s => s.trim());
       }
       const dataParsed = x.map((val, idx) => ({
         x: val,
