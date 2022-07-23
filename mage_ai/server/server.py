@@ -153,15 +153,12 @@ class ApiPipelineListHandler(BaseHandler):
     def post(self):
         pipeline = json.loads(self.request.body).get('pipeline', {})
         clone_pipeline_uuid = pipeline.get('clone_pipeline_uuid')
-        duplicate_name = pipeline.get('name')
-        source = Pipeline(clone_pipeline_uuid, get_repo_path())
-        duplicate = Pipeline.duplicate(source, duplicate_name)
-        self.write(dict(pipeline=duplicate.to_dict()))
-
-    def put(self):
-        data = json.loads(self.request.body)
-        name = data.get('pipeline', {}).get('name')
-        pipeline = Pipeline.create(name, get_repo_path())
+        name = pipeline.get('name')
+        if clone_pipeline_uuid is None:
+            pipeline = Pipeline.create(name, get_repo_path())
+        else:
+            source = Pipeline(clone_pipeline_uuid, get_repo_path())
+            pipeline = Pipeline.duplicate(source, name)
         self.write(dict(pipeline=pipeline.to_dict()))
 
 
