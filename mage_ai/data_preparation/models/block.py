@@ -11,6 +11,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_ROWS,
+    NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
@@ -45,7 +46,7 @@ async def run_blocks(
 
     while not blocks.empty():
         block = blocks.get()
-        if block.type == BlockType.SCRATCHPAD:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
             continue
         skip = False
         for upstream_block in block.upstream_blocks:
