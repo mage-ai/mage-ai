@@ -10,6 +10,7 @@ import {
   ChartStyleEnum,
   ChartTypeEnum,
   SortOrderEnum,
+  VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
 } from '@interfaces/ChartBlockType';
@@ -116,6 +117,8 @@ function ChartController({
       y,
     } = data;
 
+    console.log(data)
+
     if (x && y && Array.isArray(x)) {
       return (
         <Histogram
@@ -133,6 +136,7 @@ function ChartController({
           margin={{
             left: UNIT * 5,
             right: UNIT * 1,
+            top: UNIT * 3,
           }}
           noPadding
           renderTooltipContent={([maxValue, value, minValue]) => (
@@ -188,7 +192,7 @@ function ChartController({
           }}
           renderYTooltipContent={({ y }, idx) => (
             <Text inverted small>
-              {legendNames[idx] && `${legendNames[idx]}: `}{numberWithCommas(roundNumber(y[idx], 4))}
+              {legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
           )}
           xAxisLabel={String(configuration[VARIABLE_NAME_X])}

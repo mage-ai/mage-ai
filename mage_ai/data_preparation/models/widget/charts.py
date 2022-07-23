@@ -29,11 +29,12 @@ def build_buckets(min_value, max_value, max_buckets):
     for i in range(number_of_buckets):
         min_v = min_value + (i * bucket_interval)
         max_v = min_value + ((i + 1) * bucket_interval)
-        buckets.append(dict(
-            max_value=max_v,
-            min_value=min_v,
-            values=[],
-        ))
+        if max_value >= min_v:
+            buckets.append(dict(
+                max_value=max_v,
+                min_value=min_v,
+                values=[],
+            ))
 
     return buckets, bucket_interval
 

@@ -114,11 +114,13 @@ function PipelineDetailPage({
     newView: ViewKeyEnum,
     pushHistory: boolean = true,
   ) => {
-    goToWithQuery({
-      [VIEW_QUERY_PARAM]: newView,
-    }, {
-      pushHistory,
-    });
+    if (queryFromUrl()[VIEW_QUERY_PARAM] !== newView) {
+      goToWithQuery({
+        [VIEW_QUERY_PARAM]: newView,
+      }, {
+        pushHistory,
+      });
+    }
   }, [
     activeSidekickView,
   ]);
@@ -706,9 +708,7 @@ function PipelineDetailPage({
         fetchFileTree();
         fetchPipeline();
 
-        if (ViewKeyEnum.CHARTS !== activeSidekickView) {
-          setActiveSidekickView(ViewKeyEnum.CHARTS);
-        }
+        setActiveSidekickView(ViewKeyEnum.CHARTS);
       },
       onErrorCallback: ({
         error: {

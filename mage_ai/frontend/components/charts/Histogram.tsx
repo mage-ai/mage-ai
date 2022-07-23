@@ -58,6 +58,7 @@ export type HistogramProps = {
   large?: boolean;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   muted?: boolean;
+  numberOfXTicks?: number;
   noPadding?: boolean;
   renderTooltipContent?: (tuple: any[]) => any;
   selected?: boolean;
@@ -95,6 +96,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
     margin: marginOverride = {},
     muted,
     noPadding,
+    numberOfXTicks,
     renderTooltipContent,
     selected,
     showAxisLabels,
@@ -333,7 +335,9 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
 
               <AxisBottom
                 left={margin.left}
-                numTicks={isDateType ? undefined : 6}
+                numTicks={isDateType
+                  ? undefined
+                  : numberOfXTicks ? numberOfXTicks : 6}
                 orientation="top"
                 scale={xScaleDate || xScale}
                 stroke={colors.muted}

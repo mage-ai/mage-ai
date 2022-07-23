@@ -1,5 +1,9 @@
 import numpy as np
 import pandas as pd
+from mage_ai.shared.parsers import NpEncoder
+
+
+encoder = NpEncoder()
 
 
 def convert_to_list(arr, limit=None):
@@ -13,3 +17,7 @@ def convert_to_list(arr, limit=None):
         return [convert_to_list(arr2) for arr2 in arr]
 
     return arr
+
+
+def encode_values_in_list(arr):
+    return [encoder.default(v) for v in arr]

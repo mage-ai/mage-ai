@@ -9,7 +9,7 @@ from .constants import (
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_Y,
 )
-from .utils import convert_to_list
+from .utils import convert_to_list, encode_values_in_list
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
@@ -99,7 +99,7 @@ class Widget(Block):
         if ChartType.BAR_CHART == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
                 data.update({
-                    var_name_orig: convert_to_list(variables[var_name_orig]),
+                    var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                 })
         elif ChartType.HISTOGRAM == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
@@ -111,7 +111,7 @@ class Widget(Block):
         elif ChartType.LINE_CHART == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
                 data.update({
-                    var_name_orig: convert_to_list(variables[var_name_orig]),
+                    var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                 })
         elif ChartType.PIE_CHART == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
@@ -142,7 +142,7 @@ class Widget(Block):
                     ))
 
                 data.update({
-                    var_name_orig: convert_to_list(arr, limit=limit),
+                    var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
                 })
 
         return data
