@@ -43,9 +43,9 @@ git clone https://github.com/mage-ai/mage-ai.git && cd mage-ai
 ./scripts/start.sh [project_name]
 ```
 
-Open [http://localhost:6789](http://localhost:6789) in your browser.
+Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
-##### 4. Run pipeline
+##### 4. Run pipeline after building it in the tool
 ```bash
 ./scripts/run.sh [project_name] [pipeline]
 ```
@@ -67,9 +67,9 @@ mage init [project_name]
 mage start [project_name]
 ```
 
-Open [http://localhost:6789](http://localhost:6789) in your browser.
+Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
-##### 4. Run pipeline
+##### 4. Run pipeline after building it in the tool
 ```bash
 mage run [project_name] [pipeline]
 ```
