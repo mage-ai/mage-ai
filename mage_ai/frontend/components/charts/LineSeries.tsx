@@ -104,7 +104,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const themeContext = useContext(ThemeContext);
 
   const getX = getXProp || (d => d?.x);
-  const getY = getYProp || ((d, idx = 0) => d?.y[idx]);
+  const getY = getYProp || ((d, idx = 0) => d?.y?.[idx]);
 
   const border = dark.monotone.gray;
   const purplePastel = dark.brand.wind200;
