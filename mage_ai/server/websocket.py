@@ -79,7 +79,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
 
             threading.Thread(target=run_pipeline).start()
-        elif custom_code:
+        elif output:
+            self.send_message(output)
+        else:
             block_type = message.get('type')
             block_uuid = message.get('uuid')
             pipeline_uuid = message.get('pipeline_uuid')
@@ -117,8 +119,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         type=block.type,
                         uuid=block.uuid,
                     )))
-        elif output:
-            self.send_message(output)
 
     @classmethod
     def send_message(self, message: dict) -> None:

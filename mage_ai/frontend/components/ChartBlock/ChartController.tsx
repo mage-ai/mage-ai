@@ -48,7 +48,7 @@ function ChartController({
       y,
     } = data;
 
-    if (x && y && Array.isArray(x)) {
+    if (x && y && Array.isArray(x) && Array.isArray(y[0])) {
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         let xy = x.map((xValue, idx: number) => ({
           x: y[idx],

@@ -6,10 +6,13 @@ from .constants import (
     ChartType,
     VARIABLE_NAMES_BY_CHART_TYPE,
     VARIABLE_NAME_BUCKETS,
+    VARIABLE_NAME_GROUP_BY,
     VARIABLE_NAME_LIMIT,
+    VARIABLE_NAME_METRICS,
+    VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
 )
-from .utils import convert_to_list, encode_values_in_list
+from .utils import calculate_metrics_for_group, convert_to_list, encode_values_in_list
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
@@ -93,14 +96,36 @@ class Widget(Block):
             configuration=self.configuration,
         ))
 
-    def post_process_variables(self, variables):
+    def post_process_variables(
+        self,
+        variables,
+        code=None,
+        results={},
+        upstream_block_uuids=[],
+    ):
         data = variables.copy()
+        group_by = self.configuration.get(VARIABLE_NAME_GROUP_BY)
+        metrics = self.configuration.get(VARIABLE_NAME_METRICS)
+        dfs = []
+        for key in upstream_block_uuids:
+            if key in results.keys():
+                dfs.append(results[key])
+
+        has_code = code and len(code.strip()) >= 1
 
         if ChartType.BAR_CHART == self.chart_type:
-            for var_name_orig, var_name in self.output_variable_names:
-                data.update({
-                    var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
-                })
+            if has_code:
+                for var_name_orig, var_name in self.output_variable_names:
+                    data.update({
+                        var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
+                    })
+            elif len(dfs):
+                df = dfs[0]
+                groups = df.groupby(group_by)
+                data[VARIABLE_NAME_X] = list(groups.groups.keys())
+                data[VARIABLE_NAME_Y] = groups.apply(
+                    lambda group: calculate_metrics_for_group(metrics, group),
+                ).values
         elif ChartType.HISTOGRAM == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
                 values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]

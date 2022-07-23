@@ -1,7 +1,7 @@
 import React, { useCallback, useContext } from 'react';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { AxisBottom, AxisLeft } from '@visx/axis';
-import { Bar, BarStackHorizontal, Line } from '@visx/shape';
+import { Bar, BarGroup, BarStackHorizontal, Line } from '@visx/shape';
 import { Group } from '@visx/group';
 import { ThemeContext } from 'styled-components';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
@@ -29,7 +29,7 @@ type TooltipData = {
 };
 
 export type BarChartDataType = {
-  x: number,
+  x: number | number[],
   y: string,
 };
 
@@ -192,6 +192,29 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(
             left={margin.left}
             top={margin.top}
           >
+            {typeof data !== 'undefined' && (
+              <BarGroup
+                keys={['a', 'b']}
+                data={data}
+                x0={({ x }) => {
+                  console.log('wtf', x)
+
+                  return 1;
+                }}
+                x0Scale={xScale}
+                x1={({ x }) => x[1]}
+                x1Scale={xScale}
+                yScale={yScale}
+                color={colorScale}
+              >
+                {(barGroups) => {
+                  console.log(barGroups)
+
+                  return <div />;
+                }}
+              </BarGroup>
+            )}
+
             <BarStackHorizontal
               color={colorScale}
               data={data}

@@ -98,10 +98,12 @@ def add_internal_output_info(code: str) -> str:
 
 def __custom_output():
     from datetime import datetime
+    from mage_ai.shared.parsers import NpEncoder
     import pandas as pd
     import simplejson
 
 
+    encoder = NpEncoder()
     _internal_output_return = {last_line}
 
     if isinstance(_internal_output_return, pd.DataFrame):
@@ -121,12 +123,13 @@ def __custom_output():
                 ),
                 type='table',
             ),
+            cls=NpEncoder,
             default=datetime.isoformat,
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
     elif not {is_print_statement}:
-        return _internal_output_return
+        return encoder.default(_internal_output_return)
 
     return
 

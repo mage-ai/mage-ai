@@ -27,7 +27,7 @@ export enum ChartStyleEnum {
   VERTICAL = 'vertical',
 }
 
-enum AggregateFunctionEnum {
+enum AggregationFunctionEnum {
   AVERAGE = 'average',
   COUNT = 'count',
   COUNT_DISTINCT = 'count_distinct',
@@ -39,18 +39,18 @@ enum AggregateFunctionEnum {
 }
 
 export const AGGREGATE_FUNCTIONS = [
-  AggregateFunctionEnum.AVERAGE,
-  AggregateFunctionEnum.COUNT,
-  AggregateFunctionEnum.COUNT_DISTINCT,
-  AggregateFunctionEnum.MAX,
-  AggregateFunctionEnum.MEDIAN,
-  AggregateFunctionEnum.MIN,
-  AggregateFunctionEnum.MODE,
-  AggregateFunctionEnum.SUM,
+  AggregationFunctionEnum.AVERAGE,
+  AggregationFunctionEnum.COUNT,
+  AggregationFunctionEnum.COUNT_DISTINCT,
+  AggregationFunctionEnum.MAX,
+  AggregationFunctionEnum.MEDIAN,
+  AggregationFunctionEnum.MIN,
+  AggregationFunctionEnum.MODE,
+  AggregationFunctionEnum.SUM,
 ];
 
 interface MetricType {
-  aggregation: AggregateFunctionEnum;
+  aggregation: AggregationFunctionEnum;
   column: string;
 }
 

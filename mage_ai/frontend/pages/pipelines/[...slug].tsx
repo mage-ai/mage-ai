@@ -876,41 +876,39 @@ function PipelineDetailPage({
       runUpstream = false,
     } = payload;
 
-    if (code) {
-      const { uuid } = block;
-      const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
+    const { uuid } = block;
+    const isAlreadyRunning = runningBlocks.find(({ uuid: uuid2 }) => uuid === uuid2);
 
-      if (!isAlreadyRunning || ignoreAlreadyRunning) {
-        sendMessage(JSON.stringify({
-          code,
-          pipeline_uuid: pipeline?.uuid,
-          type: block.type,
-          uuid,
-          run_downstream: runDownstream,
-          run_upstream: runUpstream
-        }));
+    if (!isAlreadyRunning || ignoreAlreadyRunning) {
+      sendMessage(JSON.stringify({
+        code,
+        pipeline_uuid: pipeline?.uuid,
+        type: block.type,
+        uuid,
+        run_downstream: runDownstream,
+        run_upstream: runUpstream
+      }));
 
-        // @ts-ignore
-        setMessages((messagesPrevious) => {
-          delete messagesPrevious[uuid];
+      // @ts-ignore
+      setMessages((messagesPrevious) => {
+        delete messagesPrevious[uuid];
 
-          return messagesPrevious;
-        });
+        return messagesPrevious;
+      });
 
-        setTextareaFocused(false);
+      setTextareaFocused(false);
 
-        // @ts-ignore
-        setRunningBlocks((runningBlocksPrevious) => {
-          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
-            return runningBlocksPrevious;
-          }
+      // @ts-ignore
+      setRunningBlocks((runningBlocksPrevious) => {
+        if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+          return runningBlocksPrevious;
+        }
 
-          return runningBlocksPrevious.concat(block);
-        });
-      }
-
-      fetchPipeline();
+        return runningBlocksPrevious.concat(block);
+      });
     }
+
+    fetchPipeline();
   }, [
     fetchPipeline,
     pipeline,
