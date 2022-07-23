@@ -6,6 +6,7 @@ import {
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
+  VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_LIMIT,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
@@ -18,11 +19,13 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of x-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+      disableAutoRun: true,
     },
     {
       label: () => 'variable name of y-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_Y,
+      disableAutoRun: true,
     },
     {
       label: () => 'y-axis sort direction',
@@ -52,6 +55,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+      disableAutoRun: true,
     },
   ],
   [ChartTypeEnum.LINE_CHART]: [
@@ -59,11 +63,18 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of x-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+      disableAutoRun: true,
     },
     {
       label: () => 'variable name of y-axis values',
       monospace: true,
       uuid: VARIABLE_NAME_Y,
+      disableAutoRun: true,
+    },
+    {
+      label: () => 'labels of lines in chart (comma separated)',
+      uuid: VARIABLE_NAME_LEGEND_LABELS,
+      disableAutoRun: true,
     },
   ],
   [ChartTypeEnum.PIE_CHART]: [
@@ -76,6 +87,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of values',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+      disableAutoRun: true,
     },
   ],
   [ChartTypeEnum.TABLE]: [
@@ -83,11 +95,13 @@ export const CONFIGURATIONS_BY_CHART_TYPE = {
       label: () => 'variable name of columns',
       monospace: true,
       uuid: VARIABLE_NAME_X,
+      disableAutoRun: true,
     },
     {
       label: () => 'variable name of rows',
       monospace: true,
       uuid: VARIABLE_NAME_Y,
+      disableAutoRun: true,
     },
     {
       label: () => 'max number of rows',
@@ -168,7 +182,8 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
   },
   [ChartTypeEnum.LINE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',
-    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats. ' +
+      'Each list is a single line in the chart.',
   },
   [ChartTypeEnum.PIE_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',

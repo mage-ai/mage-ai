@@ -11,6 +11,7 @@ import {
   ChartTypeEnum,
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
+  VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
 } from '@interfaces/ChartBlockType';
@@ -160,7 +161,10 @@ function ChartController({
     } = data;
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
-      const legendNames = range(y.length || []).map((_, idx) => String(idx));
+      let legendNames;
+      if (configuration[VARIABLE_NAME_LEGEND_LABELS]) {
+        legendNames = configuration[VARIABLE_NAME_LEGEND_LABELS].split(',').map(s => s.trim());
+      }
       const dataParsed = x.map((val, idx) => ({
         x: val,
         y: range(y.length).map((_, idx2) => y[idx2][idx]),
@@ -192,7 +196,7 @@ function ChartController({
           }}
           renderYTooltipContent={({ y }, idx) => (
             <Text inverted small>
-              {legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
+              {legendNames && legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
           )}
           xAxisLabel={String(configuration[VARIABLE_NAME_X])}

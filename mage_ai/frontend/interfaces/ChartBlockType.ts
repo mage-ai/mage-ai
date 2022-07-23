@@ -1,5 +1,6 @@
 export const VARIABLE_NAME_BUCKETS = 'buckets';
 export const VARIABLE_NAME_CHART_STYLE = 'chart_style';
+export const VARIABLE_NAME_LEGEND_LABELS = 'legend_labels';
 export const VARIABLE_NAME_LIMIT = 'limit';
 export const VARIABLE_NAME_WIDTH_PERCENTAGE = 'width_percentage';
 export const VARIABLE_NAME_X = 'x';
@@ -32,6 +33,7 @@ export enum SortOrderEnum {
 export interface ConfigurationType {
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
+  [VARIABLE_NAME_LEGEND_LABELS]?: string;
   [VARIABLE_NAME_LIMIT]?: number;
   [VARIABLE_NAME_WIDTH_PERCENTAGE]?: number;
   [VARIABLE_NAME_X]?: string[] | number[];

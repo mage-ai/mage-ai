@@ -221,7 +221,11 @@ function ChartBlock({
   ]);
   const updateConfiguration = useCallback((data: {
     [key: string]: string | number;
-  }) => {
+  }, opts: {
+    disableAutoRun?: boolean;
+  } = {}) => {
+    const { disableAutoRun = false } = opts || {};
+
     setConfiguration(config => ({
       ...config,
       ...data,
@@ -239,7 +243,7 @@ function ChartBlock({
 
     const keys = Object.keys(data);
 
-    if (runCount && !keys.find(key => VARIABLE_NAMES.includes(key))) {
+    if (runCount && !disableAutoRun) {
       saveAndRun(widget);
     }
   }, [
@@ -257,7 +261,6 @@ function ChartBlock({
       autoHeight
       onChange={updateContent}
       showLineNumbers={false}
-      selected={selected}
       setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
@@ -443,6 +446,62 @@ function ChartBlock({
 
   const widthPercentage =
     useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
+
+  const configurationOptionsEls = useMemo(() => configurationOptions?.map(({
+    disableAutoRun,
+    label,
+    monospace,
+    options,
+    type,
+    uuid,
+  }) => {
+    let el;
+    const sharedProps = {
+      fullWidth: true,
+      key: uuid,
+      label: capitalize(label()),
+      monospace: monospace,
+      onBlur: () => setSelectedBlock(block),
+      onChange:e => updateConfiguration({
+        [uuid]: e.target.value,
+      }, {
+        disableAutoRun,
+      }),
+      onFocus: () => setSelectedBlock(block),
+      value: configuration?.[uuid],
+    };
+
+    if (options) {
+      el = (
+        <Select
+          {...sharedProps}
+        >
+          {options.map((val: string) => (
+            <option key={val} value={val}>
+              {val}
+            </option>
+          ))}
+        </Select>
+      );
+    } else {
+      el = (
+        <TextInput
+          {...sharedProps}
+          type={type}
+        />
+      );
+    }
+
+    return (
+      <Spacing key={uuid} mb={1}>
+        {el}
+      </Spacing>
+    );
+  }), [
+    configurationOptions,
+    setSelectedBlock,
+    updateConfiguration,
+  ]);
 
   return (
     <Col sm={12} md={12 * widthPercentage}>
@@ -633,51 +692,7 @@ function ChartBlock({
                   </Select>
                 </Spacing>
 
-                {configurationOptions?.map(({
-                  label,
-                  monospace,
-                  options,
-                  type,
-                  uuid,
-                }) => {
-                  let el;
-                  if (options) {
-                    el = (
-                      <Select
-                        fullWidth
-                        key={uuid}
-                        label={capitalize(label())}
-                        monospace={monospace}
-                        onChange={e => updateConfiguration({ [uuid]: e.target.value })}
-                        value={configuration?.[uuid]}
-                      >
-                        {options.map((val: string) => (
-                          <option key={val} value={val}>
-                            {val}
-                          </option>
-                        ))}
-                      </Select>
-                    );
-                  } else {
-                    el = (
-                      <TextInput
-                        fullWidth
-                        key={uuid}
-                        label={capitalize(label())}
-                        monospace={monospace}
-                        onChange={e => updateConfiguration({ [uuid]: e.target.value })}
-                        type={type}
-                        value={configuration?.[uuid]}
-                      />
-                    );
-                  }
-
-                  return (
-                    <Spacing key={uuid} mb={1}>
-                      {el}
-                    </Spacing>
-                  );
-                })}
+                {configurationOptionsEls}
               </FlexContainer>
             </ConfigurationOptionsStyle>
           )}
