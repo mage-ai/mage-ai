@@ -79,7 +79,7 @@ mage run [project_name] [pipeline]
 
 # 👩‍🏫 Tutorials
 
-1. [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
+- [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
 
 # 🔮 Features
 
