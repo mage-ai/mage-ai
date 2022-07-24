@@ -26,6 +26,8 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
+You can install Mage using Docker or `pip`:
+
 ### Using Docker
 
 ##### 1. Clone repository
