@@ -77,7 +77,7 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 mage run [project_name] [pipeline]
 ```
 
-# Tutorials
+# 👩‍🏫 Tutorials
 
 1. [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
 
