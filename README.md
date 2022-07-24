@@ -18,6 +18,7 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
 **Table of contents**
 
 1. [Quick start](#%EF%B8%8F-quick-start)
+1. [Tutorials](#-tutorials)
 1. [Features](#-features)
 1. [Contributing](#%EF%B8%8F-contributing)
 1. [Community](#-community)
@@ -76,7 +77,7 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 mage run [project_name] [pipeline]
 ```
 
-### Tutorials
+# Tutorials
 
 1. [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
 
