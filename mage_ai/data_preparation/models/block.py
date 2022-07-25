@@ -15,7 +15,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
@@ -423,11 +422,10 @@ class Block:
         upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
-            repo_path = self.pipeline.repo_path
             for upstream_block_uuid, variables in self.input_variables.items():
                 upstream_block_uuids.append(upstream_block_uuid)
                 input_vars += [
-                    VariableManager(repo_path).get_variable(
+                    self.pipeline.variable_manager.get_variable(
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
@@ -495,11 +493,10 @@ class Block:
         if len(self.output_variables) == 0:
             return []
         analyses = []
-        variable_manager = VariableManager(self.pipeline.repo_path)
         for v, vtype in self.output_variables.items():
             if vtype is not pd.DataFrame:
                 continue
-            data = variable_manager.get_variable(
+            data = self.pipeline.variable_manager.get_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 v,
@@ -518,7 +515,7 @@ class Block:
             if len(self.output_variables) == 0:
                 return []
         outputs = []
-        variable_manager = VariableManager(self.pipeline.repo_path)
+        variable_manager = self.pipeline.variable_manager
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
             all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
@@ -659,7 +656,7 @@ class Block:
                         transform=False,
                         verbose=False,
                     )
-                    VariableManager(self.pipeline.repo_path).add_variable(
+                    self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
                         self.uuid,
                         uuid,
@@ -678,14 +675,10 @@ class Block:
     def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
-        variable_manager = VariableManager(
-            self.pipeline.repo_path,
-            self.pipeline.variables_dir,
-        )
         # all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
         # removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
-            variable_manager.add_variable(
+            self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 uuid,

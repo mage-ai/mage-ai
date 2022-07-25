@@ -6,8 +6,8 @@ import yaml
 
 
 class RepoConfig:
-    def __init__(self):
-        self.repo_path = get_repo_path()
+    def __init__(self, repo_path=None):
+        self.repo_path = repo_path or get_repo_path()
         self.variables_dir = self.repo_path
         try:
             with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
@@ -51,8 +51,8 @@ def get_repo_path() -> str:
     return os.getenv(REPO_PATH_ENV_VAR) or os.getcwd()
 
 
-def get_repo_config() -> RepoConfig:
-    return RepoConfig()
+def get_repo_config(repo_path=None) -> RepoConfig:
+    return RepoConfig(repo_path=repo_path)
 
 
 def set_repo_path(repo_path: str) -> None:

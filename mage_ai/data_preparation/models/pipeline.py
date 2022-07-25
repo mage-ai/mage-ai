@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
 from typing import Callable
 import os
@@ -30,11 +31,12 @@ class Pipeline:
         else:
             self.load_config(config)
         if repo_config is None:
-            self.repo_config = get_repo_config()
+            self.repo_config = get_repo_config(repo_path=self.repo_path)
         elif type(repo_config) is dict:
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
             self.repo_config = repo_config
+        self.variable_manager = VariableManager(self.repo_path, self.variables_dir)
 
     @property
     def config_path(self):

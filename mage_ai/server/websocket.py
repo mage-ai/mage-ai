@@ -100,6 +100,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
+                    analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(),
