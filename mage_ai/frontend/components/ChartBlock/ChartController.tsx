@@ -1,4 +1,4 @@
-import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
+import BarChartHorizontal from '@components/charts/BarChartHorizontal';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import Histogram from '@components/charts/Histogram';
@@ -48,21 +48,22 @@ function ChartController({
       y,
     } = data;
 
-    if (x && y && Array.isArray(x) && Array.isArray(y[0])) {
+    if (x && y && Array.isArray(x) && Array.isArray(y)) {
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         let xy = x.map((xValue, idx: number) => ({
-          x: y[idx],
-          y: xValue,
+          __y: xValue,
+          ...y[idx],
         }));
 
+        const metricName = Object.keys(y?.[0] || {})?.[0];
         if (SortOrderEnum.ASCENDING === ySortOrder) {
-          xy = sortByKey(xy, 'x', { ascending: false });
+          xy = sortByKey(xy, d => d[metricName], { ascending: false });
         } else if (SortOrderEnum.DESCENDING === ySortOrder) {
-          xy = sortByKey(xy, 'x', { ascending: true });
+          xy = sortByKey(xy, d => d[metricName], { ascending: true });
         }
 
         return (
-          <BarGraphHorizontal
+          <BarChartHorizontal
             data={xy}
             height={CHART_HEIGHT_DEFAULT}
             margin={{
@@ -74,7 +75,6 @@ function ChartController({
             renderTooltipContent={({ x }) => x}
             width={width}
             xNumTicks={3}
-            ySerialize={({ y }) => y}
           />
         );
       }
@@ -117,8 +117,6 @@ function ChartController({
       x,
       y,
     } = data;
-
-    console.log(data)
 
     if (x && y && Array.isArray(x)) {
       return (
