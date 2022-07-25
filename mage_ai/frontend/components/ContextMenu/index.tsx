@@ -11,6 +11,7 @@ export type ContextMenuSharedProps = {
   createPipeline?: (data: any) => void;
   deletePipeline?: (uuid: string) => void;
   deleteBlockFile?: (b: BlockType) => void;
+  numPipelines?: number;
 };
 
 export type ContextMenuProps = {
@@ -79,6 +80,7 @@ function ContextMenu({
   deleteBlockFile,
   deletePipeline,
   enableContextItem,
+  numPipelines,
   type,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
@@ -137,6 +139,7 @@ function ContextMenu({
         }),
       },
       {
+        disabled: numPipelines <= 1,
         label: () => 'Delete',
         onClick: () => deletePipeline(contextItem.data.name),
       },
