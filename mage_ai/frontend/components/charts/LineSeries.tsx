@@ -21,6 +21,7 @@ import { scaleLinear, scaleOrdinal } from '@visx/scale';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import YAxisLabelContainer from './shared/YAxisLabelContainer';
 import dark from '@oracle/styles/themes/dark';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import { BLUE } from '@oracle/styles/colors/main';
@@ -34,15 +35,6 @@ const tooltipStyles = {
   backgroundColor: dark.background.navigation,
   border: 'none',
 };
-
-const YAxisLabelContainer = styled.div`
-  -webkit-transform: rotate(-90deg);
-  -moz-transform: rotate(-90deg);
-  -o-transform: rotate(-90deg);
-  -ms-transform: rotate(-90deg);
-  transform: rotate(-90deg);
-  white-space: nowrap;
-`;
 
 type DataProps = {
   x: number;
@@ -508,7 +500,8 @@ function LineSeriesContainer({
         <div
           style={{
             // This is to account for the width of the y-axis label
-            paddingLeft: 28 + 8,
+            paddingLeft: yAxisLabel ? 28 + 8 : 0,
+            paddingTop: 4,
           }}
         >
           <Text center muted small>

@@ -61,6 +61,8 @@ function ChartController({
         metricNames.push(VARIABLE_NAME_Y);
       }
       const metricName = metricNames[0];
+      const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
+      const yAxisLabel = metricNames?.join(', ');
 
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         let xy = x.map((xValue, idx1: number) => ({
@@ -96,6 +98,8 @@ function ChartController({
             }}
             width={width}
             xNumTicks={3}
+            xAxisLabel={yAxisLabel}
+            yAxisLabel={xAxisLabel}
           />
         );
       }
@@ -130,6 +134,8 @@ function ChartController({
 
             return d;
           }}
+          xAxisLabel={xAxisLabel}
+          yAxisLabel={yAxisLabel}
         />
       );
     }
@@ -138,6 +144,7 @@ function ChartController({
       x,
       y,
     } = data;
+    const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
 
     if (x && y && Array.isArray(x)) {
       return (
@@ -170,6 +177,8 @@ function ChartController({
           showYAxisLabels
           showZeroes
           sortData={d => sortByKey(d, '[0]')}
+          xAxisLabel={xAxisLabel}
+          yAxisLabel={`count(${xAxisLabel})`}
         />
       );
     }
@@ -182,8 +191,6 @@ function ChartController({
     } = data;
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType;
 
-    console.log(data)
-
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
       let legendNames = metricNames;
       if (configuration[VARIABLE_NAME_LEGEND_LABELS]) {
@@ -193,6 +200,9 @@ function ChartController({
         x: val,
         y: range(y.length).map((_, idx2) => y[idx2][idx]),
       }));
+
+      const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
+      const yAxisLabel = metricNames.join(', ');
 
       return (
         <LineSeries
@@ -229,11 +239,9 @@ function ChartController({
             </Text>
           )}
           width={width ? width - (3 * UNIT) : width}
-          xAxisLabel={String(configuration[VARIABLE_NAME_X]
-            || configuration[VARIABLE_NAME_GROUP_BY][0])
-          }
+          xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
           xLabelFormat={ts => moment(ts * 1000).format(DATE_FORMAT_SHORT)}
-          yAxisLabel={String(configuration[VARIABLE_NAME_Y] || 'metrics')}
+          yAxisLabel={yAxisLabel || String(configuration[VARIABLE_NAME_Y])}
           yLabelFormat={v => v}
         />
       );
@@ -241,6 +249,7 @@ function ChartController({
   } else if (ChartTypeEnum.PIE_CHART === chartType) {
     const varName = String(configuration[VARIABLE_NAME_X]);
     const chartData = data[varName];
+    const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
 
     if (chartData) {
       return (
@@ -250,6 +259,7 @@ function ChartController({
           getY={([, value]) => value}
           height={CHART_HEIGHT_DEFAULT}
           width={width}
+          xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
         />
       );
     }

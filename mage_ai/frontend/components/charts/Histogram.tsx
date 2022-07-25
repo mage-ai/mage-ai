@@ -12,8 +12,10 @@ import {
   scaleLinear,
 } from '@visx/scale';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import YAxisLabelContainer from './shared/YAxisLabelContainer';
 import light from '@oracle/styles/themes/light';
 import { BLACK } from '@oracle/styles/colors/main';
 import {
@@ -72,6 +74,8 @@ export type HistogramProps = {
 
 export type HistogramContainerProps = {
   loading?: boolean;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
 } & HistogramProps;
 
 export const maxBarCount: number = 60;
@@ -379,30 +383,63 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
 );
 
 function HistogramContainer({
-  height,
+  height: parentHeight,
   loading,
   selected,
-  width,
+  width: parentWidth,
+  xAxisLabel,
+  yAxisLabel,
   ...props
 }: HistogramContainerProps) {
   return (
     <>
-      <div style={{ height, width }}>
-        {loading && <Spinner />}
-
-        {!loading && (
-          <ParentSize>
-            {({ height, width }) => (
-              <Histogram
-                {...props}
-                height={height}
-                selected={selected}
-                width={width}
-              />
-            )}
-          </ParentSize>
+      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
+        {yAxisLabel && (
+          <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
+            <YAxisLabelContainer>
+              <Text center muted small>
+                {yAxisLabel}
+              </Text>
+            </YAxisLabelContainer>
+          </FlexContainer>
         )}
+
+        <div style={{
+          height: parentHeight,
+          width: yAxisLabel
+            ? parentWidth === 0 ? parentWidth : parentWidth - 28
+            : parentWidth,
+        }}>
+          {loading && <Spinner />}
+
+          {!loading && (
+            <ParentSize>
+              {({ height, width }) => (
+                <Histogram
+                  {...props}
+                  height={height}
+                  selected={selected}
+                  width={width}
+                />
+              )}
+            </ParentSize>
+          )}
+        </div>
       </div>
+
+      {xAxisLabel && (
+        <div
+          style={{
+            // This is to account for the width of the y-axis label
+            paddingLeft: yAxisLabel ? 28 + 8 : 0,
+            paddingTop: 4,
+          }}
+        >
+          <Text center muted small>
+            {xAxisLabel}
+          </Text>
+        </div>
+      )}
     </>
   );
 }

@@ -573,13 +573,13 @@ function ChartBlock({
                     const existingMetric = metricsFromConfig.find(({
                       aggregation,
                       column,
-                    }) => column === values[0] && aggregation === values[1]);
+                    }) => column === values[1] && aggregation === values[0]);
 
                     if (!existingMetric) {
                       updateConfiguration({
                         [uuid]: metricsFromConfig.concat({
-                          aggregation: values[1],
-                          column: values[0],
+                          aggregation: values[0],
+                          column: values[1],
                         }),
                       }, {
                         autoRun,
@@ -592,10 +592,10 @@ function ChartBlock({
               >
                 <Select
                   {...sharedProps}
-                  label="column"
+                  label="aggregation"
                 >
                   <option value="" />
-                  {sortByKey(columns, v => v).map((val: string) => (
+                  {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>
@@ -604,10 +604,10 @@ function ChartBlock({
 
                 <Select
                   {...sharedProps}
-                  label="aggregation"
+                  label="column"
                 >
                   <option value="" />
-                  {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
+                  {sortByKey(columns, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>

@@ -6,7 +6,8 @@ import { ThemeContext } from 'styled-components';
 import { animated, useTransition, to } from 'react-spring';
 import { scaleOrdinal } from '@visx/scale';
 
-import light from '@oracle/styles/themes/light';
+import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -128,7 +129,7 @@ function PieChart({
 }: PieProps) {
   const [selectedData, setSelectedData] = useState(null);
   const themeContext: ThemeType = useContext(ThemeContext);
-  const finalTextColor = textColor || (themeContext?.content.active || light.content.active);
+  const finalTextColor = textColor || (themeContext?.content.active || dark.content.active);
 
   if (width < 10) {
     return null;
@@ -190,6 +191,7 @@ function PieChart({
 export default function PieChartContainer({
   height: heightProp,
   width: widthProp,
+  xAxisLabel,
   ...props
 }: PieChartProps) {
   const style: {
@@ -204,16 +206,30 @@ export default function PieChartContainer({
   }
 
   return (
-    <div style={style}>
-      <ParentSize>
-        {({ width, height }) => (
-          <PieChart
-            {...props}
-            height={height}
-            width={width}
-          />
-        )}
-      </ParentSize>
-    </div>
+    <>
+      <div style={style}>
+        <ParentSize>
+          {({ width, height }) => (
+            <PieChart
+              {...props}
+              height={height}
+              width={width}
+            />
+          )}
+        </ParentSize>
+      </div>
+
+      {xAxisLabel && (
+        <div
+          style={{
+            paddingTop: 4,
+          }}
+        >
+          <Text center muted small>
+            {xAxisLabel}
+          </Text>
+        </div>
+      )}
+    </>
   );
 }
