@@ -189,6 +189,7 @@ function ChartController({
       x,
       y,
     } = data;
+    console.log(data)
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
@@ -198,7 +199,15 @@ function ChartController({
       }
       const dataParsed = x.map((val, idx) => ({
         x: val,
-        y: range(y.length).map((_, idx2) => y[idx2][idx]),
+        y: range(y.length).map((_, idx2) => {
+          const v = y[idx2][idx];
+
+          if (typeof v === 'undefined' || v === null) {
+            return 0;
+          }
+
+          return v;
+        }),
       }));
 
       const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
@@ -240,7 +249,13 @@ function ChartController({
           )}
           width={width ? width - (3 * UNIT) : width}
           xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
-          xLabelFormat={ts => moment(ts * 1000).format(DATE_FORMAT_SHORT)}
+          xLabelFormat={ts => {
+            if (isTimeSeries) {
+              return moment(ts * 1000).format(DATE_FORMAT_SHORT);
+            }
+
+            return ts;
+          }}
           yAxisLabel={yAxisLabel || String(configuration[VARIABLE_NAME_Y])}
           yLabelFormat={v => v}
         />
