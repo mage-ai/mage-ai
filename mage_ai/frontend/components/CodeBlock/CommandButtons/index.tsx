@@ -176,7 +176,7 @@ function CommandButtons({
                       uuid: 'execute_block',
                     },
                     {
-                      label: () => `Execute with upstream blocks`,
+                      label: () => 'Execute with upstream blocks',
                       onClick: () => runBlock({ block, runUpstream: true }),
                       uuid: 'execute_upstream',
                     },
