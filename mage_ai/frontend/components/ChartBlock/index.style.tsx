@@ -23,7 +23,7 @@ export const ChartBlockStyle = styled.div`
 `;
 
 export const ConfigurationOptionsStyle = styled.div`
-  flex: 1;
+  flex: 4;
   padding-left: ${UNIT * 1}px;
   padding-right: ${UNIT * 1}px;
 

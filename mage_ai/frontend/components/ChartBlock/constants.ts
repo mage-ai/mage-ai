@@ -6,109 +6,156 @@ import {
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
+  VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_LIMIT,
+  VARIABLE_NAME_METRICS,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
   VARIABLE_NAME_Y_SORT_ORDER,
 } from '@interfaces/ChartBlockType';
 
-export const CONFIGURATIONS_BY_CHART_TYPE = {
-  [ChartTypeEnum.BAR_CHART]: [
-    {
-      label: () => 'variable name of x-axis values',
-      monospace: true,
-      uuid: VARIABLE_NAME_X,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'variable name of y-axis values',
-      monospace: true,
-      uuid: VARIABLE_NAME_Y,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'y-axis sort direction',
-      options: [
-        null,
-        SortOrderEnum.ASCENDING,
-        SortOrderEnum.DESCENDING,
-      ],
-      uuid: VARIABLE_NAME_Y_SORT_ORDER,
-    },
-    {
-      label: () => 'chart style',
-      options: [
-        ChartStyleEnum.HORIZONTAL,
-        ChartStyleEnum.VERTICAL,
-      ],
-      uuid: VARIABLE_NAME_CHART_STYLE,
-    },
-  ],
-  [ChartTypeEnum.HISTOGRAM]: [
-    {
-      label: () => 'Number of buckets',
-      type: 'number',
-      uuid: VARIABLE_NAME_BUCKETS,
-    },
-    {
-      label: () => 'variable name of values',
-      monospace: true,
-      uuid: VARIABLE_NAME_X,
-      disableAutoRun: true,
-    },
-  ],
-  [ChartTypeEnum.LINE_CHART]: [
-    {
-      label: () => 'variable name of x-axis values',
-      monospace: true,
-      uuid: VARIABLE_NAME_X,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'variable name of y-axis values',
-      monospace: true,
-      uuid: VARIABLE_NAME_Y,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'labels of lines in chart (comma separated)',
-      uuid: VARIABLE_NAME_LEGEND_LABELS,
-      disableAutoRun: true,
-    },
-  ],
-  [ChartTypeEnum.PIE_CHART]: [
-    {
-      label: () => 'Number of slices',
-      type: 'number',
-      uuid: VARIABLE_NAME_BUCKETS,
-    },
-    {
-      label: () => 'variable name of values',
-      monospace: true,
-      uuid: VARIABLE_NAME_X,
-      disableAutoRun: true,
-    },
-  ],
-  [ChartTypeEnum.TABLE]: [
-    {
-      label: () => 'variable name of columns',
-      monospace: true,
-      uuid: VARIABLE_NAME_X,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'variable name of rows',
-      monospace: true,
-      uuid: VARIABLE_NAME_Y,
-      disableAutoRun: true,
-    },
-    {
-      label: () => 'max number of rows',
-      type: 'number',
-      uuid: VARIABLE_NAME_LIMIT,
-    },
-  ],
+export enum ConfigurationItemType {
+  COLUMNS = 'columns',
+  METRICS = 'metrics',
+  NUMBER = 'number',
+}
+
+export interface ConfigurationOptionType {
+  autoRun?: boolean;
+  label: () => string;
+  monospace?: boolean;
+  options?: string[];
+  type?: ConfigurationItemType;
+  uuid: string;
+}
+
+export const CONFIGURATIONS_BY_CHART_TYPE: {
+  [chartType: string]: {
+    code: ConfigurationOptionType[];
+    noCode: ConfigurationOptionType[];
+  };
+} = {
+  [ChartTypeEnum.BAR_CHART]: {
+    noCode: [
+      {
+        label: () => 'group by columns',
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
+        label: () => 'metrics',
+        type: ConfigurationItemType.METRICS,
+        uuid: VARIABLE_NAME_METRICS,
+      },
+      {
+        autoRun: true,
+        label: () => 'chart style',
+        options: [
+          ChartStyleEnum.HORIZONTAL,
+          ChartStyleEnum.VERTICAL,
+        ],
+        uuid: VARIABLE_NAME_CHART_STYLE,
+      },
+      {
+        autoRun: true,
+        label: () => 'sort direction',
+        options: [
+          null,
+          SortOrderEnum.ASCENDING,
+          SortOrderEnum.DESCENDING,
+        ],
+        uuid: VARIABLE_NAME_Y_SORT_ORDER,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of x-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+      {
+        label: () => 'variable name of y-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_Y,
+      },
+    ],
+  },
+  [ChartTypeEnum.HISTOGRAM]: {
+    noCode: [
+      {
+        autoRun: true,
+        label: () => 'Number of buckets',
+        type: ConfigurationItemType.NUMBER,
+        uuid: VARIABLE_NAME_BUCKETS,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+    ],
+  },
+  [ChartTypeEnum.LINE_CHART]: {
+    noCode: [],
+    code: [
+      {
+        label: () => 'variable name of x-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+      {
+        label: () => 'variable name of y-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_Y,
+      },
+      {
+        label: () => 'labels of lines in chart (comma separated)',
+        uuid: VARIABLE_NAME_LEGEND_LABELS,
+      },
+    ],
+  },
+  [ChartTypeEnum.PIE_CHART]: {
+    noCode: [
+      {
+        autoRun: true,
+        label: () => 'Number of slices',
+        type: ConfigurationItemType.NUMBER,
+        uuid: VARIABLE_NAME_BUCKETS,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+    ],
+  },
+  [ChartTypeEnum.TABLE]: {
+    noCode: [
+      {
+        label: () => 'max number of rows',
+        type: ConfigurationItemType.NUMBER,
+        uuid: VARIABLE_NAME_LIMIT,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of columns',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+      {
+        label: () => 'variable name of rows',
+        monospace: true,
+        uuid: VARIABLE_NAME_Y,
+      },
+
+    ],
+  },
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -175,7 +222,7 @@ y = df_1.to_numpy()`;
 export const VARIABLE_INFO_BY_CHART_TYPE = {
   [ChartTypeEnum.BAR_CHART]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of booleans, dates, integers, floats, or strings.',
-    [VARIABLE_NAME_Y]: (): string => 'must be a list of integers or floats.',
+    [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing integers or floats.',
   },
   [ChartTypeEnum.HISTOGRAM]: {
     [VARIABLE_NAME_X]: (): string => 'must be a list of integers or floats.',

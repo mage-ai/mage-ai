@@ -20,6 +20,7 @@ from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
+from mage_ai.shared.parsers import encode_complex
 import asyncio
 import os
 import pandas as pd
@@ -305,7 +306,7 @@ class Block:
                 variable_mapping = block_output
                 output = dict(output=simplejson.dumps(
                     block_output,
-                    default=datetime.isoformat,
+                    default=encode_complex,
                     ignore_nan=True,
                 ))
             else:
@@ -447,17 +448,24 @@ class Block:
             outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
         with redirect_stdout(stdout):
+            results = {self.type: block_decorator(decorated_functions)}
+            results.update(outputs_from_input_vars)
+
             if custom_code is not None:
-                results = {self.type: block_decorator(decorated_functions)}
-                results.update(outputs_from_input_vars)
-                exec(custom_code, results)
+                if BlockType.CHART != self.type or (not self.group_by_columns and not self.metrics):
+                    exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
                     exec(file.read(), {self.type: block_decorator(decorated_functions)})
 
             if BlockType.CHART == self.type:
                 variables = self.get_variables_from_code_execution(results)
-                outputs = self.post_process_variables(variables)
+                outputs = self.post_process_variables(
+                    variables,
+                    code=custom_code,
+                    results=results,
+                    upstream_block_uuids=upstream_block_uuids,
+                )
             else:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
                 if block_function is not None:

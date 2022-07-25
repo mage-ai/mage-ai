@@ -1,9 +1,22 @@
 from enum import Enum
 
 VARIABLE_NAME_BUCKETS = 'buckets'
+VARIABLE_NAME_GROUP_BY = 'group_by'
 VARIABLE_NAME_LIMIT = 'limit'
+VARIABLE_NAME_METRICS = 'metrics'
 VARIABLE_NAME_X = 'x'
 VARIABLE_NAME_Y = 'y'
+
+
+class AggregationFunction(str, Enum):
+    AVERAGE = 'average'
+    COUNT = 'count'
+    COUNT_DISTINCT = 'count_distinct'
+    MAX = 'max'
+    MEDIAN = 'median'
+    MIN = 'min'
+    MODE = 'mode'
+    SUM = 'sum'
 
 
 class ChartType(str, Enum):

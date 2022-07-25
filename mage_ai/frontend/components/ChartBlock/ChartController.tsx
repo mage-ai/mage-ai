@@ -1,4 +1,4 @@
-import BarGraphHorizontal from '@components/charts/BarGraphHorizontal';
+import BarChartHorizontal from '@components/charts/BarChartHorizontal';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import Histogram from '@components/charts/Histogram';
@@ -48,21 +48,23 @@ function ChartController({
       y,
     } = data;
 
-    if (x && y && Array.isArray(x)) {
+    if (x && y && Array.isArray(x) && Array.isArray(y)) {
+      const metricName = Object.keys(y?.[0] || {})?.[0];
+
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         let xy = x.map((xValue, idx: number) => ({
-          x: y[idx],
-          y: xValue,
+          __y: xValue,
+          ...y[idx],
         }));
 
         if (SortOrderEnum.ASCENDING === ySortOrder) {
-          xy = sortByKey(xy, 'x', { ascending: false });
+          xy = sortByKey(xy, d => d[metricName], { ascending: false });
         } else if (SortOrderEnum.DESCENDING === ySortOrder) {
-          xy = sortByKey(xy, 'x', { ascending: true });
+          xy = sortByKey(xy, d => d[metricName], { ascending: true });
         }
 
         return (
-          <BarGraphHorizontal
+          <BarChartHorizontal
             data={xy}
             height={CHART_HEIGHT_DEFAULT}
             margin={{
@@ -71,10 +73,8 @@ function ChartController({
               right: UNIT * 3,
               top: 0,
             }}
-            renderTooltipContent={({ x }) => x}
             width={width}
             xNumTicks={3}
-            ySerialize={({ y }) => y}
           />
         );
       }
@@ -83,7 +83,7 @@ function ChartController({
         <Histogram
           data={x.map((xValue , idx: number) => [
             xValue,
-            y[idx],
+            y[idx][metricName],
           ])}
           height={CHART_HEIGHT_DEFAULT}
           width={width}
@@ -94,7 +94,7 @@ function ChartController({
           }}
           renderTooltipContent={([, yValue]) => (
             <Text inverted monospace small>
-              {yValue}
+              {yValue.toFixed(4)}
             </Text>
           )}
           showAxisLabels
@@ -117,8 +117,6 @@ function ChartController({
       x,
       y,
     } = data;
-
-    console.log(data)
 
     if (x && y && Array.isArray(x)) {
       return (

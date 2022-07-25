@@ -15,6 +15,7 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import ChartController from './ChartController';
+import Chip from '@oracle/components/Chip';
 import Circle from '@oracle/elements/Circle';
 import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
@@ -27,6 +28,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
+import MultiSelect from '@oracle/elements/Inputs/MultiSelect';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -36,6 +38,7 @@ import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
+  AGGREGATE_FUNCTIONS,
   CHART_TYPES,
   ChartTypeEnum,
   ConfigurationType,
@@ -44,6 +47,8 @@ import {
 } from '@interfaces/ChartBlockType';
 import {
   CONFIGURATIONS_BY_CHART_TYPE,
+  ConfigurationItemType,
+  ConfigurationOptionType,
   DEFAULT_SETTINGS_BY_CHART_TYPE,
   VARIABLE_INFO_BY_CHART_TYPE,
 } from './constants';
@@ -59,9 +64,12 @@ import {
   Trash,
 } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalize, isJsonString } from '@utils/string';
+import {
+  capitalize,
+  isJsonString,
+} from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { indexBy } from '@utils/array';
+import { indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 
 export type ChartPropsShared = {
@@ -222,9 +230,9 @@ function ChartBlock({
   const updateConfiguration = useCallback((data: {
     [key: string]: string | number;
   }, opts: {
-    disableAutoRun?: boolean;
+    autoRun?: boolean;
   } = {}) => {
-    const { disableAutoRun = false } = opts || {};
+    const { autoRun } = opts;
 
     setConfiguration(config => ({
       ...config,
@@ -243,7 +251,7 @@ function ChartBlock({
 
     const keys = Object.keys(data);
 
-    if (runCount && !disableAutoRun) {
+    if (runCount && autoRun) {
       saveAndRun(widget);
     }
   }, [
@@ -260,9 +268,10 @@ function ChartBlock({
     <CodeEditor
       autoHeight
       onChange={updateContent}
-      showLineNumbers={false}
+      selected={selected}
       setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
       setTextareaFocused={setTextareaFocused}
+      showLineNumbers={false}
       textareaFocused={textareaFocused}
       value={content}
       width="100%"
@@ -370,7 +379,7 @@ function ChartBlock({
     const arr = [];
 
     // @ts-ignore
-    const vars = configurationOptions?.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
+    const vars = configurationOptions?.code?.reduce((acc, { uuid }) => VARIABLE_NAMES.includes(uuid)
       ? acc.concat(uuid)
       : acc
     , []);
@@ -447,60 +456,233 @@ function ChartBlock({
   const widthPercentage =
     useMemo(() => configuration[VARIABLE_NAME_WIDTH_PERCENTAGE] || 1, [configuration]);
 
-  const configurationOptionsEls = useMemo(() => configurationOptions?.map(({
-    disableAutoRun,
-    label,
-    monospace,
-    options,
-    type,
-    uuid,
-  }) => {
-    let el;
-    const sharedProps = {
-      fullWidth: true,
-      key: uuid,
-      label: capitalize(label()),
-      monospace: monospace,
-      onBlur: () => setSelectedBlock(block),
-      onChange:e => updateConfiguration({
-        [uuid]: e.target.value,
-      }, {
-        disableAutoRun,
+  const {
+    code: configurationOptionsElsForCode,
+    noCode: configurationOptionsEls,
+  }: {
+    code: ConfigurationOptionType[];
+    noCode: ConfigurationOptionType[];
+  } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => {
+    return {
+      ...acc,
+      [key]: arr.map(({
+        autoRun,
+        label,
+        monospace,
+        options,
+        type,
+        uuid,
+      }) => {
+        let el;
+        const sharedProps = {
+          fullWidth: true,
+          key: uuid,
+          label: capitalize(label()),
+          monospace: monospace,
+          onBlur: () => setSelectedBlock(block),
+          onChange: e => updateConfiguration({
+            [uuid]: e.target.value,
+          }, {
+            autoRun,
+          }),
+          onFocus: () => setSelectedBlock(block),
+          value: configuration?.[uuid],
+        };
+
+        const blocks: BlockType[] = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
+        const columns = blocks.reduce((acc, {
+          outputs,
+        }) => acc.concat(outputs?.[0]?.sample_data?.columns), []);
+
+        if (ConfigurationItemType.COLUMNS === type) {
+          const columnsFromConfig = configuration[uuid] || [];
+
+          el = (
+            <>
+              <Select
+                {...sharedProps}
+                onChange={(e) => {
+                  let arr = configuration[uuid] || [];
+                  const column = e.target.value;
+                  if (arr.includes(column)) {
+                    arr = remove(arr, v => v === column);
+                  } else {
+                    arr.push(column);
+                  }
+
+                  updateConfiguration({
+                    [uuid]: arr,
+                  }, {
+                    autoRun,
+                  });
+                }}
+                value={null}
+              >
+                <option value="" />
+                {sortByKey(columns.filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
+                  <option key={val} value={val}>
+                    {val}
+                  </option>
+                ))}
+              </Select>
+
+              {columnsFromConfig.map((col: string) => (
+                <div
+                  key={col}
+                  style={{
+                    display: 'inline-block',
+                    marginRight: 2,
+                    marginTop: 2,
+                  }}
+                >
+                  <Chip
+                    label={col}
+                    onClick={() => {
+                      updateConfiguration({
+                        [uuid]: remove(columnsFromConfig, v => v === col),
+                      }, {
+                        autoRun,
+                      });
+                    }}
+                  />
+                </div>
+              ))}
+            </>
+          );
+        } else if (ConfigurationItemType.METRICS === type) {
+          const metricsFromConfig = configuration[uuid] || [];
+
+          el = (
+            <>
+              <Text bold>
+                Metrics
+              </Text>
+              <Text muted small>
+                Select a column and an aggregation function.
+              </Text>
+              <MultiSelect
+                onChange={(values, {
+                  resetValues,
+                  setValues,
+                }) => {
+                  // @ts-ignore
+                  if (values.filter(v => !!v).length === 2) {
+                    const existingMetric = metricsFromConfig.find(({
+                      aggregation,
+                      column,
+                    }) => column === values[0] && aggregation === values[1]);
+
+                    if (!existingMetric) {
+                      updateConfiguration({
+                        [uuid]: metricsFromConfig.concat({
+                          aggregation: values[1],
+                          column: values[0],
+                        }),
+                      }, {
+                        autoRun,
+                      });
+                      setValues([null, null]);
+                      resetValues();
+                    }
+                  }
+                }}
+              >
+                <Select
+                  {...sharedProps}
+                  label="column"
+                >
+                  <option value="" />
+                  {sortByKey(columns, v => v).map((val: string) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </Select>
+
+                <Select
+                  {...sharedProps}
+                  label="aggregation"
+                >
+                  <option value="" />
+                  {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </Select>
+              </MultiSelect>
+
+              {metricsFromConfig.map(({
+                aggregation,
+                column,
+              }) => (
+                <div
+                  key={`${aggregation}(${column})`}
+                  style={{
+                    display: 'inline-block',
+                    marginRight: 2,
+                    marginTop: 2,
+                  }}
+                >
+                  <Chip
+                    label={(
+                      <>
+                        <Text inline monospace>{aggregation}(</Text>{column}<Text inline monospace>)</Text>
+                      </>
+                    )}
+                    onClick={() => {
+                      updateConfiguration({
+                        [uuid]: remove(metricsFromConfig, ({
+                          aggregation: aggregation2,
+                          column: column2,
+                        }) => aggregation === aggregation2 && column === column2),
+                      }, {
+                        autoRun,
+                      });
+                    }}
+                  />
+                </div>
+              ))}
+            </>
+          );
+        } else if (options) {
+          el = (
+            <Select
+              {...sharedProps}
+            >
+              {options.map((val: string) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </Select>
+          );
+        } else {
+          el = (
+            <TextInput
+              {...sharedProps}
+              type={type}
+            />
+          );
+        }
+
+        return (
+          <Spacing key={uuid} mb={1}>
+            {el}
+          </Spacing>
+        );
       }),
-      onFocus: () => setSelectedBlock(block),
-      value: configuration?.[uuid],
-    };
-
-    if (options) {
-      el = (
-        <Select
-          {...sharedProps}
-        >
-          {options.map((val: string) => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </Select>
-      );
-    } else {
-      el = (
-        <TextInput
-          {...sharedProps}
-          type={type}
-        />
-      );
     }
-
-    return (
-      <Spacing key={uuid} mb={1}>
-        {el}
-      </Spacing>
-    );
+  }, {
+    code: [],
+    noCode: [],
   }), [
+    blocksMapping,
+    configuration,
     configurationOptions,
     setSelectedBlock,
     updateConfiguration,
+    upstreamBlocks,
   ]);
 
   return (
@@ -621,7 +803,7 @@ function ChartBlock({
           fullWidth
         >
           <Flex
-            flex={2}
+            flex={6}
             ref={refChartContainer}
           >
             {chartData && !isEmptyObject(chartData) && (
@@ -699,20 +881,38 @@ function ChartBlock({
         </FlexContainer>
 
         {isEditing && (
-          <CodeStyle>
-            {upstreamBlocks.length >= 1 && (
-              <CodeHelperStyle>
-                <Text muted small>
-                  Variables you can use in your code: {availableVariables}
-                </Text>
-                <Text muted small>
-                  Variables that you must define: {variablesMustDefine}
-                </Text>
-              </CodeHelperStyle>
-            )}
+          <>
+            <Spacing my={1} px={1}>
+              {/*<FlexContainer>
+                {configurationOptionsElsForCode.map((el, idx: number) => (
+                  <Spacing key={`code-config-options-${idx}`} ml={idx >= 1 ? 1 : 0}>
+                    {el}
+                  </Spacing>
+                ))}
+              </FlexContainer>*/}
+              <Text bold>
+                Custom chart code
+              </Text>
+              <Text muted small>
+                Write custom logic mapping data to input values for your chart.
+              </Text>
+            </Spacing>
 
-            {codeEditorEl}
-          </CodeStyle>
+            <CodeStyle>
+              {upstreamBlocks.length >= 1 && (
+                <CodeHelperStyle>
+                  <Text muted small>
+                    Variables you can use in your code: {availableVariables}
+                  </Text>
+                  <Text muted small>
+                    Variables that you must define: {variablesMustDefine}
+                  </Text>
+                </CodeHelperStyle>
+              )}
+
+              {codeEditorEl}
+            </CodeStyle>
+          </>
         )}
 
         {codeOutputEl && (
