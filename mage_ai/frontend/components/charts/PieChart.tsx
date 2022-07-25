@@ -35,6 +35,7 @@ type PieProps = {
 export type PieChartProps = PieProps & {
   height?: number | string;
   width?: number | string;
+  xAxisLabel?: string;
 };
 
 // react-spring transition definitions

@@ -437,8 +437,14 @@ function ChartBlock({
           ...block,
           upstream_blocks: upstreamBlocks,
         };
-        updateConfiguration(defaultSettings.configuration(blockUpdated));
-        updateContent(defaultSettings.content(blockUpdated));
+        if (defaultSettings.configuration) {
+          updateConfiguration(defaultSettings.configuration(blockUpdated));
+        }
+        // @ts-ignore
+        if (defaultSettings.content) {
+          // @ts-ignore
+          updateContent(defaultSettings.content(blockUpdated));
+        }
       }
     }
   }, [
@@ -490,7 +496,15 @@ function ChartBlock({
           value: configuration?.[uuid] || '',
         };
 
-        const blocks: BlockType[] = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
+        const blocks: BlockType[] = upstreamBlocks.reduce((acc, blockUUID) => {
+          const b = blocksMapping[blockUUID];
+
+          if (b) {
+            return acc.concat(b);
+          }
+
+          return acc;
+        }, []);
         const columns = blocks.reduce((acc, {
           outputs,
         }) => acc.concat(outputs?.[0]?.sample_data?.columns), []);
