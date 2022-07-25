@@ -285,50 +285,45 @@ class Block:
         should_save_outputs=True,
         update_status=True,
     ):
-        try:
-            if not run_all_blocks:
-                not_executed_upstream_blocks = list(
-                    filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
-                )
-                if len(not_executed_upstream_blocks) > 0:
-                    raise Exception(
-                        f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                        f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
-                        'before running the current block.'
-                    )
-            output = self.execute_block(
-                custom_code=custom_code,
-                global_vars=global_vars,
-                redirect_outputs=redirect_outputs,
+        if not run_all_blocks:
+            not_executed_upstream_blocks = list(
+                filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
             )
-            block_output = output['output']
-            if BlockType.CHART == self.type:
-                variable_mapping = block_output
-                output = dict(output=simplejson.dumps(
-                    block_output,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ))
-            else:
-                if should_save_outputs:
-                    # self.__verify_outputs(block_output)
-                    variable_mapping = dict(zip(self.output_variables.keys(), block_output))
-
+            if len(not_executed_upstream_blocks) > 0:
+                raise Exception(
+                    f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                    f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
+                    'before running the current block.'
+                )
+        output = self.execute_block(
+            custom_code=custom_code,
+            global_vars=global_vars,
+            redirect_outputs=redirect_outputs,
+        )
+        block_output = output['output']
+        if BlockType.CHART == self.type:
+            variable_mapping = block_output
+            output = dict(output=simplejson.dumps(
+                block_output,
+                default=encode_complex,
+                ignore_nan=True,
+            ))
+        else:
             if should_save_outputs:
-                self.__store_variables(variable_mapping)
+                # self.__verify_outputs(block_output)
+                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-            if update_status:
-                self.status = BlockStatus.EXECUTED
+        if should_save_outputs:
+            self.__store_variables(variable_mapping)
 
-            if analyze_outputs and BlockType.CHART != self.type:
-                self.__analyze_outputs(variable_mapping)
-        except Exception as err:
-            if update_status:
-                self.status = BlockStatus.FAILED
-            raise Exception(f'Exception encountered in block {self.uuid}') from err
-        finally:
-            if update_status:
-                self.__update_pipeline_block(widget=BlockType.CHART == self.type)
+        if update_status:
+            self.status = BlockStatus.EXECUTED
+
+        if analyze_outputs and BlockType.CHART != self.type:
+            self.__analyze_outputs(variable_mapping)
+
+        if update_status:
+            self.__update_pipeline_block(widget=BlockType.CHART == self.type)
         return output
 
     async def execute(
