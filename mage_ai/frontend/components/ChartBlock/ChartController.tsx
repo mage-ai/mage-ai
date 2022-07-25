@@ -72,7 +72,6 @@ function ChartController({
               right: UNIT * 3,
               top: 0,
             }}
-            renderTooltipContent={({ x }) => x}
             width={width}
             xNumTicks={3}
           />

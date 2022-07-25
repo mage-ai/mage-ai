@@ -218,9 +218,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           fill="transparent"
           height={height - (margin.top + margin.bottom)}
           onMouseLeave={() => hideTooltip()}
-          // onMouseMove={handleTooltip}
-          // onTouchMove={handleTooltip}
-          // onTouchStart={handleTooltip}
+          onMouseMove={handleTooltip}
+          onTouchMove={handleTooltip}
+          onTouchStart={handleTooltip}
           rx={14}
           width={width - margin.left}
           x={margin.left}
@@ -330,10 +330,13 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           }}
           top={tooltipTop}
         >
-          <Text black small>
-            {renderTooltipContent?.(tooltipData)}
-            {!renderTooltipContent && getX(tooltipData).toFixed(4)}
-          </Text>
+          {renderTooltipContent && renderTooltipContent(tooltipData)}
+
+          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => '__y' !== k && (
+            <Text inverted small>
+              {k}: {v.toFixed(4)}
+            </Text>
+          ))}
         </TooltipWithBounds>
       )}
     </div>
