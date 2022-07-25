@@ -31,7 +31,7 @@ class Pipeline:
             self.load_config(config)
         if repo_config is None:
             self.repo_config = get_repo_config()
-        elif repo_config is dict:
+        elif type(repo_config) is dict:
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
             self.repo_config = repo_config
