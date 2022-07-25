@@ -191,7 +191,6 @@ def execute_custom_code():
         custom_code=code,
         global_vars=global_vars,
         analyze_outputs={analyze_outputs},
-        should_save_outputs=True,
         update_status=False,
     )
     output = block_output['output']

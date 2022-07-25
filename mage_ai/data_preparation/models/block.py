@@ -4,6 +4,7 @@ from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
 from typing import Callable, List, Set
+from mage_ai.data_cleaner.shared.utils import is_dataframe
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
@@ -281,7 +282,6 @@ class Block:
         global_vars=None,
         redirect_outputs=False,
         run_all_blocks=False,
-        should_save_outputs=True,
         update_status=True,
     ):
         if not run_all_blocks:
@@ -308,12 +308,10 @@ class Block:
                 ignore_nan=True,
             ))
         else:
-            if should_save_outputs:
-                # self.__verify_outputs(block_output)
-                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+            self.__verify_outputs(block_output)
+            variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-        if should_save_outputs:
-            self.__store_variables(variable_mapping)
+        self.__store_variables(variable_mapping)
 
         if update_status:
             self.status = BlockStatus.EXECUTED
@@ -766,7 +764,8 @@ class Block:
         for idx, output in enumerate(outputs):
             actual_dtype = type(output)
             expected_dtype = variable_dtypes[idx]
-            if type(output) is not variable_dtypes[idx]:
+            if (expected_dtype != VariableType.DATAFRAME and actual_dtype is not expected_dtype or
+                    expected_dtype == VariableType.DATAFRAME and not is_dataframe(output)):
                 raise Exception(
                     f'Validation error for block {self.uuid}: '
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '

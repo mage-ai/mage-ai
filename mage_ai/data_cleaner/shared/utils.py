@@ -65,6 +65,10 @@ def clean_dataframe(df, column_types, dropna=True):
     return df.apply(lambda col: clean_series(col, column_types[col.name], dropna=dropna))
 
 
+def is_dataframe(df):
+    return type(df) is pd.DataFrame or is_spark_dataframe(df)
+
+
 def is_numeric_dtype(df, column, column_type):
     return column_type in NUMBER_TYPES or issubclass(df[column].dtype.type, np.number)
 
