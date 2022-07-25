@@ -81,70 +81,80 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
       },
     ],
   },
-  // [ChartTypeEnum.HISTOGRAM]: [
-  //   {
-  //     label: () => 'Number of buckets',
-  //     type: 'number',
-  //     uuid: VARIABLE_NAME_BUCKETS,
-  //   },
-  //   {
-  //     label: () => 'variable name of values',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_X,
-  //     disableAutoRun: true,
-  //   },
-  // ],
-  // [ChartTypeEnum.LINE_CHART]: [
-  //   {
-  //     label: () => 'variable name of x-axis values',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_X,
-  //     disableAutoRun: true,
-  //   },
-  //   {
-  //     label: () => 'variable name of y-axis values',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_Y,
-  //     disableAutoRun: true,
-  //   },
-  //   {
-  //     label: () => 'labels of lines in chart (comma separated)',
-  //     uuid: VARIABLE_NAME_LEGEND_LABELS,
-  //     disableAutoRun: true,
-  //   },
-  // ],
-  // [ChartTypeEnum.PIE_CHART]: [
-  //   {
-  //     label: () => 'Number of slices',
-  //     type: 'number',
-  //     uuid: VARIABLE_NAME_BUCKETS,
-  //   },
-  //   {
-  //     label: () => 'variable name of values',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_X,
-  //     disableAutoRun: true,
-  //   },
-  // ],
-  // [ChartTypeEnum.TABLE]: [
-  //   {
-  //     label: () => 'variable name of columns',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_X,
-  //     disableAutoRun: true,
-  //   },
-  //   {
-  //     label: () => 'variable name of rows',
-  //     monospace: true,
-  //     uuid: VARIABLE_NAME_Y,
-  //     disableAutoRun: true,
-  //   },
-  //   {
-  //     label: () => 'max number of rows',
-  //     type: 'number',
-  //     uuid: VARIABLE_NAME_LIMIT,
-  //   },
-  // ],
+  [ChartTypeEnum.HISTOGRAM]: {
+    noCode: [
+      {
+        autoRun: true,
+        label: () => 'Number of buckets',
+        type: 'number',
+        uuid: VARIABLE_NAME_BUCKETS,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+    ],
+  },
+  [ChartTypeEnum.LINE_CHART]: {
+    code: [
+      {
+        label: () => 'variable name of x-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+      {
+        label: () => 'variable name of y-axis values',
+        monospace: true,
+        uuid: VARIABLE_NAME_Y,
+      },
+      {
+        label: () => 'labels of lines in chart (comma separated)',
+        uuid: VARIABLE_NAME_LEGEND_LABELS,
+      },
+    ],
+  },
+  [ChartTypeEnum.PIE_CHART]: {
+    noCode: [
+      {
+        autoRun: true,
+        label: () => 'Number of slices',
+        type: 'number',
+        uuid: VARIABLE_NAME_BUCKETS,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of values',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+    ],
+  },
+  [ChartTypeEnum.TABLE]: {
+    noCode: [
+      {
+        label: () => 'max number of rows',
+        type: 'number',
+        uuid: VARIABLE_NAME_LIMIT,
+      },
+    ],
+    code: [
+      {
+        label: () => 'variable name of columns',
+        monospace: true,
+        uuid: VARIABLE_NAME_X,
+      },
+      {
+        label: () => 'variable name of rows',
+        monospace: true,
+        uuid: VARIABLE_NAME_Y,
+      },
+
+    ],
+  },
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {

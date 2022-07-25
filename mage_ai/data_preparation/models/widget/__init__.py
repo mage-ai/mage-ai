@@ -117,8 +117,10 @@ class Widget(Block):
             if key in results.keys():
                 dfs.append(results[key])
 
+        should_use_no_code = self.group_by_columns and self.metrics
+
         if ChartType.BAR_CHART == self.chart_type:
-            if self.group_by_columns and self.metrics:
+            if should_use_no_code:
                 df = dfs[0]
                 groups = df.groupby(self.group_by_columns)
                 data[VARIABLE_NAME_X] = list(groups.groups.keys())
@@ -131,48 +133,60 @@ class Widget(Block):
                         var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                     })
         elif ChartType.HISTOGRAM == self.chart_type:
-            for var_name_orig, var_name in self.output_variable_names:
-                values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]
-                data = build_histogram_data(
-                    values,
-                    int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
-                )
+            if should_use_no_code:
+                pass
+            else:
+                for var_name_orig, var_name in self.output_variable_names:
+                    values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]
+                    data = build_histogram_data(
+                        values,
+                        int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
+                    )
         elif ChartType.LINE_CHART == self.chart_type:
-            for var_name_orig, var_name in self.output_variable_names:
-                data.update({
-                    var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
-                })
+            if should_use_no_code:
+                pass
+            else:
+                for var_name_orig, var_name in self.output_variable_names:
+                    data.update({
+                        var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
+                    })
         elif ChartType.PIE_CHART == self.chart_type:
-            for var_name_orig, var_name in self.output_variable_names:
-                values = [v for v in variables[var_name_orig] if v is not None]
-                value_counts = {}
-                for key in values:
-                    if not value_counts.get(key):
-                        value_counts[key] = 0
-                    value_counts[key] += 1
+            if should_use_no_code:
+                pass
+            else:
+                for var_name_orig, var_name in self.output_variable_names:
+                    values = [v for v in variables[var_name_orig] if v is not None]
+                    value_counts = {}
+                    for key in values:
+                        if not value_counts.get(key):
+                            value_counts[key] = 0
+                        value_counts[key] += 1
 
-                buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
-                arr = sorted(
-                    list(zip(value_counts.values(), value_counts.keys())),
-                    reverse=True,
-                )[:buckets]
-                value_counts_top = {k: v for v, k in arr}
-                data.update({
-                    var_name_orig: value_counts_top,
-                })
+                    buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+                    arr = sorted(
+                        list(zip(value_counts.values(), value_counts.keys())),
+                        reverse=True,
+                    )[:buckets]
+                    value_counts_top = {k: v for v, k in arr}
+                    data.update({
+                        var_name_orig: value_counts_top,
+                    })
         elif ChartType.TABLE == self.chart_type:
-            for var_name_orig, var_name in self.output_variable_names:
-                arr = variables[var_name_orig]
-                limit = len(arr)
-                if VARIABLE_NAME_Y == var_name_orig:
-                    limit = int(self.configuration.get(
-                        VARIABLE_NAME_LIMIT,
-                        DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                    ))
+            if should_use_no_code:
+                pass
+            else:
+                for var_name_orig, var_name in self.output_variable_names:
+                    arr = variables[var_name_orig]
+                    limit = len(arr)
+                    if VARIABLE_NAME_Y == var_name_orig:
+                        limit = int(self.configuration.get(
+                            VARIABLE_NAME_LIMIT,
+                            DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                        ))
 
-                data.update({
-                    var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
-                })
+                    data.update({
+                        var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
+                    })
 
         return data
 
