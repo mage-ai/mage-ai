@@ -173,6 +173,7 @@ def add_execution_code(
     kernel_name: str = None,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
+    run_tests: bool = False,
     run_upstream: bool = False,
     update_status: bool = True,
     widget: bool = False,
@@ -215,6 +216,8 @@ def execute_custom_code():
         analyze_outputs={analyze_outputs},
         update_status={update_status},
     )
+    if {run_tests}:
+        block.run_tests(custom_code=code, update_tests=False)
     output = block_output['output']
 
     if {widget}:

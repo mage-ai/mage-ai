@@ -63,12 +63,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_type = message.get('type')
         block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
-        
+
         value = dict(
             block_uuid=block_uuid,
             pipeline_uuid=pipeline_uuid,
         )
-        def publish_message(message: str, execution_state: str = 'busy', msg_type='stream_pipeline') -> None:
+
+        def publish_message(
+            message: str,
+            execution_state: str = 'busy',
+            msg_type: str = 'stream_pipeline',
+        ) -> None:
             msg_id = str(uuid.uuid4())
             WebSocketServer.running_executions_mapping[msg_id] = value
             self.send_message(
@@ -123,47 +128,22 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         type=DataType.TEXT_PLAIN,
                     ),
                 )
-            elif run_tests:
-                output = block.execute_sync(
-                    custom_code=code,
-                    global_vars=global_vars,
-                    redirect_outputs=True,
-                )
-                publish_message(output['stdout'], msg_type='stream')
-                test_output = block.run_tests(
-                    custom_code=code,
-                    redirect_outputs=True,
-                    update_tests=False,
-                )
-                publish_message(test_output, execution_state='idle', msg_type='stream')
             else:
-                if run_tests:
-                    msg_id = str(uuid.uuid4())
-                    test_output = block.run_tests(redirect_outputs=True)
-                    self.send_message(
-                        dict(
-                            data=test_output,
-                            execution_state='idle',
-                            msg_id=msg_id,
-                            msg_type='stream',
-                            type=DataType.TEXT_PLAIN,
-                        )
+                if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
+                    code = add_execution_code(
+                        pipeline_uuid,
+                        block_uuid,
+                        custom_code,
+                        global_vars,
+                        analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
+                        kernel_name=kernel_name,
+                        pipeline_config=pipeline.get_config_from_yaml(),
+                        repo_config=get_repo_config().to_dict(),
+                        run_tests=run_tests,
+                        run_upstream=run_upstream,
+                        update_status=False if kernel_name == KernelName.PYSPARK else True,
+                        widget=widget,
                     )
-                else:
-                    if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                        code = add_execution_code(
-                            pipeline_uuid,
-                            block_uuid,
-                            custom_code,
-                            global_vars,
-                            analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
-                            kernel_name=kernel_name,
-                            pipeline_config=pipeline.get_config_from_yaml(),
-                            repo_config=get_repo_config().to_dict(),
-                            run_upstream=run_upstream,
-                            update_status=False if kernel_name == KernelName.PYSPARK else True,
-                            widget=widget,
-                        )
 
                 if kernel_name == KernelName.PYTHON3:
                     msg_id = client.execute(add_internal_output_info(code))

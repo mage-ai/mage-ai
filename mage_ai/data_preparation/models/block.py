@@ -334,9 +334,7 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            raise Exception(
-                f'Exception encountered in block {self.uuid}',
-            ) from err
+            raise err
         finally:
             if update_status:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
@@ -697,6 +695,7 @@ class Block:
                     print(f'FAIL: {func.__name__} (block: {self.uuid})')
                     print('--------------------------------------------------------------')
                     print(traceback.format_exc())
+            print('--------------------------------------------------------------')
             print(f'{tests_passed}/{len(test_functions)} tests passed.')
         if redirect_outputs:
             return stdout.getvalue()
