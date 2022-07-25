@@ -1,5 +1,3 @@
-from typing import Callable
-from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
@@ -9,7 +7,9 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.data_preparation.templates.template import copy_template_directory
+from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.shared.utils import clean_name
+from typing import Callable
 import os
 import shutil
 import yaml

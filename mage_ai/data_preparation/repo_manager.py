@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
-from mage_ai.data_preparation.templates.template import copy_template_directory
+from mage_ai.data_preparation.templates.utils import copy_template_directory
 import os
 import sys
 
