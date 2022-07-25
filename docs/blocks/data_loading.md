@@ -144,7 +144,7 @@ Handles data transfer between a Redshift cluster and the Mage app. Mage uses tem
 - **Keyword Arguments**
   - `verbose`: Enables verbose output. Defaults to `False`.
 
-  To see other keyword arguments, see arguments for [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html).
+  See other keyword arguments in [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html) docs.
 
 <h3> Attributes </h3>
 
@@ -158,6 +158,7 @@ Initializes Redshift client from configuration loader.
 
 - **Args**:
   - `config (BaseConfigLoader)`: Configuration loader object
+  - `verbose (bool)`: Enables verbose output printing. Defaults to False.
   - `**kwargs`: Additional parameters passed to the loader constructor
 
 **_with_temporary_credentials_** - `with_temporary_credentials(database: str, host: str, user: str, password: str, port: int = 5439, **kwargs) -> Redshift`
@@ -252,15 +253,251 @@ Sample data from a table in the selected database in the Redshift cluster. Sampl
 
 ## S3
 
-WIP
+`mage_ai.io.s3.S3`
+
+Handles data transfer between the filesystem and the Mage app. The `S3` client currently supports importing and exporting with the following file formats:
+- CSV
+- JSON
+- Parquet
+- HDF5
+
+If IAM profile is not set up using `aws configure`, then AWS credentials can be manually specified through either Mage's [configuration loader](#configuration-settings) system or through keyword arguments in the constructor (see constructor). If using configuration settings,
+specify the following keys:
+```yaml
+AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+AWS_REGION: AWS Region
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool)`
+
+Initializes the BigQuery data loading client. I
+
+- **Args**
+    - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+    - If IAM profile is not set up using `aws configure` and Mage's configuration loader is not used, then specify your AWS credentials through the following keyword arguments:
+      - `aws_access_key_id (str)`: AWS Access Key ID credential
+      - `aws_secret_access_key (str)`: AWS Secret Access Key credential
+      - `aws_region (str)`: Region of S3 service to connect to
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, bucket_name: str, object_key: str, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports data frame to an S3 bucket.
+
+If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the HDF5 file to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
+
+- **Args**:
+  - `df (DataFrame)`: Data frame to export.
+  - `bucket_name (str)`: Name of the bucket to export data frame to0.
+  - `object_key (str)`: Key of the object in S3 bucket to export data frame to.
+  - `format (FileFormat | str, Optional)`: Format of the file to export data frame to.
+    Defaults to None, in which case the format is inferred.
+  - `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+    |Format|Pandas Writer|
+    |------|----------------|
+    |CSV|[_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)|
+    |JSON|[_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)|
+    |Parquet|[_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html)|
+    |HDF5|[_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)|
+
+
+
+**_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
+
+Loads data from S3 into a Pandas data frame. This function will load at maximum 100,000 rows of data from the specified file.
+
+- **Args**:
+  - `bucket_name (str)`: Name of the bucket to load data from.
+  - `object_key (str)`: Key of the object in S3 bucket to load data from.
+  - `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+  - `limit (int, optional)`: The number of rows to limit the loaded data frame to.
+    Defaults to 100000.
+  - `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+    |Format|Pandas Reader|
+    |------|----------------|
+    |CSV|[_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)|
+    |JSON|[_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)|
+    |Parquet|[_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html)|
+    |HDF5|[_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)|
+- **Returns**: (`DataFrame`) Data frame object loaded from the specified data frame.
 
 ## FileIO
 
-WIP
+`mage_ai.io.file.FileIO`
+
+Handles data transfer between the filesystem and the Mage app. The `FileIO` client currently supports importing and exporting with the following file formats:
+- CSV
+- JSON
+- Parquet
+- HDF5
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool)`
+
+Initializes the BigQuery data loading client.
+
+- **Args**
+    - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, filepath: os.PathLike, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports the input data frame to the file specified.
+
+If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the HDF5 file to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
+
+- **Args**:
+    - `df (DataFrame)`: Data frame to export.
+    - `filepath (os.PathLike)`: Filepath to export data frame to.
+    - `format (FileFormat | str, Optional)`: Format of the file to export data frame to.
+    Defaults to None, in which case the format is inferred.
+    - `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        |Format|Pandas Writer|
+        |------|----------------|
+        |CSV|[_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)|
+        |JSON|[_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)|
+        |Parquet|[_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html)|
+        |HDF5|[_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)|
+
+
+
+**_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
+
+Loads the data frame from the filepath specified. This function will load at maximum 100,000 rows of data from the specified file.
+
+- **Args**:
+  - `filepath (os.PathLike)`: Filepath to load data frame from.
+  - `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+  - `limit (int, optional)`: The number of rows to limit the loaded data frame to.
+    Defaults to 100000.
+  - `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+    |Format|Pandas Reader|
+    |------|----------------|
+    |CSV|[_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)|
+    |JSON|[_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)|
+    |Parquet|[_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html)|
+    |HDF5|[_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)|
+- **Returns**: (`DataFrame`) Data frame object loaded from the specified data frame.
 
 ## BigQuery
 
-WIP
+`mage_ai.io.bigquery.BigQuery`
+
+Handles data transfer between a BigQuery data warehouse and the Mage app.
+
+Authentication with a Google BigQuery warehouse requires specifying the service account key for the service account that has access to the BigQuery warehouse. There are four ways to provide this service key:
+- Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable holding the filepath to your service account key
+- Define the `GOOGLE_SERVICE_ACC_KEY_FILEPATH` key with your [configuration loader](#configuration-settings) or the `path_to_credentials` keyword argument with the client constructor holding the filepath to your service account key
+- Define the `GOOGLE_SERVICE_ACC_KEY` key with your [configuration loader](#configuration-settings) or the `credentials_mapping` keyword argument with the client constructor holding a mapping sharing the same contents as your service key
+  - if using a configuration file, be careful to wrap your service key values in quote so YAML parses the settings correctly
+- Manually pass the `google.oauth2.service_account.Credentials` object with the keyword argument `credentials`
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the BigQuery data loading client.
+
+- **Args**
+    - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+    - `credentials_mapping (Mapping[str, str])` - Mapping object corresponding to your service account key. See instructions above on when to use this keyword argument
+    - `path_to_credentials (str)` - Filepath to service account key. See instructions above on when to use this keyword argument.
+
+    All other keyword arguments can be found in the [Google BigQuery Python Client docs](https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.client.Client.html?highlight=client#google-cloud-bigquery-client-client)
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> BigQuery`
+
+Creates BigQuery data loading client from configuration settings.
+
+- **Args**:
+  - `config (BaseConfigLoader)`: Configuration loader object.
+  - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+  - `**kwargs`: Additional parameters passed to the loader constructor
+- **Returns**: (`Postgres`) The constructed dataloader using this method
+
+**_with_credentials_file_** - `with_credentials_file(cls, path_to_credentials: str, **kwargs) -> BigQuery`
+
+Constructs BigQuery data loader using the file containing the service account key.
+
+- **Args**:
+    - `path_to_credentials (str)`: Path to the credentials file.
+    - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+    - `**kwargs`: Additional parameters to pass to BigQuery client constructor.
+- **Returns**:
+    BigQuery: BigQuery data loader
+
+**_with_credentials_object_** - `with_credentials_object(cls, credentials: Mapping[str, str], **kwargs) -> BigQuery`
+
+Constructs BigQuery data loader using manually specified service account key credentials.
+
+- **Args**:
+    - `credentials (Mapping[str, str])`: Mapping containing same key-value pairs as a service account key.
+    - `verbose (bool)`: Enables verbose output printing. Defaults to False.
+    - `**kwargs`: Additional parameters to pass to BigQuery client constructor.
+- **Returns**:
+    BigQuery: BigQuery data loader
+
+<h3> Methods </h3>
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected BigQuery warehouse.
+
+- **Args**:
+    - `query_string (str)`: Query to execute on the BigQuery warehouse.
+    - `**kwargs`: Additional arguments to pass to query, such as query configurations. See [_Client.query()_](https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.client.Client.html?highlight=client#google.cloud.bigquery.client.Client.query) docs for additional arguments.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, **kwargs) -> None`
+
+Exports a data frame to a Google BigQuery warehouse.  If table doesn't exist, the table is automatically created.
+
+- **Args**:
+    - `df (DataFrame)`: Data frame to export
+    - `table_id (str)`: ID of the table to export the data frame to. If of the format
+    `"your-project.your_dataset.your_table_name"`. If this table exists,
+    the table schema must match the data frame schema. If this table doesn't exist,
+    the table schema is automatically inferred.
+    - `if_exists (str)`: Specifies export policy if table exists. Either
+        - `'fail'`: throw an error.
+        - `'replace'`: drops existing table and creates new table of same name.
+        - `'append'`: appends data frame to existing table. In this case the schema must match the original table.
+    Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument, this parameter
+    is ignored (as both define the same functionality).
+    - `**configuration_params`: Configuration parameters for export job. See valid configuration parameters at [_LoadJobConfig_](https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.job.LoadJobConfig.html#google.cloud.bigquery.job.LoadJobConfig) docs.
+
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from BigQuery into a Pandas data frame based on the query given. This will fail if the query returns no data from the database. When a select query is provided, this function will load at maximum 100,000 rows of data. To operate on more data, consider performing data transformations in warehouse.
+
+
+- **Args**:
+  - `query_string (str)`: Query to fetch a table or subset of a table.
+  - `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100000.
+  - `**kwargs`: Additional parameters to pass to the query. See [Google BigQuery Python client](https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.client.Client.html?highlight=client#google.cloud.bigquery.client.Client.query) docs for additional arguments.
+
+**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the BigQuery warehouse. Sample is not guaranteed to be random.
+
+- **Args**:
+  - `schema (str)`: The schema to select the table from.
+  - `size (int)`: The number of rows to sample. Defaults to 100,000
+  - `table (str)`: The table to sample from in the connected database.
+
+- **Returns**: (`DataFrame`) Sampled data from the data frame.
 
 ## PostgreSQL
 
@@ -288,6 +525,7 @@ Initializes the Postgres data loading client.
   - `password (str)`: The login password for the user.
   - `host (str)`: Host address for database.
   - `port (str)`: Port on which the database is running.
+  - `verbose (bool)`: Enables verbose output printing. Defaults to False.
   - `**kwargs`: Additional settings for creating psycopg2 connection
 
 <h3> Attributes </h3>
@@ -302,6 +540,7 @@ Creates Postgres data loading client from configuration settings.
 
 - **Args**:
   - `config (BaseConfigLoader)`: Configuration loader object.
+  - `verbose (bool)`: Enables verbose output printing. Defaults to False.
   - `**kwargs`: Additional parameters passed to the loader constructor
 - **Returns**: (`Postgres`) The constructed dataloader using this method
 
@@ -323,7 +562,7 @@ Sends query to the connected PostgreSQL database.
   - `query_string (str)`: The query to execute on the PostgreSQL database.
   - `**kwargs`: Additional parameters to pass to the query. See [`psycopg2` docs](https://www.psycopg.org/docs/usage.html#query-parameters) for configuring query parameters.
 
-**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, **kwargs) -> None`
+**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, index: bool, **kwargs) -> None`
 
 Exports data frame to the PostgreSQL database from a Pandas data frame. If table doesn't exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
 
@@ -419,6 +658,7 @@ Creates Snowflake data loading client from configuration settings.
 
 - **Args**:
   - `config (BaseConfigLoader)`: Configuration loader object.
+  - `verbose (bool)`: Enables verbose output printing. Defaults to False.
   - `**kwargs`: Additional parameters passed to the loader constructor
 - **Returns**: (`Snowflake`) The constructed dataloader using this method
 
