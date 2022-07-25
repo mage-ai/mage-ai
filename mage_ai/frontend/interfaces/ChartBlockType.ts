@@ -4,6 +4,7 @@ export const VARIABLE_NAME_GROUP_BY = 'group_by'
 export const VARIABLE_NAME_LEGEND_LABELS = 'legend_labels';
 export const VARIABLE_NAME_LIMIT = 'limit';
 export const VARIABLE_NAME_METRICS = 'metrics';
+export const VARIABLE_NAME_TIME_INTERVAL = 'time_interval';
 export const VARIABLE_NAME_WIDTH_PERCENTAGE = 'width_percentage';
 export const VARIABLE_NAME_X = 'x';
 export const VARIABLE_NAME_Y = 'y';
@@ -20,6 +21,7 @@ export enum ChartTypeEnum {
   LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',
   TABLE = 'table',
+  TIME_SERIES_LINE_CHART = 'time series line chart',
 }
 
 export enum ChartStyleEnum {
@@ -37,6 +39,15 @@ enum AggregationFunctionEnum {
   MODE = 'mode',
   SUM = 'sum',
 }
+
+export const CHART_TYPES = [
+  ChartTypeEnum.BAR_CHART,
+  ChartTypeEnum.HISTOGRAM,
+  ChartTypeEnum.LINE_CHART,
+  ChartTypeEnum.PIE_CHART,
+  ChartTypeEnum.TABLE,
+  ChartTypeEnum.TIME_SERIES_LINE_CHART,
+];
 
 export const AGGREGATE_FUNCTIONS = [
   AggregationFunctionEnum.AVERAGE,
@@ -73,14 +84,17 @@ export interface ConfigurationType {
   chart_type?: ChartTypeEnum;
 }
 
-export const CHART_TYPES = [
-  ChartTypeEnum.BAR_CHART,
-  ChartTypeEnum.HISTOGRAM,
-  ChartTypeEnum.LINE_CHART,
-  ChartTypeEnum.PIE_CHART,
-  ChartTypeEnum.TABLE,
-];
-
 export function buildMetricName(metric: MetricType) {
   return `${metric.aggregation}(${metric.column})`;
+}
+
+export enum TimeIntervalEnum {
+  DAY = 'day',
+  HOUR = 'hour',
+  MINUTE = 'minute',
+  MONTH = 'month',
+  ORIGINAL = 'original',
+  SECOND = 'second',
+  WEEK = 'week',
+  YEAR = 'year',
 }

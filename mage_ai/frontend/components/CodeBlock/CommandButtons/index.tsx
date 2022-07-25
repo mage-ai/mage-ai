@@ -89,8 +89,8 @@ function CommandButtons({
       upstream_blocks: [block.uuid],
     };
     const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
-    const configuration = defaultSettings?.configuration(widget) || {};
-    const content = defaultSettings?.content(widget) || null;
+    const configuration = defaultSettings?.configuration?.(widget) || {};
+    const content = defaultSettings?.content?.(widget) || null;
 
     return {
       label: () => capitalizeRemoveUnderscoreLower(chartType),

@@ -18,7 +18,9 @@ import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '
 import { localPoint } from '@visx/event';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 
+import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
+import YAxisLabelContainer from './shared/YAxisLabelContainer';
 import dark from '@oracle/styles/themes/dark';
 import {
   BLUE,
@@ -70,7 +72,10 @@ type SharedProps = {
 
 type BarStackHorizontalProps = SharedProps;
 
-export type BarStackHorizontalContainerProps = SharedProps;
+export type BarStackHorizontalContainerProps = {
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+} & SharedProps;
 
 const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;
@@ -346,27 +351,63 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
 function BarStackHorizontalContainer({
   height: parentHeight,
   width: parentWidth,
+  xAxisLabel,
+  yAxisLabel,
   ...props
 }: BarStackHorizontalContainerProps) {
+  let parentWidthFinal;
+
+  if (typeof parentWidth === 'undefined') {
+    parentWidthFinal = '100%';
+  } else {
+    parentWidthFinal = yAxisLabel
+      ? parentWidth === 0 ? parentWidth : parentWidth - 28
+      : parentWidth;
+  }
+
   return (
-    <div
-      style={{
-        height: parentHeight,
-        width: typeof parentWidth === 'undefined'
-          ? '100%'
-          : parentWidth,
-      }}
-    >
-      <ParentSize>
-        {({ width, height }) => (
-          <BarChartHorizontal
-            {...props}
-            height={height}
-            width={width}
-          />
+    <>
+      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
+        {yAxisLabel && (
+          <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
+            <YAxisLabelContainer>
+              <Text center muted small>
+                {yAxisLabel}
+              </Text>
+            </YAxisLabelContainer>
+          </FlexContainer>
         )}
-      </ParentSize>
-    </div>
+
+        <div style={{
+          height: parentHeight,
+          width: parentWidthFinal,
+        }}>
+          <ParentSize>
+            {({ width, height }) => (
+              <BarChartHorizontal
+                {...props}
+                height={height}
+                width={width}
+              />
+            )}
+          </ParentSize>
+        </div>
+      </div>
+
+      {xAxisLabel && (
+        <div
+          style={{
+            // This is to account for the width of the y-axis label
+            paddingLeft: yAxisLabel ? 28 + 8 : 0,
+            paddingTop: 4,
+          }}
+        >
+          <Text center muted small>
+            {xAxisLabel}
+          </Text>
+        </div>
+      )}
+    </>
   );
 }
 

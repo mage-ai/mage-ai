@@ -437,8 +437,14 @@ function ChartBlock({
           ...block,
           upstream_blocks: upstreamBlocks,
         };
-        updateConfiguration(defaultSettings.configuration(blockUpdated));
-        updateContent(defaultSettings.content(blockUpdated));
+        if (defaultSettings.configuration) {
+          updateConfiguration(defaultSettings.configuration(blockUpdated));
+        }
+        // @ts-ignore
+        if (defaultSettings.content) {
+          // @ts-ignore
+          updateContent(defaultSettings.content(blockUpdated));
+        }
       }
     }
   }, [
@@ -460,7 +466,7 @@ function ChartBlock({
     code: configurationOptionsElsForCode,
     noCode: configurationOptionsEls,
   }: {
-    code: ConfigurationOptionType[];
+    code?: ConfigurationOptionType[];
     noCode: ConfigurationOptionType[];
   } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => {
     return {
@@ -487,10 +493,18 @@ function ChartBlock({
             autoRun,
           }),
           onFocus: () => setSelectedBlock(block),
-          value: configuration?.[uuid],
+          value: configuration?.[uuid] || '',
         };
 
-        const blocks: BlockType[] = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
+        const blocks: BlockType[] = upstreamBlocks.reduce((acc, blockUUID) => {
+          const b = blocksMapping[blockUUID];
+
+          if (b) {
+            return acc.concat(b);
+          }
+
+          return acc;
+        }, []);
         const columns = blocks.reduce((acc, {
           outputs,
         }) => acc.concat(outputs?.[0]?.sample_data?.columns), []);
@@ -573,13 +587,13 @@ function ChartBlock({
                     const existingMetric = metricsFromConfig.find(({
                       aggregation,
                       column,
-                    }) => column === values[0] && aggregation === values[1]);
+                    }) => column === values[1] && aggregation === values[0]);
 
                     if (!existingMetric) {
                       updateConfiguration({
                         [uuid]: metricsFromConfig.concat({
-                          aggregation: values[1],
-                          column: values[0],
+                          aggregation: values[0],
+                          column: values[1],
                         }),
                       }, {
                         autoRun,
@@ -592,10 +606,10 @@ function ChartBlock({
               >
                 <Select
                   {...sharedProps}
-                  label="column"
+                  label="aggregation"
                 >
                   <option value="" />
-                  {sortByKey(columns, v => v).map((val: string) => (
+                  {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>
@@ -604,10 +618,10 @@ function ChartBlock({
 
                 <Select
                   {...sharedProps}
-                  label="aggregation"
+                  label="column"
                 >
                   <option value="" />
-                  {sortByKey(AGGREGATE_FUNCTIONS, v => v).map((val: string) => (
+                  {sortByKey(columns, v => v).map((val: string) => (
                     <option key={val} value={val}>
                       {val}
                     </option>
@@ -677,7 +691,6 @@ function ChartBlock({
       }),
     }
   }, {
-    code: [],
     noCode: [],
   }), [
     blocksMapping,
@@ -883,7 +896,7 @@ function ChartBlock({
           )}
         </FlexContainer>
 
-        {isEditing && (
+        {isEditing && !!configurationOptionsElsForCode?.length && (
           <>
             <Spacing my={1} px={1}>
               {/*<FlexContainer>

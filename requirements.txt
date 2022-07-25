@@ -17,7 +17,6 @@ joblib>=1.1.0
 jupyter_client==7.3.4
 google-cloud-bigquery==3.2.0
 jupyter-server-proxy==3.2.1
-numpyencoder==0.3.0
 numpy~=1.21.0
 pandas~=1.3.0
 psycopg2-binary==2.9.3

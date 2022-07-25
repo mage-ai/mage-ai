@@ -31,6 +31,33 @@ def build_metric_name(metric):
     return f'{aggregation}({column})'
 
 
+def calculate_metric_for_series(series, aggregation):
+    value = 0
+
+    if AggregationFunction.AVERAGE == aggregation:
+        value = sum(series) / len(series)
+    elif AggregationFunction.COUNT == aggregation:
+        value = len(series)
+    elif AggregationFunction.COUNT_DISTINCT == aggregation:
+        value = len(series.unique())
+    elif AggregationFunction.MAX == aggregation:
+        value = max(series)
+    elif AggregationFunction.MEDIAN == aggregation:
+        value = sorted(series)[int(len(series) / 2)]
+    elif AggregationFunction.MIN == aggregation:
+        value = min(series)
+    elif AggregationFunction.MODE == aggregation:
+        value = sorted(
+            series.value_counts().items(),
+            key=lambda t: t[1],
+            reverse=True,
+        )[0][0]
+    elif AggregationFunction.SUM == aggregation:
+        value = sum(series)
+
+    return value
+
+
 def calculate_metrics_for_group(metrics, group):
     values = {}
 
@@ -38,30 +65,8 @@ def calculate_metrics_for_group(metrics, group):
         aggregation = metric['aggregation']
         column = metric['column']
         series = group[column]
-        value = 0
 
-        if AggregationFunction.AVERAGE == aggregation:
-            value = sum(series) / len(series)
-        elif AggregationFunction.COUNT == aggregation:
-            value = len(series)
-        elif AggregationFunction.COUNT_DISTINCT == aggregation:
-            value = len(series.unique())
-        elif AggregationFunction.MAX == aggregation:
-            value = max(series)
-        elif AggregationFunction.MEDIAN == aggregation:
-            value = sorted(series)[int(len(series) / 2)]
-        elif AggregationFunction.MIN == aggregation:
-            value = min(series)
-        elif AggregationFunction.MODE == aggregation:
-            value = sorted(
-                series.value_counts().items(),
-                key=lambda t: t[1],
-                reverse=True,
-            )[0][0]
-        elif AggregationFunction.SUM == aggregation:
-            value = sum(series)
-
-        values[build_metric_name(metric)] = value
+        values[build_metric_name(metric)] = calculate_metric_for_series(series, aggregation)
 
     return values
 

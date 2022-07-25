@@ -1,7 +1,32 @@
+from .constants import TimeInterval, TIME_INTERVAL_TO_TIME_DELTA
+from .utils import calculate_metric_for_series
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import dateutil.parser
 import math
+import pandas as pd
 
 
 MAX_BUCKETS = 40
+TIME_SERIES_BUCKETS = 40
+
+
+def clean_series(series, column_type=None, dropna=True):
+    series_cleaned = series.map(
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
+    )
+    if dropna:
+        series_cleaned = series_cleaned.dropna()
+
+    if column_type is int:
+        try:
+            series_cleaned = series_cleaned.astype(float).astype(int)
+        except ValueError:
+            series_cleaned = series_cleaned.astype(float)
+    elif column_type is float:
+        series_cleaned = series_cleaned.astype(float)
+
+    return series_cleaned
 
 
 def build_buckets(min_value, max_value, max_buckets):
@@ -68,3 +93,93 @@ def build_histogram_data(arr, max_buckets):
         x=x,
         y=y,
     )
+
+
+def build_time_series_buckets(df, datetime_column, time_interval, metrics):
+    time_values = df[datetime_column]
+    datetimes = clean_series(time_values)
+    if datetimes.size <= 1:
+        return []
+
+    datetimes = datetimes.unique()
+    min_value_datetime = dateutil.parser.parse(datetimes.min())
+    max_value_datetime = dateutil.parser.parse(datetimes.max())
+
+    a, b = [dateutil.parser.parse(d) for d in sorted(datetimes)[:2]]
+
+    year = min_value_datetime.year
+    month = min_value_datetime.month
+    day = min_value_datetime.day
+    hour = min_value_datetime.hour
+    minute = min_value_datetime.minute
+
+    start_datetime = min_value_datetime
+
+    if TimeInterval.ORIGINAL == time_interval:
+        diff = (b - a).total_seconds()
+        if diff >= 60 * 60 * 24 * 365:
+            time_interval = TimeInterval.YEAR
+        elif diff >= 60 * 60 * 24 * 30:
+            time_interval = TimeInterval.MONTH
+        elif diff >= 60 * 60 * 24 * 7:
+            time_interval = TimeInterval.WEEK
+        elif diff >= 60 * 60 * 24:
+            time_interval = TimeInterval.DAY
+        elif diff >= 60 * 60:
+            time_interval = TimeInterval.HOUR
+        elif diff >= 60:
+            time_interval = TimeInterval.SECOND
+
+    if TimeInterval.DAY == time_interval:
+        start_datetime = datetime(year, month, day, 0, 0, 0)
+    elif TimeInterval.HOUR == time_interval:
+        start_datetime = datetime(year, month, day, hour, 0, 0)
+    elif TimeInterval.MINUTE == time_interval:
+        start_datetime = datetime(year, month, day, hour, minute, 0)
+    elif TimeInterval.MONTH == time_interval:
+        start_datetime = datetime(year, month, 1, 0, 0, 0)
+    elif TimeInterval.SECOND == time_interval:
+        start_datetime = datetime(year, month, day, hour, minute, 0)
+    elif TimeInterval.WEEK == time_interval:
+        start_datetime = min_value_datetime - relativedelta(
+            days=min_value_datetime.isocalendar()[2],
+        )
+        start_datetime = datetime(
+            start_datetime.year,
+            start_datetime.month,
+            start_datetime.day,
+            0,
+            0,
+            0,
+        )
+    elif TimeInterval.YEAR == time_interval:
+        start_datetime = datetime(year, 1, 1, 0, 0, 0)
+
+    df_copy = df.copy()
+    df_copy[datetime_column] = \
+        pd.to_datetime(df[datetime_column]).apply(lambda x: x if pd.isnull(x) else x.timestamp())
+
+    values = [[] for _ in metrics]
+    buckets = []
+
+    while len(buckets) == 0 or buckets[-1] <= max_value_datetime.timestamp():
+        if len(buckets) == 0:
+            min_date_ts = start_datetime.timestamp()
+        else:
+            min_date_ts = buckets[-1]
+        max_date = datetime.fromtimestamp(min_date_ts) + TIME_INTERVAL_TO_TIME_DELTA[time_interval]
+        buckets.append(max_date.timestamp())
+
+        df_in_range = df_copy[(
+            df_copy[datetime_column] >= min_date_ts
+        ) & (
+            df_copy[datetime_column] < max_date.timestamp()
+        )]
+
+        for idx, metric in enumerate(metrics):
+            aggregation = metric['aggregation']
+            column = metric['column']
+            series = df_in_range[column]
+            values[idx].append(calculate_metric_for_series(series, aggregation))
+
+    return buckets, values
