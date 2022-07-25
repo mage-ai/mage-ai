@@ -6,11 +6,10 @@ Blocks can be reused and shared across multiple pipelines within the same projec
 
 Current block types:
 
-- [Blocks](#blocks)
-    - [1. Scratchpad](#1-scratchpad)
-    - [2. Data loader](#2-data-loader)
-    - [3. Transformer](#3-transformer)
-    - [4. Data exporter](#4-data-exporter)
+1. [Scratchpad](#1-scratchpad)
+1. [Data loader](#2-data-loader)
+1. [Transformer](#3-transformer)
+1. [Data exporter](#4-data-exporter)
 
 ### 1. Scratchpad
 
@@ -44,6 +43,7 @@ def load_data() -> DataFrame:
     # Specify your data loading logic here
     return DataFrame({})
 ```
+
 To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).
 
 ### 3. Transformer
@@ -97,4 +97,5 @@ def export_data(df: DataFrame) -> None:
     """
     # Specify your data exporting logic here
 ```
+
 To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).
