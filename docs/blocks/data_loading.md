@@ -252,9 +252,15 @@ Sample data from a table in the selected database in the Redshift cluster. Sampl
 
 ## S3
 
+WIP
+
 ## FileIO
 
+WIP
+
 ## BigQuery
+
+WIP
 
 ## PostgreSQL
 
@@ -513,27 +519,27 @@ The following are the set of allowed key names that you must name your secrets w
 | AWS_SECRET_ACCESS_KEY           | AWS General     | secret_access_key   | AWS Secret Access Key credential                                        | Used by Redshift and S3               |
 | AWS_SESSION_TOKEN               | AWS General     | session_token       | AWS Session Token (used to generate temporary DB credentials)           | Used by Redshift                      |
 | AWS_REGION                      | AWS General     | region              | AWS Region                                                              | Used by Redshift and S3               |
-| REDSHIFT_DBNAME                 | AWS Redshift    | database            | Name of Redshift database to connect to                                 |                                       |
-| REDSHIFT_HOST                   | AWS Redshift    | host                | Redshift Cluster hostname                                               | Use with temporary credentials        |
-| REDSHIFT_PORT                   | AWS Redshift    | port                | Redshift Cluster port. Optional, defaults to 5439.                      | Use with temporary credentials        |
-| REDSHIFT_TEMP_CRED_USER         | AWS Redshift    | user                | Redshift temporary credentials username.                                | Use with temporary credentials        |
-| REDSHIFT_TEMP_CRED_PASSWORD     | AWS Redshift    | password            | Redshift temporary credentials password.                                | Use with temporary credentials        |
-| REDSHIFT_DBUSER                 | AWS Redshift    | db_user             | Redshift database user to generate credentials for.                     | Use to generate temporary credentials |
-| REDSHIFT_CLUSTER_ID             | AWS Redshift    | cluster_identifier  | Redshift cluster ID                                                     | Use to generate temporary credentials |
-| REDSHIFT_IAM_PROFILE            | AWS Redshift    | profile             | Name of the IAM profile to generate temporary credentials with          | Use to generate temporary credentials |
-| POSTGRES_DBNAME                 | PostgreSQL      | dbname              | Database name                                                           |                                       |
-| POSTGRES_USER                   | PostgreSQL      | user                | Database login username                                                 |                                       |
-| POSTGRES_PASSWORD               | PostgreSQL      | password            | Database login password                                                 |                                       |
-| POSTGRES_HOST                   | PostgreSQL      | host                | Database hostname                                                       |                                       |
-| POSTGRES_PORT                   | PostgreSQL      | port                | PostgreSQL database port                                                |                                       |
-| SNOWFLAKE_USER                  | Snowflake       | user                | Snowflake username                                                      |                                       |
-| SNOWFLAKE_PASS                  | Snowflake       | password            | Snowflake password                                                      |                                       |
-| SNOWFLAKE_ACCOUNT               | Snowflake       | account             | Snowflake account ID (including region)                                 |                                       |
-| SNOWFLAKE_DEFAULT_DB            | Snowflake       | database            | Default database to use. Optional, no database chosen if unspecified.   |                                       |
-| SNOWFLAKE_DEFAULT_SCHEMA        | Snowflake       | schema              | Default schema to use. Optional, no schema chosen if unspecified.       |                                       |
-| SNOWFLAKE_DEFAULT_WH            | Snowflake       | warehouse           | Default warehouse to use. Optional, no warehouse chosen if unspecified. |                                       |
-| GOOGLE_SERVICE_ACC_KEY          | Google BigQuery | credentials_mapping | Service account key                                                     |                                       |
-| GOOGLE_SERVICE_ACC_KEY_FILEPATH | Google BigQuery | path_to_credentials | Path to service account key                                             |                                       |
+| REDSHIFT_DBNAME                 | [AWS Redshift](#redshift)    | database            | Name of Redshift database to connect to                                 |                                       |
+| REDSHIFT_HOST                   | [AWS Redshift](#redshift)    | host                | Redshift Cluster hostname                                               | Use with temporary credentials        |
+| REDSHIFT_PORT                   | [AWS Redshift](#redshift)    | port                | Redshift Cluster port. Optional, defaults to 5439.                      | Use with temporary credentials        |
+| REDSHIFT_TEMP_CRED_USER         | [AWS Redshift](#redshift)    | user                | Redshift temporary credentials username.                                | Use with temporary credentials        |
+| REDSHIFT_TEMP_CRED_PASSWORD     | [AWS Redshift](#redshift)    | password            | Redshift temporary credentials password.                                | Use with temporary credentials        |
+| REDSHIFT_DBUSER                 | [AWS Redshift](#redshift)    | db_user             | Redshift database user to generate credentials for.                     | Use to generate temporary credentials |
+| REDSHIFT_CLUSTER_ID             | [AWS Redshift](#redshift)    | cluster_identifier  | Redshift cluster ID                                                     | Use to generate temporary credentials |
+| REDSHIFT_IAM_PROFILE            | [AWS Redshift](#redshift)    | profile             | Name of the IAM profile to generate temporary credentials with          | Use to generate temporary credentials |
+| POSTGRES_DBNAME                 | [PostgreSQL](#postgresql)      | dbname              | Database name                                                           |                                       |
+| POSTGRES_USER                   | [PostgreSQL](#postgresql)      | user                | Database login username                                                 |                                       |
+| POSTGRES_PASSWORD               | [PostgreSQL](#postgresql)      | password            | Database login password                                                 |                                       |
+| POSTGRES_HOST                   | [PostgreSQL](#postgresql)      | host                | Database hostname                                                       |                                       |
+| POSTGRES_PORT                   | [PostgreSQL](#postgresql)      | port                | PostgreSQL database port                                                |                                       |
+| SNOWFLAKE_USER                  | [Snowflake](#snowflake)       | user                | Snowflake username                                                      |                                       |
+| SNOWFLAKE_PASS                  | [Snowflake](#snowflake)       | password            | Snowflake password                                                      |                                       |
+| SNOWFLAKE_ACCOUNT               | [Snowflake](#snowflake)       | account             | Snowflake account ID (including region)                                 |                                       |
+| SNOWFLAKE_DEFAULT_DB            | [Snowflake](#snowflake)       | database            | Default database to use. Optional, no database chosen if unspecified.   |                                       |
+| SNOWFLAKE_DEFAULT_SCHEMA        | [Snowflake](#snowflake)       | schema              | Default schema to use. Optional, no schema chosen if unspecified.       |                                       |
+| SNOWFLAKE_DEFAULT_WH            | [Snowflake](#snowflake)       | warehouse           | Default warehouse to use. Optional, no warehouse chosen if unspecified. |                                       |
+| GOOGLE_SERVICE_ACC_KEY          | [Google BigQuery](#bigquery) | credentials_mapping | Service account key                                                     |                                       |
+| GOOGLE_SERVICE_ACC_KEY_FILEPATH | [Google BigQuery](#bigquery) | path_to_credentials | Path to service account key                                             |                                       |
 
 ## Configuration Loader APIs
 
