@@ -13,7 +13,7 @@ Mage can be run in an Amazon EC2 instance, either by
 
 ## Prerequistes
 
-Your EC2 instance must have `python3` installed. The supported versions of Python are 3.7, 3.8, and 3.9.
+Your EC2 instance must have `python3` installed. All Python versions between 3.7.0 (inclusive) and 3.10.0 (exclusive) are supported.
 
 ## Quick Connection via SSH
 
