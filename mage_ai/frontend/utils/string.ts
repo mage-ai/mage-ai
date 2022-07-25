@@ -3,6 +3,7 @@ import moment from 'moment';
 import nouns from '@utils/nouns';
 import { randomSample } from '@utils/array';
 
+export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:SS';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
 
 export function isJsonString(str) {

@@ -1,6 +1,7 @@
 import moment from 'moment';
 
 import BarChartHorizontal from '@components/charts/BarChartHorizontal';
+import BarChartVertical from '@components/charts/BarChartVertical';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
 import Histogram from '@components/charts/Histogram';
@@ -12,15 +13,22 @@ import {
   ChartStyleEnum,
   ChartTypeEnum,
   SortOrderEnum,
+  TimeIntervalEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_METRICS,
+  VARIABLE_NAME_TIME_INTERVAL,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
   buildMetricName,
 } from '@interfaces/ChartBlockType';
-import { DATE_FORMAT_SHORT, numberWithCommas, roundNumber } from '@utils/string';
+import {
+  DATE_FORMAT_LONG,
+  DATE_FORMAT_SHORT,
+  numberWithCommas,
+  roundNumber,
+} from '@utils/string';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { range, sortByKey } from '@utils/array';
@@ -50,6 +58,16 @@ function ChartController({
   let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
     || [];
 
+  let variableDateFormat = DATE_FORMAT_SHORT;
+  const timeInterval = configuration[VARIABLE_NAME_TIME_INTERVAL];
+  if ([
+    TimeIntervalEnum.HOUR,
+    TimeIntervalEnum.MINUTE,
+    TimeIntervalEnum.SECOND,
+  ].includes(timeInterval)) {
+    variableDateFormat = DATE_FORMAT_LONG;
+  }
+
   if (ChartTypeEnum.BAR_CHART === chartType
     || ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType) {
     const {
@@ -66,27 +84,28 @@ function ChartController({
       const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
       const yAxisLabel = metricNames?.join(', ');
 
+      let xy = x.map((xValue, idx1: number) => ({
+        __y: xValue,
+        ...metricNames.reduce((acc, mn, idx2) => {
+          const v = y?.[idx2]?.[idx1];
+          if (typeof v === 'undefined') {
+            return acc;
+          }
+
+          return {
+            ...acc,
+            [mn]: v,
+          };
+        }, {}),
+      }));
+      if (SortOrderEnum.ASCENDING === ySortOrder) {
+        xy = sortByKey(xy, d => d[metricName], { ascending: false });
+      } else if (SortOrderEnum.DESCENDING === ySortOrder) {
+        xy = sortByKey(xy, d => d[metricName], { ascending: true });
+      }
+
       if (ChartStyleEnum.HORIZONTAL === chartStyle && !isTimeSeries) {
-        let xy = x.map((xValue, idx1: number) => ({
-          __y: xValue,
-          ...metricNames.reduce((acc, mn, idx2) => {
-            const v = y?.[idx2]?.[idx1];
-            if (typeof v === 'undefined') {
-              return acc;
-            }
 
-            return {
-              ...acc,
-              [mn]: v,
-            };
-          }, {}),
-        }));
-
-        if (SortOrderEnum.ASCENDING === ySortOrder) {
-          xy = sortByKey(xy, d => d[metricName], { ascending: false });
-        } else if (SortOrderEnum.DESCENDING === ySortOrder) {
-          xy = sortByKey(xy, d => d[metricName], { ascending: true });
-        }
 
         return (
           <BarChartHorizontal
@@ -107,6 +126,22 @@ function ChartController({
       }
 
       return (
+        <>
+        <BarChartVertical
+          data={xy}
+          height={CHART_HEIGHT_DEFAULT}
+          margin={{
+            bottom: UNIT * 3,
+            left: UNIT * 1,
+            right: UNIT * 3,
+            top: 0,
+          }}
+          width={width}
+          xNumTicks={3}
+          xAxisLabel={yAxisLabel}
+          yAxisLabel={xAxisLabel}
+        />
+
         <Histogram
           data={x.map((xValue , idx: number) => [
             xValue,
@@ -127,7 +162,7 @@ function ChartController({
 
             let xValueText = xValue;
             if (isTimeSeries) {
-              xValueText = moment(xValue * 1000).format(DATE_FORMAT_SHORT);
+              xValueText = moment(xValue * 1000).format(variableDateFormat);
             }
 
             return (
@@ -160,6 +195,8 @@ function ChartController({
           }}
           yAxisLabel={yAxisLabel}
         />
+
+        </>
       );
     }
   } else if (ChartTypeEnum.HISTOGRAM === chartType) {
@@ -255,7 +292,7 @@ function ChartController({
               xLabel = configuration[VARIABLE_NAME_GROUP_BY].map(String).join(', ');
             }
             if (isTimeSeries) {
-              xValueText = moment(x * 1000).format(DATE_FORMAT_SHORT);
+              xValueText = moment(x * 1000).format(variableDateFormat);
             }
 
             return (
