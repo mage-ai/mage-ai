@@ -201,7 +201,7 @@ class Widget(Block):
                     data.update({
                         var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
                     })
-        elif ChartType.TIME_SERIES_LINE_CHART:
+        elif self.chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]
                 buckets, values = build_time_series_buckets(

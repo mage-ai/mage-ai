@@ -50,11 +50,13 @@ function ChartController({
   let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
     || [];
 
-  if (ChartTypeEnum.BAR_CHART === chartType) {
+  if (ChartTypeEnum.BAR_CHART === chartType
+    || ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType) {
     const {
       x,
       y,
     } = data;
+    const isTimeSeries = ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y)) {
       if (!metricNames.length) {
@@ -64,7 +66,7 @@ function ChartController({
       const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
       const yAxisLabel = metricNames?.join(', ');
 
-      if (ChartStyleEnum.HORIZONTAL === chartStyle) {
+      if (ChartStyleEnum.HORIZONTAL === chartStyle && !isTimeSeries) {
         let xy = x.map((xValue, idx1: number) => ({
           __y: xValue,
           ...metricNames.reduce((acc, mn, idx2) => {
@@ -117,11 +119,25 @@ function ChartController({
             left: UNIT * 5,
             right: UNIT * 1,
           }}
-          renderTooltipContent={([, yValue]) => (
-            <Text inverted monospace small>
-              {yValue?.toFixed(4)}
-            </Text>
-          )}
+          renderTooltipContent={([xValue, yValue]) => {
+            let xLabel = configuration[VARIABLE_NAME_X];
+            if (configuration[VARIABLE_NAME_GROUP_BY]) {
+              xLabel = configuration[VARIABLE_NAME_GROUP_BY].map(String).join(', ');
+            }
+
+            let xValueText = xValue;
+            if (isTimeSeries) {
+              xValueText = moment(xValue * 1000).format(DATE_FORMAT_SHORT);
+            }
+
+            return (
+              <Text inverted monospace small>
+                {metricName}: {yValue?.toFixed(4)}
+                <br />
+                {xLabel}: {xValueText}
+              </Text>
+            );
+          }}
           showAxisLabels
           showYAxisLabels
           showZeroes
@@ -135,6 +151,13 @@ function ChartController({
             return d;
           }}
           xAxisLabel={xAxisLabel}
+          xLabelFormat={ts => {
+            if (isTimeSeries) {
+              return moment(ts * 1000).format(DATE_FORMAT_SHORT);
+            }
+
+            return ts;
+          }}
           yAxisLabel={yAxisLabel}
         />
       );
@@ -189,7 +212,6 @@ function ChartController({
       x,
       y,
     } = data;
-    console.log(data)
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {

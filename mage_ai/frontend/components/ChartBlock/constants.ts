@@ -35,6 +35,40 @@ export interface ConfigurationOptionType {
   uuid: string;
 }
 
+const timeSeriesConfiguration: {
+  noCode: ConfigurationOptionType[];
+} = {
+  noCode: [
+    {
+      label: () => 'time column',
+      settings: {
+        maxValues: 1,
+      },
+      type: ConfigurationItemType.COLUMNS,
+      uuid: VARIABLE_NAME_GROUP_BY,
+    },
+    {
+      label: () => 'time interval',
+      options: [
+        TimeIntervalEnum.ORIGINAL,
+        TimeIntervalEnum.SECOND,
+        TimeIntervalEnum.MINUTE,
+        TimeIntervalEnum.HOUR,
+        TimeIntervalEnum.DAY,
+        TimeIntervalEnum.WEEK,
+        TimeIntervalEnum.MONTH,
+        TimeIntervalEnum.YEAR,
+      ],
+      uuid: VARIABLE_NAME_TIME_INTERVAL,
+    },
+    {
+      label: () => 'metrics',
+      type: ConfigurationItemType.METRICS,
+      uuid: VARIABLE_NAME_METRICS,
+    },
+  ],
+};
+
 export const CONFIGURATIONS_BY_CHART_TYPE: {
   [chartType: string]: {
     code?: ConfigurationOptionType[];
@@ -196,37 +230,8 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
 
     ],
   },
-  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
-    noCode: [
-      {
-        label: () => 'time column',
-        settings: {
-          maxValues: 1,
-        },
-        type: ConfigurationItemType.COLUMNS,
-        uuid: VARIABLE_NAME_GROUP_BY,
-      },
-      {
-        label: () => 'time interval',
-        options: [
-          TimeIntervalEnum.ORIGINAL,
-          TimeIntervalEnum.SECOND,
-          TimeIntervalEnum.MINUTE,
-          TimeIntervalEnum.HOUR,
-          TimeIntervalEnum.DAY,
-          TimeIntervalEnum.WEEK,
-          TimeIntervalEnum.MONTH,
-          TimeIntervalEnum.YEAR,
-        ],
-        uuid: VARIABLE_NAME_TIME_INTERVAL,
-      },
-      {
-        label: () => 'metrics',
-        type: ConfigurationItemType.METRICS,
-        uuid: VARIABLE_NAME_METRICS,
-      },
-    ],
-  },
+  [ChartTypeEnum.TIME_SERIES_BAR_CHART]: timeSeriesConfiguration,
+  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: timeSeriesConfiguration,
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -287,6 +292,11 @@ y = [df_1[cols[1]]]
       return `x = df_1.columns
 y = df_1.to_numpy()`;
     },
+  },
+  [ChartTypeEnum.TIME_SERIES_BAR_CHART]: {
+    configuration: (block: BlockType) => ({
+      [VARIABLE_NAME_TIME_INTERVAL]: TimeIntervalEnum.ORIGINAL,
+    }),
   },
   [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
     configuration: (block: BlockType) => ({
