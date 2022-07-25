@@ -182,7 +182,9 @@ class Widget(Block):
             data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == self.chart_type:
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                data[VARIABLE_NAME_X] = self.group_by_columns
+                data[VARIABLE_NAME_Y] = df[self.group_by_columns].to_numpy()
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables[var_name_orig]

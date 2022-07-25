@@ -156,6 +156,11 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.TABLE]: {
     noCode: [
       {
+        label: () => 'columns',
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
         label: () => 'max number of rows',
         type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_LIMIT,
