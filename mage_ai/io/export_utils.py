@@ -1,5 +1,5 @@
 from enum import Enum
-from mage_ai.data_cleaner.shared.utils import clean_name
+from mage_ai.shared.utils import clean_name
 from pandas import DataFrame, Series
 from pandas.api.types import infer_dtype
 from typing import Callable, Dict, Mapping

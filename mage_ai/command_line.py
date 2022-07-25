@@ -1,7 +1,3 @@
-from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import init_repo
-from mage_ai.server.server import main as start_server
-
 import asyncio
 import os
 
@@ -11,9 +7,13 @@ def main():
     command = sys.argv[1]
 
     if command == 'init':
+        from mage_ai.data_preparation.repo_manager import init_repo
+
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
     elif command == 'start':
+        from mage_ai.server.server import main as start_server
+
         host = None
         port = None
         if len(sys.argv) >= 3:
@@ -31,6 +31,8 @@ def main():
             project=repo_path,
         ))
     elif command == 'run':
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+
         project_path = sys.argv[2]
         pipeline_uuid = sys.argv[3]
         project_path = os.path.abspath(project_path)

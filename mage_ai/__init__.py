@@ -1,21 +1,4 @@
-from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
-from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.server.app import (
-    clean_df,
-    clean_df_with_pipeline,
-    connect_df,
-    kill as kill_flask,
-    launch as launch_flask,
-    sync_pipelines,
-)
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
-from mage_ai.server.utils.frontend_renderer import (
-    NotebookType,
-    display_inline_iframe,
-    infer_notebook_type,
-    update_frontend_urls,
-)
 import asyncio
 import logging
 import os
@@ -36,6 +19,13 @@ def launch(
     iframe_port=None,
     config={},
 ):
+    from mage_ai.server.app import launch as launch_flask
+    from mage_ai.server.utils.frontend_renderer import (
+        NotebookType,
+        display_inline_iframe,
+        infer_notebook_type,
+        update_frontend_urls,
+    )
     iframe_host = iframe_host or host
     iframe_port = iframe_port or port
     if notebook_type is None:
@@ -68,14 +58,19 @@ def launch(
 
 
 def remote_sync(api_key=None):
+    from mage_ai.server.app import sync_pipelines
     sync_pipelines(api_key)
 
 
 def kill():
+    from mage_ai.server.app import kill as kill_flask
     kill_flask()
 
 
 def connect_data(df, name, verbose=False):
+    from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
+    from mage_ai.server.app import connect_df
+
     if is_spark_dataframe(df):
         # Convert pyspark dataframe to pandas
         df_spark = df
@@ -106,6 +101,10 @@ def clean(
     api_key=None,
     verbose=False,
 ):
+    from mage_ai.server.app import (
+        clean_df,
+        clean_df_with_pipeline,
+    )
     if pipeline_uuid is not None:
         df_clean = clean_df_with_pipeline(df, id=pipeline_uuid, verbose=verbose)
     elif pipeline_path is not None:
@@ -123,6 +122,8 @@ def clean(
 
 
 def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
+    from mage_ai.data_preparation.models.pipeline import Pipeline
+
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)

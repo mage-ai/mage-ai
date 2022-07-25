@@ -4,8 +4,6 @@ from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
 from typing import Callable, List, Set
-from mage_ai.data_cleaner.data_cleaner import clean as clean_data
-from mage_ai.data_cleaner.shared.utils import clean_name
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
@@ -21,6 +19,7 @@ from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.utils import clean_name
 import asyncio
 import os
 import pandas as pd
@@ -640,6 +639,8 @@ class Block:
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
     def __analyze_outputs(self, variable_mapping):
+        from mage_ai.data_cleaner.data_cleaner import clean as clean_data
+
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():

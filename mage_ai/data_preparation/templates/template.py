@@ -6,12 +6,15 @@ from mage_ai.data_cleaner.transformer_actions.constants import (
     OUTPUT_TYPES,
 )
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.templates.utils import (
+    read_template_file,
+    template_env,
+    write_template,
+)
 from mage_ai.io.base import DataSource
 from typing import Mapping, Union
-import jinja2
 import json
-import os
-import shutil
+
 
 MAP_DATASOURCE_TO_HANDLER = {
     DataSource.BIGQUERY: 'BigQuery',
@@ -19,8 +22,6 @@ MAP_DATASOURCE_TO_HANDLER = {
     DataSource.REDSHIFT: 'Redshift',
     DataSource.SNOWFLAKE: 'Snowflake',
 }
-
-template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
 def build_template_from_suggestion(suggestion: Mapping) -> str:
@@ -47,58 +48,6 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
     )
 
 
-def copy_template_directory(template_path: str, dest_path: str) -> None:
-    """
-    Copies a template directory structure from source to destination.
-
-    Args:
-        template_path (str): Source directory for the template to copy.
-        dest_path (str): Destination directory to copy template to.
-
-    Raises:
-        IOError: Raises IOError if template could not be found.
-    """
-    template_path = os.path.join(
-        os.path.dirname(__file__),
-        template_path,
-    )
-    if not os.path.exists(template_path):
-        raise IOError(f'Could not find templates for {template_path}.')
-    shutil.copytree(template_path, dest_path)
-
-
-def read_template_file(template_path: str) -> jinja2.Template:
-    """
-    Reads template source code into a string
-
-    Args:
-        template_path (str): File path of template to load relative to `templates` package
-
-    Returns:
-        jinja2.Template: Template source object
-    """
-    return template_env.get_template(template_path)
-
-
-def write_template(template_source: str, dest_path: str) -> None:
-    """
-    Writes template source code to destination file
-
-    Args:
-        template_source (str): Template source code to write to file
-        dest_path (str): Destination file to write template source code to.
-    """
-    with open(dest_path, 'w') as foutput:
-        foutput.write(template_source)
-
-
-def load_template(
-    block_type: Union[BlockType, str], config: Mapping[str, str], dest_path: str
-) -> None:
-    template_source = fetch_template_source(block_type, config)
-    write_template(template_source, dest_path)
-
-
 def fetch_template_source(block_type: Union[BlockType, str], config: Mapping[str, str]) -> str:
     if block_type == BlockType.DATA_LOADER:
         template_source = __fetch_data_loader_templates(config)
@@ -109,6 +58,13 @@ def fetch_template_source(block_type: Union[BlockType, str], config: Mapping[str
     else:
         template_source = ''
     return template_source
+
+
+def load_template(
+    block_type: Union[BlockType, str], config: Mapping[str, str], dest_path: str
+) -> None:
+    template_source = fetch_template_source(block_type, config)
+    write_template(template_source, dest_path)
 
 
 def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
