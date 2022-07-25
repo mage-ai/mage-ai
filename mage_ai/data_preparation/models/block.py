@@ -48,7 +48,7 @@ async def run_blocks(
             update_status=update_status,
         )
         if run_tests:
-            block.run_tests()
+            block.run_tests(update_tests=False)
     tasks = dict()
     blocks = Queue()
 
@@ -142,6 +142,7 @@ class Block:
         self.pipeline = pipeline
         self.upstream_blocks = []
         self.downstream_blocks = []
+        self.test_functions = []
 
     @property
     def input_variables(self):
@@ -428,13 +429,6 @@ class Block:
             return block_function
 
     def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
-        def block_decorator(decorated_functions):
-            def custom_code(function):
-                decorated_functions.append(function)
-                return function
-
-            return custom_code
-
         upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
@@ -464,8 +458,8 @@ class Block:
 
         with redirect_stdout(stdout):
             results = {
-                self.type: block_decorator(decorated_functions),
-                'test': block_decorator(test_functions),
+                self.type: self.__block_decorator(decorated_functions),
+                'test': self.__block_decorator(test_functions),
             }
             results.update(outputs_from_input_vars)
 
@@ -475,6 +469,8 @@ class Block:
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
                     exec(file.read(), results)
+
+            self.test_functions = test_functions
 
             if BlockType.CHART == self.type:
                 variables = self.get_variables_from_code_execution(results)
@@ -496,10 +492,7 @@ class Block:
                     if type(outputs) is not list:
                         outputs = [outputs]
 
-        output_message = dict(
-            output=outputs,
-            test_functions=test_functions,
-        )
+        output_message = dict(output=outputs)
         if redirect_outputs:
             output_message['stdout'] = stdout.getvalue()
         else:
@@ -669,23 +662,20 @@ class Block:
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
-    def run_tests(self, redirect_outputs=False) -> str:
-        def block_decorator(decorated_functions):
-            def custom_code(function):
-                decorated_functions.append(function)
-                return function
-
-            return custom_code
-
+    def run_tests(self, custom_code=None, redirect_outputs=False, update_tests=True) -> str:
         test_functions = []
-        results = {
-            'test': block_decorator(test_functions),
-        }
-        if os.path.exists(self.file_path):
-            with open(self.file_path) as file:
-                exec(file.read(), results)
+        if update_tests:
+            results = {
+                'test': self.__block_decorator(test_functions),
+            }
+            if custom_code is not None:
+                exec(custom_code, results)
+            elif os.path.exists(self.file_path):
+                with open(self.file_path) as file:
+                    exec(file.read(), results)
+        else:
+            test_functions = self.test_functions
 
-        stdout = StringIO() if redirect_outputs else sys.stdout
         variable_manager = VariableManager(self.pipeline.repo_path)
         outputs = [
             variable_manager.get_variable(
@@ -695,15 +685,19 @@ class Block:
             )
             for variable in self.output_variables.keys()
         ]
+        stdout = StringIO() if redirect_outputs else sys.stdout
         with redirect_stdout(stdout):
+            tests_passed = 0
             for func in test_functions:
                 try:
                     func(*outputs)
+                    tests_passed += 1
                 except AssertionError:
                     print('==============================================================')
                     print(f'FAIL: {func.__name__} (block: {self.uuid})')
                     print('--------------------------------------------------------------')
                     print(traceback.format_exc())
+            print(f'{tests_passed}/{len(test_functions)} tests passed.')
         if redirect_outputs:
             return stdout.getvalue()
 
@@ -849,6 +843,13 @@ class Block:
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '
                     f'but {actual_dtype} type is returned',
                 )
+
+    def __block_decorator(self, decorated_functions):
+        def custom_code(function):
+            decorated_functions.append(function)
+            return function
+
+        return custom_code
 
 
 class DataLoaderBlock(Block):

@@ -93,7 +93,8 @@ type CodeBlockProps = {
     block: BlockType;
     code: string;
     runDownstream?: boolean;
-    runUpstream: boolean;
+    runUpstream?: boolean;
+    runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
   setActiveSidekickView: (view: ViewKeyEnum) => void;
@@ -180,6 +181,7 @@ function CodeBlockProps({
       disableReset?: boolean;
       runDownstream?: boolean;
       runUpstream?: boolean;
+      runTests?: boolean;
     }) => {
       const {
         block: blockPayload,
@@ -187,12 +189,14 @@ function CodeBlockProps({
         disableReset,
         runDownstream,
         runUpstream,
+        runTests,
       } = payload || {};
       runBlock({
         block: blockPayload,
         code: code || content,
         runDownstream: runDownstream || hasDownstreamWidgets,
         runUpstream: runUpstream || false,
+        runTests: runTests || false,
       });
 
       if (!disableReset) {

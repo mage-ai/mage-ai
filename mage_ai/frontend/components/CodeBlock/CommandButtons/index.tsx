@@ -51,6 +51,7 @@ type CommandButtonsProps = {
     disableReset?: boolean;
     runDownstream?: boolean;
     runUpstream?: boolean;
+    runTests?: boolean;
   }) => void;
   setOutputCollapsed: (value: boolean) => void;
 } & CommandButtonsSharedProps;
@@ -334,6 +335,11 @@ function CommandButtons({
                   label: () => `Execute with upstream blocks`,
                   onClick: () => runBlock({ block, runUpstream: true }),
                   uuid: 'execute_upstream',
+                },
+                {
+                  label: () => `Execute block and run tests`,
+                  onClick: () => runBlock({ block, runTests: true }),
+                  uuid: 'run_tests',
                 },
               ]
             }
