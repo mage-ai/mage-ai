@@ -77,6 +77,14 @@ class Widget(Block):
         return self.configuration.get('chart_type')
 
     @property
+    def group_by_columns(self):
+        return self.configuration.get(VARIABLE_NAME_GROUP_BY)
+
+    @property
+    def metrics(self):
+        return self.configuration.get(VARIABLE_NAME_METRICS)
+
+    @property
     def output_variable_names(self):
         var_names = VARIABLE_NAMES_BY_CHART_TYPE.get(self.chart_type, [])
         return [(var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names]
@@ -104,28 +112,24 @@ class Widget(Block):
         upstream_block_uuids=[],
     ):
         data = variables.copy()
-        group_by = self.configuration.get(VARIABLE_NAME_GROUP_BY)
-        metrics = self.configuration.get(VARIABLE_NAME_METRICS)
         dfs = []
         for key in upstream_block_uuids:
             if key in results.keys():
                 dfs.append(results[key])
 
-        has_code = code and len(code.strip()) >= 1
-
         if ChartType.BAR_CHART == self.chart_type:
-            if has_code:
+            if self.group_by_columns and self.metrics:
+                df = dfs[0]
+                groups = df.groupby(self.group_by_columns)
+                data[VARIABLE_NAME_X] = list(groups.groups.keys())
+                data[VARIABLE_NAME_Y] = groups.apply(
+                    lambda group: calculate_metrics_for_group(self.metrics, group),
+                ).values
+            else:
                 for var_name_orig, var_name in self.output_variable_names:
                     data.update({
                         var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                     })
-            elif len(dfs):
-                df = dfs[0]
-                groups = df.groupby(group_by)
-                data[VARIABLE_NAME_X] = list(groups.groups.keys())
-                data[VARIABLE_NAME_Y] = groups.apply(
-                    lambda group: calculate_metrics_for_group(metrics, group),
-                ).values
         elif ChartType.HISTOGRAM == self.chart_type:
             for var_name_orig, var_name in self.output_variable_names:
                 values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]

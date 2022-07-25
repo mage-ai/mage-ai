@@ -452,7 +452,8 @@ class Block:
             results.update(outputs_from_input_vars)
 
             if custom_code is not None:
-                exec(custom_code, results)
+                if BlockType.CHART != self.type or (self.group_by_columns and self.metrics):
+                    exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
                     exec(file.read(), {self.type: block_decorator(decorated_functions)})

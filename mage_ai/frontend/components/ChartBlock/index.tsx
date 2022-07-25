@@ -873,20 +873,38 @@ function ChartBlock({
         </FlexContainer>
 
         {isEditing && (
-          <CodeStyle>
-            {upstreamBlocks.length >= 1 && (
-              <CodeHelperStyle>
-                <Text muted small>
-                  Variables you can use in your code: {availableVariables}
-                </Text>
-                <Text muted small>
-                  Variables that you must define: {variablesMustDefine}
-                </Text>
-              </CodeHelperStyle>
-            )}
+          <>
+            <Spacing my={1} px={1}>
+              {/*<FlexContainer>
+                {configurationOptionsElsForCode.map((el, idx: number) => (
+                  <Spacing key={`code-config-options-${idx}`} ml={idx >= 1 ? 1 : 0}>
+                    {el}
+                  </Spacing>
+                ))}
+              </FlexContainer>*/}
+              <Text bold>
+                Custom chart code
+              </Text>
+              <Text muted small>
+                Write custom logic mapping data to input values for your chart.
+              </Text>
+            </Spacing>
 
-            {codeEditorEl}
-          </CodeStyle>
+            <CodeStyle>
+              {upstreamBlocks.length >= 1 && (
+                <CodeHelperStyle>
+                  <Text muted small>
+                    Variables you can use in your code: {availableVariables}
+                  </Text>
+                  <Text muted small>
+                    Variables that you must define: {variablesMustDefine}
+                  </Text>
+                </CodeHelperStyle>
+              )}
+
+              {codeEditorEl}
+            </CodeStyle>
+          </>
         )}
 
         {codeOutputEl && (
