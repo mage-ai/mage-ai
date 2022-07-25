@@ -49,13 +49,14 @@ function ChartController({
     } = data;
 
     if (x && y && Array.isArray(x) && Array.isArray(y)) {
+      const metricName = Object.keys(y?.[0] || {})?.[0];
+
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         let xy = x.map((xValue, idx: number) => ({
           __y: xValue,
           ...y[idx],
         }));
 
-        const metricName = Object.keys(y?.[0] || {})?.[0];
         if (SortOrderEnum.ASCENDING === ySortOrder) {
           xy = sortByKey(xy, d => d[metricName], { ascending: false });
         } else if (SortOrderEnum.DESCENDING === ySortOrder) {
@@ -82,7 +83,7 @@ function ChartController({
         <Histogram
           data={x.map((xValue , idx: number) => [
             xValue,
-            y[idx],
+            y[idx][metricName],
           ])}
           height={CHART_HEIGHT_DEFAULT}
           width={width}
@@ -93,7 +94,7 @@ function ChartController({
           }}
           renderTooltipContent={([, yValue]) => (
             <Text inverted monospace small>
-              {yValue}
+              {yValue.toFixed(4)}
             </Text>
           )}
           showAxisLabels
