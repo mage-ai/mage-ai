@@ -21,8 +21,19 @@ export enum ChartTypeEnum {
   LINE_CHART = 'line chart',
   PIE_CHART = 'pie chart',
   TABLE = 'table',
+  TIME_SERIES_BAR_CHART = 'time series bar chart',
   TIME_SERIES_LINE_CHART = 'time series line chart',
 }
+
+export const CHART_TYPES = [
+  ChartTypeEnum.BAR_CHART,
+  ChartTypeEnum.HISTOGRAM,
+  ChartTypeEnum.LINE_CHART,
+  ChartTypeEnum.PIE_CHART,
+  ChartTypeEnum.TABLE,
+  ChartTypeEnum.TIME_SERIES_BAR_CHART,
+  ChartTypeEnum.TIME_SERIES_LINE_CHART,
+];
 
 export enum ChartStyleEnum {
   HORIZONTAL = 'horizontal',
@@ -39,15 +50,6 @@ enum AggregationFunctionEnum {
   MODE = 'mode',
   SUM = 'sum',
 }
-
-export const CHART_TYPES = [
-  ChartTypeEnum.BAR_CHART,
-  ChartTypeEnum.HISTOGRAM,
-  ChartTypeEnum.LINE_CHART,
-  ChartTypeEnum.PIE_CHART,
-  ChartTypeEnum.TABLE,
-  ChartTypeEnum.TIME_SERIES_LINE_CHART,
-];
 
 export const AGGREGATE_FUNCTIONS = [
   AggregationFunctionEnum.AVERAGE,

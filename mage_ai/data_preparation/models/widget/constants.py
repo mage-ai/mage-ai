@@ -39,6 +39,7 @@ class ChartType(str, Enum):
     LINE_CHART = 'line chart'
     PIE_CHART = 'pie chart'
     TABLE = 'table'
+    TIME_SERIES_BAR_CHART = 'time series bar chart'
     TIME_SERIES_LINE_CHART = 'time series line chart'
 
 
