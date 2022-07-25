@@ -113,6 +113,143 @@ This section covers the API for using the following data loaders.
 
 ## Redshift
 
+`mage_ai.io.redshift.Redshift`
+
+Handles data transfer between a Redshift cluster and the Mage app. Mage uses temporary credentials to authenticate access to a Redshift cluster. There are two ways to specify these credentials:
+- Pre-generate your temporary credentials and specify them in your configuration settings. Use the following keys to add your credentials:
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect to
+    REDSHIFT_HOST: Redshift Cluster hostname
+    REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
+    REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
+    REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
+    ```
+- Provide your IAM Profile to automatically generate temporary credentials for connection. Your IAM profile is read from `~/.aws/` and used alongside the information stored in the following keys to generate temporary credentials.
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to
+    REDSHIFT_DBUSER: Redshift database user to generate credentials for
+    REDSHIFT_CLUSTER_ID: Redshift cluster ID
+    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with
+    ```
+    If you do not have your IAM profile setup using `aws configure` , manually specify your AWS credentials in your configuration settings as well.
+    ```yaml
+    AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+    AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+    AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
+    AWS_REGION: AWS Region
+    ```
+<h3> Constructor </h3> 
+
+`__init__(**kwargs)`
+- **Keyword Arguments**
+  - `verbose`: Enables verbose output. Defaults to `False`.
+
+  To see other keyword arguments, see arguments for [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html).
+
+<h3> Attributes </h3>
+
+- _conn_ (`redshift_connector.Connection`) - the underlying [Redshift Connection](https://docs.aws.amazon.com/redshift/latest/mgmt/python-api-reference.html#python-api-connection) object.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Redshift`
+
+Initializes Redshift client from configuration loader.
+
+- **Args**:
+  - `config (BaseConfigLoader)`: Configuration loader object
+  - `**kwargs`: Additional parameters passed to the loader constructor
+
+**_with_temporary_credentials_** - `with_temporary_credentials(database: str, host: str, user: str, password: str, port: int = 5439, **kwargs) -> Redshift`
+
+
+Creates a Redshift data loader from temporary database credentials.
+
+- **Args**:
+  - `database (str)`: Name of the database to connect to
+  - `host (str)`: The hostname of the Redshift cluster which the database belongs to
+  - `user (str)`: Temporary credentials username for authentication
+  - `password (str)`: Temporary credentials password for authentication
+  - `port (int, optional)`: Port number of the Redshift cluster. Defaults to 5439.
+  - `**kwargs`: Additional parameters passed to the loader constructor
+- **Returns**: (`Redshift`) the constructed dataloader using this method
+
+
+**_with_iam_** - `with_iam(cluster_identifier: str, database: str, db_user: str, profile: str, **kwargs) -> Redshift`
+
+Creates a Redshift data loader using an IAM profile from `~/.aws`.
+
+The IAM Profile settings can also be manually specified as keyword arguments to this constructor, but is not recommended. If credentials are manually specified, the region of the Redshift cluster must also be specified.
+
+- **Args**:
+  - `cluster_identifier (str)`: Identifier of the cluster to connect to.
+  - `database (str)`: The database to connect to within the specified cluster.
+  - `db_user (str)`: Database username
+  - `profile (str, optional)`: The profile to use from stored credentials file.
+  Defaults to 'default'.
+  - `**kwargs`: Additional parameters passed to the loader constructor
+- **Returns**: (`Redshift`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to the Redshift cluster specified in the loader configuration.
+
+**_commit_** - `commit()`
+
+Writes all changes made to the database since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Redshift cluster.
+
+- **Args**:
+  - `query_string (str)`: The query to execute on the Redshift cluster.
+  - `**kwargs`: Additional parameters to pass to the query. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+
+**_export_** - `export(df: DataFrame, table_name: str) -> None`
+
+Exports a Pandas data frame to a Redshift cluster given table name.
+
+- **Args**:
+  - `df (DataFrame)`: Data frame to export to a Redshift cluster.
+  - `table_name (str)`: Name of the table to export the data to. Table must already exist.
+
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Uses query to load data from Redshift cluster into a Pandas data frame. This will fail if the query returns no data from the database. When a select query is provided, this function will load at maximum 100,000 rows of data. To operate on more data, consider performing data transformations in warehouse using `execute`.
+
+
+- **Args**:
+  - `query_string (str)`: Query to fetch a table or subset of a table.
+  - `limit (int, Optional)`: The number of rows to limit the loaded dataframe to. Defaults to 100000.
+  - `*args, **kwargs`: Additional parameters to send to query, including parameters
+  for use with format strings. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+
+- **Returns**: (`DataFrame`) Data frame containing the queried data
+
+**_open_** - `open()`
+
+Opens a connection to the Redshift cluster specified in the loader configuration.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all database operations made since the last transaction.
+
+**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the selected database in the Redshift cluster. Sample is not guaranteed to be random.
+
+- **Args**:
+  - `schema (str)`: The schema to select the table from.
+  - `size (int)`: The number of rows to sample. Defaults to 100,000
+  - `table (str)`: The table to sample from in the connected database.
+
+- **Returns**: (`DataFrame`) Sampled data from the data frame.
+
+
 ## S3
 
 ## FileIO
@@ -121,7 +258,230 @@ This section covers the API for using the following data loaders.
 
 ## PostgreSQL
 
+`mage_ai.io.postgres.Postgres`
+
+Handles data transfer between a PostgreSQL database and the Mage app. Constructing a Postgres loader includes using the following configuration setting keys with your configuration loader:
+
+```yaml
+POSTGRES_DBNAME: Database name
+POSTGRES_USER: Database login username
+POSTGRES_PASSWORD: Database login password
+POSTGRES_HOST: Database hostname
+POSTGRES_PORT: PostgreSQL database port
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the Postgres data loading client.
+
+- **Args**:
+  - `dbname (str)`: The name of the database to connect to.
+  - `user (str)`: The user with which to connect to the database with.
+  - `password (str)`: The login password for the user.
+  - `host (str)`: Host address for database.
+  - `port (str)`: Port on which the database is running.
+  - `**kwargs`: Additional settings for creating psycopg2 connection
+
+<h3> Attributes </h3>
+
+- _conn_ (`psycopg2.connection.Connection`) - underlying [psycopg2 Connection](https://www.psycopg.org/docs/connection.html) object
+
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Postgres`
+Creates Postgres data loading client from configuration settings.
+
+- **Args**:
+  - `config (BaseConfigLoader)`: Configuration loader object.
+  - `**kwargs`: Additional parameters passed to the loader constructor
+- **Returns**: (`Postgres`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to PostgreSQL database.
+
+**_commit_** - `commit()`
+
+Writes all changes made to the database since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected PostgreSQL database.
+
+- **Args**:
+  - `query_string (str)`: The query to execute on the PostgreSQL database.
+  - `**kwargs`: Additional parameters to pass to the query. See [`psycopg2` docs](https://www.psycopg.org/docs/usage.html#query-parameters) for configuring query parameters.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, **kwargs) -> None`
+
+Exports data frame to the PostgreSQL database from a Pandas data frame. If table doesn't exist, the table is automatically created. If the schema doesn't exist, the schema is also created.
+
+- **Args**:
+  - `df (DataFrame)`: Data frame to export to the PostgreSQL database.
+  - `table_name (str)`: Name of the table to export data to (excluding database and schema).
+  - `database (str)`: Name of the database in which the table is located.
+  - `schema (str)`: Name of the schema in which the table is located.
+  - `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+      - `'fail'`: throw an error.
+      - `'replace'`: drops existing table and creates new table of same name.
+      - `'append'`: appends data frame to existing table.
+
+    Defaults to `'replace'`.
+  - `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
+  - `**kwargs`: Additional arguments to pass to writer.
+
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the connected database into a Pandas data frame based on the query given. This will fail if the query returns no data from the database. This function will load at maximum 100,000 rows of data. To operate on more data, consider performing data transformations in warehouse.
+
+
+- **Args**:
+  - `query_string (str)`: Query to fetch a table or subset of a table.
+  - `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 100000.
+  - `**kwargs`: Additional parameters to pass to the query. See [`psycopg2` docs](https://www.psycopg.org/docs/usage.html#query-parameters) for configuring query parameters.
+- **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to PostgreSQL database.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all database operations made since the last transaction.
+
+**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the PostgreSQL database. Sample is not guaranteed to be random.
+
+- **Args**:
+  - `schema (str)`: The schema to select the table from.
+  - `size (int)`: The number of rows to sample. Defaults to 100,000
+  - `table (str)`: The table to sample from in the connected database.
+
+- **Returns**: (`DataFrame`) Sampled data from the data frame.
+
+
 ## Snowflake
+
+`mage_ai.io.snowflake.Snowflake`
+
+Handles data transfer between a Snowflake data warehouse and the Mage app. Constructing a Snowflake loader includes using the following configuration setting keys with your configuration loader:
+
+```yaml
+SNOWFLAKE_USER: Snowflake username
+SNOWFLAKE_PASSWORD: Snowflake password
+SNOWFLAKE_ACCOUNT: Snowflake account ID (including region, excluding "snowflake-computing.com")
+SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional, if unspecified warehouse not chosen.
+SNOWFLAKE_DEFAULT_DB: Default database to use. Optional, if unspecified database not chosen
+SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional, if unspecified schema not chosen
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes settings for connecting to Snowflake data warehouse.
+The following arguments must be provided to the connector, all other
+arguments are optional.
+
+_Required Arguments_:
+- `user (str)`: Username for the Snowflake user.
+- `password (str)`: Login Password for the user.
+- `account (str)`: Snowflake account identifier (including region, excluding `snowflake-computing.com` suffix).
+
+_Optional Arguments_:
+- `verbose (bool)`: Specify whether to print verbose output.
+- `database (str)`: Name of the default database to use. If unspecified no database is selected on login.
+- `schema (str)`: Name of the default schema to use. If unspecified no schema is selected on login.
+- `warehouse (str)`: Name of the default warehouse to use. If unspecified no warehouse is selected on login.
+
+<h3> Attributes </h3>
+
+- _conn_ (`snowflake.connector.Connection`) - underlying [Snowflake Connection](https://docs.snowflake.com/en/user-guide/python-connector-api.html#object-connection) object
+
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Snowflake`
+Creates Snowflake data loading client from configuration settings.
+
+- **Args**:
+  - `config (BaseConfigLoader)`: Configuration loader object.
+  - `**kwargs`: Additional parameters passed to the loader constructor
+- **Returns**: (`Snowflake`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to Snowflake server.
+
+**_commit_** - `commit()`
+
+Writes all changes made to the warehouse since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Snowflake warehouse.
+
+- **Args**:
+  - `query_string (str)`: The query to execute on the Snowflake warehouse.
+  - `**kwargs`: Additional parameters to pass to the query. See [Snowflake Connector Docs](https://docs.snowflake.com/en/user-guide/python-connector-api.html#execute) for additional parameters.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, **kwargs) -> None`
+
+Exports a Pandas data frame to a Snowflake warehouse based on the table name. If table doesn't exist, the table is automatically created.
+
+- **Args**:
+  - `df (DataFrame)`: Data frame to export to a Snowflake warehouse.
+  - `table_name (str)`: Name of the table to export data to (excluding database and schema).
+  - `database (str)`: Name of the database in which the table is located.
+  - `schema (str)`: Name of the schema in which the table is located.
+  - `if_exists (str, optional)`: Specifies export policy if table exists. Either
+      - `'fail'`: throw an error.
+      - `'replace'`: drops existing table and creates new table of same name.
+      - `'append'`: appends data frame to existing table.
+
+    Defaults to `'append'`.
+  - **kwargs: Additional arguments to pass to writer
+
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from Snowflake into a Pandas data frame based on the query given. This will fail unless a `SELECT` query is provided. This function will load at maximum 100,000 rows of data. To operate on more data, consider performing data transformations in warehouse using `execute`.
+
+
+- **Args**:
+  - `query_string (str)`: Query to fetch a table or subset of a table.
+  - `limit (int, Optional)`: The number of rows to limit the loaded dataframe to. Defaults to 100000.
+  - `*args, **kwargs`: Additional parameters to pass to the query. See [Snowflake Connector Docs](https://docs.snowflake.com/en/user-guide/python-connector-api.html#execute) for additional parameters.
+- **Returns**: (`DataFrame`) Data frame containing the queried data
+
+**_open_** - `open()`
+
+Opens a connection to Snowflake servers.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all database operations made since the last transaction.
+
+**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the Snowflake warehouse. Sample is not guaranteed to be random.
+
+- **Args**:
+  - `schema (str)`: The schema to select the table from.
+  - `size (int)`: The number of rows to sample. Defaults to 100,000
+  - `table (str)`: The table to sample from in the connected database.
+
+- **Returns**: (`DataFrame`) Sampled data from the data frame.
+
 
 # Configuration Settings
 
@@ -253,21 +613,17 @@ Initializes IO Configuration loader. Input configuration file can have two forma
 
 Checks if the configuration setting stored under `key` is contained.
 
-**Args**:
-- `key (str)`: Name of the configuration setting to check.
-
-**Returns** (`bool`) Returns true if configuration setting exists, otherwise returns false.
-
-<hr>
+- **Args**:
+  - `key (str)`: Name of the configuration setting to check.
+- **Returns** (`bool`) Returns true if configuration setting exists, otherwise returns false.
 
 **_get_** `get(self, key: ConfigKey | str) -> Any`
 
 Loads the configuration setting stored under `key`.
 
-**Args**:
-- `key (str)`: Key name of the configuration setting to load
-
-**Returns**: (`Any`) Configuration setting corresponding to the given key
+- **Args**:
+  - `key (str)`: Key name of the configuration setting to load
+- **Returns**: (`Any`) Configuration setting corresponding to the given key
 
 ### Environment Variables
 
@@ -294,8 +650,6 @@ Checks if the environment variable given by `env_var` exists.
     -   `key (ConfigKey | str)`: Name of the configuration setting to check existence of.
 
 -   **Returns**: (`bool`) Returns true if configuration setting exists, otherwise returns false.
-
-<hr>
 
 **_get_**: `get(env_var: ConfigKey | str) -> Any`
 
@@ -348,14 +702,13 @@ secret to check. If
 - neither of `version_id` or `version_stage_label` are specified, any version is checked
 - one of `version_id` and `version_stage_label` are specified, the associated version is checked
 
-**Args**:
+When using the `in` operator, comparisons to specific versions are not allowed.
+
+- **Args**:
   - `secret_id (str)`: ID of the secret to load
   - `version_id (str, Optional)`: ID of the version of the secret to load. Defaults to None.
   - `version_stage_label (str, Optional)`: Staging label of the version of the secret to load. Defaults to None.
-
-**Returns**:(`bool`) Returns true if secret exists, otherwise returns false.
-
-<hr>
+- **Returns**: (`bool`) Returns true if secret exists, otherwise returns false.
 
 **_get_**: `get(secret_id: ConfigKey | str, version_id: str, version_stage_label : str) -> bytes | str`
 Loads the secret stored under `secret_id`. Can also specify the version of the
@@ -364,9 +717,11 @@ secret to fetch. If
 - neither of `version_id` or `version_stage_label` are specified, the current version is loaded
 - one of `version_id` and `version_stage_label` are specified, the associated version is loaded
 
-**Args**:
+When using the `__getitem__` overload, comparisons to specific versions are not allowed.
+
+- **Args**:
    - `secret_id (str)`: ID of the secret to load
    - ` version_id (str, Optional)`: ID of the version of the secret to load. Defaults to None.
    - `version_stage_label (str, Optional)`: Staging label of the version of the secret to load. Defaults to None.
 
-**Returns**: (`bytes | str`) The secret stored under `secret_id` in AWS secret manager. If secret is a binary value, returns a `bytes` object; else returns a `string` object
+- **Returns**: (`bytes | str`) The secret stored under `secret_id` in AWS secret manager. If secret is a binary value, returns a `bytes` object; else returns a `string` object
