@@ -67,8 +67,8 @@ export interface ConfigurationType {
   [VARIABLE_NAME_LIMIT]?: number;
   [VARIABLE_NAME_METRICS]?: MetricType[];
   [VARIABLE_NAME_WIDTH_PERCENTAGE]?: number;
-  [VARIABLE_NAME_X]?: string[] | number[];
-  [VARIABLE_NAME_Y]?: string[] | number[];
+  [VARIABLE_NAME_X]?: string;
+  [VARIABLE_NAME_Y]?: string;
   [VARIABLE_NAME_Y_SORT_ORDER]?: SortOrderEnum;
   chart_type?: ChartTypeEnum;
 }
@@ -80,3 +80,7 @@ export const CHART_TYPES = [
   ChartTypeEnum.PIE_CHART,
   ChartTypeEnum.TABLE,
 ];
+
+export function buildMetricName(metric: MetricType) {
+  return `${metric.aggregation}(${metric.column})`;
+}

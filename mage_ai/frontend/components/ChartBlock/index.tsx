@@ -470,6 +470,7 @@ function ChartBlock({
         label,
         monospace,
         options,
+        settings = {},
         type,
         uuid,
       }) => {
@@ -499,32 +500,34 @@ function ChartBlock({
 
           el = (
             <>
-              <Select
-                {...sharedProps}
-                onChange={(e) => {
-                  let arr = configuration[uuid] || [];
-                  const column = e.target.value;
-                  if (arr.includes(column)) {
-                    arr = remove(arr, v => v === column);
-                  } else {
-                    arr.push(column);
-                  }
+              {(!settings.maxValues || columnsFromConfig.length < settings.maxValues) && (
+                <Select
+                  {...sharedProps}
+                  onChange={(e) => {
+                    let arr = configuration[uuid] || [];
+                    const column = e.target.value;
+                    if (arr.includes(column)) {
+                      arr = remove(arr, v => v === column);
+                    } else {
+                      arr.push(column);
+                    }
 
-                  updateConfiguration({
-                    [uuid]: arr,
-                  }, {
-                    autoRun,
-                  });
-                }}
-                value={null}
-              >
-                <option value="" />
-                {sortByKey(columns.filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
-                  <option key={val} value={val}>
-                    {val}
-                  </option>
-                ))}
-              </Select>
+                    updateConfiguration({
+                      [uuid]: arr,
+                    }, {
+                      autoRun,
+                    });
+                  }}
+                  value={null}
+                >
+                  <option value="" />
+                  {sortByKey(columns.filter(col => !columnsFromConfig.includes(col)), v => v).map((val: string) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </Select>
+              )}
 
               {columnsFromConfig.map((col: string) => (
                 <div

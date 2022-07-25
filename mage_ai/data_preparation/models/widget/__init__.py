@@ -12,7 +12,13 @@ from .constants import (
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
 )
-from .utils import calculate_metrics_for_group, convert_to_list, encode_values_in_list
+from .utils import (
+    build_metric_name,
+    build_x_y,
+    calculate_metrics_for_group,
+    convert_to_list,
+    encode_values_in_list,
+)
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
@@ -117,63 +123,70 @@ class Widget(Block):
             if key in results.keys():
                 dfs.append(results[key])
 
-        should_use_no_code = self.group_by_columns and self.metrics
+        should_use_no_code = self.group_by_columns or self.metrics
 
         if ChartType.BAR_CHART == self.chart_type:
             if should_use_no_code:
                 df = dfs[0]
-                groups = df.groupby(self.group_by_columns)
-                data[VARIABLE_NAME_X] = list(groups.groups.keys())
-                data[VARIABLE_NAME_Y] = groups.apply(
-                    lambda group: calculate_metrics_for_group(self.metrics, group),
-                ).values
+                data = build_x_y(df, self.group_by_columns, self.metrics)
             else:
-                for var_name_orig, var_name in self.output_variable_names:
-                    data.update({
-                        var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
-                    })
+                data[VARIABLE_NAME_X] = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_X]))
+                y_values = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_Y]))
+                data[VARIABLE_NAME_Y] = [y_values]
         elif ChartType.HISTOGRAM == self.chart_type:
+            arr = []
+
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                arr = df[self.group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]
-                    data = build_histogram_data(
-                        values,
-                        int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
-                    )
+                    arr = variables[var_name_orig]
+
+            values = [v for v in arr if v is not None and not np.isnan(v)]
+            data = build_histogram_data(
+                values,
+                int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
+            )
         elif ChartType.LINE_CHART == self.chart_type:
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                data = build_x_y(df, self.group_by_columns, self.metrics)
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     data.update({
                         var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                     })
         elif ChartType.PIE_CHART == self.chart_type:
+            arr1 = []
+            data_key = VARIABLE_NAME_X
+
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                arr1 = df[self.group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    values = [v for v in variables[var_name_orig] if v is not None]
-                    value_counts = {}
-                    for key in values:
-                        if not value_counts.get(key):
-                            value_counts[key] = 0
-                        value_counts[key] += 1
+                    arr1 = variables[var_name_orig]
+                    data_key = var_name_orig
 
-                    buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
-                    arr = sorted(
-                        list(zip(value_counts.values(), value_counts.keys())),
-                        reverse=True,
-                    )[:buckets]
-                    value_counts_top = {k: v for v, k in arr}
-                    data.update({
-                        var_name_orig: value_counts_top,
-                    })
+            values = [v for v in arr1 if v is not None]
+            value_counts = {}
+            for key in values:
+                if not value_counts.get(key):
+                    value_counts[key] = 0
+                value_counts[key] += 1
+
+            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+            arr = sorted(
+                list(zip(value_counts.values(), value_counts.keys())),
+                reverse=True,
+            )[:buckets]
+            data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == self.chart_type:
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                data[VARIABLE_NAME_X] = self.group_by_columns
+                data[VARIABLE_NAME_Y] = df[self.group_by_columns].to_numpy()
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables[var_name_orig]

@@ -36,6 +36,8 @@ import { REGULAR, SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+const yKey = '__y';
+
 function max<D>(arr: D[], fn: (d: D) => number) {
   return Math.max(...arr.map(fn));
 }
@@ -51,16 +53,12 @@ type TooltipData = {
   y: number | string;
 };
 
-export type BarChartDataType = {
-  x: {
-    [key: string]: number;
-  },
-  y: number | string,
-};
-
 type SharedProps = {
-  data: BarChartDataType[];
+  data: {
+    [key: string]: number;
+  }[];
   height: number;
+  keyForYData?: string;
   large?: boolean;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   renderTooltipContent?: (opts: any) => any | number | string;
@@ -68,7 +66,6 @@ type SharedProps = {
   xAxisLabel?: string;
   xNumTicks?: number;
   yLabelFormat?: any;
-  ySerialize?: any;
 };
 
 type BarStackHorizontalProps = SharedProps;
@@ -91,6 +88,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   data: completeData,
   height,
   hideTooltip,
+  keyForYData = yKey,
   large,
   margin: marginOverride = {},
   renderTooltipContent,
@@ -103,8 +101,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   xAxisLabel,
   xNumTicks,
   yLabelFormat: yLabelFormatProp,
-  ySerialize = getY,
 }: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
+  const ySerialize = useCallback(d => d[keyForYData], [keyForYData]);
+
   let yLabelFormat = yLabelFormatProp;
   if (!yLabelFormat) {
     yLabelFormat = (label) => {
@@ -125,7 +124,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   const data = completeData.slice(
     Math.max(0, completeData.length - MAX_FIELDS_DISPLAYED),
   );
-  const xKeys = useMemo(() => Object.keys(data?.[0] || {}).filter(key => key !== '__y'), [data]);
+  const xKeys = useMemo(() => Object.keys(data?.[0] || {}).filter(key => key !== keyForYData), [data]);
 
   const colorScale = scaleOrdinal({
     domain: xKeys,
@@ -333,8 +332,8 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
         >
           {renderTooltipContent && renderTooltipContent(tooltipData)}
 
-          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => '__y' !== k && (
-            <Text inverted small>
+          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => keyForYData !== k && (
+            <Text key={k} inverted small>
               {k}: {v.toFixed(4)}
             </Text>
           ))}

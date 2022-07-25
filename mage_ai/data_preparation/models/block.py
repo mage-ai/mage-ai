@@ -451,7 +451,7 @@ class Block:
             results.update(outputs_from_input_vars)
 
             if custom_code is not None:
-                if BlockType.CHART != self.type or (not self.group_by_columns and not self.metrics):
+                if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:

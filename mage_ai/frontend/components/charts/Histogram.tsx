@@ -253,6 +253,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(
         }
         let colVal = getColVal(tuple);
         colVal = (colVal.length > 15) ? `${colVal.slice(0, 21)}` : colVal;
+
         const tooltipText: any = renderTooltipContent
           ? renderTooltipContent(tuple)
           : `${colVal} (${getColValFreq(tuple)})`;

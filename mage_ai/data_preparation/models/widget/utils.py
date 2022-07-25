@@ -1,10 +1,11 @@
-from .constants import AggregationFunction
-from mage_ai.shared.parsers import NpEncoder
+from .constants import (
+    AggregationFunction,
+    VARIABLE_NAME_X,
+    VARIABLE_NAME_Y,
+)
+from mage_ai.shared.parsers import encode_complex
 import numpy as np
 import pandas as pd
-
-
-encoder = NpEncoder()
 
 
 def convert_to_list(arr, limit=None):
@@ -21,7 +22,13 @@ def convert_to_list(arr, limit=None):
 
 
 def encode_values_in_list(arr):
-    return [encoder.default(v) for v in arr]
+    return [encode_complex(v) for v in arr]
+
+
+def build_metric_name(metric):
+    aggregation = metric['aggregation']
+    column = metric['column']
+    return f'{aggregation}({column})'
 
 
 def calculate_metrics_for_group(metrics, group):
@@ -54,6 +61,24 @@ def calculate_metrics_for_group(metrics, group):
         elif AggregationFunction.SUM == aggregation:
             value = sum(series)
 
-        values[f'{aggregation}({column})'] = value
+        values[build_metric_name(metric)] = value
 
     return values
+
+
+def build_x_y(df, group_by_columns, metrics):
+    data = {}
+    groups = df.groupby(group_by_columns)
+    data[VARIABLE_NAME_X] = list(groups.groups.keys())
+
+    metrics_per_group = groups.apply(
+        lambda group: calculate_metrics_for_group(metrics, group),
+    ).values
+
+    y_values = []
+    for idx, metric in enumerate(metrics):
+        y_values.append([g[build_metric_name(metric)] for g in metrics_per_group])
+
+    data[VARIABLE_NAME_Y] = y_values
+
+    return data

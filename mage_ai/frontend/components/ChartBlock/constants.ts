@@ -26,6 +26,9 @@ export interface ConfigurationOptionType {
   label: () => string;
   monospace?: boolean;
   options?: string[];
+  settings?: {
+    maxValues?: number;
+  };
   type?: ConfigurationItemType;
   uuid: string;
 }
@@ -84,6 +87,14 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.HISTOGRAM]: {
     noCode: [
       {
+        label: () => 'number column for chart',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
         autoRun: true,
         label: () => 'Number of buckets',
         type: ConfigurationItemType.NUMBER,
@@ -99,7 +110,21 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     ],
   },
   [ChartTypeEnum.LINE_CHART]: {
-    noCode: [],
+    noCode: [
+      {
+        label: () => 'group by columns',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
+        label: () => 'metrics',
+        type: ConfigurationItemType.METRICS,
+        uuid: VARIABLE_NAME_METRICS,
+      },
+    ],
     code: [
       {
         label: () => 'variable name of x-axis values',
@@ -120,6 +145,14 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.PIE_CHART]: {
     noCode: [
       {
+        label: () => 'column for chart',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
         autoRun: true,
         label: () => 'Number of slices',
         type: ConfigurationItemType.NUMBER,
@@ -136,6 +169,11 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   },
   [ChartTypeEnum.TABLE]: {
     noCode: [
+      {
+        label: () => 'columns',
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
       {
         label: () => 'max number of rows',
         type: ConfigurationItemType.NUMBER,
