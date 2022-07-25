@@ -21,7 +21,7 @@ export enum ConfigurationItemType {
   NUMBER = 'number',
 }
 
-interface ConfigurationType {
+export interface ConfigurationOptionType {
   autoRun?: boolean;
   label: () => string;
   monospace?: boolean;
@@ -31,9 +31,9 @@ interface ConfigurationType {
 }
 
 export const CONFIGURATIONS_BY_CHART_TYPE: {
-  [chartType: ChartStyleEnum]: {
-    code: ConfigurationType[];
-    noCode: ConfigurationType[];
+  [chartType: string]: {
+    code: ConfigurationOptionType[];
+    noCode: ConfigurationOptionType[];
   };
 } = {
   [ChartTypeEnum.BAR_CHART]: {
@@ -86,7 +86,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
       {
         autoRun: true,
         label: () => 'Number of buckets',
-        type: 'number',
+        type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_BUCKETS,
       },
     ],
@@ -99,6 +99,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     ],
   },
   [ChartTypeEnum.LINE_CHART]: {
+    noCode: [],
     code: [
       {
         label: () => 'variable name of x-axis values',
@@ -121,7 +122,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
       {
         autoRun: true,
         label: () => 'Number of slices',
-        type: 'number',
+        type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_BUCKETS,
       },
     ],
@@ -137,7 +138,7 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     noCode: [
       {
         label: () => 'max number of rows',
-        type: 'number',
+        type: ConfigurationItemType.NUMBER,
         uuid: VARIABLE_NAME_LIMIT,
       },
     ],

@@ -232,13 +232,14 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           top={margin.top}
         >
           <BarGroupHorizontal
-            y0={ySerialize}
-            y0Scale={yScale}
-            y1Scale={y1Scale}
             color={colorScale}
             data={data}
             keys={xKeys}
+            width={xMax}
             xScale={tempScale}
+            y0={ySerialize}
+            y0Scale={yScale}
+            y1Scale={y1Scale}
           >
             {(barGroups) =>
               barGroups.map((barGroup) => (

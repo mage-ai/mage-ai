@@ -34,6 +34,7 @@ function MultiSelect({
           {React.cloneElement(child, {
             onChange: (e) => {
               setValues((valuesPrevious) => {
+                // @ts-ignore
                 valuesPrevious[idx] = e.target.value;
 
                 onChange(valuesPrevious, {

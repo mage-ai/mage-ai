@@ -7,6 +7,9 @@ type SpacingProps = {
   fullHeight?: boolean;
   fullWidth?: boolean;
   inline?: boolean;
+  style?: {
+    [key: string]: number | string;
+  };
 } & MarginProps & PaddingProps;
 
 const SpacingStyle = styled.div<SpacingProps>`

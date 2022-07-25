@@ -48,6 +48,7 @@ import {
 import {
   CONFIGURATIONS_BY_CHART_TYPE,
   ConfigurationItemType,
+  ConfigurationOptionType,
   DEFAULT_SETTINGS_BY_CHART_TYPE,
   VARIABLE_INFO_BY_CHART_TYPE,
 } from './constants';
@@ -458,6 +459,9 @@ function ChartBlock({
   const {
     code: configurationOptionsElsForCode,
     noCode: configurationOptionsEls,
+  }: {
+    code: ConfigurationOptionType[];
+    noCode: ConfigurationOptionType[];
   } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => {
     return {
       ...acc,
@@ -485,7 +489,7 @@ function ChartBlock({
           value: configuration?.[uuid],
         };
 
-        const blocks: BlockType = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
+        const blocks: BlockType[] = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
         const columns = blocks.reduce((acc, {
           outputs,
         }) => acc.concat(outputs?.[0]?.sample_data?.columns), []);
@@ -561,6 +565,7 @@ function ChartBlock({
                   resetValues,
                   setValues,
                 }) => {
+                  // @ts-ignore
                   if (values.filter(v => !!v).length === 2) {
                     const existingMetric = metricsFromConfig.find(({
                       aggregation,
@@ -668,7 +673,10 @@ function ChartBlock({
         );
       }),
     }
-  }, {}), [
+  }, {
+    code: [],
+    noCode: [],
+  }), [
     blocksMapping,
     configuration,
     configurationOptions,
