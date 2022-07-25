@@ -177,8 +177,6 @@ function ChartController({
       y,
     } = data;
 
-    console.log(data)
-
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
       let legendNames = metricNames;
       if (configuration[VARIABLE_NAME_LEGEND_LABELS]) {
@@ -211,7 +209,7 @@ function ChartController({
 
             let xLabel = configuration[VARIABLE_NAME_X];
             if (configuration[VARIABLE_NAME_GROUP_BY]) {
-              xLabel = configuration[VARIABLE_NAME_GROUP_BY].join(', ');
+              xLabel = configuration[VARIABLE_NAME_GROUP_BY].map(String).join(', ');
             }
 
             return (
