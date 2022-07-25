@@ -10,11 +10,10 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import BlockType, {
-  BlockRequestPayloadType,
   BlockTypeEnum,
-  OutputType,
   SampleDataType,
 } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -35,7 +34,7 @@ import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add } from '@oracle/icons';
+import { Add, Close } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
@@ -251,7 +250,10 @@ function PipelineDetailPage({
     upstreamBlocks: null,
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
-  const [selectedBlock, setSelectedBlock] = useState(null);
+  const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
+  const [outputBlocks, setOutputBlocks] = useState<BlockType[]>([]);
+  const [selectedOutputBlock, setSelectedOutputBlock] = useState<BlockType>(null);
+  const outputBlocksPrev = usePrevious(outputBlocks);
 
   const resetState = useCallback(() => {
     setEditingBlock({
@@ -277,9 +279,9 @@ function PipelineDetailPage({
     mutate: fetchSampleData,
   } = api.blocks.pipelines.outputs.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
-      && selectedBlock?.type !== BlockTypeEnum.CHART
-      && selectedBlock?.uuid,
+    selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedOutputBlock?.type !== BlockTypeEnum.CHART
+      && selectedOutputBlock?.uuid,
   );
   const sampleData: SampleDataType = blockSampleData?.outputs?.[0]?.sample_data;
   const {
@@ -287,9 +289,9 @@ function PipelineDetailPage({
     mutate: fetchAnalysis,
   } = api.blocks.pipelines.analyses.detail(
     !afterHidden && pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
-      && selectedBlock?.type !== BlockTypeEnum.CHART
-      && selectedBlock?.uuid,
+    selectedOutputBlock?.type !== BlockTypeEnum.SCRATCHPAD
+      && selectedOutputBlock?.type !== BlockTypeEnum.CHART
+      && selectedOutputBlock?.uuid,
   );
   const {
     insights,
@@ -309,6 +311,19 @@ function PipelineDetailPage({
     fetchVariables,
     runningBlocks,
   ]);
+
+  useEffect(() => {
+    if (outputBlocks.length === 0) {
+      setSelectedOutputBlock(null);
+    } else if (outputBlocksPrev?.length !== outputBlocks?.length
+      && outputBlocks?.length < outputBlocksPrev?.length) {
+      const selectedBlockIdx = outputBlocksPrev.findIndex(({ uuid }) => uuid === selectedOutputBlock?.uuid);
+      const newSelectedBlockIdx = outputBlocksPrev.length - 1 === selectedBlockIdx
+        ? selectedBlockIdx - 1
+        : selectedBlockIdx + 1;
+      setSelectedOutputBlock(outputBlocksPrev[Math.max(0, newSelectedBlockIdx)]);
+    }
+  }, [outputBlocks, outputBlocksPrev, selectedOutputBlock?.uuid]);
 
   useEffect(() => {
     if (editingBlock.upstreamBlocks?.block) {
@@ -942,6 +957,10 @@ function PipelineDetailPage({
     filesData?.files,
     onSelectBlockFile,
   ]);
+
+  const finalSidekickViews = outputBlocks?.length > 0
+    ? SIDEKICK_VIEWS
+    : SIDEKICK_VIEWS.filter(({ key }) => key !== ViewKeyEnum.DATA);
   const sideKick = useMemo(() => (
     <Sidekick
       activeView={activeSidekickView}
@@ -998,6 +1017,7 @@ function PipelineDetailPage({
     updateWidget,
     widgets,
   ]);
+
   const pipelineDetailMemo = useMemo(() => (
     <PipelineDetail
       addNewBlockAtIndex={addNewBlockAtIndex}
@@ -1031,9 +1051,11 @@ function PipelineDetailPage({
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
+      setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
+      setSelectedOutputBlock={setSelectedOutputBlock}
       setTextareaFocused={setTextareaFocused}
       textareaFocused={textareaFocused}
       widgets={widgets}
@@ -1111,7 +1133,7 @@ function PipelineDetailPage({
             justifyContent="space-between"
           >
             <Flex>
-              {SIDEKICK_VIEWS.map(({ key, label }: any) => {
+              {finalSidekickViews.map(({ key, label }: any) => {
                 const active = key === activeSidekickView;
                 const Icon = NAV_ICON_MAPPING[key];
 
@@ -1147,6 +1169,49 @@ function PipelineDetailPage({
         )}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
+        afterSubheader={outputBlocks?.length > 0 && (
+          <FlexContainer
+            alignItems="center"
+            fullHeight
+            fullWidth
+          >
+            {outputBlocks.map(block => {
+              const { uuid: outputBlockUUID } = block;
+              const selected = selectedOutputBlock?.uuid === outputBlockUUID;
+
+              return (
+                <Spacing key={outputBlockUUID} pl={1}>
+                  <KeyboardShortcutButton
+                    afterElement={selected
+                      ?
+                        <Button
+                          basic
+                          highlightOnHover
+                          onClick={() => {
+                            setOutputBlocks(prevOutputBlocks =>
+                              prevOutputBlocks.filter(({ uuid }) => uuid !== outputBlockUUID));
+                          }}
+                          padding="2px"
+                          transparent
+                        >
+                          <Close muted size={UNIT * 1.25}/>
+                        </Button>
+                      : null
+                    }
+                    blackBorder
+                    compact
+                    muted
+                    onClick={() => setSelectedOutputBlock(block)}
+                    selected={selected}
+                    uuid={outputBlockUUID}
+                  >
+                    {outputBlockUUID}
+                  </KeyboardShortcutButton>
+                </Spacing>
+              );
+            })}
+          </FlexContainer>
+        )}
         afterWidth={afterWidth}
         before={fileTree}
         beforeHeader={(

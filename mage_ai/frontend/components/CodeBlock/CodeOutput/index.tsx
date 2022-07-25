@@ -2,8 +2,10 @@ import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
@@ -13,7 +15,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BorderColorShareProps } from '../index.style';
-import { Check, ChevronDown, ChevronUp } from '@oracle/icons';
+import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -24,8 +26,6 @@ import {
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { isJsonString } from '@utils/string';
-import Flex from '@oracle/components/Flex';
-import Button from '@oracle/elements/Button';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -39,6 +39,8 @@ type CodeOutputProps = {
   runEndTime?: number;
   runStartTime?: number;
   setCollapsed?: (boolean) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
@@ -55,6 +57,8 @@ function CodeOutput({
   runStartTime,
   selected,
   setCollapsed,
+  setOutputBlocks,
+  setSelectedOutputBlock,
 }: CodeOutputProps) {
   const {
     status,
@@ -303,6 +307,24 @@ function CodeOutput({
                     )}
                   </FlexContainer>
                 </Tooltip>
+                <Spacing pl={1}>
+                  <Button
+                    basic
+                    iconOnly
+                    noPadding
+                    onClick={() => setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                      if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                        setSelectedOutputBlock(block);
+                        return prevOutputBlocks.concat(block);
+                      } else {
+                        return prevOutputBlocks;
+                      }
+                    })}
+                    transparent
+                  >
+                    <Expand muted size={UNIT * 1.75} />
+                  </Button>
+                </Spacing>
               </FlexContainer>
             </ExtraInfoContentStyle>
           </FlexContainer>

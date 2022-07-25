@@ -67,7 +67,7 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.muted && !props.disabled && `
-    fill: ${(props.theme.monotone || light.monotone).grey400} !important;
+    fill: ${(props.theme.content || light.content).muted} !important;
   `}
 
   ${props => !props.useStroke && props.default && !props.disabled && `

@@ -177,7 +177,7 @@ function TooltipWrapper({
   }, [
     setVisible,
     visibleInterval,
-  ])
+  ]);
 
   return (
     <ContainerEl

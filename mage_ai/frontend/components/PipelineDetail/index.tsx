@@ -75,9 +75,11 @@ type PipelineDetailProps = {
   runningBlocks: BlockType[];
   savePipelineContent: () => void;
   selectedBlock: BlockType;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
   setTextareaFocused: (value: boolean) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
@@ -108,9 +110,11 @@ function PipelineDetail({
   selectedBlock,
   setEditingBlock,
   setMessages,
+  setOutputBlocks,
   setPipelineContentTouched,
   setRunningBlocks,
   setSelectedBlock,
+  setSelectedOutputBlock,
   setTextareaFocused,
   textareaFocused,
   widgets,
@@ -318,7 +322,9 @@ function PipelineDetail({
               selected={selected}
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
+              setOutputBlocks={setOutputBlocks}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+              setSelectedOutputBlock={setSelectedOutputBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={selected && textareaFocused}
               widgets={widgets}

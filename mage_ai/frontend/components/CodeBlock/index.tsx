@@ -95,6 +95,8 @@ type CodeBlockProps = {
   }) => void;
   runningBlocks: BlockType[];
   setAnyInputFocused: (value: boolean) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
   widgets: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -122,7 +124,9 @@ function CodeBlockProps({
   selected,
   setAnyInputFocused,
   setEditingBlock,
+  setOutputBlocks,
   setSelected,
+  setSelectedOutputBlock,
   setTextareaFocused,
   textareaFocused,
   widgets,
@@ -443,6 +447,8 @@ function CodeBlockProps({
           return val;
         });
       }}
+      setOutputBlocks={setOutputBlocks}
+      setSelectedOutputBlock={setSelectedOutputBlock}
     />
   ), [
     block,
