@@ -113,6 +113,9 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     noCode: [
       {
         label: () => 'group by columns',
+        settings: {
+          maxValues: 1,
+        },
         type: ConfigurationItemType.COLUMNS,
         uuid: VARIABLE_NAME_GROUP_BY,
       },

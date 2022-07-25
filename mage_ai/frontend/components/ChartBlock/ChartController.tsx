@@ -11,6 +11,7 @@ import {
   ChartTypeEnum,
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
+  VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_METRICS,
   VARIABLE_NAME_X,
@@ -179,7 +180,7 @@ function ChartController({
     console.log(data)
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
-      let legendNames;
+      let legendNames = metricNames;
       if (configuration[VARIABLE_NAME_LEGEND_LABELS]) {
         legendNames = configuration[VARIABLE_NAME_LEGEND_LABELS].split(',').map(s => s.trim());
       }
@@ -198,17 +199,25 @@ function ChartController({
             left: 5 * UNIT,
           }}
           noCurve
-          renderXTooltipContent={({ index, x }) => {
+          renderXTooltipContent={({
+            index,
+            x,
+          }) => {
             // const xCurrent = x[index];
             // const {
             //   min: xMin,
             //   max: xMax,
             // } = xCurrent;
 
+            let xLabel = configuration[VARIABLE_NAME_X];
+            if (configuration[VARIABLE_NAME_GROUP_BY]) {
+              xLabel = configuration[VARIABLE_NAME_GROUP_BY].join(', ');
+            }
+
             return (
               <Text inverted small>
                 {/*{moment.unix(xMin).format(DATE_FORMAT)} - {moment.unix(xMax).format(DATE_FORMAT)}*/}
-                {configuration[VARIABLE_NAME_X]}: {x}
+                {xLabel}: {x}
               </Text>
             );
           }}
