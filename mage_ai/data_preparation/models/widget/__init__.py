@@ -117,7 +117,7 @@ class Widget(Block):
             if key in results.keys():
                 dfs.append(results[key])
 
-        should_use_no_code = self.group_by_columns and self.metrics
+        should_use_no_code = self.group_by_columns or self.metrics
 
         if ChartType.BAR_CHART == self.chart_type:
             if should_use_no_code:
@@ -134,7 +134,12 @@ class Widget(Block):
                     })
         elif ChartType.HISTOGRAM == self.chart_type:
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                values = [v for v in df[self.group_by_columns[0]] if v is not None and not np.isnan(v)]
+                data = build_histogram_data(
+                    values,
+                    int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
+                )
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]

@@ -26,6 +26,9 @@ export interface ConfigurationOptionType {
   label: () => string;
   monospace?: boolean;
   options?: string[];
+  settings?: {
+    maxValues?: number;
+  };
   type?: ConfigurationItemType;
   uuid: string;
 }
@@ -83,6 +86,14 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   },
   [ChartTypeEnum.HISTOGRAM]: {
     noCode: [
+      {
+        label: () => 'number column for chart',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
       {
         autoRun: true,
         label: () => 'Number of buckets',
