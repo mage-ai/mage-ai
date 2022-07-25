@@ -95,19 +95,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
             if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                if kernel_name == KernelName.PYSPARK:
-                    global_vars['spark'] = spark
                 code = add_execution_code(
                     pipeline_uuid,
                     block_uuid,
                     custom_code,
                     global_vars,
+                    kernel_name=kernel_name,
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(),
                     run_upstream=run_upstream,
                     widget=widget,
                 )
-
             if kernel_name == KernelName.PYTHON3:
                 msg_id = client.execute(add_internal_output_info(code))
             else:

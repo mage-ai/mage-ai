@@ -59,7 +59,7 @@ class VariableManager:
         sample_count: int = None,
         spark=None,
     ) -> Any:
-        if variable_type == VariableType.DATAFRAME and 'spark' in globals():
+        if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
         variable = Variable(
             variable_uuid,

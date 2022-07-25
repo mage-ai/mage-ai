@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
+from mage_ai.server.kernels import KernelName
 from typing import Dict, List
 import re
 
@@ -148,6 +149,7 @@ def add_execution_code(
     code: str,
     global_vars,
     analyze_outputs: bool = True,
+    kernel_name: str = None,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
     run_upstream: bool = False,
@@ -155,6 +157,10 @@ def add_execution_code(
 ) -> str:
     escaped_code = code.replace("'", "\\'")
 
+    if kernel_name == KernelName.PYSPARK:
+        global_vars_spark = 'global_vars[\'spark\'] = spark'
+    else:
+        global_vars_spark = 'global_vars[\'spark\'] = None'
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -178,7 +184,9 @@ def execute_custom_code():
     if run_upstream:
         block.run_upstream_blocks()
 
-    global_vars = {global_vars}
+    global_vars = {global_vars} or dict()
+    {global_vars_spark}
+
     block_output = block.execute_sync(
         custom_code=code,
         global_vars=global_vars,
