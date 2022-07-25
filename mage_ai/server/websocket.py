@@ -1,5 +1,3 @@
-from jupyter_client import KernelClient, KernelManager
-from jupyter_client.session import Session
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -9,11 +7,15 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
 from mage_ai.shared.hash import merge_dict
+from jupyter_client import KernelClient, KernelManager
+from jupyter_client.session import Session
+from typing import List
 import asyncio
 import json
 import os
 import threading
 import tornado.websocket
+import traceback
 import uuid
 
 
@@ -62,7 +64,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
             def run_pipeline() -> None:
-                def publish_message(message: str, execution_state: str = 'busy') -> None:
+                def publish_message(message: str or List[str], execution_state: str = 'busy') -> None:
                     msg_id = str(uuid.uuid4())
                     WebSocketServer.running_executions_mapping[msg_id] = value
                     self.send_message(
@@ -74,9 +76,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                             type=DataType.TEXT_PLAIN,
                         )
                     )
-
-                asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
-                publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
+                
+                try:
+                    asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
+                    publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
+                except:
+                    trace = traceback.format_exc().splitlines()
+                    publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
+                    publish_message(trace, 'idle')
 
             threading.Thread(target=run_pipeline).start()
         elif output:

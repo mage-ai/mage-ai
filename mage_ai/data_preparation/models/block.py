@@ -56,7 +56,8 @@ async def run_blocks(
                 break
         if skip:
             continue
-        await asyncio.gather(*[tasks[u.uuid] for u in block.upstream_blocks])
+        upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
+        await asyncio.gather(*upstream_tasks)
         task = asyncio.create_task(
             block.execute(
                 analyze_outputs=analyze_outputs,
