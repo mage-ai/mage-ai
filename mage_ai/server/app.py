@@ -9,7 +9,7 @@ from mage_ai.server.client.mage import Mage
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
 from mage_ai.server.data.models import FeatureSet, Pipeline
 from mage_ai.shared.logger import VerboseFunctionExec
-from numpyencoder import NumpyEncoder
+from mage_ai.shared.parsers import encode_complex
 import argparse
 import json
 import logging
@@ -265,7 +265,11 @@ def pipelines():
     """
     pipelines = list(map(lambda p: p.to_dict(detailed=False), Pipeline.objects()))
     response = app.response_class(
-        response=json.dumps(pipelines, cls=NumpyEncoder), status=200, mimetype='application/json'
+        response=simplejson.dumps(
+            pipelines,
+            default=encode_complex,
+            ignore_nan=True,
+        ), status=200, mimetype='application/json'
     )
     return response
 
@@ -283,7 +287,11 @@ def pipeline(id):
         raise RuntimeError(f'Unknown pipeline id: {id}')
     pipeline = Pipeline(id=id)
     response = app.response_class(
-        response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
+        response=simplejson.dumps(
+            pipeline.to_dict(),
+            default=encode_complex,
+            ignore_nan=True,
+        ),
         status=200,
         mimetype='application/json',
     )
@@ -334,7 +342,11 @@ def update_pipeline(id):
         pipeline.sync_pipeline(api_key)
 
     response = app.response_class(
-        response=json.dumps(pipeline.to_dict(), cls=NumpyEncoder),
+        response=simplejson.dumps(
+            pipeline.to_dict(),
+            default=encode_complex,
+            ignore_nan=True,
+        ),
         status=200,
         mimetype='application/json',
     )

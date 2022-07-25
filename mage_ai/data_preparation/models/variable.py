@@ -4,9 +4,10 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT,
     VARIABLE_DIR,
 )
-from numpyencoder import NumpyEncoder
+from mage_ai.shared.parsers import encode_complex
 from typing import Any, Dict
 import json
+import simplejson
 import os
 import pandas as pd
 
@@ -70,7 +71,7 @@ class Variable:
         return self.__read_json()
 
     def __delete_dataframe_analysis(self) -> None:
-        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')        
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         for k in DATAFRAME_ANALYSIS_KEYS:
             file_path = os.path.join(variable_path, f'{k}.json')
             if os.path.exists(file_path):
@@ -104,7 +105,12 @@ class Variable:
 
     def __write_json_file(self, file_path: str, data) -> None:
         with open(file_path, 'w') as file:
-            json.dump(data, file, cls=NumpyEncoder)
+            simplejson.dump(
+                data,
+                file,
+                default=encode_complex,
+                ignore_nan=True,
+            )
 
     def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')

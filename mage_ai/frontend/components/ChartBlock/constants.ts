@@ -4,12 +4,14 @@ import {
   ChartStyleEnum,
   ChartTypeEnum,
   SortOrderEnum,
+  TimeIntervalEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
   VARIABLE_NAME_GROUP_BY,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_LIMIT,
   VARIABLE_NAME_METRICS,
+  VARIABLE_NAME_TIME_INTERVAL,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
   VARIABLE_NAME_Y_SORT_ORDER,
@@ -35,7 +37,7 @@ export interface ConfigurationOptionType {
 
 export const CONFIGURATIONS_BY_CHART_TYPE: {
   [chartType: string]: {
-    code: ConfigurationOptionType[];
+    code?: ConfigurationOptionType[];
     noCode: ConfigurationOptionType[];
   };
 } = {
@@ -194,6 +196,37 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
 
     ],
   },
+  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
+    noCode: [
+      {
+        label: () => 'time column',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
+        label: () => 'time interval',
+        options: [
+          TimeIntervalEnum.ORIGINAL,
+          TimeIntervalEnum.SECOND,
+          TimeIntervalEnum.MINUTE,
+          TimeIntervalEnum.HOUR,
+          TimeIntervalEnum.DAY,
+          TimeIntervalEnum.WEEK,
+          TimeIntervalEnum.MONTH,
+          TimeIntervalEnum.YEAR,
+        ],
+        uuid: VARIABLE_NAME_TIME_INTERVAL,
+      },
+      {
+        label: () => 'metrics',
+        type: ConfigurationItemType.METRICS,
+        uuid: VARIABLE_NAME_METRICS,
+      },
+    ],
+  },
 };
 
 export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
@@ -254,6 +287,11 @@ y = [df_1[cols[1]]]
       return `x = df_1.columns
 y = df_1.to_numpy()`;
     },
+  },
+  [ChartTypeEnum.TIME_SERIES_LINE_CHART]: {
+    configuration: (block: BlockType) => ({
+      [VARIABLE_NAME_TIME_INTERVAL]: TimeIntervalEnum.ORIGINAL,
+    }),
   },
 };
 

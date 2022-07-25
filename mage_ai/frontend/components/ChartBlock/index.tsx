@@ -460,7 +460,7 @@ function ChartBlock({
     code: configurationOptionsElsForCode,
     noCode: configurationOptionsEls,
   }: {
-    code: ConfigurationOptionType[];
+    code?: ConfigurationOptionType[];
     noCode: ConfigurationOptionType[];
   } = useMemo(() => Object.entries(configurationOptions || {}).reduce((acc, [key, arr]) => {
     return {
@@ -487,7 +487,7 @@ function ChartBlock({
             autoRun,
           }),
           onFocus: () => setSelectedBlock(block),
-          value: configuration?.[uuid],
+          value: configuration?.[uuid] || '',
         };
 
         const blocks: BlockType[] = upstreamBlocks.map(blockUUID => blocksMapping[blockUUID]);
@@ -677,7 +677,6 @@ function ChartBlock({
       }),
     }
   }, {
-    code: [],
     noCode: [],
   }), [
     blocksMapping,
@@ -883,7 +882,7 @@ function ChartBlock({
           )}
         </FlexContainer>
 
-        {isEditing && (
+        {isEditing && !!configurationOptionsElsForCode?.length && (
           <>
             <Spacing my={1} px={1}>
               {/*<FlexContainer>

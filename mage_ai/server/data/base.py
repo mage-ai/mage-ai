@@ -1,9 +1,10 @@
-from numpyencoder import NumpyEncoder
+from mage_ai.shared.parsers import encode_complex
 import json
 import logging
 import os
 import os.path
 import pandas as pd
+import simplejson
 
 # This is equivalent to ./files
 DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
@@ -56,7 +57,12 @@ class Model:
             if not os.path.isdir(dir_path):
                 os.mkdir(dir_path)
         with open(os.path.join(dir_path, file_name), 'w') as file:
-            json.dump(obj, file, cls=NumpyEncoder)
+            simplejson.dump(
+                obj,
+                file,
+                default=encode_complex,
+                ignore_nan=True,
+            )
 
     def read_parquet_file(self, file_name):
         file_path = os.path.join(self.dir, file_name)

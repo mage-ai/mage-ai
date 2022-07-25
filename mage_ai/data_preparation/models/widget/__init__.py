@@ -1,6 +1,8 @@
 from .charts import (
     MAX_BUCKETS,
+    TimeInterval,
     build_histogram_data,
+    build_time_series_buckets,
 )
 from .constants import (
     ChartType,
@@ -9,13 +11,12 @@ from .constants import (
     VARIABLE_NAME_GROUP_BY,
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_METRICS,
+    VARIABLE_NAME_TIME_INTERVAL,
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
 )
 from .utils import (
-    build_metric_name,
     build_x_y,
-    calculate_metrics_for_group,
     convert_to_list,
     encode_values_in_list,
 )
@@ -200,6 +201,17 @@ class Widget(Block):
                     data.update({
                         var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
                     })
+        elif ChartType.TIME_SERIES_LINE_CHART:
+            if should_use_no_code:
+                df = dfs[0]
+                buckets, values = build_time_series_buckets(
+                    df,
+                    self.group_by_columns[0],
+                    self.configuration.get(VARIABLE_NAME_TIME_INTERVAL, TimeInterval.ORIGINAL),
+                    self.metrics,
+                )
+                data[VARIABLE_NAME_X] = buckets
+                data[VARIABLE_NAME_Y] = values
 
         return data
 

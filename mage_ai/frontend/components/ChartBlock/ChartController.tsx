@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 import BarChartHorizontal from '@components/charts/BarChartHorizontal';
 import BlockType from '@interfaces/BlockType';
 import DataTable from '@components/DataTable';
@@ -18,9 +20,9 @@ import {
   VARIABLE_NAME_Y,
   buildMetricName,
 } from '@interfaces/ChartBlockType';
+import { DATE_FORMAT_SHORT, numberWithCommas, roundNumber } from '@utils/string';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
-import { numberWithCommas, roundNumber } from '@utils/string';
 import { range, sortByKey } from '@utils/array';
 
 type ChartControllerProps = {
@@ -171,11 +173,16 @@ function ChartController({
         />
       );
     }
-  } else if (ChartTypeEnum.LINE_CHART === chartType) {
+  } else if (ChartTypeEnum.LINE_CHART === chartType
+    || ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType
+  ) {
     const {
       x,
       y,
     } = data;
+    const isTimeSeries = ChartTypeEnum.TIME_SERIES_LINE_CHART === chartType;
+
+    console.log(data)
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
       let legendNames = metricNames;
@@ -201,21 +208,18 @@ function ChartController({
             index,
             x,
           }) => {
-            // const xCurrent = x[index];
-            // const {
-            //   min: xMin,
-            //   max: xMax,
-            // } = xCurrent;
-
             let xLabel = configuration[VARIABLE_NAME_X];
+            let xValueText = x;
             if (configuration[VARIABLE_NAME_GROUP_BY]) {
               xLabel = configuration[VARIABLE_NAME_GROUP_BY].map(String).join(', ');
+            }
+            if (isTimeSeries) {
+              xValueText = moment(x * 1000).format(DATE_FORMAT_SHORT);
             }
 
             return (
               <Text inverted small>
-                {/*{moment.unix(xMin).format(DATE_FORMAT)} - {moment.unix(xMax).format(DATE_FORMAT)}*/}
-                {xLabel}: {x}
+                {xLabel}: {xValueText}
               </Text>
             );
           }}
@@ -224,12 +228,13 @@ function ChartController({
               {legendNames && legendNames[idx] && `${legendNames[idx]}: `}{y && numberWithCommas(roundNumber(y[idx], 4))}
             </Text>
           )}
-          xAxisLabel={String(configuration[VARIABLE_NAME_X])}
-          // xLabelFormat={ts => moment.unix(ts).format(DATE_FORMAT)}
-          xLabelFormat={v => v}
-          yAxisLabel={String(configuration[VARIABLE_NAME_Y])}
-          yLabelFormat={v => v}
           width={width ? width - (3 * UNIT) : width}
+          xAxisLabel={String(configuration[VARIABLE_NAME_X]
+            || configuration[VARIABLE_NAME_GROUP_BY][0])
+          }
+          xLabelFormat={ts => moment(ts * 1000).format(DATE_FORMAT_SHORT)}
+          yAxisLabel={String(configuration[VARIABLE_NAME_Y] || 'metrics')}
+          yLabelFormat={v => v}
         />
       );
     }
