@@ -36,6 +36,8 @@ from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -71,6 +73,13 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
         "outputs": []
     }
     return BaseAction(action).execute(df)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
         new_string = build_template_from_suggestion(suggestion)
         self.assertEqual(expected_string, new_string)
@@ -80,6 +89,8 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @data_loader
@@ -93,6 +104,13 @@ def load_data(**kwargs) -> DataFrame:
     # Specify your data loading logic here
 
     return DataFrame({})
+
+@test
+def test_load_data(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': 'default'}
@@ -111,6 +129,8 @@ from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @data_loader
@@ -125,6 +145,13 @@ def load_data_from_redshift(**kwargs) -> DataFrame:
 
     with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
+
+@test
+def test_load_data(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
@@ -134,6 +161,8 @@ from os import path
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @data_loader
@@ -151,6 +180,13 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
     return S3.with_config(ConfigFileLoader(config_path, config_profile)).load(
         bucket_name, object_key
     )
+
+@test
+def test_load_data(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.REDSHIFT}
@@ -189,6 +225,8 @@ def load_data_from_api() -> DataFrame:
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -208,6 +246,13 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     # Specify your transformation logic here
 
     return df
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config1 = {'action_type': 'custom'}
@@ -225,6 +270,8 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -244,6 +291,13 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     # Specify your transformation logic here
 
     return df
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config1 = {'action_type': 'custom'}
@@ -264,6 +318,8 @@ from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -279,6 +335,13 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     )
 
     return BaseAction(action).execute(df)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.CLEAN_COLUMN_NAME, 'axis': Axis.COLUMN}
@@ -293,6 +356,8 @@ from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -308,6 +373,13 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     )
 
     return BaseAction(action).execute(df)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FILTER, 'axis': Axis.ROW}
@@ -322,6 +394,8 @@ from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -338,6 +412,13 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     )
 
     return BaseAction(action).execute(df)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.REFORMAT, 'axis': Axis.COLUMN}
@@ -352,6 +433,8 @@ from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -374,6 +457,13 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     )
 
     return BaseAction(action).execute(df)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config = {'action_type': ActionType.FIRST, 'axis': Axis.COLUMN}
@@ -481,6 +571,8 @@ from os import path
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -504,6 +596,13 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
         loader.execute(query)
         loader.commit() # Permanently apply database changes
         return loader.sample(sample_schema, sample_size, sample_table)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -514,6 +613,8 @@ from os import path
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -536,6 +637,13 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
         # Write queries to transform your dataset with
         loader.execute(query)
         return loader.sample(sample_schema, sample_size, sample_table)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
 
         config1 = {'data_source': DataSource.POSTGRES}

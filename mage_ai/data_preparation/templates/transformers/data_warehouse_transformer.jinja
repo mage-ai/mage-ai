@@ -6,6 +6,8 @@ from os import path
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @transformer
@@ -28,3 +30,10 @@ def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
         # Write queries to transform your dataset with
         loader.execute(query){{ additional_args }}
         return loader.sample(sample_schema, sample_size, sample_table)
+
+@test
+def test_transform(df: DataFrame) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert df is not None, 'The output is undefined'
