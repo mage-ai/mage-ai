@@ -115,8 +115,9 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-  const { data: pipelinesData } = api.pipelines.list();
-  const pipelines = pipelinesData?.pipelines;
+  const { data: pipelinesData, mutate: fetchPipelines } = api.pipelines.list();
+  const pipelines = useMemo(() => pipelinesData?.pipelines, [pipelinesData]);
+  const numPipelines = useMemo(() => pipelines?.length || 0, [pipelines]);
 
   const qUrl = queryFromUrl();
   const {
@@ -437,6 +438,7 @@ function PipelineDetailPage({
           }) => {
             router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
             fetchFileTree();
+            fetchPipelines();
           },
           onErrorCallback: ({
             error: {
@@ -569,6 +571,7 @@ function PipelineDetailPage({
             }
             removeCollapsedBlockStates(blocks, pipelineUUID);
             fetchFileTree();
+            fetchPipelines();
           },
           onErrorCallback: ({
             error: {
@@ -1066,6 +1069,7 @@ function PipelineDetailPage({
       deleteBlockFile={deleteBlockFile}
       deletePipeline={deletePipeline}
       enableContextItem
+      numPipelines={numPipelines}
       type={ContextMenuEnum.FILE_BROWSER}
     >
       <FileBrowser
