@@ -110,7 +110,18 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
     ],
   },
   [ChartTypeEnum.LINE_CHART]: {
-    noCode: [],
+    noCode: [
+      {
+        label: () => 'group by columns',
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
+        label: () => 'metrics',
+        type: ConfigurationItemType.METRICS,
+        uuid: VARIABLE_NAME_METRICS,
+      },
+    ],
     code: [
       {
         label: () => 'variable name of x-axis values',

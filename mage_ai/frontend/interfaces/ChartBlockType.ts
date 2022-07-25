@@ -80,3 +80,7 @@ export const CHART_TYPES = [
   ChartTypeEnum.PIE_CHART,
   ChartTypeEnum.TABLE,
 ];
+
+export function buildMetricName(metric: MetricType) {
+  return `${metric.aggregation}(${metric.column})`;
+}

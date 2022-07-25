@@ -21,6 +21,12 @@ def encode_values_in_list(arr):
     return [encode_complex(v) for v in arr]
 
 
+def build_metric_name(metric):
+    aggregation = metric['aggregation']
+    column = metric['column']
+    return f'{aggregation}({column})'
+
+
 def calculate_metrics_for_group(metrics, group):
     values = {}
 
@@ -51,6 +57,6 @@ def calculate_metrics_for_group(metrics, group):
         elif AggregationFunction.SUM == aggregation:
             value = sum(series)
 
-        values[f'{aggregation}({column})'] = value
+        values[build_metric_name(metric)] = value
 
     return values

@@ -12,7 +12,12 @@ from .constants import (
     VARIABLE_NAME_X,
     VARIABLE_NAME_Y,
 )
-from .utils import calculate_metrics_for_group, convert_to_list, encode_values_in_list
+from .utils import (
+    build_metric_name,
+    calculate_metrics_for_group,
+    convert_to_list,
+    encode_values_in_list,
+)
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
@@ -124,14 +129,20 @@ class Widget(Block):
                 df = dfs[0]
                 groups = df.groupby(self.group_by_columns)
                 data[VARIABLE_NAME_X] = list(groups.groups.keys())
-                data[VARIABLE_NAME_Y] = groups.apply(
+
+                metrics_per_group = groups.apply(
                     lambda group: calculate_metrics_for_group(self.metrics, group),
                 ).values
+
+                y_values = []
+                for idx, metric in enumerate(self.metrics):
+                    y_values.append([g[build_metric_name(metric)] for g in metrics_per_group])
+
+                data[VARIABLE_NAME_Y] = y_values
             else:
-                for var_name_orig, var_name in self.output_variable_names:
-                    data.update({
-                        var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
-                    })
+                data[VARIABLE_NAME_X] = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_X]))
+                y_values = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_Y]))
+                data[VARIABLE_NAME_Y] = [y_values]
         elif ChartType.HISTOGRAM == self.chart_type:
             arr = []
 

@@ -12,8 +12,10 @@ import {
   SortOrderEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_LEGEND_LABELS,
+  VARIABLE_NAME_METRICS,
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
+  buildMetricName,
 } from '@interfaces/ChartBlockType';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -42,6 +44,9 @@ function ChartController({
     y_sort_order: ySortOrder,
   } = configuration || {};
 
+  let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
+    || [];
+
   if (ChartTypeEnum.BAR_CHART === chartType) {
     const {
       x,
@@ -49,12 +54,25 @@ function ChartController({
     } = data;
 
     if (x && y && Array.isArray(x) && Array.isArray(y)) {
-      const metricName = Object.keys(y?.[0] || {})?.[0];
+      if (!metricNames.length) {
+        metricNames.push(VARIABLE_NAME_Y);
+      }
+      const metricName = metricNames[0];
 
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
-        let xy = x.map((xValue, idx: number) => ({
+        let xy = x.map((xValue, idx1: number) => ({
           __y: xValue,
-          ...y[idx],
+          ...metricNames.reduce((acc, mn, idx2) => {
+            const v = y?.[idx2]?.[idx1];
+            if (typeof v === 'undefined') {
+              return acc;
+            }
+
+            return {
+              ...acc,
+              [mn]: v,
+            };
+          }, {}),
         }));
 
         if (SortOrderEnum.ASCENDING === ySortOrder) {
@@ -83,7 +101,7 @@ function ChartController({
         <Histogram
           data={x.map((xValue , idx: number) => [
             xValue,
-            y[idx][metricName],
+            y[0][idx],
           ])}
           height={CHART_HEIGHT_DEFAULT}
           width={width}
@@ -94,7 +112,7 @@ function ChartController({
           }}
           renderTooltipContent={([, yValue]) => (
             <Text inverted monospace small>
-              {yValue.toFixed(4)}
+              {yValue?.toFixed(4)}
             </Text>
           )}
           showAxisLabels
@@ -157,6 +175,8 @@ function ChartController({
       x,
       y,
     } = data;
+
+    console.log(data)
 
     if (x && y && Array.isArray(x) && Array.isArray(y) && Array.isArray(y?.[0])) {
       let legendNames;
