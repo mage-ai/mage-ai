@@ -133,20 +133,20 @@ class Widget(Block):
                         var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                     })
         elif ChartType.HISTOGRAM == self.chart_type:
+            arr = []
+
             if should_use_no_code:
                 df = dfs[0]
-                values = [v for v in df[self.group_by_columns[0]] if v is not None and not np.isnan(v)]
-                data = build_histogram_data(
-                    values,
-                    int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
-                )
+                arr = df[self.group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    values = [v for v in variables[var_name_orig] if v is not None and not np.isnan(v)]
-                    data = build_histogram_data(
-                        values,
-                        int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
-                    )
+                    arr = variables[var_name_orig]
+
+            values = [v for v in arr if v is not None and not np.isnan(v)]
+            data = build_histogram_data(
+                values,
+                int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
+            )
         elif ChartType.LINE_CHART == self.chart_type:
             if should_use_no_code:
                 pass
@@ -156,26 +156,30 @@ class Widget(Block):
                         var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
                     })
         elif ChartType.PIE_CHART == self.chart_type:
+            arr1 = []
+            data_key = VARIABLE_NAME_X
+
             if should_use_no_code:
-                pass
+                df = dfs[0]
+                arr1 = df[self.group_by_columns[0]]
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    values = [v for v in variables[var_name_orig] if v is not None]
-                    value_counts = {}
-                    for key in values:
-                        if not value_counts.get(key):
-                            value_counts[key] = 0
-                        value_counts[key] += 1
+                    arr1 = variables[var_name_orig]
+                    data_key = var_name_orig
 
-                    buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
-                    arr = sorted(
-                        list(zip(value_counts.values(), value_counts.keys())),
-                        reverse=True,
-                    )[:buckets]
-                    value_counts_top = {k: v for v, k in arr}
-                    data.update({
-                        var_name_orig: value_counts_top,
-                    })
+            values = [v for v in arr1 if v is not None]
+            value_counts = {}
+            for key in values:
+                if not value_counts.get(key):
+                    value_counts[key] = 0
+                value_counts[key] += 1
+
+            buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
+            arr = sorted(
+                list(zip(value_counts.values(), value_counts.keys())),
+                reverse=True,
+            )[:buckets]
+            data[data_key] = {k: v for v, k in arr}
         elif ChartType.TABLE == self.chart_type:
             if should_use_no_code:
                 pass

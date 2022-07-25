@@ -131,6 +131,14 @@ export const CONFIGURATIONS_BY_CHART_TYPE: {
   [ChartTypeEnum.PIE_CHART]: {
     noCode: [
       {
+        label: () => 'column for chart',
+        settings: {
+          maxValues: 1,
+        },
+        type: ConfigurationItemType.COLUMNS,
+        uuid: VARIABLE_NAME_GROUP_BY,
+      },
+      {
         autoRun: true,
         label: () => 'Number of slices',
         type: ConfigurationItemType.NUMBER,

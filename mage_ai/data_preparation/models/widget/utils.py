@@ -1,10 +1,7 @@
 from .constants import AggregationFunction
-from mage_ai.shared.parsers import NpEncoder
+from mage_ai.shared.parsers import encode_complex
 import numpy as np
 import pandas as pd
-
-
-encoder = NpEncoder()
 
 
 def convert_to_list(arr, limit=None):
@@ -21,7 +18,7 @@ def convert_to_list(arr, limit=None):
 
 
 def encode_values_in_list(arr):
-    return [encoder.default(v) for v in arr]
+    return [encode_complex(v) for v in arr]
 
 
 def calculate_metrics_for_group(metrics, group):
