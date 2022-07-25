@@ -105,7 +105,7 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
     min_value_datetime = dateutil.parser.parse(datetimes.min())
     max_value_datetime = dateutil.parser.parse(datetimes.max())
 
-    # a, b = [dateutil.parser.parse(d) for d in sorted(datetimes)[:2]]
+    a, b = [dateutil.parser.parse(d) for d in sorted(datetimes)[:2]]
 
     year = min_value_datetime.year
     month = min_value_datetime.month
@@ -114,6 +114,21 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
     minute = min_value_datetime.minute
 
     start_datetime = min_value_datetime
+
+    if TimeInterval.ORIGINAL == time_interval:
+        diff = (b - a).total_seconds()
+        if diff >= 60 * 60 * 24 * 365:
+            time_interval = TimeInterval.YEAR
+        elif diff >= 60 * 60 * 24 * 30:
+            time_interval = TimeInterval.MONTH
+        elif diff >= 60 * 60 * 24 * 7:
+            time_interval = TimeInterval.WEEK
+        elif diff >= 60 * 60 * 24:
+            time_interval = TimeInterval.DAY
+        elif diff >= 60 * 60:
+            time_interval = TimeInterval.HOUR
+        elif diff >= 60:
+            time_interval = TimeInterval.SECOND
 
     if TimeInterval.DAY == time_interval:
         start_datetime = datetime(year, month, day, 0, 0, 0)
