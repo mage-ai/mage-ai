@@ -33,7 +33,6 @@ import {
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { WEBSOCKT_URL } from '@utils/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
@@ -95,7 +94,7 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const heightOffset = ASIDE_HEADER_HEIGHT + ASIDE_SUBHEADER_HEIGHT;
+  const heightOffset = ASIDE_HEADER_HEIGHT;
   const pipelineUUID = pipeline?.uuid;
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>(null);
@@ -234,7 +233,7 @@ function Sidekick({
           <DataTable
             columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
             columns={columns}
-            height={heightWindow - heightOffset}
+            height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
             noBorderBottom
             noBorderLeft
             noBorderRight
