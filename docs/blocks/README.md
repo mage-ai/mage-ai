@@ -44,6 +44,8 @@ def load_data() -> DataFrame:
     return DataFrame({})
 ```
 
+To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).
+
 ### 3. Transformer
 
 Use these blocks to clean, transform, and enhance data from other blocks.
@@ -95,3 +97,5 @@ def export_data(df: DataFrame) -> None:
     """
     # Specify your data exporting logic here
 ```
+
+To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).

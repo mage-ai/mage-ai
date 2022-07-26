@@ -100,10 +100,7 @@ class AWSSecretLoader(BaseConfigLoader):
             version_id (str, Optional): ID of the version of the secret to load. Defaults to None.
             version_stage_label (str, Optional): Staging label of the version of the secret to load. Defaults to None.
 
-        Returns:
-            Union(bytes, str): The secret stored under `secret_id` in AWS secret manager. If secret is:
-            - a binary value, returns a `bytes` object
-            - a string value, returns a `string` object
+        Returns: bool: Returns true if secret exists, otherwise returns false.
         """
         return self.__get_secret(secret_id, version_id, version_stage_label) is not None
 
@@ -256,9 +253,9 @@ class ConfigFileLoader(BaseConfigLoader):
     def __init__(self, filepath: os.PathLike = None, profile='default') -> None:
         """
         Initializes IO Configuration loader. Input configuration file can have two formats:
-        - Standard: contains a subset of the configuration keys specified in `ConfigKeys`. This
+        - Standard: contains a subset of the configuration keys specified in `ConfigKey`. This
           is the default and recommended format
-        - Verbose: Instead of configuration keys, each profiles stores an object of settings associated with
+        - Verbose: Instead of configuration keys, each profile stores an object of settings associated with
           each data migration client. This format was used in previous versions of this tool, and exists
           for backwards compatibility.
 
@@ -278,10 +275,13 @@ class ConfigFileLoader(BaseConfigLoader):
 
     def contains(self, key: Union[ConfigKey, str]) -> Any:
         """
-        Checks of the configuration setting stored under `key` is contained.
+        Checks if the configuration setting stored under `key` is contained.
 
         Args:
             key (str): Name of the configuration setting to check.
+
+        Returns:
+            (bool) Returns true if configuration setting exists, otherwise returns false
         """
         if self.use_verbose_format:
             return self.__traverse_verbose_config(key) is not None
@@ -293,6 +293,9 @@ class ConfigFileLoader(BaseConfigLoader):
 
         Args:
             key (str): Key name of the configuration setting to load
+
+        Returns:
+            (Any) Configuration setting corresponding to the given key.
         """
         if self.use_verbose_format:
             return self.__traverse_verbose_config(key)
