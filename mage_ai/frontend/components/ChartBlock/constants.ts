@@ -333,19 +333,34 @@ export const CHART_TEMPLATES = [
     widgetTemplate: () => ({
       configuration: {
         [VARIABLE_NAME_X]: 'columns_with_mising_values',
-        [VARIABLE_NAME_Y]: 'percentage_missing',
+        [VARIABLE_NAME_Y]: 'percentage_of_missing_values',
         [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.HORIZONTAL,
         [VARIABLE_NAME_Y_SORT_ORDER]: SortOrderEnum.DESCENDING,
         chart_type: ChartTypeEnum.BAR_CHART,
       },
       content: `number_of_rows = len(df_1.index)
 columns_with_mising_values = []
-percentage_missing = []
+percentage_of_missing_values = []
 for col in df_1.columns:
     missing = df_1[col].isna().sum()
     if missing > 0:
         columns_with_mising_values.append(col)
-        percentage_missing.append(100 * missing / number_of_rows)
+        percentage_of_missing_values.append(100 * missing / number_of_rows)
+`,
+    }),
+  },
+  {
+    label: () => 'Unique values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns',
+        [VARIABLE_NAME_Y]: 'number_of_unique_values',
+        [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.HORIZONTAL,
+        [VARIABLE_NAME_Y_SORT_ORDER]: SortOrderEnum.DESCENDING,
+        chart_type: ChartTypeEnum.BAR_CHART,
+      },
+      content: `columns = df_1.columns
+number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
 `,
     }),
   },
