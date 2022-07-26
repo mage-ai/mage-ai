@@ -1051,6 +1051,7 @@ function PipelineDetailPage({
       selectedBlock={selectedBlock}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
+      setActiveSidekickView={setActiveSidekickView}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
@@ -1169,7 +1170,7 @@ function PipelineDetailPage({
         )}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
-        afterSubheader={outputBlocks?.length > 0 && (
+        afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"
             fullHeight

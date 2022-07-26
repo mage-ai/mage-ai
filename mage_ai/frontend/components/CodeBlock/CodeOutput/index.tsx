@@ -23,8 +23,9 @@ import {
   ExtraInfoStyle,
   OutputRowStyle,
 } from './index.style';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
@@ -38,6 +39,7 @@ type CodeOutputProps = {
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setCollapsed?: (boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -56,6 +58,7 @@ function CodeOutput({
   runEndTime,
   runStartTime,
   selected,
+  setActiveSidekickView,
   setCollapsed,
   setOutputBlocks,
   setSelectedOutputBlock,
@@ -307,24 +310,35 @@ function CodeOutput({
                     )}
                   </FlexContainer>
                 </Tooltip>
-                <Spacing pl={1}>
-                  <Button
-                    basic
-                    iconOnly
-                    noPadding
-                    onClick={() => setOutputBlocks((prevOutputBlocks: BlockType[]) => {
-                      if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                        setSelectedOutputBlock(block);
-                        return prevOutputBlocks.concat(block);
-                      } else {
-                        return prevOutputBlocks;
-                      }
-                    })}
-                    transparent
-                  >
-                    <Expand muted size={UNIT * 1.75} />
-                  </Button>
-                </Spacing>
+                {!hasError &&
+                  <Spacing pl={1}>
+                    <Tooltip
+                      appearAbove
+                      appearBefore
+                      block
+                      label="Click to expand table"
+                      widthFitContent
+                    >
+                      <Button
+                        basic
+                        iconOnly
+                        noPadding
+                        onClick={() => setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                          setActiveSidekickView(ViewKeyEnum.DATA);
+                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                            setSelectedOutputBlock(block);
+                            return prevOutputBlocks.concat(block);
+                          } else {
+                            return prevOutputBlocks;
+                          }
+                        })}
+                        transparent
+                      >
+                        <Expand muted size={UNIT * 1.75} />
+                      </Button>
+                    </Tooltip>
+                  </Spacing>
+                }
               </FlexContainer>
             </ExtraInfoContentStyle>
           </FlexContainer>
