@@ -341,8 +341,8 @@ function PipelineDetail({
             addNewBlock={(newBlock: BlockRequestPayloadType) => {
               const block = blocks[blocks.length - 1];
 
-              let content = newBlock.content;
-              const upstreamBlocks = newBlock.upstream_blocks || [];
+              let content = null;
+              const upstreamBlocks = [];
 
               if (block) {
                 if (BlockTypeEnum.CHART !== block.type
