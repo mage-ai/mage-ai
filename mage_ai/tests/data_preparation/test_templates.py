@@ -334,7 +334,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
         type=ActionType.REFORMAT,
         arguments=[],  # Specify columns to reformat
         axis=Axis.COLUMN,
-        options={'reformat_action': None},  # Specify reformat action,
+        options={'reformat': None},  # Specify reformat action,
     )
 
     return BaseAction(action).execute(df)
