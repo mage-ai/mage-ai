@@ -192,8 +192,6 @@ function CodeBlockProps({
         runUpstream: runUpstream || false,
       });
 
-      console.log(disableReset)
-
       if (!disableReset) {
         setRunCount(1 + Number(runCount));
         setRunEndTime(null);
@@ -440,7 +438,7 @@ function CodeBlockProps({
     textareaFocused,
   ]);
 
-  const codeOutputEl = useMemo(() => hasOutput && (
+  const codeOutputEl = useMemo(() => (
     <CodeOutput
       {...borderColorShareProps}
       block={block}
@@ -466,7 +464,6 @@ function CodeBlockProps({
   ), [
     block,
     borderColorShareProps,
-    hasOutput,
     isInProgress,
     mainContainerWidth,
     messagesWithType,
@@ -753,7 +750,7 @@ function CodeBlockProps({
           }
         </CodeContainerStyle>
 
-        {codeOutputEl}
+        {hasOutput && codeOutputEl}
       </ContainerStyle>
 
       {!noDivider && (
