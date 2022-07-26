@@ -744,7 +744,22 @@ function CodeBlockProps({
         >
           {addNewBlocksVisible && (
             <AddNewBlocks
-              addNewBlock={addNewBlock}
+              addNewBlock={(newBlock: BlockType) => {
+                const upstreamBlocks = newBlock.upstream_blocks || [];
+
+                if (BlockTypeEnum.CHART !== block.type
+                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.CHART !== newBlock.type
+                  && BlockTypeEnum.SCRATCHPAD !== newBlock.type
+                ) {
+                  upstreamBlocks.push(block.uuid);
+                }
+
+                return addNewBlock({
+                  ...newBlock,
+                  upstream_blocks: upstreamBlocks,
+                })
+              }}
               compact
             />
           )}
