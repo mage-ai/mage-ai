@@ -598,7 +598,7 @@ function CodeBlockProps({
           </FlexContainer>
         </Flex>
 
-        {BlockTypeEnum.SCRATCHPAD !== block.type && (
+        {BlockTypeEnum.DATA_LOADER !== block.type && BlockTypeEnum.SCRATCHPAD !== block.type && (
           <FlexContainer alignItems="center">
             <Tooltip
               appearBefore
@@ -766,6 +766,7 @@ function CodeBlockProps({
 
                 if (BlockTypeEnum.CHART !== block.type
                   && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.DATA_LOADER !== newBlock.type
                   && BlockTypeEnum.CHART !== newBlock.type
                   && BlockTypeEnum.SCRATCHPAD !== newBlock.type
                 ) {
