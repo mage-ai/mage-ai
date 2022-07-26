@@ -316,34 +316,28 @@ function CodeOutput({
                 </Tooltip>
                 {!hasError &&
                   <Spacing pl={1}>
-                    <Tooltip
-                      appearAbove
-                      appearBefore
-                      block
-                      label="Click to expand table"
-                      widthFitContent
+                    <Button
+                      afterIcon={<Expand muted size={UNIT * 1.75} />}
+                      basic
+                      noPadding
+                      onClick={() => {
+                        addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
+                        setActiveSidekickView(ViewKeyEnum.DATA);
+                        setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                            setSelectedOutputBlock(block);
+                            return prevOutputBlocks.concat(block);
+                          } else {
+                            return prevOutputBlocks;
+                          }
+                        });
+                      }}
+                      transparent
                     >
-                      <Button
-                        basic
-                        iconOnly
-                        noPadding
-                        onClick={() => {
-                          addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                          setActiveSidekickView(ViewKeyEnum.DATA);
-                          setOutputBlocks((prevOutputBlocks: BlockType[]) => {
-                            if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                              setSelectedOutputBlock(block);
-                              return prevOutputBlocks.concat(block);
-                            } else {
-                              return prevOutputBlocks;
-                            }
-                          });
-                        }}
-                        transparent
-                      >
-                        <Expand muted size={UNIT * 1.75} />
-                      </Button>
-                    </Tooltip>
+                      <Text default>
+                        Expand table
+                      </Text>
+                    </Button>
                   </Spacing>
                 }
               </FlexContainer>
