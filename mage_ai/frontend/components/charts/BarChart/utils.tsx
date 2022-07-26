@@ -21,10 +21,10 @@ const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;
 
 const defaultMargin = {
-  bottom: UNIT * 3,
+  bottom: UNIT * (3 + PADDING_UNITS),
   left: UNIT * PADDING_UNITS,
   right: UNIT * PADDING_UNITS,
-  top: 0,
+  top: UNIT * PADDING_UNITS,
 };
 
 function max<D>(arr: D[], fn: (d: D) => number) {

@@ -54,6 +54,7 @@ type CommandButtonsProps = {
   runBlock: (payload: {
     block: BlockType;
     code?: string;
+    disableReset?: boolean;
     runDownstream?: boolean;
     runUpstream?: boolean;
   }) => void;
@@ -110,6 +111,7 @@ function CommandButtons({
             runBlock({
               block: widget,
               code: content,
+              disableReset: true,
             });
           } else {
             runBlock({
@@ -144,6 +146,7 @@ function CommandButtons({
             runBlock({
               block: widget,
               code: widget.content,
+              disableReset: true,
             });
           } else {
             runBlock({
