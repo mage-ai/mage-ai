@@ -382,6 +382,13 @@ function CodeBlockProps({
   );
 
   const buildBlockMenu = (b: BlockType) => {
+    const upstreamBlocks = [];
+    const currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);
+    const previousBlock = blocks[currentIndex - 1];
+    if (previousBlock) {
+      upstreamBlocks.push(previousBlock.uuid);
+    }
+
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
         {
@@ -392,6 +399,7 @@ function CodeBlockProps({
               block: {
                 ...b,
                 type: blockType,
+                upstream_blocks: upstreamBlocks,
               },
             }),
             uuid: `block_menu/scratchpad/convert_to/${blockType}`,
@@ -598,7 +606,7 @@ function CodeBlockProps({
           </FlexContainer>
         </Flex>
 
-        {BlockTypeEnum.SCRATCHPAD !== block.type && (
+        {BlockTypeEnum.DATA_LOADER !== block.type && BlockTypeEnum.SCRATCHPAD !== block.type && (
           <FlexContainer alignItems="center">
             <Tooltip
               appearBefore
@@ -766,6 +774,7 @@ function CodeBlockProps({
 
                 if (BlockTypeEnum.CHART !== block.type
                   && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.DATA_LOADER !== newBlock.type
                   && BlockTypeEnum.CHART !== newBlock.type
                   && BlockTypeEnum.SCRATCHPAD !== newBlock.type
                 ) {
