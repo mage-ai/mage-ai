@@ -172,7 +172,7 @@ function ChartBlock({
     chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
     chartDataRaw = chartDataRaw
       .replaceAll('\\"', '\"')
-      .replaceAll("\\'", "\'");
+      .replaceAll('\\\'', '\'');
     if (isJsonString(chartDataRaw)) {
       chartData = JSON.parse(chartDataRaw);
     }
@@ -691,7 +691,7 @@ function ChartBlock({
           </Spacing>
         );
       }),
-    }
+    };
   }, {
     noCode: [],
   }), [
@@ -709,8 +709,8 @@ function ChartBlock({
         <Spacing mt={1} px={1}>
           <FlexContainer
             alignItems="center"
-            justifyContent="space-between"
             fullWidth
+            justifyContent="space-between"
           >
             <Select
               compact
@@ -722,7 +722,7 @@ function ChartBlock({
                 };
                 updateWidget(widget);
                 saveAndRun(widget);
-                setUpstreamBlocks(value)
+                setUpstreamBlocks(value);
               }}
               placeholder="Source block"
               small
