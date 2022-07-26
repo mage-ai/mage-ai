@@ -9,11 +9,13 @@ import {
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import BlockType, {
   BlockTypeEnum,
   SampleDataType,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
+import ClickOutside from '@oracle/components/ClickOutside';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -94,6 +96,7 @@ function PipelineDetailPage({
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
+  const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
   const [filesTouched, setFilesTouched] = useState<{
     [filePath: string]: boolean;
   }>({});
@@ -141,6 +144,7 @@ function PipelineDetailPage({
     setAfterHidden(false);
   }, [setActiveSidekickView]);
 
+  const refAddChart = useRef(null);
   const blockRefs = useRef({});
   const chartRefs = useRef({});
   const contentByBlockUUID = useRef({});
@@ -1160,53 +1164,95 @@ function PipelineDetailPage({
     updatePipelineName,
   ]);
 
+  const afterHeader = useMemo(() => {
+    return (
+      <FlexContainer
+        alignItems="center"
+        fullWidth
+        justifyContent="space-between"
+      >
+        <Flex>
+          {finalSidekickViews.map(({ key, label }: any) => {
+            const active = key === activeSidekickView;
+            const Icon = NAV_ICON_MAPPING[key];
+
+            return (
+              <Spacing key={key} pl={1}>
+                <KeyboardShortcutButton
+                  beforeElement={<Icon />}
+                  blackBorder
+                  compact
+                  onClick={() => setActiveSidekickView(key)}
+                  selected={active}
+                  uuid={key}
+                >
+                  {label}
+                </KeyboardShortcutButton>
+              </Spacing>
+            );
+          })}
+        </Flex>
+
+        <Spacing
+          px={1}
+          ref={refAddChart}
+          style={{
+            position: 'relative',
+          }}
+        >
+          <KeyboardShortcutButton
+            beforeElement={<Add />}
+            blackBorder
+            compact
+            onClick={() => setShowAddCharts(true)}
+            uuid="Pipeline/afterHeader/add_chart"
+          >
+            Add chart
+          </KeyboardShortcutButton>
+
+          <ClickOutside
+            disableEscape
+            onClickOutside={() => setShowAddCharts(false)}
+            open={showAddCharts}
+          >
+            <AddChartMenu
+              addWidget={(
+                widget: BlockType,
+                {
+                  onCreateCallback,
+                }: {
+                  onCreateCallback?: (block: BlockType) => void;
+                },
+              ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+              block={blocks[blocks.length - 1]}
+              onClickCallback={() => setShowAddCharts(false)}
+              open={showAddCharts}
+              parentRef={refAddChart}
+              rightOffset={UNIT * 2}
+              runBlock={runBlock}
+            />
+          </ClickOutside>
+        </Spacing>
+      </FlexContainer>
+    );
+  }, [
+    addWidgetAtIndex,
+    blocks,
+    finalSidekickViews,
+    refAddChart,
+    runBlock,
+    setShowAddCharts,
+    showAddCharts,
+    widgets,
+  ]);
+
   return (
     <>
       <Head title={pipeline?.name} />
 
       <TripleLayout
         after={sideKick}
-        afterHeader={(
-          <FlexContainer
-            alignItems="center"
-            fullWidth
-            justifyContent="space-between"
-          >
-            <Flex>
-              {finalSidekickViews.map(({ key, label }: any) => {
-                const active = key === activeSidekickView;
-                const Icon = NAV_ICON_MAPPING[key];
-
-                return (
-                  <Spacing key={key} pl={1}>
-                    <KeyboardShortcutButton
-                      beforeElement={<Icon />}
-                      blackBorder
-                      compact
-                      onClick={() => setActiveSidekickView(key)}
-                      selected={active}
-                      uuid={key}
-                    >
-                      {label}
-                    </KeyboardShortcutButton>
-                  </Spacing>
-                );
-              })}
-            </Flex>
-
-            <Spacing px={1}>
-              <KeyboardShortcutButton
-                beforeElement={<Add />}
-                blackBorder
-                compact
-                onClick={() => addWidgetAtIndex({}, widgets.length)}
-                uuid="Pipeline/afterHeader/add_chart"
-              >
-                Add chart
-              </KeyboardShortcutButton>
-            </Spacing>
-          </FlexContainer>
-        )}
+        afterHeader={afterHeader}
         afterHidden={afterHidden}
         afterMousedownActive={afterMousedownActive}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (

@@ -338,8 +338,38 @@ function PipelineDetail({
 
         <Spacing mt={PADDING_UNITS}>
           <AddNewBlocks
-            addNewBlock={(b: BlockRequestPayloadType) => {
-              addNewBlockAtIndex(b, numberOfBlocks, setSelectedBlock);
+            addNewBlock={(newBlock: BlockRequestPayloadType) => {
+              const block = blocks[blocks.length - 1];
+
+              let content = null;
+              const upstreamBlocks = [];
+
+              if (block) {
+                if (BlockTypeEnum.CHART !== block.type
+                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.CHART !== newBlock.type
+                  && BlockTypeEnum.SCRATCHPAD !== newBlock.type
+                ) {
+                  upstreamBlocks.push(block.uuid);
+                }
+
+                if (BlockTypeEnum.CHART !== block.type
+                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.SCRATCHPAD === newBlock.type
+                ) {
+                  content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
+`;
+                }
+              }
+
+              addNewBlockAtIndex({
+                ...newBlock,
+                content,
+                upstream_blocks: upstreamBlocks,
+              }, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
           />

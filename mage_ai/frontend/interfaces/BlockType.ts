@@ -67,13 +67,15 @@ export interface AnalysisType {
 }
 
 export interface BlockRequestPayloadType {
-  name?: string;
-  type: BlockTypeEnum;
   config?: {
     data_source?: DataSourceTypeEnum;
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
   };
+  content?: string;
+  name?: string;
+  type: BlockTypeEnum;
+  upstream_blocks?: string[];
 }
 
 export default interface BlockType {
