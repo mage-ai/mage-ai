@@ -1,6 +1,12 @@
 import BlockType, { OutputType } from '@interfaces/BlockType';
+import {
+  LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS,
+  get,
+  remove,
+  set,
+} from '@storage/localStorage';
+import { indexBy } from '@utils/array';
 import { isJsonString } from '@utils/string';
-import { remove, set } from '@storage/localStorage';
 
 export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
@@ -51,4 +57,45 @@ export function updateCollapsedBlocks(blocks: BlockType[], pipelineUUID: string,
       remove(`${pipelineUUID}/${b.uuid}/outputCollapsed`),
     );
   });
+}
+
+function getOutputBlockUUIDStorageKey(pipelineUUID: string) {
+  return `${pipelineUUID}/${LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS}`;
+}
+
+export function getDataOutputBlockUUIDs(pipelineUUID: string): string[] {
+  return get(getOutputBlockUUIDStorageKey(pipelineUUID), []);
+}
+
+export function addDataOutputBlockUUID(
+  pipelineUUID: string,
+  blockUUID: string,
+) {
+  const blockUUIDs = getDataOutputBlockUUIDs(pipelineUUID);
+  if (!blockUUIDs.includes(blockUUID)) {
+    set(getOutputBlockUUIDStorageKey(pipelineUUID), [
+      ...blockUUIDs,
+      blockUUID,
+    ]);
+  }
+}
+
+export function removeDataOutputBlockUUID(
+  pipelineUUID: string,
+  blockUUID: string,
+) {
+  const blockUUIDs = getDataOutputBlockUUIDs(pipelineUUID);
+  const updatedBlockUUIDs = blockUUIDs.filter(uuid => uuid !== blockUUID);
+
+  set(getOutputBlockUUIDStorageKey(pipelineUUID), updatedBlockUUIDs);
+}
+
+export function convertBlockUUIDstoBlockTypes(
+  uuids: string[],
+  blocks: BlockType[],
+): BlockType[] {
+  const blockUUIDMapping = indexBy(blocks, (block) => block.uuid);
+  return uuids
+    .map(uuid => blockUUIDMapping[uuid])
+    .filter(block => !!block);
 }

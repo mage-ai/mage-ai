@@ -64,6 +64,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
@@ -94,7 +95,10 @@ type CodeBlockProps = {
     runUpstream: boolean;
   }) => void;
   runningBlocks: BlockType[];
+  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAnyInputFocused: (value: boolean) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
   widgets: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
 
@@ -120,9 +124,12 @@ function CodeBlockProps({
   runBlock,
   runningBlocks,
   selected,
+  setActiveSidekickView,
   setAnyInputFocused,
   setEditingBlock,
+  setOutputBlocks,
   setSelected,
+  setSelectedOutputBlock,
   setTextareaFocused,
   textareaFocused,
   widgets,
@@ -433,16 +440,20 @@ function CodeBlockProps({
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
+      pipeline={pipeline}
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
+      setActiveSidekickView={setActiveSidekickView}
       setCollapsed={(val: boolean) => {
         setOutputCollapsed(() => {
           set(outputCollapsedUUID, val);
           return val;
         });
       }}
+      setOutputBlocks={setOutputBlocks}
+      setSelectedOutputBlock={setSelectedOutputBlock}
     />
   ), [
     block,

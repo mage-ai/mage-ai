@@ -2,18 +2,21 @@ import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
 import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BorderColorShareProps } from '../index.style';
-import { Check, ChevronDown, ChevronUp } from '@oracle/icons';
+import { Check, ChevronDown, ChevronUp, Expand } from '@oracle/icons';
 import {
   ContainerStyle,
   ExtraInfoBorderStyle,
@@ -21,11 +24,11 @@ import {
   ExtraInfoStyle,
   OutputRowStyle,
 } from './index.style';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
-import Flex from '@oracle/components/Flex';
-import Button from '@oracle/elements/Button';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -35,10 +38,14 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
+  pipeline?: PipelineType;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
+  setActiveSidekickView?: (view: ViewKeyEnum) => void;
   setCollapsed?: (boolean) => void;
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
@@ -50,11 +57,15 @@ function CodeOutput({
   isInProgress,
   mainContainerWidth,
   messages,
+  pipeline,
   runCount,
   runEndTime,
   runStartTime,
   selected,
+  setActiveSidekickView,
   setCollapsed,
+  setOutputBlocks,
+  setSelectedOutputBlock,
 }: CodeOutputProps) {
   const {
     status,
@@ -75,8 +86,8 @@ function CodeOutput({
       <DataTable
         columns={columns}
         disableScrolling={!selected}
-        maxHeight={UNIT * 49.5}
         index={index}
+        maxHeight={UNIT * 49.5}
         noBorderBottom
         noBorderLeft
         noBorderRight
@@ -303,6 +314,38 @@ function CodeOutput({
                     )}
                   </FlexContainer>
                 </Tooltip>
+                {!hasError &&
+                  <Spacing pl={1}>
+                    <Tooltip
+                      appearAbove
+                      appearBefore
+                      block
+                      label="Click to expand table"
+                      widthFitContent
+                    >
+                      <Button
+                        basic
+                        iconOnly
+                        noPadding
+                        onClick={() => {
+                          addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
+                          setActiveSidekickView(ViewKeyEnum.DATA);
+                          setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                            if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                              setSelectedOutputBlock(block);
+                              return prevOutputBlocks.concat(block);
+                            } else {
+                              return prevOutputBlocks;
+                            }
+                          });
+                        }}
+                        transparent
+                      >
+                        <Expand muted size={UNIT * 1.75} />
+                      </Button>
+                    </Tooltip>
+                  </Spacing>
+                }
               </FlexContainer>
             </ExtraInfoContentStyle>
           </FlexContainer>
