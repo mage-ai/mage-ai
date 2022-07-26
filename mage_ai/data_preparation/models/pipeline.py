@@ -434,11 +434,15 @@ class Pipeline:
         if block.uuid not in mapping:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
         if len(block.downstream_blocks) > 0:
-            downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
-            raise Exception(
-                f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
-                '. Please remove the downstream blocks first.'
-            )
+            if any(b.type != BlockType.CHART for b in block.downstream_blocks):
+                downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
+                raise Exception(
+                    f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
+                    '. Please remove the downstream blocks first.'
+                )
+            for downstream_block in block.downstream_blocks:
+                self.delete_block(downstream_block, widget=True)
+
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks = [
