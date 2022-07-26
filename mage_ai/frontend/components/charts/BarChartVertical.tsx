@@ -28,6 +28,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   const {
     height,
     hideTooltip,
+    renderNoDataText,
     renderTooltipContent,
     tooltipData,
     tooltipLeft,
@@ -64,6 +65,20 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   return width < 10 ? null : (
     <div>
       <svg height={height} width={width}>
+        {renderNoDataText && !data?.length && (
+          <text
+            fill={colors.active}
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontFamily={FONT_FAMILY_REGULAR}
+            fontSize={fontSize}
+            x="50%"
+            y="50%"
+          >
+            {renderNoDataText()}
+          </text>
+        )}
+
         <Bar
           fill="transparent"
           height={height - (margin.top + margin.bottom)}

@@ -13,6 +13,7 @@ export type BuildSharedProps = {
 };
 
 export type SharedProps = {
+  renderNoDataText?: () => string;
   renderTooltipContent?: (opts: any) => any | number | string;
   xAxisLabel?: string;
   xLabelFormat?: any;
