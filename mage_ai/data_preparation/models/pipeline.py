@@ -439,11 +439,11 @@ class Pipeline:
                     b.uuid for b in block.downstream_blocks if b.type != BlockType.CHART
                 ]
                 raise Exception(
-                    f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
+                    f'Block(s) {downstream_block_uuids} are depending on block {block.uuid}'
                     '. Please remove the downstream blocks first.'
                 )
             for downstream_block in block.downstream_blocks:
-                self.delete_block(downstream_block, widget=True)
+                downstream_block.delete()
 
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:
