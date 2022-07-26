@@ -28,6 +28,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   const {
     height,
     hideTooltip,
+    renderNoDataText,
     renderTooltipContent,
     tooltipData,
     tooltipLeft,
@@ -64,101 +65,119 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   return width < 10 ? null : (
     <div>
       <svg height={height} width={width}>
-        <Bar
-          fill="transparent"
-          height={height - (margin.top + margin.bottom)}
-          onMouseLeave={() => hideTooltip()}
-          onMouseMove={handleTooltip}
-          onTouchMove={handleTooltip}
-          onTouchStart={handleTooltip}
-          rx={14}
-          width={width - (margin.left + margin.right)}
-          x={margin.left}
-          y={0}
-        />
-
-        <Group
-          left={margin.left / 2}
-          top={margin.top}
-        >
-          <BarGroup
-            color={colorScale}
-            data={data}
-            height={yMax}
-            keys={xKeys}
-            x0={ySerialize}
-            x0Scale={yScale}
-            x1Scale={y1Scale}
-            yScale={tempScale}
+        {renderNoDataText && !data?.length && (
+          <text
+            fill={colors.active}
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontFamily={FONT_FAMILY_REGULAR}
+            fontSize={fontSize}
+            x="50%"
+            y="50%"
           >
-            {(barGroups) =>
-              barGroups.map((barGroup) => (
-                <Group
-                  key={`bar-group-horizontal-${barGroup.index}-${barGroup.x0}`}
-                  left={barGroup.x0 + margin.left}
-                  top={margin.top}
-                >
-                  {barGroup.bars.map((bar) => {
-                    return (
-                      <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
-                        <rect
-                          fill={bar.color}
-                          height={bar.height}
-                          pointerEvents="none"
-                          rx={4}
-                          width={bar.width}
-                          x={bar.x}
-                          y={bar.y}
-                        />
-                      </g>
-                    );
-                  })}
-                </Group>
-              ))
-            }
-          </BarGroup>
+            {renderNoDataText()}
+          </text>
+        )}
 
-          <AxisLeft
-            left={margin.left}
-            numTicks={yNumTicks}
-            scale={tempScale}
-            stroke={colors.muted}
-            tickFormat={label => yLabelFormat(label)}
-            tickLabelProps={() => ({
-              fill: colors.active,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              textAnchor: 'end',
-              transform: 'translate(-2,2.5)',
-            })}
-            tickStroke={colors.muted}
-            top={margin.top}
-          />
+        {data?.length && (
+          <>
+            <Bar
+              fill="transparent"
+              height={height - (margin.top + margin.bottom)}
+              onMouseLeave={() => hideTooltip()}
+              onMouseMove={handleTooltip}
+              onTouchMove={handleTooltip}
+              onTouchStart={handleTooltip}
+              rx={14}
+              width={width - (margin.left + margin.right)}
+              x={margin.left * 1.5}
+              y={margin.top * 2}
+            />
 
-          <AxisBottom
-            hideTicks
-            left={margin.left}
-            numTicks={xNumTicks}
-            scale={yScale}
-            stroke={colors.muted}
-            tickFormat={xLabelFormat}
-            tickLabelProps={() => ({
-              fill: colors.active,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              textAnchor: 'middle',
-            })}
-            tickStroke={colors.muted}
-            top={yMax + margin.top}
-          />
-        </Group>
+            <Group
+              left={margin.left / 2}
+              top={margin.top}
+            >
+              <BarGroup
+                color={colorScale}
+                data={data}
+                height={yMax}
+                keys={xKeys}
+                x0={ySerialize}
+                x0Scale={yScale}
+                x1Scale={y1Scale}
+                yScale={tempScale}
+              >
+                {(barGroups) =>
+                  barGroups.map((barGroup) => (
+                    <Group
+                      key={`bar-group-horizontal-${barGroup.index}-${barGroup.x0}`}
+                      left={barGroup.x0 + margin.left}
+                      top={margin.top}
+                    >
+                      {barGroup.bars.map((bar) => {
+                        return (
+                          <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
+                            <rect
+                              fill={bar.color}
+                              height={bar.height}
+                              pointerEvents="none"
+                              rx={4}
+                              width={bar.width}
+                              x={bar.x}
+                              y={bar.y}
+                            />
+                          </g>
+                        );
+                      })}
+                    </Group>
+                  ))
+                }
+              </BarGroup>
+
+              <AxisLeft
+                left={margin.left}
+                numTicks={yNumTicks}
+                scale={tempScale}
+                stroke={colors.muted}
+                tickFormat={label => yLabelFormat(label)}
+                tickLabelProps={() => ({
+                  fill: colors.active,
+                  fontFamily: FONT_FAMILY_REGULAR,
+                  fontSize,
+                  textAnchor: 'end',
+                  transform: 'translate(-2,2.5)',
+                })}
+                tickStroke={colors.muted}
+                top={margin.top}
+              />
+
+              <AxisBottom
+                hideTicks
+                left={margin.left}
+                numTicks={xNumTicks}
+                scale={yScale}
+                stroke={colors.muted}
+                tickFormat={xLabelFormat}
+                tickLabelProps={() => ({
+                  fill: colors.active,
+                  fontFamily: FONT_FAMILY_REGULAR,
+                  fontSize,
+                  textAnchor: 'middle',
+                })}
+                tickStroke={colors.muted}
+                top={yMax + margin.top}
+              />
+            </Group>
+          </>
+        )}
 
         {tooltipData && (
           <g>
             <Line
               from={{
                 x: tooltipLeft,
-                y: margin.top,
+                y: margin.top * 2,
               }}
               pointerEvents="none"
               stroke={colors.active}
@@ -166,7 +185,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
               strokeWidth={1}
               to={{
                 x: tooltipLeft,
-                y: yMax + margin.top,
+                y: yMax + (margin.top * 2),
               }}
             />
           </g>
@@ -215,7 +234,7 @@ function BarChartVerticalContainer({
         style={{
           display: 'flex',
           height: parentHeight,
-          marginBottom: UNIT,
+          marginBottom: xAxisLabel ? UNIT : null,
           width: '100%',
         }}
       >

@@ -40,6 +40,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   keyForYData = yKey,
   large,
   margin: marginOverride = {},
+  renderNoDataText,
   renderTooltipContent,
   showTooltip,
   tooltipData,
@@ -81,6 +82,20 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   return width < 10 ? null : (
     <div>
       <svg height={height} width={width}>
+        {renderNoDataText && !data?.length && (
+          <text
+            fill={colors.active}
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontFamily={FONT_FAMILY_REGULAR}
+            fontSize={fontSize}
+            x="50%"
+            y="50%"
+          >
+            {renderNoDataText()}
+          </text>
+        )}
+
         <Bar
           fill="transparent"
           height={height - (margin.top + margin.bottom)}
@@ -91,89 +106,92 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           rx={14}
           width={width - (margin.left + margin.right)}
           x={margin.left}
-          y={0}
+          y={margin.top}
         />
 
-        <Group
-          left={margin.left}
-          top={margin.top}
-        >
-          <BarGroupHorizontal
-            color={colorScale}
-            data={data}
-            keys={xKeys}
-            width={xMax}
-            xScale={tempScale}
-            y0={ySerialize}
-            y0Scale={yScale}
-            y1Scale={y1Scale}
+        {data?.length && (
+          <Group
+            left={margin.left}
+            top={margin.top}
           >
-            {(barGroups) =>
-              barGroups.map((barGroup) => (
-                <Group
-                  key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
-                  top={barGroup.y0}
-                >
-                  {barGroup.bars.map((bar) => (
-                    <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
-                      <>
-                        <rect
-                          fill={bar.color}
-                          height={bar.height}
-                          pointerEvents="none"
-                          rx={4}
-                          width={bar.width}
-                          x={bar.x}
-                          y={bar.y}
-                        />
-                      </>
-                    </g>
-                  ))}
-                </Group>
-              ))
-            }
-          </BarGroupHorizontal>
+            <BarGroupHorizontal
+              color={colorScale}
+              data={data}
+              keys={xKeys}
+              width={xMax}
+              xScale={tempScale}
+              y0={ySerialize}
+              y0Scale={yScale}
+              y1Scale={y1Scale}
+            >
+              {(barGroups) =>
+                barGroups.map((barGroup) => (
+                  <Group
+                    key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
+                    top={barGroup.y0}
+                  >
+                    {barGroup.bars.map((bar) => (
+                      <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
+                        <>
+                          <rect
+                            fill={bar.color}
+                            height={bar.height}
+                            pointerEvents="none"
+                            rx={4}
+                            width={bar.width}
+                            x={bar.x}
+                            y={bar.y}
+                          />
+                        </>
+                      </g>
+                    ))}
+                  </Group>
+                ))
+              }
+            </BarGroupHorizontal>
 
-          <AxisLeft
-            hideTicks
-            scale={yScale}
-            stroke={colors.muted}
-            tickFormat={label => yLabelFormat(label)}
-            tickLabelProps={() => ({
-              fill: colors.active,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              style: {
-                width: '10px',
-              },
-              textAnchor: 'end',
-            })}
-            tickStroke={colors.muted}
-            tickValues={tickValues}
-            top={2}
-          />
+            <AxisLeft
+              hideTicks
+              scale={yScale}
+              stroke={colors.muted}
+              tickFormat={label => yLabelFormat(label)}
+              tickLabelProps={() => ({
+                fill: colors.active,
+                fontFamily: FONT_FAMILY_REGULAR,
+                fontSize,
+                style: {
+                  width: '10px',
+                },
+                textAnchor: 'end',
+              })}
+              tickStroke={colors.muted}
+              tickValues={tickValues}
+              top={2}
+            />
 
-          <AxisBottom
-            label={xAxisLabel}
-            labelProps={{
-              fill: colors.muted,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              textAnchor: 'middle',
-            }}
-            numTicks={xNumTicks}
-            scale={tempScale}
-            stroke={colors.muted}
-            tickLabelProps={() => ({
-              fill: colors.active,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              textAnchor: 'middle',
-            })}
-            tickStroke={colors.muted}
-            top={yMax}
-          />
-        </Group>
+            <AxisBottom
+              label={xAxisLabel}
+              labelProps={{
+                fill: colors.muted,
+                fontFamily: FONT_FAMILY_REGULAR,
+                fontSize,
+                textAnchor: 'middle',
+              }}
+              numTicks={xNumTicks}
+              scale={tempScale}
+              stroke={colors.muted}
+              tickLabelProps={() => ({
+                fill: colors.active,
+                fontFamily: FONT_FAMILY_REGULAR,
+                fontSize,
+                textAnchor: 'middle',
+              })}
+              tickStroke={colors.muted}
+              top={yMax}
+            />
+          </Group>
+        )}
+
 
         {tooltipData && (
           <g>
@@ -242,7 +260,14 @@ function BarStackHorizontalContainer({
 
   return (
     <>
-      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          height: parentHeight,
+          marginBottom: xAxisLabel ? UNIT : null,
+          width: '100%',
+        }}
+      >
         {yAxisLabel && (
           <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
             <YAxisLabelContainer>

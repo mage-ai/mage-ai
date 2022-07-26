@@ -160,6 +160,7 @@ export function buildSharedProps({
   ) => {
     const { x, y } = localPoint(event) || { x: 0, y: 0 };
     const xAdjusted = x - margin.left;
+    const yAadjusted = y - margin.top;
 
     // Need to add buffer so tooltip displays correct value for hovered bar
     let percent = 0;
@@ -167,7 +168,7 @@ export function buildSharedProps({
     if (orientationVertical) {
       percent = ((xAdjusted - tooltipMarginBuffer / 2) / (xMax - tooltipMarginBuffer));
     } else {
-      percent = 1 - ((y - tooltipMarginBuffer / 2) / (yMax - tooltipMarginBuffer));
+      percent = 1 - ((yAadjusted - tooltipMarginBuffer / 2) / (yMax - tooltipMarginBuffer));
     }
 
     const index = Math.floor(percent * dataLength);
@@ -177,22 +178,21 @@ export function buildSharedProps({
       d = data[index - 1];
     }
 
+
     if (orientationVertical) {
-      if (xAdjusted > (tooltipMarginBuffer + margin.left) && xAdjusted < (xMax - tooltipMarginBuffer)) {
+      if (xAdjusted > tooltipMarginBuffer && xAdjusted < ((xMax + margin.left) - tooltipMarginBuffer)) {
         showTooltip({
           tooltipData: d,
           tooltipLeft: x,
-          tooltipTop: y + margin.top,
+          tooltipTop: y,
         });
       }
-    } else {
-      if (y > tooltipMarginBuffer && y < (yMax - tooltipMarginBuffer)) {
-        showTooltip({
-          tooltipData: d,
-          tooltipLeft: x,
-          tooltipTop: y + margin.top,
-        });
-      }
+    } else if (yAadjusted > tooltipMarginBuffer && yAadjusted < (yMax - tooltipMarginBuffer)) {
+      showTooltip({
+        tooltipData: d,
+        tooltipLeft: x,
+        tooltipTop: y,
+      });
     }
   }, [
     data,
