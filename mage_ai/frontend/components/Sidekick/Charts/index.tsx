@@ -74,11 +74,8 @@ function Charts({
               : ExecutionStateEnum.QUEUED
              )
             : ExecutionStateEnum.IDLE;
-            
-          console.log(chartRefs);
           
           chartRefs.current[uuid] = createRef();
-
 
           return (
             <ChartBlock
