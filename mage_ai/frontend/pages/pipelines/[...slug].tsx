@@ -971,6 +971,7 @@ function PipelineDetailPage({
           router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
         }}
         ref={fileTreeRef}
+        setAfterHidden={setAfterHidden}
       />
     </ContextMenu>
   ), [

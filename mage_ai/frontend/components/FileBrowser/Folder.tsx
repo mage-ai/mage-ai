@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
+  FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
@@ -23,12 +24,14 @@ import {
 import { SpecialFileEnum } from '@components/FileTree/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
+import { VIEW_QUERY_PARAM } from '@components/Sidekick/constants';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getFullPath,
 } from './utils';
+import { goToWithQuery } from '@utils/routing';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
@@ -40,6 +43,7 @@ export type FolderSharedProps = {
   ) => void;
   openFile: (path: string) => void;
   openPipeline: (uuid: string) => void;
+  setAfterHidden: (value: boolean) => void;
 };
 
 type FolderProps = {
@@ -54,6 +58,7 @@ function Folder({
   onSelectBlockFile,
   openFile,
   openPipeline,
+  setAfterHidden,
   setContextItem,
   theme,
 }: FolderProps) {
@@ -112,6 +117,7 @@ function Folder({
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={openPipeline}
+      setAfterHidden={setAfterHidden}
       setContextItem={setContextItem}
       theme={theme}
     />
@@ -132,6 +138,12 @@ function Folder({
             return;
           }
 
+          if (parentFile?.name === FOLDER_NAME_CHARTS) {
+            goToWithQuery({
+              [VIEW_QUERY_PARAM]: 'charts',
+            });
+            setAfterHidden(false);
+          }
           if (isPipelineFolder) {
             openPipeline(name);
           } else if (children) {
