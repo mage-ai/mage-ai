@@ -1,6 +1,5 @@
-# Table of Contents
+<h1> Table of Contents </h1>
 
-- [Table of Contents](#table-of-contents)
 - [Data Loading Overview](#data-loading-overview)
   - [Example: Loading data from a file](#example-loading-data-from-a-file)
   - [Example: Loading data from Snowflake warehouse](#example-loading-data-from-snowflake-warehouse)
@@ -31,7 +30,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 Mage's data loading clients fall into two categories:
 
 -   **File-Loading Clients** - import/export data between files and your pipeline. Includes both local filesystem storage and external filesystem storage (like AWS S3)
--   **Database Clients** - imports data from an external database into your pipeline and exports data frames back into that database.
+-   **Database Clients** - imports data from an external database into your pipeline and exports data frames back into that database. These database clients include the `execute` method which execute your queries in the connected database. The Google BigQuery client follows this structure.
     -   A subcategory of database clients are **connection-based clients**, which wrap a connection to the database. This connection is used to execute transactions (sets of queries) on the database, which are either committed (saved to database) or rolled-back (deleted). Clients for PostgreSQL, Redshift, and Snowflake follow this structure.
 
 ## Example: Loading data from a file
@@ -87,7 +86,7 @@ default:
 with which a Snowflake data loading client can be constructed as:
 
 ```python
-config = ConfigFileLoader('io_config.py', 'default')
+config = ConfigFileLoader('io_config.yaml', 'default')
 loader = Snowflake.with_config(config, verbose=True)
 ```
 
@@ -131,10 +130,24 @@ Handles data transfer between a Redshift cluster and the Mage app. Mage uses tem
     REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
     ```
 2. Provide an IAM Profile to automatically generate temporary credentials for connection. The IAM profile is read from `~/.aws/` and is used with the `GetClusterCredentials` endpoint to generate temporary credentials. Add the following keys to the configuration settings for `Redshift` to generate temporary credentials
-   `yaml REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to REDSHIFT_DBUSER: Redshift database user to generate credentials for REDSHIFT_CLUSTER_ID: Redshift cluster ID REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with `
-   If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
-   `yaml AWS_ACCESS_KEY_ID: AWS Access Key ID credential AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials) AWS_REGION: AWS Region `
-     <h3> Constructor </h3>
+
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to
+    REDSHIFT_DBUSER: Redshift database user to generate credentials for
+    REDSHIFT_CLUSTER_ID: Redshift cluster ID
+    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with `
+    ```
+
+    If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
+
+    ```yaml
+    AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+    AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+    AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
+    AWS_REGION: AWS Region `
+    ```
+
+<h3> Constructor </h3>
 
 `__init__(**kwargs)`
 
@@ -753,7 +766,7 @@ Currently, the following sources (and their corresponding configuration loader) 
 -   Configuration File - `ConfigFileLoader`
 -   Environment Variables - `EnvironmentVariableLoader`
 -   AWS Secrets Manager - `AWSSecretLoader`
-
+s
 For example, the code below constructs a Redshift data loading client using secrets stored in AWS Secrets Manager
 
 ```python
@@ -767,11 +780,11 @@ loader = Redshift.from_config(config)
 The following are the set of allowed key names that you must name your secrets with in order for Mage's configuration loaders to recognize your secrets. In code you can refer to these keys by their string name or using the `mage_ai.io.config.ConfigKey` enum. Not all keys need be specified at once - only use the keys related to the services you utilize.
 
 | Key Name                        | Service                      | Client Constructor Parameter | Description                                                             | Notes                                       |
-| ------------------------------- | ---------------------------- | ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- | --- |
+| ------------------------------- | ---------------------------- | ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- |
 | AWS_ACCESS_KEY_ID               | AWS General                  | -                            | AWS Access Key ID credential                                            | Used by [Redshift](#redshift) and [S3](#s3) |
-| AWS_SECRET_ACCESS_KEY           | AWS General                  | -                            | AWS Secret Access Key credential                                        | Used by [Redshift](#redshift) and [S3](#s3) |     |
+| AWS_SECRET_ACCESS_KEY           | AWS General                  | -                            | AWS Secret Access Key credential                                        | Used by [Redshift](#redshift) and [S3](#s3) |
 | AWS_SESSION_TOKEN               | AWS General                  | -                            | AWS Session Token (used to generate temporary DB credentials)           | Used by Redshift                            |
-| AWS_REGION                      | AWS General                  | -                            | AWS Region                                                              | Used by [Redshift](#redshift) and [S3](#s3) |     |
+| AWS_REGION                      | AWS General                  | -                            | AWS Region                                                              | Used by [Redshift](#redshift) and [S3](#s3) |
 | REDSHIFT_DBNAME                 | [AWS Redshift](#redshift)    | database                     | Name of Redshift database to connect to                                 |                                             |
 | REDSHIFT_HOST                   | [AWS Redshift](#redshift)    | host                         | Redshift Cluster hostname                                               | Use with temporary credentials              |
 | REDSHIFT_PORT                   | [AWS Redshift](#redshift)    | port                         | Redshift Cluster port. Optional, defaults to 5439.                      | Use with temporary credentials              |
@@ -853,7 +866,7 @@ Initializes IO Configuration loader. Input configuration file can have two forma
     each data migration client. This format was used in previous versions of this tool, and exists
     for backwards compatibility. Below is an example configuration file using this format.
     ```yaml
-    version: 0.1.0
+    version: 0.0.0
     default:
         AWS:
             Redshift:
@@ -866,6 +879,13 @@ Initializes IO Configuration loader. Input configuration file can have two forma
             secret_access_key: AWS Secret Access Key credential
             region: AWS Region
     ```
+
+Use handlebars and `env_var` syntax to reference environment variables in either configuration file format.
+```yaml
+version: 0.1.0
+default:
+    GOOGLE_SERVICE_ACC_KEY_FILEPATH: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+```
 
 **Args**:
 
