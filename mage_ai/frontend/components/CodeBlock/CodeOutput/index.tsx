@@ -38,14 +38,14 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
-  pipeline: PipelineType;
+  pipeline?: PipelineType;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
-  setActiveSidekickView: (view: ViewKeyEnum) => void;
+  setActiveSidekickView?: (view: ViewKeyEnum) => void;
   setCollapsed?: (boolean) => void;
-  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setSelectedOutputBlock: (block: BlockType) => void;
+  setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setSelectedOutputBlock?: (block: BlockType) => void;
 } & BorderColorShareProps;
 
 function CodeOutput({
