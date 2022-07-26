@@ -11,6 +11,7 @@ import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -26,6 +27,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
 
 type CodeOutputProps = {
@@ -36,6 +38,7 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
+  pipeline: PipelineType;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
@@ -54,6 +57,7 @@ function CodeOutput({
   isInProgress,
   mainContainerWidth,
   messages,
+  pipeline,
   runCount,
   runEndTime,
   runStartTime,
@@ -82,8 +86,8 @@ function CodeOutput({
       <DataTable
         columns={columns}
         disableScrolling={!selected}
-        maxHeight={UNIT * 49.5}
         index={index}
+        maxHeight={UNIT * 49.5}
         noBorderBottom
         noBorderLeft
         noBorderRight
@@ -323,15 +327,18 @@ function CodeOutput({
                         basic
                         iconOnly
                         noPadding
-                        onClick={() => setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                        onClick={() => {
+                          addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
                           setActiveSidekickView(ViewKeyEnum.DATA);
-                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                            setSelectedOutputBlock(block);
-                            return prevOutputBlocks.concat(block);
-                          } else {
-                            return prevOutputBlocks;
-                          }
-                        })}
+                          setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                            if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                              setSelectedOutputBlock(block);
+                              return prevOutputBlocks.concat(block);
+                            } else {
+                              return prevOutputBlocks;
+                            }
+                          });
+                        }}
                         transparent
                       >
                         <Expand muted size={UNIT * 1.75} />

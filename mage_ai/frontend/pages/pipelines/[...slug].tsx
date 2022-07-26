@@ -55,9 +55,15 @@ import {
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WEBSOCKT_URL } from '@utils/constants';
+import {
+  convertBlockUUIDstoBlockTypes,
+  getDataOutputBlockUUIDs,
+  initializeContentAndMessages,
+  removeDataOutputBlockUUID,
+  updateCollapsedBlocks,
+} from '@components/PipelineDetail/utils';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { initializeContentAndMessages, updateCollapsedBlocks } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -251,7 +257,10 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
-  const [outputBlocks, setOutputBlocks] = useState<BlockType[]>([]);
+
+  const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
+  const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
+  const [outputBlocks, setOutputBlocks] = useState<BlockType[]>(outputBlocksInit);
   const [selectedOutputBlock, setSelectedOutputBlock] = useState<BlockType>(null);
   const outputBlocksPrev = usePrevious(outputBlocks);
 
@@ -767,6 +776,16 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
+    if (outputBlocksInit?.length > 0 && outputBlocks?.length === 0) {
+      setOutputBlocks(outputBlocksInit);
+      setSelectedOutputBlock(outputBlocksInit[0]);
+    }
+  }, [
+    outputBlocks?.length,
+    outputBlocksInit?.length,
+  ]);
+
+  useEffect(() => {
     if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
       const {
         content: contentByBlockUUIDResults,
@@ -1189,6 +1208,7 @@ function PipelineDetailPage({
                           basic
                           highlightOnHover
                           onClick={() => {
+                            removeDataOutputBlockUUID(pipelineUUID, block.uuid);
                             setOutputBlocks(prevOutputBlocks =>
                               prevOutputBlocks.filter(({ uuid }) => uuid !== outputBlockUUID));
                           }}

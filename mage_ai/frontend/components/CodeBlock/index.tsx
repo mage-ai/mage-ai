@@ -440,6 +440,7 @@ function CodeBlockProps({
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
+      pipeline={pipeline}
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
