@@ -1,6 +1,7 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
 
+import AddChartMenu from './AddChartMenu';
 import BlockType, {
   BlockTypeEnum,
   StatusTypeEnum,
@@ -16,12 +17,7 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
-import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import { ContainerStyle } from './index.style';
-import {
-  CHART_TEMPLATES,
-  DEFAULT_SETTINGS_BY_CHART_TYPE,
-} from '@components/ChartBlock/constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Close,
@@ -38,7 +34,6 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '../index.style';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 export type CommandButtonsSharedProps = {
   addWidget: (widget: BlockType, opts?: {
@@ -83,86 +78,6 @@ function CommandButtons({
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
-
-  const chartMenuItems = useMemo(() => CHART_TYPES.map((chartType: string) => {
-    const widget = {
-      configuration: {
-        chart_type: chartType,
-      },
-      type: BlockTypeEnum.CHART,
-      upstream_blocks: [block.uuid],
-    };
-    const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
-    const configuration = defaultSettings?.configuration?.(widget) || {};
-    const content = defaultSettings?.content?.(widget) || null;
-
-    return {
-      label: () => capitalizeRemoveUnderscoreLower(chartType),
-      onClick: () => addWidget({
-        ...widget,
-        configuration: {
-          ...widget.configuration,
-          ...configuration,
-        },
-        content,
-      }, {
-        onCreateCallback: (widget: BlockType) => {
-          if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-            runBlock({
-              block: widget,
-              code: content,
-              disableReset: true,
-            });
-          } else {
-            runBlock({
-              block,
-              runDownstream: true,
-            });
-          }
-        },
-      }),
-      uuid: chartType,
-    };
-  }), [
-    CHART_TYPES,
-    block,
-    runBlock,
-  ]);
-  const chartTemplateMenuItems = useMemo(() => CHART_TEMPLATES.map(({
-    label,
-    widgetTemplate,
-  }) => {
-    const widget = {
-      ...widgetTemplate(),
-      type: BlockTypeEnum.CHART,
-      upstream_blocks: [block.uuid],
-    };
-
-    return {
-      label,
-      onClick: () => addWidget(widget, {
-        onCreateCallback: (widget: BlockType) => {
-          if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-            runBlock({
-              block: widget,
-              code: widget.content,
-              disableReset: true,
-            });
-          } else {
-            runBlock({
-              block,
-              runDownstream: true,
-            });
-          }
-        },
-      }),
-      uuid: label(),
-    };
-  }), [
-    CHART_TEMPLATES,
-    block,
-    runBlock,
-  ]);
 
   return (
     <ContainerStyle>
@@ -291,28 +206,15 @@ function CommandButtons({
               onClickOutside={() => setShowAddCharts(false)}
               open={showAddCharts}
             >
-              <FlyoutMenu
-                items={[
-                  {
-                    isGroupingTitle: true,
-                    label: () => 'Custom charts',
-                    uuid: 'custom_charts',
-                  },
-                  ...chartMenuItems,
-                  {
-                    isGroupingTitle: true,
-                    label: () => 'Templates',
-                    uuid: 'chart_templates',
-                  },
-                  ...chartTemplateMenuItems,
-                ]}
+              <AddChartMenu
+                addWidget={addWidget}
+                block={block}
                 left={-UNIT * 25}
                 onClickCallback={() => setShowAddCharts(false)}
                 open={showAddCharts}
                 parentRef={refAddChart}
+                runBlock={runBlock}
                 topOffset={UNIT * 6}
-                uuid="CommandButtons/add_charts"
-                width={UNIT * 25}
               />
             </ClickOutside>
           </>

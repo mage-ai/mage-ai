@@ -42,6 +42,7 @@ export type FlyoutMenuProps = {
   onClickCallback?: () => void;
   open: boolean;
   parentRef: any;
+  rightOffset?: number;
   topOffset?: number;
   uuid: string;
   width?: number;
@@ -54,6 +55,7 @@ function FlyoutMenu({
   onClickCallback,
   open,
   parentRef,
+  rightOffset,
   topOffset = 0,
   uuid: uuidKeyboard,
   width,
@@ -135,7 +137,7 @@ function FlyoutMenu({
         compact={compact}
         style={{
           display: (visible || submenuVisible[uuid]) ? null : 'none',
-          left: (
+          left: typeof rightOffset === 'undefined' && (
             depth === 1
               ? (left || 0)
               : (compact
@@ -147,6 +149,9 @@ function FlyoutMenu({
               ? (height || 0) + topOffset
               : (submenuTopOffset || 0)
           ),
+          right: depth === 1
+            ? rightOffset
+            : null,
         }}
         width={width}
       >
