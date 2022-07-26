@@ -77,12 +77,13 @@ function ChartController({
     const isTimeSeries = ChartTypeEnum.TIME_SERIES_BAR_CHART === chartType;
 
     if (x && y && Array.isArray(x) && Array.isArray(y)) {
+      const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
+      const yAxisLabel = metricNames?.join(', ');
+
       if (!metricNames.length) {
         metricNames.push(VARIABLE_NAME_Y);
       }
       const metricName = metricNames[0];
-      const xAxisLabel = configuration[VARIABLE_NAME_GROUP_BY]?.join(', ');
-      const yAxisLabel = metricNames?.join(', ');
 
       let xy = x.map((xValue, idx1: number) => ({
         __y: xValue,
@@ -116,8 +117,8 @@ function ChartController({
         return (
           <BarChartHorizontal
             {...sharedProps}
-            xAxisLabel={yAxisLabel}
-            yAxisLabel={xAxisLabel}
+            xAxisLabel={yAxisLabel || configuration[VARIABLE_NAME_Y]}
+            yAxisLabel={xAxisLabel || configuration[VARIABLE_NAME_X]}
           />
         );
       }

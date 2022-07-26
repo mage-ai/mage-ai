@@ -18,6 +18,7 @@ import { REGULAR } from '@oracle/styles/fonts/sizes';
 import { SharedProps, TooltipData } from './BarChart/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildSharedProps, yKey } from './BarChart/utils';
+import { isNumeric } from '@utils/string';
 
 type BarStackHorizontalProps = SharedProps;
 type BarStackHorizontalContainerProps = BarStackHorizontalProps;
@@ -199,11 +200,23 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
         >
           {renderTooltipContent && renderTooltipContent(tooltipData)}
 
-          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => keyForYData !== k && (
-            <Text key={k} inverted small>
-              {k}: {String(v).match(/[\d.]+/) ? v.toFixed(4) : v}
-            </Text>
-          ))}
+          {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => {
+            if (keyForYData !== k) {
+              let valueToDisplay = v;
+
+              if (isNumeric(valueToDisplay)) {
+                if (String(valueToDisplay).split('.').length >= 2) {
+                  valueToDisplay = valueToDisplay.toFixed(4);
+                }
+              }
+
+              return (
+                <Text key={k} inverted small>
+                  {k}: {valueToDisplay}
+                </Text>
+              );
+            }
+          })}
         </TooltipWithBounds>
       )}
     </div>

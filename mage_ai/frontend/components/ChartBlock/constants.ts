@@ -326,3 +326,69 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
     [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing booleans, dates, integers, floats, or strings.',
   },
 };
+
+export const CHART_TEMPLATES = [
+  {
+    label: () => '% of missing values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns_with_mising_values',
+        [VARIABLE_NAME_Y]: 'percentage_of_missing_values',
+        [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.HORIZONTAL,
+        [VARIABLE_NAME_Y_SORT_ORDER]: SortOrderEnum.DESCENDING,
+        chart_type: ChartTypeEnum.BAR_CHART,
+      },
+      content: `number_of_rows = len(df_1.index)
+columns_with_mising_values = []
+percentage_of_missing_values = []
+for col in df_1.columns:
+    missing = df_1[col].isna().sum()
+    if missing > 0:
+        columns_with_mising_values.append(col)
+        percentage_of_missing_values.append(100 * missing / number_of_rows)
+`,
+    }),
+  },
+  {
+    label: () => 'Unique values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns',
+        [VARIABLE_NAME_Y]: 'number_of_unique_values',
+        [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.HORIZONTAL,
+        [VARIABLE_NAME_Y_SORT_ORDER]: SortOrderEnum.DESCENDING,
+        chart_type: ChartTypeEnum.BAR_CHART,
+      },
+      content: `columns = df_1.columns
+number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
+`,
+    }),
+  },
+  {
+    label: () => 'Most frequent values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns',
+        [VARIABLE_NAME_Y]: 'rows',
+        chart_type: ChartTypeEnum.TABLE,
+      },
+      content: `columns = ['column', 'mode value', 'frequency', '% of values']
+
+rows = []
+for col in df_1.columns:
+    value, column = sorted(
+      [(v, k) for k, v in df_1[col].value_counts().items()],
+      reverse=True,
+    )[0]
+    number_of_rows = len(df_1[col].dropna())
+    rows.append([
+        col,
+        column,
+        f'{round(100 * value / number_of_rows, 2)}%',
+        value,
+      ])
+rows = sorted(rows, key=lambda t: t[3], reverse=True)
+`,
+    }),
+  },
+];

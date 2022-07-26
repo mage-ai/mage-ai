@@ -10,7 +10,7 @@ export const ContainerStyle = styled.div`
   padding: ${UNIT}px;
   position: absolute;
   right: -${UNIT / 2}px;
-  z-index: 1;
+  z-index: 11;
 
   ${props =>  `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
