@@ -110,6 +110,7 @@ function CommandButtons({
             runBlock({
               block: widget,
               code: content,
+              disableReset: true,
             });
           } else {
             runBlock({
@@ -144,6 +145,7 @@ function CommandButtons({
             runBlock({
               block: widget,
               code: widget.content,
+              disableReset: true,
             });
           } else {
             runBlock({

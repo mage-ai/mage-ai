@@ -174,12 +174,14 @@ function CodeBlockProps({
     (payload?: {
       block: BlockType;
       code?: string;
+      disableReset?: boolean;
       runDownstream?: boolean;
       runUpstream?: boolean;
     }) => {
       const {
         block: blockPayload,
         code,
+        disableReset,
         runDownstream,
         runUpstream,
       } = payload || {};
@@ -189,9 +191,14 @@ function CodeBlockProps({
         runDownstream: runDownstream || hasDownstreamWidgets,
         runUpstream: runUpstream || false,
       });
-      setRunCount(1 + Number(runCount));
-      setRunEndTime(null);
-      setOutputCollapsed(false);
+
+      console.log(disableReset)
+
+      if (!disableReset) {
+        setRunCount(1 + Number(runCount));
+        setRunEndTime(null);
+        setOutputCollapsed(false);
+      }
     }, [
       content,
       hasDownstreamWidgets,
