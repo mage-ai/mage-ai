@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
-import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BLOCK_TYPES_NO_DATA_TABLE,
+  StatusTypeEnum,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
@@ -314,7 +317,7 @@ function CodeOutput({
                     )}
                   </FlexContainer>
                 </Tooltip>
-                {!hasError &&
+                {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
                   <Spacing pl={1}>
                     <Button
                       afterIcon={<Expand muted size={UNIT * 1.75} />}
