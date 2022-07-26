@@ -786,8 +786,11 @@ function PipelineDetailPage({
     outputBlocksInit?.length,
   ]);
 
+  const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
-    if (!blocks.length && typeof pipeline?.blocks !== 'undefined') {
+    if (typeof pipeline?.blocks !== 'undefined' && (!blocks.length
+      || blocksPrevious?.map(({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
+    )) {
       const {
         content: contentByBlockUUIDResults,
         messages: messagesInit,
@@ -801,6 +804,7 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+    blocksPrevious,
     pipeline?.blocks,
     setBlocks,
     setMessages,
