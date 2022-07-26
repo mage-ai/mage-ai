@@ -16,6 +16,7 @@ import {
   TimeIntervalEnum,
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_GROUP_BY,
+  VARIABLE_NAME_HEIGHT,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_METRICS,
   VARIABLE_NAME_TIME_INTERVAL,
@@ -54,6 +55,8 @@ function ChartController({
     chart_type: chartType,
     y_sort_order: ySortOrder,
   } = configuration || {};
+
+  const chartHeight = configuration[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT;
 
   let metricNames = configuration?.[VARIABLE_NAME_METRICS]?.map(mn => buildMetricName(mn))
     || [];
@@ -108,7 +111,7 @@ function ChartController({
 
       const sharedProps = {
         data: xy,
-        height: CHART_HEIGHT_DEFAULT,
+        height: chartHeight,
         width,
         xNumTicks: 3,
       };
@@ -157,7 +160,7 @@ function ChartController({
             y?.[idx]?.value,
             minValue,
           ])}
-          height={CHART_HEIGHT_DEFAULT}
+          height={chartHeight}
           width={width}
           large
           margin={{
@@ -215,7 +218,7 @@ function ChartController({
       return (
         <LineSeries
           data={dataParsed}
-          height={CHART_HEIGHT_DEFAULT}
+          height={chartHeight}
           lineLegendNames={legendNames}
           margin={{
             bottom: 8 * UNIT,
@@ -271,7 +274,7 @@ function ChartController({
           data={Object.entries(chartData)}
           getX={([label, value]) => `${label} (${numberWithCommas(value)})`}
           getY={([, value]) => value}
-          height={CHART_HEIGHT_DEFAULT}
+          height={chartHeight}
           width={width}
           xAxisLabel={xAxisLabel || String(configuration[VARIABLE_NAME_X])}
         />
@@ -279,6 +282,7 @@ function ChartController({
     }
   } else if (ChartTypeEnum.TABLE === chartType) {
     const {
+      index,
       x,
       y,
     } = data;
@@ -286,14 +290,15 @@ function ChartController({
     return Array.isArray(x) && Array.isArray(y) && Array.isArray(y[0]) && (
       <DataTable
         columns={x}
-        // index={index}
-        height={CHART_HEIGHT_DEFAULT}
+        index={index}
+        height={configuration[VARIABLE_NAME_HEIGHT] ? null : chartHeight}
+        maxHeight={configuration[VARIABLE_NAME_HEIGHT] ? chartHeight : null}
         noBorderBottom
         noBorderLeft
         noBorderRight
         noBorderTop
         rows={y}
-        width={width ? width - SCROLLBAR_WIDTH : width}
+        width={width}
       />
     );
   }

@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 VARIABLE_NAME_BUCKETS = 'buckets'
 VARIABLE_NAME_GROUP_BY = 'group_by'
+VARIABLE_NAME_INDEX = 'index'
 VARIABLE_NAME_LIMIT = 'limit'
 VARIABLE_NAME_METRICS = 'metrics'
 VARIABLE_NAME_TIME_INTERVAL = 'time_interval'
@@ -70,6 +71,7 @@ VARIABLE_NAMES_BY_CHART_TYPE = {
         VARIABLE_NAME_X,
     ],
     ChartType.TABLE: [
+        VARIABLE_NAME_INDEX,
         VARIABLE_NAME_X,
         VARIABLE_NAME_Y,
     ],
