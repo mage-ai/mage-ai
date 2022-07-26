@@ -1,5 +1,5 @@
 from .constants import TimeInterval, TIME_INTERVAL_TO_TIME_DELTA
-from .utils import calculate_metric_for_series
+from .utils import calculate_metric_for_series, clean_series
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
@@ -9,24 +9,6 @@ import pandas as pd
 
 MAX_BUCKETS = 40
 TIME_SERIES_BUCKETS = 40
-
-
-def clean_series(series, column_type=None, dropna=True):
-    series_cleaned = series.map(
-        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
-    )
-    if dropna:
-        series_cleaned = series_cleaned.dropna()
-
-    if column_type is int:
-        try:
-            series_cleaned = series_cleaned.astype(float).astype(int)
-        except ValueError:
-            series_cleaned = series_cleaned.astype(float)
-    elif column_type is float:
-        series_cleaned = series_cleaned.astype(float)
-
-    return series_cleaned
 
 
 def build_buckets(min_value, max_value, max_buckets):

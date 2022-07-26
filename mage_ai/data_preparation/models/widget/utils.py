@@ -8,6 +8,24 @@ import numpy as np
 import pandas as pd
 
 
+def clean_series(series, column_type=None, dropna=True):
+    series_cleaned = series.map(
+        lambda x: x if (not isinstance(x, str) or (len(x) > 0 and not x.isspace())) else np.nan,
+    )
+    if dropna:
+        series_cleaned = series_cleaned.dropna()
+
+    if column_type is int:
+        try:
+            series_cleaned = series_cleaned.astype(float).astype(int)
+        except ValueError:
+            series_cleaned = series_cleaned.astype(float)
+    elif column_type is float:
+        series_cleaned = series_cleaned.astype(float)
+
+    return series_cleaned
+
+
 def convert_to_list(arr, limit=None):
     if type(arr) in [pd.Index, pd.RangeIndex, pd.Series]:
         return arr[:limit].tolist()
@@ -32,10 +50,13 @@ def build_metric_name(metric):
 
 
 def calculate_metric_for_series(series, aggregation):
+    series = clean_series(series)
     value = 0
 
     if AggregationFunction.AVERAGE == aggregation:
-        value = sum(series) / len(series)
+        count = len(series)
+        if count > 0:
+            value = sum(series) / count
     elif AggregationFunction.COUNT == aggregation:
         value = len(series)
     elif AggregationFunction.COUNT_DISTINCT == aggregation:

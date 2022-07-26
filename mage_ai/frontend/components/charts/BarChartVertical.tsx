@@ -2,8 +2,7 @@ import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import {
   Bar,
-  BarGroupHorizontal,
-  BarStackHorizontal,
+  BarGroup,
   Line,
 } from '@visx/shape';
 import { Group } from '@visx/group';
@@ -19,37 +18,27 @@ import { SharedProps, TooltipData } from './BarChart/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { buildSharedProps, yKey } from './BarChart/utils';
 
-type BarStackHorizontalProps = SharedProps;
-type BarStackHorizontalContainerProps = BarStackHorizontalProps;
+type BarChartVerticalProps = SharedProps;
+type BarChartVerticalContainerProps = BarChartVerticalProps;
 
-const MAX_FIELDS_DISPLAYED: number = 50;
-const MAX_LABEL_LENGTH: number = 20;
-
-const defaultMargin = {
-  bottom: 5 * UNIT,
-  left: 3 * UNIT,
-  right: 20 * UNIT,
-  top: 0,
-};
-
-const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
-  data: completeData,
-  height,
-  hideTooltip,
+const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   keyForYData = yKey,
-  large,
-  margin: marginOverride = {},
-  renderTooltipContent,
-  showTooltip,
-  tooltipData,
-  tooltipLeft,
-  tooltipOpen,
-  tooltipTop,
-  width,
-  xAxisLabel,
-  xNumTicks,
-  yLabelFormat: yLabelFormatProp,
-}: BarStackHorizontalProps & WithTooltipProvidedProps<TooltipData>) => {
+  ...props
+}: BarChartVerticalProps & WithTooltipProvidedProps<TooltipData>) => {
+  const {
+    height,
+    hideTooltip,
+    renderTooltipContent,
+    tooltipData,
+    tooltipLeft,
+    tooltipOpen,
+    tooltipTop,
+    width,
+    xLabelFormat,
+    xNumTicks,
+    yNumTicks,
+  } = props;
+
   const {
     colorScale,
     colors,
@@ -67,14 +56,9 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
     yScale,
     ySerialize,
   } = buildSharedProps({
-    data: completeData,
-    height,
+    ...props,
     keyForYData,
-    large,
-    margin: marginOverride,
-    showTooltip,
-    width,
-    yLabelFormat: yLabelFormatProp,
+    orientationVertical: true,
   });
 
   return width < 10 ? null : (
@@ -94,28 +78,29 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
         />
 
         <Group
-          left={margin.left}
+          left={margin.left / 2}
           top={margin.top}
         >
-          <BarGroupHorizontal
+          <BarGroup
             color={colorScale}
             data={data}
+            height={yMax}
             keys={xKeys}
-            width={xMax}
-            xScale={tempScale}
-            y0={ySerialize}
-            y0Scale={yScale}
-            y1Scale={y1Scale}
+            x0={ySerialize}
+            x0Scale={yScale}
+            x1Scale={y1Scale}
+            yScale={tempScale}
           >
             {(barGroups) =>
               barGroups.map((barGroup) => (
                 <Group
-                  key={`bar-group-horizontal-${barGroup.index}-${barGroup.y0}`}
-                  top={barGroup.y0}
+                  key={`bar-group-horizontal-${barGroup.index}-${barGroup.x0}`}
+                  left={barGroup.x0 + margin.left}
+                  top={margin.top}
                 >
-                  {barGroup.bars.map((bar) => (
-                    <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
-                      <>
+                  {barGroup.bars.map((bar) => {
+                    return (
+                      <g key={`${barGroup.index}-${bar.index}-${bar.key}`}>
                         <rect
                           fill={bar.color}
                           height={bar.height}
@@ -125,44 +110,38 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
                           x={bar.x}
                           y={bar.y}
                         />
-                      </>
-                    </g>
-                  ))}
+                      </g>
+                    );
+                  })}
                 </Group>
               ))
             }
-          </BarGroupHorizontal>
+          </BarGroup>
 
           <AxisLeft
-            hideTicks
-            scale={yScale}
+            left={margin.left}
+            numTicks={yNumTicks}
+            scale={tempScale}
             stroke={colors.muted}
             tickFormat={label => yLabelFormat(label)}
             tickLabelProps={() => ({
               fill: colors.active,
               fontFamily: FONT_FAMILY_REGULAR,
               fontSize,
-              style: {
-                width: '10px',
-              },
               textAnchor: 'end',
+              transform: 'translate(-2,2.5)',
             })}
             tickStroke={colors.muted}
-            tickValues={tickValues}
-            top={2}
+            top={margin.top}
           />
 
           <AxisBottom
-            label={xAxisLabel}
-            labelProps={{
-              fill: colors.muted,
-              fontFamily: FONT_FAMILY_REGULAR,
-              fontSize,
-              textAnchor: 'middle',
-            }}
+            hideTicks
+            left={margin.left}
             numTicks={xNumTicks}
-            scale={tempScale}
+            scale={yScale}
             stroke={colors.muted}
+            tickFormat={xLabelFormat}
             tickLabelProps={() => ({
               fill: colors.active,
               fontFamily: FONT_FAMILY_REGULAR,
@@ -170,19 +149,25 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
               textAnchor: 'middle',
             })}
             tickStroke={colors.muted}
-            top={yMax}
+            top={yMax + margin.top}
           />
         </Group>
 
         {tooltipData && (
           <g>
             <Line
-              from={{ x: margin.left, y: tooltipTop }}
+              from={{
+                x: tooltipLeft,
+                y: margin.top,
+              }}
               pointerEvents="none"
               stroke={colors.active}
               strokeDasharray="5,2"
               strokeWidth={1}
-              to={{ x: xMax + margin.left, y: tooltipTop }}
+              to={{
+                x: tooltipLeft,
+                y: yMax + margin.top,
+              }}
             />
           </g>
         )}
@@ -204,32 +189,36 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
               {k}: {String(v).match(/[\d.]+/) ? v.toFixed(4) : v}
             </Text>
           ))}
+
+          <br />
+
+          <Text inverted small>
+            {xLabelFormat && xLabelFormat(ySerialize(tooltipData))}
+            {!xLabelFormat && ySerialize(tooltipData)}
+          </Text>
         </TooltipWithBounds>
       )}
     </div>
   );
 });
 
-function BarStackHorizontalContainer({
+function BarChartVerticalContainer({
   height: parentHeight,
   width: parentWidth,
   xAxisLabel,
   yAxisLabel,
   ...props
-}: BarStackHorizontalContainerProps) {
-  let parentWidthFinal;
-
-  if (typeof parentWidth === 'undefined') {
-    parentWidthFinal = '100%';
-  } else {
-    parentWidthFinal = yAxisLabel
-      ? parentWidth === 0 ? parentWidth : parentWidth - 28
-      : parentWidth;
-  }
-
+}: BarChartVerticalContainerProps) {
   return (
     <>
-      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          height: parentHeight,
+          marginBottom: UNIT,
+          width: '100%',
+        }}
+      >
         {yAxisLabel && (
           <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
             <YAxisLabelContainer>
@@ -240,13 +229,17 @@ function BarStackHorizontalContainer({
           </FlexContainer>
         )}
 
-        <div style={{
-          height: parentHeight,
-          width: parentWidthFinal,
-        }}>
+        <div
+          style={{
+            height: parentHeight,
+            width: yAxisLabel
+              ? parentWidth === 0 ? parentWidth : parentWidth - 28
+              : parentWidth,
+          }}
+        >
           <ParentSize>
-            {({ width, height }) => (
-              <BarChartHorizontal
+            {({ height, width }) => (
+              <BarChartVertical
                 {...props}
                 height={height}
                 width={width}
@@ -271,6 +264,6 @@ function BarStackHorizontalContainer({
       )}
     </>
   );
-}
+};
 
-export default BarStackHorizontalContainer;
+export default BarChartVerticalContainer;
