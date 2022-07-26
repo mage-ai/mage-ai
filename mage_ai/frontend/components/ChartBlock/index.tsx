@@ -43,6 +43,7 @@ import {
   ChartTypeEnum,
   ConfigurationType,
   VARIABLE_NAMES,
+  VARIABLE_NAME_HEIGHT,
   VARIABLE_NAME_WIDTH_PERCENTAGE,
 } from '@interfaces/ChartBlockType';
 import {
@@ -53,6 +54,7 @@ import {
   VARIABLE_INFO_BY_CHART_TYPE,
 } from './constants';
 import {
+  CHART_HEIGHT_DEFAULT,
   ChartBlockStyle,
   CodeHelperStyle,
   CodeStyle,
@@ -889,6 +891,18 @@ function ChartBlock({
                     ))}
                   </Select>
                 </Spacing>
+
+                {/*<Spacing mb={1}>
+                  <TextInput
+                    label="Chart height (in pixels)"
+                    onChange={e => updateConfiguration({
+                      [VARIABLE_NAME_HEIGHT]: e.target.value,
+                    })}
+                    placeholder="Chart height"
+                    type="number"
+                    value={configuration?.[VARIABLE_NAME_HEIGHT] || CHART_HEIGHT_DEFAULT}
+                  />
+                </Spacing>*/}
 
                 {configurationOptionsEls}
               </FlexContainer>

@@ -1,5 +1,4 @@
 import BlockType from '@interfaces/BlockType';
-import {  } from '@interfaces/ChartBlockType';
 import {
   ChartStyleEnum,
   ChartTypeEnum,
@@ -8,6 +7,8 @@ import {
   VARIABLE_NAME_BUCKETS,
   VARIABLE_NAME_CHART_STYLE,
   VARIABLE_NAME_GROUP_BY,
+  VARIABLE_NAME_HEIGHT,
+  VARIABLE_NAME_INDEX,
   VARIABLE_NAME_LEGEND_LABELS,
   VARIABLE_NAME_LIMIT,
   VARIABLE_NAME_METRICS,
@@ -368,26 +369,58 @@ number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
     label: () => 'Most frequent values',
     widgetTemplate: () => ({
       configuration: {
+        [VARIABLE_NAME_HEIGHT]: 3000,
+        [VARIABLE_NAME_INDEX]: 'column_index',
         [VARIABLE_NAME_X]: 'columns',
         [VARIABLE_NAME_Y]: 'rows',
         chart_type: ChartTypeEnum.TABLE,
       },
-      content: `columns = ['column', 'mode value', 'frequency', '% of values']
+      content: `columns = ['mode value', 'frequency', '% of values']
 
+column_index = []
 rows = []
 for col in df_1.columns:
-    value, column = sorted(
+    value, column_value = sorted(
       [(v, k) for k, v in df_1[col].value_counts().items()],
       reverse=True,
     )[0]
     number_of_rows = len(df_1[col].dropna())
+    column_index.append(col)
     rows.append([
-        col,
-        column,
+        column_value,
         f'{round(100 * value / number_of_rows, 2)}%',
         value,
       ])
-rows = sorted(rows, key=lambda t: t[3], reverse=True)
+`,
+    }),
+  },
+  {
+    label: () => 'Summary overview',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_HEIGHT]: 3000,
+        [VARIABLE_NAME_INDEX]: 'stats',
+        [VARIABLE_NAME_X]: 'headers',
+        [VARIABLE_NAME_Y]: 'rows',
+        chart_type: ChartTypeEnum.TABLE,
+      },
+      content: `from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+
+
+headers = ['value']
+stats = ['Columns', 'Rows']
+rows = [[len(df_1.columns)], [len(df_1.index)]]
+
+col_counts = {}
+for col, col_type in infer_column_types(df_1).items():
+    col_type_name = col_type.value
+    if not col_counts.get(col_type_name):
+        col_counts[col_type_name] = 0
+    col_counts[col_type_name] += 1
+
+for col_type, count in sorted(col_counts.items()):
+    stats.append(f'# of {col_type}')
+    rows.append([count])
 `,
     }),
   },

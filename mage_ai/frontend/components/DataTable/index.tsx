@@ -39,6 +39,7 @@ import { range } from '@utils/array';
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
+const WIDTH_OF_SINGLE_CHARACTER_MONOSPACE = 8.7;
 
 type InvalidValueType = {
   [key: string]: number[];
@@ -185,6 +186,7 @@ function estimateCellHeight({ original }) {
   const maxLength = Math.max(...original.map(val => val?.length || 0));
   const totalWidth = maxLength * WIDTH_OF_CHARACTER;
   const numberOfLines = Math.ceil(totalWidth / (DEFAULT_COLUMN_WIDTH - (UNIT * 2)));
+
   return (Math.max(numberOfLines, 1) * REGULAR_LINE_HEIGHT) + (UNIT * 2);
 }
 
@@ -232,7 +234,7 @@ function Table({
     const arr = [];
 
     range(numberOfIndexes).forEach((_, idx: number) => {
-      let maxLength = String(data?.length).length * WIDTH_OF_CHARACTER;
+      let maxLength = String(data?.length).length * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE;
 
       if (shouldUseIndexProp) {
         const charLengths = indexProp.map((i: number | number[] | string | string[]) => {
@@ -244,7 +246,7 @@ function Table({
           return String(i).length;
         });
 
-        maxLength = Math.max(...charLengths) * WIDTH_OF_CHARACTER;
+        maxLength = Math.max(...charLengths) * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE;
       }
 
       arr.push(maxLength + (UNIT * 2));
@@ -261,7 +263,8 @@ function Table({
   const columnsAll = columns.map(col => col?.Header).slice(1);
   const scrollBarSize = useMemo(() => scrollbarWidth(), []);
   const defaultColumn = useMemo(() => {
-    const newWidth = width - (Math.max(...maxWidthOfIndexColumns) + 2) - scrollBarSize;
+    // UNIT * 1.5 is just extra
+    const newWidth = width - ((Math.max(...maxWidthOfIndexColumns) + (UNIT * 1.5)) + scrollBarSize);
     const numberOfColumns = columns.length - 1;
     let defaultColumnWidth = DEFAULT_COLUMN_WIDTH;
 
@@ -328,7 +331,12 @@ function Table({
             cellStyle.fontFamily = MONO_FONT_FAMILY_REGULAR;
             cellStyle.left = 0;
             cellStyle.position = 'sticky';
-            cellStyle.textAlign = 'center';
+            if (indexProp) {
+              cellStyle.textAlign = 'right';
+            } else {
+              cellStyle.textAlign = 'center';
+            }
+
             cellStyle.width = maxWidthOfIndexColumns[idx];
           }
 
@@ -414,7 +422,7 @@ function Table({
   const listHeight = useMemo(() => {
     let val;
     if (maxHeight) {
-      val = rows.length * BASE_ROW_HEIGHT;
+      val = (rows.length * BASE_ROW_HEIGHT);
     } else {
       val = height;
       if (columnHeaderHeight) {

@@ -757,6 +757,7 @@ function CodeBlockProps({
           {addNewBlocksVisible && (
             <AddNewBlocks
               addNewBlock={(newBlock: BlockType) => {
+                let content = newBlock.content;
                 const upstreamBlocks = newBlock.upstream_blocks || [];
 
                 if (BlockTypeEnum.CHART !== block.type
@@ -767,8 +768,20 @@ function CodeBlockProps({
                   upstreamBlocks.push(block.uuid);
                 }
 
+                if (BlockTypeEnum.CHART !== block.type
+                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                  && BlockTypeEnum.SCRATCHPAD === newBlock.type
+                ) {
+                  content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
+`;
+                }
+
                 return addNewBlock({
                   ...newBlock,
+                  content,
                   upstream_blocks: upstreamBlocks,
                 })
               }}

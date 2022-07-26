@@ -9,6 +9,7 @@ from .constants import (
     VARIABLE_NAMES_BY_CHART_TYPE,
     VARIABLE_NAME_BUCKETS,
     VARIABLE_NAME_GROUP_BY,
+    VARIABLE_NAME_INDEX,
     VARIABLE_NAME_LIMIT,
     VARIABLE_NAME_METRICS,
     VARIABLE_NAME_TIME_INTERVAL,
@@ -190,17 +191,20 @@ class Widget(Block):
                 data[VARIABLE_NAME_Y] = df[self.group_by_columns].to_numpy()
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    arr = variables[var_name_orig]
-                    limit = len(arr)
-                    if VARIABLE_NAME_Y == var_name_orig:
-                        limit = int(self.configuration.get(
-                            VARIABLE_NAME_LIMIT,
-                            DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                        ))
+                    arr = variables.get(var_name_orig, None)
 
-                    data.update({
-                        var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
-                    })
+                    if arr is not None:
+                        limit = len(arr)
+                        if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
+                            limit = int(self.configuration.get(
+                                VARIABLE_NAME_LIMIT,
+                                DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                            ))
+
+                        data.update({
+                            var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
+                        })
+
         elif self.chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
                 df = dfs[0]

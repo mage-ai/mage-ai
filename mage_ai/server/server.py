@@ -223,17 +223,21 @@ class ApiPipelineBlockListHandler(BaseHandler):
         Create block and add to pipeline
         """
         pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
-        block_data = json.loads(self.request.body).get('block', {})
+        payload = json.loads(self.request.body).get('block', {})
         block = Block.create(
-            block_data.get('name') or block_data.get('uuid'),
-            block_data.get('type'),
+            payload.get('name') or payload.get('uuid'),
+            payload.get('type'),
             get_repo_path(),
-            config=block_data.get('config'),
+            config=payload.get('config'),
             pipeline=pipeline,
-            priority=block_data.get('priority'),
-            upstream_block_uuids=block_data.get('upstream_blocks', []),
+            priority=payload.get('priority'),
+            upstream_block_uuids=payload.get('upstream_blocks', []),
         )
-        pipeline.add_block(block, block_data.get('upstream_blocks', []))
+
+        if payload.get('content'):
+            block.update_content(payload['content'])
+
+        pipeline.add_block(block, payload.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict(include_content=True)))
 
 
