@@ -184,6 +184,7 @@ function CodeBlockProps({
       });
       setRunCount(1 + Number(runCount));
       setRunEndTime(null);
+      setOutputCollapsed(false);
     }, [
       content,
       hasDownstreamWidgets,
