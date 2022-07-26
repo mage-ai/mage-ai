@@ -329,7 +329,7 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
 
 export const CHART_TEMPLATES = [
   {
-    label: () => 'Missing values',
+    label: () => '% of missing values',
     widgetTemplate: () => ({
       configuration: {
         [VARIABLE_NAME_X]: 'columns_with_mising_values',
@@ -361,6 +361,33 @@ for col in df_1.columns:
       },
       content: `columns = df_1.columns
 number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
+`,
+    }),
+  },
+  {
+    label: () => 'Most frequent values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns',
+        [VARIABLE_NAME_Y]: 'rows',
+        chart_type: ChartTypeEnum.TABLE,
+      },
+      content: `columns = ['column', 'mode value', 'frequency', '% of values']
+
+rows = []
+for col in df_1.columns:
+    value, column = sorted(
+      [(v, k) for k, v in df_1[col].value_counts().items()],
+      reverse=True,
+    )[0]
+    number_of_rows = len(df_1[col].dropna())
+    rows.append([
+        col,
+        column,
+        f'{round(100 * value / number_of_rows, 2)}%',
+        value,
+      ])
+rows = sorted(rows, key=lambda t: t[3], reverse=True)
 `,
     }),
   },
