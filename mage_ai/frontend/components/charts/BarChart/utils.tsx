@@ -9,9 +9,10 @@ import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 
 import dark from '@oracle/styles/themes/dark';
 import { BLUE, GREEN, LIME, NAVY, PEACH, PINK, PURPLE, RED, YELLOW } from '@oracle/styles/colors/main';
+import { BuildSharedProps } from './constants';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { REGULAR, SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { isNumeric } from '@utils/string';
 
 export const yKey = '__y';
@@ -40,7 +41,7 @@ export function buildSharedProps({
   showTooltip,
   width,
   yLabelFormat: yLabelFormatProp,
-}) {
+}: BuildSharedProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const ySerialize = useCallback(d => d[keyForYData], [keyForYData]);
 
@@ -112,7 +113,7 @@ export function buildSharedProps({
         const v = d[k];
 
         if (isNumeric(v)) {
-          return parseInt(v);
+          return parseInt(String(v));
         }
 
         return v;

@@ -13,43 +13,14 @@ import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import YAxisLabelContainer from './shared/YAxisLabelContainer';
-import { buildSharedProps, yKey } from './BarChart/utils';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR } from '@oracle/styles/fonts/sizes';
+import { SharedProps, TooltipData } from './BarChart/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-type TooltipData = {
-  bar: any;
-  color: string;
-  height: number;
-  index: number;
-  key: string;
-  width: number;
-  x: number;
-  y: number | string;
-};
-
-type SharedProps = {
-  data: {
-    [key: string]: number;
-  }[];
-  height: number;
-  keyForYData?: string;
-  large?: boolean;
-  margin?: { top?: number; right?: number; bottom?: number; left?: number };
-  renderTooltipContent?: (opts: any) => any | number | string;
-  width?: number;
-  xAxisLabel?: string;
-  xNumTicks?: number;
-  yLabelFormat?: any;
-};
+import { buildSharedProps, yKey } from './BarChart/utils';
 
 type BarStackHorizontalProps = SharedProps;
-
-export type BarStackHorizontalContainerProps = {
-  xAxisLabel?: string;
-  yAxisLabel?: string;
-} & SharedProps;
+type BarStackHorizontalContainerProps = BarStackHorizontalProps;
 
 const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;

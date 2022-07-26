@@ -12,23 +12,19 @@ import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import YAxisLabelContainer from './shared/YAxisLabelContainer';
-import { buildSharedProps, yKey } from './BarChart/utils';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR } from '@oracle/styles/fonts/sizes';
+import { SharedProps, TooltipData } from './BarChart/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { buildSharedProps, yKey } from './BarChart/utils';
 
-type BarChartVerticalProps = {
-  keyForYData?: string;
-  large?: boolean;
-};
+type BarChartVerticalProps = SharedProps;
+type BarChartVerticalContainerProps = BarChartVerticalProps;
 
-type BarChartVerticalContainerProps = {
-} & BarChartVerticalProps;
-
-const BarChartVertical = withTooltip(({
+const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
   keyForYData = yKey,
   ...props
-}: BarChartVerticalProps) => {
+}: BarChartVerticalProps & WithTooltipProvidedProps<TooltipData>) => {
   const {
     height,
     hideTooltip,
@@ -186,11 +182,6 @@ const BarChartVertical = withTooltip(({
           }}
           top={tooltipTop}
         >
-          <Text inverted small>
-            {xLabelFormat && xLabelFormat(ySerialize(tooltipData))}
-            {!xLabelFormat && ySerialize(tooltipData)}
-          </Text>
-
           {renderTooltipContent && renderTooltipContent(tooltipData)}
 
           {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => keyForYData !== k && (
@@ -198,6 +189,13 @@ const BarChartVertical = withTooltip(({
               {k}: {String(v).match(/[\d.]+/) ? v.toFixed(4) : v}
             </Text>
           ))}
+
+          <br />
+
+          <Text inverted small>
+            {xLabelFormat && xLabelFormat(ySerialize(tooltipData))}
+            {!xLabelFormat && ySerialize(tooltipData)}
+          </Text>
         </TooltipWithBounds>
       )}
     </div>
