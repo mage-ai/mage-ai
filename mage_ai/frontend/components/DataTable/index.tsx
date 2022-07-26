@@ -34,7 +34,7 @@ import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
-import { range } from '@utils/array';
+import { range, sum } from '@utils/array';
 
 const BASE_ROW_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
@@ -422,7 +422,7 @@ function Table({
   const listHeight = useMemo(() => {
     let val;
     if (maxHeight) {
-      val = (rows.length * BASE_ROW_HEIGHT);
+      val = sum(rows.map(estimateCellHeight)) + BASE_ROW_HEIGHT;
     } else {
       val = height;
       if (columnHeaderHeight) {
@@ -435,6 +435,7 @@ function Table({
     return val;
   }, [
     columnHeaderHeight,
+    estimateCellHeight,
     height,
     maxHeight,
     rows,
