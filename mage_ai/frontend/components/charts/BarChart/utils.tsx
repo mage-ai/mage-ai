@@ -12,6 +12,9 @@ import { BLUE, GREEN, LIME, NAVY, PEACH, PINK, PURPLE, RED, YELLOW } from '@orac
 import { REGULAR, SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { isNumeric } from '@utils/string';
+
+export const yKey = '__y';
 
 const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;
@@ -33,6 +36,7 @@ export function buildSharedProps({
   keyForYData,
   large,
   margin: marginOverride = {},
+  orientationVertical = false,
   showTooltip,
   width,
   yLabelFormat: yLabelFormatProp,
@@ -79,8 +83,9 @@ export function buildSharedProps({
       LIME,
     ],
   });
+  const dataYSerialized = useMemo(() => data.map(ySerialize), [data, ySerialize]);
   const yScale = scaleBand<string>({
-    domain: data.map(ySerialize),
+    domain: dataYSerialized,
     padding: 0.35,
   });
   const y1Scale = scaleBand({
@@ -100,7 +105,21 @@ export function buildSharedProps({
     tooltipBackground: themeContext?.background.navigation || dark.background.navigation,
   };
 
-  const tickValues: string[] = data.map(ySerialize);
+  let tickValues: string[] = dataYSerialized;
+  if (orientationVertical) {
+    tickValues = data.reduce((acc, d) => {
+      return acc.concat(xKeys.map(k => {
+        const v = d[k];
+
+        if (isNumeric(v)) {
+          return parseInt(v);
+        }
+
+        return v;
+      }));
+    }, []);
+  }
+
   const maxTickValueCharacterLength: number =
     Math.min(
       Math.max(...tickValues.map(s => String(s).length)),
@@ -118,39 +137,71 @@ export function buildSharedProps({
   const yMax = height - margin.top - margin.bottom;
   margin.left += maxTickValueCharacterLength * 7;
 
-  yScale.rangeRound([yMax, 0]);
-  tempScale.rangeRound([0, xMax]);
+  if (orientationVertical) {
+    yScale.rangeRound([0, xMax]);
+    tempScale.rangeRound([yMax, 0]);
+  } else {
+    yScale.rangeRound([yMax, 0]);
+    tempScale.rangeRound([0, xMax]);
+  }
   y1Scale.rangeRound([0, yScale.bandwidth()]);
 
-  const dataLength = data.map(({ x }) => x).length;
-  const tooltipMarginBuffer: number = yScale(tickValues[dataLength - 1]);
+  const dataLength = data.map(ySerialize).length;
+  let tooltipMarginBuffer: number = 0;
+
+  if (orientationVertical) {
+  } else {
+    tooltipMarginBuffer = yScale(tickValues[dataLength - 1]);
+  }
 
   const handleTooltip = useCallback((
     event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>,
   ) => {
     const { x, y } = localPoint(event) || { x: 0, y: 0 };
+    const xAdjusted = x - margin.left;
 
     // Need to add buffer so tooltip displays correct value for hovered bar
-    const percent = 1 - ((y - tooltipMarginBuffer / 2) / (yMax - tooltipMarginBuffer));
+    let percent = 0;
+
+    if (orientationVertical) {
+      percent = ((xAdjusted - tooltipMarginBuffer / 2) / (xMax - tooltipMarginBuffer));
+    } else {
+      percent = 1 - ((y - tooltipMarginBuffer / 2) / (yMax - tooltipMarginBuffer));
+    }
 
     const index = Math.floor(percent * dataLength);
+
     let d: any = data[index];
     if (typeof d === 'undefined') {
       d = data[index - 1];
     }
-    if (y > tooltipMarginBuffer && y < (yMax - tooltipMarginBuffer)) {
-      showTooltip?.({
-        tooltipData: d,
-        tooltipLeft: x,
-        tooltipTop: y + margin.top,
-      });
+
+    if (orientationVertical) {
+      if (xAdjusted > (tooltipMarginBuffer + margin.left) && xAdjusted < (xMax - tooltipMarginBuffer)) {
+        showTooltip({
+          tooltipData: d,
+          tooltipLeft: x,
+          tooltipTop: y + margin.top,
+        });
+      }
+    } else {
+      if (y > tooltipMarginBuffer && y < (yMax - tooltipMarginBuffer)) {
+        showTooltip({
+          tooltipData: d,
+          tooltipLeft: x,
+          tooltipTop: y + margin.top,
+        });
+      }
     }
   }, [
     data,
     dataLength,
+    margin.left,
     margin.top,
+    orientationVertical,
     showTooltip,
     tooltipMarginBuffer,
+    xMax,
     yMax,
   ]);
 

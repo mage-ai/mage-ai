@@ -104,21 +104,23 @@ function ChartController({
         xy = sortByKey(xy, d => d[metricName], { ascending: true });
       }
 
-      if (ChartStyleEnum.HORIZONTAL === chartStyle && !isTimeSeries) {
+      const sharedProps = {
+        data: xy,
+        height: CHART_HEIGHT_DEFAULT,
+        margin: {
+          bottom: UNIT * 3,
+          left: UNIT * 1,
+          right: UNIT * 3,
+          top: 0,
+        },
+        xNumTicks: 3,
+        width,
+      };
 
-
+      if (ChartStyleEnum.HORIZONTAL === chartStyle) {
         return (
           <BarChartHorizontal
-            data={xy}
-            height={CHART_HEIGHT_DEFAULT}
-            margin={{
-              bottom: UNIT * 3,
-              left: UNIT * 1,
-              right: UNIT * 3,
-              top: 0,
-            }}
-            width={width}
-            xNumTicks={3}
+            {...sharedProps}
             xAxisLabel={yAxisLabel}
             yAxisLabel={xAxisLabel}
           />
@@ -127,20 +129,19 @@ function ChartController({
 
       return (
         <>
-        <BarChartVertical
-          data={xy}
-          height={CHART_HEIGHT_DEFAULT}
-          margin={{
-            bottom: UNIT * 3,
-            left: UNIT * 1,
-            right: UNIT * 3,
-            top: 0,
-          }}
-          width={width}
-          xNumTicks={3}
-          xAxisLabel={yAxisLabel}
-          yAxisLabel={xAxisLabel}
-        />
+          <BarChartVertical
+            {...sharedProps}
+            xAxisLabel={xAxisLabel}
+            xLabelFormat={ts => {
+              if (isTimeSeries) {
+                return moment(ts * 1000).format(DATE_FORMAT_SHORT);
+              }
+
+              return ts;
+            }}
+            yAxisLabel={yAxisLabel}
+            yNumTicks={3}
+          />
 
         <Histogram
           data={x.map((xValue , idx: number) => [
@@ -237,8 +238,8 @@ function ChartController({
           showYAxisLabels
           showZeroes
           sortData={d => sortByKey(d, '[0]')}
-          xAxisLabel={xAxisLabel}
-          yAxisLabel={`count(${xAxisLabel})`}
+          xAxisLabel={xAxisLabel || configuration[VARIABLE_NAME_X]}
+          yAxisLabel={xAxisLabel ? `count(${xAxisLabel})` : configuration[VARIABLE_NAME_Y]}
         />
       );
     }

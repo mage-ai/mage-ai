@@ -909,8 +909,10 @@ function ChartBlock({
               <Text bold>
                 Custom chart code
               </Text>
-              <Text muted small>
+              <Text muted>
                 Write custom logic mapping data to input values for your chart.
+                <br />
+                This code is only executed if you don’t have any columns or metrics selected.
               </Text>
             </Spacing>
 

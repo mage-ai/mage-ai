@@ -13,12 +13,10 @@ import { defaultStyles as tooltipStyles, TooltipWithBounds, withTooltip } from '
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import YAxisLabelContainer from './shared/YAxisLabelContainer';
-import { buildSharedProps } from './BarChart/utils';
+import { buildSharedProps, yKey } from './BarChart/utils';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR } from '@oracle/styles/fonts/sizes';
 import { UNIT } from '@oracle/styles/units/spacing';
-
-const yKey = '__y';
 
 type TooltipData = {
   bar: any;
@@ -62,8 +60,6 @@ const defaultMargin = {
   right: 20 * UNIT,
   top: 0,
 };
-
-const getY = d => d.__y;
 
 const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   data: completeData,
@@ -236,7 +232,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
 
           {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => keyForYData !== k && (
             <Text key={k} inverted small>
-              {k}: {v}
+              {k}: {String(v).match(/[\d.]+/) ? v.toFixed(4) : v}
             </Text>
           ))}
         </TooltipWithBounds>
