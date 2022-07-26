@@ -105,6 +105,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     pipeline_config=pipeline.get_config_from_yaml(),
                     repo_config=get_repo_config().to_dict(),
                     run_upstream=run_upstream,
+                    update_status=False if kernel_name == KernelName.PYSPARK else True,
                     widget=widget,
                 )
             if kernel_name == KernelName.PYTHON3:

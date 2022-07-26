@@ -324,7 +324,7 @@ class Block:
                 self.status = BlockStatus.FAILED
             raise Exception(
                 f'Exception encountered in block {self.uuid}',
-            ).with_traceback(err.__traceback__)
+            ) from err
         finally:
             if update_status:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)

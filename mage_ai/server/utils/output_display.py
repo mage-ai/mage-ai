@@ -153,6 +153,7 @@ def add_execution_code(
     pipeline_config: Dict = None,
     repo_config: Dict = None,
     run_upstream: bool = False,
+    update_status: bool = True,
     widget: bool = False,
 ) -> str:
     escaped_code = code.replace("'", "\\'")
@@ -160,7 +161,7 @@ def add_execution_code(
     if kernel_name == KernelName.PYSPARK:
         global_vars_spark = 'global_vars[\'spark\'] = spark'
     else:
-        global_vars_spark = 'global_vars[\'spark\'] = None'
+        global_vars_spark = ''
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
@@ -191,7 +192,7 @@ def execute_custom_code():
         custom_code=code,
         global_vars=global_vars,
         analyze_outputs={analyze_outputs},
-        update_status=False,
+        update_status={update_status},
     )
     output = block_output['output']
 
