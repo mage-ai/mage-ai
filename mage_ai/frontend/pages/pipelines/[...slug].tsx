@@ -549,7 +549,6 @@ function PipelineDetailPage({
         response, {
           callback: ({
             widget: {
-              type,
               uuid,
             },
           }) => {
@@ -558,9 +557,7 @@ function PipelineDetailPage({
               widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
-            if (type === BlockTypeEnum.SCRATCHPAD) {
-              fetchFileTree();
-            }
+            fetchFileTree();
           },
           onErrorCallback: ({
             url_parameters: urlParameters,
