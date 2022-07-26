@@ -259,7 +259,7 @@ class Block:
         if self.pipeline is not None:
             self.pipeline.delete_block(self, widget=widget)
             # For block_type SCRATCHPAD, also delete the file if possible
-            if self.type == BlockType.SCRATCHPAD:
+            if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
