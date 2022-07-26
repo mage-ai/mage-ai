@@ -47,16 +47,16 @@ class StatisticsCalculator:
     def data_tags(self):
         return dict()
 
-    def process(self, df, is_clean=True):
-        return self.calculate_statistics_overview(df, is_clean)
+    def process(self, df, df_original=None, is_clean=True):
+        return self.calculate_statistics_overview(df, df_original=df_original, is_clean=is_clean)
 
-    def calculate_statistics_overview(self, df, is_clean=True):
+    def calculate_statistics_overview(self, df, df_original=None, is_clean=True):
         increment(
             'statistics.calculate_statistics_overview.start',
             self.data_tags,
         )
         with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
-            return self.__calculate_statistics_overview(df, is_clean=is_clean)
+            return self.__calculate_statistics_overview(df, df_original=df_original, is_clean=is_clean)
 
     def null_seq_gen(self, arr):
         prev = -1
@@ -84,11 +84,14 @@ class StatisticsCalculator:
             logger.exception(f'An error was caught while processing statistics: {err}')
             return {}
 
-    def __calculate_statistics_overview(self, df, is_clean=True):
+    def __calculate_statistics_overview(self, df, df_original=None, is_clean=True):
         with timer('statistics.calculate_statistics_overview.time', self.data_tags, verbose=False):
             if not is_clean:
                 df = clean_dataframe(df, self.column_types, dropna=False)
-            data = dict(count=len(df.index))
+            data = dict(
+                original_row_count=len((df if df_original is None else df_original).index),
+                count=len(df.index)
+            )
 
             arr_args_1 = ([df[col] for col in df.columns],)
             arr_args_2 = ([col for col in df.columns],)

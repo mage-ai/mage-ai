@@ -79,7 +79,7 @@ function CodeOutput({
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
-  const [dataFrameShape, setDataFrameShape] = useState<Number[]>();
+  const [dataFrameShape, setDataFrameShape] = useState<number[]>();
 
   const internalOutputRegex = /\[__internal_output__\]/;
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
@@ -123,7 +123,7 @@ function CodeOutput({
           columns={columns}
           disableScrolling={!selectedProp}
           index={index}
-          maxHeight={UNIT * 49.5}
+          maxHeight={UNIT * 60}
           noBorderBottom
           noBorderLeft
           noBorderRight

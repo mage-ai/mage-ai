@@ -548,12 +548,13 @@ class Block:
                 )
                 stats = analysis.get('statistics', {})
                 column_types = analysis.get('metadata', {}).get('column_types', {})
+                row_count = stats.get('original_row_count', stats.get('count'))
                 data = dict(
                     sample_data=dict(
                         columns=data.columns.tolist(),
                         rows=data.to_numpy().tolist(),
                     ),
-                    shape=[stats.get('count'), len(column_types)],
+                    shape=[row_count, len(column_types)],
                     type=DataType.TABLE,
                     variable_uuid=v,
                 )
@@ -669,6 +670,7 @@ class Block:
                 try:
                     analysis = clean_data(
                         data_for_analysis,
+                        df_original=data,
                         transform=False,
                         verbose=False,
                     )
