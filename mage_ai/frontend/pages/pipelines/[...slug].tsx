@@ -68,8 +68,8 @@ import {
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { randomNameGenerator } from '@utils/string';
 import { redirectToFirstPipeline } from '@components/PipelineDetail/utils';
 import { useWindowSize } from '@utils/sizes';
 
