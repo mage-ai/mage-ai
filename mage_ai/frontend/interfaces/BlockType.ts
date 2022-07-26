@@ -13,6 +13,7 @@ export enum BlockTypeEnum {
 }
 
 export const BLOCK_TYPES = [
+  BlockTypeEnum.CHART,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.SCRATCHPAD,

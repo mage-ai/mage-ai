@@ -126,14 +126,20 @@ function PipelineDetailPage({
         pushHistory,
       });
     }
-  }, [
-    activeSidekickView,
-  ]);
+  }, []);
   useEffect(() => {
     if (!activeSidekickView) {
       setActiveSidekickView(ViewKeyEnum.TREE, false);
     }
   }, [activeSidekickView]);
+  
+  const openSidekickView = useCallback((
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => {
+    setActiveSidekickView(newView, pushHistory);
+    setAfterHidden(false);
+  }, [setActiveSidekickView]);
 
   const blockRefs = useRef({});
   const contentByBlockUUID = useRef({});
@@ -840,6 +846,11 @@ function PipelineDetailPage({
         const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
         blockRef?.current?.scrollIntoView();
       }
+    } else if (blockType === BlockTypeEnum.CHART) {
+      const chart = widgets.find(({ uuid }) => uuid === blockUUID);
+      if (chart) {
+        setSelectedBlock(chart);
+      }
     } else {
       openFile(filePath);
     }
@@ -970,8 +981,8 @@ function PipelineDetailPage({
           resetState();
           router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
         }}
+        openSidekickView={openSidekickView}
         ref={fileTreeRef}
-        setAfterHidden={setAfterHidden}
       />
     </ContextMenu>
   ), [
