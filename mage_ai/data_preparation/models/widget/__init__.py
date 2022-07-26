@@ -95,10 +95,12 @@ class Widget(Block):
     @property
     def output_variable_names(self):
         var_names = VARIABLE_NAMES_BY_CHART_TYPE.get(self.chart_type, [])
-        return [(var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names]
+        return [
+            (var_name_orig, self.configuration.get(var_name_orig)) for var_name_orig in var_names
+        ]
 
-    def delete(self):
-        super().delete(widget=True)
+    def delete(self, commit=True):
+        super().delete(widget=True, commit=commit)
 
     def get_variables_from_code_execution(self, results):
         data = {}
@@ -108,9 +110,12 @@ class Widget(Block):
         return data
 
     def to_dict(self, **kwargs):
-        return merge_dict(super().to_dict(**kwargs), dict(
-            configuration=self.configuration,
-        ))
+        return merge_dict(
+            super().to_dict(**kwargs),
+            dict(
+                configuration=self.configuration,
+            ),
+        )
 
     def post_process_variables(
         self,
@@ -132,7 +137,9 @@ class Widget(Block):
                 df = dfs[0]
                 data = build_x_y(df, self.group_by_columns, self.metrics)
             else:
-                data[VARIABLE_NAME_X] = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_X]))
+                data[VARIABLE_NAME_X] = encode_values_in_list(
+                    convert_to_list(variables[VARIABLE_NAME_X])
+                )
                 y_values = encode_values_in_list(convert_to_list(variables[VARIABLE_NAME_Y]))
                 data[VARIABLE_NAME_Y] = [y_values]
         elif ChartType.HISTOGRAM == self.chart_type:
@@ -156,9 +163,13 @@ class Widget(Block):
                 data = build_x_y(df, self.group_by_columns, self.metrics)
             else:
                 for var_name_orig, var_name in self.output_variable_names:
-                    data.update({
-                        var_name_orig: encode_values_in_list(convert_to_list(variables[var_name_orig])),
-                    })
+                    data.update(
+                        {
+                            var_name_orig: encode_values_in_list(
+                                convert_to_list(variables[var_name_orig])
+                            ),
+                        }
+                    )
         elif ChartType.PIE_CHART == self.chart_type:
             arr1 = []
             data_key = VARIABLE_NAME_X
@@ -196,14 +207,20 @@ class Widget(Block):
                     if arr is not None:
                         limit = len(arr)
                         if var_name_orig in [VARIABLE_NAME_Y, VARIABLE_NAME_INDEX]:
-                            limit = int(self.configuration.get(
-                                VARIABLE_NAME_LIMIT,
-                                DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                            ))
+                            limit = int(
+                                self.configuration.get(
+                                    VARIABLE_NAME_LIMIT,
+                                    DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                                )
+                            )
 
-                        data.update({
-                            var_name_orig: encode_values_in_list(convert_to_list(arr, limit=limit)),
-                        })
+                        data.update(
+                            {
+                                var_name_orig: encode_values_in_list(
+                                    convert_to_list(arr, limit=limit)
+                                ),
+                            }
+                        )
 
         elif self.chart_type in [ChartType.TIME_SERIES_BAR_CHART, ChartType.TIME_SERIES_LINE_CHART]:
             if should_use_no_code:
