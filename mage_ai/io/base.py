@@ -10,6 +10,7 @@ QUERY_ROW_LIMIT = 100_000
 
 
 class DataSource(str, Enum):
+    API = 'api'
     BIGQUERY = 'bigquery'
     FILE = 'file'
     POSTGRES = 'postgres'

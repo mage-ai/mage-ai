@@ -160,6 +160,30 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
         self.assertEqual(redshift_template, new_redshift_template)
         self.assertEqual(s3_template, new_s3_template)
 
+    def test_template_generation_data_loader_api(self):
+        expected_template = """from pandas import DataFrame
+import io
+import pandas as pd
+import requests
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_api() -> DataFrame:
+    \"\"\"
+    Template for loading data from API
+    \"\"\"
+    url = ''
+
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.text), sep=',')
+"""
+        config = {'data_source': DataSource.API}
+        api_template = fetch_template_source(BlockType.DATA_LOADER, config)
+        self.assertEqual(api_template, expected_template)
+
     def test_template_generation_transformer_default(self):
         expected_template = """from pandas import DataFrame
 
@@ -245,19 +269,19 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: clean_column_name
+    Execute Transformer Action: ActionType.CLEAN_COLUMN_NAME
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.CLEAN_COLUMN_NAME,
-        action_arguments=[],
+        type=ActionType.CLEAN_COLUMN_NAME,
+        arguments=df.columns,
         axis=Axis.COLUMN,
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.CLEAN_COLUMN_NAME.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.CLEAN_COLUMN_NAME, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -274,20 +298,19 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: custom
+    Execute Transformer Action: ActionType.FILTER
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.CUSTOM,
-        action_arguments=[],
+        type=ActionType.FILTER,
         axis=Axis.ROW,
-        action_code='your_action_code'
+        action_code='',  # Specify your filtering code here
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.CUSTOM.value, 'axis': Axis.ROW}
+        config = {'action_type': ActionType.FILTER, 'axis': Axis.ROW}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -304,20 +327,20 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: reformat
+    Execute Transformer Action: ActionType.REFORMAT
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.REFORMAT,
-        action_arguments=[],
+        type=ActionType.REFORMAT,
+        arguments=[],  # Specify columns to reformat
         axis=Axis.COLUMN,
-        action_options={'your_action_option': None}
+        options={'reformat': None},  # Specify reformat action,
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.REFORMAT.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.REFORMAT, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -334,22 +357,25 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: add
+    Execute Transformer Action: ActionType.FIRST
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.ADD,
-        action_arguments=[],
+        type=ActionType.FIRST,
+        action_code='',  # Enter further filtering condition on rows
+        arguments=[],  # Enter the columns to compute aggregate over
         axis=Axis.COLUMN,
-        action_code='your_action_code',
-        action_options={'your_action_option': None},
-        outputs=['your_output_metadata']
+        options={'groupby_columns': []},  # Enter columns to group by
+        outputs=[
+            {'uuid': 'new_aggregate_column_1', 'column_type': 'category'},
+            {'uuid': 'new_aggregate_column_2', 'column_type': 'number'},
+        ],
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.ADD.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.FIRST, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
