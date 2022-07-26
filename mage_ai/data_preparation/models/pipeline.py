@@ -6,8 +6,9 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.variable import Variable
 from mage_ai.data_preparation.models.widget import Widget
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
 from typing import Callable
 import os
@@ -18,14 +19,24 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
-    def __init__(self, uuid, repo_path=None):
+    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
         self.widget_configs = []
-        self.load_config_from_yaml()
+        if config is None:
+            self.load_config_from_yaml()
+        else:
+            self.load_config(config)
+        if repo_config is None:
+            self.repo_config = get_repo_config(repo_path=self.repo_path)
+        elif type(repo_config) is dict:
+            self.repo_config = RepoConfig.from_dict(repo_config)
+        else:
+            self.repo_config = repo_config
+        self.variable_manager = VariableManager(self.repo_path, self.variables_dir)
 
     @property
     def config_path(self):
@@ -39,6 +50,10 @@ class Pipeline:
     @property
     def dir_path(self):
         return os.path.join(self.repo_path, PIPELINES_FOLDER, self.uuid)
+
+    @property
+    def variables_dir(self):
+        return self.repo_config.variables_dir
 
     @classmethod
     def create(self, name, repo_path):
@@ -161,11 +176,17 @@ class Pipeline:
             update_status=update_status,
         )
 
-    def load_config_from_yaml(self):
+    def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
             raise Exception(f'Pipeline {self.uuid} does not exist.')
         with open(self.config_path) as fp:
             config = yaml.full_load(fp) or {}
+        return config
+
+    def load_config_from_yaml(self):
+        self.load_config(self.get_config_from_yaml())
+
+    def load_config(self, config):
         self.name = config.get('name')
 
         self.block_configs = config.get('blocks', [])

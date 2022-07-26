@@ -1,7 +1,5 @@
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
-from jupyter_client import KernelManager
-from jupyter_client.session import Session
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
@@ -10,6 +8,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, kernel_managers
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 import argparse
@@ -20,19 +19,6 @@ import socket
 import tornado.ioloop
 import tornado.web
 import urllib.parse
-
-
-DEFAULT_KERNEL_NAME = 'python3'
-
-kernel_managers = dict(
-    python3=KernelManager(
-        session=Session(key=bytes()),
-    ),
-    pysparkkernel=KernelManager(
-        kernel_name='pysparkkernel',
-        session=Session(key=bytes()),
-    ),
-)
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -91,7 +77,7 @@ class ApiPipelineHandler(BaseHandler):
         self.write(response)
 
     def get(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
         self.write(
@@ -109,7 +95,7 @@ class ApiPipelineHandler(BaseHandler):
         """
         Allow updating pipeline name and uuid
         """
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
@@ -126,7 +112,7 @@ class ApiPipelineHandler(BaseHandler):
 
 class ApiPipelineExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
 
         global_vars = None
         if len(self.request.body) != 0:
@@ -164,7 +150,7 @@ class ApiPipelineListHandler(BaseHandler):
 
 class ApiPipelineBlockHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         include_outputs = self.get_bool_argument('include_outputs', True)
         if block is None:
@@ -183,7 +169,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         """
         Allow updating block name, uuid, type, upstream_block, and downstream_blocks
         """
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         data = json.loads(self.request.body).get('block', {})
         block = pipeline.get_block(block_uuid)
         if block is None:
@@ -192,7 +178,7 @@ class ApiPipelineBlockHandler(BaseHandler):
         self.write(dict(block=block.to_dict(include_content=True)))
 
     def delete(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -202,7 +188,7 @@ class ApiPipelineBlockHandler(BaseHandler):
 
 class ApiPipelineBlockExecuteHandler(BaseHandler):
     def post(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -219,7 +205,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
 
 class ApiPipelineBlockListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         include_outputs = self.get_bool_argument('include_outputs', True)
         self.write(
             dict(
@@ -236,7 +222,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
         """
         Create block and add to pipeline
         """
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block_data = json.loads(self.request.body).get('block', {})
         block = Block.create(
             block_data.get('name') or block_data.get('uuid'),
@@ -253,7 +239,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
 
 class ApiPipelineBlockAnalysisHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -263,7 +249,7 @@ class ApiPipelineBlockAnalysisHandler(BaseHandler):
 
 class ApiPipelineBlockOutputHandler(BaseHandler):
     def get(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')

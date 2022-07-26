@@ -4,6 +4,7 @@ from inspect import Parameter, signature
 from io import StringIO
 from queue import Queue
 from typing import Callable, List, Set
+from mage_ai.data_cleaner.shared.utils import is_dataframe
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
@@ -15,7 +16,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
@@ -312,6 +312,7 @@ class Block:
             else:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+
             self.__store_variables(variable_mapping)
 
             if update_status:
@@ -322,10 +323,13 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            raise Exception(f'Exception encountered in block {self.uuid}') from err
+            raise Exception(
+                f'Exception encountered in block {self.uuid}',
+            ) from err
         finally:
             if update_status:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
+
         return output
 
     async def execute(
@@ -425,14 +429,15 @@ class Block:
         upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
-            repo_path = self.pipeline.repo_path
             for upstream_block_uuid, variables in self.input_variables.items():
                 upstream_block_uuids.append(upstream_block_uuid)
                 input_vars += [
-                    VariableManager(repo_path).get_variable(
+                    self.pipeline.variable_manager.get_variable(
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
+                        variable_type=VariableType.DATAFRAME,
+                        spark=(global_vars or dict()).get('spark'),
                     )
                     for var in variables
                 ]
@@ -495,11 +500,10 @@ class Block:
         if len(self.output_variables) == 0:
             return []
         analyses = []
-        variable_manager = VariableManager(self.pipeline.repo_path)
         for v, vtype in self.output_variables.items():
             if vtype is not pd.DataFrame:
                 continue
-            data = variable_manager.get_variable(
+            data = self.pipeline.variable_manager.get_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 v,
@@ -518,7 +522,7 @@ class Block:
             if len(self.output_variables) == 0:
                 return []
         outputs = []
-        variable_manager = VariableManager(self.pipeline.repo_path)
+        variable_manager = self.pipeline.variable_manager
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
             all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
@@ -659,7 +663,7 @@ class Block:
                         transform=False,
                         verbose=False,
                     )
-                    VariableManager(self.pipeline.repo_path).add_variable(
+                    self.pipeline.variable_manager.add_variable(
                         self.pipeline.uuid,
                         self.uuid,
                         uuid,
@@ -678,11 +682,13 @@ class Block:
     def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
-        variable_manager = VariableManager(self.pipeline.repo_path)
-        all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+        all_variables = self.pipeline.variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid,
+        )
         removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
-            variable_manager.add_variable(
+            self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,
                 uuid,
@@ -690,7 +696,7 @@ class Block:
             )
         if override:
             for uuid in removed_variables:
-                variable_manager.delete_variable(
+                self.pipeline.variable_manager.delete_variable(
                     self.pipeline.uuid,
                     self.uuid,
                     uuid,
@@ -770,7 +776,8 @@ class Block:
         for idx, output in enumerate(outputs):
             actual_dtype = type(output)
             expected_dtype = variable_dtypes[idx]
-            if type(output) is not variable_dtypes[idx]:
+            if ((expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or
+                    (expected_dtype == pd.DataFrame and not is_dataframe(output))):
                 raise Exception(
                     f'Validation error for block {self.uuid}: '
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '
