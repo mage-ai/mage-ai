@@ -23,7 +23,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 
-import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { ASIDE_HEADER_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close } from '@oracle/icons';
 import { FULL_WIDTH_VIEWS, MESSAGE_VIEWS, ViewKeyEnum } from './constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
@@ -33,7 +33,6 @@ import {
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
-import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { WEBSOCKT_URL } from '@utils/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
@@ -95,7 +94,7 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const heightOffset = ASIDE_HEADER_HEIGHT + SCROLLBAR_WIDTH;
+  const heightOffset = ASIDE_HEADER_HEIGHT;
   const pipelineUUID = pipeline?.uuid;
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>(null);
@@ -172,13 +171,13 @@ function Sidekick({
 
   const executePipeline = useCallback(() => {
     sendMessage(JSON.stringify({
-      pipeline_uuid: pipelineUUID,
       execute_pipeline: true,
-    }))
+      pipeline_uuid: pipelineUUID,
+    }));
   }, [
     pipelineUUID,
     sendMessage,
-  ])
+  ]);
 
   return (
     <>
@@ -234,7 +233,7 @@ function Sidekick({
           <DataTable
             columnHeaderHeight={TABLE_COLUMN_HEADER_HEIGHT}
             columns={columns}
-            height={heightWindow - heightOffset}
+            height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
             noBorderBottom
             noBorderLeft
             noBorderRight

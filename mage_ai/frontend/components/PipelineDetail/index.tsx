@@ -36,6 +36,7 @@ import {
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -75,9 +76,12 @@ type PipelineDetailProps = {
   runningBlocks: BlockType[];
   savePipelineContent: () => void;
   selectedBlock: BlockType;
+  setActiveSidekickView: (view: ViewKeyEnum) => void;
+  setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
+  setSelectedOutputBlock: (block: BlockType) => void;
   setTextareaFocused: (value: boolean) => void;
   textareaFocused: boolean;
   widgets: BlockType[];
@@ -108,9 +112,12 @@ function PipelineDetail({
   selectedBlock,
   setEditingBlock,
   setMessages,
+  setActiveSidekickView,
+  setOutputBlocks,
   setPipelineContentTouched,
   setRunningBlocks,
   setSelectedBlock,
+  setSelectedOutputBlock,
   setTextareaFocused,
   textareaFocused,
   widgets,
@@ -316,9 +323,12 @@ function PipelineDetail({
               runBlock={runBlock}
               runningBlocks={runningBlocks}
               selected={selected}
+              setActiveSidekickView={setActiveSidekickView}
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
+              setOutputBlocks={setOutputBlocks}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+              setSelectedOutputBlock={setSelectedOutputBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={selected && textareaFocused}
               widgets={widgets}

@@ -1,4 +1,5 @@
 from enum import Enum
+from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
@@ -15,6 +16,7 @@ import pandas as pd
 class VariableType(str, Enum):
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
+    SPARK_DATAFRAME = 'spark_dataframe'
 
 
 class Variable:
@@ -50,14 +52,19 @@ class Variable:
     def write_data(self, data: Any) -> None:
         if self.variable_type is None and type(data) is pd.DataFrame:
             self.variable_type = VariableType.DATAFRAME
+        elif is_spark_dataframe(data):
+            self.variable_type = VariableType.SPARK_DATAFRAME
+
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
+        elif self.variable_type == VariableType.SPARK_DATAFRAME:
+            self.__write_spark_parquet(data)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             self.__write_dataframe_analysis(data)
         else:
             self.__write_json(data)
 
-    def read_data(self, sample: bool = False, sample_count: int = None) -> Any:
+    def read_data(self, sample: bool = False, sample_count: int = None, spark=None) -> Any:
         if self.variable_type is None and os.path.exists(
             os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
         ):
@@ -66,6 +73,8 @@ class Variable:
 
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
+        elif self.variable_type == VariableType.SPARK_DATAFRAME:
+            return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
@@ -131,6 +140,19 @@ class Variable:
                 df = df.iloc[:sample_count]
         return df
 
+    def __read_spark_parquet(self, sample: bool = False, sample_count: int = None, spark=None):
+        if spark is None:
+            return None
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
+        return (
+            spark.read
+            .format('csv')
+            .option('header', 'true')
+            .option('inferSchema', 'true')
+            .option('delimiter', ',')
+            .load(variable_path)
+        )
+
     def __write_parquet(self, data: pd.DataFrame) -> None:
         df_output = data.copy()
         # Clean up data types since parquet doesn't support mixed data types
@@ -148,6 +170,15 @@ class Variable:
         df_output.to_parquet(os.path.join(variable_path, 'data.parquet'))
         df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
         df_sample_output.to_parquet(os.path.join(variable_path, 'sample_data.parquet'))
+
+    def __write_spark_parquet(self, data) -> None:
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
+        (
+            data.write
+            .option('header', 'True')
+            .mode('overwrite')
+            .csv(variable_path)
+        )
 
     def __read_dataframe_analysis(self) -> Dict[str, Dict]:
         """

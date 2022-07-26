@@ -3,8 +3,9 @@ from mage_ai.data_preparation.models.constants import (
     CUSTOM_EXECUTION_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
 from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient, KernelManager
@@ -51,6 +52,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         output = message.get('output')
         global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
+        kernel_name = message.get('kernel_name', DEFAULT_KERNEL_NAME)
 
         run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
@@ -105,11 +107,18 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     block_uuid,
                     custom_code,
                     global_vars,
+                    analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
+                    kernel_name=kernel_name,
+                    pipeline_config=pipeline.get_config_from_yaml(),
+                    repo_config=get_repo_config().to_dict(),
                     run_upstream=run_upstream,
+                    update_status=False if kernel_name == KernelName.PYSPARK else True,
                     widget=widget,
                 )
-
-            msg_id = client.execute(add_internal_output_info(code))
+            if kernel_name == KernelName.PYTHON3:
+                msg_id = client.execute(add_internal_output_info(code))
+            else:
+                msg_id = client.execute(code)
 
             value = dict(
                 block_uuid=block_uuid,

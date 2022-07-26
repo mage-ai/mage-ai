@@ -370,6 +370,7 @@ function KeyboardShortcutButton({
   linkProps,
   loading,
   mutedDisabled,
+  noHover,
   onClick: onClickProp,
   type = ButtonTypeEnum.BUTTON,
   useModelTheme,
@@ -424,7 +425,7 @@ function KeyboardShortcutButton({
             disabled={disabled || mutedDisabled}
             fitContentWidth={fitContentWidth}
             inverted={inverted}
-            noHover={!onClick && !(asHref || linkHref) && type === ButtonTypeEnum.BUTTON}
+            noHover={(!onClick || noHover) && !(asHref || linkHref) && type === ButtonTypeEnum.BUTTON}
             onClick={(event) => {
               logEventCustom(logEvent, eventType, { eventProperties, userProperties });
               onClick?.(event);

@@ -36,6 +36,7 @@ export type ButtonProps = {
   danger?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  highlightOnHover?: boolean;
   iconOnly?: boolean;
   id?: string;
   large?: boolean;
@@ -158,7 +159,13 @@ const ButtonStyle = styled.button<{
   `}
 
   ${props => props.transparent && `
-    background-color: transparent; !important
+    background-color: transparent;
+  `}
+
+  ${props => props.highlightOnHover && `
+    &:hover {
+      background-color: ${(props.theme.interactive || light.interactive).hoverBorder};
+    }
   `}
 
   ${props => !props.disabled && !props.notClickable && `

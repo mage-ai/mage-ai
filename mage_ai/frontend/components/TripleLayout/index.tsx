@@ -1,9 +1,7 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
-  useState,
 } from 'react';
 import NextHead from 'next/head';
 
@@ -11,7 +9,6 @@ import Button from '@oracle/elements/Button';
 import ClientOnly from '@hocs/ClientOnly';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
 import {
@@ -20,6 +17,7 @@ import {
   AfterInnerStyle,
   AfterStyle,
   AsideHeaderStyle,
+  AsideSubheaderStyle,
   BEFORE_MIN_WIDTH,
   BeforeInnerStyle,
   BeforeStyle,
@@ -40,7 +38,6 @@ import {
   set,
 } from '@storage/localStorage';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { pauseEvent } from '@utils/events';
 import { useWindowSize } from '@utils/sizes';
 
 type TripleLayoutProps = {
@@ -48,6 +45,7 @@ type TripleLayoutProps = {
   afterHeader?: any;
   afterHidden: boolean;
   afterMousedownActive: boolean;
+  afterSubheader?: any;
   afterWidth: number;
   before?: any;
   beforeHeader?: any;
@@ -70,6 +68,7 @@ function TripleLayout({
   afterHeader,
   afterHidden,
   afterMousedownActive,
+  afterSubheader,
   afterWidth,
   before,
   beforeHeader,
@@ -358,6 +357,17 @@ function TripleLayout({
               {!afterHidden && afterHeader}
             </FlexContainer>
           </AsideHeaderStyle>
+
+          {!afterHidden && afterSubheader && (
+            <AsideSubheaderStyle
+              style={{
+                width: afterWidthFinal,
+              }}
+              visible={afterHidden}
+            >
+              {afterSubheader}
+            </AsideSubheaderStyle>
+          )}
 
           <AfterInnerStyle
             noScrollbarTrackBackground
