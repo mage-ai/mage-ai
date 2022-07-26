@@ -13,6 +13,7 @@ import {
   ChevronRight,
   FileFill,
   Folder as FolderIcon,
+  NavGraph,
   Pipeline,
 } from '@oracle/icons';
 import { ContextAreaProps } from '@components/ContextMenu';
@@ -96,12 +97,14 @@ function Folder({
   let IconEl = FileFill;
   if (isPipelineFolder && !disabled) {
     IconEl = Pipeline;
+  } else if (name === FOLDER_NAME_CHARTS) {
+    IconEl = NavGraph;
   } else if (children) {
     IconEl = FolderIcon;
   }
 
   let color;
-  if (children && BLOCK_TYPES.includes(singularize(name))) {
+  if (children && BLOCK_TYPES.includes(singularize(name)) && singularize(name) !== BlockTypeEnum.CHART) {
     color = getColorsForBlockType(singularize(name), { theme }).accent;
   }
 
@@ -225,8 +228,8 @@ function Folder({
         <Text
           color={color}
           default={!color && !disabled}
-          monospace
           disabled={disabled}
+          monospace
           small
         >
           {name}
