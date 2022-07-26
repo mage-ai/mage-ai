@@ -511,7 +511,7 @@ function Table({
           outerRef={refListOuter}
           style={{
             maxHeight: maxHeight,
-            overflow: disableScrolling ? 'hidden' : 'auto',
+            pointerEvents: disableScrolling ? 'none' : null,
           }}
         >
           {RenderRow}

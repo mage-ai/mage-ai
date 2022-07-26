@@ -79,39 +79,6 @@ function CodeOutput({
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
-  const createDataTableElement = useCallback(({
-    columns,
-    index,
-    rows,
-    shape,
-  }) => rows.length >= 1 && (
-    <>
-      <DataTable
-        columns={columns}
-        disableScrolling={!selected}
-        index={index}
-        maxHeight={UNIT * 49.5}
-        noBorderBottom
-        noBorderLeft
-        noBorderRight
-        noBorderTop
-        rows={rows}
-        // Remove border 2px and padding from each side
-        width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
-      />
-      {shape && (
-        <Spacing ml={1} my={1}>
-          <Text>
-            {`${shape[0]} rows x ${shape[1]} columns`}
-          </Text>
-        </Spacing>
-      )}
-    </>
-  ), [
-    selected,
-    mainContainerWidth,
-  ]);
-
   const internalOutputRegex = /\[__internal_output__\]/;
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
@@ -138,6 +105,38 @@ function CodeOutput({
   ]);
 
   const content = useMemo(() => {
+    const createDataTableElement = ({
+      columns,
+      index,
+      rows,
+      shape,
+    }, {
+      selected: selectedProp,
+    }) => rows.length >= 1 && (
+      <>
+        <DataTable
+          columns={columns}
+          disableScrolling={!selectedProp}
+          index={index}
+          maxHeight={UNIT * 49.5}
+          noBorderBottom
+          noBorderLeft
+          noBorderRight
+          noBorderTop
+          rows={rows}
+          // Remove border 2px and padding from each side
+          width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
+        />
+        {shape && (
+          <Spacing ml={1} my={1}>
+            <Text>
+              {`${shape[0]} rows x ${shape[1]} columns`}
+            </Text>
+          </Spacing>
+        )}
+      </>
+    );
+
     let isTable = false;
 
     const arrContent = combinedMessages?.map(({
@@ -176,12 +175,15 @@ function CodeOutput({
             } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-              displayElement = createDataTableElement(dataDisplay);
+              displayElement = createDataTableElement(dataDisplay, { selected });
               isTable = true;
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
-          displayElement = createDataTableElement(isJsonString(data) ? JSON.parse(data) : data);
+          displayElement = createDataTableElement(
+            isJsonString(data) ? JSON.parse(data) : data,
+            { selected },
+          );
           isTable = true;
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
           displayElement = (
@@ -224,6 +226,8 @@ function CodeOutput({
   }, [
     combinedMessages,
     contained,
+    mainContainerWidth,
+    selected,
   ]);
 
   return (
