@@ -382,6 +382,13 @@ function CodeBlockProps({
   );
 
   const buildBlockMenu = (b: BlockType) => {
+    const upstreamBlocks = [];
+    const currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);
+    const previousBlock = blocks[currentIndex - 1];
+    if (previousBlock) {
+      upstreamBlocks.push(previousBlock.uuid);
+    }
+
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
         {
@@ -392,6 +399,7 @@ function CodeBlockProps({
               block: {
                 ...b,
                 type: blockType,
+                upstream_blocks: upstreamBlocks,
               },
             }),
             uuid: `block_menu/scratchpad/convert_to/${blockType}`,
