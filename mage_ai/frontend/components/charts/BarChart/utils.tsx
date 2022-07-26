@@ -11,7 +11,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BLUE, GREEN, LIME, NAVY, PEACH, PINK, PURPLE, RED, YELLOW } from '@oracle/styles/colors/main';
 import { REGULAR, SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { ThemeType } from '@oracle/styles/themes/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { isNumeric } from '@utils/string';
 
 export const yKey = '__y';
@@ -20,9 +20,9 @@ const MAX_FIELDS_DISPLAYED: number = 50;
 const MAX_LABEL_LENGTH: number = 20;
 
 const defaultMargin = {
-  bottom: 5 * UNIT,
-  left: 3 * UNIT,
-  right: 20 * UNIT,
+  bottom: UNIT * 3,
+  left: UNIT * PADDING_UNITS,
+  right: UNIT * PADDING_UNITS,
   top: 0,
 };
 
@@ -86,7 +86,7 @@ export function buildSharedProps({
   const dataYSerialized = useMemo(() => data.map(ySerialize), [data, ySerialize]);
   const yScale = scaleBand<string>({
     domain: dataYSerialized,
-    padding: 0.35,
+    padding: 0.1,
   });
   const y1Scale = scaleBand({
     domain: xKeys,
@@ -131,11 +131,11 @@ export function buildSharedProps({
   } else if (maxTickValueCharacterLength * 6 >= margin.right) {
     margin.right += maxTickValueCharacterLength * 3.75;
   }
+  margin.left += maxTickValueCharacterLength * 7;
 
   // bounds
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
-  margin.left += maxTickValueCharacterLength * 7;
+  const xMax = width - (margin.left + margin.right);
+  const yMax = height - (margin.top + margin.bottom);
 
   if (orientationVertical) {
     yScale.rangeRound([0, xMax]);

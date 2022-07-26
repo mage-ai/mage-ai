@@ -98,6 +98,7 @@ function ChartController({
           };
         }, {}),
       }));
+
       if (SortOrderEnum.ASCENDING === ySortOrder) {
         xy = sortByKey(xy, d => d[metricName], { ascending: false });
       } else if (SortOrderEnum.DESCENDING === ySortOrder) {
@@ -107,14 +108,8 @@ function ChartController({
       const sharedProps = {
         data: xy,
         height: CHART_HEIGHT_DEFAULT,
-        margin: {
-          bottom: UNIT * 3,
-          left: UNIT * 1,
-          right: UNIT * 3,
-          top: 0,
-        },
-        xNumTicks: 3,
         width,
+        xNumTicks: 3,
       };
 
       if (ChartStyleEnum.HORIZONTAL === chartStyle) {
@@ -128,64 +123,8 @@ function ChartController({
       }
 
       return (
-        <>
-          <BarChartVertical
-            {...sharedProps}
-            xAxisLabel={xAxisLabel}
-            xLabelFormat={ts => {
-              if (isTimeSeries) {
-                return moment(ts * 1000).format(DATE_FORMAT_SHORT);
-              }
-
-              return ts;
-            }}
-            yAxisLabel={yAxisLabel}
-            yNumTicks={3}
-          />
-
-        <Histogram
-          data={x.map((xValue , idx: number) => [
-            xValue,
-            y[0][idx],
-          ])}
-          height={CHART_HEIGHT_DEFAULT}
-          width={width}
-          large
-          margin={{
-            left: UNIT * 5,
-            right: UNIT * 1,
-          }}
-          renderTooltipContent={([xValue, yValue]) => {
-            let xLabel = configuration[VARIABLE_NAME_X];
-            if (configuration[VARIABLE_NAME_GROUP_BY]) {
-              xLabel = configuration[VARIABLE_NAME_GROUP_BY].map(String).join(', ');
-            }
-
-            let xValueText = xValue;
-            if (isTimeSeries) {
-              xValueText = moment(xValue * 1000).format(variableDateFormat);
-            }
-
-            return (
-              <Text inverted monospace small>
-                {metricName}: {yValue?.toFixed(4)}
-                <br />
-                {xLabel}: {xValueText}
-              </Text>
-            );
-          }}
-          showAxisLabels
-          showYAxisLabels
-          showZeroes
-          sortData={(d) => {
-            if (SortOrderEnum.ASCENDING === ySortOrder) {
-              return sortByKey(d, '[1]', { ascending: true });
-            } else if (SortOrderEnum.DESCENDING === ySortOrder) {
-              return sortByKey(d, '[1]', { ascending: false });
-            }
-
-            return d;
-          }}
+        <BarChartVertical
+          {...sharedProps}
           xAxisLabel={xAxisLabel}
           xLabelFormat={ts => {
             if (isTimeSeries) {
@@ -195,9 +134,8 @@ function ChartController({
             return ts;
           }}
           yAxisLabel={yAxisLabel}
+          yNumTicks={3}
         />
-
-        </>
       );
     }
   } else if (ChartTypeEnum.HISTOGRAM === chartType) {

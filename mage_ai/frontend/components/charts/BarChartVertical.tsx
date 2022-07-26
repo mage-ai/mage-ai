@@ -71,19 +71,19 @@ const BarChartVertical = withTooltip(({
         <Bar
           fill="transparent"
           height={height - (margin.top + margin.bottom)}
-          onMouseLeave={() => hideTooltip?.()}
+          onMouseLeave={() => hideTooltip()}
           onMouseMove={handleTooltip}
           onTouchMove={handleTooltip}
           onTouchStart={handleTooltip}
           rx={14}
-          width={width - margin.left}
+          width={width - (margin.left + margin.right)}
           x={margin.left}
           y={0}
         />
 
         <Group
+          left={margin.left / 2}
           top={margin.top}
-          left={margin.left}
         >
           <BarGroup
             color={colorScale}
@@ -99,7 +99,7 @@ const BarChartVertical = withTooltip(({
               barGroups.map((barGroup) => (
                 <Group
                   key={`bar-group-horizontal-${barGroup.index}-${barGroup.x0}`}
-                  left={barGroup.x0 + (margin.left / 2)}
+                  left={barGroup.x0 + margin.left}
                   top={margin.top}
                 >
                   {barGroup.bars.map((bar) => {
@@ -186,6 +186,11 @@ const BarChartVertical = withTooltip(({
           }}
           top={tooltipTop}
         >
+          <Text inverted small>
+            {xLabelFormat && xLabelFormat(ySerialize(tooltipData))}
+            {!xLabelFormat && ySerialize(tooltipData)}
+          </Text>
+
           {renderTooltipContent && renderTooltipContent(tooltipData)}
 
           {!renderTooltipContent && Object.entries(tooltipData).map(([k, v]) => keyForYData !== k && (

@@ -109,8 +109,6 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   return width < 10 ? null : (
     <div>
       <svg height={height} width={width}>
-        {/* <rect width={width} height={height} fill="gray" /> */}
-
         <Bar
           fill="transparent"
           height={height - (margin.top + margin.bottom)}
@@ -119,7 +117,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           onTouchMove={handleTooltip}
           onTouchStart={handleTooltip}
           rx={14}
-          width={width - margin.left}
+          width={width - (margin.left + margin.right)}
           x={margin.left}
           y={0}
         />
