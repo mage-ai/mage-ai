@@ -19,6 +19,11 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
+export const BLOCK_TYPES_NO_DATA_TABLE = [
+  BlockTypeEnum.CHART,
+  BlockTypeEnum.SCRATCHPAD,
+];
+
 export enum StatusTypeEnum {
   EXECUTED = 'executed',
   FAILED = 'failed',

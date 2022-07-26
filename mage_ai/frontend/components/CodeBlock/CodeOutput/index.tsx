@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 
-import BlockType, { StatusTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BLOCK_TYPES_NO_DATA_TABLE,
+  StatusTypeEnum,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import DataTable from '@components/DataTable';
@@ -314,36 +317,30 @@ function CodeOutput({
                     )}
                   </FlexContainer>
                 </Tooltip>
-                {!hasError &&
+                {!hasError && !BLOCK_TYPES_NO_DATA_TABLE.includes(blockType) &&
                   <Spacing pl={1}>
-                    <Tooltip
-                      appearAbove
-                      appearBefore
-                      block
-                      label="Click to expand table"
-                      widthFitContent
+                    <Button
+                      afterIcon={<Expand muted size={UNIT * 1.75} />}
+                      basic
+                      noPadding
+                      onClick={() => {
+                        addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
+                        setActiveSidekickView(ViewKeyEnum.DATA);
+                        setOutputBlocks((prevOutputBlocks: BlockType[]) => {
+                          if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
+                            setSelectedOutputBlock(block);
+                            return prevOutputBlocks.concat(block);
+                          } else {
+                            return prevOutputBlocks;
+                          }
+                        });
+                      }}
+                      transparent
                     >
-                      <Button
-                        basic
-                        iconOnly
-                        noPadding
-                        onClick={() => {
-                          addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                          setActiveSidekickView(ViewKeyEnum.DATA);
-                          setOutputBlocks((prevOutputBlocks: BlockType[]) => {
-                            if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
-                              setSelectedOutputBlock(block);
-                              return prevOutputBlocks.concat(block);
-                            } else {
-                              return prevOutputBlocks;
-                            }
-                          });
-                        }}
-                        transparent
-                      >
-                        <Expand muted size={UNIT * 1.75} />
-                      </Button>
-                    </Tooltip>
+                      <Text default>
+                        Expand table
+                      </Text>
+                    </Button>
                   </Spacing>
                 }
               </FlexContainer>
