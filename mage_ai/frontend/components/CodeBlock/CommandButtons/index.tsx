@@ -54,6 +54,7 @@ type CommandButtonsProps = {
   runBlock: (payload: {
     block: BlockType;
     code?: string;
+    disableReset?: boolean;
     runDownstream?: boolean;
     runUpstream?: boolean;
   }) => void;
