@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        action_type=ActionType.LAST,
+        type=ActionType.LAST,
         action_code='',  # Enter further filtering condition on rows
         arguments=[],  # Enter the columns to compute aggregate over
         axis=Axis.COLUMN,
