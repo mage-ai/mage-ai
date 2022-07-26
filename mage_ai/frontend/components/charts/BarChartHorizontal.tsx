@@ -40,6 +40,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   keyForYData = yKey,
   large,
   margin: marginOverride = {},
+  renderNoDataText,
   renderTooltipContent,
   showTooltip,
   tooltipData,
@@ -81,6 +82,20 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
   return width < 10 ? null : (
     <div>
       <svg height={height} width={width}>
+        {renderNoDataText && !data?.length && (
+          <text
+            fill={colors.active}
+            dominantBaseline="middle"
+            textAnchor="middle"
+            fontFamily={FONT_FAMILY_REGULAR}
+            fontSize={fontSize}
+            x="50%"
+            y="50%"
+          >
+            {renderNoDataText()}
+          </text>
+        )}
+
         <Bar
           fill="transparent"
           height={height - (margin.top + margin.bottom)}
@@ -91,7 +106,7 @@ const BarChartHorizontal = withTooltip<BarStackHorizontalProps, TooltipData>(({
           rx={14}
           width={width - (margin.left + margin.right)}
           x={margin.left}
-          y={0}
+          y={margin.top}
         />
 
         <Group
@@ -242,7 +257,14 @@ function BarStackHorizontalContainer({
 
   return (
     <>
-      <div style={{ display: 'flex', height: parentHeight,  marginBottom: UNIT, width: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          height: parentHeight,
+          marginBottom: xAxisLabel ? UNIT : null,
+          width: '100%',
+        }}
+      >
         {yAxisLabel && (
           <FlexContainer alignItems="center" fullHeight justifyContent="center" width={28}>
             <YAxisLabelContainer>

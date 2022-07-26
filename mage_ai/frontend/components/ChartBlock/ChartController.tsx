@@ -112,6 +112,7 @@ function ChartController({
       const sharedProps = {
         data: xy,
         height: chartHeight,
+        renderNoDataText: () => 'No data matching query',
         width,
         xNumTicks: 3,
       };

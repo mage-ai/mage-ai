@@ -73,8 +73,8 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
           onTouchStart={handleTooltip}
           rx={14}
           width={width - (margin.left + margin.right)}
-          x={margin.left}
-          y={0}
+          x={margin.left * 1.5}
+          y={margin.top * 2}
         />
 
         <Group
@@ -158,7 +158,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
             <Line
               from={{
                 x: tooltipLeft,
-                y: margin.top,
+                y: margin.top * 2,
               }}
               pointerEvents="none"
               stroke={colors.active}
@@ -166,7 +166,7 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
               strokeWidth={1}
               to={{
                 x: tooltipLeft,
-                y: yMax + margin.top,
+                y: yMax + (margin.top * 2),
               }}
             />
           </g>
@@ -215,7 +215,7 @@ function BarChartVerticalContainer({
         style={{
           display: 'flex',
           height: parentHeight,
-          marginBottom: UNIT,
+          marginBottom: xAxisLabel ? UNIT : null,
           width: '100%',
         }}
       >
