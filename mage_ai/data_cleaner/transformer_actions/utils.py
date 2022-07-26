@@ -21,7 +21,7 @@ def build_action_variables(
 
     Args:
         df (DataFrame): Data frame to build transformer actions for.
-        ctypes (Dict[str, ColumnType], optional): Column type for each column in dataframe.
+        ctypes (Dict[str, ColumnType], optional): Column type for each column in data frame.
         Defaults to None, in which case the column types will be automatically inferred.
         columns (List[str], options): Columns to generate action variables for. Defaults to None,
         in which case action variables are generated for all columns of the data frame.
@@ -47,10 +47,10 @@ def build_action_variables(
 
 def build_transformer_action(
     df: DataFrame,
-    action_type: Union[ActionType, str],
-    action_arguments: List[str] = [],
+    type: Union[ActionType, str],
+    arguments: List[str] = [],
     action_code: str = '',
-    action_options: Dict = {},
+    options: Dict = {},
     axis: Union[Axis, str] = Axis.COLUMN,
     outputs: List[Dict] = [],
 ) -> Dict:
@@ -62,11 +62,11 @@ def build_transformer_action(
 
     Args:
         df (DataFrame): The data frame to build a transformer action payload for.
-        action_type (Union[ActionType, str]): Transformer action to perform.
-        action_arguments (List[str], optional): Columns/Rows to perform this action on.
+        type (Union[ActionType, str]): Transformer action to perform.
+        arguments (List[str], optional): Columns/Rows to perform this action on.
         Defaults to [].
         action_code (str, optional): Special code or query to execute with action. Defaults to ''.
-        action_options (Dict, optional): Options specifying behavior of action. Defaults to {}.
+        options (Dict, optional): Options specifying behavior of action. Defaults to {}.
         axis (Union[Axis, str], optional): Axis of the data frame to apply the action to.
         Defaults to Axis.COLUMN.
         outputs (List[Dict], optional): Specifies metadata of newly created columns.
@@ -77,10 +77,10 @@ def build_transformer_action(
     """
     action_variables = build_action_variables(df)
     return dict(
-        action_type=action_type,
-        action_arguments=action_arguments,
+        action_type=type,
+        action_arguments=list(arguments),
         action_code=action_code,
-        action_options=action_options,
+        action_options=options,
         action_variables=action_variables,
         axis=axis,
         outputs=outputs,

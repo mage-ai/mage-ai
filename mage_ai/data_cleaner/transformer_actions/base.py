@@ -15,6 +15,7 @@ try:
     from mage_ai.data_cleaner.transformer_actions.spark.transformers import (
         transform as transform_spark,
     )
+
     PYSPARK = True
 except ImportError:
     PYSPARK = False
@@ -126,7 +127,10 @@ class BaseAction:
 
         if self.action_type == ActionType.FILTER:
             return df.loc[df_output.index][df_output.columns]
-        elif self.action_type == ActionType.ADD:
+        elif self.action_type == ActionType.ADD and not (
+            len(self.action['action_arguments']) == 0
+            or self.action['action_options']['udf'] is None
+        ):
             output_cols = [f['uuid'] for f in self.action['outputs']]
             df[output_cols] = df_output[output_cols]
             return df

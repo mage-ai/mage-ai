@@ -1,10 +1,4 @@
-from mage_ai.data_cleaner.transformer_actions.constants import (
-    ActionType,
-    ACTION_CODE_TYPES,
-    ACTION_OPTION_TYPES,
-    Axis,
-    OUTPUT_TYPES,
-)
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.templates.utils import (
     read_template_file,
@@ -87,6 +81,7 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
     action_type = config.get('action_type')
     axis = config.get('axis')
     data_source = config.get('data_source')
+    existing_code = config.get('existing_code', '')
     suggested_action = config.get('suggested_action')
 
     if suggested_action:
@@ -95,11 +90,11 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
     if data_source is not None:
         return __fetch_transformer_data_warehouse_template(data_source)
     elif action_type is not None and axis is not None:
-        return __fetch_transformer_action_template(action_type, axis)
+        return __fetch_transformer_action_template(action_type, axis, existing_code)
     else:
         return (
             template_env.get_template('transformers/default.jinja').render(
-                code=config.get('existing_code', ''),
+                code=existing_code,
             )
             + '\n'
         )
@@ -126,20 +121,14 @@ def __fetch_transformer_data_warehouse_template(data_source: DataSource):
     )
 
 
-def __fetch_transformer_action_template(action_type: ActionType, axis: Axis):
-    template = template_env.get_template('transformers/transformer_action_fmt.jinja')
-    additional_params = []
-    if action_type in ACTION_CODE_TYPES:
-        additional_params = ['action_code=\'your_action_code\'']
-    if action_type in ACTION_OPTION_TYPES:
-        # TODO: Automatically generate action options from action type
-        additional_params.append('action_options={\'your_action_option\': None}')
-    if action_type in OUTPUT_TYPES:
-        additional_params.append('outputs=[\'your_output_metadata\']')
-    additional_params_str = ',\n        '.join(additional_params)
-    if additional_params_str != '':
-        additional_params_str = '\n        ' + additional_params_str
-    return template.render(action_type=action_type, axis=axis, kwargs=additional_params_str) + '\n'
+def __fetch_transformer_action_template(action_type: ActionType, axis: Axis, existing_code: str):
+    try:
+        template = template_env.get_template(
+            f'transformers/transformer_actions/{axis}/{action_type}.py'
+        )
+    except FileNotFoundError:
+        template = template_env.get_template('transformers/default.jinja')
+    return template.render(code=existing_code) + '\n'
 
 
 def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:

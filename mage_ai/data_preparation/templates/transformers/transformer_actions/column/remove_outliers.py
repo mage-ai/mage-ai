@@ -10,13 +10,17 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
-    Execute Transformer Action: {{ action_type }}
+    Execute Transformer Action: ActionType.REMOVE_OUTLIERS
+
+    Warning: This method uses relative outlier checks, and so repeated executions of this
+    transformer action will continue to remove data.
     """
     action = build_transformer_action(
         df,
-        action_type=ActionType.{{ action_type.upper() }},
-        action_arguments=[],
-        axis=Axis.{{ axis.upper() }},{{ kwargs }}
+        type=ActionType.REMOVE_OUTLIERS,
+        arguments=df.columns,  # Specify columns to remove outliers from
+        axis=Axis.COLUMN,
+        options={'method': 'auto'},  # Specify algorithm to use for outlier removal
     )
 
     return BaseAction(action).execute(df)

@@ -73,6 +73,9 @@ def __get_column_type(df, cache, column_name):
 
 
 def query_with_action_code(df, action_code, kwargs):
+    if action_code == '':
+        return df
+
     transformed_types, original_types = {}, {}
     original_df, original_merged = kwargs.get('original_df', None), False
     reconstructed_code = []
