@@ -18,7 +18,10 @@ import Tooltip from '@oracle/components/Tooltip';
 import dark from '@oracle/styles/themes/dark';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import { ContainerStyle } from './index.style';
-import { DEFAULT_SETTINGS_BY_CHART_TYPE } from '@components/ChartBlock/constants';
+import {
+  CHART_TEMPLATES,
+  DEFAULT_SETTINGS_BY_CHART_TYPE,
+} from '@components/ChartBlock/constants';
 import { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import {
   Close,
@@ -120,6 +123,40 @@ function CommandButtons({
     };
   }), [
     CHART_TYPES,
+    block,
+    runBlock,
+  ]);
+  const chartTemplateMenuItems = useMemo(() => CHART_TEMPLATES.map(({
+    label,
+    widgetTemplate,
+  }) => {
+    const widget = {
+      ...widgetTemplate(),
+      type: BlockTypeEnum.CHART,
+      upstream_blocks: [block.uuid],
+    };
+
+    return {
+      label,
+      onClick: () => addWidget(widget, {
+        onCreateCallback: (widget: BlockType) => {
+          if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
+            runBlock({
+              block: widget,
+              code: widget.content,
+            });
+          } else {
+            runBlock({
+              block,
+              runDownstream: true,
+            });
+          }
+        },
+      }),
+      uuid: label(),
+    };
+  }), [
+    CHART_TEMPLATES,
     block,
     runBlock,
   ]);
@@ -252,7 +289,20 @@ function CommandButtons({
               open={showAddCharts}
             >
               <FlyoutMenu
-                items={chartMenuItems}
+                items={[
+                  {
+                    isGroupingTitle: true,
+                    label: () => 'Custom charts',
+                    uuid: 'custom_charts',
+                  },
+                  ...chartMenuItems,
+                  {
+                    isGroupingTitle: true,
+                    label: () => 'Templates',
+                    uuid: 'chart_templates',
+                  },
+                  ...chartTemplateMenuItems,
+                ]}
                 left={-UNIT * 25}
                 onClickCallback={() => setShowAddCharts(false)}
                 open={showAddCharts}

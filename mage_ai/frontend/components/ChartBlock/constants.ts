@@ -326,3 +326,27 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
     [VARIABLE_NAME_Y]: (): string => 'must be a list of lists containing booleans, dates, integers, floats, or strings.',
   },
 };
+
+export const CHART_TEMPLATES = [
+  {
+    label: () => 'Missing values',
+    widgetTemplate: () => ({
+      configuration: {
+        [VARIABLE_NAME_X]: 'columns_with_mising_values',
+        [VARIABLE_NAME_Y]: 'percentage_missing',
+        [VARIABLE_NAME_CHART_STYLE]: ChartStyleEnum.HORIZONTAL,
+        [VARIABLE_NAME_Y_SORT_ORDER]: SortOrderEnum.DESCENDING,
+        chart_type: ChartTypeEnum.BAR_CHART,
+      },
+      content: `number_of_rows = len(df_1.index)
+columns_with_mising_values = []
+percentage_missing = []
+for col in df_1.columns:
+    missing = df_1[col].isna().sum()
+    if missing > 0:
+        columns_with_mising_values.append(col)
+        percentage_missing.append(100 * missing / number_of_rows)
+`,
+    }),
+  },
+];
