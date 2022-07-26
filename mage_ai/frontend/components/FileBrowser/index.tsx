@@ -20,7 +20,6 @@ export enum FileContextEnum {
 
 function FileBrowser({
   files,
-  setContextItem,
   ...props
 }: FileBrowserProps, ref) {
   const themeContext = useContext(ThemeContext);
@@ -33,7 +32,6 @@ function FileBrowser({
           file={file}
           key={file.name}
           level={0}
-          setContextItem={setContextItem}
           theme={themeContext}
         />
       ))}

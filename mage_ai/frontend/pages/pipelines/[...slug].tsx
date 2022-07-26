@@ -126,16 +126,23 @@ function PipelineDetailPage({
         pushHistory,
       });
     }
-  }, [
-    activeSidekickView,
-  ]);
+  }, []);
   useEffect(() => {
     if (!activeSidekickView) {
       setActiveSidekickView(ViewKeyEnum.TREE, false);
     }
   }, [activeSidekickView]);
+  
+  const openSidekickView = useCallback((
+    newView: ViewKeyEnum,
+    pushHistory?: boolean,
+  ) => {
+    setActiveSidekickView(newView, pushHistory);
+    setAfterHidden(false);
+  }, [setActiveSidekickView]);
 
   const blockRefs = useRef({});
+  const chartRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
   const mainContainerRef = useRef(null);
@@ -543,7 +550,6 @@ function PipelineDetailPage({
         response, {
           callback: ({
             widget: {
-              type,
               uuid,
             },
           }) => {
@@ -552,9 +558,7 @@ function PipelineDetailPage({
               widgetsPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
-            if (type === BlockTypeEnum.SCRATCHPAD) {
-              fetchFileTree();
-            }
+            fetchFileTree();
           },
           onErrorCallback: ({
             url_parameters: urlParameters,
@@ -844,6 +848,15 @@ function PipelineDetailPage({
         const blockRef = blockRefs.current[`${block.type}s/${block.uuid}.py`];
         blockRef?.current?.scrollIntoView();
       }
+    } else if (blockType === BlockTypeEnum.CHART) {
+      const chart = widgets.find(({ uuid }) => uuid === blockUUID);
+      if (chart) {
+        setSelectedBlock(chart);
+        if (chartRefs?.current) {
+          const chartRef = chartRefs.current[chart.uuid];
+          chartRef?.current?.scrollIntoView();
+        }
+      }
     } else {
       openFile(filePath);
     }
@@ -974,6 +987,7 @@ function PipelineDetailPage({
           resetState();
           router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
         }}
+        openSidekickView={openSidekickView}
         ref={fileTreeRef}
       />
     </ContextMenu>
@@ -991,6 +1005,7 @@ function PipelineDetailPage({
       afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
       blocks={blocks}
+      chartRefs={chartRefs}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
@@ -1073,9 +1088,9 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
+      setActiveSidekickView={setActiveSidekickView}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
-      setActiveSidekickView={setActiveSidekickView}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}

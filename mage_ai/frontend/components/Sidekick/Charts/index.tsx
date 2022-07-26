@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { createRef, useMemo } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import ChartBlock, { ChartPropsShared } from '@components/ChartBlock';
@@ -20,6 +20,7 @@ export type ChartsPropsShared = {
 function Charts({
   blockRefs,
   blocks,
+  chartRefs,
   deleteWidget,
   fetchWidgets,
   messages,
@@ -73,17 +74,21 @@ function Charts({
               : ExecutionStateEnum.QUEUED
              )
             : ExecutionStateEnum.IDLE;
+          
+          chartRefs.current[uuid] = createRef();
 
           return (
             <ChartBlock
               block={block}
               blockRefs={blockRefs}
               blocks={blocks}
+              chartRefs={chartRefs}
               deleteWidget={deleteWidget}
               executionState={executionState}
               key={uuid}
               messages={messages[uuid]}
               onChangeContent={(value: string) => onChangeChartBlock(uuid, value)}
+              ref={chartRefs.current[uuid]}
               runBlock={runBlock}
               runningBlocks={runningBlocks}
               savePipelineContent={savePipelineContent}

@@ -1,4 +1,4 @@
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -13,10 +13,8 @@ import BlockType, {
   OutputType,
   StatusTypeEnum,
 } from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
 import ChartController from './ChartController';
 import Chip from '@oracle/components/Chip';
-import Circle from '@oracle/elements/Circle';
 import CodeEditor, { CodeEditorSharedProps } from '@components/CodeEditor';
 import CodeOutput from '@components/CodeBlock/CodeOutput';
 import Col from '@components/shared/Grid/Col';
@@ -43,7 +41,6 @@ import {
   ChartTypeEnum,
   ConfigurationType,
   VARIABLE_NAMES,
-  VARIABLE_NAME_HEIGHT,
   VARIABLE_NAME_WIDTH_PERCENTAGE,
 } from '@interfaces/ChartBlockType';
 import {
@@ -54,7 +51,6 @@ import {
   VARIABLE_INFO_BY_CHART_TYPE,
 } from './constants';
 import {
-  CHART_HEIGHT_DEFAULT,
   ChartBlockStyle,
   CodeHelperStyle,
   CodeStyle,
@@ -77,6 +73,7 @@ import { isEmptyObject } from '@utils/hash';
 export type ChartPropsShared = {
   blockRefs: any;
   blocks: BlockType[];
+  chartRefs: any;
   deleteWidget: (block: BlockType) => void;
   runBlock: (payload: {
     block: BlockType;
@@ -115,7 +112,7 @@ function ChartBlock({
   textareaFocused,
   updateWidget,
   width,
-}: ChartBlockType) {
+}: ChartBlockType, ref) {
   const refChartContainer = useRef(null);
   const themeContext = useContext(ThemeContext);
   const {
@@ -172,7 +169,7 @@ function ChartBlock({
     chartDataRaw = chartDataRaw.slice(1, chartDataRaw.length - 1);
     chartDataRaw = chartDataRaw
       .replaceAll('\\"', '\"')
-      .replaceAll("\\'", "\'");
+      .replaceAll('\\\'', '\'');
     if (isJsonString(chartDataRaw)) {
       chartData = JSON.parse(chartDataRaw);
     }
@@ -691,7 +688,7 @@ function ChartBlock({
           </Spacing>
         );
       }),
-    }
+    };
   }, {
     noCode: [],
   }), [
@@ -705,12 +702,12 @@ function ChartBlock({
 
   return (
     <Col sm={12} md={12 * widthPercentage}>
-      <ChartBlockStyle>
+      <ChartBlockStyle ref={ref}>
         <Spacing mt={1} px={1}>
           <FlexContainer
             alignItems="center"
-            justifyContent="space-between"
             fullWidth
+            justifyContent="space-between"
           >
             <Select
               compact
@@ -722,7 +719,7 @@ function ChartBlock({
                 };
                 updateWidget(widget);
                 saveAndRun(widget);
-                setUpstreamBlocks(value)
+                setUpstreamBlocks(value);
               }}
               placeholder="Source block"
               small
@@ -957,4 +954,4 @@ function ChartBlock({
   );
 }
 
-export default ChartBlock;
+export default React.forwardRef(ChartBlock);
