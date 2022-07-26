@@ -24,11 +24,11 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
@@ -36,11 +36,11 @@ import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, Close } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
 } from '@components/TripleLayout/index.style';
+import { Add, Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
@@ -56,21 +56,21 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
-import { getWebSocket } from '@api/utils/url';
-import { goToWithQuery } from '@utils/routing';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
+  redirectToFirstPipeline,
   removeCollapsedBlockStates,
   removeDataOutputBlockUUID,
   updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
+import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
+import { getWebSocket } from '@api/utils/url';
+import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { randomNameGenerator } from '@utils/string';
-import { redirectToFirstPipeline } from '@components/PipelineDetail/utils';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
