@@ -435,7 +435,9 @@ class Pipeline:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
         if len(block.downstream_blocks) > 0:
             if any(b.type != BlockType.CHART for b in block.downstream_blocks):
-                downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
+                downstream_block_uuids = [
+                    b.uuid for b in block.downstream_blocks if b.type != BlockType.CHART
+                ]
                 raise Exception(
                     f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
                     '. Please remove the downstream blocks first.'
