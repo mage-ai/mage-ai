@@ -21,12 +21,16 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
       messagesInit[uuid] = outputs.map((output: OutputType) => {
         const {
           sample_data: sampleData,
+          shape: shape,
           text_data: textDataJsonString,
           type,
         } = output || {};
         if (sampleData) {
           return {
-            data: sampleData,
+            data: {
+              shape,
+              ...sampleData,
+            },
             type,
           };
         } else if (textDataJsonString && isJsonString(textDataJsonString)) {

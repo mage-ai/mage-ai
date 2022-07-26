@@ -39,6 +39,7 @@ export interface SampleDataType {
 
 export interface OutputType {
   sample_data: SampleDataType;
+  shape: number[];
   text_data: string;
   type: DataTypeEnum;
   variable_uuid: string;
