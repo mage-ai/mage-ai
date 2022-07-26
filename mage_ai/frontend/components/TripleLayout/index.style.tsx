@@ -137,6 +137,7 @@ export const AsideSubheaderStyle = styled.div<{
 }>`
   border-bottom: 1px solid transparent;
   height: ${ASIDE_HEADER_HEIGHT}px;
+  overflow-x: auto;
 
   ${hideScrollBar()}
 
