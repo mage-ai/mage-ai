@@ -17,4 +17,9 @@ Instructions for running PySpark kernel
 * Update the default kernel to PySpark kernel in [code](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/server/kernels.py#L11).
 * Launch editor with command: `./scripts/start.sh [project_name]`
 
+When using PySpark kernel, we need to specify a s3 path as the variables dir, which will be used to store the output of each block. The vairables dir can be set in project's metadata.yaml file. Example:
+```yaml
+variables_dir: s3://bucket/path
+```
+
 Pipelines built with this kernel can be executed in PySpark environments.
