@@ -284,43 +284,51 @@ class Block:
         run_all_blocks=False,
         update_status=True,
     ):
-        if not run_all_blocks:
-            not_executed_upstream_blocks = list(
-                filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
-            )
-            if len(not_executed_upstream_blocks) > 0:
-                raise Exception(
-                    f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                    f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
-                    'before running the current block.'
+        try:
+            if not run_all_blocks:
+                not_executed_upstream_blocks = list(
+                    filter(lambda b: b.status == BlockStatus.NOT_EXECUTED, self.upstream_blocks)
                 )
-        output = self.execute_block(
-            custom_code=custom_code,
-            global_vars=global_vars,
-            redirect_outputs=redirect_outputs,
-        )
-        block_output = output['output']
-        if BlockType.CHART == self.type:
-            variable_mapping = block_output
-            output = dict(output=simplejson.dumps(
-                block_output,
-                default=encode_complex,
-                ignore_nan=True,
-            ))
-        else:
-            self.__verify_outputs(block_output)
-            variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+                if len(not_executed_upstream_blocks) > 0:
+                    raise Exception(
+                        f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                        f'Please run upstream blocks {list(map(lambda b: b.uuid, not_executed_upstream_blocks))} '
+                        'before running the current block.'
+                    )
+            output = self.execute_block(
+                custom_code=custom_code,
+                global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
+            )
+            block_output = output['output']
+            if BlockType.CHART == self.type:
+                variable_mapping = block_output
+                output = dict(output=simplejson.dumps(
+                    block_output,
+                    default=encode_complex,
+                    ignore_nan=True,
+                ))
+            else:
+                self.__verify_outputs(block_output)
+                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-        self.__store_variables(variable_mapping)
+            self.__store_variables(variable_mapping)
 
-        if update_status:
-            self.status = BlockStatus.EXECUTED
+            if update_status:
+                self.status = BlockStatus.EXECUTED
 
-        if analyze_outputs and BlockType.CHART != self.type:
-            self.__analyze_outputs(variable_mapping)
+            if analyze_outputs and BlockType.CHART != self.type:
+                self.__analyze_outputs(variable_mapping)
+        except Exception as err:
+            if update_status:
+                self.status = BlockStatus.FAILED
+            raise Exception(
+                f'Exception encountered in block {self.uuid}',
+            ).with_traceback(err.__traceback__)
+        finally:
+            if update_status:
+                self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
-        if update_status:
-            self.__update_pipeline_block(widget=BlockType.CHART == self.type)
         return output
 
     async def execute(
@@ -673,8 +681,11 @@ class Block:
     def __store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
-        # all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
-        # removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
+        all_variables = self.pipeline.variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid,
+        )
+        removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
@@ -682,13 +693,13 @@ class Block:
                 uuid,
                 data,
             )
-        # if override:
-        #     for uuid in removed_variables:
-        #         variable_manager.delete_variable(
-        #             self.pipeline.uuid,
-        #             self.uuid,
-        #             uuid,
-        #         )
+        if override:
+            for uuid in removed_variables:
+                self.pipeline.variable_manager.delete_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    uuid,
+                )
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
@@ -764,8 +775,8 @@ class Block:
         for idx, output in enumerate(outputs):
             actual_dtype = type(output)
             expected_dtype = variable_dtypes[idx]
-            if (expected_dtype != VariableType.DATAFRAME and actual_dtype is not expected_dtype or
-                    expected_dtype == VariableType.DATAFRAME and not is_dataframe(output)):
+            if ((expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or
+                    (expected_dtype == pd.DataFrame and not is_dataframe(output))):
                 raise Exception(
                     f'Validation error for block {self.uuid}: '
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '
