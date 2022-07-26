@@ -68,6 +68,7 @@ function Sidekick({
   afterWidth,
   blockRefs,
   blocks,
+  chartRefs,
   deleteWidget,
   editingBlock,
   fetchPipeline,
@@ -313,6 +314,7 @@ function Sidekick({
           <Charts
             blockRefs={blockRefs}
             blocks={blocks}
+            chartRefs={chartRefs}
             deleteWidget={deleteWidget}
             fetchWidgets={fetchWidgets}
             messages={messages}

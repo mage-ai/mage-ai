@@ -142,6 +142,7 @@ function PipelineDetailPage({
   }, [setActiveSidekickView]);
 
   const blockRefs = useRef({});
+  const chartRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
   const mainContainerRef = useRef(null);
@@ -847,6 +848,10 @@ function PipelineDetailPage({
       const chart = widgets.find(({ uuid }) => uuid === blockUUID);
       if (chart) {
         setSelectedBlock(chart);
+        if (chartRefs?.current) {
+          const chartRef = chartRefs.current[chart.uuid];
+          chartRef?.current?.scrollIntoView();
+        }
       }
     } else {
       openFile(filePath);
@@ -996,6 +1001,7 @@ function PipelineDetailPage({
       afterWidth={afterWidthForChildren}
       blockRefs={blockRefs}
       blocks={blocks}
+      chartRefs={chartRefs}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
       fetchPipeline={fetchPipeline}
@@ -1078,9 +1084,9 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
+      setActiveSidekickView={setActiveSidekickView}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
-      setActiveSidekickView={setActiveSidekickView}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
       setRunningBlocks={setRunningBlocks}
