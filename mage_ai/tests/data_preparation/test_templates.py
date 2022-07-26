@@ -160,6 +160,30 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
         self.assertEqual(redshift_template, new_redshift_template)
         self.assertEqual(s3_template, new_s3_template)
 
+    def test_template_generation_data_loader_api(self):
+        expected_template = """from pandas import DataFrame
+import io
+import pandas as pd
+import requests
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_api() -> DataFrame:
+    \"\"\"
+    Template for loading data from API
+    \"\"\"
+    url = ''
+
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.text), sep=',')
+"""
+        config = {'data_source': DataSource.API}
+        api_template = fetch_template_source(BlockType.DATA_LOADER, config)
+        self.assertEqual(api_template, expected_template)
+
     def test_template_generation_transformer_default(self):
         expected_template = """from pandas import DataFrame
 
