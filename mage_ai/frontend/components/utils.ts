@@ -1,3 +1,5 @@
+import { useRouter } from 'next/router';
+
 import {
   COLUMN_QUERY_PARAM,
   SHOW_COLUMNS_QUERY_PARAM,
@@ -5,7 +7,6 @@ import {
 } from '@components/datasets/overview/constants';
 import { PageEnum } from '@components/PageBreadcrumbs';
 import { queryFromUrl } from '@utils/url';
-import { useRouter } from 'next/router';
 
 export const POSITIVE_QUALITY = ['Good', 'Best'];
 export const NEGATIVE_QUALITY = ['Bad', 'Worse', 'Worst'];

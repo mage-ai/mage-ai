@@ -75,8 +75,8 @@ import {
 } from '@components/PipelineDetail/utils';
 >>>>>>> ece3991 ([sp] delete collapsed state when deleting pipeline)
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { randomNameGenerator } from '@utils/string';
 import { redirectToFirstPipeline } from '@components/PipelineDetail/utils';
 import { useWindowSize } from '@utils/sizes';
 
