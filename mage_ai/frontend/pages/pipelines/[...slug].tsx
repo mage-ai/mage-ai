@@ -753,6 +753,7 @@ function PipelineDetailPage({
     if (pipelineUUIDPrev !== pipelineUUID) {
       setBlocks([]);
       setWidgets([]);
+      setOutputBlocks([]);
     }
   }, [
     pipelineUUID,
