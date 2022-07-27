@@ -99,6 +99,10 @@ export default function(opts: ProviderOptionsType) {
         startLineNumber: position.lineNumber,
       };
 
+      if (upstreamBlocks?.length >= 1) {
+        // 1. Writing inside a function definition with the correct decorator
+      }
+
       if (BlockTypeEnum.SCRATCHPAD === type) {
         if (startColumn === 1) {
           const arr = variablesFromBlocks(monaco, range, opts);
