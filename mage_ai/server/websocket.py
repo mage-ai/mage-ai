@@ -78,11 +78,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                             type=DataType.TEXT_PLAIN,
                         )
                     )
-                
+
                 try:
                     asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
                     publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
-                except:
+                except Exception:
                     trace = traceback.format_exc().splitlines()
                     publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
                     publish_message(trace, 'idle')
@@ -101,37 +101,61 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
-            if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
-                code = add_execution_code(
-                    pipeline_uuid,
-                    block_uuid,
-                    custom_code,
-                    global_vars,
-                    analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
-                    kernel_name=kernel_name,
-                    pipeline_config=pipeline.get_config_from_yaml(),
-                    repo_config=get_repo_config().to_dict(),
-                    run_upstream=run_upstream,
-                    update_status=False if kernel_name == KernelName.PYSPARK else True,
-                    widget=widget,
+
+            if not custom_code and BlockType.SCRATCHPAD == block_type:
+                msg_id = client.execute('')
+
+                value = dict(
+                    block_uuid=block_uuid,
+                    pipeline_uuid=pipeline_uuid,
                 )
-            msg_id = client.execute(add_internal_output_info(code))
+                WebSocketServer.running_executions_mapping[msg_id] = value
 
-            value = dict(
-                block_uuid=block_uuid,
-                pipeline_uuid=pipeline_uuid,
-            )
+                self.send_message(
+                    dict(
+                        data='',
+                        execution_state='idle',
+                        msg_id=msg_id,
+                        type=DataType.TEXT_PLAIN,
+                    ),
+                )
+            else:
+                if block is not None and \
+                   block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
+                    code = add_execution_code(
+                        pipeline_uuid,
+                        block_uuid,
+                        custom_code,
+                        global_vars,
+                        analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
+                        kernel_name=kernel_name,
+                        pipeline_config=pipeline.get_config_from_yaml(),
+                        repo_config=get_repo_config().to_dict(),
+                        run_upstream=run_upstream,
+                        update_status=False if kernel_name == KernelName.PYSPARK else True,
+                        widget=widget,
+                    )
 
-            WebSocketServer.running_executions_mapping[msg_id] = value
+                if kernel_name == KernelName.PYTHON3:
+                    msg_id = client.execute(add_internal_output_info(code))
+                else:
+                    msg_id = client.execute(code)
 
-            if run_downstream:
-                for block in block.downstream_blocks:
-                    self.on_message(json.dumps(dict(
-                        code=block.file.content(),
-                        pipeline_uuid=pipeline_uuid,
-                        type=block.type,
-                        uuid=block.uuid,
-                    )))
+                value = dict(
+                    block_uuid=block_uuid,
+                    pipeline_uuid=pipeline_uuid,
+                )
+
+                WebSocketServer.running_executions_mapping[msg_id] = value
+
+                if run_downstream:
+                    for block in block.downstream_blocks:
+                        self.on_message(json.dumps(dict(
+                            code=block.file.content(),
+                            pipeline_uuid=pipeline_uuid,
+                            type=block.type,
+                            uuid=block.uuid,
+                        )))
 
     @classmethod
     def send_message(self, message: dict) -> None:

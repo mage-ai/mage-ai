@@ -20,6 +20,7 @@ import {
   PlaceholderStyle,
   SINGLE_LINE_HEIGHT,
 } from './index.style';
+import { ProvidersType } from './autocomplete/constants';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
@@ -45,6 +46,7 @@ export type CodeEditorSharedProps = {
 };
 
 type CodeEditorProps = {
+  autocompleteProviders?: ProvidersType;
   autoHeight?: boolean;
   autoSave?: boolean;
   fontSize?: number;
@@ -60,6 +62,7 @@ type CodeEditorProps = {
 } & CodeEditorSharedProps;
 
 function CodeEditor({
+  autocompleteProviders,
   autoHeight,
   autoSave,
   fontSize = DEFAULT_FONT_SIZE,
@@ -89,6 +92,14 @@ function CodeEditor({
 
   const handleEditorWillMount = useCallback((monaco) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
+    if (autocompleteProviders) {
+      Object.entries(autocompleteProviders).forEach(([lang, buildProvider]) => {
+        // https://microsoft.github.io/monaco-editor/api/modules/monaco.languages.html#registerCompletionItemProvider
+        monaco.languages.registerCompletionItemProvider(lang, {
+          provideCompletionItems: buildProvider(monaco),
+        });
+      });
+    }
   }, []);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
@@ -267,7 +278,7 @@ function CodeEditor({
             alwaysConsumeMouseWheel: false,
             vertical: 'hidden',
           },
-          wordBasedSuggestions: false,
+          wordBasedSuggestions: true,
         }}
         theme={theme}
         value={value}
