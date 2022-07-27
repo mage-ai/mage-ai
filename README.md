@@ -128,6 +128,9 @@ and charts (using [React](https://reactjs.org/)) is easy to do (tutorial coming 
   src="media/extensible-charts.png"
 />
 
+### New features and changelog
+Check out what’s new [here](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c).
+
 # 🙋‍♀️ Contributing
 We welcome all contributions to Mage;
 from small UI enhancements to brand new cleaning actions.
