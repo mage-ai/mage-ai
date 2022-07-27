@@ -351,7 +351,7 @@ const Histogram = withTooltip<HistogramProps, TooltipData>(({
               tickFormat={label => xLabelFormat
                 ? xLabelFormat(String(label))
                 // @ts-ignore
-                : isDateType ? formatDateAxisLabel(label) : label
+                : isDateType ? formatDateAxisLabel(label) : String(label)
               }
               tickLabelProps={(val: any) => ({
                 fill: showYAxisLabels ? colors.active : 'transparent',
