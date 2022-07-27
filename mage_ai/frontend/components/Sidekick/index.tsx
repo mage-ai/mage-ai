@@ -286,7 +286,8 @@ function Sidekick({
         }
         {ViewKeyEnum.VARIABLES === activeView && globalVariables && globalVariablesMemo}
 
-        {(selectedBlock && hasData)
+        {((selectedBlock && hasData)
+          || (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA))
           ? null
           : (MESSAGE_VIEWS.includes(activeView) &&
             <FlexContainer
