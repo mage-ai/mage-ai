@@ -755,9 +755,10 @@ function ChartBlock({
             fullWidth
             justifyContent="space-between"
           >
-            <FlexContainer alignItems="center">
+            <Flex flex={1} style={{ position: 'relative' }}>
               <LabelWithValueClicker
                 bold={false}
+                fullWidth
                 inputValue={newBlockUuid}
                 notRequired
                 onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
@@ -781,7 +782,9 @@ function ChartBlock({
               {isEditingBlock && (
                 <>
                   <Spacing ml={1} />
+
                   <Link
+                    noWrapping
                     // @ts-ignore
                     onClick={() => updateBlock({
                       widget: {
@@ -797,7 +800,9 @@ function ChartBlock({
                   </Link>
                 </>
               )}
-            </FlexContainer>
+            </Flex>
+
+            <Spacing mr={1} />
 
             <FlexContainer alignItems="center">
               <Select

@@ -37,6 +37,7 @@ export type LinkProps = {
   noColor?: boolean;
   noHoverUnderline?: boolean;
   noOutline?: boolean;
+  noWrapping?: boolean;
   onClick?: (event: any) => void;
   onDoubleClick?: (event: any) => void;
   onFocus?: (event: any) => void;
@@ -240,6 +241,10 @@ export const SHARED_LINK_STYLES = css<any>`
   ${props => props.verticalAlignContent && `
     align-items: center;
     display: flex;
+  `}
+
+  ${props => props.noWrapping && `
+    white-space: nowrap;
   `}
 `;
 
