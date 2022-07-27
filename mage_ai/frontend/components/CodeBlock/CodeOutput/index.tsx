@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
 
 import BlockType, {
