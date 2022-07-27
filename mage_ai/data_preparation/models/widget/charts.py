@@ -111,6 +111,8 @@ def build_time_series_buckets(df, datetime_column, time_interval, metrics):
             time_interval = TimeInterval.HOUR
         elif diff >= 60:
             time_interval = TimeInterval.SECOND
+        else:
+            time_interval = TimeInterval.SECOND
 
     if TimeInterval.DAY == time_interval:
         start_datetime = datetime(year, month, day, 0, 0, 0)
