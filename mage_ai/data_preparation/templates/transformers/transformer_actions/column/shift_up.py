@@ -16,8 +16,8 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.SHIFT_UP,
-        arguments=[],  # Specify columns to perform shift on
+        action_type=ActionType.SHIFT_UP,
+        arguments=[],  # Specify one column to perform shift on
         axis=Axis.COLUMN,
         outputs=[{'uuid': 'up_shifted_column_1', 'type': 'category'}],
     )

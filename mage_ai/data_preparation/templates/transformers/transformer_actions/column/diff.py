@@ -12,12 +12,12 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     Execute Transformer Action: ActionType.DIFF
 
-    Calculates difference from previous row along column
+    Calculates difference from previous row along column.
     """
     action = build_transformer_action(
         df,
-        type=ActionType.DIFF,
-        arguments=[],  # Specify columns to add. Must have at most one column
+        action_type=ActionType.DIFF,
+        arguments=[],  # Specify at most one column to compute difference with
         axis=Axis.COLUMN,
         outputs=[{'uuid': 'new_diff_column', 'column_type': 'number_with_decimals'}],
     )

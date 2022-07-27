@@ -127,10 +127,7 @@ class BaseAction:
 
         if self.action_type == ActionType.FILTER:
             return df.loc[df_output.index][df_output.columns]
-        elif self.action_type == ActionType.ADD and not (
-            len(self.action['action_arguments']) == 0
-            or self.action['action_options']['udf'] is None
-        ):
+        elif self.action_type == ActionType.ADD:
             output_cols = [f['uuid'] for f in self.action['outputs']]
             df[output_cols] = df_output[output_cols]
             return df

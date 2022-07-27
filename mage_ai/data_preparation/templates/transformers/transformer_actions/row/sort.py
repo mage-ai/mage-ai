@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.SORT,
+        action_type=ActionType.SORT,
         arguments=[],  # Specify columns to sort rows by
         axis=Axis.ROW,
         options={'ascending': True},

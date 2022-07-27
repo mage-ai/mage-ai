@@ -17,7 +17,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.FIX_SYNTAX_ERRORS,
+        action_type=ActionType.FIX_SYNTAX_ERRORS,
         arguments=df.columns,  # Specify columns to fix syntax errors for.
         axis=Axis.COLUMN,
     )

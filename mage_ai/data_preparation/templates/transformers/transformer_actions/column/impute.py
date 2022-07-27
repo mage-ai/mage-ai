@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.IMPUTE,
+        action_type=ActionType.IMPUTE,
         arguments=df.columns,  # Specify columns to impute
         axis=Axis.COLUMN,
         options={'strategy': ImputationStrategy.CONSTANT},  # Specify imputation strategy

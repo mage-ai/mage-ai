@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.SELECT,
+        action_type=ActionType.SELECT,
         arguments=df.columns,  # Specify columns to select
         axis=Axis.COLUMN,
     )

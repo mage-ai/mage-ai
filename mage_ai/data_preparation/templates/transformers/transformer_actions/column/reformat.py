@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.REFORMAT,
+        action_type=ActionType.REFORMAT,
         arguments=[],  # Specify columns to reformat
         axis=Axis.COLUMN,
         options={'reformat': None},  # Specify reformat action,

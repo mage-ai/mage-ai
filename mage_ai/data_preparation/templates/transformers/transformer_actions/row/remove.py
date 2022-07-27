@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.REMOVE,
+        action_type=ActionType.REMOVE,
         axis=Axis.ROW,
         options={'rows': []},  # Specify indices of rows to remove
     )

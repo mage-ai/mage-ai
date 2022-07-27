@@ -47,7 +47,7 @@ def build_action_variables(
 
 def build_transformer_action(
     df: DataFrame,
-    type: Union[ActionType, str],
+    action_type: Union[ActionType, str],
     arguments: List[str] = [],
     action_code: str = '',
     options: Dict = {},
@@ -62,7 +62,7 @@ def build_transformer_action(
 
     Args:
         df (DataFrame): The data frame to build a transformer action payload for.
-        type (Union[ActionType, str]): Transformer action to perform.
+        action_type (Union[ActionType, str]): Transformer action to perform.
         arguments (List[str], optional): Columns/Rows to perform this action on.
         Defaults to [].
         action_code (str, optional): Special code or query to execute with action. Defaults to ''.
@@ -77,7 +77,7 @@ def build_transformer_action(
     """
     action_variables = build_action_variables(df)
     return dict(
-        action_type=type,
+        action_type=action_type,
         action_arguments=list(arguments),
         action_code=action_code,
         action_options=options,

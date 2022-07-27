@@ -14,7 +14,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.FILTER,
+        action_type=ActionType.FILTER,
         axis=Axis.ROW,
         action_code='',  # Specify your filtering code here
     )

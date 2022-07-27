@@ -17,7 +17,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     action = build_transformer_action(
         df,
-        type=ActionType.REMOVE_OUTLIERS,
+        action_type=ActionType.REMOVE_OUTLIERS,
         arguments=df.columns,  # Specify columns to remove outliers from
         axis=Axis.COLUMN,
         options={'method': 'auto'},  # Specify algorithm to use for outlier removal
