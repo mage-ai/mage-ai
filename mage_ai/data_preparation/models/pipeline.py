@@ -458,7 +458,7 @@ class Pipeline:
             del self.widgets_by_uuid[block.uuid]
         else:
             del self.blocks_by_uuid[block.uuid]
-        if self.commit:
+        if commit:
             self.save()
         return block
 
