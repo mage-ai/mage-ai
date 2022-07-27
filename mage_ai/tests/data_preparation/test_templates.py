@@ -273,7 +273,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     action = build_transformer_action(
         df,
-        type=ActionType.CLEAN_COLUMN_NAME,
+        action_type=ActionType.CLEAN_COLUMN_NAME,
         arguments=df.columns,
         axis=Axis.COLUMN,
     )
@@ -302,7 +302,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     action = build_transformer_action(
         df,
-        type=ActionType.FILTER,
+        action_type=ActionType.FILTER,
         axis=Axis.ROW,
         action_code='',  # Specify your filtering code here
     )
@@ -331,7 +331,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     action = build_transformer_action(
         df,
-        type=ActionType.REFORMAT,
+        action_type=ActionType.REFORMAT,
         arguments=[],  # Specify columns to reformat
         axis=Axis.COLUMN,
         options={'reformat': None},  # Specify reformat action,
@@ -361,12 +361,13 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     action = build_transformer_action(
         df,
-        type=ActionType.FIRST,
-        action_code='',  # Enter further filtering condition on rows
+        action_type=ActionType.FIRST,
+        action_code='',  # Enter filtering condition on rows before aggregation
         arguments=[],  # Enter the columns to compute aggregate over
         axis=Axis.COLUMN,
         options={'groupby_columns': []},  # Enter columns to group by
         outputs=[
+            # The number of outputs below must match the number of arguments
             {'uuid': 'new_aggregate_column_1', 'column_type': 'category'},
             {'uuid': 'new_aggregate_column_2', 'column_type': 'number'},
         ],
