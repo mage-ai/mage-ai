@@ -269,19 +269,19 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: clean_column_name
+    Execute Transformer Action: ActionType.CLEAN_COLUMN_NAME
     \"\"\"
     action = build_transformer_action(
         df,
         action_type=ActionType.CLEAN_COLUMN_NAME,
-        action_arguments=[],
+        arguments=df.columns,
         axis=Axis.COLUMN,
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.CLEAN_COLUMN_NAME.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.CLEAN_COLUMN_NAME, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -298,20 +298,19 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: custom
+    Execute Transformer Action: ActionType.FILTER
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.CUSTOM,
-        action_arguments=[],
+        action_type=ActionType.FILTER,
         axis=Axis.ROW,
-        action_code='your_action_code'
+        action_code='',  # Specify your filtering code here
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.CUSTOM.value, 'axis': Axis.ROW}
+        config = {'action_type': ActionType.FILTER, 'axis': Axis.ROW}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -328,20 +327,20 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: reformat
+    Execute Transformer Action: ActionType.REFORMAT
     \"\"\"
     action = build_transformer_action(
         df,
         action_type=ActionType.REFORMAT,
-        action_arguments=[],
+        arguments=[],  # Specify columns to reformat
         axis=Axis.COLUMN,
-        action_options={'your_action_option': None}
+        options={'reformat': None},  # Specify reformat action,
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.REFORMAT.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.REFORMAT, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 
@@ -358,22 +357,26 @@ if 'transformer' not in globals():
 @transformer
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
-    Execute Transformer Action: add
+    Execute Transformer Action: ActionType.FIRST
     \"\"\"
     action = build_transformer_action(
         df,
-        action_type=ActionType.ADD,
-        action_arguments=[],
+        action_type=ActionType.FIRST,
+        action_code='',  # Enter filtering condition on rows before aggregation
+        arguments=[],  # Enter the columns to compute aggregate over
         axis=Axis.COLUMN,
-        action_code='your_action_code',
-        action_options={'your_action_option': None},
-        outputs=['your_output_metadata']
+        options={'groupby_columns': []},  # Enter columns to group by
+        outputs=[
+            # The number of outputs below must match the number of arguments
+            {'uuid': 'new_aggregate_column_1', 'column_type': 'category'},
+            {'uuid': 'new_aggregate_column_2', 'column_type': 'number'},
+        ],
     )
 
     return BaseAction(action).execute(df)
 """
 
-        config = {'action_type': ActionType.ADD.value, 'axis': Axis.COLUMN}
+        config = {'action_type': ActionType.FIRST, 'axis': Axis.COLUMN}
         new_template = fetch_template_source(BlockType.TRANSFORMER, config)
         self.assertEqual(expected_template, new_template)
 

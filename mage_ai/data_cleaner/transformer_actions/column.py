@@ -31,6 +31,8 @@ def add_column(df, action, **kwargs):
     udf = action['action_options'].get('udf')
     if udf is None:
         return df
+    if len(action['action_arguments']) == 0:
+        return df
     df_copy = df.copy()
     df_copy[col] = execute_udf(
         udf,
@@ -67,6 +69,8 @@ def custom(df, action, **kwargs):
 
 
 def diff(df, action, **kwargs):
+    if len(action['action_arguments']) == 0:
+        return df
     output_col = action['outputs'][0]['uuid']
     df[output_col] = df[action['action_arguments'][0]].diff()
     return df
@@ -248,6 +252,9 @@ def select(df, action, **kwargs):
 
 
 def shift_down(df, action, **kwargs):
+    if len(action['action_arguments']) == 0:
+        return df
+
     output_col = action['outputs'][0]['uuid']
     action_options = action.get('action_options', {})
     groupby_columns = action_options.get('groupby_columns')
@@ -260,6 +267,8 @@ def shift_down(df, action, **kwargs):
 
 
 def shift_up(df, action, **kwargs):
+    if len(action['action_arguments']) == 0:
+        return df
     output_col = action['outputs'][0]['uuid']
     df[output_col] = df[action['action_arguments'][0]].shift(-1)
     return df
@@ -270,6 +279,9 @@ def sum(df, action, **kwargs):
 
 
 def __agg(df, action, agg_method):
+    if len(action['action_arguments']) == 0:
+        return df
+
     if action['action_options'].get('groupby_columns'):
         return __groupby_agg(df, action, agg_method)
     else:
@@ -284,6 +296,9 @@ def __column_mapping(action):
 
 # Filter by timestamp_feature_a - window <= timestamp_feature_b <= timestamp_feature_a
 def __filter_df_with_time_window(df, action):
+    if len(action['action_arguments']) == 0:
+        return df
+
     action_options = action['action_options']
     time_window_keys = ['timestamp_feature_a', 'timestamp_feature_b', 'window']
     if all(k in action_options for k in time_window_keys):
@@ -309,6 +324,9 @@ def __filter_df_with_time_window(df, action):
 
 
 def __groupby_agg(df, action, agg_method):
+    if len(action['action_arguments']) == 0:
+        return df
+
     df_filtered, _ = __filter_df_with_time_window(df, action)
     action_code = action.get('action_code')
     if action_code is not None and action_code != '':
