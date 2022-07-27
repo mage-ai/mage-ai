@@ -1,23 +1,41 @@
 import { queryString } from '@utils/url';
 
-function getHostCore(windowDefined: boolean, localhost: string, port: number) {
-  let host = localhost;
-  if (windowDefined) {
+function getHostCore(
+  windowDefined: boolean,
+  defaultHost: string = 'localhost',
+  defaultPort: string = '6789',
+){
+  let host = defaultHost;
+  if(windowDefined){
     host = window.location.hostname;
   }
-
-  if (host === localhost) {
-    host = `${host}:${port}`;
-  } else if (windowDefined && !!window.location.port) {
+  if(host === defaultHost){
+    host = `${host}:${defaultPort}`;
+  } else if (windowDefined && !!window.location.port){
     host = `${host}:${window.location.port}`;
   }
   return host;
 }
 
-export function getHost() {
+function getProtocol(
+  windowDefined: boolean,
+  host: string,
+  defaultHost: string = 'localhost',
+){
+  let protocol = 'http://';
+  if(host !== defaultHost){
+    protocol = 'https://';
+    if(windowDefined && !window.location.protocol?.match(/https/)) {
+      protocol = 'http://';
+    }
+  }
+  return protocol;
+}
+
+function getHost(){
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
-  const PORT = 6789;
+  const PORT = '6789';
   /*
   The CLOUD_BASE_PATH placeholder below is used for replacing with base
   paths required by cloud notebooks. The backend will detect the notebook type
@@ -25,31 +43,21 @@ export function getHost() {
   know the base path until the tool is launched.
   */
   const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
+  const host = getHostCore(windowDefined, LOCALHOST, PORT);
+  const protocol = getProtocol(windowDefined, host, LOCALHOST);
 
-  let host = LOCALHOST;
-  let protocol = 'http://';
   let basePath = '';
-
-  if (host === LOCALHOST) {
-      protocol = 'https://';
-      if (windowDefined && !window.location.protocol?.match(/https/)) {
-          protocol = 'http://';
-      }
-  }
-
-  host = getHostCore(windowDefined, LOCALHOST, PORT);
-
   if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
-      basePath = CLOUD_BASE_PATH;
+    basePath = CLOUD_BASE_PATH;
   }
-
   return `${protocol}${host}${basePath}/api`;
 }
+
 
 export function getWebSocket() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
-  const PORT = 6789;
+  const PORT = '6789';
   return `ws://${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/`;
 }
 
