@@ -422,7 +422,12 @@ function Table({
   const listHeight = useMemo(() => {
     let val;
     if (maxHeight) {
-      val = sum(rows.map(estimateCellHeight)) + BASE_ROW_HEIGHT;
+      val = sum(rows.map(estimateCellHeight));
+      if (columnHeaderHeight) {
+        val += columnHeaderHeight;
+      } else {
+        val += BASE_ROW_HEIGHT;
+      }
     } else {
       val = height;
       if (columnHeaderHeight) {

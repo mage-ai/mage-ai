@@ -118,7 +118,7 @@ function CodeOutput({
           columns={columns}
           disableScrolling={!selectedProp}
           index={index}
-          maxHeight={UNIT * 49.5}
+          maxHeight={UNIT * 60}
           noBorderBottom
           noBorderLeft
           noBorderRight
