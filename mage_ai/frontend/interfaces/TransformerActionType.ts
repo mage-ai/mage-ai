@@ -29,7 +29,6 @@ export const COLUMN_ACTIONS: ActionTypeEnum[] = [
 ];
 
 export const ROW_ACTIONS: ActionTypeEnum[] = [
-  ActionTypeEnum.CUSTOM,
   ActionTypeEnum.DROP_DUPLICATE,
   ActionTypeEnum.FILTER,
   ActionTypeEnum.SORT,
@@ -71,7 +70,6 @@ export const ACTION_GROUPING_MAPPING = {
       ActionTypeEnum.SHIFT_UP,
     ],
     [ActionGroupingEnum.MISC]: [
-      ActionTypeEnum.CUSTOM,
       ActionTypeEnum.DIFF,
       ActionTypeEnum.IMPUTE,
       ActionTypeEnum.REMOVE_OUTLIERS,
@@ -95,7 +93,6 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.CLEAN_COLUMN_NAME]: 'Clean column name',
     [ActionTypeEnum.COUNT_DISTINCT]: 'Aggregate by distinct count',
     [ActionTypeEnum.COUNT]: 'Aggregate by total count',
-    [ActionTypeEnum.CUSTOM]: 'Custom code column action',
     [ActionTypeEnum.DIFF]: 'Difference',
     [ActionTypeEnum.FIRST]: 'Aggregate by first value',
     [ActionTypeEnum.FIX_SYNTAX_ERRORS]: 'Fix syntax errors',
@@ -113,7 +110,6 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.SUM]: 'Aggregate by sum of values',
   },
   [AxisEnum.ROW]: {
-    [ActionTypeEnum.CUSTOM]: 'Custom code row action',
     [ActionTypeEnum.DROP_DUPLICATE]: 'Drop duplicates',
     [ActionTypeEnum.FILTER]: 'Filter',
     [ActionTypeEnum.SORT]: 'Sort',
