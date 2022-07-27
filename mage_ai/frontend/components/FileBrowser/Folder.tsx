@@ -95,7 +95,7 @@ function Folder({
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
   let IconEl = FileFill;
-  if (isPipelineFolder && !disabled) {
+  if ((isPipelineFolder && !disabled) || (level === 1 && name === FOLDER_NAME_PIPELINES)) {
     IconEl = Pipeline;
   } else if (name === FOLDER_NAME_CHARTS) {
     IconEl = NavGraph;
