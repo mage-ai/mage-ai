@@ -792,8 +792,7 @@ function CodeBlockProps({
                   upstreamBlocks.push(block.uuid);
                 }
 
-                if (BlockTypeEnum.CHART !== block.type
-                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
                   && BlockTypeEnum.SCRATCHPAD === newBlock.type
                 ) {
                   content = `from mage_ai.data_preparation.variable_manager import get_variable

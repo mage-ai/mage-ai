@@ -1,14 +1,20 @@
 import BlockType from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 
-interface RangeType {
+export interface RangeType {
   endColumn: number;
   endLineNumber: number;
   startColumn: number;
   startLineNumber: number;
 }
 
-interface SuggestionType {
+export interface WordType {
+  endColumn: number;
+  startColumn: number;
+  word: string;
+};
+
+export interface SuggestionType {
   documentation: string;
   insertText: string;
   kind: any;

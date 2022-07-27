@@ -71,7 +71,6 @@ function CodeOutput({
   setOutputBlocks,
   setSelectedOutputBlock,
 }: CodeOutputProps) {
-  console.log(block.uuid, messages)
   const {
     status,
     type: blockType,

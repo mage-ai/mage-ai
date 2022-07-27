@@ -1,7 +1,34 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { ProviderOptionsType } from './constants';
+import {
+  ProviderOptionsType,
+  RangeType,
+  SuggestionType,
+  WordType,
+} from './constants';
 
-export function variablesFromBlocks(
+function filter(word: WordType, suggestions: SuggestionType[]): SuggestionType[] {
+  const letters = word.word.split('');
+
+  const re = new RegExp(letters.reduce((acc, letter, idx) => {
+    const nextLetter = letters[idx + 1];
+    const nextLetterRegex = nextLetter
+      ? `^${nextLetter}`
+      : '';
+    return acc + `${letter}[\w ${nextLetterRegex}]*`;
+  }, ''));
+
+  return suggestions.reduce((acc, suggestion: SuggestionType) => {
+    const { label } = suggestion;
+
+    if (label.match(re)) {
+      return acc.concat(suggestion);
+    }
+
+    return acc;
+  }, []);
+}
+
+function variablesFromBlocks(
   monaco,
   range,
   {
@@ -9,7 +36,7 @@ export function variablesFromBlocks(
     blocks,
     pipeline,
   },
-) {
+): SuggestionType[] {
   return blocks.reduce((acc, {
     type,
     uuid,
@@ -19,9 +46,10 @@ export function variablesFromBlocks(
     }
 
     return acc.concat({
-      label: `df ${uuid} ${type} data`,
-      kind: monaco.languages.CompletionItemKind.SNIPPET,
-      documentation: 'TBD',
+      label: `df ${uuid} ${type}`,
+      // https://docs.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.languageserver.protocol.completionitemkind?view=visualstudiosdk-2022
+      kind: monaco.languages.CompletionItemKind.Snippet,
+      documentation: `Get the data from ${type} block ${uuid}.`,
       insertText: `from mage_ai.data_preparation.variable_manager import get_variable
 
 
@@ -45,33 +73,34 @@ export default function(opts: ProviderOptionsType) {
 
   return (monaco) => {
     return (model, position) => {
+      const empty = { suggestions: [] };
       const suggestions = [];
 
-      // find out if we are completing a property in the 'dependencies' object.
-      const textUntilPosition = model.getValueInRange({
+      const textUntilPosition: string = model.getValueInRange({
         endColumn: position.column,
         endLineNumber: position.lineNumber,
         startColumn: 1,
         startLineNumber: 1,
       });
 
-      // const match = textUntilPosition.match(
-      //   /"dependencies"\s*:\s*\{\s*("[^"]*"\s*:\s*"[^"]*"\s*,\s*)*([^"]*)?$/
-      // );
-      // if (!match) {
-      //   return { suggestions: [] };
-      // }
+      const word: WordType = model.getWordUntilPosition(position);
+      const {
+        endColumn,
+        startColumn,
+      } = word;
 
-      const word = model.getWordUntilPosition(position);
-      const range = {
-        endColumn: word.endColumn,
+      const range: RangeType = {
+        endColumn,
         endLineNumber: position.lineNumber,
-        startColumn: word.startColumn,
+        startColumn,
         startLineNumber: position.lineNumber,
       };
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
-        suggestions.push(...variablesFromBlocks(monaco, range, opts));
+        if (startColumn === 1) {
+          const arr = variablesFromBlocks(monaco, range, opts);
+          suggestions.push(...filter(word, arr));
+        }
       }
 
       return {
