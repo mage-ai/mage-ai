@@ -115,10 +115,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     update_status=False if kernel_name == KernelName.PYSPARK else True,
                     widget=widget,
                 )
-            if kernel_name == KernelName.PYTHON3:
-                msg_id = client.execute(add_internal_output_info(code))
-            else:
-                msg_id = client.execute(code)
+            msg_id = client.execute(add_internal_output_info(code))
 
             value = dict(
                 block_uuid=block_uuid,

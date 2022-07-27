@@ -8,6 +8,7 @@ export enum DataTypeEnum {
   IMAGE_PNG = 'image/png',
   TABLE = 'table',
   TEXT = 'text',
+  TEXT_HTML = 'text/html',
   TEXT_PLAIN = 'text/plain',
 }
 
@@ -17,6 +18,7 @@ export const DATA_TYPE_TEXTLIKE = [
 ];
 
 export enum MsgType {
+  DISPLAY_DATA = 'display_data',
   STATUS = 'status',
   STREAM = 'stream',
   STREAM_PIPELINE = 'stream_pipeline',
