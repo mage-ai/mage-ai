@@ -544,11 +544,21 @@ class Block:
                 sample_count=sample_count,
             )
             if type(data) is pd.DataFrame:
+                analysis = variable_manager.get_variable(
+                    self.pipeline.uuid,
+                    self.uuid,
+                    v,
+                    variable_type=VariableType.DATAFRAME_ANALYSIS,
+                )
+                stats = analysis.get('statistics', {})
+                column_types = analysis.get('metadata', {}).get('column_types', {})
+                row_count = stats.get('original_row_count', stats.get('count'))
                 data = dict(
                     sample_data=dict(
                         columns=data.columns.tolist(),
                         rows=data.to_numpy().tolist(),
                     ),
+                    shape=[row_count, len(column_types)],
                     type=DataType.TABLE,
                     variable_uuid=v,
                 )
@@ -664,6 +674,7 @@ class Block:
                 try:
                     analysis = clean_data(
                         data_for_analysis,
+                        df_original=data,
                         transform=False,
                         verbose=False,
                     )

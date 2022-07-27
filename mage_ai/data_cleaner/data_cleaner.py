@@ -15,6 +15,7 @@ def analyze(df):
 def clean(
     df,
     column_types={},
+    df_original=None,
     transform=True,
     rules=DEFAULT_RULES,
     rule_configs={},
@@ -24,6 +25,7 @@ def clean(
     return cleaner.clean(
         df,
         column_types=column_types,
+        df_original=df_original,
         rules=rules,
         rule_configs=rule_configs,
         transform=transform,
@@ -34,7 +36,7 @@ class DataCleaner:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-    def analyze(self, df, column_types={}):
+    def analyze(self, df, column_types={}, df_original=None):
         """Analyze a dataframe
         1. Detect column types
         2. Calculate statisitics
@@ -50,7 +52,7 @@ class DataCleaner:
                 df = clean_dataframe(df, column_types, dropna=False)
         with timer('data_cleaner.calculate_statistics'):
             statistics = StatisticsCalculator(column_types, verbose=self.verbose).process(
-                df, is_clean=True
+                df, df_original=df_original, is_clean=True
             )
         with timer('data_cleaner.calculate_insights'):
             analysis = AnalysisCalculator(
@@ -63,8 +65,16 @@ class DataCleaner:
             statistics=statistics,
         )
 
-    def clean(self, df, column_types={}, transform=True, rules=DEFAULT_RULES, rule_configs={}):
-        df_stats = self.analyze(df, column_types=column_types)
+    def clean(
+        self,
+        df,
+        column_types={},
+        df_original=None,
+        transform=True,
+        rules=DEFAULT_RULES,
+        rule_configs={},
+    ):
+        df_stats = self.analyze(df, column_types=column_types, df_original=df_original)
         df = df_stats['cleaned_df']
         pipeline = BasePipeline(rules=rules, verbose=self.verbose)
         if df_stats['statistics']['is_timeseries']:

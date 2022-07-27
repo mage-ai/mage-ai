@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
 
 import BlockType, {
@@ -79,6 +79,8 @@ function CodeOutput({
     || (!isInProgress && runCount === 0 && numberOfMessages >= 1)
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
+  const [dataFrameShape, setDataFrameShape] = useState<number[]>();
+
   const internalOutputRegex = /\[__internal_output__\]/;
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
@@ -112,8 +114,11 @@ function CodeOutput({
       shape,
     }, {
       selected: selectedProp,
-    }) => rows.length >= 1 && (
-      <>
+    }) => {
+      if (shape) {
+        setDataFrameShape(shape);
+      }
+      return rows.length >= 1 && (
         <DataTable
           columns={columns}
           disableScrolling={!selectedProp}
@@ -127,15 +132,8 @@ function CodeOutput({
           // Remove border 2px and padding from each side
           width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
         />
-        {shape && (
-          <Spacing ml={1} my={1}>
-            <Text>
-              {`${shape[0]} rows x ${shape[1]} columns`}
-            </Text>
-          </Spacing>
-        )}
-      </>
-    );
+      );
+    };
 
     let isTable = false;
 
@@ -221,8 +219,6 @@ function CodeOutput({
     }
 
     return arrContent;
-
-    return [];
   }, [
     combinedMessages,
     contained,
@@ -271,7 +267,16 @@ function CodeOutput({
                       </Text>
                     </FlexContainer>
                   ) : (
-                    <ChevronUp muted size={UNIT * 2} />
+                    <FlexContainer alignItems="center">
+                      <ChevronUp muted size={UNIT * 2} />
+                      {dataFrameShape && (
+                        <Spacing ml={2}>
+                          <Text>
+                            {`${dataFrameShape[0]} rows x ${dataFrameShape[1]} columns`}
+                          </Text>
+                        </Spacing>
+                      )}
+                    </FlexContainer>
                   )}
                 </Button>
               </Flex>

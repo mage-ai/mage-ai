@@ -116,31 +116,22 @@ class BaseFile(BaseIO):
         self,
         input: Union[IO, os.PathLike],
         format: Union[FileFormat, str],
-        limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
-        Loads the data frame from the filepath or buffer specified. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        Loads the data frame from the filepath or buffer specified.
 
         Args:
             input (Union[IO, os.PathLike]): Input buffer to read dataframe from.
             Can be a stream or a filepath.
             format (Union[FileFormat, str]): Format of the data frame as stored
             in stream or filepath.
-            limit (int, optional): The number of rows to limit the loaded dataframe to.
-            Defaults to 100000.
 
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
         reader = self.__get_reader(format)
-        can_limit = format == FileFormat.CSV
-        if can_limit:
-            kwargs['nrows'] = limit
         df = reader(input, **kwargs)
-        if not can_limit:
-            df = self.__trim_df(df, limit)
         return df
 
     def __trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
