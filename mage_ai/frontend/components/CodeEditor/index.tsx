@@ -21,6 +21,7 @@ import {
   SINGLE_LINE_HEIGHT,
 } from './index.style';
 import { ProvidersType } from './autocomplete/constants';
+import { addAutocompleteSuggestions } from './autocomplete/utils';
 import { addKeyboardShortcut } from './keyboard_shortcuts';
 import { calculateHeightFromContent } from './utils';
 import { defineTheme } from './utils';
@@ -86,20 +87,15 @@ function CodeEditor({
   const monacoRef = useRef(null);
   const refBottomOfEditor = useRef(null);
 
+  const [completionDisposable, setCompletionDisposable] = useState([]);
+  const [monacoInstance, setMonacoInstance] = useState(null);
   const [mounted, setMounted] = useState<boolean>(false);
   const [heightOfContent, setHeightOfContent] = useState(height);
   const [theme, setTheme] = useState(themeProp || DEFAULT_THEME);
 
   const handleEditorWillMount = useCallback((monaco) => {
     monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true);
-    if (autocompleteProviders) {
-      Object.entries(autocompleteProviders).forEach(([lang, buildProvider]) => {
-        // https://microsoft.github.io/monaco-editor/api/modules/monaco.languages.html#registerCompletionItemProvider
-        monaco.languages.registerCompletionItemProvider(lang, {
-          provideCompletionItems: buildProvider(monaco),
-        });
-      });
-    }
+    setMonacoInstance(monaco);
   }, []);
 
   const handleEditorDidMount = useCallback((editor, monaco) => {
@@ -181,6 +177,7 @@ function CodeEditor({
     onSave,
     refBottomOfEditor.current,
     selected,
+    setCompletionDisposable,
     setMounted,
     setSelected,
     setTextareaFocused,
@@ -235,6 +232,29 @@ function CodeEditor({
     editorRef,
     selected,
     selectedPrevious,
+    textareaFocused,
+    textareaFocusedPrevious,
+  ]);
+
+  useEffect(
+    () => () => {
+      completionDisposable.map(cd => cd.dispose());
+    },
+    [completionDisposable],
+  );
+
+  useEffect(() => {
+    if (monacoInstance && autocompleteProviders) {
+      if (!textareaFocusedPrevious && textareaFocused) {
+        setCompletionDisposable(addAutocompleteSuggestions(monacoInstance, autocompleteProviders));
+      } else if (textareaFocusedPrevious && !textareaFocused) {
+        completionDisposable.map(cd => cd.dispose());
+      }
+    }
+  }, [
+    autocompleteProviders,
+    completionDisposable,
+    monacoInstance,
     textareaFocused,
     textareaFocusedPrevious,
   ]);

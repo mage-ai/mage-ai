@@ -41,7 +41,10 @@ function variablesFromBlocks(
     type,
     uuid,
   }: BlockType) => {
-    if (block.uuid === uuid) {
+    if (block.uuid === uuid || ![
+      BlockTypeEnum.DATA_LOADER,
+      BlockTypeEnum.TRANSFORMER,
+    ].includes(type)) {
       return acc;
     }
 
