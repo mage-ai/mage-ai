@@ -1015,7 +1015,6 @@ function PipelineDetailPage({
       editingBlock={editingBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
-      fetchWidgets={fetchWidgets}
       globalVariables={globalVariables}
       insights={insights}
       messages={messages}
@@ -1045,7 +1044,6 @@ function PipelineDetailPage({
     editingBlock,
     fetchFileTree,
     fetchPipeline,
-    fetchWidgets,
     globalVariables,
     insights,
     messages,

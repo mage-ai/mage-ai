@@ -74,7 +74,6 @@ function Sidekick({
   editingBlock,
   fetchFileTree,
   fetchPipeline,
-  fetchWidgets,
   globalVariables,
   insights,
   messages,
