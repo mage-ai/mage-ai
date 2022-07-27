@@ -43,7 +43,7 @@ class RemoveOutliers(BaseRule):
                 f'Remove {outlier_count} outlier(s) and null values to reduce the amount of noise in this column.',
                 ActionType.FILTER,
                 action_arguments=[column],
-                action_code=f'{wrapped_c} <= {upper} and {wrapped_c} >= {lower}',
+                action_code=f'SELECT * FROM df WHERE {wrapped_c} BETWEEN {lower} AND {upper}',
                 axis=Axis.ROW,
             )
         return None

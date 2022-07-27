@@ -662,7 +662,7 @@ class ColumnTests(TestCase):
         )
         action = dict(
             action_arguments=[False, True],
-            action_code='converted_at == null',
+            action_code='SELECT * FROM df where converted_at is null',
             action_options=dict(
                 udf='if_else',
             ),
@@ -701,7 +701,7 @@ class ColumnTests(TestCase):
         )
         action = dict(
             action_arguments=['unknown', 'user_id'],
-            action_code='converted_at == null',
+            action_code='SELECT * FROM df where converted_at is null',
             action_options=dict(
                 udf='if_else',
                 arg1_type='value',
@@ -1112,7 +1112,7 @@ class ColumnTests(TestCase):
         )
         action = dict(
             action_arguments=['order_id'],
-            action_code='order_created_at < \'2021-08-15\'',
+            action_code='SELECT * from DF where order_created_at < "2021-08-15"',
             action_options=dict(
                 groupby_columns=['group_id'],
             ),

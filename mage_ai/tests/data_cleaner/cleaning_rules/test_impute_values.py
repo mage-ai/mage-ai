@@ -479,7 +479,7 @@ class ImputeValuesTest(TestCase):
                             feature=dict(column_type='zip_code', uuid='location'), type='feature'
                         ),
                     ),
-                    action_code='state != null and location != null',
+                    action_code='SELECT * FROM df WHERE state NOT NULL AND location NOT NULL',
                     axis='row',
                     outputs=[],
                 ),

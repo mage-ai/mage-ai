@@ -92,12 +92,15 @@ class RowTests(TestCase):
         )
 
         test_cases = [
-            ([0, False, 'a'], 'integer == 0'),
-            ([0, False, 'a'], 'string == \'a\''),
-            ([1, True, 'b'], 'boolean == True'),
-            ([1, True, 'b'], 'integer >= 1'),
-            ([1, True, 'b'], 'integer >= 1 and boolean == True'),
-            ([1, True, 'b'], 'integer >= 1 and (boolean == False or string == \'b\')'),
+            ([0, False, 'a'], 'Select * from DF where integer = 0'),
+            ([0, False, 'a'], 'Select * from DF where string = "a"'),
+            ([1, True, 'b'], 'Select * from DF where boolean = True'),
+            ([1, True, 'b'], 'Select * from DF where integer >= 1'),
+            ([1, True, 'b'], 'Select * from DF where integer >= 1 and boolean = True'),
+            (
+                [1, True, 'b'],
+                'Select * from DF where integer >= 1 and (boolean = False or string = "b")',
+            ),
         ]
 
         for val, query in test_cases:
@@ -128,7 +131,7 @@ class RowTests(TestCase):
 
         integer_rows = filter_rows(
             df,
-            dict(action_code='integer == null'),
+            dict(action_code='Select * from DF where integer is null'),
             original_df=df,
         ).values.tolist()
         self.assertEqual(len(integer_rows), 1)
@@ -137,7 +140,7 @@ class RowTests(TestCase):
 
         boolean_rows = filter_rows(
             df,
-            dict(action_code='boolean == null'),
+            dict(action_code='Select * from DF where boolean isnull'),
             original_df=df,
         ).values.tolist()
         self.assertEqual(len(boolean_rows), 2)
@@ -150,7 +153,7 @@ class RowTests(TestCase):
 
         string_rows = filter_rows(
             df,
-            dict(action_code='string == null'),
+            dict(action_code='Select * from DF where string is null'),
             original_df=df,
         ).values.tolist()
         self.assertEqual(len(string_rows), 2)
@@ -182,7 +185,7 @@ class RowTests(TestCase):
         )
         integer_rows = filter_rows(
             df,
-            dict(action_code='integer != null'),
+            dict(action_code='Select * from DF where integer is not null'),
             original_df=df,
         )['integer'].values.tolist()
         self.assertEqual(
@@ -201,7 +204,7 @@ class RowTests(TestCase):
 
         boolean_rows = filter_rows(
             df,
-            dict(action_code='boolean != null'),
+            dict(action_code='Select * from DF where boolean not null'),
             original_df=df,
         )['boolean'].values.tolist()
         self.assertEqual(
@@ -219,7 +222,7 @@ class RowTests(TestCase):
 
         string_rows = filter_rows(
             df,
-            dict(action_code='string != null'),
+            dict(action_code='Select * from DF where string notnull'),
             original_df=df,
         )['string'].values.tolist()
         self.assertEqual(
@@ -249,13 +252,9 @@ class RowTests(TestCase):
             ],
         )
         action = dict(
-            action_code='id contains @',
-        )
-        action2 = dict(
-            action_code='id contains \'@\'',
+            action_code='Select * from DF where id like "%@%"',
         )
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
-        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
         df_expected = pd.DataFrame(
             [
                 ['abc@123.com'],
@@ -266,7 +265,6 @@ class RowTests(TestCase):
             ],
         )
         assert_frame_equal(df_new, df_expected)
-        assert_frame_equal(df_new2, df_expected)
 
     def test_filter_row_not_contains_string(self):
         df = pd.DataFrame(
@@ -281,22 +279,14 @@ class RowTests(TestCase):
             columns=['email', 'subscription'],
         )
         action = dict(
-            action_code='email not contains mailnet',
+            action_code='Select * from DF where email not like "%mailnet%"',
         )
         action2 = dict(
-            action_code='email not contains \'mailnet\'',
-        )
-        action3 = dict(
-            action_code='email not contains @',
-        )
-        action4 = dict(
-            action_code='email not contains \'^e+\w\'',
+            action_code='Select * from DF where email not like "%@%"',
         )
         action_invalid = dict(action_code='subscription not contains False')
         df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
         df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
-        df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
-        df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
         df_expected1 = pd.DataFrame(
             [
                 [np.NaN, False],
@@ -310,20 +300,8 @@ class RowTests(TestCase):
             [[np.NaN, False], ['fsdfsdfdsfdsf', False], ['eeeeasdf', True]],
             columns=['email', 'subscription'],
         )
-        df_expected3 = pd.DataFrame(
-            [
-                [np.NaN, False],
-                ['sfc@mailnet.com', True],
-                ['fdss@emailserver.net', True],
-                ['fsdfsdfdsfdsf', False],
-                ['xyz@mailnet.com', False],
-            ],
-            columns=['email', 'subscription'],
-        )
         assert_frame_equal(df_new, df_expected1)
-        assert_frame_equal(df_new2, df_expected1)
-        assert_frame_equal(df_new3, df_expected2)
-        assert_frame_equal(df_new4, df_expected3)
+        assert_frame_equal(df_new2, df_expected2)
 
         with self.assertRaises(Exception):
             _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
@@ -340,16 +318,22 @@ class RowTests(TestCase):
             ],
             columns=['value', 'brand', 'discounted', 'inventory'],
         )
-        action = dict(action_code='(value < 110 and value >= 50) and (value != null)')
-        action2 = dict(action_code='brand contains brand and inventory != null')
-        action3 = dict(action_code='(brand != null and value > 60) or (discounted == null)')
+        action = dict(
+            action_code='SELECT * FROM DF where (value < 110 and value >= 50) and (value is not null)'
+        )
+        action2 = dict(
+            action_code='SELECT * FROM DF where brand like "%brand%" and inventory notnull'
+        )
+        action3 = dict(
+            action_code='SELECT * FROM DF where (brand not null and value > 60) or (discounted isnull)'
+        )
         action4 = dict(
-            action_code='(discounted == True and inventory > 15)'
-            ' or (discounted == False and value != null)'
+            action_code='SELECT * FROM DF where (discounted = True and inventory > 15)'
+            ' or (discounted = False and value not null)'
         )
         action5 = dict(
-            action_code='(brand not contains company and value == 75 and inventory <= 80)'
-            ' or (discounted != null)'
+            action_code='SELECT * FROM DF where (brand not like "%company%" and value = 75 and inventory <= 80)'
+            ' or (discounted not null)'
         )
         df_expected = pd.DataFrame(
             [
@@ -423,7 +407,7 @@ class RowTests(TestCase):
         )
         action_payload = {
             'action_type': 'filter',
-            'action_code': '%{1} != null',
+            'action_code': 'SELECT * from DF WHERE %{1} notnull',
             'action_arguments': [],
             'action_options': {},
             'axis': 'row',
@@ -462,17 +446,21 @@ class RowTests(TestCase):
             ],
             columns=['Val ue', 'bra  23423  nd', 'dis>>> ??cou nted', 'invVe nTory'],
         )
-        action = dict(action_code='("Val ue" < 110 and "Val ue" >= 50) and ("Val ue" != null)')
-        action2 = dict(action_code='"bra  23423  nd" contains brand and "invVe nTory" != null')
+        action = dict(
+            action_code='SELECT * from DF where ("Val ue" < 110 and "Val ue" >= 50) and ("Val ue" is not null)'
+        )
+        action2 = dict(
+            action_code='SELECT * from DF where "bra  23423  nd" like "%brand%" and "invVe nTory" not null'
+        )
         action3 = dict(
-            action_code='("bra  23423  nd" != null and "Val ue" > 60) or ("dis>>> ??cou nted" == null)'
+            action_code='SELECT * from DF where ("bra  23423  nd" not null and "Val ue" > 60) or ("dis>>> ??cou nted" is null)'
         )
         action4 = dict(
-            action_code='("dis>>> ??cou nted" == True and "invVe nTory" > 15)'
-            ' or ("dis>>> ??cou nted" == False and "Val ue" != null)'
+            action_code='SELECT * from DF where ("dis>>> ??cou nted" is True and "invVe nTory" > 15)'
+            ' or ("dis>>> ??cou nted" is False and "Val ue" is not null)'
         )
         action5 = dict(
-            action_code='("bra  23423  nd" not contains company and "Val ue" == 75 and "invVe nTory" <= 80) or ("dis>>> ??cou nted" != null)'
+            action_code='SELECT * from DF where ("bra  23423  nd" not like "%company%" and "Val ue" = 75 and "invVe nTory" <= 80) or ("dis>>> ??cou nted" not null)'
         )
         df_expected = pd.DataFrame(
             [
@@ -545,10 +533,10 @@ class RowTests(TestCase):
             columns=['e e e e e  e e e', ' kas22d fe ($)'],
         )
         action = dict(
-            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" > " kas22d fe ($)"'
+            action_code='SELECT * FROM df WHERE ("e e e e e  e e e" is not null and " kas22d fe ($)" not null) and "e e e e e  e e e" > " kas22d fe ($)"'
         )
         action2 = dict(
-            action_code='("e e e e e  e e e" != null and " kas22d fe ($)" != null) and "e e e e e  e e e" <= " kas22d fe ($)"'
+            action_code='SELECT * FROM df WHERE ("e e e e e  e e e" not null and " kas22d fe ($)" is not null) and "e e e e e  e e e" <= " kas22d fe ($)"'
         )
         df_expected = pd.DataFrame(
             [
@@ -565,8 +553,8 @@ class RowTests(TestCase):
             ],
             columns=['e e e e e  e e e', ' kas22d fe ($)'],
         )
-        df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
-        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
+        df_new = filter_rows(df, action).reset_index(drop=True)
+        df_new2 = filter_rows(df, action2).reset_index(drop=True)
         df_new['e e e e e  e e e'] = df_new['e e e e e  e e e'].astype(float)
         df_new2['e e e e e  e e e'] = df_new2['e e e e e  e e e'].astype(float)
         df_new[' kas22d fe ($)'] = df_new[' kas22d fe ($)'].astype(float)
@@ -587,22 +575,14 @@ class RowTests(TestCase):
             columns=['e e e e e e email', 'subs crip tion'],
         )
         action = dict(
-            action_code='"e e e e e e email" not contains mailnet',
+            action_code='SELECT * FROM df where "e e e e e e email" not like "%mailnet%"',
         )
         action2 = dict(
-            action_code='"e e e e e e email" not contains \'mailnet\'',
-        )
-        action3 = dict(
-            action_code='"e e e e e e email" not contains @',
-        )
-        action4 = dict(
-            action_code='"e e e e e e email" not contains \'^e+\w\'',
+            action_code='SELECT * FROM df WHERE "e e e e e e email" not like "%@%"',
         )
         action_invalid = dict(action_code='"subs crip tion" not contains False')
-        df_new = filter_rows(df, action, original_df=df).reset_index(drop=True)
-        df_new2 = filter_rows(df, action2, original_df=df).reset_index(drop=True)
-        df_new3 = filter_rows(df, action3, original_df=df).reset_index(drop=True)
-        df_new4 = filter_rows(df, action4, original_df=df).reset_index(drop=True)
+        df_new = filter_rows(df, action).reset_index(drop=True)
+        df_new2 = filter_rows(df, action2).reset_index(drop=True)
         df_expected1 = pd.DataFrame(
             [
                 [np.NaN, False],
@@ -616,68 +596,11 @@ class RowTests(TestCase):
             [[np.NaN, False], ['fsdfsdfdsfdsf', False], ['eeeeasdf', True]],
             columns=['e e e e e e email', 'subs crip tion'],
         )
-        df_expected3 = pd.DataFrame(
-            [
-                [np.NaN, False],
-                ['sfc@mailnet.com', True],
-                ['fdss@emailserver.net', True],
-                ['fsdfsdfdsfdsf', False],
-                ['xyz@mailnet.com', False],
-            ],
-            columns=['e e e e e e email', 'subs crip tion'],
-        )
         assert_frame_equal(df_new, df_expected1)
-        assert_frame_equal(df_new2, df_expected1)
-        assert_frame_equal(df_new3, df_expected2)
-        assert_frame_equal(df_new4, df_expected3)
+        assert_frame_equal(df_new2, df_expected2)
 
         with self.assertRaises(Exception):
             _ = filter_rows(df, action_invalid, original_df=df).reset_index(drop=True)
-
-    def test_original_df_column_name_padding(self):
-        # tests edge cases for when columns with the special prefixes "orig_" and "tf_" are given as input
-        df = pd.DataFrame(
-            [[0, 1, None], [1, 2, np.NaN], [np.NaN, 3, 4], [3, None, 5]],
-            columns=['col', 'orig_col', 'tf_col'],
-        )
-        df_expected = pd.DataFrame(
-            [
-                [0, 1, None],
-                [1, 2, np.NaN],
-            ],
-            columns=['col', 'orig_col', 'tf_col'],
-        )
-        action = dict(action_code='(col != null) and (orig_col != null)')
-        df_new = filter_rows(df, action, original_df=df)
-        df_new['col'] = df_new['col'].astype(int)
-        df_new['orig_col'] = df_new['orig_col'].astype(int)
-        assert_frame_equal(df_new, df_expected)
-
-    def test_valid_columns_names(self):
-        df = pd.DataFrame(
-            [
-                [
-                    False,
-                    False,
-                    False,
-                    False,
-                ],
-            ],
-            columns=[
-                '+=  -*&^%$! ?~  |<>',
-                'this.is.an.operator',
-                'are,commas,an,operator',
-                'are()[]{}operators',
-            ],
-        )
-        for column in df.columns:
-            with self.assertRaises(Exception):
-                action = dict(action_code=f'{column} == False')
-                filter_rows(df, action, original_df=df)
-
-        for column in df.columns:
-            action = dict(action_code=f'"{column}" == False')
-            filter_rows(df, action, original_df=df)
 
     def test_sort_rows(self):
         df = pd.DataFrame(

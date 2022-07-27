@@ -54,8 +54,9 @@ class BasePipeline:
                     f'Evaluating cleaning rule: {rule.__name__}', verbose=self.verbose
                 ):
                     rule_config = rule_configs.get(rule.__name__, {})
-                    suggestions = \
-                        rule(df, column_types, statistics, custom_config=rule_config).evaluate()
+                    suggestions = rule(
+                        df, column_types, statistics, custom_config=rule_config
+                    ).evaluate()
             if suggestions:
                 all_suggestions += suggestions
         self.actions = all_suggestions

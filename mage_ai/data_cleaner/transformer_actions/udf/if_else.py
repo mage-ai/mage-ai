@@ -1,11 +1,11 @@
-from mage_ai.data_cleaner.transformer_actions.action_code import query_with_action_code
+from mage_ai.data_cleaner.transformer_actions.query.query import QueryGenerator
 from mage_ai.data_cleaner.transformer_actions.udf.base import BaseUDF
 
 
 class IfElse(BaseUDF):
     def execute(self):
         df_copy = self.df.copy()
-        true_index = query_with_action_code(df_copy, self.code, self.kwargs).index
+        true_index = QueryGenerator(df_copy)(self.code).execute().index
         arg1_type = self.options.get('arg1_type', 'value')
         arg2_type = self.options.get('arg2_type', 'value')
         arg1 = self.arguments[0]

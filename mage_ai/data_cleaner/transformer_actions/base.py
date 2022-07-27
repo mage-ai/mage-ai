@@ -15,6 +15,7 @@ try:
     from mage_ai.data_cleaner.transformer_actions.spark.transformers import (
         transform as transform_spark,
     )
+
     PYSPARK = True
 except ImportError:
     PYSPARK = False
