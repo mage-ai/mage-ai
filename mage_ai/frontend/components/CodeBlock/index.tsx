@@ -686,6 +686,7 @@ function CodeBlockProps({
           executionState={executionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
+          setOutputCollapsed={setOutputCollapsed}
         />
       )}
 
