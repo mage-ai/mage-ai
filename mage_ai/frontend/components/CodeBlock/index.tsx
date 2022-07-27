@@ -136,7 +136,9 @@ function CodeBlockProps({
   widgets,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
+
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
+  const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
@@ -417,13 +419,7 @@ function CodeBlockProps({
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
-      autocompleteProviders={{
-        python: buildAutocompleteProvider({
-          block,
-          blocks,
-          pipeline,
-        }),
-      }}
+      autocompleteProviders={autocompleteProviders}
       height={height}
       onChange={(val: string) => {
         setContent(val);
@@ -447,6 +443,7 @@ function CodeBlockProps({
       width="100%"
     />
   ), [
+    autocompleteProviders,
     block,
     blocks,
     content,
@@ -454,6 +451,20 @@ function CodeBlockProps({
     pipeline,
     selected,
     textareaFocused,
+  ]);
+
+  useEffect(() => {
+    setAutocompleteProviders({
+      python: buildAutocompleteProvider({
+        block,
+        blocks,
+        pipeline,
+      }),
+    });
+  }, [
+    block,
+    blocks,
+    pipeline,
   ]);
 
   const codeOutputEl = useMemo(() => (
