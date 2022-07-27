@@ -1,3 +1,6 @@
+import BlockType from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
+
 interface RangeType {
   endColumn: number;
   endLineNumber: number;
@@ -20,4 +23,10 @@ export interface ProvidersType {
   }) => {
     suggestions: SuggestionType[];
   };
+}
+
+export interface ProviderOptionsType {
+  block: BlockType;
+  blocks: BlockType[];
+  pipeline: PipelineType;
 }

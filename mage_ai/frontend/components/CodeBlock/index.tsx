@@ -38,7 +38,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
-import buildAutocompleteProvider from '@components/CodeEditor/autocomplete/test';
+import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
 import {
   ArrowDown,
@@ -418,7 +418,11 @@ function CodeBlockProps({
     <CodeEditor
       autoHeight
       autocompleteProviders={{
-        python: buildAutocompleteProvider({ block }),
+        python: buildAutocompleteProvider({
+          block,
+          blocks,
+          pipeline,
+        }),
       }}
       height={height}
       onChange={(val: string) => {
@@ -444,8 +448,10 @@ function CodeBlockProps({
     />
   ), [
     block,
+    blocks,
     content,
     height,
+    pipeline,
     selected,
     textareaFocused,
   ]);
