@@ -395,7 +395,7 @@ async def main(
     else:
         project = os.path.join(os.getcwd(), 'default_repo')
 
-    if not os.path.exists(project):
+    if not (os.path.exists(project) and os.path.exists(os.path.join(project, 'pipelines'))):
         init_repo(project)
     set_repo_path(project)
 

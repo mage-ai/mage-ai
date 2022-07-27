@@ -38,7 +38,7 @@ def init_repo(repo_path: str) -> None:
     """
     Initialize a repository under the current path.
     """
-    if os.path.exists(repo_path):
+    if os.path.exists(repo_path) and os.path.exists(os.path.join(repo_path, 'pipelines')):
         return
 
     copy_template_directory('repo', repo_path)
