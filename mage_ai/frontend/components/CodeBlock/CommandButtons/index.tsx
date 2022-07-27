@@ -41,7 +41,6 @@ export type CommandButtonsSharedProps = {
   deleteBlock: (block: BlockType) => void;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
-  setOutputCollapsed: (value: boolean) => void;
 };
 
 type CommandButtonsProps = {
@@ -53,6 +52,7 @@ type CommandButtonsProps = {
     runDownstream?: boolean;
     runUpstream?: boolean;
   }) => void;
+  setOutputCollapsed: (value: boolean) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
