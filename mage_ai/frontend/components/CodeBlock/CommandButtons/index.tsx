@@ -1,10 +1,9 @@
-import { useContext, useMemo, useRef, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
 
 import AddChartMenu from './AddChartMenu';
 import BlockType, {
   BlockTypeEnum,
-  StatusTypeEnum,
 } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
@@ -53,6 +52,7 @@ type CommandButtonsProps = {
     runDownstream?: boolean;
     runUpstream?: boolean;
   }) => void;
+  setOutputCollapsed: (value: boolean) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -62,6 +62,7 @@ function CommandButtons({
   executionState,
   interruptKernel,
   runBlock,
+  setOutputCollapsed,
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
@@ -231,8 +232,8 @@ function CommandButtons({
                 &nbsp;
                 <KeyboardTextGroup
                   inline
-                  monospace
                   keyTextGroups={[[KEY_SYMBOL_D], [KEY_SYMBOL_D]]}
+                  monospace
                   uuidForKey={uuid}
                 />
               </Text>
@@ -244,7 +245,10 @@ function CommandButtons({
               noBackground
               noBorder
               noPadding
-              onClick={() => deleteBlock(block)}
+              onClick={() => {
+                deleteBlock(block);
+                setOutputCollapsed(false);
+              }}
             >
               <Trash size={UNIT * 2.5} />
             </Button>

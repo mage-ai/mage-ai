@@ -53,15 +53,15 @@ function PipelineExecution({
     setMessages([]);
 
     sendMessage(JSON.stringify({
-      pipeline_uuid: pipelineUUID,
       execute_pipeline: true,
-    }))
+      pipeline_uuid: pipelineUUID,
+    }));
 
     setIsPipelineExecuting(true);
   }, [
     pipelineUUID,
     sendMessage,
-  ])
+  ]);
 
   useEffect(() => {
     if (lastMessage) {
@@ -167,7 +167,7 @@ function PipelineExecution({
         </CodeBlockStyle>
       </OutputContainerStyle>
     </>
-  )
+  );
 }
 
 export default PipelineExecution;

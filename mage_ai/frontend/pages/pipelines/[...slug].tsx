@@ -539,7 +539,8 @@ function PipelineDetailPage({
             setMessages(messagesPrev => ({
               ...messagesPrev,
               [urlParameters.block_uuid]: messages.map(msg => ({
-                data: msg,
+                data: `${msg}\n`,
+                error: `${msg}\n`,
                 type: DataTypeEnum.TEXT_PLAIN,
               })),
             }));
@@ -577,7 +578,8 @@ function PipelineDetailPage({
             setMessages(messagesPrev => ({
               ...messagesPrev,
               [urlParameters.block_uuid]: messages.map(msg => ({
-                data: msg,
+                data: `${msg}\n`,
+                error: `${msg}\n`,
                 type: DataTypeEnum.TEXT_PLAIN,
               })),
             }));
