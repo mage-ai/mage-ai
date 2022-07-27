@@ -1,5 +1,19 @@
 import { queryString } from '@utils/url';
 
+function getHostCore(windowDefined: boolean, localhost: string, port: number) {
+  let host = localhost;
+  if (windowDefined) {
+    host = window.location.hostname;
+  }
+
+  if (host === localhost) {
+    host = `${host}:${port}`;
+  } else if (windowDefined && !!window.location.port) {
+    host = `${host}:${window.location.port}`;
+  }
+  return host;
+}
+
 export function getHost() {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = 'localhost';
@@ -16,31 +30,27 @@ export function getHost() {
   let protocol = 'http://';
   let basePath = '';
 
-  if (windowDefined) {
-    host = window.location.hostname;
-  }
-
   if (host === LOCALHOST) {
-    host = `${host}:${PORT}`;
-  } else {
-    protocol = 'https://';
-
-    if (windowDefined) {
-      if (!window.location.protocol?.match(/https/)) {
-        protocol = 'http://';
+      protocol = 'https://';
+      if (windowDefined && !window.location.protocol?.match(/https/)) {
+          protocol = 'http://';
       }
-
-      if (!!window.location.port) {
-        host = `${host}:${window.location.port}`;
-      }
-    }
-
   }
+
+  host = getHostCore(windowDefined, LOCALHOST, PORT);
+
   if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
-    basePath = CLOUD_BASE_PATH;
+      basePath = CLOUD_BASE_PATH;
   }
 
   return `${protocol}${host}${basePath}/api`;
+}
+
+export function getWebSocket() {
+  const windowDefined = typeof window !== 'undefined';
+  const LOCALHOST = 'localhost';
+  const PORT = 6789;
+  return `ws://${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/`;
 }
 
 export function buildUrl(
@@ -73,6 +83,4 @@ export function buildUrl(
   return path;
 }
 
-export default {
-  buildUrl,
-};
+export default buildUrl;

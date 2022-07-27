@@ -18,7 +18,7 @@ import Text from '@oracle/elements/Text';
 import { OutputContainerStyle } from './index.style';
 import { PlayButton } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { WEBSOCKT_URL } from '@utils/constants';
+import { getWebSocket } from '@api/utils/url';
 
 export type PipelineExecutionProps = {
   pipeline: PipelineType;
@@ -39,7 +39,7 @@ function PipelineExecution({
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(WEBSOCKT_URL, {
+  } = useWebSocket(getWebSocket(), {
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down
