@@ -5,7 +5,7 @@
 
 # Intro
 
-Mage is an open-source code editor for <b>transforming data</b> and building <b>ML pipelines</b>.
+Mage is an open-source notebook for <b>building</b> and <b>deploying</b> ETL pipelines.
 
 <img
   alt="Mage"
