@@ -428,17 +428,23 @@ class Pipeline:
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
 
-    def delete_block(self, block, widget=False):
+    def delete_block(self, block, widget=False, commit=True):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
 
         if block.uuid not in mapping:
             raise Exception(f'Block {block.uuid} is not in pipeline {self.uuid}.')
         if len(block.downstream_blocks) > 0:
-            downstream_block_uuids = [b.uuid for b in block.downstream_blocks]
-            raise Exception(
-                f'Blocks {downstream_block_uuids} are depending on block {block.uuid}'
-                '. Please remove the downstream blocks first.'
-            )
+            downstream_block_uuids = [
+                b.uuid for b in block.downstream_blocks if b.type != BlockType.CHART
+            ]
+            if len(downstream_block_uuids) > 0:
+                raise Exception(
+                    f'Block(s) {downstream_block_uuids} are depending on block {block.uuid}'
+                    '. Please remove the downstream blocks first.'
+                )
+            for downstream_block in block.downstream_blocks:
+                downstream_block.delete(commit=False)
+
         upstream_blocks = block.upstream_blocks
         for upstream_block in upstream_blocks:
             upstream_block.downstream_blocks = [
@@ -452,7 +458,8 @@ class Pipeline:
             del self.widgets_by_uuid[block.uuid]
         else:
             del self.blocks_by_uuid[block.uuid]
-        self.save()
+        if commit:
+            self.save()
         return block
 
     def save(self, block_uuid: str = None, widget: bool = False):

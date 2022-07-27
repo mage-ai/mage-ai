@@ -247,7 +247,7 @@ class Block:
         block_class = self.block_class_from_type(block_type) or Block
         return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
 
-    def delete(self, widget=False):
+    def delete(self, widget=False, commit=True):
         """
         1. If pipeline is not None, delete the block from the pipeline but not delete the block
         file.
@@ -257,10 +257,13 @@ class Block:
         from mage_ai.data_preparation.models.pipeline import Pipeline
 
         if self.pipeline is not None:
-            self.pipeline.delete_block(self, widget=widget)
+            self.pipeline.delete_block(self, widget=widget, commit=commit)
             # For block_type SCRATCHPAD, also delete the file if possible
             if self.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
                 pipelines = Pipeline.get_pipelines_by_block(self, widget=widget)
+                pipelines = [
+                    pipeline for pipeline in pipelines if self.pipeline.uuid != pipeline.uuid
+                ]
                 if len(pipelines) == 0:
                     os.remove(self.file_path)
             return
@@ -273,7 +276,7 @@ class Block:
                     'Please remove the dependencies before deleting the block.'
                 )
         for p in pipelines:
-            p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget)
+            p.delete_block(p.get_block(self.uuid, widget=widget), widget=widget, commit=commit)
         os.remove(self.file_path)
 
     def execute_sync(
@@ -304,11 +307,13 @@ class Block:
             block_output = output['output']
             if BlockType.CHART == self.type:
                 variable_mapping = block_output
-                output = dict(output=simplejson.dumps(
-                    block_output,
-                    default=encode_complex,
-                    ignore_nan=True,
-                ))
+                output = dict(
+                    output=simplejson.dumps(
+                        block_output,
+                        default=encode_complex,
+                        ignore_nan=True,
+                    )
+                )
             else:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
@@ -358,10 +363,9 @@ class Block:
             stdout = output['stdout']
             if log_func is not None and len(stdout) > 0:
                 stdout_stripped = stdout.strip('\n')
-                prefixed_stdout = '\n'.join([
-                    f'[{self.uuid}] {s}'
-                    for s in stdout_stripped.split('\n')
-                ])
+                prefixed_stdout = '\n'.join(
+                    [f'[{self.uuid}] {s}' for s in stdout_stripped.split('\n')]
+                )
                 log_func(prefixed_stdout)
 
     def __validate_execution(self, decorated_functions, input_vars):
@@ -776,8 +780,9 @@ class Block:
         for idx, output in enumerate(outputs):
             actual_dtype = type(output)
             expected_dtype = variable_dtypes[idx]
-            if ((expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or
-                    (expected_dtype == pd.DataFrame and not is_dataframe(output))):
+            if (expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or (
+                expected_dtype == pd.DataFrame and not is_dataframe(output)
+            ):
                 raise Exception(
                     f'Validation error for block {self.uuid}: '
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '
