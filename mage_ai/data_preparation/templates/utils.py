@@ -23,6 +23,8 @@ def copy_template_directory(template_path: str, dest_path: str) -> None:
     )
     if not os.path.exists(template_path):
         raise IOError(f'Could not find templates for {template_path}.')
+    if not os.path.exists(dest_path):
+        os.makedirs(dest_path)
     copy_tree(template_path, dest_path)
 
 
