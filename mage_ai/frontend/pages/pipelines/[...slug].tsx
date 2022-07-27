@@ -870,7 +870,7 @@ function PipelineDetailPage({
     readyState,
     sendMessage,
   } = useWebSocket(WEBSOCKT_URL, {
-    onOpen: () => console.log('socketUrlPublish opened'),
+    onOpen: () => console.log(`socketUrlPublish opened: ${WEBSOCKT_URL}`),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down
       console.log('Attempting to reconnect...');
