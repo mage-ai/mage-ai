@@ -75,4 +75,5 @@ export function buildUrl(
 
 export default {
   buildUrl,
+  getHost,
 };

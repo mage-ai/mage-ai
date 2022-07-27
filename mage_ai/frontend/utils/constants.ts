@@ -1,1 +1,3 @@
-export const WEBSOCKT_URL = 'ws://localhost:6789/websocket/';
+import { getHost } from '@api/utils/url'
+
+export const WEBSOCKT_URL = `ws://${getHost()}/websocket/`;
