@@ -12,8 +12,7 @@ Mage is an open-source code editor for <b>transforming data</b> and building <b>
   src="media/tool-overview.png"
 />
 
-> Join us on
-> **[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)**
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-blue?style=for-the-badge&logo=slack&labelColor=5c5c5c)](https://www.mage.ai/chat)
 
 **Table of contents**
 
@@ -150,6 +149,8 @@ a group of mages who help each other realize their full potential!
 To live chat with the Mage team and community,
 please join the free Mage [<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
 channel.
+
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-blue?style=for-the-badge&logo=slack&labelColor=5c5c5c)](https://www.mage.ai/chat)
 
 For real-time news and fun memes, check out the Mage
 [<img alt="Twitter" height="20" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter-logo.svg/2491px-Twitter-logo.svg.png" style="position: relative; top: 4px;" /> Twitter](https://twitter.com/mage_ai).
