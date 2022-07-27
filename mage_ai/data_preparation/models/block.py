@@ -133,12 +133,14 @@ class Block:
         name,
         uuid,
         block_type,
+        content=None,
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
     ):
         self.name = name or uuid
         self.uuid = uuid
         self.type = block_type
+        self.content = content
         self.status = status
         self.pipeline = pipeline
         self.upstream_blocks = []
@@ -250,9 +252,24 @@ class Block:
         return block_uuids
 
     @classmethod
-    def get_block(self, name, uuid, block_type, status=BlockStatus.NOT_EXECUTED, pipeline=None):
+    def get_block(
+        self,
+        name,
+        uuid,
+        block_type,
+        content=None,
+        status=BlockStatus.NOT_EXECUTED,
+        pipeline=None,
+    ):
         block_class = self.block_class_from_type(block_type) or Block
-        return block_class(name, uuid, block_type, status=status, pipeline=pipeline)
+        return block_class(
+            name,
+            uuid,
+            block_type,
+            content=content,
+            status=status,
+            pipeline=pipeline,
+        )
 
     def delete(self, widget=False, commit=True):
         """
@@ -465,6 +482,8 @@ class Block:
             if custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
+            elif self.content is not None:
+                exec(self.content, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
                     exec(file.read(), results)
@@ -605,7 +624,7 @@ class Block:
             ),
         )
         if include_content:
-            data['content'] = self.file.content()
+            data['content'] = self.content or self.file.content()
         if include_outputs:
             data['outputs'] = self.get_outputs(sample_count=sample_count)
         return data

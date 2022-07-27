@@ -198,8 +198,9 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
-                c.get('status'),
-                self,
+                content=c.get('content'),
+                status=c.get('status'),
+                pipeline=self,
             )
             for c in self.block_configs
         ]
@@ -208,8 +209,8 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
-                c.get('status'),
-                self,
+                status=c.get('status'),
+                pipeline=self,
                 configuration=c.get('configuration'),
             )
             for c in self.widget_configs
