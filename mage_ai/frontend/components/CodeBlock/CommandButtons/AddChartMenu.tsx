@@ -92,7 +92,9 @@ function AddChartMenu({
     widgetTemplate,
   }) => {
     const widget = {
-      ...widgetTemplate(),
+      ...widgetTemplate({
+        block,
+      }),
       type: BlockTypeEnum.CHART,
       upstream_blocks: block ? [block.uuid] : null,
     };

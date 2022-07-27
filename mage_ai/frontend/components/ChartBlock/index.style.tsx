@@ -15,7 +15,6 @@ export const ChartBlockStyle = styled.div`
   margin-right: ${UNIT * 0.5}px;
   margin-top: ${UNIT * 1}px;
   overflow: hidden;
-  // padding: ${UNIT * 1}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).chartBlock};

@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 import BlockType, {
   BlockTypeEnum,
@@ -25,14 +26,17 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import MultiSelect from '@oracle/elements/Inputs/MultiSelect';
+import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -69,12 +73,16 @@ import {
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
+import { onError, onSuccess } from '@api/utils/response';
 
 export type ChartPropsShared = {
   blockRefs: any;
   blocks: BlockType[];
   chartRefs: any;
   deleteWidget: (block: BlockType) => void;
+  fetchPipeline: () => void;
+  fetchFileTree: () => void;
+  pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
     code: string;
@@ -83,6 +91,7 @@ export type ChartPropsShared = {
   }) => void;
   runningBlocks: BlockType[];
   savePipelineContent: () => Promise<any>;
+  setAnyInputFocused: (value: boolean) => void;
   setSelectedBlock: (block: BlockType) => void;
   updateWidget: (block: BlockType) => void;
   width?: number;
@@ -101,12 +110,16 @@ function ChartBlock({
   blocks,
   deleteWidget,
   executionState,
+  fetchPipeline,
+  fetchFileTree,
   messages = [],
   onChangeContent,
+  pipeline,
   runBlock,
   runningBlocks,
   savePipelineContent,
   selected,
+  setAnyInputFocused,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
@@ -122,9 +135,11 @@ function ChartBlock({
   const [configuration, setConfiguration] = useState<ConfigurationType>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
   const [isEditing, setIsEditing] = useState<boolean>(!chartType || outputs.length === 0);
+  const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [chartWidth, setChartWidth] = useState<number>(null);
   const [upstreamBlocks, setUpstreamBlocks] = useState<string[]>(block?.upstream_blocks);
   const [runCount, setRunCount] = useState<number>(outputs?.length || 0);
+  const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
 
   const configurationOptions = CONFIGURATIONS_BY_CHART_TYPE[chartType];
   const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
@@ -700,39 +715,121 @@ function ChartBlock({
     upstreamBlocks,
   ]);
 
+  const [updateBlock] = useMutation(
+    api.widgets.pipelines.useUpdate(pipeline?.uuid, block.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            setIsEditingBlock(false);
+            fetchPipeline();
+            fetchFileTree();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+      onError: (response: any) => {
+        const {
+          messages,
+        } = onError(response);
+        // setErrorMessages(messages);
+      },
+    },
+  );
+
   return (
     <Col sm={12} md={12 * widthPercentage}>
       <ChartBlockStyle ref={ref}>
+
+
         <Spacing mt={1} px={1}>
           <FlexContainer
             alignItems="center"
             fullWidth
             justifyContent="space-between"
           >
-            <Select
-              compact
-              onChange={(e) => {
-                const value = [e.target.value];
-                const widget = {
-                  ...block,
-                  upstream_blocks: value,
-                };
-                updateWidget(widget);
-                saveAndRun(widget);
-                setUpstreamBlocks(value);
-              }}
-              placeholder="Source block"
-              small
-              value={upstreamBlocks?.[0] || ''}
-            >
-              {blocksOfType?.map(({ uuid }: BlockType) => (
-                <option key={uuid} value={uuid}>
-                  {uuid}
-                </option>
-              ))}
-            </Select>
+            <Flex flex={1} style={{ position: 'relative' }}>
+              <LabelWithValueClicker
+                bold={false}
+                fullWidth
+                inputValue={newBlockUuid}
+                notRequired
+                onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
+                onChange={(e) => {
+                  setNewBlockUuid(e.target.value);
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                onFocus={() => {
+                  setAnyInputFocused(true);
+                  setIsEditingBlock(true);
+                }}
+                small
+                stacked
+                value={!isEditingBlock && block.uuid}
+              />
+
+              {isEditingBlock && (
+                <>
+                  <Spacing ml={1} />
+
+                  <Link
+                    noWrapping
+                    // @ts-ignore
+                    onClick={() => updateBlock({
+                      widget: {
+                        ...block,
+                        name: newBlockUuid,
+                      },
+                    })}
+                    preventDefault
+                    sameColorAsText
+                    small
+                  >
+                    Update chart name
+                  </Link>
+                </>
+              )}
+            </Flex>
+
+            <Spacing mr={1} />
 
             <FlexContainer alignItems="center">
+              <Select
+                compact
+                onChange={(e) => {
+                  const value = [e.target.value];
+                  const widget = {
+                    ...block,
+                    upstream_blocks: value,
+                  };
+                  updateWidget(widget);
+                  saveAndRun(widget);
+                  setUpstreamBlocks(value);
+                }}
+                placeholder="Source block"
+                small
+                value={upstreamBlocks?.[0] || ''}
+              >
+                {blocksOfType?.map(({ uuid }: BlockType) => (
+                  <option key={uuid} value={uuid}>
+                    {uuid}
+                  </option>
+                ))}
+              </Select>
+
+              <Spacing mr={1} />
+
               {!isInProgress && (
                 <Tooltip
                   appearBefore

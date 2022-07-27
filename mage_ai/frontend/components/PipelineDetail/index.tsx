@@ -50,6 +50,7 @@ type PipelineDetailProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  anyInputFocused: boolean;
   blockRefs: any;
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
@@ -77,6 +78,7 @@ type PipelineDetailProps = {
   savePipelineContent: () => void;
   selectedBlock: BlockType;
   setActiveSidekickView: (view: ViewKeyEnum) => void;
+  setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
@@ -90,6 +92,7 @@ type PipelineDetailProps = {
 function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
+  anyInputFocused,
   blockRefs,
   blocks = [],
   deleteBlock,
@@ -110,9 +113,10 @@ function PipelineDetail({
   runningBlocks = [],
   savePipelineContent,
   selectedBlock,
+  setActiveSidekickView,
+  setAnyInputFocused,
   setEditingBlock,
   setMessages,
-  setActiveSidekickView,
   setOutputBlocks,
   setPipelineContentTouched,
   setRunningBlocks,
@@ -122,7 +126,6 @@ function PipelineDetail({
   textareaFocused,
   widgets,
 }: PipelineDetailProps) {
-  const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
 

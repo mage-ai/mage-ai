@@ -90,12 +90,12 @@ const BarChartVertical = withTooltip<BarChartVerticalProps, TooltipData>(({
               onTouchStart={handleTooltip}
               rx={14}
               width={width - (margin.left + margin.right)}
-              x={margin.left * 1.5}
+              x={margin.left}
               y={margin.top * 2}
             />
 
             <Group
-              left={margin.left / 2}
+              // left={margin.left / 2}
               top={margin.top}
             >
               <BarGroup
