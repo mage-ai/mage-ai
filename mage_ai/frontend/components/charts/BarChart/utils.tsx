@@ -127,11 +127,11 @@ export function buildSharedProps({
       MAX_LABEL_LENGTH
     );
 
-  if (maxTickValueCharacterLength * 6 > margin.right * 2) {
-    margin.right += maxTickValueCharacterLength * 5.5;
-  } else if (maxTickValueCharacterLength * 6 >= margin.right) {
-    margin.right += maxTickValueCharacterLength * 3.75;
-  }
+  // if (maxTickValueCharacterLength * 6 > margin.right * 2) {
+  //   margin.right += maxTickValueCharacterLength * 5.5;
+  // } else if (maxTickValueCharacterLength * 6 >= margin.right) {
+  //   margin.right += maxTickValueCharacterLength * 3.75;
+  // }
   margin.left += maxTickValueCharacterLength * 7;
 
   // bounds

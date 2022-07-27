@@ -52,6 +52,7 @@ export type SidekickProps = {
       values: BlockType[];
     };
   };
+  fetchFileTree: () => void;
   fetchPipeline: () => void;
   insights: InsightType[][];
   globalVariables: PipelineVariableType[];
@@ -71,6 +72,7 @@ function Sidekick({
   chartRefs,
   deleteWidget,
   editingBlock,
+  fetchFileTree,
   fetchPipeline,
   fetchWidgets,
   globalVariables,
@@ -84,6 +86,7 @@ function Sidekick({
   sampleData,
   savePipelineContent,
   selectedBlock,
+  setAnyInputFocused,
   setEditingBlock,
   setSelectedBlock,
   setTextareaFocused,
@@ -316,13 +319,16 @@ function Sidekick({
             blocks={blocks}
             chartRefs={chartRefs}
             deleteWidget={deleteWidget}
-            fetchWidgets={fetchWidgets}
+            fetchFileTree={fetchFileTree}
+            fetchPipeline={fetchPipeline}
             messages={messages}
             onChangeChartBlock={onChangeChartBlock}
+            pipeline={pipeline}
             runBlock={runBlock}
             runningBlocks={runningBlocks}
             savePipelineContent={savePipelineContent}
             selectedBlock={selectedBlock}
+            setAnyInputFocused={setAnyInputFocused}
             setSelectedBlock={setSelectedBlock}
             setTextareaFocused={setTextareaFocused}
             textareaFocused={textareaFocused}

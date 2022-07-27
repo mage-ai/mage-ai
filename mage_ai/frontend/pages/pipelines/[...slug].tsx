@@ -101,6 +101,7 @@ function PipelineDetailPage({
     [filePath: string]: boolean;
   }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
+  const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -135,7 +136,7 @@ function PipelineDetailPage({
       setActiveSidekickView(ViewKeyEnum.TREE, false);
     }
   }, [activeSidekickView]);
-  
+
   const openSidekickView = useCallback((
     newView: ViewKeyEnum,
     pushHistory?: boolean,
@@ -1012,6 +1013,7 @@ function PipelineDetailPage({
       chartRefs={chartRefs}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
+      fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       fetchWidgets={fetchWidgets}
       globalVariables={globalVariables}
@@ -1025,6 +1027,7 @@ function PipelineDetailPage({
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
+      setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
@@ -1040,6 +1043,7 @@ function PipelineDetailPage({
     blocks,
     deleteWidget,
     editingBlock,
+    fetchFileTree,
     fetchPipeline,
     fetchWidgets,
     globalVariables,
@@ -1053,6 +1057,7 @@ function PipelineDetailPage({
     sampleData,
     savePipelineContent,
     selectedBlock,
+    setAnyInputFocused,
     setEditingBlock,
     setTextareaFocused,
     statistics,
@@ -1072,6 +1077,7 @@ function PipelineDetailPage({
           onCreateCallback?: (block: BlockType) => void;
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
+      anyInputFocused={anyInputFocused}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
@@ -1093,6 +1099,7 @@ function PipelineDetailPage({
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
       setActiveSidekickView={setActiveSidekickView}
+      setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
@@ -1107,6 +1114,7 @@ function PipelineDetailPage({
   ), [
     addNewBlockAtIndex,
     addWidgetAtIndex,
+    anyInputFocused,
     blockRefs,
     blocks,
     deleteBlock,
@@ -1127,6 +1135,7 @@ function PipelineDetailPage({
     runningBlocks,
     savePipelineContent,
     selectedBlock,
+    setAnyInputFocused,
     setEditingBlock,
     setMessages,
     setPipelineContentTouched,

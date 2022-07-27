@@ -8,7 +8,6 @@ import Row from '@components/shared/Grid/Row';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ChartsPropsShared = {
-  fetchWidgets: () => void;
   messages: {
     [uuid: string]: KernelOutputType[];
   };
@@ -22,19 +21,20 @@ function Charts({
   blocks,
   chartRefs,
   deleteWidget,
-  fetchWidgets,
   messages,
   onChangeChartBlock,
   runBlock,
   runningBlocks,
   savePipelineContent,
   selectedBlock,
+  setAnyInputFocused,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
   updateWidget,
   widgets,
   width,
+  ...props
 }: ChartsPropsShared) {
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -74,11 +74,12 @@ function Charts({
               : ExecutionStateEnum.QUEUED
              )
             : ExecutionStateEnum.IDLE;
-          
+
           chartRefs.current[uuid] = createRef();
 
           return (
             <ChartBlock
+              {...props}
               block={block}
               blockRefs={blockRefs}
               blocks={blocks}
@@ -93,6 +94,7 @@ function Charts({
               runningBlocks={runningBlocks}
               savePipelineContent={savePipelineContent}
               selected={selectedBlock?.uuid === uuid}
+              setAnyInputFocused={setAnyInputFocused}
               setSelectedBlock={setSelectedBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={textareaFocused}

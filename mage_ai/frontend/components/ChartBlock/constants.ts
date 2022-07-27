@@ -331,7 +331,8 @@ export const VARIABLE_INFO_BY_CHART_TYPE = {
 export const CHART_TEMPLATES = [
   {
     label: () => '% of missing values',
-    widgetTemplate: () => ({
+    widgetTemplate: ({ block }) => ({
+      name: `missing values for ${block?.uuid}`,
       configuration: {
         [VARIABLE_NAME_X]: 'columns_with_mising_values',
         [VARIABLE_NAME_Y]: 'percentage_of_missing_values',
@@ -352,7 +353,8 @@ for col in df_1.columns:
   },
   {
     label: () => 'Unique values',
-    widgetTemplate: () => ({
+    widgetTemplate: ({ block }) => ({
+      name: `unique values for ${block?.uuid}`,
       configuration: {
         [VARIABLE_NAME_X]: 'columns',
         [VARIABLE_NAME_Y]: 'number_of_unique_values',
@@ -367,7 +369,8 @@ number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
   },
   {
     label: () => 'Most frequent values',
-    widgetTemplate: () => ({
+    widgetTemplate: ({ block }) => ({
+      name: `most frequent values for ${block?.uuid}`,
       configuration: {
         [VARIABLE_NAME_HEIGHT]: 3000,
         [VARIABLE_NAME_INDEX]: 'column_index',
@@ -396,7 +399,8 @@ for col in df_1.columns:
   },
   {
     label: () => 'Summary overview',
-    widgetTemplate: () => ({
+    widgetTemplate: ({ block }) => ({
+      name: `summary overview for ${block?.uuid}`,
       configuration: {
         [VARIABLE_NAME_HEIGHT]: 3000,
         [VARIABLE_NAME_INDEX]: 'stats',
@@ -426,7 +430,8 @@ for col_type, count in sorted(col_counts.items()):
   },
   {
     label: () => 'Feature profiles',
-    widgetTemplate: () => ({
+    widgetTemplate: ({ block }) => ({
+      name: `feature profiles for ${block?.uuid}`,
       configuration: {
         [VARIABLE_NAME_HEIGHT]: 3000,
         [VARIABLE_NAME_INDEX]: 'stats',
