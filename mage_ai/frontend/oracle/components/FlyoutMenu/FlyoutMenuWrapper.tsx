@@ -18,6 +18,7 @@ function FlyoutMenuWrapper({
   onClickOutside,
   parentRef,
   uuid,
+  ...props
 }: FlyoutMenuWrapperProps) {
   const flyoutMenuEl = (
     <div
@@ -30,6 +31,7 @@ function FlyoutMenuWrapper({
         {children}
       </div>
       <FlyoutMenu
+        {...props}
         compact={compact}
         items={items}
         onClickCallback={onClickCallback}
