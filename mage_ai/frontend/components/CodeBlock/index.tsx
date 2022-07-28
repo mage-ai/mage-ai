@@ -11,8 +11,6 @@ import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import BlockType, {
-  BLOCK_TYPE_NAME_MAPPING,
-  BLOCK_TYPE_CONVERTIBLE,
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
