@@ -13,7 +13,7 @@
       - [Fix Syntax Errors](#fix-syntax-errors)
       - [Reformat Values](#reformat-values)
     - [Column Removal Actions](#column-removal-actions)
-      - [Keep Columns](#keep-columns)
+      - [Select Columns](#select-columns)
       - [Remove Columns](#remove-columns)
     - [Row Shifting Actions](#row-shifting-actions)
       - [Shift Up](#shift-up)
@@ -385,7 +385,7 @@ build_transformer_action(
 - **_arguments:_** Columns whose name to clean. If empty, no columns names are cleaned.
 
 #### Fix Syntax Errors
-Marks syntax errors in column values. Syntax errors are defined as values that are improperly formatted or of the incorrect type. For example, this could be:
+Marks syntax errors in column values. Syntax errors are defined as values that are improperly formatted or of the incorrect type. For example:
 - A number in a text column
 - An improperly formatting Email, Phone Number, or Zip Code
 - An improperly formatted date
@@ -444,19 +444,97 @@ build_transformer_action(
   - `capitalization` (optional): Specifies the capitalization strategy to use when standardizing capitalization. This argument is ignored unless `reformat = "caps_standardization"`. Options are `['lowercase', 'uppercase']`.
 
 ### Column Removal Actions
-#### Keep Columns
-#### Remove Columns
+#### Select Columns
+Keeps only the specified columns; removes all other columns from data frame.
 
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.SELECT,
+    arguments=[],
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** The columns to keep in the data frame. If empty, all columns are removed.
+
+#### Remove Columns
+Drops the specified columns.
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.REMOVE,
+    arguments=[],
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** The columns to keep in the data frame. If empty, no columns are removed.
 ### Row Shifting Actions
+
+These actions copy a column with all rows shifted up or down by a certain amount. When rows are shifted, one or more values are deleted and some new values have to be filled in. The fill-in data types are:
+
+| Type        | Fill Value   |
+| ----------- | ------------ |
+| Numeric     | `np.nan`     |
+| Datetime    | `pandas.NaT` |
+| Other Types | `None`       |
 #### Shift Up
+Shifts all rows in a column up by one. The first entry is deleted and the last entry is turned to a null type.
+
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.SHIFT_UP,
+    arguments=['Name'],
+    axis=Axis.COLUMN,
+    outputs=[{'uuid': 'shifted_name', 'type': 'text'}],
+)
+```
+**Args**
+- **_arguments:_** The column to shift up. At most one column can be shifted at once:
+  - If multiple columns are provided as arguments, only the first is shifted up
+  - If no columns are provided then no shifting is performed
+- **_outputs:_** Metadata for the newly added upshifted column. Must have at most a single entry containing the following information:
+  - `uuid`: Name of the new upshifted column
+  - `type`: Data type of the new upshifted column
 #### Shift Down
+Shifts all rows up by _periods_ rows. The last _periods_ entries are deleted and the first _periods_ are converted to a null type.
+
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.SHIFT_DOWN,
+    arguments=['created_time'],
+    axis=Axis.COLUMN,
+    options={'periods': 3},
+    outputs=[{'uuid': 'downshifted_created_time', 'type': 'datetime'}],
+)
+```
+**Args**
+- **_arguments:_** The column to shift down. At most one column can be shifted at once:
+  - If multiple columns are provided as arguments, only the first is shifted down
+  - If no columns are provided then no shifting is performed
+- **_options:_**
+  - `periods` (optional): Specifies how many rows to shift down. Defaults to 1.
+  - `groupby_columns` (optional): Specifies columns to group by. If specified, shifts each _group_ by _periods_ rows instead of the entire data frame. The resulting column is then returned. If unspecified no grouping is performed. Multiple columns can be specified to group by.
+- **_outputs:_** Metadata for the newly added downshifted column. Must have at most a single entry containing the following information:
+  - `uuid`: Name of the new downshifted column
+  - `type`: Data type of the new downshifted column
 
 ## Row Actions
 
 These are transformer actions that can be applied to each row of a data frame, and so have `axis = Axis.ROW`.
 
 #### Drop Duplicates
-Drops duplicate rows from the data frame
+Drops duplicate rows from the data frame.
 
 **Example**:
 ```python
@@ -479,7 +557,7 @@ build_transformer_action(
     Defaults to `'last'`.
 
 #### Filter
-Filters row by boolean condition. Selects all rows that meets the filter condition. 
+Filters row by boolean condition. Selects all rows that meets the filter condition.
 
 **Example**:
 ```python
