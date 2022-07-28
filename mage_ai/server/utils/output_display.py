@@ -156,8 +156,7 @@ def __custom_output():
 __custom_output()
 """
 
-        custom_code = f"""
-{code_without_last_line}
+        custom_code = f"""{code_without_last_line}
 {internal_output}
 """
 
