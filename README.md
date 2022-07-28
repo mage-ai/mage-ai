@@ -125,7 +125,7 @@ and charts (using [React](https://reactjs.org/)) is easy to do (tutorial coming 
 
 <img
   alt="Extensible charts"
-  src="media/extensible-charts.png"
+  src="media/extensible-charts.gif"
 />
 
 ### New features and changelog
