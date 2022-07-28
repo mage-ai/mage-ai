@@ -7,6 +7,29 @@ import {
 } from './constants';
 import { indexBy } from '@utils/array';
 
+function columnNameItems(monaco, range, block: BlockType) {
+  const columns = block.outputs?.[0]?.sample_data?.columns || [];
+  return columns.map((column: string) => ({
+    label: `${column} column`,
+    kind: monaco.languages.CompletionItemKind.Variable,
+    insertText: `'${column}'`,
+    range,
+  }));
+}
+
+function variableManagersDefinedRegex(blocks, pipeline) {
+  return blocks.map((block: BlockType) => {
+    const regex = new RegExp(
+      `([\\w_]+)[ ]*=[ ]*get_variable\\('${pipeline.uuid}', '${block.uuid}', 'df'\\)`,
+    );
+
+    return {
+      block,
+      regex,
+    };
+  });
+}
+
 function filter(word: WordType, suggestions: SuggestionType[]): SuggestionType[] {
   const letters = word.word.split('');
 
@@ -103,6 +126,7 @@ export default function(opts: ProviderOptionsType) {
 
   return (monaco) => {
     return (model, position) => {
+      console.log('typed first character')
       const empty = { suggestions: [] };
       const suggestions = [];
 
@@ -136,6 +160,42 @@ export default function(opts: ProviderOptionsType) {
       }
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
+        // Search all previous lines where [var] = get_variable(pipeline_uuid, block_uuid, 'df')
+        // is defined, then get the value of [var] and check to see if they typed it on the
+        // same line as the current word.
+
+        const variableNamesMatched = [];
+
+        variableManagersDefinedRegex(blocks, pipeline).forEach(({
+          block: blockForRegex,
+          regex,
+        }) => {
+          const variableName = textUntilPosition.match(regex)?.[1];
+          if (variableName) {
+            variableNamesMatched.push({
+              block: blockForRegex,
+              variableName,
+            })
+          }
+        });
+
+        if (variableNamesMatched.length >= 1) {
+          const textPreviouslyTypeInSameLine =
+            textUntilPosition.split('\n')[position.lineNumber - 1]?.slice(0, word.startColumn - 1);
+
+          if (textPreviouslyTypeInSameLine) {
+            variableNamesMatched.forEach(({
+              block: blockForVariable,
+              variableName,
+            }) => {
+              const regex = new RegExp(`^${variableName}\\[| ${variableName}\\[`);
+              if (textPreviouslyTypeInSameLine.match(regex)) {
+                suggestions.push(...columnNameItems(monaco, range, blockForVariable));
+              }
+            });
+          }
+        }
+
         if (startColumn === 1) {
           suggestions.push(...variablesFromBlocks(monaco, range, opts));
         }
