@@ -63,7 +63,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { buildConvertBlockMenu } from './utils';
+import { buildConvertBlockMenuItems } from './utils';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
@@ -383,7 +383,7 @@ function CodeBlockProps({
   const buildBlockMenu = (b: BlockType) => {
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
-        ...buildConvertBlockMenu(b, blocks, 'block_menu/scratchpad', updateBlock),
+        ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', updateBlock),
       ],
     };
 
@@ -776,7 +776,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
                   ...newBlock,
                   content,
                   upstream_blocks: upstreamBlocks,
-                })
+                });
               }}
               compact
             />

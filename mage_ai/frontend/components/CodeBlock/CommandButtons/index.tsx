@@ -34,7 +34,7 @@ import {
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { buildConvertBlockMenu } from '../utils';
+import { buildConvertBlockMenuItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
@@ -91,7 +91,7 @@ function CommandButtons({
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
 
   const convertBlockMenuItems = useMemo(() => (
-    buildConvertBlockMenu(block, blocks, 'CommandButtons', updateBlock)
+    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', updateBlock)
   ), [
     block,
     blocks,

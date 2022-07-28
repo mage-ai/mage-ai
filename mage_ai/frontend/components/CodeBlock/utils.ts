@@ -1,12 +1,13 @@
 import BlockType, { BLOCK_TYPE_CONVERTIBLE, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { lowercase } from '@utils/string';
 
-export const buildConvertBlockMenu = (
+export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
   baseUUID: string,
   updateBlock: ({ block: BlockType }) => void,
-) => {
+): FlyoutMenuItemType[] => {
   const upstreamBlocks = [];
   const currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);
   const previousBlock = blocks[currentIndex - 1];

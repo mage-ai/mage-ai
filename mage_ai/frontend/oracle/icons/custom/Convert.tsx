@@ -1,11 +1,7 @@
 import styled from 'styled-components';
+
 import { BaseIconProps } from '../BaseIcon';
 import { DEFAULT_SIZE } from '../shared/constants';
-
-export type LogoWithNameProps = {
-  height?: number;
-  width?: number;
-};
 
 const SVGStyle = styled.svg``;
 
