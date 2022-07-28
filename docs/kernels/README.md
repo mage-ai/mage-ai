@@ -19,7 +19,7 @@ Instructions for running PySpark kernel
 
 When using PySpark kernel, we need to specify a s3 path as the variables dir, which will be used to store the output of each block. The vairables dir can be set in project's metadata.yaml file. Example:
 ```yaml
-variables_dir: s3://bucket/path
+remote_variables_dir: s3://bucket/path
 ```
 
 Pipelines built with this kernel can be executed in PySpark environments.

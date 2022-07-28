@@ -14,7 +14,6 @@ from mage_ai.server.utils.output_display import (
 from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.session import Session
-from typing import List
 import asyncio
 import json
 import os
@@ -102,7 +101,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     global_vars=global_vars,
                     kernel_name=kernel_name,
                     pipeline_config=pipeline.to_dict(include_content=True),
-                    repo_config=get_repo_config().to_dict(),
+                    repo_config=get_repo_config().to_dict(remote=True),
                     update_status=False if kernel_name == KernelName.PYSPARK else True,
                 )
                 client = self.init_kernel_client()

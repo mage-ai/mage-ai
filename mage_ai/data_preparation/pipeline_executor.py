@@ -3,6 +3,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.emr import emr
 from mage_ai.services.s3 import s3
+from typing import Dict
 import asyncio
 import os
 
@@ -18,7 +19,12 @@ class PipelineExecutor:
         else:
             return PipelineExecutor(pipeline)
 
-    def execute(self, analyze_outputs=False, global_vars=None, update_status=False):
+    def execute(
+        self,
+        analyze_outputs: bool = False,
+        global_vars: Dict = None,
+        update_status: bool = False,
+    ) -> None:
         asyncio.run(self.pipeline.execute(
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
@@ -27,13 +33,18 @@ class PipelineExecutor:
 
 
 class PySparkPipelineExecutor(PipelineExecutor):
-    def __init__(self, pipeline):
+    def __init__(self, pipeline: Pipeline):
         super().__init__(pipeline)
         path_parts = self.pipeline.variables_dir.replace('s3://', '').split('/')
         self.s3_bucket = path_parts.pop(0)
         self.s3_path_prefix = '/'.join(path_parts)
 
-    def execute(self, analyze_outputs=False, global_vars=None, update_status=False):
+    def execute(
+        self,
+        analyze_outputs: bool = False,
+        global_vars: Dict = None,
+        update_status: bool = False,
+    ) -> None:
         """
         Run pipeline in a spark cluster
         1. Upload pipeline execution script to S3
@@ -44,33 +55,33 @@ class PySparkPipelineExecutor(PipelineExecutor):
         self.submit_spark_job()
 
     @property
-    def bootstrap_script_path(self):
+    def bootstrap_script_path(self) -> str:
         return os.path.join('s3://', self.s3_bucket, self.bootstrap_script_path_key)
 
     @property
-    def bootstrap_script_path_key(self):
+    def bootstrap_script_path_key(self) -> str:
         return os.path.join(self.s3_path_prefix, 'scripts/emr_bootstrap.sh')
 
     @property
-    def log_uri(self):
+    def log_uri(self) -> str:
         return os.path.join('s3://', self.s3_bucket, self.s3_path_prefix, 'logs')
 
     @property
-    def pipeline_script_path(self):
+    def pipeline_script_path(self) -> str:
         return os.path.join('s3://', self.s3_bucket, self.pipeline_script_path_key)
 
     @property
-    def pipeline_script_path_key(self):
+    def pipeline_script_path_key(self) -> str:
         return os.path.join(self.s3_path_prefix, f'scripts/{self.pipeline.uuid}.py')
 
-    def upload_pipeline_execution_script(self, global_vars=None):
+    def upload_pipeline_execution_script(self, global_vars: Dict = None) -> None:
         execution_script_code = template_env.get_template(
             'pipeline_execution/spark_script.jinja',
         ).render(
             global_vars=global_vars,
             pipeline_config=self.pipeline.to_dict(include_content=True),
             pipeline_uuid=self.pipeline.uuid,
-            repo_config=self.pipeline.repo_config.to_dict(),
+            repo_config=self.pipeline.repo_config.to_dict(remote=True),
             spark_log_path=self.log_uri,
         )
         bootstrap_script_code = template_env.get_template(
