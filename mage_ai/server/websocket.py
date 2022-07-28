@@ -92,9 +92,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if execute_pipeline:
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
-            value = dict(
-                pipeline_uuid=pipeline_uuid,
-            )
             if kernel_name == KernelName.PYSPARK:
                 code = get_pipeline_execution_code(
                     pipeline_uuid,
