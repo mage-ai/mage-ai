@@ -675,7 +675,7 @@ class Block:
         else:
             test_functions = self.test_functions
 
-        variable_manager = VariableManager(self.pipeline.repo_path)
+        variable_manager = self.pipeline.variable_manager
         outputs = [
             variable_manager.get_variable(
                 self.pipeline.uuid,

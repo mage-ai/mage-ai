@@ -100,9 +100,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             threading.Thread(target=run_pipeline).start()
         else:
-            block_type = message.get('type')
-            block_uuid = message.get('uuid')
-            pipeline_uuid = message.get('pipeline_uuid')
             widget = BlockType.CHART == block_type
 
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
