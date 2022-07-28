@@ -286,12 +286,14 @@ function ChartBlock({
       setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
       setTextareaFocused={setTextareaFocused}
       showLineNumbers={false}
-      textareaFocused={textareaFocused}
+      textareaFocused={textareaFocused || (ChartTypeEnum.TABLE === chartType && !isEditing)}
       value={content}
       width="100%"
     />
   ), [
+    chartType,
     content,
+    isEditing,
     selected,
     setSelectedBlock,
     setTextareaFocused,

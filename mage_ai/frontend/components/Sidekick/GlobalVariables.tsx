@@ -100,7 +100,7 @@ function GlobalVariables({
       }: PipelineVariableType) => {
         const block: BlockType = blocksByUUID[uuid];
 
-        if (!block || BlockTypeEnum.SCRATCHPAD === block.type) {
+        if (!block || BlockTypeEnum.DATA_EXPORTER === block.type || BlockTypeEnum.SCRATCHPAD === block.type) {
           return;
         }
 

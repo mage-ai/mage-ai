@@ -465,7 +465,7 @@ for col, col_type in columns_and_types:
             median = sorted(not_null)[int(count / 2)]
         min_value = round(series.min(), 2)
         max_value = round(series.max(), 2)
-        std_dev = round(statistics.stdev(not_null.values), 2)
+        std_dev = round(statistics.stdev(not_null.values.tolist()), 2)
     else:
         min_value = not_null.astype(str).min()
         max_value = not_null.astype(str).max()

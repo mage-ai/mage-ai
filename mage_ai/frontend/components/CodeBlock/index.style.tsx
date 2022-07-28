@@ -67,7 +67,6 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
 
 export const ContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
-  overflow: hidden;
   position: relative;
 `;
 

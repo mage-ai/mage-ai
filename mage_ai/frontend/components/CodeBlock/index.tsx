@@ -38,6 +38,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import usePrevious from '@utils/usePrevious';
 import {
   ArrowDown,
@@ -135,7 +136,9 @@ function CodeBlockProps({
   widgets,
 }: CodeBlockProps, ref) {
   const themeContext = useContext(ThemeContext);
+
   const [addNewBlocksVisible, setAddNewBlocksVisible] = useState(false);
+  const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
@@ -413,10 +416,10 @@ function CodeBlockProps({
     return blockMenuItems[b.type];
   };
 
-
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
+      autocompleteProviders={autocompleteProviders}
       height={height}
       onChange={(val: string) => {
         setContent(val);
@@ -440,10 +443,28 @@ function CodeBlockProps({
       width="100%"
     />
   ), [
+    autocompleteProviders,
+    block,
+    blocks,
     content,
     height,
+    pipeline,
     selected,
     textareaFocused,
+  ]);
+
+  useEffect(() => {
+    setAutocompleteProviders({
+      python: buildAutocompleteProvider({
+        block,
+        blocks,
+        pipeline,
+      }),
+    });
+  }, [
+    block,
+    blocks,
+    pipeline,
   ]);
 
   const codeOutputEl = useMemo(() => (
@@ -722,7 +743,7 @@ function CodeBlockProps({
                   return (
                     <div key={blockUUID}>
                       <Text inline monospace muted small>
-                        &nbsp;&nbsp;&nbsp;&nbsp;df_{i + 1}
+                        &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
                       </Text> <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}
                         onClick={() => {
@@ -782,8 +803,7 @@ function CodeBlockProps({
                   upstreamBlocks.push(block.uuid);
                 }
 
-                if (BlockTypeEnum.CHART !== block.type
-                  && BlockTypeEnum.SCRATCHPAD !== block.type
+                if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
                   && BlockTypeEnum.SCRATCHPAD === newBlock.type
                 ) {
                   content = `from mage_ai.data_preparation.variable_manager import get_variable
