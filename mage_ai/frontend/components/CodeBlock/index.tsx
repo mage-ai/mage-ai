@@ -65,6 +65,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { buildConvertBlockMenu } from './utils';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
@@ -382,31 +383,9 @@ function CodeBlockProps({
   );
 
   const buildBlockMenu = (b: BlockType) => {
-    const upstreamBlocks = [];
-    const currentIndex = blocks.findIndex(({ uuid }) => uuid === b.uuid);
-    const previousBlock = blocks[currentIndex - 1];
-    if (previousBlock) {
-      upstreamBlocks.push(previousBlock.uuid);
-    }
-
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
-        {
-          items: BLOCK_TYPE_CONVERTIBLE.map(blockType => ({
-            label: () => BLOCK_TYPE_NAME_MAPPING[blockType],
-            // @ts-ignore
-            onClick: () => updateBlock({
-              block: {
-                ...b,
-                type: blockType,
-                upstream_blocks: upstreamBlocks,
-              },
-            }),
-            uuid: `block_menu/scratchpad/convert_to/${blockType}`,
-          })),
-          label: () => 'Convert to',
-          uuid: 'block_menu/scratchpad/convert_to',
-        },
+        ...buildConvertBlockMenu(b, blocks, 'block_menu/scratchpad', updateBlock),
       ],
     };
 
@@ -682,11 +661,13 @@ function CodeBlockProps({
         <CommandButtons
           addWidget={addWidget}
           block={block}
+          blocks={blocks}
           deleteBlock={deleteBlock}
           executionState={executionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
           setOutputCollapsed={setOutputCollapsed}
+          updateBlock={updateBlock}
         />
       )}
 
