@@ -3,16 +3,9 @@
 - [Overview](#overview)
   - [Tutorial](#tutorial)
   - [Core Concepts](#core-concepts)
+- [Building Transformer Actions](#building-transformer-actions)
 - [Transformer Action Reference](#transformer-action-reference)
-  - [Building Transformer Actions](#building-transformer-actions)
-  - [Column Actions](#column-actions)
-    - [Aggregation Actions](#aggregation-actions)
-    - [Formatting Actions](#formatting-actions)
-    - [Column Removal Actions](#column-removal-actions)
-    - [Row Shifting Actions](#row-shifting-actions)
-    - [Other Column Actions](#other-column-actions)
-  - [Row Actions](#row-actions)
-  - [Appendix: Filter Syntax](#appendix-filter-syntax)
+- [Appendix: Filter Syntax](#appendix-filter-syntax)
 
 # Overview
 
@@ -251,9 +244,7 @@ payload = build_transformer_action(...)
 transformed_df = BaseAction(payload).execute(df)
 ```
 
-# Transformer Action Reference
-
-## Building Transformer Actions
+# Building Transformer Actions
 
 **_build_transformer_action_** - `build_transformer_action(df: DataFrame, action_type: ActionType | str, arguments: List[str], action_code: str, options: Dict, axis: Axis | str, outputs: List[Dict]) -> Dict:`
 
@@ -290,9 +281,31 @@ Note: Action variables are inferred from `arguments` and `df`.
     )
   ```
 
-## Column Actions
+# Transformer Action Reference
+- [Column Actions](#column-actions)
+  - [Aggregation Actions](#aggregation-actions)
+  - [Formatting Actions](#formatting-actions)
+    - [Clean Column Names](#clean-column-names)
+    - [Fix Syntax Errors](#fix-syntax-errors)
+    - [Reformat Values](#reformat-values)
+  - [Column Removal Actions](#column-removal-actions)
+    - [Select Columns](#select-columns)
+    - [Remove Columns](#remove-columns)
+  - [Row Shifting Actions](#row-shifting-actions)
+    - [Shift Up](#shift-up)
+    - [Shift Down](#shift-down)
+  - [Other Column Actions](#other-column-actions)
+    - [Difference](#difference)
+    - [Fill In Missing Values](#fill-in-missing-values)
+    - [Remove Outliers](#remove-outliers)
+- [Row Actions](#row-actions)
+    - [Drop Duplicates](#drop-duplicates)
+    - [Filter](#filter)
+    - [Remove Rows](#remove-rows)
+    - [Sort](#sort)
+# Column Actions
 
-### Aggregation Actions
+## Aggregation Actions
 
 Applies some aggregation function over groups determined by values in some columns. A set of grouping columns are provided, whose unique combinations of values are used to form groups. For example, consider the dataset below:
 
@@ -391,9 +404,9 @@ These are the possible aggregations that can be applied to each group per each i
 | **_Sum_**            | `ActionType.SUM`            | Sums over all values in each group per input column                                                            |
 
 
-### Formatting Actions
+## Formatting Actions
 These transformer actions involve reformatting column names or the values in columns
-#### Clean Column Names
+### Clean Column Names
 Cleans column names according to the following rules:
 1. Names are converted to snake case
 2. All wrapping whitespace or underscores are removed
@@ -428,7 +441,7 @@ build_transformer_action(
 **Args**
 - **_arguments:_** Columns whose name to clean. If empty, no columns names are cleaned.
 
-#### Fix Syntax Errors
+### Fix Syntax Errors
 Marks syntax errors in column values. Syntax errors are defined as values that are improperly formatted or of the incorrect type. For example:
 - A number in a text column
 - An improperly formatted email, phone number, or zip code
@@ -452,7 +465,7 @@ build_transformer_action(
 ```
 **Args**
 - **_arguments:_** Columns to mark syntax errors for. If empty no columns are checked.
-#### Reformat Values
+### Reformat Values
 Reformats values in column based on requested action. The currently supported reformats are:
 - Standardize capitalization (`reformat = 'caps_standardization'`): Forces text column to follow a single capitalization strategy (either lowercase or uppercase)
 - Convert currencies to a number (`reformat = 'currency_to_num'`): Converts a currency value (by default stored as a string) to a decimal number. If unable to convert, doesn't perform conversion
@@ -487,8 +500,8 @@ build_transformer_action(
     - `'date_format_conversion'` - convert datetime string to `pandas.Timestamp`
   - `capitalization` (optional): Specifies the capitalization strategy to use when standardizing capitalization. This argument is ignored unless `reformat = "caps_standardization"`. Options are `['lowercase', 'uppercase']`.
 
-### Column Removal Actions
-#### Select Columns
+## Column Removal Actions
+### Select Columns
 Keeps only the specified columns; removes all other columns from data frame.
 
 **Example**:
@@ -503,7 +516,7 @@ build_transformer_action(
 **Args**
 - **_arguments:_** The columns to keep in the data frame. If empty, all columns are removed.
 
-#### Remove Columns
+### Remove Columns
 Drops the specified columns.
 
 **Example**:
@@ -517,7 +530,7 @@ build_transformer_action(
 ```
 **Args**
 - **_arguments:_** The columns to keep in the data frame. If empty, no columns are removed.
-### Row Shifting Actions
+## Row Shifting Actions
 
 These actions copy a column with all rows shifted up or down by a certain amount. When rows are shifted, one or more values are deleted and some new values have to be filled in. The fill-in data types are:
 
@@ -526,7 +539,7 @@ These actions copy a column with all rows shifted up or down by a certain amount
 | Numeric     | `np.nan`     |
 | Datetime    | `pandas.NaT` |
 | Other Types | `None`       |
-#### Shift Up
+### Shift Up
 Shifts all rows in a column up by one. The first entry is deleted and the last entry is turned to a null type.
 
 
@@ -547,7 +560,7 @@ build_transformer_action(
 - **_outputs:_** Metadata for the newly added upshifted column. Must have at most a single entry containing the following information:
   - `uuid`: Name of the new upshifted column
   - `type`: Data type of the new upshifted column
-#### Shift Down
+### Shift Down
 Shifts all rows up by _periods_ rows. The last _periods_ entries are deleted and the first _periods_ are converted to a null type.
 
 
@@ -573,9 +586,9 @@ build_transformer_action(
   - `uuid`: Name of the new downshifted column
   - `type`: Data type of the new downshifted column
 
-### Other Column Actions
+## Other Column Actions
 
-#### Difference
+### Difference
 Adds a new column where each row is the difference between every consecutive two rows in the original column.
 
 
@@ -597,7 +610,7 @@ build_transformer_action(
   - `uuid`: Name of the difference column
   - `type`: Data type of the difference column (most often will be a number)
 
-#### Fill In Missing Values
+### Fill In Missing Values
 Imputes missing values using different strategies:
 | Strategy   | Description                                                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -626,7 +639,7 @@ build_transformer_action(
   - `value` (optional): Value to fill in missing value with. This argument is ignored unless `strategy = 'constant'`, in which case the constant value used to impute is `value`.
   - `timeseries_cols = []` (optional): Columns which specify the time series in the data frame. This argument is ignored unless `strategy = 'sequential'`, in which case the data frame is sorted along these columns to sequentially impute data in the order of the time series.
 
-#### Remove Outliers
+### Remove Outliers
 Removes multidimensional outliers in the data frame by analyzing numerical columns. If there are no numerical columns, no check is performed. Null values are ignored when checking for outliers.
 
 The following methods are supported for detecting outliers:
@@ -660,11 +673,11 @@ build_transformer_action(
 
     Defaults to `'auto'`.
 
-## Row Actions
+# Row Actions
 
 These are transformer actions that can be applied to each row of a data frame, and so have `axis = Axis.ROW`.
 
-#### Drop Duplicates
+### Drop Duplicates
 Drops duplicate rows from the data frame.
 
 **Example**:
@@ -687,7 +700,7 @@ build_transformer_action(
 
     Defaults to `'last'`.
 
-#### Filter
+### Filter
 Filters row by boolean condition. Selects all rows that meets the filter condition.
 
 **Example**:
@@ -702,7 +715,7 @@ build_transformer_action(
 **Args**
 - **_action_code:_** filter to apply to select rows. See [Filter Syntax](#appendix-filter-syntax) for more information on valid filter syntax.
 
-#### Remove Rows
+### Remove Rows
 Removes rows specified by their index.
 **Example**:
 ```python
@@ -717,7 +730,7 @@ build_transformer_action(
 - **_options:_**
   - `rows`: List of the indices corresponding to the rows to remove. If empty, no rows are removed.
 
-#### Sort
+### Sort
 Sorts rows in the specified order.
 
 **Example**:
@@ -738,7 +751,7 @@ build_transformer_action(
     - If sorted in descending order, null values are placed at the bottom of the data frame in the same order as they appeared in the original data frame
   - `ascendings` (optional): A list of booleans specifying if each column specified in _arguments_ should be sorted in ascending order (must be the same length). If specified, this list will take precedence over the `ascending` option.
 
-## Appendix: Filter Syntax
+# Appendix: Filter Syntax
 Valid filters are composed of clauses of the form:
 ```
 [column_name] [op] [value or column_name]
