@@ -89,11 +89,11 @@ Currently, runtime variables must be of primitive Python types or some basic con
 
 Runtime variable names must be a valid Python identifier (i.e., no spaces in name, can't start with a number).
 
-## Create Runtime Variables In-Editor
+## Creating Runtime Variables In-Editor
 
 **_WIP_**
 
-## Run Pipeline with Runtime Variables
+## Running Pipeline with Runtime Variables
 
 If your pipeline is configured to use runtime variables, you can still execute your pipeline outside the code editor. Provide the runtime variables as keyword arguments to `mage_ai.run()`:
 
