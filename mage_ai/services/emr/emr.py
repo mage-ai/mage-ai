@@ -254,11 +254,11 @@ def __add_step(emr_client, cluster_id, steps):
             ),
         )[0]['Status']['State']
 
-    # __status_poller(
-    #     f'Waiting for step {step_id} to complete...',
-    #     'COMPLETED',
-    #     _get_status,
-    # )
+    __status_poller(
+        f'Waiting for step {step_id} to complete...',
+        'COMPLETED',
+        _get_status,
+    )
 
     return response, step_id, _get_status()
 

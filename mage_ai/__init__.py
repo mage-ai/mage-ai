@@ -1,5 +1,4 @@
 from mage_ai.server.constants import SERVER_HOST, SERVER_PORT
-import asyncio
 import logging
 import os
 import sys
@@ -122,19 +121,14 @@ def clean(
 
 
 def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
-    from mage_ai.data_preparation.models.constants import PipelineType
     from mage_ai.data_preparation.models.pipeline import Pipeline
+    from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
 
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
-    if pipeline.type == PipelineType.PYSPARK:
-        """
-        Run pipeline in a spark cluster
-        1. Launch or connect to a spark cluster
-        2. Submit a spark job
-        """
-    else:
-        asyncio.run(
-            pipeline.execute(analyze_outputs=False, global_vars=global_vars, update_status=False)
-        )
+    PipelineExecutor.get_executor(pipeline).execute(
+        analyze_outputs=False,
+        global_vars=global_vars,
+        update_status=False,
+    )
