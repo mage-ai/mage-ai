@@ -61,7 +61,7 @@ def get_instances_config(cluster_count, idle_timeout=0):
                 Market=market,
                 InstanceRole='CORE',
                 InstanceType='r5.4xlarge',
-                InstanceCount=3,
+                InstanceCount=1,
                 Configurations=[
                     {
                         'Classification': 'spark-defaults',
