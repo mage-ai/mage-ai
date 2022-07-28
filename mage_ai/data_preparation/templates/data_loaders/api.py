@@ -1,12 +1,12 @@
-from pandas import DataFrame
+{% extends "data_loaders/default.jinja" %}
+{% block imports %}
+{{ super() }}
 import io
 import pandas as pd
 import requests
+{% endblock %}
 
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
-
-
+{% block content %}
 @data_loader
 def load_data_from_api() -> DataFrame:
     """
@@ -16,3 +16,4 @@ def load_data_from_api() -> DataFrame:
 
     response = requests.get(url)
     return pd.read_csv(io.StringIO(response.text), sep=',')
+{% endblock %}

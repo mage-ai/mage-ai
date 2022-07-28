@@ -1,11 +1,11 @@
-from pandas import DataFrame
+{% extends "testable.jinja" %}
+{% block imports %}from pandas import DataFrame
+from os import path
 
 if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
+    from mage_ai.data_preparation.decorators import transformer{% endblock %}
 
-
+{% block content %} 
 @transformer
 def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
@@ -23,10 +23,4 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
     # Specify your transformation logic here
 {{ code }}
     return df
-
-@test
-def test_transform(df: DataFrame) -> None:
-    """
-    Template code for testing the output of the block.
-    """
-    assert df is not None, 'The output is undefined'
+{% endblock %}
