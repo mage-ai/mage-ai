@@ -6,6 +6,7 @@
 - [Building Transformer Actions](#building-transformer-actions)
 - [Transformer Action Reference](#transformer-action-reference)
 - [Appendix: Filter Syntax](#appendix-filter-syntax)
+- [Appendix: Column Types](#appendix-column-types)
 
 # Overview
 
@@ -70,7 +71,7 @@ Let's break this code down:
   - `action_type` - specifies the action to perform. In this case, we are performing an `IMPUTE` action.
   - `arguments` - specifies the columns to perform the action on. Currently, the action is configured to impute all columns of the data frame. Since we only want to transform "Cabin", "Age", and "Embarked", we will update this entry to only contain these column names.
   - `axis` - specifies which axis to perform the action on. Imputing values is done on a per column basis, so this is a column transformation.
-  - `option` - these are extra settings to specify for this action. For an impute transformation, the main option to specify is `'strategy'`, dictating the imputation strategy to use. See [Fill in Missing Values](#fill-in-missing-values) for details on the valid imputation strategies. For now we will use `MODE`, which specifies to fill empty values with the most frequent value per column.
+  - `options` - these are extra settings to specify for this action. For an impute transformation, the main option to specify is `'strategy'`, dictating the imputation strategy to use. See [Fill in Missing Values](#fill-in-missing-values) for details on the valid imputation strategies. For now we will use `MODE`, which specifies to fill empty values with the most frequent value per column.
 
 The modified transformer block is:
 ```python
@@ -203,13 +204,13 @@ The core object of any transformer action is the **payload**, a JSON object that
             "column_type": "number"
         },
         "name": {
-            "uuid": "name",
+            "uuid": "hourly_salary",
             "column_type": "text"
         }
     }
 }
 ```
-The above transformer action imputes missing values in the 'age' and "name" columns with the constant value `32`. Here is a list of the keys used in transformer action payloads:
+The above transformer action imputes missing values in the "age" and "hourly_salary" columns with the constant value `32`. Here is a list of the keys used in transformer action payloads:
 
 | Key              | Description                                                                                                                                                                         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -219,7 +220,7 @@ The above transformer action imputes missing values in the 'age' and "name" colu
 | action_arguments | The columns to perform the transformation on.                                                                                                                                       |
 | action_options   | Other settings to provide to the transformer action. See [Transformer Action Reference](#transformer-action-reference) for specific details on which actions require which options. |
 | action_variables | Variable metadata for each input argument (column). Specifies column name and type.                                                                                                 |
-| outputs          | Variable metadata for each output column. Specifies column name and type.                                                                                                           |
+| outputs          | Variable metadata for each output column. Specifies column name and type. See [Column Types](#appendix-column-types) for information on possible column types to specify.           |
 
 This JSON formatted payload is difficult to generate so it is recommended to use the `build_transformer_action` factory to generate the payload. The above snippet generates the same payload as above:
 
@@ -770,3 +771,19 @@ Clauses can be connected using the `and` and `or` operators and grouped with par
 - If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used.
     Example: `("+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
 - If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
+
+# Appendix: Column Types
+These are list of column types used in the Mage tool. One of these column types should be specified for every entry in the _options_ argument of a transformer action. The enum source is `mage_ai.data_cleaner.column_types.constants.ColumnType`.
+| Type                      | Enum                                   | String Value                | Description                                                                                           |
+| ------------------------- | -------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Category                  | `ColumnType.CATEGORY`                  | "category"                  | Categorical variable that takes one of some finite set of values. This set has at most 255 entries.   |
+| High Cardinality Category | `ColumnType.CATEGORY_HIGH_CARDINALITY` | "category_high_cardinality" | Categorical variable that takes one of some finite set of values. This set has more than 255 entries. |
+| Datetime                  | `ColumnType.DATETIME`                  | "datetime"                  | Datetime objects or strings representing a datetime.                                                  |
+| Email                     | `ColumnType.EMAIL`                     | "email"                     | Strings that contains emails.                                                                         |
+| List                      | `ColumnType.LIST`                      | "list"                      | Lists of primitives (integers, strings, booleans, floats) of variable length.                         |
+| Number                    | `ColumnType.NUMBER`                    | "number"                    | Integer numbers. Can be a Python integer, NumPy integer or a stringified integer.                     |
+| Floating Point Number     | `ColumnType.NUMBER_WITH_DECIMALS`      | "number_with_decimals"      | Floating point numbers. Can be a Python float, NumPy float, or a stringified float.                   |
+| Phone Number              | `ColumnType.PHONE_NUMBER`              | "phone_number"              | Phone numbers (either in string form or integer form).                                                |
+| Text                      | `ColumnType.TEXT`                      | "text"                      | Text values, such as sentences or paragraphs.                                                         |
+| Binary                    | `ColumnType.TRUE_OR_FALSE`             | "true_or_false"             | A variable that takes on two different values (including booleans).                                   |
+| Zip Code                  | `ColumnType.ZIP_CODE`                  | "zip_code"                  | Zip codes (either in string form or integer form).                                                    |
