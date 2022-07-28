@@ -743,7 +743,7 @@ function CodeBlockProps({
                   return (
                     <div key={blockUUID}>
                       <Text inline monospace muted small>
-                        &nbsp;&nbsp;&nbsp;&nbsp;df_{i + 1}
+                        &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
                       </Text> <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}
                         onClick={() => {

@@ -5,6 +5,7 @@ import {
   SuggestionType,
   WordType,
 } from './constants';
+import { indexBy } from '@utils/array';
 
 function filter(word: WordType, suggestions: SuggestionType[]): SuggestionType[] {
   const letters = word.word.split('');
@@ -49,7 +50,7 @@ function variablesFromBlocks(
     }
 
     return acc.concat({
-      label: `df ${uuid} ${type}`,
+      label: `df ${uuid} ${type} block`,
       // https://docs.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.languageserver.protocol.completionitemkind?view=visualstudiosdk-2022
       kind: monaco.languages.CompletionItemKind.Snippet,
       documentation: `Get the data from ${type} block ${uuid}.`,
@@ -61,6 +62,32 @@ df = get_variable('${pipeline.uuid}', '${uuid}', 'df')
       range,
     });
   }, []);
+}
+
+function variablesFromPositionalArguments(monaco, range, {
+  block,
+  blocks,
+}): SuggestionType[] {
+  const {
+    upstream_blocks: upstreamBlocks,
+  } = block;
+  const blocksMapping = indexBy(blocks, ({ uuid }) => uuid);
+
+  return upstreamBlocks.map((uuid: string, idx: number) => {
+    const upstreamBlock = blocksMapping[uuid];
+    const {
+      type,
+    } = upstreamBlock;
+    const insertText = idx === 0 ? 'df' : `args[${idx - 1}]`;
+
+    return {
+      label: `df ${uuid} ${type} block`,
+      kind: monaco.languages.CompletionItemKind.Variable,
+      documentation: `Variable for ${type} ${uuid} data.`,
+      insertText,
+      range,
+    };
+  });
 }
 
 export default function(opts: ProviderOptionsType) {
@@ -100,18 +127,22 @@ export default function(opts: ProviderOptionsType) {
       };
 
       if (upstreamBlocks?.length >= 1) {
-        // 1. Writing inside a function definition with the correct decorator
+        const re = new RegExp(`\n@${type}`);
+        const match = textUntilPosition.match(re);
+
+        if (match) {
+          suggestions.push(...variablesFromPositionalArguments(monaco, range, opts));
+        }
       }
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
         if (startColumn === 1) {
-          const arr = variablesFromBlocks(monaco, range, opts);
-          suggestions.push(...filter(word, arr));
+          suggestions.push(...variablesFromBlocks(monaco, range, opts));
         }
       }
 
       return {
-        suggestions,
+        suggestions: filter(word, suggestions),
       };
     }
   };
