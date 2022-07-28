@@ -172,6 +172,7 @@ export default function(opts: ProviderOptionsType) {
           regex,
         }) => {
           const matches = textUntilPosition.matchAll(regex);
+          // @ts-ignore
           [...matches].forEach((match) => {
             const matchIndex = match?.index;
             const variableName = match?.[1];
