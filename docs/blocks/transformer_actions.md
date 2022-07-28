@@ -18,6 +18,10 @@
     - [Row Shifting Actions](#row-shifting-actions)
       - [Shift Up](#shift-up)
       - [Shift Down](#shift-down)
+    - [Other Column Actions](#other-column-actions)
+      - [Difference](#difference)
+      - [Fill In Missing Values](#fill-in-missing-values)
+      - [Remove Outliers](#remove-outliers)
   - [Row Actions](#row-actions)
       - [Drop Duplicates](#drop-duplicates)
       - [Filter](#filter)
@@ -528,6 +532,93 @@ build_transformer_action(
 - **_outputs:_** Metadata for the newly added downshifted column. Must have at most a single entry containing the following information:
   - `uuid`: Name of the new downshifted column
   - `type`: Data type of the new downshifted column
+
+### Other Column Actions
+
+#### Difference
+Adds a new column where each row is the difference between every consecutive two rows in the original column.
+
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.DIFF,
+    arguments=['position'],
+    axis=Axis.COLUMN,
+    outputs=[{'uuid': 'delta_position', 'column_type': 'number_with_decimals'}],
+)
+```
+**Args**
+- **_arguments:_** The column to calculate difference on. At most one column can be specified:
+  - If multiple columns are provided as arguments, only the first is used in calculated
+  - If no columns are provided then no calculation
+- **_outputs:_** Metadata for the newly added difference column. Must have at most a single entry containing the following information:
+  - `uuid`: Name of the difference column
+  - `type`: Data type of the difference column (most often will be a number)
+
+#### Fill In Missing Values
+Imputes missing values using different strategies:
+| Strategy   | Description                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Average    | Fill missing values with the average per column.                                                                                           |
+| Column     | Fill missing values with values from another column.                                                                                       |
+| Constant   | Fill missing values with a placeholder constant. Can fill with a specific value; otherwise a default placeholder is chosen by column type. |
+| Median     | Fill missing values with the median per column.                                                                                            |
+| Mode       | Fill missing values with the most frequent value per column.                                                                               |
+| Random     | Fill missing values with a randomly sampled non-null value from same column.                                                               |
+| Sequential | Fill missing values with the previous row. Should only be used with timeseries columns.                                                    |
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.IMPUTE,
+    arguments=df.columns,  # Specify columns to impute
+    axis=Axis.COLUMN,
+    options={'strategy': ImputationStrategy.CONSTANT},  # Specify imputation strategy
+)
+```
+**Args**
+- **_arguments:_** The columns to impute (fill in the missing values).
+- **_options:_**
+  - `strategy` (required): Specifies strategy to use. See table above or enum `ImputationStrategy`
+  - `value` (optional): Value to fill in missing value with. This argument is ignored unless `strategy = 'constant'`, in which case the constant value used to impute is `value`.
+  - `timeseries_cols = []` (optional): Columns which specify the time series in the data frame. This argument is ignored unless `strategy = 'sequential'`, in which case the data frame is sorted along these columns to sequentially impute data in the order of the time series.
+
+#### Remove Outliers
+Removes multidimensional outliers in the data frame by analyzing numerical columns. If there are no numerical columns, no check is performed. Null values are ignored when checking for outliers.
+
+The following methods are supported for detecting outliers:
+| Method    | Description                                                                                                                                                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `'itree'` | Uses the [Isolation Tree](https://scikit-learn.org/stable/modules/outlier_detection.html#isolation-forest) algorithm. Number of trees is set to 100.                                                                                |
+| `'lof'`   | Uses the [Local Outlier Factor](https://scikit-learn.org/stable/modules/outlier_detection.html#local-outlier-factor) algorithm.  Number of neighbors for computing local density scales with amount of data and contamination rate. |
+| `'auto'`  | Automatically determines from above methods based on number of data points and dimensionality of the data.                                                                                                                          |
+
+Notes:
+- The contamination rate for both algorithms is estimated via the per-dimension IQR (which discounts multidimensional interactions but estimates how many outliers there likely are)
+- If the input data has more than 20 dimensions, the dimensionality is reduced using PCA
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.REMOVE_OUTLIERS,
+    arguments=df.columns,  # Specify columns to remove outliers from
+    axis=Axis.COLUMN,
+    options={'method': 'auto'},  # Specify algorithm to use for outlier removal
+)
+```
+**Args**
+- **_arguments:_** The set of columns to consider when checking for outliers. Of these columns, only numerical columns will be used to calculate outliers.
+- **_options:_**
+  - `method` (optional): Specifies outlier detection method to use:
+    - `'itree'`
+    - `'lof'`
+    - `'auto'`
+
+    Defaults to `'auto'`.
 
 ## Row Actions
 
