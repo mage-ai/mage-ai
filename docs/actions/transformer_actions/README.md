@@ -1,6 +1,5 @@
 # Table of Contents
 
-- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
   - [Tutorial](#tutorial)
   - [Core Concepts](#core-concepts)
@@ -9,24 +8,10 @@
   - [Column Actions](#column-actions)
     - [Aggregation Actions](#aggregation-actions)
     - [Formatting Actions](#formatting-actions)
-      - [Clean Column Names](#clean-column-names)
-      - [Fix Syntax Errors](#fix-syntax-errors)
-      - [Reformat Values](#reformat-values)
     - [Column Removal Actions](#column-removal-actions)
-      - [Select Columns](#select-columns)
-      - [Remove Columns](#remove-columns)
     - [Row Shifting Actions](#row-shifting-actions)
-      - [Shift Up](#shift-up)
-      - [Shift Down](#shift-down)
     - [Other Column Actions](#other-column-actions)
-      - [Difference](#difference)
-      - [Fill In Missing Values](#fill-in-missing-values)
-      - [Remove Outliers](#remove-outliers)
   - [Row Actions](#row-actions)
-      - [Drop Duplicates](#drop-duplicates)
-      - [Filter](#filter)
-      - [Remove Rows](#remove-rows)
-      - [Sort](#sort)
   - [Appendix: Filter Syntax](#appendix-filter-syntax)
 
 # Overview
