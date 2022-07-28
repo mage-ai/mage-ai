@@ -8,15 +8,6 @@
   - [Building Transformer Actions](#building-transformer-actions)
   - [Column Actions](#column-actions)
     - [Aggregation Actions](#aggregation-actions)
-      - [Minimum](#minimum)
-      - [Maximum](#maximum)
-      - [Median](#median)
-      - [Sum](#sum)
-      - [Average](#average)
-      - [First](#first)
-      - [Last](#last)
-      - [Count](#count)
-      - [Count Distinct](#count-distinct)
     - [Formatting Actions](#formatting-actions)
       - [Clean Column Names](#clean-column-names)
       - [Fix Syntax Errors](#fix-syntax-errors)
@@ -32,6 +23,7 @@
       - [Filter](#filter)
       - [Remove Rows](#remove-rows)
       - [Sort](#sort)
+  - [Appendix: Filter Syntax](#appendix-filter-syntax)
 
 # Overview
 
@@ -304,15 +296,55 @@ Note: Action variables are inferred from `arguments` and `df`.
 ## Column Actions
 
 ### Aggregation Actions
-#### Minimum
-#### Maximum
-#### Median
-#### Sum
-#### Average
-#### First
-#### Last
-#### Count
-#### Count Distinct
+
+Applies some aggregation function over specified groups. All of these transformer actions have the same set of arguments when using `build_transformer_action` but have different types corresponding to the different aggregation functions that could be applied to the groups.
+
+The output data frame contains a new column for each input column which stores the aggregate value for the group which that row falls into.
+
+**Example**
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.AVERAGE,
+    action_code='brand != null',
+    arguments=['revenue', 'cost'],
+    axis=Axis.COLUMN,
+    options={'groupby_columns': ['brand']},
+    outputs=[
+        {'uuid': 'avg_rev_per_brand', 'column_type': 'number_with_decimals'},
+        {'uuid': 'avg_cost_per_brand', 'column_type': 'number_with_decimals'},
+    ],
+)
+```
+**Args**
+- **_action_code:_** Filter for selecting rows before aggregation is performed. See [Filter Syntax](#appendix-filter-syntax) for more information on valid filter syntax.
+- **_arguments:_** Columns to compute aggregate values over. For each argument a new column will be created to store the aggregates values over the column.
+  - If no arguments are provided, no aggregation is performed
+- **_options_:**
+  - `groupby_columns` (optional) - list of columns to form groups with when aggregating. A group consists of each unique combination of values chosen from each of the columns specified in this option.
+    - If this is empty, aggregation is performed over the first column specified in _arguments_ (if _arguments_ is nonempty - if empty no aggregation is performed) and only one column is added
+
+  The following options are used as a shortcut to simplify filtering over time windows. Let $A$ and $B$ be datetime columns, and let $\text{window}$ be an integer describing the length of a time window in seconds. If the following options are specified, rows for which the time value for $B \in [A, A + \text{window}]$ are selected (All rows where value for $B$ must (a) be greater than or equal to the value for $A$ and (b) less than or equal to the value $A+window$).
+  - `timestamp_feature_a` (optional) - time feature A (a column in the data frame)
+  - `timestamp_feature_b` (optional) - time feature B (a column in the data frame)
+  - `window` (optional) - max time window between feature A and feature B in seconds
+
+  If some (or none) of these options are specified, then the filtering is not performed. Regardless if this filtering is performed, _action_code_ filtering is still performed.
+- **_outputs_:** Specifies the metadata for each output column of the aggregation (corresponding to the aggregation created from input argument in _argument_). This array must be the same length as _arguments_, and each entry must contain the following metadata:
+  - `uuid (string)`: Name of the new column
+  - `column_type (string | ColumnType)`: Type of the new column ( See `mage_ai.data_cleaner.column_types.constants.ColumnType` for options)
+
+**Aggregation Functions**
+These are the possible aggregations that can be applied to each group per each input column. To use the aggregation function specify the corresponding action type in `build_transformer_action`.
+- **_Average:_** (`ActionType.AVERAGE`) - averages input column value over each group
+- **_Count Distinct:_** (`ActionType.COUNT_DISTINCT`) - counts the number of distinct rows in each group per input column
+- **_Count:_** (`ActionType.COUNT`) - counts the number of rows in each group per input column
+- **_First:_** (`ActionType.FIRST`) - for each input column, selects first item in each group (as appearing in the order of the original data frame)
+- **_Last:_** (`ActionType.LAST`) - for each input column, selects last item in each group (as appearing in the order of the original data frame)
+- **_Maximum:_** (`ActionType.MAX`) - gets the maximum value per group for each input column
+- **_Median:_** (`ActionType.MEDIAN`) - gets the median value per group for each input column
+- **_Minimum:_** (`ActionType.MIN`) - gets the maximum value per group for each input column
+- **_Sum:_** (`ActionType.SUM`) - sums over all values in each group per input column
 
 
 ### Formatting Actions
@@ -346,9 +378,9 @@ build_transformer_action(
 )
 ```
 **Args**
-- _arguments_: the columns along which comparisons will be made to check for duplicate rows. If empty, all columns will be used to perform comparison.
-- _options_:
-  - `keep`: specifies policy on keeping duplicates:
+- **_arguments:_** the columns along which comparisons will be made to check for duplicate rows. If empty, all columns will be used to perform comparison.
+- **_options:_**
+  - `keep` (optional): specifies policy on keeping duplicates:
     - `'first'` - keeps the first occurrence of the row
     - `'last'` - keeps the last occurrence of the row
     - `False` - removes occurrences of duplicates
@@ -356,24 +388,7 @@ build_transformer_action(
     Defaults to `'last'`.
 
 #### Filter
-Filters row by boolean condition. Selects all rows that meets the filter condition.
-
-Valid filters are composed of clauses of the form:
-```
-[column_name] [op] [value or column_name]
-```
-- List of valid operations: `==, !=, <=, <, >, >=, contains, not contains`
-  - `contains` (and `not contains`) checks if the value is a substring (or not a substring) of values in the column specified.
-- The right hand side of each clause can either be a literal value (boolean, number, string) or another column to compare to.
-
-Clauses can be connected using the `and` and `or` operators and grouped with parentheses.
-```
-(brand != null and value > 60) or (discounted == null)
-```
-**Rules on Naming Columns**
-- If column names contain only alphanumeric characters and the special character '_', then the raw column name can used to filter code. Example: age != null and price_of_item >= 50.23
-- If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used. Example: (`"+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial"`).
-- If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
+Filters row by boolean condition. Selects all rows that meets the filter condition. 
 
 **Example**:
 ```python
@@ -385,7 +400,7 @@ build_transformer_action(
 )
 ```
 **Args**
-- _action_code_: filter to apply to select rows.
+- **_action_code:_** filter to apply to select rows. See [Filter Syntax](#appendix-filter-syntax) for more information on valid filter syntax.
 
 #### Remove Rows
 Removes rows specified by their index.
@@ -399,7 +414,7 @@ build_transformer_action(
 )
 ```
 **Args**
-- _options_:
+- **_options:_**
   - `rows`: List of the indices corresponding to the rows to remove. If empty, no rows are removed.
 
 #### Sort
@@ -416,10 +431,29 @@ build_transformer_action(
 )
 ```
 **Args**
-- _arguments_: the columns whose value to consider while sorting rows. If empty then sort is not performed.
-- _options_:
+- **_arguments:_** the columns whose value to consider while sorting rows. If empty then sort is not performed.
+- **_options:_**
   - `ascending` (optional): Specifies how to sort rows. If `True`, then rows are sorted in ascending order; if `False` sorted in descending order. Defaults to `True`.
     - If sorted in ascending order, null values are placed at the top of the data frame in the same order as they appeared in the original data frame
     - If sorted in descending order, null values are placed at the bottom of the data frame in the same order as they appeared in the original data frame
-  - `ascendings` (optional): A list of booleans specifying if each column specified in `arguments` should be sorted in ascending order (must be the same length). If specified, this list will take precedence over the `ascending` option.
+  - `ascendings` (optional): A list of booleans specifying if each column specified in _arguments_ should be sorted in ascending order (must be the same length). If specified, this list will take precedence over the `ascending` option.
 
+## Appendix: Filter Syntax
+Valid filters are composed of clauses of the form:
+```
+[column_name] [op] [value or column_name]
+```
+- List of valid operations: `==, !=, <=, <, >, >=, contains, not contains`
+  - `contains` (and `not contains`) checks if the value is a substring (or not a substring) of values in the column specified.
+- The right hand side of each clause can either be a literal value (boolean, number, string) or another column to compare to.
+
+Clauses can be connected using the `and` and `or` operators and grouped with parentheses.
+```
+(brand != null and value > 60) or (discounted == null)
+```
+**Rules on Naming Columns**
+- If column names contain only alphanumeric characters and the special character '_', then the raw column name can used to filter code.
+    Example: `age != null and price_of_item >= 50.23`
+- If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used.
+    Example: `("+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial")`
+- If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
