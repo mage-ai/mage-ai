@@ -79,6 +79,9 @@ mage run [project_name] [pipeline]
 # 👩‍🏫 Tutorials
 
 - [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
+- [Coming soon] Build an ETL pipeline end-to-end
+
+<br />
 
 # 🔮 Features
 
