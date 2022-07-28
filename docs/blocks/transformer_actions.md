@@ -1,0 +1,425 @@
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+  - [Tutorial](#tutorial)
+  - [Core Concepts](#core-concepts)
+- [Transformer Action Reference](#transformer-action-reference)
+  - [Building Transformer Actions](#building-transformer-actions)
+  - [Column Actions](#column-actions)
+    - [Aggregation Actions](#aggregation-actions)
+      - [Minimum](#minimum)
+      - [Maximum](#maximum)
+      - [Median](#median)
+      - [Sum](#sum)
+      - [Average](#average)
+      - [First](#first)
+      - [Last](#last)
+      - [Count](#count)
+      - [Count Distinct](#count-distinct)
+    - [Formatting Actions](#formatting-actions)
+      - [Clean Column Names](#clean-column-names)
+      - [Fix Syntax Errors](#fix-syntax-errors)
+      - [Reformat Values](#reformat-values)
+    - [Column Removal Actions](#column-removal-actions)
+      - [Keep Columns](#keep-columns)
+      - [Remove Columns](#remove-columns)
+    - [Row Shifting Actions](#row-shifting-actions)
+      - [Shift Up](#shift-up)
+      - [Shift Down](#shift-down)
+  - [Row Actions](#row-actions)
+      - [Drop Duplicates](#drop-duplicates)
+      - [Filter](#filter)
+      - [Remove Rows](#remove-rows)
+      - [Sort](#sort)
+
+# Overview
+
+Transformer Actions are a library of modular, reusable data transformations, reducing the boilerplate to perform common transformations on your data.
+
+## Tutorial
+
+To introduce how the Transformer Actions library works, we will use the Titanic Survival dataset. When in the Mage app, create a new pipeline and add a data loader with the following code to load the Titanic Survival dataset:
+```python
+from mage_ai.io.file import FileIO
+from pandas import DataFrame
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_file(**kwargs) -> DataFrame:
+    """
+    Template for loading data from filesystem.
+    """
+    filepath = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'
+    return FileIO().load(filepath)
+```
+Run this block to load the Titanic Survival dataset into your pipeline.
+
+You'll notice that there are three columns that have missing values: "Cabin", "Age", "Embarked". Let's perform imputation to fill in these missing values using the Transformer Action Library. Create a new transformer block below, and select the "Fill in missing values" option. You should see the following code in your new transformer block:
+
+```python
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, ImputationStrategy
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+    """
+    Execute Transformer Action: ActionType.IMPUTE
+    """
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.IMPUTE,
+        arguments=df.columns,  # Specify columns to impute
+        axis=Axis.COLUMN,
+        options={'strategy': ImputationStrategy.CONSTANT},  # Specify imputation strategy
+    )
+
+    return BaseAction(action).execute(df)
+```
+
+Let's break this code down:
+- the `build_transformer_action` function creates a transformer action **payload** that describes the action to complete. The dictionary object created by this function is stored in the variable `action`. The arguments passed in are
+  - `df` - the data frame to transform, used to infer type data
+  - `action_type` - specifies the action to perform. In this case, we are performing an `IMPUTE` action.
+  - `arguments` - specifies the columns to perform the action on. Currently, the action is configured to impute all columns of the data frame. Since we only want to transform "Cabin", "Age", and "Embarked", we will update this entry to only contain these column names
+  - `axis` - specifies which axis to perform the action on. Imputing values is done per column, so this is a column transformation.
+  - `option` - these are extra options to specify for this action. For an impute transformation, the main option to specify is `'strategy'`, which specifies what imputation strategy to use. See [Impute Transformation](#) for details on the valid imputation strategies; for now we will use `MODE`, which specifies to fill empty values with the most frequent value per column.
+
+The modified transformer block is:
+```python
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis, ImputationStrategy
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+    """
+    Execute Transformer Action: ActionType.IMPUTE
+    """
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.IMPUTE,
+        arguments=['Cabin', 'Age', 'Embarked'],  # Specify columns to impute
+        axis=Axis.COLUMN,
+        options={'strategy': ImputationStrategy.MODE},  # Specify imputation strategy
+    )
+
+    return BaseAction(action).execute(df)
+```
+Execute this transformer - you should notice that all null values are now filled with the mode of each column in these three columns! After the payload is created by `build_transformer_action`, the payload is used to construct the `BaseAction` object, representing a reusable instance of the transformation. Then the transformation is executed on the input data frame using `execute`, returning the transformed data frame when done.
+
+
+Suppose you're interested in computing the average fare and age by each location of embarkation - Southampton (S), Cherbourg (C), and Queenstown (Q). Transformer Actions can help us here as well - create a new transformer using the "Aggregate/Aggregate by average value" template. You should see the following code in your new transformer block.
+```python
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+    """
+    Execute Transformer Action: ActionType.AVERAGE
+    """
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.AVERAGE,
+        action_code='',  # Enter filtering condition on rows before aggregation
+        arguments=[],  # Enter the columns to compute aggregate over
+        axis=Axis.COLUMN,
+        options={'groupby_columns': []},  # Enter columns to group by
+        outputs=[
+            # The number of outputs below must match the number of arguments
+            {'uuid': 'new_aggregate_column_1', 'column_type': 'number_with_decimals'},
+            {'uuid': 'new_aggregate_column_2', 'column_type': 'number_with_decimals'},
+        ],
+    )
+
+    return BaseAction(action).execute(df)
+```
+As before, we can fill in the settings we need for performing this aggregation by average value:
+- `action_code` is used by aggregation-type transformer actions to filter rows of the dataset before performing the aggregation. For example, if the "Embarked" column had null values, we could filter them out using the filter `'Embarked != null'`. In this case we won't perform any filtering
+- Since we want to aggregate over "Fare" and "Age", our arguments are `['Fare', 'Age']`
+- In `options`, the only parameter is `groupby_columns` which is the list of the columns to groupby when performing the aggregation. In this case, the column we want to group by is "Embarked"
+- `outputs` is used to specify the name and type of the new columns created by the aggregation. As there are two columns in `arguments` that we want to perform the aggregation over, there should be two corresponding entries in column.
+
+The resulting template after these edits are:
+```python
+from mage_ai.data_cleaner.transformer_actions.base import BaseAction
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from pandas import DataFrame
+
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+
+@transformer
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+    """
+    Execute Transformer Action: ActionType.AVERAGE
+    """
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.AVERAGE,
+        action_code='',  # Enter filtering condition on rows before aggregation
+        arguments=['Fare', 'Age'],  # Enter the columns to compute aggregate over
+        axis=Axis.COLUMN,
+        options={'groupby_columns': ['Embarked']},  # Enter columns to group by
+        outputs=[
+            # The number of outputs below must match the number of arguments
+            {'uuid': 'avg_fare_by_embarked_loc', 'column_type': 'number_with_decimals'},
+            {'uuid': 'avg_age_by_embarked_loc', 'column_type': 'number_with_decimals'},
+        ],
+    )
+
+    return BaseAction(action).execute(df)
+```
+Run this transformer, and your output data frame should now include two new columns named "avg_fare_by_embarked_loc" and "avg_age_by_embarked_loc" which contain the average fare and average age by embarkation location per entry.
+
+This workflow can be summarized to describe how Transformer Actions can be used effectively:
+1. Identify a transformation that may need to be made to your data
+2. Create a transformer using the transformer action that corresponds to your template
+3. Fill in the parameters for the transformer action to build your transformer action payload
+4. Build a `BaseAction` object using the payload and execute the action to get the transformed data frame
+
+
+## Core Concepts
+
+The core object of any transformer action is the **payload**, a JSON object that describes the transformation to perform alongside settings for that transformation. A sample transformer action payload is shown below:
+
+```json
+{
+    "action_type": "impute",
+    "action_arguments": ["age", "name"],
+    "action_options": {
+        "strategy": "constant",
+        "value": "34"
+    },
+    "axis": "column",
+    "action_variables": {
+        "1": {
+            "uuid": "age",
+            "column_type": "number"
+        },
+        "2": {
+            "uuid": "name",
+            "column_type": "text"
+        }
+    }
+}
+```
+The above transformer action imputes missing values in the 'age' and "name" columns with the constant value `32`. Here is a list of the keys used in transformer action payloads:
+
+| Key              | Description                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| axis             | Axis to perform the transformation on. Either 'row' or 'column'.                                                           |
+| action_type      | Type of action to perform. See [Transformer Action Reference](#transformer-action-reference) for the list of action types. |
+| action_code      | Text field for specifying any code such as filters.                                                                        |
+| action_arguments | The columns to perform the transformation on                                                                               |
+| action_options   | Other settings to provide to the transformer action.                                                                       |
+| action_variables | Variable metadata for each input argument (column). Specifies column name and type.                                        |
+| outputs          | Variable metadata for each output column. Specifies column name and type.                                                  |
+
+This JSON formatted payload is difficult to generate so it is recommended to use the `build_transformer_action` factory to generate the payload. The above snippet generates the same payload as above:
+
+```python
+from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+
+df = pd.DataFrame({...}) # your input data frame
+payload = build_transformer_action(
+    df,
+    action_type=ActionType.IMPUTE,
+    arguments=['age'],
+    axis=Axis.COLUMN,
+    options={'strategy': 'constants', 'values': 32},
+)
+```
+See [Building Transformer Actions](#building-transformer-actions) for detailed information on using `build_transformer_action`.
+
+The transformer action payload, once built, can be used to construct a `BaseAction` object. This object processes the payload to identify the transformations to apply a data frame. Through this action object, the transformer action can be applied to a data frame using the `execute` function:
+
+```python
+payload = build_transformer_action(...)
+transformed_df = BaseAction(payload).execute(df)
+```
+
+# Transformer Action Reference
+
+## Building Transformer Actions
+
+**_build_transformer_action_** - `build_transformer_action(df: DataFrame, action_type: ActionType | str, arguments: List[str], action_code: str, options: Dict, axis: Axis | str, outputs: List[Dict]) -> Dict:`
+
+Source: `mage_ai.data_cleaner.transformer_actions.utils.build_transformer_action`
+
+Builds transformer action payload from arguments. The output of this function can be passed
+as input to the `transformer_actions.base.BaseAction` to perform the requested transformation.
+
+Note: Action variables are inferred from `arguments` and `df`.
+
+- **Args**:
+    - `df (DataFrame)`: The data frame to build a transformer action payload for.
+    - `action_type (ActionType | str)`: Transformer action to perform.
+    - `arguments (List[str], optional)`: Columns/Rows to perform this action on. Defaults to `[]`.
+    - `action_code (str, optional)`: Special code or query to execute with action. Defaults to `''`.
+    - `options (Dict, optional)`: Options specifying behavior of action. Defaults to `{}`.
+    - `axis (Union[Axis, str], optional)`: Axis of the data frame to apply the action to. Defaults to `Axis.COLUMN`.
+    - `outputs (List[Dict], optional)`: Specifies metadata of newly created columns. Defaults to `[]`.
+- **Returns**: (`Dict`) Transformer action payload to use with `transformer_actions.base.BaseAction`
+- **Example**:
+  ```python
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.FIRST,
+        action_code='retailer != null and retail_price >= 0',  # Enter filtering condition on rows before aggregation
+        arguments=['retail_price', 'review'],  # Enter the columns to compute aggregate over
+        axis=Axis.COLUMN,
+        options={'groupby_columns': ['retailer']},  # Enter columns to group by
+        outputs=[
+            # The number of outputs below must match the number of arguments
+            {'uuid': 'first_retail_price', 'column_type': 'number_with_decimals'},
+            {'uuid': 'first_review', 'column_type': 'category'},
+        ],
+    )
+  ```
+
+## Column Actions
+
+### Aggregation Actions
+#### Minimum
+#### Maximum
+#### Median
+#### Sum
+#### Average
+#### First
+#### Last
+#### Count
+#### Count Distinct
+
+
+### Formatting Actions
+#### Clean Column Names
+#### Fix Syntax Errors
+#### Reformat Values
+
+### Column Removal Actions
+#### Keep Columns
+#### Remove Columns
+
+### Row Shifting Actions
+#### Shift Up
+#### Shift Down
+
+## Row Actions
+
+These are transformer actions that can be applied to each row of a data frame, and so have `axis = Axis.ROW`.
+
+#### Drop Duplicates
+Drops duplicate rows from the data frame
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.DROP_DUPLICATE,
+    arguments=[],
+    axis=Axis.ROW,
+    options={'keep': 'first'},
+)
+```
+**Args**
+- _arguments_: the columns along which comparisons will be made to check for duplicate rows. If empty, all columns will be used to perform comparison.
+- _options_:
+  - `keep`: specifies policy on keeping duplicates:
+    - `'first'` - keeps the first occurrence of the row
+    - `'last'` - keeps the last occurrence of the row
+    - `False` - removes occurrences of duplicates
+
+    Defaults to `'last'`.
+
+#### Filter
+Filters row by boolean condition. Selects all rows that meets the filter condition.
+
+Valid filters are composed of clauses of the form:
+```
+[column_name] [op] [value or column_name]
+```
+- List of valid operations: `==, !=, <=, <, >, >=, contains, not contains`
+  - `contains` (and `not contains`) checks if the value is a substring (or not a substring) of values in the column specified.
+- The right hand side of each clause can either be a literal value (boolean, number, string) or another column to compare to.
+
+Clauses can be connected using the `and` and `or` operators and grouped with parentheses.
+```
+(brand != null and value > 60) or (discounted == null)
+```
+**Rules on Naming Columns**
+- If column names contain only alphanumeric characters and the special character '_', then the raw column name can used to filter code. Example: age != null and price_of_item >= 50.23
+- If columns contain whitespace, newlines, and some of the following special characters: `+=-*&^%$! ?~|<>(){}[],.`, then the quoted column name can be used to filter code. Any quote character can be used. Example: (`"+= -*&^%$! ?~ |<>" == False and ' kas22d fe ($)' > 50.23) or ("dis>>> ??cou nted" contains "partial"`).
+- If columns contain any other special characters apart from those listed above, the column cannot be filtered. This is a fundamental limitation of pandas, see [here](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html?highlight=query#pandas.DataFrame.query:~:text=During%20parsing%20a,not%20be%20escaped) for more information.
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.FILTER,
+    axis=Axis.ROW,
+    action_code='column1 != null and column2 <= 5'
+)
+```
+**Args**
+- _action_code_: filter to apply to select rows.
+
+#### Remove Rows
+Removes rows specified by their index.
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.REMOVE,
+    axis=Axis.ROW,
+    options={'rows': []},
+)
+```
+**Args**
+- _options_:
+  - `rows`: List of the indices corresponding to the rows to remove. If empty, no rows are removed.
+
+#### Sort
+Sorts rows in the specified order.
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.SORT,
+    arguments=[],
+    axis=Axis.ROW,
+    options={'ascending': True},
+)
+```
+**Args**
+- _arguments_: the columns whose value to consider while sorting rows. If empty then sort is not performed.
+- _options_:
+  - `ascending` (optional): Specifies how to sort rows. If `True`, then rows are sorted in ascending order; if `False` sorted in descending order. Defaults to `True`.
+    - If sorted in ascending order, null values are placed at the top of the data frame in the same order as they appeared in the original data frame
+    - If sorted in descending order, null values are placed at the bottom of the data frame in the same order as they appeared in the original data frame
+  - `ascendings` (optional): A list of booleans specifying if each column specified in `arguments` should be sorted in ascending order (must be the same length). If specified, this list will take precedence over the `ascending` option.
+
