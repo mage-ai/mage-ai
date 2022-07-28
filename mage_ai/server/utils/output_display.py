@@ -127,6 +127,27 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
+    elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
+        _sample = _internal_output_return.limit({DATAFRAME_SAMPLE_COUNT_PREVIEW}).toPandas()
+        _columns = _sample.columns.tolist()[:40]
+        _rows = _sample.to_numpy().tolist()
+        _shape = [_internal_output_return.count(), len(_sample.columns.tolist())]
+        _index = _sample.index.tolist()
+
+        _json_string = simplejson.dumps(
+            dict(
+                data=dict(
+                    columns=_columns,
+                    index=_index,
+                    rows=_rows,
+                    shape=_shape,
+                ),
+                type='table',
+            ),
+            default=encode_complex,
+            ignore_nan=True,
+        )
+        return print(f'[__internal_output__]{{_json_string}}')
     elif not {is_print_statement}:
         return encode_complex(_internal_output_return)
 
@@ -199,7 +220,7 @@ def execute_custom_code():
     if {widget}:
         return output
     else:
-        return find(lambda val: type(val) == pd.DataFrame, output)
+        return find(lambda val: val is not None, output)
 
 execute_custom_code()
     """

@@ -6,6 +6,7 @@ class DataType(str, Enum):
     IMAGE_PNG = 'image/png'
     TABLE = 'table'
     TEXT = 'text'
+    TEXT_HTML = 'text/html'
     TEXT_PLAIN = 'text/plain'
 
 
@@ -27,10 +28,11 @@ def parse_output_message(message: dict) -> dict:
     data = content.get('data', {})
     metadata = content.get('metadata')
     text = data.get('text/plain')
+    text_html = data.get('text/html')
     code = data.get('code')
     image = data.get('image/png')
 
-    if content.get('name') == 'stdout':
+    if content.get('name') in ['stdout', 'stderr']:
         text_stdout = content.get('text')
         data_content = text_stdout.split('\n')
         data_type = DataType.TEXT_PLAIN
@@ -41,8 +43,13 @@ def parse_output_message(message: dict) -> dict:
         data_content = [line for line in traceback]
         data_type = DataType.TEXT
         error = traceback
+    elif text_html:
+        data_content = text_html
+        data_type = DataType.TEXT_HTML
     elif text:
         data_content = text.split('\n')
+        if len(data_content[-1]) != 0:
+            data_content.append('')
         data_type = DataType.TEXT_PLAIN
     elif code:
         data_content = code

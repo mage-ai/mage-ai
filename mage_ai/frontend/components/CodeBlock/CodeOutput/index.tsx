@@ -25,6 +25,7 @@ import {
   ExtraInfoBorderStyle,
   ExtraInfoContentStyle,
   ExtraInfoStyle,
+  HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -193,6 +194,20 @@ function CodeOutput({
               </Text>
             </OutputRowStyle>
           );
+        } else if (dataType === DataTypeEnum.TEXT_HTML) {
+          displayElement = (
+            <OutputRowStyle {...outputRowSharedProps}>
+              <HTMLOutputStyle>
+                <Text
+                  // @ts-ignore
+                  dangerouslySetInnerHTML={{
+                    __html: data
+                  }}
+                  monospace
+                />
+              </HTMLOutputStyle>
+            </OutputRowStyle>
+          );
         } else if (dataType === DataTypeEnum.IMAGE_PNG) {
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
@@ -213,10 +228,6 @@ function CodeOutput({
 
       return arr;
     });
-
-    if (isTable) {
-      return arrContent[arrContent.length - 1];
-    }
 
     return arrContent;
   }, [

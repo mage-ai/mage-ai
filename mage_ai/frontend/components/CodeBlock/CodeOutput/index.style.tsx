@@ -52,6 +52,26 @@ export const OutputRowStyle = styled.div<{
   `}
 `;
 
+export const HTMLOutputStyle = styled.div<any>`
+  table {
+    border-left-style: solid;
+    border-left-width: 2px;
+    border-right-style: solid;
+    border-right-width: 2px;
+    ${BORDER_COLOR_SHARED_STYLES}
+  }
+
+  td, th {
+    padding: 0 8px;
+  }
+  a {
+  
+    ${props => `
+      color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    `}
+  }
+`;
+
 export const ExtraInfoStyle = styled.div<BorderColorShareProps>`
   ${BORDER_COLOR_SHARED_STYLES}
 
