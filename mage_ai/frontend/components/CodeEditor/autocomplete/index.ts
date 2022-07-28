@@ -5,7 +5,7 @@ import {
   SuggestionType,
   WordType,
 } from './constants';
-import { indexBy } from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 
 function columnNameItems(monaco, range, block: BlockType) {
   const columns = block.outputs?.[0]?.sample_data?.columns || [];
@@ -21,6 +21,7 @@ function variableManagersDefinedRegex(blocks, pipeline) {
   return blocks.map((block: BlockType) => {
     const regex = new RegExp(
       `([\\w_]+)[ ]*=[ ]*get_variable\\('${pipeline.uuid}', '${block.uuid}', 'df'\\)`,
+      'g',
     );
 
     return {
@@ -170,13 +171,19 @@ export default function(opts: ProviderOptionsType) {
           block: blockForRegex,
           regex,
         }) => {
-          const variableName = textUntilPosition.match(regex)?.[1];
-          if (variableName) {
-            variableNamesMatched.push({
-              block: blockForRegex,
-              variableName,
-            })
-          }
+          const matches = textUntilPosition.matchAll(regex);
+          // @ts-ignore
+          [...matches].forEach((match) => {
+            const matchIndex = match?.index;
+            const variableName = match?.[1];
+            if (variableName) {
+              variableNamesMatched.push({
+                block: blockForRegex,
+                matchIndex,
+                variableName,
+              })
+            }
+          });
         });
 
         if (variableNamesMatched.length >= 1) {
@@ -184,15 +191,27 @@ export default function(opts: ProviderOptionsType) {
             textUntilPosition.split('\n')[position.lineNumber - 1]?.slice(0, word.startColumn - 1);
 
           if (textPreviouslyTypeInSameLine) {
+            const arrayOfItems = [];
+
             variableNamesMatched.forEach(({
               block: blockForVariable,
+              matchIndex,
               variableName,
             }) => {
               const regex = new RegExp(`^${variableName}\\[| ${variableName}\\[`);
               if (textPreviouslyTypeInSameLine.match(regex)) {
-                suggestions.push(...columnNameItems(monaco, range, blockForVariable));
+                arrayOfItems.push({
+                  items: columnNameItems(monaco, range, blockForVariable),
+                  matchIndex,
+                });
               }
             });
+
+            if (arrayOfItems.length >= 1) {
+              const mostRecentMatchItems =
+                sortByKey(arrayOfItems, 'matchIndex', { ascending: false })[0];
+              suggestions.push(...mostRecentMatchItems.items);
+            }
           }
         }
 
