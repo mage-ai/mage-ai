@@ -57,6 +57,10 @@ class Pipeline:
     def variables_dir(self):
         return self.repo_config.variables_dir
 
+    @property
+    def remote_variables_dir(self):
+        return self.repo_config.remote_variables_dir
+
     @classmethod
     def create(self, name, repo_path):
         """

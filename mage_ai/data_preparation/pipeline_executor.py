@@ -35,7 +35,7 @@ class PipelineExecutor:
 class PySparkPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline):
         super().__init__(pipeline)
-        path_parts = self.pipeline.variables_dir.replace('s3://', '').split('/')
+        path_parts = self.pipeline.remote_variables_dir.replace('s3://', '').split('/')
         self.s3_bucket = path_parts.pop(0)
         self.s3_path_prefix = '/'.join(path_parts)
 
@@ -100,5 +100,6 @@ class PySparkPipelineExecutor(PipelineExecutor):
             cluster_name=step['name'],
             steps=[step],
             bootstrap_script_path=self.bootstrap_script_path,
+            emr_config=self.pipeline.repo_config.emr_config,
             log_uri=self.log_uri,
         )

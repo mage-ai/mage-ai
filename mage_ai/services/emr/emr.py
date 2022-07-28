@@ -2,6 +2,7 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from datetime import datetime
 from mage_ai.services.emr import emr_basics
+from mage_ai.services.emr.config import EmrConfig
 import boto3
 import logging
 import random
@@ -12,7 +13,6 @@ import sys
 
 MAX_STEPS_IN_CLUSTER = 255 - 55
 MAX_RUNNING_OR_PENDING_STEPS = 15
-MAX_CLUSTERS_ON_SPOT_INSTANCES = 40
 
 logger = logging.getLogger(__name__)
 
@@ -30,56 +30,10 @@ def get_running_cluster_count(emr_client):
     return len(clusters['Clusters'])
 
 
-def get_instances_config(cluster_count, idle_timeout=0):
-    market = 'SPOT' if cluster_count < MAX_CLUSTERS_ON_SPOT_INSTANCES else 'ON_DEMAND'
-    # TODO: Replace the hardcoded configs
-    instances_config = {
-        'KeepJobFlowAliveWhenNoSteps': False,
-        'EmrManagedMasterSecurityGroup': 'sg-0193f530fab3f82c9',
-        'EmrManagedSlaveSecurityGroup': 'sg-0cd77cb85df5cdd6b',
-        'InstanceGroups': [
-            dict(
-                Name='AmazonEMRMaster',
-                Market=market,
-                InstanceRole='MASTER',
-                InstanceType='r5.4xlarge',
-                InstanceCount=1,
-                Configurations=[
-                    {
-                        'Classification': 'spark-defaults',
-                        'Properties': {
-                            'spark.driver.memory': '32000M',
-                            'spark.driver.maxResultSize': '0',
-                            'spark.executor.memory': '32000M',
-                        },
-                    },
-                ],
-            ),
-            dict(
-                Name='AmazonEMRCore',
-                Market=market,
-                InstanceRole='CORE',
-                InstanceType='r5.4xlarge',
-                InstanceCount=1,
-                Configurations=[
-                    {
-                        'Classification': 'spark-defaults',
-                        'Properties': {
-                            'spark.driver.memory': '32000M',
-                            'spark.driver.maxResultSize': '0',
-                            'spark.executor.memory': '32000M',
-                        },
-                    },
-                ],
-            ),
-        ],
-    }
-    return instances_config
-
-
 def create_a_new_cluster(
     cluster_name,
     steps,
+    emr_config,
     bootstrap_script_path=None,
     idle_timeout=0,
     log_uri=None,
@@ -95,7 +49,10 @@ def create_a_new_cluster(
         Name=f'{datetime.utcnow().isoformat()}-{cluster_name}',
         LogUri=log_uri,
         ReleaseLabel='emr-6.5.0',
-        Instances=get_instances_config(get_running_cluster_count(emr_client), idle_timeout),
+        Instances=emr_config.get_instances_config(
+            get_running_cluster_count(emr_client),
+            idle_timeout,
+        ),
         Steps=__build_steps_config(steps),
         StepConcurrencyLevel=256,
         Applications=[{
@@ -152,6 +109,7 @@ def submit_spark_job(
     cluster_name,
     steps,
     bootstrap_script_path=None,
+    emr_config=dict(),
     idle_timeout=0,
     log_uri=None,
 ):
@@ -214,6 +172,7 @@ def submit_spark_job(
         cluster_id = create_a_new_cluster(
             cluster_name,
             steps,
+            EmrConfig(config=emr_config),
             bootstrap_script_path=bootstrap_script_path,
             idle_timeout=idle_timeout,
             log_uri=log_uri,

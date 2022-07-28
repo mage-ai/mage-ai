@@ -19,20 +19,25 @@ class RepoConfig:
                     os.path.join(self.repo_path, self.variables_dir),
                 )
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
+            self.emr_config = repo_config.get('emr_config')
         except Exception:
             pass
 
     @classmethod
     def from_dict(self, config_dict: Dict) -> 'RepoConfig':
         repo_config = RepoConfig()
+        repo_config.emr_config = config_dict.get('emr_config')
         repo_config.repo_path = config_dict.get('repo_path')
         repo_config.variables_dir = config_dict.get('variables_dir')
+        repo_config.remote_variables_dir = config_dict.get('remote_variables_dir')
         return repo_config
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            emr_config=self.emr_config,
             repo_path=self.repo_path,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,
+            remote_variables_dir=self.remote_variables_dir,
         )
 
 
