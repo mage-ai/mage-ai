@@ -1,13 +1,13 @@
+{% extends "data_loaders/default.jinja" %}
+{% block imports %}
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
-from pandas import DataFrame
-from os import path
-
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
+{{ super() -}}
+{% endblock %}
 
 
+{% block content %}
 @data_loader
 def load_data_from_big_query(**kwargs) -> DataFrame:
     """
@@ -19,3 +19,4 @@ def load_data_from_big_query(**kwargs) -> DataFrame:
     config_profile = 'default'
 
     return BigQuery.with_config(ConfigFileLoader(config_path, config_profile)).load(query)
+{% endblock %}

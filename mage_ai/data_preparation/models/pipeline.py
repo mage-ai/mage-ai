@@ -155,6 +155,7 @@ class Pipeline:
         global_vars=None,
         log_func: Callable[[str], None] = None,
         redirect_outputs: bool = False,
+        run_tests: bool = False,
         update_status: bool = True,
     ) -> None:
         """
@@ -173,6 +174,7 @@ class Pipeline:
             global_vars=global_vars,
             log_func=log_func,
             redirect_outputs=redirect_outputs,
+            run_tests=run_tests,
             update_status=update_status,
         )
 

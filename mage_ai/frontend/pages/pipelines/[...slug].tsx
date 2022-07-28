@@ -926,6 +926,7 @@ function PipelineDetailPage({
     ignoreAlreadyRunning?: boolean;
     runDownstream?: boolean;
     runUpstream?: boolean;
+    runTests?: boolean;
   }) => {
     const {
       block,
@@ -933,6 +934,7 @@ function PipelineDetailPage({
       ignoreAlreadyRunning,
       runDownstream = false,
       runUpstream = false,
+      runTests = false,
     } = payload;
 
     const { uuid } = block;
@@ -945,7 +947,8 @@ function PipelineDetailPage({
         type: block.type,
         uuid,
         run_downstream: runDownstream,
-        run_upstream: runUpstream
+        run_upstream: runUpstream,
+        run_tests: runTests,
       }));
 
       // @ts-ignore

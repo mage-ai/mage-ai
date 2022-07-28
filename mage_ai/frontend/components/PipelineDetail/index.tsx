@@ -73,6 +73,7 @@ type PipelineDetailProps = {
     block: BlockType;
     code: string;
     runUpstream?: boolean;
+    runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
   savePipelineContent: () => void;

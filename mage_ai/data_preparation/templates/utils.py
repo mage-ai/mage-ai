@@ -3,7 +3,11 @@ import os
 import shutil
 
 
-template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
+template_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    lstrip_blocks=True,
+    trim_blocks=True,
+)
 
 
 def copy_template_directory(template_path: str, dest_path: str) -> None:

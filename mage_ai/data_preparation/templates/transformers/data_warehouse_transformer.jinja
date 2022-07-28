@@ -1,13 +1,13 @@
+{% extends "transformers/default.jinja" %}
+{% block imports %}
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.io_config import IOConfig
 from mage_ai.io.{{ data_source }} import {{ data_source_handler }}
-from pandas import DataFrame
-from os import path
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
+{{ super() -}}
+{% endblock %}
 
 
+{% block content %}
 @transformer
 def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
     """
@@ -28,3 +28,4 @@ def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
         # Write queries to transform your dataset with
         loader.execute(query){{ additional_args }}
         return loader.sample(sample_schema, sample_size, sample_table)
+{% endblock %}

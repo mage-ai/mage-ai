@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
@@ -34,9 +35,21 @@ async def run_blocks(
     global_vars=None,
     log_func: Callable[[str], None] = None,
     redirect_outputs: bool = False,
+    run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
+    async def create_block_task(block: 'Block', run_tests: bool = False):
+        await block.execute(
+            analyze_outputs=analyze_outputs,
+            global_vars=global_vars,
+            log_func=log_func,
+            redirect_outputs=redirect_outputs,
+            run_all_blocks=True,
+            update_status=update_status,
+        )
+        if run_tests:
+            block.run_tests(update_tests=False)
     tasks = dict()
     blocks = Queue()
 
@@ -59,14 +72,7 @@ async def run_blocks(
         upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
         await asyncio.gather(*upstream_tasks)
         task = asyncio.create_task(
-            block.execute(
-                analyze_outputs=analyze_outputs,
-                global_vars=global_vars,
-                log_func=log_func,
-                redirect_outputs=redirect_outputs,
-                run_all_blocks=True,
-                update_status=update_status,
-            )
+            create_block_task(block, run_tests=run_tests)
         )
         tasks[block.uuid] = task
         for downstream_block in block.downstream_blocks:
@@ -137,6 +143,7 @@ class Block:
         self.pipeline = pipeline
         self.upstream_blocks = []
         self.downstream_blocks = []
+        self.test_functions = []
 
     @property
     def input_variables(self):
@@ -328,9 +335,7 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
-            raise Exception(
-                f'Exception encountered in block {self.uuid}',
-            ) from err
+            raise err
         finally:
             if update_status:
                 self.__update_pipeline_block(widget=BlockType.CHART == self.type)
@@ -423,13 +428,6 @@ class Block:
             return block_function
 
     def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
-        def block_decorator(decorated_functions):
-            def custom_code(function):
-                decorated_functions.append(function)
-                return function
-
-            return custom_code
-
         upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
@@ -447,6 +445,7 @@ class Block:
                 ]
         outputs = []
         decorated_functions = []
+        test_functions = []
         stdout = StringIO() if redirect_outputs else sys.stdout
         results = {}
         outputs_from_input_vars = {}
@@ -457,7 +456,10 @@ class Block:
             outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
         with redirect_stdout(stdout):
-            results = {self.type: block_decorator(decorated_functions)}
+            results = {
+                self.type: self.__block_decorator(decorated_functions),
+                'test': self.__block_decorator(test_functions),
+            }
             results.update(outputs_from_input_vars)
 
             if custom_code is not None:
@@ -465,7 +467,9 @@ class Block:
                     exec(custom_code, results)
             elif os.path.exists(self.file_path):
                 with open(self.file_path) as file:
-                    exec(file.read(), {self.type: block_decorator(decorated_functions)})
+                    exec(file.read(), results)
+
+            self.test_functions = test_functions
 
             if BlockType.CHART == self.type:
                 variables = self.get_variables_from_code_execution(results)
@@ -657,6 +661,46 @@ class Block:
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
+    def run_tests(self, custom_code=None, redirect_outputs=False, update_tests=True) -> str:
+        test_functions = []
+        if update_tests:
+            results = {
+                'test': self.__block_decorator(test_functions),
+            }
+            if custom_code is not None:
+                exec(custom_code, results)
+            elif os.path.exists(self.file_path):
+                with open(self.file_path) as file:
+                    exec(file.read(), results)
+        else:
+            test_functions = self.test_functions
+
+        variable_manager = self.pipeline.variable_manager
+        outputs = [
+            variable_manager.get_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                variable,
+            )
+            for variable in self.output_variables.keys()
+        ]
+        stdout = StringIO() if redirect_outputs else sys.stdout
+        with redirect_stdout(stdout):
+            tests_passed = 0
+            for func in test_functions:
+                try:
+                    func(*outputs)
+                    tests_passed += 1
+                except AssertionError:
+                    print('==============================================================')
+                    print(f'FAIL: {func.__name__} (block: {self.uuid})')
+                    print('--------------------------------------------------------------')
+                    print(traceback.format_exc())
+            print('--------------------------------------------------------------')
+            print(f'{tests_passed}/{len(test_functions)} tests passed.')
+        if redirect_outputs:
+            return stdout.getvalue()
+
     def __analyze_outputs(self, variable_mapping):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 
@@ -799,6 +843,13 @@ class Block:
                     f'the variable {variable_names[idx]} should be {expected_dtype} type, '
                     f'but {actual_dtype} type is returned',
                 )
+
+    def __block_decorator(self, decorated_functions):
+        def custom_code(function):
+            decorated_functions.append(function)
+            return function
+
+        return custom_code
 
 
 class DataLoaderBlock(Block):

@@ -1,13 +1,13 @@
+{% extends "data_loaders/default.jinja" %}
+{% block imports %}
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
-from pandas import DataFrame
-from os import path
-
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
+{{ super() -}}
+{% endblock %}
 
 
+{% block content %}
 @data_loader
 def load_from_s3_bucket(**kwargs) -> DataFrame:
     """
@@ -23,3 +23,4 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
     return S3.with_config(ConfigFileLoader(config_path, config_profile)).load(
         bucket_name, object_key
     )
+{% endblock %}

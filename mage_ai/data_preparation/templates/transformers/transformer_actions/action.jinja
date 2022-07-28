@@ -9,10 +9,15 @@ from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_act
 
 {% block content %}
 @transformer
-def {{ title }}(df: DataFrame, *args, **kwargs) -> DataFrame:
-    """
-    Transformer Action: {{ message }}
-    """
-    action = {{ payload }}
+def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+    {% block action %}
+    action = build_transformer_action(
+        df,
+        action_type=ActionType.CLEAN_COLUMN_NAME,
+        arguments=df.columns,
+        axis=Axis.COLUMN,
+    )
+    {% endblock %}
+
     return BaseAction(action).execute(df)
 {% endblock %}
