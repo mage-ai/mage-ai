@@ -163,10 +163,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         widget=widget,
                     )
 
-                if kernel_name == KernelName.PYTHON3:
-                    msg_id = client.execute(add_internal_output_info(code))
-                else:
-                    msg_id = client.execute(code)
+                msg_id = client.execute(add_internal_output_info(code))
 
                 WebSocketServer.running_executions_mapping[msg_id] = dict(
                     block_uuid=block_uuid,
