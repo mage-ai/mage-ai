@@ -348,9 +348,100 @@ These are the possible aggregations that can be applied to each group per each i
 
 
 ### Formatting Actions
+These transformer actions involve reformatting column names or the values in columns
 #### Clean Column Names
+Cleans column names according to the following rules:
+1. Names are converted to snake case
+2. All wrapping whitespace or underscores are removed
+3. All non-alphanumeric characters (except "_") are removed
+4. Numbers are prefixed with "number_"
+5. All Python keywords are postfixed by "_"
+
+
+Snake case is chosen as
+1. all characters are lower case
+2. no whitespace is used (which makes referring to columns in code easier)
+
+
+| Original Name          | Cleaned Name       | Notes                                             |
+| ---------------------- | ------------------ | ------------------------------------------------- |
+| good_name              | good_name          | columns in snake case are left unchanged          |
+| bad case               | bad_case           |                                                   |
+| %@#342%34@@#342        | number_34234342    | Symbols are removed first, then number is cleaned |
+| PascalCaseColumn       | pascal_case_column |                                                   |
+| camelCaseText          | camel_case_text    |                                                   |
+| \_\_\_snake_case\_\_\_ | snake_case         | Surrounding underscores are stripped              |
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.CLEAN_COLUMN_NAME,
+    arguments=df.columns,
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** Columns whose name to clean. If empty, no columns names are cleaned.
+
 #### Fix Syntax Errors
+Marks syntax errors in column values. Syntax errors are defined as values that are improperly formatted or of the incorrect type. For example, this could be:
+- A number in a text column
+- An improperly formatting Email, Phone Number, or Zip Code
+- An improperly formatted date
+
+Values that break these syntax errors are currently marked as:
+- `"invalid"` if column is of categorical or string type
+- `pd.NaT` if column is a datetime
+- `np.nan` if column is a number type
+
+_WIP_: Intelligently fix syntax errors in these columns if possible
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.FIX_SYNTAX_ERRORS,
+    arguments=df.columns,
+    axis=Axis.COLUMN,
+)
+```
+**Args**
+- **_arguments:_** Columns to mark syntax errors for. If empty no columns are checked.
 #### Reformat Values
+Reformats values in column based on requested action. The currently supported reformats are:
+- Standardize capitalization (`reformat = 'caps_standardization'`): Forces text column to follow a single capitalization strategy (either lowercase or uppercase)
+- Convert currencies to a number (`reformat = 'currency_to_num'`): Converts a currency value (by default stored as a string) to a decimal number. If unable to convert, doesn't perform conversion
+  - Supported currencies: $, CAD, £, €, ¥, Rs, 元
+    | Original String  | Parsed Decimal | Notes                                           |
+    | ---------------- | -------------- | ----------------------------------------------- |
+    | "  $ 10000"      | 10000          |                                                 |
+    | "- ¥ 22.324523"  | -22.324523     | Negation in front of symbol supported           |
+    | " 10000 元   "   | 10000          | Currencies with postfixed symbols are supported |
+    | "0.42 €"         | 0.42           |                                                 |
+    | "-  3.42032 CAD" | -3.42032       |                                                 |
+    | "Rs - 100000.23" | -100000.23     | Negation after symbol is supported              |
+- Convert string to datetime (`reformat = 'date_time_conversion'`): Converts a string value representing a datetime to a `pandas.Timestamp` object if possible. Else converts to `None`.
+
+**Example**:
+```python
+build_transformer_action(
+    df,
+    action_type=ActionType.REFORMAT,
+    arguments=[],
+    axis=Axis.COLUMN,
+    options={'reformat': None},
+)
+```
+**Args**
+- **_arguments:_** Columns to apply the reformat action to
+- **_options:_**
+  - `reformat` (optional): The reformat action to apply to the specified columns. Can be:
+    - `None` - no reformat is applied
+    - `'caps_standardization'` - standardize capitalization
+    - `'currency_to_num'` - convert currency string to number
+    - `'date_format_conversion'` - convert datetime string to `pandas.Timestamp`
+  - `capitalization` (optional): Specifies the capitalization strategy to use when standardizing capitalization. This argument is ignored unless `reformat = "caps_standardization"`. Options are `['lowercase', 'uppercase']`.
 
 ### Column Removal Actions
 #### Keep Columns
