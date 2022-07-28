@@ -23,3 +23,12 @@ remote_variables_dir: s3://bucket/path
 ```
 
 Pipelines built with this kernel can be executed in PySpark environments.
+
+We support executing PySpark pipelines in EMR cluster automatically. You'll need to specify the some emr config fields in project's metadata.yaml file. And then we'll launch an EMR cluster when you executing the pipelien with `mage run [project_name] [pipeline]` command. Example EMR config:
+```yaml
+emr_config:
+    master_security_group: 'sg-xxxxxxxxxxxx'
+    slave_security_group: 'sg-yyyyyyyyyyyy'
+    master_instance_type: 'r5.4xlarge'
+    slave_instance_type: 'r5.4xlarge'
+```
