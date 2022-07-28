@@ -8,7 +8,7 @@ class KernelName(str, Enum):
     PYTHON3 = 'python3'
 
 
-DEFAULT_KERNEL_NAME = KernelName.PYSPARK
+DEFAULT_KERNEL_NAME = KernelName.PYTHON3
 
 kernel_managers = dict(
     python3=KernelManager(

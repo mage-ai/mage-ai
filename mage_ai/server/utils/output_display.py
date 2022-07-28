@@ -101,7 +101,6 @@ def __custom_output():
     from datetime import datetime
     from mage_ai.shared.parsers import encode_complex
     import pandas as pd
-    import pyspark
     import simplejson
 
 
@@ -128,7 +127,7 @@ def __custom_output():
             ignore_nan=True,
         )
         return print(f'[__internal_output__]{{_json_string}}')
-    elif isinstance(_internal_output_return, pyspark.sql.DataFrame):
+    elif type(_internal_output_return).__module__ == 'pyspark.sql.dataframe':
         _sample = _internal_output_return.limit({DATAFRAME_SAMPLE_COUNT_PREVIEW}).toPandas()
         _columns = _sample.columns.tolist()[:40]
         _rows = _sample.to_numpy().tolist()
