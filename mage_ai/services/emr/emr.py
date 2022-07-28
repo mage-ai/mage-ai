@@ -33,6 +33,7 @@ def get_running_cluster_count(emr_client):
 
 def get_instances_config(cluster_count, idle_timeout=0):
     market = 'SPOT' if cluster_count < MAX_CLUSTERS_ON_SPOT_INSTANCES else 'ON_DEMAND'
+    # TODO: Replace the hardcoded configs
     instances_config = {
         'KeepJobFlowAliveWhenNoSteps': False,
         'EmrManagedMasterSecurityGroup': 'sg-0193f530fab3f82c9',
@@ -77,7 +78,13 @@ def get_instances_config(cluster_count, idle_timeout=0):
     return instances_config
 
 
-def create_a_new_cluster(cluster_name, steps, idle_timeout=0):
+def create_a_new_cluster(
+    cluster_name,
+    steps,
+    bootstrap_script_path=None,
+    idle_timeout=0,
+    log_uri=None,
+):
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
@@ -87,7 +94,7 @@ def create_a_new_cluster(cluster_name, steps, idle_timeout=0):
     applications = ['Hadoop', 'Hive', 'Spark']
     response = emr_client.run_job_flow(
         Name=f'{datetime.utcnow().isoformat()}-{cluster_name}',
-        LogUri=f's3://{EMR_BUCKET_NAME}/logs',
+        LogUri=log_uri,
         ReleaseLabel='emr-6.5.0',
         Instances=get_instances_config(get_running_cluster_count(emr_client), idle_timeout),
         Steps=__build_steps_config(steps),
@@ -99,7 +106,7 @@ def create_a_new_cluster(cluster_name, steps, idle_timeout=0):
             dict(
                 Name='Install Python packages using pip.',
                 ScriptBootstrapAction=dict(
-                    Path=f's3://{EMR_BUCKET_NAME}/scripts/emr_bootstrap_emr_650.sh',
+                    Path=bootstrap_script_path,
                 ),
             ),
         ],
@@ -142,7 +149,13 @@ def create_a_new_cluster(cluster_name, steps, idle_timeout=0):
     return cluster_id
 
 
-def submit_spark_job(cluster_name, steps, idle_timeout=0):
+def submit_spark_job(
+    cluster_name,
+    steps,
+    bootstrap_script_path=None,
+    idle_timeout=0,
+    log_uri=None,
+):
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
@@ -199,7 +212,13 @@ def submit_spark_job(cluster_name, steps, idle_timeout=0):
     #     print('\n')
 
     if len(valid_cluster_ids) == 0:
-        cluster_id = create_a_new_cluster(cluster_name, steps, idle_timeout=idle_timeout)
+        cluster_id = create_a_new_cluster(
+            cluster_name,
+            steps,
+            bootstrap_script_path=bootstrap_script_path,
+            idle_timeout=idle_timeout,
+            log_uri=log_uri,
+        )
 
         # for step in steps:
         #     def _get_status():
@@ -229,8 +248,8 @@ def submit_spark_job(cluster_name, steps, idle_timeout=0):
             steps=steps,
         )
 
-        # if status != 'COMPLETED':
-        #     raise Exception(f'Step ID {step_id} did not complete, status: {status}')
+        if status != 'COMPLETED':
+            raise Exception(f'Step ID {step_id} did not complete, status: {status}')
 
 
 def __add_step(emr_client, cluster_id, steps):
@@ -273,8 +292,6 @@ def __build_steps_config(steps):
                 'spark-submit',
                 '--deploy-mode',
                 'cluster',
-                '--py-files',
-                f's3://{EMR_BUCKET_NAME}/shared/packages.zip,s3://{EMR_BUCKET_NAME}/shared/ai_src.zip',
                 step['script_uri'],
                 *step['script_args'],
             ]

@@ -33,6 +33,7 @@ class PipelineTest(TestCase):
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 2',
             uuid='test_pipeline_2',
+            type='python',
             blocks=[
                 dict(
                     name='block1',
@@ -95,6 +96,7 @@ class PipelineTest(TestCase):
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 3',
             uuid='test_pipeline_3',
+            type='python',
             blocks=[
                 dict(
                     name='block1',
@@ -141,6 +143,7 @@ class PipelineTest(TestCase):
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 3',
             uuid='test_pipeline_3',
+            type='python',
             blocks=[
                 dict(
                     name='block1',
@@ -202,6 +205,7 @@ class PipelineTest(TestCase):
         self.assertEquals(pipeline.to_dict(), dict(
             name='test pipeline 4',
             uuid='test_pipeline_4',
+            type='python',
             blocks=[
                 dict(
                     name='block1',

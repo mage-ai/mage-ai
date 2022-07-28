@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
+    PipelineType,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
 )
@@ -25,6 +26,7 @@ class Pipeline:
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
+        self.type = PipelineType.PYTHON
         self.widget_configs = []
         if config is None:
             self.load_config_from_yaml()
@@ -190,6 +192,7 @@ class Pipeline:
 
     def load_config(self, config):
         self.name = config.get('name')
+        self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks', [])
         self.widget_configs = config.get('widgets', [])
@@ -257,6 +260,7 @@ class Pipeline:
         return dict(
             name=self.name,
             uuid=self.uuid,
+            type=self.type.value if type(self.type) is not str else self.type,
             blocks=[
                 b.to_dict(
                     include_content=include_content,
