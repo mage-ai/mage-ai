@@ -32,6 +32,7 @@ class TemplateTest(TestCase):
         expected_string = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -74,8 +75,9 @@ def remove_rows_with_missing_entries(df: DataFrame, *args, **kwargs) -> DataFram
     }
     return BaseAction(action).execute(df)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -85,7 +87,8 @@ def test_transform(df: DataFrame) -> None:
         self.assertEqual(expected_string, new_string)
 
     def test_template_generation_data_loader_default(self):
-        expected_template = """from pandas import DataFrame
+        expected_template = """from os import path
+from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -105,8 +108,9 @@ def load_data(**kwargs) -> DataFrame:
 
     return DataFrame({})
 
+
 @test
-def test_load_data(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -124,8 +128,8 @@ def test_load_data(df: DataFrame) -> None:
         redshift_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
-from pandas import DataFrame
 from os import path
+from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -146,8 +150,9 @@ def load_data_from_redshift(**kwargs) -> DataFrame:
     with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
 
+
 @test
-def test_load_data(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -156,8 +161,8 @@ def test_load_data(df: DataFrame) -> None:
         s3_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.s3 import S3
-from pandas import DataFrame
 from os import path
+from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
@@ -181,8 +186,9 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
         bucket_name, object_key
     )
 
+
 @test
-def test_load_data(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -197,13 +203,16 @@ def test_load_data(df: DataFrame) -> None:
         self.assertEqual(s3_template, new_s3_template)
 
     def test_template_generation_data_loader_api(self):
-        expected_template = """from pandas import DataFrame
-import io
+        expected_template = """import io
 import pandas as pd
 import requests
+from os import path
+from pandas import DataFrame
 
 if 'data_loader' not in globals():
     from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
 
 
 @data_loader
@@ -215,13 +224,22 @@ def load_data_from_api() -> DataFrame:
 
     response = requests.get(url)
     return pd.read_csv(io.StringIO(response.text), sep=',')
+
+
+@test
+def test_output(df) -> None:
+    \"\"\"
+    Template code for testing the output of the block.
+    \"\"\"
+    assert df is not None, 'The output is undefined'
 """
         config = {'data_source': DataSource.API}
         api_template = fetch_template_source(BlockType.DATA_LOADER, config)
         self.assertEqual(api_template, expected_template)
 
     def test_template_generation_transformer_default(self):
-        expected_template = """from pandas import DataFrame
+        expected_template = """from os import path
+from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -247,8 +265,9 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return df
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -266,7 +285,8 @@ def test_transform(df: DataFrame) -> None:
         self.assertEqual(expected_template, new_template3)
 
     def test_template_generation_transformer_action_default(self):
-        expected_template = """from pandas import DataFrame
+        expected_template = """from os import path
+from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -292,8 +312,9 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return df
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -314,6 +335,7 @@ def test_transform(df: DataFrame) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -336,8 +358,9 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -352,6 +375,7 @@ def test_transform(df: DataFrame) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -374,8 +398,9 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -390,6 +415,7 @@ def test_transform(df: DataFrame) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -413,8 +439,9 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -429,6 +456,7 @@ def test_transform(df: DataFrame) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
+from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -458,8 +486,9 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -566,8 +595,8 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
         postgres_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.io_config import IOConfig
 from mage_ai.io.postgres import Postgres
-from pandas import DataFrame
 from os import path
+from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -597,8 +626,9 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
         loader.commit() # Permanently apply database changes
         return loader.sample(sample_schema, sample_size, sample_table)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
@@ -608,8 +638,8 @@ def test_transform(df: DataFrame) -> None:
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.io_config import IOConfig
 from mage_ai.io.bigquery import BigQuery
-from pandas import DataFrame
 from os import path
+from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -638,8 +668,9 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
         loader.execute(query)
         return loader.sample(sample_schema, sample_size, sample_table)
 
+
 @test
-def test_transform(df: DataFrame) -> None:
+def test_output(df) -> None:
     \"\"\"
     Template code for testing the output of the block.
     \"\"\"
