@@ -35,7 +35,7 @@ Transformer Actions are a library of modular, reusable data transformations, red
 
 ## Tutorial
 
-To introduce how the Transformer Actions library works, we will use the Titanic Survival dataset. When in the Mage app, create a new pipeline and add a data loader with the following code to load the Titanic Survival dataset:
+To introduce how the Transformer Actions library works, we will perform some cleaning actions on the Titanic Survival dataset. Open the Mage app and create a new pipeline. Add a data loader with the following code to load the Titanic Survival dataset:
 ```python
 from mage_ai.io.file import FileIO
 from pandas import DataFrame
@@ -54,7 +54,11 @@ def load_data_from_file(**kwargs) -> DataFrame:
 ```
 Run this block to load the Titanic Survival dataset into your pipeline.
 
-You'll notice that there are three columns that have missing values: "Cabin", "Age", "Embarked". Let's perform imputation to fill in these missing values using the Transformer Action Library. Create a new transformer block below, and select the "Fill in missing values" option. You should see the following code in your new transformer block:
+You'll notice that there are three columns that have missing values: "Cabin", "Age", "Embarked". Let's perform imputation to fill in these missing values using the Transformer Action Library. Create a new transformer block below, and select the "Fill in missing values" template.
+
+![Image of transformer block template drop down highlighting "Fill in missing values"](./transformer_actions_impute.png)
+
+You should see the following code in your new transformer block:
 
 ```python
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
@@ -83,12 +87,12 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 ```
 
 Let's break this code down:
-- the `build_transformer_action` function creates a transformer action **payload** that describes the action to complete. The dictionary object created by this function is stored in the variable `action`. The arguments passed in are
-  - `df` - the data frame to transform, used to infer type data
+- `build_transformer_action()` creates a transformer action **payload**, which is a dictionary that describes settings for the action to complete. The arguments passed in are
+  - `df` - the data frame to transform, used to infer column types
   - `action_type` - specifies the action to perform. In this case, we are performing an `IMPUTE` action.
-  - `arguments` - specifies the columns to perform the action on. Currently, the action is configured to impute all columns of the data frame. Since we only want to transform "Cabin", "Age", and "Embarked", we will update this entry to only contain these column names
-  - `axis` - specifies which axis to perform the action on. Imputing values is done per column, so this is a column transformation.
-  - `option` - these are extra options to specify for this action. For an impute transformation, the main option to specify is `'strategy'`, which specifies what imputation strategy to use. See [Impute Transformation](#) for details on the valid imputation strategies; for now we will use `MODE`, which specifies to fill empty values with the most frequent value per column.
+  - `arguments` - specifies the columns to perform the action on. Currently, the action is configured to impute all columns of the data frame. Since we only want to transform "Cabin", "Age", and "Embarked", we will update this entry to only contain these column names.
+  - `axis` - specifies which axis to perform the action on. Imputing values is done on a per column basis, so this is a column transformation.
+  - `option` - these are extra settings to specify for this action. For an impute transformation, the main option to specify is `'strategy'`, dictating the imputation strategy to use. See [Fill in Missing Values](#fill-in-missing-values) for details on the valid imputation strategies. For now we will use `MODE`, which specifies to fill empty values with the most frequent value per column.
 
 The modified transformer block is:
 ```python
@@ -116,10 +120,14 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 ```
-Execute this transformer - you should notice that all null values are now filled with the mode of each column in these three columns! After the payload is created by `build_transformer_action`, the payload is used to construct the `BaseAction` object, representing a reusable instance of the transformation. Then the transformation is executed on the input data frame using `execute`, returning the transformed data frame when done.
+Execute this transformer - you should notice that all null values are now filled with the mode value of each respective column! After the payload is created by `build_transformer_action()`, the payload is used to construct the `BaseAction` object, representing a reusable instance of the transformation. Then the transformation is executed on the input data frame using `execute()`, returning the transformed data frame when done.
 
 
-Suppose you're interested in computing the average fare and age by each location of embarkation - Southampton (S), Cherbourg (C), and Queenstown (Q). Transformer Actions can help us here as well - create a new transformer using the "Aggregate/Aggregate by average value" template. You should see the following code in your new transformer block.
+Suppose then you're interested in computing the average fare and age by each location of embarkation - Southampton (S), Cherbourg (C), and Queenstown (Q). Transformer Actions can help us here as well - create a new transformer using the "Aggregate/Aggregate by average value" template.
+
+![Image of transformer block template drop down highlighting "Aggregate/Aggregate by average value"](./transformer_actions_agg.png)
+
+You should see the following code in your new transformer block.
 ```python
 from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -152,10 +160,10 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     return BaseAction(action).execute(df)
 ```
 As before, we can fill in the settings we need for performing this aggregation by average value:
-- `action_code` is used by aggregation-type transformer actions to filter rows of the dataset before performing the aggregation. For example, if the "Embarked" column had null values, we could filter them out using the filter `'Embarked != null'`. In this case we won't perform any filtering
+- `action_code` is used by aggregation-type transformer actions to filter rows of the dataset before performing the aggregation. For example, if the "Embarked" column had null values, we could filter them out using the filter `'Embarked != null'`. In this case we won't perform any filtering. See [Filter Syntax](#appendix-filter-syntax) for more details on valid filter syntax.
 - Since we want to aggregate over "Fare" and "Age", our arguments are `['Fare', 'Age']`
-- In `options`, the only parameter is `groupby_columns` which is the list of the columns to groupby when performing the aggregation. In this case, the column we want to group by is "Embarked"
-- `outputs` is used to specify the name and type of the new columns created by the aggregation. As there are two columns in `arguments` that we want to perform the aggregation over, there should be two corresponding entries in column.
+- In `options`, the only parameter is `groupby_columns` which is the list of the columns to group by when performing the aggregation. In this case, the column we want to use to form groups is "Embarked"
+- `outputs` is used to specify the name and type of the new columns created by the aggregation. As there are two columns in `arguments` that we want to perform the aggregation over, there should be two corresponding entries in `outputs`.
 
 The resulting template after these edits are:
 ```python
@@ -189,7 +197,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
 
     return BaseAction(action).execute(df)
 ```
-Run this transformer, and your output data frame should now include two new columns named "avg_fare_by_embarked_loc" and "avg_age_by_embarked_loc" which contain the average fare and average age by embarkation location per entry.
+Run this transformer, and your output data frame should now include two new columns named "avg_fare_by_embarked_loc" and "avg_age_by_embarked_loc" which contain the average fare and average age by embarkation location. Each row gets a new value corresponding to the group which that row falls into.
 
 This workflow can be summarized to describe how Transformer Actions can be used effectively:
 1. Identify a transformation that may need to be made to your data
@@ -208,15 +216,15 @@ The core object of any transformer action is the **payload**, a JSON object that
     "action_arguments": ["age", "name"],
     "action_options": {
         "strategy": "constant",
-        "value": "34"
+        "value": "32"
     },
     "axis": "column",
     "action_variables": {
-        "1": {
+        "age": {
             "uuid": "age",
             "column_type": "number"
         },
-        "2": {
+        "name": {
             "uuid": "name",
             "column_type": "text"
         }
@@ -225,15 +233,15 @@ The core object of any transformer action is the **payload**, a JSON object that
 ```
 The above transformer action imputes missing values in the 'age' and "name" columns with the constant value `32`. Here is a list of the keys used in transformer action payloads:
 
-| Key              | Description                                                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| axis             | Axis to perform the transformation on. Either 'row' or 'column'.                                                           |
-| action_type      | Type of action to perform. See [Transformer Action Reference](#transformer-action-reference) for the list of action types. |
-| action_code      | Text field for specifying any code such as filters.                                                                        |
-| action_arguments | The columns to perform the transformation on                                                                               |
-| action_options   | Other settings to provide to the transformer action.                                                                       |
-| action_variables | Variable metadata for each input argument (column). Specifies column name and type.                                        |
-| outputs          | Variable metadata for each output column. Specifies column name and type.                                                  |
+| Key              | Description                                                                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| axis             | Axis to perform the transformation on. Either 'row' or 'column'.                                                                                                                    |
+| action_type      | Type of action to perform. See [Transformer Action Reference](#transformer-action-reference) for the list of action types.                                                          |
+| action_code      | Text field for specifying any code such as filters.                                                                                                                                 |
+| action_arguments | The columns to perform the transformation on.                                                                                                                                       |
+| action_options   | Other settings to provide to the transformer action. See [Transformer Action Reference](#transformer-action-reference) for specific details on which actions require which options. |
+| action_variables | Variable metadata for each input argument (column). Specifies column name and type.                                                                                                 |
+| outputs          | Variable metadata for each output column. Specifies column name and type.                                                                                                           |
 
 This JSON formatted payload is difficult to generate so it is recommended to use the `build_transformer_action` factory to generate the payload. The above snippet generates the same payload as above:
 
@@ -267,14 +275,14 @@ transformed_df = BaseAction(payload).execute(df)
 Source: `mage_ai.data_cleaner.transformer_actions.utils.build_transformer_action`
 
 Builds transformer action payload from arguments. The output of this function can be passed
-as input to the `transformer_actions.base.BaseAction` to perform the requested transformation.
+as input to `transformer_actions.base.BaseAction` in order to perform the requested transformation.
 
 Note: Action variables are inferred from `arguments` and `df`.
 
 - **Args**:
     - `df (DataFrame)`: The data frame to build a transformer action payload for.
     - `action_type (ActionType | str)`: Transformer action to perform.
-    - `arguments (List[str], optional)`: Columns/Rows to perform this action on. Defaults to `[]`.
+    - `arguments (List[str], optional)`: Columns to perform this action on. Defaults to `[]`.
     - `action_code (str, optional)`: Special code or query to execute with action. Defaults to `''`.
     - `options (Dict, optional)`: Options specifying behavior of action. Defaults to `{}`.
     - `axis (Union[Axis, str], optional)`: Axis of the data frame to apply the action to. Defaults to `Axis.COLUMN`.
@@ -301,9 +309,54 @@ Note: Action variables are inferred from `arguments` and `df`.
 
 ### Aggregation Actions
 
-Applies some aggregation function over specified groups. All of these transformer actions have the same set of arguments when using `build_transformer_action` but have different types corresponding to the different aggregation functions that could be applied to the groups.
+Applies some aggregation function over groups determined by values in some columns. A set of grouping columns are provided, whose unique combinations of values are used to form groups. For example, consider the dataset below:
 
-The output data frame contains a new column for each input column which stores the aggregate value for the group which that row falls into.
+| Paid Dues | Due Amount |
+| --------- | ---------- |
+| Yes       | $5.00      |
+| No        | $15.20     |
+| Yes       | $3.50      |
+| Yes       | $1.28      |
+| No        | $25.03     |
+
+The data could be grouped by "Paid Dues" to form the following groups:
+<div style='display: flex; align-content: inline;'>
+<div style='padding-right: 30px;'>
+
+| Paid Dues | Due Amount |
+| --------- | ---------- |
+| Yes       | $5.00      |
+| Yes       | $3.50      |
+| Yes       | $1.28      |
+</div>
+<div>
+
+| Paid Dues | Due Amount |
+| --------- | ---------- |
+| No        | $15.20     |
+| No        | $25.03     |
+</div>
+</div>
+
+Then an aggregation function is applied to each group over the input columns. In the example, we can compute the total dues by group by aggregating over "Due Amount":
+| Paid Dues | Total Due Amount |
+| --------- | ---------------- |
+| Yes       | $9.78            |
+| No        | $40.23           |
+
+
+Then the output of this aggregation is used to create a new column for each input column, where each row receives the corresponding aggregate of the group it falls into. In the example above, the final output data frame would be:
+
+| Paid Dues | Due Amount | Total Due Amount by Payment Status |
+| --------- | ---------- | ---------------------------------- |
+| Yes       | $5.00      | $9.78                              |
+| No        | $15.20     | $40.23                             |
+| Yes       | $3.50      | $9.78                              |
+| Yes       | $1.28      | $9.78                              |
+| No        | $25.03     | $40.23                             |
+
+
+All of these transformer actions have the same set of arguments when using `build_transformer_action`, but have different types corresponding to the different aggregation functions that could be applied to the groups.
 
 **Example**
 ```python
@@ -326,7 +379,7 @@ build_transformer_action(
   - If no arguments are provided, no aggregation is performed
 - **_options_:**
   - `groupby_columns` (optional) - list of columns to form groups with when aggregating. A group consists of each unique combination of values chosen from each of the columns specified in this option.
-    - If this is empty, aggregation is performed over the first column specified in _arguments_ (if _arguments_ is nonempty - if empty no aggregation is performed) and only one column is added
+    - If this is empty, aggregation is performed over the first column specified in _arguments_ (only if _arguments_ is nonempty - if empty no aggregation is performed) and only one column is added
 
   The following options are used as a shortcut to simplify filtering over time windows. Let $A$ and $B$ be datetime columns, and let $\text{window}$ be an integer describing the length of a time window in seconds. If the following options are specified, rows for which the time value for $B \in [A, A + \text{window}]$ are selected (All rows where value for $B$ must (a) be greater than or equal to the value for $A$ and (b) less than or equal to the value $A+window$).
   - `timestamp_feature_a` (optional) - time feature A (a column in the data frame)
@@ -334,21 +387,23 @@ build_transformer_action(
   - `window` (optional) - max time window between feature A and feature B in seconds
 
   If some (or none) of these options are specified, then the filtering is not performed. Regardless if this filtering is performed, _action_code_ filtering is still performed.
-- **_outputs_:** Specifies the metadata for each output column of the aggregation (corresponding to the aggregation created from input argument in _argument_). This array must be the same length as _arguments_, and each entry must contain the following metadata:
+- **_outputs_:** Specifies the metadata for each output column of the aggregation (corresponding to the aggregation created from input argument in _arguments_). This array must be the same length as _arguments_, and each entry must contain the following metadata:
   - `uuid (string)`: Name of the new column
   - `column_type (string | ColumnType)`: Type of the new column ( See `mage_ai.data_cleaner.column_types.constants.ColumnType` for options)
 
 **Aggregation Functions**
 These are the possible aggregations that can be applied to each group per each input column. To use the aggregation function specify the corresponding action type in `build_transformer_action`.
-- **_Average:_** (`ActionType.AVERAGE`) - averages input column value over each group
-- **_Count Distinct:_** (`ActionType.COUNT_DISTINCT`) - counts the number of distinct rows in each group per input column
-- **_Count:_** (`ActionType.COUNT`) - counts the number of rows in each group per input column
-- **_First:_** (`ActionType.FIRST`) - for each input column, selects first item in each group (as appearing in the order of the original data frame)
-- **_Last:_** (`ActionType.LAST`) - for each input column, selects last item in each group (as appearing in the order of the original data frame)
-- **_Maximum:_** (`ActionType.MAX`) - gets the maximum value per group for each input column
-- **_Median:_** (`ActionType.MEDIAN`) - gets the median value per group for each input column
-- **_Minimum:_** (`ActionType.MIN`) - gets the maximum value per group for each input column
-- **_Sum:_** (`ActionType.SUM`) - sums over all values in each group per input column
+| Name                 | Action Type Enum            | Description                                                                                                    |
+| -------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **_Average_**        | `ActionType.AVERAGE`        | Averages input column value over each group                                                                    |
+| **_Count Distinct_** | `ActionType.COUNT_DISTINCT` | Counts the number of distinct rows in each group per input column                                              |
+| **_Count_**          | `ActionType.COUNT`          | Counts the number of rows in each group per input column                                                       |
+| **_First_**          | `ActionType.FIRST`          | For each input column, selects first item in each group (as appearing in the order of the original data frame) |
+| **_Last_**           | `ActionType.LAST`           | For each input column, selects last item in each group (as appearing in the order of the original data frame)  |
+| **_Maximum_**        | `ActionType.MAX`            | Gets the maximum value per group for each input column                                                         |
+| **_Median_**         | `ActionType.MEDIAN`         | Gets the median value per group for each input column                                                          |
+| **_Minimum_**        | `ActionType.MIN`            | Gets the maximum value per group for each input column                                                         |
+| **_Sum_**            | `ActionType.SUM`            | Sums over all values in each group per input column                                                            |
 
 
 ### Formatting Actions
@@ -391,15 +446,15 @@ build_transformer_action(
 #### Fix Syntax Errors
 Marks syntax errors in column values. Syntax errors are defined as values that are improperly formatted or of the incorrect type. For example:
 - A number in a text column
-- An improperly formatting Email, Phone Number, or Zip Code
+- An improperly formatted email, phone number, or zip code
 - An improperly formatted date
 
 Values that break these syntax errors are currently marked as:
 - `"invalid"` if column is of categorical or string type
-- `pd.NaT` if column is a datetime
+- `pandas.NaT` if column is a datetime
 - `np.nan` if column is a number type
 
-_WIP_: Intelligently fix syntax errors in these columns if possible
+_WIP_: Intelligently fix syntax errors in these columns automatically
 
 **Example**:
 ```python
@@ -416,7 +471,7 @@ build_transformer_action(
 Reformats values in column based on requested action. The currently supported reformats are:
 - Standardize capitalization (`reformat = 'caps_standardization'`): Forces text column to follow a single capitalization strategy (either lowercase or uppercase)
 - Convert currencies to a number (`reformat = 'currency_to_num'`): Converts a currency value (by default stored as a string) to a decimal number. If unable to convert, doesn't perform conversion
-  - Supported currencies: $, CAD, £, €, ¥, Rs, 元
+  - Supported currencies: **$, CAD, £, €, ¥, Rs, 元**
     | Original String  | Parsed Decimal | Notes                                           |
     | ---------------- | -------------- | ----------------------------------------------- |
     | "  $ 10000"      | 10000          |                                                 |
@@ -425,7 +480,7 @@ Reformats values in column based on requested action. The currently supported re
     | "0.42 €"         | 0.42           |                                                 |
     | "-  3.42032 CAD" | -3.42032       |                                                 |
     | "Rs - 100000.23" | -100000.23     | Negation after symbol is supported              |
-- Convert string to datetime (`reformat = 'date_time_conversion'`): Converts a string value representing a datetime to a `pandas.Timestamp` object if possible. Else converts to `None`.
+- Convert string to datetime (`reformat = 'date_time_conversion'`): Converts a string value representing a datetime to a `pandas.Timestamp` object if correctly formatted, else converts to `None`.
 
 **Example**:
 ```python
@@ -434,7 +489,7 @@ build_transformer_action(
     action_type=ActionType.REFORMAT,
     arguments=[],
     axis=Axis.COLUMN,
-    options={'reformat': None},
+    options={'reformat': 'caps_standardization', 'capitalization': 'lowercase'},
 )
 ```
 **Args**
@@ -597,7 +652,7 @@ The following methods are supported for detecting outliers:
 | `'auto'`  | Automatically determines from above methods based on number of data points and dimensionality of the data.                                                                                                                          |
 
 Notes:
-- The contamination rate for both algorithms is estimated via the per-dimension IQR (which discounts multidimensional interactions but estimates how many outliers there likely are)
+- The contamination rate for both algorithms is estimated via the per-dimension IQR (which discounts multidimensional interactions but still estimates how many outliers there likely are)
 - If the input data has more than 20 dimensions, the dimensionality is reduced using PCA
 
 **Example**:
