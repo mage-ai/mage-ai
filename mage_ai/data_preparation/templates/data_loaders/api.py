@@ -1,6 +1,6 @@
 {% extends "data_loaders/default.jinja" %}
 {% block imports %}
-{{ super() }}
+{{ super() -}}
 import io
 import pandas as pd
 import requests

@@ -1,7 +1,7 @@
 {% extends "data_loaders/default.jinja" %}
 {% block imports %}
 from mage_ai.io.file import FileIO
-{{ super() }}
+{{ super() -}}
 {% endblock %}
 
 

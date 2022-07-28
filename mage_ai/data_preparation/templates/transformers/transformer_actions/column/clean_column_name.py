@@ -1,15 +1,5 @@
-{% extends "transformers/default.jinja" %}
-{% block imports %}
-from mage_ai.data_cleaner.transformer_actions.base import BaseAction
-from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-{{ super() }}
-{% endblock %}
-
-
-{% block content %}
-@transformer
-def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
+{% extends "transformers/transformer_actions/action.jinja" %}
+{% block action %}
     """
     Execute Transformer Action: ActionType.CLEAN_COLUMN_NAME
     """
@@ -19,6 +9,4 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
         arguments=df.columns,
         axis=Axis.COLUMN,
     )
-
-    return BaseAction(action).execute(df)
 {% endblock %}

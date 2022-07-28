@@ -1,8 +1,11 @@
-{% block imports %}{%- endblock -%}
+{% block imports %}
+{% endblock %}
 if 'test' not in globals():
     from mage_ai.data_preparation.decorators import test
 
-{% block content %}{% endblock %}
+
+{% block content %}
+{% endblock %}
 
 
 @test
