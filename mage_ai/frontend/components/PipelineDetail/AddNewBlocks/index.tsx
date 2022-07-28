@@ -45,31 +45,35 @@ function AddNewBlocks({
     inline: true,
   };
 
-  const dataLoaderMenuItems = DATA_SOURCE_TYPES.map((sourceType: DataSourceTypeEnum) => ({
-    label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
-    onClick: () => {
-      addNewBlock({
-        config: {
-          data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
-        },
-        type: BlockTypeEnum.DATA_LOADER,
-      });
-    },
-    uuid: `data_loader/${sourceType}`,
-  }));
+  const dataLoaderMenuItems = (
+    DATA_SOURCE_TYPES[BlockTypeEnum.DATA_LOADER].map((sourceType: DataSourceTypeEnum) => ({
+      label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
+      onClick: () => {
+        addNewBlock({
+          config: {
+            data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
+          },
+          type: BlockTypeEnum.DATA_LOADER,
+        });
+      },
+      uuid: `data_loader/${sourceType}`,
+    }))
+  );
 
-  const dataExporterMenuItems = DATA_SOURCE_TYPES.map((sourceType: DataSourceTypeEnum) => ({
-    label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
-    onClick: () => {
-      addNewBlock({
-        config: {
-          data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
-        },
-        type: BlockTypeEnum.DATA_EXPORTER,
-      });
-    },
-    uuid: `data_exporter/${sourceType}`,
-  }));
+  const dataExporterMenuItems = (
+    DATA_SOURCE_TYPES[BlockTypeEnum.DATA_EXPORTER].map((sourceType: DataSourceTypeEnum) => ({
+      label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
+      onClick: () => {
+        addNewBlock({
+          config: {
+            data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
+          },
+          type: BlockTypeEnum.DATA_EXPORTER,
+        });
+      },
+      uuid: `data_exporter/${sourceType}`,
+    }))
+  );
 
   const columnActionMenuItems = createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
