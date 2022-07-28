@@ -1,7 +1,7 @@
 import React from 'react';
 import { Meta, Story } from '@storybook/react';
-import ThemeBlock from 'stories/ThemeBlock';
 
+import ThemeBlock from '../../ThemeBlock';
 import {
   Action,
   Add,
@@ -61,6 +61,7 @@ import {
   Switch,
   Trash,
 } from '@oracle/icons';
+import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
   Action,
@@ -100,6 +101,7 @@ const ICONS = [
   Info,
   Input,
   Insights,
+  Mage8Bit,
   MapPin,
   Menu,
   MultiShare,
