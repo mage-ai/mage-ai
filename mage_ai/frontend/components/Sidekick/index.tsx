@@ -33,9 +33,9 @@ import {
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
-import { WEBSOCKT_URL } from '@utils/constants';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
+import { getWebSocket } from '@api/utils/url';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
 
@@ -162,7 +162,7 @@ function Sidekick({
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(WEBSOCKT_URL, {
+  } = useWebSocket(getWebSocket(), {
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down

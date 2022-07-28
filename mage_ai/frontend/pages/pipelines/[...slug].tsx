@@ -56,7 +56,6 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { WEBSOCKT_URL } from '@utils/constants';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -65,6 +64,7 @@ import {
   updateCollapsedBlocks,
 } from '@components/PipelineDetail/utils';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
+import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { randomNameGenerator } from '@utils/string';
@@ -876,7 +876,7 @@ function PipelineDetailPage({
     lastMessage,
     readyState,
     sendMessage,
-  } = useWebSocket(WEBSOCKT_URL, {
+  } = useWebSocket(getWebSocket(), {
     onOpen: () => console.log('socketUrlPublish opened'),
     shouldReconnect: (closeEvent) => {
       // Will attempt to reconnect on all close events, such as server shutting down
