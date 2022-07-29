@@ -121,7 +121,7 @@ function FlyoutMenu({
       setHighlightedIndices([]);
     }
   }, [open]);
-  
+
   const buildMenuEl = (
     items: FlyoutMenuItemType[],
     uuid: string,
