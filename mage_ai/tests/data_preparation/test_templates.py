@@ -593,7 +593,7 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
 
     def test_template_generation_transformer_dwh(self):
         postgres_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from os import path
 from pandas import DataFrame
@@ -620,7 +620,7 @@ def transform_in_postgres(*args, **kwargs) -> DataFrame:
     sample_schema = 'schema_of_table_to_sample'
     sample_size = 10_000
 
-    with Postgres.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.execute(query)
         loader.commit() # Permanently apply database changes
@@ -636,7 +636,7 @@ def test_output(df) -> None:
 """
 
         bigquery_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.bigquery import BigQuery
 from os import path
 from pandas import DataFrame
@@ -663,7 +663,7 @@ def transform_in_bigquery(*args, **kwargs) -> DataFrame:
     sample_schema = 'schema_of_table_to_sample'
     sample_size = 10_000
 
-    with BigQuery.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with BigQuery.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.execute(query)
         return loader.sample(sample_schema, sample_size, sample_table)

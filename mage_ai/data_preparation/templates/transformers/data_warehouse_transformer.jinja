@@ -1,7 +1,7 @@
 {% extends "transformers/default.jinja" %}
 {% block imports %}
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.io_config import IOConfig
+from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.{{ data_source }} import {{ data_source_handler }}
 {{ super() -}}
 {% endblock %}
@@ -24,7 +24,7 @@ def transform_in_{{ data_source }}(*args, **kwargs) -> DataFrame:
     sample_schema = 'schema_of_table_to_sample'
     sample_size = 10_000
 
-    with {{ data_source_handler }}.with_config(IOConfig(config_path).use(config_profile)) as loader:
+    with {{ data_source_handler }}.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         # Write queries to transform your dataset with
         loader.execute(query){{ additional_args }}
         return loader.sample(sample_schema, sample_size, sample_table)

@@ -114,7 +114,7 @@ def __fetch_transformer_data_warehouse_template(data_source: DataSource):
     return (
         template.render(
             additional_args=additional_args,
-            data_source=data_source.value,
+            data_source=data_source if type(data_source) is str else data_source.value,
             data_source_handler=data_source_handler,
         )
         + '\n'
