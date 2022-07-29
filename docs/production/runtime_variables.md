@@ -44,64 +44,75 @@ mage_ai.run('sample_pipeline', 'repos/default_repo', filepath = 'path/to/my/file
 ```
 
 ## Example - Aggregating Daily Logs
-A common ETL task is processing and analyzing daily events, or in the case of this example, logs from a web application.
+A common use of ETL pipelines is to process and analyze daily events. In the case of this example, we will create an ETL pipeline to analyze log messages from a web application. Suppose the following is an example of a log file that our web application produces.
 
 | log_date            | type    | source    |
 | ------------------- | ------- | --------- |
 | 2022-07-27T20:19:20 | INFO    | react-1   |
 | 2022-07-27T19:18:45 | WARNING | express-2 |
+| 2022-07-27T16:35:28 | DEBUG   | react-1   |
+| 2022-07-27T10:19:32 | INFO    | express-1 |
 | 2022-07-27T07:20:26 | ERROR   | express-1 |
 | 2022-07-27T00:42:37 | ERROR   | react-1   |
-| 2022-07-26T16:35:28 | DEBUG   | react-1   |
-| 2022-07-26T10:19:32 | INFO    | express-1 |
 
 Suppose we want to know the distribution of log types at the end of every day. Using Mage's runtime variables this is made a very simple task:
-1. Provide the current date to partition the log file using **runtime variables**
-2. Calculate the distribution of log types for the current date
+1. Create a data loader to load all log files modified on a specific date. We will specify the log folder and the date to load logs from using **runtime variables** which are passed to this block via the `**kwargs` parameter.
+    ```python
+    from datetime import datetime, timedelta, date
+    from pandas import DataFrame, concat, read_csv
+    from pathlib import Path
+    import os
 
-We'll define the transformer below to perform this statistics calculation:
-
-```python
-from datetime import datetime, timedelta, date
-from pandas import DataFrame
-from os import path
-import pandas as pd
-
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
+    if 'data_loader' not in globals():
+        from mage_ai.data_preparation.decorators import data_loader
 
 
-@transformer
-def extract_statistics(df: DataFrame, **kwargs) -> DataFrame:
-    current_date = kwargs.get('current_date')
-    end_dt = datetime.fromisoformat(current_date)
-    start_dt = end_dt - timedelta(days=1)
+    @data_loader
+    def load_log_data(**kwargs) -> DataFrame:
+        start = datetime.fromisoformat(kwargs.get('current_date'))
+        end = start + timedelta(days=1)
+        logpath = Path(kwargs.get('log_folder'))
+        logs = []
+        for file in logpath.iterdir():
+            print(file)
+            modification_time = datetime.fromtimestamp(os.path.getmtime(file))
+            if modification_time >= start and modification_time < end:
+                df = read_csv(file)
+                logs.append(df)
+        return concat(logs, axis=0)
+    ```
+    *Note*: This code ignores the edge case of a log file that spills over between days. Since the modification date is used instead of the creation date, a log file that is modified between days will only be considered in the latter day.
+2. Calculate the distribution of log types over this date
+    ```python
+    from pandas import DataFrame
+    from os import path
+    import pandas as pd
 
-    dates = pd.to_datetime(df['log_date'], infer_datetime_format=True)
-    current_logs = df[dates.between(start_dt, end_dt, inclusive='left')]
+    if 'transformer' not in globals():
+        from mage_ai.data_preparation.decorators import transformer
 
-    count = current_logs['type'].value_counts()
-    count = DataFrame({now: count}).T
-    return count
-```
-Let's break down the transformation above:
-1. We use `**kwargs` to fetch the the **runtime variable** `current_date` and use it to construct the date window of 1 day (between `start_dt` and `end_dt`, left inclusive)
-2. All log dates are parsed from strings to `pandas.Timestamp` objects so datetime comparisons can be performed.
-3. To select all logs from today, we filter logs in that window using `between` on the parsed `log_date` column. Alternatively, you can set `dates` as the index of the data frame and use index slicing to select all logs from today. These logs are stored in `current_logs`.
-4. Of these entries, the distribution of values is computed using `value_counts()`
-5. A new data frame is constructed with today's date as the index to present the distribution with each type as a column:
-    |           | DEBUG | ERROR | INFO | WARNING |
-    | --------- | ----- | ----- | ---- | ------- |
-    | 7-28-2022 | 816   | 765   | 828  | 871     |
+
+    @transformer
+    def extract_statistics(df: DataFrame, **kwargs) -> DataFrame:
+        now = kwargs.get('current_date')
+        count = df['type'].value_counts()
+        count = DataFrame({now: count}).T
+        return count
+    ```
+
+    The result of this transformer is a new data frame that looks like below:
+    |            | DEBUG | ERROR | INFO | WARNING |
+    | ---------- | ----- | ----- | ---- | ------- |
+    | 2022-07-28 | 816   | 765   | 828  | 871     |
 
 This data can then be ingested into a log statistics database.
 
-**Key:** As the current date is not hardcoded in the pipeline but instead provided as a runtime variable, your pipeline code remains reusable without having to change any code. Every day, the pipeline can be ran using `mage_ai.run()` using the current date as:
+**Key:** As the current date and log folder are not hardcoded in the pipeline but instead provided as a runtime variable, your pipeline code remains reusable without having to change any code. Every day, the pipeline can be ran using `mage_ai.run()`, providing the current date and log folder as keyword arguments:
 
 ```python
-mage_ai.run('log_stats_ingestion', 'repos/default_repo', current_date='2022-07-29')
+mage_ai.run('log_stats_ingestion', 'repos/default_repo', current_date='2022-07-29', log_folder='logs/webapp')
 ```
-where the keyword argument `current_date` is passed to the blocks in the pipeline.
+This makes the pipeline designed above completely reusable without
 
 ## Example - Model Rockets
 Consider the following sample data tracking the launch angle (in degrees) and vertical velocity (in meters per second) of model rocket tests:
