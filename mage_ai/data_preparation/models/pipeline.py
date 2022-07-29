@@ -11,11 +11,13 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
-from typing import Callable
+from typing import Callable, List, Tuple
 import os
 import shutil
 import yaml
 
+
+CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 METADATA_FILE_NAME = 'metadata.yaml'
 
 
@@ -235,8 +237,7 @@ class Pipeline:
             all_blocks,
         )
 
-        if not self.validate():
-            raise InvalidPipelineError('A cycle was detected in this pipeline.')
+        self.validate('A cycle was detected in the loaded pipeline')
 
     def __initialize_blocks_by_uuid(
         self,
@@ -365,10 +366,7 @@ class Pipeline:
                 priority=priority,
             )
 
-        if not self.validate():
-            raise InvalidPipelineError(
-                f'A cycle was created in this pipeline when adding block \'{block.uuid}\''
-            )
+        self.validate('A cycle was formed while adding a block')
         self.save()
         return block
 
@@ -417,7 +415,7 @@ class Pipeline:
         else:
             self.blocks_by_uuid[block.uuid] = block
 
-        self.validate()
+        self.validate('A cycle was formed while updating a block')
         self.save(**save_kwargs, widget=widget)
 
         return block
@@ -495,12 +493,13 @@ class Pipeline:
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
 
-    def validate(self) -> None:
+    def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """
-        Validates whether pipeline is valid; there exist no cycles in the pipeline.
+        Validates whether pipeline is valid; there must exist no cycles in the pipeline.
 
-        Returns:
-            bool: Returns True if pipelines exist in the cycle; else returns False.
+        Args:
+            error_msg (str): Error message to print if cycle is found.
+            Defaults to 'A cycle was detected'
         """
 
         status = {uuid: 'unvisited' for uuid in self.blocks_by_uuid}
@@ -511,24 +510,25 @@ class Pipeline:
                 self.children = block.downstream_block_uuids
                 self.accessed = False
 
+        def __print_cycle(start_uuid: str, virtual_stack: List[StackFrame]):
+            index = 0
+            while index < len(virtual_stack) and virtual_stack[index].uuid != start_uuid:
+                index += 1
+
+            cycle = [frame.uuid for frame in virtual_stack[index:]]
+            return " --> ".join(cycle)
+
         def __check_cycle(block: Block):
             virtual_stack = [StackFrame(block)]
             while len(virtual_stack) > 0:
-                print('Stack:')
-                for s in virtual_stack:
-                    print(s)
-                print('-----')
                 frame = virtual_stack[-1]
                 if status[frame.uuid] == 'validated':
                     virtual_stack.pop()
                     continue
                 if not frame.accessed:
                     if status[frame.uuid] == 'processing':
-                        cycle = [other_frames.uuid for other_frames in virtual_stack]
-                        # TODO: Prune start of cycle until the current uuid is seen
-                        raise InvalidPipelineError(
-                            f'A cycle was detected in the pipeline starting at block \'{uuid}\':\n {" --> ".join(cycle)}'
-                        )
+                        cycle = __print_cycle(frame.uuid, virtual_stack)
+                        raise InvalidPipelineError(f'{error_msg}: {cycle}')
                     frame.accessed = True
                     status[frame.uuid] = 'processing'
                 if len(frame.children) == 0:
@@ -541,7 +541,6 @@ class Pipeline:
         for uuid in self.blocks_by_uuid:
             if status[uuid] == 'unvisited':
                 __check_cycle(self.blocks_by_uuid[uuid])
-        return True
 
 
 class InvalidPipelineError(Exception):
