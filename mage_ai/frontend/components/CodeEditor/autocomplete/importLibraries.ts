@@ -1,4 +1,4 @@
-import AutocompleteItemType from '@interfaces/AutocompleteItemType';
+import AutocompleteItemType, { GroupEnum } from '@interfaces/AutocompleteItemType';
 
 export default function(
   autocompleteItems = [],
@@ -12,20 +12,28 @@ export default function(
     word,
   } = wordObj;
 
-  const mapping = autocompleteItems.reduce((acc, autocompleteItem) => {
-    let moduleName = autocompleteItem.id;
-    if (moduleName.match(/__init__.py/)) {
-      moduleName = moduleName.replace(/\/__init__.py/, '');
-    }
-    moduleName = moduleName.split('.py')[0].replaceAll('/', '.');
+  const allImportExamples = new Set();
+  const mapping = {};
 
-    return {
-      ...acc,
-      [moduleName]: {
-        ...autocompleteItem,
-      },
-    };
-  }, {});
+  autocompleteItems.forEach((autocompleteItem) => {
+    const {
+      group,
+      id,
+      imports,
+    } = autocompleteItem;
+
+    if ([GroupEnum.MAGE_LIBRARY, GroupEnum.USER_LIBRARY].includes(group)) {
+      let moduleName = id;
+      if (moduleName.match(/__init__.py/)) {
+        moduleName = moduleName.replace(/\/__init__.py/, '');
+      }
+      moduleName = moduleName.split('.py')[0].replaceAll('/', '.');
+
+      mapping[moduleName] = autocompleteItem;
+    }
+
+    imports.forEach(line => allImportExamples.add(line));
+  });
 
   const isImport = word === 'i';
   const isFrom = word === 'f';
@@ -82,24 +90,22 @@ export default function(
     return items;
   }
 
-  return Object.entries(mapping).map(([k, v]) => {
-    // @ts-ignore
-    const {
-      classes: classesArr,
-      constants: constantsArr,
-      files: filesArr,
-      functions: functionsArr,
-    }: AutocompleteItemType = v;
-
+  return [...allImportExamples].map(line => ({
+    filterText: line,
+    insertText: line,
+    kind: monaco.languages.CompletionItemKind.File,
+    label: line,
+    range,
+  })).concat(Object.entries(mapping).map(([k, v]) => {
     return {
       filterText: `${prefix} ${k}`,
       insertText: `${prefix} ${k} `,
-      kind: monaco.languages.CompletionItemKind.Class,
+      kind: monaco.languages.CompletionItemKind.File,
       label: `${k}`,
       range: {
         ...range,
         // startColumn: range.endColumn,
       },
     };
-  });
+  }));
 }

@@ -48,6 +48,17 @@ def extract_all_functions(file_content):
     return [t[0] or t[1] for t in re.findall(regex, file_content)]
 
 
+def extract_all_imports(file_content):
+    regexes = [
+        'import [\w.]+ as [\w.]+',
+        'import [\w.]+',
+        'from [\w.]+ import [\w.]+ as [\w.]+',
+        'from [\w.]+ import [\w.]+',
+    ]
+    regex = re.compile(f'({"|".join(regexes)})')
+    return re.findall(regex, file_content)
+
+
 def build_file_content_mapping(paths, files):
     file_content_mapping = {}
     file_names = reduce(add_file, paths, files)
@@ -67,6 +78,7 @@ def build_file_content_mapping(paths, files):
         file_content_mapping[file_name] = dict(
             classes=extract_all_classes(file_content),
             constants=extract_all_constants(file_content),
+            imports=extract_all_imports(file_content),
             files=files,
             functions=extract_all_functions(file_content),
         )
