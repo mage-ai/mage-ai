@@ -14,6 +14,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.
     """
+    schema_name = 'your_schema_name'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -21,6 +22,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         loader.export(
             df,
+            schema_name,
             table_name,
             index=False,  # Specifies whether to include index in exported table
             if_exists='replace',  # Specify resolution policy if table name already exists
