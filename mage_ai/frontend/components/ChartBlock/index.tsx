@@ -9,6 +9,7 @@ import React, {
 import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
   BlockTypeEnum,
   OutputType,
@@ -37,6 +38,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
+import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
 import dark from '@oracle/styles/themes/dark';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -76,6 +78,7 @@ import { isEmptyObject } from '@utils/hash';
 import { onError, onSuccess } from '@api/utils/response';
 
 export type ChartPropsShared = {
+  autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
   chartRefs: any;
@@ -105,6 +108,7 @@ type ChartBlockType = {
 } & ChartPropsShared;
 
 function ChartBlock({
+  autocompleteItems,
   block,
   blockRefs,
   blocks,
@@ -131,6 +135,8 @@ function ChartBlock({
   const {
     outputs = [],
   } = block;
+
+  const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [chartType, setChartType] = useState<ChartTypeEnum>(block.configuration?.chart_type);
   const [configuration, setConfiguration] = useState<ConfigurationType>(block.configuration);
   const [content, setContent] = useState<string>(block.content);
@@ -278,9 +284,26 @@ function ChartBlock({
     updateWidget,
   ]);
 
+  useEffect(() => {
+    setAutocompleteProviders({
+      python: buildAutocompleteProvider({
+        autocompleteItems,
+        block,
+        blocks,
+        pipeline,
+      }),
+    });
+  }, [
+    autocompleteItems,
+    block,
+    blocks,
+    pipeline,
+  ]);
+
   const codeEditorEl = useMemo(() => (
     <CodeEditor
       autoHeight
+      autocompleteProviders={autocompleteProviders}
       onChange={updateContent}
       selected={selected}
       setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
@@ -291,6 +314,7 @@ function ChartBlock({
       width="100%"
     />
   ), [
+    autocompleteProviders,
     chartType,
     content,
     isEditing,

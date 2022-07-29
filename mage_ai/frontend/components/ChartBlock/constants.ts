@@ -245,7 +245,7 @@ export const DEFAULT_SETTINGS_BY_CHART_TYPE = {
     content: (block: BlockType) => {
       return `columns = df_1.columns
 x = df_1.columns[:7]
-y = [len(df_1[col].unique()) for col in x]
+y = [[v] for v in [len(df_1[col].unique()) for col in x]]
 `;
     },
   },
