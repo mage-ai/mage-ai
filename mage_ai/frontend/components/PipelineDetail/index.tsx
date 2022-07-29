@@ -67,6 +67,7 @@ type PipelineDetailProps = {
     [uuid: string]: KernelOutputType[];
   };
   onChangeCodeBlock: (uuid: string, value: string) => void;
+  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
@@ -80,7 +81,6 @@ type PipelineDetailProps = {
   runningBlocks: BlockType[];
   savePipelineContent: () => void;
   selectedBlock: BlockType;
-  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
@@ -109,6 +109,7 @@ function PipelineDetail({
   mainContainerWidth,
   messages,
   onChangeCodeBlock,
+  openSidekickView,
   pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
@@ -117,7 +118,6 @@ function PipelineDetail({
   runningBlocks = [],
   savePipelineContent,
   selectedBlock,
-  setActiveSidekickView,
   setAnyInputFocused,
   setEditingBlock,
   setMessages,
@@ -326,12 +326,12 @@ function PipelineDetail({
               messages={messages[uuid]}
               noDivider={idx === numberOfBlocks - 1}
               onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+              openSidekickView={openSidekickView}
               pipeline={pipeline}
               ref={blockRefs.current[path]}
               runBlock={runBlock}
               runningBlocks={runningBlocks}
               selected={selected}
-              setActiveSidekickView={setActiveSidekickView}
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
               setOutputBlocks={setOutputBlocks}

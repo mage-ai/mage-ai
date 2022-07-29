@@ -1105,6 +1105,7 @@ function PipelineDetailPage({
       mainContainerWidth={mainContainerWidth}
       messages={messages}
       onChangeCodeBlock={onChangeCodeBlock}
+      openSidekickView={openSidekickView}
       pipeline={pipeline}
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
@@ -1113,7 +1114,6 @@ function PipelineDetailPage({
       runningBlocks={runningBlocks}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
-      setActiveSidekickView={setActiveSidekickView}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
       setMessages={setMessages}

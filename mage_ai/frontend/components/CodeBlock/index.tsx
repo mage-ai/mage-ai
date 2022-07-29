@@ -89,6 +89,7 @@ type CodeBlockProps = {
   messages: KernelOutputType[];
   noDivider?: boolean;
   onChange?: (value: string) => void;
+  openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   runBlock: (payload: {
     block: BlockType;
@@ -98,7 +99,6 @@ type CodeBlockProps = {
     runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
-  setActiveSidekickView: (view: ViewKeyEnum) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -124,11 +124,11 @@ function CodeBlockProps({
   messages = [],
   noDivider,
   onChange,
+  openSidekickView,
   pipeline,
   runBlock,
   runningBlocks,
   selected,
-  setActiveSidekickView,
   setAnyInputFocused,
   setEditingBlock,
   setOutputBlocks,
@@ -461,12 +461,12 @@ function CodeBlockProps({
       isInProgress={isInProgress}
       mainContainerWidth={mainContainerWidth}
       messages={messagesWithType}
+      openSidekickView={openSidekickView}
       pipeline={pipeline}
       runCount={runCount}
       runEndTime={runEndTime}
       runStartTime={runStartTime}
       selected={selected}
-      setActiveSidekickView={setActiveSidekickView}
       setCollapsed={(val: boolean) => {
         setOutputCollapsed(() => {
           set(outputCollapsedUUID, val);
