@@ -34,6 +34,8 @@ class RemoveCollinearColumns(BaseRule):
             vifs = np.sign(e_vals) / (abs(e_vals) + self.EPSILON)
             collinearity = vifs >= self.VIF_UB
 
+            if len(collinearity) == 0:
+                break
             i = collinearity.argmax()
             if i == 0 and collinearity[0] == 0:
                 break
