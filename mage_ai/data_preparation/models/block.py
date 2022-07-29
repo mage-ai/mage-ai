@@ -342,13 +342,13 @@ class Block:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-            self.__store_variables(variable_mapping)
+            self.store_variables(variable_mapping)
 
             if update_status:
                 self.status = BlockStatus.EXECUTED
 
             if analyze_outputs and BlockType.CHART != self.type:
-                self.__analyze_outputs(variable_mapping)
+                self.analyze_outputs(variable_mapping)
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
@@ -609,7 +609,7 @@ class Block:
         for o in outputs:
             if all(k in o for k in ['variable_uuid', 'text_data']):
                 variable_mapping[o['variable_uuid']] = o['text_data']
-        self.__store_variables(variable_mapping, override=override)
+        self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
@@ -720,7 +720,7 @@ class Block:
         if redirect_outputs:
             return stdout.getvalue()
 
-    def __analyze_outputs(self, variable_mapping):
+    def analyze_outputs(self, variable_mapping):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
 
         if self.pipeline is None:
@@ -757,7 +757,7 @@ class Block:
                     print('\nFailed to analyze dataframe:')
                     print(traceback.format_exc())
 
-    def __store_variables(self, variable_mapping, override=False):
+    def store_variables(self, variable_mapping, override=False):
         if self.pipeline is None:
             return
         all_variables = self.pipeline.variable_manager.get_variables_by_block(

@@ -1,4 +1,5 @@
 from mage_ai.data_preparation.models.constants import (
+    BlockType,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.server.kernels import KernelName
@@ -169,6 +170,7 @@ def add_execution_code(
     code: str,
     global_vars,
     analyze_outputs: bool = True,
+    block_type: BlockType = None,
     kernel_name: str = None,
     pipeline_config: Dict = None,
     repo_config: Dict = None,
@@ -179,11 +181,19 @@ def add_execution_code(
 ) -> str:
     escaped_code = code.replace("'", "\\'")
 
+    global_vars_spark = ''
+    magic_header = ''
     if kernel_name == KernelName.PYSPARK:
-        global_vars_spark = 'global_vars[\'spark\'] = spark'
-    else:
-        global_vars_spark = ''
-    return f"""
+        if block_type == BlockType.CHART:
+            global_vars_spark = ''
+            magic_header = '%%local'
+            run_upstream = False
+        else:
+            global_vars_spark = 'global_vars[\'spark\'] = spark'
+            if block_type in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+                magic_header = '%%spark -o df --maxrows 10000'
+
+    return f"""{magic_header}
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
@@ -224,7 +234,32 @@ def execute_custom_code():
     else:
         return find(lambda val: val is not None, output)
 
-execute_custom_code()
+df = execute_custom_code()
+    """
+
+
+def get_block_output_process_code(
+    pipeline_uuid: str,
+    block_uuid: str,
+    block_type: BlockType = None,
+    kernel_name: str = None,
+
+):
+    if kernel_name != KernelName.PYSPARK or \
+            block_type not in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
+        return None
+    return f"""%%local
+from mage_ai.data_preparation.models.pipeline import Pipeline
+import pandas
+
+block_uuid=\'{block_uuid}\'
+pipeline = Pipeline(
+    uuid=\'{pipeline_uuid}\',
+)
+block = pipeline.get_block(block_uuid)
+variable_mapping = dict(df=df)
+block.store_variables(variable_mapping)
+block.analyze_outputs(variable_mapping)
     """
 
 

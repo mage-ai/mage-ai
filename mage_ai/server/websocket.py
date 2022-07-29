@@ -9,6 +9,7 @@ from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
+    get_block_output_process_code,
     get_pipeline_execution_code,
 )
 from mage_ai.shared.hash import merge_dict
@@ -144,27 +145,40 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 )
             else:
                 if block is not None and block.type in CUSTOM_EXECUTION_BLOCK_TYPES:
+                    if kernel_name == KernelName.PYSPARK and not widget:
+                        remote_execution = True
+                    else:
+                        remote_execution = False
                     code = add_execution_code(
                         pipeline_uuid,
                         block_uuid,
                         custom_code,
                         global_vars,
-                        analyze_outputs=False if kernel_name == KernelName.PYSPARK else True,
+                        analyze_outputs=False if remote_execution else True,
+                        block_type=block_type,
                         kernel_name=kernel_name,
                         pipeline_config=pipeline.get_config_from_yaml(),
-                        repo_config=get_repo_config().to_dict(),
+                        repo_config=get_repo_config().to_dict(remote=remote_execution),
                         run_tests=run_tests,
                         run_upstream=run_upstream,
-                        update_status=False if kernel_name == KernelName.PYSPARK else True,
+                        update_status=False if remote_execution else True,
                         widget=widget,
                     )
-
                 msg_id = client.execute(add_internal_output_info(code))
 
                 WebSocketServer.running_executions_mapping[msg_id] = dict(
                     block_uuid=block_uuid,
                     pipeline_uuid=pipeline_uuid,
                 )
+
+                block_output_process_code = get_block_output_process_code(
+                    pipeline_uuid,
+                    block_uuid,
+                    block_type=block_type,
+                    kernel_name=kernel_name,
+                )
+                if block_output_process_code is not None:
+                    client.execute(block_output_process_code)
 
                 if run_downstream:
                     for block in block.downstream_blocks:
