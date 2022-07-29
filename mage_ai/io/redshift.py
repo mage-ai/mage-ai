@@ -31,6 +31,7 @@ class Redshift(BaseSQLConnection):
             **kwargs: Additional parameters to pass to the query.
         """
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
 
@@ -52,6 +53,7 @@ class Redshift(BaseSQLConnection):
             DataFrame: Data frame associated with the given query.
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 return cur.execute(
                     self._enforce_limit(query_string, limit), *args, **kwargs

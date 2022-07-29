@@ -69,6 +69,7 @@ class BigQuery(BaseSQLDatabase):
             DataFrame: Data frame associated with the given query.
         """
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             return self.client.query(
                 self._enforce_limit(query_string, limit), *kwargs
             ).to_dataframe()
