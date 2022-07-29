@@ -329,9 +329,20 @@ def export_data(df: DataFrame) -> None:
 
 We can now run the entire pipeline end-to-end. In your terminal, execute the following command:
 
+<b>Docker</b>
+```bash
+./scripts/run.sh demo_project titanic_survivors
+```
+
+<b>pip</b>
 ```bash
 mage run demo_project titanic_survivors
 ```
+
+You can also run the pipeline from the UI. Click on the <b>Execute pipeline </b> from right bottom panel.
+
+![Screenshot 2022-07-24 at 12 51 44 PM](https://user-images.githubusercontent.com/5618143/180636819-b5b66dc0-6f7d-40b5-8085-3e4cae349a27.png)
+
 
 Your output should look something like this:
 
