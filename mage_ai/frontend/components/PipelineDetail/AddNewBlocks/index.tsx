@@ -7,7 +7,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
-import { BlockRequestPayloadType, BlockTypeEnum, BLOCK_TYPE_CONVERTIBLE } from '@interfaces/BlockType';
+import { BlockRequestPayloadType, BlockTypeEnum, CONVERTIBLE_BLOCK_TYPES } from '@interfaces/BlockType';
 import {
   COLUMN_ACTION_GROUPINGS,
   ROW_ACTION_GROUPINGS,
@@ -41,7 +41,7 @@ function AddNewBlocks({
   };
 
   const dataSourceMenuItems = useMemo(() => (
-    Object.fromEntries(BLOCK_TYPE_CONVERTIBLE.map(
+    Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
       (blockType: BlockTypeEnum) => ([
         blockType,
         createDataSourceMenuItems(blockType, addNewBlock),

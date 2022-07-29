@@ -101,7 +101,7 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
-export const BLOCK_TYPE_CONVERTIBLE = [
+export const CONVERTIBLE_BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.TRANSFORMER,
