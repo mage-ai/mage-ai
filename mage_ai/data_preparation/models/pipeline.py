@@ -71,7 +71,7 @@ class Pipeline:
         uuid = clean_name(name)
         pipeline_path = os.path.join(repo_path, PIPELINES_FOLDER, uuid)
         if os.path.exists(pipeline_path):
-            raise Exception(f'Pipeline {name} alredy exists.')
+            raise Exception(f'Pipeline {name} already exists.')
         # Copy pipeline files from template folder
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
@@ -235,6 +235,9 @@ class Pipeline:
             all_blocks,
         )
 
+        if not self.validate():
+            raise InvalidPipelineError('A cycle was detected in this pipeline.')
+
     def __initialize_blocks_by_uuid(
         self,
         configs,
@@ -362,6 +365,10 @@ class Pipeline:
                 priority=priority,
             )
 
+        if not self.validate():
+            raise InvalidPipelineError(
+                f'A cycle was created in this pipeline when adding block \'{block.uuid}\''
+            )
         self.save()
         return block
 
@@ -410,6 +417,7 @@ class Pipeline:
         else:
             self.blocks_by_uuid[block.uuid] = block
 
+        self.validate()
         self.save(**save_kwargs, widget=widget)
 
         return block
@@ -486,3 +494,59 @@ class Pipeline:
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
+
+    def validate(self) -> None:
+        """
+        Validates whether pipeline is valid; there exist no cycles in the pipeline.
+
+        Returns:
+            bool: Returns True if pipelines exist in the cycle; else returns False.
+        """
+
+        status = {uuid: 'unvisited' for uuid in self.blocks_by_uuid}
+
+        class StackFrame:
+            def __init__(self, block):
+                self.uuid = block.uuid
+                self.children = block.downstream_block_uuids
+                self.accessed = False
+
+        def __check_cycle(block: Block):
+            virtual_stack = [StackFrame(block)]
+            while len(virtual_stack) > 0:
+                print('Stack:')
+                for s in virtual_stack:
+                    print(s)
+                print('-----')
+                frame = virtual_stack[-1]
+                if status[frame.uuid] == 'validated':
+                    virtual_stack.pop()
+                    continue
+                if not frame.accessed:
+                    if status[frame.uuid] == 'processing':
+                        cycle = [other_frames.uuid for other_frames in virtual_stack]
+                        # TODO: Prune start of cycle until the current uuid is seen
+                        raise InvalidPipelineError(
+                            f'A cycle was detected in the pipeline starting at block \'{uuid}\':\n {" --> ".join(cycle)}'
+                        )
+                    frame.accessed = True
+                    status[frame.uuid] = 'processing'
+                if len(frame.children) == 0:
+                    status[frame.uuid] = 'validated'
+                    virtual_stack.pop()
+                else:
+                    child_block = self.blocks_by_uuid[frame.children.pop()]
+                    virtual_stack.append(StackFrame(child_block))
+
+        for uuid in self.blocks_by_uuid:
+            if status[uuid] == 'unvisited':
+                __check_cycle(self.blocks_by_uuid[uuid])
+        return True
+
+
+class InvalidPipelineError(Exception):
+    """
+    Invalid pipeline found due to existence of a cycle.
+    """
+
+    pass
