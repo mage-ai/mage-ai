@@ -42,11 +42,11 @@ type CodeOutputProps = {
   isInProgress: boolean;
   mainContainerWidth?: number;
   messages: KernelOutputType[];
+  openSidekickView?: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline?: PipelineType;
   runCount?: number;
   runEndTime?: number;
   runStartTime?: number;
-  setActiveSidekickView?: (view: ViewKeyEnum) => void;
   setCollapsed?: (boolean) => void;
   setOutputBlocks?: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock?: (block: BlockType) => void;
@@ -61,12 +61,12 @@ function CodeOutput({
   isInProgress,
   mainContainerWidth,
   messages,
+  openSidekickView,
   pipeline,
   runCount,
   runEndTime,
   runStartTime,
   selected,
-  setActiveSidekickView,
   setCollapsed,
   setOutputBlocks,
   setSelectedOutputBlock,
@@ -345,7 +345,7 @@ function CodeOutput({
                       noPadding
                       onClick={() => {
                         addDataOutputBlockUUID(pipeline?.uuid, block.uuid);
-                        setActiveSidekickView(ViewKeyEnum.DATA);
+                        openSidekickView(ViewKeyEnum.DATA);
                         setOutputBlocks((prevOutputBlocks: BlockType[]) => {
                           if (!prevOutputBlocks.find(({ uuid }) => uuid === block.uuid)) {
                             setSelectedOutputBlock(block);
