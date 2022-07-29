@@ -196,7 +196,6 @@ function CommandButtons({
         {BlockTypeEnum.SCRATCHPAD === block.type && (
           <Spacing mt={PADDING_UNITS}>
             <FlyoutMenuWrapper
-              compact
               items={convertBlockMenuItems}
               left={-UNIT * 22}
               onClickCallback={() => setShowConvertMenu(false)}

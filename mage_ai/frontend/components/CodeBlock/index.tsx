@@ -481,7 +481,6 @@ function CodeBlockProps({
             <Spacing mr={1} />
 
             <FlyoutMenuWrapper
-              compact
               items={buildBlockMenu(block)}
               onClickCallback={closeBlockMenu}
               onClickOutside={closeBlockMenu}
