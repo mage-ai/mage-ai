@@ -186,22 +186,16 @@ export default function(opts: ProviderOptionsType) {
       // Autocomplete import of Mage specific libraries
       // from and import statements from data loaders, data exporters, transformers
 
-      const importArr = 'import'.split('');
-      const importRegex =
-        new RegExp(importArr.map((char, idx) => importArr.slice(0, idx + 1).join('')).join('|'));
-      const fromArr = 'from'.split('');
-      const fromRegex =
-        new RegExp(fromArr.map((char, idx) => fromArr.slice(0, idx + 1).join('')).join('|'));
-
       if (word.word.match(/i|f/)) {
-        suggestions.push(...importLibraries(
+        const arr = importLibraries(
           autocompleteItems,
           textUntilPosition,
           word,
           monaco,
           range,
           opts,
-        ));
+        );
+        suggestions.push(...arr);
       }
 
       // Variables defined in other blocks (e.g. the code copied from variables tab)

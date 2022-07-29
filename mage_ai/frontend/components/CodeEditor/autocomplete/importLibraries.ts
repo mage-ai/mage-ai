@@ -33,6 +33,15 @@ export default function(
       mapping[moduleName] = autocompleteItem;
     }
 
+    // import/from for all files
+    const parts = id.replace('.py', '').replace('/__init__', '').split('/');
+    if (parts.length === 1) {
+      allImportExamples.add(`import ${parts[0]}`);
+    } else if (parts.length >= 2) {
+      const fromStatement = parts.slice(0, parts.length - 1).join('.');
+      allImportExamples.add(`from ${fromStatement} import ${parts[parts.length - 1]}`);
+    }
+
     imports.forEach(line => allImportExamples.add(line));
   });
 
