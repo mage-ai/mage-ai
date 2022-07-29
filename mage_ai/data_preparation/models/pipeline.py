@@ -11,7 +11,7 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
-from typing import Callable, List, Tuple
+from typing import Callable, List
 import os
 import shutil
 import yaml
@@ -501,8 +501,9 @@ class Pipeline:
             error_msg (str): Error message to print if cycle is found.
             Defaults to 'A cycle was detected'
         """
-
-        status = {uuid: 'unvisited' for uuid in self.blocks_by_uuid}
+        combined_blocks = {uuid: block for uuid, block in self.blocks_by_uuid.items()}
+        combined_blocks.update(self.widgets_by_uuid)
+        status = {uuid: 'unvisited' for uuid in combined_blocks}
 
         class StackFrame:
             def __init__(self, block):
@@ -535,10 +536,10 @@ class Pipeline:
                     status[frame.uuid] = 'validated'
                     virtual_stack.pop()
                 else:
-                    child_block = self.blocks_by_uuid[frame.children.pop()]
+                    child_block = combined_blocks[frame.children.pop()]
                     virtual_stack.append(StackFrame(child_block))
 
-        for uuid in self.blocks_by_uuid:
+        for uuid in combined_blocks:
             if status[uuid] == 'unvisited':
                 __check_cycle(self.blocks_by_uuid[uuid])
 
