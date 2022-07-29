@@ -1,3 +1,4 @@
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 
@@ -32,14 +33,8 @@ export interface ProvidersType {
 }
 
 export interface ProviderOptionsType {
+  autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blocks: BlockType[];
   pipeline: PipelineType;
-}
-
-export interface LibraryImportType {
-  classes: string[];
-  constants: string[];
-  files: string[];
-  functions: string[];
 }

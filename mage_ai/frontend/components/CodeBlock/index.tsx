@@ -10,6 +10,7 @@ import { ThemeContext } from 'styled-components';
 import { useMutation } from 'react-query';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
   BLOCK_TYPE_NAME_MAPPING,
   BLOCK_TYPE_CONVERTIBLE,
@@ -76,6 +77,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
+  autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
   blocks: BlockType[];
@@ -107,6 +109,7 @@ type CodeBlockProps = {
 function CodeBlockProps({
   addNewBlock,
   addWidget,
+  autocompleteItems,
   block,
   blockRefs,
   blocks,
@@ -460,12 +463,14 @@ function CodeBlockProps({
   useEffect(() => {
     setAutocompleteProviders({
       python: buildAutocompleteProvider({
+        autocompleteItems,
         block,
         blocks,
         pipeline,
       }),
     });
   }, [
+    autocompleteItems,
     block,
     blocks,
     pipeline,

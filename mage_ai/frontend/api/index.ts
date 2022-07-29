@@ -20,6 +20,7 @@ import { handle } from '@api/utils/response';
 import { onError, onSuccess } from '@api/utils/response';
 
 export const ACTION_EXECUTE = 'execute';
+export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
 export const ANALYSES = 'analyses';
 export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
@@ -43,6 +44,7 @@ export const WIDGETS: 'widgets' = 'widgets';
 // Update this as routes get added
 const RESOURCES: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
+  [AUTOCOMPLETE_ITEMS],
   [BLOCKS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],

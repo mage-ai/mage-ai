@@ -1,11 +1,12 @@
-from mage_ai.server.api.base import BaseHandler
-from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
+from mage_ai.server.api.base import BaseHandler
+from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, kernel_managers
@@ -373,6 +374,7 @@ def make_app():
         ),
         (r'/api/kernels', KernelsHandler),
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
+        (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
     ]
     return tornado.web.Application(
         routes,
