@@ -30,6 +30,7 @@ class Redshift(BaseSQLConnection):
             query_string (str): The query to execute on the Redshift cluster.
             **kwargs: Additional parameters to pass to the query.
         """
+        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
@@ -51,6 +52,7 @@ class Redshift(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
+        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
             with self.conn.cursor() as cur:
                 return cur.execute(

@@ -46,6 +46,7 @@ class Snowflake(BaseSQLConnection):
             query_string (str): The query to execute on Snowflake's platform.
             **kwargs: Additional parameters to provide to the query
         """
+        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, **kwargs)
@@ -66,6 +67,7 @@ class Snowflake(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
+        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
             with self.conn.cursor() as cur:
                 return cur.execute(

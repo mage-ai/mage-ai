@@ -210,7 +210,7 @@ class BaseFile(BaseIO):
 class BaseSQLDatabase(BaseIO):
     """
     Base data loader for connecting to a SQL database. This adds `query` method which allows a user
-    to send queries to the databse server.
+    to send queries to the database server.
     """
 
     @abstractmethod
@@ -238,6 +238,19 @@ class BaseSQLDatabase(BaseIO):
             DataFrame: Sampled data from the data frame.
         """
         return self.load(f'SELECT * FROM {schema}.{table} LIMIT {str(size)};', **kwargs)
+
+    def _clean_query(self, query_string: str) -> str:
+        """
+        Cleans query before sending to database. Cleaning steps include:
+        - Removing surrounding whitespace, newlines, and tabs
+
+        Args:
+            query_string (str): Query string to clean
+
+        Returns:
+            str: Clean query string
+        """
+        return query_string.strip(' \n\t')
 
 
 class BaseSQLConnection(BaseSQLDatabase):
