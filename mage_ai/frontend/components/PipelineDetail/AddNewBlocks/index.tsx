@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -7,21 +7,16 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
-import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import { BlockRequestPayloadType, BlockTypeEnum, BLOCK_TYPE_CONVERTIBLE } from '@interfaces/BlockType';
 import {
   COLUMN_ACTION_GROUPINGS,
   ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
 import {
-  DATA_SOURCE_TYPES,
-  DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING,
-  DataSourceTypeEnum,
-} from '@interfaces/DataSourceType';
-import {
   ICON_SIZE,
   IconContainerStyle,
 } from './index.style';
-import { createActionMenuGroupings } from './utils';
+import { createActionMenuGroupings, createDataSourceMenuItems } from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -45,35 +40,16 @@ function AddNewBlocks({
     inline: true,
   };
 
-  const dataLoaderMenuItems = (
-    DATA_SOURCE_TYPES[BlockTypeEnum.DATA_LOADER].map((sourceType: DataSourceTypeEnum) => ({
-      label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
-      onClick: () => {
-        addNewBlock({
-          config: {
-            data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
-          },
-          type: BlockTypeEnum.DATA_LOADER,
-        });
-      },
-      uuid: `data_loader/${sourceType}`,
-    }))
-  );
-
-  const dataExporterMenuItems = (
-    DATA_SOURCE_TYPES[BlockTypeEnum.DATA_EXPORTER].map((sourceType: DataSourceTypeEnum) => ({
-      label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
-      onClick: () => {
-        addNewBlock({
-          config: {
-            data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
-          },
-          type: BlockTypeEnum.DATA_EXPORTER,
-        });
-      },
-      uuid: `data_exporter/${sourceType}`,
-    }))
-  );
+  const dataSourceMenuItems = useMemo(() => (
+    Object.fromEntries(BLOCK_TYPE_CONVERTIBLE.map(
+      (blockType: BlockTypeEnum) => ([
+        blockType,
+        createDataSourceMenuItems(blockType, addNewBlock),
+      ]),
+    ),
+  )), [
+    addNewBlock,
+  ]);
 
   const columnActionMenuItems = createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
@@ -118,7 +94,7 @@ function AddNewBlocks({
       >
         <FlexContainer>
           <FlyoutMenuWrapper
-            items={dataLoaderMenuItems}
+            items={dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
@@ -178,7 +154,7 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
-            items={dataExporterMenuItems}
+            items={dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
             parentRef={dataExporterButtonRef}
