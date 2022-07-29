@@ -445,7 +445,7 @@ import statistics
 
 columns_and_types = infer_column_types(df_1).items()
 columns = [t[0] for t in columns_and_types]
-stats = ['Type', 'Missing values', 'Unique values', 'Min', 'Max', 'Mean', 'Median', 'Mode', 'STD dev']
+stats = ['Type', 'Missing values', 'Unique values', 'Min', 'Max', 'Mean', 'Median', 'Mode']
 rows = [[] for _ in stats]
 
 for col, col_type in columns_and_types:
@@ -454,7 +454,6 @@ for col, col_type in columns_and_types:
     max_value = None
     mean = None
     median = None
-    std_dev = None
 
     not_null = series[series.notnull()]
 
@@ -465,7 +464,6 @@ for col, col_type in columns_and_types:
             median = sorted(not_null)[int(count / 2)]
         min_value = round(series.min(), 2)
         max_value = round(series.max(), 2)
-        std_dev = round(statistics.stdev(not_null.values.tolist()), 2)
     else:
         min_value = not_null.astype(str).min()
         max_value = not_null.astype(str).max()
@@ -484,7 +482,6 @@ for col, col_type in columns_and_types:
         mean,
         median,
         mode,
-        std_dev,
     ]):
       rows[idx].append(value)
 `,

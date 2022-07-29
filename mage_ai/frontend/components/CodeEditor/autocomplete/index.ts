@@ -200,7 +200,6 @@ export default function(opts: ProviderOptionsType) {
       }
 
       // Positional argument variable names (e.g. df_1, df_2, etc)
-
       if (upstreamBlocks?.length >= 1) {
         const re = new RegExp(`\n@${type}`);
         const match = textUntilPosition.match(re);

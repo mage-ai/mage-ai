@@ -72,11 +72,11 @@ export function getFunctionsFromCurrentModule(
   range,
   autocompleteItemsById,
 ) {
-  const previousWord = getTextBeforeCurrentWord(textUntilPosition, range);
+  let previousWord = getTextBeforeCurrentWord(textUntilPosition, range);
+  previousWord = previousWord.match(/([\w_]+)./);
 
   if (previousWord) {
-    const importMatch =
-      extractAllImportNames(textUntilPosition)[previousWord.match(/([\w_]+)./)[1]];
+    const importMatch = extractAllImportNames(textUntilPosition)[previousWord[1]];
 
     if (importMatch) {
       const moduleParts = importMatch.split(' as ')[0].replace('from ', '').replace('import ', '').split(' ').reduce((acc, word) => {
