@@ -482,6 +482,7 @@ function Table({
                   columnStyle.position = 'sticky';
                   columnStyle.textAlign = 'center';
                   columnStyle.width = maxWidthOfIndexColumns[idx];
+                  columnStyle.minWidth = maxWidthOfIndexColumns[idx];
                 } else if (renderColumnHeader) {
                   el = renderColumnHeader(column, idx - numberOfIndexes, {
                     width: defaultColumn.width,
@@ -490,6 +491,7 @@ function Table({
                   el = column.render('Header');
                   columnStyle.color = (themeContext || dark).content.default;
                   columnStyle.padding = UNIT * 1;
+                  columnStyle.minWidth = defaultColumn.width;
                 }
 
                 return (
