@@ -64,8 +64,8 @@ class Postgres(BaseSQLConnection):
             query_string (str): SQL query string to apply on the connected database.
             query_vars: Variable values to fill in when using format strings in query.
         """
-        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **query_vars)
 
@@ -84,8 +84,8 @@ class Postgres(BaseSQLConnection):
         Returns:
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
-        query_string = self._clean_query(query_string)
         with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+            query_string = self._clean_query(query_string)
             return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
     def export(
