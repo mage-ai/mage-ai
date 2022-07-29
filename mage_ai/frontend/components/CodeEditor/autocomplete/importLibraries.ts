@@ -1,4 +1,5 @@
 import AutocompleteItemType, { GroupEnum } from '@interfaces/AutocompleteItemType';
+import { getTextBeforeCurrentWord } from './utils';
 
 export default function(
   autocompleteItems = [],
@@ -39,9 +40,7 @@ export default function(
   const isFrom = word === 'f';
   const prefix = isImport ? 'import' : isFrom ? 'from' : '';
 
-  const textBeforeWord = textUntilPosition
-    .split('\n')[range.startLineNumber - 1]
-    .slice(0, range.startColumn - 1);
+  const textBeforeWord = getTextBeforeCurrentWord(textUntilPosition, range);
 
   let parentModuleName;
   if (isImport && textBeforeWord.match(/from/)) {
