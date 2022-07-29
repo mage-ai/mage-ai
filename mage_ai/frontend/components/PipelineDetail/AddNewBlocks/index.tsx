@@ -61,16 +61,14 @@ function AddNewBlocks({
     AxisEnum.ROW,
     addNewBlock,
   );
+
   const allActionMenuItems = [
     {
-      label: () => 'Generic (no template)',
-      onClick: () => {
-        addNewBlock({
-          type: BlockTypeEnum.TRANSFORMER,
-        });
-      },
-      uuid: 'generic_transformer_action',
+      isGroupingTitle: true,
+      label: () => 'Data sources',
+      uuid: 'data_sources_grouping',
     },
+    ...dataSourceMenuItems[BlockTypeEnum.TRANSFORMER],
     {
       isGroupingTitle: true,
       label: () => 'Column actions',
@@ -84,6 +82,7 @@ function AddNewBlocks({
     },
     ...rowActionMenuItems,
   ];
+
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
 
   return (
