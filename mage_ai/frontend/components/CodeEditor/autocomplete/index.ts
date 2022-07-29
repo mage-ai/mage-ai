@@ -6,7 +6,10 @@ import {
   SuggestionType,
   WordType,
 } from './constants';
-import { getFunctionsFromCurrentModule } from './functions';
+import {
+  getFunctionsFromCurrentClass,
+  getFunctionsFromCurrentModule,
+} from './functions';
 import { indexBy, sortByKey } from '@utils/array';
 
 function columnNameItems(monaco, range, block: BlockType) {
@@ -156,13 +159,31 @@ export default function(opts: ProviderOptionsType) {
 
       // methods from imported class
       const methodsForClass =
-        getFunctionsFromCurrentModule(textUntilPosition, range, autocompleteItemsById);
+        getFunctionsFromCurrentClass(textUntilPosition, range, autocompleteItemsById);
 
       if (methodsForClass.length >= 1) {
         const arr = methodsForClass.map(methodName => ({
           filterText: methodName,
           insertText: methodName,
           kind: monaco.languages.CompletionItemKind.Method,
+          label: methodName,
+          range,
+        }));
+
+        return {
+          suggestions: filter(word, arr),
+        };
+      }
+
+      // function from imported module
+      const functionsForModule =
+        getFunctionsFromCurrentModule(textUntilPosition, range, autocompleteItemsById);
+
+      if (functionsForModule.length >= 1) {
+        const arr = functionsForModule.map(methodName => ({
+          filterText: methodName,
+          insertText: methodName,
+          kind: monaco.languages.CompletionItemKind.Function,
           label: methodName,
           range,
         }));
