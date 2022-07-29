@@ -1,13 +1,19 @@
-import test from './test.json';
-import { LibraryImportType } from './constants';
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 
-export default function(textUntilPosition, wordObj, monaco, range, opts) {
+export default function(
+  autocompleteItems = [],
+  textUntilPosition,
+  wordObj,
+  monaco,
+  range,
+  opts,
+) {
   const {
     word,
   } = wordObj;
 
-  const mapping = Object.entries(test).reduce((acc, [k, v]) => {
-    let moduleName = k;
+  const mapping = autocompleteItems.reduce((acc, autocompleteItem) => {
+    let moduleName = autocompleteItem.id;
     if (moduleName.match(/__init__.py/)) {
       moduleName = moduleName.replace(/\/__init__.py/, '');
     }
@@ -16,7 +22,7 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
     return {
       ...acc,
       [moduleName]: {
-        ...v,
+        ...autocompleteItem,
       },
     };
   }, {});
@@ -40,7 +46,7 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
       constants,
       files,
       functions,
-    }: LibraryImportType = mapping[parentModuleName];
+    }: AutocompleteItemType = mapping[parentModuleName];
 
     const items = [];
 
@@ -51,9 +57,10 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
     ].forEach(([arr, kind]) => {
       arr.forEach((objName: string) => {
          items.push({
+          filterText: `import ${objName}`,
           insertText: `import ${objName}`,
           kind,
-          label: `import ${objName}`,
+          label: objName,
           range,
          })
       });
@@ -64,9 +71,10 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
       const childModuleName = p[p.length - 1].split('.py')[0];
 
       items.push({
+        filterText: `import ${childModuleName}`,
         insertText: `import ${childModuleName}`,
         kind: monaco.languages.CompletionItemKind.Variable,
-        label: `import ${childModuleName}`,
+        label: childModuleName,
         range,
       });
     });
@@ -81,13 +89,13 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
       constants: constantsArr,
       files: filesArr,
       functions: functionsArr,
-    }: LibraryImportType = v;
+    }: AutocompleteItemType = v;
 
     return {
-      // filterText: `import ${k}`,
-      insertText: `${prefix} ${k}`,
+      filterText: `${prefix} ${k}`,
+      insertText: `${prefix} ${k} `,
       kind: monaco.languages.CompletionItemKind.Class,
-      label: `${prefix} ${k}`,
+      label: `${k}`,
       range: {
         ...range,
         // startColumn: range.endColumn,

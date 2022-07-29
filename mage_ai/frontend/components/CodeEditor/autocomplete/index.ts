@@ -117,6 +117,7 @@ function variablesFromPositionalArguments(monaco, range, {
 
 export default function(opts: ProviderOptionsType) {
   const {
+    autocompleteItems,
     block,
     blocks,
     pipeline,
@@ -125,14 +126,6 @@ export default function(opts: ProviderOptionsType) {
     type,
     upstream_blocks: upstreamBlocks,
   } = block;
-  const allWordsFromAllBlockContent = new Set();
-  blocks.forEach(({ content }) => {
-    // @ts-ignore
-    [...content.matchAll('([A-Za-z_0-9]+)', 'g')]
-      .forEach(word => allWordsFromAllBlockContent.add(word[1]));
-  });
-  // @ts-ignore
-  const wordsFromContent = [...allWordsFromAllBlockContent];
 
   return (monaco) => {
     return (model, position) => {
@@ -176,7 +169,14 @@ export default function(opts: ProviderOptionsType) {
         new RegExp(fromArr.map((char, idx) => fromArr.slice(0, idx + 1).join('')).join('|'));
 
       if (word.word.match(/i|f/)) {
-        suggestions.push(...importLibraries(textUntilPosition, word, monaco, range, opts));
+        suggestions.push(...importLibraries(
+          autocompleteItems,
+          textUntilPosition,
+          word,
+          monaco,
+          range,
+          opts,
+        ));
       }
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
@@ -238,6 +238,15 @@ export default function(opts: ProviderOptionsType) {
           suggestions.push(...filter(word, variablesFromBlocks(monaco, range, opts)));
         }
       }
+
+      const allWordsFromAllBlockContent = new Set();
+      blocks.concat({ content: textUntilPosition }).forEach(({ content }) => {
+        // @ts-ignore
+        [...content.matchAll('([A-Za-z_0-9]+)', 'g')]
+          .forEach(word => allWordsFromAllBlockContent.add(word[1]));
+      });
+      // @ts-ignore
+      const wordsFromContent = [...allWordsFromAllBlockContent];
 
       if (wordsFromContent.length) {
         const arr = wordsFromContent.map(word => ({

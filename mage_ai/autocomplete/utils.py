@@ -72,6 +72,3 @@ def build_file_content_mapping(paths, files):
         )
 
     return file_content_mapping
-
-
-build_file_content_mapping(PATHS_TO_TRAVERSE, FILES_TO_READ)

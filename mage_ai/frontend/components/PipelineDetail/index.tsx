@@ -8,6 +8,7 @@ import {
 import { CSSTransition } from 'react-transition-group';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
+import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -51,6 +52,7 @@ type PipelineDetailProps = {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
   anyInputFocused: boolean;
+  autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
@@ -94,6 +96,7 @@ function PipelineDetail({
   addNewBlockAtIndex,
   addWidget,
   anyInputFocused,
+  autocompleteItems,
   blockRefs,
   blocks = [],
   deleteBlock,
@@ -304,6 +307,7 @@ function PipelineDetail({
                 return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               }}
               addWidget={addWidget}
+              autocompleteItems={autocompleteItems}
               block={block}
               blockRefs={blockRefs}
               blocks={blocks}

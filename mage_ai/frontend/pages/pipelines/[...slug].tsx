@@ -353,6 +353,16 @@ function PipelineDetailPage({
     }
   }, [editingBlock.upstreamBlocks]);
 
+  // Autocomplete items
+  const {
+    data: dataAutocompleteItems,
+    mutate: fetchAutocompleteItems,
+  } = api.autocomplete_items.list({}, {
+    refreshInterval: false,
+    revalidateOnFocus: true,
+  });
+  const autocompleteItems = dataAutocompleteItems?.autocomplete_items;
+
   // Kernels
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
@@ -597,6 +607,7 @@ function PipelineDetailPage({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
+            fetchAutocompleteItems();
             fetchPipeline();
             fetchFileTree();
           },
@@ -1081,6 +1092,7 @@ function PipelineDetailPage({
         },
       ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
       anyInputFocused={anyInputFocused}
+      autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
       deleteBlock={deleteBlock}
@@ -1118,6 +1130,7 @@ function PipelineDetailPage({
     addNewBlockAtIndex,
     addWidgetAtIndex,
     anyInputFocused,
+    autocompleteItems,
     blockRefs,
     blocks,
     deleteBlock,
