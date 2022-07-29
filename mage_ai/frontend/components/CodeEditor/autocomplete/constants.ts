@@ -36,3 +36,10 @@ export interface ProviderOptionsType {
   blocks: BlockType[];
   pipeline: PipelineType;
 }
+
+export interface LibraryImportType {
+  classes: string[];
+  constants: string[];
+  files: string[];
+  functions: string[];
+}

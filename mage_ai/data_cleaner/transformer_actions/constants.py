@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import re
 
+
 CONSTANT_IMPUTATION_DEFAULTS = {
     ColumnType.CATEGORY: 'missing',
     ColumnType.CATEGORY_HIGH_CARDINALITY: 'missing',

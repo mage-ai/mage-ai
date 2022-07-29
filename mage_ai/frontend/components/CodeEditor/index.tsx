@@ -245,7 +245,7 @@ function CodeEditor({
 
   useEffect(() => {
     if (monacoInstance && autocompleteProviders) {
-      if (!textareaFocusedPrevious && textareaFocused) {
+      if ((completionDisposable.length === 0 && textareaFocused) || (!textareaFocusedPrevious && textareaFocused)) {
         setCompletionDisposable(addAutocompleteSuggestions(monacoInstance, autocompleteProviders));
       } else if (textareaFocusedPrevious && !textareaFocused) {
         completionDisposable.map(cd => cd.dispose());
@@ -298,7 +298,7 @@ function CodeEditor({
             alwaysConsumeMouseWheel: false,
             vertical: 'hidden',
           },
-          wordBasedSuggestions: true,
+          wordBasedSuggestions: false,
         }}
         theme={theme}
         value={value}

@@ -6,6 +6,7 @@ import {
   WordType,
 } from './constants';
 import { indexBy, sortByKey } from '@utils/array';
+import importLibraries from './importLibraries';
 
 function columnNameItems(monaco, range, block: BlockType) {
   const columns = block.outputs?.[0]?.sample_data?.columns || [];
@@ -124,10 +125,17 @@ export default function(opts: ProviderOptionsType) {
     type,
     upstream_blocks: upstreamBlocks,
   } = block;
+  const allWordsFromAllBlockContent = new Set();
+  blocks.forEach(({ content }) => {
+    // @ts-ignore
+    [...content.matchAll('([A-Za-z_0-9]+)', 'g')]
+      .forEach(word => allWordsFromAllBlockContent.add(word[1]));
+  });
+  // @ts-ignore
+  const wordsFromContent = [...allWordsFromAllBlockContent];
 
   return (monaco) => {
     return (model, position) => {
-      console.log('typed first character')
       const empty = { suggestions: [] };
       const suggestions = [];
 
@@ -156,8 +164,19 @@ export default function(opts: ProviderOptionsType) {
         const match = textUntilPosition.match(re);
 
         if (match) {
-          suggestions.push(...variablesFromPositionalArguments(monaco, range, opts));
+          suggestions.push(...filter(word, variablesFromPositionalArguments(monaco, range, opts)));
         }
+      }
+
+      const importArr = 'import'.split('');
+      const importRegex =
+        new RegExp(importArr.map((char, idx) => importArr.slice(0, idx + 1).join('')).join('|'));
+      const fromArr = 'from'.split('');
+      const fromRegex =
+        new RegExp(fromArr.map((char, idx) => fromArr.slice(0, idx + 1).join('')).join('|'));
+
+      if (word.word.match(/i|f/)) {
+        suggestions.push(...importLibraries(textUntilPosition, word, monaco, range, opts));
       }
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
@@ -210,18 +229,31 @@ export default function(opts: ProviderOptionsType) {
             if (arrayOfItems.length >= 1) {
               const mostRecentMatchItems =
                 sortByKey(arrayOfItems, 'matchIndex', { ascending: false })[0];
-              suggestions.push(...mostRecentMatchItems.items);
+              suggestions.push(...filter(word, mostRecentMatchItems.items));
             }
           }
         }
 
         if (startColumn === 1) {
-          suggestions.push(...variablesFromBlocks(monaco, range, opts));
+          suggestions.push(...filter(word, variablesFromBlocks(monaco, range, opts)));
         }
       }
 
+      if (wordsFromContent.length) {
+        const arr = wordsFromContent.map(word => ({
+          filterText: word,
+          insertText: word,
+          kind: monaco.languages.CompletionItemKind.Variable,
+          label: word,
+          range,
+        }));
+        // @ts-ignore
+        suggestions.push(...filter(word, arr));
+      }
+
       return {
-        suggestions: filter(word, suggestions),
+        // https://github.com/microsoft/monaco-editor/issues/1889#issuecomment-607479373
+        suggestions,
       };
     }
   };
