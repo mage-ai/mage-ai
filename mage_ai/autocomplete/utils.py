@@ -1,5 +1,6 @@
-from mage_ai.shared.utils import files_in_path
 from functools import reduce
+from mage_ai.shared.utils import files_in_path
+import importlib
 import os
 import re
 
@@ -48,6 +49,17 @@ def extract_all_functions(file_content):
     return [t[0] or t[1] for t in re.findall(regex, file_content)]
 
 
+def extract_all_imports(file_content):
+    regexes = [
+        'import [\w.]+ as [\w.]+',
+        'import [\w.]+',
+        'from [\w.]+ import [\w.]+ as [\w.]+',
+        'from [\w.]+ import [\w.]+',
+    ]
+    regex = re.compile(f'({"|".join(regexes)})')
+    return re.findall(regex, file_content)
+
+
 def build_file_content_mapping(paths, files):
     file_content_mapping = {}
     file_names = reduce(add_file, paths, files)
@@ -58,17 +70,35 @@ def build_file_content_mapping(paths, files):
             file_content = f.read()
             f.close()
 
+        file_name = file_name.replace(f'{os.getcwd()}/', '')
         files = []
         parts = file_name.split('/')
+        module_name = '.'.join(parts).replace('.py', '')
+
         if '__init__.py' == parts[-1]:
             path_sub = '/'.join(parts[:len(parts) - 1])
             files += [fn for fn in reduce(add_file, [path_sub], []) if fn != file_name]
+            module_name = module_name.replace('.__init__', '')
+
+        methods_for_class = {}
+        all_classes = extract_all_classes(file_content)
+        for class_name in all_classes:
+            klass = getattr(
+                importlib.import_module(module_name),
+                class_name,
+            )
+            methods_for_class[class_name] = list(filter(
+                lambda x: not re.match('^_', x),
+                dir(klass),
+            ))
 
         file_content_mapping[file_name] = dict(
-            classes=extract_all_classes(file_content),
+            classes=all_classes,
             constants=extract_all_constants(file_content),
             files=files,
             functions=extract_all_functions(file_content),
+            imports=extract_all_imports(file_content),
+            methods_for_class=methods_for_class,
         )
 
     return file_content_mapping

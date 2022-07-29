@@ -1,12 +1,13 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import importLibraries from './importLibraries';
 import {
   ProviderOptionsType,
   RangeType,
   SuggestionType,
   WordType,
 } from './constants';
+import { getFunctionsFromCurrentModule } from './functions';
 import { indexBy, sortByKey } from '@utils/array';
-import importLibraries from './importLibraries';
 
 function columnNameItems(monaco, range, block: BlockType) {
   const columns = block.outputs?.[0]?.sample_data?.columns || [];
@@ -126,6 +127,7 @@ export default function(opts: ProviderOptionsType) {
     type,
     upstream_blocks: upstreamBlocks,
   } = block;
+  const autocompleteItemsById = indexBy(autocompleteItems, ({ id }) => id);
 
   return (monaco) => {
     return (model, position) => {
@@ -152,6 +154,26 @@ export default function(opts: ProviderOptionsType) {
         startLineNumber: position.lineNumber,
       };
 
+      // methods from imported class
+      const methodsForClass =
+        getFunctionsFromCurrentModule(textUntilPosition, range, autocompleteItemsById);
+
+      if (methodsForClass.length >= 1) {
+        const arr = methodsForClass.map(methodName => ({
+          filterText: methodName,
+          insertText: methodName,
+          kind: monaco.languages.CompletionItemKind.Method,
+          label: methodName,
+          range,
+        }));
+
+        return {
+          suggestions: filter(word, arr),
+        };
+      }
+
+      // Positional argument variable names (e.g. df_1, df_2, etc)
+
       if (upstreamBlocks?.length >= 1) {
         const re = new RegExp(`\n@${type}`);
         const match = textUntilPosition.match(re);
@@ -161,23 +183,22 @@ export default function(opts: ProviderOptionsType) {
         }
       }
 
-      const importArr = 'import'.split('');
-      const importRegex =
-        new RegExp(importArr.map((char, idx) => importArr.slice(0, idx + 1).join('')).join('|'));
-      const fromArr = 'from'.split('');
-      const fromRegex =
-        new RegExp(fromArr.map((char, idx) => fromArr.slice(0, idx + 1).join('')).join('|'));
+      // Autocomplete import of Mage specific libraries
+      // from and import statements from data loaders, data exporters, transformers
 
       if (word.word.match(/i|f/)) {
-        suggestions.push(...importLibraries(
+        const arr = importLibraries(
           autocompleteItems,
           textUntilPosition,
           word,
           monaco,
           range,
           opts,
-        ));
+        );
+        suggestions.push(...arr);
       }
+
+      // Variables defined in other blocks (e.g. the code copied from variables tab)
 
       if (BlockTypeEnum.SCRATCHPAD === type) {
         // Search all previous lines where [var] = get_variable(pipeline_uuid, block_uuid, 'df')
@@ -239,8 +260,10 @@ export default function(opts: ProviderOptionsType) {
         }
       }
 
+      // Variables defined in current block
       const allWordsFromAllBlockContent = new Set();
       blocks.concat({ content: textUntilPosition }).forEach(({ content }) => {
+        // Words from other blocks
         // @ts-ignore
         [...content.matchAll('([A-Za-z_0-9]+)', 'g')]
           .forEach(word => allWordsFromAllBlockContent.add(word[1]));
@@ -249,11 +272,11 @@ export default function(opts: ProviderOptionsType) {
       const wordsFromContent = [...allWordsFromAllBlockContent];
 
       if (wordsFromContent.length) {
-        const arr = wordsFromContent.map(word => ({
-          filterText: word,
-          insertText: word,
+        const arr = wordsFromContent.map(wordFromContent => ({
+          filterText: wordFromContent,
+          insertText: wordFromContent,
           kind: monaco.languages.CompletionItemKind.Variable,
-          label: word,
+          label: wordFromContent,
           range,
         }));
         // @ts-ignore
