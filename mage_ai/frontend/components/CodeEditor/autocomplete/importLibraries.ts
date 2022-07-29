@@ -89,6 +89,7 @@ export default function(
     return items;
   }
 
+  // @ts-ignore
   return [...allImportExamples].map(line => ({
     filterText: line,
     insertText: line,

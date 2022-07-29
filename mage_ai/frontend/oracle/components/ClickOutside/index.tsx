@@ -36,7 +36,7 @@ function ClickOutside({
 
   const handleClickOutside = useCallback(e => {
     // @ts-ignore
-    if ((node && node.current.contains(e.target))
+    if ((node && node?.current?.contains?.(e.target))
     || (additionalRef && additionalRef.current.contains(e.target))
     || disableClickOutside) {
       return;
