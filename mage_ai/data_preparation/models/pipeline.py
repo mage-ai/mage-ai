@@ -505,12 +505,6 @@ class Pipeline:
         combined_blocks.update(self.widgets_by_uuid)
         status = {uuid: 'unvisited' for uuid in combined_blocks}
 
-        class StackFrame:
-            def __init__(self, block):
-                self.uuid = block.uuid
-                self.children = block.downstream_block_uuids
-                self.accessed = False
-
         def __print_cycle(start_uuid: str, virtual_stack: List[StackFrame]):
             index = 0
             while index < len(virtual_stack) and virtual_stack[index].uuid != start_uuid:
@@ -542,6 +536,13 @@ class Pipeline:
         for uuid in combined_blocks:
             if status[uuid] == 'unvisited':
                 __check_cycle(self.blocks_by_uuid[uuid])
+
+
+class StackFrame:
+    def __init__(self, block):
+        self.uuid = block.uuid
+        self.children = block.downstream_block_uuids
+        self.accessed = False
 
 
 class InvalidPipelineError(Exception):
