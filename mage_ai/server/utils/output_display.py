@@ -156,8 +156,7 @@ def __custom_output():
 __custom_output()
 """
 
-        custom_code = f"""
-{code_without_last_line}
+        custom_code = f"""{code_without_last_line}
 {internal_output}
 """
 
@@ -226,4 +225,39 @@ def execute_custom_code():
         return find(lambda val: val is not None, output)
 
 execute_custom_code()
+    """
+
+
+def get_pipeline_execution_code(
+    pipeline_uuid: str,
+    global_vars: Dict = None,
+    kernel_name: str = None,
+    pipeline_config: Dict = None,
+    repo_config: Dict = None,
+    update_status: bool = True,
+) -> str:
+    if kernel_name == KernelName.PYSPARK:
+        global_vars_spark = 'global_vars[\'spark\'] = spark'
+    else:
+        global_vars_spark = ''
+    return f"""
+from mage_ai.data_preparation.models.pipeline import Pipeline
+import asyncio
+
+def execute_pipeline():
+    pipeline = Pipeline(
+        uuid=\'{pipeline_uuid}\',
+        config={pipeline_config},
+        repo_config={repo_config},
+    )
+
+    global_vars = {global_vars} or dict()
+    {global_vars_spark}
+
+    asyncio.run(pipeline.execute(
+        analyze_outputs=False,
+        global_vars=global_vars,
+        update_status={update_status},
+    ))
+execute_pipeline()
     """

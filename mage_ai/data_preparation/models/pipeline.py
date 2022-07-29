@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
+    PipelineType,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
 )
@@ -25,6 +26,7 @@ class Pipeline:
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
+        self.type = PipelineType.PYTHON
         self.widget_configs = []
         if config is None:
             self.load_config_from_yaml()
@@ -54,6 +56,10 @@ class Pipeline:
     @property
     def variables_dir(self):
         return self.repo_config.variables_dir
+
+    @property
+    def remote_variables_dir(self):
+        return self.repo_config.remote_variables_dir
 
     @classmethod
     def create(self, name, repo_path):
@@ -190,6 +196,7 @@ class Pipeline:
 
     def load_config(self, config):
         self.name = config.get('name')
+        self.type = config.get('type') or self.type
 
         self.block_configs = config.get('blocks', [])
         self.widget_configs = config.get('widgets', [])
@@ -198,8 +205,9 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
-                c.get('status'),
-                self,
+                content=c.get('content'),
+                status=c.get('status'),
+                pipeline=self,
             )
             for c in self.block_configs
         ]
@@ -208,8 +216,8 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
-                c.get('status'),
-                self,
+                status=c.get('status'),
+                pipeline=self,
                 configuration=c.get('configuration'),
             )
             for c in self.widget_configs
@@ -256,6 +264,7 @@ class Pipeline:
         return dict(
             name=self.name,
             uuid=self.uuid,
+            type=self.type.value if type(self.type) is not str else self.type,
             blocks=[
                 b.to_dict(
                     include_content=include_content,

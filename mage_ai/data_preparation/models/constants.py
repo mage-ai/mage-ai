@@ -33,6 +33,11 @@ class BlockType(str, Enum):
     TRANSFORMER = 'transformer'
 
 
+class PipelineType(str, Enum):
+    PYTHON = 'python'
+    PYSPARK = 'pyspark'
+
+
 CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,
     BlockType.DATA_EXPORTER,

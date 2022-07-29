@@ -6,11 +6,14 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
-from mage_ai.server.utils.output_display import add_internal_output_info, add_execution_code
+from mage_ai.server.utils.output_display import (
+    add_internal_output_info,
+    add_execution_code,
+    get_pipeline_execution_code,
+)
 from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient, KernelManager
 from jupyter_client.session import Session
-from typing import List
 import asyncio
 import json
 import os
@@ -89,16 +92,30 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if execute_pipeline:
             pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
-            def run_pipeline() -> None:
-                try:
-                    asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
-                    publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
-                except Exception:
-                    trace = traceback.format_exc().splitlines()
-                    publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
-                    publish_message(trace, 'idle')
+            if kernel_name == KernelName.PYSPARK:
+                code = get_pipeline_execution_code(
+                    pipeline_uuid,
+                    global_vars=global_vars,
+                    kernel_name=kernel_name,
+                    pipeline_config=pipeline.to_dict(include_content=True),
+                    repo_config=get_repo_config().to_dict(remote=True),
+                    update_status=False if kernel_name == KernelName.PYSPARK else True,
+                )
+                client = self.init_kernel_client()
+                msg_id = client.execute(code)
 
-            threading.Thread(target=run_pipeline).start()
+                WebSocketServer.running_executions_mapping[msg_id] = value
+            else:
+                def run_pipeline() -> None:
+                    try:
+                        asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
+                        publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
+                    except Exception:
+                        trace = traceback.format_exc().splitlines()
+                        publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
+                        publish_message(trace, 'idle')
+
+                threading.Thread(target=run_pipeline).start()
         else:
             widget = BlockType.CHART == block_type
 
@@ -142,10 +159,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         widget=widget,
                     )
 
-                if kernel_name == KernelName.PYTHON3:
-                    msg_id = client.execute(add_internal_output_info(code))
-                else:
-                    msg_id = client.execute(code)
+                msg_id = client.execute(add_internal_output_info(code))
 
                 WebSocketServer.running_executions_mapping[msg_id] = dict(
                     block_uuid=block_uuid,
