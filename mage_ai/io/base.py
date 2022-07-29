@@ -6,7 +6,7 @@ from typing import IO, Any, Callable, Union
 import os
 import pandas as pd
 
-QUERY_ROW_LIMIT = 100_000
+QUERY_ROW_LIMIT = 10_000_000
 
 
 class DataSource(str, Enum):

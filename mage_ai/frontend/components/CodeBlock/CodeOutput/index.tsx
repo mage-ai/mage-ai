@@ -314,7 +314,7 @@ function CodeOutput({
                   widthFitContent
                 >
                   <FlexContainer alignItems="center">
-                    {runCount >= 1 && (
+                    {runCount >= 1 && Number(runEndTime) > Number(runStartTime) && (
                       <>
                         <Text small>
                           {(Number(runEndTime) - Number(runStartTime)) / 1000}s

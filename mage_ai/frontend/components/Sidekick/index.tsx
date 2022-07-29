@@ -228,6 +228,7 @@ function Sidekick({
               <Spacing p={2}>
                 <PipelineExecution
                   pipeline={pipeline}
+                  savePipelineContent={savePipelineContent}
                 />
               </Spacing>
             )}

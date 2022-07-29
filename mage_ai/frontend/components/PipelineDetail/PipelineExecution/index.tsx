@@ -22,10 +22,12 @@ import { getWebSocket } from '@api/utils/url';
 
 export type PipelineExecutionProps = {
   pipeline: PipelineType;
+  savePipelineContent: () => Promise<any>;
 };
 
 function PipelineExecution({
   pipeline,
+  savePipelineContent,
 }: PipelineExecutionProps) {
   const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
@@ -50,16 +52,18 @@ function PipelineExecution({
   });
 
   const executePipeline = useCallback(() => {
-    setMessages([]);
+    savePipelineContent().then(() => {
+      setIsPipelineExecuting(true);
+      setMessages([]);
 
-    sendMessage(JSON.stringify({
-      execute_pipeline: true,
-      pipeline_uuid: pipelineUUID,
-    }));
-
-    setIsPipelineExecuting(true);
+      sendMessage(JSON.stringify({
+        execute_pipeline: true,
+        pipeline_uuid: pipelineUUID,
+      }));
+    });
   }, [
     pipelineUUID,
+    savePipelineContent,
     sendMessage,
   ]);
 
@@ -74,7 +78,7 @@ function PipelineExecution({
 
       if (pipeline_uuid === pipelineUUID && msgType === MsgType.STREAM_PIPELINE) {
         setMessages((messagesPrevious) => {
-  
+
           return [
             ...messagesPrevious,
             message,
