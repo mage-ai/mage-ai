@@ -20,5 +20,4 @@ def load_data_from_snowflake(**kwargs) -> DataFrame:
 
     with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
         return loader.load(query)
-    )
 {% endblock %}
