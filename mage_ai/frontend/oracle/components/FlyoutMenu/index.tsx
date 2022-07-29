@@ -206,7 +206,11 @@ function FlyoutMenu({
                   <Text noWrapping>
                     {label()}
                   </Text>
-                  {items && <ArrowRight />}
+                  {items && (
+                    <Spacing ml={2}>
+                      <ArrowRight />
+                    </Spacing>
+                  )}
 
                   {keyTextGroups && (
                     <Spacing ml={4} ref={keyTextGroupRef}>
@@ -221,7 +225,7 @@ function FlyoutMenu({
                     false,
                     depth,
                     refArg,
-                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0),
+                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0) + UNIT * 2,
                   )
                 )}
               </LinkStyle>
