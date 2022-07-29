@@ -112,7 +112,6 @@ This data can then be ingested into a log statistics database.
 ```python
 mage_ai.run('log_stats_ingestion', 'repos/default_repo', current_date='2022-07-29', log_folder='logs/webapp')
 ```
-This makes the pipeline designed above completely reusable without
 
 ## Example - Model Rockets
 Consider the following sample data tracking the launch angle (in degrees) and vertical velocity (in meters per second) of model rocket tests:
