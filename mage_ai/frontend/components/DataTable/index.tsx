@@ -132,12 +132,6 @@ const Styles = styled.div<{
           color: ${(props.theme.content || light.content).default};
         `}
       }
-
-      :last-child {
-        .td {
-          border-bottom: 0;
-        }
-      }
     }
 
     .th {
@@ -161,11 +155,6 @@ const Styles = styled.div<{
         border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
         border-right: 1px solid ${(props.theme.borders || light.borders).medium};
       `}
-      :last-child {
-        ${props => `
-          border-right: none;
-        `}
-      }
     }
 
     .td {
