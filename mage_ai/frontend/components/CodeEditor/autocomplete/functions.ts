@@ -32,6 +32,9 @@ export function getFunctionsFromCurrentModule(
   range,
   autocompleteItemsById,
 ) {
+  // NOTE: this doesn’t handle cases where the user imports a module then accesses
+  // the class from that module. For example: from foo import bar; then bar.CoolClass()
+  // Only currently works if they do from foo.bar import CoolClass
   const allVariableAssignments = getAllVariableAssignments(textUntilPosition);
   const previousWord = getTextBeforeCurrentWord(textUntilPosition, range);
   const variableAssignment =

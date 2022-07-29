@@ -154,7 +154,7 @@ export default function(opts: ProviderOptionsType) {
         startLineNumber: position.lineNumber,
       };
 
-      // functions from imported module
+      // methods from imported class
       const methodsForClass =
         getFunctionsFromCurrentModule(textUntilPosition, range, autocompleteItemsById);
 
