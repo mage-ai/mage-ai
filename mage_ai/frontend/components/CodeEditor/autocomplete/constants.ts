@@ -16,7 +16,7 @@ export interface WordType {
 };
 
 export interface SuggestionType {
-  documentation: string;
+  documentation?: string;
   insertText: string;
   kind: any;
   label: string;
