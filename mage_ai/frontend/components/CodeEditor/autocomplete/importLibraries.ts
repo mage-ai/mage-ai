@@ -1,4 +1,5 @@
 import test from './test.json';
+import { LibraryImportType } from './constants';
 
 export default function(textUntilPosition, wordObj, monaco, range, opts) {
   const {
@@ -39,7 +40,7 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
       constants,
       files,
       functions,
-    } = mapping[parentModuleName];
+    }: LibraryImportType = mapping[parentModuleName];
 
     const items = [];
 
@@ -74,12 +75,13 @@ export default function(textUntilPosition, wordObj, monaco, range, opts) {
   }
 
   return Object.entries(mapping).map(([k, v]) => {
+    // @ts-ignore
     const {
       classes: classesArr,
       constants: constantsArr,
       files: filesArr,
       functions: functionsArr,
-    } = v;
+    }: LibraryImportType = v;
 
     return {
       // filterText: `import ${k}`,

@@ -127,9 +127,11 @@ export default function(opts: ProviderOptionsType) {
   } = block;
   const allWordsFromAllBlockContent = new Set();
   blocks.forEach(({ content }) => {
+    // @ts-ignore
     [...content.matchAll('([A-Za-z_0-9]+)', 'g')]
       .forEach(word => allWordsFromAllBlockContent.add(word[1]));
   });
+  // @ts-ignore
   const wordsFromContent = [...allWordsFromAllBlockContent];
 
   return (monaco) => {
@@ -245,9 +247,9 @@ export default function(opts: ProviderOptionsType) {
           label: word,
           range,
         }));
+        // @ts-ignore
         suggestions.push(...filter(word, arr));
       }
-
 
       return {
         // https://github.com/microsoft/monaco-editor/issues/1889#issuecomment-607479373
