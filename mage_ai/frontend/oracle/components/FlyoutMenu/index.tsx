@@ -65,7 +65,8 @@ function FlyoutMenu({
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
   const menuRefs = useRef({});
-
+  const keyTextGroupRef = useRef(null);
+  
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -120,7 +121,7 @@ function FlyoutMenu({
       setHighlightedIndices([]);
     }
   }, [open]);
-
+  
   const buildMenuEl = (
     items: FlyoutMenuItemType[],
     uuid: string,
@@ -130,7 +131,6 @@ function FlyoutMenu({
     maxWidth: number = 0,
   ) => {
     depth += 1;
-
     const maxItemLength = Math.max(...items.map((item: FlyoutMenuItemType) => Number(item.label().length)));
 
     return (
@@ -209,13 +209,21 @@ function FlyoutMenu({
                   {items && <ArrowRight />}
 
                   {keyTextGroups && (
-                    <>
-                      <Spacing mr={4} />
+                    <Spacing ml={4} ref={keyTextGroupRef}>
                       <KeyboardTextGroup keyTextGroups={keyTextGroups} />
-                    </>
+                    </Spacing>
                   )}
                 </FlexContainer>
-                {items && buildMenuEl(items, uuid, false, depth, refArg, maxItemLength * UNIT)}
+                {items && (
+                  buildMenuEl(
+                    items,
+                    uuid,
+                    false,
+                    depth,
+                    refArg,
+                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0),
+                  )
+                )}
               </LinkStyle>
           );
         })}

@@ -136,7 +136,7 @@ function FileHeaderMenu({
         }), {}),
       ),
       uuid: 'Clear all outputs',
-    }
+    },
   ];
 
   const uuidKeyboard = 'FileHeaderMenu/index';
