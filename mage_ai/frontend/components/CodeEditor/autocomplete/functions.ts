@@ -43,7 +43,7 @@ export function getFunctionsFromCurrentClass(
   if (variableAssignment) {
     const { assignmentValue } = variableAssignment;
     const importMatch = extractAllImportNames(textUntilPosition)[assignmentValue];
-    const moduleParts = importMatch.split('as')[0].replace('from', '').replace('import', '').split(' ').reduce((acc, word) => {
+    const moduleParts = importMatch.split(' as ')[0].replace('from ', '').replace('import ', '').split(' ').reduce((acc, word) => {
       if (!word.trim()) {
         return acc;
       }
@@ -76,7 +76,7 @@ export function getFunctionsFromCurrentModule(
       extractAllImportNames(textUntilPosition)[previousWord.match(/([\w_]+)./)[1]];
 
     if (importMatch) {
-      const moduleParts = importMatch.split('as')[0].replace('from', '').replace('import', '').split(' ').reduce((acc, word) => {
+      const moduleParts = importMatch.split(' as ')[0].replace('from ', '').replace('import ', '').split(' ').reduce((acc, word) => {
         if (!word.trim()) {
           return acc;
         }
