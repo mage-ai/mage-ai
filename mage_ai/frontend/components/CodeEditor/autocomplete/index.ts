@@ -161,7 +161,7 @@ export default function(opts: ProviderOptionsType) {
       const methodsForClass =
         getFunctionsFromCurrentClass(textUntilPosition, range, autocompleteItemsById);
 
-      if (methodsForClass.length >= 1) {
+      if (methodsForClass?.length >= 1) {
         const arr = methodsForClass.map(methodName => ({
           filterText: methodName,
           insertText: methodName,
@@ -169,17 +169,20 @@ export default function(opts: ProviderOptionsType) {
           label: methodName,
           range,
         }));
+        const arrFiltered = filter(word, arr);
 
-        return {
-          suggestions: filter(word, arr),
-        };
+        if (arrFiltered.length >= 1) {
+          return {
+            suggestions: arrFiltered,
+          };
+        }
       }
 
       // function from imported module
       const functionsForModule =
         getFunctionsFromCurrentModule(textUntilPosition, range, autocompleteItemsById);
 
-      if (functionsForModule.length >= 1) {
+      if (functionsForModule?.length >= 1) {
         const arr = functionsForModule.map(methodName => ({
           filterText: methodName,
           insertText: methodName,
@@ -187,10 +190,13 @@ export default function(opts: ProviderOptionsType) {
           label: methodName,
           range,
         }));
+        const arrFiltered = filter(word, arr);
 
-        return {
-          suggestions: filter(word, arr),
-        };
+        if (arrFiltered.length >= 1) {
+          return {
+            suggestions: arrFiltered,
+          };
+        }
       }
 
       // Positional argument variable names (e.g. df_1, df_2, etc)
@@ -220,32 +226,42 @@ export default function(opts: ProviderOptionsType) {
       }
 
       // Variables defined in other blocks (e.g. the code copied from variables tab)
-
-      if (BlockTypeEnum.SCRATCHPAD === type) {
+      // Upstream block input value dataframe variables
+      if (BlockTypeEnum.CHART === type || BlockTypeEnum.SCRATCHPAD === type) {
         // Search all previous lines where [var] = get_variable(pipeline_uuid, block_uuid, 'df')
         // is defined, then get the value of [var] and check to see if they typed it on the
         // same line as the current word.
 
         const variableNamesMatched = [];
 
-        variableManagersDefinedRegex(blocks, pipeline).forEach(({
-          block: blockForRegex,
-          regex,
-        }) => {
-          const matches = textUntilPosition.matchAll(regex);
-          // @ts-ignore
-          [...matches].forEach((match) => {
-            const matchIndex = match?.index;
-            const variableName = match?.[1];
-            if (variableName) {
-              variableNamesMatched.push({
-                block: blockForRegex,
-                matchIndex,
-                variableName,
-              })
-            }
+        if (BlockTypeEnum.CHART === type) {
+          upstreamBlocks.forEach((blockUUID: string, idx: number) => {
+            variableNamesMatched.push({
+              block: blocks.find(({ uuid }) => blockUUID === uuid),
+              matchIndex: 0,
+              variableName: `df_${idx + 1}`,
+            });
           });
-        });
+        } else if (BlockTypeEnum.SCRATCHPAD === type) {
+          variableManagersDefinedRegex(blocks, pipeline).forEach(({
+            block: blockForRegex,
+            regex,
+          }) => {
+            const matches = textUntilPosition.matchAll(regex);
+            // @ts-ignore
+            [...matches].forEach((match) => {
+              const matchIndex = match?.index;
+              const variableName = match?.[1];
+              if (variableName) {
+                variableNamesMatched.push({
+                  block: blockForRegex,
+                  matchIndex,
+                  variableName,
+                });
+              }
+            });
+          });
+        }
 
         if (variableNamesMatched.length >= 1) {
           const textPreviouslyTypeInSameLine =
@@ -259,7 +275,7 @@ export default function(opts: ProviderOptionsType) {
               matchIndex,
               variableName,
             }) => {
-              const regex = new RegExp(`^${variableName}\\[| ${variableName}\\[`);
+              const regex = new RegExp(`${variableName}\\[`);
               if (textPreviouslyTypeInSameLine.match(regex)) {
                 arrayOfItems.push({
                   items: columnNameItems(monaco, range, blockForVariable),
@@ -271,13 +287,32 @@ export default function(opts: ProviderOptionsType) {
             if (arrayOfItems.length >= 1) {
               const mostRecentMatchItems =
                 sortByKey(arrayOfItems, 'matchIndex', { ascending: false })[0];
-              suggestions.push(...filter(word, mostRecentMatchItems.items));
+
+              return {
+                suggestions: filter(word, mostRecentMatchItems.items),
+              }
             }
           }
         }
 
         if (startColumn === 1) {
-          suggestions.push(...filter(word, variablesFromBlocks(monaco, range, opts)));
+          if (BlockTypeEnum.CHART === type) {
+            suggestions.push(...filter(
+              word,
+              upstreamBlocks.map((blockUUID, idx: number) => {
+                const varName = `df_${idx + 1}`;
+
+                return {
+                  label: `${varName} ${blockUUID} block`,
+                  kind: monaco.languages.CompletionItemKind.Snippet,
+                  insertText: varName,
+                  range,
+                };
+              }),
+            ));
+          } else if (BlockTypeEnum.SCRATCHPAD === type) {
+            suggestions.push(...filter(word, variablesFromBlocks(monaco, range, opts)));
+          }
         }
       }
 

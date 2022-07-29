@@ -1024,6 +1024,7 @@ function PipelineDetailPage({
     <Sidekick
       activeView={activeSidekickView}
       afterWidth={afterWidthForChildren}
+      autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
       chartRefs={chartRefs}
@@ -1054,6 +1055,7 @@ function PipelineDetailPage({
   ), [
     activeSidekickView,
     afterWidthForChildren,
+    autocompleteItems,
     blockRefs,
     blocks,
     deleteWidget,
@@ -1190,6 +1192,8 @@ function PipelineDetailPage({
   ]);
 
   const afterHeader = useMemo(() => {
+    const validBlocks = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
+
     return (
       <FlexContainer
         alignItems="center"
@@ -1249,7 +1253,7 @@ function PipelineDetailPage({
                   onCreateCallback?: (block: BlockType) => void;
                 },
               ) => addWidgetAtIndex(widget, widgets.length, onCreateCallback)}
-              block={blocks[blocks.length - 1]}
+              block={validBlocks[validBlocks.length - 1]}
               onClickCallback={() => setShowAddCharts(false)}
               open={showAddCharts}
               parentRef={refAddChart}

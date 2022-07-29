@@ -67,6 +67,7 @@ export type SidekickProps = {
 function Sidekick({
   activeView,
   afterWidth,
+  autocompleteItems,
   blockRefs,
   blocks,
   chartRefs,
@@ -315,6 +316,7 @@ function Sidekick({
 
         {ViewKeyEnum.CHARTS === activeView && (
           <Charts
+            autocompleteItems={autocompleteItems}
             blockRefs={blockRefs}
             blocks={blocks}
             chartRefs={chartRefs}

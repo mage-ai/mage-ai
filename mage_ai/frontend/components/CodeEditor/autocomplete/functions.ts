@@ -43,22 +43,25 @@ export function getFunctionsFromCurrentClass(
   if (variableAssignment) {
     const { assignmentValue } = variableAssignment;
     const importMatch = extractAllImportNames(textUntilPosition)[assignmentValue];
-    const moduleParts = importMatch.split(' as ')[0].replace('from ', '').replace('import ', '').split(' ').reduce((acc, word) => {
-      if (!word.trim()) {
-        return acc;
-      }
 
-      return acc.concat(word);
-    }, []);
+    if (importMatch) {
+      const moduleParts = importMatch.split(' as ')[0].replace('from ', '').replace('import ', '').split(' ').reduce((acc, word) => {
+        if (!word.trim()) {
+          return acc;
+        }
 
-    const autocompleteItem = getAutocompleteItemWithModuleParts(
-      moduleParts.join('.').split('.'),
-      autocompleteItemsById,
-    );
-    const moduleNameImported = extractModuleNameImported(importMatch, assignmentValue);
-    const methodsForClass = autocompleteItem?.methods_for_class?.[moduleNameImported];
+        return acc.concat(word);
+      }, []);
 
-    return methodsForClass;
+      const autocompleteItem = getAutocompleteItemWithModuleParts(
+        moduleParts.join('.').split('.'),
+        autocompleteItemsById,
+      );
+      const moduleNameImported = extractModuleNameImported(importMatch, assignmentValue);
+      const methodsForClass = autocompleteItem?.methods_for_class?.[moduleNameImported];
+
+      return methodsForClass;
+    }
   }
 
   return [];
