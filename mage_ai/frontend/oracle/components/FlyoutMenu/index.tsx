@@ -140,7 +140,7 @@ function FlyoutMenu({
           left: typeof rightOffset === 'undefined' && (
             depth === 1
               ? (left || 0)
-              : ((depth - 1) * maxWidth)
+              : maxWidth
           ),
           right: depth === 1
             ? rightOffset
@@ -206,15 +206,15 @@ function FlyoutMenu({
                   <Text noWrapping>
                     {label()}
                   </Text>
-                  {items && (
-                    <Spacing ml={2}>
-                      <ArrowRight />
-                    </Spacing>
-                  )}
-
-                  {keyTextGroups && (
-                    <Spacing ml={4} ref={keyTextGroupRef}>
-                      <KeyboardTextGroup keyTextGroups={keyTextGroups} />
+                  {(items || keyTextGroups) && (
+                    <Spacing ml={4}>
+                      {items && (
+                        <ArrowRight />
+                      )}
+    
+                      {keyTextGroups && (
+                        <KeyboardTextGroup keyTextGroups={keyTextGroups} />
+                      )}
                     </Spacing>
                   )}
                 </FlexContainer>
@@ -225,7 +225,7 @@ function FlyoutMenu({
                     false,
                     depth,
                     refArg,
-                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0) + UNIT * 2,
+                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth || 0) + UNIT * 4,
                   )
                 )}
               </LinkStyle>
