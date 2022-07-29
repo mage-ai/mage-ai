@@ -27,7 +27,7 @@ function getAutocompleteItemWithModuleParts(modulePartsInit: string[], autocompl
   return autocompleteItem;
 }
 
-export function getFunctionsFromCurrentModule(
+export function getFunctionsFromCurrentClass(
   textUntilPosition,
   range,
   autocompleteItemsById,
@@ -59,6 +59,40 @@ export function getFunctionsFromCurrentModule(
     const methodsForClass = autocompleteItem?.methods_for_class?.[moduleNameImported];
 
     return methodsForClass;
+  }
+
+  return [];
+}
+
+export function getFunctionsFromCurrentModule(
+  textUntilPosition,
+  range,
+  autocompleteItemsById,
+) {
+  const previousWord = getTextBeforeCurrentWord(textUntilPosition, range);
+
+  if (previousWord) {
+    const importMatch =
+      extractAllImportNames(textUntilPosition)[previousWord.match(/([\w_]+)./)[1]];
+
+    if (importMatch) {
+      const moduleParts = importMatch.split('as')[0].replace('from', '').replace('import', '').split(' ').reduce((acc, word) => {
+        if (!word.trim()) {
+          return acc;
+        }
+
+        return acc.concat(word);
+      }, []);
+
+      const autocompleteItem = getAutocompleteItemWithModuleParts(
+        moduleParts.join('.').split('.'),
+        autocompleteItemsById,
+      );
+
+      if (autocompleteItem?.functions) {
+        return autocompleteItem?.functions;
+      }
+    }
   }
 
   return [];
