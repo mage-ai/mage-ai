@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { ThemeContext } from 'styled-components';
 
 import AddChartMenu from './AddChartMenu';
@@ -8,8 +8,10 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
+import Convert from '@oracle/icons/custom/Convert';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -32,12 +34,14 @@ import {
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { buildConvertBlockMenuItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 
 export type CommandButtonsSharedProps = {
   addWidget: (widget: BlockType, opts?: {
     onCreateCallback?: (block: BlockType) => void;
   }) => Promise<any>;
+  blocks: BlockType[];
   deleteBlock: (block: BlockType) => void;
   executionState: ExecutionStateEnum;
   interruptKernel: () => void;
@@ -54,16 +58,19 @@ type CommandButtonsProps = {
     runTests?: boolean;
   }) => void;
   setOutputCollapsed: (value: boolean) => void;
+  updateBlock: ({ block: BlockType }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
   addWidget,
   block,
+  blocks,
   deleteBlock,
   executionState,
   interruptKernel,
   runBlock,
   setOutputCollapsed,
+  updateBlock,
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
@@ -71,15 +78,26 @@ function CommandButtons({
     uuid,
   } = block;
   const refAddChart = useRef(null);
+  const refConvertBlock = useRef(null);
   const refExecuteActions = useRef(null);
   const refMoreActions = useRef(null);
 
   const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
+  const [showConvertMenu, setShowConvertMenu] = useState<boolean>(false);
   const [showExecuteActions, setShowExecuteActions] = useState<boolean>(false);
   const [showMoreActions, setShowMoreActions] = useState<boolean>(false);
+
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
+
+  const convertBlockMenuItems = useMemo(() => (
+    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', updateBlock)
+  ), [
+    block,
+    blocks,
+    updateBlock,
+  ]);
 
   return (
     <ContainerStyle>
@@ -174,6 +192,43 @@ function CommandButtons({
               />
             </ClickOutside>
           </>
+        )}
+
+        {BlockTypeEnum.SCRATCHPAD === block.type && (
+          <Spacing mt={PADDING_UNITS}>
+            <FlyoutMenuWrapper
+              items={convertBlockMenuItems}
+              left={-UNIT * 22}
+              onClickCallback={() => setShowConvertMenu(false)}
+              onClickOutside={() => setShowConvertMenu(false)}
+              open={showConvertMenu}
+              parentRef={refConvertBlock}
+              topOffset={-UNIT * 3}
+              uuid="CommandButtons/convert_block"
+            >
+              <Tooltip
+                appearBefore
+                default
+                label={(
+                  <Text>
+                    Convert block
+                  </Text>
+                )}
+                size={UNIT * 2.5}
+                widthFitContent
+              >
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowConvertMenu(!showConvertMenu)}
+                  ref={refConvertBlock}
+                >
+                  <Convert size={UNIT * 2.5} />
+                </Button>
+              </Tooltip>
+            </FlyoutMenuWrapper>
+          </Spacing>
         )}
 
         {[

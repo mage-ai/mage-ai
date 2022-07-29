@@ -3,13 +3,12 @@ import React, { createRef, useEffect, useRef, useState } from 'react';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutType from '@interfaces/KeyboardShortcutType';
 import KeyboardTextGroup, { NumberOrString } from '@oracle/elements/KeyboardTextGroup';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { ArrowRight } from '@oracle/icons';
 import {
-  COMPACT_MENU_WIDTH,
   FlyoutMenuContainerStyle,
   LinkStyle,
-  MENU_WIDTH,
   TitleContainerStyle,
 } from './index.style';
 import {
@@ -17,6 +16,7 @@ import {
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -36,7 +36,6 @@ export type FlyoutMenuItemType = {
 };
 
 export type FlyoutMenuProps = {
-  compact?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
   onClickCallback?: () => void;
@@ -49,7 +48,6 @@ export type FlyoutMenuProps = {
 };
 
 function FlyoutMenu({
-  compact,
   items,
   left,
   onClickCallback,
@@ -67,7 +65,8 @@ function FlyoutMenu({
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
   const menuRefs = useRef({});
-
+  const keyTextGroupRef = useRef(null);
+  
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -129,29 +128,28 @@ function FlyoutMenu({
     visible: boolean,
     depth: number = 0,
     refArg: React.RefObject<any>,
+    maxWidth: number = 0,
   ) => {
     depth += 1;
+    const maxItemLength = Math.max(...items.map((item: FlyoutMenuItemType) => Number(item.label().length)));
 
     return (
       <FlyoutMenuContainerStyle
-        compact={compact}
         style={{
           display: (visible || submenuVisible[uuid]) ? null : 'none',
           left: typeof rightOffset === 'undefined' && (
             depth === 1
               ? (left || 0)
-              : (compact
-                ? ((depth - 1) * COMPACT_MENU_WIDTH)
-                : ((depth - 1) * MENU_WIDTH))
+              : ((depth - 1) * maxWidth)
           ),
+          right: depth === 1
+            ? rightOffset
+            : null,
           top: (
             depth === 1
               ? (height || 0) + topOffset
               : (submenuTopOffset || 0)
           ),
-          right: depth === 1
-            ? rightOffset
-            : null,
         }}
         width={width}
       >
@@ -169,7 +167,7 @@ function FlyoutMenu({
           return (isGroupingTitle
             ?
               <TitleContainerStyle>
-                <Text bold key={uuid} muted>
+                <Text bold key={uuid} muted noWrapping>
                   {label()}
                 </Text>
               </TitleContainerStyle>
@@ -205,14 +203,27 @@ function FlyoutMenu({
                   fullWidth
                   justifyContent="space-between"
                 >
-                  <Text>
+                  <Text noWrapping>
                     {label()}
                   </Text>
                   {items && <ArrowRight />}
-                </FlexContainer>
 
-                {keyTextGroups && <KeyboardTextGroup keyTextGroups={keyTextGroups} />}
-                {items && buildMenuEl(items, uuid, false, depth, refArg)}
+                  {keyTextGroups && (
+                    <Spacing ml={4} ref={keyTextGroupRef}>
+                      <KeyboardTextGroup keyTextGroups={keyTextGroups} />
+                    </Spacing>
+                  )}
+                </FlexContainer>
+                {items && (
+                  buildMenuEl(
+                    items,
+                    uuid,
+                    false,
+                    depth,
+                    refArg,
+                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0),
+                  )
+                )}
               </LinkStyle>
           );
         })}

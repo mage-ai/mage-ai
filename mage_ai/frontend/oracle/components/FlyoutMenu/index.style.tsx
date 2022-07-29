@@ -8,20 +8,9 @@ type LinkProps = {
   indent?: boolean;
 };
 
-export const MENU_WIDTH = UNIT * 34;
-export const COMPACT_MENU_WIDTH = UNIT * 20;
-
 export const FlyoutMenuContainerStyle = styled.div<any>`
   position: absolute;
   max-height: ${UNIT * 58}px;
-
-  ${props => !props.compact && `
-    min-width: ${MENU_WIDTH}px;
-  `}
-
-  ${props => props.compact && `
-    min-width: ${COMPACT_MENU_WIDTH}px;
-  `}
 
   ${props => props.width && `
     min-width: 0px;
@@ -49,7 +38,6 @@ export const TitleContainerStyle = styled.div`
 
 export const LinkStyle = styled.div<LinkProps>`
   align-items: center;
-  display: flex;
   justify-content: space-between;
   padding: ${UNIT}px;
 
