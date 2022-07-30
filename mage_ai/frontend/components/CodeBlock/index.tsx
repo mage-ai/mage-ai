@@ -50,6 +50,7 @@ import {
   BlockDivider,
   BlockDividerInner,
   CodeHelperStyle,
+  TimeTrackerStyle,
 } from './index.style';
 import {
   ContainerStyle,
@@ -145,6 +146,7 @@ function CodeBlockProps({
   const [blockMenuVisible, setBlockMenuVisible] = useState(false);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
+  const [currentTime, setCurrentTime] = useState<number>(null);
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
@@ -215,19 +217,17 @@ function CodeBlockProps({
       setRunEndTime,
     ]);
 
-  const messagesPrevious = usePrevious(messages);
+  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
+    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
+
   useEffect(() => {
-    if (!messagesPrevious?.length && messages?.length >= 1) {
+    if (isInProgress) {
       setRunStartTime(Number(new Date()));
     }
   }, [
-    messages,
-    messagesPrevious,
+    isInProgress,
     setRunStartTime,
   ]);
-
-  const isInProgress = !!runningBlocks.find(({ uuid }) => uuid === block.uuid)
-    || messages?.length >= 1 && executionState !== ExecutionStateEnum.IDLE;
 
   const finalExecutionStatePrevious = usePrevious(executionState);
   useEffect(() => {
@@ -389,6 +389,17 @@ function CodeBlockProps({
       updateBlock,
     ],
   );
+
+  useEffect(() => {
+    let interval
+
+    if (runStartTime) {
+      interval = setInterval(() => setCurrentTime(Number(new Date())), 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [runStartTime]);
+
 
   const buildBlockMenu = (b: BlockType) => {
     const blockMenuItems = {
@@ -765,6 +776,14 @@ function CodeBlockProps({
               </Spacing>
             )
           }
+
+          {isInProgress && currentTime && (
+            <TimeTrackerStyle>
+              <Text muted>
+                {`${Math.round((currentTime - runStartTime) / 1000)}`}s
+              </Text>
+            </TimeTrackerStyle>
+          )}
         </CodeContainerStyle>
 
         {hasOutput && codeOutputEl}

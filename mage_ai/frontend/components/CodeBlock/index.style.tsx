@@ -85,6 +85,7 @@ export const CodeContainerStyle = styled.div<{
   border-top-width: 2px;
   padding-bottom: ${UNIT}px;
   padding-top: ${UNIT}px;
+  position: relative;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeTextarea};
@@ -140,4 +141,10 @@ export const CodeHelperStyle = styled.div`
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
+`;
+
+export const TimeTrackerStyle =  styled.div`
+  bottom: ${UNIT * 1}px;
+  left: ${LEFT_PADDING}px;
+  position: absolute;
 `;
