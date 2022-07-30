@@ -8,7 +8,7 @@ import {
   DEFAULT_SETTINGS_BY_CHART_TYPE,
 } from '@components/ChartBlock/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower, getNewUUID } from '@utils/string';
 
 type AddChartMenuProps = {
   addWidget: (widget: BlockType, opts?: {
@@ -53,10 +53,16 @@ function AddChartMenu({
     const configuration = defaultSettings?.configuration?.(widget) || {};
     const content = defaultSettings?.content?.(widget) || null;
 
+    let widgetName = chartType;
+    if (block) {
+      widgetName = `${widgetName} for ${block.uuid}`;
+    }
+
     return {
       label: () => capitalizeRemoveUnderscoreLower(chartType),
       onClick: () => addWidget({
         ...widget,
+        name: `${widgetName} ${getNewUUID()}`,
         configuration: {
           ...widget.configuration,
           ...configuration,
