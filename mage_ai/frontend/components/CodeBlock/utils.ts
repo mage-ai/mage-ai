@@ -1,4 +1,4 @@
-import BlockType, { BLOCK_TYPE_CONVERTIBLE, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import BlockType, { CONVERTIBLE_BLOCK_TYPES, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { lowercase } from '@utils/string';
 
@@ -16,7 +16,7 @@ export const buildConvertBlockMenuItems = (
   }
 
   return (
-    BLOCK_TYPE_CONVERTIBLE.map(blockType => ({
+    CONVERTIBLE_BLOCK_TYPES.map(blockType => ({
       label: () => `Convert to ${lowercase(BLOCK_TYPE_NAME_MAPPING[blockType])}`,
       // @ts-ignore
       onClick: () => updateBlock({

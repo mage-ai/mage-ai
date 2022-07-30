@@ -42,6 +42,12 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.SNOWFLAKE,
   ],
+  [BlockTypeEnum.TRANSFORMER]: [
+    DataSourceTypeEnum.BIGQUERY,
+    DataSourceTypeEnum.POSTGRES,
+    DataSourceTypeEnum.REDSHIFT,
+    DataSourceTypeEnum.SNOWFLAKE,
+  ],
 };
 
 export default DataSourceTypeEnum;
