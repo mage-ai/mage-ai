@@ -1,29 +1,38 @@
-version: 0.1.0
+version: 0.1.1
 default:
   # Default profile created for data IO access.
   # Add your credentials for the source you use, and delete the rest.
-  AWS_ACCESS_KEY_ID: AWS Access Key ID credential
-  AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
-  AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
-  AWS_REGION: AWS Region
-  GOOGLE_SERVICE_ACC_KEY: Service account key (add nested object here)
-  GOOGLE_SERVICE_ACC_KEY_FILEPATH: Path to service account key
-  POSTGRES_DBNAME: Database name
-  POSTGRES_USER: Database login username
-  POSTGRES_PASSWORD: Database login password
-  POSTGRES_HOST: Database hostname
-  POSTGRES_PORT: PostgreSQL database port
-  REDSHIFT_DBNAME: Name of Redshift database to connect to
-  REDSHIFT_HOST: Redshift Cluster hostname
-  REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
-  REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
-  REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
-  REDSHIFT_DBUSER: Redshift database user to generate credentials for
-  REDSHIFT_CLUSTER_ID: Redshift cluster ID
-  REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with
-  SNOWFLAKE_USER: Snowflake username
-  SNOWFLAKE_PASSWORD: Snowflake password
-  SNOWFLAKE_ACCOUNT: Snowflake account ID (including region)
-  SNOWFLAKE_DEFAULT_WH: Default warehouse to use. Optional
-  SNOWFLAKE_DEFAULT_DB: Default database to use. Optional
-  SNOWFLAKE_DEFAULT_SCHEMA: Default schema to use. Optional
+  AWS_ACCESS_KEY_ID: access_key_id
+  AWS_SECRET_ACCESS_KEY: secret_access_key
+  AWS_SESSION_TOKEN: session_token (Used to generate Redshift credentials)
+  AWS_REGION: region
+  GOOGLE_SERVICE_ACC_KEY:
+    type: service_account
+    project_id: project-id
+    private_key_id: key-id
+    private_key: "-----BEGIN PRIVATE KEY-----\nyour_private_key\n-----END_PRIVATE_KEY"
+    client_email: your_service_account_email
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "https://accounts.google.com/o/oauth2/token",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/your_service_account_email"
+  GOOGLE_SERVICE_ACC_KEY_FILEPATH: "/path/to/your/service/account/key.json"
+  POSTGRES_DBNAME: postgres
+  POSTGRES_USER: username
+  POSTGRES_PASSWORD: password
+  POSTGRES_HOST: hostname
+  POSTGRES_PORT: 5432
+  REDSHIFT_DBNAME: redshift_db_name
+  REDSHIFT_HOST: redshift_cluster_id.identifier.region.redshift.amazonaws.com
+  REDSHIFT_PORT: 5439
+  REDSHIFT_TEMP_CRED_USER: temp_username
+  REDSHIFT_TEMP_CRED_PASSWORD: temp_password
+  REDSHIFT_DBUSER: redshift_db_user
+  REDSHIFT_CLUSTER_ID: redshift_cluster_id
+  REDSHIFT_IAM_PROFILE: default
+  SNOWFLAKE_USER: username
+  SNOWFLAKE_PASSWORD: password
+  SNOWFLAKE_ACCOUNT: account_id.region
+  SNOWFLAKE_DEFAULT_WH: optional_default_warehouse
+  SNOWFLAKE_DEFAULT_DB: optional_default_database
+  SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
