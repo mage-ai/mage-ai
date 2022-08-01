@@ -59,6 +59,11 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 pip install mage-ai
 ```
 
+You may need to install development libraries for MIT Kerberos to use some Mage features. On Ubuntu, this can be installed as:
+```bash
+apt install libkrb5-dev
+```
+
 ##### 2. Create new project
 ```bash
 mage init [project_name]
