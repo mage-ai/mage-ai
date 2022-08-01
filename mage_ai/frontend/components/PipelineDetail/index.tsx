@@ -131,6 +131,7 @@ function PipelineDetail({
 }: PipelineDetailProps) {
   const [visible, setVisible] = useState<boolean>(false);
   const [visibleOverlay, setVisibleOverlay] = useState<boolean>(true);
+  const [addNewBlockMenuOpenIdx, setAddNewBlockMenuOpenIdx] = useState<number>(null);
 
   const runningBlocksByUUID = useMemo(() => runningBlocks.reduce((
     acc: {
@@ -305,9 +306,11 @@ function PipelineDetail({
 
                 return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
               }}
+              addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
               addWidget={addWidget}
               autocompleteItems={autocompleteItems}
               block={block}
+              blockIdx={idx}
               blockRefs={blockRefs}
               blocks={blocks}
               defaultValue={block.content}
@@ -331,6 +334,7 @@ function PipelineDetail({
               runBlock={runBlock}
               runningBlocks={runningBlocks}
               selected={selected}
+              setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
               setOutputBlocks={setOutputBlocks}
