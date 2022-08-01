@@ -74,7 +74,7 @@ const ASIDE_STYLE = css`
   z-index: 2;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).sidePanel};
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 `;
 
@@ -124,7 +124,7 @@ export const AsideHeaderStyle = styled.div<{
   ${hideScrollBar()}
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).sidePanel};
+    background-color: ${(props.theme.background || dark.background).panel};
   `}
 
   ${props => !props.visible && `
