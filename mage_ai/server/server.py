@@ -65,6 +65,8 @@ class ApiFileContentHandler(BaseHandler):
 
         data = json.loads(self.request.body).get('file_content', {})
         content = data.get('content')
+        if content is None:
+            raise Exception('Please provide a \'content\' param in the request payload.')
         file.update_content(content)
 
         self.write(dict(file_content=file.to_dict(include_content=True)))
