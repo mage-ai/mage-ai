@@ -206,6 +206,7 @@ export default {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
+    window: '0px 10px 60px rgba(0, 0, 0, 0.7)',
   },
   status: {
     negative: RED,
