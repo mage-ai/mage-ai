@@ -501,7 +501,8 @@ class Pipeline:
             error_msg (str): Error message to print if cycle is found.
             Defaults to 'A cycle was detected'
         """
-        combined_blocks = {uuid: block for uuid, block in self.blocks_by_uuid.items()}
+        combined_blocks = dict()
+        combined_blocks.update(self.blocks_by_uuid)
         combined_blocks.update(self.widgets_by_uuid)
         status = {uuid: 'unvisited' for uuid in combined_blocks}
 
