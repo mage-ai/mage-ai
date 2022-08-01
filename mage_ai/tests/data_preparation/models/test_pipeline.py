@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import TestCase
 import asyncio
@@ -315,6 +315,23 @@ class PipelineTest(TestCase):
             self.assertEqual(original.type, duplicate.type)
             self.assertEqual(original.chart_type, duplicate.chart_type)
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
+
+    def test_cycle_detection(self):
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 5')
+        pipeline.validate()
+
+        block_new = Block.create('block_new', 'transformer', self.repo_path)
+        block_new.downstream_blocks = pipeline.get_blocks(['block1', 'block2'])
+        with self.assertRaises(InvalidPipelineError):
+            pipeline.add_block(block_new, upstream_block_uuids=['block4'])
+        block_new.downstream_blocks = pipeline.get_blocks(['block2'])
+        with self.assertRaises(InvalidPipelineError):
+            pipeline.add_block(block_new, upstream_block_uuids=['block4'])
+
+        block4 = pipeline.get_block('block4')
+        block4.downstream_blocks = pipeline.get_blocks(['block1', 'block2'])
+        with self.assertRaises(InvalidPipelineError):
+            pipeline.update_block(block4)
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(name, self.repo_path)

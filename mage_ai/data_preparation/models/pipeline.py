@@ -11,11 +11,13 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
-from typing import Callable
+from typing import Callable, List
 import os
 import shutil
 import yaml
 
+
+CYCLE_DETECTION_ERR_MESSAGE = 'A cycle was detected in this pipeline'
 METADATA_FILE_NAME = 'metadata.yaml'
 
 
@@ -71,7 +73,7 @@ class Pipeline:
         uuid = clean_name(name)
         pipeline_path = os.path.join(repo_path, PIPELINES_FOLDER, uuid)
         if os.path.exists(pipeline_path):
-            raise Exception(f'Pipeline {name} alredy exists.')
+            raise Exception(f'Pipeline {name} already exists.')
         # Copy pipeline files from template folder
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
@@ -235,6 +237,8 @@ class Pipeline:
             all_blocks,
         )
 
+        self.validate('A cycle was detected in the loaded pipeline')
+
     def __initialize_blocks_by_uuid(
         self,
         configs,
@@ -362,6 +366,7 @@ class Pipeline:
                 priority=priority,
             )
 
+        self.validate('A cycle was formed while adding a block')
         self.save()
         return block
 
@@ -410,6 +415,7 @@ class Pipeline:
         else:
             self.blocks_by_uuid[block.uuid] = block
 
+        self.validate('A cycle was formed while updating a block')
         self.save(**save_kwargs, widget=widget)
 
         return block
@@ -486,3 +492,63 @@ class Pipeline:
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
+
+    def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
+        """
+        Validates whether pipeline is valid; there must exist no cycles in the pipeline.
+
+        Args:
+            error_msg (str): Error message to print if cycle is found.
+            Defaults to 'A cycle was detected'
+        """
+        combined_blocks = dict()
+        combined_blocks.update(self.blocks_by_uuid)
+        combined_blocks.update(self.widgets_by_uuid)
+        status = {uuid: 'unvisited' for uuid in combined_blocks}
+
+        def __print_cycle(start_uuid: str, virtual_stack: List[StackFrame]):
+            index = 0
+            while index < len(virtual_stack) and virtual_stack[index].uuid != start_uuid:
+                index += 1
+
+            cycle = [frame.uuid for frame in virtual_stack[index:]]
+            return " --> ".join(cycle)
+
+        def __check_cycle(block: Block):
+            virtual_stack = [StackFrame(block)]
+            while len(virtual_stack) > 0:
+                frame = virtual_stack[-1]
+                if status[frame.uuid] == 'validated':
+                    virtual_stack.pop()
+                    continue
+                if not frame.accessed:
+                    if status[frame.uuid] == 'processing':
+                        cycle = __print_cycle(frame.uuid, virtual_stack)
+                        raise InvalidPipelineError(f'{error_msg}: {cycle}')
+                    frame.accessed = True
+                    status[frame.uuid] = 'processing'
+                if len(frame.children) == 0:
+                    status[frame.uuid] = 'validated'
+                    virtual_stack.pop()
+                else:
+                    child_block = combined_blocks[frame.children.pop()]
+                    virtual_stack.append(StackFrame(child_block))
+
+        for uuid in combined_blocks:
+            if status[uuid] == 'unvisited':
+                __check_cycle(self.blocks_by_uuid[uuid])
+
+
+class StackFrame:
+    def __init__(self, block):
+        self.uuid = block.uuid
+        self.children = block.downstream_block_uuids
+        self.accessed = False
+
+
+class InvalidPipelineError(Exception):
+    """
+    Invalid pipeline found due to existence of a cycle.
+    """
+
+    pass
