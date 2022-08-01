@@ -24,7 +24,6 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLongFromUnixTimestamp } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
-import { pauseEvent } from '@utils/events';
 
 type KernelStatusProps = {
   filePaths: string[];

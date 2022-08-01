@@ -77,9 +77,11 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
+  addNewBlockMenuOpenIdx: number;
   autocompleteItems: AutocompleteItemType[];
   block: BlockType;
   blockRefs: any;
+  blockIdx: number;
   blocks: BlockType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
@@ -100,6 +102,7 @@ type CodeBlockProps = {
     runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
+  setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -108,9 +111,11 @@ type CodeBlockProps = {
 
 function CodeBlockProps({
   addNewBlock,
+  addNewBlockMenuOpenIdx,
   addWidget,
   autocompleteItems,
   block,
+  blockIdx,
   blockRefs,
   blocks,
   defaultValue = '',
@@ -130,6 +135,7 @@ function CodeBlockProps({
   runBlock,
   runningBlocks,
   selected,
+  setAddNewBlockMenuOpenIdx,
   setAnyInputFocused,
   setEditingBlock,
   setOutputBlocks,
@@ -503,7 +509,10 @@ function CodeBlockProps({
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} style={{
+      position: 'relative',
+      zIndex: blockIdx === addNewBlockMenuOpenIdx ? 11 : null,
+    }}>
       <FlexContainer
         alignItems="center"
         justifyContent="space-between"
@@ -792,7 +801,10 @@ function CodeBlockProps({
       {!noDivider && (
         <BlockDivider
           onMouseEnter={() => setAddNewBlocksVisible(true)}
-          onMouseLeave={() => setAddNewBlocksVisible(false)}
+          onMouseLeave={() => {
+            setAddNewBlocksVisible(false);
+            setAddNewBlockMenuOpenIdx(null);
+          }}
         >
           {addNewBlocksVisible && (
             <AddNewBlocks
@@ -825,7 +837,9 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
                   upstream_blocks: upstreamBlocks,
                 });
               }}
+              blockIdx={blockIdx}
               compact
+              setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
             />
           )}
           <BlockDividerInner className="block-divider-inner" />

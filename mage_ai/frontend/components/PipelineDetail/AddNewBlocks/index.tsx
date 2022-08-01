@@ -20,7 +20,9 @@ import { createActionMenuGroupings, createDataSourceMenuItems } from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
+  blockIdx?: number;
   compact?: boolean;
+  setAddNewBlockMenuOpenIdx?: (cb: any) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -30,6 +32,8 @@ const DATA_EXPORTER_BUTTON_INDEX = 2;
 function AddNewBlocks({
   addNewBlock,
   compact,
+  blockIdx,
+  setAddNewBlockMenuOpenIdx,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -93,6 +97,10 @@ function AddNewBlocks({
   ];
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
+  const handleBlockZIndex = useCallback(() =>
+    setAddNewBlockMenuOpenIdx?.(idx => idx === null ? blockIdx : null),
+    [blockIdx, setAddNewBlockMenuOpenIdx],
+  );
 
   return (
     <FlexContainer inline>
@@ -122,6 +130,7 @@ function AddNewBlocks({
                     ? null
                     : DATA_LOADER_BUTTON_INDEX,
                 );
+                handleBlockZIndex();
               }}
               uuid="AddNewBlocks/Data_loader"
             >
@@ -152,6 +161,7 @@ function AddNewBlocks({
                     ? null
                     : TRANSFORMER_BUTTON_INDEX,
                 );
+                handleBlockZIndex();
               }}
               uuid="AddNewBlocks/Transformer"
             >
@@ -185,6 +195,7 @@ function AddNewBlocks({
                     ? null
                     : DATA_EXPORTER_BUTTON_INDEX,
                 );
+                handleBlockZIndex();
               }}
               uuid="AddNewBlocks/Data_exporter"
             >
