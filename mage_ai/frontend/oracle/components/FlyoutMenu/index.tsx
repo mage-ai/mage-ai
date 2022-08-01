@@ -128,10 +128,8 @@ function FlyoutMenu({
     visible: boolean,
     depth: number = 0,
     refArg: React.RefObject<any>,
-    maxWidth: number = 0,
   ) => {
     depth += 1;
-    const maxItemLength = Math.max(...items.map((item: FlyoutMenuItemType) => Number(item.label().length)));
 
     return (
       <FlyoutMenuContainerStyle
@@ -140,7 +138,7 @@ function FlyoutMenu({
           left: typeof rightOffset === 'undefined' && (
             depth === 1
               ? (left || 0)
-              : ((depth - 1) * maxWidth)
+              : '100%'
           ),
           right: depth === 1
             ? rightOffset
@@ -225,7 +223,6 @@ function FlyoutMenu({
                     false,
                     depth,
                     refArg,
-                    (UNIT * maxItemLength) + (keyTextGroupRef.current?.clientWidth + UNIT || 0) + UNIT * 2,
                   )
                 )}
               </LinkStyle>
