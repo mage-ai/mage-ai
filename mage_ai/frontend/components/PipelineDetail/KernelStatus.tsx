@@ -2,6 +2,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
@@ -12,7 +13,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KernelType from '@interfaces/KernelType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -29,6 +30,9 @@ import { dateFormatLongFromUnixTimestamp } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import ClickOutside from '@oracle/components/ClickOutside';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 
 type KernelStatusProps = {
   filePaths: string[];
@@ -41,9 +45,8 @@ type KernelStatusProps = {
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
-  restartKernel: () => void;
   selectedFilePath?: string;
-  updatePipelineName: (name: string) => void;
+  updatePipelineName: (name: string, type?: string) => void;
 };
 
 function KernelStatus({
@@ -55,7 +58,6 @@ function KernelStatus({
   pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
-  restartKernel,
   selectedFilePath,
   updatePipelineName,
 }: KernelStatusProps) {
@@ -66,6 +68,9 @@ function KernelStatus({
   } = kernel || {};
   const [isEditingPipeline, setIsEditingPipeline] = useState(false);
   const [newPipelineName, setNewPipelineName] = useState('');
+  const [showSelectKernel, setShowSelectKernel] = useState(false);
+
+  const refSelectKernel = useRef(null);
 
   useEffect(() => {
     if (pipeline?.uuid) {
@@ -137,27 +142,76 @@ function KernelStatus({
     pipeline,
   ]);
 
+  const kernelStatus = useMemo(() => (
+    <div
+      ref={refSelectKernel}
+      style={{
+        position: 'relative',
+      }}
+    >
+      <KeyboardShortcutButton
+        beforeElement={
+          <Circle
+            color={isBusy
+              ? (themeContext || dark).borders.info
+              : (alive
+                ? (themeContext || dark).borders.success
+                : (themeContext || dark).borders.danger
+              )
+            }
+            size={UNIT}
+          />
+        }
+        blackBorder
+        compact
+        inline
+        onClick={() => setShowSelectKernel(true)}
+        uuid="Pipeline/KernelStatus/kernel"
+      >
+        {pipeline?.type || PipelineTypeEnum.PYTHON}
+      </KeyboardShortcutButton>
+
+      <ClickOutside
+        disableEscape
+        onClickOutside={() => setShowSelectKernel(false)}
+        open={showSelectKernel}
+      >
+        <FlyoutMenu
+          items={[
+            {
+              isGroupingTitle: true,
+              label: () => 'Select kernel',
+              uuid: 'select_kernel',
+            },
+            ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME).map(type => ({
+              label: () => type,
+              onClick: () => updatePipelineName(pipeline?.name, type),
+              uuid: type,
+            }))
+          ]}
+          onClickCallback={() => setShowSelectKernel(false)}
+          open={showSelectKernel}
+          parentRef={refSelectKernel}
+          uuid="KernelStatus/select_kernel"
+          width={UNIT * 25}
+        />
+      </ClickOutside>
+    </div>
+  ), [
+    alive,
+    isBusy,
+    pipeline,
+    showSelectKernel,
+    setShowSelectKernel,
+    themeContext,
+  ])
+
   const pipelineName = useMemo(() => (
     <Flex alignItems="center">
-      <Circle
-        color={isBusy
-          ? (themeContext || dark).borders.info
-          : (alive
-            ? (themeContext || dark).borders.success
-            : (themeContext || dark).borders.danger
-          )
-        }
-        size={UNIT}
-      />
-
-      <Spacing mr={1} />
-
-      <FlexContainer alignItems="center">
-        <Text>
-          Pipeline:&nbsp;{selectedFilePath && pipeline?.uuid}
-        </Text>
-        {!selectedFilePath && pipelineNameInput}
-      </FlexContainer>
+      <Text>
+        Pipeline:&nbsp;{selectedFilePath && pipeline?.uuid}
+      </Text>
+      {!selectedFilePath && pipelineNameInput}
 
       <Spacing mr={3} />
     </Flex>
@@ -199,14 +253,7 @@ function KernelStatus({
 
             {!selectedFilePath && (
               <FlexContainer alignItems="center">
-                <Tooltip
-                  block
-                  label={alive ? `${name} kernel is ${isBusy ? 'busy' : 'alive'}` : 'Kernel is dead'}
-                  size={null}
-                  widthFitContent
-                >
-                  {pipelineName}
-                </Tooltip>
+                {pipelineName}
                 {isEditingPipeline && (
                   <>
                     <Spacing ml={1} />
@@ -323,12 +370,16 @@ function KernelStatus({
             );
           })}
         </FlexContainer>
-
+        
         {!selectedFilePath && (
           <Spacing px={PADDING_UNITS}>
-            <Text muted>
-              {saveStatus}
-            </Text>
+            <Flex alignItems="center">
+              {kernelStatus}
+              <Spacing ml={2}/>
+              <Text muted>
+                {saveStatus}
+              </Text>
+            </Flex>
           </Spacing>
         )}
       </FlexContainer>

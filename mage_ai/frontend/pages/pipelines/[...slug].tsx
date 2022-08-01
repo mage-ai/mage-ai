@@ -30,7 +30,7 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
@@ -383,7 +383,8 @@ function PipelineDetailPage({
     revalidateOnFocus: true,
   });
   const kernels = dataKernels?.kernels;
-  const kernel = kernels?.[0];
+  const kernel =
+    kernels?.find(({ name }) => name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]) || kernels?.[0];
 
   // Files
   const openFile = useCallback((filePath: string) => {
@@ -433,6 +434,37 @@ function PipelineDetailPage({
     },
   );
 
+  const [updatePipelineMetadata] = useMutation(
+    api.pipelines.useUpdate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+              type,
+            },
+          }) => {
+            fetchFileTree();
+            if (type !== pipeline?.type) {
+              fetchPipeline();
+            }
+            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+            router.push(`/pipelines/${uuid}`);
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
@@ -441,7 +473,6 @@ function PipelineDetailPage({
       block: blockOverride,
       pipeline: pipelineOverride = {},
     } = payload || {};
-
     setPipelineLastSaved(new Date());
 
     // @ts-ignore
@@ -507,10 +538,11 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  const updatePipelineName = useCallback((name: string) => {
+  const updatePipelineName = useCallback((name: string, type?: PipelineTypeEnum) => {
     return savePipelineContent({
       pipeline: {
         name,
+        type,
       },
     }).then(({
       data: {

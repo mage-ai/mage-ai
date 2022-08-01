@@ -1,11 +1,12 @@
 from mage_ai.data_preparation.models.constants import (
+    PIPELINE_TO_KERNEL_NAME,
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, kernel_managers, KernelName, test_kernel
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
@@ -41,25 +42,25 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def init_kernel_client(self) -> KernelClient:
+    def init_kernel_client(self, kernel_name) -> KernelClient:
         connection_file = os.getenv('CONNECTION_FILE')
         with open(connection_file) as f:
             connection = json.loads(f.read())
 
-        session = Session(key=bytes())
-        manager = KernelManager(**connection, session=session)
-        return manager.client()
+        kernel = test_kernel.active_kernel
+
+        return kernel.client()
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
         custom_code = message.get('code')
         output = message.get('output')
         if output:
+            print('output')
             self.send_message(output)
             return
         global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
-        kernel_name = message.get('kernel_name', DEFAULT_KERNEL_NAME)
 
         run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
@@ -67,6 +68,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_type = message.get('type')
         block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
+        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        kernel_name = message.get('kernel_name', test_kernel.active_kernel.kernel_name)
+        print('kernel_name:', kernel_name)
+
 
         value = dict(
             block_uuid=block_uuid,
@@ -91,8 +96,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
         if execute_pipeline:
-            pipeline = Pipeline(pipeline_uuid, get_repo_path())
-
             if kernel_name == KernelName.PYSPARK:
                 code = get_pipeline_execution_code(
                     pipeline_uuid,
@@ -102,7 +105,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     repo_config=get_repo_config().to_dict(remote=True),
                     update_status=False if kernel_name == KernelName.PYSPARK else True,
                 )
-                client = self.init_kernel_client()
+                client = self.init_kernel_client(kernel_name)
                 msg_id = client.execute(code)
 
                 WebSocketServer.running_executions_mapping[msg_id] = value
@@ -120,11 +123,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         else:
             widget = BlockType.CHART == block_type
 
-            pipeline = Pipeline(pipeline_uuid, get_repo_path())
             block = pipeline.get_block(block_uuid, widget=widget)
             code = custom_code
 
-            client = self.init_kernel_client()
+            client = self.init_kernel_client(kernel_name)
 
             if not custom_code and BlockType.SCRATCHPAD == block_type:
                 msg_id = client.execute('')
