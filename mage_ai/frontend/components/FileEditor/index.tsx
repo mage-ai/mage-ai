@@ -23,6 +23,7 @@ import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
+  active: boolean;
   addNewBlock: (b: BlockType) => void;
   filePath: string;
   pipeline: PipelineType;
@@ -32,6 +33,7 @@ type FileEditorProps = {
 };
 
 function FileEditor({
+  active,
   addNewBlock,
   filePath,
   pipeline,
@@ -158,19 +160,22 @@ function FileEditor({
   registerOnKeyDown(
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
-      if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
-        event.preventDefault();
-        saveFile(content, file);
-      } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
-        event.preventDefault();
-        const warning = `${file.path} has changes that are unsaved. ` +
-          'Click cancel and save your changes before reloading page.';
-        if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
-          location.reload();
+      if (active) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
+          event.preventDefault();
+          saveFile(content, file);
+        } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
+          event.preventDefault();
+          const warning = `${file.path} has changes that are unsaved. ` +
+            'Click cancel and save your changes before reloading page.';
+          if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
+            location.reload();
+          }
         }
       }
     },
     [
+      active,
       content,
       file,
       saveFile,
