@@ -384,9 +384,8 @@ function CodeBlockProps({
           event.preventDefault();
           addNewBlock({
             type: block.type,
-          }).then(() => {
-            runBlockAndTrack({ block });
           });
+          runBlockAndTrack({ block });
         }
       }
     },
