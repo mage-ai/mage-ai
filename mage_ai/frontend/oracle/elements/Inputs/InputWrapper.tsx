@@ -38,7 +38,7 @@ export type InputWrapperProps = {
   basicPadding?: boolean;
   beforeIcon?: any;
   bold?: boolean;
-  borderLess?: boolean;
+  borderless?: boolean;
   compact?: boolean
   danger?: boolean;
   defaultColor?: boolean;
@@ -213,7 +213,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     font-family: ${FONT_FAMILY_BOLD};
   `}
 
-  ${props => !props.borderLess && `
+  ${props => !props.borderless && `
     border-radius: ${BORDER_RADIUS_SMALL}px;
     border-style: ${BORDER_STYLE};
     border-width: ${BORDER_WIDTH}px};
@@ -224,7 +224,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     border-bottom-right-radius: 0;
   `}
 
-  ${props => props.borderLess && `
+  ${props => props.borderless && `
     border-style: none;
   `}
 
