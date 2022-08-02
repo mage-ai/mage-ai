@@ -1,9 +1,35 @@
 # Run pipeline in Airflow
 We support running the pipeline in Airflow DAGs. You need to firstly install `mage_ai` library by adding `mage_ai` to your requirements.txt file. Then you need to download the mage pipeline code into your Airflow directory. You can achieve it by using a git submodule in your Airflow directory.
 
-We provide two ways to run mage pipelines in Airflow.
-1. Run pipeline in a BashOperator or PythonOperator.
-2. Run pipeine as an Airflow DAG.
+We provide multiple ways to run mage pipelines in Airflow.
+1. [Create DAGs for all pipelines in a Mage project](#create-dags-for-all-the-pipelines-in-mage-project)
+1. [Run one pipeline in a BashOperator](#run-pipeline-in-a-bashoperator)
+1. [Run one pipeline in a PythonOperator](#run-pipeline-in-a-pythonoperator)
+1. [Run one pipeine as an Airflow DAG](#run-pipeline-as-an-airflow-dag)
+
+
+## Create DAGs for all the pipelines in Mage project
+```python
+from airflow import DAG
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime
+from mage_ai.orchestration.airflow import create_dags
+import os
+
+
+ABSOLUTE_PATH = os.path.abspath(os.path.dirname(__file__))
+project_path = os.path.join(ABSOLUTE_PATH, 'project_path')
+
+create_dags(
+    project_path,
+    DAG,
+    PythonOperator,
+    blacklist_pipelines=[],     # Blacklisted pipeline uuids
+    dag_settings=dict(
+        start_date=datetime(2022, 8, 2),
+    ),
+)
+```
 
 
 ## Run pipeline in a BashOperator
@@ -98,7 +124,7 @@ dag = DAG(
 )
 
 
-pipeline = Pipeline('prod_pipeline', repo_path=project_path)
+pipeline = Pipeline(pipeline_name, repo_path=project_path)
 
 tasks = []
 

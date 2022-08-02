@@ -51,7 +51,7 @@ def create_dag(
         operators = {}
 
         for task_dict in tasks:
-            task_operator = python_operator_class(task_dag=dag, **ignore_keys(task_dict, [
+            task_operator = python_operator_class(dag=dag, **ignore_keys(task_dict, [
                 'upstream_task_ids',
             ]))
             operators[task_operator.task_id] = task_operator
