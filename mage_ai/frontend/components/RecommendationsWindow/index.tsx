@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -16,11 +17,17 @@ import {
 } from './index.style';
 
 type RecommendationsWindowProps = {
+  blocks: BlockType[];
   children?: JSX.Element;
+  selectedBlock: BlockType;
+  setSelectedBlock: (block: BlockType) => void;
 };
 
 function RecommendationsWindow({
+  blocks = [],
   children,
+  selectedBlock,
+  setSelectedBlock,
 }: RecommendationsWindowProps) {
   const recsCount = React.Children.count(children);
 
@@ -28,16 +35,42 @@ function RecommendationsWindow({
     <WindowContainerStyle>
       <WindowHeaderStyle>
         <Flex alignItems="center">
-          <MageIcon />
+          <div>
+            <MageIcon />
+          </div>
           <Spacing pr={1} />
-          <Text>
-            Block Dropdown
+          <Text
+            disableWordBreak
+            monospace
+            muted
+          >
+            Recommendations:
           </Text>
+          <Select
+            borderless
+            compact
+            fullWidth
+            label="Select a block"
+            monospace
+            onChange={e => {
+              const newBlockUuid = e.target.value;
+              const newBlock = blocks.find(({ uuid }) => uuid === newBlockUuid);
+              setSelectedBlock(newBlock);
+            }}
+            value={selectedBlock?.name}
+          >
+            {blocks.map(({ name, uuid }) => (
+              <option key={uuid} value={uuid}>
+                {name}
+              </option>
+            ))}
+          </Select>
         </Flex>
         <Button iconOnly>
           <Close muted />
         </Button>
       </WindowHeaderStyle>
+
       <WindowContentStyle>
         {recsCount === 0
           ? 
@@ -47,6 +80,7 @@ function RecommendationsWindow({
           : children
         }
       </WindowContentStyle>
+
       <WindowFooterStyle>
         <Text default monospace>
           {recsCount} results
@@ -55,7 +89,9 @@ function RecommendationsWindow({
           beforeIcon={<Add size={UNIT * 2} />}
           secondaryGradient
         >
-          Add selected
+          <Text>
+            Add selected
+          </Text>
         </Button>
       </WindowFooterStyle>
     </WindowContainerStyle>
