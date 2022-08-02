@@ -36,7 +36,7 @@
     "axios": "^0.27.2",
     "js-cookie": "^3.0.1",
     "local-storage": "^2.0.0",
-    "moment": "^2.29.3",
+    "moment": "^2.29.4",
     "monaco-themes": "^0.4.2",
     "next": "12.1.6",
     "next-cookies": "^2.0.3",
