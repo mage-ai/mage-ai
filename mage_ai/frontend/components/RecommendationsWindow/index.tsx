@@ -34,6 +34,9 @@ function RecommendationsWindow({
   setSelectedBlock,
 }: RecommendationsWindowProps) {
   const recsCount = React.Children.count(children);
+  const emptyMessage = selectedBlock === null
+    ? 'Select a block to view data cleaning recommendations.'
+    : 'No recommendations available.'
 
   return (
     <WindowContainerStyle>
@@ -53,7 +56,7 @@ function RecommendationsWindow({
             borderless
             compact
             fullWidth
-            label="Select a block"
+            label="Select block"
             monospace
             onChange={e => {
               const newBlockUuid = e.target.value;
@@ -81,7 +84,7 @@ function RecommendationsWindow({
         {recsCount === 0
           ? 
             <Text>
-              No recommendations available
+              {emptyMessage}
             </Text>
           : children
         }
