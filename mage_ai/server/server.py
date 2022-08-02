@@ -4,12 +4,23 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.active_kernel import (
+    interrupt_kernel,
+    restart_kernel,
+    start_kernel,
+    switch_active_kernel,
+)
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, kernel_managers
+from mage_ai.server.kernels import (
+    DEFAULT_KERNEL_NAME,
+    kernel_managers,
+    KernelName,
+    PIPELINE_TO_KERNEL_NAME,
+)
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 import argparse
@@ -83,6 +94,7 @@ class ApiPipelineHandler(BaseHandler):
         pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
+        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
         self.write(
             dict(
                 pipeline=pipeline.to_dict(
@@ -102,6 +114,7 @@ class ApiPipelineHandler(BaseHandler):
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
+        switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
         self.write(
             dict(
                 pipeline=pipeline.to_dict(
@@ -282,15 +295,17 @@ class ApiPipelineVariableListHandler(BaseHandler):
 class KernelsHandler(BaseHandler):
     def get(self, kernel_id=None):
         kernels = []
-
-        if kernel_managers[DEFAULT_KERNEL_NAME].has_kernel:
-            kernels.append(
-                dict(
-                    alive=kernel_managers[DEFAULT_KERNEL_NAME].is_alive(),
-                    id=kernel_managers[DEFAULT_KERNEL_NAME].kernel_id,
-                    name=kernel_managers[DEFAULT_KERNEL_NAME].kernel_name,
+        
+        for kernel_name in KernelName:
+            kernel = kernel_managers[kernel_name]
+            if kernel.has_kernel:
+                kernels.append(
+                    dict(
+                        alive=kernel.is_alive(),
+                        id=kernel.kernel_id,
+                        name=kernel.kernel_name,
+                    )
                 )
-            )
 
         r = json.dumps(dict(kernels=kernels))
         self.write(r)
@@ -299,16 +314,16 @@ class KernelsHandler(BaseHandler):
         kernel_name = self.get_argument('kernel_name', DEFAULT_KERNEL_NAME)
         if kernel_name not in kernel_managers:
             kernel_name = DEFAULT_KERNEL_NAME
+        switch_active_kernel(kernel_name)
         if 'interrupt' == action_type:
-            kernel_managers[kernel_name].interrupt_kernel()
+            interrupt_kernel()
         elif 'restart' == action_type:
             try:
-                kernel_managers[kernel_name].restart_kernel()
+                restart_kernel()
             except RuntimeError as e:
                 # RuntimeError: Cannot restart the kernel. No previous call to 'start_kernel'.
                 if 'start_kernel' in str(e):
-                    kernel_managers[kernel_name].start_kernel()
-            os.environ['CONNECTION_FILE'] = kernel_managers[kernel_name].connection_file
+                    start_kernel()
 
         r = json.dumps(
             dict(
@@ -403,8 +418,7 @@ async def main(
         init_repo(project)
     set_repo_path(project)
 
-    kernel_managers[DEFAULT_KERNEL_NAME].start_kernel()
-    os.environ['CONNECTION_FILE'] = kernel_managers[DEFAULT_KERNEL_NAME].connection_file
+    switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
 
@@ -418,7 +432,7 @@ async def main(
     while is_port_in_use(port):
         if port > max_port:
             raise Exception(
-                f'Unable to find an open port' 'please clear your running processes if possible.'
+                'Unable to find an open port, please clear your running processes if possible.'
             )
         port += 1
 
@@ -430,7 +444,6 @@ async def main(
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
     get_messages(
-        kernel_managers[DEFAULT_KERNEL_NAME].client(),
         lambda content: WebSocketServer.send_message(
             parse_output_message(content),
         ),

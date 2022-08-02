@@ -30,7 +30,7 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import PipelineDetail from '@components/PipelineDetail';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
@@ -383,7 +383,10 @@ function PipelineDetailPage({
     revalidateOnFocus: true,
   });
   const kernels = dataKernels?.kernels;
-  const kernel = kernels?.[0];
+  const kernel =
+    kernels?.find(({ name }) =>
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
+    ) || kernels?.[0];
 
   // Files
   const openFile = useCallback((filePath: string) => {
@@ -441,7 +444,6 @@ function PipelineDetailPage({
       block: blockOverride,
       pipeline: pipelineOverride = {},
     } = payload || {};
-
     setPipelineLastSaved(new Date());
 
     // @ts-ignore
@@ -507,10 +509,11 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  const updatePipelineName = useCallback((name: string) => {
+  const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => {
     return savePipelineContent({
       pipeline: {
         name,
+        type,
       },
     }).then(({
       data: {
@@ -520,6 +523,9 @@ function PipelineDetailPage({
       },
     }) => {
       fetchFileTree();
+      if (type !== pipeline?.type) {
+        fetchPipeline();
+      }
       updateCollapsedBlocks(blocks, pipelineUUID, uuid);
       router.push(`/pipelines/${uuid}`);
     });
@@ -1190,7 +1196,7 @@ function PipelineDetailPage({
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
       selectedFilePath={selectedFilePath}
-      updatePipelineName={updatePipelineName}
+      updatePipelineMetadata={updatePipelineMetadata}
     />
   ), [
     filesTouched,
@@ -1203,7 +1209,7 @@ function PipelineDetailPage({
     runningBlocks,
     selectedFilePath,
     selectedFilePaths,
-    updatePipelineName,
+    updatePipelineMetadata,
   ]);
 
   const afterHeader = useMemo(() => {

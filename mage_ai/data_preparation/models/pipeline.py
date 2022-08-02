@@ -302,6 +302,13 @@ class Pipeline:
             os.rename(old_pipeline_path, new_pipeline_path)
             self.save()
 
+        if 'type' in data and data['type'] != self.type:
+            """
+            Update kernel
+            """
+            self.type = data['type']
+            self.save()
+
         if update_content:
             for key in ['blocks', 'widgets']:
                 if key in data:
