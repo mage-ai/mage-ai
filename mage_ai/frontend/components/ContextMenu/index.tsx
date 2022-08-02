@@ -84,7 +84,7 @@ function ContextMenu({
   type,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
-  const [contextItem, setContextItem] = useState({} as ContextItemType);
+  const [contextItem, setContextItem] = useState<ContextItemType>({} as ContextItemType);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
