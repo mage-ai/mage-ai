@@ -6,10 +6,10 @@ import { PipelineMetadataType } from './MetadataType';
 import { randomSample } from '@utils/array';
 
 export default interface PipelineType {
-  actions: TransformerActionType[];
+  actions?: TransformerActionType[];
   blocks?: BlockType[];
   id?: number;
-  metadata: PipelineMetadataType;
+  metadata?: PipelineMetadataType;
   name?: string;
   uuid?: string;
 }

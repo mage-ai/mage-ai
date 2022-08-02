@@ -120,5 +120,5 @@ export function buildFetchV2(urlArg: string, opts: FetcherOptionsType = {}) {
 }
 
 export function fetcher(url: string, opts: FetcherOptionsType = {}) {
-  return buildFetch(url, opts).then(res => res.json());
+  return buildFetch(url, opts).then(res => res.clone().json());
 }

@@ -433,35 +433,6 @@ function PipelineDetailPage({
     },
   );
 
-  const [updatePipelineName] = useMutation(
-    (name: string) => api.pipelines.useUpdate(pipelineUUID)({
-      pipeline: { name },
-    }),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            fetchFileTree();
-            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
-            router.push(`/pipelines/${uuid}`);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
@@ -534,6 +505,30 @@ function PipelineDetailPage({
     updatePipeline,
     widgetTempData.current,
     widgets,
+  ]);
+
+  const updatePipelineName = useCallback((name: string) => {
+    return savePipelineContent({
+      pipeline: {
+        name,
+      },
+    }).then(({
+      data: {
+        pipeline: {
+          uuid,
+        },
+      },
+    }) => {
+      fetchFileTree();
+      updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+      router.push(`/pipelines/${uuid}`);
+    });
+  }, [
+    blocks,
+    fetchFileTree,
+    pipelineUUID,
+    savePipelineContent,
+    updateCollapsedBlocks,
   ]);
 
   const [deleteBlock] = useMutation(
