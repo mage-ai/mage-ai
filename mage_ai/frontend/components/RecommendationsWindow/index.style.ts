@@ -4,12 +4,11 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-const HEADER_HEIGHT = UNIT * 6;
-const MAX_WIDTH = UNIT * 80;
+const HEADER_HEIGHT = UNIT * 6.25;
+const MAX_WIDTH = UNIT * 100;
 
 export const WindowContainerStyle = styled.div`
   border-radius: ${BORDER_RADIUS}px;
-  height: fit-content;
   width: 100%;
   max-width: ${MAX_WIDTH}px;
   z-index: 101;
@@ -25,8 +24,11 @@ export const WindowContainerStyle = styled.div`
 `;
 
 const HEADER_STYLES = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   height: ${HEADER_HEIGHT}px;
-  padding: ${UNIT * 1.5}px ${PADDING_UNITS * UNIT}px;
+  padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
 
   ${props => `
     background-color: ${(props.theme || dark).background.output};
