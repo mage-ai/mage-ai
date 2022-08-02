@@ -71,7 +71,7 @@ const ButtonStyle = styled.button<{
   border: none;
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
-  padding: 7px ${UNIT * 2}px;
+  padding: 7px ${UNIT}px;
   position: relative;
   z-index: 0;
 

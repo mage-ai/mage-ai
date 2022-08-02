@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 const HEADER_HEIGHT = UNIT * 6.25;
 const MAX_WIDTH = UNIT * 100;
@@ -13,7 +14,7 @@ export const WindowContainerStyle = styled.div`
   max-width: ${MAX_WIDTH}px;
   z-index: 101;
   position: absolute;
-  top: 45%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 
@@ -46,8 +47,11 @@ export const WindowHeaderStyle = styled.div`
 `;
 
 export const WindowContentStyle = styled.div`
+  max-height: 75vh;
   overflow: auto;
   padding: ${PADDING_UNITS * UNIT}px;
+
+  ${ScrollbarStyledCss}
 `;
 
 export const WindowFooterStyle = styled.div`
