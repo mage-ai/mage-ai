@@ -1,5 +1,4 @@
 from enum import Enum
-from mage_ai.server.kernels import KernelName
 
 PIPELINES_FOLDER = 'pipelines'
 PIPELINE_CONFIG_FILE = 'metadata.yaml'
@@ -37,12 +36,6 @@ class BlockType(str, Enum):
 class PipelineType(str, Enum):
     PYTHON = 'python'
     PYSPARK = 'pyspark'
-
-
-PIPELINE_TO_KERNEL_NAME = {
-    PipelineType.PYTHON: KernelName.PYTHON3,
-    PipelineType.PYSPARK: KernelName.PYSPARK,
-}
 
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [

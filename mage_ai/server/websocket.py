@@ -55,7 +55,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         custom_code = message.get('code')
         output = message.get('output')
         if output:
-            print('output')
             self.send_message(output)
             return
         global_vars = message.get('global_vars')

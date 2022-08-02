@@ -8,9 +8,12 @@ import {
 import { ThemeContext } from 'styled-components';
 
 import Circle from '@oracle/elements/Circle';
+import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelType from '@interfaces/KernelType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
@@ -30,9 +33,6 @@ import { dateFormatLongFromUnixTimestamp } from '@utils/string';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 import { useKeyboardContext } from '@context/Keyboard';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import ClickOutside from '@oracle/components/ClickOutside';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
 
 type KernelStatusProps = {
   filePaths: string[];
@@ -111,7 +111,7 @@ function KernelStatus({
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
-        updatePipelineName(newPipelineName);
+        updatePipelineMetadata(newPipelineName);
         setIsEditingPipeline(false);
       }
     },
@@ -119,7 +119,7 @@ function KernelStatus({
       isEditingPipeline,
       newPipelineName,
       setIsEditingPipeline,
-      updatePipelineName,
+      updatePipelineMetadata,
     ],
   );
 
