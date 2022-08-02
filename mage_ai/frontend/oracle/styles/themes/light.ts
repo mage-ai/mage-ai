@@ -139,7 +139,9 @@ export default {
   },
   interactive: {
     activeBorder: BLACK,
+    checked: PURPLE_LIGHT,
     dangerBorder: RED,
+    defaultBackground: WHITE,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
     focusBackground: GRAY,

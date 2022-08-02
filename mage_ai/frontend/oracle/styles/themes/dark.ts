@@ -163,6 +163,7 @@ export default {
   },
   interactive: {
     activeBorder: BLACK,
+    checked: WHITE,
     dangerBorder: RED,
     defaultBackground: '#36383F',
     defaultBorder: '#1D1D20',
