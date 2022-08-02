@@ -433,50 +433,32 @@ function PipelineDetailPage({
     },
   );
 
-  const [updatePipelineName] = useMutation(
-    (name: string) => api.pipelines.useUpdate(pipelineUUID)({
-      pipeline: { name },
-    }),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            fetchFileTree();
-            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
-            router.push(`/pipelines/${uuid}`);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
+  const savePipelineContent = useCallback((payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => {
+    const {
+      block: blockOverride,
+      pipeline: pipelineOverride = {},
+    } = payload || {};
 
-  const savePipelineContent = useCallback(() => {
     setPipelineLastSaved(new Date());
 
     // @ts-ignore
     return updatePipeline({
       pipeline: {
         ...pipeline,
+        ...pipelineOverride,
         blocks: blocks.map((block: BlockType) => {
           let contentToSave = contentByBlockUUID.current[block.uuid];
           if (typeof contentToSave === 'undefined') {
             contentToSave = block.content;
           }
-          return {
+
+          const blockPayload: BlockType = {
             ...block,
             content: contentToSave,
+            // @ts-ignore
             outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
               ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
                 text_data: JSON.stringify(d),
@@ -484,6 +466,14 @@ function PipelineDetailPage({
               }))
               : block.outputs,
           };
+
+          if (blockOverride?.uuid === block.uuid) {
+            Object.entries(blockOverride).forEach(([k, v]) => {
+              blockPayload[k] = v;
+            });
+          }
+
+          return blockPayload;
         }),
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
@@ -515,6 +505,30 @@ function PipelineDetailPage({
     updatePipeline,
     widgetTempData.current,
     widgets,
+  ]);
+
+  const updatePipelineName = useCallback((name: string) => {
+    return savePipelineContent({
+      pipeline: {
+        name,
+      },
+    }).then(({
+      data: {
+        pipeline: {
+          uuid,
+        },
+      },
+    }) => {
+      fetchFileTree();
+      updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+      router.push(`/pipelines/${uuid}`);
+    });
+  }, [
+    blocks,
+    fetchFileTree,
+    pipelineUUID,
+    savePipelineContent,
+    updateCollapsedBlocks,
   ]);
 
   const [deleteBlock] = useMutation(

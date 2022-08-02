@@ -11,6 +11,7 @@ from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, g
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
+from mage_ai.shared.hash import extract
 from typing import Callable, List
 import os
 import shutil
@@ -316,14 +317,24 @@ class Pipeline:
                             if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                                 block.save_outputs(block_data['outputs'], override=True)
 
+                            name = block_data.get('name')
+
                             if widget:
                                 if block_data.get('configuration'):
                                     block.configuration = block_data['configuration']
 
+                                keys_to_update = []
+
+                                if name and name != block.name:
+                                    keys_to_update.append('name')
+
                                 if block_data.get('upstream_blocks'):
-                                    block.update(
-                                        dict(upstream_blocks=block_data['upstream_blocks'])
-                                    )
+                                    keys_to_update.append('upstream_blocks')
+
+                                if len(keys_to_update) >= 1:
+                                    block.update(extract(block_data, keys_to_update))
+                            elif name and name != block.name:
+                                block.update(extract(block_data, ['name']))
 
                                 self.save(widget=widget)
 

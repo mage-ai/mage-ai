@@ -78,7 +78,10 @@ type PipelineDetailProps = {
     runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
-  savePipelineContent: () => void;
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
@@ -333,6 +336,7 @@ function PipelineDetail({
               ref={blockRefs.current[path]}
               runBlock={runBlock}
               runningBlocks={runningBlocks}
+              savePipelineContent={savePipelineContent}
               selected={selected}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setAnyInputFocused={setAnyInputFocused}

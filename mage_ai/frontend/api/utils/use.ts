@@ -53,7 +53,7 @@ export function fetchListWithParentAsync(
 export function fetchUpdate(resource: string, id: string, body: any, query: any = {}) {
   const url: string = buildUrl(resource, id, null, null, query);
 
-  return buildFetch(url, { body, method: PUT });
+  return buildFetchV2(url, { body, method: PUT });
 }
 
 export function useDetail(

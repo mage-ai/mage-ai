@@ -102,6 +102,10 @@ type CodeBlockProps = {
     runTests?: boolean;
   }) => void;
   runningBlocks: BlockType[];
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
@@ -134,6 +138,7 @@ function CodeBlockProps({
   pipeline,
   runBlock,
   runningBlocks,
+  savePipelineContent,
   selected,
   setAddNewBlockMenuOpenIdx,
   setAnyInputFocused,
@@ -321,7 +326,7 @@ function CodeBlockProps({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({ block: { content } }) => {
+          callback: () => {
             setIsEditingBlock(false);
             fetchPipeline();
             fetchFileTree();
@@ -615,11 +620,15 @@ function CodeBlockProps({
                 <Spacing ml={1} />
                 <Link
                   // @ts-ignore
-                  onClick={() => updateBlock({
+                  onClick={() => savePipelineContent({
                     block: {
-                      ...block,
                       name: newBlockUuid,
+                      uuid: block.uuid,
                     },
+                  }).then(() => {
+                    setIsEditingBlock(false);
+                    fetchPipeline();
+                    fetchFileTree();
                   })}
                   preventDefault
                   sameColorAsText
