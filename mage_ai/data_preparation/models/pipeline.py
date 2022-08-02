@@ -546,7 +546,7 @@ class Pipeline:
                     virtual_stack.append(StackFrame(child_block))
 
         for uuid in combined_blocks:
-            if status[uuid] == 'unvisited':
+            if status[uuid] == 'unvisited' and uuid in self.blocks_by_uuid:
                 __check_cycle(self.blocks_by_uuid[uuid])
 
 
