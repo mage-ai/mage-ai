@@ -462,21 +462,32 @@ function PipelineDetailPage({
     },
   );
 
-  const savePipelineContent = useCallback(() => {
+  const savePipelineContent = useCallback((payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => {
+    const {
+      block: blockOverride,
+      pipeline: pipelineOverride = {},
+    } = payload || {};
+
     setPipelineLastSaved(new Date());
 
     // @ts-ignore
     return updatePipeline({
       pipeline: {
         ...pipeline,
+        ...pipelineOverride,
         blocks: blocks.map((block: BlockType) => {
           let contentToSave = contentByBlockUUID.current[block.uuid];
           if (typeof contentToSave === 'undefined') {
             contentToSave = block.content;
           }
-          return {
+
+          const blockPayload: BlockType = {
             ...block,
             content: contentToSave,
+            // @ts-ignore
             outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
               ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
                 text_data: JSON.stringify(d),
@@ -484,6 +495,14 @@ function PipelineDetailPage({
               }))
               : block.outputs,
           };
+
+          if (blockOverride?.uuid === block.uuid) {
+            Object.entries(blockOverride).forEach(([k, v]) => {
+              blockPayload[k] = v;
+            });
+          }
+
+          return blockPayload;
         }),
         widgets: widgets.map((block: BlockType) => {
           let contentToSave = contentByWidgetUUID.current[block.uuid];
