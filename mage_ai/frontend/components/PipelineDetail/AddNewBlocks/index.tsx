@@ -24,7 +24,7 @@ type AddNewBlocksProps = {
   blockIdx?: number;
   compact?: boolean;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
-  setRecommendationsWindowOpen: (open: boolean) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -36,7 +36,7 @@ function AddNewBlocks({
   compact,
   blockIdx,
   setAddNewBlockMenuOpenIdx,
-  setRecommendationsWindowOpen,
+  setRecsWindowOpenBlockIdx,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -242,7 +242,7 @@ function AddNewBlocks({
         }
         onClick={(e) => {
           e.preventDefault();
-          setRecommendationsWindowOpen(true);
+          setRecsWindowOpenBlockIdx(blockIdx);
         }}
         uuid="AddNewBlocks/Recommendations"
       >

@@ -21,7 +21,7 @@ type RecommendationsWindowProps = {
   blocks: BlockType[];
   children?: JSX.Element;
   selectedBlock: BlockType;
-  setRecommendationsWindowOpen: (open: boolean) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedBlock: (block: BlockType) => void;
 };
 
@@ -30,13 +30,16 @@ function RecommendationsWindow({
   blocks = [],
   children,
   selectedBlock,
-  setRecommendationsWindowOpen,
+  setRecsWindowOpenBlockIdx,
   setSelectedBlock,
 }: RecommendationsWindowProps) {
   const recsCount = React.Children.count(children);
+  const finalBlockInsertionIdx = typeof blockInsertionIndex === 'undefined'
+    ? blocks.length
+    : blockInsertionIndex;
   const emptyMessage = selectedBlock === null
     ? 'Select a block to view data cleaning recommendations.'
-    : 'No recommendations available.'
+    : 'No recommendations available.';
 
   return (
     <WindowContainerStyle>
@@ -55,7 +58,6 @@ function RecommendationsWindow({
           <Select
             borderless
             compact
-            fullWidth
             label="Select block"
             monospace
             onChange={e => {
@@ -63,18 +65,18 @@ function RecommendationsWindow({
               const newBlock = blocks.find(({ uuid }) => uuid === newBlockUuid);
               setSelectedBlock(newBlock);
             }}
-            value={selectedBlock?.name}
+            value={selectedBlock?.uuid}
           >
-            {blocks.map(({ name, uuid }) => (
+            {blocks.map(({ uuid }) => (
               <option key={uuid} value={uuid}>
-                {name}
+                {uuid}
               </option>
             ))}
           </Select>
         </Flex>
         <Button
           iconOnly
-          onClick={() => setRecommendationsWindowOpen(false)}
+          onClick={() => setRecsWindowOpenBlockIdx(null)}
         >
           <Close muted />
         </Button>

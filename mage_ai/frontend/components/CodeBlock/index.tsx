@@ -109,7 +109,7 @@ type CodeBlockProps = {
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
-  setRecommendationsWindowOpen: (open: boolean) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   widgets: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -145,7 +145,7 @@ function CodeBlockProps({
   setAnyInputFocused,
   setEditingBlock,
   setOutputBlocks,
-  setRecommendationsWindowOpen,
+  setRecsWindowOpenBlockIdx,
   setSelected,
   setSelectedOutputBlock,
   setTextareaFocused,
@@ -850,7 +850,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               blockIdx={blockIdx}
               compact
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-              setRecommendationsWindowOpen={setRecommendationsWindowOpen}
+              setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
             />
           )}
           <BlockDividerInner className="block-divider-inner" />
