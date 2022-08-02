@@ -1,3 +1,5 @@
+import { NextRouter } from 'next/router';
+
 import BlockType, { OutputType } from '@interfaces/BlockType';
 import {
   LOCAL_STORAGE_KEY_DATA_OUTPUT_BLOCK_UUIDS,
@@ -5,9 +7,7 @@ import {
   remove,
   set,
 } from '@storage/localStorage';
-import api from '@api';
 import PipelineType from '@interfaces/PipelineType';
-import { NextRouter } from 'next/router';
 import { indexBy } from '@utils/array';
 import { isJsonString } from '@utils/string';
 
