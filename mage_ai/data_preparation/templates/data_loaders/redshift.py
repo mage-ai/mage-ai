@@ -13,6 +13,8 @@ def load_data_from_redshift(**kwargs) -> DataFrame:
     """
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#redshift
     """
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
