@@ -67,6 +67,10 @@ import {
   PlayButtonFilled,
   Trash,
 } from '@oracle/icons';
+import {
+  KEY_CODE_ENTER,
+  KEY_CODE_META,
+} from '@utils/hooks/keyboardShortcuts/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import {
   capitalize,
@@ -76,6 +80,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy, remove, sortByKey } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { onError, onSuccess } from '@api/utils/response';
+import { useKeyboardContext } from '@context/Keyboard';
 
 export type ChartPropsShared = {
   autocompleteItems: AutocompleteItemType[];
@@ -768,6 +773,40 @@ function ChartBlock({
         // setErrorMessages(messages);
       },
     },
+  );
+
+  const uuidKeyboard = `ChartBlock/${block.uuid}`;
+  const {
+    registerOnKeyDown,
+    unregisterOnKeyDown,
+  } = useKeyboardContext();
+
+  useEffect(() => () => {
+    unregisterOnKeyDown(uuidKeyboard);
+  }, [unregisterOnKeyDown, uuidKeyboard]);
+
+  registerOnKeyDown(
+    uuidKeyboard,
+    (event, keyMapping, keyHistory) => {
+      if (isEditingBlock
+        && String(keyHistory[0]) === String(KEY_CODE_ENTER)
+        && String(keyHistory[1]) !== String(KEY_CODE_META)
+      ) {
+        // @ts-ignore
+        updateBlock({
+          widget: {
+            ...block,
+            name: newBlockUuid,
+          },
+        });
+      }
+    },
+    [
+      block,
+      isEditingBlock,
+      newBlockUuid,
+      updateBlock,
+    ],
   );
 
   return (
