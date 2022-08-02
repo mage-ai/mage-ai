@@ -26,7 +26,7 @@ const SelectStyle = styled.select<SelectProps>`
   background-repeat: no-repeat;
   background-position: -webkit-calc(100% - ${UNIT}px) center;
   background-position: calc(100% - ${UNIT}px) center;
-  padding-right: ${UNIT * 2.5}px;
+  padding-right: ${UNIT * 3.5}px;
 
   &:hover {
     cursor: pointer;

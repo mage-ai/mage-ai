@@ -17,16 +17,20 @@ import {
 } from './index.style';
 
 type RecommendationsWindowProps = {
+  blockInsertionIndex?: number;
   blocks: BlockType[];
   children?: JSX.Element;
   selectedBlock: BlockType;
+  setRecommendationsWindowOpen: (open: boolean) => void;
   setSelectedBlock: (block: BlockType) => void;
 };
 
 function RecommendationsWindow({
+  blockInsertionIndex,
   blocks = [],
   children,
   selectedBlock,
+  setRecommendationsWindowOpen,
   setSelectedBlock,
 }: RecommendationsWindowProps) {
   const recsCount = React.Children.count(children);
@@ -42,7 +46,6 @@ function RecommendationsWindow({
           <Text
             disableWordBreak
             monospace
-            muted
           >
             Recommendations:
           </Text>
@@ -66,7 +69,10 @@ function RecommendationsWindow({
             ))}
           </Select>
         </Flex>
-        <Button iconOnly>
+        <Button
+          iconOnly
+          onClick={() => setRecommendationsWindowOpen(false)}
+        >
           <Close muted />
         </Button>
       </WindowHeaderStyle>

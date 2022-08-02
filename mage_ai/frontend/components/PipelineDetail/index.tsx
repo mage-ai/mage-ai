@@ -86,6 +86,7 @@ type PipelineDetailProps = {
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
+  setRecommendationsWindowOpen: (open: boolean) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -125,6 +126,7 @@ function PipelineDetail({
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
+  setRecommendationsWindowOpen,
   setRunningBlocks,
   setSelectedBlock,
   setSelectedOutputBlock,
@@ -342,6 +344,7 @@ function PipelineDetail({
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
               setOutputBlocks={setOutputBlocks}
+              setRecommendationsWindowOpen={setRecommendationsWindowOpen}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
               setSelectedOutputBlock={setSelectedOutputBlock}
               setTextareaFocused={setTextareaFocused}
@@ -387,6 +390,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
+            setRecommendationsWindowOpen={setRecommendationsWindowOpen}
           />
         </Spacing>
       </Spacing>
