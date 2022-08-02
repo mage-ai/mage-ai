@@ -1,6 +1,6 @@
+from distutils.dir_util import copy_tree
 import jinja2
 import os
-import shutil
 
 
 template_env = jinja2.Environment(
@@ -27,7 +27,9 @@ def copy_template_directory(template_path: str, dest_path: str) -> None:
     )
     if not os.path.exists(template_path):
         raise IOError(f'Could not find templates for {template_path}.')
-    shutil.copytree(template_path, dest_path)
+    if not os.path.exists(dest_path):
+        os.makedirs(dest_path)
+    copy_tree(template_path, dest_path)
 
 
 def read_template_file(template_path: str) -> jinja2.Template:
@@ -53,4 +55,3 @@ def write_template(template_source: str, dest_path: str) -> None:
     """
     with open(dest_path, 'w') as foutput:
         foutput.write(template_source)
-
