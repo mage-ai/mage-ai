@@ -11,6 +11,8 @@ import ModelThemeContext from '@context/ModelTheme';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
+
+import { BLUE_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
@@ -78,7 +80,7 @@ export type KeyboardShortcutButtonProps = {
   noPadding?: boolean;
   noHover?: boolean;
   pill?: boolean;
-  primaryEnergy?: boolean;
+  primaryGradient?: boolean;
   secondary?: boolean;
   selected?: boolean;
   shadow?: boolean;
@@ -317,10 +319,8 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     background-color: ${(props.theme.brand || dark.brand).earth400};
   `}
 
-  ${props => props.primaryEnergy && `
-    background-color: ${(props.theme.brand || dark.brand).energy400};
-    border: none;
-    font-family: ${FONT_FAMILY_BOLD};
+  ${props => props.primaryGradient && `
+    background: ${BLUE_GRADIENT};
   `}
 
   ${props => (props.selected || props.useModelTheme) && props.wind && `
