@@ -45,8 +45,9 @@ type KernelStatusProps = {
   pipeline: PipelineType;
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
+  restartKernel: () => void;
   selectedFilePath?: string;
-  updatePipelineName: (name: string, type?: string) => void;
+  updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
 function KernelStatus({
@@ -58,8 +59,9 @@ function KernelStatus({
   pipeline,
   pipelineContentTouched,
   pipelineLastSaved,
+  restartKernel,
   selectedFilePath,
-  updatePipelineName,
+  updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const {
@@ -187,7 +189,7 @@ function KernelStatus({
               .filter(type => pipeline?.type != type)
               .map(type => ({
                 label: () => type,
-                onClick: () => updatePipelineName(pipeline?.name, type),
+                onClick: () => updatePipelineMetadata(pipeline?.name, type),
                 uuid: type,
               }))
           ]}
@@ -206,7 +208,7 @@ function KernelStatus({
     showSelectKernel,
     setShowSelectKernel,
     themeContext,
-  ])
+  ]);
 
   const pipelineName = useMemo(() => (
     <Flex alignItems="center">
@@ -261,7 +263,7 @@ function KernelStatus({
                     <Spacing ml={1} />
                     <Link
                       onClick={() => {
-                        updatePipelineName(newPipelineName);
+                        updatePipelineMetadata(newPipelineName);
                         setIsEditingPipeline(false);
                       }}
                       preventDefault
@@ -372,7 +374,7 @@ function KernelStatus({
             );
           })}
         </FlexContainer>
-        
+
         {!selectedFilePath && (
           <Spacing px={PADDING_UNITS}>
             <Flex alignItems="center">

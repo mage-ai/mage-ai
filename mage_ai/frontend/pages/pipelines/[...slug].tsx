@@ -384,7 +384,9 @@ function PipelineDetailPage({
   });
   const kernels = dataKernels?.kernels;
   const kernel =
-    kernels?.find(({ name }) => name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]) || kernels?.[0];
+    kernels?.find(({ name }) =>
+      name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
+    ) || kernels?.[0];
 
   // Files
   const openFile = useCallback((filePath: string) => {
@@ -507,7 +509,7 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  const updatePipelineName = useCallback((name: string, type?: PipelineTypeEnum) => {
+  const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => {
     return savePipelineContent({
       pipeline: {
         name,
@@ -1194,7 +1196,7 @@ function PipelineDetailPage({
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
       selectedFilePath={selectedFilePath}
-      updatePipelineName={updatePipelineName}
+      updatePipelineMetadata={updatePipelineMetadata}
     />
   ), [
     filesTouched,
@@ -1207,7 +1209,7 @@ function PipelineDetailPage({
     runningBlocks,
     selectedFilePath,
     selectedFilePaths,
-    updatePipelineName,
+    updatePipelineMetadata,
   ]);
 
   const afterHeader = useMemo(() => {

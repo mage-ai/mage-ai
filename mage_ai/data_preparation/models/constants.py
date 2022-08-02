@@ -1,5 +1,4 @@
 from enum import Enum
-
 from mage_ai.server.kernels import KernelName
 
 PIPELINES_FOLDER = 'pipelines'

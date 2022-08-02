@@ -2,8 +2,6 @@ from enum import Enum
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
 
-import os
-
 
 class KernelName(str, Enum):
     PYSPARK = 'pysparkkernel'
@@ -11,6 +9,7 @@ class KernelName(str, Enum):
 
 
 DEFAULT_KERNEL_NAME = KernelName.PYTHON3
+
 
 kernel_managers = dict(
     python3=KernelManager(

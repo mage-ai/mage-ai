@@ -293,14 +293,14 @@ class KernelsHandler(BaseHandler):
         
         for kernel_name in KernelName:
             kernel = kernel_managers[kernel_name]
-            # if kernel.has_kernel:
-            kernels.append(
-                dict(
-                    alive=kernel.is_alive(),
-                    id=kernel.kernel_id,
-                    name=kernel.kernel_name,
+            if kernel.has_kernel:
+                kernels.append(
+                    dict(
+                        alive=kernel.is_alive(),
+                        id=kernel.kernel_id,
+                        name=kernel.kernel_name,
+                    )
                 )
-            )
 
         r = json.dumps(dict(kernels=kernels))
         self.write(r)
@@ -309,7 +309,7 @@ class KernelsHandler(BaseHandler):
         kernel_name = self.get_argument('kernel_name', DEFAULT_KERNEL_NAME)
         if kernel_name not in kernel_managers:
             kernel_name = DEFAULT_KERNEL_NAME
-            switch_active_kernel(kernel_name)
+        switch_active_kernel(kernel_name)
         if 'interrupt' == action_type:
             interrupt_kernel()
         elif 'restart' == action_type:
@@ -439,7 +439,6 @@ async def main(
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
     get_messages(
-        # kernel_managers[DEFAULT_KERNEL_NAME].client(),
         lambda content: WebSocketServer.send_message(
             parse_output_message(content),
         ),

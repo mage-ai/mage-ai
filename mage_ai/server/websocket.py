@@ -1,5 +1,4 @@
 from mage_ai.data_preparation.models.constants import (
-    PIPELINE_TO_KERNEL_NAME,
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
 )
@@ -11,7 +10,7 @@ from mage_ai.server.active_kernel import (
     switch_active_kernel,
 )
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
+from mage_ai.server.kernels import KernelName
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
@@ -19,11 +18,9 @@ from mage_ai.server.utils.output_display import (
     get_pipeline_execution_code,
 )
 from mage_ai.shared.hash import merge_dict
-from jupyter_client import KernelClient, KernelManager
-from jupyter_client.session import Session
+from jupyter_client import KernelClient
 import asyncio
 import json
-import os
 import threading
 import tornado.websocket
 import traceback
@@ -63,6 +60,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             return
         global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
+        kernel_name = message.get('kernel_name', get_active_kernel_name())
 
         run_downstream = message.get('run_downstream')
         run_upstream = message.get('run_upstream')
@@ -71,7 +69,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        kernel_name = message.get('kernel_name', get_active_kernel_name())
 
 
         value = dict(
