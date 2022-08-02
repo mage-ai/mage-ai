@@ -363,7 +363,7 @@ for col in df_1.columns:
         chart_type: ChartTypeEnum.BAR_CHART,
       },
       content: `columns = df_1.columns
-number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
+number_of_unique_values = [df_1[col].nunique() for col in columns]
 `,
     }),
   },
@@ -383,11 +383,12 @@ number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
 column_index = []
 rows = []
 for col in df_1.columns:
-    value, column_value = sorted(
-      [(v, k) for k, v in df_1[col].value_counts().items()],
-      reverse=True,
-    )[0]
-    number_of_rows = len(df_1[col].dropna())
+    value_counts = df_1[col].value_counts()
+    if len(value_counts.index) == 0:
+        continue
+    column_value = value_counts.index[0]
+    value = value_counts[column_value]
+    number_of_rows = df_1[col].count()
     column_index.append(col)
     rows.append([
         column_value,

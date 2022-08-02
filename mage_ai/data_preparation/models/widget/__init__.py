@@ -184,13 +184,16 @@ class Widget(Block):
                 for var_name_orig, var_name in self.output_variable_names:
                     arr1 = variables[var_name_orig]
                     data_key = var_name_orig
-
-            values = [v for v in arr1 if v is not None]
-            value_counts = {}
-            for key in values:
-                if not value_counts.get(key):
-                    value_counts[key] = 0
-                value_counts[key] += 1
+            if type(arr1) is pd.Series:
+                values = arr1[arr1.notna()]
+                value_counts = values.value_counts().to_dict()
+            else:
+                values = [v for v in arr1 if v is not None]
+                value_counts = {}
+                for key in values:
+                    if not value_counts.get(key):
+                        value_counts[key] = 0
+                    value_counts[key] += 1
 
             buckets = int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS))
             arr = sorted(
