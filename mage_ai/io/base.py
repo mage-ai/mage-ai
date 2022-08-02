@@ -116,6 +116,7 @@ class BaseFile(BaseIO):
         self,
         input: Union[IO, os.PathLike],
         format: Union[FileFormat, str],
+        limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
@@ -126,13 +127,20 @@ class BaseFile(BaseIO):
             Can be a stream or a filepath.
             format (Union[FileFormat, str]): Format of the data frame as stored
             in stream or filepath.
+            limit (int): Number of rows to limit reading. Note that true row limiting
+            can only be done for row-like data formats like CSV; all other formats
+            load all data and then truncate so only the first _limit_ rows are considered.
+            Defaults to 100,000.
 
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
         reader = self.__get_reader(format)
+        can_limit = format == FileFormat.CSV or (format == FileFormat.JSON and kwargs.get('lines'))
+        if can_limit:
+            kwargs['nrows'] = limit
         df = reader(input, **kwargs)
-        return df
+        return self.__trim_df(df, limit)
 
     def __trim_df(self, df: DataFrame, limit: int = QUERY_ROW_LIMIT) -> DataFrame:
         """
