@@ -363,7 +363,7 @@ for col in df_1.columns:
         chart_type: ChartTypeEnum.BAR_CHART,
       },
       content: `columns = df_1.columns
-number_of_unique_values = [len(df_1[col].dropna().unique()) for col in columns]
+number_of_unique_values = [df_1[col].nunique() for col in columns]
 `,
     }),
   },
