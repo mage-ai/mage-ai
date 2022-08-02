@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.shared.hash import ignore_keys, merge_dict
 import numpy as np
+import pandas as pd
 
 
 class Widget(Block):
@@ -151,8 +152,10 @@ class Widget(Block):
             else:
                 for var_name_orig, var_name in self.output_variable_names:
                     arr = variables[var_name_orig]
-
-            values = [v for v in arr if v is not None and not np.isnan(v)]
+            if type(arr) is pd.Series:
+                values = arr[arr.notna()].tolist()
+            else:
+                values = [v for v in arr if v is not None and not np.isnan(v)]
             data = build_histogram_data(
                 values,
                 int(self.configuration.get(VARIABLE_NAME_BUCKETS, MAX_BUCKETS)),
