@@ -94,6 +94,7 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
   const [showAddCharts, setShowAddCharts] = useState<boolean>(false);
@@ -775,6 +776,8 @@ function PipelineDetailPage({
         fetchPipeline();
 
         setActiveSidekickView(ViewKeyEnum.CHARTS);
+
+        setRecentlyAddedChart(widget);
       },
       onErrorCallback: ({
         error: {
@@ -787,8 +790,22 @@ function PipelineDetailPage({
     },
   )), [
     activeSidekickView,
+    chartRefs.current,
     createWidget,
     setActiveSidekickView,
+  ]);
+
+  useEffect(() => {
+    if (recentlyAddedChart) {
+      const refChart = chartRefs.current[recentlyAddedChart.uuid]?.current;
+      if (refChart) {
+        refChart.scrollIntoView();
+        setRecentlyAddedChart(null);
+      }
+    }
+  }, [
+    chartRefs.current[recentlyAddedChart?.uuid],
+    setRecentlyAddedChart,
   ]);
 
   useEffect(() => {
