@@ -5,6 +5,9 @@ import {
   remove,
   set,
 } from '@storage/localStorage';
+import api from '@api';
+import PipelineType from '@interfaces/PipelineType';
+import { NextRouter } from 'next/router';
 import { indexBy } from '@utils/array';
 import { isJsonString } from '@utils/string';
 
@@ -49,7 +52,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   };
 }
 
-export function updateCollapsedBlocks(blocks: BlockType[], pipelineUUID: string, newPipelineUUID: string) {
+export function updateCollapsedBlockStates(blocks: BlockType[], pipelineUUID: string, newPipelineUUID: string) {
   blocks.forEach((b) => {
     set(
       `${newPipelineUUID}/${b.uuid}/codeCollapsed`,
@@ -103,3 +106,22 @@ export function convertBlockUUIDstoBlockTypes(
     .map(uuid => blockUUIDMapping[uuid])
     .filter(block => !!block);
 }
+
+export function removeCollapsedBlockStates(blocks: BlockType[], pipelineUUID: string) {
+  blocks.forEach((b) => {
+    remove(`${pipelineUUID}/${b.uuid}/codeCollapsed`);
+    remove(`${pipelineUUID}/${b.uuid}/outputCollapsed`);
+  });
+}
+
+export const redirectToFirstPipeline = (pipelines: PipelineType[], router: NextRouter) => {
+  const pathname = `/pipelines/${pipelines?.[0]}`;
+  const query = router.query;
+
+  if (pipelines?.length >= 1) {
+    router.push({
+      pathname,
+      query,
+    });
+  }
+};

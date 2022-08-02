@@ -21,6 +21,7 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
+  disabled?: boolean;
   indent?: boolean;
   items?: FlyoutMenuItemType[];
   keyTextGroups?: NumberOrString[][];
@@ -102,7 +103,7 @@ function FlyoutMenu({
         items[currentIndex]?.onClick?.();
         onClickCallback?.();
       } else {
-        items.forEach(({ keyboardShortcutValidation }) => {
+        items?.forEach(({ keyboardShortcutValidation }) => {
           keyboardShortcutValidation?.({ keyHistory, keyMapping });
         });
       }
@@ -152,6 +153,7 @@ function FlyoutMenu({
         width={width}
       >
         {items?.map(({
+          disabled,
           items,
           indent,
           isGroupingTitle,
@@ -171,13 +173,17 @@ function FlyoutMenu({
               </TitleContainerStyle>
             :
               <LinkStyle
+                disabled={disabled}
                 highlighted={highlightedIndices[0] === idx0}
                 indent={indent}
                 key={uuid}
                 onClick={(e) => {
                   e.preventDefault();
-                  onClick?.();
-                  onClickCallback?.();
+                  
+                  if (onClick && !disabled) {
+                    onClick?.();
+                    onClickCallback?.();
+                  }
                 }}
                 onMouseEnter={() => {
                   setSubmenuVisible((prevState) => ({
@@ -201,7 +207,10 @@ function FlyoutMenu({
                   fullWidth
                   justifyContent="space-between"
                 >
-                  <Text noWrapping>
+                  <Text
+                    disabled={disabled}
+                    noWrapping
+                  >
                     {label()}
                   </Text>
                   {items && (
