@@ -49,7 +49,7 @@ class Snowflake(BaseSQLConnection):
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
-                return cur.execute(query_string, **kwargs)
+                return cur.execute(query_string, **kwargs).fetchall()
 
     def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
         """

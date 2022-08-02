@@ -10,6 +10,7 @@ import re
 
 DATETIME_MATCHES_THRESHOLD = 0.5
 MAXIMUM_WORD_LENGTH_FOR_CATEGORY_FEATURES = 40
+MAX_ROWS_FOR_COLUMN_TYPE_INFERENCE = 100_000
 MULTITHREAD_MAX_NUM_ENTRIES = 50000
 NUMBER_TYPE_MATCHES_THRESHOLD = 0.8
 STRING_TYPE_MATCHES_THRESHOLD = 0.3
@@ -223,17 +224,23 @@ def infer_object_type(series, column_name, kwargs):
 def infer_column_types(df, **kwargs):
     column_types = kwargs.get('column_types', {})
     df_columns = df.columns.tolist()
-    new_cols = [col for col in df_columns if col not in column_types]
-    columns = [df[col] for col in new_cols]
-    kwarg_list = [kwargs] * len(new_cols)
     ctypes = {k: v for k, v in column_types.items() if k in df_columns}
+    new_cols = [col for col in df_columns if col not in column_types]
+    kwarg_list = [kwargs] * len(new_cols)
+
     num_entries = len(df)
+    if num_entries > MAX_ROWS_FOR_COLUMN_TYPE_INFERENCE:
+        df_sample = df.sample(MAX_ROWS_FOR_COLUMN_TYPE_INFERENCE)
+    else:
+        df_sample = df
+    columns = [df_sample[col] for col in new_cols]
+
     if num_entries > MULTITHREAD_MAX_NUM_ENTRIES:
         types = run_parallel_multiple_args(
-            infer_column_type, columns, new_cols, df.dtypes[new_cols], kwarg_list
+            infer_column_type, columns, new_cols, df_sample.dtypes[new_cols], kwarg_list
         )
     else:
-        types = map(infer_column_type, columns, new_cols, df.dtypes[new_cols], kwarg_list)
+        types = map(infer_column_type, columns, new_cols, df_sample.dtypes[new_cols], kwarg_list)
     for col, dtype in zip(new_cols, types):
         ctypes[col] = dtype
     return ctypes

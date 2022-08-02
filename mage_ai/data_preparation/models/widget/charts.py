@@ -4,6 +4,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
 import math
+import numpy as np
 import pandas as pd
 
 
@@ -55,21 +56,18 @@ def build_histogram_data(arr, max_buckets):
     if bucket_interval == 0:
         return
 
-    for value in arr:
-        index = math.floor((value - min_value) / bucket_interval)
-        if value == max_value:
-            index = len(buckets) - 1
-        buckets[index]['values'].append(value)
+    bins = [b['min_value'] for b in buckets] + [buckets[-1]['max_value']]
+    count, _ = np.histogram(arr, bins=bins)
 
     x = []
     y = []
 
-    for bucket in buckets:
+    for idx, bucket in enumerate(buckets):
         x.append(dict(
             max=bucket['max_value'],
             min=bucket['min_value'],
         ))
-        y.append(dict(value=len(bucket['values'])))
+        y.append(dict(value=count[idx]))
 
     return dict(
         x=x,
