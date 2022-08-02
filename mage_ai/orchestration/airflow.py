@@ -1,14 +1,15 @@
 from datetime import datetime
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.hash import ignore_keys, merge_dict
+from typing import Dict, List, Any
 
 
 def create_dag(
-    project_path,
-    pipeline_uuid,
+    project_path: str,
+    pipeline_uuid: str,
     dag_class,
     python_operator_class,
-    dag_settings=dict(),
+    dag_settings: Dict[str, Any] = dict(),
 ):
     dag_id = f'mage_pipeline_{pipeline_uuid}'
     dag = dag_class(
@@ -66,11 +67,11 @@ def create_dag(
 
 
 def create_dags(
-    project_path,
+    project_path: str,
     dag_class,
     python_operator_class,
-    blacklist_pipelines=[],
-    dag_settings=dict(),
+    blacklist_pipelines: List[str] = [],
+    dag_settings: Dict[str, Any] = dict(),
 ):
     all_pipeline_uuids = Pipeline.get_all_pipelines(project_path)
     for pipeline_uuid in all_pipeline_uuids:
