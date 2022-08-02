@@ -434,37 +434,6 @@ function PipelineDetailPage({
     },
   );
 
-  const [updatePipelineMetadata] = useMutation(
-    api.pipelines.useUpdate(pipelineUUID),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-              type,
-            },
-          }) => {
-            fetchFileTree();
-            if (type !== pipeline?.type) {
-              fetchPipeline();
-            }
-            updateCollapsedBlocks(blocks, pipelineUUID, uuid);
-            router.push(`/pipelines/${uuid}`);
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
-
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
@@ -552,6 +521,9 @@ function PipelineDetailPage({
       },
     }) => {
       fetchFileTree();
+      if (type !== pipeline?.type) {
+        fetchPipeline();
+      }
       updateCollapsedBlocks(blocks, pipelineUUID, uuid);
       router.push(`/pipelines/${uuid}`);
     });

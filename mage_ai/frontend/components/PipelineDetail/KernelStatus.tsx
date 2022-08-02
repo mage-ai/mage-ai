@@ -183,11 +183,13 @@ function KernelStatus({
               label: () => 'Select kernel',
               uuid: 'select_kernel',
             },
-            ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME).map(type => ({
-              label: () => type,
-              onClick: () => updatePipelineName(pipeline?.name, type),
-              uuid: type,
-            }))
+            ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME)
+              .filter(type => pipeline?.type != type)
+              .map(type => ({
+                label: () => type,
+                onClick: () => updatePipelineName(pipeline?.name, type),
+                uuid: type,
+              }))
           ]}
           onClickCallback={() => setShowSelectKernel(false)}
           open={showSelectKernel}

@@ -4,7 +4,12 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.server.active_kernel import get_active_kernel, interrupt_kernel, restart_kernel, start_kernel, switch_active_kernel
+from mage_ai.server.active_kernel import (
+    interrupt_kernel,
+    restart_kernel,
+    start_kernel,
+    switch_active_kernel,
+)
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler

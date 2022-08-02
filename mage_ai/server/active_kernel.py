@@ -1,5 +1,4 @@
 from jupyter_client import KernelClient, KernelManager
-from sqlalchemy import String
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 
 
@@ -30,7 +29,7 @@ def get_active_kernel() -> KernelManager:
     return active_kernel.kernel
 
 
-def get_active_kernel_name() -> String:
+def get_active_kernel_name() -> str:
     return active_kernel.kernel.kernel_name
  
 
