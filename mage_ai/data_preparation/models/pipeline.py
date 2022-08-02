@@ -303,6 +303,7 @@ class Pipeline:
             self.save()
 
         if update_content:
+            block_uuid_mapping = dict()
             for key in ['blocks', 'widgets']:
                 if key in data:
                     for block_data in data[key]:
@@ -330,12 +331,16 @@ class Pipeline:
 
                                 if block_data.get('upstream_blocks'):
                                     keys_to_update.append('upstream_blocks')
+                                    block_data['upstream_blocks'] = [
+                                        block_uuid_mapping.get(b, b)
+                                        for b in block_data['upstream_blocks']
+                                    ]
 
                                 if len(keys_to_update) >= 1:
                                     block.update(extract(block_data, keys_to_update))
                             elif name and name != block.name:
                                 block.update(extract(block_data, ['name']))
-
+                                block_uuid_mapping[block_data.get('uuid')] = block.uuid
                                 self.save(widget=widget)
 
     def __add_block_to_mapping(
