@@ -18,6 +18,11 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
+<<<<<<< HEAD
+=======
+from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.execution_manager import add_pipeline_block_execution
+>>>>>>> 4a5cfd86 ([dy] Initial commit)
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
@@ -40,19 +45,24 @@ async def run_blocks(
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
-    async def create_block_task(block: 'Block', run_tests: bool = False):
-        await block.execute(
-            analyze_outputs=analyze_outputs,
-            global_vars=global_vars,
-            log_func=log_func,
-            redirect_outputs=redirect_outputs,
-            run_all_blocks=True,
-            update_status=update_status,
-        )
-        if run_tests:
-            block.run_tests(update_tests=False)
     tasks = dict()
     blocks = Queue()
+
+    def create_block_task(block: 'Block', run_tests: bool = False):
+        block_task = asyncio.create_task(
+            block.execute(
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                log_func=log_func,
+                redirect_outputs=redirect_outputs,
+                run_all_blocks=True,
+                update_status=update_status,
+            )
+        )
+        add_pipeline_block_execution(block_task)
+        tasks[block.uuid] = block_task
+        if run_tests:
+            block.run_tests(update_tests=False)
 
     for block in root_blocks:
         blocks.put(block)
@@ -72,10 +82,7 @@ async def run_blocks(
             continue
         upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
         await asyncio.gather(*upstream_tasks)
-        task = asyncio.create_task(
-            create_block_task(block, run_tests=run_tests)
-        )
-        tasks[block.uuid] = task
+        create_block_task(block, run_tests=run_tests)
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
                 selected_blocks is None or upstream_block.uuid in selected_blocks

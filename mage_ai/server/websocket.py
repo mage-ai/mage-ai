@@ -10,6 +10,7 @@ from mage_ai.server.active_kernel import (
     get_active_kernel_name,
     switch_active_kernel,
 )
+from mage_ai.server.execution_manager import cancel_pipeline_execution, set_pipeline_execution
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import KernelName
 from mage_ai.server.utils.output_display import (
@@ -58,6 +59,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if output:
             self.send_message(output)
             return
+        global_vars = message.get('global_vars')
+        cancel_pipeline = message.get('cancel_pipeline')
         execute_pipeline = message.get('execute_pipeline')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
 
@@ -83,6 +86,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             msg_type: str = 'stream_pipeline',
         ) -> None:
             msg_id = str(uuid.uuid4())
+            print('value:', value)
             WebSocketServer.running_executions_mapping[msg_id] = value
             self.send_message(
                 dict(
@@ -93,6 +97,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     type=DataType.TEXT_PLAIN,
                 )
             )
+
+        if cancel_pipeline:
+            cancel_pipeline_execution(callback=lambda: publish_message('', 'idle'))
+            return
 
         if execute_pipeline:
             if kernel_name == KernelName.PYSPARK:
@@ -126,6 +134,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             code = custom_code
 
             client = self.init_kernel_client(kernel_name)
+
+            value = dict(block_uuid=block_uuid)
 
             if not custom_code and BlockType.SCRATCHPAD == block_type:
                 msg_id = client.execute('')
@@ -167,10 +177,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     )
                 msg_id = client.execute(add_internal_output_info(code))
 
-                WebSocketServer.running_executions_mapping[msg_id] = dict(
-                    block_uuid=block_uuid,
-                    pipeline_uuid=pipeline_uuid,
-                )
+                WebSocketServer.running_executions_mapping[msg_id] = value
 
                 block_output_process_code = get_block_output_process_code(
                     pipeline_uuid,

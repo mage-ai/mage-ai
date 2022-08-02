@@ -67,6 +67,16 @@ function PipelineExecution({
     sendMessage,
   ]);
 
+  const cancelPipeline = useCallback(() => {
+    sendMessage(JSON.stringify({
+      cancel_pipeline: true,
+      pipeline_uuid: pipelineUUID,
+    }));
+  }, [
+    pipelineUUID,
+    sendMessage,
+  ]);
+
   useEffect(() => {
     if (lastMessage) {
       const message: KernelOutputType = JSON.parse(lastMessage.data);
@@ -76,18 +86,15 @@ function PipelineExecution({
         msg_type: msgType,
       } = message;
 
-      if (pipeline_uuid === pipelineUUID && msgType === MsgType.STREAM_PIPELINE) {
-        setMessages((messagesPrevious) => {
-
-          return [
-            ...messagesPrevious,
-            message,
-          ];
-        });
-      }
-
-      if (ExecutionStateEnum.IDLE === executionState) {
-        setIsPipelineExecuting(false);
+      if (pipeline_uuid === pipelineUUID) {
+        if (ExecutionStateEnum.IDLE === executionState) {
+          setIsPipelineExecuting(false);
+        } else {
+          setMessages((messagesPrevious) => [
+              ...messagesPrevious,
+              message,
+          ]);
+        }
       }
     }
   }, [
@@ -100,7 +107,7 @@ function PipelineExecution({
       <Button
         beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
         loading={isPipelineExecuting}
-        onClick={() => executePipeline()}
+        onClick={executePipeline}
         success
       >
         <Text
@@ -111,6 +118,21 @@ function PipelineExecution({
           Execute pipeline
         </Text>
       </Button>
+      {isPipelineExecuting && (
+        <Button
+          beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+          onClick={cancelPipeline}
+          success
+        >
+          <Text
+            bold
+            inverted
+            primary={false}
+          >
+            Cancel Pipeline
+          </Text>
+        </Button>
+      )}
       <OutputContainerStyle noScrollbarTrackBackground>
         <CodeBlockStyle
           // blockType={BlockTypeEnum.DATA_EXPORTER}

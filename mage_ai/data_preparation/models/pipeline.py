@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.models.block import Block, run_blocks
+from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
@@ -10,9 +10,11 @@ from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.server.execution_manager import set_pipeline_execution
 from mage_ai.shared.utils import clean_name
 from mage_ai.shared.hash import extract
 from typing import Callable, List
+import asyncio
 import os
 import shutil
 import yaml
@@ -185,14 +187,39 @@ class Pipeline:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
 
-        await run_blocks(
+        execution_task = asyncio.create_task(
+            run_blocks(
+                root_blocks,
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                log_func=log_func,
+                redirect_outputs=redirect_outputs,
+                run_tests=run_tests,
+                update_status=update_status,
+            )
+        )
+        set_pipeline_execution(execution_task)
+        await execution_task
+
+    def execute_sync(
+        self,
+        analyze_outputs: bool = True,
+        redirect_outputs: bool = False,
+    ) -> None:
+        """
+        Async function for parallel processing
+        This function will schedule the block execution in topological
+        order based on a block's upstream dependencies.
+        """
+        root_blocks = []
+        for block in self.blocks_by_uuid.values():
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+
+        run_blocks_sync(
             root_blocks,
             analyze_outputs=analyze_outputs,
-            global_vars=global_vars,
-            log_func=log_func,
             redirect_outputs=redirect_outputs,
-            run_tests=run_tests,
-            update_status=update_status,
         )
 
     def get_config_from_yaml(self):
