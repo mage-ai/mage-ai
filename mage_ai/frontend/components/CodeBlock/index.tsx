@@ -794,7 +794,7 @@ function CodeBlockProps({
             )
           }
 
-          {isInProgress && currentTime && (
+          {isInProgress && currentTime && currentTime > runStartTime && (
             <TimeTrackerStyle>
               <Text muted>
                 {`${Math.round((currentTime - runStartTime) / 1000)}`}s

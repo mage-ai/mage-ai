@@ -995,7 +995,8 @@ function PipelineDetailPage({
       });
     }
 
-    fetchPipeline();
+    // Tommy Dang: what was this for?!
+    // fetchPipeline();
   }, [
     fetchPipeline,
     pipeline,
