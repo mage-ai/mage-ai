@@ -1,5 +1,5 @@
 from datetime import datetime
-from mage_ai.server.kernels import test_kernel
+from mage_ai.server.active_kernel import get_active_kernel_client
 
 
 def get_messages(callback=None):
@@ -7,8 +7,8 @@ def get_messages(callback=None):
 
     while True:
         try:
-            test = test_kernel.active_kernel.client()
-            message = test.get_iopub_msg(timeout=1)
+            client = get_active_kernel_client()
+            message = client.get_iopub_msg(timeout=1)
             print(f'[{now}] Message:', message)
 
             if message.get('content'):

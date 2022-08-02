@@ -5,8 +5,13 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
+from mage_ai.server.active_kernel import (
+    get_active_kernel_client,
+    get_active_kernel_name,
+    switch_active_kernel,
+)
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, kernel_managers, KernelName, test_kernel
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
@@ -43,13 +48,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         return True
 
     def init_kernel_client(self, kernel_name) -> KernelClient:
-        connection_file = os.getenv('CONNECTION_FILE')
-        with open(connection_file) as f:
-            connection = json.loads(f.read())
+        if kernel_name != get_active_kernel_name():
+            switch_active_kernel(kernel_name)
 
-        kernel = test_kernel.active_kernel
-
-        return kernel.client()
+        return get_active_kernel_client()
 
     def on_message(self, raw_message):
         message = json.loads(raw_message)
@@ -69,8 +71,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
-        kernel_name = message.get('kernel_name', test_kernel.active_kernel.kernel_name)
-        print('kernel_name:', kernel_name)
+        kernel_name = message.get('kernel_name', get_active_kernel_name())
 
 
         value = dict(
@@ -193,7 +194,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_message(self, message: dict) -> None:
-        msg_id = message['msg_id']
+        msg_id = message.get('msg_id')
+        if msg_id is None:
+            return
         msg_id_value = WebSocketServer.running_executions_mapping.get(msg_id, dict())
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')

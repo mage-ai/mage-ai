@@ -19,7 +19,7 @@ def parse_output_message(message: dict) -> dict:
     msg_type = header['msg_type']
 
     parent_header = message['parent_header']
-    msg_id = parent_header['msg_id']
+    msg_id = parent_header.get('msg_id')
 
     content = message['content']
     execution_state = content.get('execution_state')
