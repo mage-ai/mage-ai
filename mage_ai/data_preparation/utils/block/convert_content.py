@@ -3,7 +3,7 @@ import re
 
 
 def convert_to_block(block, content):
-    block_template_content = block.to_dict(include_content=True)['content']
+    block_template_content = block.content
     content_imports = extract_all_imports(content, ignore_nesting=True)
     block_template_imports = extract_all_imports(block_template_content, ignore_nesting=True)
 
