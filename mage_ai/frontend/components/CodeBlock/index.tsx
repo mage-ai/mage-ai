@@ -12,6 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
+  BlockRequestPayloadType,
   BlockTypeEnum,
   SetEditingBlockType,
 } from '@interfaces/BlockType';
@@ -66,7 +67,7 @@ import {
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { buildConvertBlockMenuItems } from './utils';
+import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
@@ -403,7 +404,7 @@ function CodeBlockProps({
   );
 
   useEffect(() => {
-    let interval
+    let interval;
 
     if (runStartTime) {
       interval = setInterval(() => setCurrentTime(Number(new Date())), 1000);
@@ -818,18 +819,9 @@ function CodeBlockProps({
         >
           {addNewBlocksVisible && (
             <AddNewBlocks
-              addNewBlock={(newBlock: BlockType) => {
+              addNewBlock={(newBlock: BlockRequestPayloadType) => {
                 let content = newBlock.content;
-                const upstreamBlocks = newBlock.upstream_blocks || [];
-
-                if (BlockTypeEnum.CHART !== block.type
-                  && BlockTypeEnum.SCRATCHPAD !== block.type
-                  && BlockTypeEnum.DATA_LOADER !== newBlock.type
-                  && BlockTypeEnum.CHART !== newBlock.type
-                  && BlockTypeEnum.SCRATCHPAD !== newBlock.type
-                ) {
-                  upstreamBlocks.push(block.uuid);
-                }
+                const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
 
                 if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
                   && BlockTypeEnum.SCRATCHPAD === newBlock.type

@@ -1,6 +1,29 @@
-import BlockType, { CONVERTIBLE_BLOCK_TYPES, BLOCK_TYPE_NAME_MAPPING } from '@interfaces/BlockType';
+import BlockType, {
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+  CONVERTIBLE_BLOCK_TYPES,
+  BLOCK_TYPE_NAME_MAPPING,
+} from '@interfaces/BlockType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { lowercase } from '@utils/string';
+
+export const getUpstreamBlockUuids = (
+  currentBlock: BlockType,
+  newBlock?: BlockRequestPayloadType,
+): string[] => {
+  const upstreamBlocks = newBlock?.upstream_blocks || [];
+
+  if (BlockTypeEnum.CHART !== currentBlock.type
+    && BlockTypeEnum.SCRATCHPAD !== currentBlock.type
+    && BlockTypeEnum.DATA_LOADER !== newBlock?.type
+    && BlockTypeEnum.CHART !== newBlock?.type
+    && BlockTypeEnum.SCRATCHPAD !== newBlock?.type
+  ) {
+    upstreamBlocks.push(currentBlock.uuid);
+  }
+
+  return upstreamBlocks;
+};
 
 export const buildConvertBlockMenuItems = (
   b: BlockType,

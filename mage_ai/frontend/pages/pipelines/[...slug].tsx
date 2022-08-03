@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 
 import AddChartMenu from '@components/CodeBlock/CommandButtons/AddChartMenu';
 import BlockType, {
+  BlockRequestPayloadType,
   BlockTypeEnum,
   SampleDataType,
 } from '@interfaces/BlockType';
@@ -755,7 +756,7 @@ function PipelineDetailPage({
 
   const [createBlock] = useMutation(api.blocks.pipelines.useCreate(pipelineUUID));
   const addNewBlockAtIndex = useCallback((
-    block: BlockType,
+    block: BlockRequestPayloadType,
     idx: number,
     onCreateCallback?: (block: BlockType) => void,
     name: string = randomNameGenerator(),
@@ -1461,8 +1462,8 @@ function PipelineDetailPage({
           >
             <FileEditor
               active={selectedFilePath === filePath}
-              addNewBlock={(b: BlockType) => {
-                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.uuid);
+              addNewBlock={(b: BlockRequestPayloadType) => {
+                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
                 router.push(`/pipelines/${pipelineUUID}`);
               }}
               filePath={filePath}

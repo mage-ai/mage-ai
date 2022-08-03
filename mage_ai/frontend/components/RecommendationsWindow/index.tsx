@@ -17,6 +17,7 @@ import {
   WindowFooterStyle,
   WindowHeaderStyle,
 } from './index.style';
+import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 
 type RecommendationsWindowProps = {
   addNewBlockAtIndex: (
@@ -127,6 +128,7 @@ function RecommendationsWindow({
           beforeIcon={<Add size={UNIT * 2} />}
           disabled={selectedRecIdx === null}
           onClick={() => {
+            const upstreamBlocks = getUpstreamBlockUuids(selectedBlock);
             const suggestedActionPayload: SuggestionType = suggestions?.[selectedRecIdx];
             addNewBlockAtIndex({
               config: {
@@ -135,6 +137,7 @@ function RecommendationsWindow({
                 },
               },
               type: BlockTypeEnum.TRANSFORMER,
+              upstream_blocks: upstreamBlocks,
             }, finalBlockInsertionIdx, setSelectedBlock);
           }}
           secondaryGradient={selectedRecIdx !== null}

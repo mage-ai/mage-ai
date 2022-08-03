@@ -5,7 +5,7 @@ import {
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
 import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -24,7 +24,7 @@ import { useKeyboardContext } from '@context/Keyboard';
 
 type FileEditorProps = {
   active: boolean;
-  addNewBlock: (b: BlockType) => void;
+  addNewBlock: (b: BlockRequestPayloadType) => void;
   filePath: string;
   pipeline: PipelineType;
   setFilesTouched: (data: {
@@ -138,8 +138,8 @@ function FileEditor({
       <KeyboardShortcutButton
         inline
         onClick={() => addNewBlock({
+          name: getBlockUUID(file.path.split('/')),
           type: getBlockType(file.path.split('/')),
-          uuid: getBlockUUID(file.path.split('/')),
         })}
         uuid="FileEditor/AddToCurrentPipeline"
       >
