@@ -48,6 +48,7 @@ export type CommandButtonsSharedProps = {
 };
 
 type CommandButtonsProps = {
+  addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
   runBlock: (payload: {
     block: BlockType;
@@ -62,6 +63,7 @@ type CommandButtonsProps = {
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
+  addNewBlock,
   addWidget,
   block,
   blocks,
@@ -92,11 +94,11 @@ function CommandButtons({
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
 
   const convertBlockMenuItems = useMemo(() => (
-    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', updateBlock)
+    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', addNewBlock)
   ), [
     block,
     blocks,
-    updateBlock,
+    addNewBlock,
   ]);
 
   return (

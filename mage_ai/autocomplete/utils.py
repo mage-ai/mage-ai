@@ -49,15 +49,24 @@ def extract_all_functions(file_content):
     return [t[0] or t[1] for t in re.findall(regex, file_content)]
 
 
-def extract_all_imports(file_content):
-    regexes = [
+def extract_all_imports(file_content, ignore_nesting=False):
+    base_regexes = [
         'import [\w.]+ as [\w.]+',
         'import [\w.]+',
         'from [\w.]+ import [\w.]+ as [\w.]+',
         'from [\w.]+ import [\w.]+',
     ]
+    regexes = []
+
+    if ignore_nesting:
+        for regex in base_regexes:
+            regexes.append(f'^{regex}')
+            regexes.append(f'\n{regex}')
+    else:
+        regexes += base_regexes
+
     regex = re.compile(f'({"|".join(regexes)})')
-    return re.findall(regex, file_content)
+    return [s.strip() for s in re.findall(regex, file_content)]
 
 
 def build_file_content_mapping(paths, files):

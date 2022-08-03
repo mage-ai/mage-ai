@@ -85,6 +85,7 @@ export default interface BlockType {
   all_upstream_blocks_executed?: boolean;
   configuration?: ConfigurationType;
   content?: string;
+  converted_from?: string;
   downstream_blocks?: string[];
   file?: string;
   name?: string;
@@ -103,10 +104,11 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
+// Specific order, don’t change
 export const CONVERTIBLE_BLOCK_TYPES = [
-  BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.TRANSFORMER,
+  BlockTypeEnum.DATA_EXPORTER,
 ];
 
 export const BLOCK_TYPE_ABBREVIATION_MAPPING = {

@@ -717,6 +717,7 @@ function CodeBlockProps({
 
       {(selected || isInProgress) && (
         <CommandButtons
+          addNewBlock={addNewBlock}
           addWidget={addWidget}
           block={block}
           blocks={blocks}

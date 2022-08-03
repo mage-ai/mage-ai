@@ -1,8 +1,9 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import BlockType, DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
+from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -250,8 +251,12 @@ class ApiPipelineBlockListHandler(BaseHandler):
             upstream_block_uuids=payload.get('upstream_blocks', []),
         )
 
-        if payload.get('content'):
-            block.update_content(payload['content'])
+        content = payload.get('content')
+        if content:
+            if payload.get('converted_from'):
+                content = convert_to_block(block, content)
+
+            block.update_content(content)
 
         pipeline.add_block(block, payload.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict(include_content=True)))
