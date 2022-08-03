@@ -568,7 +568,7 @@ function PipelineDetailPage({
         if (type !== pipeline?.type) {
           fetchPipeline();
         }
-        updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+        updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
         router.push(`/pipelines/${uuid}`);
       }
     });
