@@ -76,6 +76,7 @@ export interface BlockRequestPayloadType {
     suggested_action?: SuggestionType;
   };
   content?: string;
+  converted_from?: string;
   name?: string;
   type: BlockTypeEnum;
   upstream_blocks?: string[];
