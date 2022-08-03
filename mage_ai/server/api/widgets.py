@@ -8,7 +8,7 @@ class ApiPipelineWidgetDetailHandler(BaseHandler):
     model_class = Widget
 
     def put(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         payload = self.get_payload()
 
         widget = pipeline.get_block(block_uuid, widget=True)
@@ -23,7 +23,7 @@ class ApiPipelineWidgetDetailHandler(BaseHandler):
         self.write(dict(widget=widget.to_dict(include_content=True)))
 
     def delete(self, pipeline_uuid, block_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         widget = pipeline.get_block(block_uuid, widget=True)
         if widget is None:
             raise Exception(f'widget {block_uuid} does not exist in pipeline {pipeline_uuid}')
@@ -37,7 +37,7 @@ class ApiPipelineWidgetListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         include_outputs = self.get_bool_argument('include_outputs', True)
 
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         collection = [widget.to_dict(
             include_content=True,
             include_outputs=include_outputs,
@@ -47,7 +47,7 @@ class ApiPipelineWidgetListHandler(BaseHandler):
         self.finish()
 
     def post(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
 
         payload = self.get_payload()
 
