@@ -125,11 +125,7 @@ class Pipeline:
 
     @classmethod
     def get(self, uuid):
-        if uuid in self.pipelines_cache:
-            return self.pipelines_cache[uuid]
-        pipeline = Pipeline(uuid)
-        self.pipelines_cache[uuid] = pipeline
-        return pipeline
+        return Pipeline(uuid)
 
     @classmethod
     def get_all_pipelines(self, repo_path):
