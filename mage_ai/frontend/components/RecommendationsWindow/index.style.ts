@@ -51,6 +51,11 @@ export const WindowHeaderStyle = styled.div`
 export const WindowContentStyle = styled.div<{
   minMaxHeight?: boolean;
 }>`
+  overflow: auto;
+  padding: ${UNIT}px 0;
+  ${ScrollbarStyledCss}
+  ${transition()}
+
   ${props => props.minMaxHeight && `
     max-height: ${UNIT * 7}px;
   `}
@@ -58,12 +63,6 @@ export const WindowContentStyle = styled.div<{
   ${props => !props.minMaxHeight && `
     max-height: 75vh;
   `}
-
-  overflow: auto;
-  padding: ${PADDING_UNITS * UNIT}px;
-
-  ${ScrollbarStyledCss}
-  ${transition()}
 `;
 
 export const WindowFooterStyle = styled.div`
@@ -73,5 +72,16 @@ export const WindowFooterStyle = styled.div`
 
   ${props => `
     border-top: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
+  `}
+`;
+
+export const RowStyle = styled.div`
+  padding: ${UNIT}px ${UNIT * PADDING_UNITS}px;
+
+  ${props => `
+    &:hover {
+      cursor: pointer;
+      background-color: ${(props.theme || dark).background.output};
+    }
   `}
 `;
