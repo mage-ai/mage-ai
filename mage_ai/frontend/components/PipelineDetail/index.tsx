@@ -54,7 +54,7 @@ type PipelineDetailProps = {
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
-  deleteBlock: (block: BlockType) => void;
+  deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   interruptKernel: () => void;
