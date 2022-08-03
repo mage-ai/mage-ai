@@ -3,20 +3,23 @@ import React, { useState } from 'react';
 import BlockType, { BlockTypeEnum, BlockRequestPayloadType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import MageIcon from '@oracle/icons/custom/Mage8Bit';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
+
 import { Add, Close } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
 import {
+  RowStyle,
   WindowContainerStyle,
   WindowContentStyle,
   WindowFooterStyle,
   WindowHeaderStyle,
 } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { addUnderscores, randomSimpleHashGenerator } from '@utils/string';
 
@@ -102,12 +105,20 @@ function RecommendationsWindow({
       <WindowContentStyle
         minMaxHeight={recsCount === 0 }
       >
-        {loading && <Spinner inverted />}
+        {loading && (
+          <Spacing p={1}>
+            <FlexContainer justifyContent="center">
+              <Spinner inverted />
+            </FlexContainer>
+          </Spacing>
+        )}
         {(!loading && recsCount === 0)
           ? 
-            <Text>
-              {emptyMessage}
-            </Text>
+            <RowStyle>
+              <Text>
+                {emptyMessage}
+              </Text>
+            </RowStyle>
           : React.Children.map(children, (
             recRow: JSX.Element,
             idx: number,
