@@ -74,13 +74,13 @@ export default {
     navigation: '#EDEDED',
     output: '#2E3036',
     page: '#1E1F24',
+    panel: '#232429',
     popup: '#27292E',
     row: DARK_CONTENT_INVERTED,
     row2: GREY500,
     scrollbarThumb: 'rgba(100, 100, 100, 0.5)',
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
     scrollbarTrack: '#2E3036', // defaultBackground
-    sidePanel: '#232429',
     success: LIME_DARK,
     table: '#292A2F',
   },
@@ -163,6 +163,7 @@ export default {
   },
   interactive: {
     activeBorder: BLACK,
+    checked: WHITE,
     dangerBorder: RED,
     defaultBackground: '#36383F',
     defaultBorder: '#1D1D20',
@@ -177,7 +178,7 @@ export default {
   },
   loader: {
     color: '#EB0032',
-    colorInverted: '#EB0032',
+    colorInverted: LIME_DARK,
   },
   monotone: {
     black: BLACK,
@@ -206,6 +207,7 @@ export default {
     base: '12px 40px 120px rgba(106, 117, 139, 0.4)',
     menu: '4px 10px 20px rgba(6, 6, 6, 0.12)',
     popup: '10px 20px 40px rgba(0, 0, 0, 0.2)',
+    window: '0px 10px 60px rgba(0, 0, 0, 0.7)',
   },
   status: {
     negative: RED,

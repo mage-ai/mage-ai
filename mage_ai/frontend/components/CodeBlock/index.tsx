@@ -109,6 +109,7 @@ type CodeBlockProps = {
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
   widgets: BlockType[];
 } & CodeEditorSharedProps & CommandButtonsSharedProps & SetEditingBlockType;
@@ -144,6 +145,7 @@ function CodeBlockProps({
   setAnyInputFocused,
   setEditingBlock,
   setOutputBlocks,
+  setRecsWindowOpenBlockIdx,
   setSelected,
   setSelectedOutputBlock,
   setTextareaFocused,
@@ -167,12 +169,12 @@ function CodeBlockProps({
   const [runStartTime, setRunStartTime] = useState<number>(null);
 
   const codeCollapsedUUID = useMemo(() => (
-    `${pipeline?.uuid}/${block.uuid}/codeCollapsed`
-  ), [pipeline?.uuid, block.uuid]);
+    `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`
+  ), [pipeline?.uuid, block?.uuid]);
 
   const outputCollapsedUUID = useMemo(() => (
-    `${pipeline?.uuid}/${block.uuid}/outputCollapsed`
-  ), [pipeline?.uuid, block.uuid]);
+    `${pipeline?.uuid}/${block?.uuid}/outputCollapsed`
+  ), [pipeline?.uuid, block?.uuid]);
 
   useEffect(() => {
     setCodeCollapsed(get(codeCollapsedUUID, false));
@@ -848,6 +850,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               blockIdx={blockIdx}
               compact
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+              setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
             />
           )}
           <BlockDividerInner className="block-divider-inner" />

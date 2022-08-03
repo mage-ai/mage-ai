@@ -25,18 +25,22 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
+import RecommendationsWindow from '@components/RecommendationsWindow';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionType from '@interfaces/SuggestionType';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
 import { Add, Close } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
@@ -57,18 +61,20 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
+  redirectToFirstPipeline,
+  removeCollapsedBlockStates,
   removeDataOutputBlockUUID,
-  updateCollapsedBlocks,
+  updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
@@ -109,6 +115,9 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const { data: pipelinesData, mutate: fetchPipelines } = api.pipelines.list();
+  const pipelines = useMemo(() => pipelinesData?.pipelines, [pipelinesData]);
+  const numPipelines = useMemo(() => pipelines?.length || 0, [pipelines]);
 
   const qUrl = queryFromUrl();
   const {
@@ -272,6 +281,7 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
+  const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -322,6 +332,16 @@ function PipelineDetailPage({
     metadata,
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
+  const {
+    data: selectedBlockAnalysis,
+    mutate: fetchSecondBlockAnalysis,
+  } = api.blocks.pipelines.analyses.detail(
+    pipelineUUID,
+    selectedBlock?.type !== BlockTypeEnum.CHART
+      && recsWindowOpenBlockIdx !== null
+      && selectedBlock?.uuid,
+  );
+  const selectedBlockSuggestions = selectedBlockAnalysis?.analyses?.[0]?.suggestions || [];
 
   useEffect(() => {
     if (runningBlocks.length === 0) {
@@ -419,6 +439,33 @@ function PipelineDetailPage({
   }, [
     filePathsFromUrl
   ]);
+
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            fetchFileTree();
+            fetchPipelines();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
@@ -530,8 +577,37 @@ function PipelineDetailPage({
     fetchFileTree,
     pipelineUUID,
     savePipelineContent,
-    updateCollapsedBlocks,
+    updateCollapsedBlockStates,
   ]);
+  const [deletePipeline] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            if (uuid === pipelineUUID) {
+              redirectToFirstPipeline(pipelines, router);
+            }
+            removeCollapsedBlockStates(blocks, pipelineUUID);
+            fetchFileTree();
+            fetchPipelines();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [deleteBlock] = useMutation(
     ({ uuid }: BlockType) => api.blocks.pipelines.useDelete(pipelineUUID, uuid)(),
@@ -549,6 +625,7 @@ function PipelineDetailPage({
               blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
+            setSelectedBlock(null);
             if (type === BlockTypeEnum.SCRATCHPAD) {
               fetchFileTree();
             }
@@ -705,6 +782,7 @@ function PipelineDetailPage({
             } = response;
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
+            setRecsWindowOpenBlockIdx(null);
             fetchFileTree();
             fetchPipeline();
           },
@@ -1010,8 +1088,11 @@ function PipelineDetailPage({
   const fileTree = useMemo(() => (
     <ContextMenu
       areaRef={fileTreeRef}
+      createPipeline={createPipeline}
       deleteBlockFile={deleteBlockFile}
+      deletePipeline={deletePipeline}
       enableContextItem
+      numPipelines={numPipelines}
       type={ContextMenuEnum.FILE_BROWSER}
     >
       <FileBrowser
@@ -1135,6 +1216,7 @@ function PipelineDetailPage({
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
+      setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
@@ -1248,6 +1330,7 @@ function PipelineDetailPage({
             blackBorder
             compact
             onClick={() => setShowAddCharts(true)}
+            primaryGradient
             uuid="Pipeline/afterHeader/add_chart"
           >
             Add chart
@@ -1346,7 +1429,7 @@ function PipelineDetailPage({
         before={fileTree}
         beforeHeader={(
           <FileHeaderMenu
-            fetchFileTree={fetchFileTree}
+            createPipeline={createPipeline}
             interruptKernel={interruptKernel}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
@@ -1403,6 +1486,26 @@ function PipelineDetailPage({
           onClose={() => setErrors(null)}
         />
       )}
+
+      {recsWindowOpenBlockIdx !== null &&
+        <RecommendationsWindow
+          addNewBlockAtIndex={addNewBlockAtIndex}
+          blockInsertionIndex={recsWindowOpenBlockIdx}
+          blocks={blocks}
+          loading={!selectedBlockAnalysis && selectedBlock !== null}
+          selectedBlock={selectedBlock}
+          setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+          setSelectedBlock={setSelectedBlock}
+          suggestions={selectedBlockSuggestions}
+        >
+          {selectedBlockSuggestions?.map((suggestion: SuggestionType, idx: number) => (
+            <RecommendationRow
+              key={`${addUnderscores(suggestion.title)}_${idx}`}
+              suggestion={suggestion}
+            />
+          ))}
+        </RecommendationsWindow>
+      }
     </>
   );
 }

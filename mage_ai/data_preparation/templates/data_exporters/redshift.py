@@ -13,6 +13,8 @@ def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
     """
     Template for exporting data to a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#redshift
     """
     table_name = 'your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')

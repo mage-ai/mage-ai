@@ -36,6 +36,15 @@ Subtitle.args = {
   subtitle: <Text disabled large> Good </Text>,
 };
 
+export const Footer = Template.bind({});
+Footer.args = {
+  children: <Text> 1.00 </Text>,
+  footer: <Text large>12 results</Text>,
+  headerTitle: 'Quality Metrics',
+  items: <Check />,
+  subtitle: <Text disabled large> Good </Text>,
+};
+
 export const Borderless = Template.bind({});
 Borderless.args = {
   ...Regular.args,

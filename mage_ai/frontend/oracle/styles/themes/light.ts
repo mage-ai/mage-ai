@@ -10,6 +10,7 @@ import {
   GREEN,
   LIGHT,
   LIME,
+  LIME_DARK,
   LIME_XLIGHT,
   LIME_TEXT,
   NAVY,
@@ -52,11 +53,11 @@ export default {
     muted: SILVER,
     navigation: '#EDEDED',
     page: WHITE,
+    panel: '#232429',
     row: LIGHT,
     scrollbarThumb: 'rgba(0, 0, 0, 0.5)',
     scrollbarThumbHover: 'rgba(255, 255, 255, 0.3)',
     scrollbarTrack: 'rgba(39, 42, 47, 0.3)', // defaultBackground
-    sidePanel: '#232429',
     success: LIME_XLIGHT,
     table: WHITE,
   },
@@ -139,7 +140,9 @@ export default {
   },
   interactive: {
     activeBorder: BLACK,
+    checked: PURPLE_LIGHT,
     dangerBorder: RED,
+    defaultBackground: WHITE,
     defaultBorder: GRAY_LINES,
     disabledBorder: GRAY,
     focusBackground: GRAY,
@@ -151,7 +154,8 @@ export default {
     linkSecondaryDisabled: PURPLE_LIGHT,
   },
   loader: {
-    color: '#EB0032',
+    color: LIME_DARK,
+    colorInverted: '#EB0032',
   },
   monotone: {
     black: BLACK,

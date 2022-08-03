@@ -7,6 +7,8 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
+
+import { BLUE_GRADIENT, PURPLE_PINK_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
@@ -50,6 +52,8 @@ export type ButtonProps = {
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   primary?: boolean;
+  primaryGradient?: boolean;
+  secondaryGradient?: boolean;
   selected?: boolean;
   selectedAlt?: boolean;
   small?: boolean;
@@ -67,7 +71,7 @@ const ButtonStyle = styled.button<{
   border: none;
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
-  padding: 7px ${UNIT * 2}px;
+  padding: 7px ${UNIT}px;
   position: relative;
   z-index: 0;
 
@@ -158,6 +162,10 @@ const ButtonStyle = styled.button<{
     ${SMALL}
   `}
 
+  ${props => !props.noPadding && props.iconOnly && `
+    padding: ${UNIT}px;
+  `}
+
   ${props => props.transparent && `
     background-color: transparent;
   `}
@@ -184,6 +192,14 @@ const ButtonStyle = styled.button<{
     &:hover {
       border-color: ${(props.theme.monotone || light.monotone).black};
     }
+  `}
+
+  ${props => props.secondaryGradient && `
+    background: ${PURPLE_PINK_GRADIENT};
+  `}
+
+  ${props => props.primaryGradient && `
+    background: ${BLUE_GRADIENT};
   `}
 
   ${props => props.disabled && `
@@ -220,6 +236,7 @@ const Button = ({
   beforeIcon,
   children,
   disabled,
+  iconOnly,
   id,
   loading,
   onClick,
@@ -235,6 +252,7 @@ const Button = ({
       {...props}
       disabled={disabled}
       hasOnClick={!!onClick}
+      iconOnly={iconOnly}
       id={id}
       onClick={(e) => {
         e?.preventDefault();
@@ -259,7 +277,11 @@ const Button = ({
         {loading && <Spinner />}
         {!loading && (
           <Flex>
-            {children}
+            {!iconOnly && children}
+            {iconOnly && React.cloneElement(children, {
+              ...iconProps,
+              size: children.props?.size || iconProps.size,
+            })}
           </Flex>
         )}
         {!loading && afterIcon && (

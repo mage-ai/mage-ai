@@ -20,13 +20,26 @@ export type ThemeType = {
     yellowLight: string;
   };
   background: {
+    chartBlock: string;
+    codeArea: string;
+    codeTextarea: string;
+    danger: string;
     dark: string;
     header: string;
+    menu: string;
     muted: string;
     navigation: string;
+    output: string;
     page: string;
+    panel: string;
     popup: string;
     row: string;
+    row2: string;
+    scrollbarThumb: string;
+    scrollbarThumbHover: string;
+    scrollbarTrack: string;
+    success: string;
+    table: string;
   };
   borders: {
     danger: string;

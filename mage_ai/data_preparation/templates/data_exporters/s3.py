@@ -13,6 +13,8 @@ def export_data_to_s3(df: DataFrame, **kwargs) -> None:
     """
     Template for exporting data to a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#s3
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

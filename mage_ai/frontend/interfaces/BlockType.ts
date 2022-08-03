@@ -1,4 +1,5 @@
 import FeatureType from '@interfaces/FeatureType';
+import SuggestionType from './SuggestionType';
 import { ActionTypeEnum, AxisEnum } from './ActionPayloadType';
 import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
@@ -72,6 +73,7 @@ export interface BlockRequestPayloadType {
     data_source?: DataSourceTypeEnum;
     action_type?: ActionTypeEnum;
     axis?: AxisEnum;
+    suggested_action?: SuggestionType;
   };
   content?: string;
   name?: string;

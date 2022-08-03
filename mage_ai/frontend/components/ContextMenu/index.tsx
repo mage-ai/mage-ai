@@ -8,7 +8,10 @@ import { HEADER_HEIGHT, HEADER_Z_INDEX } from '@components/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type ContextMenuSharedProps = {
+  createPipeline?: (data: any) => void;
+  deletePipeline?: (uuid: string) => void;
   deleteBlockFile?: (b: BlockType) => void;
+  numPipelines?: number;
 };
 
 export type ContextMenuProps = {
@@ -23,13 +26,13 @@ export enum ContextMenuEnum {
 }
 
 export interface ContextAreaProps {
-  setContextItem?: (item: any) => void;
+  setContextItem?: (item: ContextItemType) => void;
 }
 
-export interface ContextItemType {
-  data: any;
+export type ContextItemType = {
+  data?: any;
   type: any;
-}
+};
 
 const ContainerStyle = styled.div<{
   bottom?: number;
@@ -73,12 +76,15 @@ const ContainerStyle = styled.div<{
 function ContextMenu({
   areaRef,
   children,
+  createPipeline,
   deleteBlockFile,
+  deletePipeline,
   enableContextItem,
+  numPipelines,
   type,
 }: ContextMenuProps) {
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
-  const [contextItem, setContextItem] = useState({} as ContextItemType);
+  const [contextItem, setContextItem] = useState<ContextItemType>({} as ContextItemType);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -119,7 +125,25 @@ function ContextMenu({
       {
         label: () => 'Delete',
         onClick: () => deleteBlockFile(contextItem.data.block),
-        uuid: 'delete block file',
+        uuid: 'delete_block_file',
+      },
+    ],
+    [FileContextEnum.PIPELINE]: [
+      {
+        label: () => 'Duplicate',
+        onClick: () => createPipeline({
+          pipeline: {
+            clone_pipeline_uuid: contextItem.data.name,
+            name: `${contextItem.data.name}_copy`,
+          },
+        }),
+        uuid: 'duplicate_pipeline',
+      },
+      {
+        disabled: numPipelines <= 1,
+        label: () => 'Delete',
+        onClick: () => deletePipeline(contextItem.data.name),
+        uuid: 'delete_pipeline',
       },
     ],
   };
