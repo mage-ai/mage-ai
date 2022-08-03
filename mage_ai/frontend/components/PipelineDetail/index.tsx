@@ -86,6 +86,7 @@ type PipelineDetailProps = {
   setAnyInputFocused: (value: boolean) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
   setRunningBlocks: (blocks: BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
   setSelectedOutputBlock: (block: BlockType) => void;
@@ -125,6 +126,7 @@ function PipelineDetail({
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
+  setRecsWindowOpenBlockIdx,
   setRunningBlocks,
   setSelectedBlock,
   setSelectedOutputBlock,
@@ -188,6 +190,7 @@ function PipelineDetail({
 
           if (keyMapping[KEY_CODE_ESCAPE]) {
             setSelectedBlock(null);
+            setRecsWindowOpenBlockIdx(null);
           } else if (keyHistory[0] === KEY_CODE_I
             && keyHistory[1] === KEY_CODE_I
           ) {
@@ -342,6 +345,7 @@ function PipelineDetail({
               setAnyInputFocused={setAnyInputFocused}
               setEditingBlock={setEditingBlock}
               setOutputBlocks={setOutputBlocks}
+              setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
               setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
               setSelectedOutputBlock={setSelectedOutputBlock}
               setTextareaFocused={setTextareaFocused}
@@ -387,6 +391,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
+            setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           />
         </Spacing>
       </Spacing>

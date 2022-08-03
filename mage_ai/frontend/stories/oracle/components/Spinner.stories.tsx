@@ -31,3 +31,9 @@ Small.args = {
   ...Regular.args,
   small: true,
 };
+
+export const Inverted = Template.bind({});
+Inverted.args = {
+  ...Regular.args,
+  inverted: true,
+};

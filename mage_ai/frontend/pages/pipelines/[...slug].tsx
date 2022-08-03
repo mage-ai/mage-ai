@@ -31,16 +31,20 @@ import KernelOutputType, {
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
+import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
+import RecommendationsWindow from '@components/RecommendationsWindow';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
+import SuggestionType from '@interfaces/SuggestionType';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+
+import { Add, Close } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
 } from '@components/TripleLayout/index.style';
-import { Add, Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
@@ -56,6 +60,7 @@ import {
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
@@ -70,7 +75,6 @@ import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
-import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -275,6 +279,7 @@ function PipelineDetailPage({
   });
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
+  const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -325,6 +330,16 @@ function PipelineDetailPage({
     metadata,
     statistics = {},
   } = blockAnalysis?.analyses?.[0] || {};
+  const {
+    data: selectedBlockAnalysis,
+    mutate: fetchSecondBlockAnalysis,
+  } = api.blocks.pipelines.analyses.detail(
+    pipelineUUID,
+    selectedBlock?.type !== BlockTypeEnum.CHART
+      && recsWindowOpenBlockIdx !== null
+      && selectedBlock?.uuid,
+  );
+  const selectedBlockSuggestions = selectedBlockAnalysis?.analyses?.[0]?.suggestions || [];
 
   useEffect(() => {
     if (runningBlocks.length === 0) {
@@ -615,6 +630,7 @@ function PipelineDetailPage({
               blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
+            setSelectedBlock(null);
             if (type === BlockTypeEnum.SCRATCHPAD) {
               fetchFileTree();
             }
@@ -782,6 +798,7 @@ function PipelineDetailPage({
             } = response;
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
+            setRecsWindowOpenBlockIdx(null);
             fetchFileTree();
             fetchPipeline();
           },
@@ -1223,6 +1240,7 @@ function PipelineDetailPage({
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
+      setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
       setRunningBlocks={setRunningBlocks}
       setSelectedBlock={setSelectedBlock}
       setSelectedOutputBlock={setSelectedOutputBlock}
@@ -1336,6 +1354,7 @@ function PipelineDetailPage({
             blackBorder
             compact
             onClick={() => setShowAddCharts(true)}
+            primaryGradient
             uuid="Pipeline/afterHeader/add_chart"
           >
             Add chart
@@ -1484,6 +1503,26 @@ function PipelineDetailPage({
           )}
         />
       </TripleLayout>
+
+      {recsWindowOpenBlockIdx !== null &&
+        <RecommendationsWindow
+          addNewBlockAtIndex={addNewBlockAtIndex}
+          blockInsertionIndex={recsWindowOpenBlockIdx}
+          blocks={blocks}
+          loading={!selectedBlockAnalysis && selectedBlock !== null}
+          selectedBlock={selectedBlock}
+          setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+          setSelectedBlock={setSelectedBlock}
+          suggestions={selectedBlockSuggestions}
+        >
+          {selectedBlockSuggestions?.map((suggestion: SuggestionType, idx: number) => (
+            <RecommendationRow
+              key={`${addUnderscores(suggestion.title)}_${idx}`}
+              suggestion={suggestion}
+            />
+          ))}
+        </RecommendationsWindow>
+      }
     </>
   );
 }

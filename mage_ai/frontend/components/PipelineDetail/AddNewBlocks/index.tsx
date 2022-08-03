@@ -4,6 +4,7 @@ import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
@@ -23,6 +24,7 @@ type AddNewBlocksProps = {
   blockIdx?: number;
   compact?: boolean;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
+  setRecsWindowOpenBlockIdx: (idx: number) => void;
 };
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -34,6 +36,7 @@ function AddNewBlocks({
   compact,
   blockIdx,
   setAddNewBlockMenuOpenIdx,
+  setRecsWindowOpenBlockIdx,
 }: AddNewBlocksProps) {
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -226,6 +229,24 @@ function AddNewBlocks({
         uuid="AddNewBlocks/Scratchpad"
       >
         Scratchpad
+      </KeyboardShortcutButton>
+
+      <Spacing ml={1} />
+
+      <KeyboardShortcutButton
+        {...sharedProps}
+        beforeElement={
+          <IconContainerStyle compact={compact}>
+            <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+          </IconContainerStyle>
+        }
+        onClick={(e) => {
+          e.preventDefault();
+          setRecsWindowOpenBlockIdx(blockIdx);
+        }}
+        uuid="AddNewBlocks/Recommendations"
+      >
+        Recs
       </KeyboardShortcutButton>
     </FlexContainer>
   );
