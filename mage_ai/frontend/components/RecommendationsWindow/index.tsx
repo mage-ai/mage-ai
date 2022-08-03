@@ -74,12 +74,13 @@ function RecommendationsWindow({
               const newBlockUuid = e.target.value;
               const newBlock = blocks.find(({ uuid }) => uuid === newBlockUuid);
               setSelectedBlock(newBlock);
+              setSelectedRecIdx(null);
             }}
             value={selectedBlock?.uuid}
           >
             {blocks.map(({ uuid }) => (
               <option key={uuid} value={uuid}>
-                {uuid}
+                {uuid}&nbsp;
               </option>
             ))}
           </Select>
@@ -133,7 +134,7 @@ function RecommendationsWindow({
           secondaryGradient={selectedRecIdx !== null}
         >
           <Text>
-            Add selected
+            Add selected code block
           </Text>
         </Button>
       </WindowFooterStyle>

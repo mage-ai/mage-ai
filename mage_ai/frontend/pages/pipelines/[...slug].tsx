@@ -630,6 +630,7 @@ function PipelineDetailPage({
               blocksPrevious.findIndex(({ uuid: uuid2 }: BlockType) => uuid === uuid2),
             ));
             fetchPipeline();
+            setSelectedBlock(null);
             if (type === BlockTypeEnum.SCRATCHPAD) {
               fetchFileTree();
             }
