@@ -169,7 +169,7 @@ class Block:
 
     @property
     def outputs(self):
-        if self._outputs is None:
+        if self._outputs is None or len(self._outputs) == 0:
             self._outputs = self.get_outputs()
         return self._outputs
 
