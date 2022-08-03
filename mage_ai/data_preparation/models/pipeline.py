@@ -479,6 +479,8 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
+        if self.uuid in Pipeline.pipelines_cache:
+            del Pipeline.pipelines_cache[self.uuid]
 
     def delete_block(self, block, widget=False, commit=True):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
