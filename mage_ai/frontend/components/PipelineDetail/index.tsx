@@ -213,9 +213,19 @@ function PipelineDetail({
               }
             });
           } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
-            setSelectedBlock(blocks[selectedBlockIndex - 1]);
+            const nextBlock = blocks[selectedBlockIndex - 1];
+            if (nextBlock) {
+              setSelectedBlock(nextBlock);
+              const path = `${nextBlock.type}s/${nextBlock.uuid}.py`;
+              blockRefs.current[path]?.current?.scrollIntoView();
+            }
           } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
-            setSelectedBlock(blocks[selectedBlockIndex + 1]);
+            const nextBlock = blocks[selectedBlockIndex + 1];
+            if (nextBlock) {
+              setSelectedBlock(nextBlock);
+              const path = `${nextBlock.type}s/${nextBlock.uuid}.py`;
+              blockRefs.current[path]?.current?.scrollIntoView();
+            }
           } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
             setTextareaFocused(true);
           } else if (!anyInputFocused && onlyKeysPresent([KEY_CODE_A], keyMapping)) {
@@ -241,6 +251,7 @@ function PipelineDetail({
     [
       addNewBlockAtIndex,
       anyInputFocused,
+      blockRefs.current,
       blocks,
       interruptKernel,
       numberOfBlocks,
