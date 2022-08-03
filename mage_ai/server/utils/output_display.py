@@ -179,6 +179,8 @@ def add_execution_code(
     update_status: bool = True,
     widget: bool = False,
 ) -> str:
+    escaped_code = code.replace("'''", "\"\"\"")
+
     global_vars_spark = ''
     magic_header = ''
     if kernel_name == KernelName.PYSPARK:
@@ -208,7 +210,7 @@ def execute_custom_code():
     block = pipeline.get_block(block_uuid, widget={widget})
 
     code = r\'\'\'
-{code}
+{escaped_code}
     \'\'\'
 
     if run_upstream:
