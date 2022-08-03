@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import BlockType, { BlockTypeEnum, BlockRequestPayloadType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -11,7 +11,7 @@ import Spinner from '@oracle/components/Spinner';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
 
-import { Add, Close } from '@oracle/icons';
+import { Close } from '@oracle/icons';
 import {
   RowStyle,
   WindowContainerStyle,
@@ -19,7 +19,6 @@ import {
   WindowFooterStyle,
   WindowHeaderStyle,
 } from './index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { addUnderscores, randomSimpleHashGenerator } from '@utils/string';
 
@@ -38,7 +37,7 @@ type RecommendationsWindowProps = {
   selectedBlock: BlockType;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedBlock: (block: BlockType) => void;
-  suggestions: SuggestionType[];
+  suggestions?: SuggestionType[];
 };
 
 function RecommendationsWindow({
@@ -52,7 +51,6 @@ function RecommendationsWindow({
   setSelectedBlock,
   suggestions,
 }: RecommendationsWindowProps) {
-  const [selectedRecIdx, setSelectedRecIdx] = useState<number>(null);
   const recsCount = React.Children.count(children);
   const finalBlockInsertionIdx = typeof blockInsertionIndex === 'undefined'
     ? blocks.length
@@ -83,7 +81,6 @@ function RecommendationsWindow({
               const newBlockUuid = e.target.value;
               const newBlock = blocks.find(({ uuid }) => uuid === newBlockUuid);
               setSelectedBlock(newBlock);
-              setSelectedRecIdx(null);
             }}
             value={selectedBlock?.uuid}
           >
@@ -113,7 +110,7 @@ function RecommendationsWindow({
           </Spacing>
         )}
         {(!loading && recsCount === 0)
-          ? 
+          ?
             <RowStyle>
               <Text>
                 {emptyMessage}
@@ -124,10 +121,22 @@ function RecommendationsWindow({
             idx: number,
           ) => React.cloneElement(recRow, {
             key: idx,
-            onClick: () => setSelectedRecIdx(prevSelectedRecIdx => (
-              idx === prevSelectedRecIdx ? null : idx),
-            ),
-            selected: idx === selectedRecIdx,
+            onClick: (suggestion: SuggestionType) => {
+              const upstreamBlocks = getUpstreamBlockUuids(selectedBlock);
+              const formattedSuggestionTitle = addUnderscores(suggestion?.title || '').toLowerCase();
+              const newBlockTitle = `${formattedSuggestionTitle}_${randomSimpleHashGenerator()}`;
+
+              addNewBlockAtIndex({
+                config: {
+                  suggested_action: {
+                    ...suggestion,
+                  },
+                },
+                name: newBlockTitle,
+                type: BlockTypeEnum.TRANSFORMER,
+                upstream_blocks: upstreamBlocks,
+              }, finalBlockInsertionIdx, setSelectedBlock);
+            },
           }))
         }
       </WindowContentStyle>
@@ -136,32 +145,6 @@ function RecommendationsWindow({
         <Text default monospace>
           {recsCount} results
         </Text>
-        <Button
-          beforeIcon={<Add size={UNIT * 2} />}
-          disabled={selectedRecIdx === null}
-          onClick={() => {
-            const upstreamBlocks = getUpstreamBlockUuids(selectedBlock);
-            const suggestedActionPayload: SuggestionType = suggestions?.[selectedRecIdx];
-            const formattedSuggestionTitle = addUnderscores(suggestedActionPayload?.title || '').toLowerCase();
-            const newBlockTitle = `${formattedSuggestionTitle}_${randomSimpleHashGenerator()}`;
-
-            addNewBlockAtIndex({
-              config: {
-                suggested_action: {
-                  ...suggestedActionPayload,
-                },
-              },
-              name: newBlockTitle,
-              type: BlockTypeEnum.TRANSFORMER,
-              upstream_blocks: upstreamBlocks,
-            }, finalBlockInsertionIdx, setSelectedBlock);
-          }}
-          secondaryGradient={selectedRecIdx !== null}
-        >
-          <Text>
-            Add selected code block
-          </Text>
-        </Button>
       </WindowFooterStyle>
     </WindowContainerStyle>
   );

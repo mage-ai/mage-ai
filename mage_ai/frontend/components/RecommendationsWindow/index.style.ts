@@ -77,4 +77,11 @@ export const WindowFooterStyle = styled.div`
 
 export const RowStyle = styled.div`
   padding: ${UNIT}px ${UNIT * PADDING_UNITS}px;
+
+  ${props => `
+    &:hover {
+      cursor: pointer;
+      background-color: ${(props.theme || dark).background.output};
+    }
+  `}
 `;
