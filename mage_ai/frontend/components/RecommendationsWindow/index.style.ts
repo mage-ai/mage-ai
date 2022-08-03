@@ -14,6 +14,7 @@ export const WindowContainerStyle = styled.div`
   max-width: ${MAX_WIDTH}px;
   z-index: 101;
   position: absolute;
+  overflow: hidden;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

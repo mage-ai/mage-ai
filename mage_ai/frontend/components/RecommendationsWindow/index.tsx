@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
-import Select from '@oracle/elements/Inputs/Select';
-import Spacing from '@oracle/elements/Spacing';
 import Flex from '@oracle/components/Flex';
 import MageIcon from '@oracle/icons/custom/Mage8Bit';
+import Select from '@oracle/elements/Inputs/Select';
+import Spacing from '@oracle/elements/Spacing';
+import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
 import { Add, Close } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -23,6 +24,7 @@ type RecommendationsWindowProps = {
   selectedBlock: BlockType;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
   setSelectedBlock: (block: BlockType) => void;
+  suggestions: SuggestionType[];
 };
 
 function RecommendationsWindow({
@@ -32,7 +34,9 @@ function RecommendationsWindow({
   selectedBlock,
   setRecsWindowOpenBlockIdx,
   setSelectedBlock,
+  suggestions,
 }: RecommendationsWindowProps) {
+  const [selectedRecIdx, setSelectedRecIdx] = useState<number>(null);
   const recsCount = React.Children.count(children);
   const finalBlockInsertionIdx = typeof blockInsertionIndex === 'undefined'
     ? blocks.length
@@ -53,10 +57,9 @@ function RecommendationsWindow({
             disableWordBreak
             monospace
           >
-            Recommendations:
+            Recommendations:&nbsp;
           </Text>
           <Select
-            borderless
             compact
             label="Select block"
             monospace
@@ -88,7 +91,17 @@ function RecommendationsWindow({
             <Text>
               {emptyMessage}
             </Text>
-          : children
+          : React.Children.map(children, (
+            recRow: JSX.Element,
+            idx: number,
+          ) => React.cloneElement(recRow, {
+            key: idx,
+            last: idx === recsCount - 1,
+            onClick: () => setSelectedRecIdx(prevSelectedRecIdx => (
+              idx === prevSelectedRecIdx ? null : idx),
+            ),
+            selected: idx === selectedRecIdx,
+          }))
         }
       </WindowContentStyle>
 
