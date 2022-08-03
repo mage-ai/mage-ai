@@ -68,8 +68,9 @@ function ErrorPopup({
                 default
                 monospace
                 key={msg}
+                // @ts-ignore
                 dangerouslySetInnerHTML={{
-                  __html: msg.replaceAll(' ', '&nbsp;', 'g'),
+                  __html: msg.replaceAll(' ', '&nbsp;'),
                 }}
               />
             ))}
@@ -97,8 +98,9 @@ function ErrorPopup({
                   default
                   monospace
                   key={msg}
+                  // @ts-ignore
                   dangerouslySetInnerHTML={{
-                    __html: msg.replaceAll(' ', '&nbsp;', 'g'),
+                    __html: msg.replaceAll(' ', '&nbsp;'),
                   }}
                 />
               ))}
