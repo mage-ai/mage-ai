@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CSSTransition } from 'react-transition-group';
 
 import BlockType, { BlockTypeEnum, BlockRequestPayloadType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -93,7 +94,9 @@ function RecommendationsWindow({
         </Button>
       </WindowHeaderStyle>
 
-      <WindowContentStyle>
+      <WindowContentStyle
+        minMaxHeight={recsCount === 0}
+      >
         {recsCount === 0
           ? 
             <Text>
