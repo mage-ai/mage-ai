@@ -10,6 +10,7 @@ import {
   GREEN,
   LIGHT,
   LIME,
+  LIME_DARK,
   LIME_XLIGHT,
   LIME_TEXT,
   NAVY,
@@ -153,7 +154,8 @@ export default {
     linkSecondaryDisabled: PURPLE_LIGHT,
   },
   loader: {
-    color: '#EB0032',
+    color: LIME_DARK,
+    colorInverted: '#EB0032',
   },
   monotone: {
     black: BLACK,

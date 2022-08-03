@@ -52,7 +52,7 @@ export const WindowContentStyle = styled.div<{
   minMaxHeight?: boolean;
 }>`
   ${props => props.minMaxHeight && `
-    max-height: ${20 + (UNIT * 4)}px;
+    max-height: ${UNIT * 7}px;
   `}
 
   ${props => !props.minMaxHeight && `

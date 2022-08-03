@@ -335,8 +335,8 @@ function PipelineDetailPage({
     mutate: fetchSecondBlockAnalysis,
   } = api.blocks.pipelines.analyses.detail(
     pipelineUUID,
-    selectedBlock?.type !== BlockTypeEnum.SCRATCHPAD
-      && selectedBlock?.type !== BlockTypeEnum.CHART
+    selectedBlock?.type !== BlockTypeEnum.CHART
+      && recsWindowOpenBlockIdx !== null
       && selectedBlock?.uuid,
   );
   const selectedBlockSuggestions = selectedBlockAnalysis?.analyses?.[0]?.suggestions || [];
@@ -1509,12 +1509,13 @@ function PipelineDetailPage({
           addNewBlockAtIndex={addNewBlockAtIndex}
           blockInsertionIndex={recsWindowOpenBlockIdx}
           blocks={blocks}
+          loading={!selectedBlockAnalysis && selectedBlock !== null}
           selectedBlock={selectedBlock}
           setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           setSelectedBlock={setSelectedBlock}
           suggestions={selectedBlockSuggestions}
         >
-          {selectedBlockSuggestions.map((suggestion: SuggestionType, idx: number) => (
+          {selectedBlockSuggestions?.map((suggestion: SuggestionType, idx: number) => (
             <RecommendationRow
               key={`${addUnderscores(suggestion.title)}_${idx}`}
               suggestion={suggestion}
