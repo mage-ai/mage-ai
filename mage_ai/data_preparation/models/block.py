@@ -17,7 +17,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex

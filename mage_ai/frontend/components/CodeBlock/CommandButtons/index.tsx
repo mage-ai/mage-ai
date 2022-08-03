@@ -13,6 +13,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
@@ -48,6 +49,7 @@ export type CommandButtonsSharedProps = {
 };
 
 type CommandButtonsProps = {
+  addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
   runBlock: (payload: {
     block: BlockType;
@@ -57,11 +59,16 @@ type CommandButtonsProps = {
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
   setOutputCollapsed: (value: boolean) => void;
   updateBlock: ({ block: BlockType }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
+  addNewBlock,
   addWidget,
   block,
   blocks,
@@ -69,6 +76,7 @@ function CommandButtons({
   executionState,
   interruptKernel,
   runBlock,
+  savePipelineContent,
   setOutputCollapsed,
   updateBlock,
 }: CommandButtonsProps) {
@@ -91,13 +99,22 @@ function CommandButtons({
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
 
-  const convertBlockMenuItems = useMemo(() => (
-    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', updateBlock)
-  ), [
-    block,
-    blocks,
-    updateBlock,
-  ]);
+  const convertBlockMenuItems =
+    useMemo(() => buildConvertBlockMenuItems(
+      block,
+      blocks,
+      'CommandButtons',
+      addNewBlock,
+    ).map((config) => ({
+      ...config,
+      onClick: () => savePipelineContent().then(() => config.onClick()),
+    })),
+    [
+      addNewBlock,
+      block,
+      blocks,
+      savePipelineContent,
+    ]);
 
   return (
     <ContainerStyle>

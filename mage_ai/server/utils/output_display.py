@@ -56,6 +56,29 @@ def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
     return starting_index
 
 
+def get_content_inside_triple_quotes(parts):
+    parts_length = len(parts) - 2
+    start_index = None
+
+    for i in range(parts_length):
+        idx = parts_length - i
+        part = parts[idx]
+        if re.search('"""', part):
+            start_index = idx
+
+        if start_index is not None:
+            break
+
+    if start_index is not None:
+        first_line = parts[start_index]
+
+        variable = None
+        if re.search('[\w]+[ ]*=[ ]*[f]*"""', first_line):
+            variable = first_line.split('=')[0].strip()
+
+        return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
+
+
 def add_internal_output_info(code: str) -> str:
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)
@@ -83,6 +106,13 @@ def add_internal_output_info(code: str) -> str:
             last_line_in_block = True
     elif re.search(r'^import[ ]{1,}|^from[ ]{1,}', code_lines[-1].strip()):
         last_line_in_block = True
+
+    if re.search('"""$', last_line):
+        triple_quotes_content, variable = get_content_inside_triple_quotes(code_lines)
+        if variable:
+            return f'{code}\nprint({variable})'
+        elif triple_quotes_content:
+            return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
     if not last_line or last_line_in_block or re.match('^from|^import', last_line.strip()):
         return f"""

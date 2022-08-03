@@ -761,9 +761,15 @@ function PipelineDetailPage({
     onCreateCallback?: (block: BlockType) => void,
     name: string = randomNameGenerator(),
   ): Promise<any> => {
+    let blockContent;
+    if (block.converted_from) {
+      blockContent = contentByBlockUUID.current[block.converted_from];
+    }
+
     // @ts-ignore
     return createBlock({
       block: {
+        content: blockContent,
         name,
         priority: idx,
         ...block,
@@ -795,6 +801,7 @@ function PipelineDetailPage({
       );
     });
   }, [
+    contentByBlockUUID.current,
     createBlock,
     setBlocks,
   ]);
