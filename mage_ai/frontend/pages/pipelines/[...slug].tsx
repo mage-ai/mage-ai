@@ -797,6 +797,7 @@ function PipelineDetailPage({
             } = response;
             setBlocks((previousBlocks) => pushAtIndex(block, idx, previousBlocks));
             onCreateCallback?.(block);
+            setRecsWindowOpenBlockIdx(null);
             fetchFileTree();
             fetchPipeline();
           },
@@ -1504,11 +1505,13 @@ function PipelineDetailPage({
 
       {recsWindowOpenBlockIdx !== null &&
         <RecommendationsWindow
+          addNewBlockAtIndex={addNewBlockAtIndex}
           blockInsertionIndex={recsWindowOpenBlockIdx}
           blocks={blocks}
           selectedBlock={selectedBlock}
           setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           setSelectedBlock={setSelectedBlock}
+          suggestions={selectedBlockSuggestions}
         >
           {selectedBlockSuggestions.map((suggestion: SuggestionType, idx: number) => (
             <RecommendationRow

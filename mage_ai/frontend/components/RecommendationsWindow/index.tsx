@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, BlockRequestPayloadType } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import MageIcon from '@oracle/icons/custom/Mage8Bit';
@@ -18,6 +18,12 @@ import {
 } from './index.style';
 
 type RecommendationsWindowProps = {
+  addNewBlockAtIndex: (
+    block: BlockRequestPayloadType,
+    idx: number,
+    onCreateCallback?: (block: BlockType) => void,
+    name?: string,
+  ) => Promise<any>;
   blockInsertionIndex?: number;
   blocks: BlockType[];
   children?: JSX.Element;
@@ -28,19 +34,20 @@ type RecommendationsWindowProps = {
 };
 
 function RecommendationsWindow({
+  addNewBlockAtIndex,
   blockInsertionIndex,
   blocks = [],
   children,
   selectedBlock,
   setRecsWindowOpenBlockIdx,
   setSelectedBlock,
-  suggestions,
+  suggestions = [],
 }: RecommendationsWindowProps) {
   const [selectedRecIdx, setSelectedRecIdx] = useState<number>(null);
   const recsCount = React.Children.count(children);
   const finalBlockInsertionIdx = typeof blockInsertionIndex === 'undefined'
     ? blocks.length
-    : blockInsertionIndex;
+    : blockInsertionIndex + 1;
   const emptyMessage = selectedBlock === null
     ? 'Select a block to view data cleaning recommendations.'
     : 'No recommendations available.';
@@ -111,7 +118,19 @@ function RecommendationsWindow({
         </Text>
         <Button
           beforeIcon={<Add size={UNIT * 2} />}
-          secondaryGradient
+          disabled={selectedRecIdx === null}
+          onClick={() => {
+            const suggestedActionPayload: SuggestionType = suggestions[selectedRecIdx];
+            addNewBlockAtIndex({
+              config: {
+                suggested_action: {
+                  ...suggestedActionPayload,
+                },
+              },
+              type: BlockTypeEnum.TRANSFORMER,
+            }, finalBlockInsertionIdx, setSelectedBlock);
+          }}
+          secondaryGradient={selectedRecIdx !== null}
         >
           <Text>
             Add selected
