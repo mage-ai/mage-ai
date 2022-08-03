@@ -190,6 +190,7 @@ function PipelineDetail({
 
           if (keyMapping[KEY_CODE_ESCAPE]) {
             setSelectedBlock(null);
+            setRecsWindowOpenBlockIdx(null);
           } else if (keyHistory[0] === KEY_CODE_I
             && keyHistory[1] === KEY_CODE_I
           ) {
