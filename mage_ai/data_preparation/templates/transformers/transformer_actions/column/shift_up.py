@@ -4,6 +4,8 @@
     Execute Transformer Action: ActionType.SHIFT_UP
 
     Shifts value in the selected column down by specified number periods.
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#shift-up
     """
     action = build_transformer_action(
         df,

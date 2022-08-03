@@ -2,6 +2,8 @@
 {% block action %}
     """
     Execute Transformer Action: ActionType.COUNT_DISTINCT
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
     """
     action = build_transformer_action(
         df,

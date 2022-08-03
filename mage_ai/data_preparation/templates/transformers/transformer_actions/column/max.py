@@ -11,6 +11,8 @@ if 'transformer' not in globals():
 def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     Execute Transformer Action: ActionType.MAX
+
+    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
     """
     action = build_transformer_action(
         df,
