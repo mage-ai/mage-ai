@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_ROWS,
+    DATAFRAME_SAMPLE_COUNT_PREVIEW,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
 )
 from mage_ai.data_preparation.models.file import File
@@ -140,12 +141,19 @@ class Block:
         self.name = name or uuid
         self.uuid = uuid
         self.type = block_type
-        self.content = content
+        self._content = content
+        self._outputs = None
         self.status = status
         self.pipeline = pipeline
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
+
+    @property
+    def content(self):
+        if self._content is None:
+            self._content = self.file.content()
+        return self._content
 
     @property
     def input_variables(self):
@@ -158,6 +166,12 @@ class Block:
         The key is the variable name, and the value is variable data type.
         """
         return dict()
+
+    @property
+    def outputs(self):
+        if self._outputs is None:
+            self._outputs = self.get_outputs()
+        return self._outputs
 
     @property
     def upstream_block_uuids(self):
@@ -343,6 +357,8 @@ class Block:
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
             self.store_variables(variable_mapping)
+            # Reset outputs cache
+            self._outputs = None
 
             if update_status:
                 self.status = BlockStatus.EXECUTED
@@ -540,7 +556,7 @@ class Block:
             analyses.append(data)
         return analyses
 
-    def get_outputs(self, sample_count=None):
+    def get_outputs(self, sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW):
         if self.pipeline is None:
             return
         if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
@@ -609,6 +625,7 @@ class Block:
         for o in outputs:
             if all(k in o for k in ['variable_uuid', 'text_data']):
                 variable_mapping[o['variable_uuid']] = o['text_data']
+        self._outputs = outputs
         self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
@@ -624,9 +641,9 @@ class Block:
             ),
         )
         if include_content:
-            data['content'] = self.content or self.file.content()
+            data['content'] = self.content
         if include_outputs:
-            data['outputs'] = self.get_outputs(sample_count=sample_count)
+            data['outputs'] = self.outputs
         return data
 
     def update(self, data):
@@ -645,10 +662,11 @@ class Block:
         return self
 
     def update_content(self, content, widget=False):
-        if content != self.file.content():
+        if content != self.content:
             self.status = BlockStatus.UPDATED
-        self.file.update_content(content)
-        self.__update_pipeline_block(widget=widget)
+            self._content = content
+            self.file.update_content(content)
+            self.__update_pipeline_block(widget=widget)
         return self
 
     def get_all_upstream_blocks(self) -> List['Block']:

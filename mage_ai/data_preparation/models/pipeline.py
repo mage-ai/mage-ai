@@ -23,6 +23,8 @@ METADATA_FILE_NAME = 'metadata.yaml'
 
 
 class Pipeline:
+    pipelines_cache = dict()
+
     def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -80,7 +82,9 @@ class Pipeline:
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, METADATA_FILE_NAME), 'w') as fp:
             yaml.dump(dict(name=name, uuid=uuid), fp)
-        return Pipeline(uuid, repo_path)
+        pipeline = Pipeline(uuid, repo_path)
+        self.pipelines_cache[pipeline.uuid] = pipeline
+        return pipeline
 
     @classmethod
     def duplicate(cls, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
@@ -118,6 +122,14 @@ class Pipeline:
             )
         duplicate_pipeline.save()
         return duplicate_pipeline
+
+    @classmethod
+    def get(self, uuid):
+        if uuid in self.pipelines_cache:
+            return self.pipelines_cache[uuid]
+        pipeline = Pipeline(uuid)
+        self.pipelines_cache[uuid] = pipeline
+        return pipeline
 
     @classmethod
     def get_all_pipelines(self, repo_path):
@@ -467,6 +479,8 @@ class Pipeline:
                 self.delete_block(block)
                 os.remove(block.file_path)
         shutil.rmtree(self.dir_path)
+        if self.uuid in Pipeline.pipelines_cache:
+            del Pipeline.pipelines_cache[self.uuid]
 
     def delete_block(self, block, widget=False, commit=True):
         mapping = self.widgets_by_uuid if widget else self.blocks_by_uuid
@@ -515,6 +529,7 @@ class Pipeline:
             pipeline_dict = self.to_dict()
         with open(self.config_path, 'w') as fp:
             yaml.dump(pipeline_dict, fp)
+        Pipeline.pipelines_cache[self.uuid] = self
 
     def validate(self, error_msg=CYCLE_DETECTION_ERR_MESSAGE) -> None:
         """
