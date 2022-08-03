@@ -1,7 +1,9 @@
-import adjectives from '@utils/adjectives';
+import adjectives from './samples/adjectives';
+import letters from './samples/letters';
 import moment from 'moment';
-import nouns from '@utils/nouns';
-import { randomSample } from '@utils/array';
+import nouns from './samples/nouns';
+import numbers from './samples/numbers';
+import { randomSample } from './array';
 
 export const DATE_FORMAT_LONG = 'YYYY-MM-DD HH:mm:SS';
 export const DATE_FORMAT_SHORT = 'YYYY-MM-DD';
@@ -265,4 +267,8 @@ export function roundNumber(number, floatingPoints = 2) {
 
 export function randomNameGenerator() {
   return `${randomSample(adjectives)} ${randomSample(nouns)}`;
+}
+
+export function randomSimpleHashGenerator() {
+  return `${randomSample(letters)}${randomSample(numbers)}`;
 }
