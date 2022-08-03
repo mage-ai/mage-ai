@@ -196,16 +196,19 @@ function PipelineDetail({
             && keyHistory[1] === KEY_CODE_D
             && selectedBlockIndex !== -1
           ) {
-            deleteBlock(selectedBlock);
-            setTimeout(() => {
-              if (selectedBlockIndex === blocks.length - 1) {
-                setSelectedBlock(blocks[selectedBlockIndex - 1]);
-              } else if (blocks.length >= 0) {
-                setSelectedBlock(blocks[selectedBlockIndex + 1]);
-              } else {
-                setSelectedBlock(null);
+            deleteBlock(selectedBlock).then((resp) => {
+              if (!resp?.error) {
+                setTimeout(() => {
+                  if (selectedBlockIndex === blocks.length - 1) {
+                    setSelectedBlock(blocks[selectedBlockIndex - 1]);
+                  } else if (blocks.length >= 0) {
+                    setSelectedBlock(blocks[selectedBlockIndex + 1]);
+                  } else {
+                    setSelectedBlock(null);
+                  }
+                }, 100);
               }
-            }, 100);
+            });
           } else if (keyMapping[KEY_CODE_ARROW_UP] && selectedBlockIndex >= 1) {
             setSelectedBlock(blocks[selectedBlockIndex - 1]);
           } else if (keyMapping[KEY_CODE_ARROW_DOWN] && selectedBlockIndex <= numberOfBlocks - 2) {
