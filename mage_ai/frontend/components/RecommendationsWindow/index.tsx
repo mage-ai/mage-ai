@@ -113,7 +113,6 @@ function RecommendationsWindow({
             idx: number,
           ) => React.cloneElement(recRow, {
             key: idx,
-            last: idx === recsCount - 1,
             onClick: () => setSelectedRecIdx(prevSelectedRecIdx => (
               idx === prevSelectedRecIdx ? null : idx),
             ),

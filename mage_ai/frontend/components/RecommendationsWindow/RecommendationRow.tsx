@@ -4,16 +4,15 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
+import { RowStyle } from './index.style';
 
 export type RecommendationRowProps = {
-  last?: boolean;
   suggestion: SuggestionType;
   onClick?: () => void;
   selected?: boolean;
 };
 
 function RecommendationRow({
-  last,
   suggestion,
   onClick,
   selected,
@@ -22,7 +21,7 @@ function RecommendationRow({
   const columnsAffected = actionPayload?.action_arguments || [];
 
   return (
-    <Spacing pb={last ? 0 : 2}>
+    <RowStyle>
       <FlexContainer alignItems="flex-start">
         <Spacing pr={2} pt="4px">
           <Checkbox
@@ -42,7 +41,7 @@ function RecommendationRow({
           </Text>
         </Flex>
       </FlexContainer>
-    </Spacing>
+    </RowStyle>
   );
 }
 
