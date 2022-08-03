@@ -24,11 +24,11 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import Sidekick from '@components/Sidekick';
@@ -36,11 +36,11 @@ import Spacing from '@oracle/elements/Spacing';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-import { Add, Close } from '@oracle/icons';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
 } from '@components/TripleLayout/index.style';
+import { Add, Close } from '@oracle/icons';
 import {
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
@@ -60,15 +60,17 @@ import {
   convertBlockUUIDstoBlockTypes,
   getDataOutputBlockUUIDs,
   initializeContentAndMessages,
+  redirectToFirstPipeline,
+  removeCollapsedBlockStates,
   removeDataOutputBlockUUID,
-  updateCollapsedBlocks,
+  updateCollapsedBlockStates,
 } from '@components/PipelineDetail/utils';
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
 import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -107,6 +109,9 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
+  const { data: pipelinesData, mutate: fetchPipelines } = api.pipelines.list();
+  const pipelines = useMemo(() => pipelinesData?.pipelines, [pipelinesData]);
+  const numPipelines = useMemo(() => pipelines?.length || 0, [pipelines]);
 
   const qUrl = queryFromUrl();
   const {
@@ -418,6 +423,33 @@ function PipelineDetailPage({
     filePathsFromUrl
   ]);
 
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            fetchFileTree();
+            fetchPipelines();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const [updatePipeline, { isLoading: isPipelineUpdating }] = useMutation(
     api.pipelines.useUpdate(pipelineUUID, { update_content: true }),
     {
@@ -527,7 +559,7 @@ function PipelineDetailPage({
       if (type !== pipeline?.type) {
         fetchPipeline();
       }
-      updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+      updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
       router.push(`/pipelines/${uuid}`);
     });
   }, [
@@ -535,8 +567,37 @@ function PipelineDetailPage({
     fetchFileTree,
     pipelineUUID,
     savePipelineContent,
-    updateCollapsedBlocks,
+    updateCollapsedBlockStates,
   ]);
+  const [deletePipeline] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            if (uuid === pipelineUUID) {
+              redirectToFirstPipeline(pipelines, router);
+            }
+            removeCollapsedBlockStates(blocks, pipelineUUID);
+            fetchFileTree();
+            fetchPipelines();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
 
   const [deleteBlock] = useMutation(
     ({ uuid }: BlockType) => api.blocks.pipelines.useDelete(pipelineUUID, uuid)(),
@@ -1034,8 +1095,11 @@ function PipelineDetailPage({
   const fileTree = useMemo(() => (
     <ContextMenu
       areaRef={fileTreeRef}
+      createPipeline={createPipeline}
       deleteBlockFile={deleteBlockFile}
+      deletePipeline={deletePipeline}
       enableContextItem
+      numPipelines={numPipelines}
       type={ContextMenuEnum.FILE_BROWSER}
     >
       <FileBrowser
@@ -1370,7 +1434,7 @@ function PipelineDetailPage({
         before={fileTree}
         beforeHeader={(
           <FileHeaderMenu
-            fetchFileTree={fetchFileTree}
+            createPipeline={createPipeline}
             interruptKernel={interruptKernel}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}

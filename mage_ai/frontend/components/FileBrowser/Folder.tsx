@@ -176,22 +176,26 @@ function Folder({
         onContextMenu={(e) => {
           e.preventDefault();
 
-          const contextPayload = {
-            data: {
-              block: getBlockFromFile(file),
-            },
-          };
-
           if (disabled) {
-            setContextItem({ type: FileContextEnum.DISABLED, ...contextPayload });
+            setContextItem({ type: FileContextEnum.DISABLED });
           } else if (isPipelineFolder) {
-            setContextItem({ type: FileContextEnum.PIPELINE, ...contextPayload });
+            setContextItem({
+              data: {
+                name,
+              },
+              type: FileContextEnum.PIPELINE,
+            });
           } else if (children) {
-            setContextItem({ type: FileContextEnum.FOLDER, ...contextPayload });
+            setContextItem({ type: FileContextEnum.FOLDER });
           } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-            setContextItem({ type: FileContextEnum.FILE, ...contextPayload });
+            setContextItem({ type: FileContextEnum.FILE });
           } else {
-            setContextItem({ type: FileContextEnum.BLOCK_FILE, ...contextPayload });
+            setContextItem({
+              data: {
+                block: getBlockFromFile(file),
+              },
+              type: FileContextEnum.BLOCK_FILE,
+            });
           }
         }}
         style={{

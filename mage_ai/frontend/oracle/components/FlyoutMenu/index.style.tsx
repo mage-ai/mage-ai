@@ -4,6 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
+  disabled?: boolean;
   highlighted: boolean;
   indent?: boolean;
 };
@@ -41,15 +42,23 @@ export const LinkStyle = styled.div<LinkProps>`
   justify-content: space-between;
   padding: ${UNIT}px;
 
-  &:hover {
-    cursor: default;
-  }
+  ${props => !props.disabled && `  
+    &:hover {
+      cursor: default;
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    }
+  `}
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.disabled && `
+    color: ${(props.theme.content || dark.content).disabled};
+    cursor: not-allowed;
 
     &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+      color: ${(props.theme.content || dark.content).disabled};
     }
   `}
 
