@@ -85,13 +85,13 @@ class ApiFileContentHandler(BaseHandler):
 
 class ApiPipelineHandler(BaseHandler):
     def delete(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         response = dict(pipeline=pipeline.to_dict())
         pipeline.delete()
         self.write(response)
 
     def get(self, pipeline_uuid):
-        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         include_content = self.get_bool_argument('include_content', True)
         include_outputs = self.get_bool_argument('include_outputs', True)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
@@ -110,7 +110,7 @@ class ApiPipelineHandler(BaseHandler):
         """
         Allow updating pipeline name and uuid
         """
-        pipeline = Pipeline(pipeline_uuid, repo_path=get_repo_path())
+        pipeline = Pipeline.get(pipeline_uuid)
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
