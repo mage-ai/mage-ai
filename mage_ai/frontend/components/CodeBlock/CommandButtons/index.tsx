@@ -13,6 +13,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardTextGroup from '@oracle/elements/KeyboardTextGroup';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
