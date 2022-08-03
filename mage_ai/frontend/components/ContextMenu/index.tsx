@@ -125,7 +125,7 @@ function ContextMenu({
       {
         label: () => 'Delete',
         onClick: () => deleteBlockFile(contextItem.data.block),
-        uuid: 'delete block file',
+        uuid: 'delete_block_file',
       },
     ],
     [FileContextEnum.PIPELINE]: [
@@ -137,11 +137,13 @@ function ContextMenu({
             name: `${contextItem.data.name}_copy`,
           },
         }),
+        uuid: 'duplicate_pipeline',
       },
       {
         disabled: numPipelines <= 1,
         label: () => 'Delete',
         onClick: () => deletePipeline(contextItem.data.name),
+        uuid: 'delete_pipeline',
       },
     ],
   };
