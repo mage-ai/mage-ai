@@ -18,6 +18,8 @@ import {
   WindowHeaderStyle,
 } from './index.style';
 import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
+import { addUnderscores, randomSimpleHashGenerator } from '@utils/string';
+
 
 type RecommendationsWindowProps = {
   addNewBlockAtIndex: (
@@ -130,12 +132,16 @@ function RecommendationsWindow({
           onClick={() => {
             const upstreamBlocks = getUpstreamBlockUuids(selectedBlock);
             const suggestedActionPayload: SuggestionType = suggestions?.[selectedRecIdx];
+            const formattedSuggestionTitle = addUnderscores(suggestedActionPayload?.title || '').toLowerCase();
+            const newBlockTitle = `${formattedSuggestionTitle}_${randomSimpleHashGenerator()}`;
+
             addNewBlockAtIndex({
               config: {
                 suggested_action: {
                   ...suggestedActionPayload,
                 },
               },
+              name: newBlockTitle,
               type: BlockTypeEnum.TRANSFORMER,
               upstream_blocks: upstreamBlocks,
             }, finalBlockInsertionIdx, setSelectedBlock);
