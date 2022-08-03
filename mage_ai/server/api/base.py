@@ -34,6 +34,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def write_error(self, status_code, **kwargs):
         if status_code == 500:
+            self.set_status(200)
             exception = kwargs['exc_info'][1]
             self.write(
                 dict(

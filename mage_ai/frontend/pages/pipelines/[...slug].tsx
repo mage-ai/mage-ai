@@ -17,6 +17,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
+import ErrorPopup from '@components/ErrorPopup';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
@@ -94,6 +95,7 @@ function PipelineDetailPage({
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
+  const [errors, setErrors] = useState(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
   const [selectedFilePaths, setSelectedFilePaths] = useState<string[]>([]);
@@ -424,14 +426,10 @@ function PipelineDetailPage({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => setPipelineContentTouched(false),
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -516,19 +514,16 @@ function PipelineDetailPage({
         name,
         type,
       },
-    }).then(({
-      data: {
-        pipeline: {
-          uuid,
-        },
-      },
-    }) => {
-      fetchFileTree();
-      if (type !== pipeline?.type) {
-        fetchPipeline();
+    }).then((resp) => {
+      if (resp?.data?.pipeline) {
+        const { uuid } = resp.data.pipeline;
+        fetchFileTree();
+        if (type !== pipeline?.type) {
+          fetchPipeline();
+        }
+        updateCollapsedBlocks(blocks, pipelineUUID, uuid);
+        router.push(`/pipelines/${uuid}`);
       }
-      updateCollapsedBlocks(blocks, pipelineUUID, uuid);
-      router.push(`/pipelines/${uuid}`);
     });
   }, [
     blocks,
@@ -632,15 +627,12 @@ function PipelineDetailPage({
             fetchPipeline();
             fetchFileTree();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-            alert('Error deleting block file. Check that there are no downstream blocks, then try again.');
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            displayMessage: 'Error deleting block file. ' +
+              'Check that there are no downstream blocks, then try again.',
+            response,
+          }),
         },
       ),
     },
@@ -652,14 +644,10 @@ function PipelineDetailPage({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => fetchKernels(),
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -672,14 +660,10 @@ function PipelineDetailPage({
           callback: (response) => {
 
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -724,14 +708,10 @@ function PipelineDetailPage({
             fetchFileTree();
             fetchPipeline();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       );
     });
@@ -779,14 +759,10 @@ function PipelineDetailPage({
 
         setRecentlyAddedChart(widget);
       },
-      onErrorCallback: ({
-        error: {
-          errors,
-          message,
-        },
-      }) => {
-        console.log(errors, message);
-      },
+      onErrorCallback: (response, errors) => setErrors({
+        errors,
+        response,
+      }),
     },
   )), [
     activeSidekickView,
@@ -1420,6 +1396,13 @@ function PipelineDetailPage({
           )}
         />
       </TripleLayout>
+
+      {errors && (
+        <ErrorPopup
+          {...errors}
+          onClose={() => setErrors(null)}
+        />
+      )}
     </>
   );
 }

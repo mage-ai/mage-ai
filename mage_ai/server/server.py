@@ -295,7 +295,7 @@ class ApiPipelineVariableListHandler(BaseHandler):
 class KernelsHandler(BaseHandler):
     def get(self, kernel_id=None):
         kernels = []
-        
+
         for kernel_name in KernelName:
             kernel = kernel_managers[kernel_name]
             if kernel.has_kernel:
