@@ -812,9 +812,7 @@ function ChartBlock({
   return (
     <Col sm={12} md={12 * widthPercentage}>
       <ChartBlockStyle ref={ref}>
-
-
-        <Spacing mt={1} px={1}>
+        <Spacing mt={1} pt={1} px={1}>
           <FlexContainer
             alignItems="center"
             fullWidth

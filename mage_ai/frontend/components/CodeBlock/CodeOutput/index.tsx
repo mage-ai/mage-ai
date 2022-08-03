@@ -162,7 +162,7 @@ function CodeOutput({
         const outputRowSharedProps = {
           contained,
           first: idx === 0 && idxInner === 0,
-          last: idx === numberOfMessages - 1 && idxInner === dataArrayLength - 1,
+          last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
         };
 
         if (typeof data === 'string' && data.match(internalOutputRegex)) {
