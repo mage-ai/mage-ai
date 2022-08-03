@@ -58,6 +58,10 @@ type CommandButtonsProps = {
     runUpstream?: boolean;
     runTests?: boolean;
   }) => void;
+  savePipelineContent: (payload?: {
+    block?: BlockType;
+    pipeline?: PipelineType;
+  }) => Promise<any>;
   setOutputCollapsed: (value: boolean) => void;
   updateBlock: ({ block: BlockType }) => void;
 } & CommandButtonsSharedProps;
@@ -71,6 +75,7 @@ function CommandButtons({
   executionState,
   interruptKernel,
   runBlock,
+  savePipelineContent,
   setOutputCollapsed,
   updateBlock,
 }: CommandButtonsProps) {
@@ -93,13 +98,22 @@ function CommandButtons({
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
 
-  const convertBlockMenuItems = useMemo(() => (
-    buildConvertBlockMenuItems(block, blocks, 'CommandButtons', addNewBlock)
-  ), [
-    block,
-    blocks,
-    addNewBlock,
-  ]);
+  const convertBlockMenuItems =
+    useMemo(() => buildConvertBlockMenuItems(
+      block,
+      blocks,
+      'CommandButtons',
+      addNewBlock,
+    ).map((config) => ({
+      ...config,
+      onClick: () => savePipelineContent().then(() => config.onClick()),
+    })),
+    [
+      addNewBlock,
+      block,
+      blocks,
+      savePipelineContent,
+    ]);
 
   return (
     <ContainerStyle>

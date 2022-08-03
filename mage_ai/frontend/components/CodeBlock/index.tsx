@@ -414,15 +414,23 @@ function CodeBlockProps({
   }, [runStartTime]);
 
 
-  const buildBlockMenu = (b: BlockType) => {
+  const buildBlockMenu = useCallback((b: BlockType) => {
     const blockMenuItems = {
       [BlockTypeEnum.SCRATCHPAD]: [
-        ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', updateBlock),
-      ],
+        ...buildConvertBlockMenuItems(b, blocks, 'block_menu/scratchpad', addNewBlock),
+      ].map((config) => ({
+        ...config,
+        onClick: () => savePipelineContent().then(() => config.onClick()),
+      })),
     };
 
     return blockMenuItems[b.type];
-  };
+  }, [
+    addNewBlock,
+    blocks,
+    buildConvertBlockMenuItems,
+    savePipelineContent,
+  ]);
 
   const codeEditorEl = useMemo(() => (
     <CodeEditor
@@ -725,6 +733,7 @@ function CodeBlockProps({
           executionState={executionState}
           interruptKernel={interruptKernel}
           runBlock={runBlockAndTrack}
+          savePipelineContent={savePipelineContent}
           setOutputCollapsed={setOutputCollapsed}
           updateBlock={updateBlock}
         />
