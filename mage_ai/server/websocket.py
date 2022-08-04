@@ -125,7 +125,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                                 log_func=publish_message,
                                 parallel=False,
                             ))
-                        publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
+                        publish_message(
+                            f'Pipeline {pipeline.uuid} execution complete.\n'
+                            'You can see the code block output in the corresponding code block.',
+                            'idle',
+                        )
                     except Exception:
                         trace = traceback.format_exc().splitlines()
                         publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')

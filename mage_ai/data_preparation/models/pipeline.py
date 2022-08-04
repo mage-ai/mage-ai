@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
+from mage_ai.data_preparation.models.block import Block, run_blocks
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
@@ -202,27 +202,6 @@ class Pipeline:
         )
         set_pipeline_execution(execution_task)
         await execution_task
-
-    def execute_sync(
-        self,
-        analyze_outputs: bool = True,
-        redirect_outputs: bool = False,
-    ) -> None:
-        """
-        Async function for parallel processing
-        This function will schedule the block execution in topological
-        order based on a block's upstream dependencies.
-        """
-        root_blocks = []
-        for block in self.blocks_by_uuid.values():
-            if len(block.upstream_blocks) == 0:
-                root_blocks.append(block)
-
-        run_blocks_sync(
-            root_blocks,
-            analyze_outputs=analyze_outputs,
-            redirect_outputs=redirect_outputs,
-        )
 
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):

@@ -420,7 +420,6 @@ class Block:
                 update_status=update_status,
             )
         stdout = output['stdout']
-        print('block stdout:', stdout)
         if log_func is not None and len(stdout) > 0:
             stdout_stripped = stdout.strip('\n')
             prefixed_stdout = '\n'.join(

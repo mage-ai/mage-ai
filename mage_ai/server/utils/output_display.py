@@ -309,19 +309,8 @@ def get_pipeline_execution_code(
 ) -> str:
     if kernel_name == KernelName.PYSPARK:
         global_vars_spark = 'global_vars[\'spark\'] = spark'
-        pipeline_execution_code = f"""
-    asyncio.run(pipeline.execute(
-        analyze_outputs=False,
-        global_vars=global_vars,
-        update_status={update_status},
-    ))
-        """
     else:
         global_vars_spark = ''
-        pipeline_execution_code = """
-    pipeline.execute_sync(analyze_outputs=True)
-        """
-    
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
 import asyncio
@@ -336,6 +325,10 @@ def execute_pipeline():
     global_vars = {global_vars} or dict()
     {global_vars_spark}
 
-    {pipeline_execution_code}
+    asyncio.run(pipeline.execute(
+        analyze_outputs=False,
+        global_vars=global_vars,
+        update_status={update_status},
+    ))
 execute_pipeline()
     """

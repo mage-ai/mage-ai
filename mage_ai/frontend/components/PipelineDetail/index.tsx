@@ -288,7 +288,6 @@ function PipelineDetail({
 
   const codeBlocks = useMemo(
     () => blocks.map((block: BlockType, idx: number) => {
-      console.log('block:', block);
       const {
         type,
         uuid,

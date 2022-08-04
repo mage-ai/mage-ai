@@ -16,6 +16,7 @@ import DependencyGraph from '@components/DependencyGraph';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
+import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -35,10 +36,8 @@ import {
 } from './index.style';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
-import { getWebSocket } from '@api/utils/url';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
-import KernelOutputType from '@interfaces/KernelOutputType';
 
 const MAX_COLUMNS = 40;
 
