@@ -111,7 +111,7 @@ function RecommendationsWindow({
         )}
         {(!loading && recsCount === 0)
           ?
-            <RowStyle>
+            <RowStyle disableHover>
               <Text>
                 {emptyMessage}
               </Text>
@@ -145,9 +145,11 @@ function RecommendationsWindow({
         <Text default monospace>
           {recsCount} results
         </Text>
-        <Text default>
-          Click on a row to add a new code block, which you can edit after.
-        </Text>
+        {recsCount > 0 &&
+          <Text default>
+            Click on a row to add a new code block, which you can edit after.
+          </Text>
+        }
       </WindowFooterStyle>
     </WindowContainerStyle>
   );
