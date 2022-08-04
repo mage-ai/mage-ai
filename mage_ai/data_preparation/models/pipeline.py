@@ -353,6 +353,8 @@ class Pipeline:
 
                                 if len(keys_to_update) >= 1:
                                     block.update(extract(block_data, keys_to_update))
+
+                                self.save(widget=widget)
                             elif name and name != block.name:
                                 block.update(extract(block_data, ['name']))
                                 block_uuid_mapping[block_data.get('uuid')] = block.uuid
