@@ -1,5 +1,8 @@
 # Run pipeline in Airflow
-We support running the pipeline in Airflow DAGs. You need to firstly install `mage_ai` library by adding `mage_ai` to your requirements.txt file. Then you need to download the mage pipeline code into your Airflow directory. You can achieve it by using a git submodule in your Airflow directory.
+We support running the pipeline in Airflow DAGs.
+* You need to firstly install `mage_ai` library by adding `mage_ai` to your requirements.txt file.
+* Then you need to download the mage pipeline code into your Airflow directory. You can achieve it by using a git submodule in your Airflow directory.
+* In your Mage project's metadata.yaml file, please specify a variables_dir that you want to store the output of each block execution (You need to have write permission to the variables_dir). Example: `variables_dir: /tmp`.
 
 We provide multiple ways to run mage pipelines in Airflow.
 1. [Create DAGs for all pipelines in a Mage project](#create-dags-for-all-the-pipelines-in-mage-project)
