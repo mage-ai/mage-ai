@@ -909,10 +909,15 @@ function PipelineDetailPage({
   ]);
 
   const blocksPrevious = usePrevious(blocks);
+
   useEffect(() => {
-    if (typeof pipeline?.blocks !== 'undefined' && (!blocks.length
-      || blocksPrevious?.map(({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
-    )) {
+    if (
+      typeof pipeline?.blocks !== 'undefined' 
+        && (!blocks.length
+            || blocksPrevious?.map(
+              ({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
+           )
+    ) {
       const {
         content: contentByBlockUUIDResults,
         messages: messagesInit,
@@ -1002,41 +1007,52 @@ function PipelineDetailPage({
       const message: KernelOutputType = JSON.parse(lastMessage.data);
       const {
         execution_state: executionState,
-        pipeline_uuid: messagePipelineUuid,
+        msg_type: msgType,
         uuid,
       } = message;
 
       const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
-
-      // @ts-ignore
-      setMessages((messagesPrevious) => {
-        const messagesFromUUID = messagesPrevious[uuid] || [];
-
-        return {
-          ...messagesPrevious,
-          [uuid]: messagesFromUUID.concat(message),
-        };
-      });
-
-      if (messagePipelineUuid) {
+      
+      if (msgType !== 'stream_pipeline') {
+        // @ts-ignore
+        setMessages((messagesPrevious) => {
+          const messagesFromUUID = messagesPrevious[uuid] || [];
+  
+          return {
+            ...messagesPrevious,
+            [uuid]: messagesFromUUID.concat(message),
+          };
+        });
+      } else {
         setPipelineMessages((pipelineMessagesPrevious) => [
           ...pipelineMessagesPrevious,
           message,
         ]);
+        if (ExecutionStateEnum.IDLE === executionState) {
+          fetchPipeline();
+          const {
+            messages: messagesInit,
+          } = initializeContentAndMessages(pipeline?.blocks);
+    
+          setMessages(messagesPrev => ({
+            ...messagesPrev,
+            [uuid]: messagesInit[uuid],
+          }));
+        }
       }
       
       if (ExecutionStateEnum.BUSY === executionState) {
         setRunningBlocks((runningBlocksPrevious) => {
-          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
             return runningBlocksPrevious;
           }
-  
+          
           return runningBlocksPrevious.concat(block);
         });
       } else if (ExecutionStateEnum.IDLE === executionState) {
         // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
-          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
+          runningBlocksPrevious.filter(block => uuid !== block?.uuid),
         );
       }
 
@@ -1044,7 +1060,10 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+    fetchPipeline,
     lastMessage,
+    pipeline?.blocks,
+    setBlocks,
     setMessages,
     setPipelineContentTouched,
     setRunningBlocks,

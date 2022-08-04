@@ -15,7 +15,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
   const contentByBlockUUID = {};
 
-  blocks.forEach(({
+  blocks?.forEach(({
     content,
     outputs,
     uuid,

@@ -10,7 +10,7 @@ from mage_ai.server.active_kernel import (
     get_active_kernel_name,
     switch_active_kernel,
 )
-from mage_ai.server.execution_manager import cancel_pipeline_execution, set_pipeline_execution
+from mage_ai.server.execution_manager import cancel_pipeline_execution
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import KernelName
 from mage_ai.server.utils.output_display import (
@@ -100,7 +100,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
         if cancel_pipeline:
-            cancel_pipeline_execution(callback=lambda: publish_message('', 'idle'))
+            cancel_pipeline_execution(publish_message=publish_message)
             return
 
         if execute_pipeline:
@@ -120,7 +120,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             else:
                 def run_pipeline() -> None:
                     try:
-                        asyncio.run(pipeline.execute(log_func=publish_message, redirect_outputs=True))
+                        asyncio.run(
+                            pipeline.execute(
+                                log_func=publish_message,
+                                parallel=False,
+                            ))
                         publish_message(f'Pipeline {pipeline.uuid} execution complete.', 'idle')
                     except Exception:
                         trace = traceback.format_exc().splitlines()
@@ -141,10 +145,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             if not custom_code and BlockType.SCRATCHPAD == block_type:
                 msg_id = client.execute('')
 
-                value = dict(
-                    block_uuid=block_uuid,
-                    pipeline_uuid=pipeline_uuid,
-                )
                 WebSocketServer.running_executions_mapping[msg_id] = value
 
                 self.send_message(
@@ -177,7 +177,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         widget=widget,
                     )
                 
-                print('code:', code)
                 msg_id = client.execute(add_internal_output_info(code))
 
                 WebSocketServer.running_executions_mapping[msg_id] = value

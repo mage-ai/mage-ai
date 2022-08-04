@@ -138,6 +138,8 @@ function CodeOutput({
 
     let isTable = false;
 
+    console.log('combined messages:', combinedMessages);
+
     const arrContent = combinedMessages?.map(({
       data: dataInit,
       type: dataType,

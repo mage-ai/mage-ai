@@ -5,26 +5,26 @@ class PipelineExecution():
 
 pipeline_execution = PipelineExecution()
 
+
 def set_pipeline_execution(task):
     pipeline_execution.current_pipeline_task = task
+
 
 def add_pipeline_block_execution(task):
     pipeline_execution.current_pipeline_block_tasks.append(task)
 
-def set_pipeline(task):
-    pipeline_execution.current_pipeline_task = task
 
-def cancel_pipeline_execution(callback=None):
+def cancel_pipeline_execution(publish_message=None):
     current_task = pipeline_execution.current_pipeline_task
     current_block_tasks = pipeline_execution.current_pipeline_block_tasks
-    # if current_task is not None or not current_task.cancelled():
-    #     current_task.cancel()
     if len(current_block_tasks) > 0:
         for task in current_block_tasks:
             if not task.cancelled():
                 task.cancel()
-        if callback is not None:
-            callback()
+        if publish_message is not None:
+            publish_message('', execution_state='idle')
+    if current_task is not None or not current_task.cancelled():
+        current_task.cancel()
 
     pipeline_execution.current_pipeline_task = None
     pipeline_execution.current_pipeline_block_tasks = []

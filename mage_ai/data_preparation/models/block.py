@@ -2,8 +2,6 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
-from queue import Queue
-from typing import Callable, List, Set
 from mage_ai.data_cleaner.shared.utils import is_dataframe
 from mage_ai.data_preparation.models.constants import (
     BlockStatus,
@@ -18,12 +16,12 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.server.execution_manager import add_pipeline_block_execution
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.logger import VerboseFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
+from queue import Queue
+from typing import Callable, List, Set
 import asyncio
 import os
 import pandas as pd
@@ -37,6 +35,7 @@ async def run_blocks(
     analyze_outputs: bool = True,
     global_vars=None,
     log_func: Callable = None,
+    parallel: bool = True,
     redirect_outputs: bool = False,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
@@ -47,17 +46,22 @@ async def run_blocks(
 
     def create_block_task(block: 'Block'):
         async def execute_and_run_tests():
-            await block.execute(
-                analyze_outputs=analyze_outputs,
-                global_vars=global_vars,
-                log_func=log_func,
-                redirect_outputs=redirect_outputs,
-                run_all_blocks=True,
-                update_status=update_status,
-            )
-            if run_tests:
-                block.run_tests(update_tests=False)
-            log_func('', execution_state='idle', block_uuid=block.uuid)
+            prefix = f'[{block.uuid}]'
+            try:
+                log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
+                await block.execute(
+                    analyze_outputs=analyze_outputs,
+                    global_vars=global_vars,
+                    log_func=log_func,
+                    redirect_outputs=redirect_outputs,
+                    run_all_blocks=True,
+                    update_status=update_status,
+                    parallel=parallel,
+                )
+                if run_tests:
+                    block.run_tests(update_tests=False)
+            finally:
+                log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
         
         return asyncio.create_task(execute_and_run_tests())
 
@@ -390,12 +394,9 @@ class Block:
         redirect_outputs: bool = False,
         run_all_blocks: bool = False,
         update_status: bool = True,
+        parallel: bool = True,
     ) -> None:
-        with VerboseFunctionExec(
-            f'Executing {self.type} block',
-            log_func=lambda msg: log_func(msg, block_uuid=self.uuid),
-            prefix=f'[{self.uuid}]',
-        ):
+        if parallel:
             loop = asyncio.get_event_loop()
             output = await loop.run_in_executor(
                 None,
@@ -409,13 +410,23 @@ class Block:
                     update_status,
                 ]
             )
-            stdout = output['stdout']
-            if log_func is not None and len(stdout) > 0:
-                stdout_stripped = stdout.strip('\n')
-                prefixed_stdout = '\n'.join(
-                    [f'[{self.uuid}] {s}' for s in stdout_stripped.split('\n')]
-                )
-                log_func(prefixed_stdout, block_uuid=self.uuid)
+        else:
+            output = self.execute_sync(
+                analyze_outputs=analyze_outputs,
+                custom_code=custom_code,
+                global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
+                run_all_blocks=run_all_blocks,
+                update_status=update_status,
+            )
+        stdout = output['stdout']
+        print('block stdout:', stdout)
+        if log_func is not None and len(stdout) > 0:
+            stdout_stripped = stdout.strip('\n')
+            prefixed_stdout = '\n'.join(
+                [f'[{self.uuid}] {s}' for s in stdout_stripped.split('\n')]
+            )
+            log_func(prefixed_stdout, block_uuid=self.uuid)
 
     def __validate_execution(self, decorated_functions, input_vars):
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
@@ -517,30 +528,25 @@ class Block:
 
             self.test_functions = test_functions
 
-            def execute_block_code():
-                if BlockType.CHART == self.type:
-                    variables = self.get_variables_from_code_execution(results)
-                    outputs = self.post_process_variables(
-                        variables,
-                        code=custom_code,
-                        results=results,
-                        upstream_block_uuids=upstream_block_uuids,
-                    )
-                else:
-                    block_function = self.__validate_execution(decorated_functions, input_vars)
-                    if block_function is not None:
-                        if global_vars is not None and len(global_vars) != 0:
-                            outputs = block_function(*input_vars, **global_vars)
-                        else:
-                            outputs = block_function(*input_vars)
-                        if outputs is None:
-                            outputs = []
-                        if type(outputs) is not list:
-                            outputs = [outputs]
-
-                return outputs
-            
-            outputs = execute_block_code()
+            if BlockType.CHART == self.type:
+                variables = self.get_variables_from_code_execution(results)
+                outputs = self.post_process_variables(
+                    variables,
+                    code=custom_code,
+                    results=results,
+                    upstream_block_uuids=upstream_block_uuids,
+                )
+            else:
+                block_function = self.__validate_execution(decorated_functions, input_vars)
+                if block_function is not None:
+                    if global_vars is not None and len(global_vars) != 0:
+                        outputs = block_function(*input_vars, **global_vars)
+                    else:
+                        outputs = block_function(*input_vars)
+                    if outputs is None:
+                        outputs = []
+                    if type(outputs) is not list:
+                        outputs = [outputs]
 
         output_message = dict(output=outputs)
         if redirect_outputs:
