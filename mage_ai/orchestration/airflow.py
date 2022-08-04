@@ -31,7 +31,8 @@ def create_dag(
     tasks = []
 
     def build_execute_block(block):
-        def _callable(ds, **kwargs):
+        # Airflow v1.x will error unless we use *args instead of ds explicitly.
+        def _callable(*args, **kwargs):
             block.execute_sync(
                 analyze_outputs=False,
                 update_status=False,
