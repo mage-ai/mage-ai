@@ -14,8 +14,7 @@
         options={'groupby_columns': []},  # Enter columns to group by
         outputs=[
             # The number of outputs below must match the number of arguments
-            {'uuid': 'new_aggregate_column_1', 'column_type': 'category'},
-            {'uuid': 'new_aggregate_column_2', 'column_type': 'number'},
+            {'uuid': 'new_aggregate_column', 'column_type': 'category'},
         ],
     )
 {% endblock %}
