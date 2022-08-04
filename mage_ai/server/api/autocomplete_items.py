@@ -6,11 +6,13 @@ from mage_ai.autocomplete.utils import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
+import os
 
 
 class ApiAutocompleteItemsHandler(BaseHandler):
     def get(self):
         repo_path = get_repo_path()
+        cwd = os.getcwd()
         collection = []
 
         for file_group, mapping in [
@@ -28,7 +30,10 @@ class ApiAutocompleteItemsHandler(BaseHandler):
             ),
             (
                 'mage_library',
-                build_file_content_mapping(PATHS_TO_TRAVERSE, FILES_TO_READ),
+                build_file_content_mapping(
+                    PATHS_TO_TRAVERSE,
+                    [f'{cwd}/{fn}' for fn in FILES_TO_READ],
+                ),
             ),
             (
                 'user_library',
