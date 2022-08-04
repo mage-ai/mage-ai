@@ -1002,7 +1002,7 @@ function PipelineDetailPage({
       const message: KernelOutputType = JSON.parse(lastMessage.data);
       const {
         execution_state: executionState,
-        pipeline_uuid: pipelineUuid,
+        pipeline_uuid: messagePipelineUuid,
         uuid,
       } = message;
 
@@ -1018,7 +1018,7 @@ function PipelineDetailPage({
         };
       });
 
-      if (pipelineUuid) {
+      if (messagePipelineUuid) {
         setPipelineMessages((pipelineMessagesPrevious) => [
           ...pipelineMessagesPrevious,
           message,
@@ -1196,13 +1196,16 @@ function PipelineDetailPage({
     metadata,
     onChangeChartBlock,
     pipeline,
+    pipelineMessages,
     runBlock,
     runningBlocks,
     sampleData,
     savePipelineContent,
     selectedBlock,
+    sendMessage,
     setAnyInputFocused,
     setEditingBlock,
+    setPipelineMessages,
     setTextareaFocused,
     statistics,
     textareaFocused,

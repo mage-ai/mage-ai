@@ -176,6 +176,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         update_status=False if remote_execution else True,
                         widget=widget,
                     )
+                
+                print('code:', code)
                 msg_id = client.execute(add_internal_output_info(code))
 
                 WebSocketServer.running_executions_mapping[msg_id] = value

@@ -48,6 +48,7 @@ function PipelineExecution({
     savePipelineContent().then(() => {
       setIsPipelineExecuting(true);
       setPipelineMessages([]);
+      setMessages([]);
 
       sendMessage(JSON.stringify({
         execute_pipeline: true,
@@ -71,6 +72,7 @@ function PipelineExecution({
   ]);
 
   useEffect(() => {
+    console.log('pipelineMessages:', pipelineMessages);
     if (pipelineMessages.length > 0) {
       const message = pipelineMessages[pipelineMessages.length - 1];
       const {
@@ -80,13 +82,12 @@ function PipelineExecution({
       } = message;
 
       if (pipeline_uuid === pipelineUUID) {
+        setMessages((messagesPrevious) => [
+          ...messagesPrevious,
+          message,
+        ]); 
         if (ExecutionStateEnum.IDLE === executionState && !uuid) {
           setIsPipelineExecuting(false);
-        } else {
-          setMessages((messagesPrevious) => [
-              ...messagesPrevious,
-              message,
-          ]);
         }
       }
     }
