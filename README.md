@@ -83,8 +83,8 @@ mage run [project_name] [pipeline]
 
 # 👩‍🏫 Tutorials
 
-- [Train model on Titanic dataset](docs/tutorials/train_titanic_model/README.md)
-- [Coming soon] Build an ETL pipeline end-to-end
+- [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
+- [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
 - [Coming soon] How to visualize your data with charts
 
 <br />
