@@ -2,7 +2,11 @@ from functools import reduce
 from mage_ai.shared.utils import files_in_path
 import importlib
 import os
+import pathlib
 import re
+
+
+root_path = '/'.join(str(pathlib.Path(__file__).parent.resolve()).split('/')[:-1])
 
 
 FILE_EXTENSIONS_TO_INCLUDE = [
@@ -12,8 +16,8 @@ PATHS_TO_TRAVERSE = [
     'mage_ai/io',
 ]
 FILES_TO_READ = [
-    'mage_ai/data_cleaner/transformer_actions/constants.py',
-    'mage_ai/data_cleaner/transformer_actions/utils.py',
+    f'{root_path}/data_cleaner/transformer_actions/constants.py',
+    f'{root_path}/data_cleaner/transformer_actions/utils.py',
 ]
 
 
