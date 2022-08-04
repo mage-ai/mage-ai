@@ -10,7 +10,7 @@ We support multiple kernels in the code editor.
 Python3 is the default kernel. You can prototype and transform small to medium size datasets with this kernel. Pipelines built with this kernel can be executed in Python environments.
 
 ## PySpark kernel <a name="pyspark"></a>
-We support running PySpark kernel to prototype with large datasets and build pipelines to transform large datasets.
+We support running PySpark kernel to prototype with large datasets and build pipelines to transform large datasets. To use the PySpark kernel, you need to uncomment the PySpark kernel setup code in Dockerfile and build the image.
 
 Instructions for running PySpark kernel
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.

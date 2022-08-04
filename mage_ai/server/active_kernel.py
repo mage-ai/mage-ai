@@ -1,4 +1,5 @@
 from jupyter_client import KernelClient, KernelManager
+from jupyter_client.kernelspec import NoSuchKernel
 from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName, kernel_managers
 
 
@@ -19,10 +20,20 @@ def switch_active_kernel(kernel_name: KernelName) -> None:
         if kernel.is_alive():
             kernel.request_shutdown()
 
-    new_kernel = kernel_managers[kernel_name]
-    new_kernel.start_kernel()
-    active_kernel.kernel = new_kernel
-    active_kernel.kernel_client = new_kernel.client()
+    try:
+        new_kernel = kernel_managers[kernel_name]
+        new_kernel.start_kernel()
+        active_kernel.kernel = new_kernel
+        active_kernel.kernel_client = new_kernel.client()
+    except NoSuchKernel as e:
+        if kernel_name == KernelName.PYSPARK:
+            raise Exception(
+                'PySpark kernel is not installed. Please follow the instructions in '
+                'https://github.com/mage-ai/mage-ai/blob/master/docs/kernels/README.md#pyspark-kernel-'
+                'to install it.'
+            ) from e
+        else:
+            raise e
 
 
 def get_active_kernel() -> KernelManager:

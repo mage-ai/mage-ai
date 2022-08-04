@@ -1,6 +1,5 @@
 from IPython import get_ipython
 from IPython.display import IFrame, Javascript, display
-from bs4 import BeautifulSoup
 from enum import Enum
 from mage_ai.server.app import (
     server_config,
@@ -8,7 +7,6 @@ from mage_ai.server.app import (
 from mage_ai.server.constants import SERVER_PORT
 import logging
 import os
-import re
 
 
 FRONTEND_DIST_PATH = os.path.abspath(
@@ -92,50 +90,5 @@ def update_frontend_urls(host=None, port=None, notebook_type=None, config={}):
         url_params = f'?token={token}'
         server_config.server_base_path = base_path
         server_config.server_url_params = url_params
-        __update_frontend_urls_in_files(base_path, url_params)
     elif notebook_type == NotebookType.SAGEMAKER:
         base_path = f'/proxy/{port}'
-        __update_frontend_urls_in_files(base_path, None)
-
-
-
-def __update_frontend_urls_in_files(base_path, url_params):
-    if base_path is None and url_params is None:
-        return
-    base_path = base_path or ''
-    url_params = url_params or ''
-    for root, dirnames, filenames in os.walk(FRONTEND_DIST_PATH):
-        for filename in filenames:
-            if filename.endswith('.html'):
-                fname = os.path.join(root, filename)
-                # Read html file
-                with open(fname) as handle:
-                    soup = BeautifulSoup(handle.read(), 'html.parser')
-                # Update urls
-                links = soup.find_all('link', attrs={'href': re.compile(FRONTEND_STATIC_PATH)})
-                scripts = soup.find_all('script', attrs={'src': True})
-                for link in links:
-                    link['href'] = re.sub(
-                        r'\.css.*?$',
-                        '.css',
-                        re.sub(
-                            r'^.*?' + FRONTEND_STATIC_PATH,
-                            FRONTEND_STATIC_PATH,
-                            link['href'],
-                        )
-                    )
-                    link['href'] = base_path + link['href'] + url_params
-                for s in scripts:
-                    s['src'] = re.sub(
-                        r'\.js.*?$',
-                        '.js',
-                        re.sub(
-                            r'^.*?' + FRONTEND_STATIC_PATH,
-                            FRONTEND_STATIC_PATH,
-                            s['src'],
-                        ),
-                    )
-                    s['src'] = base_path + s['src'] + url_params
-                # Write modified file
-                with open(fname, 'w') as outf:
-                    outf.write(str(soup))
