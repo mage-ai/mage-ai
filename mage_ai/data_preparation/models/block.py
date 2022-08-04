@@ -39,7 +39,7 @@ async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
     global_vars=None,
-    log_func: Callable[[str], None] = None,
+    log_func: Callable = None,
     redirect_outputs: bool = False,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
@@ -48,9 +48,9 @@ async def run_blocks(
     tasks = dict()
     blocks = Queue()
 
-    def create_block_task(block: 'Block', run_tests: bool = False):
-        block_task = asyncio.create_task(
-            block.execute(
+    def create_block_task(block: 'Block'):
+        async def execute_and_run_tests():
+            await block.execute(
                 analyze_outputs=analyze_outputs,
                 global_vars=global_vars,
                 log_func=log_func,
@@ -58,11 +58,11 @@ async def run_blocks(
                 run_all_blocks=True,
                 update_status=update_status,
             )
-        )
-        add_pipeline_block_execution(block_task)
-        tasks[block.uuid] = block_task
-        if run_tests:
-            block.run_tests(update_tests=False)
+            if run_tests:
+                block.run_tests(update_tests=False)
+            log_func('', execution_state='idle', block_uuid=block.uuid)
+        
+        return asyncio.create_task(execute_and_run_tests())
 
     for block in root_blocks:
         blocks.put(block)
@@ -82,7 +82,9 @@ async def run_blocks(
             continue
         upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
         await asyncio.gather(*upstream_tasks)
-        create_block_task(block, run_tests=run_tests)
+        block_task = create_block_task(block)
+        add_pipeline_block_execution(block_task)
+        tasks[block.uuid] = block_task
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
                 selected_blocks is None or upstream_block.uuid in selected_blocks
@@ -387,23 +389,28 @@ class Block:
         analyze_outputs: bool = True,
         custom_code: str = None,
         global_vars=None,
-        log_func: Callable[[str], None] = None,
+        log_func: Callable = None,
         redirect_outputs: bool = False,
         run_all_blocks: bool = False,
         update_status: bool = True,
     ) -> None:
         with VerboseFunctionExec(
             f'Executing {self.type} block',
-            log_func=log_func,
+            log_func=lambda msg: log_func(msg, block_uuid=self.uuid),
             prefix=f'[{self.uuid}]',
         ):
-            output = self.execute_sync(
-                analyze_outputs=analyze_outputs,
-                custom_code=custom_code,
-                global_vars=global_vars,
-                redirect_outputs=redirect_outputs,
-                run_all_blocks=run_all_blocks,
-                update_status=update_status,
+            loop = asyncio.get_event_loop()
+            output = await loop.run_in_executor(
+                None,
+                self.execute_sync,
+                [
+                    analyze_outputs,
+                    custom_code,
+                    global_vars,
+                    redirect_outputs,
+                    run_all_blocks,
+                    update_status,
+                ]
             )
             stdout = output['stdout']
             if log_func is not None and len(stdout) > 0:
@@ -411,7 +418,7 @@ class Block:
                 prefixed_stdout = '\n'.join(
                     [f'[{self.uuid}] {s}' for s in stdout_stripped.split('\n')]
                 )
-                log_func(prefixed_stdout)
+                log_func(prefixed_stdout, block_uuid=self.uuid)
 
     def __validate_execution(self, decorated_functions, input_vars):
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
@@ -513,25 +520,30 @@ class Block:
 
             self.test_functions = test_functions
 
-            if BlockType.CHART == self.type:
-                variables = self.get_variables_from_code_execution(results)
-                outputs = self.post_process_variables(
-                    variables,
-                    code=custom_code,
-                    results=results,
-                    upstream_block_uuids=upstream_block_uuids,
-                )
-            else:
-                block_function = self.__validate_execution(decorated_functions, input_vars)
-                if block_function is not None:
-                    if global_vars is not None and len(global_vars) != 0:
-                        outputs = block_function(*input_vars, **global_vars)
-                    else:
-                        outputs = block_function(*input_vars)
-                    if outputs is None:
-                        outputs = []
-                    if type(outputs) is not list:
-                        outputs = [outputs]
+            def execute_block_code():
+                if BlockType.CHART == self.type:
+                    variables = self.get_variables_from_code_execution(results)
+                    outputs = self.post_process_variables(
+                        variables,
+                        code=custom_code,
+                        results=results,
+                        upstream_block_uuids=upstream_block_uuids,
+                    )
+                else:
+                    block_function = self.__validate_execution(decorated_functions, input_vars)
+                    if block_function is not None:
+                        if global_vars is not None and len(global_vars) != 0:
+                            outputs = block_function(*input_vars, **global_vars)
+                        else:
+                            outputs = block_function(*input_vars)
+                        if outputs is None:
+                            outputs = []
+                        if type(outputs) is not list:
+                            outputs = [outputs]
+
+                return outputs
+            
+            outputs = execute_block_code()
 
         output_message = dict(output=outputs)
         if redirect_outputs:

@@ -391,6 +391,7 @@ function PipelineDetailPage({
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
+  const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
   const {
     data,
@@ -1001,8 +1002,11 @@ function PipelineDetailPage({
       const message: KernelOutputType = JSON.parse(lastMessage.data);
       const {
         execution_state: executionState,
+        pipeline_uuid: pipelineUuid,
         uuid,
       } = message;
+
+      const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
 
       // @ts-ignore
       setMessages((messagesPrevious) => {
@@ -1014,7 +1018,22 @@ function PipelineDetailPage({
         };
       });
 
-      if (ExecutionStateEnum.IDLE === executionState) {
+      if (pipelineUuid) {
+        setPipelineMessages((pipelineMessagesPrevious) => [
+          ...pipelineMessagesPrevious,
+          message,
+        ]);
+      }
+      
+      if (ExecutionStateEnum.BUSY === executionState) {
+        setRunningBlocks((runningBlocksPrevious) => {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2)) {
+            return runningBlocksPrevious;
+          }
+  
+          return runningBlocksPrevious.concat(block);
+        });
+      } else if (ExecutionStateEnum.IDLE === executionState) {
         // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
@@ -1024,6 +1043,7 @@ function PipelineDetailPage({
       setPipelineContentTouched(true);
     }
   }, [
+    blocks,
     lastMessage,
     setMessages,
     setPipelineContentTouched,
@@ -1142,13 +1162,16 @@ function PipelineDetailPage({
       metadata={metadata}
       onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
+      pipelineMessages={pipelineMessages}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
+      sendMessage={sendMessage}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
+      setPipelineMessages={setPipelineMessages}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}

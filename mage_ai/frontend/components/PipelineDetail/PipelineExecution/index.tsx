@@ -19,15 +19,22 @@ import { OutputContainerStyle } from './index.style';
 import { PlayButton } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getWebSocket } from '@api/utils/url';
+import BlockType from '@interfaces/BlockType';
 
 export type PipelineExecutionProps = {
   pipeline: PipelineType;
+  pipelineMessages: KernelOutputType[];
+  setPipelineMessages: (messages: KernelOutputType[]) => void; 
   savePipelineContent: () => Promise<any>;
+  sendMessage: (message: any) => void;
 };
 
 function PipelineExecution({
   pipeline,
+  pipelineMessages,
   savePipelineContent,
+  setPipelineMessages,
+  sendMessage,
 }: PipelineExecutionProps) {
   const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
@@ -37,24 +44,10 @@ function PipelineExecution({
     uuid: pipelineUUID
   } = pipeline || {};
 
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(getWebSocket(), {
-    onOpen: () => console.log('socketUrlPublish opened'),
-    shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
-
-      return true;
-    },
-  });
-
   const executePipeline = useCallback(() => {
     savePipelineContent().then(() => {
       setIsPipelineExecuting(true);
-      setMessages([]);
+      setPipelineMessages([]);
 
       sendMessage(JSON.stringify({
         execute_pipeline: true,
@@ -78,16 +71,16 @@ function PipelineExecution({
   ]);
 
   useEffect(() => {
-    if (lastMessage) {
-      const message: KernelOutputType = JSON.parse(lastMessage.data);
+    if (pipelineMessages.length > 0) {
+      const message = pipelineMessages[pipelineMessages.length - 1];
       const {
         execution_state: executionState,
         pipeline_uuid,
-        msg_type: msgType,
+        uuid,
       } = message;
 
       if (pipeline_uuid === pipelineUUID) {
-        if (ExecutionStateEnum.IDLE === executionState) {
+        if (ExecutionStateEnum.IDLE === executionState && !uuid) {
           setIsPipelineExecuting(false);
         } else {
           setMessages((messagesPrevious) => [
@@ -98,7 +91,7 @@ function PipelineExecution({
       }
     }
   }, [
-    lastMessage,
+    pipelineMessages,
     setMessages,
   ]);
 

@@ -84,9 +84,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             message: str,
             execution_state: str = 'busy',
             msg_type: str = 'stream_pipeline',
+            block_uuid: str = None,
         ) -> None:
             msg_id = str(uuid.uuid4())
-            print('value:', value)
+            value['block_uuid'] = block_uuid
             WebSocketServer.running_executions_mapping[msg_id] = value
             self.send_message(
                 dict(

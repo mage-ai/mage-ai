@@ -17,12 +17,12 @@ def set_pipeline(task):
 def cancel_pipeline_execution(callback=None):
     current_task = pipeline_execution.current_pipeline_task
     current_block_tasks = pipeline_execution.current_pipeline_block_tasks
-    if current_task is not None or not current_task.cancelled():
-        current_task.cancel()
-        if len(current_block_tasks) > 0:
-            for task in current_block_tasks:
-                if not task.cancelled():
-                    task.cancel()
+    # if current_task is not None or not current_task.cancelled():
+    #     current_task.cancel()
+    if len(current_block_tasks) > 0:
+        for task in current_block_tasks:
+            if not task.cancelled():
+                task.cancel()
         if callback is not None:
             callback()
 

@@ -38,6 +38,7 @@ import { createMetricsSample, createStatisticsSample } from './utils';
 import { getWebSocket } from '@api/utils/url';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
+import KernelOutputType from '@interfaces/KernelOutputType';
 
 const MAX_COLUMNS = 40;
 
@@ -61,9 +62,12 @@ export type SidekickProps = {
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
   pipeline: PipelineType;
+  pipelineMessages: KernelOutputType[];
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
+  sendMessage: (message: any) => void;
+  setPipelineMessages: (messages: KernelOutputType[]) => void;
   statistics: StatisticsType;
 } & SetEditingBlockType & ChartsPropsShared;
 
@@ -85,13 +89,16 @@ function Sidekick({
   metadata,
   onChangeChartBlock,
   pipeline,
+  pipelineMessages,
   runBlock,
   runningBlocks,
   sampleData,
   savePipelineContent,
   selectedBlock,
+  sendMessage,
   setAnyInputFocused,
   setEditingBlock,
+  setPipelineMessages,
   setSelectedBlock,
   setTextareaFocused,
   statistics,
@@ -103,8 +110,6 @@ function Sidekick({
     height: heightWindow,
   } = useWindowSize();
   const heightOffset = ASIDE_HEADER_HEIGHT;
-  const pipelineUUID = pipeline?.uuid;
-  const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const {
@@ -169,30 +174,6 @@ function Sidekick({
     setSelectedBlock,
   ]);
 
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(getWebSocket(), {
-    onOpen: () => console.log('socketUrlPublish opened'),
-    shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
-
-      return true;
-    },
-  });
-
-  const executePipeline = useCallback(() => {
-    sendMessage(JSON.stringify({
-      execute_pipeline: true,
-      pipeline_uuid: pipelineUUID,
-    }));
-  }, [
-    pipelineUUID,
-    sendMessage,
-  ]);
-
   return (
     <>
       {errorMessages?.length >= 1 &&
@@ -238,7 +219,10 @@ function Sidekick({
               <Spacing p={2}>
                 <PipelineExecution
                   pipeline={pipeline}
+                  pipelineMessages={pipelineMessages}
                   savePipelineContent={savePipelineContent}
+                  sendMessage={sendMessage}
+                  setPipelineMessages={setPipelineMessages}
                 />
               </Spacing>
             )}
