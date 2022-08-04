@@ -75,10 +75,12 @@ export const WindowFooterStyle = styled.div`
   `}
 `;
 
-export const RowStyle = styled.div`
+export const RowStyle = styled.div<{
+  disableHover?: boolean;
+}>`
   padding: ${UNIT}px ${UNIT * PADDING_UNITS}px;
 
-  ${props => `
+  ${props => !props.disableHover && `
     &:hover {
       cursor: pointer;
       background-color: ${(props.theme || dark).background.output};
