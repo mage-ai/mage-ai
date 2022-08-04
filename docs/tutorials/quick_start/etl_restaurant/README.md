@@ -14,7 +14,7 @@ In this tutorial, we’ll create a data pipeline that does the following:
 4. Write the transformed data to PostgreSQL
 
 If you prefer to skip the tutorial and view the finished code,
-follow [[TBD] this guide](use_completed_pipeline.md).
+follow [this guide](use_completed_pipeline.md).
 
 If you haven’t setup a project before, check out the [setup guide](../setup.md) before starting.
 
