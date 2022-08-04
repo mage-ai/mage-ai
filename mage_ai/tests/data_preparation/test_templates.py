@@ -32,7 +32,6 @@ class TemplateTest(TestCase):
         expected_string = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -240,8 +239,7 @@ def test_output(df) -> None:
         self.assertEqual(api_template, expected_template)
 
     def test_template_generation_transformer_default(self):
-        expected_template = """from os import path
-from pandas import DataFrame
+        expected_template = """from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -287,8 +285,7 @@ def test_output(df) -> None:
         self.assertEqual(expected_template, new_template3)
 
     def test_template_generation_transformer_action_default(self):
-        expected_template = """from os import path
-from pandas import DataFrame
+        expected_template = """from pandas import DataFrame
 
 if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
@@ -337,7 +334,6 @@ def test_output(df) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -379,7 +375,6 @@ def test_output(df) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -421,7 +416,6 @@ def test_output(df) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
@@ -464,7 +458,6 @@ def test_output(df) -> None:
         expected_template = """from mage_ai.data_cleaner.transformer_actions.base import BaseAction
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_cleaner.transformer_actions.utils import build_transformer_action
-from os import path
 from pandas import DataFrame
 
 if 'transformer' not in globals():
