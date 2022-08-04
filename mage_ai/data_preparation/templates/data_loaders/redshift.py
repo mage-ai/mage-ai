@@ -3,6 +3,7 @@
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.redshift import Redshift
+from os import path
 {{ super() -}}
 {% endblock %}
 

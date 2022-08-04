@@ -23,8 +23,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
         options={'groupby_columns': []},  # Enter columns to group by
         outputs=[
             # The number of outputs below must match the number of arguments
-            {'uuid': 'new_aggregate_column_1', 'column_type': 'number_with_decimals'},
-            {'uuid': 'new_aggregate_column_2', 'column_type': 'number_with_decimals'},
+            {'uuid': 'new_aggregate_column', 'column_type': 'number_with_decimals'},
         ],
     )
 
