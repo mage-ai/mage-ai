@@ -12,7 +12,6 @@ import os
 class ApiAutocompleteItemsHandler(BaseHandler):
     def get(self):
         repo_path = get_repo_path()
-        cwd = os.getcwd()
         collection = []
 
         for file_group, mapping in [
@@ -32,7 +31,7 @@ class ApiAutocompleteItemsHandler(BaseHandler):
                 'mage_library',
                 build_file_content_mapping(
                     PATHS_TO_TRAVERSE,
-                    [f'{cwd}/{fn}' for fn in FILES_TO_READ],
+                    FILES_TO_READ,
                 ),
             ),
             (
