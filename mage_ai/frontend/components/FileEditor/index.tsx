@@ -13,6 +13,7 @@ import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import {
+  KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
@@ -161,7 +162,7 @@ function FileEditor({
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
       if (active) {
-        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)) {
+        if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping) || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)) {
           event.preventDefault();
           saveFile(content, file);
         } else if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
