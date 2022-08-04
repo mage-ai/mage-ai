@@ -14,10 +14,10 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name='mage-ai',
-    version='0.1.4',
+    version='0.1.5',
     author='Mage',
     author_email='eng@mage.ai',
-    description='Mage is an open-source code editor for transforming data and building ML pipelines.',
+    description='Mage is a notebook for building and deploying data pipelines.',
     long_description=readme(),
     long_description_content_type='text/markdown',
     url='https://github.com/mage-ai/mage-ai',
