@@ -131,8 +131,13 @@ def add_internal_output_info(code: str) -> str:
 def __custom_output():
     from datetime import datetime
     from mage_ai.shared.parsers import encode_complex
+    from pandas.core.common import SettingWithCopyWarning
     import pandas as pd
     import simplejson
+    import warnings
+
+
+    warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
 
     _internal_output_return = {last_line}
