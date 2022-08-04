@@ -6,7 +6,7 @@ import pathlib
 import re
 
 
-root_path = '/'.join(str(pathlib.Path(__file__).parent.resolve()).split('/')[:-1])
+root_path = '/'.join(str(pathlib.Path(__file__).parent.resolve()).split('/')[:-2])
 
 
 FILE_EXTENSIONS_TO_INCLUDE = [
@@ -16,8 +16,8 @@ PATHS_TO_TRAVERSE = [
     'mage_ai/io',
 ]
 FILES_TO_READ = [
-    f'{root_path}/data_cleaner/transformer_actions/constants.py',
-    f'{root_path}/data_cleaner/transformer_actions/utils.py',
+    f'{root_path}/mage_ai/data_cleaner/transformer_actions/constants.py',
+    f'{root_path}/mage_ai/data_cleaner/transformer_actions/utils.py',
 ]
 
 
@@ -83,7 +83,7 @@ def build_file_content_mapping(paths, files):
             file_content = f.read()
             f.close()
 
-        file_name = file_name.replace(f'{os.getcwd()}/', '')
+        file_name = file_name.replace(f'{os.getcwd()}/', '').replace(f'{root_path}/', '')
         files = []
         parts = file_name.split('/')
         module_name = '.'.join(parts).replace('.py', '')
