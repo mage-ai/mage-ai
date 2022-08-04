@@ -45,7 +45,6 @@ Resources:
         - Name: mage-data-preparation
           Image: public.ecr.aws/u3j0m2y7/mage:latest
           Command:
-            - python3 -m pip install mage-ai
             - mage start default_repo
           PortMappings:
             - ContainerPort: 6789
