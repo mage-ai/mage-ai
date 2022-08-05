@@ -264,10 +264,6 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     border-top-right-radius: ${UNIT * 8}px;
   `}
 
-  ${props => !props.noBackground && props.backgroundColor && `
-    background-color: ${props.backgroundColor};
-  `}
-
   ${props => props.inverted && !props.noBackground && !props.backgroundColor && `
     background-color: ${(props.theme.monotone || dark.monotone).black};
   `}
@@ -278,6 +274,10 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
     &:hover {
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
     }
+  `}
+
+  ${props => !props.noBackground && props.backgroundColor && `
+    background-color: ${props.backgroundColor};
   `}
 
   ${props => props.noBackground && `
@@ -446,7 +446,6 @@ function KeyboardShortcutButton({
             <Flex alignItems="center">
               {Icon && (
                 <Icon
-                  inverted={!inverted}
                   muted={disabled || mutedDisabled}
                   size={UNIT * 2.5}
                 />

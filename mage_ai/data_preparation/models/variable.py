@@ -31,7 +31,16 @@ class Variable:
         self.variable_dir_path = os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
         if not os.path.exists(self.variable_dir_path):
             os.makedirs(self.variable_dir_path)
+
         self.variable_type = variable_type
+        self.check_variable_type()
+
+    def check_variable_type(self):
+        if self.variable_type is None and os.path.exists(
+            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
+        ):
+            # If parquet file exists for given variable, set the variable type to DATAFRAME
+            self.variable_type = VariableType.DATAFRAME
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
@@ -65,11 +74,7 @@ class Variable:
             self.__write_json(data)
 
     def read_data(self, sample: bool = False, sample_count: int = None, spark=None) -> Any:
-        if self.variable_type is None and os.path.exists(
-            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.parquet')
-        ):
-            # If parquet file exists for given variable, set the variable type to DATAFRAME
-            self.variable_type = VariableType.DATAFRAME
+        self.check_variable_type()
 
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
