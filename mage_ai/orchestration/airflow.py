@@ -10,6 +10,7 @@ def create_dag(
     dag_class,
     python_operator_class,
     dag_settings: Dict[str, Any] = dict(),
+    globals_dict: Dict[str, Any] = dict(),
 ):
     dag_id = f'mage_pipeline_{pipeline_uuid}'
     dag = dag_class(
@@ -24,7 +25,7 @@ def create_dag(
             dag_settings,
         )
     )
-    globals()[dag_id] = dag
+    globals_dict[dag_id] = dag
 
     pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
 
@@ -73,6 +74,7 @@ def create_dags(
     python_operator_class,
     blacklist_pipelines: List[str] = [],
     dag_settings: Dict[str, Any] = dict(),
+    globals_dict: Dict[str, Any] = dict(),
 ):
     all_pipeline_uuids = Pipeline.get_all_pipelines(project_path)
     for pipeline_uuid in all_pipeline_uuids:
@@ -83,4 +85,5 @@ def create_dags(
                 dag_class,
                 python_operator_class,
                 dag_settings,
+                globals_dict,
             )

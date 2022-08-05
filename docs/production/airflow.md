@@ -31,6 +31,7 @@ create_dags(
     dag_settings=dict(
         start_date=datetime(2022, 8, 2),
     ),
+    globals_dict=globals(),
 )
 ```
 
