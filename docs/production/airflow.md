@@ -1,4 +1,13 @@
 # Run pipeline in Airflow
+
+Need help integrating Mage into an existing Airflow project?
+
+Check out this [tutorial](../tutorials/airflow/integrate_into_existing_project/README.md) or
+get instant help from us in
+[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat).
+
+---
+
 We support running the pipeline in Airflow DAGs.
 * You need to firstly install `mage_ai` library by adding `mage_ai` to your requirements.txt file.
 * Then you need to download the mage pipeline code into your Airflow directory. You can achieve it by using a git submodule in your Airflow directory.
