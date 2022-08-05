@@ -1,4 +1,10 @@
 # Integrate Mage into an existing Airflow project
+
+<img
+  alt="wind"
+  src="https://www.penccil.com/files/U_95_240356858903_wt5.gif"
+/>
+
 In this tutorial, we’ll create a DAG in Airflow for scheduling and
 running a data pipeline; all from the Mage UI.
 
