@@ -12,21 +12,6 @@ def create_dag(
     dag_settings: Dict[str, Any] = dict(),
     globals_dict: Dict[str, Any] = dict(),
 ):
-    dag_id = f'mage_pipeline_{pipeline_uuid}'
-    dag = dag_class(
-        f'mage_pipeline_{pipeline_uuid}',
-        **merge_dict(
-            dict(
-                start_date=datetime(2022, 7, 14),
-                description=f'Mage pipeline: {pipeline_uuid}.',
-                schedule_interval='@once',
-                catchup=False,
-            ),
-            dag_settings,
-        )
-    )
-    globals_dict[dag_id] = dag
-
     pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
 
     tasks = []
@@ -65,7 +50,23 @@ def create_dag(
 
         return operators
 
-    initialize_tasks(dag, tasks)
+    if len(tasks) >= 1:
+        dag_id = f'mage_pipeline_{pipeline_uuid}'
+        dag = dag_class(
+            f'mage_pipeline_{pipeline_uuid}',
+            **merge_dict(
+                dict(
+                    start_date=datetime(2022, 7, 14),
+                    description=f'Mage pipeline: {pipeline_uuid}.',
+                    schedule_interval='@once',
+                    catchup=False,
+                ),
+                dag_settings,
+            )
+        )
+        globals_dict[dag_id] = dag
+
+        initialize_tasks(dag, tasks)
 
 
 def create_dags(
