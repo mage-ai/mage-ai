@@ -113,6 +113,8 @@ function PipelineDetailPage({
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
 
+  const [updateBlockUuid, setUpdateBlockUuid] = useState<string>(null);
+
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
@@ -883,11 +885,12 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if (typeof pipeline?.blocks !== 'undefined') {
+    if (!isLoading && typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
     }
   }, [
     pipeline?.blocks,
+    isLoading,
   ]);
 
   useEffect(() => {
@@ -1029,15 +1032,9 @@ function PipelineDetailPage({
           message,
         ]);
         if (ExecutionStateEnum.IDLE === executionState) {
-          fetchPipeline();
-          const {
-            messages: messagesInit,
-          } = initializeContentAndMessages(pipeline?.blocks);
-    
-          setMessages(messagesPrev => ({
-            ...messagesPrev,
-            [uuid]: messagesInit[uuid],
-          }));
+          fetchPipeline()
+
+          setUpdateBlockUuid(uuid);
         }
       }
       
@@ -1062,7 +1059,7 @@ function PipelineDetailPage({
     blocks,
     fetchPipeline,
     lastMessage,
-    pipeline?.blocks,
+    pipeline,
     setBlocks,
     setMessages,
     setPipelineContentTouched,
@@ -1343,7 +1340,7 @@ function PipelineDetailPage({
   ]);
 
   const afterHeader = useMemo(() => {
-    const validBlocks = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
+    const validBlocks = blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
 
     return (
       <FlexContainer

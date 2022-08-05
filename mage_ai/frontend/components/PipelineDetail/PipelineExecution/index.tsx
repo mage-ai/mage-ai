@@ -73,7 +73,7 @@ function PipelineExecution({
   ]);
 
   useEffect(() => {
-    const currentLength = pipelineMessages.length
+    const currentLength = pipelineMessages.length;
     if (currentLength > lastMessageProcessed) {
       pipelineMessages.slice(lastMessageProcessed, currentLength).forEach(message => {
         const {
@@ -92,7 +92,7 @@ function PipelineExecution({
           }
         }
       })
-      setLastMessageProcessed(currentLength)
+      setLastMessageProcessed(currentLength);
     }
   }, [
     lastMessageProcessed,
