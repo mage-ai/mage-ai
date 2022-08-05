@@ -85,6 +85,7 @@ mage run [project_name] [pipeline]
 
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
 - [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
+- [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
 - [Coming soon] How to visualize your data with charts
 
 <br />
