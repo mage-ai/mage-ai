@@ -23,6 +23,7 @@ class EmrConfig:
         if 'emr_config' in config:
             config = config['emr_config']
         self.config = config
+        self.ec2_key_name = config.get('ec2_key_name')
         self.master_security_group = config.get('master_security_group')
         if self.master_security_group is None:
             raise Exception(
@@ -33,10 +34,10 @@ class EmrConfig:
         self.master_instance_type = config.get('master_instance_type', DEFAULT_INSTANCE_TYPE)
         self.slave_instance_type = config.get('slave_instance_type', DEFAULT_INSTANCE_TYPE)
 
-    def get_instances_config(self, cluster_count, idle_timeout=0):
+    def get_instances_config(self, cluster_count, idle_timeout=0, keep_alive=False):
         market = 'SPOT' if cluster_count < MAX_CLUSTERS_ON_SPOT_INSTANCES else 'ON_DEMAND'
         instances_config = {
-            'KeepJobFlowAliveWhenNoSteps': False,
+            'KeepJobFlowAliveWhenNoSteps': keep_alive,
             'EmrManagedMasterSecurityGroup': self.master_security_group,
             'EmrManagedSlaveSecurityGroup': self.slave_security_group,
             'InstanceGroups': [
@@ -76,4 +77,6 @@ class EmrConfig:
                 ),
             ],
         }
+        if self.ec2_key_name is not None:
+            instances_config['Ec2KeyName'] = self.ec2_key_name
         return instances_config
