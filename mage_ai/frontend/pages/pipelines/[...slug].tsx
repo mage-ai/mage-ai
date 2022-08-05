@@ -113,8 +113,6 @@ function PipelineDetailPage({
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
 
-  const [updateBlockUuid, setUpdateBlockUuid] = useState<string>(null);
-
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
@@ -911,7 +909,6 @@ function PipelineDetailPage({
   ]);
 
   const blocksPrevious = usePrevious(blocks);
-
   useEffect(() => {
     if (
       typeof pipeline?.blocks !== 'undefined' 
@@ -1032,8 +1029,6 @@ function PipelineDetailPage({
         ]);
         if (ExecutionStateEnum.IDLE === executionState) {
           fetchPipeline()
-
-          setUpdateBlockUuid(uuid);
         }
       }
       
@@ -1048,7 +1043,7 @@ function PipelineDetailPage({
       } else if (ExecutionStateEnum.IDLE === executionState) {
         // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
-          runningBlocksPrevious.filter(block => uuid !== block?.uuid),
+          runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
         );
       }
 

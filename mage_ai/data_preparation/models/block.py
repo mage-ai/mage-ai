@@ -48,7 +48,8 @@ async def run_blocks(
         async def execute_and_run_tests():
             prefix = f'[{block.uuid}]'
             try:
-                log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
+                if log_func:
+                    log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     global_vars=global_vars,
@@ -61,7 +62,8 @@ async def run_blocks(
                 if run_tests:
                     block.run_tests(update_tests=False)
             finally:
-                log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
+                if log_func:
+                    log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
         
         return asyncio.create_task(execute_and_run_tests())
 
