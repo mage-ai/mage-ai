@@ -7,14 +7,14 @@ running a data pipeline; all from the Mage UI.
 > This tutorial requires that you already have Airflow setup and running locally.
 
 ## Table of contents
-1. [Add `mage-ai` as a dependency](#1-add-mage-ai-as-a-dependency)
-1. [Install `mage-ai` library](#2-install-mage-ai-library)
+1. [Add `mage-ai` as a dependency in Airflow](#1-add-mage-ai-as-a-dependency-in-airflow)
+1. [Install Mage tool](#2-install-mage-tool)
 1. [Initialize Mage project](#3-initialize-mage-project)
 1. [Create one-time DAG for pipelines](#4-create-one-time-dag-for-pipelines)
 1. [Create pipeline](#5-create-pipeline)
 1. [Run DAG in Airflow for pipeline](#6-run-dag-in-airflow-for-pipeline)
 
-## 1. Add `mage-ai` as a dependency
+## 1. Add `mage-ai` as a dependency in Airflow
 Open the `requirements.txt` file in the root directory of your Airflow project,
 and add the `mage-ai` library:
 
@@ -22,7 +22,7 @@ and add the `mage-ai` library:
 mage-ai
 ```
 
-## 2. Install `mage-ai` library
+## 2. Install Mage tool
 You can install and run Mage using Docker or using pip.
 
 ### Using Docker
