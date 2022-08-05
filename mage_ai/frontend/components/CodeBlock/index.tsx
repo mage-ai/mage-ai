@@ -183,13 +183,17 @@ function CodeBlockProps({
   [
     block,
     blockPrevious,
+    setMessages,
   ]);
 
+  const blockMessagesPrev = usePrevious(blockMessages);
   useEffect(() => {
-    if (typeof blockMessages !== 'undefined') {
+    if (typeof blockMessages !== 'undefined'
+        && blockMessages.length !== blockMessagesPrev?.length) {
+      
       setMessages(blockMessages);
     }
-  }, [blockMessages]);
+  }, [blockMessages, blockMessagesPrev, setMessages]);
 
   const codeCollapsedUUID = useMemo(() => (
     `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`

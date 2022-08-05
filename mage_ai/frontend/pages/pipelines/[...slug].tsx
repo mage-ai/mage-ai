@@ -885,12 +885,11 @@ function PipelineDetailPage({
   ]);
 
   useEffect(() => {
-    if (!isLoading && typeof pipeline?.blocks !== 'undefined') {
+    if (typeof pipeline?.blocks !== 'undefined') {
       setBlocks(pipeline.blocks);
     }
   }, [
     pipeline?.blocks,
-    isLoading,
   ]);
 
   useEffect(() => {
