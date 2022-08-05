@@ -6,7 +6,6 @@ from mage_ai.autocomplete.utils import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.hash import merge_dict
-import os
 
 
 class ApiAutocompleteItemsHandler(BaseHandler):

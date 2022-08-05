@@ -13,7 +13,7 @@ FILE_EXTENSIONS_TO_INCLUDE = [
     '.py',
 ]
 PATHS_TO_TRAVERSE = [
-    'mage_ai/io',
+    f'{root_path}/mage_ai/io',
 ]
 FILES_TO_READ = [
     f'{root_path}/mage_ai/data_cleaner/transformer_actions/constants.py',
