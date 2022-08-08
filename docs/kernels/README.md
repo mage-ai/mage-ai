@@ -14,6 +14,7 @@ We support running PySpark kernel to prototype with large datasets and build pip
 
 Instructions for running PySpark kernel
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.
+    * You can use the create_emr.py script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Make sure you specify a project_path which contains the EMR related metadata as an argument when running the script. Example: `python3 emr_and_cluster.py [project_path]`
 * Connect to the remote spark cluster with command `ssh -i path_to_key_pair -L 0.0.0.0:9999:localhost:8998 master_ec2_public_dns_name`
 * Launch editor with command: `./scripts/start.sh [project_name]`
 
