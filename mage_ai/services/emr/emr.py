@@ -35,7 +35,9 @@ def create_a_new_cluster(
     steps,
     emr_config,
     bootstrap_script_path=None,
+    done_status='RUNNING',
     idle_timeout=0,
+    keep_alive=False,
     log_uri=None,
 ):
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
@@ -45,32 +47,37 @@ def create_a_new_cluster(
     print('Creating cluster...')
 
     applications = ['Hadoop', 'Hive', 'Spark']
-    response = emr_client.run_job_flow(
+
+    emr_kwargs = dict(
         Name=f'{datetime.utcnow().isoformat()}-{cluster_name}',
-        LogUri=log_uri,
         ReleaseLabel='emr-6.5.0',
         Instances=emr_config.get_instances_config(
             get_running_cluster_count(emr_client),
-            idle_timeout,
+            idle_timeout=idle_timeout,
+            keep_alive=keep_alive,
         ),
         Steps=__build_steps_config(steps),
         StepConcurrencyLevel=256,
         Applications=[{
             'Name': app
         } for app in applications],
-        BootstrapActions=[
+        JobFlowRole='EMR_EC2_DefaultRole',
+        ServiceRole='EMR_DefaultRole',
+        EbsRootVolumeSize=10,
+        VisibleToAllUsers=True,
+    )
+    if log_uri is not None:
+        emr_kwargs['LogUri'] = log_uri
+    if bootstrap_script_path is not None:
+        emr_kwargs['BootstrapActions'] = [
             dict(
                 Name='Install Python packages using pip.',
                 ScriptBootstrapAction=dict(
                     Path=bootstrap_script_path,
                 ),
             ),
-        ],
-        JobFlowRole='EMR_EC2_DefaultRole',
-        ServiceRole='EMR_DefaultRole',
-        EbsRootVolumeSize=10,
-        VisibleToAllUsers=True,
-    )
+        ]
+    response = emr_client.run_job_flow(**emr_kwargs)
     print(response)
     print('\n')
     cluster_id = response['JobFlowId']
@@ -98,11 +105,18 @@ def create_a_new_cluster(
 
     __status_poller(
         'Waiting for cluster, this typically takes several minutes...',
-        'RUNNING',
+        done_status,
         lambda: emr_basics.describe_cluster(cluster_id, emr_client)['Status']['State'],
     )
 
     return cluster_id
+
+
+def describe_cluster(cluster_id):
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    config = Config(region_name=region_name)
+    emr_client = boto3.client('emr', config=config)
+    return emr_basics.describe_cluster(cluster_id, emr_client)
 
 
 def submit_spark_job(
