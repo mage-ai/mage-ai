@@ -33,10 +33,8 @@ You can install and run Mage using Docker or using pip.
 
 ### Using Docker
 ```bash
-docker pull public.ecr.aws/u3j0m2y7/mage:latest
+docker pull mageai/mageai:latest
 ```
-
-If you’re using an Apple M1 chip, use this image instead: WIP
 
 ### Using pip
 ```bash
@@ -56,7 +54,7 @@ Then, initialize a new Mage project in the `dags/` folder.
 If you’re using Docker, run the following command in the `dags/` folder:
 
 ```bash
-docker run public.ecr.aws/u3j0m2y7/mage mage init demo_project
+docker run mageai/mageai mage init demo_project
 ```
 
 If you used pip to install Mage, run the following command in the `dags/` folder:
@@ -115,7 +113,7 @@ If you’re using Docker, run the following command in the `dags/` folder:
 docker run \
   -p 6789:6789 \
   -v demo_project:/home/src/demo_project \
-  public.ecr.aws/u3j0m2y7/mage \
+  mageai/mageai \
   mage start demo_project
 ```
 
