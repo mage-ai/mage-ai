@@ -38,8 +38,6 @@ export const CellStyle = styled.td<any>`
   border: 1px solid #1C1C1C;
   height: 100%;
 
-  overflow-x: auto;
-
   ${props => !props.noPadding && `
     padding: 0 ${2 * UNIT}px;
   `}

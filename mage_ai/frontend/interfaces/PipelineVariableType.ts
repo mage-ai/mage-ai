@@ -9,11 +9,10 @@ export default interface PipelineVariableType {
     uuid: string;
     value: any;
   }[];
-  // variables: string[];
 }
 
 export interface VariableType {
   uuid: string,
   type: string,
-  value: string,
+  value: any,
 }

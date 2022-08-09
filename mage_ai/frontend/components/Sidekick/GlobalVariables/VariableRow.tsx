@@ -7,6 +7,7 @@ import Row from '@components/shared/Grid/Row';
 import Text from '@oracle/elements/Text';
 import { CellStyle } from './index.style';
 import { Copy, Trash } from '@oracle/icons';
+import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { LIME_DARK } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VariableType } from '@interfaces/PipelineVariableType';
@@ -41,7 +42,7 @@ function VariableRow({
         <Col md={1} hiddenSmDown>
           <CellStyle noPadding>
             <KeyboardShortcutButton
-              backgroundColor="#232429"
+              backgroundColor={DARK_CONTENT_BACKGROUND}
               borderless
               centerText
               muted
@@ -64,12 +65,12 @@ function VariableRow({
         </Col>
         <Col md={5}>
           <CellStyle>
-            <Text color={LIME_DARK} monospace textOverflow>
+            <Text color={LIME_DARK} monospace small textOverflow>
               {uuid}
             </Text>
             {deleteVariable && showDelete && (
               <KeyboardShortcutButton
-                backgroundColor="#232429"
+                backgroundColor={DARK_CONTENT_BACKGROUND}
                 borderless
                 inline
                 muted
@@ -84,7 +85,7 @@ function VariableRow({
         </Col>
         <Col md={6}>
           <CellStyle>
-            <Text monospace>
+            <Text monospace small>
               {value}
             </Text>
           </CellStyle>

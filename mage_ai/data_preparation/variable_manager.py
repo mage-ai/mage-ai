@@ -101,7 +101,7 @@ class VariableManager:
                 variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
 
-    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> Dict[str, List[str]]:
+    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> List[str]:
         variable_dir_path = os.path.join(
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
@@ -117,6 +117,15 @@ class VariableManager:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
         return path
+
+
+def get_global_variables(pipeline_uuid: str) -> Dict[str, Any]:
+    variables = VariableManager(get_repo_path()).get_variables_by_block(pipeline_uuid, 'global')
+    global_variables = dict()
+    for variable in variables:
+        global_variables[variable] = get_global_variable(pipeline_uuid, variable)
+
+    return global_variables
 
 
 def get_global_variable(pipeline_uuid: str, key: str) -> Any:

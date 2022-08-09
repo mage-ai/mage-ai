@@ -19,8 +19,9 @@ import VariableRow from './VariableRow';
 import api from '@api';
 import { Add, Copy } from '@oracle/icons';
 import { CellStyle, TableStyle } from './index.style';
+import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { indexBy } from '@utils/array';
+import { getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
 
 const SAMPLE_SOURCE = `
@@ -34,6 +35,10 @@ const SAMPLE_SOURCE = `
         'block_uuid',
         'variable_name',
     )
+`;
+
+const SAMPLE_KWARGS_SOURCE = `
+    var = kwargs['variable_name']
 `;
 
 const BUILD_CODE_SNIPPET_PREVIEW = (
@@ -63,15 +68,11 @@ function GlobalVariables({
   variables,
   width,
 }: GlobalVariablesProps) {
-  const themeContext = useContext(ThemeContext);
-  const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
-  const pipelineUUID = pipeline?.uuid;
-
   const [showNewVariable, setShowNewVariable] = useState<boolean>(false);
-
   const [newVariableName, setNewVariableName] = useState<string>();
   const [newVariableValue, setNewVariableValue] = useState<string>();
 
+  const pipelineUUID = pipeline?.uuid;
   const [createVariable] = useMutation(
     api.variables.pipelines.useCreate(pipelineUUID),
     {
@@ -114,14 +115,23 @@ function GlobalVariables({
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
+      let updatedValue = newVariableValue
+      try {
+        updatedValue = JSON.parse(newVariableValue);
+      } catch {
+        // do nothing
+      }
+
       // @ts-ignore
       createVariable({
         variable: {
           name: newVariableName,
-          value: newVariableValue,
+          value: updatedValue,
         }
       }).then(() => {
         fetchVariables();
+        setNewVariableName(null);
+        setNewVariableValue(null);
       });
       setShowNewVariable(false);
     }
@@ -129,28 +139,30 @@ function GlobalVariables({
     createVariable,
     fetchVariables,
     newVariableName,
-    newVariableValue
+    newVariableValue,
   ]);
 
-  const globalVariables = useMemo(() =>
-    variables?.find(({ block }) => block.uuid === 'global')?.variables,
+  const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
+  const globalVariables = useMemo(
+    () => getFormattedVariables(variables, (block) => block.uuid === 'global'),
     [variables],
   );
 
-  const blockVariables = useMemo(() =>
-    variables?.find(({ block }) => block.uuid === selectedBlock?.uuid)?.variables,
+  const blockVariables = useMemo(
+    () => getFormattedVariables(variables, (block) => block.uuid === selectedBlock?.uuid),
     [selectedBlock, variables],
   );
 
   const globalVariableTable = useMemo(() => (
-    <TableStyle width={width - 6 * UNIT}>
+    <TableStyle width={tableWidth}>
       {showNewVariable && (
         <Row>
           <Col md={1}>
             <CellStyle noPadding>
               <KeyboardShortcutButton
-                backgroundColor="#232429"
+                backgroundColor={DARK_CONTENT_BACKGROUND}
                 borderless
+                centerText
                 muted
                 onClick={() => {
                   navigator.clipboard.writeText(newVariableName);
@@ -182,6 +194,7 @@ function GlobalVariables({
                 onKeyDown={handleKeyDown}
                 paddingHorizontal={0}
                 placeholder="variable"
+                small
                 value={newVariableName}
               />
             </CellStyle>
@@ -199,6 +212,7 @@ function GlobalVariables({
                 onKeyDown={handleKeyDown}
                 paddingHorizontal={0}
                 placeholder="enter value"
+                small
                 value={newVariableValue}
               />
             </CellStyle>
@@ -228,6 +242,7 @@ function GlobalVariables({
     setNewVariableValue,
     setShowNewVariable,
     showNewVariable,
+    tableWidth,
   ]);
 
   const blockVariableTable = useMemo(() => {
@@ -235,7 +250,7 @@ function GlobalVariables({
       `${uuid} = get_variable(${pipelineUUID}, ${selectedBlock?.uuid}, ${uuid})`
       
     return (
-      <TableStyle width={width - 6 * UNIT}>
+      <TableStyle width={tableWidth}>
         {blockVariables?.map((variable: VariableType) => (
           <VariableRow
             copyText={copyText(variable.uuid)}
@@ -247,6 +262,7 @@ function GlobalVariables({
   }, [
     blockVariables,
     selectedBlock,
+    tableWidth,
   ])
 
   return (
@@ -269,7 +285,23 @@ function GlobalVariables({
         </FlexContainer>
       </Spacing>
 
-      {globalVariableTable}
+      <Spacing mb={PADDING_UNITS}>
+        {globalVariableTable}
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text>
+          Global variables will be passed into all non-scratchpad blocks as keyword arguments. To load a global variable, use the following syntax:
+        </Text>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <CodeBlock
+          language="python"
+          small
+          source={SAMPLE_KWARGS_SOURCE}
+        />
+      </Spacing>
 
       {blockVariables && blockVariables.length > 0 && (
         <>
@@ -278,9 +310,14 @@ function GlobalVariables({
               Block Output Variables
             </Headline>
           </Spacing>
+
+          <Spacing mb={2}>
+            {blockVariableTable}
+          </Spacing>
+
           <Spacing mb={PADDING_UNITS}>
             <Text>
-              The variables listed below can be used in any <Text
+              Output variables can be used in any <Text
                 bold
                 inline
                 monospace
@@ -303,8 +340,6 @@ function GlobalVariables({
               source={SAMPLE_SOURCE}
             />
           </Spacing>
-
-          {blockVariableTable}
         </>
       )}
     </Spacing>

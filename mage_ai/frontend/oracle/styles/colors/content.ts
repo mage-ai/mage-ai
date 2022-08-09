@@ -15,5 +15,7 @@ export const DARK_CONTENT_DEFAULT_TRANSPARENT = 'rgba(174, 174, 174, 0.5)';
 // selected links, important text
 export const DARK_CONTENT_ACTIVE = '#FFFFFF';
 
+export const DARK_CONTENT_BACKGROUND = '#232429';
+
 export const LIGHT_CONTENT_INVERTED: string = DARK_CONTENT_ACTIVE; // inverted content
 export const DARK_CONTENT_INVERTED: string = LIGHT_CONTENT_ACTIVE; // inverted content

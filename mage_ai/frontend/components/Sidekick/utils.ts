@@ -122,3 +122,16 @@ export function createStatisticsSample({
 
   return rowData;
 }
+
+export function getFormattedVariables(variables, filterBlock) {
+  return variables
+    ?.find(({ block }) => filterBlock(block))
+    ?.variables
+    ?.map(variable => {
+      const variableValue = variable.value;
+      return {
+        ...variable,
+        value: typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue),
+      }
+    })
+}

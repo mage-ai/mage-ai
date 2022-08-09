@@ -1,16 +1,11 @@
-from turtle import pd
-from importlib_metadata import re
-
-import pandas
-from build.lib.mage_ai.data_preparation.variable_manager import get_global_variable, get_variable, set_global_variable
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockType, DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
-from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable
+from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -321,27 +316,18 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
     def post(self, pipeline_uuid):
         variable = json.loads(self.request.body).get('variable', {})
-        block_uuid = variable.get('block_uuid')
         variable_uuid = variable.get('name')
         if not variable_uuid.isidentifier():
             raise Exception(f'Invalid variable name syntax for variable name {variable_uuid}')
         variable_value = variable.get('value')
-        if variable_value is None or len(variable_value) == 0:
+        if variable_value is None:
             raise Exception(f'Value is empty for variable name {variable_uuid}')
-        variable_manager = VariableManager(get_repo_path())
-        if block_uuid is not None:
-            variable_manager.add_variable(
-                pipeline_uuid,
-                block_uuid,
-                variable_uuid,
-                variable_value,
-            )
-        else:
-            set_global_variable(
-                pipeline_uuid,
-                variable_uuid,
-                variable_value,
-            )
+        
+        set_global_variable(
+            pipeline_uuid,
+            variable_uuid,
+            variable_value,
+        )
         
         variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
         variables = [
