@@ -43,6 +43,8 @@ def create_a_new_cluster(
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
+    if type(emr_config) is dict:
+        emr_config = EmrConfig(config=emr_config)
 
     print('Creating cluster...')
 

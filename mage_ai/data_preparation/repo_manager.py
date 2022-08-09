@@ -20,6 +20,14 @@ class RepoConfig:
                 )
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
             self.emr_config = repo_config.get('emr_config')
+            self.s3_bucket = None
+            self.s3_path_prefix = None
+
+            if self.remote_variables_dir is not None and \
+                    self.remote_variables_dir.startswith('s3://'):
+                path_parts = self.remote_variables_dir.replace('s3://', '').split('/')
+                self.s3_bucket = path_parts.pop(0)
+                self.s3_path_prefix = '/'.join(path_parts)
         except Exception:
             pass
 
