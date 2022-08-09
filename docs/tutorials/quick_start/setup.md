@@ -4,26 +4,27 @@ You can install Mage using Docker or `pip`:
 
 ## Using Docker
 
-##### 1. Clone repository
-```bash
-git clone https://github.com/mage-ai/mage-ai.git && cd mage-ai
-```
+##### 1. Create new project and launch tool
 
-##### 2. Create new project
 ```bash
-./scripts/init.sh [project_name]
-```
-
-##### 3. Launch editor
-```bash
-./scripts/start.sh [project_name]
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
+  mageai/mageai mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
-##### 4. Run pipeline after building it in the tool
+##### 2. Run pipeline after building it in the tool
 ```bash
-./scripts/run.sh [project_name] [pipeline]
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
+  mageai/mageai mage run [project_name] [pipeline]
+```
+
+##### Initialize new project
+If you want to create a different project with a different name, run the following:
+
+```bash
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
+  mageai/mageai mage init [project_name]
 ```
 
 ## Using pip
@@ -38,19 +39,20 @@ You may need to install development libraries for MIT Kerberos to use some Mage 
 apt install libkrb5-dev
 ```
 
-##### 2. Create new project
-```bash
-mage init [project_name]
-```
-
-##### 3. Launch editor
+##### 2. Create new project and launch tool
 ```bash
 mage start [project_name]
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
-##### 4. Run pipeline after building it in the tool
+##### 3. Run pipeline after building it in the tool
 ```bash
 mage run [project_name] [pipeline]
+```
+
+##### Initialize new project
+If you want to create a different project with a different name, run the following:
+```bash
+mage init [project_name]
 ```
