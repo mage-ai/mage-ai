@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
     NON_PIPELINE_EXECUTABLE_BLOCK_TYPES,
@@ -745,6 +746,8 @@ class Block:
         for uuid, data in variable_mapping.items():
             vtype = self.output_variables[uuid]
             if vtype is pd.DataFrame:
+                if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS:
+                    continue
                 if data.shape[0] > DATAFRAME_ANALYSIS_MAX_ROWS:
                     data_for_analysis = data.sample(DATAFRAME_ANALYSIS_MAX_ROWS).reset_index(
                         drop=True,
