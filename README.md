@@ -12,8 +12,49 @@ Mage is an open-source notebook for <b>building</b> and <b>deploying</b> data pi
   src="media/tool-overview.png"
 />
 
+A data pipeline defined across 3 different files:
+
+```python
+# load_data_from_file.py
+from pandas import DataFrame
+import pandas as pd
+
+
+@data_loader
+def load_data() -> DataFrame:
+    return pd.read_csv('default_repo/titanic.csv')
+```
+
+```python
+# select_columns.py
+from pandas import DataFrame
+
+
+@transformer
+def transform_df(df: DataFrame, *args) -> DataFrame:
+    return df[['Age', 'Fare', 'Survived']]
+```
+
+```python
+# export_to_file.py
+from pandas import DataFrame
+
+
+@data_exporter
+def export_data(df: DataFrame) -> None:
+    return df.to_csv('default_repo/titanic_transformed.csv')
+```
+
+What the data pipeline looks like in the UI:
+
+<img
+  alt="data pipeline overview"
+  src="media/data-pipeline-overview.jpg"
+/>
+
+
 New? We recommend reading about [blocks](docs/blocks/README.md) and
-getting started from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md).
+learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md).
 
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
