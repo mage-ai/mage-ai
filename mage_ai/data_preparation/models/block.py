@@ -592,10 +592,12 @@ class Block:
                 stats = analysis.get('statistics', {})
                 column_types = analysis.get('metadata', {}).get('column_types', {})
                 row_count = stats.get('original_row_count', stats.get('count'))
+
+                columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
                 data = dict(
                     sample_data=dict(
-                        columns=data.columns.tolist(),
-                        rows=data.to_numpy().tolist(),
+                        columns=columns_to_display,
+                        rows=data[columns_to_display].to_numpy().tolist(),
                     ),
                     shape=[row_count, len(column_types)],
                     type=DataType.TABLE,
