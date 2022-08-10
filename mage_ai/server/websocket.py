@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.server.active_kernel import (
     get_active_kernel_client,
     get_active_kernel_name,
@@ -57,7 +58,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if output:
             self.send_message(output)
             return
-        global_vars = message.get('global_vars')
         execute_pipeline = message.get('execute_pipeline')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
 
@@ -68,6 +68,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
+
+        global_vars = message.get('global_vars', get_global_variables(pipeline_uuid))
 
 
         value = dict(

@@ -365,12 +365,12 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     padding: ${UNIT * 0.5}px ${UNIT * 1}px !important;
   `}
 
-  ${props => props.paddingHorizontal && `
+  ${props => typeof props.paddingHorizontal !== 'undefined' && `
     padding-left: ${props.paddingHorizontal}px;
     padding-right: ${props.paddingHorizontal}px;
   `}
 
-  ${props => props.paddingVertical && `
+  ${props => typeof props.paddingHorizontal !== 'undefined' && `
     padding-bottom: ${props.paddingVertical}px;
     padding-top: ${props.paddingVertical}px;
   `}

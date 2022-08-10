@@ -59,15 +59,31 @@ class VariableManager:
         sample_count: int = None,
         spark=None,
     ) -> Any:
+        variable = self.get_variable_object(
+            pipeline_uuid,
+            block_uuid,
+            variable_uuid,
+            variable_type,
+        )
+        return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
+
+    def get_variable_object(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        variable_uuid: str,
+        variable_type: VariableType = None,
+        spark=None,
+    ) -> Variable:
         if variable_type == VariableType.DATAFRAME and spark is not None:
             variable_type = VariableType.SPARK_DATAFRAME
-        variable = Variable(
+        return Variable(
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             variable_type=variable_type,
         )
-        return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
+
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
@@ -85,7 +101,7 @@ class VariableManager:
                 variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
 
-    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> Dict[str, List[str]]:
+    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> List[str]:
         variable_dir_path = os.path.join(
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
@@ -103,6 +119,15 @@ class VariableManager:
         return path
 
 
+def get_global_variables(pipeline_uuid: str) -> Dict[str, Any]:
+    variables = VariableManager(get_repo_path()).get_variables_by_block(pipeline_uuid, 'global')
+    global_variables = dict()
+    for variable in variables:
+        global_variables[variable] = get_global_variable(pipeline_uuid, variable)
+
+    return global_variables
+
+
 def get_global_variable(pipeline_uuid: str, key: str) -> Any:
     return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
 
@@ -113,3 +138,7 @@ def get_variable(pipeline_uuid: str, block_uuid: str, key: str) -> Any:
 
 def set_global_variable(pipeline_uuid: str, key: str, value: Any) -> None:
     VariableManager(get_repo_path()).add_variable(pipeline_uuid, 'global', key, value)
+
+
+def delete_global_variable(pipeline_uuid: str, key: str) -> None:
+    VariableManager(get_repo_path()).delete_variable(pipeline_uuid, 'global', key)

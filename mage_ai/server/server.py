@@ -1,10 +1,11 @@
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockType, DATAFRAME_SAMPLE_COUNT_PREVIEW
+from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
-from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -284,6 +285,50 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
 
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
+        variable_manager = VariableManager(get_repo_path())
+
+        def get_variable_value(block_uuid, variable_uuid):
+            variable = variable_manager.get_variable_object(pipeline_uuid, block_uuid, variable_uuid)
+            if variable.variable_type == VariableType.DATAFRAME:
+                value = 'DataFrame'
+                variable_type = 'pandas.DataFrame'
+            else:
+                value = variable.read_data()
+                variable_type = str(type(value))
+            return dict(
+                uuid=variable_uuid,
+                type=variable_type,
+                value=value,
+            )
+
+        variables_dict = variable_manager.get_variables_by_pipeline(pipeline_uuid)
+        variables = [
+            dict(
+                block=dict(uuid=uuid),
+                pipeline=dict(uuid=pipeline_uuid),
+                variables=[get_variable_value(uuid, var) for var in arr],
+            )
+            for uuid, arr in variables_dict.items()
+        ]
+
+        self.write(dict(variables=variables))
+        self.finish()
+
+    def post(self, pipeline_uuid):
+        variable = json.loads(self.request.body).get('variable', {})
+        variable_uuid = variable.get('name')
+        if not variable_uuid.isidentifier():
+            raise Exception(f'Invalid variable name syntax for variable name {variable_uuid}')
+        variable_value = variable.get('value')
+        if variable_value is None:
+            raise Exception(f'Value is empty for variable name {variable_uuid}')
+        
+        set_global_variable(
+            pipeline_uuid,
+            variable_uuid,
+            variable_value,
+        )
+        
         variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
         variables = [
             dict(
@@ -294,6 +339,14 @@ class ApiPipelineVariableListHandler(BaseHandler):
             for uuid, arr in variables_dict.items()
         ]
         self.write(dict(variables=variables))
+        self.finish()
+
+
+class ApiPipelineVariableDetailHandler(BaseHandler):
+    def delete(self, pipeline_uuid, variable_uuid):
+        delete_global_variable(pipeline_uuid, variable_uuid)
+
+        self.write(dict(variable=variable_uuid))
         self.finish()
 
 
@@ -385,6 +438,10 @@ def make_app():
             ApiPipelineBlockOutputHandler,
         ),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
+        (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables/(?P<variable_uuid>\w+)',
+            ApiPipelineVariableDetailHandler,
+        ),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables', ApiPipelineVariableListHandler),
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets/(?P<block_uuid>\w+)',

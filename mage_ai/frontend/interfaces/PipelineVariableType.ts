@@ -5,5 +5,14 @@ export default interface PipelineVariableType {
   pipeline: {
     uuid: string;
   };
-  variables: string[];
+  variables: {
+    uuid: string;
+    value: any;
+  }[];
+}
+
+export interface VariableType {
+  uuid: string,
+  type: string,
+  value: any,
 }

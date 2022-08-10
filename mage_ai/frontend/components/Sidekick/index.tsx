@@ -56,6 +56,7 @@ export type SidekickProps = {
   };
   fetchFileTree: () => void;
   fetchPipeline: () => void;
+  fetchVariables: () => void;
   insights: InsightType[][];
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
@@ -77,6 +78,7 @@ function Sidekick({
   editingBlock,
   fetchFileTree,
   fetchPipeline,
+  fetchVariables,
   globalVariables,
   insights,
   messages,
@@ -103,7 +105,7 @@ function Sidekick({
   const heightOffset = ASIDE_HEADER_HEIGHT;
   const pipelineUUID = pipeline?.uuid;
   const [isDisplayingSuccessMessage, setIsDisplayingSuccessMessage] = useState<boolean>(false);
-  const [errorMessages, setErrorMessages] = useState<string[]>(null);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const {
     block: blockEditing,
@@ -149,15 +151,21 @@ function Sidekick({
 
   const globalVariablesMemo = useMemo(() => (
     <GlobalVariables
-      blockRefs={blockRefs}
       blocks={blocks}
-      globalVariables={globalVariables}
-      setSelectedBlock={setSelectedBlock}
+      fetchVariables={fetchVariables}
+      pipeline={pipeline}
+      selectedBlock={selectedBlock}
+      setErrorMessages={setErrorMessages}
+      variables={globalVariables}
+      width={afterWidth}
     />
   ), [
     blockRefs?.current,
     blocks,
+    fetchVariables,
     globalVariables,
+    pipeline,
+    selectedBlock,
     setSelectedBlock,
   ]);
 
@@ -187,7 +195,7 @@ function Sidekick({
 
   return (
     <>
-      {(activeView === ViewKeyEnum.TREE && errorMessages?.length >= 1) &&
+      {errorMessages?.length >= 1 &&
         <Spacing mb={3} mt={2} mx={2}>
           <FlexContainer justifyContent="space-between">
             <Text bold danger>
@@ -197,7 +205,7 @@ function Sidekick({
               basic
               iconOnly
               noPadding
-              onClick={() => setErrorMessages(null)}
+              onClick={() => setErrorMessages([])}
               transparent
             >
               <Close muted />
