@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.models.constants import (
     BlockType,
+    DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.server.kernels import KernelName
@@ -144,7 +145,7 @@ def __custom_output():
 
     if isinstance(_internal_output_return, pd.DataFrame):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
-        _columns = _sample.columns.tolist()[:40]
+        _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
         _rows = _sample.to_numpy().tolist()
         _shape = _internal_output_return.shape
         _index = _sample.index.tolist()

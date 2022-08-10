@@ -39,6 +39,8 @@ import { getWebSocket } from '@api/utils/url';
 import { indexBy } from '@utils/array';
 import { useWindowSize } from '@utils/sizes';
 
+const MAX_COLUMNS = 40;
+
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
   afterWidth: number;
@@ -107,7 +109,7 @@ function Sidekick({
     block: blockEditing,
   } = editingBlock?.upstreamBlocks || {};
 
-  const columns = sampleData?.columns || [];
+  const columns = (sampleData?.columns || []).slice(0, MAX_COLUMNS);
   const rows = sampleData?.rows || [];
   const columnTypes = metadata?.column_types || {};
   const features = columns?.map(uuid => ({
