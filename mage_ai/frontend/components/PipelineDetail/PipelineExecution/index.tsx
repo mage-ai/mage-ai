@@ -75,7 +75,9 @@ function PipelineExecution({
   useEffect(() => {
     const currentLength = pipelineMessages.length;
     if (currentLength > lastMessageProcessed) {
-      pipelineMessages.slice(lastMessageProcessed, currentLength).forEach(message => {
+      const messagesToProcess = pipelineMessages.slice(lastMessageProcessed, currentLength)
+      setLastMessageProcessed(currentLength);
+      messagesToProcess.forEach(message => {
         const {
           execution_state: executionState,
           pipeline_uuid,
@@ -92,11 +94,9 @@ function PipelineExecution({
           }
         }
       })
-      setLastMessageProcessed(currentLength);
     }
   }, [
-    lastMessageProcessed,
-    pipelineMessages,
+    pipelineMessages.length,
     setLastMessageProcessed,
     setMessages,
   ]);

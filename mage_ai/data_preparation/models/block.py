@@ -16,7 +16,6 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
-from mage_ai.server.execution_manager import add_pipeline_block_execution
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
@@ -86,7 +85,6 @@ async def run_blocks(
         upstream_tasks = [tasks[u.uuid] for u in block.upstream_blocks]
         await asyncio.gather(*upstream_tasks)
         block_task = create_block_task(block)
-        add_pipeline_block_execution(block_task)
         tasks[block.uuid] = block_task
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
@@ -102,7 +100,10 @@ async def run_blocks(
 def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
+    log_func: Callable = None,
+    global_vars=None,
     redirect_outputs: bool = False,
+    run_tests: bool = False,
     selected_blocks: Set[str] = None,
 ) -> None:
     tasks = dict()
@@ -125,17 +126,26 @@ def run_blocks_sync(
                 break
         if skip:
             continue
-        block.execute_sync(
-            analyze_outputs=analyze_outputs,
-            redirect_outputs=redirect_outputs,
-            run_all_blocks=True,
-        )
+        try:
+            prefix = f'[{block.uuid}]'
+            if log_func:
+                log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
+            block.execute_sync(
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                redirect_outputs=redirect_outputs,
+                run_all_blocks=True,
+            )
+            if run_tests:
+                block.run_tests(update_tests=False)
+        finally:
+            if log_func:
+                log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
                 selected_blocks is None or downstream_block.uuid in selected_blocks
             ):
-
                 tasks[downstream_block.uuid] = None
                 blocks.put(downstream_block)
 

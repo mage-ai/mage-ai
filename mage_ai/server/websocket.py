@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
+    PIPELINES_FOLDER,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config, get_repo_path
@@ -10,7 +11,12 @@ from mage_ai.server.active_kernel import (
     get_active_kernel_name,
     switch_active_kernel,
 )
-from mage_ai.server.execution_manager import cancel_pipeline_execution
+from mage_ai.server.execution_manager import (
+    cancel_pipeline_execution,
+    delete_pipeline_copy_config,
+    set_current_pipeline_process,
+    set_previous_config_path,
+)
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.server.kernels import KernelName
 from mage_ai.server.utils.output_display import (
@@ -23,7 +29,7 @@ from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient
 import asyncio
 import json
-import threading
+import multiprocessing
 import tornado.websocket
 import traceback
 import uuid
@@ -100,7 +106,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             )
 
         if cancel_pipeline:
-            cancel_pipeline_execution(publish_message=publish_message)
+            cancel_pipeline_execution(pipeline, publish_message=publish_message)
             return
 
         if execute_pipeline:
@@ -118,13 +124,24 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
                 WebSocketServer.running_executions_mapping[msg_id] = value
             else:
+                # TODO: save config for other kernel types.
+                def save_pipeline_config() -> str:
+                    from distutils.dir_util import copy_tree
+                    import os
+                    import uuid as uuid_gen
+                    pipeline_copy = f'{pipeline.uuid}_{str(uuid_gen.uuid4())}'
+                    new_pipeline_directory = os.path.join(pipeline.repo_path, PIPELINES_FOLDER, pipeline_copy)
+                    copy_tree(pipeline.dir_path, new_pipeline_directory)
+                    set_previous_config_path(new_pipeline_directory)
+                    return new_pipeline_directory
+
+                config_copy_path = save_pipeline_config() 
+                
                 def run_pipeline() -> None:
                     try:
-                        asyncio.run(
-                            pipeline.execute(
-                                log_func=publish_message,
-                                parallel=False,
-                            ))
+                        pipeline.execute_sync(
+                            log_func=publish_message,
+                        )
                         publish_message(
                             f'Pipeline {pipeline.uuid} execution complete.\n'
                             'You can see the code block output in the corresponding code block.',
@@ -135,7 +152,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
                         publish_message(trace, 'idle')
 
-                threading.Thread(target=run_pipeline).start()
+                    delete_pipeline_copy_config(config_copy_path)
+
+                save_pipeline_config()
+                proc = multiprocessing.Process(target=run_pipeline)
+                proc.start()
+                set_current_pipeline_process(proc)
         else:
             widget = BlockType.CHART == block_type
 

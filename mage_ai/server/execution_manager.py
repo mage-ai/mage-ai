@@ -1,31 +1,41 @@
+from distutils.dir_util import copy_tree
+import os
+import shutil
+
 class PipelineExecution():
     def __init__(self):
-        self.current_pipeline_task = None
-        self.current_pipeline_block_tasks = []
+        self.current_pipeline_block = None
+        self.current_pipeline_process = None
+        self.previous_config_path = None
 
 pipeline_execution = PipelineExecution()
 
 
-def set_pipeline_execution(task):
-    pipeline_execution.current_pipeline_task = task
+def set_current_pipeline_process(process):
+    pipeline_execution.current_pipeline_process = process
 
 
-def add_pipeline_block_execution(task):
-    pipeline_execution.current_pipeline_block_tasks.append(task)
+def cancel_pipeline_execution(pipeline, publish_message=None):
+    pipeline_execution.current_pipeline_process.terminate()
+    publish_message(
+        'Pipeline execution cancelled... reverting state to previous iteration',
+        execution_state='idle',
+    )
+    config_path = pipeline_execution.previous_config_path
+    if config_path is not None and os.path.isdir(config_path):
+        copy_tree(config_path, pipeline.dir_path)
+        delete_pipeline_copy_config(config_path)
 
 
-def cancel_pipeline_execution(publish_message=None):
-    current_task = pipeline_execution.current_pipeline_task
-    current_block_tasks = pipeline_execution.current_pipeline_block_tasks
-    if len(current_block_tasks) > 0:
-        for task in current_block_tasks:
-            if not task.cancelled():
-                task.cancel()
-        if publish_message is not None:
-            publish_message('', execution_state='idle')
-    if current_task is not None or not current_task.cancelled():
-        current_task.cancel()
+def reset_execution_manager():
+    pipeline_execution.current_pipeline_block = None
+    pipeline_execution.current_pipeline_process = None
+    pipeline_execution.previous_config_path = None
 
-    pipeline_execution.current_pipeline_task = None
-    pipeline_execution.current_pipeline_block_tasks = []
-    
+
+def set_previous_config_path(path):
+    pipeline_execution.previous_config_path = path
+
+
+def delete_pipeline_copy_config(path):
+    shutil.rmtree(path)

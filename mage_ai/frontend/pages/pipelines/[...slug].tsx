@@ -1028,6 +1028,7 @@ function PipelineDetailPage({
           message,
         ]);
         if (ExecutionStateEnum.IDLE === executionState) {
+          setRunningBlocks([]);
           fetchPipeline()
         }
       }
@@ -1050,14 +1051,7 @@ function PipelineDetailPage({
       setPipelineContentTouched(true);
     }
   }, [
-    blocks,
-    fetchPipeline,
     lastMessage,
-    pipeline,
-    setBlocks,
-    setMessages,
-    setPipelineContentTouched,
-    setRunningBlocks,
   ]);
 
   const runBlock = useCallback((payload: {

@@ -20,7 +20,7 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
     outputs,
     uuid,
   }: BlockType) => {
-    if (outputs.length >= 1) {
+    if (outputs?.length >= 1) {
       messagesInit[uuid] = outputs.map((output: OutputType) => {
         const {
           sample_data: sampleData,
