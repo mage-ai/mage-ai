@@ -39,6 +39,8 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
+Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use PySpark kernel in your notebook.
+
 ### Using pip
 
 ##### 1. Install Mage
