@@ -12,6 +12,9 @@ Mage is an open-source notebook for <b>building</b> and <b>deploying</b> data pi
   src="media/tool-overview.png"
 />
 
+New? We recommend reading about [blocks](docs/blocks/README.md) and
+getting started from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md).
+
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
 **Table of contents**
