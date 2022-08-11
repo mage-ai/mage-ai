@@ -6,6 +6,7 @@ from queue import Queue
 from typing import Callable, List, Set
 from mage_ai.data_cleaner.shared.utils import is_dataframe
 from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
     BlockStatus,
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -137,6 +138,7 @@ class Block:
         content=None,
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
+        language=BlockLanguage.PYTHON,
     ):
         self.name = name or uuid
         self.uuid = uuid
@@ -148,6 +150,7 @@ class Block:
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
+        self.language = language
 
     @property
     def content(self):
@@ -632,15 +635,16 @@ class Block:
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
         data = dict(
-            name=self.name,
-            uuid=self.uuid,
-            type=self.type.value if type(self.type) is not str else self.type,
-            status=self.status.value if type(self.status) is not str else self.status,
-            upstream_blocks=self.upstream_block_uuids,
-            downstream_blocks=self.downstream_block_uuids,
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
+            downstream_blocks=self.downstream_block_uuids,
+            name=self.name,
+            language=self.language.value if type(self.language) is not str else self.language,
+            status=self.status.value if type(self.status) is not str else self.status,
+            type=self.type.value if type(self.type) is not str else self.type,
+            upstream_blocks=self.upstream_block_uuids,
+            uuid=self.uuid,
         )
         if include_content:
             data['content'] = self.content

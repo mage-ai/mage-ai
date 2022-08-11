@@ -19,6 +19,11 @@ DATAFRAME_SAMPLE_COUNT = 1000
 VARIABLE_DIR = '.variables'
 
 
+class BlockLanguage(str, Enum):
+    PYTHON = 'python'
+    SQL = 'sql'
+
+
 class BlockStatus(str, Enum):
     EXECUTED = 'executed'
     FAILED = 'failed'
