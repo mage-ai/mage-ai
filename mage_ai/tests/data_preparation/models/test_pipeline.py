@@ -36,6 +36,7 @@ class PipelineTest(TestCase):
             type='python',
             blocks=[
                 dict(
+                    language='python',
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -45,6 +46,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -54,6 +56,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=False,
                 ),
                 dict(
+                    language='python',
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -63,6 +66,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=False,
                 ),
                 dict(
+                    language='python',
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -74,6 +78,7 @@ class PipelineTest(TestCase):
             ],
             widgets=[
                 dict(
+                    language='python',
                     name='widget1',
                     uuid='widget1',
                     type='chart',
@@ -99,6 +104,7 @@ class PipelineTest(TestCase):
             type='python',
             blocks=[
                 dict(
+                    language='python',
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -108,6 +114,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -117,6 +124,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=False,
                 ),
                 dict(
+                    language='python',
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -146,6 +154,7 @@ class PipelineTest(TestCase):
             type='python',
             blocks=[
                 dict(
+                    language='python',
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -155,6 +164,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -164,6 +174,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -173,6 +184,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -208,6 +220,7 @@ class PipelineTest(TestCase):
             type='python',
             blocks=[
                 dict(
+                    language='python',
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -217,6 +230,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -226,6 +240,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -235,6 +250,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block4',
                     uuid='block4',
                     type='data_loader',
@@ -244,6 +260,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block5',
                     uuid='block5',
                     type='transformer',
@@ -253,6 +270,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block6',
                     uuid='block6',
                     type='transformer',
@@ -262,6 +280,7 @@ class PipelineTest(TestCase):
                     all_upstream_blocks_executed=True,
                 ),
                 dict(
+                    language='python',
                     name='block7',
                     uuid='block7',
                     type='data_exporter',
