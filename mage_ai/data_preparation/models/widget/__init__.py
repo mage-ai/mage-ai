@@ -67,18 +67,20 @@ class Widget(Block):
         name,
         uuid,
         block_type,
-        status=BlockStatus.NOT_EXECUTED,
-        pipeline=None,
         configuration=None,
+        language=None,
+        pipeline=None,
+        status=BlockStatus.NOT_EXECUTED,
     ):
         block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
         return block_class(
             name,
             uuid,
             block_type,
-            status=status,
-            pipeline=pipeline,
             configuration=configuration,
+            language=language,
+            pipeline=pipeline,
+            status=status,
         )
 
     @property

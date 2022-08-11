@@ -197,14 +197,24 @@ def incorrect_function(df1, df2, df3):
             asyncio.run(block3.execute())
 
     def test_to_dict(self):
-        block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
-        block2 = Block.create('test_data_exporter', 'data_exporter', self.repo_path)
+        block1 = Block.create(
+            'test_transformer_2',
+            'transformer',
+            self.repo_path,
+            language='sql',
+        )
+        block2 = Block.create(
+            'test_data_exporter',
+            'data_exporter',
+            self.repo_path,
+            language='python',
+        )
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
         self.assertEqual(block1.to_dict(), dict(
             all_upstream_blocks_executed=True,
             downstream_blocks=['test_data_exporter'],
-            language='python',
+            language='sql',
             name='test_transformer_2',
             status='not_executed',
             type='transformer',

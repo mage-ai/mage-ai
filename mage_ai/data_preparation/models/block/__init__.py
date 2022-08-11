@@ -234,7 +234,7 @@ class Block:
         name,
         block_type,
         repo_path,
-        language=BlockLanguage.PYTHON,
+        language=None,
         pipeline=None,
         priority=None,
         upstream_block_uuids=None,
@@ -261,7 +261,7 @@ class Block:
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        elif BlockLanguage.PYTHON == language:
+        else:
             load_template(block_type, config, file_path)
 
         block = self.block_class_from_type(block_type)(
@@ -301,8 +301,9 @@ class Block:
         uuid,
         block_type,
         content=None,
-        status=BlockStatus.NOT_EXECUTED,
+        language=None,
         pipeline=None,
+        status=BlockStatus.NOT_EXECUTED,
     ):
         block_class = self.block_class_from_type(block_type) or Block
         return block_class(
@@ -310,8 +311,9 @@ class Block:
             uuid,
             block_type,
             content=content,
-            status=status,
+            language=language,
             pipeline=pipeline,
+            status=status,
         )
 
     def delete(self, widget=False, commit=True):
@@ -674,8 +676,8 @@ class Block:
         self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
-        language = self.language or BlockLanguage.PYTHON
-        if type(self.language) is not str:
+        language = self.language
+        if language and type(self.language) is not str:
             language = self.language.value
 
         data = dict(

@@ -252,8 +252,9 @@ class Pipeline:
                 c.get('uuid'),
                 c.get('type'),
                 content=c.get('content'),
-                status=c.get('status'),
+                language=c.get('language'),
                 pipeline=self,
+                status=c.get('status'),
             )
             for c in self.block_configs
         ]
@@ -262,8 +263,9 @@ class Pipeline:
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
-                status=c.get('status'),
+                language=c.get('language'),
                 pipeline=self,
+                status=c.get('status'),
                 configuration=c.get('configuration'),
             )
             for c in self.widget_configs

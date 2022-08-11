@@ -354,11 +354,11 @@ class PipelineTest(TestCase):
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(name, self.repo_path)
-        block1 = Block.create('block1', 'data_loader', self.repo_path)
-        block2 = Block.create('block2', 'transformer', self.repo_path)
-        block3 = Block.create('block3', 'transformer', self.repo_path)
-        block4 = Block.create('block4', 'data_exporter', self.repo_path)
-        widget1 = Widget.create('widget1', 'chart', self.repo_path)
+        block1 = Block.create('block1', 'data_loader', self.repo_path, language='python')
+        block2 = Block.create('block2', 'transformer', self.repo_path, language='python')
+        block3 = Block.create('block3', 'transformer', self.repo_path, language='python')
+        block4 = Block.create('block4', 'data_exporter', self.repo_path, language='python')
+        widget1 = Widget.create('widget1', 'chart', self.repo_path, language='python')
         pipeline.add_block(block1)
         pipeline.add_block(block2, upstream_block_uuids=['block1'])
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
@@ -367,7 +367,7 @@ class PipelineTest(TestCase):
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):
-        block = Block.create(name, 'data_loader', self.repo_path, pipeline=pipeline)
+        block = Block.create(name, 'data_loader', self.repo_path, pipeline=pipeline, language='python')
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_loader
@@ -379,7 +379,7 @@ def load_data():
         return block
 
     def __create_dummy_transformer_block(self, name, pipeline):
-        block = Block.create(name, 'transformer', self.repo_path, pipeline=pipeline)
+        block = Block.create(name, 'transformer', self.repo_path, pipeline=pipeline, language='python')
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @transformer
@@ -389,7 +389,7 @@ def transform(df):
         return block
 
     def __create_dummy_data_exporter_block(self, name, pipeline):
-        block = Block.create(name, 'data_exporter', self.repo_path, pipeline=pipeline)
+        block = Block.create(name, 'data_exporter', self.repo_path, pipeline=pipeline, language='python')
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_exporter
@@ -399,7 +399,7 @@ def export_data(df, *args):
         return block
 
     def __create_dummy_scratchpad(self, name, pipeline):
-        block = Block.create(name, 'scratchpad', self.repo_path, pipeline=pipeline)
+        block = Block.create(name, 'scratchpad', self.repo_path, pipeline=pipeline, language='python')
         with open(block.file_path, 'w') as file:
             file.write(
                 '''import antigravity
