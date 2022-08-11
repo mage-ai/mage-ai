@@ -202,20 +202,22 @@ def incorrect_function(df1, df2, df3):
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
         self.assertEqual(block1.to_dict(), dict(
-            name='test_transformer_2',
-            uuid='test_transformer_2',
-            type='transformer',
-            status='not_executed',
-            upstream_blocks=[],
-            downstream_blocks=['test_data_exporter'],
             all_upstream_blocks_executed=True,
+            downstream_blocks=['test_data_exporter'],
+            language='python',
+            name='test_transformer_2',
+            status='not_executed',
+            type='transformer',
+            upstream_blocks=[],
+            uuid='test_transformer_2',
         ))
         self.assertEqual(block2.to_dict(), dict(
-            name='test_data_exporter',
-            uuid='test_data_exporter',
-            type='data_exporter',
-            status='not_executed',
-            upstream_blocks=['test_transformer_2'],
-            downstream_blocks=[],
             all_upstream_blocks_executed=False,
+            downstream_blocks=[],
+            language='python',
+            name='test_data_exporter',
+            status='not_executed',
+            type='data_exporter',
+            upstream_blocks=['test_transformer_2'],
+            uuid='test_data_exporter',
         ))
