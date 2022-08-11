@@ -82,6 +82,7 @@ export interface BlockRequestPayloadType {
   };
   content?: string;
   converted_from?: string;
+  language?: BlockLanguageEnum;
   name?: string;
   type: BlockTypeEnum;
   upstream_blocks?: string[];
@@ -94,6 +95,7 @@ export default interface BlockType {
   converted_from?: string;
   downstream_blocks?: string[];
   file?: string;
+  language?: BlockLanguageEnum;
   name?: string;
   outputs?: OutputType[];
   priority?: number;
