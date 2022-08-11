@@ -80,3 +80,32 @@ class VerbosePrintHandler:
         if self.verbose:
             print('DONE', end='')
             self.exists_previous_message = True
+
+
+class BlockFunctionExec:
+    def __init__(
+        self,
+        block_uuid: str,
+        message: str,
+        log_func: Callable[..., None],
+    ):
+        self.message = message
+        self.log_func = log_func
+        self.block_uuid = block_uuid
+        self.prefix = f'[{block_uuid}]'
+
+    def __enter__(self):
+        if self.log_func is not None:
+            self.log_func(
+                f'{self.prefix} {self.message}',
+                execution_state='busy',
+                block_uuid=self.block_uuid,
+            )
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.log_func is not None:
+            self.log_func(
+                f'{self.prefix} DONE',
+                execution_state='idle',
+                block_uuid=self.block_uuid,
+            )

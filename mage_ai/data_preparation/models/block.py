@@ -17,6 +17,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
 from queue import Queue
@@ -45,10 +46,11 @@ async def run_blocks(
 
     def create_block_task(block: 'Block'):
         async def execute_and_run_tests():
-            prefix = f'[{block.uuid}]'
-            try:
-                if log_func:
-                    log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
+            with BlockFunctionExec(
+                block.uuid,
+                f'Executing {block.type} block...',
+                log_func,
+            ):
                 await block.execute(
                     analyze_outputs=analyze_outputs,
                     global_vars=global_vars,
@@ -60,9 +62,6 @@ async def run_blocks(
                 )
                 if run_tests:
                     block.run_tests(update_tests=False)
-            finally:
-                if log_func:
-                    log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
         
         return asyncio.create_task(execute_and_run_tests())
 
@@ -126,10 +125,11 @@ def run_blocks_sync(
                 break
         if skip:
             continue
-        try:
-            prefix = f'[{block.uuid}]'
-            if log_func:
-                log_func(f'{prefix} Executing {block.type} block...', execution_state='busy', block_uuid=block.uuid)
+        with BlockFunctionExec(
+            block.uuid,
+            f'Executing {block.type} block...',
+            log_func,
+        ):
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 global_vars=global_vars,
@@ -138,9 +138,6 @@ def run_blocks_sync(
             )
             if run_tests:
                 block.run_tests(update_tests=False)
-        finally:
-            if log_func:
-                log_func(f'{prefix} DONE', execution_state='idle', block_uuid=block.uuid)
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
