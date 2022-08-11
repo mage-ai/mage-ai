@@ -217,7 +217,7 @@ if 'test' not in globals():
 
 
 @data_loader
-def load_data_from_api() -> DataFrame:
+def load_data_from_api(**kwargs) -> DataFrame:
     \"\"\"
     Template for loading data from API
     \"\"\"
