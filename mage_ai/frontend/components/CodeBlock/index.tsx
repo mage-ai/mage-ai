@@ -386,7 +386,9 @@ function CodeBlockProps({
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
           event.preventDefault();
           addNewBlock({
+            language: block.language,
             type: block.type,
+            upstream_blocks: [block.uuid],
           });
           runBlockAndTrack({ block });
         }

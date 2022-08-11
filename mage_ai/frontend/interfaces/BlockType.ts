@@ -5,6 +5,11 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
+export enum BlockLanguageEnum {
+  PYTHON = 'python',
+  SQL = 'sql',
+}
+
 export enum BlockTypeEnum {
   CHART = 'chart',
   DATA_EXPORTER = 'data_exporter',
