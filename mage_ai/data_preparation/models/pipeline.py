@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.models.block import Block, run_blocks
+from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     PipelineType,
@@ -13,6 +13,7 @@ from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.shared.utils import clean_name
 from mage_ai.shared.hash import extract
 from typing import Callable, List
+import asyncio
 import os
 import shutil
 import yaml
@@ -171,6 +172,7 @@ class Pipeline:
         analyze_outputs: bool = True,
         global_vars=None,
         log_func: Callable[[str], None] = None,
+        parallel: bool = True,
         redirect_outputs: bool = False,
         run_tests: bool = False,
         update_status: bool = True,
@@ -185,15 +187,48 @@ class Pipeline:
             if len(block.upstream_blocks) == 0:
                 root_blocks.append(block)
 
-        await run_blocks(
+        execution_task = asyncio.create_task(
+            run_blocks(
+                root_blocks,
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                log_func=log_func,
+                parallel=parallel,
+                redirect_outputs=redirect_outputs,
+                run_tests=run_tests,
+                update_status=update_status,
+            )
+        )
+        await execution_task
+
+
+    def execute_sync(
+        self,
+        analyze_outputs: bool = True,
+        global_vars=None,
+        log_func: Callable[[str], None] = None,
+        redirect_outputs: bool = False,
+        run_tests: bool = False,
+    ) -> None:
+        """
+        Async function for parallel processing
+        This function will schedule the block execution in topological
+        order based on a block's upstream dependencies.
+        """
+        root_blocks = []
+        for block in self.blocks_by_uuid.values():
+            if len(block.upstream_blocks) == 0:
+                root_blocks.append(block)
+
+        run_blocks_sync(
             root_blocks,
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
             log_func=log_func,
             redirect_outputs=redirect_outputs,
             run_tests=run_tests,
-            update_status=update_status,
         )
+
 
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):

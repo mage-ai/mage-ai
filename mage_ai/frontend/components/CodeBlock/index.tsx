@@ -75,6 +75,7 @@ import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
+import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 
 type CodeBlockProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
@@ -133,7 +134,7 @@ function CodeBlockProps({
   interruptKernel,
   mainContainerRef,
   mainContainerWidth,
-  messages = [],
+  messages: blockMessages = [],
   noDivider,
   onChange,
   openSidekickView,
@@ -168,6 +169,31 @@ function CodeBlockProps({
   const [runCount, setRunCount] = useState<number>(0);
   const [runEndTime, setRunEndTime] = useState<number>(null);
   const [runStartTime, setRunStartTime] = useState<number>(null);
+  const [messages, setMessages] = useState<KernelOutputType[]>(blockMessages);
+
+  const blockPrevious = usePrevious(block);
+  useEffect(() => {
+    if (JSON.stringify(block) != JSON.stringify(blockPrevious)) {
+      const {
+        messages: messagesInit,
+      } = initializeContentAndMessages([block]);
+      setMessages(messagesInit?.[block?.uuid] || [])
+    }
+  },
+  [
+    block,
+    blockPrevious,
+    setMessages,
+  ]);
+
+  const blockMessagesPrev = usePrevious(blockMessages);
+  useEffect(() => {
+    if (typeof blockMessages !== 'undefined'
+        && blockMessages.length !== blockMessagesPrev?.length) {
+      
+      setMessages(blockMessages);
+    }
+  }, [blockMessages, blockMessagesPrev, setMessages]);
 
   const codeCollapsedUUID = useMemo(() => (
     `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`

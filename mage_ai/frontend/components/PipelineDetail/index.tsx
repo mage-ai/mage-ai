@@ -286,6 +286,109 @@ function PipelineDetail({
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
 
+  const codeBlocks = useMemo(
+    () => blocks.map((block: BlockType, idx: number) => {
+      const {
+        type,
+        uuid,
+      } = block;
+      const selected: boolean = selectedBlock?.uuid === uuid;
+      const runningBlock = runningBlocksByUUID[uuid];
+      const executionState = runningBlock
+        ? (runningBlock.priority === 0
+          ? ExecutionStateEnum.BUSY
+          : ExecutionStateEnum.QUEUED
+        )
+        : ExecutionStateEnum.IDLE;
+
+      const path = `${type}s/${uuid}.py`;
+      blockRefs.current[path] = createRef();
+
+      return (
+        <CodeBlock
+          addNewBlock={(b: BlockRequestPayloadType) => {
+            setTextareaFocused(true);
+
+            return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
+          }}
+          addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
+          addWidget={addWidget}
+          autocompleteItems={autocompleteItems}
+          block={block}
+          blockIdx={idx}
+          blockRefs={blockRefs}
+          blocks={blocks}
+          defaultValue={block.content}
+          deleteBlock={(b: BlockType) => {
+            deleteBlock(b);
+            setAnyInputFocused(false);
+          }}
+          executionState={executionState}
+          fetchFileTree={fetchFileTree}
+          fetchPipeline={fetchPipeline}
+          interruptKernel={interruptKernel}
+          key={uuid}
+          mainContainerRef={mainContainerRef}
+          mainContainerWidth={mainContainerWidth}
+          messages={messages[uuid]}
+          noDivider={idx === numberOfBlocks - 1}
+          onChange={(value: string) => onChangeCodeBlock(uuid, value)}
+          openSidekickView={openSidekickView}
+          pipeline={pipeline}
+          ref={blockRefs.current[path]}
+          runBlock={runBlock}
+          runningBlocks={runningBlocks}
+          savePipelineContent={savePipelineContent}
+          selected={selected}
+          setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
+          setAnyInputFocused={setAnyInputFocused}
+          setEditingBlock={setEditingBlock}
+          setOutputBlocks={setOutputBlocks}
+          setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+          setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
+          setSelectedOutputBlock={setSelectedOutputBlock}
+          setTextareaFocused={setTextareaFocused}
+          textareaFocused={selected && textareaFocused}
+          widgets={widgets}
+        />
+      );
+    }
+  ),
+  [
+    addNewBlockAtIndex,
+    addNewBlockMenuOpenIdx,
+    addWidget,
+    autocompleteItems,
+    blockRefs,
+    blocks,
+    deleteBlock,
+    fetchFileTree,
+    fetchPipeline,
+    interruptKernel,
+    mainContainerRef,
+    mainContainerWidth,
+    messages,
+    numberOfBlocks,
+    onChangeCodeBlock,
+    openSidekickView,
+    pipeline,
+    runBlock,
+    runningBlocks,
+    runningBlocksByUUID,
+    savePipelineContent,
+    selectedBlock,
+    setAddNewBlockMenuOpenIdx,
+    setAnyInputFocused,
+    setEditingBlock,
+    setOutputBlocks,
+    setRecsWindowOpenBlockIdx,
+    setSelectedBlock,
+    setSelectedOutputBlock,
+    setTextareaFocused,
+    textareaFocused,
+    widgets,
+  ]);
+
   return (
     <>
       <PipelineContainerStyle>
@@ -302,72 +405,7 @@ function PipelineDetail({
       </PipelineContainerStyle>
 
       <Spacing mt={1} px={PADDING_UNITS}>
-        {blocks.map((block: BlockType, idx: number) => {
-          const {
-            type,
-            uuid,
-          } = block;
-          const selected: boolean = selectedBlock?.uuid === uuid;
-          const runningBlock = runningBlocksByUUID[uuid];
-          const executionState = runningBlock
-            ? (runningBlock.priority === 0
-              ? ExecutionStateEnum.BUSY
-              : ExecutionStateEnum.QUEUED
-             )
-            : ExecutionStateEnum.IDLE;
-
-          const path = `${type}s/${uuid}.py`;
-          blockRefs.current[path] = createRef();
-
-          return (
-            <CodeBlock
-              addNewBlock={(b: BlockRequestPayloadType) => {
-                setTextareaFocused(true);
-
-                return addNewBlockAtIndex(b, idx + 1, setSelectedBlock);
-              }}
-              addNewBlockMenuOpenIdx={addNewBlockMenuOpenIdx}
-              addWidget={addWidget}
-              autocompleteItems={autocompleteItems}
-              block={block}
-              blockIdx={idx}
-              blockRefs={blockRefs}
-              blocks={blocks}
-              defaultValue={block.content}
-              deleteBlock={(b: BlockType) => {
-                deleteBlock(b);
-                setAnyInputFocused(false);
-              }}
-              executionState={executionState}
-              fetchFileTree={fetchFileTree}
-              fetchPipeline={fetchPipeline}
-              interruptKernel={interruptKernel}
-              key={uuid}
-              mainContainerRef={mainContainerRef}
-              mainContainerWidth={mainContainerWidth}
-              messages={messages[uuid]}
-              noDivider={idx === numberOfBlocks - 1}
-              onChange={(value: string) => onChangeCodeBlock(uuid, value)}
-              openSidekickView={openSidekickView}
-              pipeline={pipeline}
-              ref={blockRefs.current[path]}
-              runBlock={runBlock}
-              runningBlocks={runningBlocks}
-              savePipelineContent={savePipelineContent}
-              selected={selected}
-              setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
-              setAnyInputFocused={setAnyInputFocused}
-              setEditingBlock={setEditingBlock}
-              setOutputBlocks={setOutputBlocks}
-              setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
-              setSelected={(value: boolean) => setSelectedBlock(value === true ? block : null)}
-              setSelectedOutputBlock={setSelectedOutputBlock}
-              setTextareaFocused={setTextareaFocused}
-              textareaFocused={selected && textareaFocused}
-              widgets={widgets}
-            />
-          );
-        })}
+        {codeBlocks}
 
         <Spacing mt={PADDING_UNITS}>
           <AddNewBlocks

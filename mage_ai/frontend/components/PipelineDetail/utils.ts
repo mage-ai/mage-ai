@@ -15,12 +15,12 @@ export function initializeContentAndMessages(blocks: BlockType[]) {
   const messagesInit = {};
   const contentByBlockUUID = {};
 
-  blocks.forEach(({
+  blocks?.forEach(({
     content,
     outputs,
     uuid,
   }: BlockType) => {
-    if (outputs.length >= 1) {
+    if (outputs?.length >= 1) {
       messagesInit[uuid] = outputs.map((output: OutputType) => {
         const {
           sample_data: sampleData,

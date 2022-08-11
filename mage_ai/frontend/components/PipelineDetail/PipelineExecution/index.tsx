@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
-import useWebSocket from 'react-use-websocket';
 
 import Button from '@oracle/elements/Button';
 import {
@@ -16,44 +15,40 @@ import KernelOutputType, {
 import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import { OutputContainerStyle } from './index.style';
-import { PlayButton } from '@oracle/icons';
+import { Close, PlayButton } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getWebSocket } from '@api/utils/url';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Spacing from '@oracle/elements/Spacing';
 
 export type PipelineExecutionProps = {
   pipeline: PipelineType;
+  pipelineMessages: KernelOutputType[];
+  setPipelineMessages: (messages: KernelOutputType[]) => void; 
   savePipelineContent: () => Promise<any>;
+  sendMessage: (message: any) => void;
 };
 
 function PipelineExecution({
   pipeline,
+  pipelineMessages,
   savePipelineContent,
+  setPipelineMessages,
+  sendMessage,
 }: PipelineExecutionProps) {
   const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
   const [messages, setMessages] = useState<KernelOutputType[]>([]);
+  const [lastMessageProcessed, setLastMessageProcessed] = useState<number>(0);
   const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
 
   const {
     uuid: pipelineUUID
   } = pipeline || {};
 
-  const {
-    lastMessage,
-    readyState,
-    sendMessage,
-  } = useWebSocket(getWebSocket(), {
-    onOpen: () => console.log('socketUrlPublish opened'),
-    shouldReconnect: (closeEvent) => {
-      // Will attempt to reconnect on all close events, such as server shutting down
-      console.log('Attempting to reconnect...');
-
-      return true;
-    },
-  });
-
   const executePipeline = useCallback(() => {
     savePipelineContent().then(() => {
       setIsPipelineExecuting(true);
+      setPipelineMessages([]);
+      setLastMessageProcessed(0);
       setMessages([]);
 
       sendMessage(JSON.stringify({
@@ -67,53 +62,82 @@ function PipelineExecution({
     sendMessage,
   ]);
 
+  const cancelPipeline = useCallback(() => {
+    sendMessage(JSON.stringify({
+      cancel_pipeline: true,
+      pipeline_uuid: pipelineUUID,
+    }));
+  }, [
+    pipelineUUID,
+    sendMessage,
+  ]);
+
   useEffect(() => {
-    if (lastMessage) {
-      const message: KernelOutputType = JSON.parse(lastMessage.data);
-      const {
-        execution_state: executionState,
-        pipeline_uuid,
-        msg_type: msgType,
-      } = message;
-
-      if (pipeline_uuid === pipelineUUID && msgType === MsgType.STREAM_PIPELINE) {
-        setMessages((messagesPrevious) => {
-
-          return [
+    const currentLength = pipelineMessages.length;
+    if (currentLength > lastMessageProcessed) {
+      const messagesToProcess = pipelineMessages.slice(lastMessageProcessed, currentLength)
+      setLastMessageProcessed(currentLength);
+      messagesToProcess.forEach(message => {
+        const {
+          execution_state: executionState,
+          pipeline_uuid,
+          uuid,
+        } = message;
+  
+        if (pipeline_uuid === pipelineUUID) {
+          setMessages((messagesPrevious) => [
             ...messagesPrevious,
             message,
-          ];
-        });
-      }
-
-      if (ExecutionStateEnum.IDLE === executionState) {
-        setIsPipelineExecuting(false);
-      }
+          ]); 
+          if (ExecutionStateEnum.IDLE === executionState && !uuid) {
+            setIsPipelineExecuting(false);
+          }
+        }
+      })
     }
   }, [
-    lastMessage,
+    pipelineMessages.length,
+    setLastMessageProcessed,
     setMessages,
   ]);
 
   return (
     <>
-      <Button
-        beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
-        loading={isPipelineExecuting}
-        onClick={() => executePipeline()}
-        success
-      >
-        <Text
-          bold
-          inverted
-          primary={false}
+      <FlexContainer>
+        <Button
+          beforeIcon={<PlayButton inverted size={UNIT * 2}/>}
+          loading={isPipelineExecuting}
+          onClick={executePipeline}
+          success
         >
-          Execute pipeline
-        </Text>
-      </Button>
+          <Text
+            bold
+            inverted
+            primary={false}
+          >
+            Execute pipeline
+          </Text>
+        </Button>
+        <Spacing ml={1} />
+        {isPipelineExecuting && (
+          <Button
+            beforeIcon={<Close inverted size={UNIT * 2}/>}
+            onClick={cancelPipeline}
+            success
+          >
+            <Text
+              bold
+              inverted
+              primary={false}
+            >
+              Cancel Pipeline
+            </Text>
+          </Button>
+        )}
+
+      </FlexContainer>
       <OutputContainerStyle noScrollbarTrackBackground>
         <CodeBlockStyle
-          // blockType={BlockTypeEnum.DATA_EXPORTER}
           executedAndIdle
           hasError={false}
           selected

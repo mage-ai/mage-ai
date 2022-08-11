@@ -391,6 +391,7 @@ function PipelineDetailPage({
   const [messages, setMessages] = useState<{
     [uuid: string]: KernelOutputType[];
   }>({});
+  const [pipelineMessages, setPipelineMessages] = useState<KernelOutputType[]>([]);
 
   const {
     data,
@@ -909,9 +910,13 @@ function PipelineDetailPage({
 
   const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
-    if (typeof pipeline?.blocks !== 'undefined' && (!blocks.length
-      || blocksPrevious?.map(({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
-    )) {
+    if (
+      typeof pipeline?.blocks !== 'undefined' 
+        && (!blocks.length
+            || blocksPrevious?.map(
+              ({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
+           )
+    ) {
       const {
         content: contentByBlockUUIDResults,
         messages: messagesInit,
@@ -1001,20 +1006,42 @@ function PipelineDetailPage({
       const message: KernelOutputType = JSON.parse(lastMessage.data);
       const {
         execution_state: executionState,
+        msg_type: msgType,
         uuid,
       } = message;
 
-      // @ts-ignore
-      setMessages((messagesPrevious) => {
-        const messagesFromUUID = messagesPrevious[uuid] || [];
-
-        return {
-          ...messagesPrevious,
-          [uuid]: messagesFromUUID.concat(message),
-        };
-      });
-
-      if (ExecutionStateEnum.IDLE === executionState) {
+      const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
+      
+      if (msgType !== 'stream_pipeline') {
+        // @ts-ignore
+        setMessages((messagesPrevious) => {
+          const messagesFromUUID = messagesPrevious[uuid] || [];
+  
+          return {
+            ...messagesPrevious,
+            [uuid]: messagesFromUUID.concat(message),
+          };
+        });
+      } else {
+        setPipelineMessages((pipelineMessagesPrevious) => [
+          ...pipelineMessagesPrevious,
+          message,
+        ]);
+        if (ExecutionStateEnum.IDLE === executionState) {
+          setRunningBlocks([]);
+          fetchPipeline()
+        }
+      }
+      
+      if (ExecutionStateEnum.BUSY === executionState) {
+        setRunningBlocks((runningBlocksPrevious) => {
+          if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
+            return runningBlocksPrevious;
+          }
+          
+          return runningBlocksPrevious.concat(block);
+        });
+      } else if (ExecutionStateEnum.IDLE === executionState) {
         // @ts-ignore
         setRunningBlocks((runningBlocksPrevious) =>
           runningBlocksPrevious.filter(({ uuid: uuid2 }) => uuid !== uuid2),
@@ -1025,9 +1052,6 @@ function PipelineDetailPage({
     }
   }, [
     lastMessage,
-    setMessages,
-    setPipelineContentTouched,
-    setRunningBlocks,
   ]);
 
   const runBlock = useCallback((payload: {
@@ -1142,13 +1166,16 @@ function PipelineDetailPage({
       metadata={metadata}
       onChangeChartBlock={onChangeChartBlock}
       pipeline={pipeline}
+      pipelineMessages={pipelineMessages}
       runBlock={runBlock}
       runningBlocks={runningBlocks}
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
+      sendMessage={sendMessage}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
+      setPipelineMessages={setPipelineMessages}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
@@ -1173,13 +1200,16 @@ function PipelineDetailPage({
     metadata,
     onChangeChartBlock,
     pipeline,
+    pipelineMessages,
     runBlock,
     runningBlocks,
     sampleData,
     savePipelineContent,
     selectedBlock,
+    sendMessage,
     setAnyInputFocused,
     setEditingBlock,
+    setPipelineMessages,
     setTextareaFocused,
     statistics,
     textareaFocused,
@@ -1298,7 +1328,7 @@ function PipelineDetailPage({
   ]);
 
   const afterHeader = useMemo(() => {
-    const validBlocks = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
+    const validBlocks = blocks?.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type);
 
     return (
       <FlexContainer
