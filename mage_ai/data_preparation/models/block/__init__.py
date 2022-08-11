@@ -234,6 +234,7 @@ class Block:
         name,
         block_type,
         repo_path,
+        language=BlockLanguage.PYTHON,
         pipeline=None,
         priority=None,
         upstream_block_uuids=None,
@@ -260,10 +261,16 @@ class Block:
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
-        else:
+        elif BlockLanguage.PYTHON == language:
             load_template(block_type, config, file_path)
 
-        block = self.block_class_from_type(block_type)(name, uuid, block_type, pipeline=pipeline)
+        block = self.block_class_from_type(block_type)(
+            name,
+            uuid,
+            block_type,
+            language=language,
+            pipeline=pipeline,
+        )
         self.after_create(
             block,
             config=config,
@@ -667,13 +674,17 @@ class Block:
         self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+        language = self.language or BlockLanguage.PYTHON
+        if type(self.language) is not str:
+            language = self.language.value
+
         data = dict(
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
             downstream_blocks=self.downstream_block_uuids,
             name=self.name,
-            language=self.language.value if type(self.language) is not str else self.language,
+            language=language,
             status=self.status.value if type(self.status) is not str else self.status,
             type=self.type.value if type(self.type) is not str else self.type,
             upstream_blocks=self.upstream_block_uuids,

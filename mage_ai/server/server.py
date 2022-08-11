@@ -247,6 +247,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
             payload.get('type'),
             get_repo_path(),
             config=payload.get('config'),
+            language=payload.get('language'),
             pipeline=pipeline,
             priority=payload.get('priority'),
             upstream_block_uuids=payload.get('upstream_blocks', []),
@@ -322,13 +323,13 @@ class ApiPipelineVariableListHandler(BaseHandler):
         variable_value = variable.get('value')
         if variable_value is None:
             raise Exception(f'Value is empty for variable name {variable_uuid}')
-        
+
         set_global_variable(
             pipeline_uuid,
             variable_uuid,
             variable_value,
         )
-        
+
         variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
         variables = [
             dict(

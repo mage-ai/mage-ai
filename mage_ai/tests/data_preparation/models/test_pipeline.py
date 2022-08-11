@@ -367,7 +367,7 @@ class PipelineTest(TestCase):
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):
-        block = Block.create(name, 'data_loader', self.repo_path, pipeline)
+        block = Block.create(name, 'data_loader', self.repo_path, pipeline=pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_loader
@@ -379,7 +379,7 @@ def load_data():
         return block
 
     def __create_dummy_transformer_block(self, name, pipeline):
-        block = Block.create(name, 'transformer', self.repo_path, pipeline)
+        block = Block.create(name, 'transformer', self.repo_path, pipeline=pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @transformer
@@ -389,7 +389,7 @@ def transform(df):
         return block
 
     def __create_dummy_data_exporter_block(self, name, pipeline):
-        block = Block.create(name, 'data_exporter', self.repo_path, pipeline)
+        block = Block.create(name, 'data_exporter', self.repo_path, pipeline=pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_exporter
@@ -399,7 +399,7 @@ def export_data(df, *args):
         return block
 
     def __create_dummy_scratchpad(self, name, pipeline):
-        block = Block.create(name, 'scratchpad', self.repo_path, pipeline)
+        block = Block.create(name, 'scratchpad', self.repo_path, pipeline=pipeline)
         with open(block.file_path, 'w') as file:
             file.write(
                 '''import antigravity
