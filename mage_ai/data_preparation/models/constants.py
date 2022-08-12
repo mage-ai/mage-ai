@@ -39,6 +39,13 @@ class BlockType(str, Enum):
     TRANSFORMER = 'transformer'
 
 
+class ExecutorType(str, Enum):
+    LOCAL_PYTHON = 'local_python'
+    ECS = 'ecs'
+    K8S = 'k8s'
+    PYSPARK = 'pyspark'
+
+
 class PipelineType(str, Enum):
     PYTHON = 'python'
     PYSPARK = 'pyspark'

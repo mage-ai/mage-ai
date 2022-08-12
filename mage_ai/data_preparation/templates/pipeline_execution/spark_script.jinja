@@ -58,8 +58,18 @@ if __name__ == '__main__':
             global_vars = {{ global_vars }} or dict()
             global_vars['spark'] = spark
 
-            asyncio.run(pipeline.execute(
-                analyze_outputs=False,
-                global_vars=global_vars,
-                update_status=False,
-            ))
+            block_uuid = {{ block_uuid }}
+
+            if block_uuid is None:
+                asyncio.run(pipeline.execute(
+                    analyze_outputs=False,
+                    global_vars=global_vars,
+                    update_status=False,
+                ))
+            else:
+                block = pipeline.get_block(block_uuid)
+                block.execute_sync(
+                    analyze_outputs=False,
+                    global_vars=global_vars,
+                    update_status=False,
+                )
