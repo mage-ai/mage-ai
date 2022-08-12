@@ -414,22 +414,6 @@ function PipelineDetailPage({
       name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
     ) || kernels?.[0];
 
-  // Files
-  const openFile = useCallback((filePath: string) => {
-    const filePathEncoded = encodeURIComponent(filePath);
-    let filePaths = queryFromUrl()['file_paths[]'] || [];
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-    if (!filePaths.includes(filePathEncoded)) {
-      filePaths.push(filePathEncoded);
-    }
-    goToWithQuery({
-      'file_paths[]': filePaths,
-      file_path: filePathEncoded,
-    });
-  }, []);
-
   useEffect(() => {
     setSelectedFilePath(filePathFromUrl);
   }, [
@@ -440,7 +424,7 @@ function PipelineDetailPage({
       setSelectedFilePaths(filePathsFromUrl);
     }
   }, [
-    filePathsFromUrl
+    filePathsFromUrl,
   ]);
 
   const [createPipeline] = useMutation(
@@ -556,6 +540,26 @@ function PipelineDetailPage({
     updatePipeline,
     widgetTempData.current,
     widgets,
+  ]);
+
+  // Files
+  const openFile = useCallback((filePath: string) => {
+    savePipelineContent();
+
+    const filePathEncoded = encodeURIComponent(filePath);
+    let filePaths = queryFromUrl()['file_paths[]'] || [];
+    if (!Array.isArray(filePaths)) {
+      filePaths = [filePaths];
+    }
+    if (!filePaths.includes(filePathEncoded)) {
+      filePaths.push(filePathEncoded);
+    }
+    goToWithQuery({
+      'file_paths[]': filePaths,
+      file_path: filePathEncoded,
+    });
+  }, [
+    savePipelineContent,
   ]);
 
   const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => {
@@ -1329,6 +1333,7 @@ function PipelineDetailPage({
     textareaFocused,
     widgets,
   ]);
+
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
       filePaths={selectedFilePaths}
@@ -1340,6 +1345,7 @@ function PipelineDetailPage({
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
+      savePipelineContent={savePipelineContent}
       selectedFilePath={selectedFilePath}
       updatePipelineMetadata={updatePipelineMetadata}
     />
@@ -1352,6 +1358,7 @@ function PipelineDetailPage({
     pipelineLastSaved,
     restartKernel,
     runningBlocks,
+    savePipelineContent,
     selectedFilePath,
     selectedFilePaths,
     updatePipelineMetadata,
@@ -1521,7 +1528,15 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        {!selectedFilePath && pipelineDetailMemo}
+        <div
+          style={{
+            height: selectedFilePath && 0,
+            visibility: selectedFilePath && 'hidden',
+            opacity: selectedFilePath && 0,
+          }}
+        >
+          {pipelineDetailMemo}
+        </div>
 
         {filePathsFromUrl?.map((filePath: string) => (
           <div

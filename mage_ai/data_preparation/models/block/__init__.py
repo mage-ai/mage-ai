@@ -262,7 +262,7 @@ class Block:
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
         else:
-            load_template(block_type, config, file_path)
+            load_template(block_type, config, file_path, language=language)
 
         block = self.block_class_from_type(block_type)(
             name,
@@ -911,6 +911,7 @@ class Block:
             block_type,
             dict(existing_code='    ' + existing_code.replace('\n', '\n    ')),
             new_file_path,
+            language=self.language,
         )
 
     def __update_upstream_blocks(self, upstream_blocks):
