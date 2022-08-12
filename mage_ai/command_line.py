@@ -4,9 +4,37 @@ import os
 
 def main():
     import sys
-    command = sys.argv[1]
 
-    if command == 'init':
+    try:
+        command = sys.argv[1]
+    except IndexError:
+        command = 'help'
+    if command == 'help':
+        print("""Usage:
+    mage <command> 
+
+Commands:
+    init <project_path>                 Initialize Mage project.
+    args:
+        project_path                    path of the Mage project to be created.
+
+    start <project_path> [host] [port]  Start Mage server and UI.
+    args:
+        project_path                    path of the Mage project to be loaded.
+        host                            optional argument to specify the host, defaults to localhost
+        port                            optional argument to specify the port, defaults to 6789
+
+    run <project_path> <pipeline_uuid>  Run pipeline.
+    args:
+        project_path                    path of the Mage project that contains the pipeline.
+        pipeline_uuid                   uuid of the pipeline to be run.
+
+    test <project_path> <pipeline_uuid> Run pipeline and output tests.
+    args:
+        project_path                    path of the Mage project that contains the pipeline.
+        pipeline_uuid                   uuid of the pipeline to be run and tested.
+        """)
+    elif command == 'init':
         from mage_ai.data_preparation.repo_manager import init_repo
 
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
@@ -60,6 +88,8 @@ def main():
                 update_status=False,
             )
         )
+    else:
+        print(f'Unknown command "{command}". Type "mage help" to see what commands are available.')
 
 
 if __name__ == "__main__":
