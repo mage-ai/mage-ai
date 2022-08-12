@@ -21,85 +21,19 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 
 export type PipelineExecutionProps = {
-  pipeline: PipelineType;
+  cancelPipeline: () => void;
+  executePipeline: () => void;
+  isPipelineExecuting: boolean;
   pipelineMessages: KernelOutputType[];
-  setPipelineMessages: (messages: KernelOutputType[]) => void; 
-  savePipelineContent: () => Promise<any>;
-  sendMessage: (message: any) => void;
 };
 
 function PipelineExecution({
-  pipeline,
+  cancelPipeline,
+  executePipeline,
+  isPipelineExecuting,
   pipelineMessages,
-  savePipelineContent,
-  setPipelineMessages,
-  sendMessage,
 }: PipelineExecutionProps) {
-  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
-  const [messages, setMessages] = useState<KernelOutputType[]>([]);
-  const [lastMessageProcessed, setLastMessageProcessed] = useState<number>(0);
-  const numberOfMessages = useMemo(() => messages?.length || 0, [messages]);
-
-  const {
-    uuid: pipelineUUID
-  } = pipeline || {};
-
-  const executePipeline = useCallback(() => {
-    savePipelineContent().then(() => {
-      setIsPipelineExecuting(true);
-      setPipelineMessages([]);
-      setLastMessageProcessed(0);
-      setMessages([]);
-
-      sendMessage(JSON.stringify({
-        execute_pipeline: true,
-        pipeline_uuid: pipelineUUID,
-      }));
-    });
-  }, [
-    pipelineUUID,
-    savePipelineContent,
-    sendMessage,
-  ]);
-
-  const cancelPipeline = useCallback(() => {
-    sendMessage(JSON.stringify({
-      cancel_pipeline: true,
-      pipeline_uuid: pipelineUUID,
-    }));
-  }, [
-    pipelineUUID,
-    sendMessage,
-  ]);
-
-  useEffect(() => {
-    const currentLength = pipelineMessages.length;
-    if (currentLength > lastMessageProcessed) {
-      const messagesToProcess = pipelineMessages.slice(lastMessageProcessed, currentLength)
-      setLastMessageProcessed(currentLength);
-      messagesToProcess.forEach(message => {
-        const {
-          execution_state: executionState,
-          pipeline_uuid,
-          uuid,
-        } = message;
-  
-        if (pipeline_uuid === pipelineUUID) {
-          setMessages((messagesPrevious) => [
-            ...messagesPrevious,
-            message,
-          ]); 
-          if (ExecutionStateEnum.IDLE === executionState && !uuid) {
-            setIsPipelineExecuting(false);
-          }
-        }
-      })
-    }
-  }, [
-    pipelineMessages.length,
-    setLastMessageProcessed,
-    setMessages,
-  ]);
+  const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
 
   return (
     <>
@@ -142,7 +76,7 @@ function PipelineExecution({
           hasError={false}
           selected
         >
-          {messages.map(({
+          {pipelineMessages.map(({
             data: dataInit,
             type: dataType,
           }: KernelOutputType, idx: number) => {
