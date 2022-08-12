@@ -272,6 +272,7 @@ function PipelineDetailPage({
     widgetTempData.current,
   ]);
 
+  const [isPipelineExecuting, setIsPipelineExecuting] = useState<boolean>(false);
   const [editingBlock, setEditingBlock] = useState<{
     upstreamBlocks: {
       block: BlockType;
@@ -1030,6 +1031,10 @@ function PipelineDetailPage({
         if (ExecutionStateEnum.IDLE === executionState) {
           setRunningBlocks([]);
           fetchPipeline()
+
+          if (!uuid) {
+            setIsPipelineExecuting(false);
+          }
         }
       }
       
@@ -1052,6 +1057,30 @@ function PipelineDetailPage({
     }
   }, [
     lastMessage,
+  ]);
+
+  const executePipeline = useCallback(() => {
+    savePipelineContent().then(() => {
+      setIsPipelineExecuting(true);
+      setPipelineMessages([]);
+
+      sendMessage(JSON.stringify({
+        execute_pipeline: true,
+        pipeline_uuid: pipelineUUID,
+      }));
+    });
+  }, [
+    pipelineUUID,
+  ]);
+
+  const cancelPipeline = useCallback(() => {
+    sendMessage(JSON.stringify({
+      cancel_pipeline: true,
+      pipeline_uuid: pipelineUUID,
+    }));
+  }, [
+    pipelineUUID,
+    sendMessage,
   ]);
 
   const runBlock = useCallback((payload: {
@@ -1154,14 +1183,17 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
+      cancelPipeline={cancelPipeline}
       chartRefs={chartRefs}
       deleteWidget={deleteWidget}
       editingBlock={editingBlock}
+      executePipeline={executePipeline}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
       fetchVariables={fetchVariables}
       globalVariables={globalVariables}
       insights={insights}
+      isPipelineExecuting={isPipelineExecuting}
       messages={messages}
       metadata={metadata}
       onChangeChartBlock={onChangeChartBlock}
@@ -1172,10 +1204,8 @@ function PipelineDetailPage({
       sampleData={sampleData}
       savePipelineContent={savePipelineContent}
       selectedBlock={selectedBlock}
-      sendMessage={sendMessage}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
-      setPipelineMessages={setPipelineMessages}
       setSelectedBlock={setSelectedBlock}
       setTextareaFocused={setTextareaFocused}
       statistics={statistics}
@@ -1469,8 +1499,11 @@ function PipelineDetailPage({
         before={fileTree}
         beforeHeader={(
           <FileHeaderMenu
+            cancelPipeline={cancelPipeline}
             createPipeline={createPipeline}
+            executePipeline={executePipeline}
             interruptKernel={interruptKernel}
+            isPipelineExecuting={isPipelineExecuting}
             restartKernel={restartKernel}
             savePipelineContent={savePipelineContent}
             setMessages={setMessages}

@@ -48,16 +48,19 @@ export type SidekickProps = {
     [current: string]: any;
   };
   blocks: BlockType[];
+  cancelPipeline: () => void;
   editingBlock: {
     upstreamBlocks: {
       block: BlockType;
       values: BlockType[];
     };
   };
+  executePipeline: () => void;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
   fetchVariables: () => void;
   insights: InsightType[][];
+  isPipelineExecuting: boolean;
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
   pipeline: PipelineType;
@@ -65,8 +68,6 @@ export type SidekickProps = {
   runningBlocks: BlockType[];
   sampleData: SampleDataType;
   selectedBlock: BlockType;
-  sendMessage: (message: any) => void;
-  setPipelineMessages: (messages: KernelOutputType[]) => void;
   statistics: StatisticsType;
 } & SetEditingBlockType & ChartsPropsShared;
 
@@ -76,14 +77,17 @@ function Sidekick({
   autocompleteItems,
   blockRefs,
   blocks,
+  cancelPipeline,
   chartRefs,
   deleteWidget,
   editingBlock,
+  executePipeline,
   fetchFileTree,
   fetchPipeline,
   fetchVariables,
   globalVariables,
   insights,
+  isPipelineExecuting,
   messages,
   metadata,
   onChangeChartBlock,
@@ -94,10 +98,8 @@ function Sidekick({
   sampleData,
   savePipelineContent,
   selectedBlock,
-  sendMessage,
   setAnyInputFocused,
   setEditingBlock,
-  setPipelineMessages,
   setSelectedBlock,
   setTextareaFocused,
   statistics,
@@ -217,11 +219,10 @@ function Sidekick({
             {!blockEditing && (
               <Spacing p={2}>
                 <PipelineExecution
-                  pipeline={pipeline}
+                  cancelPipeline={cancelPipeline}
+                  executePipeline={executePipeline}
+                  isPipelineExecuting={isPipelineExecuting}
                   pipelineMessages={pipelineMessages}
-                  savePipelineContent={savePipelineContent}
-                  sendMessage={sendMessage}
-                  setPipelineMessages={setPipelineMessages}
                 />
               </Spacing>
             )}

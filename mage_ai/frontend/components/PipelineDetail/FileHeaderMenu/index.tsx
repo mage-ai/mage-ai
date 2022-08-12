@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -19,12 +19,16 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
+import { alignItems } from 'styled-system';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
 type FileHeaderMenuProps = {
+  cancelPipeline: () => void;
   createPipeline: (data: any) => void;
+  executePipeline: () => void;
   interruptKernel: () => void;
+  isPipelineExecuting: boolean;
   restartKernel: () => void;
   savePipelineContent: () => void;
   setMessages: (message: {
@@ -33,8 +37,11 @@ type FileHeaderMenuProps = {
 };
 
 function FileHeaderMenu({
+  cancelPipeline,
   createPipeline,
+  executePipeline,
   interruptKernel,
+  isPipelineExecuting,
   restartKernel,
   savePipelineContent,
   setMessages,
@@ -61,52 +68,70 @@ function FileHeaderMenu({
       uuid: 'save pipeline',
     },
   ];
-  const runItems = [
-    // TODO (tommy dang): add onClick functions to these 2 menu items
-    // {
-    //   label: () => 'Run selected block',
-    //   keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]],
-    //   uuid: 'Run selected block',
-    // },
-    // {
-    //   label: () => 'Delete selected block',
-    //   keyTextGroups: [
-    //     [KEY_SYMBOL_D],
-    //     [KEY_SYMBOL_D],
-    //   ],
-    //   uuid: 'Delete selected block',
-    // },
-    {
-      label: () => 'Interrupt kernel',
-      keyTextGroups: [
-        [KEY_SYMBOL_I],
-        [KEY_SYMBOL_I],
-      ],
-      onClick: () => interruptKernel(),
-      uuid: 'Interrupt kernel',
-    },
-    {
-      label: () => 'Restart kernel',
-      keyTextGroups: [
-        [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-        [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
-      ],
-      onClick: () => restartKernel(),
-      uuid: 'Restart kernel',
-    },
-    {
-      label: () => 'Clear all outputs',
-      // @ts-ignore
-      onClick: () => setMessages(messagesByUUID => Object
-        .keys(messagesByUUID)
-        .reduce((acc, uuid) => ({
-          ...acc,
-          [uuid]: [],
-        }), {}),
-      ),
-      uuid: 'Clear all outputs',
-    },
-  ];
+  const runItems = useMemo(() => {
+    const items = [
+      // TODO (tommy dang): add onClick functions to these 2 menu items
+      // {
+      //   label: () => 'Run selected block',
+      //   keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]],
+      //   uuid: 'Run selected block',
+      // },
+      // {
+      //   label: () => 'Delete selected block',
+      //   keyTextGroups: [
+      //     [KEY_SYMBOL_D],
+      //     [KEY_SYMBOL_D],
+      //   ],
+      //   uuid: 'Delete selected block',
+      // },
+      {
+        label: () => 'Interrupt kernel',
+        keyTextGroups: [
+          [KEY_SYMBOL_I],
+          [KEY_SYMBOL_I],
+        ],
+        onClick: () => interruptKernel(),
+        uuid: 'Interrupt kernel',
+      },
+      {
+        label: () => 'Restart kernel',
+        keyTextGroups: [
+          [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
+          [KEY_CODE_NUMBERS_TO_NUMBER[KEY_CODE_NUMBER_0]],
+        ],
+        onClick: () => restartKernel(),
+        uuid: 'Restart kernel',
+      },
+      {
+        label: () => 'Clear all outputs',
+        // @ts-ignore
+        onClick: () => setMessages(messagesByUUID => Object
+          .keys(messagesByUUID)
+          .reduce((acc, uuid) => ({
+            ...acc,
+            [uuid]: [],
+          }), {}),
+        ),
+        uuid: 'Clear all outputs',
+      },
+    ];
+
+    if (isPipelineExecuting) {
+      items.push({
+        label: () => 'Cancel pipeline',
+        onClick: () => cancelPipeline(),
+        uuid: 'Cancel pipeline',
+      });
+    } else {
+      items.push({
+        label: () => 'Execute pipeline',
+        onClick: () => executePipeline(),
+        uuid: 'Execute pipeline',
+      });
+    }
+
+    return items;
+  }, [isPipelineExecuting]);
 
   const uuidKeyboard = 'FileHeaderMenu/index';
   const {
