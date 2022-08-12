@@ -158,6 +158,7 @@ class Block:
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language=BlockLanguage.PYTHON,
+        configuration={},
     ):
         self.name = name or uuid
         self.uuid = uuid
@@ -170,6 +171,7 @@ class Block:
         self.downstream_blocks = []
         self.test_functions = []
         self.language = language
+        self.configuration = configuration
 
     @property
     def content(self):
@@ -234,6 +236,7 @@ class Block:
         name,
         block_type,
         repo_path,
+        configuration=None,
         language=None,
         pipeline=None,
         priority=None,
@@ -268,6 +271,7 @@ class Block:
             name,
             uuid,
             block_type,
+            configuration=configuration,
             language=language,
             pipeline=pipeline,
         )
@@ -300,6 +304,7 @@ class Block:
         name,
         uuid,
         block_type,
+        configuration=None,
         content=None,
         language=None,
         pipeline=None,
@@ -310,6 +315,7 @@ class Block:
             name,
             uuid,
             block_type,
+            configuration=configuration,
             content=content,
             language=language,
             pipeline=pipeline,
@@ -684,6 +690,7 @@ class Block:
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
+            configuration=self.configuration,
             downstream_blocks=self.downstream_block_uuids,
             name=self.name,
             language=language,

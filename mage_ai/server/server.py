@@ -248,6 +248,7 @@ class ApiPipelineBlockListHandler(BaseHandler):
             payload.get('type'),
             get_repo_path(),
             config=payload.get('config'),
+            configuration=payload.get('configuration'),
             language=payload.get('language'),
             pipeline=pipeline,
             priority=payload.get('priority'),

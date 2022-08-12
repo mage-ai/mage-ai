@@ -24,6 +24,7 @@ export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
 export const ANALYSES = 'analyses';
 export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
+export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
 export const FEATURES: 'features' = 'features';
 export const FILE_CONTENTS: 'file_contents' = 'file_contents';
@@ -50,6 +51,7 @@ const RESOURCES: any[][] = [
   [BLOCKS, PIPELINES, ANALYSES],
   [BLOCKS, PIPELINES, OUTPUTS],
   [COLUMNS, FEATURE_SETS],
+  [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
   [FEATURE_SETS],
   [FILES],

@@ -3,6 +3,15 @@ from mage_ai.server.api.base import BaseHandler
 import yaml
 
 
+DATA_PROVIDERS = [
+    DataSource.BIGQUERY,
+    DataSource.POSTGRES,
+    DataSource.REDSHIFT,
+    DataSource.S3,
+    DataSource.SNOWFLAKE,
+]
+
+
 class ApiDataProvidersHandler(BaseHandler):
     def get(self):
         profiles = []
@@ -14,8 +23,8 @@ class ApiDataProvidersHandler(BaseHandler):
                 print(exc)
 
         collection = [dict(
-            id=k,
+            id=ds.title(),
             profiles=[p for p in profiles if p != 'version'],
-            value=v.value,
-        ) for k, v in DataSource.__members__.items()]
+            value=ds.value,
+        ) for ds in DATA_PROVIDERS]
         self.write(dict(data_providers=collection))

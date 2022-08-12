@@ -10,6 +10,7 @@ import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, { BlockRequestPayloadType, BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
+import DataProviderType from '@interfaces/DataProviderType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType from '@interfaces/PipelineType';
@@ -54,6 +55,7 @@ type PipelineDetailProps = {
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
+  dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
@@ -102,6 +104,7 @@ function PipelineDetail({
   autocompleteItems,
   blockRefs,
   blocks = [],
+  dataProviders,
   deleteBlock,
   fetchFileTree,
   fetchPipeline,
@@ -318,6 +321,7 @@ function PipelineDetail({
           blockIdx={idx}
           blockRefs={blockRefs}
           blocks={blocks}
+          dataProviders={dataProviders}
           defaultValue={block.content}
           deleteBlock={(b: BlockType) => {
             deleteBlock(b);

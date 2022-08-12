@@ -12,6 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
+  BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
   SetEditingBlockType,
@@ -24,6 +25,7 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
+import DataProviderType from '@interfaces/DataProviderType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -34,6 +36,7 @@ import KernelOutputType, {
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
+import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -53,6 +56,10 @@ import {
   CodeHelperStyle,
   TimeTrackerStyle,
 } from './index.style';
+import {
+  CONFIG_KEY_DATA_PROVIDER,
+  CONFIG_KEY_DATA_PROVIDER_PROFILE,
+} from '@interfaces/ChartBlockType';
 import {
   ContainerStyle,
   CodeContainerStyle,
@@ -85,6 +92,7 @@ type CodeBlockProps = {
   blockRefs: any;
   blockIdx: number;
   blocks: BlockType[];
+  dataProviders: DataProviderType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   fetchFileTree: () => void;
@@ -125,6 +133,7 @@ function CodeBlockProps({
   blockIdx,
   blockRefs,
   blocks,
+  dataProviders,
   defaultValue = '',
   deleteBlock,
   executionState,
@@ -194,6 +203,17 @@ function CodeBlockProps({
       setMessages(blockMessages);
     }
   }, [blockMessages, blockMessagesPrev, setMessages]);
+
+  const dataProviderProfiles = useMemo(() => {
+    let set = new Set();
+    dataProviders.forEach(({ profiles }) => {
+      set = new Set([...set, ...profiles]);
+    });
+
+    return [...set];
+  }, [
+    dataProviders,
+  ]);
 
   const codeCollapsedUUID = useMemo(() => (
     `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`
@@ -774,6 +794,63 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
+          {BlockLanguageEnum.SQL === block.language && (
+            <CodeHelperStyle>
+              <FlexContainer>
+                <Select
+                  compact
+                  label="Data provider"
+                  // @ts-ignore
+                  onChange={e => savePipelineContent({
+                    block: {
+                      configuration: {
+                        [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
+                      },
+                      uuid: block.uuid,
+                    },
+                  })}
+                  small
+                  value={block.configuration?.[CONFIG_KEY_DATA_PROVIDER]}
+                >
+                  <option value="" />
+                  {dataProviders?.map(({
+                    id,
+                    value,
+                  }: DataProvider) => (
+                    <option value={value}>
+                      {id}
+                    </option>
+                  ))}
+                </Select>
+
+                <Spacing mr={1} />
+
+                <Select
+                  compact
+                  label="Profile"
+                  // @ts-ignore
+                  onChange={e => savePipelineContent({
+                    block: {
+                      configuration: {
+                        [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
+                      },
+                      uuid: block.uuid,
+                    },
+                  })}
+                  small
+                  value={block.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
+                >
+                  <option value="" />
+                  {dataProviderProfiles?.map((id: string) => (
+                    <option value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </Select>
+              </FlexContainer>
+            </CodeHelperStyle>
+          )}
+
           {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>

@@ -27,20 +27,11 @@ from mage_ai.data_preparation.models.constants import (
     BlockType,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
-from mage_ai.shared.hash import ignore_keys, merge_dict
 import numpy as np
 import pandas as pd
 
 
 class Widget(Block):
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **ignore_keys(kwargs, ['configuration']))
-        self.configuration = kwargs.get('configuration', {})
-
     @classmethod
     def create(
         self,
@@ -60,28 +51,6 @@ class Widget(Block):
     @classmethod
     def block_class_from_type(self, block_type: str) -> str:
         return BLOCK_TYPE_TO_CLASS.get(block_type)
-
-    @classmethod
-    def get_block(
-        self,
-        name,
-        uuid,
-        block_type,
-        configuration=None,
-        language=None,
-        pipeline=None,
-        status=BlockStatus.NOT_EXECUTED,
-    ):
-        block_class = BLOCK_TYPE_TO_CLASS.get(block_type, Block)
-        return block_class(
-            name,
-            uuid,
-            block_type,
-            configuration=configuration,
-            language=language,
-            pipeline=pipeline,
-            status=status,
-        )
 
     @property
     def chart_type(self):
@@ -111,14 +80,6 @@ class Widget(Block):
             data[var_name_orig] = results.get(var_name)
 
         return data
-
-    def to_dict(self, **kwargs):
-        return merge_dict(
-            super().to_dict(**kwargs),
-            dict(
-                configuration=self.configuration,
-            ),
-        )
 
     def post_process_variables(
         self,

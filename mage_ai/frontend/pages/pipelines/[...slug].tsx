@@ -18,6 +18,7 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
+import DataProviderType from '@interfaces/DataProviderType';
 import ErrorPopup from '@components/ErrorPopup';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -237,6 +238,10 @@ function PipelineDetailPage({
     beforeMousedownActive,
     beforeWidth,
   ]);
+
+  // Data providers
+  const { data: dataDataProviders } = api.data_providers.list();
+  const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
   // Variables
   const {
@@ -504,7 +509,16 @@ function PipelineDetailPage({
 
           if (blockOverride?.uuid === block.uuid) {
             Object.entries(blockOverride).forEach(([k, v]) => {
-              blockPayload[k] = v;
+              if (typeof v === 'object') {
+                Object.entries(v).forEach(([k2, v2]) => {
+                  if (!blockPayload[k]) {
+                    blockPayload[k] = {};
+                  }
+                  blockPayload[k][k2] = v2;
+                });
+              } else {
+                blockPayload[k] = v;
+              }
             });
           }
 
@@ -1266,6 +1280,7 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
+      dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
@@ -1305,6 +1320,7 @@ function PipelineDetailPage({
     autocompleteItems,
     blockRefs,
     blocks,
+    dataProviders,
     deleteBlock,
     fetchFileTree,
     fetchPipeline,

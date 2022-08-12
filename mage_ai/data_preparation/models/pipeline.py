@@ -246,30 +246,21 @@ class Pipeline:
 
         self.block_configs = config.get('blocks', [])
         self.widget_configs = config.get('widgets', [])
-        blocks = [
-            Block.get_block(
+
+        def build_shared_args_kwargs(c, block_class):
+            return block_class(
                 c.get('name'),
                 c.get('uuid'),
                 c.get('type'),
+                configuration=c.get('configuration'),
                 content=c.get('content'),
                 language=c.get('language'),
                 pipeline=self,
                 status=c.get('status'),
             )
-            for c in self.block_configs
-        ]
-        widgets = [
-            Widget.get_block(
-                c.get('name'),
-                c.get('uuid'),
-                c.get('type'),
-                language=c.get('language'),
-                pipeline=self,
-                status=c.get('status'),
-                configuration=c.get('configuration'),
-            )
-            for c in self.widget_configs
-        ]
+
+        blocks = [build_shared_args_kwargs(c, Block) for c in self.block_configs]
+        widgets = [build_shared_args_kwargs(c, Widget) for c in self.widget_configs]
         all_blocks = blocks + widgets
 
         self.blocks_by_uuid = self.__initialize_blocks_by_uuid(
@@ -370,12 +361,14 @@ class Pipeline:
                             if 'outputs' in block_data and block.type == BlockType.SCRATCHPAD:
                                 block.save_outputs(block_data['outputs'], override=True)
 
+                            should_save = False
                             name = block_data.get('name')
 
-                            if widget:
-                                if block_data.get('configuration'):
-                                    block.configuration = block_data['configuration']
+                            if block_data.get('configuration'):
+                                block.configuration = block_data['configuration']
+                                should_save = True
 
+                            if widget:
                                 keys_to_update = []
 
                                 if name and name != block.name:
@@ -391,10 +384,13 @@ class Pipeline:
                                 if len(keys_to_update) >= 1:
                                     block.update(extract(block_data, keys_to_update))
 
-                                self.save(widget=widget)
+                                should_save = True
                             elif name and name != block.name:
                                 block.update(extract(block_data, ['name']))
                                 block_uuid_mapping[block_data.get('uuid')] = block.uuid
+                                should_save = True
+
+                            if should_save:
                                 self.save(widget=widget)
 
     def __add_block_to_mapping(
