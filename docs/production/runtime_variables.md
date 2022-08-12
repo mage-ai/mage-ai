@@ -33,7 +33,7 @@ Runtime variable names must be a valid Python identifier (i.e., no spaces in nam
 
 ## Creating Runtime Variables In-Editor
 
-**_WIP_**
+You can create new global variables from the Mage UI through the "Variables" tab in the sidekick. 
 
 ## Running Pipeline with Runtime Variables
 
