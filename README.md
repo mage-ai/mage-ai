@@ -97,6 +97,7 @@ Mage also has the following extras:
 * **bigquery**: to connect to BigQuery for data import or export
 * **postgres**: to connect to PostgreSQL for data import or export
 * **redshift**: to connect to Redshift for data import or export
+* **s3**: to connect to S3 for data import or export
 * **snowflake**: to connect to Snowflake for data import or export
 * **all**: to install all of the above to use all functionalities
 
