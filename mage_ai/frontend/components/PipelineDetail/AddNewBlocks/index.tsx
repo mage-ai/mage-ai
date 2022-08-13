@@ -79,6 +79,7 @@ function AddNewBlocks({
       label: () => 'Generic (no template)',
       onClick: () => {
         addNewBlock({
+          language: BlockLanguageEnum.PYTHON,
           type: BlockTypeEnum.TRANSFORMER,
         });
       },

@@ -794,7 +794,7 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {BlockLanguageEnum.SQL === block.language && (
+          {BlockLanguageEnum.SQL === block.language && !codeCollapsed && (
             <CodeHelperStyle>
               <FlexContainer>
                 <Select
@@ -854,21 +854,27 @@ function CodeBlockProps({
           {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>
-                Positional arguments for decorated function:
+                {BlockLanguageEnum.SQL !== block.language && 'Positional arguments for decorated function:'}
+                {BlockLanguageEnum.SQL === block.language && 'Tables available in query from upstream blocks:'}
               </Text>
 
               <Spacing mt={1}>
-                <Text monospace muted small>
-                  {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
-                  {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
-                  {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
-                </Text>
-                <Text monospace muted small>
-                  def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
-                    || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
-                    || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
-                  ({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
-                </Text>
+                {BlockLanguageEnum.SQL !== block.language && (
+                  <>
+                    <Text monospace muted small>
+                      {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
+                      {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
+                      {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
+                    </Text>
+                    <Text monospace muted small>
+                      def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
+                        || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
+                        || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
+                      ({block.upstream_blocks.map((_,i) => i >= 1 ? `df_${i + 1}` : 'df').join(', ')}):
+                    </Text>
+                  </>
+                )}
+
                 {block.upstream_blocks.map((blockUUID, i) => {
                   const b = blocksMapping[blockUUID];
                   const blockColor =
@@ -876,9 +882,15 @@ function CodeBlockProps({
 
                   return (
                     <div key={blockUUID}>
-                      <Text inline monospace muted small>
-                        &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
-                      </Text> <Text inline monospace muted small>→</Text> <Link
+                      {BlockLanguageEnum.SQL !== block.language && (
+                        <Text inline monospace muted small>
+                          &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
+                        </Text>
+                      )}{BlockLanguageEnum.SQL === block.language && (
+                        <Text inline monospace muted small>
+                          {`{{ df_${i + 1} }}`}
+                        </Text>
+                      )} <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}
                         onClick={() => {
                           const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];

@@ -50,6 +50,7 @@ export function createActionMenuItems(
           action_type: action,
           axis,
         },
+        language: BlockLanguageEnum.PYTHON,
         type: BlockTypeEnum.TRANSFORMER,
       });
     },
