@@ -208,9 +208,11 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+        file_extension = 'sql' if BlockLanguage.SQL == self.language else 'py'
+
         return os.path.join(
             repo_path or os.getcwd(),
-            f'{self.type}s/{self.uuid}.py',
+            f'{self.type}s/{self.uuid}.{file_extension}',
         )
 
     @property
@@ -260,7 +262,8 @@ class Block:
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
 
-        file_path = os.path.join(block_dir_path, f'{uuid}.py')
+        file_extension = 'sql' if BlockLanguage.SQL == language else 'py'
+        file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
@@ -294,7 +297,7 @@ class Block:
                 continue
             block_uuids[t.value] = []
             for f in os.listdir(block_dir):
-                if f.endswith('.py') and f != '__init__.py':
+                if (f.endswith('.py') or f.endswith('.sql')) and f != '__init__.py':
                     block_uuids[t.value].append(f.split('.')[0])
         return block_uuids
 
