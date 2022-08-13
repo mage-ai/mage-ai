@@ -119,38 +119,6 @@ class VariableManager:
         return path
 
 
-<<<<<<< HEAD
-def get_global_variables(pipeline_uuid: str) -> Dict[str, Any]:
-    variables = VariableManager(get_repo_path()).get_variables_by_block(pipeline_uuid, 'global')
-    global_variables = dict()
-    for variable in variables:
-        global_variables[variable] = get_global_variable(pipeline_uuid, variable)
-
-    return global_variables
-
-
-def get_global_variable(pipeline_uuid: str, key: str) -> Any:
-    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
-
-
-def get_variable(
-    pipeline_uuid: str,
-    block_uuid: str,
-    key: str,
-    **kwargs
-) -> Any:
-    return VariableManager(get_repo_path()).get_variable(
-        pipeline_uuid,
-        block_uuid,
-        key,
-        **kwargs,
-    )
-=======
-def get_variable(pipeline_uuid: str, block_uuid: str, key: str) -> Any:
-    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, block_uuid, key)
->>>>>>> 1e40139e ([dy] Add runtime variables to cli)
-
-
 def get_global_variables(
     pipeline_uuid: str,
     repo_path: str = get_repo_path(),
@@ -169,6 +137,20 @@ def get_global_variable(
     repo_path: str = get_repo_path(),
 ) -> Any:
     return VariableManager(repo_path).get_variable(pipeline_uuid, 'global', key)
+
+
+def get_variable(
+    pipeline_uuid: str,
+    block_uuid: str,
+    key: str,
+    **kwargs
+) -> Any:
+    return VariableManager(get_repo_path()).get_variable(
+        pipeline_uuid,
+        block_uuid,
+        key,
+        **kwargs,
+    )
 
 
 def set_global_variable(
