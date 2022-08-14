@@ -16,7 +16,7 @@ Instructions for running PySpark kernel
 * Launch editor with command: `docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai mage start [project_name]`
 * Specify PySpark kernel related [metadata](#metadata) in project's metadata.yaml file
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.
-    * You can use the `create_emr.py` script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Example: `python3 emr_and_cluster.py [project_path]`.
+    * You can use the `create_emr.py` script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Example: `python3 create_cluster.py [project_path]`. Please make sure your AWS crendentials are provided in `~/.aws/credentials` file or environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when executing the script.
 * Connect to the remote spark cluster with command `ssh -i path_to_key_pair -L 0.0.0.0:9999:localhost:8998 master_ec2_public_dns_name`
 
 ### Metadata
