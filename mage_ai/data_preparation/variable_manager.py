@@ -63,7 +63,8 @@ class VariableManager:
             pipeline_uuid,
             block_uuid,
             variable_uuid,
-            variable_type,
+            variable_type=variable_type,
+            spark=spark,
         )
         return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
 
