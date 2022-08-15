@@ -21,6 +21,7 @@ TIMESERIES_COLUMN_TYPES = frozenset(
     ]
 )
 VERBOSE = False
+SUBSAMPLE_COUNT = 10_000
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +61,18 @@ class AnalysisCalculator:
         else:
             df_clean = df
 
-        arr_args_1 = ([df_clean for _ in features_to_use],)
+        if df_clean.shape[0] > SUBSAMPLE_COUNT:
+            sub_df = df_clean.sample(SUBSAMPLE_COUNT)
+        else:
+            sub_df = df_clean
+
+        arr_args_1 = ([sub_df for _ in features_to_use],)
         arr_args_2 = (features_to_use,)
 
-        data_for_columns = [d for d in map(self.calculate_column, *arr_args_1, *arr_args_2)]
+        data_for_columns = list(map(self.calculate_column, *arr_args_1, *arr_args_2))
 
-        correlation_data = self.calculate_correlation_data(df)
-        time_series_charts = self.calculate_timeseries_data(df)
+        correlation_data = self.calculate_correlation_data(sub_df)
+        time_series_charts = self.calculate_timeseries_data(sub_df)
         for d in data_for_columns:
             fuuid = d['feature']['uuid']
             if fuuid in correlation_data:
@@ -75,7 +81,7 @@ class AnalysisCalculator:
                 d[DATA_KEY_TIME_SERIES] = time_series_charts[fuuid]
 
         overview = charts.build_overview_data(
-            df,
+            sub_df,
             datetime_features_to_use,
             numeric_features_to_use,
         )
