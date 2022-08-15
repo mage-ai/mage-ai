@@ -549,7 +549,9 @@ class Block:
             }
             results.update(outputs_from_input_vars)
 
-            if custom_code is not None:
+            if BlockLanguage.SQL == self.language:
+                pass
+            elif custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
             elif self.content is not None:
