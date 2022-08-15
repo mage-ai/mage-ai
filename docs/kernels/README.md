@@ -13,7 +13,7 @@ Python3 is the default kernel. You can prototype and transform small to medium s
 We support running PySpark kernel to prototype with large datasets and build pipelines to transform large datasets.
 
 Instructions for running PySpark kernel
-* Launch editor with command: `docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai mage start [project_name]`
+* Launch editor with docker: `docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai mage start [project_name]`
 * Specify PySpark kernel related [metadata](#metadata) in project's metadata.yaml file
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.
     * You can use the `create_emr.py` script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Example: `python3 create_cluster.py [project_path]`. Please make sure your AWS crendentials are provided in `~/.aws/credentials` file or environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when executing the script.
@@ -25,7 +25,7 @@ When using PySpark kernel, we need to specify a s3 path as the variables dir, wh
 remote_variables_dir: s3://bucket/path
 
 emr_config:
-    master_security_group: 'sg-xxxxxxxxxxxx' # Required
+    master_security_group: 'sg-xxxxxxxxxxxx' # Required. Should allow SSH access for trusted sources.
     slave_security_group: 'sg-yyyyyyyyyyyy' # Optional. Default value: master_security_group
     master_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
     slave_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
