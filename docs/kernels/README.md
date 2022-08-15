@@ -30,8 +30,8 @@ When using PySpark kernel, we need to specify a s3 path as the variables dir, wh
 remote_variables_dir: s3://bucket/path
 
 emr_config:
-    master_security_group: 'sg-xxxxxxxxxxxx' # Required. Should allow SSH access for trusted sources.
-    slave_security_group: 'sg-yyyyyyyyyyyy' # Optional. Default value: master_security_group
+    master_security_group: 'sg-xxxxxxxxxxxx' # Optional. Use EMR-managed security group by default.
+    slave_security_group: 'sg-yyyyyyyyyyyy' # Optional. Use EMR-managed security group by default.
     master_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
     slave_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
     # ec2_key_name must be configured during cluster launch to enable SSH access.
