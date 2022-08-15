@@ -25,10 +25,10 @@ class EmrConfig:
         self.config = config
         self.ec2_key_name = config.get('ec2_key_name')
         self.master_security_group = config.get('master_security_group')
-        if self.master_security_group is None:
-            raise Exception(
-                'Please provide master_security_group in config file to initialize an EmrConfig',
-            )
+        # if self.master_security_group is None:
+        #     raise Exception(
+        #         'Please provide master_security_group in config file to initialize an EmrConfig',
+        #     )
         self.slave_security_group = \
             config.get('slave_security_group') or self.master_security_group
         self.master_instance_type = config.get('master_instance_type', DEFAULT_INSTANCE_TYPE)
@@ -38,8 +38,8 @@ class EmrConfig:
         market = 'SPOT' if cluster_count < MAX_CLUSTERS_ON_SPOT_INSTANCES else 'ON_DEMAND'
         instances_config = {
             'KeepJobFlowAliveWhenNoSteps': keep_alive,
-            'EmrManagedMasterSecurityGroup': self.master_security_group,
-            'EmrManagedSlaveSecurityGroup': self.slave_security_group,
+            # 'EmrManagedMasterSecurityGroup': self.master_security_group,
+            # 'EmrManagedSlaveSecurityGroup': self.slave_security_group,
             'InstanceGroups': [
                 dict(
                     Name='AmazonEMRMaster',
