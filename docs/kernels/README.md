@@ -17,7 +17,9 @@ Instructions for running PySpark kernel
 * Specify PySpark kernel related [metadata](#metadata) in project's metadata.yaml file
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.
     * You can use the `create_emr.py` script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Example: `python3 create_cluster.py [project_path]`. Please make sure your AWS crendentials are provided in `~/.aws/credentials` file or environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when executing the script.
-* Connect to the remote spark cluster with command `ssh -i path_to_key_pair -L 0.0.0.0:9999:localhost:8998 master_ec2_public_dns_name`
+* Connect to the remote spark cluster with command `ssh -i [path_to_key_pair] -L 0.0.0.0:9999:localhost:8998 [master_ec2_public_dns_name]`
+    * `path_to_key_pair` is the path to the `ec2_key_pair_name` configured in `metadata.yaml` file
+    * Find the `master_ec2_public_dns_name` in your newly created EMR cluster page under attribute `Master public DNS`
 
 ### Metadata
 When using PySpark kernel, we need to specify a s3 path as the variables dir, which will be used to store the output of each block. We also need to provide EMR cluster related config fields for cluster creation. The config fields can be configured in project's metadata.yaml file. Example:
@@ -29,8 +31,11 @@ emr_config:
     slave_security_group: 'sg-yyyyyyyyyyyy' # Optional. Default value: master_security_group
     master_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
     slave_instance_type: 'r5.4xlarge' # Optional. Default value: r5.4xlarge
-    ec2_key_name: '[ec2_key_pair_name]' # This must be configured during cluster launch to enable SSH access.
+    # ec2_key_name must be configured during cluster launch to enable SSH access.
+    # You can create a key pair in page https://console.aws.amazon.com/ec2#KeyPairs and download the key file.
+    ec2_key_name: '[ec2_key_pair_name]'
 ```
+
 ### Pipeline execution
 Pipelines built with this kernel can be executed in PySpark environments.
 
