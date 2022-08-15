@@ -121,6 +121,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.hash import ignore_keys
+import mage_ai
 import os
 
 
@@ -144,7 +145,10 @@ tasks = []
 
 def build_execute_block(block):
     def _callable(ds, **kwargs):
-        block.execute_sync(
+        mage_ai.run(
+            pipeline_name,
+            project_path=project_path,
+            block_uuid=block.uuid,
             analyze_outputs=False,
             update_status=False,
         )

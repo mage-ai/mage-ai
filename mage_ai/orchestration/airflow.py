@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from typing import Dict, List, Any
+import mage_ai
 
 
 def create_dag(
@@ -19,7 +20,10 @@ def create_dag(
     def build_execute_block(block):
         # Airflow v1.x will error unless we use *args instead of ds explicitly.
         def _callable(*args, **kwargs):
-            block.execute_sync(
+            mage_ai.run(
+                pipeline_uuid,
+                project_path=project_path,
+                block_uuid=block.uuid,
                 analyze_outputs=False,
                 update_status=False,
             )

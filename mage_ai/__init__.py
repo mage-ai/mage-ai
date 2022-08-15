@@ -120,15 +120,27 @@ def clean(
 # --------------- Data preparation methods --------------- #
 
 
-def run(pipeline_uuid: str, project_path: str = None, **global_vars) -> None:
+def run(
+    pipeline_uuid: str,
+    project_path: str = None,
+    block_uuid: str = None,
+    **global_vars,
+) -> None:
     from mage_ai.data_preparation.models.pipeline import Pipeline
-    from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
+    from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 
     project_path = os.getcwd() if project_path is None else os.path.abspath(project_path)
     sys.path.append(os.path.dirname(project_path))
     pipeline = Pipeline(pipeline_uuid, project_path)
-    PipelineExecutor.get_executor(pipeline).execute(
-        analyze_outputs=False,
-        global_vars=global_vars,
-        update_status=False,
-    )
+    if block_uuid is None:
+        ExecutorFactory.get_pipeline_executor(pipeline).execute(
+            analyze_outputs=False,
+            global_vars=global_vars,
+            update_status=False,
+        )
+    else:
+        ExecutorFactory.get_block_executor(pipeline, block_uuid).execute(
+            analyze_outputs=False,
+            global_vars=global_vars,
+            update_status=False,
+        )
