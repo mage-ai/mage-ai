@@ -248,10 +248,11 @@ class Pipeline:
         self.widget_configs = config.get('widgets', [])
 
         def build_shared_args_kwargs(c, block_class):
-            return block_class(
+            block_type = c.get('type')
+            return block_class.block_class_from_type(block_type)(
                 c.get('name'),
                 c.get('uuid'),
-                c.get('type'),
+                block_type,
                 configuration=c.get('configuration'),
                 content=c.get('content'),
                 language=c.get('language'),

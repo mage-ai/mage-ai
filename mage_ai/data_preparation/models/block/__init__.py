@@ -3,6 +3,7 @@ from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
 from mage_ai.data_cleaner.shared.utils import is_dataframe
+from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
@@ -464,6 +465,9 @@ class Block:
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
             return None
 
+        if BlockLanguage.SQL == self.language:
+            return None
+
         if len(decorated_functions) == 0:
             raise Exception(
                 f'Block {self.uuid} does not have any decorated functions. '
@@ -549,8 +553,10 @@ class Block:
             }
             results.update(outputs_from_input_vars)
 
+            outputs = None
+
             if BlockLanguage.SQL == self.language:
-                pass
+                outputs = [execute_sql_code(self, custom_code or self.content)]
             elif custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
@@ -577,10 +583,11 @@ class Block:
                         outputs = block_function(*input_vars, **global_vars)
                     else:
                         outputs = block_function(*input_vars)
-                    if outputs is None:
-                        outputs = []
-                    if type(outputs) is not list:
-                        outputs = [outputs]
+
+            if outputs is None:
+                outputs = []
+            if type(outputs) is not list:
+                outputs = [outputs]
 
         output_message = dict(output=outputs)
         if redirect_outputs:
