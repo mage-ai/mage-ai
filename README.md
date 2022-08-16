@@ -103,7 +103,7 @@ Mage also has the following extras:
 * **all**: to install all of the above to use all functionalities
 
 ```bash
-pip install mage-ai[spark]
+pip install "mage-ai[spark]"
 ```
 
 You may need to install development libraries for MIT Kerberos to use some Mage features. On Ubuntu, this can be installed as:
