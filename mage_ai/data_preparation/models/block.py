@@ -378,7 +378,10 @@ class Block:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-            self.store_variables(variable_mapping)
+            self.store_variables(
+                variable_mapping,
+                spark=(global_vars or dict()).get('spark'),
+            )
             # Reset outputs cache
             self._outputs = None
 
@@ -813,7 +816,12 @@ class Block:
                     print('\nFailed to analyze dataframe:')
                     print(traceback.format_exc())
 
-    def store_variables(self, variable_mapping, override=False):
+    def store_variables(
+        self,
+        variable_mapping,
+        override=False,
+        spark=None,
+    ):
         if self.pipeline is None:
             return
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
@@ -822,6 +830,8 @@ class Block:
         )
         removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
+            if spark is not None and type(data) is pd.DataFrame:
+                data = spark.createDataFrame(data)
             self.pipeline.variable_manager.add_variable(
                 self.pipeline.uuid,
                 self.uuid,

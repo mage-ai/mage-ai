@@ -85,7 +85,6 @@ class VariableManager:
             variable_type=variable_type,
         )
 
-
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
         if not os.path.exists(variable_dir_path):
@@ -133,8 +132,18 @@ def get_global_variable(pipeline_uuid: str, key: str) -> Any:
     return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
 
 
-def get_variable(pipeline_uuid: str, block_uuid: str, key: str) -> Any:
-    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, block_uuid, key)
+def get_variable(
+    pipeline_uuid: str,
+    block_uuid: str,
+    key: str,
+    **kwargs
+) -> Any:
+    return VariableManager(get_repo_path()).get_variable(
+        pipeline_uuid,
+        block_uuid,
+        key,
+        **kwargs,
+    )
 
 
 def set_global_variable(pipeline_uuid: str, key: str, value: Any) -> None:

@@ -33,6 +33,10 @@ Commands:
     args:
         project_path                    path of the Mage project that contains the pipeline.
         pipeline_uuid                   uuid of the pipeline to be run and tested.
+
+    create_spark_cluster <project_path>
+      args:
+        project_path                    path of the Mage project that contains the EMR config.
         """)
     elif command == 'init':
         from mage_ai.data_preparation.repo_manager import init_repo
@@ -88,6 +92,11 @@ Commands:
                 update_status=False,
             )
         )
+    elif command == 'create_spark_cluster':
+        from mage_ai.services.emr.launcher import create_cluster
+
+        project_path = os.path.abspath(sys.argv[2])
+        create_cluster(project_path)
     else:
         print(f'Unknown command "{command}". Type "mage help" to see what commands are available.')
 
