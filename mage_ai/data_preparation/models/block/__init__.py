@@ -63,7 +63,7 @@ async def run_blocks(
                 )
                 if run_tests:
                     block.run_tests(update_tests=False)
-        
+
         return asyncio.create_task(execute_and_run_tests())
 
     for block in root_blocks:
