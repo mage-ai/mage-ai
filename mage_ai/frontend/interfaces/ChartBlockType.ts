@@ -14,6 +14,7 @@ export const VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order';
 
 export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
 export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
+export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
 
 export const VARIABLE_NAMES = [
   VARIABLE_NAME_X,

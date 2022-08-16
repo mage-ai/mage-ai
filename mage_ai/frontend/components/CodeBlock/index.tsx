@@ -39,6 +39,7 @@ import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
@@ -59,6 +60,7 @@ import {
 import {
   CONFIG_KEY_DATA_PROVIDER,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
+  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
 } from '@interfaces/ChartBlockType';
 import {
   ContainerStyle,
@@ -174,6 +176,7 @@ function CodeBlockProps({
   const [dataProviderConfig, setDataProviderConfig] = useState({
     [CONFIG_KEY_DATA_PROVIDER]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
+    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
   });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
@@ -210,7 +213,7 @@ function CodeBlockProps({
 
   const dataProviderProfiles = useMemo(() => {
     let set = new Set();
-    dataProviders.forEach(({ profiles }) => {
+    dataProviders?.forEach(({ profiles }) => {
       set = new Set([...set, ...profiles]);
     });
 
@@ -864,6 +867,25 @@ function CodeBlockProps({
                     </option>
                   ))}
                 </Select>
+
+                <Spacing mr={1} />
+
+                <FlexContainer alignItems="center">
+                  <Text monospace muted small>
+                    Schema to save data:
+                  </Text>
+                  <span>&nbsp;</span>
+                  <TextInput
+                    compact
+                    monospace
+                    // @ts-ignore
+                    onChange={e => updateDataProviderConfig({
+                      [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                    })}
+                    small
+                    value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                  />
+                </FlexContainer>
               </FlexContainer>
             </CodeHelperStyle>
           )}

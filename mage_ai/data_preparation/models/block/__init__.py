@@ -220,6 +220,10 @@ class Block:
     def file(self):
         return File.from_path(self.file_path)
 
+    @property
+    def table_name(self):
+        return f'{self.pipeline.uuid}_{self.uuid}_{self.pipeline.version_name}'
+
     @classmethod
     def block_class_from_type(self, block_type: str) -> str:
         return BLOCK_TYPE_TO_CLASS.get(block_type)
@@ -556,7 +560,7 @@ class Block:
             outputs = None
 
             if BlockLanguage.SQL == self.language:
-                outputs = [execute_sql_code(self, custom_code or self.content)]
+                outputs = execute_sql_code(self, custom_code or self.content)
             elif custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
