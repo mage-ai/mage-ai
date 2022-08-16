@@ -65,6 +65,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Features](#-features)
 1. [Contributing](#%EF%B8%8F-contributing)
 1. [Community](#-community)
+1. [Documentation](docs/README.md)
 
 # 🏃‍♀️ Quick start
 
