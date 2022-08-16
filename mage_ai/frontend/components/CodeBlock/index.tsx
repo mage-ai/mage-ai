@@ -171,6 +171,10 @@ function CodeBlockProps({
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
+  const [dataProviderConfig, setDataProviderConfig] = useState({
+    [CONFIG_KEY_DATA_PROVIDER]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER],
+    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
+  });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
@@ -199,7 +203,7 @@ function CodeBlockProps({
   useEffect(() => {
     if (typeof blockMessages !== 'undefined'
         && blockMessages.length !== blockMessagesPrev?.length) {
-      
+
       setMessages(blockMessages);
     }
   }, [blockMessages, blockMessagesPrev, setMessages]);
@@ -572,6 +576,29 @@ function CodeBlockProps({
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
 
+  const updateDataProviderConfig = useCallback((payload) => {
+    setDataProviderConfig((dataProviderConfigPrev) => {
+      const data = {
+        ...dataProviderConfigPrev,
+        ...payload,
+      };
+
+      if (data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE]) {
+        savePipelineContent({
+          block: {
+            configuration: data,
+            uuid: block.uuid,
+          },
+        });
+      }
+
+      return data;
+    });
+  }, [
+    block,
+    savePipelineContent,
+  ]);
+
   return (
     <div ref={ref} style={{
       position: 'relative',
@@ -801,16 +828,11 @@ function CodeBlockProps({
                   compact
                   label="Data provider"
                   // @ts-ignore
-                  onChange={e => savePipelineContent({
-                    block: {
-                      configuration: {
-                        [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
-                      },
-                      uuid: block.uuid,
-                    },
+                  onChange={e => updateDataProviderConfig({
+                    [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
                   })}
                   small
-                  value={block.configuration?.[CONFIG_KEY_DATA_PROVIDER]}
+                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
                 >
                   <option value="" />
                   {dataProviders?.map(({
@@ -829,16 +851,11 @@ function CodeBlockProps({
                   compact
                   label="Profile"
                   // @ts-ignore
-                  onChange={e => savePipelineContent({
-                    block: {
-                      configuration: {
-                        [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
-                      },
-                      uuid: block.uuid,
-                    },
+                  onChange={e => updateDataProviderConfig({
+                    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
                   })}
                   small
-                  value={block.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
+                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
                 >
                   <option value="" />
                   {dataProviderProfiles?.map((id: string) => (
@@ -949,6 +966,7 @@ function CodeBlockProps({
             <AddNewBlocks
               addNewBlock={(newBlock: BlockRequestPayloadType) => {
                 let content = newBlock.content;
+                let configuration = newBlock.configuration;
                 const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
 
                 if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
@@ -961,8 +979,17 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
 `;
                 }
 
+
+                if (BlockLanguageEnum.SQL === block.language) {
+                  configuration = {
+                    ...block.configuration,
+                    ...configuration,
+                  };
+                }
+
                 return addNewBlock({
                   ...newBlock,
+                  configuration,
                   content,
                   upstream_blocks: upstreamBlocks,
                 });

@@ -8,7 +8,12 @@ import { CSSTransition } from 'react-transition-group';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
-import BlockType, { BlockRequestPayloadType, BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+  SetEditingBlockType,
+} from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
@@ -417,9 +422,12 @@ function PipelineDetail({
               const block = blocks[blocks.length - 1];
 
               let content = null;
+              let configuration = {};
               const upstreamBlocks = [];
 
               if (block) {
+                configuration = block.configuration;
+
                 if (BlockTypeEnum.CHART !== block.type
                   && BlockTypeEnum.SCRATCHPAD !== block.type
                   && BlockTypeEnum.DATA_LOADER !== newBlock.type
@@ -438,10 +446,18 @@ function PipelineDetail({
 df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
 `;
                 }
+
+                if (BlockLanguageEnum.SQL === block.language) {
+                  configuration = {
+                    ...block.configuration,
+                    ...configuration,
+                  };
+                }
               }
 
               addNewBlockAtIndex({
                 ...newBlock,
+                configuration,
                 content,
                 upstream_blocks: upstreamBlocks,
               }, numberOfBlocks, setSelectedBlock);
