@@ -95,8 +95,7 @@ Commands:
     elif command == 'create_spark_cluster':
         from mage_ai.services.emr.launcher import create_cluster
 
-        project_path = sys.argv[2]
-        project_path = os.path.abspath(sys.argv[1])
+        project_path = os.path.abspath(sys.argv[2])
         create_cluster(project_path)
     else:
         print(f'Unknown command "{command}". Type "mage help" to see what commands are available.')

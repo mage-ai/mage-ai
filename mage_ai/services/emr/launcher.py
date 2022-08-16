@@ -4,6 +4,7 @@ from mage_ai.services.emr.resource_manager import EmrResourceManager
 
 
 def create_cluster(project_path):
+    print(f'Creating EMR cluster for project: {project_path}')
     repo_config = RepoConfig(project_path)
     # Upload bootstrap script
     resource_manager = EmrResourceManager(
