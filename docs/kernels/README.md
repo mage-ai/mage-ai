@@ -17,7 +17,6 @@ Instructions for running PySpark kernel
 * Specify PySpark kernel related [metadata](#metadata) in project's metadata.yaml file
 * Launch a remote AWS EMR Spark cluster. Install mage_ai library in bootstrap actions. Make sure the EMR cluster is publicly accessible.
     * You can use the `create_emr.py` script under [scripts/spark](https://github.com/mage-ai/mage-ai/tree/master/scripts/spark) folder to launch a new EMR cluster. Example: `python3 create_cluster.py [project_path]`. Please make sure your AWS crendentials are provided in `~/.aws/credentials` file or environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when executing the script.
-    * After the EMR cluster is launched, please grant S3 read and write permissions of the bucket you want to access in your pipeline and the `remote_variabls_dir` bucket to the EMR cluster's IAM roles (`EMR_DefaultRole` and `EMR_EC2_DefaultRole`).
 * Connect to the remote spark cluster with command `ssh -i [path_to_key_pair] -L 0.0.0.0:9999:localhost:8998 [master_ec2_public_dns_name]`
     * `path_to_key_pair` is the path to the `ec2_key_pair_name` configured in `metadata.yaml` file
     * Find the `master_ec2_public_dns_name` in your newly created EMR cluster page under attribute `Master public DNS`
