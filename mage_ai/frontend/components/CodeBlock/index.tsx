@@ -687,7 +687,10 @@ function CodeBlockProps({
               monospace
               muted
               notRequired
-              onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
+              onBlur={() => setTimeout(() => {
+                setAnyInputFocused(false);
+                setIsEditingBlock(false);
+              }, 300)}
               onChange={(e) => {
                 setNewBlockUuid(e.target.value);
                 e.preventDefault();
@@ -878,10 +881,22 @@ function CodeBlockProps({
                   <TextInput
                     compact
                     monospace
-                    // @ts-ignore
-                    onChange={e => updateDataProviderConfig({
-                      [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                    })}
+                    onBlur={() => setTimeout(() => {
+                      setAnyInputFocused(false);
+                    }, 300)}
+                    onChange={(e) => {
+                      // @ts-ignore
+                      updateDataProviderConfig({
+                        [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                      });
+                      e.preventDefault();
+                    }}
+                    onClick={() => {
+                      setAnyInputFocused(true);
+                    }}
+                    onFocus={() => {
+                      setAnyInputFocused(true);
+                    }}
                     small
                     value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
                   />
