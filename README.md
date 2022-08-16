@@ -75,11 +75,11 @@ You can install Mage using Docker or `pip`:
 
 ### Using Docker
 
-Create a new project and launch tool:
+Create a new project and launch tool (change `demo_project` to any other name if you want):
 
 ```bash
 docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  mageai/mageai mage start [project_name]
+  mageai/mageai mage start demo_project
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
@@ -112,8 +112,11 @@ apt install libkrb5-dev
 ```
 
 ##### 2. Create new project and launch tool
+
+(change `demo_project` to any other name if you want):
+
 ```bash
-mage start [project_name]
+mage start demo_project
 ```
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
