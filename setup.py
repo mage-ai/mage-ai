@@ -16,7 +16,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name='mage-ai',
-    version='0.2.8',
+    version='0.2.9',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a notebook for building and deploying data pipelines.',
