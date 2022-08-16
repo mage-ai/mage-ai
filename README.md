@@ -96,6 +96,7 @@ pip install mage-ai
 Mage also has the following extras:
 * **spark**: to use Spark in your Mage pipeline
 * **bigquery**: to connect to BigQuery for data import or export
+* **hdf5**: to process HDF5 file format
 * **postgres**: to connect to PostgreSQL for data import or export
 * **redshift**: to connect to Redshift for data import or export
 * **s3**: to connect to S3 for data import or export

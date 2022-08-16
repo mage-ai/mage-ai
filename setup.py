@@ -39,6 +39,7 @@ setuptools.setup(
     },
     extras_require={
         'bigquery': ['google-cloud-bigquery==3.2.0', 'db-dtypes==1.0.2'],
+        'hdf5': ['tables==3.7.0'],
         'postgres': ['psycopg2-binary==2.9.3'],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.907'],
         's3': ['botocore==1.27.19', 'boto3==1.24.19'],
