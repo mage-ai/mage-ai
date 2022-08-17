@@ -3,6 +3,7 @@ from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
 from mage_ai.data_cleaner.shared.utils import is_dataframe
+from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
@@ -158,6 +159,7 @@ class Block:
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language=BlockLanguage.PYTHON,
+        configuration={},
     ):
         self.name = name or uuid
         self.uuid = uuid
@@ -170,6 +172,7 @@ class Block:
         self.downstream_blocks = []
         self.test_functions = []
         self.language = language
+        self.configuration = configuration
 
     @property
     def content(self):
@@ -206,14 +209,20 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
+        file_extension = 'sql' if BlockLanguage.SQL == self.language else 'py'
+
         return os.path.join(
             repo_path or os.getcwd(),
-            f'{self.type}s/{self.uuid}.py',
+            f'{self.type}s/{self.uuid}.{file_extension}',
         )
 
     @property
     def file(self):
         return File.from_path(self.file_path)
+
+    @property
+    def table_name(self):
+        return f'{self.pipeline.uuid}_{self.uuid}_{self.pipeline.version_name}'
 
     @classmethod
     def block_class_from_type(self, block_type: str) -> str:
@@ -234,6 +243,8 @@ class Block:
         name,
         block_type,
         repo_path,
+        configuration=None,
+        language=None,
         pipeline=None,
         priority=None,
         upstream_block_uuids=None,
@@ -256,14 +267,22 @@ class Block:
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
 
-        file_path = os.path.join(block_dir_path, f'{uuid}.py')
+        file_extension = 'sql' if BlockLanguage.SQL == language else 'py'
+        file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
         else:
-            load_template(block_type, config, file_path)
+            load_template(block_type, config, file_path, language=language)
 
-        block = self.block_class_from_type(block_type)(name, uuid, block_type, pipeline=pipeline)
+        block = self.block_class_from_type(block_type)(
+            name,
+            uuid,
+            block_type,
+            configuration=configuration,
+            language=language,
+            pipeline=pipeline,
+        )
         self.after_create(
             block,
             config=config,
@@ -283,7 +302,7 @@ class Block:
                 continue
             block_uuids[t.value] = []
             for f in os.listdir(block_dir):
-                if f.endswith('.py') and f != '__init__.py':
+                if (f.endswith('.py') or f.endswith('.sql')) and f != '__init__.py':
                     block_uuids[t.value].append(f.split('.')[0])
         return block_uuids
 
@@ -293,18 +312,22 @@ class Block:
         name,
         uuid,
         block_type,
+        configuration=None,
         content=None,
-        status=BlockStatus.NOT_EXECUTED,
+        language=None,
         pipeline=None,
+        status=BlockStatus.NOT_EXECUTED,
     ):
         block_class = self.block_class_from_type(block_type) or Block
         return block_class(
             name,
             uuid,
             block_type,
+            configuration=configuration,
             content=content,
-            status=status,
+            language=language,
             pipeline=pipeline,
+            status=status,
         )
 
     def delete(self, widget=False, commit=True):
@@ -446,6 +469,9 @@ class Block:
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
             return None
 
+        if BlockLanguage.SQL == self.language:
+            return None
+
         if len(decorated_functions) == 0:
             raise Exception(
                 f'Block {self.uuid} does not have any decorated functions. '
@@ -531,7 +557,11 @@ class Block:
             }
             results.update(outputs_from_input_vars)
 
-            if custom_code is not None:
+            outputs = None
+
+            if BlockLanguage.SQL == self.language:
+                outputs = execute_sql_code(self, custom_code or self.content)
+            elif custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
             elif self.content is not None:
@@ -557,10 +587,11 @@ class Block:
                         outputs = block_function(*input_vars, **global_vars)
                     else:
                         outputs = block_function(*input_vars)
-                    if outputs is None:
-                        outputs = []
-                    if type(outputs) is not list:
-                        outputs = [outputs]
+
+            if outputs is None:
+                outputs = []
+            if type(outputs) is not list:
+                outputs = [outputs]
 
         output_message = dict(output=outputs)
         if redirect_outputs:
@@ -667,13 +698,18 @@ class Block:
         self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
+        language = self.language
+        if language and type(self.language) is not str:
+            language = self.language.value
+
         data = dict(
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
+            configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             name=self.name,
-            language=self.language.value if type(self.language) is not str else self.language,
+            language=language,
             status=self.status.value if type(self.status) is not str else self.status,
             type=self.type.value if type(self.type) is not str else self.type,
             upstream_blocks=self.upstream_block_uuids,
@@ -898,6 +934,7 @@ class Block:
             block_type,
             dict(existing_code='    ' + existing_code.replace('\n', '\n    ')),
             new_file_path,
+            language=self.language,
         )
 
     def __update_upstream_blocks(self, upstream_blocks):

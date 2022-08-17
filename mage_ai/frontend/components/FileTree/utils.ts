@@ -9,9 +9,9 @@ export const getBlockType = (path: string[]): BlockTypeEnum => (
   path.at(-2).slice(0, -1) as BlockTypeEnum
 );
 
-export const getBlockUUID = (path: string[]) => (
-  getBlockFilename(path).slice(0, -3)
-);
+export const getBlockUUID = (path: string[]) => {
+  return getBlockFilename(path).split('.')[0];
+};
 
 export const findBlockByPath = (blocks: BlockType[], path: string[]) => (
   blocks.find(({ uuid }) => getBlockUUID(path) === uuid)

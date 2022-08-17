@@ -4,7 +4,11 @@ import {
   ActionGroupingEnum,
 } from '@interfaces/TransformerActionType';
 import { ActionTypeEnum, AxisEnum } from '@interfaces/ActionPayloadType';
-import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import {
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import DataSourceTypeEnum, {
   DATA_SOURCE_TYPES,
   DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING,
@@ -24,6 +28,7 @@ export const createDataSourceMenuItems = (
         config: {
           data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
         },
+        language: BlockLanguageEnum.PYTHON,
         type: blockType,
       });
     },
@@ -45,6 +50,7 @@ export function createActionMenuItems(
           action_type: action,
           axis,
         },
+        language: BlockLanguageEnum.PYTHON,
         type: BlockTypeEnum.TRANSFORMER,
       });
     },
