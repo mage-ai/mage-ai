@@ -6,7 +6,7 @@ ARG PIP=pip3
 
 USER root
 
-RUN apt update && apt install curl
+RUN apt -y update && apt -y install curl
 RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
 RUN apt install nodejs
 

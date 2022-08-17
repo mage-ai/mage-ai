@@ -1,20 +1,28 @@
 # Spark
 
-This is a guide for using Spark (PySpark) with Mage in different cloud providers.
+Want to become a [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
 
-See a specific section for the cloud provider you use.
+This is a guide for using Spark (PySpark) with Mage in different cloud providers (see a specific section for the cloud provider you use).
 
 ## AWS
 
 Here is an overview of the steps required to use Mage locally with Spark in AWS:
 
 1. [Create an EC2 key pair](#1-create-an-ec2-key-pair)
-1. Create an S3 bucket for Spark
-1. Start Mage
-1. Configure project’s metadata settings
-1. Launch EMR cluster
-1. SSH into EMR master node
-1. Sample pipeline with PySpark code
+1. [Create an S3 bucket for Spark](#2-create-an-s3-bucket-for-spark)
+1. [Start Mage](#3-start-mage)
+1. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
+1. [Launch EMR cluster](#5-launch-emr-cluster)
+1. [SSH into EMR master node](#6-ssh-into-emr-master-node)
+1. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
+1. [Debugging](#8-debugging)
+1. [Clean up](#9-clean-up)
+
+If you get stuck, run into problems, or just want someone to walk you through these steps, please join our
+[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
+and someone will help you ASAP.
+
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
 ### 1. Create an EC2 key pair
 
@@ -102,128 +110,10 @@ Once you’ve acquired those credentials, do the following:
 
 The following steps will create 2 IAM roles required for EMR.
 
-The steps create the same default roles
-described in this [AWS API documentation](https://docs.aws.amazon.com/cli/latest/reference/emr/create-default-roles.html)
-for the `create-default-roles` function.
-
-##### EMR_EC2_DefaultRole
-1. Go to the Roles page in the IAM Management Console and click "Create role".
-1. Under "Trusted entity type", select "Custom trust policy".
-1. Paste the following code in the "Custom trust policy" textarea:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      }
-    }
-  ]
-}
-```
-1. Click "Next" at the bottom right.
-1. On the "Add permissions" step, click "Create policy".
-1. Under "Role name", enter "EMR_EC2_DefaultRole".
-1. Click "Create role" at the bottom right of the page to create role.
-1. On the Roles page, search for the role named "EMR_EC2_DefaultRole" and click it.
-1. Click the "Add permissions" dropdown and click "Attach policies".
-1. Enter "AmazonElasticMapReduceforEC2Role" in the search bar and press "Enter".
-1. Click the checkbox next to the policy named "AmazonElasticMapReduceforEC2Role".
-1. Click "Attach policies" at the bottom right of the page.
-
-##### EMR_DefaultRole
-1. Go to the Roles page in the IAM Management Console and click "Create role".
-1. Under "Trusted entity type", select "Custom trust policy".
-1. Paste the following code in the "Custom trust policy" textarea:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Sid": "",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "elasticmapreduce.amazonaws.com"
-      }
-    }
-  ]
-}
-```
-1. Click "Next" at the bottom right.
-1. On the "Add permissions" step, click "Create policy".
-1. Under "Role name", enter "EMR_DefaultRole".
-1. Click "Create role" at the bottom right of the page to create role.
-1. On the Roles page, search for the role named "EMR_DefaultRole" and click it.
-1. Click the "Add permissions" dropdown and click "Create inline policy".
-1. Click the "JSON" tab and paste in the following JSON:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:CancelSpotInstanceRequests",
-        "ec2:CreateSecurityGroup",
-        "ec2:CreateTags",
-        "ec2:DeleteTags",
-        "ec2:DescribeAvailabilityZones",
-        "ec2:DescribeAccountAttributes",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeKeyPairs",
-        "ec2:DescribePrefixLists",
-        "ec2:DescribeRouteTables",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSpotInstanceRequests",
-        "ec2:DescribeSpotPriceHistory",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeVpcAttribute",
-        "ec2:DescribeVpcEndpoints",
-        "ec2:DescribeVpcEndpointServices",
-        "ec2:DescribeVpcs",
-        "ec2:ModifyImageAttribute",
-        "ec2:ModifyInstanceAttribute",
-        "ec2:RequestSpotInstances",
-        "ec2:RunInstances",
-        "ec2:TerminateInstances",
-        "iam:GetRole",
-        "iam:GetRolePolicy",
-        "iam:ListInstanceProfiles",
-        "iam:ListRolePolicies",
-        "iam:PassRole",
-        "s3:CreateBucket",
-        "s3:Get*",
-        "s3:List*",
-        "sdb:BatchPutAttributes",
-        "sdb:Select",
-        "sqs:CreateQueue",
-        "sqs:Delete*",
-        "sqs:GetQueue*",
-        "sqs:ReceiveMessage"
-      ],
-      "Resource": "*",
-      "Effect": "Allow"
-    }
-  ]
-}
-```
-1. Click "Review policy".
-1. Under "Name", enter "EMR_DefaultRole_policy".
-1. Click "Create policy".
-
-#### 5a. Clone the Mage GitHub repository
-
-Clone the repository, move your `demo_project/` folder into the `mage-ai/` folder,
-and change directory into the `mage-ai` folder:
-
+1. Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+1. Run this command in your terminal ([reference](https://docs.aws.amazon.com/cli/latest/reference/emr/create-default-roles.html))
 ```bash
-git clone https://github.com/mage-ai/mage-ai.git && mv demo_project mage-ai && cd mage-ai
+aws emr create-default-roles
 ```
 
 #### 5b. Run script in Docker container
@@ -231,31 +121,171 @@ Using your AWS Access Key ID and an AWS Secret Access Key,
 run the following command in your terminal to launch an EMR cluster:
 
 ```bash
-docker run \
+docker run -it \
+  -v $(pwd):/home/src mageai/mageai \
   --env AWS_ACCESS_KEY_ID=your_key_id \
   --env AWS_SECRET_ACCESS_KEY=your_access_key \
-  -v $(pwd):/home/src mageai/mageai \
-  python3 scripts/spark/create_cluster.py demo_project
+  mage create_spark_cluster demo_project
 ```
 
 This script will take a few minutes to complete.
 Once finished, your terminal will output something like this:
 
 ```bash
-TBD
+Creating EMR cluster for project: /home/src/demo_project
+Creating cluster...
+
+{
+  "JobFlowId": "j-3500M6WJOND9Q",
+  "ClusterArn": "...",
+  "ResponseMetadata": {
+    "RequestId": "...,
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "x-amzn-requestid": "...,
+      "content-type": "application/x-amz-json-1.1",
+      "content-length": "118",
+      "date": "Wed, 17 Aug 2022 04:32:33 GMT"
+    },
+    "RetryAttempts": 0
+  }
+}
+
+Cluster ID: j-3500M6WJOND9Q
+Waiting for cluster, this typically takes several minutes...
+Current status: STARTING..BOOTSTRAPPING.....WAITING
+Cluster j-3500M6WJOND9Q is created
 ```
 
 ### 6. SSH into EMR master node
 
-- Get the master_ec2_public_dns_name
+#### 6a. Allow SSH access to EMR
+
+Add an inbound rule to the EMR master node’s security group to allow SSH access by following these steps:
+
+1. Go to [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
+1. Click on the cluster you just created.
+1. Under the section **Security and access**, click the link next to **Security groups for Master:**. The link could look like this `sg-0bb79fd041def8c5d` (depending on your security group ID).
+1. In the "Security Groups" page that just opened up, click on the row with the "Security group name" value of "ElasticMapReduce-master".
+1. Under the section "Inbound rules", click the button on the right labeled "Edit inbound rules".
+1. Scroll down and click "Add rule".
+1. Change the "type" dropdown from `Custom TCP` to `SSH`.
+1. Change the "Source" dropdown from `Custom` to `My IP`.
+1. Click "Save rules" in the bottom right corner of the page.
+
+#### 6b. SSH into master node
+1. Go to [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
+1. Click on the cluster you just created.
+1. Find the **Master public DNS**, it should look something like this: `ec2-some-ip.us-west-2.compute.amazonaws.com`.
+1. Make sure your EC2 key pair is read-only. Run the following command (change the location to wherever you saved your EC2 key pair locally):
+```bash
+chmod 400 ~/.ssh/aws-ec2.pem
+```
+1. In a separate terminal session, run the following command:
+```bash
+ssh -i [location of EC2 key pair file] \
+  -L 0.0.0.0:9999:localhost:8998 \
+  hadoop@[Master public DNS]
+```
+
+The command could look like this:
+```bash
+ssh -i ~/.ssh/aws-ec2.pem \
+  -L 0.0.0.0:9999:localhost:8998 \
+  hadoop@ec2-44-234-41-39.us-west-2.compute.amazonaws.com
+```
 
 ### 7. Sample pipeline with PySpark code
 
-- Change the kernel in the UI
-- Code
+1. Create a new pipeline by going to `File` in the top left corner of the page and then clicking `New pipeline`.
+1. Change the pipeline’s kernel from `python` to `pyspark`. Click the button with the green dot and the word `python` next to it. This is located at the top of the page on the right side of your header.
+1. Click `+ Data loader`, then choose `Python`, then `Generic (no template)` to add a new data loader block.
+1. Paste the following sample code in the new data loader block:
+```python
+from pandas import DataFrame
+import io
+import pandas as pd
+import requests
+
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+def data_from_internet():
+    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.text), sep=',')
+
+
+@data_loader
+def load_data(**kwargs) -> DataFrame:
+    df_spark = kwargs['spark'].createDataFrame(data_from_internet())
+
+    return df_spark
+```
+1. Click `+ Data exporter`, then choose `Python`, then `Generic (no template)` to add a new data exporter block.
+1. Paste the following sample code in the new data exporter block (change the `s3://bucket-name` to the bucket you created from a previous step):
+```python
+from pandas import DataFrame
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(df: DataFrame, **kwargs) -> None:
+    (
+        df.write
+        .option('delimiter', ',')
+        .option('header', 'True')
+        .mode('overwrite')
+        .csv('s3://mage-spark-cluster/demo_project/demo_pipeline/')
+    )
+```
+
+#### Verify everything worked
+
+Let’s load the data from S3 that we just created using Spark:
+
+1. Click `+ Data loader`, then choose `Python`, then `Generic (no template)` to add a new data loader block.
+1. Paste the following sample code in the new data loader block (change the `s3://bucket-name` to the bucket you created from a previous step):
+
+```python
+from pandas import DataFrame
+
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data(**kwargs) -> DataFrame:
+    df = (
+        kwargs['spark'].read
+        .format('csv')
+        .option('header', 'true')
+        .option('inferSchema', 'true')
+        .option('delimiter', ',')
+        .load('s3://mage-spark-cluster/demo_project/demo_pipeline/*')
+    )
+
+    return df
+```
+
+### 8. Debugging
+
+If you run into any problems, 1st thing to try is restarting the kernel: `Run` > `Restart kernel`.
+
+If that doesn’t work, restart the app by stopping the docker container and starting it again.
+
+### 9. Clean up
+
+Please make sure to terminate your EMR cluster when you’re done using it so you can save money.
 
 ## [WIP] GCP
-Coming soon.
+Coming soon...
 
 ## [WIP] Azure
-Coming soon.
+Coming soon...
