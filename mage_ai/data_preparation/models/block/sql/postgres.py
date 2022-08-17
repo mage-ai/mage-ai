@@ -19,6 +19,7 @@ def create_upstream_block_tables(loader, block):
                 upstream_block.table_name,
                 if_exists='replace',
                 index=False,
+                verbose=False,
             )
 
 
