@@ -80,6 +80,7 @@ export interface BlockRequestPayloadType {
     axis?: AxisEnum;
     suggested_action?: SuggestionType;
   };
+  configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
   language?: BlockLanguageEnum;

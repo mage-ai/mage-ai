@@ -930,7 +930,7 @@ function PipelineDetailPage({
   const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
     if (
-      typeof pipeline?.blocks !== 'undefined' 
+      typeof pipeline?.blocks !== 'undefined'
         && (!blocks.length
             || blocksPrevious?.map(
               ({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
@@ -1030,12 +1030,12 @@ function PipelineDetailPage({
       } = message;
 
       const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
-      
+
       if (msgType !== 'stream_pipeline') {
         // @ts-ignore
         setMessages((messagesPrevious) => {
           const messagesFromUUID = messagesPrevious[uuid] || [];
-  
+
           return {
             ...messagesPrevious,
             [uuid]: messagesFromUUID.concat(message),
@@ -1055,13 +1055,13 @@ function PipelineDetailPage({
           }
         }
       }
-      
+
       if (ExecutionStateEnum.BUSY === executionState) {
         setRunningBlocks((runningBlocksPrevious) => {
           if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
             return runningBlocksPrevious;
           }
-          
+
           return runningBlocksPrevious.concat(block);
         });
       } else if (ExecutionStateEnum.IDLE === executionState) {
@@ -1546,9 +1546,9 @@ function PipelineDetailPage({
       >
         <div
           style={{
-            height: selectedFilePath && 0,
-            visibility: selectedFilePath && 'hidden',
-            opacity: selectedFilePath && 0,
+            height: selectedFilePath ? 0 : null,
+            visibility: selectedFilePath ? 'hidden' : null,
+            opacity: selectedFilePath ? 0 : null,
           }}
         >
           {pipelineDetailMemo}

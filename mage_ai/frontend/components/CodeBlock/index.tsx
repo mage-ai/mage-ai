@@ -214,9 +214,11 @@ function CodeBlockProps({
   const dataProviderProfiles = useMemo(() => {
     let set = new Set();
     dataProviders?.forEach(({ profiles }) => {
+      // @ts-ignore
       set = new Set([...set, ...profiles]);
     });
 
+    // @ts-ignore
     return [...set];
   }, [
     dataProviders,
@@ -844,7 +846,7 @@ function CodeBlockProps({
                   {dataProviders?.map(({
                     id,
                     value,
-                  }: DataProvider) => (
+                  }: DataProviderType) => (
                     <option value={value}>
                       {id}
                     </option>
@@ -890,9 +892,6 @@ function CodeBlockProps({
                         [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
                       });
                       e.preventDefault();
-                    }}
-                    onClick={() => {
-                      setAnyInputFocused(true);
                     }}
                     onFocus={() => {
                       setAnyInputFocused(true);
