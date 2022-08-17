@@ -37,7 +37,6 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
-                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -48,7 +47,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -59,7 +57,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -70,7 +67,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -83,13 +79,13 @@ class PipelineTest(TestCase):
             widgets=[
                 dict(
                     language='python',
-                    configuration={},
                     name='widget1',
                     uuid='widget1',
                     type='chart',
                     status='not_executed',
                     upstream_blocks=['block4'],
                     downstream_blocks=[],
+                    configuration={},
                     all_upstream_blocks_executed=False,
                 ),
             ],
@@ -109,7 +105,6 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
-                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -120,7 +115,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -131,7 +125,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -162,7 +155,6 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
-                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -173,7 +165,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -184,7 +175,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -195,7 +185,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -232,7 +221,6 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
-                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -243,7 +231,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -254,7 +241,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -265,7 +251,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_loader',
@@ -276,7 +261,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block5',
                     uuid='block5',
                     type='transformer',
@@ -287,7 +271,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block6',
                     uuid='block6',
                     type='transformer',
@@ -298,7 +281,6 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
-                    configuration={},
                     name='block7',
                     uuid='block7',
                     type='data_exporter',
@@ -372,11 +354,11 @@ class PipelineTest(TestCase):
 
     def __create_pipeline_with_blocks(self, name):
         pipeline = Pipeline.create(name, self.repo_path)
-        block1 = Block.create('block1', 'data_loader', self.repo_path, language='python')
-        block2 = Block.create('block2', 'transformer', self.repo_path, language='python')
-        block3 = Block.create('block3', 'transformer', self.repo_path, language='python')
-        block4 = Block.create('block4', 'data_exporter', self.repo_path, language='python')
-        widget1 = Widget.create('widget1', 'chart', self.repo_path, language='python')
+        block1 = Block.create('block1', 'data_loader', self.repo_path)
+        block2 = Block.create('block2', 'transformer', self.repo_path)
+        block3 = Block.create('block3', 'transformer', self.repo_path)
+        block4 = Block.create('block4', 'data_exporter', self.repo_path)
+        widget1 = Widget.create('widget1', 'chart', self.repo_path)
         pipeline.add_block(block1)
         pipeline.add_block(block2, upstream_block_uuids=['block1'])
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
@@ -385,7 +367,7 @@ class PipelineTest(TestCase):
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):
-        block = Block.create(name, 'data_loader', self.repo_path, pipeline=pipeline, language='python')
+        block = Block.create(name, 'data_loader', self.repo_path, pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_loader
@@ -397,7 +379,7 @@ def load_data():
         return block
 
     def __create_dummy_transformer_block(self, name, pipeline):
-        block = Block.create(name, 'transformer', self.repo_path, pipeline=pipeline, language='python')
+        block = Block.create(name, 'transformer', self.repo_path, pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @transformer
@@ -407,7 +389,7 @@ def transform(df):
         return block
 
     def __create_dummy_data_exporter_block(self, name, pipeline):
-        block = Block.create(name, 'data_exporter', self.repo_path, pipeline=pipeline, language='python')
+        block = Block.create(name, 'data_exporter', self.repo_path, pipeline)
         with open(block.file_path, 'w') as file:
             file.write('''import pandas as pd
 @data_exporter
@@ -417,7 +399,7 @@ def export_data(df, *args):
         return block
 
     def __create_dummy_scratchpad(self, name, pipeline):
-        block = Block.create(name, 'scratchpad', self.repo_path, pipeline=pipeline, language='python')
+        block = Block.create(name, 'scratchpad', self.repo_path, pipeline)
         with open(block.file_path, 'w') as file:
             file.write(
                 '''import antigravity

@@ -18,7 +18,6 @@ import BlockType, {
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
-import DataProviderType from '@interfaces/DataProviderType';
 import ErrorPopup from '@components/ErrorPopup';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
@@ -239,10 +238,6 @@ function PipelineDetailPage({
     beforeWidth,
   ]);
 
-  // Data providers
-  const { data: dataDataProviders } = api.data_providers.list();
-  const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
-
   // Variables
   const {
     data: dataGlobalVariables,
@@ -419,6 +414,22 @@ function PipelineDetailPage({
       name === PIPELINE_TYPE_TO_KERNEL_NAME[pipeline?.type]
     ) || kernels?.[0];
 
+  // Files
+  const openFile = useCallback((filePath: string) => {
+    const filePathEncoded = encodeURIComponent(filePath);
+    let filePaths = queryFromUrl()['file_paths[]'] || [];
+    if (!Array.isArray(filePaths)) {
+      filePaths = [filePaths];
+    }
+    if (!filePaths.includes(filePathEncoded)) {
+      filePaths.push(filePathEncoded);
+    }
+    goToWithQuery({
+      'file_paths[]': filePaths,
+      file_path: filePathEncoded,
+    });
+  }, []);
+
   useEffect(() => {
     setSelectedFilePath(filePathFromUrl);
   }, [
@@ -429,7 +440,7 @@ function PipelineDetailPage({
       setSelectedFilePaths(filePathsFromUrl);
     }
   }, [
-    filePathsFromUrl,
+    filePathsFromUrl
   ]);
 
   const [createPipeline] = useMutation(
@@ -509,16 +520,7 @@ function PipelineDetailPage({
 
           if (blockOverride?.uuid === block.uuid) {
             Object.entries(blockOverride).forEach(([k, v]) => {
-              if (typeof v === 'object') {
-                Object.entries(v).forEach(([k2, v2]) => {
-                  if (!blockPayload[k]) {
-                    blockPayload[k] = {};
-                  }
-                  blockPayload[k][k2] = v2;
-                });
-              } else {
-                blockPayload[k] = v;
-              }
+              blockPayload[k] = v;
             });
           }
 
@@ -554,26 +556,6 @@ function PipelineDetailPage({
     updatePipeline,
     widgetTempData.current,
     widgets,
-  ]);
-
-  // Files
-  const openFile = useCallback((filePath: string) => {
-    savePipelineContent();
-
-    const filePathEncoded = encodeURIComponent(filePath);
-    let filePaths = queryFromUrl()['file_paths[]'] || [];
-    if (!Array.isArray(filePaths)) {
-      filePaths = [filePaths];
-    }
-    if (!filePaths.includes(filePathEncoded)) {
-      filePaths.push(filePathEncoded);
-    }
-    goToWithQuery({
-      'file_paths[]': filePaths,
-      file_path: filePathEncoded,
-    });
-  }, [
-    savePipelineContent,
   ]);
 
   const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => {
@@ -930,7 +912,7 @@ function PipelineDetailPage({
   const blocksPrevious = usePrevious(blocks);
   useEffect(() => {
     if (
-      typeof pipeline?.blocks !== 'undefined'
+      typeof pipeline?.blocks !== 'undefined' 
         && (!blocks.length
             || blocksPrevious?.map(
               ({ uuid }) => uuid).sort() !== blocks?.map(({ uuid }) => uuid).sort()
@@ -1030,12 +1012,12 @@ function PipelineDetailPage({
       } = message;
 
       const block = blocks.find(({ uuid: uuid2 }) => uuid === uuid2 );
-
+      
       if (msgType !== 'stream_pipeline') {
         // @ts-ignore
         setMessages((messagesPrevious) => {
           const messagesFromUUID = messagesPrevious[uuid] || [];
-
+  
           return {
             ...messagesPrevious,
             [uuid]: messagesFromUUID.concat(message),
@@ -1055,13 +1037,13 @@ function PipelineDetailPage({
           }
         }
       }
-
+      
       if (ExecutionStateEnum.BUSY === executionState) {
         setRunningBlocks((runningBlocksPrevious) => {
           if (runningBlocksPrevious.find(({ uuid: uuid2 }) => uuid === uuid2) || !block) {
             return runningBlocksPrevious;
           }
-
+          
           return runningBlocksPrevious.concat(block);
         });
       } else if (ExecutionStateEnum.IDLE === executionState) {
@@ -1280,7 +1262,6 @@ function PipelineDetailPage({
       autocompleteItems={autocompleteItems}
       blockRefs={blockRefs}
       blocks={blocks}
-      dataProviders={dataProviders}
       deleteBlock={deleteBlock}
       fetchFileTree={fetchFileTree}
       fetchPipeline={fetchPipeline}
@@ -1320,7 +1301,6 @@ function PipelineDetailPage({
     autocompleteItems,
     blockRefs,
     blocks,
-    dataProviders,
     deleteBlock,
     fetchFileTree,
     fetchPipeline,
@@ -1349,7 +1329,6 @@ function PipelineDetailPage({
     textareaFocused,
     widgets,
   ]);
-
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
       filePaths={selectedFilePaths}
@@ -1361,7 +1340,6 @@ function PipelineDetailPage({
       pipelineContentTouched={pipelineContentTouched}
       pipelineLastSaved={pipelineLastSaved}
       restartKernel={restartKernel}
-      savePipelineContent={savePipelineContent}
       selectedFilePath={selectedFilePath}
       updatePipelineMetadata={updatePipelineMetadata}
     />
@@ -1374,7 +1352,6 @@ function PipelineDetailPage({
     pipelineLastSaved,
     restartKernel,
     runningBlocks,
-    savePipelineContent,
     selectedFilePath,
     selectedFilePaths,
     updatePipelineMetadata,
@@ -1544,15 +1521,7 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        <div
-          style={{
-            height: selectedFilePath ? 0 : null,
-            visibility: selectedFilePath ? 'hidden' : null,
-            opacity: selectedFilePath ? 0 : null,
-          }}
-        >
-          {pipelineDetailMemo}
-        </div>
+        {!selectedFilePath && pipelineDetailMemo}
 
         {filePathsFromUrl?.map((filePath: string) => (
           <div

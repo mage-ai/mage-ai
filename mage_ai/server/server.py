@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
+from mage_ai.data_preparation.utils.block.convert_content import convert_to_block
 from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -13,14 +14,6 @@ from mage_ai.server.active_kernel import (
 )
 from mage_ai.server.api.autocomplete_items import ApiAutocompleteItemsHandler
 from mage_ai.server.api.base import BaseHandler
-from mage_ai.server.api.blocks import (
-    ApiPipelineBlockAnalysisHandler,
-    ApiPipelineBlockExecuteHandler,
-    ApiPipelineBlockHandler,
-    ApiPipelineBlockListHandler,
-    ApiPipelineBlockOutputHandler,
-)
-from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
@@ -173,6 +166,123 @@ class ApiPipelineListHandler(BaseHandler):
         self.write(dict(pipeline=pipeline.to_dict()))
 
 
+class ApiPipelineBlockHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        block = pipeline.get_block(block_uuid)
+        include_outputs = self.get_bool_argument('include_outputs', True)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        self.write(
+            dict(
+                block=block.to_dict(
+                    include_content=True,
+                    include_outputs=include_outputs,
+                )
+            )
+        )
+        self.finish()
+
+    def put(self, pipeline_uuid, block_uuid):
+        """
+        Allow updating block name, uuid, type, upstream_block, and downstream_blocks
+        """
+        pipeline = Pipeline.get(pipeline_uuid)
+        data = json.loads(self.request.body).get('block', {})
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        block.update(data)
+        self.write(dict(block=block.to_dict(include_content=True)))
+
+    def delete(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        block.delete()
+        self.write(dict(block=block.to_dict()))
+
+
+class ApiPipelineBlockExecuteHandler(BaseHandler):
+    def post(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        asyncio.run(block.execute(redirect_outputs=True))
+        self.write(
+            dict(
+                block=block.to_dict(
+                    include_outputs=True,
+                )
+            )
+        )
+        self.finish()
+
+
+class ApiPipelineBlockListHandler(BaseHandler):
+    def get(self, pipeline_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        include_outputs = self.get_bool_argument('include_outputs', True)
+        self.write(
+            dict(
+                blocks=pipeline.to_dict(
+                    include_content=True,
+                    include_outputs=include_outputs,
+                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
+                )['blocks']
+            )
+        )
+        self.finish()
+
+    def post(self, pipeline_uuid):
+        """
+        Create block and add to pipeline
+        """
+        pipeline = Pipeline.get(pipeline_uuid)
+        payload = json.loads(self.request.body).get('block', {})
+        block = Block.create(
+            payload.get('name') or payload.get('uuid'),
+            payload.get('type'),
+            get_repo_path(),
+            config=payload.get('config'),
+            pipeline=pipeline,
+            priority=payload.get('priority'),
+            upstream_block_uuids=payload.get('upstream_blocks', []),
+        )
+
+        content = payload.get('content')
+        if content:
+            if payload.get('converted_from'):
+                content = convert_to_block(block, content)
+
+            block.update_content(content)
+
+        pipeline.add_block(block, payload.get('upstream_blocks', []))
+        self.write(dict(block=block.to_dict(include_content=True)))
+
+
+class ApiPipelineBlockAnalysisHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        analyses = block.get_analyses()
+        self.write(dict(analyses=analyses))
+
+
+class ApiPipelineBlockOutputHandler(BaseHandler):
+    def get(self, pipeline_uuid, block_uuid):
+        pipeline = Pipeline.get(pipeline_uuid)
+        block = pipeline.get_block(block_uuid)
+        if block is None:
+            raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
+        outputs = block.get_outputs(sample_count=None)
+        self.write(dict(outputs=outputs))
+
+
 class ApiPipelineVariableListHandler(BaseHandler):
     def get(self, pipeline_uuid):
         variable_manager = VariableManager(get_repo_path())
@@ -212,13 +322,13 @@ class ApiPipelineVariableListHandler(BaseHandler):
         variable_value = variable.get('value')
         if variable_value is None:
             raise Exception(f'Value is empty for variable name {variable_uuid}')
-
+        
         set_global_variable(
             pipeline_uuid,
             variable_uuid,
             variable_value,
         )
-
+        
         variables_dict = VariableManager(get_repo_path()).get_variables_by_pipeline(pipeline_uuid)
         variables = [
             dict(
@@ -344,7 +454,6 @@ def make_app():
         (r'/api/kernels', KernelsHandler),
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
-        (r'/api/data_providers', ApiDataProvidersHandler),
     ]
     return tornado.web.Application(
         routes,

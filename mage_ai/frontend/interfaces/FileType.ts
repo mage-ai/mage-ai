@@ -1,15 +1,11 @@
-import { BlockLanguageEnum } from './BlockType';
-
 export enum FileExtensionEnum {
   PY = 'py',
-  SQL = 'sql',
   TXT = 'txt',
   YAML = 'yaml',
   YML = 'yml',
 }
 
 const SUPPORTED_FILE_EXTENSIONS = [
-  FileExtensionEnum.SQL,
   FileExtensionEnum.TXT,
   FileExtensionEnum.YAML,
   FileExtensionEnum.YML,
@@ -30,8 +26,7 @@ export default interface FileType {
 export const FOLDER_NAME_CHARTS = 'charts';
 export const FOLDER_NAME_PIPELINES = 'pipelines';
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
-  [FileExtensionEnum.PY]: BlockLanguageEnum.PYTHON,
-  [FileExtensionEnum.SQL]: BlockLanguageEnum.SQL,
+  [FileExtensionEnum.PY]: 'python',
   [FileExtensionEnum.TXT]: 'text',
   [FileExtensionEnum.YAML]: 'yaml',
   [FileExtensionEnum.YML]: 'yaml',

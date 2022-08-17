@@ -133,13 +133,12 @@ function FileEditor({
     setFilesTouched,
   ]);
 
-  const addToPipelineEl = (fileExtension === FileExtensionEnum.PY || fileExtension === FileExtensionEnum.SQL)
+  const addToPipelineEl = fileExtension === FileExtensionEnum.PY
     && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
     <Spacing p={2}>
       <KeyboardShortcutButton
         inline
         onClick={() => addNewBlock({
-          language: FILE_EXTENSION_TO_LANGUAGE_MAPPING[fileExtension],
           name: getBlockUUID(file.path.split('/')),
           type: getBlockType(file.path.split('/')),
         })}

@@ -8,12 +8,7 @@ import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
-import {
-  BlockLanguageEnum,
-  BlockRequestPayloadType,
-  BlockTypeEnum,
-  CONVERTIBLE_BLOCK_TYPES,
-} from '@interfaces/BlockType';
+import { BlockRequestPayloadType, BlockTypeEnum, CONVERTIBLE_BLOCK_TYPES } from '@interfaces/BlockType';
 import {
   COLUMN_ACTION_GROUPINGS,
   ROW_ACTION_GROUPINGS,
@@ -79,7 +74,6 @@ function AddNewBlocks({
       label: () => 'Generic (no template)',
       onClick: () => {
         addNewBlock({
-          language: BlockLanguageEnum.PYTHON,
           type: BlockTypeEnum.TRANSFORMER,
         });
       },
@@ -119,21 +113,7 @@ function AddNewBlocks({
       >
         <FlexContainer>
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.DATA_LOADER,
-                }),
-                uuid: 'data_loaders/sql',
-              },
-              {
-                label: () => 'Python',
-                items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
-                uuid: 'data_loaders/python',
-              },
-            ]}
+            items={dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
@@ -164,21 +144,7 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.TRANSFORMER,
-                }),
-                uuid: 'transformers/sql',
-              },
-              {
-                label: () => 'Python',
-                items: allActionMenuItems,
-                uuid: 'transformers/python',
-              },
-            ]}
+            items={allActionMenuItems}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
             parentRef={transformerButtonRef}
@@ -209,21 +175,7 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.DATA_EXPORTER,
-                }),
-                uuid: 'data_exporters/sql',
-              },
-              {
-                label: () => 'Python',
-                items: dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER],
-                uuid: 'data_exporters/python',
-              },
-            ]}
+            items={dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
             parentRef={dataExporterButtonRef}
@@ -255,6 +207,9 @@ function AddNewBlocks({
           </FlyoutMenuWrapper>
         </FlexContainer>
       </ClickOutside>
+
+
+
 
       <Spacing ml={1} />
 

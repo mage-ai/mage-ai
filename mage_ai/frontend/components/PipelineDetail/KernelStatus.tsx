@@ -46,7 +46,6 @@ type KernelStatusProps = {
   pipelineContentTouched: boolean;
   pipelineLastSaved: Date;
   restartKernel: () => void;
-  savePipelineContent: () => void;
   selectedFilePath?: string;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
@@ -61,7 +60,6 @@ function KernelStatus({
   pipelineContentTouched,
   pipelineLastSaved,
   restartKernel,
-  savePipelineContent,
   selectedFilePath,
   updatePipelineMetadata,
 }: KernelStatusProps) {
@@ -293,7 +291,6 @@ function KernelStatus({
                 onClick={(e) => {
                   e.preventDefault();
                   if (!selected) {
-                    savePipelineContent();
                     goToWithQuery({
                       file_path: encodeURIComponent(filePath),
                     });
