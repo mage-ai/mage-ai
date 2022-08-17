@@ -3,7 +3,7 @@ import os
 import yaml
 
 DEFAULT_INSTANCE_TYPE = 'r5.4xlarge'
-MAX_CLUSTERS_ON_SPOT_INSTANCES = 40
+# MAX_CLUSTERS_ON_SPOT_INSTANCES = 40
 
 
 class EmrConfig:
@@ -31,7 +31,7 @@ class EmrConfig:
         self.slave_instance_type = config.get('slave_instance_type', DEFAULT_INSTANCE_TYPE)
 
     def get_instances_config(self, cluster_count, idle_timeout=0, keep_alive=False):
-        market = 'SPOT' if cluster_count < MAX_CLUSTERS_ON_SPOT_INSTANCES else 'ON_DEMAND'
+        market = 'ON_DEMAND'
         instances_config = {
             'KeepJobFlowAliveWhenNoSteps': keep_alive,
             'InstanceGroups': [
