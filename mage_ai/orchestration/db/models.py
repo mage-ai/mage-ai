@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
+from sqlalchemy.sql import func
 import enum
 
 Base = declarative_base()
@@ -22,8 +23,8 @@ class BaseModel(Base):
         primary_key=True,
         autoincrement=True,
     )
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def save(self, commit=True):
         session.add(self)
