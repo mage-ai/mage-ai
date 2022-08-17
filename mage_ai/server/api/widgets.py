@@ -1,4 +1,4 @@
-from mage_ai.server.api.base import BaseHandler
+from .base import BaseHandler
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import get_repo_path

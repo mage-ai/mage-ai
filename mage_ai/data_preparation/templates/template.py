@@ -1,5 +1,5 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.templates.utils import (
     read_template_file,
     template_env,
@@ -42,31 +42,22 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
     )
 
 
-def fetch_template_source(
-    block_type: Union[BlockType, str],
-    config: Mapping[str, str],
-    language: BlockLanguage = BlockLanguage.PYTHON,
-) -> str:
-    template_source = ''
-
-    if BlockLanguage.PYTHON == language:
-        if block_type == BlockType.DATA_LOADER:
-            template_source = __fetch_data_loader_templates(config)
-        elif block_type == BlockType.TRANSFORMER:
-            template_source = __fetch_transformer_templates(config)
-        elif block_type == BlockType.DATA_EXPORTER:
-            template_source = __fetch_data_exporter_templates(config)
-
+def fetch_template_source(block_type: Union[BlockType, str], config: Mapping[str, str]) -> str:
+    if block_type == BlockType.DATA_LOADER:
+        template_source = __fetch_data_loader_templates(config)
+    elif block_type == BlockType.TRANSFORMER:
+        template_source = __fetch_transformer_templates(config)
+    elif block_type == BlockType.DATA_EXPORTER:
+        template_source = __fetch_data_exporter_templates(config)
+    else:
+        template_source = ''
     return template_source
 
 
 def load_template(
-    block_type: Union[BlockType, str],
-    config: Mapping[str, str],
-    dest_path: str,
-    language: BlockLanguage = BlockLanguage.PYTHON,
+    block_type: Union[BlockType, str], config: Mapping[str, str], dest_path: str
 ) -> None:
-    template_source = fetch_template_source(block_type, config, language=language)
+    template_source = fetch_template_source(block_type, config)
     write_template(template_source, dest_path)
 
 

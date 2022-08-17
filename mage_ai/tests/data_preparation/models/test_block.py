@@ -37,12 +37,12 @@ class BlockTest(TestCase):
 
     def test_execute(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
-        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline)
         block2 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
-            pipeline=pipeline,
+            pipeline,
             upstream_block_uuids=['test_data_loader'],
         )
         with open(block1.file_path, 'w') as file:
@@ -87,13 +87,13 @@ def remove_duplicate_rows(df):
 
     def test_execute_multiple_upstream_blocks(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
-        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline)
         block3 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
-            pipeline=pipeline,
+            pipeline,
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
@@ -151,13 +151,13 @@ def union_datasets(df1, df2):
 
     def test_execute_validation(self):
         pipeline = Pipeline.create('test pipeline', self.repo_path)
-        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
-        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
+        block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline)
+        block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline)
         block3 = Block.create(
             'test_transformer',
             'transformer',
             self.repo_path,
-            pipeline=pipeline,
+            pipeline,
             upstream_block_uuids=['test_data_loader_1', 'test_data_loader_2'],
         )
         with open(block1.file_path, 'w') as file:
@@ -197,25 +197,14 @@ def incorrect_function(df1, df2, df3):
             asyncio.run(block3.execute())
 
     def test_to_dict(self):
-        block1 = Block.create(
-            'test_transformer_2',
-            'transformer',
-            self.repo_path,
-            language='sql',
-        )
-        block2 = Block.create(
-            'test_data_exporter',
-            'data_exporter',
-            self.repo_path,
-            language='python',
-        )
+        block1 = Block.create('test_transformer_2', 'transformer', self.repo_path)
+        block2 = Block.create('test_data_exporter', 'data_exporter', self.repo_path)
         block2.upstream_blocks = [block1]
         block1.downstream_blocks = [block2]
         self.assertEqual(block1.to_dict(), dict(
             all_upstream_blocks_executed=True,
-            configuration={},
             downstream_blocks=['test_data_exporter'],
-            language='sql',
+            language='python',
             name='test_transformer_2',
             status='not_executed',
             type='transformer',
@@ -224,7 +213,6 @@ def incorrect_function(df1, df2, df3):
         ))
         self.assertEqual(block2.to_dict(), dict(
             all_upstream_blocks_executed=False,
-            configuration={},
             downstream_blocks=[],
             language='python',
             name='test_data_exporter',

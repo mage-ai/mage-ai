@@ -151,7 +151,6 @@ function Folder({
               );
             }
           }
-
           if (isPipelineFolder) {
             openPipeline(name);
           } else if (children) {

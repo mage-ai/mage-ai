@@ -12,7 +12,6 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
-  BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
   SetEditingBlockType,
@@ -25,7 +24,6 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
-import DataProviderType from '@interfaces/DataProviderType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -36,10 +34,8 @@ import KernelOutputType, {
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
-import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import buildAutocompleteProvider from '@components/CodeEditor/autocomplete';
@@ -57,11 +53,6 @@ import {
   CodeHelperStyle,
   TimeTrackerStyle,
 } from './index.style';
-import {
-  CONFIG_KEY_DATA_PROVIDER,
-  CONFIG_KEY_DATA_PROVIDER_PROFILE,
-  CONFIG_KEY_DATA_PROVIDER_SCHEMA,
-} from '@interfaces/ChartBlockType';
 import {
   ContainerStyle,
   CodeContainerStyle,
@@ -94,7 +85,6 @@ type CodeBlockProps = {
   blockRefs: any;
   blockIdx: number;
   blocks: BlockType[];
-  dataProviders: DataProviderType[];
   defaultValue?: string;
   executionState: ExecutionStateEnum;
   fetchFileTree: () => void;
@@ -135,7 +125,6 @@ function CodeBlockProps({
   blockIdx,
   blockRefs,
   blocks,
-  dataProviders,
   defaultValue = '',
   deleteBlock,
   executionState,
@@ -173,11 +162,6 @@ function CodeBlockProps({
   const [codeCollapsed, setCodeCollapsed] = useState(false);
   const [content, setContent] = useState(defaultValue);
   const [currentTime, setCurrentTime] = useState<number>(null);
-  const [dataProviderConfig, setDataProviderConfig] = useState({
-    [CONFIG_KEY_DATA_PROVIDER]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER],
-    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
-    [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
-  });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
   const [newBlockUuid, setNewBlockUuid] = useState(block.uuid);
@@ -206,23 +190,10 @@ function CodeBlockProps({
   useEffect(() => {
     if (typeof blockMessages !== 'undefined'
         && blockMessages.length !== blockMessagesPrev?.length) {
-
+      
       setMessages(blockMessages);
     }
   }, [blockMessages, blockMessagesPrev, setMessages]);
-
-  const dataProviderProfiles = useMemo(() => {
-    let set = new Set();
-    dataProviders?.forEach(({ profiles }) => {
-      // @ts-ignore
-      set = new Set([...set, ...profiles]);
-    });
-
-    // @ts-ignore
-    return [...set];
-  }, [
-    dataProviders,
-  ]);
 
   const codeCollapsedUUID = useMemo(() => (
     `${pipeline?.uuid}/${block?.uuid}/codeCollapsed`
@@ -441,9 +412,7 @@ function CodeBlockProps({
         } else if (onlyKeysPresent([KEY_CODE_SHIFT, KEY_CODE_ENTER], keyMapping)) {
           event.preventDefault();
           addNewBlock({
-            language: block.language,
             type: block.type,
-            upstream_blocks: [block.uuid],
           });
           runBlockAndTrack({ block });
         }
@@ -494,7 +463,6 @@ function CodeBlockProps({
       autoHeight
       autocompleteProviders={autocompleteProviders}
       height={height}
-      language={block.language}
       onChange={(val: string) => {
         setContent(val);
         onChange?.(val);
@@ -581,29 +549,6 @@ function CodeBlockProps({
 
   const closeBlockMenu = useCallback(() => setBlockMenuVisible(false), []);
 
-  const updateDataProviderConfig = useCallback((payload) => {
-    setDataProviderConfig((dataProviderConfigPrev) => {
-      const data = {
-        ...dataProviderConfigPrev,
-        ...payload,
-      };
-
-      if (data[CONFIG_KEY_DATA_PROVIDER] && data[CONFIG_KEY_DATA_PROVIDER_PROFILE]) {
-        savePipelineContent({
-          block: {
-            configuration: data,
-            uuid: block.uuid,
-          },
-        });
-      }
-
-      return data;
-    });
-  }, [
-    block,
-    savePipelineContent,
-  ]);
-
   return (
     <div ref={ref} style={{
       position: 'relative',
@@ -689,10 +634,7 @@ function CodeBlockProps({
               monospace
               muted
               notRequired
-              onBlur={() => setTimeout(() => {
-                setAnyInputFocused(false);
-                setIsEditingBlock(false);
-              }, 300)}
+              onBlur={() => setTimeout(() => setIsEditingBlock(false), 300)}
               onChange={(e) => {
                 setNewBlockUuid(e.target.value);
                 e.preventDefault();
@@ -829,105 +771,24 @@ function CodeBlockProps({
           className={selected && textareaFocused ? 'selected' : null}
           hasOutput={hasOutput}
         >
-          {BlockLanguageEnum.SQL === block.language && !codeCollapsed && (
-            <CodeHelperStyle>
-              <FlexContainer>
-                <Select
-                  compact
-                  label="Data provider"
-                  // @ts-ignore
-                  onChange={e => updateDataProviderConfig({
-                    [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
-                  })}
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
-                >
-                  <option value="" />
-                  {dataProviders?.map(({
-                    id,
-                    value,
-                  }: DataProviderType) => (
-                    <option value={value}>
-                      {id}
-                    </option>
-                  ))}
-                </Select>
-
-                <Spacing mr={1} />
-
-                <Select
-                  compact
-                  label="Profile"
-                  // @ts-ignore
-                  onChange={e => updateDataProviderConfig({
-                    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
-                  })}
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
-                >
-                  <option value="" />
-                  {dataProviderProfiles?.map((id: string) => (
-                    <option value={id}>
-                      {id}
-                    </option>
-                  ))}
-                </Select>
-
-                <Spacing mr={1} />
-
-                <FlexContainer alignItems="center">
-                  <Text monospace muted small>
-                    Schema to save data:
-                  </Text>
-                  <span>&nbsp;</span>
-                  <TextInput
-                    compact
-                    monospace
-                    onBlur={() => setTimeout(() => {
-                      setAnyInputFocused(false);
-                    }, 300)}
-                    onChange={(e) => {
-                      // @ts-ignore
-                      updateDataProviderConfig({
-                        [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                      });
-                      e.preventDefault();
-                    }}
-                    onFocus={() => {
-                      setAnyInputFocused(true);
-                    }}
-                    small
-                    value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                  />
-                </FlexContainer>
-              </FlexContainer>
-            </CodeHelperStyle>
-          )}
-
           {block.upstream_blocks.length >= 1 && !codeCollapsed && (
             <CodeHelperStyle>
               <Text small>
-                {BlockLanguageEnum.SQL !== block.language && 'Positional arguments for decorated function:'}
-                {BlockLanguageEnum.SQL === block.language && 'Tables available in query from upstream blocks:'}
+                Positional arguments for decorated function:
               </Text>
 
               <Spacing mt={1}>
-                {BlockLanguageEnum.SQL !== block.language && (
-                  <>
-                    <Text monospace muted small>
-                      {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
-                      {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
-                      {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
-                    </Text>
-                    <Text monospace muted small>
-                      def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
-                        || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
-                        || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
-                      ({block.upstream_blocks.map((_,i) => i >= 1 ? `df_${i + 1}` : 'df').join(', ')}):
-                    </Text>
-                  </>
-                )}
-
+                <Text monospace muted small>
+                  {BlockTypeEnum.DATA_EXPORTER === block.type && '@data_exporter'}
+                  {BlockTypeEnum.DATA_LOADER === block.type && '@data_loader'}
+                  {BlockTypeEnum.TRANSFORMER === block.type && '@transformer'}
+                </Text>
+                <Text monospace muted small>
+                  def {BlockTypeEnum.DATA_EXPORTER === block.type && 'export_data'
+                    || (BlockTypeEnum.DATA_LOADER === block.type && 'load_data')
+                    || (BlockTypeEnum.TRANSFORMER === block.type && 'transform_df')}
+                  ({block.upstream_blocks.map((_,i) => `df_${i + 1}`).join(', ')}):
+                </Text>
                 {block.upstream_blocks.map((blockUUID, i) => {
                   const b = blocksMapping[blockUUID];
                   const blockColor =
@@ -935,15 +796,9 @@ function CodeBlockProps({
 
                   return (
                     <div key={blockUUID}>
-                      {BlockLanguageEnum.SQL !== block.language && (
-                        <Text inline monospace muted small>
-                          &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
-                        </Text>
-                      )}{BlockLanguageEnum.SQL === block.language && (
-                        <Text inline monospace muted small>
-                          {`{{ df_${i + 1} }}`}
-                        </Text>
-                      )} <Text inline monospace muted small>→</Text> <Link
+                      <Text inline monospace muted small>
+                        &nbsp;&nbsp;&nbsp;&nbsp;df{i >= 1 ? `_${i + 1}` : null}
+                      </Text> <Text inline monospace muted small>→</Text> <Link
                         color={blockColor}
                         onClick={() => {
                           const refBlock = blockRefs?.current?.[`${b?.type}s/${b?.uuid}.py`];
@@ -1002,7 +857,6 @@ function CodeBlockProps({
             <AddNewBlocks
               addNewBlock={(newBlock: BlockRequestPayloadType) => {
                 let content = newBlock.content;
-                let configuration = newBlock.configuration;
                 const upstreamBlocks = getUpstreamBlockUuids(block, newBlock);
 
                 if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
@@ -1015,17 +869,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
 `;
                 }
 
-
-                if (BlockLanguageEnum.SQL === block.language) {
-                  configuration = {
-                    ...block.configuration,
-                    ...configuration,
-                  };
-                }
-
                 return addNewBlock({
                   ...newBlock,
-                  configuration,
                   content,
                   upstream_blocks: upstreamBlocks,
                 });

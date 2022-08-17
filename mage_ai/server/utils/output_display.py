@@ -58,11 +58,11 @@ def find_index_of_last_expression_lines(code_lines: List[str]) -> int:
 
 
 def get_content_inside_triple_quotes(parts):
-    parts_length = len(parts) - 1
+    parts_length = len(parts) - 2
     start_index = None
 
     for i in range(parts_length):
-        idx = parts_length - (i + 1)
+        idx = parts_length - i
         part = parts[idx]
         if re.search('"""', part):
             start_index = idx
@@ -78,8 +78,6 @@ def get_content_inside_triple_quotes(parts):
             variable = first_line.split('=')[0].strip()
 
         return '\n'.join(parts[start_index + 1:-1]).replace('\"', '\\"'), variable
-
-    return None, None
 
 
 def add_internal_output_info(code: str) -> str:

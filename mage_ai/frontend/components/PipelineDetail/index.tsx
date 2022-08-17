@@ -8,14 +8,8 @@ import { CSSTransition } from 'react-transition-group';
 
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
-import BlockType, {
-  BlockLanguageEnum,
-  BlockRequestPayloadType,
-  BlockTypeEnum,
-  SetEditingBlockType,
-} from '@interfaces/BlockType';
+import BlockType, { BlockRequestPayloadType, BlockTypeEnum, SetEditingBlockType } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
-import DataProviderType from '@interfaces/DataProviderType';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
 import PipelineType from '@interfaces/PipelineType';
@@ -60,7 +54,6 @@ type PipelineDetailProps = {
   autocompleteItems: AutocompleteItemType[];
   blockRefs: any;
   blocks: BlockType[];
-  dataProviders: DataProviderType[];
   deleteBlock: (block: BlockType) => Promise<any>;
   fetchFileTree: () => void;
   fetchPipeline: () => void;
@@ -109,7 +102,6 @@ function PipelineDetail({
   autocompleteItems,
   blockRefs,
   blocks = [],
-  dataProviders,
   deleteBlock,
   fetchFileTree,
   fetchPipeline,
@@ -326,7 +318,6 @@ function PipelineDetail({
           blockIdx={idx}
           blockRefs={blockRefs}
           blocks={blocks}
-          dataProviders={dataProviders}
           defaultValue={block.content}
           deleteBlock={(b: BlockType) => {
             deleteBlock(b);
@@ -422,12 +413,9 @@ function PipelineDetail({
               const block = blocks[blocks.length - 1];
 
               let content = null;
-              let configuration = {};
               const upstreamBlocks = [];
 
               if (block) {
-                configuration = block.configuration;
-
                 if (BlockTypeEnum.CHART !== block.type
                   && BlockTypeEnum.SCRATCHPAD !== block.type
                   && BlockTypeEnum.DATA_LOADER !== newBlock.type
@@ -446,18 +434,10 @@ function PipelineDetail({
 df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
 `;
                 }
-
-                if (BlockLanguageEnum.SQL === block.language) {
-                  configuration = {
-                    ...block.configuration,
-                    ...configuration,
-                  };
-                }
               }
 
               addNewBlockAtIndex({
                 ...newBlock,
-                configuration,
                 content,
                 upstream_blocks: upstreamBlocks,
               }, numberOfBlocks, setSelectedBlock);
