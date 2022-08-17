@@ -62,6 +62,7 @@ function FlyoutMenu({
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [submenuVisible, setSubmenuVisible] = useState<{ [uuid: string]: boolean }>({});
   const [submenuTopOffset, setSubmenuTopOffset] = useState<number>(0);
+  const [submenuTopOffset2, setSubmenuTopOffset2] = useState<number>(0);
   const {
     height,
   } = parentRef?.current?.getBoundingClientRect?.() || {};
@@ -147,7 +148,7 @@ function FlyoutMenu({
           top: (
             depth === 1
               ? (height || 0) + topOffset
-              : (submenuTopOffset || 0)
+              : ((depth === 2 ? submenuTopOffset : submenuTopOffset2) || 0)
           ),
         }}
         width={width}
@@ -192,6 +193,8 @@ function FlyoutMenu({
                   }));
                   if (depth === 1) {
                     setSubmenuTopOffset(refArg.current[uuid]?.current?.offsetTop || 0);
+                  } else if (depth === 2) {
+                    setSubmenuTopOffset2(refArg.current[uuid]?.current?.offsetTop || 0);
                   }
                 }}
                 onMouseLeave={() => {
