@@ -1,4 +1,4 @@
-# Spark
+# 🪄 Spark
 
 Want to become a [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
 
