@@ -29,3 +29,5 @@ def execute_sql_code(block, query):
 
             if BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type:
                 return [loader.load(f'SELECT * FROM {schema_name}.{block.table_name}')]
+
+    return []
