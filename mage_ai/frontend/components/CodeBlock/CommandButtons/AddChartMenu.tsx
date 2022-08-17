@@ -46,6 +46,7 @@ function AddChartMenu({
       configuration: {
         chart_type: chartType,
       },
+      language: block.language,
       type: BlockTypeEnum.CHART,
       upstream_blocks: block ? [block.uuid] : null,
     };
@@ -72,7 +73,7 @@ function AddChartMenu({
         content,
       }, {
         onCreateCallback: (widget: BlockType) => {
-          if (block) {
+          if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
               runBlock({
                 block: widget,
@@ -103,6 +104,7 @@ function AddChartMenu({
       ...widgetTemplate({
         block,
       }),
+      language: block.language,
       type: BlockTypeEnum.CHART,
       upstream_blocks: block ? [block.uuid] : null,
     };
@@ -111,7 +113,7 @@ function AddChartMenu({
       label,
       onClick: () => addWidget(widget, {
         onCreateCallback: (widget: BlockType) => {
-          if (block) {
+          if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
               runBlock({
                 block: widget,
@@ -136,22 +138,29 @@ function AddChartMenu({
     runBlock,
   ]);
 
+  const items = [
+    {
+      isGroupingTitle: true,
+      label: () => 'Custom charts',
+      uuid: 'custom_charts',
+    },
+    ...chartMenuItems,
+  ];
+
+  if (BlockLanguageEnum.SQL !== block.language) {
+    items.push(...[
+      {
+        isGroupingTitle: true,
+        label: () => 'Templates',
+        uuid: 'chart_templates',
+      },
+      ...chartTemplateMenuItems,
+    ]);
+  }
+
   return (
     <FlyoutMenu
-      items={[
-        {
-          isGroupingTitle: true,
-          label: () => 'Custom charts',
-          uuid: 'custom_charts',
-        },
-        ...chartMenuItems,
-        {
-          isGroupingTitle: true,
-          label: () => 'Templates',
-          uuid: 'chart_templates',
-        },
-        ...chartTemplateMenuItems,
-      ]}
+      items={items}
       left={left}
       onClickCallback={onClickCallback}
       open={open}

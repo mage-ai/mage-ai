@@ -56,6 +56,7 @@ class ApiPipelineWidgetListHandler(BaseHandler):
             payload.get('type'),
             get_repo_path(),
             config=payload.get('config'),
+            language=payload.get('language'),
             pipeline=pipeline,
             priority=payload.get('priority'),
             upstream_block_uuids=payload.get('upstream_blocks', []),

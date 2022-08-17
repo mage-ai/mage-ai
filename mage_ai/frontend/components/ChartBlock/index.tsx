@@ -11,6 +11,7 @@ import { useMutation } from 'react-query';
 
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
+  BlockLanguageEnum,
   BlockTypeEnum,
   OutputType,
   StatusTypeEnum,
@@ -1068,7 +1069,10 @@ function ChartBlock({
           )}
         </FlexContainer>
 
-        {isEditing && !!configurationOptionsElsForCode?.length && (
+        {isEditing
+          && !!configurationOptionsElsForCode?.length
+          && BlockLanguageEnum.SQL !== block.language
+          && (
           <>
             <Spacing my={1} px={1}>
               {/*<FlexContainer>
