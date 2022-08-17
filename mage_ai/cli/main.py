@@ -1,6 +1,5 @@
-from mage_ai.cli.utils import parse_arguments, parse_runtime_variables
-from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.shared.hash import merge_dict
+from mage_ai.cli.utils import parse_runtime_variables
+import argparse
 import asyncio
 import os
 
@@ -54,30 +53,43 @@ Commands:
         init_repo(repo_path)
     elif command == 'start':
         from mage_ai.server.server import main as start_server
-        
-        options = dict()
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument('repo_path', metavar='project_path', type=str)
+        parser.add_argument('--host', type=str)
+        parser.add_argument('--port', type=int)
+
+        args = dict()
         if len(sys.argv) >= 3:
-            repo_path = os.path.join(os.getcwd(), sys.argv[2])
-            if len(sys.argv) >= 4:
-                options = parse_arguments(sys.argv[3:])
-                
+            args = vars(parser.parse_args(sys.argv[2:]))
+            repo_path = args['repo_path']
         else:
             repo_path = os.getcwd()
 
         asyncio.run(start_server(
-            host=options.get('host'),
-            port=options.get('port'),
+            host=args.get('host'),
+            port=args.get('port'),
             project=repo_path,
         ))
     elif command == 'run' or command == 'test':
         from mage_ai.data_preparation.models.pipeline import Pipeline
         from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
+        from mage_ai.data_preparation.variable_manager import get_global_variables
+        from mage_ai.shared.hash import merge_dict
 
-        project_path = sys.argv[2]
-        pipeline_uuid = sys.argv[3]
+        parser = argparse.ArgumentParser(description='Run pipeline.')
+        parser.add_argument('repo_path', metavar='project_path', type=str)
+        parser.add_argument('pipeline_uuid', type=str)
+        parser.add_argument('--runtime-vars', nargs="+")
+
+        args = vars(parser.parse_args(sys.argv[2:]))
+        project_path = args['repo_path']
+        pipeline_uuid = args['pipeline_uuid']
+        runtime_vars = args.get('runtime_vars')
+
         runtime_variables = dict()
-        if len(sys.argv) >= 5 and sys.argv[4] == '--runtime-vars':
-            runtime_variables = parse_runtime_variables(sys.argv[5:])
+        if runtime_vars is not None:
+            runtime_variables = parse_runtime_variables(runtime_vars)
 
         project_path = os.path.abspath(project_path)
         sys.path.append(os.path.dirname(project_path))

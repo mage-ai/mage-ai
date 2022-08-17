@@ -2,20 +2,6 @@ from typing import Dict, List
 import json
 
 
-# currently only parses single value arguments
-def parse_arguments(args: List[str]) -> Dict[str, any]:
-    args_parsed = dict()
-    for i in range(len(args)):
-        arg = args[i]
-        if arg.startswith('--'):
-            key = arg[2:]
-            value = True
-            if len(args) > i+1 and not args[i+1].startswith('--'):
-                value = args[i+1]
-            args_parsed[key] = value
-    return args_parsed
-
-
 def parse_runtime_variables(variables: List[str]) -> Dict[str, any]:
     vars_parsed = dict()
 
