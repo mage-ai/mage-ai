@@ -5,6 +5,11 @@ import { ConfigurationType } from './ChartBlockType';
 import { DataSourceTypeEnum } from './DataSourceType';
 import { DataTypeEnum } from './KernelOutputType';
 
+export enum BlockLanguageEnum {
+  PYTHON = 'python',
+  SQL = 'sql',
+}
+
 export enum BlockTypeEnum {
   CHART = 'chart',
   DATA_EXPORTER = 'data_exporter',
@@ -75,8 +80,10 @@ export interface BlockRequestPayloadType {
     axis?: AxisEnum;
     suggested_action?: SuggestionType;
   };
+  configuration?: ConfigurationType;
   content?: string;
   converted_from?: string;
+  language?: BlockLanguageEnum;
   name?: string;
   type: BlockTypeEnum;
   upstream_blocks?: string[];
@@ -89,6 +96,7 @@ export default interface BlockType {
   converted_from?: string;
   downstream_blocks?: string[];
   file?: string;
+  language?: BlockLanguageEnum;
   name?: string;
   outputs?: OutputType[];
   priority?: number;

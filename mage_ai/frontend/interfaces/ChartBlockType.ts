@@ -12,6 +12,10 @@ export const VARIABLE_NAME_X = 'x';
 export const VARIABLE_NAME_Y = 'y';
 export const VARIABLE_NAME_Y_SORT_ORDER = 'y_sort_order';
 
+export const CONFIG_KEY_DATA_PROVIDER = 'data_provider';
+export const CONFIG_KEY_DATA_PROVIDER_PROFILE = 'data_provider_profile';
+export const CONFIG_KEY_DATA_PROVIDER_SCHEMA = 'data_provider_schema';
+
 export const VARIABLE_NAMES = [
   VARIABLE_NAME_X,
   VARIABLE_NAME_Y,
@@ -75,6 +79,8 @@ export enum SortOrderEnum {
 }
 
 export interface ConfigurationType {
+  [CONFIG_KEY_DATA_PROVIDER]?: string;
+  [CONFIG_KEY_DATA_PROVIDER_PROFILE]?: string;
   [VARIABLE_NAME_BUCKETS]?: number;
   [VARIABLE_NAME_CHART_STYLE]?: ChartStyleEnum;
   [VARIABLE_NAME_GROUP_BY]?: string[];

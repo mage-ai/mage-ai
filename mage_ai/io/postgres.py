@@ -95,6 +95,9 @@ class Postgres(BaseSQLConnection):
         table_name: str,
         if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
         index: bool = False,
+        verbose: bool = True,
+        query_string: str = None,
+        drop_table_on_replace: bool = False,
     ) -> None:
         """
         Exports dataframe to the connected database from a Pandas data frame. If table doesn't
@@ -111,15 +114,17 @@ class Postgres(BaseSQLConnection):
             index (bool): If true, the data frame index is also exported alongside the table. Defaults to False.
             **kwargs: Additional query parameters.
         """
-        if index:
-            df = df.reset_index()
 
-        dtypes = infer_dtypes(df)
-        df = clean_df_for_export(df, self.clean, dtypes)
+        full_table_name = f'{schema_name}.{table_name}'
 
-        with self.printer.print_msg(
-            f'Exporting data frame to table \'{schema_name}.{table_name}\''
-        ):
+        if not query_string:
+            if index:
+                df = df.reset_index()
+
+            dtypes = infer_dtypes(df)
+            df = clean_df_for_export(df, self.clean, dtypes)
+
+        def __process():
             buffer = StringIO()
             table_exists = self.__table_exists(schema_name, table_name)
 
@@ -128,22 +133,40 @@ class Postgres(BaseSQLConnection):
                 if table_exists:
                     if if_exists == ExportWritePolicy.FAIL:
                         raise ValueError(
-                            f'Table \'{schema_name}.{table_name}\' already exists in database'
+                            f'Table \'{full_table_name}\' already exists in database'
                         )
                     elif if_exists == ExportWritePolicy.REPLACE:
-                        cur.execute(f'DELETE FROM {schema_name}.{table_name}')
-                else:
+                        if drop_table_on_replace:
+                            cur.execute(f'DROP TABLE {full_table_name}')
+                        else:
+                            cur.execute(f'DELETE FROM {full_table_name}')
+                elif not query_string:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
                     query = gen_table_creation_query(db_dtypes, schema_name, table_name)
                     cur.execute(query)
 
-                df.to_csv(buffer, index=False, header=False)
-                buffer.seek(0)
-                cur.copy_expert(
-                    f'COPY {schema_name}.{table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
-                    buffer,
-                )
+                if query_string:
+                    query = 'CREATE TABLE {} AS\n{}'.format(
+                        full_table_name,
+                        query_string,
+                    )
+                    cur.execute(query)
+                else:
+                    df.to_csv(buffer, index=False, header=False)
+                    buffer.seek(0)
+                    cur.copy_expert(
+                        f'COPY {full_table_name} FROM STDIN (FORMAT csv, DELIMITER \',\', NULL \'\');',
+                        buffer,
+                    )
             self.conn.commit()
+
+        if verbose:
+            with self.printer.print_msg(
+                f'Exporting data frame to table \'{full_table_name}\''
+            ):
+                __process()
+        else:
+            __process()
 
     def __table_exists(self, schema_name: str, table_name: str) -> bool:
         """

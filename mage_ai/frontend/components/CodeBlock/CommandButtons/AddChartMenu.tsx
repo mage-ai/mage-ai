@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import BlockType, { BlockTypeEnum, StatusTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockLanguageEnum, BlockTypeEnum, StatusTypeEnum } from '@interfaces/BlockType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import { CHART_TYPES } from '@interfaces/ChartBlockType';
 import {
@@ -51,7 +51,9 @@ function AddChartMenu({
     };
     const defaultSettings = DEFAULT_SETTINGS_BY_CHART_TYPE[chartType];
     const configuration = defaultSettings?.configuration?.(widget) || {};
-    const content = defaultSettings?.content?.(widget) || null;
+    const content = BlockLanguageEnum.SQL === block?.language
+      ? null
+      : defaultSettings?.content?.(widget) || null;
 
     let widgetName = chartType;
     if (block) {
