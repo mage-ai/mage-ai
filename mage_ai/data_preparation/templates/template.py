@@ -45,7 +45,7 @@ def build_template_from_suggestion(suggestion: Mapping) -> str:
 def fetch_template_source(
     block_type: Union[BlockType, str],
     config: Mapping[str, str],
-    language: BlockLanguage,
+    language: BlockLanguage = BlockLanguage.PYTHON,
 ) -> str:
     template_source = ''
 
@@ -64,7 +64,7 @@ def load_template(
     block_type: Union[BlockType, str],
     config: Mapping[str, str],
     dest_path: str,
-    language: BlockLanguage,
+    language: BlockLanguage = BlockLanguage.PYTHON,
 ) -> None:
     template_source = fetch_template_source(block_type, config, language=language)
     write_template(template_source, dest_path)

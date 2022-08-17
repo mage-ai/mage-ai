@@ -37,6 +37,7 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
+                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -47,6 +48,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -57,6 +59,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -67,6 +70,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -79,13 +83,13 @@ class PipelineTest(TestCase):
             widgets=[
                 dict(
                     language='python',
+                    configuration={},
                     name='widget1',
                     uuid='widget1',
                     type='chart',
                     status='not_executed',
                     upstream_blocks=['block4'],
                     downstream_blocks=[],
-                    configuration={},
                     all_upstream_blocks_executed=False,
                 ),
             ],
@@ -105,6 +109,7 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
+                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -115,6 +120,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -125,6 +131,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -155,6 +162,7 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
+                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -165,6 +173,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -175,6 +184,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -185,6 +195,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_exporter',
@@ -221,6 +232,7 @@ class PipelineTest(TestCase):
             blocks=[
                 dict(
                     language='python',
+                    configuration={},
                     name='block1',
                     uuid='block1',
                     type='data_loader',
@@ -231,6 +243,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block2',
                     uuid='block2',
                     type='transformer',
@@ -241,6 +254,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block3',
                     uuid='block3',
                     type='transformer',
@@ -251,6 +265,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block4',
                     uuid='block4',
                     type='data_loader',
@@ -261,6 +276,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block5',
                     uuid='block5',
                     type='transformer',
@@ -271,6 +287,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block6',
                     uuid='block6',
                     type='transformer',
@@ -281,6 +298,7 @@ class PipelineTest(TestCase):
                 ),
                 dict(
                     language='python',
+                    configuration={},
                     name='block7',
                     uuid='block7',
                     type='data_exporter',

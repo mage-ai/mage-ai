@@ -23,7 +23,6 @@ from .utils import (
 )
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
-    BlockStatus,
     BlockType,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
@@ -54,15 +53,15 @@ class Widget(Block):
 
     @property
     def chart_type(self):
-        return self.configuration.get('chart_type')
+        return (self.configuration or {}).get('chart_type')
 
     @property
     def group_by_columns(self):
-        return self.configuration.get(VARIABLE_NAME_GROUP_BY)
+        return (self.configuration or {}).get(VARIABLE_NAME_GROUP_BY)
 
     @property
     def metrics(self):
-        return self.configuration.get(VARIABLE_NAME_METRICS)
+        return (self.configuration or {}).get(VARIABLE_NAME_METRICS)
 
     @property
     def output_variable_names(self):

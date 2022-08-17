@@ -213,6 +213,7 @@ def incorrect_function(df1, df2, df3):
         block1.downstream_blocks = [block2]
         self.assertEqual(block1.to_dict(), dict(
             all_upstream_blocks_executed=True,
+            configuration={},
             downstream_blocks=['test_data_exporter'],
             language='sql',
             name='test_transformer_2',
@@ -223,6 +224,7 @@ def incorrect_function(df1, df2, df3):
         ))
         self.assertEqual(block2.to_dict(), dict(
             all_upstream_blocks_executed=False,
+            configuration={},
             downstream_blocks=[],
             language='python',
             name='test_data_exporter',

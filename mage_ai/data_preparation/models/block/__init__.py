@@ -706,7 +706,7 @@ class Block:
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
-            configuration=self.configuration,
+            configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             name=self.name,
             language=language,
