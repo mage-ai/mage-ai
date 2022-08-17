@@ -119,17 +119,24 @@ class VariableManager:
         return path
 
 
-def get_global_variables(pipeline_uuid: str) -> Dict[str, Any]:
-    variables = VariableManager(get_repo_path()).get_variables_by_block(pipeline_uuid, 'global')
+def get_global_variables(
+    pipeline_uuid: str,
+    repo_path: str = get_repo_path(),
+) -> Dict[str, Any]:
+    variables = VariableManager(repo_path).get_variables_by_block(pipeline_uuid, 'global')
     global_variables = dict()
     for variable in variables:
-        global_variables[variable] = get_global_variable(pipeline_uuid, variable)
+        global_variables[variable] = get_global_variable(pipeline_uuid, variable, repo_path)
 
     return global_variables
 
 
-def get_global_variable(pipeline_uuid: str, key: str) -> Any:
-    return VariableManager(get_repo_path()).get_variable(pipeline_uuid, 'global', key)
+def get_global_variable(
+    pipeline_uuid: str,
+    key: str,
+    repo_path: str = get_repo_path(),
+) -> Any:
+    return VariableManager(repo_path).get_variable(pipeline_uuid, 'global', key)
 
 
 def get_variable(
@@ -146,9 +153,18 @@ def get_variable(
     )
 
 
-def set_global_variable(pipeline_uuid: str, key: str, value: Any) -> None:
-    VariableManager(get_repo_path()).add_variable(pipeline_uuid, 'global', key, value)
+def set_global_variable(
+    pipeline_uuid: str,
+    key: str,
+    value: Any,
+    repo_path: str = get_repo_path(),
+) -> None:
+    VariableManager(repo_path).add_variable(pipeline_uuid, 'global', key, value)
 
 
-def delete_global_variable(pipeline_uuid: str, key: str) -> None:
-    VariableManager(get_repo_path()).delete_variable(pipeline_uuid, 'global', key)
+def delete_global_variable(
+    pipeline_uuid: str,
+    key: str,
+    repo_path: str = get_repo_path(),
+) -> None:
+    VariableManager(repo_path).delete_variable(pipeline_uuid, 'global', key)

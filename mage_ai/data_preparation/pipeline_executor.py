@@ -10,7 +10,7 @@ import os
 
 
 class PipelineExecutor:
-    def __init__(self, pipeline):
+    def __init__(self, pipeline: Pipeline):
         self.pipeline = pipeline
 
     @classmethod
@@ -24,11 +24,13 @@ class PipelineExecutor:
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
+        run_tests: bool = False,
         update_status: bool = False,
     ) -> None:
         asyncio.run(self.pipeline.execute(
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
+            run_tests=run_tests,
             update_status=update_status,
         ))
 
@@ -47,6 +49,7 @@ class PySparkPipelineExecutor(PipelineExecutor):
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
+        run_tests: bool = False,
         update_status: bool = False,
     ) -> None:
         """

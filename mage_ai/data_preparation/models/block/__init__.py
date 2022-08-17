@@ -25,6 +25,7 @@ from mage_ai.shared.utils import clean_name
 from queue import Queue
 from typing import Callable, List, Set
 import asyncio
+import functools
 import os
 import pandas as pd
 import simplejson
@@ -438,15 +439,15 @@ class Block:
             loop = asyncio.get_event_loop()
             output = await loop.run_in_executor(
                 None,
-                self.execute_sync,
-                [
-                    analyze_outputs,
-                    custom_code,
-                    global_vars,
-                    redirect_outputs,
-                    run_all_blocks,
-                    update_status,
-                ]
+                functools.partial(
+                    self.execute_sync,
+                    analyze_outputs=analyze_outputs,
+                    custom_code=custom_code,
+                    global_vars=global_vars,
+                    redirect_outputs=redirect_outputs,
+                    run_all_blocks=run_all_blocks,
+                    update_status=update_status,
+                )
             )
         else:
             output = self.execute_sync(
