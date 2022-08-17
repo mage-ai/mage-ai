@@ -16,33 +16,26 @@ A data pipeline defined across 3 different files:
 
 ```python
 # load_data_from_file.py
-from pandas import DataFrame
 import pandas as pd
 
 
 @data_loader
-def load_data() -> DataFrame:
+def load_data():
     return pd.read_csv('default_repo/titanic.csv')
 ```
 
 ```python
 # select_columns.py
-from pandas import DataFrame
-
-
 @transformer
-def transform_df(df: DataFrame, *args) -> DataFrame:
+def transform_df(df, *args):
     return df[['Age', 'Fare', 'Survived']]
 ```
 
 ```python
 # export_to_file.py
-from pandas import DataFrame
-
-
 @data_exporter
-def export_data(df: DataFrame) -> None:
-    return df.to_csv('default_repo/titanic_transformed.csv')
+def export_data(df) -> None:
+    df.to_csv('default_repo/titanic_transformed.csv')
 ```
 
 What the data pipeline looks like in the UI:
