@@ -401,6 +401,8 @@ class Block:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
+            print('variable_mapping', variable_mapping)
+
             self.store_variables(
                 variable_mapping,
                 spark=(global_vars or dict()).get('spark'),
@@ -557,7 +559,7 @@ class Block:
             }
             results.update(outputs_from_input_vars)
 
-            outputs = None
+            outputs = []
 
             if BlockLanguage.SQL == self.language:
                 outputs = execute_sql_code(self, custom_code or self.content)
@@ -587,11 +589,10 @@ class Block:
                         outputs = block_function(*input_vars, **global_vars)
                     else:
                         outputs = block_function(*input_vars)
-
-            if outputs is None:
-                outputs = []
-            if type(outputs) is not list:
-                outputs = [outputs]
+                    if outputs is None:
+                        outputs = []
+                    if type(outputs) is not list:
+                        outputs = [outputs]
 
         output_message = dict(output=outputs)
         if redirect_outputs:
