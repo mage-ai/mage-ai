@@ -401,8 +401,6 @@ class Block:
                 self.__verify_outputs(block_output)
                 variable_mapping = dict(zip(self.output_variables.keys(), block_output))
 
-            print('variable_mapping', variable_mapping)
-
             self.store_variables(
                 variable_mapping,
                 spark=(global_vars or dict()).get('spark'),
