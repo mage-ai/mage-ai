@@ -1032,6 +1032,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }}
               blockIdx={blockIdx}
               compact
+              pipeline={pipeline}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}
               setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
             />

@@ -463,6 +463,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
               }, numberOfBlocks, setSelectedBlock);
               setTextareaFocused(true);
             }}
+            pipeline={pipeline}
             setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
           />
         </Spacing>

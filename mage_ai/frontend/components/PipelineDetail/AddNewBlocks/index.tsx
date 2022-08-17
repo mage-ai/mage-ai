@@ -5,6 +5,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import { Add } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
@@ -28,6 +29,7 @@ type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
   blockIdx?: number;
   compact?: boolean;
+  pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
 };
@@ -40,6 +42,7 @@ function AddNewBlocks({
   addNewBlock,
   compact,
   blockIdx,
+  pipeline,
   setAddNewBlockMenuOpenIdx,
   setRecsWindowOpenBlockIdx,
 }: AddNewBlocksProps) {
@@ -111,6 +114,8 @@ function AddNewBlocks({
     [blockIdx, setAddNewBlockMenuOpenIdx],
   );
 
+  const isPySpark = PipelineTypeEnum.PYSPARK === pipeline?.type;
+
   return (
     <FlexContainer inline>
       <ClickOutside
@@ -119,21 +124,24 @@ function AddNewBlocks({
       >
         <FlexContainer>
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.DATA_LOADER,
-                }),
-                uuid: 'data_loaders/sql',
-              },
-              {
-                label: () => 'Python',
-                items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
-                uuid: 'data_loaders/python',
-              },
-            ]}
+            items={isPySpark
+              ? dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]
+              : [
+                  {
+                    label: () => 'SQL',
+                    onClick: () => addNewBlock({
+                      language: BlockLanguageEnum.SQL,
+                      type: BlockTypeEnum.DATA_LOADER,
+                    }),
+                    uuid: 'data_loaders/sql',
+                  },
+                  {
+                    label: () => 'Python',
+                    items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
+                    uuid: 'data_loaders/python',
+                  },
+                ]
+            }
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
@@ -164,21 +172,24 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.TRANSFORMER,
-                }),
-                uuid: 'transformers/sql',
-              },
-              {
-                label: () => 'Python',
-                items: allActionMenuItems,
-                uuid: 'transformers/python',
-              },
-            ]}
+            items={isPySpark
+              ? allActionMenuItems
+              : [
+                {
+                  label: () => 'SQL',
+                  onClick: () => addNewBlock({
+                    language: BlockLanguageEnum.SQL,
+                    type: BlockTypeEnum.TRANSFORMER,
+                  }),
+                  uuid: 'transformers/sql',
+                },
+                {
+                  label: () => 'Python',
+                  items: allActionMenuItems,
+                  uuid: 'transformers/python',
+                },
+              ]
+            }
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
             parentRef={transformerButtonRef}
@@ -209,21 +220,24 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
-            items={[
-              {
-                label: () => 'SQL',
-                onClick: () => addNewBlock({
-                  language: BlockLanguageEnum.SQL,
-                  type: BlockTypeEnum.DATA_EXPORTER,
-                }),
-                uuid: 'data_exporters/sql',
-              },
-              {
-                label: () => 'Python',
-                items: dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER],
-                uuid: 'data_exporters/python',
-              },
-            ]}
+            items={isPySpark
+              ? dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]
+              : [
+                {
+                  label: () => 'SQL',
+                  onClick: () => addNewBlock({
+                    language: BlockLanguageEnum.SQL,
+                    type: BlockTypeEnum.DATA_EXPORTER,
+                  }),
+                  uuid: 'data_exporters/sql',
+                },
+                {
+                  label: () => 'Python',
+                  items: dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER],
+                  uuid: 'data_exporters/python',
+                },
+              ]
+            }
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
             parentRef={dataExporterButtonRef}

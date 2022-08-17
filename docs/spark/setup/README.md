@@ -199,7 +199,7 @@ ssh -i ~/.ssh/aws-ec2.pem \
 
 1. Create a new pipeline by going to `File` in the top left corner of the page and then clicking `New pipeline`.
 1. Change the pipeline’s kernel from `python` to `pyspark`. Click the button with the green dot and the word `python` next to it. This is located at the top of the page on the right side of your header.
-1. Click `+ Data loader`, then choose `Python`, then `Generic (no template)` to add a new data loader block.
+1. Click `+ Data loader`, then `Generic (no template)` to add a new data loader block.
 1. Paste the following sample code in the new data loader block:
 ```python
 from pandas import DataFrame
@@ -225,7 +225,7 @@ def load_data(**kwargs) -> DataFrame:
 
     return df_spark
 ```
-1. Click `+ Data exporter`, then choose `Python`, then `Generic (no template)` to add a new data exporter block.
+1. Click `+ Data exporter`, then `Generic (no template)` to add a new data exporter block.
 1. Paste the following sample code in the new data exporter block (change the `s3://bucket-name` to the bucket you created from a previous step):
 ```python
 from pandas import DataFrame
@@ -249,7 +249,7 @@ def export_data(df: DataFrame, **kwargs) -> None:
 
 Let’s load the data from S3 that we just created using Spark:
 
-1. Click `+ Data loader`, then choose `Python`, then `Generic (no template)` to add a new data loader block.
+1. Click `+ Data loader`, then `Generic (no template)` to add a new data loader block.
 1. Paste the following sample code in the new data loader block (change the `s3://bucket-name` to the bucket you created from a previous step):
 
 ```python
