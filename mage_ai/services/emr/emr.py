@@ -4,6 +4,7 @@ from datetime import datetime
 from mage_ai.services.emr import emr_basics
 from mage_ai.services.emr.config import EmrConfig
 import boto3
+import json
 import logging
 import random
 import time
@@ -80,7 +81,8 @@ def create_a_new_cluster(
             ),
         ]
     response = emr_client.run_job_flow(**emr_kwargs)
-    print(response)
+    print('\n')
+    print(json.dumps(json.loads(response), indent=2))
     print('\n')
     cluster_id = response['JobFlowId']
     print(f'Cluster ID: {cluster_id}')
