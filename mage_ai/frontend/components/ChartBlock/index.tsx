@@ -357,7 +357,12 @@ function ChartBlock({
     const rect = refChartContainer?.current?.getBoundingClientRect();
     if (isEditingPrevious !== isEditing || widthPrevious !== width) {
       setChartWidth(0);
-      setTimeout(() => setChartWidth(rect?.width), 100);
+      setTimeout(() => {
+        const w = refChartContainer?.current?.getBoundingClientRect()?.width;
+        if (w) {
+          setChartWidth(w);
+        }
+      }, 100);
     } else if (rect) {
       setChartWidth(rect.width);
     }
