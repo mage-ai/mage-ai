@@ -21,6 +21,7 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 export type FlyoutMenuItemType = {
+  bold?: boolean;
   disabled?: boolean;
   indent?: boolean;
   items?: FlyoutMenuItemType[];
@@ -154,6 +155,7 @@ function FlyoutMenu({
         width={width}
       >
         {items?.map(({
+          bold,
           disabled,
           items,
           indent,
@@ -211,6 +213,7 @@ function FlyoutMenu({
                   justifyContent="space-between"
                 >
                   <Text
+                    bold={bold}
                     disabled={disabled}
                     noWrapping
                   >

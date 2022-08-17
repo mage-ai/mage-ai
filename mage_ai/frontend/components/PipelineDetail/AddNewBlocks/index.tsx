@@ -19,6 +19,7 @@ import {
   COLUMN_ACTION_GROUPINGS,
   ROW_ACTION_GROUPINGS,
 } from '@interfaces/TransformerActionType';
+import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import {
   ICON_SIZE,
   IconContainerStyle,
@@ -77,7 +78,7 @@ function AddNewBlocks({
     addNewBlock,
   );
 
-  const allActionMenuItems = [
+  const allActionMenuItems: FlyoutMenuItemType[] = [
     {
       label: () => 'Generic (no template)',
       onClick: () => {
@@ -89,23 +90,23 @@ function AddNewBlocks({
       uuid: 'generic_transformer_action',
     },
     {
-      isGroupingTitle: true,
+      bold: true,
+      items: dataSourceMenuItems[BlockTypeEnum.TRANSFORMER],
       label: () => 'Data sources',
       uuid: 'data_sources_grouping',
     },
-    ...dataSourceMenuItems[BlockTypeEnum.TRANSFORMER],
+    {
+      bold: true,
+      items: rowActionMenuItems,
+      label: () => 'Row actions',
+      uuid: 'row_actions_grouping',
+    },
     {
       isGroupingTitle: true,
       label: () => 'Column actions',
       uuid: 'column_actions_grouping',
     },
     ...columnActionMenuItems,
-    {
-      isGroupingTitle: true,
-      label: () => 'Row actions',
-      uuid: 'row_actions_grouping',
-    },
-    ...rowActionMenuItems,
   ];
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
@@ -136,8 +137,8 @@ function AddNewBlocks({
                     uuid: 'data_loaders/sql',
                   },
                   {
-                    label: () => 'Python',
                     items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
+                    label: () => 'Python',
                     uuid: 'data_loaders/python',
                   },
                 ]
@@ -184,8 +185,8 @@ function AddNewBlocks({
                   uuid: 'transformers/sql',
                 },
                 {
-                  label: () => 'Python',
                   items: allActionMenuItems,
+                  label: () => 'Python',
                   uuid: 'transformers/python',
                 },
               ]
