@@ -114,6 +114,7 @@ function CodeOutput({
       rows,
       shape,
     }, {
+      borderTop,
       selected: selectedProp,
     }) => {
       if (shape) {
@@ -128,7 +129,7 @@ function CodeOutput({
           noBorderBottom
           noBorderLeft
           noBorderRight
-          noBorderTop
+          noBorderTop={!borderTop}
           rows={rows}
           // Remove border 2px and padding from each side
           width={mainContainerWidth - (2 + (PADDING_UNITS * UNIT * 2) + 2 + SCROLLBAR_WIDTH)}
@@ -165,6 +166,8 @@ function CodeOutput({
           last: idx === combinedMessages.length - 1 && idxInner === dataArrayLength - 1,
         };
 
+        const borderTop = idx >= 1;
+
         if (typeof data === 'string' && data.match(internalOutputRegex)) {
           const rawString = data.replace(internalOutputRegex, '');
           if (isJsonString(rawString)) {
@@ -174,14 +177,20 @@ function CodeOutput({
             } = JSON.parse(rawString);
 
             if (DataTypeEnum.TABLE === typeDisplay) {
-              displayElement = createDataTableElement(dataDisplay, { selected });
+              displayElement = createDataTableElement(dataDisplay, {
+                borderTop,
+                selected,
+              });
               isTable = true;
             }
           }
         } else if (dataType === DataTypeEnum.TABLE) {
           displayElement = createDataTableElement(
             isJsonString(data) ? JSON.parse(data) : data,
-            { selected },
+            {
+              borderTop,
+              selected,
+            },
           );
           isTable = true;
         } else if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
