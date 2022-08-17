@@ -21,6 +21,10 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
+from mage_ai.server.api.orchestration import (
+    ApiPipelineScheduleDetailHandler,
+    ApiPipelineScheduleListHandler,
+)
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
@@ -329,6 +333,10 @@ def make_app():
         ),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/blocks', ApiPipelineBlockListHandler),
         (
+            r'/api/pipelines/(?P<pipeline_uuid>\w+)/pipeline_schedules',
+            ApiPipelineScheduleListHandler,
+        ),
+        (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/variables/(?P<variable_uuid>\w+)',
             ApiPipelineVariableDetailHandler,
         ),
@@ -340,6 +348,14 @@ def make_app():
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets',
             ApiPipelineWidgetListHandler,
+        ),
+        (
+            r'/api/pipeline_schedules',
+            ApiPipelineScheduleListHandler,
+        ),
+        (
+            r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)',
+            ApiPipelineScheduleDetailHandler,
         ),
         (r'/api/kernels', KernelsHandler),
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),

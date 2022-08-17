@@ -28,6 +28,7 @@ zipp==3.8.0
 
 
 # extras
+alembic>=1.7.5
 botocore==1.27.19
 boto3==1.24.19
 db-dtypes==1.0.2
@@ -36,3 +37,4 @@ psycopg2-binary==2.9.3
 redshift-connector==2.0.907
 snowflake-connector-python==2.7.9
 tables==3.7.0
+sqlalchemy>=1.4.20
