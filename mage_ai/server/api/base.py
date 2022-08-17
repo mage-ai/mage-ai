@@ -1,3 +1,4 @@
+from mage_ai.shared.strings import camel_to_snake_case
 import json
 import simplejson
 import tornado.web
@@ -51,6 +52,6 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_payload(self):
         key = ''
         if self.model_class:
-            key = self.model_class.__name__.lower()
+            key = camel_to_snake_case(self.model_class.__name__)
 
         return json.loads(self.request.body).get(key, {})
