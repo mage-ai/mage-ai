@@ -1,8 +1,8 @@
 # Spark
 
-This is a guide for using Spark (PySpark) with Mage in different cloud providers.
+Want to become a [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/front/0/3/030f4058-54e5-4333-bd6c-2789c334bf12.jpg)?
 
-See a specific section for the cloud provider you use.
+This is a guide for using Spark (PySpark) with Mage in different cloud providers (see a specific section for the cloud provider you use).
 
 ## AWS
 
@@ -15,6 +15,8 @@ Here is an overview of the steps required to use Mage locally with Spark in AWS:
 1. [Launch EMR cluster](#5-launch-emr-cluster)
 1. [SSH into EMR master node](#6-ssh-into-emr-master-node)
 1. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
+1. [Debugging](#8-debugging)
+1. [Clean up](#9-clean-up)
 
 If you get stuck, run into problems, or just want someone to walk you through these steps, please join our
 [<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
@@ -236,7 +238,7 @@ if 'data_exporter' not in globals():
 def export_data(df: DataFrame, **kwargs) -> None:
     (
         df.write
-        .option('delimiter', '|')
+        .option('delimiter', ',')
         .option('header', 'True')
         .mode('overwrite')
         .csv('s3://mage-spark-cluster/demo_project/demo_pipeline/')
@@ -272,8 +274,18 @@ def load_data(**kwargs) -> DataFrame:
     return df
 ```
 
+### 8. Debugging
+
+If you run into any problems, 1st thing to try is restarting the kernel: `Run` > `Restart kernel`.
+
+If that doesn’t work, restart the app by stopping the docker container and starting it again.
+
+### 9. Clean up
+
+Please make sure to terminate your EMR cluster when you’re done using it so you can save money.
+
 ## [WIP] GCP
-Coming soon.
+Coming soon...
 
 ## [WIP] Azure
-Coming soon.
+Coming soon...
