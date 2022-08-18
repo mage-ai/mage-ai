@@ -33,6 +33,6 @@ default:
   SNOWFLAKE_USER: username
   SNOWFLAKE_PASSWORD: password
   SNOWFLAKE_ACCOUNT: account_id.region
-  SNOWFLAKE_DEFAULT_WH: optional_default_warehouse
+  SNOWFLAKE_DEFAULT_WH: default_warehouse
   SNOWFLAKE_DEFAULT_DB: optional_default_database
   SNOWFLAKE_DEFAULT_SCHEMA: optional_default_schema
