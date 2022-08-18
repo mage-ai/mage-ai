@@ -182,6 +182,10 @@ class Block:
         return self._content
 
     @property
+    def executable(self):
+        return self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+
+    @property
     def input_variables(self):
         return {b.uuid: b.output_variables.keys() for b in self.upstream_blocks}
 
