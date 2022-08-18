@@ -78,8 +78,10 @@ Resources:
       ContainerDefinitions:
         - Name: mage-data-preparation
           Image: public.ecr.aws/u3j0m2y7/mage:latest
-          Command:
-            - mage start default_repo
+          MountPoints:
+            - ReadOnly: false
+              ContainerPath: /var/mage
+              SourceVolume: mage-data-preparation
           PortMappings:
             - ContainerPort: 6789
           PseudoTerminal: true
