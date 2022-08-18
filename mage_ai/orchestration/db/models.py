@@ -1,4 +1,5 @@
 from datetime import datetime
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, Integer, String, ForeignKey
@@ -25,6 +26,12 @@ class BaseModel(Base):
     )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    @classmethod
+    def create(self, **kwargs):
+        model = self(**kwargs)
+        model.save()
+        return model
 
     def save(self, commit=True):
         session.add(self)
@@ -84,6 +91,20 @@ class PipelineRun(BaseModel):
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
 
     block_runs = relationship('BlockRun')
+
+    @classmethod
+    def create(self, **kwargs):
+        pipeline_run = super().create(**kwargs)
+        pipeline_uuid = kwargs.get('pipeline_uuid')
+        if pipeline_uuid is not None:
+            pipeline = Pipeline.get(pipeline_uuid)
+            blocks = pipeline.get_executable_blocks()
+            for b in blocks:
+                BlockRun.create(
+                    pipeline_run_id=pipeline_run.id,
+                    block_uuid=b.uuid,
+                )
+        return pipeline_run
 
 
 class BlockRun(BaseModel):
