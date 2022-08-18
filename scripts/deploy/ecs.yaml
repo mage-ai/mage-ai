@@ -77,7 +77,7 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       ContainerDefinitions:
         - Name: mage-data-preparation
-          Image: public.ecr.aws/u3j0m2y7/mage:latest
+          Image: mageai/mageai:latest
           MountPoints:
             - ReadOnly: false
               ContainerPath: /home/src
