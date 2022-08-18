@@ -8,7 +8,7 @@ DATA_PROVIDERS = [
     DataSource.POSTGRES,
     # DataSource.REDSHIFT,
     # DataSource.S3,
-    # DataSource.SNOWFLAKE,
+    DataSource.SNOWFLAKE,
 ]
 
 

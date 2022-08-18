@@ -29,7 +29,7 @@ class Snowflake(BaseSQLConnection):
             kwargs['login_timeout'] = DEFAULT_LOGIN_TIMEOUT
         if 'network_timeout' not in kwargs:
             kwargs['network_timeout'] = DEFAULT_NETWORK_TIMEOUT
-        super().__init__(**kwargs)
+        super().__init__(verbose=True, **kwargs)
 
     def open(self) -> None:
         """
@@ -81,6 +81,7 @@ class Snowflake(BaseSQLConnection):
         database: str,
         schema: str,
         if_exists: str = 'append',
+        query_string: str = None,
         **kwargs,
     ) -> None:
         """
@@ -99,6 +100,7 @@ class Snowflake(BaseSQLConnection):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
+
         with self.printer.print_msg(
             f'Exporting data frame to table \'{database}.{schema}.{table_name}\''
         ):
@@ -110,7 +112,8 @@ class Snowflake(BaseSQLConnection):
                             f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
                         )
                     elif if_exists == 'replace':
-                        cur.execute(f'DROP TABLE {table_name}')
+                        cur.execute(f'USE DATABASE {database}')
+                        cur.execute(f'DROP TABLE "{schema}"."{table_name}"')
                     elif if_exists != 'append':
                         raise ValueError(
                             f'Invalid policy specified for handling existence of table: \'{if_exists}\''
@@ -118,24 +121,38 @@ class Snowflake(BaseSQLConnection):
                 elif cur.rowcount > 1:
                     raise ValueError(f'Two or more tables with the name {table_name} are found.')
 
+                if query_string:
+                    if if_exists == 'replace':
+                        cur.execute(f"""
+CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
+{query_string}
+""")
+
             auto_create_table = True
             if 'auto_create_table' in kwargs:
                 auto_create_table = kwargs.pop(auto_create_table)
                 if auto_create_table is None:
                     auto_create_table = True
 
-            write_pandas(
-                self.conn,
-                df,
-                table_name,
-                database=database,
-                schema=schema,
-                auto_create_table=auto_create_table,
-                **kwargs,
-            )
+            if not query_string:
+                write_pandas(
+                    self.conn,
+                    df,
+                    table_name,
+                    database=database,
+                    schema=schema,
+                    auto_create_table=auto_create_table,
+                    **kwargs,
+                )
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Snowflake':
+    def with_config(
+        cls,
+        config: BaseConfigLoader,
+        database=None,
+        schema=None,
+        **kwargs,
+    ) -> 'Snowflake':
         """
         Initializes Snowflake client from configuration loader.
 
@@ -147,7 +164,7 @@ class Snowflake(BaseSQLConnection):
             password=config[ConfigKey.SNOWFLAKE_PASSWORD],
             account=config[ConfigKey.SNOWFLAKE_ACCOUNT],
             warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
-            database=config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
-            schema=config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
+            database=database or config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
+            schema=schema or config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
             **kwargs,
         )
