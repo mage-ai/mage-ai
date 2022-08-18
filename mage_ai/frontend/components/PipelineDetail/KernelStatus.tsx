@@ -96,7 +96,7 @@ function KernelStatus({
     saveStatus = 'All changes saved';
   }
 
-  const uuidKeyboard = `KernelStatus`;
+  const uuidKeyboard = 'KernelStatus';
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -113,8 +113,12 @@ function KernelStatus({
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
-        updatePipelineMetadata(newPipelineName);
-        setIsEditingPipeline(false);
+        if (pipeline?.uuid === newPipelineName) {
+          event.target.blur();
+        } else {
+          updatePipelineMetadata(newPipelineName);
+          setIsEditingPipeline(false);
+        }
       }
     },
     [
