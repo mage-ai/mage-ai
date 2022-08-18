@@ -48,7 +48,7 @@ class BaseModel(Base):
                 setattr(self, key, value)
         session.commit()
 
-    def delete(self, commit=True):
+    def delete(self, commit: bool = True):
         session.delete(self)
         if commit:
             session.commit()
@@ -85,6 +85,7 @@ class PipelineRun(BaseModel):
         RUNNING = 'running'
         COMPLETED = 'completed'
         FAILED = 'failed'
+        CANCELLED = 'cancelled'
 
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
     pipeline_uuid = Column(String(255))
@@ -106,6 +107,10 @@ class PipelineRun(BaseModel):
                 )
         return pipeline_run
 
+    def all_blocks_completed(self):
+        return all(b.status == BlockRun.BlockRunStatus.COMPLETED
+                   for b in self.block_runs)
+
 
 class BlockRun(BaseModel):
     class BlockRunStatus(str, enum.Enum):
@@ -114,7 +119,18 @@ class BlockRun(BaseModel):
         RUNNING = 'running'
         COMPLETED = 'completed'
         FAILED = 'failed'
+        CANCELLED = 'cancelled'
 
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'))
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
+
+    @classmethod
+    def get(self, pipeline_run_id: int = None, block_uuid: str = None):
+        block_runs = self.query.filter(
+            BlockRun.pipeline_run_id == pipeline_run_id,
+            BlockRun.block_uuid == block_uuid,
+        ).all()
+        if len(block_runs) > 0:
+            return block_runs[0]
+        return None

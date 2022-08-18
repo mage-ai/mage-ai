@@ -36,6 +36,9 @@ class ApiPipelineRunListHandler(BaseHandler):
         payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
         pipeline_run = PipelineRun.create(**payload)
 
+        from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+        PipelineScheduler(pipeline_run).start()
+
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
 
 

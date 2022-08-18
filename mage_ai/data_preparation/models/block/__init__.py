@@ -335,6 +335,9 @@ class Block:
             status=status,
         )
 
+    def all_upstream_blocks_completed(self, completed_block_uuids: Set[str]):
+        return all(b.uuid in completed_block_uuids for b in self.upstream_blocks)
+
     def delete(self, widget=False, commit=True):
         """
         1. If pipeline is not None, delete the block from the pipeline but not delete the block
