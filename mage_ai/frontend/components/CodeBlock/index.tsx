@@ -59,6 +59,7 @@ import {
 } from './index.style';
 import {
   CONFIG_KEY_DATA_PROVIDER,
+  CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
 } from '@interfaces/ChartBlockType';
@@ -67,6 +68,7 @@ import {
   CodeContainerStyle,
   getColorsForBlockType,
 } from './index.style';
+import { DataSourceTypeEnum } from '@interfaces/DataSourceType';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -175,6 +177,7 @@ function CodeBlockProps({
   const [currentTime, setCurrentTime] = useState<number>(null);
   const [dataProviderConfig, setDataProviderConfig] = useState({
     [CONFIG_KEY_DATA_PROVIDER]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER],
+    [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
     [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
   });
@@ -876,6 +879,38 @@ function CodeBlockProps({
                     </option>
                   ))}
                 </Select>
+
+                {DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER] && (
+                  <>
+                    <Spacing mr={1} />
+
+                    <FlexContainer alignItems="center">
+                      <Text monospace muted small>
+                        Database:
+                      </Text>
+                      <span>&nbsp;</span>
+                      <TextInput
+                        compact
+                        monospace
+                        onBlur={() => setTimeout(() => {
+                          setAnyInputFocused(false);
+                        }, 300)}
+                        onChange={(e) => {
+                          // @ts-ignore
+                          updateDataProviderConfig({
+                            [CONFIG_KEY_DATA_PROVIDER_DATABASE]: e.target.value,
+                          });
+                          e.preventDefault();
+                        }}
+                        onFocus={() => {
+                          setAnyInputFocused(true);
+                        }}
+                        small
+                        value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
+                      />
+                    </FlexContainer>
+                  </>
+                )}
 
                 <Spacing mr={1} />
 

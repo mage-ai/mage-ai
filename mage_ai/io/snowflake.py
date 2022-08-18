@@ -5,7 +5,10 @@ from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 
 DEFAULT_LOGIN_TIMEOUT = 20
-DEFAULT_NETWORK_TIMEOUT = 20
+# NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
+# TODO: check credentials before executing query and error sooner
+# than waiting for Snowflake to timeout.
+DEFAULT_NETWORK_TIMEOUT = 60 * 5
 
 
 class Snowflake(BaseSQLConnection):
@@ -29,7 +32,7 @@ class Snowflake(BaseSQLConnection):
             kwargs['login_timeout'] = DEFAULT_LOGIN_TIMEOUT
         if 'network_timeout' not in kwargs:
             kwargs['network_timeout'] = DEFAULT_NETWORK_TIMEOUT
-        super().__init__(**kwargs)
+        super().__init__(verbose=True, **kwargs)
 
     def open(self) -> None:
         """
@@ -67,7 +70,7 @@ class Snowflake(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+        with self.printer.print_msg(f'Loading data with query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 return cur.execute(
@@ -81,6 +84,8 @@ class Snowflake(BaseSQLConnection):
         database: str,
         schema: str,
         if_exists: str = 'append',
+        query_string: str = None,
+        verbose: bool = True,
         **kwargs,
     ) -> None:
         """
@@ -99,9 +104,8 @@ class Snowflake(BaseSQLConnection):
             Defaults to `'append'`.
             **kwargs: Additional arguments to pass to writer
         """
-        with self.printer.print_msg(
-            f'Exporting data frame to table \'{database}.{schema}.{table_name}\''
-        ):
+
+        def __process():
             with self._ctx.cursor() as cur:
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
                 if cur.rowcount == 1:
@@ -110,7 +114,8 @@ class Snowflake(BaseSQLConnection):
                             f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
                         )
                     elif if_exists == 'replace':
-                        cur.execute(f'DROP TABLE {table_name}')
+                        cur.execute(f'USE DATABASE {database}')
+                        cur.execute(f'DROP TABLE "{schema}"."{table_name}"')
                     elif if_exists != 'append':
                         raise ValueError(
                             f'Invalid policy specified for handling existence of table: \'{if_exists}\''
@@ -118,24 +123,46 @@ class Snowflake(BaseSQLConnection):
                 elif cur.rowcount > 1:
                     raise ValueError(f'Two or more tables with the name {table_name} are found.')
 
+                if query_string:
+                    if if_exists == 'replace':
+                        cur.execute(f"""
+CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
+{query_string}
+""")
+
             auto_create_table = True
             if 'auto_create_table' in kwargs:
                 auto_create_table = kwargs.pop(auto_create_table)
                 if auto_create_table is None:
                     auto_create_table = True
 
-            write_pandas(
-                self.conn,
-                df,
-                table_name,
-                database=database,
-                schema=schema,
-                auto_create_table=auto_create_table,
-                **kwargs,
-            )
+            if not query_string:
+                write_pandas(
+                    self.conn,
+                    df,
+                    table_name,
+                    database=database,
+                    schema=schema,
+                    auto_create_table=auto_create_table,
+                    **kwargs,
+                )
+
+        if verbose:
+            with self.printer.print_msg(
+                f'Exporting data to \'{database}.{schema}.{table_name}\''
+            ):
+                __process()
+        else:
+            __process()
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Snowflake':
+    def with_config(
+        cls,
+        config: BaseConfigLoader,
+        database=None,
+        schema=None,
+        **kwargs,
+    ) -> 'Snowflake':
         """
         Initializes Snowflake client from configuration loader.
 
@@ -147,7 +174,7 @@ class Snowflake(BaseSQLConnection):
             password=config[ConfigKey.SNOWFLAKE_PASSWORD],
             account=config[ConfigKey.SNOWFLAKE_ACCOUNT],
             warehouse=config[ConfigKey.SNOWFLAKE_DEFAULT_WH],
-            database=config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
-            schema=config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
+            database=database or config[ConfigKey.SNOWFLAKE_DEFAULT_DB],
+            schema=schema or config[ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA],
             **kwargs,
         )

@@ -23,7 +23,7 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     config_profile = 'default'
 
     with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
-        return loader.export(
+        loader.export(
             df,
             table_name,
             database,
