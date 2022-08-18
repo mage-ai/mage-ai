@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Spark and Mage](spark/setup/README.md)
+- [Templates](#templates)
 
 ## Installing extra packages
 
@@ -28,3 +29,7 @@ On Ubuntu, this can be installed as:
 ```bash
 apt install libkrb5-dev
 ```
+
+## Templates
+
+- [`io_config.yaml`](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_preparation/templates/repo/io_config.yaml)
