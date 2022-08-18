@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled, { css } from 'styled-components';
 
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -7,10 +7,7 @@ import TooltipWrapper, { TooltipWrapperProps } from './TooltipWrapper';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { Info } from '@oracle/icons';
-import { OUTLINE_OFFSET, OUTLINE_WIDTH } from '@oracle/styles/units/borders';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
-import { selectOutlineColor } from '@oracle/elements/Button';
-import { transition } from '@oracle/styles/mixins';
 
 export type TooltipProps = {
   keyboardShortcuts?: any[];

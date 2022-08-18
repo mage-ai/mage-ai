@@ -1048,7 +1048,7 @@ function PipelineDetailPage({
         ]);
         if (ExecutionStateEnum.IDLE === executionState) {
           setRunningBlocks([]);
-          fetchPipeline()
+          fetchPipeline();
 
           if (!uuid) {
             setIsPipelineExecuting(false);
@@ -1151,8 +1151,8 @@ function PipelineDetailPage({
       });
     }
 
-    // Tommy Dang: what was this for?!
-    // fetchPipeline();
+    // Need to fetch pipeline to refresh block status in dependency graph
+    fetchPipeline();
   }, [
     fetchPipeline,
     pipeline,
