@@ -1,5 +1,5 @@
 # !bin/bash
-MAGE_CLI="python3 -m mage_ai.command_line"
+MAGE_CLI="python3 -m mage_ai.cli.main"
 PIP="python3 -m pip"
 
 POSITIONAL=()
