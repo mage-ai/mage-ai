@@ -3,11 +3,14 @@ from mage_ai.data_preparation.variable_manager import get_variable
 
 
 def create_upstream_block_tables(loader, block):
+    data_provider = block.configuration.get('data_provider')
     database = block.configuration.get('data_provider_database')
     schema = block.configuration.get('data_provider_schema')
 
     for idx, upstream_block in enumerate(block.upstream_blocks):
-        if BlockLanguage.SQL != upstream_block.language:
+        if BlockLanguage.SQL != upstream_block.language or \
+           data_provider != upstream_block.configuration.get('data_provider'):
+
             df = get_variable(
                 upstream_block.pipeline.uuid,
                 upstream_block.uuid,
@@ -20,6 +23,7 @@ def create_upstream_block_tables(loader, block):
                 database.upper(),
                 schema.upper(),
                 if_exists='replace',
+                verbose=False
             )
 
 

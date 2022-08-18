@@ -49,6 +49,7 @@ def execute_sql_code(block, query):
                 schema,
                 if_exists='replace',
                 query_string=snowflake.interpolate_input_data(block, query),
+                verbose=BlockType.DATA_EXPORTER == block.type,
             )
 
             if should_query:

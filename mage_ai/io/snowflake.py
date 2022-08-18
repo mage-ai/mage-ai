@@ -5,7 +5,10 @@ from snowflake.connector import connect
 from snowflake.connector.pandas_tools import write_pandas
 
 DEFAULT_LOGIN_TIMEOUT = 20
-DEFAULT_NETWORK_TIMEOUT = 20
+# NOTE: if credentials are wrong, it’ll take this many seconds for the user to be shown an error.
+# TODO: check credentials before executing query and error sooner
+# than waiting for Snowflake to timeout.
+DEFAULT_NETWORK_TIMEOUT = 60 * 5
 
 
 class Snowflake(BaseSQLConnection):
@@ -67,7 +70,7 @@ class Snowflake(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+        with self.printer.print_msg(f'Loading data with query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 return cur.execute(
@@ -82,6 +85,7 @@ class Snowflake(BaseSQLConnection):
         schema: str,
         if_exists: str = 'append',
         query_string: str = None,
+        verbose: bool = True,
         **kwargs,
     ) -> None:
         """
@@ -101,9 +105,7 @@ class Snowflake(BaseSQLConnection):
             **kwargs: Additional arguments to pass to writer
         """
 
-        with self.printer.print_msg(
-            f'Exporting data frame to table \'{database}.{schema}.{table_name}\''
-        ):
+        def __process():
             with self._ctx.cursor() as cur:
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
                 if cur.rowcount == 1:
@@ -144,6 +146,14 @@ CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
                     auto_create_table=auto_create_table,
                     **kwargs,
                 )
+
+        if verbose:
+            with self.printer.print_msg(
+                f'Exporting data to \'{database}.{schema}.{table_name}\''
+            ):
+                __process()
+        else:
+            __process()
 
     @classmethod
     def with_config(

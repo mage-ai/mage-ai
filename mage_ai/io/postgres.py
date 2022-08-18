@@ -84,7 +84,7 @@ class Postgres(BaseSQLConnection):
         Returns:
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
-        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
+        with self.printer.print_msg(f'Loading data with query \'{query_string}\''):
             query_string = self._clean_query(query_string)
             return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
@@ -162,7 +162,7 @@ class Postgres(BaseSQLConnection):
 
         if verbose:
             with self.printer.print_msg(
-                f'Exporting data frame to table \'{full_table_name}\''
+                f'Exporting data to \'{full_table_name}\''
             ):
                 __process()
         else:
