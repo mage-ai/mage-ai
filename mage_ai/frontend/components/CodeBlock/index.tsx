@@ -193,7 +193,7 @@ function CodeBlockProps({
       const {
         messages: messagesInit,
       } = initializeContentAndMessages([block]);
-      setMessages(messagesInit?.[block?.uuid] || [])
+      setMessages(messagesInit?.[block?.uuid] || []);
     }
   },
   [
@@ -426,13 +426,17 @@ function CodeBlockProps({
         && String(keyHistory[0]) === String(KEY_CODE_ENTER)
         && String(keyHistory[1]) !== String(KEY_CODE_META)
       ) {
-        // @ts-ignore
-        updateBlock({
-          block: {
-            ...block,
-            name: newBlockUuid,
-          },
-        });
+        if (block.uuid === newBlockUuid) {
+          event.target.blur();
+        } else {
+          // @ts-ignore
+          updateBlock({
+            block: {
+              ...block,
+              name: newBlockUuid,
+            },
+          });
+        }
       } else if (selected) {
         if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
           || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
@@ -847,7 +851,7 @@ function CodeBlockProps({
                     id,
                     value,
                   }: DataProviderType) => (
-                    <option value={value}>
+                    <option key={id} value={value}>
                       {id}
                     </option>
                   ))}
@@ -867,7 +871,7 @@ function CodeBlockProps({
                 >
                   <option value="" />
                   {dataProviderProfiles?.map((id: string) => (
-                    <option value={id}>
+                    <option key={id} value={id}>
                       {id}
                     </option>
                   ))}
