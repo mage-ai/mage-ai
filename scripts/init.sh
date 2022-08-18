@@ -6,4 +6,4 @@ PROJECT_NAME="$1"
 HOST='' \
 PORT='' \
 PROJECT='' \
-docker-compose run server python mage_ai/command_line.py init $PROJECT_NAME
+docker-compose run server python mage_ai/cli/main.py init $PROJECT_NAME

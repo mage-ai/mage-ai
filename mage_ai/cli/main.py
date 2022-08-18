@@ -56,8 +56,8 @@ Commands:
 
         parser = argparse.ArgumentParser()
         parser.add_argument('repo_path', metavar='project_path', type=str)
-        parser.add_argument('--host', type=str)
-        parser.add_argument('--port', type=int)
+        parser.add_argument('--host', nargs='?', type=str)
+        parser.add_argument('--port', nargs='?', type=int)
 
         args = dict()
         if len(sys.argv) >= 3:
