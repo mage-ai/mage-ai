@@ -355,7 +355,6 @@ function DependencyGraph({
 
       <GraphContainerStyle height={height - (UNIT * 10) }>
         <Canvas
-          // arrow={<MarkerArrow style={{ fill: '#b1b1b7' }} />}
           arrow={null}
           disabled={false}
           edge={(edge) => {
@@ -390,23 +389,12 @@ function DependencyGraph({
                   }
                 }
               }}
-              // port={(
-              //   <Port
-              //     rx={10}
-              //     ry={10}
-              //     style={{
-              //       fill: themeContext.accent.alert,
-              //       stroke: themeContext.accent.alert,
-              //     }}
-              //   />
-              // )}
               port={null}
               style={{
                 fill: 'transparent',
                 stroke: 'transparent',
                 strokeWidth: 0,
               }}
-              // label={<div style={{ display: 'none' }} />}
             >
               {(event) => {
                 const {

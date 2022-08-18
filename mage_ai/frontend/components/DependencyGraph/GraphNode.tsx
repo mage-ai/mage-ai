@@ -2,7 +2,6 @@ import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
 
 import BlockType from '@interfaces/BlockType';
-import Button from '@oracle/elements/Button';
 import Circle from '@oracle/elements/Circle';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -10,7 +9,7 @@ import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { Check, Close } from '@oracle/icons';
-import { INVERTED_TEXT_COLOR_BLOCK_TYPES, MIN_NODE_WIDTH } from './constants';
+import { INVERTED_TEXT_COLOR_BLOCK_TYPES } from './constants';
 import { NodeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -66,16 +65,6 @@ function GraphNode({
       key={uuid}
       selected={selected}
     >
-      {/*<Button
-        basic
-        disabled={disabled}
-        id={uuid}
-        noBackground
-        noBorder
-        noPadding
-        onClick={(onClick && !disabled) ? () => onClick(block) : null}
-      >
-      </Button>*/}
       <Spacing p={1}>
         <FlexContainer alignItems="center">
           <FlexContainer
