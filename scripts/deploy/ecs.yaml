@@ -80,7 +80,7 @@ Resources:
           Image: public.ecr.aws/u3j0m2y7/mage:latest
           MountPoints:
             - ReadOnly: false
-              ContainerPath: /var/mage
+              ContainerPath: /home/src
               SourceVolume: mage-data-preparation
           PortMappings:
             - ContainerPort: 6789
