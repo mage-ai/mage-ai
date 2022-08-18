@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
   SubnetID:
     Type: String
+  FileSharePort:
+    Type: Number
+    Description: Port to use for accessing the FileSystem via a Mount Target
+    Default: 2049 # NFS Default Port Number
+    MinValue: 1024
+    MaxValue: 65535
 Resources:
   Cluster:
     Type: AWS::ECS::Cluster
@@ -26,13 +32,41 @@ Resources:
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: ContainerSecurityGroup
+      GroupName: MageContainerSecurityGroup
       GroupDescription: Security group for Mage server
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 6789
           ToPort: 6789
           CidrIp: 0.0.0.0/0
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      FileSystemTags:
+        - Key: Name
+          Value: mage-data-preparation
+      KmsKeyId: !Ref "AWS::NoValue"
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      ProvisionedThroughputInMibps: !Ref 'AWS::NoValue'
+  MountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !GetAtt FileSystem.FileSystemId
+      SubnetId: !Ref SubnetID
+      SecurityGroups:
+        - !GetAtt MountTargetSecurityGroup.GroupId
+  MountTargetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: FileSystem Security Group
+      GroupName: MageEFSSecurityGroup
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: !Ref FileSharePort
+          ToPort: !Ref FileSharePort
+          SourceSecurityGroupId: !GetAtt ContainerSecurityGroup.GroupId
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -44,8 +78,10 @@ Resources:
       ContainerDefinitions:
         - Name: mage-data-preparation
           Image: public.ecr.aws/u3j0m2y7/mage:latest
-          Command:
-            - mage start default_repo
+          MountPoints:
+            - ReadOnly: false
+              ContainerPath: /var/mage
+              SourceVolume: mage-data-preparation
           PortMappings:
             - ContainerPort: 6789
           PseudoTerminal: true
@@ -58,6 +94,11 @@ Resources:
       RequiresCompatibilities:
         - EC2
         - FARGATE
+      Volumes:
+        - Name: mage-data-preparation
+          EfsVolumeConfiguration:
+            FileSystemId: !GetAtt FileSystem.FileSystemId
+            TransitEncryption: "ENABLED"
   Service:
     Type: AWS::ECS::Service
     Properties:
