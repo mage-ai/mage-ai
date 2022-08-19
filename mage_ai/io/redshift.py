@@ -59,7 +59,15 @@ class Redshift(BaseSQLConnection):
                     self._enforce_limit(query_string, limit), *args, **kwargs
                 ).fetch_dataframe()
 
-    def export(self, df: DataFrame, table_name: str) -> None:
+    def export(
+        self,
+        df: DataFrame,
+        table_name: str,
+        schema: str,
+        if_exists: str = 'append',
+        query_string: str = None,
+        verbose: bool = True,
+    ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
 
@@ -69,12 +77,27 @@ class Redshift(BaseSQLConnection):
             Table must already exist.
         """
         # TODO: Add support for creating new tables if table doesn't exist
-        with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
+
+        full_table_name = f'{schema}.{table_name}'
+
+        def __process():
             with self.conn.cursor() as cur:
-                cur.write_dataframe(df, table_name)
+                if not query_string:
+                    cur.write_dataframe(df, full_table_name)
+
+        if verbose:
+            with self.printer.print_msg(f'Exporting data to table \'{full_table_name}\''):
+                __process()
+        else:
+            __process()
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Redshift':
+    def with_config(
+        cls,
+        config: BaseConfigLoader,
+        database=None,
+        **kwargs,
+    ) -> 'Redshift':
         """
         Initializes Redshift client from configuration loader.
 
@@ -83,7 +106,7 @@ class Redshift(BaseSQLConnection):
         """
         if ConfigKey.REDSHIFT_DBNAME not in config:
             raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting to connect.')
-        kwargs['database'] = config[ConfigKey.REDSHIFT_DBNAME]
+        kwargs['database'] = database or config[ConfigKey.REDSHIFT_DBNAME]
         if (
             ConfigKey.REDSHIFT_CLUSTER_ID in config
             and ConfigKey.REDSHIFT_DBUSER in config

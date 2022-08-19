@@ -4,6 +4,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
+from mage_ai.io.redshift import Redshift
 from mage_ai.io.snowflake import Snowflake
 from os import path
 
@@ -39,7 +40,18 @@ def execute_sql_code(block, query):
             if should_query:
                 return [
                     loader.load(
-                        f'SELECT * FROM {schema}.{block.table_name}',
+                        f'SELECT * FROM {schema}.{table_name}',
+                        verbose=False,
+                    ),
+                ]
+    elif DataSource.REDSHIFT.value == data_provider:
+        with Redshift.with_config(config_file_loader) as loader:
+            pass
+
+        if should_query:
+            return [
+                    loader.load(
+                        f'SELECT * FROM {schema}.{table_name}',
                         verbose=False,
                     ),
                 ]
