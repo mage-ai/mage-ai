@@ -42,6 +42,23 @@ You can create new global variables from the Mage UI through the "Variables" tab
 
 ## Running Pipeline with Runtime Variables
 
+### Run from command line
+You can execute your pipeline with runtime variables from the command line. First, make sure you installed the package.
+
+```bash
+pip install mage-ai
+```
+
+Once the package is installed, you can run your pipeline through the command line.
+
+```bash
+mage run <project_path> <pipeline_uuid> --runtime-vars [name value]...
+
+# example with 2 runtime variables "name" and "ds":
+mage run default_repo default_pipeline --runtime-vars name default ds 2022-08-18
+```
+
+### Run from Python script
 If your pipeline is configured to use runtime variables, you can still execute your pipeline outside the code editor. Provide the runtime variables as keyword arguments to `mage_ai.run()`:
 
 ```python
