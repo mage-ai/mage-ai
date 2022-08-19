@@ -78,6 +78,24 @@ class PipelineSchedule(BaseModel):
 
     pipeline_runs = relationship('PipelineRun')
 
+    @classmethod
+    def active_schedules(self):
+        return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
+
+    def should_schedule(self):
+        if self.status != self.__class__.ScheduleStatus.ACTIVE:
+            return False
+        if self.schedule_interval == '@once':
+            if len(self.pipeline_runs) == 0:
+                return True
+        else:
+            """
+            TODO: Implement other schedule interval checks
+            """
+            pass
+
+        return False
+
 
 class PipelineRun(BaseModel):
     class PipelineRunStatus(str, enum.Enum):
@@ -92,6 +110,10 @@ class PipelineRun(BaseModel):
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
 
     block_runs = relationship('BlockRun')
+
+    @classmethod
+    def active_runs(self):
+        return self.query.filter(self.status == self.PipelineRunStatus.RUNNING).all()
 
     @classmethod
     def create(self, **kwargs):
