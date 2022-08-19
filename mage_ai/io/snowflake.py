@@ -54,7 +54,15 @@ class Snowflake(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 return cur.execute(query_string, **kwargs).fetchall()
 
-    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
+    def load(
+        self,
+        query_string: str,
+        limit: int = QUERY_ROW_LIMIT,
+        display_query: str = None,
+        verbose: bool = True,
+        *args,
+        **kwargs,
+    ) -> DataFrame:
         """
         Loads data from Snowflake into a Pandas data frame based on the query given.
         This will fail unless a `SELECT` query is provided. This function will load at
@@ -70,8 +78,20 @@ class Snowflake(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.printer.print_msg(f'Loading data with query \'{query_string}\''):
-            query_string = self._clean_query(query_string)
+
+        print_message = 'Loading data'
+        if verbose:
+            print_message += ' with query'
+
+            if display_query:
+                for line in display_query.split('\n'):
+                    print_message += f'\n{line}'
+            else:
+                print_message += f'\n{query_string}'
+
+        query_string = self._clean_query(query_string)
+
+        with self.printer.print_msg(print_message):
             with self.conn.cursor() as cur:
                 return cur.execute(
                     self._enforce_limit(query_string, limit), *args, **kwargs

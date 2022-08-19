@@ -69,7 +69,14 @@ class Postgres(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **query_vars)
 
-    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
+    def load(
+        self,
+        query_string: str,
+        limit: int = QUERY_ROW_LIMIT,
+        display_query: str = None,
+        verbose: bool = True,
+        **kwargs,
+    ) -> DataFrame:
         """
         Loads data from the connected database into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. This function will load at
@@ -84,8 +91,19 @@ class Postgres(BaseSQLConnection):
         Returns:
             DataFrame: The data frame corresponding to the data returned by the given query.
         """
-        with self.printer.print_msg(f'Loading data with query \'{query_string}\''):
-            query_string = self._clean_query(query_string)
+        print_message = 'Loading data'
+        if verbose:
+            print_message += ' with query'
+
+            if display_query:
+                for line in display_query.split('\n'):
+                    print_message += f'\n{line}'
+            else:
+                print_message += f'\n{query_string}'
+
+        query_string = self._clean_query(query_string)
+
+        with self.printer.print_msg(print_message):
             return read_sql(self._enforce_limit(query_string, limit), self.conn, **kwargs)
 
     def export(
