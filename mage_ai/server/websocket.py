@@ -259,11 +259,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                 set_previous_config_path(new_pipeline_directory)
                 return new_pipeline_directory
 
+            reset_execution_manager()
+
+            # The pipeline state can potentially break when the execution is cancelled,
+            # so we save the pipeline config before execution if the user cancels the excecution.
             config_copy_path = save_pipeline_config()
             
             def run_pipeline() -> None:
                 try:
+                    global_vars = get_global_variables(pipeline_uuid)
                     pipeline.execute_sync(
+                        global_vars=global_vars,
                         log_func=publish_message,
                     )
                     publish_message(
@@ -278,11 +284,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
                 delete_pipeline_copy_config(config_copy_path)
 
-            reset_execution_manager()
-
-            # The pipeline state can potentially break when the execution is cancelled,
-            # so we save the pipeline config before execution if the user cancels the excecution.
-            save_pipeline_config()
             proc = multiprocessing.Process(target=run_pipeline)
             proc.start()
             set_current_pipeline_process(proc)
