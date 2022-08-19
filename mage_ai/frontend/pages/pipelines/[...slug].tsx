@@ -1577,10 +1577,13 @@ function PipelineDetailPage({
         ))}
 
         <Spacing
-          pb={Math.max(
-            Math.floor((heightWindow * (2 / 3)) / UNIT),
-            0,
-          )}
+          pb={filePathFromUrl
+            ? 0
+            : Math.max(
+              Math.floor((heightWindow * (2 / 3)) / UNIT),
+              0,
+            )
+          }
         />
       </TripleLayout>
 

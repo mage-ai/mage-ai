@@ -1,24 +1,25 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useMutation } from 'react-query';
 
-import BlockType, { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import CodeEditor from '@components/CodeEditor';
 import FileType, { FileExtensionEnum, FILE_EXTENSION_TO_LANGUAGE_MAPPING } from '@interfaces/FileType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
+import { BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
 import {
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_R,
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { getBlockType, getBlockUUID } from '@components/FileTree/utils';
+import { getBlockType, getBlockUUID } from './utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -41,6 +42,7 @@ function FileEditor({
   setFilesTouched,
 }: FileEditorProps) {
   const [file, setFile] = useState<FileType>(null);
+  const containerRef = useRef(null);
   const { data } = api.file_contents.detail(filePath);
   useEffect(() => {
     if (data?.file_content) {
@@ -50,6 +52,10 @@ function FileEditor({
 
   const [content, setContent] = useState<string>(file?.content);
   const [touched, setTouched] = useState<boolean>(false);
+
+  useEffect(() => {
+    containerRef?.current?.scrollIntoView();
+  }, [containerRef?.current]);
 
   const [updateFile] = useMutation(
     api.file_contents.useUpdate(file?.path),
@@ -186,10 +192,10 @@ function FileEditor({
   );
 
   return (
-    <>
+    <div ref={containerRef}>
       {codeEditorEl}
       {addToPipelineEl}
-    </>
+    </div>
   );
 }
 

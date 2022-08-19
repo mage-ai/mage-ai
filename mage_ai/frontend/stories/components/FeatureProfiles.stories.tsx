@@ -2,11 +2,11 @@ import React from 'react';
 import { Meta, Story } from '@storybook/react';
 
 import FeatureProfiles, { FeatureProfilesProps } from '@components/datasets/FeatureProfiles';
-import ThemeBlock from '../../ThemeBlock';
+import ThemeBlock from '../ThemeBlock';
 
 export default {
   component: FeatureProfiles,
-  title: 'Components/Panels/FeatureProfiles',
+  title: 'Components/FeatureProfiles',
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (

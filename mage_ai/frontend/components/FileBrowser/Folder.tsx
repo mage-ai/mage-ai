@@ -22,7 +22,6 @@ import {
   ICON_SIZE,
   INDENT_WIDTH,
 } from './index.style';
-import { SpecialFileEnum } from '@components/FileTree/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT, WIDTH_OF_SINGLE_CHARACTER } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -45,6 +44,10 @@ export type FolderSharedProps = {
   openPipeline: (uuid: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
 };
+
+enum SpecialFileEnum {
+  INIT_PY = '__init__.py',
+}
 
 type FolderProps = {
   file: FileType;
