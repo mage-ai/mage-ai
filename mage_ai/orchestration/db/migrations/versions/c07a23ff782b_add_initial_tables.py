@@ -1,8 +1,8 @@
-"""Added initial tables.
+"""Add initial tables.
 
-Revision ID: 256d6a12a927
+Revision ID: c07a23ff782b
 Revises: 
-Create Date: 2022-08-17 14:39:56.441953
+Create Date: 2022-08-19 15:19:01.457470
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '256d6a12a927'
+revision = 'c07a23ff782b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -36,7 +36,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('pipeline_schedule_id', sa.Integer(), nullable=True),
     sa.Column('pipeline_uuid', sa.String(length=255), nullable=True),
-    sa.Column('status', sa.Enum('INITIAL', 'RUNNING', 'COMPLETED', 'FAILED', name='pipelinerunstatus'), nullable=True),
+    sa.Column('execution_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('status', sa.Enum('INITIAL', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED', name='pipelinerunstatus'), nullable=True),
     sa.ForeignKeyConstraint(['pipeline_schedule_id'], ['pipeline_schedule.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -46,7 +47,7 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('pipeline_run_id', sa.Integer(), nullable=True),
     sa.Column('block_uuid', sa.String(length=255), nullable=True),
-    sa.Column('status', sa.Enum('INITIAL', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', name='blockrunstatus'), nullable=True),
+    sa.Column('status', sa.Enum('INITIAL', 'QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED', name='blockrunstatus'), nullable=True),
     sa.ForeignKeyConstraint(['pipeline_run_id'], ['pipeline_run.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
