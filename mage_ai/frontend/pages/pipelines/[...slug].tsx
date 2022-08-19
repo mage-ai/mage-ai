@@ -1465,8 +1465,6 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  console.log('filePathFromUrl:', filePathFromUrl);
-
   return (
     <>
       <Head title={pipeline?.name} />
