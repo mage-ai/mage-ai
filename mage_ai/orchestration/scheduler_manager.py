@@ -12,6 +12,7 @@ def schedule():
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule():
             payload = dict(
+                execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
                 pipeline_uuid=pipeline_schedule.pipeline_uuid,
             )

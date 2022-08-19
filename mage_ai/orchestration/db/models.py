@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
+from mage_ai.shared.array import find
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
@@ -82,6 +83,20 @@ class PipelineSchedule(BaseModel):
     def active_schedules(self):
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
 
+    def current_execution_date(self):
+        now = datetime.now()
+        if self.schedule_interval == '@daily':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0)
+        elif self.schedule_interval == '@hourly':
+            return now.replace(second=0, microsecond=0, minute=0)
+        elif self.scheduel_interval == '@weekly':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
+                timedelta(days=now.weekday())
+        elif self.scheduel_interval == '@monthly':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
+        # TODO: Support cron syntax
+        return None
+
     def should_schedule(self):
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
@@ -92,8 +107,11 @@ class PipelineSchedule(BaseModel):
             """
             TODO: Implement other schedule interval checks
             """
-            pass
-
+            current_execution_date = self.current_execution_date()
+            if current_execution_date is None:
+                return False
+            if not find(lambda x: x.execution_date == current_execution_date, self.pipeline_runs):
+                return True
         return False
 
 
