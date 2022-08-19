@@ -1,6 +1,10 @@
 import React from 'react';
 
-import BlockType, { BlockTypeEnum, BlockRequestPayloadType } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockTypeEnum,
+  BlockRequestPayloadType,
+} from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -132,6 +136,7 @@ function RecommendationsWindow({
                     ...suggestion,
                   },
                 },
+                language: BlockLanguageEnum.PYTHON,
                 name: newBlockTitle,
                 type: BlockTypeEnum.TRANSFORMER,
                 upstream_blocks: upstreamBlocks,
