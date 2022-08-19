@@ -20,8 +20,11 @@ def execute_sql_code(block, query):
     should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
 
     if DataSource.POSTGRES.value == data_provider:
+
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
+
+            query_string = postgres.interpolate_input_data(block, query)
             loader.export(
                 None,
                 schema,
@@ -29,12 +32,17 @@ def execute_sql_code(block, query):
                 drop_table_on_replace=True,
                 if_exists='replace',
                 index=False,
-                query_string=postgres.interpolate_input_data(block, query),
+                query_string=query_string,
                 verbose=BlockType.DATA_EXPORTER == block.type,
             )
 
             if should_query:
-                return [loader.load(f'SELECT * FROM {schema}.{block.table_name}')]
+                return [
+                    loader.load(
+                        f'SELECT * FROM {schema}.{block.table_name}',
+                        verbose=False,
+                    ),
+                ]
     elif DataSource.SNOWFLAKE.value == data_provider:
         table_name = table_name.upper()
         database = database.upper()
@@ -42,17 +50,24 @@ def execute_sql_code(block, query):
 
         with Snowflake.with_config(config_file_loader, database=database, schema=schema) as loader:
             snowflake.create_upstream_block_tables(loader, block)
+
+            query_string = snowflake.interpolate_input_data(block, query)
             loader.export(
                 None,
                 table_name,
                 database,
                 schema,
                 if_exists='replace',
-                query_string=snowflake.interpolate_input_data(block, query),
+                query_string=query_string,
                 verbose=BlockType.DATA_EXPORTER == block.type,
             )
 
             if should_query:
-                return [loader.load(f'SELECT * FROM "{database}"."{schema}"."{table_name}"')]
+                return [
+                    loader.load(
+                        f'SELECT * FROM "{database}"."{schema}"."{table_name}"',
+                        verbose=False,
+                    ),
+                ]
 
     return []
