@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { transition } from '@oracle/styles/mixins';
+import { hideScrollBar } from '@oracle/styles/scrollbars';
+
 
 export const ANIMATION_DURATION = 300;
 
@@ -37,11 +38,14 @@ export const PipelineHeaderStyle = styled.div`
   top: 0;
   width: 100%;
   z-index: 5;
+  overflow: auto;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).codeArea};
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
+
+  ${hideScrollBar()}
 `;
 
 export const FileTabStyle = styled.div<{
