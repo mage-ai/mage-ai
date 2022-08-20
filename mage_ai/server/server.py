@@ -41,6 +41,7 @@ from mage_ai.server.websocket import WebSocketServer
 import argparse
 import asyncio
 import json
+import multiprocessing
 import os
 import socket
 import tornado.ioloop
@@ -384,19 +385,6 @@ async def main(
     port: str = None,
     project: str = None,
 ):
-    host = host if host else None
-    port = port if port else DATA_PREP_SERVER_PORT
-    project = project if project else None
-
-    if project:
-        project = project = os.path.abspath(project)
-    else:
-        project = os.path.join(os.getcwd(), 'default_repo')
-
-    if not os.path.exists(project):
-        init_repo(project)
-    set_repo_path(project)
-
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
@@ -431,6 +419,48 @@ async def main(
     await asyncio.Event().wait()
 
 
+def start_scheduler():
+    from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+
+    def __run_scheduler():
+        LoopTimeTrigger().start()
+
+    proc = multiprocessing.Process(target=__run_scheduler)
+    proc.start()
+
+
+def start_server(
+    host: str = None,
+    port: str = None,
+    project: str = None,
+):
+    host = host if host else None
+    port = port if port else DATA_PREP_SERVER_PORT
+    project = project if project else None
+
+    # Set project path in environment variable
+    if project:
+        project = project = os.path.abspath(project)
+    else:
+        project = os.path.join(os.getcwd(), 'default_repo')
+
+    if not os.path.exists(project):
+        init_repo(project)
+    set_repo_path(project)
+
+    # Start a subprocess for scheduler
+    # start_scheduler()
+
+    # Start web server
+    asyncio.run(
+        main(
+            host=host,
+            port=port,
+            project=project,
+        )
+    )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', type=str, default=None)
@@ -442,10 +472,4 @@ if __name__ == '__main__':
     port = args.port
     project = args.project
 
-    asyncio.run(
-        main(
-            host=host,
-            port=port,
-            project=project,
-        )
-    )
+    start_server()

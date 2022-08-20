@@ -1,11 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
+from mage_ai.shared.array import find
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.sql import func
+from typing import Dict, List
 import enum
 
 Base = declarative_base()
@@ -33,7 +35,7 @@ class BaseModel(Base):
         model.save()
         return model
 
-    def save(self, commit=True):
+    def save(self, commit=True) -> None:
         session.add(self)
         if commit:
             try:
@@ -42,18 +44,18 @@ class BaseModel(Base):
                 session.rollback()
                 raise e
 
-    def update(self, **kwargs):
+    def update(self, **kwargs) -> None:
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
         session.commit()
 
-    def delete(self, commit=True):
+    def delete(self, commit: bool = True) -> None:
         session.delete(self)
         if commit:
             session.commit()
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         def __format_value(value):
             if type(value) is datetime:
                 return str(value)
@@ -78,6 +80,41 @@ class PipelineSchedule(BaseModel):
 
     pipeline_runs = relationship('PipelineRun')
 
+    @classmethod
+    def active_schedules(self) -> List['PipelineSchedule']:
+        return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
+
+    def current_execution_date(self) -> datetime:
+        now = datetime.now()
+        if self.schedule_interval == '@daily':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0)
+        elif self.schedule_interval == '@hourly':
+            return now.replace(second=0, microsecond=0, minute=0)
+        elif self.scheduel_interval == '@weekly':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
+                timedelta(days=now.weekday())
+        elif self.scheduel_interval == '@monthly':
+            return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
+        # TODO: Support cron syntax
+        return None
+
+    def should_schedule(self) -> bool:
+        if self.status != self.__class__.ScheduleStatus.ACTIVE:
+            return False
+        if self.schedule_interval == '@once':
+            if len(self.pipeline_runs) == 0:
+                return True
+        else:
+            """
+            TODO: Implement other schedule interval checks
+            """
+            current_execution_date = self.current_execution_date()
+            if current_execution_date is None:
+                return False
+            if not find(lambda x: x.execution_date == current_execution_date, self.pipeline_runs):
+                return True
+        return False
+
 
 class PipelineRun(BaseModel):
     class PipelineRunStatus(str, enum.Enum):
@@ -85,15 +122,21 @@ class PipelineRun(BaseModel):
         RUNNING = 'running'
         COMPLETED = 'completed'
         FAILED = 'failed'
+        CANCELLED = 'cancelled'
 
     pipeline_schedule_id = Column(Integer, ForeignKey('pipeline_schedule.id'))
     pipeline_uuid = Column(String(255))
+    execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
 
     block_runs = relationship('BlockRun')
 
     @classmethod
-    def create(self, **kwargs):
+    def active_runs(self) -> List['PipelineRun']:
+        return self.query.filter(self.status == self.PipelineRunStatus.RUNNING).all()
+
+    @classmethod
+    def create(self, **kwargs) -> 'PipelineRun':
         pipeline_run = super().create(**kwargs)
         pipeline_uuid = kwargs.get('pipeline_uuid')
         if pipeline_uuid is not None:
@@ -106,6 +149,10 @@ class PipelineRun(BaseModel):
                 )
         return pipeline_run
 
+    def all_blocks_completed(self) -> bool:
+        return all(b.status == BlockRun.BlockRunStatus.COMPLETED
+                   for b in self.block_runs)
+
 
 class BlockRun(BaseModel):
     class BlockRunStatus(str, enum.Enum):
@@ -114,7 +161,18 @@ class BlockRun(BaseModel):
         RUNNING = 'running'
         COMPLETED = 'completed'
         FAILED = 'failed'
+        CANCELLED = 'cancelled'
 
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'))
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
+
+    @classmethod
+    def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
+        block_runs = self.query.filter(
+            BlockRun.pipeline_run_id == pipeline_run_id,
+            BlockRun.block_uuid == block_uuid,
+        ).all()
+        if len(block_runs) > 0:
+            return block_runs[0]
+        return None

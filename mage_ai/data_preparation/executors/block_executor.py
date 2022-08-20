@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Callable, Dict
 
 
 class BlockExecutor:
@@ -12,9 +12,18 @@ class BlockExecutor:
         analyze_outputs: bool = False,
         global_vars: Dict = None,
         update_status: bool = False,
+        on_complete: Callable[[str], None] = None,
+        on_failure: Callable[[str], None] = None,
     ) -> None:
-        self.block.execute_sync(
-            analyze_outputs=analyze_outputs,
-            global_vars=global_vars,
-            update_status=update_status,
-        )
+        try:
+            self.block.execute_sync(
+                analyze_outputs=analyze_outputs,
+                global_vars=global_vars,
+                update_status=update_status,
+            )
+        except Exception as e:
+            if on_failure is not None:
+                on_failure(self.block_uuid)
+            raise e
+        if on_complete is not None:
+            on_complete(self.block_uuid)

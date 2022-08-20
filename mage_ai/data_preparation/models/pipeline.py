@@ -209,7 +209,6 @@ class Pipeline:
         )
         await execution_task
 
-
     def execute_sync(
         self,
         analyze_outputs: bool = True,
@@ -236,7 +235,6 @@ class Pipeline:
             redirect_outputs=redirect_outputs,
             run_tests=run_tests,
         )
-
 
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):

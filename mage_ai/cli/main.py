@@ -1,6 +1,5 @@
 from mage_ai.cli.utils import parse_runtime_variables
 import argparse
-import asyncio
 import os
 
 
@@ -52,7 +51,7 @@ Commands:
         repo_path = os.path.join(os.getcwd(), sys.argv[2])
         init_repo(repo_path)
     elif command == 'start':
-        from mage_ai.server.server import main as start_server
+        from mage_ai.server.server import start_server
 
         parser = argparse.ArgumentParser()
         parser.add_argument('repo_path', metavar='project_path', type=str)
@@ -66,11 +65,11 @@ Commands:
         else:
             repo_path = os.getcwd()
 
-        asyncio.run(start_server(
+        start_server(
             host=args.get('host'),
             port=args.get('port'),
             project=repo_path,
-        ))
+        )
     elif command == 'run' or command == 'test':
         from mage_ai.data_preparation.models.pipeline import Pipeline
         from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
