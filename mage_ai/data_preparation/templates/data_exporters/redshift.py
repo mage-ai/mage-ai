@@ -21,4 +21,8 @@ def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
     config_profile = 'default'
 
     with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
-        loader.export(df, table_name)
+        loader.export(
+            df,
+            table_name,
+            if_exists='replace',  # Specify resolution policy if table already exists
+        )

@@ -173,7 +173,7 @@ def infer_object_type(series, column_name, kwargs):
             ):
                 return ColumnType.ZIP_CODE
             else:
-                clean_series = clean_series.str.replace(r'\.0*', '')
+                clean_series = clean_series.str.replace(r'\.0*', '', regex=True)
                 try:
                     clean_series.astype(int)
                     return ColumnType.NUMBER

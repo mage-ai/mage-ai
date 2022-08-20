@@ -1,7 +1,12 @@
 from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.shared.utils import (
+    convert_pandas_dtype_to_python_type,
+    convert_python_type_to_redshift_type,
+)
 from pandas import DataFrame
 from redshift_connector import connect
+import json
 
 
 class Redshift(BaseSQLConnection):
@@ -13,7 +18,7 @@ class Redshift(BaseSQLConnection):
         """
         Initializes settings for connecting to a cluster.
         """
-        super().__init__(**kwargs)
+        super().__init__(verbose=True, **kwargs)
 
     def open(self) -> None:
         """
@@ -35,7 +40,15 @@ class Redshift(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
 
-    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, *args, **kwargs) -> DataFrame:
+    def load(
+        self,
+        query_string: str,
+        limit: int = QUERY_ROW_LIMIT,
+        display_query: str = None,
+        verbose: bool = True,
+        *args,
+        **kwargs,
+    ) -> DataFrame:
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database. When a
@@ -52,14 +65,44 @@ class Redshift(BaseSQLConnection):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
-            query_string = self._clean_query(query_string)
-            with self.conn.cursor() as cur:
-                return cur.execute(
-                    self._enforce_limit(query_string, limit), *args, **kwargs
-                ).fetch_dataframe()
+        print_message = 'Loading data'
+        if verbose:
+            print_message += ' with query'
 
-    def export(self, df: DataFrame, table_name: str) -> None:
+            if display_query:
+                for line in display_query.split('\n'):
+                    print_message += f'\n{line}'
+            else:
+                print_message += f'\n{query_string}'
+
+        query_string = self._clean_query(query_string)
+
+        try:
+            with self.printer.print_msg(print_message):
+                with self.conn.cursor() as cur:
+                    return cur.execute(
+                        self._enforce_limit(query_string, limit), *args, **kwargs
+                    ).fetch_dataframe()
+        except Exception as e:
+            try:
+                raw_string = str(e).replace('"', '\\"').replace("'", '"')
+                error_message = json.loads(raw_string).get('M')
+                if error_message:
+                    print(f'\n\nError: {error_message}')
+                else:
+                    raise e
+            except json.JSONDecodeError:
+                raise e
+
+    def export(
+        self,
+        df: DataFrame,
+        table_name: str,
+        if_exists: str = 'append',
+        query_string: str = None,
+        schema: str = None,
+        verbose: bool = True,
+    ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
 
@@ -69,12 +112,101 @@ class Redshift(BaseSQLConnection):
             Table must already exist.
         """
         # TODO: Add support for creating new tables if table doesn't exist
-        with self.printer.print_msg(f'Exporting data frame to table \'{table_name}\''):
+
+        # CREATE TABLE predictions_dev.test_v01 AS
+        # SELECT *
+        # FROM experimentation.assignments_dev
+
+        if schema:
+            full_table_name = f'{schema}.{table_name}'
+        else:
+            parts = table_name.split('.')
+            if len(parts) == 2:
+                schema = parts[0]
+                table_name = parts[1]
+                full_table_name = f'{schema}.{table_name}'
+            else:
+                schema = 'public'
+                full_table_name = table_name
+
+        def __process():
+            columns_with_type = []
+            if not query_string:
+                columns_with_type = [(
+                    col,
+                    convert_python_type_to_redshift_type(
+                        convert_pandas_dtype_to_python_type(df.dtypes[col]),
+                    ),
+                ) for col in df.columns]
+
             with self.conn.cursor() as cur:
-                cur.write_dataframe(df, table_name)
+                if if_exists == 'replace':
+                    # TODO: DELETE FROM to support partitions
+                    # https://docs.aws.amazon.com/redshift/latest/dg/r_DELETE.html
+                    cur.execute(f'DROP TABLE IF EXISTS {full_table_name}')
+
+                cur.execute("""
+SELECT 1
+FROM information_schema.tables
+WHERE table_schema = '{schema}'
+AND table_name = '{table_name}'
+""")
+                table_doesnt_exist = len(cur.fetchall()) == 0
+                if table_doesnt_exist and not query_string:
+                    col_with_types = ', '.join(
+                        [f'{col} {col_type}' for col, col_type in columns_with_type],
+                    )
+                    sql = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
+                    cur.execute(sql)
+
+                if query_string:
+                    if table_doesnt_exist:
+                        sql = f"""
+CREATE TABLE {full_table_name} AS
+{query_string}
+"""
+                    else:
+                        sql = f"""
+INSERT INTO {full_table_name}
+{query_string}
+"""
+                    cur.execute(sql)
+                else:
+                    columns = ', '.join([t[0] for t in columns_with_type])
+                    values = [f"""({', '.join(["'{}'".format(x) for x in v])})""" for v in df.values]
+                    values = ', '.join(values)
+                    sql = f"""
+INSERT INTO {full_table_name} ({columns})
+VALUES {values}
+"""
+                    cur.execute(sql)
+
+                self.conn.commit()
+
+        try:
+            if verbose:
+                with self.printer.print_msg(f'Exporting data to table \'{full_table_name}\''):
+                    __process()
+            else:
+                __process()
+        except Exception as e:
+            try:
+                raw_string = str(e).replace('"', '\\"').replace("'", '"')
+                error_message = json.loads(raw_string).get('M')
+                if error_message:
+                    print(f'\n\nError: {error_message}')
+                else:
+                    raise e
+            except json.JSONDecodeError:
+                raise e
 
     @classmethod
-    def with_config(cls, config: BaseConfigLoader, **kwargs) -> 'Redshift':
+    def with_config(
+        cls,
+        config: BaseConfigLoader,
+        database=None,
+        **kwargs,
+    ) -> 'Redshift':
         """
         Initializes Redshift client from configuration loader.
 
@@ -83,7 +215,7 @@ class Redshift(BaseSQLConnection):
         """
         if ConfigKey.REDSHIFT_DBNAME not in config:
             raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting to connect.')
-        kwargs['database'] = config[ConfigKey.REDSHIFT_DBNAME]
+        kwargs['database'] = database or config[ConfigKey.REDSHIFT_DBNAME]
         if (
             ConfigKey.REDSHIFT_CLUSTER_ID in config
             and ConfigKey.REDSHIFT_DBUSER in config

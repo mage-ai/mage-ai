@@ -1,9 +1,10 @@
-from mage_ai.data_preparation.models.block.sql import postgres, snowflake
+from mage_ai.data_preparation.models.block.sql import postgres, redshift, snowflake
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
+from mage_ai.io.redshift import Redshift
 from mage_ai.io.snowflake import Snowflake
 from os import path
 
@@ -20,7 +21,6 @@ def execute_sql_code(block, query):
     should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
 
     if DataSource.POSTGRES.value == data_provider:
-
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
 
@@ -39,10 +39,31 @@ def execute_sql_code(block, query):
             if should_query:
                 return [
                     loader.load(
-                        f'SELECT * FROM {schema}.{block.table_name}',
+                        f'SELECT * FROM {schema}.{table_name}',
                         verbose=False,
                     ),
                 ]
+    elif DataSource.REDSHIFT.value == data_provider:
+        with Redshift.with_config(config_file_loader) as loader:
+            redshift.create_upstream_block_tables(loader, block)
+
+            query_string = redshift.interpolate_input_data(block, query)
+            loader.export(
+                None,
+                table_name,
+                if_exists='replace',
+                query_string=query_string,
+                schema=schema,
+                verbose=BlockType.DATA_EXPORTER == block.type,
+            )
+
+            if should_query:
+                return [
+                        loader.load(
+                            f'SELECT * FROM {schema}.{table_name}',
+                            verbose=False,
+                        ),
+                    ]
     elif DataSource.SNOWFLAKE.value == data_provider:
         table_name = table_name.upper()
         database = database.upper()
