@@ -2,13 +2,13 @@ from abc import ABC, abstractmethod
 from mage_ai.orchestration.scheduler_manager import schedule
 
 
-class TimeTrigger:
-    def __init__(self, trigger_interval: int = 10):
+class TimeTrigger(ABC):
+    def __init__(self, trigger_interval: int = 10) -> None:
         self.trigger_interval = trigger_interval
 
-    def run(self):
+    def run(self) -> None:
         schedule()
 
     @abstractmethod
-    def start(self):
+    def start(self) -> None:
         pass

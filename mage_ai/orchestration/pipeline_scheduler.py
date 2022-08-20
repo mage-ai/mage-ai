@@ -4,31 +4,30 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 
 
 class PipelineScheduler:
-    def __init__(self, pipeline_run: PipelineRun):
+    def __init__(self, pipeline_run: PipelineRun) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
 
-    def start(self, should_schedule=True):
+    def start(self, should_schedule: bool = True) -> None:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
             return
-        # Get the root blocks and enqueue them for execution
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         if should_schedule:
             self.schedule()
 
-    def stop(self):
+    def stop(self) -> None:
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
         # Cancel all the block runs
         for b in self.pipeline_run.block_runs:
             b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
-    def schedule(self):
+    def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
             self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.COMPLETED)
         self.__schedule_blocks()
 
-    def on_block_complete(self, block_uuid: str):
+    def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.COMPLETED)
         if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
@@ -36,13 +35,13 @@ class PipelineScheduler:
         else:
             self.schedule()
 
-    def on_block_failure(self, block_uuid: str):
+    def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.FAILED)
 
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
-    def __schedule_blocks(self):
+    def __schedule_blocks(self) -> None:
         executable_block_runs = [b for b in self.pipeline_run.block_runs
                                  if b.status == BlockRun.BlockRunStatus.INITIAL]
         completed_block_runs = [b for b in self.pipeline_run.block_runs

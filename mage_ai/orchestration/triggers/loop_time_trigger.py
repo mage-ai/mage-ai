@@ -3,7 +3,7 @@ import time
 
 
 class LoopTimeTrigger(TimeTrigger):
-    def start(self):
+    def start(self) -> None:
         while True:
             self.last_run_time = int(time.time())
             self.run()
