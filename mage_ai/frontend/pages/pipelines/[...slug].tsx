@@ -303,7 +303,7 @@ function PipelineDetailPage({
       ?.forEach((schedule) => {
         const pipelineUuid = schedule?.pipeline_uuid;
         const currentSchedules = schedulesByPipeline[pipelineUuid];
-        currentSchedules.push(schedule);
+        currentSchedules?.push(schedule);
         schedulesByPipeline[pipelineUuid] = currentSchedules;
       });
     return schedulesByPipeline;
