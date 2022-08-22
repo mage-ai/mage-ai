@@ -5,7 +5,7 @@
 
 # Intro
 
-Mage is an open-source notebook for <b>building</b> and <b>deploying</b> data pipelines.
+Mage is an open-source tool for <b>building</b> and <b>deploying</b> data pipelines.
 
 <img
   alt="Mage"
