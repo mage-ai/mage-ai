@@ -59,6 +59,10 @@ class PipelineScheduler:
             b.update(status=BlockRun.BlockRunStatus.RUNNING)
             ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
                 analyze_outputs=False,
+                execution_partition='/'.join([
+                    str(self.pipeline_run.pipeline_schedule_id),
+                    self.pipeline_run.execution_date.strftime(format='%Y%m%dT%H%M%S'),
+                ]),
                 update_status=False,
                 on_complete=self.on_block_complete,
                 on_failure=self.on_block_failure,

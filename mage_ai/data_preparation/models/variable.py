@@ -21,14 +21,25 @@ class VariableType(str, Enum):
 
 class Variable:
     def __init__(
-        self, uuid: str, pipeline_path: str, block_uuid: str, variable_type: VariableType = None
+        self,
+        uuid: str,
+        pipeline_path: str,
+        block_uuid: str,
+        partition: str = None,
+        variable_type: VariableType = None
     ) -> None:
         self.uuid = uuid
         if not os.path.exists(pipeline_path):
             raise Exception(f'Pipeline {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
-        self.variable_dir_path = os.path.join(pipeline_path, VARIABLE_DIR, block_uuid)
+        self.partition = partition
+        self.variable_dir_path = os.path.join(
+            pipeline_path,
+            VARIABLE_DIR,
+            partition or '',
+            block_uuid,
+        )
         if not os.path.exists(self.variable_dir_path):
             os.makedirs(self.variable_dir_path)
 
