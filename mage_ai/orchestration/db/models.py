@@ -55,6 +55,9 @@ class BaseModel(Base):
         if commit:
             session.commit()
 
+    def refresh(self):
+        session.refresh(self)
+
     def to_dict(self) -> Dict:
         def __format_value(value):
             if type(value) is datetime:
