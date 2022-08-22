@@ -36,6 +36,7 @@ import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
 import RecommendationsWindow from '@components/RecommendationsWindow';
+import Sidebar from '@components/Orchestration/Sidebar';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
@@ -62,6 +63,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
@@ -79,8 +81,6 @@ import { goToWithQuery } from '@utils/routing';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-import Sidebar from '@components/Orchestration/Sidebar';
-import { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
@@ -1507,7 +1507,7 @@ function PipelineDetailPage({
           selectedSchedule={selectedSchedule}
           setSelectedSchedule={setSelectedSchedule}
         />
-      )
+      );
     }
   }, [
     page,

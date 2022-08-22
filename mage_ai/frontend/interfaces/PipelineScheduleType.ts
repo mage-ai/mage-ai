@@ -1,4 +1,3 @@
-
 export enum ScheduleTypeEnum {
   TIME = 'time',
 }

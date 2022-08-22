@@ -1,5 +1,6 @@
-import { UNIT } from '@oracle/styles/units/spacing';
 import styled from 'styled-components';
+
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export const EntryStyle = styled.div<any>`
   border-bottom: 1px solid #1C1C1C;

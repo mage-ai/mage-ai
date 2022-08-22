@@ -1,15 +1,13 @@
-import PipelineScheduleType, { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
-import PipelineType from '@interfaces/PipelineType';
-import Flex from '@oracle/components/Flex';
+import React, { useMemo, useState } from 'react';
+
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
+import PipelineScheduleType, { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { CaretDown, CaretRight } from '@oracle/icons';
-import { UNIT } from '@oracle/styles/units/spacing';
-import React, { useMemo, useState } from 'react';
-import { Icon } from 'reaflow';
 import { EntryStyle } from './index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 type SidebarProps = {
   pipelineSchedules: {
@@ -22,10 +20,10 @@ type SidebarProps = {
 
 type PipelineSchedulesProps = {
   pipelineUuid: string;
-  schedules: PipelineScheduleType[]
+  schedules: PipelineScheduleType[];
   selectedSchedule: SelectedScheduleType;
   setSelectedSchedule: (schedule: SelectedScheduleType) => void;
-}
+};
 
 function PipelineSchedules({
   pipelineUuid,
@@ -39,8 +37,6 @@ function PipelineSchedules({
     pipelineUuid: selectedPipelineUuid,
     scheduleName: selectedScheduleName,
   } = selectedSchedule || {};
-
-  const pipelineSchedules = schedules;
 
   const pipelineSelected = useMemo(
     () => selectedPipelineUuid === pipelineUuid,
@@ -73,7 +69,7 @@ function PipelineSchedules({
           </FlexContainer>
         </Link>
       </EntryStyle>
-      {expanded && pipelineSchedules?.map(({ name }) => {
+      {expanded && schedules?.map(({ name }) => {
         const scheduleSelected = pipelineSelected && selectedScheduleName === name;
 
         return (
@@ -102,7 +98,7 @@ function PipelineSchedules({
         );
       })}
     </>
-  )
+  );
 }
 
 function Sidebar({
@@ -122,7 +118,7 @@ function Sidebar({
         />
       ))}
     </FlexContainer>
-  )
+  );
 }
 
 export default Sidebar;
