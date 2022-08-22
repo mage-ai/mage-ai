@@ -393,6 +393,7 @@ class Block:
                     )
             output = self.execute_block(
                 custom_code=custom_code,
+                execution_partition=execution_partition,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
             )
@@ -535,6 +536,7 @@ class Block:
     def execute_block(
         self,
         custom_code: str = None,
+        execution_partition: str = None,
         redirect_outputs: bool = False,
         global_vars: Dict = None,
     ) -> Dict:
@@ -548,6 +550,7 @@ class Block:
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
+                        partition=execution_partition,
                         variable_type=VariableType.DATAFRAME,
                         spark=(global_vars or dict()).get('spark'),
                     )

@@ -43,6 +43,7 @@ class ApiPipelineRunListHandler(BaseHandler):
 
 
 class ApiPipelineScheduleDetailHandler(BaseHandler):
+    datetime_keys = ['start_time']
     model_class = PipelineSchedule
 
     def get(self, pipeline_schedule_id):
@@ -65,6 +66,7 @@ class ApiPipelineScheduleDetailHandler(BaseHandler):
 
 
 class ApiPipelineScheduleListHandler(BaseHandler):
+    datetime_keys = ['start_time']
     model_class = PipelineSchedule
 
     def get(self, pipeline_uuid=None):

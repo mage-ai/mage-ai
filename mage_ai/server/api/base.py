@@ -1,4 +1,5 @@
 from mage_ai.shared.strings import camel_to_snake_case
+import dateutil.parser
 import json
 import simplejson
 import tornado.web
@@ -6,6 +7,7 @@ import traceback
 
 
 class BaseHandler(tornado.web.RequestHandler):
+    datetime_keys = []
     model_class = None
 
     def check_origin(self, origin):
@@ -54,4 +56,8 @@ class BaseHandler(tornado.web.RequestHandler):
         if self.model_class:
             key = camel_to_snake_case(self.model_class.__name__)
 
-        return json.loads(self.request.body).get(key, {})
+        payload = json.loads(self.request.body).get(key, {})
+        for key in self.datetime_keys:
+            if payload.get(key) is not None:
+                payload[key] = dateutil.parser.parse(payload[key])
+        return payload

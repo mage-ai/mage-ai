@@ -101,6 +101,9 @@ class PipelineSchedule(BaseModel):
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
+        if self.start_time is not None and datetime.now() < self.start_time:
+            return False
+
         if self.schedule_interval == '@once':
             if len(self.pipeline_runs) == 0:
                 return True
