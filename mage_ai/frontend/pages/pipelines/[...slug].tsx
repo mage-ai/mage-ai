@@ -81,6 +81,7 @@ import { goToWithQuery } from '@utils/routing';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
+import Header from '@components/PipelineDetail/Header';
 
 type PipelineDetailPageProps = {
   pipeline: PipelineType;
@@ -1358,6 +1359,13 @@ function PipelineDetailPage({
     textareaFocused,
     widgets,
   ]);
+
+  // const mainContainerHeaderMemo = useMemo(() => (
+  //   <Header
+  //     page={page}
+  //     setPage={setPage}
+  //   />
+  // ), [page, setPage])
 
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
