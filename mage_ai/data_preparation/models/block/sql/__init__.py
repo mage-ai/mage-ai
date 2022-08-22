@@ -29,7 +29,7 @@ def execute_sql_code(block, query):
 
     if DataSource.BIGQUERY.value == data_provider:
         loader = BigQuery.with_config(config_file_loader)
-        # bigquery.create_upstream_block_tables(loader, block)
+        bigquery.create_upstream_block_tables(loader, block)
 
         query_string = bigquery.interpolate_input_data(block, query)
         loader.export(
@@ -44,13 +44,19 @@ def execute_sql_code(block, query):
         if should_query:
             # An error is thrown because the table doesn’t exist until you re-run the query
             # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
-            sleep(2)
-            return [
-                loader.load(
-                    f'SELECT * FROM {database}.{schema}.{table_name}',
-                    verbose=False,
-                ),
-            ]
+            tries = 0
+            while tries < 10:
+                tries += 1
+                try:
+                    result = loader.load(
+                        f'SELECT * FROM {database}.{schema}.{table_name}',
+                        verbose=False,
+                    )
+                    return [result]
+                except Exception as err:
+                    if '404' not in str(err):
+                        raise err
+                sleep(tries)
     elif DataSource.POSTGRES.value == data_provider:
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
