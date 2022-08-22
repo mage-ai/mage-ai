@@ -640,7 +640,11 @@ class Block:
             analyses.append(data)
         return analyses
 
-    def get_outputs(self, sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW):
+    def get_outputs(
+        self,
+        execution_partition: str = None,
+        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW
+    ) -> List[Dict]:
         if self.pipeline is None:
             return
         if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
@@ -652,9 +656,17 @@ class Block:
         variable_manager = self.pipeline.variable_manager
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
-            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+            all_variables = variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                self.uuid,
+                partition=execution_partition,
+            )
         elif BlockType.CHART == self.type:
-            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+            all_variables = variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                self.uuid,
+                partition=execution_partition,
+            )
         else:
             # For non-scratchpad blocks, return all variables in output_variables
             all_variables = self.output_variables.keys()
@@ -663,6 +675,7 @@ class Block:
                 self.pipeline.uuid,
                 self.uuid,
                 v,
+                partition=execution_partition,
                 sample=True,
                 sample_count=sample_count,
             )
@@ -671,6 +684,7 @@ class Block:
                     self.pipeline.uuid,
                     self.uuid,
                     v,
+                    partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
                 stats = analysis.get('statistics', {})

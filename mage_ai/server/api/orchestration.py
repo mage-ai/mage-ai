@@ -16,6 +16,13 @@ class ApiBlockRunListHandler(BaseHandler):
         self.finish()
 
 
+class ApiBlockRunOutputHandler(BaseHandler):
+    def get(self, block_run_id):
+        block_run = BlockRun.query.get(int(block_run_id))
+        outputs = block_run.get_outputs()
+        self.write(dict(outputs=outputs))
+
+
 class ApiPipelineRunListHandler(BaseHandler):
     model_class = PipelineRun
 

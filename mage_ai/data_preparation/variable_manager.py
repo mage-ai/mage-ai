@@ -68,6 +68,7 @@ class VariableManager:
             pipeline_uuid,
             block_uuid,
             variable_uuid,
+            partition=partition,
             variable_type=variable_type,
             spark=spark,
         )

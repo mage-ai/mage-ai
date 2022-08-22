@@ -132,7 +132,17 @@ class PipelineRun(BaseModel):
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
 
-    block_runs = relationship('BlockRun')
+    block_runs = relationship('BlockRun', back_populates='pipeline_run')
+
+    @property
+    def execution_partition(self) -> str:
+        if self.execution_date is None:
+            return str(self.pipeline_schedule_id)
+        else:
+            return '/'.join([
+                        str(self.pipeline_schedule_id),
+                        self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
+                    ])
 
     @classmethod
     def active_runs(self) -> List['PipelineRun']:
@@ -170,6 +180,8 @@ class BlockRun(BaseModel):
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
 
+    pipeline_run = relationship(PipelineRun, back_populates='block_runs')
+
     @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
@@ -179,3 +191,11 @@ class BlockRun(BaseModel):
         if len(block_runs) > 0:
             return block_runs[0]
         return None
+
+    def get_outputs(self, sample_count: int = None) -> List[Dict]:
+        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        block = pipeline.get_block(self.block_uuid)
+        return block.get_outputs(
+            execution_partition=self.pipeline_run.execution_partition,
+            sample_count=sample_count,
+        )
