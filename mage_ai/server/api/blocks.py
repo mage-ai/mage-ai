@@ -103,7 +103,6 @@ class ApiPipelineBlockListHandler(BaseHandler):
 
             block.update_content(content)
 
-        pipeline.add_block(block, payload.get('upstream_blocks', []))
         self.write(dict(block=block.to_dict(include_content=True)))
 
 
