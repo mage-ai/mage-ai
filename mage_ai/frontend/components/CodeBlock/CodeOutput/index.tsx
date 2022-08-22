@@ -169,7 +169,8 @@ function CodeOutput({
         const borderTop = idx >= 1;
 
         if (typeof data === 'string' && data.match(internalOutputRegex)) {
-          const rawString = data.replace(internalOutputRegex, '');
+          const parts = data.split('[__internal_output__]')
+          const rawString = parts[parts.length - 1];
           if (isJsonString(rawString)) {
             const {
               data: dataDisplay,

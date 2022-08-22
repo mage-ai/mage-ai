@@ -18,7 +18,9 @@ class Redshift(BaseSQLConnection):
         """
         Initializes settings for connecting to a cluster.
         """
-        super().__init__(verbose=True, **kwargs)
+        if kwargs.get('verbose') is not None:
+            kwargs.pop('verbose')
+        super().__init__(verbose=kwargs.get('verbose', True), **kwargs)
 
     def open(self) -> None:
         """

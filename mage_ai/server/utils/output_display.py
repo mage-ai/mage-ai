@@ -135,6 +135,7 @@ def __custom_output():
     from datetime import datetime
     from mage_ai.shared.parsers import encode_complex
     from pandas.core.common import SettingWithCopyWarning
+    import json
     import pandas as pd
     import simplejson
     import warnings
@@ -148,7 +149,7 @@ def __custom_output():
     if isinstance(_internal_output_return, pd.DataFrame):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
-        _rows = _sample.to_numpy().tolist()
+        _rows = json.loads(_sample.to_json(orient='split'))['data']
         _shape = _internal_output_return.shape
         _index = _sample.index.tolist()
 
