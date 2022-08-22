@@ -31,6 +31,7 @@ class PipelineScheduler:
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.pipeline_run.refresh()
         if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
             return
         else:
