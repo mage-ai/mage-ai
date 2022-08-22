@@ -90,10 +90,10 @@ class PipelineSchedule(BaseModel):
             return now.replace(second=0, microsecond=0, minute=0, hour=0)
         elif self.schedule_interval == '@hourly':
             return now.replace(second=0, microsecond=0, minute=0)
-        elif self.scheduel_interval == '@weekly':
+        elif self.schedule_interval == '@weekly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
-        elif self.scheduel_interval == '@monthly':
+        elif self.schedule_interval == '@monthly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         # TODO: Support cron syntax
         return None
@@ -101,6 +101,9 @@ class PipelineSchedule(BaseModel):
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
+        if self.start_time is not None and datetime.now() < self.start_time:
+            return False
+
         if self.schedule_interval == '@once':
             if len(self.pipeline_runs) == 0:
                 return True
@@ -129,7 +132,17 @@ class PipelineRun(BaseModel):
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
 
-    block_runs = relationship('BlockRun')
+    block_runs = relationship('BlockRun', back_populates='pipeline_run')
+
+    @property
+    def execution_partition(self) -> str:
+        if self.execution_date is None:
+            return str(self.pipeline_schedule_id)
+        else:
+            return '/'.join([
+                        str(self.pipeline_schedule_id),
+                        self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
+                    ])
 
     @classmethod
     def active_runs(self) -> List['PipelineRun']:
@@ -167,6 +180,8 @@ class BlockRun(BaseModel):
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
 
+    pipeline_run = relationship(PipelineRun, back_populates='block_runs')
+
     @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
@@ -176,3 +191,11 @@ class BlockRun(BaseModel):
         if len(block_runs) > 0:
             return block_runs[0]
         return None
+
+    def get_outputs(self, sample_count: int = None) -> List[Dict]:
+        pipeline = Pipeline.get(self.pipeline_run.pipeline_uuid)
+        block = pipeline.get_block(self.block_uuid)
+        return block.get_outputs(
+            execution_partition=self.pipeline_run.execution_partition,
+            sample_count=sample_count,
+        )

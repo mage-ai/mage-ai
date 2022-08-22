@@ -21,6 +21,7 @@ class VariableManager:
         block_uuid: str,
         variable_uuid: str,
         data: Any,
+        partition: str = None,
         variable_type: VariableType = None
     ) -> None:
         if type(data) is pd.DataFrame:
@@ -31,6 +32,7 @@ class VariableManager:
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
+            partition=partition,
             variable_type=variable_type,
         )
         variable.write_data(data)
@@ -40,12 +42,14 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
+        partition: str = None,
         variable_type: VariableType = None,
     ) -> None:
         Variable(
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
+            partition=partition,
             variable_type=variable_type,
         ).delete()
 
@@ -54,6 +58,7 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
+        partition: str = None,
         variable_type: VariableType = None,
         sample: bool = False,
         sample_count: int = None,
@@ -63,6 +68,7 @@ class VariableManager:
             pipeline_uuid,
             block_uuid,
             variable_uuid,
+            partition=partition,
             variable_type=variable_type,
             spark=spark,
         )
@@ -73,6 +79,7 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
+        partition: str = None,
         variable_type: VariableType = None,
         spark=None,
     ) -> Variable:
@@ -82,6 +89,7 @@ class VariableManager:
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
+            partition=partition,
             variable_type=variable_type,
         )
 
@@ -101,10 +109,16 @@ class VariableManager:
                 variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
 
-    def get_variables_by_block(self, pipeline_uuid: str, block_uuid: str) -> List[str]:
+    def get_variables_by_block(
+        self,
+        pipeline_uuid: str,
+        block_uuid: str,
+        partition: str = None,
+    ) -> List[str]:
         variable_dir_path = os.path.join(
             self.__pipeline_path(pipeline_uuid),
             VARIABLE_DIR,
+            partition or '',
             block_uuid,
         )
         if not os.path.exists(variable_dir_path):

@@ -23,7 +23,7 @@ from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
 from queue import Queue
-from typing import Callable, List, Set
+from typing import Callable, Dict, List, Set
 import asyncio
 import functools
 import json
@@ -104,7 +104,7 @@ def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
     log_func: Callable = None,
-    global_vars=None,
+    global_vars: Dict = None,
     redirect_outputs: bool = False,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
@@ -373,12 +373,13 @@ class Block:
 
     def execute_sync(
         self,
-        analyze_outputs=True,
-        custom_code=None,
-        global_vars=None,
-        redirect_outputs=False,
-        run_all_blocks=False,
-        update_status=True,
+        analyze_outputs: bool = True,
+        custom_code: str = None,
+        execution_partition: str = None,
+        global_vars: Dict = None,
+        redirect_outputs: bool = False,
+        run_all_blocks: bool = False,
+        update_status: bool = True,
     ):
         try:
             if not run_all_blocks:
@@ -393,6 +394,7 @@ class Block:
                     )
             output = self.execute_block(
                 custom_code=custom_code,
+                execution_partition=execution_partition,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
             )
@@ -412,6 +414,7 @@ class Block:
 
             self.store_variables(
                 variable_mapping,
+                execution_partition=execution_partition,
                 spark=(global_vars or dict()).get('spark'),
             )
             # Reset outputs cache
@@ -531,7 +534,13 @@ class Block:
 
             return block_function
 
-    def execute_block(self, custom_code=None, redirect_outputs=False, global_vars=None):
+    def execute_block(
+        self,
+        custom_code: str = None,
+        execution_partition: str = None,
+        redirect_outputs: bool = False,
+        global_vars: Dict = None,
+    ) -> Dict:
         upstream_block_uuids = []
         input_vars = []
         if self.pipeline is not None:
@@ -542,6 +551,7 @@ class Block:
                         self.pipeline.uuid,
                         upstream_block_uuid,
                         var,
+                        partition=execution_partition,
                         variable_type=VariableType.DATAFRAME,
                         spark=(global_vars or dict()).get('spark'),
                     )
@@ -631,7 +641,11 @@ class Block:
             analyses.append(data)
         return analyses
 
-    def get_outputs(self, sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW):
+    def get_outputs(
+        self,
+        execution_partition: str = None,
+        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW
+    ) -> List[Dict]:
         if self.pipeline is None:
             return
         if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
@@ -643,9 +657,17 @@ class Block:
         variable_manager = self.pipeline.variable_manager
         if self.type == BlockType.SCRATCHPAD:
             # For scratchpad blocks, return all variables in block variable folder
-            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+            all_variables = variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                self.uuid,
+                partition=execution_partition,
+            )
         elif BlockType.CHART == self.type:
-            all_variables = variable_manager.get_variables_by_block(self.pipeline.uuid, self.uuid)
+            all_variables = variable_manager.get_variables_by_block(
+                self.pipeline.uuid,
+                self.uuid,
+                partition=execution_partition,
+            )
         else:
             # For non-scratchpad blocks, return all variables in output_variables
             all_variables = self.output_variables.keys()
@@ -654,6 +676,7 @@ class Block:
                 self.pipeline.uuid,
                 self.uuid,
                 v,
+                partition=execution_partition,
                 sample=True,
                 sample_count=sample_count,
             )
@@ -662,6 +685,7 @@ class Block:
                     self.pipeline.uuid,
                     self.uuid,
                     v,
+                    partition=execution_partition,
                     variable_type=VariableType.DATAFRAME_ANALYSIS,
                 )
                 stats = analysis.get('statistics', {})
@@ -864,8 +888,9 @@ class Block:
 
     def store_variables(
         self,
-        variable_mapping,
-        override=False,
+        variable_mapping: Dict,
+        execution_partition: str = None,
+        override: bool = False,
         spark=None,
     ):
         if self.pipeline is None:
@@ -873,6 +898,7 @@ class Block:
         all_variables = self.pipeline.variable_manager.get_variables_by_block(
             self.pipeline.uuid,
             self.uuid,
+            partition=execution_partition,
         )
         removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
         for uuid, data in variable_mapping.items():
@@ -883,6 +909,7 @@ class Block:
                 self.uuid,
                 uuid,
                 data,
+                partition=execution_partition,
             )
         if override:
             for uuid in removed_variables:

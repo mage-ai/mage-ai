@@ -59,6 +59,7 @@ class PipelineScheduler:
             b.update(status=BlockRun.BlockRunStatus.RUNNING)
             ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
                 analyze_outputs=False,
+                execution_partition=self.pipeline_run.execution_partition,
                 update_status=False,
                 on_complete=self.on_block_complete,
                 on_failure=self.on_block_failure,
