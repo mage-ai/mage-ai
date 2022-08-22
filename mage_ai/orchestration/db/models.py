@@ -90,10 +90,10 @@ class PipelineSchedule(BaseModel):
             return now.replace(second=0, microsecond=0, minute=0, hour=0)
         elif self.schedule_interval == '@hourly':
             return now.replace(second=0, microsecond=0, minute=0)
-        elif self.scheduel_interval == '@weekly':
+        elif self.schedule_interval == '@weekly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0) - \
                 timedelta(days=now.weekday())
-        elif self.scheduel_interval == '@monthly':
+        elif self.schedule_interval == '@monthly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         # TODO: Support cron syntax
         return None
