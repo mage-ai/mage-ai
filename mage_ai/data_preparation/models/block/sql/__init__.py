@@ -46,6 +46,7 @@ def execute_sql_code(block, query):
             # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
             tries = 0
             while tries < 10:
+                sleep(tries)
                 tries += 1
                 try:
                     result = loader.load(
@@ -56,7 +57,6 @@ def execute_sql_code(block, query):
                 except Exception as err:
                     if '404' not in str(err):
                         raise err
-                sleep(tries)
     elif DataSource.POSTGRES.value == data_provider:
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
