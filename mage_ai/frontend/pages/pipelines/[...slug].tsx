@@ -36,6 +36,7 @@ import PipelineDetail from '@components/PipelineDetail';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
 import RecommendationsWindow from '@components/RecommendationsWindow';
+import Sidebar from '@components/Orchestration/Sidebar';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
@@ -62,6 +63,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
@@ -113,6 +115,7 @@ function PipelineDetailPage({
   }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
+  const [page, setPage] = useState<string>('develop');
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -289,6 +292,23 @@ function PipelineDetailPage({
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
   const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
+
+  // Orchestration
+  const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
+  const pipelineSchedules = useMemo(() => {
+    const schedulesByPipeline = {};
+    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline] = []);
+    pipelineSchedulesData
+      ?.pipeline_schedules
+      ?.forEach((schedule) => {
+        const pipelineUuid = schedule?.pipeline_uuid;
+        const currentSchedules = schedulesByPipeline[pipelineUuid];
+        currentSchedules.push(schedule);
+        schedulesByPipeline[pipelineUuid] = currentSchedules;
+      });
+    return schedulesByPipeline;
+  }, [pipelines, pipelineSchedulesData]);
+  const [selectedSchedule, setSelectedSchedule] = useState<SelectedScheduleType>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -1180,34 +1200,6 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const fileTreeRef = useRef(null);
-  const fileTree = useMemo(() => (
-    <ContextMenu
-      areaRef={fileTreeRef}
-      createPipeline={createPipeline}
-      deleteBlockFile={deleteBlockFile}
-      deletePipeline={deletePipeline}
-      enableContextItem
-      numPipelines={numPipelines}
-      type={ContextMenuEnum.FILE_BROWSER}
-    >
-      <FileBrowser
-        files={filesData?.files}
-        onSelectBlockFile={onSelectBlockFile}
-        openFile={openFile}
-        openPipeline={(uuid: string) => {
-          resetState();
-          router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-        }}
-        openSidekickView={openSidekickView}
-        ref={fileTreeRef}
-      />
-    </ContextMenu>
-  ), [
-    filesData?.files,
-    onSelectBlockFile,
-  ]);
-
   const finalSidekickViews = outputBlocks?.length > 0
     ? SIDEKICK_VIEWS
     : SIDEKICK_VIEWS.filter(({ key }) => key !== ViewKeyEnum.DATA);
@@ -1482,6 +1474,50 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const fileTreeRef = useRef(null);
+  const before = useMemo(() => {
+    if (page === 'develop') {
+      return (
+        <ContextMenu
+          areaRef={fileTreeRef}
+          createPipeline={createPipeline}
+          deleteBlockFile={deleteBlockFile}
+          deletePipeline={deletePipeline}
+          enableContextItem
+          numPipelines={numPipelines}
+          type={ContextMenuEnum.FILE_BROWSER}
+        >
+          <FileBrowser
+            files={filesData?.files}
+            onSelectBlockFile={onSelectBlockFile}
+            openFile={openFile}
+            openPipeline={(uuid: string) => {
+              resetState();
+              router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            }}
+            openSidekickView={openSidekickView}
+            ref={fileTreeRef}
+          />
+        </ContextMenu>
+      );
+    } else if (page === 'orchestrate') {
+      return (
+        <Sidebar
+          pipelineSchedules={pipelineSchedules}
+          selectedSchedule={selectedSchedule}
+          setSelectedSchedule={setSelectedSchedule}
+        />
+      );
+    }
+  }, [
+    page,
+    pipelines,
+    pipelineSchedules,
+    filesData?.files,
+    onSelectBlockFile,
+    selectedSchedule,
+  ]);
+
   return (
     <>
       <Head title={pipeline?.name} />
@@ -1536,7 +1572,7 @@ function PipelineDetailPage({
           </FlexContainer>
         )}
         afterWidth={afterWidth}
-        before={fileTree}
+        before={before}
         beforeHeader={(
           <FileHeaderMenu
             cancelPipeline={cancelPipeline}
