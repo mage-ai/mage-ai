@@ -294,6 +294,20 @@ function PipelineDetailPage({
   const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
 
   // Orchestration
+  const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
+  const pipelineSchedules = useMemo(() => {
+    const schedulesByPipeline = {};
+    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline] = []);
+    pipelineSchedulesData
+      ?.pipeline_schedules
+      ?.forEach((schedule) => {
+        const pipelineUuid = schedule?.pipeline_uuid;
+        const currentSchedules = schedulesByPipeline[pipelineUuid];
+        currentSchedules.push(schedule);
+        schedulesByPipeline[pipelineUuid] = currentSchedules;
+      });
+    return schedulesByPipeline;
+  }, [pipelines, pipelineSchedulesData]);
   const [selectedSchedule, setSelectedSchedule] = useState<SelectedScheduleType>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
@@ -1462,44 +1476,46 @@ function PipelineDetailPage({
 
   const fileTreeRef = useRef(null);
   const before = useMemo(() => {
-    // if (page === 'develop') {
-    //   return (
-    //     <ContextMenu
-    //       areaRef={fileTreeRef}
-    //       createPipeline={createPipeline}
-    //       deleteBlockFile={deleteBlockFile}
-    //       deletePipeline={deletePipeline}
-    //       enableContextItem
-    //       numPipelines={numPipelines}
-    //       type={ContextMenuEnum.FILE_BROWSER}
-    //     >
-    //       <FileBrowser
-    //         files={filesData?.files}
-    //         onSelectBlockFile={onSelectBlockFile}
-    //         openFile={openFile}
-    //         openPipeline={(uuid: string) => {
-    //           resetState();
-    //           router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-    //         }}
-    //         openSidekickView={openSidekickView}
-    //         ref={fileTreeRef}
-    //       />
-    //     </ContextMenu>
-    //   );
-    // } else if (page === 'orchestrate') {
+    if (page === 'develop') {
+      return (
+        <ContextMenu
+          areaRef={fileTreeRef}
+          createPipeline={createPipeline}
+          deleteBlockFile={deleteBlockFile}
+          deletePipeline={deletePipeline}
+          enableContextItem
+          numPipelines={numPipelines}
+          type={ContextMenuEnum.FILE_BROWSER}
+        >
+          <FileBrowser
+            files={filesData?.files}
+            onSelectBlockFile={onSelectBlockFile}
+            openFile={openFile}
+            openPipeline={(uuid: string) => {
+              resetState();
+              router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            }}
+            openSidekickView={openSidekickView}
+            ref={fileTreeRef}
+          />
+        </ContextMenu>
+      );
+    } else if (page === 'orchestrate') {
       return (
         <Sidebar
-          pipelines={pipelines}
+          pipelineSchedules={pipelineSchedules}
           selectedSchedule={selectedSchedule}
           setSelectedSchedule={setSelectedSchedule}
         />
       )
-    // }
+    }
   }, [
     page,
     pipelines,
+    pipelineSchedules,
     filesData?.files,
     onSelectBlockFile,
+    selectedSchedule,
   ]);
 
   return (

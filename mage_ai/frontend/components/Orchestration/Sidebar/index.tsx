@@ -1,4 +1,4 @@
-import { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
+import PipelineScheduleType, { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,20 +12,24 @@ import { Icon } from 'reaflow';
 import { EntryStyle } from './index.style';
 
 type SidebarProps = {
-  pipelines: PipelineType[];
+  pipelineSchedules: {
+    [uuid: string]: PipelineScheduleType[],
+  };
   selectedSchedule: SelectedScheduleType;
   setSelectedSchedule: (schedule: SelectedScheduleType) => void;
   width?: number;
 };
 
 type PipelineSchedulesProps = {
-  pipeline: PipelineType;
+  pipelineUuid: string;
+  schedules: PipelineScheduleType[]
   selectedSchedule: SelectedScheduleType;
   setSelectedSchedule: (schedule: SelectedScheduleType) => void;
 }
 
 function PipelineSchedules({
-  pipeline,
+  pipelineUuid,
+  schedules,
   selectedSchedule,
   setSelectedSchedule,
 }: PipelineSchedulesProps) {
@@ -36,20 +40,10 @@ function PipelineSchedules({
     scheduleName: selectedScheduleName,
   } = selectedSchedule || {};
 
-  const pipelineSchedules = [
-    {
-      name: 'test1'
-    },
-    {
-      name: 'test2'
-    },
-    {
-      name: 'test3'
-    }
-  ]
+  const pipelineSchedules = schedules;
 
   const pipelineSelected = useMemo(
-    () => selectedPipelineUuid === pipeline,
+    () => selectedPipelineUuid === pipelineUuid,
     [selectedPipelineUuid],
   );
 
@@ -74,7 +68,7 @@ function PipelineSchedules({
               muted={!pipelineSelected}
               textOverflow
             >
-              {pipeline}
+              {pipelineUuid}
             </Text>
           </FlexContainer>
         </Link>
@@ -83,23 +77,28 @@ function PipelineSchedules({
         const scheduleSelected = pipelineSelected && selectedScheduleName === name;
 
         return (
-          <EntryStyle
+          <Link
+            noHoverUnderline
+            noOutline
             onClick={() => setSelectedSchedule({
-              pipelineUuid: pipeline,
+              pipelineUuid,
               scheduleName: name,
             })}
-            selected={scheduleSelected}
           >
-            <Spacing pl={4}>
-              <Text
-                bold={scheduleSelected}
-                monospace
-                muted={!scheduleSelected}
-              >
-                {name}
-              </Text>
-            </Spacing>
-          </EntryStyle>
+            <EntryStyle
+              selected={scheduleSelected}
+            >
+              <Spacing pl={4}>
+                <Text
+                  bold={scheduleSelected}
+                  monospace
+                  muted={!scheduleSelected}
+                >
+                  {name}
+                </Text>
+              </Spacing>
+            </EntryStyle>
+          </Link>
         );
       })}
     </>
@@ -107,16 +106,17 @@ function PipelineSchedules({
 }
 
 function Sidebar({
-  pipelines,
+  pipelineSchedules,
   selectedSchedule,
   setSelectedSchedule,
   width,
 }: SidebarProps) {
   return (
     <FlexContainer flexDirection="column" width={width}>
-      {pipelines?.map(pipeline => (
+      {Object.entries(pipelineSchedules || {}).map(([pipelineUuid, schedules]) => (
         <PipelineSchedules
-          pipeline={pipeline}
+          pipelineUuid={pipelineUuid}
+          schedules={schedules}
           selectedSchedule={selectedSchedule}
           setSelectedSchedule={setSelectedSchedule}
         />
