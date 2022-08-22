@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+import multiprocessing
 
 
 class PipelineScheduler:
@@ -54,13 +55,18 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(b)
 
-        # TODO: Support processing queued block runs in separate workers/processes
+        # TODO: Support processing queued block runs in separate instances
         for b in queued_block_runs:
             b.update(status=BlockRun.BlockRunStatus.RUNNING)
-            ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
-                analyze_outputs=False,
-                execution_partition=self.pipeline_run.execution_partition,
-                update_status=False,
-                on_complete=self.on_block_complete,
-                on_failure=self.on_block_failure,
-            )
+
+            def __run_block():
+                ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
+                    analyze_outputs=False,
+                    execution_partition=self.pipeline_run.execution_partition,
+                    update_status=False,
+                    on_complete=self.on_block_complete,
+                    on_failure=self.on_block_failure,
+                )
+
+            proc = multiprocessing.Process(target=__run_block)
+            proc.start()
