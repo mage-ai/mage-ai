@@ -1111,7 +1111,7 @@ function PipelineDetailPage({
     sendMessage,
   ]);
 
-  const runBlock = useCallback((payload: {
+  const runBlockOrig = useCallback((payload: {
     block: BlockType;
     code: string;
     ignoreAlreadyRunning?: boolean;
@@ -1171,6 +1171,13 @@ function PipelineDetailPage({
     setMessages,
     setRunningBlocks,
     setTextareaFocused,
+  ]);
+
+  const runBlock = useCallback((payload) => {
+    return savePipelineContent().then(() => runBlockOrig(payload));
+  }, [
+    runBlockOrig,
+    savePipelineContent,
   ]);
 
   const fileTreeRef = useRef(null);
