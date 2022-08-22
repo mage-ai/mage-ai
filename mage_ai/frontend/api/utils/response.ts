@@ -48,7 +48,7 @@ type OptsProps = {
   successMessage?: string;
 };
 
-function parseErrorFromResponse(res, opts: OptsProps = {}) {
+export function parseErrorFromResponse(res, opts: OptsProps = {}) {
   const {
     code,
     errors,

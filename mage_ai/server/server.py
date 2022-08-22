@@ -131,15 +131,14 @@ class ApiPipelineHandler(BaseHandler):
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
-        self.write(
-            dict(
-                pipeline=pipeline.to_dict(
-                    include_content=update_content,
-                    include_outputs=update_content,
-                    sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
-                )
+        resp = dict(
+            pipeline=pipeline.to_dict(
+                include_content=update_content,
+                include_outputs=update_content,
+                sample_count=DATAFRAME_SAMPLE_COUNT_PREVIEW,
             )
         )
+        self.write(resp)
 
 
 class ApiPipelineExecuteHandler(BaseHandler):

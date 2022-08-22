@@ -32,7 +32,9 @@ class Snowflake(BaseSQLConnection):
             kwargs['login_timeout'] = DEFAULT_LOGIN_TIMEOUT
         if 'network_timeout' not in kwargs:
             kwargs['network_timeout'] = DEFAULT_NETWORK_TIMEOUT
-        super().__init__(verbose=True, **kwargs)
+        if kwargs.get('verbose') is not None:
+            kwargs.pop('verbose')
+        super().__init__(verbose=kwargs.get('verbose', True), **kwargs)
 
     def open(self) -> None:
         """

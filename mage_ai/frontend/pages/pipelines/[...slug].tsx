@@ -76,7 +76,7 @@ import {
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
-import { onSuccess } from '@api/utils/response';
+import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
@@ -406,6 +406,16 @@ function PipelineDetailPage({
   } = api.pipelines.detail(pipelineUUID);
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const pipeline = data?.pipeline;
+
+  useEffect(() => {
+    if (data?.error) {
+      setErrors({
+        errors: parseErrorFromResponse(data),
+        response: data,
+      });
+    }
+  }, [data]);
+
   const {
     data: dataKernels,
     mutate: fetchKernels,

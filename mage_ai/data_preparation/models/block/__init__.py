@@ -26,6 +26,7 @@ from queue import Queue
 from typing import Callable, List, Set
 import asyncio
 import functools
+import json
 import os
 import pandas as pd
 import simplejson
@@ -671,7 +672,7 @@ class Block:
                 data = dict(
                     sample_data=dict(
                         columns=columns_to_display,
-                        rows=data[columns_to_display].to_numpy().tolist(),
+                        rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
                     ),
                     shape=[row_count, len(column_types)],
                     type=DataType.TABLE,
@@ -856,8 +857,10 @@ class Block:
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
                 except Exception:
-                    print('\nFailed to analyze dataframe:')
-                    print(traceback.format_exc())
+                    pass
+                    # TODO: we use to silently fail, but it looks bad when using BigQuery
+                    # print('\nFailed to analyze dataframe:')
+                    # print(traceback.format_exc())
 
     def store_variables(
         self,

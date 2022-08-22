@@ -1,12 +1,19 @@
-from mage_ai.data_preparation.models.block.sql import postgres, redshift, snowflake
+from mage_ai.data_preparation.models.block.sql import (
+    bigquery,
+    postgres,
+    redshift,
+    snowflake,
+)
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
+from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from mage_ai.io.redshift import Redshift
 from mage_ai.io.snowflake import Snowflake
 from os import path
+from time import sleep
 
 
 def execute_sql_code(block, query):
@@ -20,7 +27,37 @@ def execute_sql_code(block, query):
     table_name = block.table_name
     should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
 
-    if DataSource.POSTGRES.value == data_provider:
+    if DataSource.BIGQUERY.value == data_provider:
+        loader = BigQuery.with_config(config_file_loader)
+        bigquery.create_upstream_block_tables(loader, block)
+
+        query_string = bigquery.interpolate_input_data(block, query)
+        loader.export(
+            None,
+            f'{schema}.{table_name}',
+            database=database,
+            if_exists='replace',
+            query_string=query_string,
+            verbose=BlockType.DATA_EXPORTER == block.type,
+        )
+
+        if should_query:
+            # An error is thrown because the table doesn’t exist until you re-run the query
+            # NotFound: 404 Not found: Table database:schema.table_name was not found in location XX
+            tries = 0
+            while tries < 10:
+                sleep(tries)
+                tries += 1
+                try:
+                    result = loader.load(
+                        f'SELECT * FROM {database}.{schema}.{table_name}',
+                        verbose=False,
+                    )
+                    return [result]
+                except Exception as err:
+                    if '404' not in str(err):
+                        raise err
+    elif DataSource.POSTGRES.value == data_provider:
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
 

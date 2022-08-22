@@ -31,10 +31,9 @@ class BigQuery(BaseSQLDatabase):
         All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
         to the Google BigQuery client, accepting all other configuration settings there.
         """
-        verbose = kwargs.get('verbose')
-        if verbose is not None:
+        if kwargs.get('verbose') is not None:
             kwargs.pop('verbose')
-        super().__init__(verbose=verbose)
+        super().__init__(verbose=kwargs.get('verbose', True))
 
         credentials = kwargs.get('credentials')
         if credentials is None:
@@ -51,7 +50,14 @@ class BigQuery(BaseSQLDatabase):
         with self.printer.print_msg(f'Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
 
-    def load(self, query_string: str, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame:
+    def load(
+        self,
+        query_string: str,
+        limit: int = QUERY_ROW_LIMIT,
+        display_query: str = None,
+        verbose: bool = True,
+        **kwargs,
+    ) -> DataFrame:
         """
         Loads data from BigQuery into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. When a select query
@@ -68,8 +74,20 @@ class BigQuery(BaseSQLDatabase):
         Returns:
             DataFrame: Data frame associated with the given query.
         """
-        with self.printer.print_msg(f'Loading data frame with query \'{query_string}\''):
-            query_string = self._clean_query(query_string)
+
+        print_message = 'Loading data'
+        if verbose:
+            print_message += ' with query'
+
+            if display_query:
+                for line in display_query.split('\n'):
+                    print_message += f'\n{line}'
+            else:
+                print_message += f'\n{query_string}'
+
+        query_string = self._clean_query(query_string)
+
+        with self.printer.print_msg(print_message):
             return self.client.query(
                 self._enforce_limit(query_string, limit), *kwargs
             ).to_dataframe()
@@ -78,7 +96,10 @@ class BigQuery(BaseSQLDatabase):
         self,
         df: DataFrame,
         table_id: str,
+        database: str = None,
         if_exists: str = 'replace',
+        query_string: str = None,
+        verbose: bool = True,
         **configuration_params,
     ) -> None:
         """
@@ -99,20 +120,57 @@ class BigQuery(BaseSQLDatabase):
             is ignored (as both define the same functionality).
             **configuration_params: Configuration parameters for export job
         """
-        with self.printer.print_msg(f'Exporting data frame to table \'{table_id}\''):
-            config = LoadJobConfig(**configuration_params)
-            if 'write_disposition' not in configuration_params:
-                if if_exists == 'replace':
-                    config.write_disposition = WriteDisposition.WRITE_TRUNCATE
-                elif if_exists == 'append':
-                    config.write_disposition = WriteDisposition.WRITE_APPEND
-                elif if_exists == 'fail':
-                    config.write_disposition = WriteDisposition.WRITE_EMPTY
+
+        def __process(database):
+            if query_string:
+                parts = table_id.split('.')
+                if len(parts) == 2:
+                    schema, table_name = parts
+                elif len(parts) == 3:
+                    database, schema, table_name = parts
+
+                df_existing = self.client.query(f"""
+SELECT 1
+FROM `{database}.{schema}.__TABLES_SUMMARY__`
+WHERE table_id = '{table_name}'
+""").to_dataframe()
+
+                table_doesnt_exist = df_existing.empty
+
+                if table_doesnt_exist:
+                    command = 'CREATE TABLE'
+                elif if_exists == 'replace':
+                    self.client.query(f'DROP TABLE {database}.{schema}.{table_name}')
+                    command = 'CREATE TABLE'
                 else:
-                    raise ValueError(
-                        f'Invalid policy specified for handling existence of table: \'{if_exists}\''
-                    )
-            self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+                    command = 'INSERT INTO'
+
+                sql = f"""
+{command} {table_id} AS
+{query_string}
+"""
+                self.client.query(sql)
+
+            else:
+                config = LoadJobConfig(**configuration_params)
+                if 'write_disposition' not in configuration_params:
+                    if if_exists == 'replace':
+                        config.write_disposition = WriteDisposition.WRITE_TRUNCATE
+                    elif if_exists == 'append':
+                        config.write_disposition = WriteDisposition.WRITE_APPEND
+                    elif if_exists == 'fail':
+                        config.write_disposition = WriteDisposition.WRITE_EMPTY
+                    else:
+                        raise ValueError(
+                            f'Invalid policy specified for handling existence of table: \'{if_exists}\''
+                        )
+                self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+
+        if verbose:
+            with self.printer.print_msg(f'Exporting data to table \'{table_id}\''):
+                __process(database=database)
+        else:
+            __process(database=database)
 
     def execute(self, query_string: str, **kwargs) -> None:
         """

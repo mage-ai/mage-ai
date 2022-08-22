@@ -880,7 +880,9 @@ function CodeBlockProps({
                   ))}
                 </Select>
 
-                {DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER] && (
+                {(DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
+                  || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
+                ) && (
                   <>
                     <Spacing mr={1} />
 
