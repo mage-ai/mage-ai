@@ -1,4 +1,6 @@
 from typing import Callable, Dict
+import json
+import requests
 
 
 class BlockExecutor:
@@ -10,6 +12,7 @@ class BlockExecutor:
     def execute(
         self,
         analyze_outputs: bool = False,
+        callback_url: str = None,
         execution_partition: str = None,
         global_vars: Dict = None,
         update_status: bool = False,
@@ -26,6 +29,24 @@ class BlockExecutor:
         except Exception as e:
             if on_failure is not None:
                 on_failure(self.block_uuid)
+            elif callback_url is not None:
+                self.__update_block_run_status(callback_url, 'failed')
             raise e
         if on_complete is not None:
             on_complete(self.block_uuid)
+        elif callback_url is not None:
+            self.__update_block_run_status(callback_url, 'completed')
+
+    def __update_block_run_status(callback_url: str, status: str):
+        response = requests.put(
+            callback_url,
+            data=json.dumps({
+                'block_run': {
+                    'status': status,
+                },
+            }),
+            headers={
+                'Content-Type': 'application/json',
+            },
+        )
+        print(json.dumps(response, indent=4, default=str))
