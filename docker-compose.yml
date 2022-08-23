@@ -4,7 +4,7 @@ services:
     image: mage/data
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./dev.Dockerfile
     command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT}"
     ports:
       - 6789:6789
@@ -15,7 +15,9 @@ services:
     tty: true # used for interactive debugging
   app:
     image: mage/data
-    build: .
+    build:
+      context: .
+      dockerfile: ./dev.Dockerfile
     depends_on:
       - server
     command: ./scripts/install_and_run.sh
