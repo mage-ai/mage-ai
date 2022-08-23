@@ -7,11 +7,7 @@ from mage_ai.data_preparation.models.block.sql import (
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource
-from mage_ai.io.bigquery import BigQuery
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.io.postgres import Postgres
-from mage_ai.io.redshift import Redshift
-from mage_ai.io.snowflake import Snowflake
 from os import path
 from time import sleep
 
@@ -28,6 +24,8 @@ def execute_sql_code(block, query):
     should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
 
     if DataSource.BIGQUERY.value == data_provider:
+        from mage_ai.io.bigquery import BigQuery
+
         loader = BigQuery.with_config(config_file_loader)
         bigquery.create_upstream_block_tables(loader, block)
 
@@ -58,6 +56,8 @@ def execute_sql_code(block, query):
                     if '404' not in str(err):
                         raise err
     elif DataSource.POSTGRES.value == data_provider:
+        from mage_ai.io.postgres import Postgres
+
         with Postgres.with_config(config_file_loader) as loader:
             postgres.create_upstream_block_tables(loader, block)
 
@@ -81,6 +81,8 @@ def execute_sql_code(block, query):
                     ),
                 ]
     elif DataSource.REDSHIFT.value == data_provider:
+        from mage_ai.io.redshift import Redshift
+
         with Redshift.with_config(config_file_loader) as loader:
             redshift.create_upstream_block_tables(loader, block)
 
@@ -102,6 +104,8 @@ def execute_sql_code(block, query):
                         ),
                     ]
     elif DataSource.SNOWFLAKE.value == data_provider:
+        from mage_ai.io.snowflake import Snowflake
+
         table_name = table_name.upper()
         database = database.upper()
         schema = schema.upper()
