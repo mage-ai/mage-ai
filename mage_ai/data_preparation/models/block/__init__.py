@@ -655,22 +655,13 @@ class Block:
                 return []
         outputs = []
         variable_manager = self.pipeline.variable_manager
-        if self.type == BlockType.SCRATCHPAD:
-            # For scratchpad blocks, return all variables in block variable folder
-            all_variables = variable_manager.get_variables_by_block(
-                self.pipeline.uuid,
-                self.uuid,
-                partition=execution_partition,
-            )
-        elif BlockType.CHART == self.type:
-            all_variables = variable_manager.get_variables_by_block(
-                self.pipeline.uuid,
-                self.uuid,
-                partition=execution_partition,
-            )
-        else:
-            # For non-scratchpad blocks, return all variables in output_variables
-            all_variables = self.output_variables.keys()
+
+        all_variables = variable_manager.get_variables_by_block(
+            self.pipeline.uuid,
+            self.uuid,
+            partition=execution_partition,
+        )
+
         for v in all_variables:
             data = variable_manager.get_variable(
                 self.pipeline.uuid,
