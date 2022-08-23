@@ -73,6 +73,7 @@ Commands:
     elif command == 'run' or command == 'test':
         from mage_ai.data_preparation.models.pipeline import Pipeline
         from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
+        from mage_ai.data_preparation.repo_manager import set_repo_path
         from mage_ai.data_preparation.variable_manager import get_global_variables
         from mage_ai.shared.hash import merge_dict
 
@@ -91,6 +92,7 @@ Commands:
             runtime_variables = parse_runtime_variables(runtime_vars)
 
         project_path = os.path.abspath(project_path)
+        set_repo_path(project_path)
         sys.path.append(os.path.dirname(project_path))
         pipeline = Pipeline(pipeline_uuid, repo_path=project_path)
 
