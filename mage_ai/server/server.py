@@ -22,6 +22,7 @@ from mage_ai.server.api.blocks import (
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.orchestration import (
+    ApiBlockRunDetailHandler,
     ApiBlockRunListHandler,
     ApiBlockRunOutputHandler,
     ApiPipelineRunListHandler,
@@ -313,6 +314,7 @@ def make_app():
         ),
         (r'/websocket/', WebSocketServer),
         (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
+        (r'/api/block_runs/(?P<block_run_id>.+)', ApiBlockRunDetailHandler),
         (r'/api/block_runs/(?P<block_run_id>.+)/outputs', ApiBlockRunOutputHandler),
         (r'/api/files', ApiFileListHandler),
         (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),

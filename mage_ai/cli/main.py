@@ -102,7 +102,7 @@ Commands:
         PipelineExecutor.get_executor(pipeline).execute(
             analyze_outputs=False,
             global_vars=global_vars,
-            run_tests=command=='test',
+            run_tests=command == 'test',
             update_status=False,
         )
     elif command == 'create_spark_cluster':

@@ -3,6 +3,20 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 
 
+class ApiBlockRunDetailHandler(BaseHandler):
+    model_class = BlockRun
+
+    def put(self, block_run_id):
+        payload = self.get_payload()
+        # Only allow update block run status
+        status = payload.get('status')
+        if status is not None:
+            block_run = BlockRun.query.get(int(block_run_id))
+            if status != block_run.status:
+                block_run.update(status=status)
+        self.write(dict(block_run=block_run.to_dict()))
+
+
 class ApiBlockRunListHandler(BaseHandler):
     model_class = BlockRun
 
