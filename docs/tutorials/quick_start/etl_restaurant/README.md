@@ -39,7 +39,7 @@ Then, click the name of the pipeline and rename it to `etl demo`.
 
 ## 2. Load data
 
-1. Click the `+ Data loader` button and select the template called `API`.
+1. Click the `+ Data loader` button, select `Python`, then click the template called `API`.
 2. Rename the block to `load dataset`.
 3. In the function named `load_data_from_api`, set the `url` variable to:
 `https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv`.
@@ -59,7 +59,6 @@ Here is what the code should look like:
 import io
 import pandas as pd
 import requests
-from os import path
 from pandas import DataFrame
 
 if 'data_loader' not in globals():
@@ -138,7 +137,7 @@ Your chart should look like:
 
 Let’s transform the data to add a column that counts the number of meals for each user.
 
-1. Click the `+ Transformer` button, select `Aggregate`, then click `Aggregate by distinct count`.
+1. Click the `+ Transformer` button, select `Python`, select `Aggregate`, then click `Aggregate by distinct count`.
 2. Rename the block to `transform data`.
 3. Change the argument named `arguments` to `arguments=['meal transaction ID']`.
 4. In the dictionary with the `'groupby_columns'` key, change the value to `{'groupby_columns': ['user ID']}`.
@@ -230,7 +229,7 @@ default:
 
 ### 5b. Export data
 
-1. Click the `+ Data exporter` button and select the template called `PostgreSQL`.
+1. Click the `+ Data exporter` button, select `Python`, and select the template called `PostgreSQL`.
 1. Set `schema_name` to `public`.
 1. Set `table_name` to `restaurant_data_transformed_something_unique`.
 Note: change the `something_unique` part of the table name to something truly unique since you’ll be writing to the same demo database as others.
@@ -260,7 +259,7 @@ Pipeline etl_demo execution complete.
 
 We can now query the transformed data from PostgreSQL.
 
-1. Click the `+ Data loader` button and select the template called `PostgreSQL`.
+1. Click the `+ Data loader` button, select `Python`, and select the template called `PostgreSQL`.
 1. Set `query` to `SELECT * FROM restaurant_data_transformed_initial_demo`.
 1. Run the block.
 

@@ -14,6 +14,8 @@ In this tutorial, we’ll create a pipeline that does the following:
 If you prefer to skip the tutorial and view the finished code,
 follow [this guide](use_completed_pipeline.md).
 
+If you haven’t setup a project before, check out the [setup guide](../setup.md) before starting.
+
 ## Table of contents
 
 1. [Setup](#1-setup)
@@ -26,35 +28,7 @@ follow [this guide](use_completed_pipeline.md).
 
 ## 1. Setup
 
-### 1a. Initialize project
-
-In your terminal, run this command:
-
-<b>Docker</b>
-```bash
-./scripts/init.sh demo_project
-```
-
-<b>pip</b>
-```bash
-mage init demo_project
-```
-
-### 2a. Start the tool
-
-<b>Docker</b>
-```bash
-./scripts/start.sh demo_project
-```
-
-<b>pip</b>
-```bash
-mage start demo_project
-```
-
-Open [http://localhost:6789](http://localhost:6789) in your browser.
-
-### 3a. Add Python packages to project
+### 1a. Add Python packages to project
 
 In the left sidebar (aka file browser), click on the `requirements.txt` file under the
 `demo_project/` folder.
@@ -72,7 +46,9 @@ requests
 scikit-learn
 ```
 
-### 4a. Install dependencies
+Then, save the file by pressing `⌘ + S`.
+
+### 2a. Install dependencies
 
 The simplest way is to run pip install from the tool.
 
@@ -150,7 +126,7 @@ plt.show()
 Then click the `Play button` on the right side of the block to run the code.
 Alternatively, you can use the following keyboard shortcuts to execute code in the block:
 
-- Command + Enter
+- ⌘ + Enter
 - Control + Enter
 - Shift + Enter (run code and add a new block)
 
@@ -165,55 +141,59 @@ typing the letter D and then D again.
 
 ## 4. Load data
 
-1. Add a new data loader block by clicking the `+ Data loader` button.
-1. Rename the block to `load dataset`.
-1. Paste the following code and run the block:
+1. Click the `+ Data loader` button, select `Python`, then click the template called `API`.
+2. Rename the block to `load dataset`.
+3. In the function named `load_data_from_api`, set the `url` variable to:
+`https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv`.
+4. Run the block by clicking the play icon button or using the keyboard shortcuts `⌘ + Enter`, `Control + Enter`, or `Shift + Enter`.
 
-```python
-from pandas import DataFrame
-import io
-import pandas as pd
-import requests
-
-if 'data_loader' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
-
-
-@data_loader
-def load_data() -> DataFrame:
-    response = requests.get(
-      'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv',
-    )
-
-    return pd.read_csv(io.StringIO(response.text), sep=',')
-```
-
-After you run the block, you can immediately see a sample of the data in the block’s output.
+After you run the block (⌘ + Enter),
+you can immediately see a sample of the data in the block’s output.
 
 <img
   alt="load data"
   src="load-data.gif"
 />
 
-On the far right side of the screen (aka the Sidekick), there are 5 tabs you can explore:
+Here is what the code should look like:
 
-1. Tree: shows the dependencies of each block
-1. Data: detailed information of the underlying data
-1. Reports: data quality, feature profiles, etc.
-1. Graphs: charts
-1. Variables: how to access variables produced in other blocks
+```python
+import io
+import pandas as pd
+import requests
+from pandas import DataFrame
 
-Every data loader and transformer block will have its own state of information
-displayed on the right side.
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data_from_api(**kwargs) -> DataFrame:
+    """
+    Template for loading data from API
+    """
+    url = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'
+
+    response = requests.get(url)
+    return pd.read_csv(io.StringIO(response.text), sep=',')
+
+
+@test
+def test_output(df) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert df is not None, 'The output is undefined'
+```
 
 ## 5. Transform data
 
 We’re going to select numerical columns from the original dataset,
 then fill in missing values for those columns (aka impute).
 
-1. Add a new transformer block by clicking `+ Transformer` button.
-1. Click the link in the top right corner of the block labeled `Click to set parent blocks`.
-1. On the right side under the `Tree` tab, select the block named `load_dataset`, then click the `Save dependencies` button.
+1. Click the `+ Transformer` button, select `Python`, then click `Generic (no template)`.
 1. Rename the block to `extract and impute numbers`.
 1. Paste the following code in the block:
 
@@ -243,6 +223,9 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
     return fill_missing_values_with_median(select_number_columns(df))
 ```
 
+After you run the block (⌘ + Enter),
+you can immediately see a sample of the data in the block’s output.
+
 <img
   alt="transform data"
   src="transform-data.gif"
@@ -259,9 +242,7 @@ In this part, we’re going to accomplish the following:
 
 Here are the steps to take:
 
-1. Add a new data exporter block by clicking `+ Data exporter` button.
-1. Click the link in the top right corner of the block labeled `Click to set parent blocks`.
-1. On the right side under the `Tree` tab, select the block named `extract_and_impute_numbers`, then click the `Save dependencies` button.
+1. Add a new data exporter block by clicking `+ Data exporter` button, select `Python`, then click `Generic (no template)`.
 1. Rename the block to `train model`.
 1. Paste the following code in the block:
 
@@ -319,6 +300,8 @@ def export_data(df: DataFrame) -> None:
     y_train.to_csv(f'{cwd}/y_train')
     y_test.to_csv(f'{cwd}/y_test')
 ```
+
+Run the block (⌘ + Enter).
 
 <img
   alt="train model"
