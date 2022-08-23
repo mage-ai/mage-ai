@@ -12,7 +12,7 @@ Mage is an open-source tool for <b>building</b> and <b>deploying</b> data pipeli
 Here is a sample data pipeline defined across 3 files:
 
 ```python
-# load_data_from_file.py
+# data_loaders/load_data_from_file.py
 import pandas as pd
 
 
@@ -22,14 +22,14 @@ def load_data():
 ```
 
 ```python
-# select_columns.py
+# transformers/select_columns.py
 @transformer
 def transform_df(df, *args):
     return df[['Age', 'Fare', 'Survived']]
 ```
 
 ```python
-# export_to_file.py
+# data_exporters/export_to_file.py
 @data_exporter
 def export_data(df) -> None:
     df.to_csv('default_repo/titanic_transformed.csv')
