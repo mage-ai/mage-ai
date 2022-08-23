@@ -1,7 +1,6 @@
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.utils import template_env
-from mage_ai.services.s3 import s3
 from typing import Dict
 import asyncio
 import os
@@ -71,6 +70,8 @@ class PySparkPipelineExecutor(PipelineExecutor):
         return os.path.join(self.s3_path_prefix, f'scripts/{self.pipeline.uuid}.py')
 
     def upload_pipeline_execution_script(self, global_vars: Dict = None) -> None:
+        from mage_ai.services.s3 import s3
+
         execution_script_code = template_env.get_template(
             'pipeline_execution/spark_script.jinja',
         ).render(
