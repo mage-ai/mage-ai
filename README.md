@@ -77,7 +77,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
-Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use PySpark kernel in your notebook.
+<sub>Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use PySpark kernel in your notebook.</sub>
 
 ### Using pip
 
@@ -86,13 +86,11 @@ Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use Py
 pip install mage-ai
 ```
 
-For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](docs/README.md#installing-extra-packages).
+<sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](docs/README.md#installing-extra-packages).</sub>
 
-If you run into errors, please see [Install errors](docs/README.md#install-errors).
+<sub>If you run into errors, please see [Install errors](docs/README.md#install-errors).</sub>
 
-##### 2. Create new project and launch tool
-
-(change `demo_project` to any other name if you want):
+##### 2. Create new project and launch tool (change `demo_project` to any other name if you want):
 
 ```bash
 mage start demo_project
@@ -105,7 +103,6 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
 - [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
 - [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
-- [Coming soon] How to visualize your data with charts
 
 <br />
 
