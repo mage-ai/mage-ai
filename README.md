@@ -55,10 +55,10 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Tutorials](#-tutorials)
+1. [Features](#-features)
+1. [Documentation](#documentation)
 1. [Contributing](#%EF%B8%8F-contributing)
 1. [Community](#-community)
-1. [Features](docs/features/README.md)
-1. [Documentation](docs/README.md)
 
 # 🏃‍♀️ Quick start
 
@@ -105,6 +105,18 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
 - [Load data from API, transform it, and export it to PostgreSQL](docs/tutorials/quick_start/etl_restaurant/README.md)
 - [Integrate Mage into an existing Airflow project](docs/tutorials/airflow/integrate_into_existing_project/README.md)
+
+<br />
+
+# 🔮 Features
+
+Check out an overview of features [here](docs/features/README.md).
+
+<br />
+
+# 📚 Documentation
+
+Read more docs [here](docs/README.md).
 
 <br />
 
