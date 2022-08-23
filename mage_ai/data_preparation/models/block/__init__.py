@@ -724,7 +724,8 @@ class Block:
     def save_outputs(self, outputs, override=False):
         variable_mapping = dict()
         for o in outputs:
-            if all(k in o for k in ['variable_uuid', 'text_data']):
+            if all(k in o for k in ['variable_uuid', 'text_data']) and \
+                    o['variable_uuid'] != 'df':
                 variable_mapping[o['variable_uuid']] = o['text_data']
         self._outputs = outputs
         self.store_variables(variable_mapping, override=override)
@@ -900,7 +901,9 @@ class Block:
             self.uuid,
             partition=execution_partition,
         )
-        removed_variables = [v for v in all_variables if v not in variable_mapping.keys()]
+        # Not remove dataframe variables
+        removed_variables = [v for v in all_variables
+                             if v not in variable_mapping.keys() and v != 'df']
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
