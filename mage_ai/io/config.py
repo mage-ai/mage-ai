@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
-from botocore.exceptions import ClientError
 from enum import Enum
 from jinja2 import Template
 from mage_ai.data_preparation.shared.constants import REPO_PATH_ENV_VAR
 from pathlib import Path
 from typing import Any, Dict, Union
-import boto3
 import os
 import yaml
 
@@ -83,6 +81,8 @@ class BaseConfigLoader(ABC):
 
 class AWSSecretLoader(BaseConfigLoader):
     def __init__(self, **kwargs):
+        import boto3
+
         self.client = boto3.client('secretsmanager', **kwargs)
 
     def contains(
@@ -152,6 +152,8 @@ class AWSSecretLoader(BaseConfigLoader):
         Returns:
             Dict: response object returned by AWS Secrets Manager API
         """
+        from botocore.exceptions import ClientError
+
         try:
             return self.client.get_secret_value(
                 SecretID=secret_id,
