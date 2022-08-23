@@ -1194,6 +1194,16 @@ function PipelineDetailPage({
   ]);
 
   const runBlock = useCallback((payload) => {
+    const {
+      block,
+    } = payload;
+
+    setMessages((messagesPrevious) => {
+      delete messagesPrevious[block.uuid];
+
+      return messagesPrevious;
+    });
+
     return savePipelineContent().then(() => runBlockOrig(payload));
   }, [
     runBlockOrig,
