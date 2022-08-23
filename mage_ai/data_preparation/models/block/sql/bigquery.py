@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.models.constants import BlockLanguage
 from mage_ai.data_preparation.variable_manager import get_variable
+from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_input
 
 
 def create_upstream_block_tables(loader, block):
@@ -27,20 +28,8 @@ def create_upstream_block_tables(loader, block):
 
 
 def interpolate_input_data(block, query):
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        matcher = '{} df_{} {}'.format('{{', idx + 1, '}}')
-
-        if BlockLanguage.SQL == upstream_block.type:
-            configuration = upstream_block.configuration
-        else:
-            configuration = block.configuration
-
-        database = configuration.get('data_provider_database', '')
-        schema = configuration.get('data_provider_schema', '')
-
-        query = query.replace(
-            f'{matcher}',
-            f'{database}.{schema}.{upstream_block.table_name}',
-        )
-
-    return query
+    return interpolate_input(
+        block,
+        query,
+        lambda db, schema, tn: f'{db}.{schema}.{tn}',
+    )
