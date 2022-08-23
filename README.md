@@ -5,6 +5,8 @@
 
 # Intro
 
+<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
+
 Mage is an open-source tool for <b>building</b> and <b>deploying</b> data pipelines.
 
 Here is a sample data pipeline defined across 3 files:
@@ -57,8 +59,6 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Community](#-community)
 
 # 🏃‍♀️ Quick start
-
-<img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
 You can install Mage using Docker or `pip`:
 
