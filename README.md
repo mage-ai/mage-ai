@@ -7,12 +7,7 @@
 
 Mage is an open-source tool for <b>building</b> and <b>deploying</b> data pipelines.
 
-<img
-  alt="Mage"
-  src="media/tool-overview.png"
-/>
-
-A data pipeline defined across 3 different files:
+Here is a sample data pipeline defined across 3 files:
 
 ```python
 # load_data_from_file.py
@@ -54,6 +49,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 **Table of contents**
 
 1. [Quick start](#%EF%B8%8F-quick-start)
+1. [Demo video](#-demo-video-2-min)
 1. [Tutorials](#-tutorials)
 1. [Features](#-features)
 1. [Documentation](#documentation)
@@ -100,6 +96,14 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 
 <br />
 
+# 🎮 Demo video (2 min)
+
+[![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
+
+<sub><i>Click the image to play video</i></sub>
+
+<br />
+
 # 👩‍🏫 Tutorials
 
 - [Train model on Titanic dataset](docs/tutorials/quick_start/train_titanic_model/README.md)
@@ -111,6 +115,11 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 # 🔮 Features
 
 Check out an overview of features [here](docs/features/README.md).
+
+<img
+  alt="Mage"
+  src="media/tool-overview.png"
+/>
 
 <br />
 
