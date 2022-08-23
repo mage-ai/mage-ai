@@ -35,6 +35,7 @@ import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
 export type FolderSharedProps = {
+  onlyShowChildren?: boolean;
   onSelectBlockFile: (
     blockUUID: string,
     blockType: BlockTypeEnum,
@@ -58,6 +59,7 @@ type FolderProps = {
 function Folder({
   file,
   level,
+  onlyShowChildren,
   onSelectBlockFile,
   openFile,
   openPipeline,
@@ -118,7 +120,7 @@ function Folder({
         parent: file,
       }}
       key={`${uuid}/${f.name}`}
-      level={level + 1}
+      level={onlyShowChildren ? level : level + 1}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       openPipeline={openPipeline}
@@ -134,115 +136,117 @@ function Folder({
 
   return (
     <>
-      <div
-        className="row"
-        onClick={(e) => {
-          e.preventDefault();
-
-          if (disabled) {
-            return;
-          }
-
-          if (parentFile?.name === FOLDER_NAME_CHARTS) {
-            openSidekickView(ViewKeyEnum.CHARTS);
-            const block = getBlockFromFile(file);
-            if (block) {
-              onSelectBlockFile(
-                block.uuid,
-                block.type,
-                getFullPath(file).split('/').slice(1).join('/'),
-              );
-            }
-          }
-
-          if (isPipelineFolder) {
-            openPipeline(name);
-          } else if (children) {
-            setCollapsed((collapsedPrev) => {
-              set(uuid, !collapsedPrev);
-
-              return !collapsedPrev;
-            });
-          } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
-            // WARNING: this assumes the first part of a path is the default_repo
-            openFile(getFullPath(file).split('/').slice(1).join('/'));
-          } else {
-            const block = getBlockFromFile(file);
-            if (block) {
-              onSelectBlockFile(
-                block.uuid,
-                block.type,
-                getFullPath(file).split('/').slice(1).join('/'),
-              );
-            }
-          }
-        }}
-        onContextMenu={(e) => {
-          e.preventDefault();
-
-          if (disabled) {
-            setContextItem({ type: FileContextEnum.DISABLED });
-          } else if (isPipelineFolder) {
-            setContextItem({
-              data: {
-                name,
-              },
-              type: FileContextEnum.PIPELINE,
-            });
-          } else if (children) {
-            setContextItem({ type: FileContextEnum.FOLDER });
-          } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
-            setContextItem({ type: FileContextEnum.FILE });
-          } else {
-            setContextItem({
-              data: {
-                block: getBlockFromFile(file),
-              },
-              type: FileContextEnum.BLOCK_FILE,
-            });
-          }
-        }}
-        style={{
-          alignItems: 'center',
-          cursor: 'default',
-          display: 'flex',
-          minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
-          paddingBottom: UNIT / 4,
-          paddingLeft: (UNIT / 4) + (INDENT_WIDTH * level),
-          paddingRight: (UNIT / 4),
-          paddingTop: UNIT / 4,
-        }}
-      >
-        {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
-        {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
-        {!children && <div style={{ width: ICON_SIZE }} />}
-
+      {!onlyShowChildren && (
         <div
+          className="row"
+          onClick={(e) => {
+            e.preventDefault();
+
+            if (disabled) {
+              return;
+            }
+
+            if (parentFile?.name === FOLDER_NAME_CHARTS) {
+              openSidekickView(ViewKeyEnum.CHARTS);
+              const block = getBlockFromFile(file);
+              if (block) {
+                onSelectBlockFile(
+                  block.uuid,
+                  block.type,
+                  getFullPath(file).split('/').slice(1).join('/'),
+                );
+              }
+            }
+
+            if (isPipelineFolder) {
+              openPipeline(name);
+            } else if (children) {
+              setCollapsed((collapsedPrev) => {
+                set(uuid, !collapsedPrev);
+
+                return !collapsedPrev;
+              });
+            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
+              // WARNING: this assumes the first part of a path is the default_repo
+              openFile(getFullPath(file).split('/').slice(1).join('/'));
+            } else {
+              const block = getBlockFromFile(file);
+              if (block) {
+                onSelectBlockFile(
+                  block.uuid,
+                  block.type,
+                  getFullPath(file).split('/').slice(1).join('/'),
+                );
+              }
+            }
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+
+            if (disabled) {
+              setContextItem({ type: FileContextEnum.DISABLED });
+            } else if (isPipelineFolder) {
+              setContextItem({
+                data: {
+                  name,
+                },
+                type: FileContextEnum.PIPELINE,
+              });
+            } else if (children) {
+              setContextItem({ type: FileContextEnum.FOLDER });
+            } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
+              setContextItem({ type: FileContextEnum.FILE });
+            } else {
+              setContextItem({
+                data: {
+                  block: getBlockFromFile(file),
+                },
+                type: FileContextEnum.BLOCK_FILE,
+              });
+            }
+          }}
           style={{
-            marginLeft: UNIT / 2,
-            marginRight: UNIT / 2,
+            alignItems: 'center',
+            cursor: 'default',
+            display: 'flex',
+            minWidth: (level * INDENT_WIDTH) + (file.name.length * WIDTH_OF_SINGLE_CHARACTER) + (UNIT * 2),
+            paddingBottom: UNIT / 4,
+            paddingLeft: (UNIT / 4) + (INDENT_WIDTH * level),
+            paddingRight: (UNIT / 4),
+            paddingTop: UNIT / 4,
           }}
         >
-          {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
-          {color && (
-            <Circle
-              color={color}
-              size={ICON_SIZE}
-              square
-            />
-          )}
-        </div>
+          {children && !collapsed && <ChevronDown muted size={ICON_SIZE} />}
+          {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
+          {!children && <div style={{ width: ICON_SIZE }} />}
 
-        <Text
-          color={color}
-          default={!color && !disabled}
-          disabled={disabled}
-          monospace
-          small
-        >
-          {name}
-        </Text>
-      </div>
+          <div
+            style={{
+              marginLeft: UNIT / 2,
+              marginRight: UNIT / 2,
+            }}
+          >
+            {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
+            {color && (
+              <Circle
+                color={color}
+                size={ICON_SIZE}
+                square
+              />
+            )}
+          </div>
+
+          <Text
+            color={color}
+            default={!color && !disabled}
+            disabled={disabled}
+            monospace
+            small
+          >
+            {name}
+          </Text>
+        </div>
+      )}
 
       <div
         style={{

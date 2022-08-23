@@ -23,7 +23,7 @@ const Develop = ({
     <path
       clipRule="evenodd"
       d="M1 1H5V5H1V1ZM6 6V10H10V6H6ZM11 10V5H6V0H0V5V6V10V11V16H5H6H10H11H16V10H11ZM11 15H15V11H11V15ZM10 15V11H6V15H10ZM5 6V10H1V6H5ZM1 11H5V15H1V11Z"
-      fill="url(#paint0_linear_1930_66663)"
+      fill={fill || 'url(#paint0_linear_1930_66663)'}
       fillRule="evenodd"
     />
     <defs>

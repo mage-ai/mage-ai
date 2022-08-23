@@ -17,6 +17,7 @@ export const MAIN_MIN_WIDTH = UNIT * 13;
 
 export const ASIDE_HEADER_HEIGHT = PADDING_UNITS * 3 * UNIT;
 export const ASIDE_SUBHEADER_HEIGHT = UNIT * 6;
+export const ALL_HEADERS_HEIGHT = 2 * PADDING_UNITS * 3 * UNIT;
 
 type ScrollbarTrackType = {
   noScrollbarTrackBackground?: boolean;
@@ -39,6 +40,21 @@ export const HeaderStyle = styled.div<{
   ${props => props.beforeVisible && `
     left: ${BEFORE_DEFAULT_WIDTH}px;
     width: calc(100% - ${BEFORE_DEFAULT_WIDTH}px);
+  `}
+`;
+
+export const NewHeaderStyle = styled.div<any>`
+  border-bottom: 1px solid transparent;
+  height: ${ASIDE_HEADER_HEIGHT}px;
+  padding: 0 ${2 * UNIT}px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 4;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
+    border-color: ${(props.theme.borders || dark.borders).medium};
   `}
 `;
 
@@ -68,9 +84,9 @@ export const TabStyle = styled.div<{
 `;
 
 const ASIDE_STYLE = css`
-  height: calc(100% - ${ASIDE_HEADER_HEIGHT}px);
+  height: calc(100% - ${ALL_HEADERS_HEIGHT}px);
   position: fixed;
-  top: ${ASIDE_HEADER_HEIGHT}px;
+  top: ${ALL_HEADERS_HEIGHT}px;
   z-index: 2;
 
   ${props => `
@@ -118,7 +134,7 @@ export const AsideHeaderStyle = styled.div<{
   border-bottom: 1px solid transparent;
   height: ${ASIDE_HEADER_HEIGHT}px;
   position: fixed;
-  top: 0;
+  top: ${ASIDE_HEADER_HEIGHT}px;
   z-index: 4;
 
   ${hideScrollBar()}
@@ -128,6 +144,8 @@ export const AsideHeaderStyle = styled.div<{
   `}
 
   ${props => !props.visible && `
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
     border-color: ${(props.theme.borders || dark.borders).medium} !important;
   `}
 `;
@@ -184,12 +202,12 @@ export const DraggableStyle = styled.div<{
   ${ASIDE_DRAGGABLE_STYLE}
 
   ${props => typeof props.left !== 'undefined' && `
-    border-left: 1px solid transparent;
+    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
     left: ${props.left}px;
   `}
 
   ${props => typeof props.right !== 'undefined' && `
-    border-right: 1px solid transparent;
+    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
     right: ${props.right}px;
   `}
 `;

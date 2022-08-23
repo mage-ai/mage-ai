@@ -13,6 +13,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Tooltip from '@oracle/components/Tooltip';
 import {
   AFTER_MIN_WIDTH,
+  ALL_HEADERS_HEIGHT,
   ASIDE_HEADER_HEIGHT,
   AfterInnerStyle,
   AfterStyle,
@@ -27,6 +28,7 @@ import {
   MainContentInnerStyle,
   MainContentStyle,
   MainWrapper,
+  NewHeaderStyle,
 } from './index.style';
 import {
   ChevronLeft,
@@ -53,6 +55,7 @@ type TripleLayoutProps = {
   beforeMousedownActive: boolean;
   beforeWidth: number;
   children: any;
+  header?: any;
   mainContainerHeader?: any;
   mainContainerRef: any;
   setAfterHidden: (value: boolean) => void;
@@ -76,6 +79,7 @@ function TripleLayout({
   beforeMousedownActive,
   beforeWidth,
   children,
+  header,
   mainContainerHeader,
   mainContainerRef,
   setAfterHidden,
@@ -214,6 +218,12 @@ function TripleLayout({
         </NextHead>
       )}
 
+      {header && (
+        <NewHeaderStyle>
+          {header}
+        </NewHeaderStyle>
+      )}
+
       {before && (
         <BeforeStyle
           style={{
@@ -297,7 +307,7 @@ function TripleLayout({
         {mainContainerHeader}
 
         <MainContentStyle
-          headerOffset={mainContainerHeader ? ASIDE_HEADER_HEIGHT : null}
+          headerOffset={mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT}
           style={{
             width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
           }}

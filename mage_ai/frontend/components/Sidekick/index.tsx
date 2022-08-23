@@ -24,7 +24,7 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 
-import { ASIDE_HEADER_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { ALL_HEADERS_HEIGHT, ASIDE_HEADER_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close } from '@oracle/icons';
 import { FULL_WIDTH_VIEWS, MESSAGE_VIEWS, ViewKeyEnum } from './constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
@@ -110,7 +110,7 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const heightOffset = ASIDE_HEADER_HEIGHT;
+  const heightOffset = ALL_HEADERS_HEIGHT;
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const {

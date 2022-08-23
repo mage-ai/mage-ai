@@ -9,10 +9,7 @@ import {
 import KernelOutputType, {
     DataTypeEnum,
     DATA_TYPE_TEXTLIKE,
-    ExecutionStateEnum,
-    MsgType,
 } from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
 import Text from '@oracle/elements/Text';
 import { OutputContainerStyle } from './index.style';
 import { Close, PlayButton } from '@oracle/icons';
@@ -68,7 +65,6 @@ function PipelineExecution({
             </Text>
           </Button>
         )}
-
       </FlexContainer>
       <OutputContainerStyle noScrollbarTrackBackground>
         <CodeBlockStyle

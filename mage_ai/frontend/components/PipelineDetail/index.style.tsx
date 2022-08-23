@@ -35,14 +35,14 @@ export const OverlayStyle = styled.div`
 export const PipelineHeaderStyle = styled.div`
   height: ${ASIDE_HEADER_HEIGHT}px;
   position: sticky;
-  top: 0;
+  top: ${ASIDE_HEADER_HEIGHT}px;
   width: 100%;
   z-index: 5;
   overflow: auto;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).codeArea};
-    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+    background-color: ${(props.theme.background || dark.background).panel};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
   ${hideScrollBar()}
