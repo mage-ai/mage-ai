@@ -18,6 +18,7 @@ class BlockExecutor:
         update_status: bool = False,
         on_complete: Callable[[str], None] = None,
         on_failure: Callable[[str], None] = None,
+        **kwargs,
     ) -> None:
         try:
             self.block.execute_sync(

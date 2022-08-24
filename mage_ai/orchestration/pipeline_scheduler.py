@@ -63,6 +63,7 @@ class PipelineScheduler:
             def __run_block():
                 ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
                     analyze_outputs=False,
+                    block_run_id=b.id,
                     execution_partition=self.pipeline_run.execution_partition,
                     update_status=False,
                     on_complete=self.on_block_complete,
