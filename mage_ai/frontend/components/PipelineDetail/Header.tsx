@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
+import Router, { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Develop from '@oracle/icons/custom/Develop';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Orchestrate from '@oracle/icons/custom/Orchestrate';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { DARK_CONTENT_MUTED } from '@oracle/styles/colors/content';
@@ -12,33 +14,49 @@ import { Folder } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 
-const HEADER_BUTTONS = [
-  {
-    Icon: Develop,
-    name: 'develop',
-  },
-  // TODO: Uncomment when orchestration UI is ready
-  // {
-  //   Icon: Orchestrate,
-  //   name: 'jobs',
-  // },
-]
-
 type HeaderProps = {
   page: string;
+  pipeline: PipelineType;
   projectName: string;
-  setPage: (page: string) => void;
 };
 
 function Header({
   page,
+  pipeline,
   projectName,
-  setPage,
 }: HeaderProps) {
+  const router = useRouter();
+  const queryParams = router.query;
+
+  const headerButtons = useMemo(
+    () => ([
+      {
+        Icon: Develop,
+        name: 'develop',
+        onClick: () => {
+          Router.push({
+            pathname: `/pipelines/${pipeline.uuid}`,
+          });
+        }
+      },
+      // TODO: Uncomment when jobs is ready.
+      // {
+      //   Icon: Orchestrate,
+      //   name: 'jobs',
+      //   onClick: () => {
+      //     Router.push({
+      //       pathname: `/pipelines/${pipeline.uuid}/new_schedule`,
+      //     });
+      //   }
+      // },
+    ]),
+    [queryParams, pipeline],
+  );
+
 
   const buttons = useMemo(() => (
     <>
-      {HEADER_BUTTONS.map(({ Icon, name }) => {
+      {headerButtons.map(({ Icon, name, onClick }) => {
         const selected = page === name;
 
         return (
@@ -48,7 +66,7 @@ function Header({
               highlightOnHover={!selected}
               noBackground={!selected}
               notClickable={selected}
-              onClick={() => setPage(name)}
+              onClick={onClick}
             >
               <Text color={!selected && DARK_CONTENT_MUTED}>
                 {capitalize(name)}
@@ -58,7 +76,7 @@ function Header({
         );
       })}
     </>
-  ), [page]);
+  ), [headerButtons, page]);
 
   return (
     <FlexContainer fullHeight alignItems="center">

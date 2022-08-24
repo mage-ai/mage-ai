@@ -1,84 +1,102 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Router from 'next/router';
 
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
-import PipelineScheduleType, { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
+import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { CaretDown, CaretRight } from '@oracle/icons';
+import { Add, CaretDown, CaretRight } from '@oracle/icons';
 import { EntryStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { queryFromUrl } from '@utils/url';
 
 type SidebarProps = {
   pipelineSchedules: {
     [uuid: string]: PipelineScheduleType[],
   };
-  selectedSchedule: SelectedScheduleType;
-  setSelectedSchedule: (schedule: SelectedScheduleType) => void;
+  pipelineScheduleId: string;
+  pipelineUuid: string;
   width?: number;
 };
 
 type PipelineSchedulesProps = {
   pipelineUuid: string;
   schedules: PipelineScheduleType[];
-  selectedSchedule: SelectedScheduleType;
-  setSelectedSchedule: (schedule: SelectedScheduleType) => void;
+  selectedPipelineUuid: string;
+  selectedScheduleId: string;
 };
 
 function PipelineSchedules({
   pipelineUuid,
   schedules,
-  selectedSchedule,
-  setSelectedSchedule,
+  selectedPipelineUuid,
+  selectedScheduleId,
 }: PipelineSchedulesProps) {
-  const [expanded, setExpanded] = useState<boolean>(false);
-
-  const {
-    pipelineUuid: selectedPipelineUuid,
-    scheduleName: selectedScheduleName,
-  } = selectedSchedule || {};
-
   const pipelineSelected = useMemo(
     () => selectedPipelineUuid === pipelineUuid,
-    [selectedPipelineUuid],
+    [pipelineUuid, selectedPipelineUuid],
   );
+  const [expanded, setExpanded] = useState<boolean>(false);
+
+  useEffect(
+    () => {
+      if (pipelineSelected) {
+        setExpanded(true);
+      }
+    },
+    [pipelineSelected],
+  )
 
   return (
     <>
       <EntryStyle>
-        <Link
-          noHoverUnderline
-          noOutline
-          onClick={() => setExpanded(expanded => !expanded)}
-        >
-          <FlexContainer alignItems="end">
-            {expanded && (
-              <CaretDown muted size={3 * UNIT} />
-            )}
-            {!expanded && (
-              <CaretRight muted size={3 * UNIT} />
-            )}
-            <Text
-              bold={pipelineSelected}
-              monospace
-              muted={!pipelineSelected}
-              textOverflow
-            >
-              {pipelineUuid}
-            </Text>
-          </FlexContainer>
-        </Link>
+        <FlexContainer justifyContent="space-between">
+          <Link
+            noHoverUnderline
+            noOutline
+            onClick={() => setExpanded(expanded => !expanded)}
+          >
+            <Flex alignItems="end">
+              {expanded && (
+                <CaretDown muted size={3 * UNIT} />
+              )}
+              {!expanded && (
+                <CaretRight muted size={3 * UNIT} />
+              )}
+              <Text
+                bold={pipelineSelected}
+                monospace
+                muted={!pipelineSelected}
+                textOverflow
+              >
+                {pipelineUuid}
+              </Text>
+            </Flex>
+          </Link>
+          <Link
+            noHoverUnderline
+            noOutline
+            onClick={() => Router.push({
+              pathname: `/pipelines/${pipelineUuid}/new_schedule`,
+              query: queryFromUrl(),
+            })}
+          >
+            <Add size={2.5 * UNIT} />
+          </Link>
+        </FlexContainer>
       </EntryStyle>
-      {expanded && schedules?.map(({ name }) => {
-        const scheduleSelected = pipelineSelected && selectedScheduleName === name;
+      {expanded && schedules?.map(({ id, name }) => {
+        const scheduleSelected = pipelineSelected && selectedScheduleId === String(id);
 
         return (
           <Link
             noHoverUnderline
             noOutline
-            onClick={() => setSelectedSchedule({
-              pipelineUuid,
-              scheduleName: name,
+            onClick={() => Router.push({
+              pathname: `/pipelines/${pipelineUuid}/jobs/${id}`,
+              query: queryFromUrl(),
             })}
           >
             <EntryStyle
@@ -103,8 +121,8 @@ function PipelineSchedules({
 
 function Sidebar({
   pipelineSchedules,
-  selectedSchedule,
-  setSelectedSchedule,
+  pipelineScheduleId: selectedScheduleId,
+  pipelineUuid: selectedPipelineUuid,
   width,
 }: SidebarProps) {
   return (
@@ -113,8 +131,8 @@ function Sidebar({
         <PipelineSchedules
           pipelineUuid={pipelineUuid}
           schedules={schedules}
-          selectedSchedule={selectedSchedule}
-          setSelectedSchedule={setSelectedSchedule}
+          selectedPipelineUuid={selectedPipelineUuid}
+          selectedScheduleId={selectedScheduleId}
         />
       ))}
     </FlexContainer>

@@ -63,6 +63,7 @@ export type InputWrapperProps = {
   name?: string;
   negative?: boolean;
   noBackground?: boolean;
+  noBorder?: boolean;
   noBorderRadiusBottom?: boolean;
   noBorderUntilFocus?: boolean;
   noBorderUntilHover?: boolean;
@@ -228,7 +229,11 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     border-style: none;
   `}
 
-  ${props => props.noBorderUntilFocus && `
+  ${props => props.noBorder && `
+    border-style: none;
+  `}
+
+  ${props => !props.noBorder && props.noBorderUntilFocus && `
     border-style: none;
 
     &:focus {
@@ -236,7 +241,7 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     }
   `}
 
-  ${props => props.noBorderUntilHover && `
+  ${props => !props.noBorder && props.noBorderUntilHover && `
     border-style: none;
 
     &:hover {

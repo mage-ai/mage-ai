@@ -7,16 +7,26 @@ export enum ScheduleStatusEnum {
   INACTIVE = 'inactive',
 }
 
-export interface SelectedScheduleType {
-  pipelineUuid: string;
-  scheduleName: string;
+export enum ScheduleIntervalEnum {
+  ONCE = '@once',
+  HOURLY = '@hourly',
+  DAILY = '@daily',
+  WEEKLY = '@weekly',
+  MONTHLY = '@monthly',
 }
 
+export interface SelectedScheduleType {
+  pipelineUuid: string;
+  scheduleName?: string;
+}
+
+
 export default interface PipelineScheduleType {
-  name: string;
-  pipeline_uuid: string;
-  schedule_type: ScheduleTypeEnum;
-  start_time: string;
-  schedule_interval: string;
-  status: ScheduleStatusEnum;
+  id?: string;
+  name?: string;
+  pipeline_uuid?: string;
+  schedule_type?: ScheduleTypeEnum;
+  start_time?: string;
+  schedule_interval?: string;
+  status?: ScheduleStatusEnum;
 }
