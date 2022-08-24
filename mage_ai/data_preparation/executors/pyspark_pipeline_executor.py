@@ -22,6 +22,7 @@ class PySparkPipelineExecutor(PipelineExecutor):
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
+        run_tests: bool = False,
         update_status: bool = False,
     ) -> None:
         """
