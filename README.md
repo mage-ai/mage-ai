@@ -114,7 +114,9 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 
 # 🔮 Features
 
-Check out an overview of features [here](docs/features/README.md).
+- [Overview](docs/features/README.md)
+- [Roadmap](https://airtable.com/shrJS0cDOmQywb8vp)
+- [Changelog](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c)
 
 <img
   alt="Mage"
