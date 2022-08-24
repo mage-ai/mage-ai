@@ -37,7 +37,7 @@ class BlockExecutor:
         elif callback_url is not None:
             self.__update_block_run_status(callback_url, 'completed')
 
-    def __update_block_run_status(callback_url: str, status: str):
+    def __update_block_run_status(self, callback_url: str, status: str):
         response = requests.put(
             callback_url,
             data=json.dumps({
@@ -49,4 +49,4 @@ class BlockExecutor:
                 'Content-Type': 'application/json',
             },
         )
-        print(json.dumps(response, indent=4, default=str))
+        print(response.text)
