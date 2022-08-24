@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import styled from 'styled-components';
 import { FileContextEnum } from '@components/FileBrowser';
@@ -11,6 +11,7 @@ export type ContextMenuSharedProps = {
   createPipeline?: (data: any) => void;
   deletePipeline?: (uuid: string) => void;
   deleteBlockFile?: (b: BlockType) => void;
+  deleteWidget?: (b: BlockType) => void;
   numPipelines?: number;
 };
 
@@ -79,6 +80,7 @@ function ContextMenu({
   createPipeline,
   deleteBlockFile,
   deletePipeline,
+  deleteWidget,
   enableContextItem,
   numPipelines,
   type,
@@ -124,7 +126,14 @@ function ContextMenu({
     [FileContextEnum.BLOCK_FILE]: [
       {
         label: () => 'Delete',
-        onClick: () => deleteBlockFile(contextItem.data.block),
+        onClick: () => {
+          const { block } = contextItem.data;
+          if (block.type === BlockTypeEnum.CHART) {
+            deleteWidget(block);
+          } else {
+            deleteBlockFile(block);
+          }
+        },
         uuid: 'delete_block_file',
       },
     ],
