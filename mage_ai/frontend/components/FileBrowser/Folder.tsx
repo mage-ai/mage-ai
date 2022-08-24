@@ -224,33 +224,34 @@ function Folder({
           {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
           {!children && <div style={{ width: ICON_SIZE }} />}
 
-        <div
-          style={{
-            marginLeft: UNIT / 2,
-            marginRight: UNIT / 2,
-          }}
-        >
-          {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
-          {color && (
-            <Circle
-              color={color}
-              size={ICON_SIZE}
-              square
-            />
-          )}
-        </div>
+          <div
+            style={{
+              marginLeft: UNIT / 2,
+              marginRight: UNIT / 2,
+            }}
+          >
+            {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
+            {color && (
+              <Circle
+                color={color}
+                size={ICON_SIZE}
+                square
+              />
+            )}
+          </div>
 
-        <Text
-          color={color}
-          default={!color && !disabled}
-          disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
-          italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
-          monospace
-          small
-        >
-          {name}
-        </Text>
-      </div>
+          <Text
+            color={color}
+            default={!color && !disabled}
+            disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
+            italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
+            monospace
+            small
+          >
+            {name}
+          </Text>
+        </div>
+      )}
 
       <div
         style={{
