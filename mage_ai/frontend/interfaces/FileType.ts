@@ -8,6 +8,10 @@ export enum FileExtensionEnum {
   YML = 'yml',
 }
 
+export enum SpecialFileEnum {
+  INIT_PY = '__init__.py',
+}
+
 const SUPPORTED_FILE_EXTENSIONS = [
   FileExtensionEnum.SQL,
   FileExtensionEnum.TXT,

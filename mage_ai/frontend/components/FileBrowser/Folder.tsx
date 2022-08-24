@@ -4,6 +4,7 @@ import Circle from '@oracle/elements/Circle';
 import FileType, {
   FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
+  SpecialFileEnum,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
 import Text from '@oracle/elements/Text';
@@ -29,6 +30,7 @@ import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
+  getBlockUUIDFromFile,
   getFullPath,
 } from './utils';
 import { singularize } from '@utils/string';
@@ -46,13 +48,10 @@ export type FolderSharedProps = {
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
 };
 
-enum SpecialFileEnum {
-  INIT_PY = '__init__.py',
-}
-
 type FolderProps = {
   file: FileType;
   level: number;
+  pipelineBlockUuids: string[];
   theme: ThemeType;
 } & FolderSharedProps & ContextAreaProps;
 
@@ -64,6 +63,7 @@ function Folder({
   openFile,
   openPipeline,
   openSidekickView,
+  pipelineBlockUuids,
   setContextItem,
   theme,
 }: FolderProps) {
@@ -96,6 +96,9 @@ function Folder({
     ],
   );
   const uuid = `${level}/${name}`;
+  const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
+  const parentFolderName = parentFile?.name || '';
+  const isEditableCodeBlock = BLOCK_TYPES.includes(singularize(parentFolderName));
 
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
@@ -125,6 +128,7 @@ function Folder({
       openFile={openFile}
       openPipeline={openPipeline}
       openSidekickView={openSidekickView}
+      pipelineBlockUuids={pipelineBlockUuids}
       setContextItem={setContextItem}
       theme={theme}
     />
@@ -220,33 +224,33 @@ function Folder({
           {children && collapsed && <ChevronRight muted size={ICON_SIZE} />}
           {!children && <div style={{ width: ICON_SIZE }} />}
 
-          <div
-            style={{
-              marginLeft: UNIT / 2,
-              marginRight: UNIT / 2,
-            }}
-          >
-            {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
-            {color && (
-              <Circle
-                color={color}
-                size={ICON_SIZE}
-                square
-              />
-            )}
-          </div>
-
-          <Text
-            color={color}
-            default={!color && !disabled}
-            disabled={disabled}
-            monospace
-            small
-          >
-            {name}
-          </Text>
+        <div
+          style={{
+            marginLeft: UNIT / 2,
+            marginRight: UNIT / 2,
+          }}
+        >
+          {!color && <IconEl disabled={disabled} size={ICON_SIZE} />}
+          {color && (
+            <Circle
+              color={color}
+              size={ICON_SIZE}
+              square
+            />
+          )}
         </div>
-      )}
+
+        <Text
+          color={color}
+          default={!color && !disabled}
+          disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
+          italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
+          monospace
+          small
+        >
+          {name}
+        </Text>
+      </div>
 
       <div
         style={{

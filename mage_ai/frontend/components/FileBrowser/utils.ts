@@ -32,3 +32,15 @@ export function getBlockFromFile(
     };
   }
 }
+
+export function getBlockUUIDFromFile(
+  file: FileType,
+) {
+  const filename = file.name;
+  const nameParts = filename.split('.');
+  if (nameParts[nameParts.length - 1] === FileExtensionEnum.PY) {
+    nameParts.pop();
+  }
+
+  return nameParts.join('');
+}
