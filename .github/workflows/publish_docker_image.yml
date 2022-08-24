@@ -3,6 +3,10 @@ name: Build and publish Docker image
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Git branch'
+        required: true
+        default: master
       tag:
         description: 'Docker image tag'
         required: true
@@ -15,7 +19,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-      
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
