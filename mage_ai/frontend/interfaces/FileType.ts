@@ -12,6 +12,11 @@ export enum SpecialFileEnum {
   INIT_PY = '__init__.py',
 }
 
+export const CODE_BLOCK_FILE_EXTENSIONS = [
+  FileExtensionEnum.PY,
+  FileExtensionEnum.SQL,
+];
+
 const SUPPORTED_FILE_EXTENSIONS = [
   FileExtensionEnum.SQL,
   FileExtensionEnum.TXT,
