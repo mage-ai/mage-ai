@@ -26,6 +26,7 @@ import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
+import Header from '@components/PipelineDetail/Header';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KernelOutputType, {
   DataTypeEnum,
@@ -425,6 +426,7 @@ function PipelineDetailPage({
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID);
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
+  const projectName = useMemo(() => filesData?.files?.[0]?.name, [filesData]);
   const pipeline = data?.pipeline;
 
   useEffect(() => {
@@ -1369,6 +1371,14 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const headerMemo = useMemo(() => (
+    <Header
+      page={page}
+      projectName={projectName}
+      setPage={setPage}
+    />
+  ), [page, projectName, setPage])
+
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
       filePaths={selectedFilePaths}
@@ -1499,6 +1509,7 @@ function PipelineDetailPage({
         >
           <FileBrowser
             files={filesData?.files}
+            onlyShowChildren
             onSelectBlockFile={onSelectBlockFile}
             openFile={openFile}
             openPipeline={(uuid: string) => {
@@ -1510,7 +1521,7 @@ function PipelineDetailPage({
           />
         </ContextMenu>
       );
-    } else if (page === 'orchestrate') {
+    } else if (page === 'jobs') {
       return (
         <Sidebar
           pipelineSchedules={pipelineSchedules}
@@ -1598,6 +1609,7 @@ function PipelineDetailPage({
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
+        header={headerMemo}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
         setAfterHidden={setAfterHidden}
