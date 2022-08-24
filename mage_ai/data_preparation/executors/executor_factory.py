@@ -1,9 +1,5 @@
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
-from mage_ai.data_preparation.executors.ecs_block_executor import EcsBlockExecutor
-from mage_ai.data_preparation.executors.k8s_block_executor import K8sBlockExecutor
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-from mage_ai.data_preparation.executors.pyspark_block_executor import PySparkBlockExecutor
-from mage_ai.data_preparation.executors.pyspark_pipeline_executor import PySparkPipelineExecutor
 from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 
@@ -21,6 +17,8 @@ class ExecutorFactory:
             else:
                 executor_type = ExecutorType.LOCAL_PYTHON
         if executor_type == ExecutorType.PYSPARK:
+            from mage_ai.data_preparation.executors.pyspark_pipeline_executor \
+                import PySparkPipelineExecutor
             return PySparkPipelineExecutor(pipeline)
         else:
             return PipelineExecutor(pipeline)
@@ -38,10 +36,16 @@ class ExecutorFactory:
             else:
                 executor_type = ExecutorType.LOCAL_PYTHON
         if executor_type == ExecutorType.PYSPARK:
+            from mage_ai.data_preparation.executors.pyspark_block_executor \
+                import PySparkBlockExecutor
             return PySparkBlockExecutor(pipeline, block_uuid)
         elif executor_type == ExecutorType.ECS:
+            from mage_ai.data_preparation.executors.ecs_block_executor \
+                import EcsBlockExecutor
             return EcsBlockExecutor(pipeline, block_uuid)
         elif executor_type == ExecutorType.K8S:
+            from mage_ai.data_preparation.executors.k8s_block_executor \
+                import K8sBlockExecutor
             return K8sBlockExecutor(pipeline, block_uuid)
         else:
             return BlockExecutor(pipeline, block_uuid)
