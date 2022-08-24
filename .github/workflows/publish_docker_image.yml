@@ -3,6 +3,14 @@ name: Build and publish Docker image
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Git branch'
+        required: true
+        default: master
+      name:
+        description: 'Docker image name'
+        required: true
+        default: mageai
       tag:
         description: 'Docker image tag'
         required: true
@@ -15,7 +23,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-      
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -26,7 +36,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: mageai/mageai:${{ github.event.inputs.tag }}
+          images: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -40,5 +50,5 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: mageai/mageai:${{ github.event.inputs.tag }}
+          tags: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
           labels: ${{ steps.meta.outputs.labels }}
