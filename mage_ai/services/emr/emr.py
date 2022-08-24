@@ -45,7 +45,7 @@ def create_a_new_cluster(
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
     if type(emr_config) is dict:
-        emr_config = EmrConfig(config=emr_config)
+        emr_config = EmrConfig.load(config=emr_config)
 
     print('Creating cluster...')
 
@@ -190,7 +190,7 @@ def submit_spark_job(
         cluster_id = create_a_new_cluster(
             cluster_name,
             steps,
-            EmrConfig(config=emr_config),
+            EmrConfig.load(config=emr_config),
             bootstrap_script_path=bootstrap_script_path,
             idle_timeout=idle_timeout,
             log_uri=log_uri,
