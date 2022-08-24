@@ -1,13 +1,16 @@
 import React, { useContext } from 'react';
 import { ThemeContext } from 'styled-components';
 
+import BlockType from '@interfaces/BlockType';
 import FileType from '@interfaces/FileType';
 import Folder, { FolderSharedProps } from './Folder';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
 
 type FileBrowserProps = {
+  blocks: BlockType[];
   files: FileType[];
+  widgets?: BlockType[];
 } & FolderSharedProps & ContextAreaProps;
 
 export enum FileContextEnum {
@@ -19,10 +22,13 @@ export enum FileContextEnum {
 }
 
 function FileBrowser({
+  blocks = [],
   files,
+  widgets = [],
   ...props
 }: FileBrowserProps, ref) {
   const themeContext = useContext(ThemeContext);
+  const pipelineBlockUuids = blocks.concat(widgets).map(({ uuid }) => uuid);
 
   return (
     <ContainerStyle ref={ref}>
@@ -32,6 +38,7 @@ function FileBrowser({
           file={file}
           key={file.name}
           level={0}
+          pipelineBlockUuids={pipelineBlockUuids}
           theme={themeContext}
         />
       ))}

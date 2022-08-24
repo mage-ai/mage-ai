@@ -1,4 +1,7 @@
-import FileType, { FileExtensionEnum } from '@interfaces/FileType';
+import FileType, {
+  CODE_BLOCK_FILE_EXTENSIONS,
+  FileExtensionEnum,
+} from '@interfaces/FileType';
 import { BLOCK_TYPES } from '@interfaces/BlockType';
 import { singularize } from '@utils/string';
 
@@ -31,4 +34,17 @@ export function getBlockFromFile(
       uuid: fileName.replace(pyRegex, ''),
     };
   }
+}
+
+export function getBlockUUIDFromFile(
+  file: FileType,
+) {
+  const filename = file.name;
+  const nameParts = filename.split('.');
+  const fileExtension = nameParts[nameParts.length - 1] as FileExtensionEnum;
+  if (CODE_BLOCK_FILE_EXTENSIONS.includes(fileExtension)) {
+    nameParts.pop();
+  }
+
+  return nameParts.join('');
 }

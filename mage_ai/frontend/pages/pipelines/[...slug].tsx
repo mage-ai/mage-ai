@@ -1508,6 +1508,7 @@ function PipelineDetailPage({
           type={ContextMenuEnum.FILE_BROWSER}
         >
           <FileBrowser
+            blocks={blocks}
             files={filesData?.files}
             onlyShowChildren
             onSelectBlockFile={onSelectBlockFile}
@@ -1518,6 +1519,7 @@ function PipelineDetailPage({
             }}
             openSidekickView={openSidekickView}
             ref={fileTreeRef}
+            widgets={widgets}
           />
         </ContextMenu>
       );
@@ -1531,6 +1533,7 @@ function PipelineDetailPage({
       );
     }
   }, [
+    blocks,
     page,
     pipelines,
     pipelineSchedules,
