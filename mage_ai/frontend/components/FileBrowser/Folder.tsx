@@ -201,12 +201,16 @@ function Folder({
             } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX) || name === SpecialFileEnum.INIT_PY) {
               setContextItem({ type: FileContextEnum.FILE });
             } else {
-              setContextItem({
-                data: {
-                  block: getBlockFromFile(file),
-                },
-                type: FileContextEnum.BLOCK_FILE,
-              });
+              if (parentFile?.name === FOLDER_NAME_CHARTS && !fileUsedByPipeline) {
+                setContextItem({ type: FileContextEnum.FILE });
+              } else {
+                setContextItem({
+                  data: {
+                    block: getBlockFromFile(file),
+                  },
+                  type: FileContextEnum.BLOCK_FILE,
+                });
+              }
             }
           }}
           style={{

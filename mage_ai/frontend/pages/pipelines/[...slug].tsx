@@ -1376,7 +1376,7 @@ function PipelineDetailPage({
       projectName={projectName}
       setPage={setPage}
     />
-  ), [page, projectName, setPage])
+  ), [page, projectName, setPage]);
 
   const mainContainerHeaderMemo = useMemo(() => (
     <KernelStatus
@@ -1502,6 +1502,7 @@ function PipelineDetailPage({
           createPipeline={createPipeline}
           deleteBlockFile={deleteBlockFile}
           deletePipeline={deletePipeline}
+          deleteWidget={deleteWidget}
           enableContextItem
           numPipelines={numPipelines}
           type={ContextMenuEnum.FILE_BROWSER}
