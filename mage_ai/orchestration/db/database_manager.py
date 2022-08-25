@@ -14,7 +14,7 @@ class DatabaseManager:
 
     def run_migrations(self):
         cur_dirpath = os.path.abspath(os.path.dirname(__file__))
-        alembic_cfg = Config()
+        alembic_cfg = Config(os.path.join(cur_dirpath, 'alembic.ini'))
         alembic_cfg.set_main_option(
             'script_location',
             os.path.join(cur_dirpath, 'migrations'),
