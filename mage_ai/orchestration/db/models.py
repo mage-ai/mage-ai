@@ -3,7 +3,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.array import find
 from mage_ai.shared.strings import camel_to_snake_case
-from sqlalchemy import Column, DateTime, Enum, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, Enum, Integer, JSON, String, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.sql import func
@@ -80,6 +80,7 @@ class PipelineSchedule(BaseModel):
     start_time = Column(DateTime(timezone=True))
     schedule_interval = Column(String(50), default='@once')
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
+    variables = Column(JSON)
 
     pipeline_runs = relationship('PipelineRun')
 
