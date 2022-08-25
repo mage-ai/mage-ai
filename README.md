@@ -56,18 +56,16 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 ## Table of contents
 
 1. [Quick start](#%EF%B8%8F-quick-start)
-1. [Demo video](#-demo-video-2-min)
+1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Features](#-features)
-1. [Documentation](#documentation)
+1. [Documentation](#-documentation)
 1. [Contributing](#%EF%B8%8F-contributing)
 1. [Community](#-community)
 
 # 🏃‍♀️ Quick start
 
-Try an [online demo](http://demo.mage.ai/) or install Mage using Docker or `pip`:
-
-<sub>Note: the online demo is public, please don’t save anything sensitive.</sub>
+Install Mage using Docker or `pip`:
 
 ### Using Docker
 
@@ -103,7 +101,17 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 
 <br />
 
-# 🎮 Demo video (2 min)
+# 🎮 Demo
+
+## Live demo
+
+Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai/).
+
+> WARNING
+>
+> The live demo is public, please don’t save anything sensitive.
+
+## Demo video (2 min)
 
 [![Mage quick start demo](media/mage-youtube-preview.jpg)](https://www.youtube.com/watch?v=hrsErfPDits "Mage quick start demo")
 
