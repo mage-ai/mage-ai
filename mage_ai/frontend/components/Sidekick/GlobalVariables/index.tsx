@@ -46,7 +46,7 @@ const BUILD_CODE_SNIPPET_PREVIEW = (
   blockUUID: string,
   variableName: string,
 ) => `
-    ${variableName} = get_variable('${pipelineUUID}', '${blockUUID}', '${variableName}')
+${variableName} = get_variable('${pipelineUUID}', '${blockUUID}', '${variableName}')
 `;
 
 type GlobalVariablesProps = {
@@ -247,7 +247,11 @@ function GlobalVariables({
 
   const blockVariableTable = useMemo(() => {
     const copyText = (uuid) => 
-      `${uuid} = get_variable(${pipelineUUID}, ${selectedBlock?.uuid}, ${uuid})`
+      `from mage_ai.data_preparation.variable_manager import (
+    get_variable,
+)
+        
+${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
       
     return (
       <TableStyle width={tableWidth}>
@@ -263,7 +267,7 @@ function GlobalVariables({
     blockVariables,
     selectedBlock,
     tableWidth,
-  ])
+  ]);
 
   return (
     <Spacing p={PADDING_UNITS}>
