@@ -196,7 +196,10 @@ function CodeBlockProps({
       const {
         messages: messagesInit,
       } = initializeContentAndMessages([block]);
-      setMessages(messagesInit?.[block?.uuid] || []);
+      const msgs = messagesInit?.[block?.uuid];
+      if (msgs?.length >= 1) {
+        setMessages(msgs);
+      }
     }
   },
   [

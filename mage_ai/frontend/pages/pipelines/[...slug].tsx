@@ -541,7 +541,7 @@ function PipelineDetailPage({
 
           if (blockOverride?.uuid === block.uuid) {
             Object.entries(blockOverride).forEach(([k, v]) => {
-              if (typeof v === 'object') {
+              if (typeof v === 'object' && !Array.isArray(v)) {
                 Object.entries(v).forEach(([k2, v2]) => {
                   if (!blockPayload[k]) {
                     blockPayload[k] = {};
@@ -1200,13 +1200,12 @@ function PipelineDetailPage({
       block,
     } = payload;
 
-    setMessages((messagesPrevious) => {
-      delete messagesPrevious[block.uuid];
-
-      return messagesPrevious;
-    });
-
-    return savePipelineContent().then(() => runBlockOrig(payload));
+    return savePipelineContent({
+      block: {
+        outputs: [],
+        uuid: block.uuid,
+      },
+    }).then(() => runBlockOrig(payload));
   }, [
     runBlockOrig,
     savePipelineContent,
