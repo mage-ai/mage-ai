@@ -9,7 +9,9 @@
 
 Mage is an open-source tool for <b>building</b> and <b>deploying</b> data pipelines.
 
-Here is a sample data pipeline defined across 3 files:
+<br />
+
+<b>Here is a sample data pipeline defined across 3 files:</b>
 
 ```python
 # data_loaders/load_data_from_file.py
@@ -35,20 +37,23 @@ def export_data(df) -> None:
     df.to_csv('default_repo/titanic_transformed.csv')
 ```
 
-What the data pipeline looks like in the UI:
+<br />
+
+<b>What the data pipeline looks like in the UI:</b>
 
 <img
   alt="data pipeline overview"
   src="media/data-pipeline-overview.jpg"
 />
 
-
 New? We recommend reading about [blocks](docs/blocks/README.md) and
 learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/README.md).
 
+<br />
+
 [![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
 
-**Table of contents**
+## Table of contents
 
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Demo video](#-demo-video-2-min)
@@ -61,6 +66,8 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 # 🏃‍♀️ Quick start
 
 Try an [online demo](http://demo.mage.ai/) or install Mage using Docker or `pip`:
+
+<sub>Note: the online demo is public, please don’t save anything sensitive.</sub>
 
 ### Using Docker
 
