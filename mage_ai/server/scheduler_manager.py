@@ -1,4 +1,5 @@
 from enum import Enum
+from mage_ai.orchestration.db.database_manager import database_manager
 import multiprocessing
 
 
@@ -27,6 +28,7 @@ class SchedulerManager:
         from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
 
         def __run_scheduler():
+            database_manager.run_migrations()
             LoopTimeTrigger().start()
 
         if self.is_alive:
