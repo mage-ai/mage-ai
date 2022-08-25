@@ -60,7 +60,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 
 # 🏃‍♀️ Quick start
 
-You can install Mage using Docker or `pip`:
+Try an [online demo](http://demo.mage.ai/) or install Mage using Docker or `pip`:
 
 ### Using Docker
 
