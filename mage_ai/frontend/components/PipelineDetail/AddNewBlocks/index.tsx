@@ -125,6 +125,7 @@ function AddNewBlocks({
       >
         <FlexContainer>
           <FlyoutMenuWrapper
+            disableKeyboardShortcuts
             items={isPySpark
               ? dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]
               : [
@@ -173,6 +174,7 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
+            disableKeyboardShortcuts
             items={isPySpark
               ? allActionMenuItems
               : [
@@ -221,6 +223,7 @@ function AddNewBlocks({
           <Spacing ml={1} />
 
           <FlyoutMenuWrapper
+            disableKeyboardShortcuts
             items={isPySpark
               ? dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]
               : [

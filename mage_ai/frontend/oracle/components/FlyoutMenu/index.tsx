@@ -38,6 +38,7 @@ export type FlyoutMenuItemType = {
 };
 
 export type FlyoutMenuProps = {
+  disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
   onClickCallback?: () => void;
@@ -50,6 +51,7 @@ export type FlyoutMenuProps = {
 };
 
 function FlyoutMenu({
+  disableKeyboardShortcuts,
   items,
   left,
   onClickCallback,
@@ -83,6 +85,11 @@ function FlyoutMenu({
     uuidKeyboard,
     (event, keyMapping, keyHistory) => {
       if (!open) {
+        return;
+      }
+
+      if (disableKeyboardShortcuts) {
+        pauseEvent(event);
         return;
       }
 
