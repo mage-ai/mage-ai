@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import useWebSocket from 'react-use-websocket';
 
 import BlockCharts from '@components/BlockCharts';
 import BlockType, {
@@ -13,6 +12,7 @@ import Button from '@oracle/elements/Button';
 import Charts, { ChartsPropsShared } from './Charts';
 import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
+import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import FeatureProfiles from '@components/datasets/FeatureProfiles';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
@@ -24,9 +24,14 @@ import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
 
-import { ALL_HEADERS_HEIGHT, ASIDE_HEADER_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
+import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close } from '@oracle/icons';
-import { FULL_WIDTH_VIEWS, MESSAGE_VIEWS, ViewKeyEnum } from './constants';
+import {
+  FULL_WIDTH_VIEWS,
+  MESSAGE_VIEWS,
+  VH_PERCENTAGE,
+  ViewKeyEnum,
+} from './constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import {
@@ -289,7 +294,7 @@ function Sidekick({
             <FlexContainer
               alignItems="center"
               justifyContent="center"
-              verticalHeight={90}
+              verticalHeight={VH_PERCENTAGE}
               verticalHeightOffset={heightOffset}
               width={afterWidth}
             >
@@ -309,30 +314,43 @@ function Sidekick({
           )
         }
 
-        {ViewKeyEnum.CHARTS === activeView && (
-          <Charts
-            autocompleteItems={autocompleteItems}
-            blockRefs={blockRefs}
-            blocks={blocks}
-            chartRefs={chartRefs}
-            deleteWidget={deleteWidget}
-            fetchFileTree={fetchFileTree}
-            fetchPipeline={fetchPipeline}
-            messages={messages}
-            onChangeChartBlock={onChangeChartBlock}
-            pipeline={pipeline}
-            runBlock={runBlock}
-            runningBlocks={runningBlocks}
-            savePipelineContent={savePipelineContent}
-            selectedBlock={selectedBlock}
-            setAnyInputFocused={setAnyInputFocused}
-            setSelectedBlock={setSelectedBlock}
-            setTextareaFocused={setTextareaFocused}
-            textareaFocused={textareaFocused}
-            updateWidget={updateWidget}
-            widgets={widgets}
-            width={afterWidth}
-          />
+        {ViewKeyEnum.CHARTS === activeView && (widgets.length > 0
+          ?
+            <Charts
+              autocompleteItems={autocompleteItems}
+              blockRefs={blockRefs}
+              blocks={blocks}
+              chartRefs={chartRefs}
+              deleteWidget={deleteWidget}
+              fetchFileTree={fetchFileTree}
+              fetchPipeline={fetchPipeline}
+              messages={messages}
+              onChangeChartBlock={onChangeChartBlock}
+              pipeline={pipeline}
+              runBlock={runBlock}
+              runningBlocks={runningBlocks}
+              savePipelineContent={savePipelineContent}
+              selectedBlock={selectedBlock}
+              setAnyInputFocused={setAnyInputFocused}
+              setSelectedBlock={setSelectedBlock}
+              setTextareaFocused={setTextareaFocused}
+              textareaFocused={textareaFocused}
+              updateWidget={updateWidget}
+              widgets={widgets}
+              width={afterWidth}
+            />
+          :
+            <FlexContainer
+              alignItems="center"
+              justifyContent="center"
+              verticalHeight={VH_PERCENTAGE}
+              verticalHeightOffset={heightOffset}
+              width={afterWidth}
+            >
+              <Spacing pl={1} />
+              <EmptyCharts size={358} />
+              <Spacing pr={1} />
+            </FlexContainer>
         )}
       </SidekickContainerStyle>
     </>

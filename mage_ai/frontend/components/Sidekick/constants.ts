@@ -7,6 +7,7 @@ import {
 } from '@oracle/icons';
 
 export const VIEW_QUERY_PARAM = 'sideview';
+export const VH_PERCENTAGE = 90;
 
 export enum ViewKeyEnum {
   CHARTS = 'charts',
