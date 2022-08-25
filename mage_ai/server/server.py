@@ -38,6 +38,7 @@ from mage_ai.server.kernels import (
     KernelName,
     PIPELINE_TO_KERNEL_NAME,
 )
+from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 import argparse
@@ -248,6 +249,18 @@ class ApiPipelineVariableDetailHandler(BaseHandler):
         self.finish()
 
 
+class ApiSchedulerHandler(BaseHandler):
+    def get(self, action_type=None):
+        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+    def post(self, action_type):
+        if action_type == 'start':
+            scheduler_manager.start_scheduler()
+        elif action_type == 'stop':
+            scheduler_manager.stop_scheduler()
+        self.write(dict(scheduler=dict(status=scheduler_manager.get_status())))
+
+
 class KernelsHandler(BaseHandler):
     def get(self, kernel_id=None):
         kernels = []
@@ -371,6 +384,9 @@ def make_app():
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs',
             ApiPipelineRunListHandler,
         ),
+        (
+            r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler,
+        ),
         (r'/api/kernels', KernelsHandler),
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
@@ -422,16 +438,6 @@ async def main(
     await asyncio.Event().wait()
 
 
-def start_scheduler():
-    from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
-
-    def __run_scheduler():
-        LoopTimeTrigger().start()
-
-    proc = multiprocessing.Process(target=__run_scheduler)
-    proc.start()
-
-
 def start_server(
     host: str = None,
     port: str = None,
@@ -452,7 +458,7 @@ def start_server(
     set_repo_path(project)
 
     # Start a subprocess for scheduler
-    # start_scheduler()
+    # scheduler_manager.start_scheduler()
 
     # Start web server
     asyncio.run(
