@@ -1,8 +1,10 @@
 import FileType, {
   CODE_BLOCK_FILE_EXTENSIONS,
   FileExtensionEnum,
+  FOLDER_NAME_PIPELINES,
 } from '@interfaces/FileType';
 import { BLOCK_TYPES } from '@interfaces/BlockType';
+import { prependArray, removeAtIndex } from '@utils/array';
 import { singularize } from '@utils/string';
 
 export function getFullPath(
@@ -47,4 +49,17 @@ export function getBlockUUIDFromFile(
   }
 
   return nameParts.join('');
+}
+
+export function rearrangePipelinesFolderToTop(
+  files: FileType[],
+) {
+  const pipelinesFolder = files.find(f => f.name === FOLDER_NAME_PIPELINES);
+  const pipelinesFolderIdx = files.findIndex(f => f.name === FOLDER_NAME_PIPELINES);
+  const rearrangedFiles = prependArray(
+    pipelinesFolder,
+    removeAtIndex(files, pipelinesFolderIdx),
+  );
+
+  return rearrangedFiles;
 }
