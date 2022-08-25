@@ -927,6 +927,7 @@ function PipelineDetailPage({
       setBlocks([]);
       setWidgets([]);
       setOutputBlocks([]);
+      setPipelineMessages([]);
     }
   }, [
     pipelineUUID,
@@ -1450,6 +1451,7 @@ function PipelineDetailPage({
             beforeElement={<Add />}
             blackBorder
             compact
+            disabled={validBlocks?.length === 0}
             onClick={() => setShowAddCharts(true)}
             primaryGradient
             uuid="Pipeline/afterHeader/add_chart"

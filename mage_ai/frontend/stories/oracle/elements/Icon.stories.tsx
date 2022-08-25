@@ -62,6 +62,7 @@ import {
   Switch,
   Trash,
 } from '@oracle/icons';
+import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 
 const ICONS = [
@@ -92,6 +93,7 @@ const ICONS = [
   Cursor,
   Edit,
   Email,
+  EmptyCharts,
   Expand,
   FileIcon,
   FilledFileIcon,
