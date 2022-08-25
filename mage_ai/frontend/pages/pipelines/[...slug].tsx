@@ -927,6 +927,7 @@ function PipelineDetailPage({
       setBlocks([]);
       setWidgets([]);
       setOutputBlocks([]);
+      setPipelineMessages([]);
     }
   }, [
     pipelineUUID,
