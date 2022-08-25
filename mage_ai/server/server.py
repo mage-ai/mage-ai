@@ -473,4 +473,8 @@ if __name__ == '__main__':
     port = args.port
     project = args.project
 
-    start_server()
+    start_server(
+        host=host,
+        port=port,
+        project=project,
+    )
