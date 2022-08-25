@@ -3,6 +3,13 @@ from mage_ai.orchestration.db.database_manager import database_manager
 import multiprocessing
 
 
+def run_scheduler():
+    from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+
+    database_manager.run_migrations()
+    LoopTimeTrigger().start()
+
+
 class SchedulerManager:
     """
     Singleton class to manage scheduler process.
@@ -25,16 +32,10 @@ class SchedulerManager:
         return SchedulerManager.SchedulerStatus.STOPPED
 
     def start_scheduler(self):
-        from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
-
-        def __run_scheduler():
-            database_manager.run_migrations()
-            LoopTimeTrigger().start()
-
         if self.is_alive:
             return
 
-        proc = multiprocessing.Process(target=__run_scheduler)
+        proc = multiprocessing.Process(target=run_scheduler)
         proc.start()
         self.scheduler_process = proc
 
