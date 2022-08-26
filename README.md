@@ -134,7 +134,7 @@ Every user experience and technical design decision adheres to these principles.
 
 1. [Easy developer experience](docs/features/README.md#-easy-developer-experience)
 1. [Engineering best practices built-in](docs/features/README.md#engineering-best-practices-built-in)
-1. [Data is a 1st class citizen](docs/features/README.md#data-is-a-1st-class-citizen)
+1. [Data is a first-class citizen](docs/features/README.md#data-is-a-first-class-citizen)
 1. [Scaling made simple](docs/features/README.md#scaling-made-simple)
 
 <br />
