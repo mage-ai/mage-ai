@@ -67,6 +67,7 @@ class PipelineScheduler:
                     analyze_outputs=False,
                     block_run_id=b.id,
                     execution_partition=self.pipeline_run.execution_partition,
+                    global_vars=self.pipeline_run.pipeline_schedule.variables or dict(),
                     update_status=False,
                     on_complete=self.on_block_complete,
                     on_failure=self.on_block_failure,
