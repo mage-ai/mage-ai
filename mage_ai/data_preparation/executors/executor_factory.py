@@ -28,8 +28,14 @@ class ExecutorFactory:
         self,
         pipeline: Pipeline,
         block_uuid: str,
+        execution_partition: str = None,
         executor_type: ExecutorType = None
     ) -> BlockExecutor:
+        executor_kwargs = dict(
+            pipeline=pipeline,
+            block_uuid=block_uuid,
+            execution_partition=execution_partition,
+        )
         if executor_type is None:
             if pipeline.type == PipelineType.PYSPARK:
                 executor_type = ExecutorType.PYSPARK
@@ -38,14 +44,14 @@ class ExecutorFactory:
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_block_executor \
                 import PySparkBlockExecutor
-            return PySparkBlockExecutor(pipeline, block_uuid)
+            return PySparkBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.ECS:
             from mage_ai.data_preparation.executors.ecs_block_executor \
                 import EcsBlockExecutor
-            return EcsBlockExecutor(pipeline, block_uuid)
+            return EcsBlockExecutor(**executor_kwargs)
         elif executor_type == ExecutorType.K8S:
             from mage_ai.data_preparation.executors.k8s_block_executor \
                 import K8sBlockExecutor
-            return K8sBlockExecutor(pipeline, block_uuid)
+            return K8sBlockExecutor(**executor_kwargs)
         else:
-            return BlockExecutor(pipeline, block_uuid)
+            return BlockExecutor(**executor_kwargs)

@@ -8,14 +8,13 @@ class EcsBlockExecutor(BlockExecutor):
     def execute(
         self,
         block_run_id: int = None,
-        execution_partition: str = None,
         global_vars: Dict = None,
         **kwargs,
     ) -> None:
         cmd = f'mage run {self.pipeline.repo_config.repo_name} {self.pipeline.uuid}'
         options = [f'--block_uuid {self.block_uuid}']
-        if execution_partition is not None:
-            options.append(f'--execution_partition {execution_partition}')
+        if self.execution_partition is not None:
+            options.append(f'--execution_partition {self.execution_partition}')
         if block_run_id is not None:
             ip = get('https://api.ipify.org').content.decode('utf8')
             callback_url = f'http://{ip}/api/block_runs/{block_run_id}'

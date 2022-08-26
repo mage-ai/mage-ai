@@ -63,10 +63,13 @@ class PipelineScheduler:
             def __run_block():
                 print(f'Execute PipelineRun {self.pipeline_run.id}, BlockRun {b.id}: '
                       f'pipeline {self.pipeline.uuid} block {b.block_uuid}')
-                ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
+                ExecutorFactory.get_block_executor(
+                    self.pipeline,
+                    b.block_uuid,
+                    execution_partition=self.pipeline_run.execution_partition,
+                ).execute(
                     analyze_outputs=False,
                     block_run_id=b.id,
-                    execution_partition=self.pipeline_run.execution_partition,
                     global_vars=self.pipeline_run.pipeline_schedule.variables or dict(),
                     update_status=False,
                     on_complete=self.on_block_complete,

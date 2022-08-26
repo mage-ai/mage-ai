@@ -30,6 +30,18 @@ class ApiBlockRunListHandler(BaseHandler):
         self.finish()
 
 
+class ApiBlockRunLogHandler(BaseHandler):
+    def get(self, block_run_id):
+        block_run = BlockRun.query.get(int(block_run_id))
+        self.write(
+            dict(
+                log=dict(
+                    content=block_run.log_file.to_dict(include_content=True),
+                ),
+            ),
+        )
+
+
 class ApiBlockRunOutputHandler(BaseHandler):
     def get(self, block_run_id):
         block_run = BlockRun.query.get(int(block_run_id))
@@ -61,6 +73,18 @@ class ApiPipelineRunListHandler(BaseHandler):
         PipelineScheduler(pipeline_run).start()
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
+
+
+class ApiPipelineRunLogHandler(BaseHandler):
+    def get(self, pipeline_run_id):
+        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
+        self.write(
+            dict(
+                log=dict(
+                    content=pipeline_run.log_file.to_dict(include_content=True),
+                ),
+            ),
+        )
 
 
 class ApiPipelineScheduleDetailHandler(BaseHandler):

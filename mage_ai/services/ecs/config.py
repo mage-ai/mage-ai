@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mage_ai.services.config import BaseConfig
+from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 
 
