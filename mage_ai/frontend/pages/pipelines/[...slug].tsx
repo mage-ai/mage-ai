@@ -33,7 +33,9 @@ import KernelOutputType, {
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Orchestration from '@components/Orchestration';
 import PipelineDetail from '@components/PipelineDetail';
+import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
 import RecommendationsWindow from '@components/RecommendationsWindow';
@@ -64,7 +66,6 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
-import { SelectedScheduleType } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
@@ -84,11 +85,19 @@ import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
+  newPipelineSchedule: boolean;
+  page: string;
   pipeline: PipelineType;
+  pipelineSchedule?: PipelineScheduleType;
+  pipelineScheduleAction?: string;
 };
 
 function PipelineDetailPage({
+  newPipelineSchedule,
+  page,
   pipeline: pipelineProp,
+  pipelineSchedule: pipelineScheduleProp,
+  pipelineScheduleAction,
 }: PipelineDetailPageProps) {
   const router = useRouter();
   const {
@@ -116,7 +125,6 @@ function PipelineDetailPage({
   }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
-  const [page, setPage] = useState<string>('develop');
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -251,7 +259,7 @@ function PipelineDetailPage({
   const {
     data: dataGlobalVariables,
     mutate: fetchVariables,
-  } = api.variables.pipelines.list(!afterHidden && pipelineUUID);
+  } = api.variables.pipelines.list(pipelineUUID);
   const globalVariables = dataGlobalVariables?.variables;
 
   // Blocks
@@ -295,6 +303,8 @@ function PipelineDetailPage({
   const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
 
   // Orchestration
+  const pipelineScheduleId = pipelineScheduleProp?.id;
+
   const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
   const pipelineSchedules = useMemo(() => {
     const schedulesByPipeline = {};
@@ -309,7 +319,6 @@ function PipelineDetailPage({
       });
     return schedulesByPipeline;
   }, [pipelines, pipelineSchedulesData]);
-  const [selectedSchedule, setSelectedSchedule] = useState<SelectedScheduleType>(null);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -1371,33 +1380,56 @@ function PipelineDetailPage({
     widgets,
   ]);
 
+  const orchestrationMemo = useMemo(() => (
+    <Orchestration
+      newPipelineSchedule={newPipelineSchedule}
+      pipeline={pipeline}
+      pipelineScheduleAction={pipelineScheduleAction}
+      pipelineScheduleId={pipelineScheduleId}
+      setErrors={setErrors}
+      variables={globalVariables}
+    />
+  ), [
+    globalVariables,
+    newPipelineSchedule,
+    pipeline,
+    pipelineScheduleAction,
+    pipelineScheduleId,
+    setErrors,
+  ])
+
   const headerMemo = useMemo(() => (
     <Header
       page={page}
-      projectName={projectName}
-      setPage={setPage}
-    />
-  ), [page, projectName, setPage]);
-
-  const mainContainerHeaderMemo = useMemo(() => (
-    <KernelStatus
-      filePaths={selectedFilePaths}
-      filesTouched={filesTouched}
-      isBusy={runningBlocks.length >= 1}
-      isPipelineUpdating={isPipelineUpdating}
-      kernel={kernel}
       pipeline={pipeline}
-      pipelineContentTouched={pipelineContentTouched}
-      pipelineLastSaved={pipelineLastSaved}
-      restartKernel={restartKernel}
-      savePipelineContent={savePipelineContent}
-      selectedFilePath={selectedFilePath}
-      updatePipelineMetadata={updatePipelineMetadata}
+      projectName={projectName}
     />
-  ), [
+  ), [page, pipeline, projectName])
+
+  const mainContainerHeaderMemo = useMemo(() => {
+    if (page === 'develop') {
+      return (
+        <KernelStatus
+          filePaths={selectedFilePaths}
+          filesTouched={filesTouched}
+          isBusy={runningBlocks.length >= 1}
+          isPipelineUpdating={isPipelineUpdating}
+          kernel={kernel}
+          pipeline={pipeline}
+          pipelineContentTouched={pipelineContentTouched}
+          pipelineLastSaved={pipelineLastSaved}
+          restartKernel={restartKernel}
+          savePipelineContent={savePipelineContent}
+          selectedFilePath={selectedFilePath}
+          updatePipelineMetadata={updatePipelineMetadata}
+        />
+      );
+    }
+  }, [
     filesTouched,
     isPipelineUpdating,
     kernel,
+    page,
     pipeline,
     pipelineContentTouched,
     pipelineLastSaved,
@@ -1529,8 +1561,8 @@ function PipelineDetailPage({
       return (
         <Sidebar
           pipelineSchedules={pipelineSchedules}
-          selectedSchedule={selectedSchedule}
-          setSelectedSchedule={setSelectedSchedule}
+          pipelineUuid={pipelineUUID}
+          pipelineScheduleId={pipelineScheduleId}
         />
       );
     }
@@ -1538,11 +1570,39 @@ function PipelineDetailPage({
     blocks,
     page,
     pipelines,
+    pipelineScheduleId,
     pipelineSchedules,
+    pipelineUUID,
     filesData?.files,
     onSelectBlockFile,
-    selectedSchedule,
   ]);
+
+  const beforeHeader = useMemo(() => {
+    if (page === 'develop') {
+      return (
+        <FileHeaderMenu
+          cancelPipeline={cancelPipeline}
+          createPipeline={createPipeline}
+          executePipeline={executePipeline}
+          interruptKernel={interruptKernel}
+          isPipelineExecuting={isPipelineExecuting}
+          restartKernel={restartKernel}
+          savePipelineContent={savePipelineContent}
+          setMessages={setMessages}
+        />
+      );
+    }
+  }, [
+    cancelPipeline,
+    createPipeline,
+    executePipeline,
+    interruptKernel,
+    isPipelineExecuting,
+    page,
+    restartKernel,
+    savePipelineContent,
+    setMessages,
+  ])
 
   return (
     <>
@@ -1599,18 +1659,7 @@ function PipelineDetailPage({
         )}
         afterWidth={afterWidth}
         before={before}
-        beforeHeader={(
-          <FileHeaderMenu
-            cancelPipeline={cancelPipeline}
-            createPipeline={createPipeline}
-            executePipeline={executePipeline}
-            interruptKernel={interruptKernel}
-            isPipelineExecuting={isPipelineExecuting}
-            restartKernel={restartKernel}
-            savePipelineContent={savePipelineContent}
-            setMessages={setMessages}
-          />
-        )}
+        beforeHeader={beforeHeader}
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
         beforeWidth={beforeWidth}
@@ -1624,47 +1673,53 @@ function PipelineDetailPage({
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
       >
-        <div
-          style={{
-            height: selectedFilePath ? 0 : null,
-            visibility: selectedFilePath ? 'hidden' : null,
-            opacity: selectedFilePath ? 0 : null,
-          }}
-        >
-          {pipelineDetailMemo}
-        </div>
-
-        {filePathsFromUrl?.map((filePath: string) => (
-          <div
-            key={filePath}
-            style={{
-              display: selectedFilePath === filePath
-                ? null
-                : 'none',
-            }}
-          >
-            <FileEditor
-              active={selectedFilePath === filePath}
-              addNewBlock={(b: BlockRequestPayloadType) => {
-                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
-                router.push(`/pipelines/${pipelineUUID}`);
+        {page === 'develop' && (
+          <>
+            <div
+              style={{
+                height: selectedFilePath ? 0 : null,
+                visibility: selectedFilePath ? 'hidden' : null,
+                opacity: selectedFilePath ? 0 : null,
               }}
-              filePath={filePath}
-              pipeline={pipeline}
-              setFilesTouched={setFilesTouched}
-            />
-          </div>
-        ))}
+            >
+              {pipelineDetailMemo}
+            </div>
 
-        <Spacing
-          pb={filePathFromUrl
-            ? 0
-            : Math.max(
-              Math.floor((heightWindow * (2 / 3)) / UNIT),
-              0,
-            )
-          }
-        />
+            {filePathsFromUrl?.map((filePath: string) => (
+              <div
+                key={filePath}
+                style={{
+                  display: selectedFilePath === filePath
+                    ? null
+                    : 'none',
+                }}
+              >
+                <FileEditor
+                  active={selectedFilePath === filePath}
+                  addNewBlock={(b: BlockRequestPayloadType) => {
+                    addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
+                    router.push(`/pipelines/${pipelineUUID}`);
+                  }}
+                  filePath={filePath}
+                  pipeline={pipeline}
+                  setFilesTouched={setFilesTouched}
+                />
+              </div>
+            ))}
+
+            <Spacing
+              pb={filePathFromUrl
+                ? 0
+                : Math.max(
+                  Math.floor((heightWindow * (2 / 3)) / UNIT),
+                  0,
+                )
+              }
+            />
+          </>
+        )}
+
+        {page === 'jobs' && orchestrationMemo}
       </TripleLayout>
 
       {errors && (
@@ -1699,17 +1754,44 @@ function PipelineDetailPage({
 
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
   const { slug: slugArray }: { slug: string[] } = ctx.query;
+  let page = 'develop';
   let pipelineUUID;
+  let pipelineScheduleId;
+  let pipelineScheduleAction;
+  let newPipelineSchedule = false;
 
   if (Array.isArray(slugArray)) {
     pipelineUUID = slugArray[0];
+    if (slugArray.length > 1) {
+      page = 'jobs';
+      newPipelineSchedule = slugArray[1] === 'new_schedule';
+    }
+    if (!newPipelineSchedule && slugArray.length > 2) {
+      pipelineScheduleId = slugArray[2];
+      if (slugArray.length > 3) {
+        pipelineScheduleAction = slugArray[3];
+      }
+    }
+
   }
 
-  return {
+  const initialProps = {
+    newPipelineSchedule,
+    page,
     pipeline: {
       uuid: pipelineUUID,
     },
   };
+
+  if (pipelineScheduleId) {
+    initialProps['pipelineSchedule'] = {
+      id: pipelineScheduleId,
+      pipeline_uuid: pipelineUUID,
+    };
+    initialProps['pipelineScheduleAction'] = pipelineScheduleAction;
+  }
+
+  return initialProps;
 };
 
 export default PipelineDetailPage;

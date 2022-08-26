@@ -32,6 +32,7 @@ export type ButtonProps = {
   backgroundColor?: string;
   basic?: boolean;
   beforeIcon?: any;
+  borderColor?: string;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
@@ -84,6 +85,10 @@ const ButtonStyle = styled.button<{
   ${props => `
     border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
     color: ${(props.theme.content || light.content).active};
+  `}
+
+  ${props => props.borderColor && `
+    border-color: ${props.borderColor};
   `}
 
   ${props => !props.noBackground && `
