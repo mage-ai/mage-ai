@@ -76,8 +76,6 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
   mageai/mageai mage start demo_project
 ```
 
-Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
-
 <sub>Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use PySpark kernel in your notebook.</sub>
 
 ### Using pip
@@ -96,6 +94,8 @@ pip install mage-ai
 ```bash
 mage start demo_project
 ```
+
+### Open tool in browser
 
 Open [http://localhost:6789](http://localhost:6789) in your browser and build a pipeline.
 
