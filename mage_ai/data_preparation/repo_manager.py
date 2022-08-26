@@ -9,6 +9,7 @@ import yaml
 class RepoConfig:
     def __init__(self, repo_path: str = None):
         self.repo_path = repo_path or get_repo_path()
+        self.repo_name = os.path.basename(self.repo_path)
         self.variables_dir = self.repo_path
         try:
             with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
@@ -19,6 +20,7 @@ class RepoConfig:
                     os.path.join(self.repo_path, self.variables_dir),
                 )
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
+            self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
             self.s3_bucket = None
             self.s3_path_prefix = None
@@ -34,14 +36,17 @@ class RepoConfig:
     @classmethod
     def from_dict(self, config_dict: Dict) -> 'RepoConfig':
         repo_config = RepoConfig()
+        repo_config.ecs_config = config_dict.get('ecs_config')
         repo_config.emr_config = config_dict.get('emr_config')
         repo_config.repo_path = config_dict.get('repo_path')
+        repo_config.repo_name = os.path.basename(repo_config.repo_path)
         repo_config.variables_dir = config_dict.get('variables_dir')
         repo_config.remote_variables_dir = config_dict.get('remote_variables_dir')
         return repo_config
 
     def to_dict(self, remote: bool = False) -> Dict:
         return dict(
+            ecs_config=self.ecs_config,
             emr_config=self.emr_config,
             repo_path=self.repo_path,
             variables_dir=self.remote_variables_dir if remote else self.variables_dir,

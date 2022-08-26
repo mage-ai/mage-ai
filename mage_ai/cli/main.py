@@ -71,8 +71,8 @@ Commands:
             project=repo_path,
         )
     elif command == 'run' or command == 'test':
+        from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
         from mage_ai.data_preparation.models.pipeline import Pipeline
-        from mage_ai.data_preparation.pipeline_executor import PipelineExecutor
         from mage_ai.data_preparation.repo_manager import set_repo_path
         from mage_ai.data_preparation.variable_manager import get_global_variables
         from mage_ai.shared.hash import merge_dict
@@ -80,11 +80,18 @@ Commands:
         parser = argparse.ArgumentParser(description='Run pipeline.')
         parser.add_argument('repo_path', metavar='project_path', type=str)
         parser.add_argument('pipeline_uuid', type=str)
+        parser.add_argument('--block_uuid', nargs='?', type=str)
+        parser.add_argument('--execution_partition', nargs='?', type=str)
+        parser.add_argument('--callback_url', nargs='?', type=str)
+        parser.add_argument('--block_run_id', nargs='?', type=int)
         parser.add_argument('--runtime-vars', nargs="+")
 
         args = vars(parser.parse_args(sys.argv[2:]))
         project_path = args['repo_path']
         pipeline_uuid = args['pipeline_uuid']
+        block_uuid = args.get('block_uuid')
+        execution_partition = args.get('execution_partition')
+        callback_url = args.get('callback_url')
         runtime_vars = args.get('runtime_vars')
 
         runtime_variables = dict()
@@ -99,12 +106,22 @@ Commands:
         default_variables = get_global_variables(pipeline_uuid, repo_path=project_path)
         global_vars = merge_dict(default_variables, runtime_variables)
 
-        PipelineExecutor.get_executor(pipeline).execute(
-            analyze_outputs=False,
-            global_vars=global_vars,
-            run_tests=command=='test',
-            update_status=False,
-        )
+        if block_uuid is None:
+            ExecutorFactory.get_pipeline_executor(pipeline).execute(
+                analyze_outputs=False,
+                global_vars=global_vars,
+                run_tests=command == 'test',
+                update_status=False,
+            )
+        else:
+            ExecutorFactory.get_block_executor(pipeline, block_uuid).execute(
+                analyze_outputs=False,
+                execution_partition=execution_partition,
+                callback_url=callback_url,
+                global_vars=global_vars,
+                update_status=False,
+            )
+
     elif command == 'create_spark_cluster':
         from mage_ai.services.emr.launcher import create_cluster
 

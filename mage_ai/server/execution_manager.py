@@ -17,6 +17,7 @@ class PipelineExecution:
         self.current_pipeline_process: multiprocessing.Process = None
         self.previous_config_path: str = None
 
+
 pipeline_execution = PipelineExecution()
 
 

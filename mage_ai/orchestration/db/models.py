@@ -82,7 +82,7 @@ class PipelineSchedule(BaseModel):
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
 
-    pipeline_runs = relationship('PipelineRun')
+    pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
     @classmethod
     def active_schedules(self) -> List['PipelineSchedule']:
@@ -135,6 +135,8 @@ class PipelineRun(BaseModel):
     pipeline_uuid = Column(String(255))
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
+
+    pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
 
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
 

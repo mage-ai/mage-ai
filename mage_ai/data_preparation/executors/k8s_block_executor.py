@@ -8,6 +8,7 @@ class K8sBlockExecutor(BlockExecutor):
         analyze_outputs: bool = False,
         global_vars: Dict = None,
         update_status: bool = False,
+        **kwargs,
     ) -> None:
         """
         TODO: Implement this method

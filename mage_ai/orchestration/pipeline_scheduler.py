@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 import multiprocessing
 
 
@@ -61,9 +61,13 @@ class PipelineScheduler:
             b.update(status=BlockRun.BlockRunStatus.RUNNING)
 
             def __run_block():
+                print(f'Execute PipelineRun {self.pipeline_run.id}, BlockRun {b.id}: '
+                      f'pipeline {self.pipeline.uuid} block {b.block_uuid}')
                 ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
                     analyze_outputs=False,
+                    block_run_id=b.id,
                     execution_partition=self.pipeline_run.execution_partition,
+                    global_vars=self.pipeline_run.pipeline_schedule.variables or dict(),
                     update_status=False,
                     on_complete=self.on_block_complete,
                     on_failure=self.on_block_failure,
@@ -71,3 +75,24 @@ class PipelineScheduler:
 
             proc = multiprocessing.Process(target=__run_block)
             proc.start()
+
+
+def schedule():
+    """
+    1. Check whether any new pipeline runs need to be scheduled.
+    2. In active pipeline runs, check whether any block runs need to be scheduled.
+    """
+    active_pipeline_schedules = PipelineSchedule.active_schedules()
+
+    for pipeline_schedule in active_pipeline_schedules:
+        if pipeline_schedule.should_schedule():
+            payload = dict(
+                execution_date=pipeline_schedule.current_execution_date(),
+                pipeline_schedule_id=pipeline_schedule.id,
+                pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            )
+            pipeline_run = PipelineRun.create(**payload)
+            PipelineScheduler(pipeline_run).start(should_schedule=False)
+    active_pipeline_runs = PipelineRun.active_runs()
+    for r in active_pipeline_runs:
+        PipelineScheduler(r).schedule()

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from mage_ai.orchestration.scheduler_manager import schedule
+from mage_ai.orchestration.pipeline_scheduler import schedule
 
 
 class TimeTrigger(ABC):
