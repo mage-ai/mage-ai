@@ -7,7 +7,7 @@
 
 <img alt="Fire mage" height="160" src="media/mage-fire-charging-up.svg" />
 
-Mage is an open-source tool for building and running data pipelines that <b>transform</b> your data.
+Mage is an open-source tool for building and running data-centric pipelines that <b>transform</b> your data.
 
 <br />
 
