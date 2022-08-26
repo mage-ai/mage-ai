@@ -58,6 +58,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
+1. [Core design principles](#-core-design-principles)
 1. [Features](#-features)
 1. [Documentation](#-documentation)
 1. [Contributing](#%EF%B8%8F-contributing)
@@ -127,16 +128,22 @@ Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai
 
 <br />
 
+# 🏔️ Core design principles
+
+Every user experience and technical design decision adheres to these principles.
+
+1. [Easy developer experience](docs/features/README.md#-easy-developer-experience)
+1. [Engineering best practices built-in](docs/features/README.md#-engineering-best-practices-built-in)
+1. [Data is a 1st class citizen](docs/features/README.md#-data-is-a-1st-class-citizen)
+1. [Scaling made simple](docs/features/README.md#-scaling-made-simple)
+
+<br />
+
 # 🔮 Features
 
-- [Overview](docs/features/README.md)
+- [Features overview](docs/features/README.md)
 - [Roadmap](https://airtable.com/shrJS0cDOmQywb8vp)
 - [Changelog](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c)
-
-<img
-  alt="Mage"
-  src="media/tool-overview.png"
-/>
 
 <br />
 
@@ -147,18 +154,10 @@ Read more docs [here](docs/README.md).
 <br />
 
 # 🙋‍♀️ Contributing
-We welcome all contributions to Mage;
-from small UI enhancements to brand new cleaning actions.
-We love seeing community members level up and give people power-ups!
 
 Check out the [🎁 contributing guide](/docs/contributing/README.md) to get started
 by setting up your development environment and
 exploring the code base.
-
-Got questions? Live chat with us in
-[<img alt="Slack" height="20" src="https://thepostsportsbar.com/wp-content/uploads/2017/02/Slack-Logo.png" style="position: relative; top: 4px;" /> Slack](https://www.mage.ai/chat)
-
-Anything you contribute, the Mage team and community will maintain. We’re in it together!
 
 <br />
 

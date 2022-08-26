@@ -1,5 +1,38 @@
 # 🔮 Features
 
+<img
+  alt="Mage"
+  src="media/tool-overview.png"
+/>
+
+## 🏔️ Core design principles
+
+### 💻 Easy developer experience
+- Mage comes with a specialized notebook UI for building data pipelines.
+- Use Python and SQL (more languages coming soon) together in the same pipeline for ultimate flexibility.
+- Set up locally and get started developing with a single command.
+- Deploying to production is fast using native integrations with major cloud providers.
+
+### 🚢 Engineering best practices built-in
+- Writing reusable code is easy because every block in your data pipeline is a standalone file.
+- Data validation is written into each block and tested every time a block is ran.
+- Operationalizing your data pipelines is easy with built-in monitoring and observability.
+- Each block of code has a single responsibility: load data from a source, transform data, or export data anywhere.
+
+### 💳 Data is a 1st class citizen
+- Datasets are created whenever blocks are ran.
+- Every dataset can be automatically partitioned.
+- Each pipeline and dataset can be versioned.
+- Backfilling datasets is a core function and operation.
+
+### 🪐 Scaling made simple
+- Transform very large datasets through a native integration with Spark.
+- Handle data intensive transformations with built-in distributed computing (e.g. Dask, Ray).
+- Run thousands of pipelines simultaneously and manage transparently through a collaborative UI.
+- Execute SQL queries in your data warehouse to process heavy workloads.
+
+## More features
+
 1. [Data centric editor](#1-data-centric-editor)
 1. [Production ready code](#2-production-ready-code)
 1. [Extensible](#3-extensible)
