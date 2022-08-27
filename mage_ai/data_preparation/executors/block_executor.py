@@ -28,7 +28,6 @@ class BlockExecutor:
     ) -> None:
         self.logger.info('Start executing block.')
         try:
-
             self.block.execute_sync(
                 analyze_outputs=analyze_outputs,
                 execution_partition=self.execution_partition,
@@ -60,4 +59,4 @@ class BlockExecutor:
                 'Content-Type': 'application/json',
             },
         )
-        self.logger.info(f'Calback response: {response.text}')
+        self.logger.info(f'Callback response: {response.text}')

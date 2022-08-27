@@ -2,7 +2,6 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 import logging
 import os
-import sys
 
 
 class LoggerManager:
@@ -24,29 +23,26 @@ class LoggerManager:
             create_dir=True,
         )
 
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-        formatter = logging.Formatter(
-            '%(levelname)s %(asctime)s - %(message)s'
-        )
-        prefix_args = [f'Pipeline {pipeline_uuid}']
+        logger_name_parts = [pipeline_uuid]
+        if partition is not None:
+            logger_name_parts.append(partition)
         if block_uuid is not None:
-            prefix_args.append(f'Block {block_uuid}')
-        prefix = ', '.join(prefix_args)
-        formatter_stdout = logging.Formatter(
-            f'%(levelname)s %(asctime)s - [{prefix}] %(message)s'
-        )
+            logger_name_parts.append(block_uuid)
+        logger_name = '/'.join(logger_name_parts)
 
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setLevel(logging.INFO)
-        stdout_handler.setFormatter(formatter_stdout)
+        logger = logging.getLogger(logger_name)
 
-        file_handler = logging.FileHandler(log_filepath)
-        file_handler.setLevel(logging.INFO)
-        file_handler.setFormatter(formatter)
+        if not len(logger.handlers):
+            logger.setLevel(logging.INFO)
+            formatter = logging.Formatter(
+                '%(levelname)s %(asctime)s - %(message)s'
+            )
 
-        logger.addHandler(file_handler)
-        logger.addHandler(stdout_handler)
+            file_handler = logging.FileHandler(log_filepath)
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
+
+            logger.addHandler(file_handler)
         return logger
 
     @classmethod
