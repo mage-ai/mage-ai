@@ -5,7 +5,7 @@ Want to become a [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/f
 <img
   alt="Sparkmage"
   height="300"
-  src="https://64.media.tumblr.com/85482a20d2f4134f9ebaa754d7c06710/2ac83ad4887ba0cd-1e/s1280x1920/b5b5d6203a423f8af84b3bd7e1c76168fa129bb6.jpg"
+  src="https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/f/fd/Rowan_key_art.jpg/revision/latest"
 />
 
 This is a guide for using Spark (PySpark) with Mage in different cloud providers (see a specific section for the cloud provider you use).
