@@ -111,14 +111,17 @@ class ApiPipelineScheduleListHandler(BaseHandler):
     model_class = PipelineSchedule
 
     def get(self, pipeline_uuid=None):
-        if pipeline_uuid is not None:
-            pipeline = Pipeline.get(pipeline_uuid)
-            schedules = PipelineSchedule.query.filter(
-                PipelineSchedule.pipeline_uuid == pipeline.uuid,
-            ).all()
-        else:
-            schedules = PipelineSchedule.query.all()
-        collection = [s.to_dict() for s in schedules]
+        try:
+            if pipeline_uuid is not None:
+                pipeline = Pipeline.get(pipeline_uuid)
+                schedules = PipelineSchedule.query.filter(
+                    PipelineSchedule.pipeline_uuid == pipeline.uuid,
+                ).all()
+            else:
+                schedules = PipelineSchedule.query.all()
+            collection = [s.to_dict() for s in schedules]
+        except Exception:
+            collection = []
 
         self.write(dict(pipeline_schedules=collection))
         self.finish()
