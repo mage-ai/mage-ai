@@ -168,8 +168,9 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
-        pipelines = Pipeline.get_all_pipelines(get_repo_path())
-        self.write(dict(pipelines=pipelines))
+        pipeline_names = Pipeline.get_all_pipelines(get_repo_path())
+        pipelines = [Pipeline.get(uuid) for uuid in pipeline_names]
+        self.write(dict(pipelines=[p.to_dict() for p in pipelines]))
         self.finish()
 
     def post(self):
