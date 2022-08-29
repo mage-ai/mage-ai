@@ -133,8 +133,8 @@ class Pipeline:
         return duplicate_pipeline
 
     @classmethod
-    def get(self, uuid):
-        return Pipeline(uuid)
+    def get(self, uuid, repo_path: str = None):
+        return Pipeline(uuid, repo_path=repo_path)
 
     @classmethod
     def get_all_pipelines(self, repo_path):
