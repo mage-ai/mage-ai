@@ -94,12 +94,16 @@ class VariableManager:
         )
 
     def get_variables_by_pipeline(self, pipeline_uuid: str) -> Dict[str, List[str]]:
+        from mage_ai.data_preparation.models.pipeline import Pipeline
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
         if not os.path.exists(variable_dir_path):
             return dict()
         block_dirs = os.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
+            if not pipeline.has_block(d) and d != 'global':
+                continue
             block_variables_path = os.path.join(variable_dir_path, d)
             if not os.path.isdir(block_variables_path):
                 variables_by_block[d] = []

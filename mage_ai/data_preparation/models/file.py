@@ -2,7 +2,15 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Dict
 import os
 
-BLACKLISTED_DIRS = frozenset(['venv', 'env', '.git', '.DS_Store', '__pycache__'])
+BLACKLISTED_DIRS = frozenset([
+    'venv',
+    'env',
+    '.git',
+    '.logs',
+    '.variables',
+    '.DS_Store',
+    '__pycache__'
+])
 INACCESSIBLE_DIRS = frozenset(['__pycache__'])
 MAX_DEPTH = 30
 

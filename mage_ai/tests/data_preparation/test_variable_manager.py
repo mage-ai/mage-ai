@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.models.variable import Variable, VariableType
+from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import set_repo_path
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
