@@ -32,6 +32,7 @@ class BlockExecutor:
                 analyze_outputs=analyze_outputs,
                 execution_partition=self.execution_partition,
                 global_vars=global_vars,
+                logger=self.logger,
                 update_status=update_status,
             )
         except Exception as e:
