@@ -1,5 +1,6 @@
 import { NextPage } from 'next';
 
+import PipelineList from '@components/PipelineList';
 import api from '@api';
 
 function PipelineListPage(): NextPage {
@@ -8,18 +9,11 @@ function PipelineListPage(): NextPage {
   } = api.pipelines.list();
   const pipelines = data?.pipelines;
 
-  console.log(pipelines)
-
   return (
-    <div>
-    </div>
+    <PipelineList pipelines={pipelines} />
   );
 }
 
-PipelineListPage.getInitialProps = async (ctx: any) => {
-  return {
-
-  };
-};
+PipelineListPage.getInitialProps = async (ctx: any) => ({});
 
 export default PipelineListPage;

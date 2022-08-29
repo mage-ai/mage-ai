@@ -80,7 +80,7 @@ function Header({
 
   return (
     <FlexContainer fullHeight alignItems="center">
-      <Flex>
+      <Flex alignItems="center">
         <Folder size={2 * UNIT} />
         <Spacing ml={1} />
         <Text large monospace>
