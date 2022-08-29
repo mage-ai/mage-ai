@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from mage_ai.data_preparation.logger_manager import LoggerManager
+from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.array import find
@@ -150,6 +152,13 @@ class PipelineRun(BaseModel):
                         self.execution_date.strftime(format='%Y%m%dT%H%M%S'),
                     ])
 
+    @property
+    def log_file(self):
+        return File.from_path(LoggerManager.get_log_filepath(
+            pipeline_uuid=self.pipeline_uuid,
+            partition=self.execution_partition,
+        ))
+
     @classmethod
     def active_runs(self) -> List['PipelineRun']:
         return self.query.filter(self.status == self.PipelineRunStatus.RUNNING).all()
@@ -187,6 +196,14 @@ class BlockRun(BaseModel):
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
 
     pipeline_run = relationship(PipelineRun, back_populates='block_runs')
+
+    @property
+    def log_file(self):
+        return File.from_path(LoggerManager.get_log_filepath(
+            pipeline_uuid=self.pipeline_run.pipeline_uuid,
+            block_uuid=self.block_uuid,
+            partition=self.pipeline_run.execution_partition,
+        ))
 
     @classmethod
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':

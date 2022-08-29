@@ -24,8 +24,10 @@ from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.orchestration import (
     ApiBlockRunDetailHandler,
     ApiBlockRunListHandler,
+    ApiBlockRunLogHandler,
     ApiBlockRunOutputHandler,
     ApiPipelineRunListHandler,
+    ApiPipelineRunLogHandler,
     ApiPipelineScheduleDetailHandler,
     ApiPipelineScheduleListHandler,
 )
@@ -329,6 +331,7 @@ def make_app():
         (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)', ApiBlockRunDetailHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),
+        (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/files', ApiFileListHandler),
         (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
@@ -372,6 +375,7 @@ def make_app():
             r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/block_runs',
             ApiBlockRunListHandler,
         ),
+        (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
         (
             r'/api/pipeline_schedules',
             ApiPipelineScheduleListHandler,

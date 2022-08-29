@@ -2,7 +2,9 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
+from logging import Logger
 from mage_ai.data_cleaner.shared.utils import is_dataframe
+from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -377,6 +379,7 @@ class Block:
         custom_code: str = None,
         execution_partition: str = None,
         global_vars: Dict = None,
+        logger: Logger = None,
         redirect_outputs: bool = False,
         run_all_blocks: bool = False,
         update_status: bool = True,
@@ -396,6 +399,7 @@ class Block:
                 custom_code=custom_code,
                 execution_partition=execution_partition,
                 global_vars=global_vars,
+                logger=logger,
                 redirect_outputs=redirect_outputs,
             )
             block_output = output['output']
@@ -538,6 +542,7 @@ class Block:
         self,
         custom_code: str = None,
         execution_partition: str = None,
+        logger: Logger = None,
         redirect_outputs: bool = False,
         global_vars: Dict = None,
     ) -> Dict:
@@ -560,7 +565,12 @@ class Block:
         outputs = []
         decorated_functions = []
         test_functions = []
-        stdout = StringIO() if redirect_outputs else sys.stdout
+        if logger is not None:
+            stdout = StreamToLogger(logger)
+        elif redirect_outputs:
+            stdout = StringIO()
+        else:
+            stdout = sys.stdout
         results = {}
         outputs_from_input_vars = {}
 

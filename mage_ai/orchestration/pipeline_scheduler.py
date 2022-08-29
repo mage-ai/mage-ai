@@ -1,5 +1,6 @@
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 import multiprocessing
 
@@ -8,6 +9,10 @@ class PipelineScheduler:
     def __init__(self, pipeline_run: PipelineRun) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
+        self.logger = LoggerManager.get_logger(
+            pipeline_uuid=self.pipeline.uuid,
+            partition=self.pipeline_run.execution_partition,
+        )
 
     def start(self, should_schedule: bool = True) -> None:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
@@ -31,15 +36,20 @@ class PipelineScheduler:
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        self.logger.info(f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.')
+
         self.pipeline_run.refresh()
         if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
             return
         else:
+            for b in self.pipeline_run.block_runs:
+                b.refresh()
             self.schedule()
 
     def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         block_run.update(status=BlockRun.BlockRunStatus.FAILED)
+        self.logger.info(f'BlockRun {block_run.id} (block_uuid: {block_uuid}) failed.')
 
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
@@ -60,13 +70,18 @@ class PipelineScheduler:
         for b in queued_block_runs:
             b.update(status=BlockRun.BlockRunStatus.RUNNING)
 
+            self.logger.info(f'Start a process for BlockRun {b.id}')
+
             def __run_block():
-                print(f'Execute PipelineRun {self.pipeline_run.id}, BlockRun {b.id}: '
-                      f'pipeline {self.pipeline.uuid} block {b.block_uuid}')
-                ExecutorFactory.get_block_executor(self.pipeline, b.block_uuid).execute(
+                self.logger.info(f'Execute PipelineRun {self.pipeline_run.id}, BlockRun {b.id}: '
+                                 f'pipeline {self.pipeline.uuid} block {b.block_uuid}')
+                ExecutorFactory.get_block_executor(
+                    self.pipeline,
+                    b.block_uuid,
+                    execution_partition=self.pipeline_run.execution_partition,
+                ).execute(
                     analyze_outputs=False,
                     block_run_id=b.id,
-                    execution_partition=self.pipeline_run.execution_partition,
                     global_vars=self.pipeline_run.pipeline_schedule.variables or dict(),
                     update_status=False,
                     on_complete=self.on_block_complete,
