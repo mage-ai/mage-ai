@@ -15,7 +15,7 @@ const Home = () => {
   if (basePath && basePath !== '/') {
     pathname = basePath;
   } else if (pipelines?.length >= 1) {
-    pathname += `/pipelines/${pipelines[0]}`;
+    pathname += `/pipelines/${pipelines[0].uuid}`;
   }
 
   useEffect(() => {
