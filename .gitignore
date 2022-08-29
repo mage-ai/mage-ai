@@ -147,5 +147,8 @@ testfiles/
 .python_history
 mage_ai/frontend/package-lock.json
 
+# DB files
+*.db
+
 # vscode
 .vscode/
