@@ -77,7 +77,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
   mageai/mageai mage start demo_project
 ```
 
-<sub>Follow the [guide](docs/kernels/README.md#pyspark-kernel-) if you want to use PySpark kernel in your notebook.</sub>
+<sub>Follow the [guide](docs/spark/setup/README.md) if you want to use PySpark kernel in your notebook.</sub>
 
 ### Using pip
 
