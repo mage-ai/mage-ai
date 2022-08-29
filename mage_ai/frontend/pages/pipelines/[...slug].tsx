@@ -308,7 +308,7 @@ function PipelineDetailPage({
   const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
   const pipelineSchedules = useMemo(() => {
     const schedulesByPipeline = {};
-    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline] = []);
+    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline.uuid] = []);
     pipelineSchedulesData
       ?.pipeline_schedules
       ?.forEach((schedule) => {
@@ -1569,7 +1569,6 @@ function PipelineDetailPage({
   }, [
     blocks,
     page,
-    pipelines,
     pipelineScheduleId,
     pipelineSchedules,
     pipelineUUID,

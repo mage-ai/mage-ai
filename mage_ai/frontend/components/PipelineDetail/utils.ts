@@ -115,7 +115,7 @@ export function removeCollapsedBlockStates(blocks: BlockType[], pipelineUUID: st
 }
 
 export const redirectToFirstPipeline = (pipelines: PipelineType[], router: NextRouter) => {
-  const pathname = `/pipelines/${pipelines?.[0]}`;
+  const pathname = `/pipelines/${pipelines?.[0]?.uuid}`;
   const query = router.query;
 
   if (pipelines?.length >= 1) {
