@@ -102,7 +102,7 @@ class VariableManager:
         block_dirs = os.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
-            if not pipeline.has_block(d):
+            if not pipeline.has_block(d) and d != 'global':
                 continue
             block_variables_path = os.path.join(variable_dir_path, d)
             if not os.path.isdir(block_variables_path):
