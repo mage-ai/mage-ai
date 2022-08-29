@@ -1,9 +1,7 @@
-import { NextPage } from 'next';
-
 import PipelineList from '@components/PipelineList';
 import api from '@api';
 
-function PipelineListPage(): NextPage {
+function PipelineListPage() {
   const {
     data,
   } = api.pipelines.list();
