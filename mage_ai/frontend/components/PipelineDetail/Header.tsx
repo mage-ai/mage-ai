@@ -40,15 +40,15 @@ function Header({
         }
       },
       // TODO: Uncomment when jobs is ready.
-      // {
-      //   Icon: Orchestrate,
-      //   name: 'jobs',
-      //   onClick: () => {
-      //     Router.push({
-      //       pathname: `/pipelines/${pipeline.uuid}/new_schedule`,
-      //     });
-      //   }
-      // },
+      {
+        Icon: Orchestrate,
+        name: 'jobs',
+        onClick: () => {
+          Router.push({
+            pathname: `/pipelines/${pipeline.uuid}/schedules/new`,
+          });
+        }
+      },
     ]),
     [queryParams, pipeline],
   );

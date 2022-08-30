@@ -79,7 +79,7 @@ function PipelineSchedules({
             noHoverUnderline
             noOutline
             onClick={() => Router.push({
-              pathname: `/pipelines/${pipelineUuid}/new_schedule`,
+              pathname: `/pipelines/${pipelineUuid}/schedules/new`,
               query: queryFromUrl(),
             })}
           >
@@ -88,14 +88,14 @@ function PipelineSchedules({
         </FlexContainer>
       </EntryStyle>
       {expanded && schedules?.map(({ id, name }) => {
-        const scheduleSelected = pipelineSelected && selectedScheduleId === String(id);
+        const scheduleSelected = pipelineSelected && String(selectedScheduleId) === String(id);
 
         return (
           <Link
             noHoverUnderline
             noOutline
             onClick={() => Router.push({
-              pathname: `/pipelines/${pipelineUuid}/jobs/${id}`,
+              pathname: `/pipelines/${pipelineUuid}/schedules/${id}`,
               query: queryFromUrl(),
             })}
           >

@@ -9,6 +9,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 export type FlexTableProps = {
   borderRadius?: boolean;
   columnFlex: number[];
+  columnHeaders?: any[];
   noBorder?: boolean;
   rows: any[][];
   paddingHorizontal?: number;
@@ -72,12 +73,18 @@ const CellStyle = styled.div<any>`
 
 function FlexTable({
   columnFlex,
+  columnHeaders,
   rows,
   ...props
 }: FlexTableProps) {
-  return (
+
+  let updatedRows = rows;
+  if (columnHeaders) {
+    updatedRows = [columnHeaders, ...rows]
+  }
+return (
     <TableStyle>
-      {rows.map((row, rowIndex) => (
+      {updatedRows.map((row, rowIndex) => (
         <FlexContainer>
           {row.map((cell, colIndex) => (
             <CellStyle
