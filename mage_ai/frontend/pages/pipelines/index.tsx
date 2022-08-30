@@ -54,6 +54,7 @@ function PipelineListPage() {
           bold
           beforeElement={<Add size={2.5 * UNIT} />}
           loading={isLoading}
+          // @ts-ignore
           onClick={() => createPipeline({
             pipeline: {
               name: randomNameGenerator(),
