@@ -43,7 +43,7 @@ function GradientButton({
       {...props}
       backgroundGradient={backgroundGradient}
       noPadding
-      padding={borderWidth}
+      padding={`${borderWidth}px`}
       pointerEventsEnabled
     >
       <ButtonContentStyle

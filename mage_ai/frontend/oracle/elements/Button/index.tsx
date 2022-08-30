@@ -53,6 +53,7 @@ export type ButtonProps = {
   notClickable?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
+  pointerEventsEnabled?: boolean;
   primary?: boolean;
   primaryGradient?: boolean;
   secondaryGradient?: boolean;
@@ -96,6 +97,10 @@ const ButtonStyle = styled.button<{
     background-color: ${(props.theme.background || light.background).row};
   `}
 
+  ${props => props.pointerEventsEnabled && `
+    pointer-events: all;
+  `}
+
   ${props => props.backgroundGradient && `
     background: ${props.backgroundGradient};
   `}
@@ -105,7 +110,7 @@ const ButtonStyle = styled.button<{
   `}
 
   ${props => props.padding && `
-    padding: ${props.padding}px !important;
+    padding: ${props.padding} !important;
   `}
 
   ${props => props.noPadding && `

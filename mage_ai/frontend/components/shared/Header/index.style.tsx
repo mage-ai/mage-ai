@@ -14,6 +14,7 @@ export const HeaderStyle = styled.div`
   position: fixed;
   top: 0;
   width: 100%;
+  z-index: 10;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};

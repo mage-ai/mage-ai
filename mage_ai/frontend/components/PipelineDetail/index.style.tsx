@@ -38,7 +38,6 @@ export const PipelineHeaderStyle = styled.div`
   top: ${ASIDE_HEADER_HEIGHT}px;
   width: 100%;
   z-index: 5;
-  overflow: auto;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
