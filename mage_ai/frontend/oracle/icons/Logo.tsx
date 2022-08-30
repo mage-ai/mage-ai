@@ -12,6 +12,7 @@ export type LogoProps = {
   fire?: boolean;
   height?: number;
   inverted?: boolean;
+  slash?: boolean;
   water?: boolean;
   width?: number;
   wind?: boolean;
@@ -19,13 +20,13 @@ export type LogoProps = {
 
 const SVGStyle = styled.svg``;
 
-const PathStyle = styled.path`
+const PathStyle = styled.path<LogoProps>`
   ${props => !props.slash && !props.inverted && `
     fill: ${(props.theme.logo || dark.logo).color};
   `}
 
   ${props => !props.slash && props.inverted && `
-    fill: ${SHADOW};
+    fill: ${BLACK};
   `}
 
   ${props => props.slash && `

@@ -7,7 +7,11 @@ type GradientTextProps = {
   startingOpacity?: number;
 };
 
-const SpanStyle = styled.span`
+const SpanStyle = styled.span<{
+  backgroundGradient?: string;
+  color?: string;
+  startingOpacity?: number;
+}>`
   ${props => props.backgroundGradient && `
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent;

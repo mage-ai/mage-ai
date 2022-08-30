@@ -12,7 +12,6 @@ function PipelineListPage() {
 
   return (
     <Dashboard
-      pipelines={pipelines}
       projects={projects}
       title="Pipelines"
     />
