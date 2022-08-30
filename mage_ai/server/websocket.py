@@ -287,3 +287,4 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             proc = multiprocessing.Process(target=run_pipeline)
             proc.start()
             set_current_pipeline_process(proc)
+            proc.join()

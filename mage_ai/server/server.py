@@ -449,6 +449,9 @@ def start_server(
     port: str = None,
     project: str = None,
 ):
+    import multiprocessing
+    multiprocessing.set_start_method('forkserver')
+
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
     project = project if project else None

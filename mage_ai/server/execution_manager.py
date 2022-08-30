@@ -42,6 +42,7 @@ def cancel_pipeline_execution(
     publish_message(
         'Pipeline execution cancelled... reverting state to previous iteration',
         execution_state='idle',
+        metadata=dict(pipeline_uuid=pipeline.uuid),
     )
     config_path = pipeline_execution.previous_config_path
     if config_path is not None and os.path.isdir(config_path):
