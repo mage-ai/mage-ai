@@ -22,6 +22,8 @@ from mage_ai.server.api.blocks import (
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.orchestration import (
+    ApiAllBlockRunListHandler,
+    ApiAllPipelineRunListHandler,
     ApiBlockRunDetailHandler,
     ApiBlockRunListHandler,
     ApiBlockRunLogHandler,
@@ -44,6 +46,7 @@ from mage_ai.server.kernels import (
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
+from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
 import json
@@ -376,6 +379,10 @@ def make_app():
             r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/block_runs',
             ApiBlockRunListHandler,
         ),
+        (
+            r'/api/block_runs',
+            ApiAllBlockRunListHandler,
+        ),
         (r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/logs', ApiPipelineRunLogHandler),
         (
             r'/api/pipeline_schedules',
@@ -388,6 +395,10 @@ def make_app():
         (
             r'/api/pipeline_schedules/(?P<pipeline_schedule_id>\w+)/pipeline_runs',
             ApiPipelineRunListHandler,
+        ),
+        (
+            r'/api/pipeline_runs',
+            ApiAllPipelineRunListHandler,
         ),
         (
             r'/api/scheduler/(?P<action_type>[\w\-]*)', ApiSchedulerHandler,
@@ -464,7 +475,9 @@ def start_server(
     set_repo_path(project)
 
     # Start a subprocess for scheduler
-    # scheduler_manager.start_scheduler()
+    scheduler_manager.start_scheduler()
+
+    enable_pretty_logging()
 
     # Start web server
     asyncio.run(

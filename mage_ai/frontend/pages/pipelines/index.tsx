@@ -17,10 +17,11 @@ import { randomNameGenerator } from '@utils/string';
 
 function PipelineListPage() {
   const router = useRouter();
-  const {
-    data,
-  } = api.pipelines.list();
+  const { data } = api.pipelines.list();
   const { data: dataProjects } = api.projects.list();
+
+  const pipelines = useMemo(() => data?.pipelines || [], [data]);
+  const projects = dataProjects?.projects;
 
   const [createPipeline, { isLoading }] = useMutation(
     api.pipelines.useCreate(),
@@ -46,9 +47,6 @@ function PipelineListPage() {
       ),
     },
   );
-
-  const pipelines = useMemo(() => data?.pipelines || [], [data]);
-  const projects = dataProjects?.projects;
 
   return (
     <Dashboard
@@ -79,10 +77,10 @@ function PipelineListPage() {
           href: '/pipelines/[pipeline]',
         })}
         columnHeaders={[
-          <Text bold monospace>
+          <Text bold monospace muted>
             Name
           </Text>,
-          <Text bold monospace>
+          <Text bold monospace muted>
             Blocks
           </Text>,
           null,

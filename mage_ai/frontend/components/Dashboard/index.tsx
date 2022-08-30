@@ -51,9 +51,11 @@ function Dashboard({
           flex={1}
           flexDirection="column"
         >
-          <Subheader>
-            {subheaderChildren}
-          </Subheader>
+          {subheaderChildren && (
+            <Subheader>
+              {subheaderChildren}
+            </Subheader>
+          )}
 
           {children}
         </Flex>

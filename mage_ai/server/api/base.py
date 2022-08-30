@@ -1,3 +1,4 @@
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import camel_to_snake_case
 import dateutil.parser
 import json
@@ -32,7 +33,11 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def write(self, chunk):
         if type(chunk) is dict:
-            chunk = simplejson.dumps(chunk, ignore_nan=True)
+            chunk = simplejson.dumps(
+                chunk,
+                default=encode_complex,
+                ignore_nan=True,
+            )
         super().write(chunk)
 
     def write_error(self, status_code, **kwargs):
