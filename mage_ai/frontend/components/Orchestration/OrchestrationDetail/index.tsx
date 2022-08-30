@@ -96,11 +96,11 @@ function OrchestrationDetail({
             <Button
               borderColor={dark.borders.dark}
               onClick={() => Router.push({
-                pathname: `/pipelines/${pipelineUuid}/jobs/${id}/edit`,
+                pathname: `/pipelines/${pipelineUuid}/schedules/${id}/edit`,
                 query: queryFromUrl(),
               })}
             >
-              <Text>
+              <Text monospace>
                 Config
               </Text>
             </Button>

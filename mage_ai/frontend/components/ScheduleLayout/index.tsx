@@ -28,12 +28,14 @@ function ScheduleLayout({
   const { data: pipelinesData, mutate: fetchPipelines } = api.pipelines.list();
   const pipelines = useMemo(() => pipelinesData?.pipelines, [pipelinesData]);
 
+  console.log('pipelines:', pipelines);
+
   const pipelineScheduleId = pipelineSchedule?.id;
 
   const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
   const pipelineSchedules = useMemo(() => {
     const schedulesByPipeline = {};
-    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline] = []);
+    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline.uuid] = []);
     pipelineSchedulesData
       ?.pipeline_schedules
       ?.forEach((schedule) => {

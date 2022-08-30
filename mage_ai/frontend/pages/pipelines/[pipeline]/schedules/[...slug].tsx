@@ -115,7 +115,10 @@ ScheduleDetailPage.getInitialProps= async(ctx: any) => {
     }
   }
 
-  return {}
+  return {
+    newSchedule: true,
+    pipelineUUID,
+  }
 }
 
 export default ScheduleDetailPage;
