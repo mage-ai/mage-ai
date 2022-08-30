@@ -47,6 +47,7 @@ from mage_ai.server.websocket import WebSocketServer
 import argparse
 import asyncio
 import json
+import multiprocessing
 import os
 import socket
 import tornado.ioloop
@@ -410,6 +411,8 @@ async def main(
     port: str = None,
     project: str = None,
 ):
+    multiprocessing.set_start_method('fork')
+
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
