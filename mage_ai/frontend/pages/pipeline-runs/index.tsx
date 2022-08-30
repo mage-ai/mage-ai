@@ -27,7 +27,7 @@ function RunListPage() {
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => {
-          const pipelineRun: PipelineRun = pipelineRuns[rowIndex];
+          const pipelineRun: PipelineRunType = pipelineRuns[rowIndex];
 
           return {
             as: `/pipelines/${pipelineRun.pipeline_uuid}/schedules/${pipelineRun.pipeline_schedule_id}`,
