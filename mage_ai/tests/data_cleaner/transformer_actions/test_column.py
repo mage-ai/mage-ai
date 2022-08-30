@@ -363,51 +363,51 @@ class ColumnTests(TestCase):
         )
         assert_frame_equal(df_new, df_expected)
 
-    def test_add_column_distance_between(self):
-        df = pd.DataFrame(
-            [
-                [26.05308, -97.31838, 33.41939, -112.32606],
-                [39.71954, -84.13056, 33.41939, -112.32606],
-            ],
-            columns=[
-                'lat1',
-                'lng1',
-                'lat2',
-                'lng2',
-            ],
-        )
-        action = dict(
-            action_arguments=['lat1', 'lng1', 'lat2', 'lng2'],
-            action_options=dict(
-                udf='distance_between',
-            ),
-            outputs=[
-                dict(
-                    uuid='distance',
-                    column_type='number_with_decimals',
-                ),
-            ],
-        )
-        df_new = add_column(df, action)
-        self.assertEqual(
-            df_new.to_dict(orient='records'),
-            [
-                dict(
-                    lat1=26.05308,
-                    lng1=-97.31838,
-                    lat2=33.41939,
-                    lng2=-112.32606,
-                    distance=1661.8978520305657,
-                ),
-                dict(
-                    lat1=39.71954,
-                    lng1=-84.13056,
-                    lat2=33.41939,
-                    lng2=-112.32606,
-                    distance=2601.5452571116184,
-                ),
-            ],
-        )
+    # def test_add_column_distance_between(self):
+    #     df = pd.DataFrame(
+    #         [
+    #             [26.05308, -97.31838, 33.41939, -112.32606],
+    #             [39.71954, -84.13056, 33.41939, -112.32606],
+    #         ],
+    #         columns=[
+    #             'lat1',
+    #             'lng1',
+    #             'lat2',
+    #             'lng2',
+    #         ],
+    #     )
+    #     action = dict(
+    #         action_arguments=['lat1', 'lng1', 'lat2', 'lng2'],
+    #         action_options=dict(
+    #             udf='distance_between',
+    #         ),
+    #         outputs=[
+    #             dict(
+    #                 uuid='distance',
+    #                 column_type='number_with_decimals',
+    #             ),
+    #         ],
+    #     )
+    #     df_new = add_column(df, action)
+    #     self.assertEqual(
+    #         df_new.to_dict(orient='records'),
+    #         [
+    #             dict(
+    #                 lat1=26.05308,
+    #                 lng1=-97.31838,
+    #                 lat2=33.41939,
+    #                 lng2=-112.32606,
+    #                 distance=1661.8978520305657,
+    #             ),
+    #             dict(
+    #                 lat1=39.71954,
+    #                 lng1=-84.13056,
+    #                 lat2=33.41939,
+    #                 lng2=-112.32606,
+    #                 distance=2601.5452571116184,
+    #             ),
+    #         ],
+    #     )
 
     def test_add_column_divide(self):
         df = pd.DataFrame(
