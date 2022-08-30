@@ -42,7 +42,6 @@ def publish_pipeline_message(
     execution_state: str = 'busy',
     metadata: Dict[str, str] = dict(),
     msg_type: str = 'stream_pipeline',
-    clients: List['WebSocketServer'] = None,
 ) -> None:
     msg_id = str(uuid.uuid4())
     WebSocketServer.running_executions_mapping[msg_id] = metadata
@@ -53,11 +52,10 @@ def publish_pipeline_message(
             msg_id=msg_id,
             msg_type=msg_type,
             type=DataType.TEXT_PLAIN,
-        ),
-        clients=clients,
+        )
     )
             
-def run_pipeline(pipeline, config_copy_path, clients) -> None:
+def run_pipeline(pipeline, config_copy_path) -> None:
     metadata = dict(
         pipeline_uuid=pipeline.uuid,
     )
@@ -74,7 +72,6 @@ def run_pipeline(pipeline, config_copy_path, clients) -> None:
             execution_state=execution_state,
             metadata=metadata,
             msg_type=msg_type,
-            clients=clients,
         )
 
     try:
@@ -87,22 +84,12 @@ def run_pipeline(pipeline, config_copy_path, clients) -> None:
             f'Pipeline {pipeline.uuid} execution complete.\n'
             'You can see the code block output in the corresponding code block.',
             execution_state='idle',
-            metadata=metadata,
-            clients=clients,
+            metadata=metadata
         )
     except Exception:
         trace = traceback.format_exc().splitlines()
-        publish_pipeline_message(
-            f'Pipeline {pipeline.uuid} execution failed with error:',
-            metadata=metadata,
-            clients=clients,
-        )
-        publish_pipeline_message(
-            trace,
-            execution_state='idle',
-            metadata=metadata,
-            clients=clients,
-        )
+        publish_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:', metadata=metadata)
+        publish_pipeline_message(trace, execution_state='idle', metadata=metadata)
 
     delete_pipeline_copy_config(config_copy_path)
 
@@ -311,7 +298,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             proc = multiprocessing.Process(
                 target=run_pipeline,
-                args=(pipeline, config_copy_path, self.clients)
+                args=(pipeline, config_copy_path)
             )
             proc.start()
             set_current_pipeline_process(proc)
