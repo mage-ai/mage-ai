@@ -1,4 +1,6 @@
 import {
+  BLUE_DARK,
+  PEACH,
   PURPLE_DARK,
 } from './main';
 import {
@@ -25,3 +27,4 @@ export const WIND_GRADIENT = `linear-gradient(100.38deg, ${WIND} 41.11%, #677FFF
 export const WATER_GRADIENT = `linear-gradient(100.38deg, ${WATER} 41.11%, #B880FF 86.99%)`;
 
 export const PURPLE_BLUE = `linear-gradient(90deg, ${PURPLE_DARK} 20.13%, #2AB2FE)`;
+export const BUTTON_GRADIENT = `linear-gradient(90deg, ${BLUE_DARK} 0%, ${PURPLE_DARK} 53.13%, ${PEACH} 100%)`;

@@ -48,6 +48,7 @@ export type KeyboardShortcutButtonProps = {
   Icon?: any;
   afterElement?: any;
   beforeElement?: any;
+  background?: string;
   backgroundColor?: string;
   blackBorder?: boolean;
   bold?: boolean;
@@ -320,7 +321,11 @@ const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   `}
 
   ${props => props.primaryGradient && `
-    background: ${BLUE_GRADIENT};
+    background: ${BLUE_GRADIENT} !important;
+  `}
+
+  ${props => props.background && `
+    background: ${props.background} !important;
   `}
 
   ${props => (props.selected || props.useModelTheme) && props.wind && `
@@ -454,9 +459,7 @@ function KeyboardShortcutButton({
               {Icon && children && <Spacing mr={1} />}
 
               {loading && (
-                <SpanStyle>
-                  <Spinner inverted={!inverted} />
-                </SpanStyle>
+                <Spinner inverted={!inverted} />
               )}
               {!loading && children}
             </Flex>
