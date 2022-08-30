@@ -10,7 +10,7 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
-from typing import Any, Dict
+from typing import Any, Dict, List
 import os
 import pandas as pd
 import shutil
@@ -98,9 +98,13 @@ class Variable:
         else:
             self.__write_json(data)
 
-    def read_data(self, sample: bool = False, sample_count: int = None, spark=None) -> Any:
-        self.check_variable_type()
-
+    def read_data(
+        self,
+        dataframe_analysis_keys: List[str] = None,
+        sample: bool = False,
+        sample_count: int = None,
+        spark=None,
+    ) -> Any:
         if self.variable_type == VariableType.DATAFRAME:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
@@ -108,7 +112,7 @@ class Variable:
         elif self.variable_type == VariableType.GEO_DATAFRAME:
             return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
-            return self.__read_dataframe_analysis()
+            return self.__read_dataframe_analysis(dataframe_analysis_keys=dataframe_analysis_keys)
         return self.__read_json()
 
     def __delete_dataframe_analysis(self) -> None:
@@ -165,15 +169,19 @@ class Variable:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         file_path = os.path.join(variable_path, 'data.parquet')
         sample_file_path = os.path.join(variable_path, 'sample_data.parquet')
-        if not self.storage.path_exists(file_path):
-            return pd.DataFrame()
-        if sample and self.storage.path_exists(sample_file_path):
+
+        read_sample_success = False
+        if sample:
             try:
                 df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
+                read_sample_success = True
             except Exception:
-                df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
-        else:
-            df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
+                pass
+        if not read_sample_success:
+            try:
+                df = self.storage.read_parquet(file_path, engine='pyarrow')
+            except Exception:
+                df = pd.DataFrame()
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
             if df.shape[0] > sample_count:
@@ -233,7 +241,10 @@ class Variable:
             .csv(variable_path)
         )
 
-    def __read_dataframe_analysis(self) -> Dict[str, Dict]:
+    def __read_dataframe_analysis(
+        self,
+        dataframe_analysis_keys: List[str] = None,
+    ) -> Dict[str, Dict]:
         """
         Read the following files
         1. metadata.json
@@ -246,6 +257,8 @@ class Variable:
             return dict()
         result = dict()
         for k in DATAFRAME_ANALYSIS_KEYS:
+            if dataframe_analysis_keys is not None and k not in dataframe_analysis_keys:
+                continue
             result[k] = self.storage.read_json_file(os.path.join(variable_path, f'{k}.json'))
         return result
 

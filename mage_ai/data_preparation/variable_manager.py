@@ -27,8 +27,11 @@ class VariableManager:
         # TODO: implement caching logic
 
     @classmethod
-    def get_manager(self, repo_path=None, variables_dir=None):
-
+    def get_manager(
+        self,
+        repo_path: str = None,
+        variables_dir: str = None,
+    ) -> 'VariableManager':
         manager_args = dict(
             repo_path=repo_path,
             variables_dir=variables_dir,
@@ -88,6 +91,7 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
+        dataframe_analysis_keys: List[str] = None,
         partition: str = None,
         variable_type: VariableType = None,
         sample: bool = False,
@@ -102,7 +106,12 @@ class VariableManager:
             variable_type=variable_type,
             spark=spark,
         )
-        return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
+        return variable.read_data(
+            dataframe_analysis_keys=dataframe_analysis_keys,
+            sample=sample,
+            sample_count=sample_count,
+            spark=spark,
+        )
 
     def get_variable_object(
         self,
@@ -163,8 +172,9 @@ class VariableManager:
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
         path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
-        if not self.storage.path_exists(path):
-            self.storage.makedirs(path, exist_ok=True)
+        if type(self.storage) is LocalStorage:
+            if not self.storage.path_exists(path):
+                self.storage.makedirs(path, exist_ok=True)
         return path
 
 

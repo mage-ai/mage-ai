@@ -1,5 +1,5 @@
+from mage_ai.services.aws.s3 import s3
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
-from mage_ai.services.s3 import s3
 from mage_ai.shared.constants import S3_PREFIX
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.urls import s3_url_path
@@ -37,15 +37,17 @@ class S3Storage(BaseStorage):
         pass
 
     def path_exists(self, path: str) -> bool:
-        return len(self.client.list_objects(s3_url_path(path))) > 0
+        results = self.client.list_objects(s3_url_path(path), max_keys=1)
+        return len(results) > 0
 
     def remove(self, path: str) -> None:
         self.client.delete_objects(s3_url_path(path))
 
     def read_json_file(self, file_path: str, default_value={}) -> Dict:
-        if not self.path_exists(file_path):
+        try:
+            return json.loads(self.client.read(s3_url_path(file_path)))
+        except Exception:
             return default_value
-        return json.loads(self.client.read(s3_url_path(file_path)))
 
     def write_json_file(self, file_path: str, data) -> None:
         self.client.upload(

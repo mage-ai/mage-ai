@@ -786,6 +786,7 @@ class Block:
                         self.pipeline.uuid,
                         self.uuid,
                         v,
+                        dataframe_analysis_keys=['metadata', 'statistics'],
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
