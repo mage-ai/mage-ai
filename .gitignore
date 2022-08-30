@@ -150,5 +150,9 @@ mage_ai/frontend/package-lock.json
 # DB files
 *.db
 
+# Terraform files
+**/.terraform*
+*.tfstate*
+
 # vscode
 .vscode/
