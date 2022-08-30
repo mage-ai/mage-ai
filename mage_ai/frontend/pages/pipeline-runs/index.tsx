@@ -17,7 +17,7 @@ function RunListPage() {
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
   const pipelinesByUUID = useMemo(() => indexBy(pipelines, ({ uuid }) => uuid), [pipelines]);
-  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [data]);
+  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
   const projects = dataProjects?.projects;
 
   return (
