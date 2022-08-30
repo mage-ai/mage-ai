@@ -175,6 +175,7 @@ export default {
     linkPrimary: BLUE,
     linkSecondary: PURPLE,
     linkSecondaryDisabled: PURPLE_LIGHT,
+    rowHoverBackground: 'rgba(0, 0, 0, 0.1)',
   },
   loader: {
     color: '#EB0032',

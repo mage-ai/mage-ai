@@ -34,7 +34,7 @@ const SHARED_STYLES = css`
   flex-direction: row;
 
   ${props => `
-    border-bottom: 1px solid ${(props.theme.borders || light.borders).medium};
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
   `}
 `;
 
@@ -51,7 +51,7 @@ const RowStyle = styled.div`
 
   ${props => `
     &:hover {
-      background: ${(props.theme.interactive || light.interactive).hoverBackground};
+      background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
       cursor: pointer;
     }
   `}
@@ -81,7 +81,7 @@ function FlexTable({
     updatedRows = [columnHeaders, ...rows]
   }
 
-  const Column = useCallback((cell, rowIndex, colIndex, isHeader) => (
+  const Column = useCallback((cell, rowIndex, colIndex) => (
     <CellStyle
       flex={columnFlex[colIndex]}
       key={`row-{rowIndex}-col-{colIndex}`}
