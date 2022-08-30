@@ -403,7 +403,7 @@ function PipelineDetailPage({
               uuid,
             },
           }) => {
-            router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+            router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
             fetchFileTree();
             fetchPipelines();
           },
@@ -1459,7 +1459,7 @@ function PipelineDetailPage({
         openFile={openFile}
         openPipeline={(uuid: string) => {
           resetState();
-          router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+          router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
         }}
         openSidekickView={openSidekickView}
         ref={fileTreeRef}

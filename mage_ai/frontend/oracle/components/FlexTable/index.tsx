@@ -1,16 +1,23 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useCallback } from 'react';
+import NextLink from 'next/link';
+import styled, { css } from 'styled-components';
 
-import FlexContainer from '../FlexContainer';
+import Link from '@oracle/elements/Link';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { transition } from '@oracle/styles/mixins';
 
 export type FlexTableProps = {
+  buildLinkProps?: (rowIndex: number) => {
+    as: string;
+    href: string;
+  };
   borderRadius?: boolean;
   columnFlex: number[];
   columnHeaders?: any[];
   noBorder?: boolean;
+  onClickRow?: (index: number) => void;
   rows: any[][];
   paddingHorizontal?: number;
   paddingVertical?: number;
@@ -21,59 +28,50 @@ const TableStyle = styled.div<any>`
   flex-direction: column;
 `;
 
+const SHARED_STYLES = css`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+`;
+
+const HeaderStyle = styled.div`
+  ${SHARED_STYLES}
+`;
+
+const RowStyle = styled.div`
+  ${SHARED_STYLES}
+
+  ${transition()}
+
+  flex: 1;
+
+  ${props => `
+    &:hover {
+      background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
+      cursor: pointer;
+    }
+  `}
+`;
+
 const CellStyle = styled.div<any>`
+  align-items: center;
+  display: flex;
+  padding: ${2 * UNIT}px;
+
   ${props => props.flex && `
     flex: ${props.flex};
-  `}
-  
-  display: flex;
-  align-items: center;
-
-  padding: 0 ${2 * UNIT}px;
-
-  ${props => typeof props.paddingHorizontal !== undefined && `
-    padding-left: ${props.paddingHorizontal}px;
-    padding-right: ${props.paddingHorizontal}px;
-  `}
-
-  ${props => typeof props.paddingVertical !== undefined  && `
-    padding-top: ${props.paddingVertical}px;
-    padding-bottom: ${props.paddingVertical}px;
-  `}
-
-  ${props => !props.noBorder && `
-    border-left: 1px solid ${(props.theme.borders || dark.borders).medium};
-    border-top: 1px solid ${(props.theme.borders || dark.borders).medium};
-  `}
-
-  ${props => !props.noBorder && props.lastCol && `
-    border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
-  `}
-
-  ${props => !props.noBorder && props.lastRow && `
-    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
-  `}
-
-  ${props => !props.noBorder && props.borderRadius && props.firstCol && props.firstRow && `
-    border-top-left-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => !props.noBorder && props.borderRadius && props.lastCol && props.firstRow && `
-    border-top-right-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => !props.noBorder && props.borderRadius && props.firstCol && props.lastRow && `
-    border-bottom-left-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => !props.noBorder && props.borderRadius && props.lastCol && props.lastRow && `
-    border-bottom-right-radius: ${BORDER_RADIUS}px;
   `}
 `;
 
 function FlexTable({
+  buildLinkProps,
   columnFlex,
   columnHeaders,
+  onClickRow,
   rows,
   ...props
 }: FlexTableProps) {
@@ -82,26 +80,69 @@ function FlexTable({
   if (columnHeaders) {
     updatedRows = [columnHeaders, ...rows]
   }
-return (
+
+  const Column = useCallback((cell, rowIndex, colIndex) => (
+    <CellStyle
+      flex={columnFlex[colIndex]}
+      key={`row-{rowIndex}-col-{colIndex}`}
+      {...props}
+    >
+      {cell}
+    </CellStyle>
+  ), [
+    columnFlex,
+    props,
+  ]);
+  const Row = useCallback((row, rowIndex: number) => {
+    const cellEls = row.map((cell, colIndex) => Column(cell, rowIndex, colIndex));
+
+    if (buildLinkProps) {
+      return (
+        <NextLink
+          {...buildLinkProps(rowIndex)}
+          key={`row-{rowIndex}`}
+          passHref
+        >
+          <Link
+            fullWidth
+            noHoverUnderline
+            noOutline
+            verticalAlignContent
+          >
+            <RowStyle>
+              {cellEls}
+            </RowStyle>
+          </Link>
+        </NextLink>
+      );
+    }
+
+    return (
+      <RowStyle
+        onClick={() => onClickRow?.(rowIndex)}
+        key={`row-{rowIndex}`}
+      >
+        {cellEls}
+      </RowStyle>
+    );
+  }, [
+    buildLinkProps,
+    onClickRow,
+  ]);
+
+  return (
     <TableStyle>
-      {updatedRows.map((row, rowIndex) => (
-        <FlexContainer>
-          {row.map((cell, colIndex) => (
-            <CellStyle
-              firstCol={colIndex === 0}
-              firstRow={rowIndex === 0}
-              flex={columnFlex[colIndex]}
-              lastCol={colIndex === row.length - 1}
-              lastRow={rowIndex === rows.length - 1}
-              {...props}
-            >
-              {cell}
-            </CellStyle>
-          ))}
-        </FlexContainer>
-      ))}
+      {columnHeaders?.length >= 1 && (
+        <HeaderStyle
+          key={`row-{rowIndex}`}
+        >
+          {columnHeaders.map((cell, colIndex) => Column(cell, -1, colIndex))}
+        </HeaderStyle>
+      )}
+
+      {rows.map((row, rowIndex) => Row(row, rowIndex))}
     </TableStyle>
-  )
+  );
 }
 
 export default FlexTable;

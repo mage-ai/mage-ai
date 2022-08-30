@@ -13,7 +13,7 @@ export const ContainerStyle = styled.div`
   width: 100%;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
+    background-color: ${(props.theme.background || dark.background).page};
   `}
 `;
 
@@ -21,6 +21,7 @@ export const VerticalNavigationStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
 
   ${props => `
+    background-color: ${(props.theme.background || dark.background).panel};
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;

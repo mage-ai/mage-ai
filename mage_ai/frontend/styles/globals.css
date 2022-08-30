@@ -116,6 +116,7 @@ a {
 }
 
 body {
+  background-color: #1E1F24;
   line-height: 1;
 
   -webkit-font-smoothing: antialiased;

@@ -10,12 +10,14 @@ import {
 } from './index.style';
 
 type DashboardProps = {
+  children?: any;
   projects: ProjectType[];
   subheaderChildren?: any;
   title: string;
 };
 
 function Dashboard({
+  children,
   projects,
   subheaderChildren,
   title,
@@ -45,10 +47,15 @@ function Dashboard({
           <VerticalNavigation />
         </VerticalNavigationStyle>
 
-        <Flex>
+        <Flex
+          flex={1}
+          flexDirection="column"
+        >
           <Subheader>
             {subheaderChildren}
           </Subheader>
+
+          {children}
         </Flex>
       </ContainerStyle>
     </>
