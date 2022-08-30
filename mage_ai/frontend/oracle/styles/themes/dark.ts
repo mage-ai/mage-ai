@@ -180,6 +180,9 @@ export default {
     color: '#EB0032',
     colorInverted: LIME_DARK,
   },
+  logo: {
+    color: WHITE,
+  },
   monotone: {
     black: BLACK,
     blackTransparent: 'rgba(0, 0, 0, 0.6)',

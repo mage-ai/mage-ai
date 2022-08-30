@@ -37,6 +37,7 @@ export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
 export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_SCHEDULES: 'pipeline_schedules' = 'pipeline_schedules';
+export const PROJECTS: 'projects' = 'projects';
 export const STATUS: 'status' = 'status';
 export const TRANSFORMER_ACTIONS: 'transformer_actions' = 'transformer_actions';
 export const VARIABLES: 'variables' = 'variables';
@@ -61,8 +62,9 @@ const RESOURCES: any[][] = [
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
   [PIPELINES],
-  [PIPELINE_SCHEDULES], 
-  [PIPELINE_SCHEDULES, PIPELINES], 
+  [PIPELINE_SCHEDULES],
+  [PIPELINE_SCHEDULES, PIPELINES],
+  [PROJECTS],
   [STATUS],
   [VARIABLES, PIPELINES],
   [VERSIONS, FEATURE_SETS],

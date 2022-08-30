@@ -18,6 +18,7 @@ export type TooltipWrapperProps = {
   children?: any;
   default?: boolean;
   description?: string;
+  height?: number;
   inline?: boolean;
   label?: string | any;
   leftPosition?: number;
@@ -28,12 +29,17 @@ export type TooltipWrapperProps = {
   rightPosition?: boolean;
   size?: number;
   topOffset?: number;
+  visibleDelay?: number;
   warning?: boolean;
   widthFitContent?: boolean;
 };
 
 const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
   position: relative;
+
+  ${props => props.height && `
+    height: ${props.height}px;
+  `}
 
   ${props => props.size && `
     height: ${props.size}px;
@@ -135,11 +141,13 @@ function TooltipWrapper({
   center,
   children,
   content,
+  height,
   inline,
   minWidth,
   noHoverOutline,
   size = UNIT * 2,
   topOffset,
+  visibleDelay = 1000,
   widthFitContent,
 }: TooltipWrapperProps & {
   content: any;
@@ -165,7 +173,7 @@ function TooltipWrapper({
   );
 
   useEffect(() => {
-    const interval = setInterval(() => setVisible(true), 1000);
+    const interval = setInterval(() => setVisible(true), visibleDelay);
 
     if (!visibleInterval) {
       clearInterval(interval);
@@ -181,6 +189,7 @@ function TooltipWrapper({
 
   return (
     <ContainerEl
+      height={height}
       onMouseLeave={() => {
         setVisibleInterval(false);
         setVisible(false);

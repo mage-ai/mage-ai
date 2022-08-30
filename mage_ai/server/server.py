@@ -31,6 +31,7 @@ from mage_ai.server.api.orchestration import (
     ApiPipelineScheduleDetailHandler,
     ApiPipelineScheduleListHandler,
 )
+from mage_ai.server.api.projects import ApiProjectsHandler
 from mage_ai.server.api.widgets import ApiPipelineWidgetDetailHandler, ApiPipelineWidgetListHandler
 from mage_ai.server.constants import DATA_PREP_SERVER_PORT
 from mage_ai.server.kernel_output_parser import parse_output_message
@@ -46,7 +47,6 @@ from mage_ai.server.websocket import WebSocketServer
 import argparse
 import asyncio
 import json
-import multiprocessing
 import os
 import socket
 import tornado.ioloop
@@ -396,6 +396,7 @@ def make_app():
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
+        (r'/api/projects', ApiProjectsHandler),
     ]
     return tornado.web.Application(
         routes,

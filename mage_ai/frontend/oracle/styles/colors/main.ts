@@ -33,6 +33,7 @@ export const RED = '#FF144D';
 export const RED_HIGHLIGHT = 'rgba(255, 241, 244, 0.06)';
 export const RED_LIGHT = '#FFA1B8';
 export const RED_XLIGHT = '#FFD0DB';
+export const SHADE: '#A1A1A1' = '#A1A1A1'; // gray
 export const SILVER = '#F9FAFC';
 export const WHITE = '#FFFFFF';
 export const YELLOW = '#FFCC19';
