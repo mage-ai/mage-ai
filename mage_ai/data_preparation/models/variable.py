@@ -35,8 +35,8 @@ class Variable:
     ) -> None:
         self.uuid = uuid
         self.storage = storage
-        if not self.storage.path_exists(pipeline_path):
-            raise Exception(f'Pipeline path {pipeline_path} does not exist.')
+        # if not self.storage.path_exists(pipeline_path):
+        #     raise Exception(f'Pipeline path {pipeline_path} does not exist.')
         self.pipeline_path = pipeline_path
         self.block_uuid = block_uuid
         self.partition = partition
@@ -169,11 +169,11 @@ class Variable:
             return pd.DataFrame()
         if sample and self.storage.path_exists(sample_file_path):
             try:
-                df = pd.read_parquet(sample_file_path, engine='pyarrow')
+                df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
             except Exception:
-                df = pd.read_parquet(file_path, engine='pyarrow')
+                df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
         else:
-            df = pd.read_parquet(file_path, engine='pyarrow')
+            df = self.storage.read_parquet(sample_file_path, engine='pyarrow')
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
             if df.shape[0] > sample_count:
@@ -214,9 +214,15 @@ class Variable:
                     df_output[c] = series_non_null.astype(str)
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         self.storage.makedirs(variable_path, exist_ok=True)
-        df_output.to_parquet(os.path.join(variable_path, 'data.parquet'))
+        self.storage.write_parquet(
+            df_output,
+            os.path.join(variable_path, 'data.parquet'),
+        )
         df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
-        df_sample_output.to_parquet(os.path.join(variable_path, 'sample_data.parquet'))
+        self.storage.write_parquet(
+            df_sample_output,
+            os.path.join(variable_path, 'sample_data.parquet'),
+        )
 
     def __write_spark_parquet(self, data) -> None:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')

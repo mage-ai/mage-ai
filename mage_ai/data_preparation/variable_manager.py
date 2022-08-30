@@ -33,7 +33,7 @@ class VariableManager:
             repo_path=repo_path,
             variables_dir=variables_dir,
         )
-        if self.variables_dir is not None and self.variables_dir.startswith(S3_PREFIX):
+        if variables_dir is not None and variables_dir.startswith(S3_PREFIX):
             return S3VariableManager(**manager_args)
         else:
             return VariableManager(**manager_args)
@@ -171,7 +171,7 @@ class VariableManager:
 class S3VariableManager(VariableManager):
     def __init__(self, repo_path=None, variables_dir=None):
         super().__init__(repo_path=repo_path, variables_dir=variables_dir)
-        self.storage = S3Storage(variables_dir)
+        self.storage = S3Storage(dirpath=variables_dir)
 
 
 def get_global_variables(

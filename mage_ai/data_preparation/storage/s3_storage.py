@@ -4,7 +4,9 @@ from mage_ai.shared.constants import S3_PREFIX
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.urls import s3_url_path
 from typing import Dict, List
+import io
 import json
+import pandas as pd
 import simplejson
 
 
@@ -25,7 +27,11 @@ class S3Storage(BaseStorage):
         return self.path_exists(path)
 
     def listdir(self, path: str) -> List[str]:
-        return self.client.list_folders(s3_url_path(path))
+        if not path.endswith('/'):
+            path += '/'
+        path = s3_url_path(path)
+        keys = self.client.list_folders(path)
+        return [k[len(path):].rstrip('/') for k in keys]
 
     def makedirs(self, path: str, **kwargs) -> None:
         pass
@@ -39,10 +45,10 @@ class S3Storage(BaseStorage):
     def read_json_file(self, file_path: str, default_value={}) -> Dict:
         if not self.path_exists(file_path):
             return default_value
-        return json.load(self.client.read(s3_url_path(file_path)))
+        return json.loads(self.client.read(s3_url_path(file_path)))
 
     def write_json_file(self, file_path: str, data) -> None:
-        self.client.put_object(
+        self.client.upload(
             s3_url_path(file_path),
             simplejson.dumps(
                 data,
@@ -50,3 +56,13 @@ class S3Storage(BaseStorage):
                 ignore_nan=True,
             ),
         )
+
+    def read_parquet(self, file_path: str, **kwargs) -> pd.DataFrame:
+        buffer = io.BytesIO(self.client.get_object(s3_url_path(file_path)).read())
+        return pd.read_parquet(buffer, **kwargs)
+
+    def write_parquet(self, df: pd.DataFrame, file_path: str) -> None:
+        buffer = io.BytesIO()
+        df.to_parquet(buffer)
+        buffer.seek(0)
+        self.client.upload_object(s3_url_path(file_path), buffer)
