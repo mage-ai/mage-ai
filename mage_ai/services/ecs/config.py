@@ -10,6 +10,8 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
+    cpu: int = 512
+    memory: int = 1024
 
     def get_task_config(self, command: str = None) -> Dict:
         task_config = dict(
@@ -32,7 +34,11 @@ class EcsConfig(BaseConfig):
                     {
                         'name': self.container_name,
                         'command': command.split(' '),
+                        'cpu': self.cpu,
+                        'memory': self.memory,
                     },
                 ],
+                'cpu': str(self.cpu),
+                'memory': str(self.memory),
             }
         return task_config
