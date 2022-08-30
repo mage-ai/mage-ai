@@ -84,7 +84,8 @@ class ApiAllPipelineRunListHandler(BaseHandler):
             select(*columns, func.count(c.id).label('block_runs_count')).
             join(b, a.pipeline_schedule_id == b.id).
             join(c, a.id == c.pipeline_run_id).
-            group_by(*columns)
+            group_by(*columns).
+            order_by(a.created_at.desc())
         ).all()
         collection = [r for r in pipeline_runs]
 
