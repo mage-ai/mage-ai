@@ -4,6 +4,7 @@ import React, {
   useRef,
 } from 'react';
 import App, { AppProps } from 'next/app';
+import LoadingBar from 'react-top-loading-bar';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
 
@@ -15,6 +16,7 @@ import ToastWrapper from '@components/Toast/ToastWrapper';
 import light from '@oracle/styles/themes/light';
 import useGlobalKeyboardShortcuts from '@utils/hooks/keyboardShortcuts/useGlobalKeyboardShortcuts';
 import { ModalProvider } from '@context/Modal';
+import { RED } from '@oracle/styles/colors/main';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
@@ -120,6 +122,8 @@ function MyApp(props: MyAppProps & AppProps) {
                   name="viewport"
                 />
               </Head>
+
+              <LoadingBar color={RED} ref={refLoadingBar} />
 
               {/* @ts-ignore */}
               <Component {...pageProps} />

@@ -24,3 +24,7 @@ export const VerticalNavigationStyle = styled.div`
     border-right: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 `;
+
+export const SubheaderStyle = styled.div`
+  padding: ${PADDING_UNITS * UNIT}px;
+`;
