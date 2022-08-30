@@ -19,47 +19,30 @@ import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import ContextMenu, { ContextMenuEnum } from '@components/ContextMenu';
 import DataProviderType from '@interfaces/DataProviderType';
-import ErrorPopup from '@components/ErrorPopup';
 import FileBrowser from '@components/FileBrowser';
 import FileEditor from '@components/FileEditor';
 import FileHeaderMenu from '@components/PipelineDetail/FileHeaderMenu';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Head from '@oracle/elements/Head';
-import Header from '@components/PipelineDetail/Header';
 import KernelStatus from '@components/PipelineDetail/KernelStatus';
 import KernelOutputType, {
   DataTypeEnum,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Orchestration from '@components/Orchestration';
 import PipelineDetail from '@components/PipelineDetail';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
 import RecommendationsWindow from '@components/RecommendationsWindow';
-import Sidebar from '@components/Orchestration/Sidebar';
 import Sidekick from '@components/Sidekick';
 import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
-import TripleLayout from '@components/TripleLayout';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 
 import { Add, Close } from '@oracle/icons';
-import {
-  AFTER_DEFAULT_WIDTH,
-  BEFORE_DEFAULT_WIDTH,
-} from '@components/TripleLayout/index.style';
-import {
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN,
-  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH,
-  get,
-  set,
-} from '@storage/localStorage';
 import {
   NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
@@ -83,6 +66,7 @@ import { goToWithQuery } from '@utils/routing';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
+import PipelineLayout from '@components/PipelineLayout';
 
 type PipelineDetailPageProps = {
   newPipelineSchedule: boolean;
@@ -93,28 +77,15 @@ type PipelineDetailPageProps = {
 };
 
 function PipelineDetailPage({
-  newPipelineSchedule,
   page,
   pipeline: pipelineProp,
-  pipelineSchedule: pipelineScheduleProp,
-  pipelineScheduleAction,
 }: PipelineDetailPageProps) {
   const router = useRouter();
   const {
     height: heightWindow,
-    width: widthWindow,
   } = useWindowSize();
-  const [afterWidth, setAfterWidth] = useState(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, AFTER_DEFAULT_WIDTH));
+  const [afterHidden, setAfterHidden] = useState<boolean>(false);
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
-  const [beforeWidth, setBeforeWidth] = useState(
-    get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, BEFORE_DEFAULT_WIDTH));
-  const [afterHidden, setAfterHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
-  const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [errors, setErrors] = useState(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState<string>(null);
@@ -125,6 +96,8 @@ function PipelineDetailPage({
   }>({});
   const [textareaFocused, setTextareaFocused] = useState<boolean>(false);
   const [anyInputFocused, setAnyInputFocused] = useState<boolean>(false);
+
+  const mainContainerRef = useRef(null);
 
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
@@ -176,7 +149,6 @@ function PipelineDetailPage({
   const chartRefs = useRef({});
   const contentByBlockUUID = useRef({});
   const contentByWidgetUUID = useRef({});
-  const mainContainerRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
   const pipelineUUIDPrev = usePrevious(pipelineUUID);
 
@@ -216,40 +188,6 @@ function PipelineDetailPage({
   );
 
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
-  useEffect(() => {
-    if (mainContainerRef?.current && !afterMousedownActive && !beforeMousedownActive) {
-      setMainContainerWidth(mainContainerRef.current.getBoundingClientRect().width);
-    }
-  }, [
-    afterMousedownActive,
-    beforeMousedownActive,
-    afterHidden,
-    afterWidth,
-    beforeHidden,
-    beforeWidth,
-    mainContainerRef?.current,
-    setMainContainerWidth,
-    widthWindow,
-  ]);
-
-  useEffect(() => {
-    if (!afterMousedownActive) {
-      setAfterWidthForChildren(afterWidth);
-      set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, afterWidth);
-    }
-  }, [
-    afterMousedownActive,
-    afterWidth,
-    setAfterWidthForChildren,
-  ]);
-  useEffect(() => {
-    if (!beforeMousedownActive) {
-      set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, beforeWidth);
-    }
-  }, [
-    beforeMousedownActive,
-    beforeWidth,
-  ]);
 
   // Data providers
   const { data: dataDataProviders } = api.data_providers.list();
@@ -262,7 +200,7 @@ function PipelineDetailPage({
   } = api.variables.pipelines.list(pipelineUUID);
   const globalVariables = dataGlobalVariables?.variables;
 
-  // Blocks
+  // // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [widgets, setWidgets] = useState<BlockType[]>([]);
   const widgetTempData = useRef({});
@@ -301,24 +239,6 @@ function PipelineDetailPage({
   const [runningBlocks, setRunningBlocks] = useState<BlockType[]>([]);
   const [selectedBlock, setSelectedBlock] = useState<BlockType>(null);
   const [recsWindowOpenBlockIdx, setRecsWindowOpenBlockIdx] = useState<number>(null);
-
-  // Orchestration
-  const pipelineScheduleId = pipelineScheduleProp?.id;
-
-  const { data: pipelineSchedulesData, mutate: fetchPipelineSchedules } = api.pipeline_schedules.list();
-  const pipelineSchedules = useMemo(() => {
-    const schedulesByPipeline = {};
-    pipelines?.forEach(pipeline => schedulesByPipeline[pipeline.uuid] = []);
-    pipelineSchedulesData
-      ?.pipeline_schedules
-      ?.forEach((schedule) => {
-        const pipelineUuid = schedule?.pipeline_uuid;
-        const currentSchedules = schedulesByPipeline[pipelineUuid];
-        currentSchedules?.push(schedule);
-        schedulesByPipeline[pipelineUuid] = currentSchedules;
-      });
-    return schedulesByPipeline;
-  }, [pipelines, pipelineSchedulesData]);
 
   const outputBlockUUIDsInit = getDataOutputBlockUUIDs(pipelineUUID);
   const outputBlocksInit = convertBlockUUIDstoBlockTypes(outputBlockUUIDsInit, blocks);
@@ -597,7 +517,7 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  // Files
+  // // Files
   const openFile = useCallback((filePath: string) => {
     savePipelineContent();
 
@@ -1380,31 +1300,23 @@ function PipelineDetailPage({
     widgets,
   ]);
 
-  const orchestrationMemo = useMemo(() => (
-    <Orchestration
-      newPipelineSchedule={newPipelineSchedule}
-      pipeline={pipeline}
-      pipelineScheduleAction={pipelineScheduleAction}
-      pipelineScheduleId={pipelineScheduleId}
-      setErrors={setErrors}
-      variables={globalVariables}
-    />
-  ), [
-    globalVariables,
-    newPipelineSchedule,
-    pipeline,
-    pipelineScheduleAction,
-    pipelineScheduleId,
-    setErrors,
-  ])
-
-  const headerMemo = useMemo(() => (
-    <Header
-      page={page}
-      pipeline={pipeline}
-      projectName={projectName}
-    />
-  ), [page, pipeline, projectName])
+  // const orchestrationMemo = useMemo(() => (
+  //   <Orchestration
+  //     newPipelineSchedule={newPipelineSchedule}
+  //     pipeline={pipeline}
+  //     pipelineScheduleAction={pipelineScheduleAction}
+  //     pipelineScheduleId={pipelineScheduleId}
+  //     setErrors={setErrors}
+  //     variables={globalVariables}
+  //   />
+  // ), [
+  //   globalVariables,
+  //   newPipelineSchedule,
+  //   pipeline,
+  //   pipelineScheduleAction,
+  //   pipelineScheduleId,
+  //   setErrors,
+  // ])
 
   const mainContainerHeaderMemo = useMemo(() => {
     if (page === 'develop') {
@@ -1528,50 +1440,34 @@ function PipelineDetailPage({
   ]);
 
   const fileTreeRef = useRef(null);
-  const before = useMemo(() => {
-    if (page === 'develop') {
-      return (
-        <ContextMenu
-          areaRef={fileTreeRef}
-          createPipeline={createPipeline}
-          deleteBlockFile={deleteBlockFile}
-          deletePipeline={deletePipeline}
-          deleteWidget={deleteWidget}
-          enableContextItem
-          numPipelines={numPipelines}
-          type={ContextMenuEnum.FILE_BROWSER}
-        >
-          <FileBrowser
-            blocks={blocks}
-            files={filesData?.files}
-            onlyShowChildren
-            onSelectBlockFile={onSelectBlockFile}
-            openFile={openFile}
-            openPipeline={(uuid: string) => {
-              resetState();
-              router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
-            }}
-            openSidekickView={openSidekickView}
-            ref={fileTreeRef}
-            widgets={widgets}
-          />
-        </ContextMenu>
-      );
-    } else if (page === 'jobs') {
-      return (
-        <Sidebar
-          pipelineSchedules={pipelineSchedules}
-          pipelineUuid={pipelineUUID}
-          pipelineScheduleId={pipelineScheduleId}
-        />
-      );
-    }
-  }, [
+  const before = useMemo(() => (
+    <ContextMenu
+      areaRef={fileTreeRef}
+      createPipeline={createPipeline}
+      deleteBlockFile={deleteBlockFile}
+      deletePipeline={deletePipeline}
+      deleteWidget={deleteWidget}
+      enableContextItem
+      numPipelines={numPipelines}
+      type={ContextMenuEnum.FILE_BROWSER}
+    >
+      <FileBrowser
+        blocks={blocks}
+        files={filesData?.files}
+        onlyShowChildren
+        onSelectBlockFile={onSelectBlockFile}
+        openFile={openFile}
+        openPipeline={(uuid: string) => {
+          resetState();
+          router.push('/pipelines/[...slug]', `/pipelines/${uuid}`);
+        }}
+        openSidekickView={openSidekickView}
+        ref={fileTreeRef}
+        widgets={widgets}
+      />
+    </ContextMenu>
+  ), [
     blocks,
-    page,
-    pipelineScheduleId,
-    pipelineSchedules,
-    pipelineUUID,
     filesData?.files,
     onSelectBlockFile,
   ]);
@@ -1607,11 +1503,10 @@ function PipelineDetailPage({
     <>
       <Head title={pipeline?.name} />
 
-      <TripleLayout
+      <PipelineLayout
         after={sideKick}
         afterHeader={afterHeader}
         afterHidden={afterHidden}
-        afterMousedownActive={afterMousedownActive}
         afterSubheader={outputBlocks?.length > 0 && activeSidekickView === ViewKeyEnum.DATA && (
           <FlexContainer
             alignItems="center"
@@ -1656,77 +1551,61 @@ function PipelineDetailPage({
             })}
           </FlexContainer>
         )}
-        afterWidth={afterWidth}
         before={before}
         beforeHeader={beforeHeader}
-        beforeHidden={beforeHidden}
-        beforeMousedownActive={beforeMousedownActive}
-        beforeWidth={beforeWidth}
-        header={headerMemo}
+        errors={errors}
         mainContainerHeader={mainContainerHeaderMemo}
         mainContainerRef={mainContainerRef}
+        page={page}
+        pipeline={pipeline}
+        projectName={projectName}
         setAfterHidden={setAfterHidden}
-        setAfterMousedownActive={setAfterMousedownActive}
-        setAfterWidth={setAfterWidth}
-        setBeforeHidden={setBeforeHidden}
-        setBeforeMousedownActive={setBeforeMousedownActive}
-        setBeforeWidth={setBeforeWidth}
+        setAfterWidthForChildren={setAfterWidthForChildren}
+        setErrors={setErrors}
+        setMainContainerWidth={setMainContainerWidth}
       >
-        {page === 'develop' && (
-          <>
-            <div
-              style={{
-                height: selectedFilePath ? 0 : null,
-                visibility: selectedFilePath ? 'hidden' : null,
-                opacity: selectedFilePath ? 0 : null,
+        <div
+          style={{
+            height: selectedFilePath ? 0 : null,
+            visibility: selectedFilePath ? 'hidden' : null,
+            opacity: selectedFilePath ? 0 : null,
+          }}
+        >
+          {pipelineDetailMemo}
+        </div>
+
+        {filePathsFromUrl?.map((filePath: string) => (
+          <div
+            key={filePath}
+            style={{
+              display: selectedFilePath === filePath
+                ? null
+                : 'none',
+            }}
+          >
+            <FileEditor
+              active={selectedFilePath === filePath}
+              addNewBlock={(b: BlockRequestPayloadType) => {
+                addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
+                router.push(`/pipelines/${pipelineUUID}`);
               }}
-            >
-              {pipelineDetailMemo}
-            </div>
-
-            {filePathsFromUrl?.map((filePath: string) => (
-              <div
-                key={filePath}
-                style={{
-                  display: selectedFilePath === filePath
-                    ? null
-                    : 'none',
-                }}
-              >
-                <FileEditor
-                  active={selectedFilePath === filePath}
-                  addNewBlock={(b: BlockRequestPayloadType) => {
-                    addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
-                    router.push(`/pipelines/${pipelineUUID}`);
-                  }}
-                  filePath={filePath}
-                  pipeline={pipeline}
-                  setFilesTouched={setFilesTouched}
-                />
-              </div>
-            ))}
-
-            <Spacing
-              pb={filePathFromUrl
-                ? 0
-                : Math.max(
-                  Math.floor((heightWindow * (2 / 3)) / UNIT),
-                  0,
-                )
-              }
+              filePath={filePath}
+              pipeline={pipeline}
+              setFilesTouched={setFilesTouched}
             />
-          </>
-        )}
+          </div>
+        ))}
 
-        {page === 'jobs' && orchestrationMemo}
-      </TripleLayout>
-
-      {errors && (
-        <ErrorPopup
-          {...errors}
-          onClose={() => setErrors(null)}
+        <Spacing
+          pb={filePathFromUrl
+            ? 0
+            : Math.max(
+              Math.floor((heightWindow * (2 / 3)) / UNIT),
+              0,
+            )
+          }
         />
-      )}
+      </PipelineLayout>
 
       {recsWindowOpenBlockIdx !== null &&
         <RecommendationsWindow
@@ -1752,43 +1631,49 @@ function PipelineDetailPage({
 }
 
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
-  const { slug: slugArray }: { slug: string[] } = ctx.query;
+  const { pipeline: pipelineUUID }: { pipeline: string } = ctx.query;
   let page = 'develop';
-  let pipelineUUID;
-  let pipelineScheduleId;
-  let pipelineScheduleAction;
-  let newPipelineSchedule = false;
+  // let pipelineScheduleId;
+  // let pipelineScheduleAction;
+  // let newPipelineSchedule = false;
 
-  if (Array.isArray(slugArray)) {
-    pipelineUUID = slugArray[0];
-    if (slugArray.length > 1) {
-      page = 'jobs';
-      newPipelineSchedule = slugArray[1] === 'new_schedule';
-    }
-    if (!newPipelineSchedule && slugArray.length > 2) {
-      pipelineScheduleId = slugArray[2];
-      if (slugArray.length > 3) {
-        pipelineScheduleAction = slugArray[3];
-      }
-    }
+  // if (Array.isArray(slugArray)) {
+  //   pipelineUUID = slugArray[0];
+  //   if (slugArray.length > 1) {
+  //     page = 'jobs';
+  //     newPipelineSchedule = slugArray[1] === 'new_schedule';
+  //   }
+  //   if (!newPipelineSchedule && slugArray.length > 2) {
+  //     pipelineScheduleId = slugArray[2];
+  //     if (slugArray.length > 3) {
+  //       pipelineScheduleAction = slugArray[3];
+  //     }
+  //   }
 
-  }
+  // }
+
+  // const initialProps = {
+  //   newPipelineSchedule,
+  //   page,
+  //   pipeline: {
+  //     uuid: pipelineUUID,
+  //   },
+  // };
+
+  // if (pipelineScheduleId) {
+  //   initialProps['pipelineSchedule'] = {
+  //     id: pipelineScheduleId,
+  //     pipeline_uuid: pipelineUUID,
+  //   };
+  //   initialProps['pipelineScheduleAction'] = pipelineScheduleAction;
+  // }
 
   const initialProps = {
-    newPipelineSchedule,
-    page,
-    pipeline: {
-      uuid: pipelineUUID,
-    },
-  };
-
-  if (pipelineScheduleId) {
-    initialProps['pipelineSchedule'] = {
-      id: pipelineScheduleId,
-      pipeline_uuid: pipelineUUID,
+      page,
+      pipeline: {
+        uuid: pipelineUUID,
+      },
     };
-    initialProps['pipelineScheduleAction'] = pipelineScheduleAction;
-  }
 
   return initialProps;
 };

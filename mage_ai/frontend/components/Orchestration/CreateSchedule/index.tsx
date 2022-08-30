@@ -53,7 +53,7 @@ function CreateSchedule({
           callback:
             (res) =>
               window.location.href =
-                `/pipelines/${pipeline?.uuid}/jobs/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
+                `/pipelines/${pipeline?.uuid}/schedules/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
@@ -71,7 +71,7 @@ function CreateSchedule({
           callback:
             (res) =>
               window.location.href =
-                `/pipelines/${pipeline?.uuid}/jobs/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
+                `/pipelines/${pipeline?.uuid}/schedules/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,

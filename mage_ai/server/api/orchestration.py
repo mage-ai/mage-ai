@@ -48,6 +48,7 @@ class ApiBlockRunOutputHandler(BaseHandler):
 
 
 class ApiPipelineRunListHandler(BaseHandler):
+    datetime_keys = ['execution_date']
     model_class = PipelineRun
 
     def get(self, pipeline_schedule_id):

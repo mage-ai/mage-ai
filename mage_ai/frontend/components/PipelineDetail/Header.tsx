@@ -42,10 +42,10 @@ function Header({
       // TODO: Uncomment when jobs is ready.
       // {
       //   Icon: Orchestrate,
-      //   name: 'jobs',
+      //   name: 'schedules',
       //   onClick: () => {
       //     Router.push({
-      //       pathname: `/pipelines/${pipeline.uuid}/new_schedule`,
+      //       pathname: `/pipelines/${pipeline.uuid}/schedules/new`,
       //     });
       //   }
       // },
