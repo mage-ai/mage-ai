@@ -16,6 +16,8 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name='mage-ai',
+    # NOTE: when you change this, change the value of VERSION in the following file:
+    # mage-ai/mage_ai/server/constants.py
     version='0.3.4',
     author='Mage',
     author_email='eng@mage.ai',

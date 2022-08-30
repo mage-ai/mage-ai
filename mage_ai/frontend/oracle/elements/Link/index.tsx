@@ -11,7 +11,6 @@ import {
 import { SHARED_TEXT_STYLES } from '@oracle/elements/Text';
 import { transition } from '@oracle/styles/mixins';
 
-
 export type LinkProps = {
   autoHeight?: boolean;
   block?: boolean;

@@ -11,7 +11,6 @@ import ModelThemeContext from '@context/ModelTheme';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
-
 import { BLUE_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
@@ -29,6 +28,7 @@ import {
   REGULAR,
   SMALL,
 } from '@oracle/styles/fonts/sizes';
+import { LinkProps } from '@oracle/elements/Link';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { logEventCustom } from '@interfaces/EventPropertiesType';
@@ -94,7 +94,7 @@ export type KeyboardShortcutButtonProps = {
   withIcon?: boolean;
   wrapText?: boolean;
   useModelTheme?: boolean;
-} & KeyboardShortcutSharedProps;
+} & KeyboardShortcutSharedProps & LinkProps;
 
 const SHARED_STYLES = css<KeyboardShortcutButtonProps>`
   ${transition()}
