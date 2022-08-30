@@ -30,6 +30,7 @@ export function selectOutlineColor(props) {
 export type ButtonProps = {
   afterIcon?: any;
   backgroundColor?: string;
+  backgroundGradient?: string;
   basic?: boolean;
   beforeIcon?: any;
   borderColor?: string;
@@ -52,6 +53,7 @@ export type ButtonProps = {
   notClickable?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
+  pointerEventsEnabled?: boolean;
   primary?: boolean;
   primaryGradient?: boolean;
   secondaryGradient?: boolean;
@@ -95,12 +97,20 @@ const ButtonStyle = styled.button<{
     background-color: ${(props.theme.background || light.background).row};
   `}
 
+  ${props => props.pointerEventsEnabled && `
+    pointer-events: all;
+  `}
+
+  ${props => props.backgroundGradient && `
+    background: ${props.backgroundGradient};
+  `}
+
   ${props => props.noBackground && `
     background-color: transparent;
   `}
 
   ${props => props.padding && `
-    padding: ${props.padding};
+    padding: ${props.padding} !important;
   `}
 
   ${props => props.noPadding && `
