@@ -1,4 +1,3 @@
-
 export enum RunStatus {
   INITIAL = 'initial',
   RUNNING = 'running',
@@ -14,9 +13,14 @@ export interface BlockRunType {
 }
 
 export default interface PipelineRunType {
-  pipeline_schedule_id: string;
-  pipeline_uuid: string;
+  block_runs?: BlockRunType[];
+  block_runs_count?: number;
+  created_at: string;
   execution_date: string;
+  id: number;
+  pipeline_schedule_id: number;
+  pipeline_schedule_name: string;
+  pipeline_uuid: string;
   status: RunStatus;
-  block_runs: BlockRunType[];
+  updated_at: string;
 }

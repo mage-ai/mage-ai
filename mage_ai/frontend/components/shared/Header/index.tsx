@@ -115,8 +115,8 @@ function Header({
               widthFitContent
             >
               <NextLink
-                as="/pipelines"
-                href="/pipelines"
+                as="/"
+                href="/"
                 passHref
               >
                 <Link

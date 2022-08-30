@@ -14,6 +14,7 @@ import enum
 
 Base = declarative_base()
 Base.query = Session.query_property()
+Base.select = Session.query
 
 
 class BaseModel(Base):

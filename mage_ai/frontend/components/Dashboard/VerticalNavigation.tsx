@@ -29,7 +29,7 @@ function VerticalNavigation() {
       {
         Icon: BlocksStacked,
         IconSelected: BlocksStackedGradient,
-        id: 'runs',
+        id: 'pipeline-runs',
       },
     ].map(({
       Icon,
@@ -43,7 +43,7 @@ function VerticalNavigation() {
         <Tooltip
           height={5 * UNIT}
           key={`button-${id}`}
-          label={capitalize(id)}
+          label={capitalize(id.split('-').join(' '))}
           size={null}
           widthFitContent
         >
