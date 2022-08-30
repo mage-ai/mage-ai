@@ -17,7 +17,7 @@ import {
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   BORDER_WIDTH,
- } from '@oracle/styles/units/borders';
+} from '@oracle/styles/units/borders';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_REGULAR,

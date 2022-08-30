@@ -8,7 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
-import LogoIcon from '@oracle/icons/Logo';
+import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -125,7 +125,7 @@ function Header({
                   noHoverUnderline
                   noOutline
                 >
-                  <LogoIcon height={LOGO_HEIGHT} />
+                  <GradientLogoIcon height={LOGO_HEIGHT} />
                 </Link>
               </NextLink>
             </Tooltip>

@@ -1,6 +1,12 @@
+import Flex from '@oracle/components/Flex';
 import Header from '@components/shared/Header';
 import ProjectType from '@interfaces/ProjectType';
+import VerticalNavigation from './VerticalNavigation';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
+import {
+  ContainerStyle,
+  VerticalNavigationStyle,
+} from './index.style';
 
 type DashboardProps = {
   projects: ProjectType[];
@@ -30,6 +36,14 @@ function Dashboard({
         breadcrumbs={breadcrumbs}
         version={projects?.[0]?.version}
       />
+
+      <ContainerStyle>
+        <VerticalNavigationStyle>
+          <VerticalNavigation />
+        </VerticalNavigationStyle>
+
+        <Flex />
+      </ContainerStyle>
     </>
   );
 }
