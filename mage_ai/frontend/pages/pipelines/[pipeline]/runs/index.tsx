@@ -5,7 +5,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRun from '@interfaces/PipelineRun';
+import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { ChevronRight } from '@oracle/icons';
@@ -30,7 +30,7 @@ function PipelineRuns({
       ]}
       pageName={PageNameEnum.RUNS}
       pipeline={pipeline}
-      title={({ name }) => `${name} schedules`}
+      title={({ name }) => `${name} runs`}
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => {
@@ -46,6 +46,9 @@ function PipelineRuns({
             Run date
           </Text>,
           <Text bold monospace muted>
+            Status
+          </Text>,
+          <Text bold monospace muted>
             Schedule
           </Text>,
           <Text bold monospace muted>
@@ -53,15 +56,25 @@ function PipelineRuns({
           </Text>,
           null,
         ]}
-        columnFlex={[4, 2, 1, 1]}
+        columnFlex={[3, 2, 3, 2, 1]}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           created_at: createdAt,
           pipeline_schedule_name: pipelineScheduleName,
           pipeline_uuid: pipelineUUID,
+          status,
         }: PipelineRunType) => [
           <Text monospace>
             {createdAt}
+          </Text>,
+          <Text
+            danger={RunStatus.FAILED === status}
+            info={RunStatus.INITIAL === status}
+            muted={RunStatus.CANCELLED === status}
+            success={RunStatus.COMPLETED === status}
+            warning={RunStatus.RUNNING === status}
+          >
+            {status}
           </Text>,
           <Text>
             {pipelineScheduleName}

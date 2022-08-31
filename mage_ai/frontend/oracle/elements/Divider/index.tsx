@@ -3,12 +3,13 @@ import styled from 'styled-components';
 import { MarginProps, PaddingProps } from 'styled-system';
 
 import Spacing from '../Spacing';
-import light from '../../styles/themes/light';
+import dark from '../../styles/themes/dark';
 import { ThemeType } from '../../styles/themes/constants';
 
 export type DividerProps = {
   black?: boolean;
   dark?: boolean;
+  light?: boolean;
   muted?: boolean;
   prominent?: boolean;
   short?: boolean;
@@ -29,8 +30,12 @@ const DividerContainerStyle = styled.div<DividerProps>`
 const DividerStyle = styled.div<DividerProps>`
   height: 1px;
 
-  ${props => `
-    background-color: ${(props.theme.monotone || light.monotone).grey200};
+  ${props => !props.light && `
+    background-color: ${(props.theme.monotone || dark.monotone).grey200};
+  `}
+
+  ${props => props.light && `
+    background-color: ${(props.theme.borders || dark.borders).light};
   `}
 `;
 

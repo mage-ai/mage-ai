@@ -42,14 +42,16 @@ const HeaderStyle = styled.div`
   ${SHARED_STYLES}
 `;
 
-const RowStyle = styled.div`
+const RowStyle = styled.div<{
+  noHover: boolean;
+}>`
   ${SHARED_STYLES}
 
   ${transition()}
 
   flex: 1;
 
-  ${props => `
+  ${props => !props.noHover && `
     &:hover {
       background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
       cursor: pointer;
@@ -119,6 +121,7 @@ function FlexTable({
 
     return (
       <RowStyle
+        noHover={!onClickRow}
         onClick={() => onClickRow?.(rowIndex)}
         key={`row-${rowIndex}`}
       >

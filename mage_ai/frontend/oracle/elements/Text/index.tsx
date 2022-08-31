@@ -36,6 +36,7 @@ export type TextProps = {
   disabled?: boolean;
   fullWidth?: boolean;
   headline?: boolean;
+  info?: boolean;
   inline?: boolean;
   inlineText?: boolean;
   inverted?: boolean;
@@ -230,6 +231,14 @@ export const SHARED_STYLES = css<TextProps>`
 
   ${props => props.danger && `
     color: ${(props.theme.interactive || light.interactive).dangerBorder};
+  `}
+
+  ${props => props.info && `
+    color: ${(props.theme.accent || dark.accent).info};
+  `}
+
+  ${props => props.warning && `
+    color: ${(props.theme.accent || dark.accent).warning};
   `}
 
   ${props => props.success && `

@@ -1,14 +1,14 @@
 export enum RunStatus {
-  INITIAL = 'initial',
-  RUNNING = 'running',
+  CANCELLED = 'cancelled',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  CANCELLED = 'cancelled',
+  INITIAL = 'initial',
+  RUNNING = 'running',
 }
 
 export interface BlockRunType {
-  pipeline_run_id: string;
   block_uuid: string;
+  pipeline_run_id: string;
   status: RunStatus;
 }
 

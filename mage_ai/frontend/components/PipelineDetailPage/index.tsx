@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import Dashboard from '@components/Dashboard';
+import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
@@ -22,6 +24,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
   children: any;
+  headline?: string;
   pageName: PageNameEnum,
   pipeline: {
     uuid: string;
@@ -35,6 +38,7 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   breadcrumbs: breadcrumbsProp,
   children,
+  headline,
   pageName,
   pipeline: pipelineProp,
   subheaderBackground,
@@ -143,6 +147,17 @@ function PipelineDetailPage({
               {subheaderText}
             </FlexContainer>
           </BannerStyle>
+        </Spacing>
+      )}
+
+      {headline && (
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+            <Headline level={5}>
+              {headline}
+            </Headline>
+            <Divider light mt={PADDING_UNITS} short />
+          </Spacing>
         </Spacing>
       )}
 
