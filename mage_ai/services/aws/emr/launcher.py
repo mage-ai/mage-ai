@@ -1,6 +1,6 @@
 from mage_ai.data_preparation.repo_manager import RepoConfig
-from mage_ai.services.emr.emr import create_a_new_cluster
-from mage_ai.services.emr.resource_manager import EmrResourceManager
+from mage_ai.services.aws.emr.emr import create_a_new_cluster
+from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 
 
 def create_cluster(project_path):

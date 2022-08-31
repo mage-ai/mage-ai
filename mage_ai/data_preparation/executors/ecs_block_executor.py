@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
-from mage_ai.services.ecs import ecs
+from mage_ai.services.aws.ecs import ecs
 from requests import get
 from typing import Dict
 

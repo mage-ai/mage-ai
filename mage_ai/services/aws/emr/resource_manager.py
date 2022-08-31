@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.templates.utils import template_env
-from mage_ai.services.s3 import s3
+from mage_ai.services.aws.s3 import s3
 import os
 
 

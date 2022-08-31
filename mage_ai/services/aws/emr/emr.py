@@ -1,8 +1,8 @@
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from datetime import datetime
-from mage_ai.services.emr import emr_basics
-from mage_ai.services.emr.config import EmrConfig
+from mage_ai.services.aws.emr import emr_basics
+from mage_ai.services.aws.emr.config import EmrConfig
 import boto3
 import json
 import logging
