@@ -43,7 +43,7 @@ const HeaderStyle = styled.div`
 `;
 
 const RowStyle = styled.div<{
-  noHover: boolean;
+  noHover?: boolean;
 }>`
   ${SHARED_STYLES}
 

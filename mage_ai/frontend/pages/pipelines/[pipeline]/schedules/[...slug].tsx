@@ -4,6 +4,7 @@ import CreateSchedule from '@components/Orchestration/CreateSchedule';
 import OrchestrationDetail from '@components/Orchestration/OrchestrationDetail';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import api from '@api';
+import { BreadcrumbType } from '@components/shared/Header';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 
@@ -82,7 +83,7 @@ function ScheduleDetailPage({
   ]);
 
   const breadcrumbs = useMemo(() => {
-    const arr = [
+    const arr: BreadcrumbType[] = [
       {
         label: () => 'Schedules',
         linkProps: {
