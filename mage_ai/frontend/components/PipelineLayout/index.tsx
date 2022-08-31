@@ -7,7 +7,7 @@ import React, {
 
 import ErrorPopup from '@components/ErrorPopup';
 import Head from '@oracle/elements/Head';
-import Header from '@components/shared/Header';
+import Header, { BreadcrumbType } from '@components/shared/Header';
 import PipelineType from '@interfaces/PipelineType';
 import TripleLayout from '@components/TripleLayout';
 import api from '@api';
@@ -125,7 +125,7 @@ function PipelineLayout({
   const { data: dataProjects } = api.projects.list();
   const projects = dataProjects?.projects;
   const headerMemo = useMemo(() => {
-    const breadcrumbs = [
+    const breadcrumbs: BreadcrumbType[] = [
       {
         label: () => 'Pipelines',
         linkProps: {

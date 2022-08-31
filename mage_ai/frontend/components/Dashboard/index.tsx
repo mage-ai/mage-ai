@@ -1,4 +1,5 @@
 import Flex from '@oracle/components/Flex';
+import Head from '@oracle/elements/Head';
 import Header from '@components/shared/Header';
 import ProjectType from '@interfaces/ProjectType';
 import Subheader from './Subheader';
@@ -37,6 +38,8 @@ function Dashboard({
 
   return (
     <>
+      <Head title={title} />
+
       <Header
         breadcrumbs={breadcrumbs}
         version={projects?.[0]?.version}
