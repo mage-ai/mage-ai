@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import Dashboard from '@components/Dashboard';
+import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import api from '@api';
@@ -23,6 +24,7 @@ type PipelineDetailPageProps = {
   pipeline: {
     uuid: string;
   };
+  subheaderChildren?: any;
   title?: (pipeline: PipelineType) => string;
 };
 
@@ -31,6 +33,7 @@ function PipelineDetailPage({
   children,
   pageName,
   pipeline: pipelineProp,
+  subheaderChildren,
   title,
 }: PipelineDetailPageProps) {
   const pipelineUUID = pipelineProp.uuid;
@@ -106,21 +109,25 @@ function PipelineDetailPage({
       ]}
       projects={[]}
       subheaderChildren={
-        <KeyboardShortcutButton
-          background={BUTTON_GRADIENT}
-          bold
-          beforeElement={<Edit size={2.5 * UNIT} />}
-          inline
-          linkProps={{
-            as: `/pipelines/${pipelineUUID}/edit`,
-            href: '/pipelines/[pipeline]/edit',
-          }}
-          noHoverUnderline
-          sameColorAsText
-          uuid="PipelineDetailPage/edit"
-        >
-          Edit Pipeline
-        </KeyboardShortcutButton>
+        <FlexContainer alignItems="center">
+          <KeyboardShortcutButton
+            background={BUTTON_GRADIENT}
+            bold
+            beforeElement={<Edit size={2.5 * UNIT} />}
+            inline
+            linkProps={{
+              as: `/pipelines/${pipelineUUID}/edit`,
+              href: '/pipelines/[pipeline]/edit',
+            }}
+            noHoverUnderline
+            sameColorAsText
+            uuid="PipelineDetailPage/edit"
+          >
+            Edit Pipeline
+          </KeyboardShortcutButton>
+
+          {subheaderChildren}
+        </FlexContainer>
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
     >

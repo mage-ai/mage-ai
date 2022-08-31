@@ -83,7 +83,7 @@ class ApiAllPipelineRunListHandler(BaseHandler):
             PipelineRun.
             select(*columns, func.count(c.id).label('block_runs_count')).
             join(b, a.pipeline_schedule_id == b.id).
-            join(c, a.id == c.pipeline_run_id).
+            join(c, a.id == c.pipeline_run_id, isouter=True).
             group_by(*columns).
             order_by(a.created_at.desc())
         ).all()
@@ -180,10 +180,10 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                 results = (
                     PipelineRun.
                     select(*columns, func.count(b.id).label('pipeline_runs_count')).
-                    join(b, a.id == b.pipeline_schedule_id).
+                    join(b, a.id == b.pipeline_schedule_id, isouter=True).
                     filter(a.pipeline_uuid == pipeline.uuid).
                     group_by(*columns).
-                    order_by(a.start_time.desc())
+                    order_by(a.start_time.desc(), a.id.desc())
                 ).all()
                 collection = [s for s in results]
             else:

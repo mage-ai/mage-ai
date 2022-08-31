@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 
 import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
+import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { ChevronRight } from '@oracle/icons';
+import { Add, ChevronRight } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
@@ -26,6 +28,24 @@ function PipelineSchedules({
       ]}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
+      subheaderChildren={
+        <>
+          <Spacing ml={2} />
+          <KeyboardShortcutButton
+            beforeElement={<Add size={2.5 * UNIT} />}
+            inline
+            linkProps={{
+              as: `/pipelines/${pipelineUUID}/schedules/new`,
+              href: '/pipelines/[pipeline]/schedules/[...slug]',
+            }}
+            noHoverUnderline
+            sameColorAsText
+            uuid="PipelineDetailPage/add_new_schedule"
+          >
+            Add new schedule
+          </KeyboardShortcutButton>
+        </>
+      }
       title={({ name }) => `${name} schedules`}
     >
       <FlexTable
