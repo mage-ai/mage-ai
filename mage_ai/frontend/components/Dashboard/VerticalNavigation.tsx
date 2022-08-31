@@ -28,7 +28,7 @@ export type NavigationItem = {
 };
 
 export type VerticalNavigationProps = {
-  navigationItems: NavigationItem[];
+  navigationItems?: NavigationItem[];
 };
 
 function VerticalNavigation({
@@ -68,7 +68,7 @@ function VerticalNavigation({
       linkProps,
     }, idx: Number) => {
       const selected: boolean = isSelected
-        ? isSelected({ pathname })
+        ? isSelected(pathname)
         : !!pathname.match(new RegExp(`^/${id}[/]*`));
       const IconToUse = selected && IconSelected ? IconSelected : Icon;
 

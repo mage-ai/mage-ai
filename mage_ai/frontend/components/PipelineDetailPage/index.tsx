@@ -4,6 +4,7 @@ import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import PipelineType from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import api from '@api';
 import {
@@ -107,7 +108,6 @@ function PipelineDetailPage({
           isSelected: () => PageNameEnum.RUNS === pageName,
         },
       ]}
-      projects={[]}
       subheaderChildren={
         <FlexContainer alignItems="center">
           <KeyboardShortcutButton

@@ -32,6 +32,7 @@ function PipelineSchedules({
         <>
           <Spacing ml={2} />
           <KeyboardShortcutButton
+            blackBorder
             beforeElement={<Add size={2.5 * UNIT} />}
             inline
             linkProps={{
