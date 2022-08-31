@@ -42,14 +42,16 @@ const HeaderStyle = styled.div`
   ${SHARED_STYLES}
 `;
 
-const RowStyle = styled.div`
+const RowStyle = styled.div<{
+  noHover?: boolean;
+}>`
   ${SHARED_STYLES}
 
   ${transition()}
 
   flex: 1;
 
-  ${props => `
+  ${props => !props.noHover && `
     &:hover {
       background: ${(props.theme.interactive || dark.interactive).rowHoverBackground};
       cursor: pointer;
@@ -84,7 +86,7 @@ function FlexTable({
   const Column = useCallback((cell, rowIndex, colIndex) => (
     <CellStyle
       flex={columnFlex[colIndex]}
-      key={`row-{rowIndex}-col-{colIndex}`}
+      key={`row-${rowIndex}-col-${colIndex}`}
       {...props}
     >
       {cell}
@@ -100,7 +102,7 @@ function FlexTable({
       return (
         <NextLink
           {...buildLinkProps(rowIndex)}
-          key={`row-{rowIndex}`}
+          key={`row-${rowIndex}`}
           passHref
         >
           <Link
@@ -119,8 +121,9 @@ function FlexTable({
 
     return (
       <RowStyle
+        noHover={!onClickRow}
         onClick={() => onClickRow?.(rowIndex)}
-        key={`row-{rowIndex}`}
+        key={`row-${rowIndex}`}
       >
         {cellEls}
       </RowStyle>
@@ -133,9 +136,7 @@ function FlexTable({
   return (
     <TableStyle>
       {columnHeaders?.length >= 1 && (
-        <HeaderStyle
-          key={`row-{rowIndex}`}
-        >
+        <HeaderStyle>
           {columnHeaders.map((cell, colIndex) => Column(cell, -1, colIndex))}
         </HeaderStyle>
       )}

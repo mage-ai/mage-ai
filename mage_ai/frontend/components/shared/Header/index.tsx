@@ -49,13 +49,13 @@ function Header({
       const showDivider = count >= 2 && idx >= 1;
       const title = label();
       const titleEl = (
-        <Text large weightStyle={4}>
+        <Text monospace>
           {showDivider && (
-            <>
-              &nbsp;&nbsp;
+            <Text inline monospace muted={!gradientColor}>
+              &nbsp;
               /
-              &nbsp;&nbsp;
-            </>
+              &nbsp;
+            </Text>
           )}
           {title}
         </Text>

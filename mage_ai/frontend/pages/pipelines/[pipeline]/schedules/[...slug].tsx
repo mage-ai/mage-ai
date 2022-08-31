@@ -2,8 +2,11 @@ import React, { useMemo, useState } from 'react';
 
 import CreateSchedule from '@components/Orchestration/CreateSchedule';
 import OrchestrationDetail from '@components/Orchestration/OrchestrationDetail';
-import ScheduleLayout from '@components/ScheduleLayout';
+import PipelineDetailPage from '@components/PipelineDetailPage';
 import api from '@api';
+import { BreadcrumbType } from '@components/shared/Header';
+import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 
 type ScheduleDetailPageProps = {
   newSchedule: boolean;
@@ -35,7 +38,10 @@ function ScheduleDetailPage({
     isLoading,
     mutate: fetchPipeline,
   } = api.pipelines.detail(pipelineUUID);
-  const pipeline = data?.pipeline;
+  const pipeline = {
+    ...data?.pipeline,
+    uuid: pipelineUUID,
+  };
 
   const { data: filesData } = api.files.list();
   const projectName = useMemo(() => filesData?.files?.[0]?.name, [filesData]);
@@ -49,7 +55,7 @@ function ScheduleDetailPage({
           variables={globalVariables}
         />
       );
-    } else if (subpath === 'edit') {
+    } else if (subpath === PAGE_NAME_EDIT) {
       return (
         <CreateSchedule
           editSchedule
@@ -74,18 +80,58 @@ function ScheduleDetailPage({
     pipelineSchedule,
     setErrors,
     subpath,
-  ])
+  ]);
+
+  const breadcrumbs = useMemo(() => {
+    const arr: BreadcrumbType[] = [
+      {
+        label: () => 'Schedules',
+        linkProps: {
+          as: `/pipelines/${pipelineUUID}/schedules`,
+          href: '/pipelines/[pipeline]/schedules',
+        },
+      },
+    ];
+
+    if (newSchedule) {
+      arr.push({
+        label: () => 'New',
+      });
+    } else if (pipelineSchedule) {
+      let linkProps;
+      if (subpath === PAGE_NAME_EDIT) {
+        linkProps = {
+          as: `/pipelines/${pipelineUUID}/schedules/${pipelineSchedule.id}`,
+          href: '/pipelines/[pipeline]/schedules/[...slug]',
+        };
+      }
+      arr.push({
+        label: () => pipelineSchedule.name,
+        linkProps,
+      });
+    }
+
+    if (subpath === PAGE_NAME_EDIT) {
+      arr.push({
+        label: () => 'Edit',
+      });
+    }
+
+    return arr;
+  }, [
+    newSchedule,
+    pipelineSchedule,
+    subpath,
+  ]);
 
   return (
-    <ScheduleLayout
-      errors={errors}
+    <PipelineDetailPage
+      breadcrumbs={breadcrumbs}
+      pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
-      pipelineSchedule={pipelineSchedule}
-      projectName={projectName}
-      setErrors={setErrors}
     >
       {content}
-    </ScheduleLayout>
+    </PipelineDetailPage>
   )
 }
 
@@ -104,9 +150,9 @@ ScheduleDetailPage.getInitialProps= async(ctx: any) => {
     if (pipelineScheduleId === 'new') {
       pipelineScheduleId = null;
     }
-  
+
     const subpath = slugArray[1];
-  
+
     return {
       newSchedule,
       pipelineUUID,

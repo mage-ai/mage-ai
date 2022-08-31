@@ -627,6 +627,23 @@ export const Switch = build([{
   viewBox: '0 0 16 16',
 });
 
+export const Pause = build([{
+  Style: RectStyle,
+  height: 12,
+  rx: 1.5,
+  width: 3,
+  x: 1.5,
+}, {
+  Style: RectStyle,
+  height: 12,
+  rx: 1.5,
+  width: 3,
+  x: 7.5,
+}], {
+  fill: 'none',
+  viewBox: '0 0 12 12',
+});
+
 export const Trash = build([{
   d: 'M8.41421 9.50012L9.70715 8.20718L8.29294 6.79297L7 8.08591L5.70706 6.79297L4.29285 8.20718L5.58579 9.50012L4.29294 10.793L5.70715 12.2072L7 10.9143L8.29285 12.2072L9.70706 10.793L8.41421 9.50012Z',
 }, {

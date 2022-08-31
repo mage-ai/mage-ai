@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 
-import Button from '@oracle/elements/Button';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
+import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import Router from 'next/router';
@@ -16,7 +18,7 @@ import dark from '@oracle/styles/themes/dark';
 import { ChevronRight } from '@oracle/icons';
 import { HeaderStyle } from './index.style';
 import { LIME_DARK } from '@oracle/styles/colors/main';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { queryFromUrl } from '@utils/url';
 
 type OrchestrationDetailProps = {
@@ -29,10 +31,11 @@ function OrchestrationDetail({
   pipelineSchedule,
 }: OrchestrationDetailProps) {
   const {
-    uuid: pipelineUuid,
+    uuid: pipelineUUID,
   } = pipeline || {};
-  const { data: pipelineRunsData } = api.pipeline_runs.pipeline_schedules.list(pipelineSchedule?.id);
-  const pipelineRuns = pipelineRunsData?.pipeline_runs;
+  const { data: dataPipelineRuns } =
+    api.pipeline_runs.pipeline_schedules.list(pipelineSchedule?.id);
+  const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
   const {
     id,
@@ -92,37 +95,71 @@ function OrchestrationDetail({
               </Text>
             </Flex>
           </FlexContainer>
-          <Flex>
-            <Button
-              borderColor={dark.borders.dark}
-              onClick={() => Router.push({
-                pathname: `/pipelines/${pipelineUuid}/schedules/${id}/edit`,
-                query: queryFromUrl(),
-              })}
+          <div>
+            <KeyboardShortcutButton
+              blackBorder
+              inline
+              linkProps={{
+                as: `/pipelines/${pipelineUUID}/schedules/${id}/edit`,
+                href: '/pipelines/[pipeline]/schedules/[...slug]',
+              }}
+              noHoverUnderline
+              sameColorAsText
+              uuid="PipelineDetailPage/edit_schedule"
             >
-              <Text monospace>
-                Config
-              </Text>
-            </Button>
-          </Flex>
+              Edit schedule
+            </KeyboardShortcutButton>
+          </div>
         </FlexContainer>
       </HeaderStyle>
+
+      <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+        <Headline level={5}>
+          Pipeline runs
+        </Headline>
+        <Divider light mt={PADDING_UNITS} short />
+      </Spacing>
+
       <FlexTable
-        columnFlex={[3, 1, 1]}
         columnHeaders={[
-          <Text monospace muted>
-            Executed on
+          <Text bold monospace muted>
+            Run date
           </Text>,
-          <Text monospace muted>
+          <Text bold monospace muted>
             Status
           </Text>,
-          <Text monospace muted>
-            Blocks
-          </Text>
+          <Text bold monospace muted>
+            Block runs
+          </Text>,
+          // null,
         ]}
-        paddingHorizontal={16}
-        paddingVertical={16}
-        rows={runData || []}
+        columnFlex={[3, 2, 2]}
+        rows={pipelineRuns.map(({
+          block_runs_count: blockRunsCount,
+          created_at: createdAt,
+          pipeline_schedule_name: pipelineScheduleName,
+          pipeline_uuid: pipelineUUID,
+          status,
+        }: PipelineRunType) => [
+          <Text monospace>
+            {createdAt}
+          </Text>,
+          <Text
+            danger={RunStatus.FAILED === status}
+            info={RunStatus.INITIAL === status}
+            muted={RunStatus.CANCELLED === status}
+            success={RunStatus.COMPLETED === status}
+            warning={RunStatus.RUNNING === status}
+          >
+            {status}
+          </Text>,
+          <Text>
+            {blockRunsCount}
+          </Text>,
+          // <Flex flex={1} justifyContent="flex-end">
+          //   <ChevronRight muted size={2 * UNIT} />
+          // </Flex>,
+        ])}
       />
     </>
   )

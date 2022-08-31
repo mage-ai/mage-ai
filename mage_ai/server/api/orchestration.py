@@ -60,37 +60,62 @@ class ApiBlockRunOutputHandler(BaseHandler):
         self.write(dict(outputs=outputs))
 
 
+def process_pipeline_runs(
+    handler,
+    pipeline_schedule_id=None,
+    pipeline_uuid=None,
+):
+    a = aliased(PipelineRun, name='a')
+    b = aliased(PipelineSchedule, name='b')
+    c = aliased(BlockRun, name='c')
+    columns = [
+        a.created_at,
+        a.execution_date,
+        a.id,
+        b.name.label('pipeline_schedule_name'),
+        a.pipeline_schedule_id,
+        a.pipeline_uuid,
+        a.status,
+        a.updated_at,
+    ]
+
+    pipeline_runs = (
+        PipelineRun.
+        select(*columns, func.count(c.id).label('block_runs_count')).
+        join(b, a.pipeline_schedule_id == b.id).
+        join(c, a.id == c.pipeline_run_id, isouter=True)
+    )
+
+    if pipeline_schedule_id:
+        pipeline_runs = (
+            pipeline_runs.
+            filter(a.pipeline_schedule_id == pipeline_schedule_id)
+        )
+
+    if pipeline_uuid:
+        pipeline_runs = (
+            pipeline_runs.
+            filter(b.pipeline_uuid == pipeline_uuid)
+        )
+
+    pipeline_runs = (
+        pipeline_runs.
+        group_by(*columns).
+        order_by(a.created_at.desc())
+    ).all()
+    collection = [r for r in pipeline_runs]
+
+    handler.write(dict(pipeline_runs=collection))
+    handler.finish()
+
+
 class ApiAllPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
 
     def get(self):
-        a = aliased(PipelineRun, name='a')
-        b = aliased(PipelineSchedule, name='b')
-        c = aliased(BlockRun, name='c')
-        columns = [
-            a.created_at,
-            a.execution_date,
-            a.id,
-            b.name.label('pipeline_schedule_name'),
-            a.pipeline_schedule_id,
-            a.pipeline_uuid,
-            a.status,
-            a.updated_at,
-        ]
-
-        pipeline_runs = (
-            PipelineRun.
-            select(*columns, func.count(c.id).label('block_runs_count')).
-            join(b, a.pipeline_schedule_id == b.id).
-            join(c, a.id == c.pipeline_run_id, isouter=True).
-            group_by(*columns).
-            order_by(a.created_at.desc())
-        ).all()
-        collection = [r for r in pipeline_runs]
-
-        self.write(dict(pipeline_runs=collection))
-        self.finish()
+        pipeline_uuid = self.get_argument('pipeline_uuid', None)
+        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
 
 
 class ApiPipelineRunListHandler(BaseHandler):
@@ -98,13 +123,7 @@ class ApiPipelineRunListHandler(BaseHandler):
     model_class = PipelineRun
 
     def get(self, pipeline_schedule_id):
-        pipeline_runs = PipelineRun.query.filter(
-            PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id),
-        ).all()
-        collection = [r.to_dict() for r in pipeline_runs]
-
-        self.write(dict(pipeline_runs=collection))
-        self.finish()
+        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id))
 
     def post(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))

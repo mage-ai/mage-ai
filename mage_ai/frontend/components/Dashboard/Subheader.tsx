@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { SubheaderStyle } from './index.style';
 
 type SubheaderProps = {
@@ -6,12 +8,12 @@ type SubheaderProps = {
 
 function Subheader({
   children,
-}: SubheaderProps) {
+}: SubheaderProps, ref) {
   return (
-    <SubheaderStyle>
+    <SubheaderStyle ref={ref}>
       {children}
     </SubheaderStyle>
   );
 }
 
-export default Subheader;
+export default React.forwardRef(Subheader);

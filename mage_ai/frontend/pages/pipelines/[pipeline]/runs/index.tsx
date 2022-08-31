@@ -1,26 +1,36 @@
 import { useMemo } from 'react';
+import { useMutation } from 'react-query';
 
-import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
+import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
+import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { ChevronRight } from '@oracle/icons';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { indexBy } from '@utils/array';
 
-function RunListPage() {
-  const { data } = api.pipelines.list();
-  const { data: dataPipelineRuns } = api.pipeline_runs.list();
-
-  const pipelines = useMemo(() => data?.pipelines || [], [data]);
-  const pipelinesByUUID = useMemo(() => indexBy(pipelines, ({ uuid }) => uuid), [pipelines]);
+function PipelineRuns({
+  pipeline,
+}) {
+  const pipelineUUID = pipeline.uuid;
+  const { data: dataPipelineRuns } = api.pipeline_runs.list({
+    pipeline_uuid: pipelineUUID,
+  });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
   return (
-    <Dashboard
-      title="Pipeline runs"
+    <PipelineDetailPage
+      breadcrumbs={[
+        {
+          label: () => 'Runs',
+        },
+      ]}
+      pageName={PageNameEnum.RUNS}
+      pipeline={pipeline}
+      title={({ name }) => `${name} runs`}
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => {
@@ -39,9 +49,6 @@ function RunListPage() {
             Status
           </Text>,
           <Text bold monospace muted>
-            Pipeline
-          </Text>,
-          <Text bold monospace muted>
             Schedule
           </Text>,
           <Text bold monospace muted>
@@ -49,7 +56,7 @@ function RunListPage() {
           </Text>,
           null,
         ]}
-        columnFlex={[3, 2, 2, 3, 2, 1]}
+        columnFlex={[3, 2, 3, 2, 1]}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           created_at: createdAt,
@@ -70,9 +77,6 @@ function RunListPage() {
             {status}
           </Text>,
           <Text>
-            {pipelinesByUUID[pipelineUUID]?.name}
-          </Text>,
-          <Text>
             {pipelineScheduleName}
           </Text>,
           <Text>
@@ -83,8 +87,18 @@ function RunListPage() {
           </Flex>
         ])}
       />
-    </Dashboard>
+    </PipelineDetailPage>
   );
 }
 
-export default RunListPage;
+PipelineRuns.getInitialProps = async (ctx: any) => {
+  const { pipeline: pipelineUUID }: { pipeline: string } = ctx.query;
+
+  return {
+    pipeline: {
+      uuid: pipelineUUID,
+    },
+  };
+};
+
+export default PipelineRuns;

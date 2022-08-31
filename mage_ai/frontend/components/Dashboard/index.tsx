@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import Flex from '@oracle/components/Flex';
 import Head from '@oracle/elements/Head';
 import Header, { BreadcrumbType } from '@components/shared/Header';
@@ -8,6 +10,7 @@ import api from '@api';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
   ContainerStyle,
+  ContentStyle,
   VerticalNavigationStyle,
 } from './index.style';
 
@@ -25,6 +28,8 @@ function Dashboard({
   subheaderChildren,
   title,
 }: DashboardProps & VerticalNavigationProps) {
+  const refSubheader = useRef(null);
+
   const { data: dataProjects } = api.projects.list();
   const projects = dataProjects?.projects;
 
@@ -62,12 +67,14 @@ function Dashboard({
           flexDirection="column"
         >
           {subheaderChildren && (
-            <Subheader>
+            <Subheader ref={refSubheader}>
               {subheaderChildren}
             </Subheader>
           )}
 
-          {children}
+          <ContentStyle heightOffset={refSubheader?.current?.getBoundingClientRect?.()?.height}>
+            {children}
+          </ContentStyle>
         </Flex>
       </ContainerStyle>
     </>
