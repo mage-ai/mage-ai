@@ -44,10 +44,10 @@ def run_pipeline(
     config_copy_path: str,
     queue: multiprocessing.Queue,
 ) -> None:
-    '''
+    """
     Execute pipeline synchronously. This function is meant to be run in a separate process,
     and will write status messages to the passed in multiprocessing queue.
-    '''
+    """
     metadata = dict(
         pipeline_uuid=pipeline.uuid,
     )
