@@ -48,22 +48,24 @@ type TripleLayoutProps = {
   afterHidden: boolean;
   afterMousedownActive: boolean;
   afterSubheader?: any;
-  afterWidth: number;
+  afterWidth?: number;
   before?: any;
   beforeHeader?: any;
   beforeHidden: boolean;
   beforeMousedownActive: boolean;
-  beforeWidth: number;
+  beforeWidth?: number;
   children: any;
   header?: any;
+  headerOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
   setAfterHidden: (value: boolean) => void;
-  setAfterMousedownActive: (value: boolean) => void;
+  setAfterMousedownActive?: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
   setBeforeHidden: (value: boolean) => void;
-  setBeforeMousedownActive: (value: boolean) => void;
+  setBeforeMousedownActive?: (value: boolean) => void;
   setBeforeWidth: (width: number) => void;
+  uuid?: string;
 };
 
 function TripleLayout({
@@ -72,14 +74,15 @@ function TripleLayout({
   afterHidden,
   afterMousedownActive,
   afterSubheader,
-  afterWidth,
+  afterWidth = 0,
   before,
   beforeHeader,
   beforeHidden,
   beforeMousedownActive,
-  beforeWidth,
+  beforeWidth = 0,
   children,
   header,
+  headerOffset = 0,
   mainContainerHeader,
   mainContainerRef,
   setAfterHidden,
@@ -88,6 +91,7 @@ function TripleLayout({
   setBeforeHidden,
   setBeforeMousedownActive,
   setBeforeWidth,
+  uuid,
 }: TripleLayoutProps) {
   const { width } = useWindowSize();
   const refAfterInner = useRef(null);
@@ -130,13 +134,13 @@ function TripleLayout({
       if (e.offsetX >= e.target.offsetWidth - DRAGGABLE_WIDTH
         && e.offsetX <= e.target.offsetWidth + DRAGGABLE_WIDTH
       ) {
-        setBeforeMousedownActive(true);
+        setBeforeMousedownActive?.(true);
         e.preventDefault();
         document?.addEventListener?.('mousemove', resizeBefore, false);
       }
     };
     const removeMousemove = () => {
-      setBeforeMousedownActive(false);
+      setBeforeMousedownActive?.(false);
       document?.removeEventListener?.('mousemove', resizeBefore, false);
     };
     refBeforeInnerDraggable?.current?.addEventListener?.('mousedown', addMousedown, false);
@@ -173,13 +177,13 @@ function TripleLayout({
 
     const addMousedown = (e) => {
       if (e.offsetX >= -1 * DRAGGABLE_WIDTH && e.offsetX <= DRAGGABLE_WIDTH) {
-        setAfterMousedownActive(true);
+        setAfterMousedownActive?.(true);
         e.preventDefault();
         document?.addEventListener?.('mousemove', resizeAfter, false);
       }
     };
     const removeMousemove = () => {
-      setAfterMousedownActive(false);
+      setAfterMousedownActive?.(false);
       document?.removeEventListener?.('mousemove', resizeAfter, false);
     };
     refAfterInnerDraggable?.current?.addEventListener?.('mousedown', addMousedown, false);
@@ -307,7 +311,7 @@ function TripleLayout({
         {mainContainerHeader}
 
         <MainContentStyle
-          headerOffset={mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT}
+          headerOffset={(mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset}
           style={{
             width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
           }}
