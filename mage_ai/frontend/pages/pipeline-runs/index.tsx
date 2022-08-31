@@ -1,12 +1,12 @@
+import NextLink from 'next/link';
 import { useMemo } from 'react';
 
 import Dashboard from '@components/Dashboard';
-import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
+import Link from '@oracle/elements/Link';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { ChevronRight } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 
@@ -23,14 +23,6 @@ function RunListPage() {
       title="Pipeline runs"
     >
       <FlexTable
-        buildLinkProps={(rowIndex: number) => {
-          const pipelineRun: PipelineRunType = pipelineRuns[rowIndex];
-
-          return {
-            as: `/pipelines/${pipelineRun.pipeline_uuid}/schedules/${pipelineRun.pipeline_schedule_id}`,
-            href: '/pipelines/[pipeline]/schedules/[...slug]',
-          };
-        }}
         columnHeaders={[
           <Text bold monospace muted>
             Run date
@@ -47,12 +39,12 @@ function RunListPage() {
           <Text bold monospace muted>
             Block runs
           </Text>,
-          null,
         ]}
-        columnFlex={[3, 2, 2, 3, 2, 1]}
+        columnFlex={[3, 2, 2, 3, 2]}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           created_at: createdAt,
+          pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
           pipeline_uuid: pipelineUUID,
           status,
@@ -69,18 +61,27 @@ function RunListPage() {
           >
             {status}
           </Text>,
-          <Text>
-            {pipelinesByUUID[pipelineUUID]?.name}
-          </Text>,
-          <Text>
-            {pipelineScheduleName}
-          </Text>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}`}
+            href={'/pipelines/[pipeline]'}
+            passHref
+          >
+            <Link bold sameColorAsText>
+              {pipelinesByUUID[pipelineUUID]?.name}
+            </Link>
+          </NextLink>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/schedules/${pipelineScheduleId}`}
+            href={'/pipelines/[pipeline]/schedules/[...slug]'}
+            passHref
+          >
+            <Link bold sameColorAsText>
+              {pipelineScheduleName}
+            </Link>
+          </NextLink>,
           <Text>
             {blockRunsCount}
           </Text>,
-          <Flex flex={1} justifyContent="flex-end">
-            <ChevronRight muted size={2 * UNIT} />
-          </Flex>
         ])}
       />
     </Dashboard>

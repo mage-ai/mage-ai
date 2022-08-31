@@ -97,13 +97,19 @@ function BlockRuns({
             href={'/pipelines/[pipeline]/schedules/[...slug]'}
             passHref
           >
-            <Link sameColorAsText underline>
+            <Link bold sameColorAsText>
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text>
-            {blockUUID}
-          </Text>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
+            href={'/pipelines/[pipeline]/edit'}
+            passHref
+          >
+            <Link bold sameColorAsText>
+              {blockUUID}
+            </Link>
+          </NextLink>,
           <Text monospace muted={!completedAt}>
             {completedAt || '-'}
           </Text>,

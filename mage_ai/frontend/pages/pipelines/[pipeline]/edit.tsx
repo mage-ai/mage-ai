@@ -109,6 +109,7 @@ function PipelineDetailPage({
   const qUrl = queryFromUrl();
   const {
     [VIEW_QUERY_PARAM]: activeSidekickView,
+    block_uuid: blockUUIDFromUrl,
     file_path: filePathFromUrl,
   } = qUrl;
   const filePathsFromUrl = useMemo(() => {
@@ -202,7 +203,7 @@ function PipelineDetailPage({
   } = api.variables.pipelines.list(pipelineUUID);
   const globalVariables = dataGlobalVariables?.variables;
 
-  // // Blocks
+  // Blocks
   const [blocks, setBlocks] = useState<BlockType[]>([]);
   const [widgets, setWidgets] = useState<BlockType[]>([]);
   const widgetTempData = useRef({});
@@ -967,6 +968,19 @@ function PipelineDetailPage({
     }
   }, [
     blocks,
+  ]);
+
+  useEffect(() => {
+    if (blockUUIDFromUrl && !selectedBlock) {
+      const block = blocks.find(({ uuid }) => blockUUIDFromUrl === uuid);
+      if (block) {
+        onSelectBlockFile(block.uuid, block.type, null);
+      }
+    }
+  }, [
+    blockUUIDFromUrl,
+    blocks,
+    selectedBlock,
   ]);
 
   // WebSocket
