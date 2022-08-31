@@ -138,6 +138,7 @@ class PipelineRun(BaseModel):
     pipeline_uuid = Column(String(255))
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
+    completed_at = Column(DateTime(timezone=True))
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
 
@@ -195,6 +196,7 @@ class BlockRun(BaseModel):
     pipeline_run_id = Column(Integer, ForeignKey('pipeline_run.id'))
     block_uuid = Column(String(255))
     status = Column(Enum(BlockRunStatus), default=BlockRunStatus.INITIAL)
+    completed_at = Column(DateTime(timezone=True))
 
     pipeline_run = relationship(PipelineRun, back_populates='block_runs')
 
