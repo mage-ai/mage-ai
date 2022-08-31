@@ -73,15 +73,15 @@ function VerticalNavigation({
       const IconToUse = selected && IconSelected ? IconSelected : Icon;
 
       return (
-        <Tooltip
-          height={5 * UNIT}
+        <Spacing
           key={`button-${id}`}
-          label={label()}
-          size={null}
-          widthFitContent
+          mt={idx >= 1 ? PADDING_UNITS : 0}
         >
-          <Spacing
-            mt={idx >= 1 ? PADDING_UNITS : 0}
+          <Tooltip
+            height={5 * UNIT}
+            label={label()}
+            size={null}
+            widthFitContent
           >
             {selected && (
               <GradientButton
@@ -124,8 +124,8 @@ function VerticalNavigation({
                 </div>
               </KeyboardShortcutButton>
             )}
-          </Spacing>
-        </Tooltip>
+          </Tooltip>
+        </Spacing>
       );
     });
   }, [

@@ -22,6 +22,7 @@ import { onError, onSuccess } from '@api/utils/response';
 export const ACTION_EXECUTE = 'execute';
 export const AUTOCOMPLETE_ITEMS = 'autocomplete_items';
 export const ANALYSES = 'analyses';
+export const BLOCK_RUNS: 'block_runs' = 'block_runs';
 export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
@@ -49,6 +50,7 @@ export const WIDGETS: 'widgets' = 'widgets';
 const RESOURCES: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
   [AUTOCOMPLETE_ITEMS],
+  [BLOCK_RUNS],
   [BLOCKS],
   [BLOCKS, PIPELINES],
   [BLOCKS, PIPELINES, ANALYSES],
@@ -210,10 +212,11 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource].list = (
       query: any = {},
       swrOptionsRuntime?: any,
+      opts?: any,
     ) => useList(resource, query, {
       ...swrOptions,
       ...swrOptionsRuntime,
-    });
+    }, opts);
   }
 });
 

@@ -84,7 +84,7 @@ export function buildUrl(
     path = `${path}/${grandchildResource}`;
   }
 
-  if (Object.values(query).length >= 1) {
+  if (Object.values(query || {}).length >= 1) {
     path = `${path}?${queryString(query)}`;
   }
 

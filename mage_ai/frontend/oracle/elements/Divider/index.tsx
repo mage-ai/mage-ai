@@ -5,6 +5,7 @@ import { MarginProps, PaddingProps } from 'styled-system';
 import Spacing from '../Spacing';
 import dark from '../../styles/themes/dark';
 import { ThemeType } from '../../styles/themes/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export type DividerProps = {
   black?: boolean;
@@ -19,7 +20,7 @@ export type DividerProps = {
 
 const DividerContainerStyle = styled.div<DividerProps>`
   ${props => props.short && `
-    width: 30%;
+    width: ${21 * UNIT}px;
   `}
 
   ${props => !props.short && `

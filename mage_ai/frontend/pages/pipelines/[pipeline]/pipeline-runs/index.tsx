@@ -25,12 +25,12 @@ function PipelineRuns({
     <PipelineDetailPage
       breadcrumbs={[
         {
-          label: () => 'Runs',
+          label: () => 'Pipeline runs',
         },
       ]}
-      pageName={PageNameEnum.RUNS}
+      pageName={PageNameEnum.PIPELINE_RUNS}
       pipeline={pipeline}
-      title={({ name }) => `${name} runs`}
+      title={({ name }) => `${name} pipeline runs`}
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => {

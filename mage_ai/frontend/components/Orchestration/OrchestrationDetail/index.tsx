@@ -121,6 +121,10 @@ function OrchestrationDetail({
       </Spacing>
 
       <FlexTable
+        buildLinkProps={(rowIndex: number) => ({
+          as: `/pipelines/${pipelineUUID}/block-runs?pipeline_run_id=${pipelineRuns[rowIndex].id}`,
+          href: '/pipelines/[pipeline]/block-runs',
+        })}
         columnHeaders={[
           <Text bold monospace muted>
             Run date
@@ -131,9 +135,9 @@ function OrchestrationDetail({
           <Text bold monospace muted>
             Block runs
           </Text>,
-          // null,
+          null,
         ]}
-        columnFlex={[3, 2, 2]}
+        columnFlex={[3, 2, 2, 1]}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           created_at: createdAt,
@@ -156,9 +160,9 @@ function OrchestrationDetail({
           <Text>
             {blockRunsCount}
           </Text>,
-          // <Flex flex={1} justifyContent="flex-end">
-          //   <ChevronRight muted size={2 * UNIT} />
-          // </Flex>,
+          <Flex flex={1} justifyContent="flex-end">
+            <ChevronRight muted size={2 * UNIT} />
+          </Flex>,
         ])}
       />
     </>
