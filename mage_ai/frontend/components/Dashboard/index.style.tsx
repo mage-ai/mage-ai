@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ContainerStyle = styled.div`
   display: flex;
@@ -31,5 +32,17 @@ export const SubheaderStyle = styled.div`
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
+`;
+
+export const ContentStyle = styled.div<{
+  heightOffset?: number;
+}>`
+  ${ScrollbarStyledCss}
+
+  overflow: auto;
+
+  ${props => `
+    height: calc(100vh - ${HEADER_HEIGHT + (props.heightOffset || 0)}px);
   `}
 `;
