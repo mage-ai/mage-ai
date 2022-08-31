@@ -97,7 +97,7 @@ function PipelineDetailPage({
         {
           Icon: Schedule,
           IconSelected: ScheduleGradient,
-          id: 'schedules',
+          id: PageNameEnum.SCHEDULES,
           label: () => 'Schedules',
           linkProps: {
             as: `/pipelines/${pipelineUUID}/schedules`,
@@ -108,13 +108,24 @@ function PipelineDetailPage({
         {
           Icon: BlocksStacked,
           IconSelected: BlocksStackedGradient,
-          id: 'runs',
-          label: () => 'Runs',
+          id: PageNameEnum.PIPELINE_RUNS,
+          label: () => 'Pipeline runs',
           linkProps: {
-            as: `/pipelines/${pipelineUUID}/runs`,
-            href: '/pipelines/[pipeline]/runs',
+            as: `/pipelines/${pipelineUUID}/pipeline-runs`,
+            href: '/pipelines/[pipeline]/pipeline-runs',
           },
-          isSelected: () => PageNameEnum.RUNS === pageName,
+          isSelected: () => PageNameEnum.PIPELINE_RUNS === pageName,
+        },
+        {
+          Icon: BlocksStacked,
+          IconSelected: BlocksStackedGradient,
+          id: PageNameEnum.BLOCK_RUNS,
+          label: () => 'Block runs',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/block-runs`,
+            href: '/pipelines/[pipeline]/block-runs',
+          },
+          isSelected: () => PageNameEnum.BLOCK_RUNS === pageName,
         },
       ]}
       subheaderChildren={

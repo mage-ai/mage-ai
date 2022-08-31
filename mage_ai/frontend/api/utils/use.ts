@@ -131,13 +131,15 @@ export function useList(
   resource: string,
   query: object = {},
   swrOptions: any = {},
+  opts: any = {},
 ) {
+  const { pauseFetch = false } = opts;
   const {
     data,
     error,
     mutate,
   } = useSWR(
-    buildUrl(resource, null, null, null, query),
+    pauseFetch ? null : buildUrl(resource, null, null, null, query),
     url => fetcher(url),
     swrOptions,
   );

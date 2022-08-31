@@ -10,15 +10,16 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 
 type ScheduleDetailPageProps = {
   newSchedule: boolean;
-  pipelineUUID: string;
   pipelineScheduleId?: string;
+  pipelineUUID: string;
+  slug?: string[];
   subpath: string;
 };
 
 function ScheduleDetailPage({
   newSchedule,
-  pipelineUUID,
   pipelineScheduleId,
+  pipelineUUID,
   subpath,
 }: ScheduleDetailPageProps) {
   // Variables
@@ -105,10 +106,12 @@ function ScheduleDetailPage({
           href: '/pipelines/[pipeline]/schedules/[...slug]',
         };
       }
+
       arr.push({
         label: () => pipelineSchedule.name,
         linkProps,
       });
+
     }
 
     if (subpath === PAGE_NAME_EDIT) {
@@ -141,6 +144,7 @@ ScheduleDetailPage.getInitialProps= async(ctx: any) => {
     slug: slugArray,
   }: {
     pipeline: string,
+    pipeline_run_id: number;
     slug: string[],
   } = ctx.query;
 
@@ -155,8 +159,8 @@ ScheduleDetailPage.getInitialProps= async(ctx: any) => {
 
     return {
       newSchedule,
-      pipelineUUID,
       pipelineScheduleId,
+      pipelineUUID,
       subpath,
     }
   }

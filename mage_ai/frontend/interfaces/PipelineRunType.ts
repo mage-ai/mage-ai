@@ -1,16 +1,6 @@
-export enum RunStatus {
-  CANCELLED = 'cancelled',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  INITIAL = 'initial',
-  RUNNING = 'running',
-}
+import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
 
-export interface BlockRunType {
-  block_uuid: string;
-  pipeline_run_id: string;
-  status: RunStatus;
-}
+export const RunStatus = RunStatusEnum;
 
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
