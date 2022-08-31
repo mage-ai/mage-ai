@@ -7,10 +7,10 @@ import React, {
 
 import ErrorPopup from '@components/ErrorPopup';
 import Head from '@oracle/elements/Head';
-import Header from '@components/PipelineDetail/Header';
+import Header, { BreadcrumbType } from '@components/shared/Header';
 import PipelineType from '@interfaces/PipelineType';
 import TripleLayout from '@components/TripleLayout';
-
+import api from '@api';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
@@ -23,6 +23,9 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
+import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
+import { capitalize } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineLayoutProps = {
@@ -119,13 +122,53 @@ function PipelineLayout({
     beforeWidth,
   ]);
 
-  const headerMemo = useMemo(() => (
-    <Header
-      page={page}
-      pipeline={pipeline}
-      projectName={projectName}
-    />
-  ), [page, pipeline, projectName])
+  const { data: dataProjects } = api.projects.list();
+  const projects = dataProjects?.projects;
+  const headerMemo = useMemo(() => {
+    const breadcrumbs: BreadcrumbType[] = [
+      {
+        label: () => 'Pipelines',
+        linkProps: {
+          href: '/pipelines',
+          as: '/pipelines',
+        },
+      },
+    ];
+
+    if (pipeline) {
+      breadcrumbs.push(...[
+        {
+          gradientColor: PAGE_NAME_EDIT === page ? null : PURPLE_BLUE,
+          label: () => pipeline?.name,
+          linkProps: {
+            href: '/pipelines/[pipeline]/schedules/[...slug]',
+            as: `/pipelines/${pipeline?.uuid}/schedules/new`,
+          },
+        },
+      ]);
+
+      if (PAGE_NAME_EDIT === page) {
+        breadcrumbs.push(...[
+          {
+            gradientColor: PURPLE_BLUE,
+            label: () => capitalize(page),
+          },
+        ]);
+      }
+    }
+
+    return (
+      <Header
+        breadcrumbs={breadcrumbs}
+        version={projects?.[0]?.version}
+      />
+    );
+  }, [
+    page,
+    pipeline,
+    projectName,
+    projects,
+  ]);
 
   return (
     <>
