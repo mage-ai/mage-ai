@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
+from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
     restart_kernel,
@@ -46,6 +47,9 @@ from mage_ai.server.kernels import (
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
+from mage_ai.shared.hash import index_by, merge_dict
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
 from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
@@ -171,9 +175,33 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
-        pipeline_names = Pipeline.get_all_pipelines(get_repo_path())
-        pipelines = [Pipeline.get(uuid) for uuid in pipeline_names]
-        self.write(dict(pipelines=[p.to_dict() for p in pipelines]))
+        include_schedules_count = self.get_argument('include_schedules_count', False)
+
+        pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
+        pipelines = [Pipeline.get(uuid) for uuid in pipeline_uuids]
+
+        mapping = {}
+        if include_schedules_count:
+            a = aliased(PipelineSchedule, name='a')
+            result = (
+                PipelineSchedule.
+                select(a.pipeline_uuid, func.count(a.id).label('schedules_count')).
+                filter(a.pipeline_uuid.in_(pipeline_uuids)).
+                group_by(a.pipeline_uuid)
+            ).all()
+            mapping = index_by(lambda x: x.pipeline_uuid, result)
+
+        collection = []
+        for pipeline in pipelines:
+            schedules_count = 0
+            if mapping.get(pipeline.uuid):
+                schedules_count = mapping[pipeline.uuid].schedules_count
+            collection.append(merge_dict(
+                pipeline.to_dict(),
+                dict(schedules_count=schedules_count),
+            ))
+
+        self.write(dict(pipelines=collection))
         self.finish()
 
     def post(self):

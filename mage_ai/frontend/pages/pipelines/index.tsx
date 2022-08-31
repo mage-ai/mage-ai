@@ -17,7 +17,7 @@ import { randomNameGenerator } from '@utils/string';
 
 function PipelineListPage() {
   const router = useRouter();
-  const { data } = api.pipelines.list();
+  const { data } = api.pipelines.list({ include_schedules_count: 1 });
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
 
@@ -80,23 +80,34 @@ function PipelineListPage() {
           <Text bold monospace muted>
             Blocks
           </Text>,
+          <Text bold monospace muted>
+            Schedules
+          </Text>,
           null,
         ]}
-        columnFlex={[8, 1, 1]}
+        columnFlex={[5, 2, 2, 1]}
         rows={pipelines.map(({
           blocks,
           name,
-        }) => [
-          <Text>
-            {name}
-          </Text>,
-          <Text>
-            {blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length}
-          </Text>,
-          <Flex flex={1} justifyContent="flex-end">
-            <ChevronRight muted size={2 * UNIT} />
-          </Flex>
-        ])}
+          schedules_count: schedulesCount,
+        }) => {
+          const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+
+          return [
+            <Text>
+              {name}
+            </Text>,
+            <Text muted={blocksCount === 0}>
+              {blocksCount}
+            </Text>,
+            <Text muted={schedulesCount === 0}>
+              {schedulesCount}
+            </Text>,
+            <Flex flex={1} justifyContent="flex-end">
+              <ChevronRight muted size={2 * UNIT} />
+            </Flex>
+          ];
+        })}
       />
     </Dashboard>
   );
