@@ -161,12 +161,34 @@ class ApiPipelineScheduleListHandler(BaseHandler):
         try:
             if pipeline_uuid is not None:
                 pipeline = Pipeline.get(pipeline_uuid)
-                schedules = PipelineSchedule.query.filter(
-                    PipelineSchedule.pipeline_uuid == pipeline.uuid,
+
+                a = aliased(PipelineSchedule, name='a')
+                b = aliased(PipelineRun, name='b')
+
+                columns = [
+                    a.created_at,
+                    a.id,
+                    a.name,
+                    a.pipeline_uuid,
+                    a.schedule_interval,
+                    a.schedule_type,
+                    a.start_time,
+                    a.status,
+                    a.updated_at,
+                    a.variables,
+                ]
+                results = (
+                    PipelineRun.
+                    select(*columns, func.count(b.id).label('pipeline_runs_count')).
+                    join(b, a.id == b.pipeline_schedule_id).
+                    filter(a.pipeline_uuid == pipeline.uuid).
+                    group_by(*columns).
+                    order_by(a.start_time.desc())
                 ).all()
+                collection = [s for s in results]
             else:
-                schedules = PipelineSchedule.query.all()
-            collection = [s.to_dict() for s in schedules]
+                results = PipelineSchedule.query.all()
+                collection = [s.to_dict() for s in results]
         except Exception:
             collection = []
 

@@ -4,6 +4,7 @@ import Header, { BreadcrumbType } from '@components/shared/Header';
 import ProjectType from '@interfaces/ProjectType';
 import Subheader from './Subheader';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
+import api from '@api';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
   ContainerStyle,
@@ -13,7 +14,6 @@ import {
 type DashboardProps = {
   breadcrumbs?: BreadcrumbType[];
   children?: any;
-  projects: ProjectType[];
   subheaderChildren?: any;
   title: string;
 };
@@ -22,10 +22,12 @@ function Dashboard({
   breadcrumbs: breadcrumbsProp,
   children,
   navigationItems,
-  projects,
   subheaderChildren,
   title,
 }: DashboardProps & VerticalNavigationProps) {
+  const { data: dataProjects } = api.projects.list();
+  const projects = dataProjects?.projects;
+
   const breadcrumbs = [];
   if (breadcrumbsProp) {
     breadcrumbs.push(...breadcrumbsProp);

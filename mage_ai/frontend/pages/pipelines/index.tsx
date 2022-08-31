@@ -18,10 +18,8 @@ import { randomNameGenerator } from '@utils/string';
 function PipelineListPage() {
   const router = useRouter();
   const { data } = api.pipelines.list();
-  const { data: dataProjects } = api.projects.list();
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
-  const projects = dataProjects?.projects;
 
   const [createPipeline, { isLoading }] = useMutation(
     api.pipelines.useCreate(),
@@ -50,7 +48,6 @@ function PipelineListPage() {
 
   return (
     <Dashboard
-      projects={projects}
       subheaderChildren={
         <KeyboardShortcutButton
           background={BUTTON_GRADIENT}

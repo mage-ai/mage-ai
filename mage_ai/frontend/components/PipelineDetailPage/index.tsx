@@ -18,6 +18,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
+  children: any;
   pageName: PageNameEnum,
   pipeline: {
     uuid: string;
@@ -27,6 +28,7 @@ type PipelineDetailPageProps = {
 
 function PipelineDetailPage({
   breadcrumbs: breadcrumbsProp,
+  children,
   pageName,
   pipeline: pipelineProp,
   title,
@@ -122,6 +124,7 @@ function PipelineDetailPage({
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
     >
+      {children}
     </Dashboard>
   );
 }
