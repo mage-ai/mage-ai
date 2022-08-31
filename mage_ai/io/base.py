@@ -116,6 +116,7 @@ class BaseFile(BaseIO):
         self,
         input: Union[IO, os.PathLike],
         format: Union[FileFormat, str],
+        limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
