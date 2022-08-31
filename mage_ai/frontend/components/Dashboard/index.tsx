@@ -1,9 +1,9 @@
 import Flex from '@oracle/components/Flex';
 import Head from '@oracle/elements/Head';
-import Header from '@components/shared/Header';
+import Header, { BreadcrumbType } from '@components/shared/Header';
 import ProjectType from '@interfaces/ProjectType';
 import Subheader from './Subheader';
-import VerticalNavigation from './VerticalNavigation';
+import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
   ContainerStyle,
@@ -11,6 +11,7 @@ import {
 } from './index.style';
 
 type DashboardProps = {
+  breadcrumbs?: BreadcrumbType[];
   children?: any;
   projects: ProjectType[];
   subheaderChildren?: any;
@@ -18,13 +19,17 @@ type DashboardProps = {
 };
 
 function Dashboard({
+  breadcrumbs: breadcrumbsProp,
   children,
+  navigationItems,
   projects,
   subheaderChildren,
   title,
-}: DashboardProps) {
+}: DashboardProps & VerticalNavigationProps) {
   const breadcrumbs = [];
-  if (projects?.length >= 1) {
+  if (breadcrumbsProp) {
+    breadcrumbs.push(...breadcrumbsProp);
+  } else if (projects?.length >= 1) {
     breadcrumbs.push(...[
       {
         label: () => projects[0]?.name,
@@ -47,7 +52,7 @@ function Dashboard({
 
       <ContainerStyle>
         <VerticalNavigationStyle>
-          <VerticalNavigation />
+          <VerticalNavigation navigationItems={navigationItems} />
         </VerticalNavigationStyle>
 
         <Flex

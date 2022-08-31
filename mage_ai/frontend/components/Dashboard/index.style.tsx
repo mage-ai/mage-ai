@@ -28,4 +28,8 @@ export const VerticalNavigationStyle = styled.div`
 
 export const SubheaderStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
+
+  ${props => `
+    border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
+  `}
 `;
