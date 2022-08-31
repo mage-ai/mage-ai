@@ -84,7 +84,7 @@ function FlexTable({
   const Column = useCallback((cell, rowIndex, colIndex) => (
     <CellStyle
       flex={columnFlex[colIndex]}
-      key={`row-{rowIndex}-col-{colIndex}`}
+      key={`row-${rowIndex}-col-${colIndex}`}
       {...props}
     >
       {cell}
@@ -100,7 +100,7 @@ function FlexTable({
       return (
         <NextLink
           {...buildLinkProps(rowIndex)}
-          key={`row-{rowIndex}`}
+          key={`row-${rowIndex}`}
           passHref
         >
           <Link
@@ -120,7 +120,7 @@ function FlexTable({
     return (
       <RowStyle
         onClick={() => onClickRow?.(rowIndex)}
-        key={`row-{rowIndex}`}
+        key={`row-${rowIndex}`}
       >
         {cellEls}
       </RowStyle>
@@ -133,9 +133,7 @@ function FlexTable({
   return (
     <TableStyle>
       {columnHeaders?.length >= 1 && (
-        <HeaderStyle
-          key={`row-{rowIndex}`}
-        >
+        <HeaderStyle>
           {columnHeaders.map((cell, colIndex) => Column(cell, -1, colIndex))}
         </HeaderStyle>
       )}

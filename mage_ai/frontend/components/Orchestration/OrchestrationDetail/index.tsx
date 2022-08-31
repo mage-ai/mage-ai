@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 
-import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
@@ -92,19 +92,21 @@ function OrchestrationDetail({
               </Text>
             </Flex>
           </FlexContainer>
-          <Flex>
-            <Button
-              borderColor={dark.borders.dark}
-              onClick={() => Router.push({
-                pathname: `/pipelines/${pipelineUuid}/schedules/${id}/edit`,
-                query: queryFromUrl(),
-              })}
+          <div>
+            <KeyboardShortcutButton
+              blackBorder
+              inline
+              linkProps={{
+                as: `/pipelines/${pipelineUuid}/schedules/${id}/edit`,
+                href: '/pipelines/[pipeline]/schedules/[...slug]',
+              }}
+              noHoverUnderline
+              sameColorAsText
+              uuid="PipelineDetailPage/edit_schedule"
             >
-              <Text monospace>
-                Config
-              </Text>
-            </Button>
-          </Flex>
+              Edit schedule
+            </KeyboardShortcutButton>
+          </div>
         </FlexContainer>
       </HeaderStyle>
       <FlexTable

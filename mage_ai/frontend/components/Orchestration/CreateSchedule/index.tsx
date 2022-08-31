@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import Button from '@oracle/elements/Button';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import Headline from '@oracle/elements/Headline';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineScheduleType, { ScheduleIntervalEnum } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
@@ -86,7 +86,7 @@ function CreateSchedule({
       if (variables) {
         setGlobalVariables(getFormattedVariables(variables, block => block.uuid === 'global'));
       }
-      
+
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
       }
@@ -187,7 +187,7 @@ function CreateSchedule({
                 {Object.values(ScheduleIntervalEnum).map(value => (
                   <option key={value} value={value}>
                     {value}
-                  </option> 
+                  </option>
                 ))}
               </Select>
             ],
@@ -280,14 +280,16 @@ function CreateSchedule({
               </Text>
             </Button>
             <Spacing ml={2} /> */}
-            <Button
-              borderColor={dark.borders.dark}
+            <KeyboardShortcutButton
+              blackBorder
+              inline
+              noHoverUnderline
               onClick={onSave}
+              sameColorAsText
+              uuid="PipelineDetailPage/save"
             >
-              <Text monospace>
-                Save
-              </Text>
-            </Button>
+              Save
+            </KeyboardShortcutButton>
           </Flex>
         </FlexContainer>
         <Spacing my={3}>

@@ -6,17 +6,18 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
+import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import {
   BlocksStacked,
   Edit,
   Schedule,
 } from '@oracle/icons';
+import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
-import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
@@ -25,7 +26,9 @@ type PipelineDetailPageProps = {
   pipeline: {
     uuid: string;
   };
-  subheaderChildren?: any;
+  subheaderBackground?: string;
+  subheaderButton?: any;
+  subheaderText?: any;
   title?: (pipeline: PipelineType) => string;
 };
 
@@ -34,7 +37,9 @@ function PipelineDetailPage({
   children,
   pageName,
   pipeline: pipelineProp,
-  subheaderChildren,
+  subheaderBackground,
+  subheaderButton,
+  subheaderText,
   title,
 }: PipelineDetailPageProps) {
   const pipelineUUID = pipelineProp.uuid;
@@ -111,7 +116,7 @@ function PipelineDetailPage({
       subheaderChildren={
         <FlexContainer alignItems="center">
           <KeyboardShortcutButton
-            background={BUTTON_GRADIENT}
+            blackBorder
             bold
             beforeElement={<Edit size={2.5 * UNIT} />}
             inline
@@ -125,12 +130,22 @@ function PipelineDetailPage({
           >
             Edit Pipeline
           </KeyboardShortcutButton>
-
-          {subheaderChildren}
         </FlexContainer>
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
     >
+      {(subheaderButton || subheaderText) && (
+        <Spacing mb={PADDING_UNITS} mx={PADDING_UNITS}>
+          <BannerStyle background={subheaderBackground}>
+            <FlexContainer alignItems="center">
+              {subheaderButton}
+              {subheaderText && <Spacing ml={3} />}
+              {subheaderText}
+            </FlexContainer>
+          </BannerStyle>
+        </Spacing>
+      )}
+
       {children}
     </Dashboard>
   );
