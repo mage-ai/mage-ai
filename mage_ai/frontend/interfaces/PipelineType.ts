@@ -1,4 +1,5 @@
 import BlockType from './BlockType';
+import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
 import { PipelineMetadataType } from './MetadataType';
 
@@ -18,7 +19,7 @@ export default interface PipelineType {
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;
-  schedules_count?: number;
+  schedules?: PipelineScheduleType[];
   type?: PipelineTypeEnum;
   uuid?: string;
 }

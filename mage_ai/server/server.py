@@ -47,8 +47,7 @@ from mage_ai.server.kernels import (
 from mage_ai.server.scheduler_manager import scheduler_manager
 from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
-from mage_ai.shared.hash import index_by, merge_dict
-from sqlalchemy import func
+from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
 from tornado.log import enable_pretty_logging
 import argparse
@@ -136,13 +135,27 @@ class ApiPipelineHandler(BaseHandler):
 
     def put(self, pipeline_uuid):
         """
-        Allow updating pipeline name and uuid
+        Allow updating pipeline name, uuid, status
         """
         pipeline = Pipeline.get(pipeline_uuid)
         update_content = self.get_bool_argument('update_content', False)
         data = json.loads(self.request.body).get('pipeline', {})
         pipeline.update(data, update_content=update_content)
         switch_active_kernel(PIPELINE_TO_KERNEL_NAME[pipeline.type])
+
+        status = data.get('status')
+        if status and status in [
+            PipelineSchedule.ScheduleStatus.ACTIVE.value,
+            PipelineSchedule.ScheduleStatus.INACTIVE.value,
+        ]:
+            schedules = (
+                PipelineSchedule.
+                query.
+                filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+            ).all()
+            for schedule in schedules:
+                schedule.update(status=status)
+
         resp = dict(
             pipeline=pipeline.to_dict(
                 include_content=update_content,
@@ -175,30 +188,39 @@ class ApiPipelineExecuteHandler(BaseHandler):
 
 class ApiPipelineListHandler(BaseHandler):
     def get(self):
-        include_schedules_count = self.get_argument('include_schedules_count', False)
+        include_schedules = self.get_argument('include_schedules', False)
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
         pipelines = [Pipeline.get(uuid) for uuid in pipeline_uuids]
 
         mapping = {}
-        if include_schedules_count:
+        if include_schedules:
             a = aliased(PipelineSchedule, name='a')
             result = (
                 PipelineSchedule.
-                select(a.pipeline_uuid, func.count(a.id).label('schedules_count')).
-                filter(a.pipeline_uuid.in_(pipeline_uuids)).
-                group_by(a.pipeline_uuid)
+                select(*[
+                    a.created_at,
+                    a.id,
+                    a.name,
+                    a.pipeline_uuid,
+                    a.schedule_interval,
+                    a.schedule_type,
+                    a.start_time,
+                    a.status,
+                    a.updated_at,
+                ]).
+                filter(a.pipeline_uuid.in_(pipeline_uuids))
             ).all()
-            mapping = index_by(lambda x: x.pipeline_uuid, result)
+            mapping = group_by(lambda x: x.pipeline_uuid, result)
 
         collection = []
         for pipeline in pipelines:
-            schedules_count = 0
+            schedules = []
             if mapping.get(pipeline.uuid):
-                schedules_count = mapping[pipeline.uuid].schedules_count
+                schedules = mapping[pipeline.uuid]
             collection.append(merge_dict(
                 pipeline.to_dict(),
-                dict(schedules_count=schedules_count),
+                dict(schedules=schedules),
             ))
 
         self.write(dict(pipelines=collection))
