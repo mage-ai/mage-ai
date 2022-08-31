@@ -18,6 +18,7 @@ export default interface PipelineType {
   id?: number;
   metadata?: PipelineMetadataType;
   name?: string;
+  schedules_count?: number;
   type?: PipelineTypeEnum;
   uuid?: string;
 }
