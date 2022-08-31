@@ -16,6 +16,7 @@ from mage_ai.server.execution_manager import (
     cancel_pipeline_execution,
     delete_pipeline_copy_config,
     reset_execution_manager,
+    set_current_message_task,
     set_current_pipeline_process,
     set_previous_config_path,
 )
@@ -29,7 +30,8 @@ from mage_ai.server.utils.output_display import (
 )
 from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient
-from typing import Callable, Dict
+from typing import Callable, Dict, List
+import asyncio
 import json
 import multiprocessing
 import os
@@ -37,6 +39,85 @@ import tornado.websocket
 import traceback
 import uuid
 
+def run_pipeline(
+    pipeline: Pipeline,
+    config_copy_path: str,
+    queue: multiprocessing.Queue,
+) -> None:
+    '''
+    Execute pipeline synchronously. This function is meant to be run in a separate process,
+    and will write status messages to the passed in multiprocessing queue.
+    '''
+    metadata = dict(
+        pipeline_uuid=pipeline.uuid,
+    )
+
+    def add_pipeline_message(
+        message: str,
+        execution_state: str = 'busy',
+        metadata: Dict[str, str] = dict(),
+        msg_type: str = 'stream_pipeline',
+    ):
+        msg = dict(
+            message=message,
+            execution_state=execution_state,
+            metadata=metadata,
+            msg_type=msg_type,
+        )
+        queue.put(msg)
+
+    def add_block_message(
+        message: str,
+        execution_state: str = 'busy',
+        msg_type: str = 'stream_pipeline',
+        block_uuid: str = None,
+    ):
+        add_pipeline_message(
+            message,
+            execution_state=execution_state,
+            metadata=dict(
+                block_uuid=block_uuid,
+                pipeline_uuid=pipeline.uuid,
+            ),
+            msg_type=msg_type,
+        )
+
+    try:
+        global_vars = get_global_variables(pipeline.uuid)
+        pipeline.execute_sync(
+            global_vars=global_vars,
+            log_func=add_block_message,
+        )
+        add_pipeline_message(
+            f'Pipeline {pipeline.uuid} execution complete.\n'
+            'You can see the code block output in the corresponding code block.',
+            execution_state='idle',
+            metadata=metadata,
+        )
+    except Exception:
+        trace = traceback.format_exc().splitlines()
+        add_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:', metadata=metadata)
+        add_pipeline_message(trace, execution_state='idle', metadata=metadata)
+
+    delete_pipeline_copy_config(config_copy_path)
+
+def publish_pipeline_message(
+    message: str,
+    execution_state: str = 'busy',
+    metadata: Dict[str, str] = dict(),
+    msg_type: str = 'stream_pipeline',
+) -> None:
+    msg_id = str(uuid.uuid4())
+    WebSocketServer.send_message(
+        dict(
+            data=message,
+            execution_state=execution_state,
+            metadata=metadata,
+            msg_id=msg_id,
+            msg_type=msg_type,
+            type=DataType.TEXT_PLAIN,
+        )
+    )
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -71,44 +152,18 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         cancel_pipeline = message.get('cancel_pipeline')
         execute_pipeline = message.get('execute_pipeline')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
-        block_uuid = message.get('uuid')
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
         global_vars = message.get('global_vars', get_global_variables(pipeline_uuid))
 
-        value = dict(
-            block_uuid=block_uuid,
-            pipeline_uuid=pipeline_uuid,
-        )
-
-        def publish_message(
-            message: str,
-            execution_state: str = 'busy',
-            msg_type: str = 'stream_pipeline',
-            block_uuid: str = None,
-        ) -> None:
-            msg_id = str(uuid.uuid4())
-            value['block_uuid'] = block_uuid
-            WebSocketServer.running_executions_mapping[msg_id] = value
-            self.send_message(
-                dict(
-                    data=message,
-                    execution_state=execution_state,
-                    msg_id=msg_id,
-                    msg_type=msg_type,
-                    type=DataType.TEXT_PLAIN,
-                )
-            )
-
         if cancel_pipeline:
-            cancel_pipeline_execution(pipeline, publish_message)
+            cancel_pipeline_execution(pipeline, publish_pipeline_message)
         elif execute_pipeline:
             self.__execute_pipeline(
                 pipeline,
                 kernel_name,
                 global_vars,
-                publish_message,
             )
         else:
             self.__execute_block(
@@ -123,7 +178,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
-        msg_id_value = WebSocketServer.running_executions_mapping.get(msg_id, dict())
+
+        metadata = message.get('metadata')
+        msg_id_value = metadata if metadata is not None \
+            else WebSocketServer.running_executions_mapping.get(msg_id, dict())
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
 
@@ -231,7 +289,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline: Pipeline,
         kernel_name: str,
         global_vars: Dict[str, any],
-        publish_message: Callable,
     ) -> None:
         pipeline_uuid = pipeline.uuid
 
@@ -264,26 +321,31 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             # The pipeline state can potentially break when the execution is cancelled,
             # so we save the pipeline config before execution if the user cancels the excecution.
             config_copy_path = save_pipeline_config()
-            
-            def run_pipeline() -> None:
-                try:
-                    global_vars = get_global_variables(pipeline_uuid)
-                    pipeline.execute_sync(
-                        global_vars=global_vars,
-                        log_func=publish_message,
-                    )
-                    publish_message(
-                        f'Pipeline {pipeline.uuid} execution complete.\n'
-                        'You can see the code block output in the corresponding code block.',
-                        execution_state = 'idle',
-                    )
-                except Exception:
-                    trace = traceback.format_exc().splitlines()
-                    publish_message(f'Pipeline {pipeline.uuid} execution failed with error:')
-                    publish_message(trace, 'idle')
 
-                delete_pipeline_copy_config(config_copy_path)
-
-            proc = multiprocessing.Process(target=run_pipeline)
+            queue = multiprocessing.Queue()
+            proc = multiprocessing.Process(
+                target=run_pipeline,
+                args=(pipeline, config_copy_path, queue)
+            )
             proc.start()
             set_current_pipeline_process(proc)
+
+            async def check_for_messages():
+                while True:
+                    if not queue.empty():
+                        msg = queue.get()
+                        metadata = msg.get('metadata')
+                        execution_state = msg.get('execution_state')
+                        publish_pipeline_message(
+                            msg.get('message'),
+                            execution_state=execution_state,
+                            metadata=metadata,
+                            msg_type=msg.get('msg_type'),
+                        )
+                        if execution_state == 'idle' and \
+                            metadata.get('block_uuid') is None:
+                            break
+                    await asyncio.sleep(1)
+            
+            task = asyncio.create_task(check_for_messages())
+            set_current_message_task(task)

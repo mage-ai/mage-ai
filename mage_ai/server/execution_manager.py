@@ -1,6 +1,7 @@
 from distutils.dir_util import copy_tree
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from typing import Callable
+import asyncio
 import multiprocessing
 import os
 import shutil
@@ -15,6 +16,7 @@ class PipelineExecution:
     """
     def __init__(self):
         self.current_pipeline_process: multiprocessing.Process = None
+        self.current_message_task = None
         self.previous_config_path: str = None
 
 
@@ -28,6 +30,13 @@ def set_current_pipeline_process(process: multiprocessing.Process) -> None:
     pipeline_execution.current_pipeline_process = process
 
 
+def set_current_message_task(task: asyncio.Task) -> None:
+    """
+    Set the task that current is processing messages from execution process.
+    """
+    pipeline_execution.current_message_task = task
+
+
 def cancel_pipeline_execution(
     pipeline: Pipeline,
     publish_message: Callable[..., None],
@@ -39,9 +48,11 @@ def cancel_pipeline_execution(
     current_process = pipeline_execution.current_pipeline_process
     if current_process.is_alive():
         pipeline_execution.current_pipeline_process.terminate()
+    pipeline_execution.current_message_task.cancel()
     publish_message(
         'Pipeline execution cancelled... reverting state to previous iteration',
         execution_state='idle',
+        metadata=dict(pipeline_uuid=pipeline.uuid),
     )
     config_path = pipeline_execution.previous_config_path
     if config_path is not None and os.path.isdir(config_path):
