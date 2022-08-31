@@ -2,10 +2,9 @@ import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import {
-  ScrollbarStyledCss,
-} from '@oracle/styles/scrollbars';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
 export const AFTER_DEFAULT_WIDTH = UNIT * 64;
@@ -44,18 +43,11 @@ export const HeaderStyle = styled.div<{
 `;
 
 export const NewHeaderStyle = styled.div<any>`
-  border-bottom: 1px solid transparent;
-  height: ${ASIDE_HEADER_HEIGHT}px;
-  padding: 0 ${2 * UNIT}px;
+  height: ${HEADER_HEIGHT}px;
   position: fixed;
   top: 0;
   width: 100%;
   z-index: 4;
-
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).panel};
-    border-color: ${(props.theme.borders || dark.borders).medium};
-  `}
 `;
 
 export const TabStyle = styled.div<{

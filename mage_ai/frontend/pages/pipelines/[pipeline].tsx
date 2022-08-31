@@ -32,6 +32,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetail from '@components/PipelineDetail';
+import PipelineLayout from '@components/PipelineLayout';
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
 import RecommendationRow from '@components/RecommendationsWindow/RecommendationRow';
@@ -41,7 +42,6 @@ import Spacing from '@oracle/elements/Spacing';
 import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
-
 import { Add, Close } from '@oracle/icons';
 import {
   NAV_ICON_MAPPING,
@@ -49,6 +49,7 @@ import {
   VIEW_QUERY_PARAM,
   ViewKeyEnum,
 } from '@components/Sidekick/constants';
+import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { addUnderscores, randomNameGenerator } from '@utils/string';
 import {
@@ -66,7 +67,6 @@ import { goToWithQuery } from '@utils/routing';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
-import PipelineLayout from '@components/PipelineLayout';
 
 type PipelineDetailPageProps = {
   newPipelineSchedule: boolean;
@@ -190,7 +190,9 @@ function PipelineDetailPage({
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
   // Data providers
-  const { data: dataDataProviders } = api.data_providers.list();
+  const { data: dataDataProviders } = api.data_providers.list({}, {
+    revalidateOnFocus: true,
+  });
   const dataProviders: DataProviderType[] = dataDataProviders?.data_providers;
 
   // Variables
@@ -1319,7 +1321,7 @@ function PipelineDetailPage({
   // ])
 
   const mainContainerHeaderMemo = useMemo(() => {
-    if (page === 'develop') {
+    if (page === PAGE_NAME_EDIT) {
       return (
         <KernelStatus
           filePaths={selectedFilePaths}
@@ -1454,7 +1456,7 @@ function PipelineDetailPage({
       <FileBrowser
         blocks={blocks}
         files={filesData?.files}
-        onlyShowChildren
+        // onlyShowChildren
         onSelectBlockFile={onSelectBlockFile}
         openFile={openFile}
         openPipeline={(uuid: string) => {
@@ -1473,7 +1475,7 @@ function PipelineDetailPage({
   ]);
 
   const beforeHeader = useMemo(() => {
-    if (page === 'develop') {
+    if (page === PAGE_NAME_EDIT) {
       return (
         <FileHeaderMenu
           cancelPipeline={cancelPipeline}
@@ -1632,7 +1634,8 @@ function PipelineDetailPage({
 
 PipelineDetailPage.getInitialProps = async (ctx: any) => {
   const { pipeline: pipelineUUID }: { pipeline: string } = ctx.query;
-  let page = 'develop';
+  const page = PAGE_NAME_EDIT;
+
   // let pipelineScheduleId;
   // let pipelineScheduleAction;
   // let newPipelineSchedule = false;

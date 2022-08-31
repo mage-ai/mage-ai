@@ -83,7 +83,9 @@ function Header({
           >
             <Link
               block
+              noHoverUnderline
               noOutline
+              sameColorAsText
             >
               {el}
             </Link>

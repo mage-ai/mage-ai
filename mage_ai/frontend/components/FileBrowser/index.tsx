@@ -6,7 +6,6 @@ import FileType from '@interfaces/FileType';
 import Folder, { FolderSharedProps } from './Folder';
 import { ContainerStyle } from './index.style';
 import { ContextAreaProps } from '@components/ContextMenu';
-import { rearrangePipelinesFolderToTop } from './utils';
 
 type FileBrowserProps = {
   blocks: BlockType[];
@@ -30,14 +29,12 @@ function FileBrowser({
 }: FileBrowserProps, ref) {
   const themeContext = useContext(ThemeContext);
   const pipelineBlockUuids = blocks.concat(widgets).map(({ uuid }) => uuid);
-  const filesWithPipelinesFolderFirst = files?.map((project: FileType) => ({
-    ...project,
-    children: rearrangePipelinesFolderToTop(project.children),
-  }));
+
+  console.log(files)
 
   return (
     <ContainerStyle ref={ref}>
-      {filesWithPipelinesFolderFirst?.map((file: FileType) => (
+      {files?.map((file: FileType) => (
         <Folder
           {...props}
           file={file}

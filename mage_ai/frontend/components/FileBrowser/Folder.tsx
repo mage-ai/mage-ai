@@ -247,8 +247,9 @@ function Folder({
           <Text
             color={color}
             default={!color && !disabled}
-            disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
-            italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
+            disabled={disabled}
+            // disabled={disabled || (isEditableCodeBlock && !fileUsedByPipeline)}
+            // italic={isEditableCodeBlock && !fileUsedByPipeline && name !== SpecialFileEnum.INIT_PY}
             monospace
             small
           >
