@@ -143,7 +143,7 @@ export function pluralize(string, n) {
 }
 
 export function removeUnderscore(string) {
-  return string.replace(/_/g, ' ');
+  return string?.replace(/_/g, ' ');
 }
 
 export function singularize(string) {

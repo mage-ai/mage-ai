@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
-import Dashboard from '@components/Dashboard';
+import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -35,9 +35,11 @@ type PipelineDetailPageProps = {
   subheaderButton?: any;
   subheaderText?: any;
   title?: (pipeline: PipelineType) => string;
-};
+} & DashboardSharedProps;
 
 function PipelineDetailPage({
+  after,
+  afterWidth,
   breadcrumbs: breadcrumbsProp,
   children,
   headline,
@@ -47,6 +49,7 @@ function PipelineDetailPage({
   subheaderButton,
   subheaderText,
   title,
+  uuid,
 }: PipelineDetailPageProps) {
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
@@ -94,6 +97,8 @@ function PipelineDetailPage({
 
   return (
     <Dashboard
+      after={after}
+      afterWidth={afterWidth}
       breadcrumbs={breadcrumbs}
       navigationItems={[
         {
@@ -150,6 +155,7 @@ function PipelineDetailPage({
         </FlexContainer>
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
+      uuid={uuid}
     >
       {(subheaderButton || subheaderText) && (
         <Spacing mb={PADDING_UNITS} mx={PADDING_UNITS}>

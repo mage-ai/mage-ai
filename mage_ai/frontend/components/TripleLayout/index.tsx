@@ -59,7 +59,7 @@ type TripleLayoutProps = {
   headerOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
-  setAfterHidden: (value: boolean) => void;
+  setAfterHidden?: (value: boolean) => void;
   setAfterMousedownActive?: (value: boolean) => void;
   setAfterWidth: (width: number) => void;
   setBeforeHidden: (value: boolean) => void;
@@ -101,7 +101,7 @@ function TripleLayout({
 
   const toggleAfter = useCallback(() => {
     const val = !afterHidden;
-    setAfterHidden(val);
+    setAfterHidden?.(val);
     set(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN, val);
   }, [
     afterHidden,
@@ -327,6 +327,7 @@ function TripleLayout({
 
       {after && (
         <AfterStyle
+          headerOffset={0}
           style={{
             width: afterWidthFinal,
           }}
@@ -338,49 +339,53 @@ function TripleLayout({
             ref={refAfterInnerDraggable}
           />
 
-          <AsideHeaderStyle
-            style={{
-              width: afterWidthFinal,
-            }}
-            visible={afterHidden}
-          >
-            <FlexContainer alignItems="center" fullHeight fullWidth>
-              <Flex>
-                <Spacing pl={afterHidden ? 1 : 2} />
-                <Button
-                  noBackground
-                  noBorder
-                  noPadding
-                  onClick={() => toggleAfter()}
+          {setAfterHidden && (
+            <>
+              <AsideHeaderStyle
+                style={{
+                  width: afterWidthFinal,
+                }}
+                visible={afterHidden}
+              >
+                <FlexContainer alignItems="center" fullHeight fullWidth>
+                  <Flex>
+                    <Spacing pl={afterHidden ? 1 : 2} />
+                    <Button
+                      noBackground
+                      noBorder
+                      noPadding
+                      onClick={() => toggleAfter()}
+                    >
+                      {afterHidden && (
+                        <ChevronLeft
+                          neutral
+                          size={UNIT * 2}
+                        />
+                      )}
+                      {!afterHidden && (
+                        <ChevronRight
+                          neutral
+                          size={UNIT * 2}
+                        />
+                      )}
+                    </Button>
+                  </Flex>
+
+                  {!afterHidden && afterHeader}
+                </FlexContainer>
+              </AsideHeaderStyle>
+
+              {!afterHidden && afterSubheader && (
+                <AsideSubheaderStyle
+                  style={{
+                    width: afterWidthFinal,
+                  }}
+                  visible={afterHidden}
                 >
-                  {afterHidden && (
-                    <ChevronLeft
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                  {!afterHidden && (
-                    <ChevronRight
-                      neutral
-                      size={UNIT * 2}
-                    />
-                  )}
-                </Button>
-              </Flex>
-
-              {!afterHidden && afterHeader}
-            </FlexContainer>
-          </AsideHeaderStyle>
-
-          {!afterHidden && afterSubheader && (
-            <AsideSubheaderStyle
-              style={{
-                width: afterWidthFinal,
-              }}
-              visible={afterHidden}
-            >
-              {afterSubheader}
-            </AsideSubheaderStyle>
+                  {afterSubheader}
+                </AsideSubheaderStyle>
+              )}
+            </>
           )}
 
           <AfterInnerStyle

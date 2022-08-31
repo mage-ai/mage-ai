@@ -57,6 +57,10 @@ function PipelineSchedules({
 
   return (
     <PipelineDetailPage
+      after={
+        <h1>Text</h1>
+      }
+      afterWidth={300}
       breadcrumbs={[
         {
           label: () => 'Schedules',
@@ -83,6 +87,7 @@ function PipelineSchedules({
       }
       subheaderText={<Text bold large>Set up a new schedule for this pipeline.</Text>}
       title={({ name }) => `${name} schedules`}
+      uuid={`${PageNameEnum.SCHEDULES}_${pipelineUUID}`}
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => ({

@@ -76,13 +76,13 @@ export const TabStyle = styled.div<{
 `;
 
 const ASIDE_STYLE = css`
-  height: calc(100% - ${ALL_HEADERS_HEIGHT}px);
   position: fixed;
-  top: ${ALL_HEADERS_HEIGHT}px;
   z-index: 2;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
+    height: calc(100% - ${typeof props.headerOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.headerOffset}px);
+    top: ${typeof props.headerOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.headerOffset}px;
   `}
 `;
 
