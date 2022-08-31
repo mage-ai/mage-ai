@@ -974,7 +974,7 @@ function PipelineDetailPage({
     if (blockUUIDFromUrl && !selectedBlock) {
       const block = blocks.find(({ uuid }) => blockUUIDFromUrl === uuid);
       if (block) {
-        onSelectBlockFile(block.uuid, block.type);
+        onSelectBlockFile(block.uuid, block.type, null);
       }
     }
   }, [

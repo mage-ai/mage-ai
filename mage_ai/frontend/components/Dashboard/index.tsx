@@ -80,6 +80,7 @@ function Dashboard({
           )}
 
           {headerOffset !== null && (
+            // @ts-ignore
             <TripleLayout
               after={
                 <h1>
