@@ -15,35 +15,68 @@ import { capitalize } from '@utils/string';
 
 const ICON_SIZE = 3 * UNIT;
 
-function VerticalNavigation() {
+export type NavigationItem = {
+  Icon: any;
+  IconSelected: any;
+  id: string;
+  isSelected?: (pathname: string) => boolean;
+  label: () => string;
+  linkProps: {
+    as?: string;
+    href: string;
+  };
+};
+
+export type VerticalNavigationProps = {
+  navigationItems?: NavigationItem[];
+};
+
+function VerticalNavigation({
+  navigationItems,
+}: VerticalNavigationProps) {
   const router = useRouter();
   const { pathname } = router;
 
   const buttons = useMemo(() => {
-    return [
+    const items = navigationItems || [
       {
         Icon: PipelineV2,
         IconSelected: PipelineV2Gradient,
         id: 'pipelines',
+        label: () => 'Pipelines',
+        linkProps: {
+          href: 'pipelines',
+        },
       },
       {
         Icon: BlocksStacked,
         IconSelected: BlocksStackedGradient,
         id: 'pipeline-runs',
+        label: () => 'Pipelines runs',
+        linkProps: {
+          href: 'pipeline-runs',
+        },
       },
-    ].map(({
+    ];
+
+    return items.map(({
       Icon,
       IconSelected,
       id,
+      isSelected,
+      label,
+      linkProps,
     }, idx: Number) => {
-      const selected: boolean = !!pathname.match(new RegExp(`^/${id}[/]*`));
+      const selected: boolean = isSelected
+        ? isSelected(pathname)
+        : !!pathname.match(new RegExp(`^/${id}[/]*`));
       const IconToUse = selected && IconSelected ? IconSelected : Icon;
 
       return (
         <Tooltip
           height={5 * UNIT}
           key={`button-${id}`}
-          label={capitalize(id.split('-').join(' '))}
+          label={label()}
           size={null}
           widthFitContent
         >
@@ -75,10 +108,7 @@ function VerticalNavigation() {
                 block
                 noHoverUnderline
                 noPadding
-                linkProps={{
-                  as: id,
-                  href: id,
-                }}
+                linkProps={linkProps}
                 sameColorAsText
                 uuid={`VerticalNavigation/${id}`}
               >
@@ -98,7 +128,10 @@ function VerticalNavigation() {
         </Tooltip>
       );
     });
-  }, [pathname]);
+  }, [
+    navigationItems,
+    pathname,
+  ]);
 
 
   return (

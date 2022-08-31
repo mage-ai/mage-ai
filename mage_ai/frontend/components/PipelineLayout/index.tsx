@@ -141,8 +141,8 @@ function PipelineLayout({
           gradientColor: PAGE_NAME_EDIT === page ? null : PURPLE_BLUE,
           label: () => pipeline?.name,
           linkProps: {
-            href: '/pipelines/[pipeline]/schedules/[...slug]',
-            as: `/pipelines/${pipeline?.uuid}/schedules/new`,
+            href: '/pipelines/[pipeline]',
+            as: `/pipelines/${pipeline?.uuid}`,
           },
         },
       ]);

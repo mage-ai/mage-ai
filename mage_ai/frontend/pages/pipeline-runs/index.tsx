@@ -13,16 +13,13 @@ import { indexBy } from '@utils/array';
 function RunListPage() {
   const { data } = api.pipelines.list();
   const { data: dataPipelineRuns } = api.pipeline_runs.list();
-  const { data: dataProjects } = api.projects.list();
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
   const pipelinesByUUID = useMemo(() => indexBy(pipelines, ({ uuid }) => uuid), [pipelines]);
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
-  const projects = dataProjects?.projects;
 
   return (
     <Dashboard
-      projects={projects}
       title="Pipeline runs"
     >
       <FlexTable

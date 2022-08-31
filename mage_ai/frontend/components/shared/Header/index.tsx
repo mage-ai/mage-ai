@@ -138,6 +138,7 @@ function Header({
           <Flex alignItems="center">
             <Spacing mr={2}>
               <KeyboardShortcutButton
+                blackBorder
                 block
                 compact
                 noHoverUnderline

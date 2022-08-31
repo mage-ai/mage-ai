@@ -22,11 +22,17 @@ export interface SelectedScheduleType {
 
 
 export default interface PipelineScheduleType {
+  created_at?: string;
   id?: string;
   name?: string;
+  pipeline_runs_count?: number;
   pipeline_uuid?: string;
+  schedule_interval?: string;
   schedule_type?: ScheduleTypeEnum;
   start_time?: string;
-  schedule_interval?: string;
   status?: ScheduleStatusEnum;
+  updated_at?: string;
+  variables?: {
+    [key: string]: string | number;
+  };
 }
