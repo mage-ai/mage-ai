@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import Dashboard from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
@@ -11,6 +12,7 @@ import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
 import api from '@api';
 import {
+  BlocksSeparated,
   BlocksStacked,
   Edit,
   Schedule,
@@ -117,8 +119,8 @@ function PipelineDetailPage({
           isSelected: () => PageNameEnum.PIPELINE_RUNS === pageName,
         },
         {
-          Icon: BlocksStacked,
-          IconSelected: BlocksStackedGradient,
+          Icon: BlocksSeparated,
+          IconSelected: BlocksSeparatedGradient,
           id: PageNameEnum.BLOCK_RUNS,
           label: () => 'Block runs',
           linkProps: {
