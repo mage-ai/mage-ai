@@ -91,17 +91,17 @@ resource "aws_ecs_service" "aws-ecs-service" {
     assign_public_ip = true
     security_groups = [
       aws_security_group.service_security_group.id,
-      # aws_security_group.load_balancer_security_group.id
+      aws_security_group.load_balancer_security_group.id
     ]
   }
 
-  # load_balancer {
-  #  target_group_arn = aws_lb_target_group.target_group.arn
-  #  container_name   = "${var.app_name}-${var.app_environment}-container"
-  #  container_port   = 8080
-  #}
+  load_balancer {
+    target_group_arn = aws_lb_target_group.target_group.arn
+    container_name   = "${var.app_name}-${var.app_environment}-container"
+    container_port   = 6789
+  }
 
-  #depends_on = [aws_lb_listener.listener]
+  depends_on = [aws_lb_listener.listener]
 }
 
 resource "aws_security_group" "service_security_group" {
