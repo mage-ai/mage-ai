@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.logger_manager import LoggerManager
@@ -30,12 +31,18 @@ class PipelineScheduler:
 
     def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
-            self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.COMPLETED)
+            self.pipeline_run.update(
+                status=PipelineRun.PipelineRunStatus.COMPLETED,
+                completed_at=datetime.now(),
+            )
         self.__schedule_blocks()
 
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        block_run.update(
+            status=BlockRun.BlockRunStatus.COMPLETED,
+            completed_at=datetime.now(),
+        )
         self.logger.info(f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.')
 
         self.pipeline_run.refresh()
