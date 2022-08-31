@@ -30,6 +30,10 @@ resource "aws_cloudwatch_log_group" "log-group" {
   }
 }
 
+data "template_file" "env_vars" {
+  template = file("env_vars.json")
+}
+
 resource "aws_ecs_task_definition" "aws-ecs-task" {
   family = "${var.app_name}-task"
 
@@ -38,6 +42,7 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
     {
       "name": "${var.app_name}-${var.app_environment}-container",
       "image": "${var.docker_image}",
+      "environment": ${data.template_file.env_vars.rendered},
       "essential": true,
       "mountPoints": [
         {
