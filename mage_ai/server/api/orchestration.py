@@ -65,6 +65,8 @@ class ApiAllPipelineRunListHandler(BaseHandler):
     model_class = PipelineRun
 
     def get(self):
+        pipeline_uuid = self.get_argument('pipeline_uuid', None)
+
         a = aliased(PipelineRun, name='a')
         b = aliased(PipelineSchedule, name='b')
         c = aliased(BlockRun, name='c')
@@ -83,7 +85,17 @@ class ApiAllPipelineRunListHandler(BaseHandler):
             PipelineRun.
             select(*columns, func.count(c.id).label('block_runs_count')).
             join(b, a.pipeline_schedule_id == b.id).
-            join(c, a.id == c.pipeline_run_id, isouter=True).
+            join(c, a.id == c.pipeline_run_id, isouter=True)
+        )
+
+        if pipeline_uuid:
+            pipeline_runs = (
+                pipeline_runs.
+                filter(b.pipeline_uuid == pipeline_uuid)
+            )
+
+        pipeline_runs = (
+            pipeline_runs.
             group_by(*columns).
             order_by(a.created_at.desc())
         ).all()
