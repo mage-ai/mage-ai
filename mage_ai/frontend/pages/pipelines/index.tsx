@@ -33,7 +33,7 @@ function PipelineListPage() {
               uuid,
             },
           }) => {
-            router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
+            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
           },
           onErrorCallback: ({
             error: {

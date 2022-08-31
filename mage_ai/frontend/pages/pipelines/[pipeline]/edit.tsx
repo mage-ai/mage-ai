@@ -405,7 +405,7 @@ function PipelineDetailPage({
               uuid,
             },
           }) => {
-            router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
+            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
             fetchFileTree();
             fetchPipelines();
           },
@@ -1461,7 +1461,7 @@ function PipelineDetailPage({
         openFile={openFile}
         openPipeline={(uuid: string) => {
           resetState();
-          router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
+          router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
         }}
         openSidekickView={openSidekickView}
         ref={fileTreeRef}
