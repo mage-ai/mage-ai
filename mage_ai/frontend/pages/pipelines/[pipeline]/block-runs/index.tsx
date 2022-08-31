@@ -2,12 +2,12 @@ import NextLink from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
@@ -79,7 +79,7 @@ function BlockRuns({
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
           status,
-        }: PipelineRunType) => [
+        }: BlockRunType) => [
           <Text monospace>
             {createdAt}
           </Text>,

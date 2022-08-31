@@ -6,7 +6,7 @@ export enum RunStatus {
   RUNNING = 'running',
 }
 
-export interface BlockRunType {
+export default interface BlockRunType {
   block_uuid: string;
   completed_at?: string;
   created_at: string;

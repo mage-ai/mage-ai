@@ -11,6 +11,6 @@ export default interface PipelineRunType {
   pipeline_schedule_id: number;
   pipeline_schedule_name: string;
   pipeline_uuid: string;
-  status: RunStatus;
+  status: RunStatusEnum;
   updated_at: string;
 }
