@@ -8,6 +8,7 @@ import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import PipelineType from '@interfaces/PipelineType'
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
