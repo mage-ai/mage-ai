@@ -32,6 +32,7 @@ type PipelineDetailPageProps = {
     uuid: string;
   };
   subheaderBackground?: string;
+  subheaderBackgroundImage?: string;
   subheaderButton?: any;
   subheaderText?: any;
   title?: (pipeline: PipelineType) => string;
@@ -46,6 +47,7 @@ function PipelineDetailPage({
   pageName,
   pipeline: pipelineProp,
   subheaderBackground,
+  subheaderBackgroundImage,
   subheaderButton,
   subheaderText,
   title,
@@ -159,7 +161,7 @@ function PipelineDetailPage({
     >
       {(subheaderButton || subheaderText) && (
         <Spacing mb={PADDING_UNITS} mx={PADDING_UNITS}>
-          <BannerStyle background={subheaderBackground}>
+          <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
             <FlexContainer alignItems="center">
               {subheaderButton}
               {subheaderText && <Spacing ml={3} />}

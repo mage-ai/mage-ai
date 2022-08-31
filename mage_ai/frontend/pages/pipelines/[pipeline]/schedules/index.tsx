@@ -68,7 +68,7 @@ function PipelineSchedules({
       ]}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
-      subheaderBackground={PURPLE}
+      subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
       subheaderButton={
         <KeyboardShortcutButton
           blackBorder
