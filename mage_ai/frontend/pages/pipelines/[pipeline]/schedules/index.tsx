@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import DependencyGraph from '@components/DependencyGraph';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
@@ -17,17 +18,24 @@ import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { useWindowSize } from '@utils/sizes';
 
 function PipelineSchedules({
-  pipeline,
+  pipeline: pipelineProp,
 }) {
-  const pipelineUUID = pipeline.uuid;
+  const { height } = useWindowSize();
+  const pipelineUUID = pipelineProp.uuid;
+  const { data } = api.pipelines.detail(pipelineUUID);
+  const pipeline = {
+    ...pipelineProp,
+    ...data?.pipeline,
+  };
   const {
-    data,
+    data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
   } = api.pipeline_schedules.pipelines.list(pipelineUUID);
   const pipelinesSchedules: PipelineScheduleType[] =
-    useMemo(() => data?.pipeline_schedules || [], [data]);
+    useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -58,7 +66,10 @@ function PipelineSchedules({
   return (
     <PipelineDetailPage
       after={
-        <h1>Text</h1>
+        <DependencyGraph
+          height={height}
+          pipeline={pipeline}
+        />
       }
       afterWidth={300}
       breadcrumbs={[

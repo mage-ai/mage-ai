@@ -14,6 +14,7 @@ import {
   VERTICAL_NAVIGATION_WIDTH,
   VerticalNavigationStyle,
 } from './index.style';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import {
   get,
   set,
@@ -129,6 +130,7 @@ function Dashboard({
             // @ts-ignore
             <TripleLayout
               after={after}
+              afterHeightOffset={HEADER_HEIGHT}
               afterMousedownActive={afterMousedownActive}
               afterWidth={afterWidth}
               beforeWidth={VERTICAL_NAVIGATION_WIDTH}

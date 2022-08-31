@@ -239,7 +239,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     a.variables,
                 ]
                 results = (
-                    PipelineRun.
+                    PipelineSchedule.
                     select(*columns, func.count(b.id).label('pipeline_runs_count')).
                     join(b, a.id == b.pipeline_schedule_id, isouter=True).
                     filter(a.pipeline_uuid == pipeline.uuid).

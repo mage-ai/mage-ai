@@ -81,8 +81,8 @@ const ASIDE_STYLE = css`
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).panel};
-    height: calc(100% - ${typeof props.headerOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.headerOffset}px);
-    top: ${typeof props.headerOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.headerOffset}px;
+    height: calc(100% - ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px);
+    top: ${typeof props.heightOffset === 'undefined' ? ALL_HEADERS_HEIGHT : props.heightOffset}px;
   `}
 `;
 

@@ -45,6 +45,7 @@ import { useWindowSize } from '@utils/sizes';
 type TripleLayoutProps = {
   after?: any;
   afterHeader?: any;
+  afterHeightOffset?: number;
   afterHidden: boolean;
   afterMousedownActive: boolean;
   afterSubheader?: any;
@@ -71,6 +72,7 @@ type TripleLayoutProps = {
 function TripleLayout({
   after,
   afterHeader,
+  afterHeightOffset,
   afterHidden,
   afterMousedownActive,
   afterSubheader,
@@ -327,7 +329,7 @@ function TripleLayout({
 
       {after && (
         <AfterStyle
-          headerOffset={0}
+          heightOffset={afterHeightOffset}
           style={{
             width: afterWidthFinal,
           }}
