@@ -2,12 +2,9 @@ alembic>=1.7.5
 Faker==4.14.0
 Flask~=1.1.2
 Jinja2~=3.0.3
-MarkupSafe==2.1.1
 Werkzeug~=2.0.0
 asyncio==3.4.3
-click==8.1.3
 flask-cors==3.0.10
-importlib-metadata==4.11.3
 ipykernel==6.15.0
 ipython
 itsdangerous~=1.1.0
@@ -26,7 +23,6 @@ simplejson
 six>=1.15.0
 sqlalchemy>=1.4.20
 tornado==6.1
-zipp==3.8.0
 
 
 # extras
