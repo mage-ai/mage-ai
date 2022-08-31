@@ -39,6 +39,13 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
       "name": "${var.app_name}-${var.app_environment}-container",
       "image": "${var.docker_image}",
       "essential": true,
+      "mountPoints": [
+        {
+          "readOnly": false,
+          "containerPath": "/home/src",
+          "sourceVolume": "${var.app_name}-fs"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -66,6 +73,15 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
   cpu                      = "256"
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
+
+  volume {
+    name  = "${var.app_name}-fs"
+
+    efs_volume_configuration {
+      file_system_id        = aws_efs_file_system.file_system.id
+      transit_encryption    = "ENABLED"
+    }
+  }
 
   tags = {
     Name        = "${var.app_name}-ecs-td"
