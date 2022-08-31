@@ -39,6 +39,13 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
       "name": "${var.app_name}-${var.app_environment}-container",
       "image": "${var.docker_image}",
       "essential": true,
+      "mountPoints": [
+        {
+          "readOnly": false,
+          "containerPath": "/home/src",
+          "sourceVolume": "${var.app_name}-fs"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -67,6 +74,15 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
   execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
   task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
 
+  volume {
+    name  = "${var.app_name}-fs"
+
+    efs_volume_configuration {
+      file_system_id        = aws_efs_file_system.file_system.id
+      transit_encryption    = "ENABLED"
+    }
+  }
+
   tags = {
     Name        = "${var.app_name}-ecs-td"
     Environment = var.app_environment
@@ -91,17 +107,17 @@ resource "aws_ecs_service" "aws-ecs-service" {
     assign_public_ip = true
     security_groups = [
       aws_security_group.service_security_group.id,
-      # aws_security_group.load_balancer_security_group.id
+      aws_security_group.load_balancer_security_group.id
     ]
   }
 
-  # load_balancer {
-  #  target_group_arn = aws_lb_target_group.target_group.arn
-  #  container_name   = "${var.app_name}-${var.app_environment}-container"
-  #  container_port   = 8080
-  #}
+  load_balancer {
+    target_group_arn = aws_lb_target_group.target_group.arn
+    container_name   = "${var.app_name}-${var.app_environment}-container"
+    container_port   = 6789
+  }
 
-  #depends_on = [aws_lb_listener.listener]
+  depends_on = [aws_lb_listener.listener]
 }
 
 resource "aws_security_group" "service_security_group" {

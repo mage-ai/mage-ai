@@ -18,7 +18,7 @@ variable "aws_cloudwatch_retention_in_days" {
 variable "app_name" {
   type        = string
   description = "Application Name"
-  default     = "mage-data-prep-tf"
+  default     = "mage-data-prep"
 }
 
 variable "app_environment" {

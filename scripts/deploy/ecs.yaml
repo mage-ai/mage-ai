@@ -100,7 +100,7 @@ Resources:
     Properties:
       VpcId: !Ref VpcID
       HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /api/pipelines
+      HealthCheckPath: /api/kernels
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
