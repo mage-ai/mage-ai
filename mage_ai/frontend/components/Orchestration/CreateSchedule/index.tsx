@@ -13,12 +13,11 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
+import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
-import dark from '@oracle/styles/themes/dark';
 import { BLUE_TEXT, LIME_DARK } from '@oracle/styles/colors/main';
-import { PlayButtonFilled } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { getFormattedVariables } from '@components/Sidekick/utils';
+import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
 import { useMutation } from 'react-query';
@@ -43,7 +42,8 @@ function CreateSchedule({
   setErrors,
 }: CreateScheduleProps) {
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
-  const [globalVariables, setGlobalVariables] = useState<VariableType[]>([]);
+  const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
+  const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
 
   const [createSchedule] = useMutation(
     api.pipeline_schedules.pipelines.useCreate(pipeline?.uuid),
@@ -81,31 +81,52 @@ function CreateSchedule({
     }
   );
 
+  const {
+    name,
+    schedule_type,
+    start_time,
+    schedule_interval,
+    variables: schedule_variables = {},
+  } = schedule || {};
+
+  const scheduleVariables = useMemo(() => schedule_variables || {}, [schedule_variables]);
+
+  useEffect(
+    () => {
+      if (scheduleVariables && Object.keys(scheduleVariables).length > 0) {
+        setOverwriteVariables(true);
+      }
+    },
+    [scheduleVariables],
+  )
+
   useEffect(
     () => {
       if (variables) {
-        setGlobalVariables(getFormattedVariables(variables, block => block.uuid === 'global'));
+        const formattedVariables = getFormattedVariables(variables, block => block.uuid === 'global');
+        if (overwriteVariables) {
+          setRuntimeVariables(formattedVariables.reduce(
+            (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
+            {},
+          ));
+        } else {
+          setRuntimeVariables(null);
+        }
       }
 
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
       }
     },
-    [editSchedule, pipelineSchedule, variables],
+    [editSchedule, overwriteVariables, pipelineSchedule, scheduleVariables, variables],
   );
-
-  const {
-    name,
-    schedule_type,
-    start_time,
-    schedule_interval,
-  } = schedule || {};
 
   const onSave = useCallback(() => {
     const updatedSchedule = {
       name,
       start_time,
       schedule_interval,
+      variables: parseVariables(runtimeVariables),
     };
 
     const scheduleAction = editSchedule ? updateSchedule : createSchedule;
@@ -119,6 +140,7 @@ function CreateSchedule({
     editSchedule,
     updateSchedule,
     name,
+    runtimeVariables,
     start_time,
     schedule_interval,
   ])
@@ -226,18 +248,26 @@ function CreateSchedule({
   const variablesMemo = useMemo(() => {
     return (
       <>
-        {globalVariables && globalVariables.length > 0 && (
-          <>
-            <Headline level={5} monospace>
-              Runtime variables
-            </Headline>
-            <Spacing mb={2} />
+        <FlexContainer alignItems="center">
+          <Spacing mr={2}>
+            <ToggleSwitch
+              checked={overwriteVariables}
+              onCheck={setOverwriteVariables}
+            />
+          </Spacing>
+          <Text monospace muted>
+            Overwrite global variables
+          </Text>
+        </FlexContainer>
+        {overwriteVariables && runtimeVariables
+          && Object.entries(runtimeVariables).length > 0 && (
+          <Spacing mt={2}>
             <FlexTable
               borderRadius
               columnFlex={[1, 2]}
               paddingHorizontal={0}
               paddingVertical={12}
-              rows={globalVariables.map(({ uuid, value }) => {
+              rows={Object.entries(runtimeVariables).map(([uuid, value]) => {
                 return [
                   <Spacing px={2}>
                     <Text
@@ -248,27 +278,37 @@ function CreateSchedule({
                     </Text>
                   </Spacing>,
                   <Spacing px={2}>
-                    <Text
+                    <TextInput
+                      compact
+                      borderless
                       monospace
-                    >
-                      {value}
-                    </Text>
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setRuntimeVariables(vars => ({
+                          ...vars,
+                          [uuid]: e.target.value,
+                        }));
+                      }}
+                      paddingHorizontal={0}
+                      placeholder="variable"
+                      value={value}
+                    />
                   </Spacing>,
                 ]
               })}
             />
-          </>
+          </Spacing>
         )}
       </>
     )
-  }, [globalVariables]);
+  }, [overwriteVariables, runtimeVariables, setOverwriteVariables]);
 
   return (
     <ContainerStyle>
       <FlexContainer flexDirection="column" fullWidth>
         <FlexContainer justifyContent="space-between">
           <Headline level={2} monospace>
-            {editSchedule ? 'Configure' : 'Create new job'}
+            {editSchedule ? 'Configure' : 'Create new schedule'}
           </Headline>
           <Flex>
             {/* <Button

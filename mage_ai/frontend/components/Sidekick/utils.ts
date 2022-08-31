@@ -135,3 +135,26 @@ export function getFormattedVariables(variables, filterBlock) {
       }
     })
 }
+
+export function parseVariables(variables) {
+  if (!variables) {
+    return variables;
+  }
+  
+  return Object.entries(variables).reduce(
+    (prev, [uuid, value]: [string, string]) => {
+      let updatedValue = value;
+      try {
+        updatedValue = JSON.parse(value);
+      } catch {
+        // do nothing
+      }
+
+      return {
+        ...prev,
+        [uuid]: updatedValue,
+      };
+    },
+    {},
+  );
+}
