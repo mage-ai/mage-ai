@@ -1,20 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import Router from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
-import Flex from '@oracle/components/Flex';
-import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
-import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -63,6 +61,30 @@ function PipelineSchedules({
     },
   );
 
+  const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
+  const buildSidekick = useMemo(() => {
+    const showVariables = selectedSchedule &&
+      selectedSchedule.variables &&
+      Object.entries(selectedSchedule.variables).length > 0;
+
+    return props => {
+      const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
+      return (
+        <>
+          {showVariables && (
+            <VariableOverwrites
+              pipelineSchedule={selectedSchedule}
+            />
+          )}
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+          />
+        </>
+      )
+    };
+  }, [selectedSchedule]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -70,7 +92,7 @@ function PipelineSchedules({
           label: () => 'Schedules',
         },
       ]}
-      buildDependencyTree={props => <DependencyGraph {...props} />}
+      buildSidekick={buildSidekick}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
       subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
@@ -95,10 +117,6 @@ function PipelineSchedules({
       uuid={`${PageNameEnum.SCHEDULES}_${pipelineUUID}`}
     >
       <FlexTable
-        buildLinkProps={(rowIndex: number) => ({
-          as: `/pipelines/${pipelineUUID}/schedules/${pipelinesSchedules[rowIndex].id}`,
-          href: '/pipelines/[pipeline]/schedules/[...slug]',
-        })}
         columnHeaders={[
           null,
           <Text bold monospace muted>
@@ -116,11 +134,15 @@ function PipelineSchedules({
           <Text bold monospace muted>
             Runs
           </Text>,
-          null,
+          <Text bold monospace muted>
+            Edit
+          </Text>,,
         ]}
-        columnFlex={[1, 3, 10, 10, 4, 1, 1]}
+        columnFlex={[1, 3, 10, 10, 4, 2, 1]}
+        onClickRow={(rowIndex: number) => setSelectedSchedule(pipelinesSchedules[rowIndex])}
         rows={pipelinesSchedules.map((pipelineSchedule: PipelineScheduleType) => {
           const {
+            id,
             pipeline_runs_count: pipelineRunsCount,
             name,
             schedule_interval: scheduleInterval,
@@ -167,9 +189,13 @@ function PipelineSchedules({
             <Text>
               {pipelineRunsCount}
             </Text>,
-            <Flex flex={1} justifyContent="flex-end">
+            <Button
+              iconOnly
+              noBackground
+              onClick={(e) => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
+            >
               <ChevronRight muted size={2 * UNIT} />
-            </Flex>,
+            </Button>
           ];
         })}
       />

@@ -99,9 +99,10 @@ function FlexTable({
     const cellEls = row.map((cell, colIndex) => Column(cell, rowIndex, colIndex));
 
     if (buildLinkProps) {
+      const linkProps = buildLinkProps(rowIndex)
       return (
         <NextLink
-          {...buildLinkProps(rowIndex)}
+          {...linkProps}
           key={`row-${rowIndex}`}
           passHref
         >
