@@ -19,6 +19,7 @@ export const GraphContainerStyle = styled.div<{
 export const NodeStyle = styled.div<{
   backgroundColor?: string;
   disabled: boolean;
+  isCancelled: boolean;
   selected: boolean;
 }>`
   border: 2px solid transparent;
@@ -33,9 +34,11 @@ export const NodeStyle = styled.div<{
     background-color: ${props.backgroundColor};
   `}
 
-  ${props => props.disabled && `
+  ${props => (props.isCancelled || props.disabled) && `
     opacity: 0.5;
+  `}
 
+  ${props => props.disabled && `
     &:hover {
       cursor: not-allowed;
     }

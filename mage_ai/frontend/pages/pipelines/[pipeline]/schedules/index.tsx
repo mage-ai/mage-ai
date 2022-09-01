@@ -79,6 +79,7 @@ function PipelineSchedules({
           <DependencyGraph
             {...props}
             height={dependencyGraphHeight}
+            noStatus
           />
         </>
       )

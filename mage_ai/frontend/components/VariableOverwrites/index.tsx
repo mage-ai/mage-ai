@@ -29,7 +29,7 @@ function VariableOverwrites({
               {variable}
             </Text>
             <Text color={LIME_DARK} monospace>
-              {value}
+              {typeof value === 'string' ? value : JSON.stringify(value)}
             </Text>
           </VariableCardStyle>
         ))}
