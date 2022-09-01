@@ -146,7 +146,15 @@ def process_pipeline_runs(
         group_by(*columns).
         order_by(a.created_at.desc())
     ).all()
-    collection = [r for r in pipeline_runs]
+
+    collection = []
+    for r in pipeline_runs:
+        run_dict = dict(r._mapping)
+        block_runs = BlockRun.query.filter(
+            BlockRun.pipeline_run_id == int(r.id),
+        ).all()
+        run_dict['block_runs'] = [r.to_dict() for r in block_runs]
+        collection.append(run_dict)
 
     handler.write(dict(pipeline_runs=collection))
     handler.finish()

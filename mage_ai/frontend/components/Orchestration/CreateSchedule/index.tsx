@@ -115,13 +115,18 @@ function CreateSchedule({
           setRuntimeVariables(null);
         }
       }
+    },
+    [overwriteVariables],
+  );
 
+  useEffect(
+    () => {
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
       }
     },
-    [editSchedule, overwriteVariables, pipelineSchedule, scheduleVariables, variables],
-  );
+    [pipelineSchedule],
+  )
 
   const onSave = useCallback(() => {
     const updatedSchedule = {

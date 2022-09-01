@@ -20,6 +20,7 @@ type GraphNodeProps = {
   children: any;
   disabled?: boolean;
   hasFailed?: boolean;
+  isCancelled?: boolean;
   isInProgress?: boolean;
   isQueued?: boolean;
   isSuccessful?: boolean;
@@ -32,6 +33,7 @@ function GraphNode({
   children,
   disabled,
   hasFailed,
+  isCancelled,
   isInProgress,
   isQueued,
   isSuccessful,
@@ -44,7 +46,7 @@ function GraphNode({
     uuid,
   } = block;
 
-  const noStatus = !(isInProgress || isQueued || hasFailed || isSuccessful);
+  const noStatus = !(isInProgress || isQueued || hasFailed || isSuccessful || isCancelled);
   const success = isSuccessful && !(isInProgress || isQueued);
   const failed = hasFailed && !(isInProgress || isQueued);
   let tooltipText = '';
@@ -56,12 +58,15 @@ function GraphNode({
     tooltipText = 'Failed execution';
   } else if (isInProgress) {
     tooltipText = 'Currently executiing';
+  } else if (isCancelled) {
+    tooltipText = 'Cancelled execution';
   }
 
   return (
     <NodeStyle
       backgroundColor={getColorsForBlockType(type, { theme: themeContext }).accent}
       disabled={disabled}
+      isCancelled={isCancelled}
       key={uuid}
       selected={selected}
     >

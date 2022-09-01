@@ -1,15 +1,15 @@
 import NextLink from 'next/link';
-import { useMemo } from 'react';
-import { useMutation } from 'react-query';
+import { useMemo, useState } from 'react';
 
 import DependencyGraph from '@components/DependencyGraph';
-import FlexContainer from '@oracle/components/FlexContainer';
+import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
 import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { ChevronRight } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 
@@ -29,9 +29,30 @@ function PipelineRuns({
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
+  const buildSidekick = useMemo(() => {
+    return props => {
+      const updatedProps = { ...props };
+      if (selectedRun) {
+        updatedProps['blockStatus'] = selectedRun.block_runs?.reduce(
+          (prev, { block_uuid, status }) => ({ ...prev, [block_uuid]: status }),
+          {},
+        );
+      } else {
+        updatedProps['noStatus'] = true;
+      }
+
+      return (
+        <DependencyGraph
+          {...updatedProps}
+        />
+      );
+    };
+  }, [selectedRun])
+
   return (
     <PipelineDetailPage
-      buildSidekick={props => <DependencyGraph {...props} />}
+      buildSidekick={buildSidekick}
       breadcrumbs={[
         {
           label: () => 'Pipeline runs',
@@ -59,8 +80,10 @@ function PipelineRuns({
           <Text bold monospace muted>
             Completed at
           </Text>,
+          null
         ]}
-        columnFlex={[3, 2, 2, 3, 3]}
+        columnFlex={[3, 2, 2, 3, 3, 1]}
+        onClickRow={(rowIndex) => setSelectedRun(pipelineRuns[rowIndex])}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           completed_at: completedAt,
@@ -97,6 +120,9 @@ function PipelineRuns({
           <Text monospace muted={!completedAt}>
             {completedAt || '-'}
           </Text>,
+          <Flex flex={1} justifyContent="flex-end">
+            <ChevronRight muted size={2 * UNIT} />
+          </Flex>
         ])}
       />
     </PipelineDetailPage>

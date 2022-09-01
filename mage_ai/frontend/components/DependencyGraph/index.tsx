@@ -21,6 +21,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 
 import { GraphContainerStyle } from './index.style';
+import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
   PADDING_UNITS,
@@ -86,6 +87,9 @@ export type DependencyGraphProps = {
   blockRefs?: {
     [current: string]: any;
   };
+  blockStatus?: {
+    [uuid: string]: RunStatus;
+  };
   editingBlock?: {
     upstreamBlocks: {
       block: BlockType;
@@ -94,6 +98,7 @@ export type DependencyGraphProps = {
   };
   fetchPipeline?: () => void;
   height: number;
+  noStatus?: boolean;
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
   selectedBlock?: BlockType;
@@ -102,9 +107,11 @@ export type DependencyGraphProps = {
 
 function DependencyGraph({
   blockRefs,
+  blockStatus,
   editingBlock,
   fetchPipeline,
   height,
+  noStatus,
   pipeline,
   runningBlocks = [],
   selectedBlock,
@@ -273,6 +280,29 @@ function DependencyGraph({
     blocks,
   ]);
 
+  const getBlockStatus = useCallback((block: BlockType) => {
+    if (noStatus) {
+      return {};
+    } else if (blockStatus) {
+      const status = blockStatus[block.uuid];
+      return {
+        hasFailed: RunStatus.FAILED === status,
+        isCancelled: RunStatus.CANCELLED === status,
+        isInProgress: RunStatus.RUNNING === status,
+        isQueued: RunStatus.INITIAL === status,
+        isSuccessful: RunStatus.COMPLETED === status,
+      };
+    } else {
+      return {
+        hasFailed: StatusTypeEnum.FAILED === block.status,
+        isInProgress: runningBlocksMapping[block.uuid],
+        isQueued: runningBlocksMapping[block.uuid]
+          && runningBlocks[0]?.uuid !== block.uuid,
+        isSuccessful: StatusTypeEnum.EXECUTED === block.status,
+      };
+    }
+  }, [runningBlocksMapping, blockStatus]);
+
   return (
     <>
       {blockEditing && (
@@ -419,17 +449,12 @@ function DependencyGraph({
                     <GraphNode
                       block={block}
                       disabled={blockEditing?.uuid === block.uuid}
-                      hasFailed={StatusTypeEnum.FAILED === block.status}
-                      isInProgress={runningBlocksMapping[block.uuid]}
-                      isQueued={runningBlocksMapping[block.uuid]
-                        && runningBlocks[0]?.uuid !== block.uuid
-                      }
-                      isSuccessful={StatusTypeEnum.EXECUTED === block.status}
                       key={block.uuid}
                       selected={blockEditing
                         ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
                         : selectedBlock?.uuid === block.uuid
                       }
+                      {...getBlockStatus(block)}
                     >
                       {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
                     </GraphNode>
