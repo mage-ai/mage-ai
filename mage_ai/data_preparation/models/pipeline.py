@@ -250,8 +250,8 @@ class Pipeline:
         self.name = config.get('name')
         self.type = config.get('type') or self.type
 
-        self.block_configs = config.get('blocks', [])
-        self.widget_configs = config.get('widgets', [])
+        self.block_configs = config.get('blocks') or []
+        self.widget_configs = config.get('widgets') or []
 
         def build_shared_args_kwargs(c, block_class):
             block_type = c.get('type')
