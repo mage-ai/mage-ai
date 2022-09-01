@@ -56,6 +56,14 @@ class BaseHandler(tornado.web.RequestHandler):
                 )
             )
 
+    def write_model(self, model):
+        key = camel_to_snake_case(self.model_class.__name__)
+        self.write({key: model.to_dict()})
+
+    def write_models(self, models):
+        key = camel_to_snake_case(self.model_class.__name__) + 's'
+        self.write({key: [m.to_dict() for m in models]})
+
     def get_payload(self):
         key = ''
         if self.model_class:
@@ -68,3 +76,20 @@ class BaseHandler(tornado.web.RequestHandler):
             if payload.get(key) is not None:
                 payload[key] = dateutil.parser.parse(payload[key])
         return payload
+
+
+class BaseDetailHandler(BaseHandler):
+    def get(self, model_id):
+        model = self.model_class.query.get(int(model_id))
+        self.write_model(model)
+
+    def put(self, model_id):
+        model = self.model_class.query.get(int(model_id))
+        payload = self.get_payload()
+        model.update(**payload)
+        self.write_model(model)
+
+    def delete(self, model_id):
+        model = self.model_class.query.get(int(model_id))
+        model.delete()
+        self.write_model(model)

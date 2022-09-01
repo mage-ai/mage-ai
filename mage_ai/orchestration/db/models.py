@@ -5,7 +5,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.array import find
 from mage_ai.shared.strings import camel_to_snake_case
-from sqlalchemy import Column, DateTime, Enum, Integer, JSON, String, ForeignKey
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.sql import func
@@ -69,6 +69,14 @@ class BaseModel(Base):
         return {c.name: __format_value(getattr(self, c.name)) for c in self.__table__.columns}
 
 
+pipeline_schedule_event_matcher_association_table = Table(
+    'pipeline_schedule_event_matcher_association',
+    Base.metadata,
+    Column('pipeline_schedule_id', ForeignKey('pipeline_schedule.id')),
+    Column('event_matcher_id', ForeignKey('event_matcher.id')),
+)
+
+
 class PipelineSchedule(BaseModel):
     class ScheduleStatus(str, enum.Enum):
         ACTIVE = 'active'
@@ -76,6 +84,7 @@ class PipelineSchedule(BaseModel):
 
     class ScheduleType(str, enum.Enum):
         TIME = 'time'
+        EVENT = 'event'
 
     name = Column(String(255))
     pipeline_uuid = Column(String(255))
@@ -87,9 +96,19 @@ class PipelineSchedule(BaseModel):
 
     pipeline_runs = relationship('PipelineRun', back_populates='pipeline_schedule')
 
+    event_matchers = relationship(
+        'EventMatcher',
+        secondary=pipeline_schedule_event_matcher_association_table,
+        back_populates='pipeline_schedules'
+    )
+
     @classmethod
     def active_schedules(self) -> List['PipelineSchedule']:
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
+
+    def add_event_matcher(self, event_matcher: 'EventMatcher'):
+        self.event_matchers.append(event_matcher)
+        session.commit()
 
     def current_execution_date(self) -> datetime:
         now = datetime.now()
@@ -225,3 +244,47 @@ class BlockRun(BaseModel):
             execution_partition=self.pipeline_run.execution_partition,
             sample_count=sample_count,
         )
+
+
+class EventMatcher(BaseModel):
+    class EventType(str, enum.Enum):
+        AWS_EVENT = 'aws_event'
+
+    event_type = Column(Enum(EventType), default=EventType.AWS_EVENT)
+    name = Column(String(255))
+    pattern = Column(JSON)
+
+    pipeline_schedules = relationship(
+        'PipelineSchedule',
+        secondary=pipeline_schedule_event_matcher_association_table,
+        back_populates='event_matchers',
+    )
+
+    @classmethod
+    def active_event_matchers(self) -> List['EventMatcher']:
+        return self.query.filter(
+            EventMatcher.pipeline_schedules.any(
+                PipelineSchedule.status == PipelineSchedule.ScheduleStatus.ACTIVE
+            )
+        ).all()
+
+    def active_pipeline_schedules(self) -> List[PipelineSchedule]:
+        return [p for p in self.pipeline_schedules
+                if p.status == PipelineSchedule.ScheduleStatus.ACTIVE]
+
+    def match(self, config: Dict) -> bool:
+        def __match_dict(sub_pattern, sub_config):
+            print(f'Matching {sub_pattern} with {sub_config}')
+            if type(sub_pattern) is not dict or type(sub_config) is not dict:
+                return False
+            for k in sub_pattern.keys():
+                if k not in sub_config:
+                    return False
+                v = sub_pattern[k]
+                if type(v) is list:
+                    if sub_config[k] not in v:
+                        return False
+                elif not __match_dict(v, sub_config[v]):
+                    return False
+            return True
+        return __match_dict(self.pattern, config)

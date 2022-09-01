@@ -22,7 +22,11 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
-from mage_ai.server.api.events import ApiEventHandler
+from mage_ai.server.api.events import (
+    ApiEventHandler,
+    ApiEventMatcherDetailHandler,
+    ApiEventMatcherListHandler,
+)
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
@@ -389,6 +393,8 @@ def make_app():
         (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/events', ApiEventHandler),
+        (r'/api/event_matchers', ApiEventMatcherListHandler),
+        (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
         (r'/api/files', ApiFileListHandler),
         (r'/api/file_contents/(?P<file_path_encoded>.+)', ApiFileContentHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/execute', ApiPipelineExecuteHandler),
