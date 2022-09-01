@@ -7,6 +7,7 @@ from mage_ai.shared.array import find
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.sql import func
 from typing import Dict, List
@@ -61,12 +62,21 @@ class BaseModel(Base):
     def refresh(self):
         session.refresh(self)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, include_attributes=[]) -> Dict:
         def __format_value(value):
             if type(value) is datetime:
                 return str(value)
+            elif type(value) is InstrumentedList:
+                return [__format_value(v) for v in value]
+            elif hasattr(value, 'to_dict'):
+                return value.to_dict()
             return value
-        return {c.name: __format_value(getattr(self, c.name)) for c in self.__table__.columns}
+        obj_dict = {c.name: __format_value(getattr(self, c.name)) for c in self.__table__.columns}
+        if include_attributes is not None and len(include_attributes) > 0:
+            for attr in include_attributes:
+                if hasattr(self, attr):
+                    obj_dict[attr] = __format_value(getattr(self, attr))
+        return obj_dict
 
 
 pipeline_schedule_event_matcher_association_table = Table(
@@ -105,10 +115,6 @@ class PipelineSchedule(BaseModel):
     @classmethod
     def active_schedules(self) -> List['PipelineSchedule']:
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
-
-    def add_event_matcher(self, event_matcher: 'EventMatcher'):
-        self.event_matchers.append(event_matcher)
-        session.commit()
 
     def current_execution_date(self) -> datetime:
         now = datetime.now()
@@ -260,6 +266,9 @@ class EventMatcher(BaseModel):
         back_populates='event_matchers',
     )
 
+    def __repr__(self):
+        return f'EventMatcher(id={self.id}, name={self.name}, pattern={self.pattern})'
+
     @classmethod
     def active_event_matchers(self) -> List['EventMatcher']:
         return self.query.filter(
@@ -274,7 +283,6 @@ class EventMatcher(BaseModel):
 
     def match(self, config: Dict) -> bool:
         def __match_dict(sub_pattern, sub_config):
-            print(f'Matching {sub_pattern} with {sub_config}')
             if type(sub_pattern) is not dict or type(sub_config) is not dict:
                 return False
             for k in sub_pattern.keys():

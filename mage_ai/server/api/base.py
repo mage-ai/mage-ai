@@ -56,9 +56,9 @@ class BaseHandler(tornado.web.RequestHandler):
                 )
             )
 
-    def write_model(self, model):
+    def write_model(self, model, **kwargs):
         key = camel_to_snake_case(self.model_class.__name__)
-        self.write({key: model.to_dict()})
+        self.write({key: model.to_dict(**kwargs)})
 
     def write_models(self, models):
         key = camel_to_snake_case(self.model_class.__name__) + 's'
@@ -79,13 +79,13 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class BaseDetailHandler(BaseHandler):
-    def get(self, model_id):
+    def get(self, model_id, **kwargs):
         model = self.model_class.query.get(int(model_id))
-        self.write_model(model)
+        self.write_model(model, **kwargs)
 
-    def put(self, model_id):
+    def put(self, model_id, payload=None):
         model = self.model_class.query.get(int(model_id))
-        payload = self.get_payload()
+        payload = payload or self.get_payload()
         model.update(**payload)
         self.write_model(model)
 

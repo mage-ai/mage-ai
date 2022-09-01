@@ -154,6 +154,7 @@ def schedule_all():
 
 
 def schedule_with_event(event: Dict = dict()):
+    print(f'Schedule with event {event}')
     all_event_matchers = EventMatcher.active_event_matchers()
     for e in all_event_matchers:
         if e.match(event):
