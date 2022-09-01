@@ -12,10 +12,12 @@ export function queryFromUrl(url: string = null): any {
   if (urlToTest) {
     const params = new URLSearchParams(urlToTest.split('?').slice(1).join(''));
     // @ts-ignore
-    Array.from(params.keys()).forEach(key => {
+    Array.from(params.keys()).forEach((key: string) => {
+      const isList = key.match(/\[\]/);
+
       // @ts-ignore
       const values = params.getAll(key);
-      if (values.length === 1) {
+      if (values.length === 1 && !isList) {
         // @ts-ignore
         [query[key]] = values;
       } else {

@@ -108,7 +108,7 @@ function Table({
           (
             <TableHeadStyle key={`${uuid}-col-${col.uuid}-${idx}`}>
               <Text bold leftAligned monospace muted>
-                {col.label?.() || col.uuid}
+                {col.label ? col.label() : col.uuid}
               </Text>
             </TableHeadStyle>
           ))}

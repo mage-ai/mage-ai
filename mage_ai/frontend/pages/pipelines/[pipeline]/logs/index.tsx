@@ -10,23 +10,29 @@ import {
 
 import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Circle from '@oracle/elements/Circle';
+import Divider from '@oracle/elements/Divider';
+import Filter from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Link from '@oracle/elements/Link';
 import LogType, { LogDataType, LogLevelEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { indexBy, sortByKey } from '@utils/array';
 import { initializeLogs } from '@utils/models/log';
+import { isEmptyObject, isEqual } from '@utils/hash';
+import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 
 type BlockRunsProp = {
   pipeline: {
@@ -57,6 +63,7 @@ function BlockRuns({
   const { data: dataLogs } = api.logs.pipelines.list(pipelineUUID, query, {}, {
     pauseFetch: !query,
   });
+  const isLoading = !dataLogs;
   const {
     blockRunLogs,
     pipelineRunLogs,
@@ -68,8 +75,8 @@ function BlockRuns({
       } = dataLogs.logs?.[0] || {};
 
       return {
-        blockRunLogs: brLogs.reduce((acc, log) => acc.concat(initializeLogs(log)), []),
-        pipelineRunLogs: prLogs.reduce((acc, log) => acc.concat(initializeLogs(log)), []),
+        blockRunLogs: brLogs,
+        pipelineRunLogs: prLogs,
       };
     }
 
@@ -80,25 +87,59 @@ function BlockRuns({
   }, [
     dataLogs,
   ]);
-  const logs: LogType[] = useMemo(() => sortByKey(
-    blockRunLogs.concat(pipelineRunLogs),
-    ({ data }) => data?.timestamp || 0,
-  ), [
+  const logsAll: LogType[] = useMemo(() => {
+    return sortByKey(
+      blockRunLogs
+        .concat(pipelineRunLogs)
+        .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
+      ({ data }) => data?.timestamp || 0,
+    );
+  }, [
     blockRunLogs,
     pipelineRunLogs,
   ]);
+  const logs: LogType[] = useMemo(() => {
+    return logsAll
+      .filter(({ data }: LogType) => {
+        const evals = [];
 
+        if (!query) {
+          return true;
+        }
+
+        if (query['level[]']) {
+          evals.push(query['level[]'].includes(data?.level));
+        }
+        if (query['block_type[]']) {
+          evals.push(query['block_type[]'].includes(blocksByUUID[data?.block_uuid]?.type));
+        }
+
+        return evals.every(v => v);
+      });
+  }, [
+    blocksByUUID,
+    logsAll,
+    query,
+  ]);
+
+  const q = queryFromUrl();
+  const qPrev = usePrevious(q);
   useEffect(() => {
-    const { pipeline_run_id: pipelineRunId } = queryFromUrl();
-    if (pipelineRunId) {
-      setQuery({ pipeline_run_id: pipelineRunId });
-    } else {
-      setQuery({});
+    if (!isEqual(q, qPrev)) {
+      setQuery(q);
     }
-  }, []);
+  }, [
+    q,
+    qPrev,
+  ]);
 
   return (
     <PipelineDetailPage
+      before={(
+        <Filter
+          query={query}
+        />
+      )}
       breadcrumbs={[
         {
           label: () => 'Logs',
@@ -109,7 +150,26 @@ function BlockRuns({
       subheader={null}
       title={({ name }) => `${name} logs`}
     >
-      {logs.length >= 1 && (
+      <Spacing px={PADDING_UNITS} py={1}>
+        <Text rightAligned>
+          {!isLoading && (
+            <>
+              {numberWithCommas(logs.length)} logs of {numberWithCommas(logsAll.length)} found
+            </>
+          )}
+          {isLoading && 'Searching...'}
+        </Text>
+      </Spacing>
+
+      <Divider light />
+
+      {isLoading && (
+        <Spacing p={PADDING_UNITS}>
+          <Spinner />
+        </Spacing>
+      )}
+
+      {!isLoading && logs.length >= 1 && (
         <Table
           buildLinkProps={(rowIndex: number) => {
             const id = logs[rowIndex].data?.pipeline_schedule_id;
@@ -125,6 +185,7 @@ function BlockRuns({
           columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
           columns={[
             {
+              label: () => '',
               uuid: '!',
             },
             {
@@ -141,7 +202,7 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
-          rows={logs.map(({
+          rows={logs.slice(0, 40).map(({
             content,
             createdAt,
             data,
@@ -203,7 +264,8 @@ function BlockRuns({
                 <LogLevelIndicatorStyle
                   critical={LogLevelEnum.CRITICAL === level}
                   debug={LogLevelEnum.DEBUG === level}
-                  error={LogLevelEnum.ERROR === level || LogLevelEnum.EXCEPTION === level}
+                  error={LogLevelEnum.ERROR === level}
+                  exception={LogLevelEnum.EXCEPTION === level}
                   info={LogLevelEnum.INFO === level}
                   log={LogLevelEnum.LOG === level}
                   warning={LogLevelEnum.WARNING === level}

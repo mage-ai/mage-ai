@@ -14,5 +14,5 @@ export const BORDER_COLOR = GRAY_LINES;
 export const BORDER_COLOR_DARK = DARK_GRAY_LINES;
 export const BORDER_COLOR_NAVY = NAVY;
 
-export const OUTLINE_OFFSET: number = 2;
-export const OUTLINE_WIDTH: number = 3;
+export const OUTLINE_OFFSET: number = 1;
+export const OUTLINE_WIDTH: number = 2;

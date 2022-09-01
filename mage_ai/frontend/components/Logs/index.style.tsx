@@ -12,6 +12,7 @@ type LogLevelIndictorProps = {
   critical?: boolean;
   debug?: boolean;
   error?: boolean;
+  exception?: boolean;
   info?: boolean;
   log?: boolean;
   warning?: boolean;
@@ -22,7 +23,7 @@ export const LogLevelIndicatorStyle = styled.div<LogLevelIndictorProps>`
   height: 12px;
   width: 5px;
 
-  ${props => (props.critical || props.error) && `
+  ${props => (props.critical || props.error || props.exception) && `
     background-color: ${RED};
   `}
 

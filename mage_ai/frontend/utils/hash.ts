@@ -24,6 +24,10 @@ export function isEmptyObject(obj) {
   );
 }
 
+export function isEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export function pickKey(obj) {
   const keys = Object.keys(obj);
   return keys.filter(k => obj[k]);

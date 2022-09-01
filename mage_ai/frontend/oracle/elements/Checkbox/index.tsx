@@ -173,7 +173,6 @@ const Checkbox = ({
             warning={hasError}
           >
             <Check
-              inverted={checked}
               size={UNIT * (large ? 3 : 2)}
             />
           </StyledCheckbox>
