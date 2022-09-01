@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { useRouter } from 'next/router';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -41,6 +42,7 @@ function CreateSchedule({
   variables,
   setErrors,
 }: CreateScheduleProps) {
+  const router = useRouter();
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
@@ -50,10 +52,10 @@ function CreateSchedule({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback:
-            (res) =>
-              window.location.href =
-                `/pipelines/${pipeline?.uuid}/schedules/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
+          callback: () => router.push(
+            '/pipelines/[pipeline]/schedules',
+            `/pipelines/${pipeline?.uuid}/schedules`,
+          ),
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,

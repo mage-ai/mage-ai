@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
-import Dashboard from '@components/Dashboard';
+import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -22,9 +22,14 @@ import { BreadcrumbType } from '@components/shared/Header';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
+  buildDependencyTree?: (opts: {
+    height: number;
+    pipeline: PipelineType;
+  }) => any;
   children: any;
   headline?: string;
   pageName: PageNameEnum,
@@ -32,25 +37,52 @@ type PipelineDetailPageProps = {
     uuid: string;
   };
   subheaderBackground?: string;
+  subheaderBackgroundImage?: string;
   subheaderButton?: any;
   subheaderText?: any;
   title?: (pipeline: PipelineType) => string;
-};
+} & DashboardSharedProps;
 
 function PipelineDetailPage({
+  after: afterProp,
+  afterWidth: afterWidthProp,
   breadcrumbs: breadcrumbsProp,
+  buildDependencyTree,
   children,
   headline,
   pageName,
   pipeline: pipelineProp,
   subheaderBackground,
+  subheaderBackgroundImage,
   subheaderButton,
   subheaderText,
   title,
+  uuid,
 }: PipelineDetailPageProps) {
+  const { height } = useWindowSize();
+
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
   const pipeline = data?.pipeline;
+
+  const after = useMemo(() => {
+    if (afterProp) {
+      return afterProp;
+    } else if (buildDependencyTree) {
+      return buildDependencyTree({
+        height,
+        pipeline,
+      });
+    }
+
+    return null;
+  }, [
+    afterProp,
+    buildDependencyTree,
+    height,
+    pipeline,
+  ]);
+  const afterWidth = afterWidthProp || (after ? 400 : null);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
@@ -94,6 +126,8 @@ function PipelineDetailPage({
 
   return (
     <Dashboard
+      after={after}
+      afterWidth={afterWidth}
       breadcrumbs={breadcrumbs}
       navigationItems={[
         {
@@ -150,10 +184,11 @@ function PipelineDetailPage({
         </FlexContainer>
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
+      uuid={uuid}
     >
       {(subheaderButton || subheaderText) && (
         <Spacing mb={PADDING_UNITS} mx={PADDING_UNITS}>
-          <BannerStyle background={subheaderBackground}>
+          <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
             <FlexContainer alignItems="center">
               {subheaderButton}
               {subheaderText && <Spacing ml={3} />}

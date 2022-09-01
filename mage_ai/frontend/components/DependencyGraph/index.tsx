@@ -86,18 +86,18 @@ export type DependencyGraphProps = {
   blockRefs?: {
     [current: string]: any;
   };
-  editingBlock: {
+  editingBlock?: {
     upstreamBlocks: {
       block: BlockType;
       values: BlockType[];
     };
   };
-  fetchPipeline: () => void;
+  fetchPipeline?: () => void;
   height: number;
   pipeline: PipelineType;
-  runningBlocks: BlockType[];
-  selectedBlock: BlockType;
-  setSelectedBlock: (block: BlockType) => void;
+  runningBlocks?: BlockType[];
+  selectedBlock?: BlockType;
+  setSelectedBlock?: (block: BlockType) => void;
 } & SetEditingBlockType;
 
 function DependencyGraph({
@@ -106,7 +106,7 @@ function DependencyGraph({
   fetchPipeline,
   height,
   pipeline,
-  runningBlocks,
+  runningBlocks = [],
   selectedBlock,
   setEditingBlock,
   setSelectedBlock,
@@ -144,7 +144,7 @@ function DependencyGraph({
             setEditingBlock({
               upstreamBlocks: null,
             });
-            fetchPipeline();
+            fetchPipeline?.();
           },
           onErrorCallback: ({
             error: {
@@ -164,7 +164,7 @@ function DependencyGraph({
       type,
       uuid,
     } = block;
-    setSelectedBlock(block);
+    setSelectedBlock?.(block);
     if (blockRefs?.current) {
       const blockRef = blockRefs.current[`${type}s/${uuid}.py`];
       blockRef?.current?.scrollIntoView();

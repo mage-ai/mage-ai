@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
+import DependencyGraph from '@components/DependencyGraph';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
@@ -18,16 +19,23 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
+type PipelineSchedulesProp = {
+  pipeline: {
+    uuid: string;
+  };
+};
+
 function PipelineSchedules({
   pipeline,
-}) {
+}: PipelineSchedulesProp) {
   const pipelineUUID = pipeline.uuid;
+
   const {
-    data,
+    data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
   } = api.pipeline_schedules.pipelines.list(pipelineUUID);
   const pipelinesSchedules: PipelineScheduleType[] =
-    useMemo(() => data?.pipeline_schedules || [], [data]);
+    useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -62,9 +70,10 @@ function PipelineSchedules({
           label: () => 'Schedules',
         },
       ]}
+      buildDependencyTree={props => <DependencyGraph {...props} />}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
-      subheaderBackground={PURPLE}
+      subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
       subheaderButton={
         <KeyboardShortcutButton
           blackBorder
@@ -83,6 +92,7 @@ function PipelineSchedules({
       }
       subheaderText={<Text bold large>Set up a new schedule for this pipeline.</Text>}
       title={({ name }) => `${name} schedules`}
+      uuid={`${PageNameEnum.SCHEDULES}_${pipelineUUID}`}
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => ({

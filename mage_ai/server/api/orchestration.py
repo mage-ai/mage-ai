@@ -111,6 +111,7 @@ def process_pipeline_runs(
     b = aliased(PipelineSchedule, name='b')
     c = aliased(BlockRun, name='c')
     columns = [
+        a.completed_at,
         a.created_at,
         a.execution_date,
         a.id,
@@ -239,7 +240,7 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     a.variables,
                 ]
                 results = (
-                    PipelineRun.
+                    PipelineSchedule.
                     select(*columns, func.count(b.id).label('pipeline_runs_count')).
                     join(b, a.id == b.pipeline_schedule_id, isouter=True).
                     filter(a.pipeline_uuid == pipeline.uuid).

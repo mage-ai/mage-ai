@@ -71,7 +71,7 @@ function BlockRuns({
             Completed at
           </Text>,
         ]}
-        columnFlex={[3, 2, 2, 3, 3, 1]}
+        columnFlex={[3, 2, 2, 3, 3]}
         rows={blockRuns.map(({
           block_uuid: blockUUID,
           completed_at: completedAt,
