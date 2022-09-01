@@ -725,6 +725,8 @@ class Block:
     def save_outputs(self, outputs, override=False):
         variable_mapping = dict()
         for o in outputs:
+            if o is None:
+                continue
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
                     o['variable_uuid'] != 'df':
                 variable_mapping[o['variable_uuid']] = o['text_data']
