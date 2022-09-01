@@ -10,12 +10,14 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
+import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 import {
   BlocksSeparated,
   BlocksStacked,
   Edit,
   Schedule,
+  TodoList,
 } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
@@ -36,6 +38,7 @@ type PipelineDetailPageProps = {
   pipeline: {
     uuid: string;
   };
+  subheader?: any;
   subheaderBackground?: string;
   subheaderBackgroundImage?: string;
   subheaderButton?: any;
@@ -52,6 +55,7 @@ function PipelineDetailPage({
   headline,
   pageName,
   pipeline: pipelineProp,
+  subheader,
   subheaderBackground,
   subheaderBackgroundImage,
   subheaderButton,
@@ -163,25 +167,39 @@ function PipelineDetailPage({
           },
           isSelected: () => PageNameEnum.BLOCK_RUNS === pageName,
         },
+        {
+          Icon: TodoList,
+          IconSelected: TodoListGradient,
+          id: PageNameEnum.PIPELINE_LOGS,
+          label: () => 'Logs',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/logs`,
+            href: '/pipelines/[pipeline]/logs',
+          },
+          isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
+        },
       ]}
-      subheaderChildren={
-        <FlexContainer alignItems="center">
-          <KeyboardShortcutButton
-            blackBorder
-            bold
-            beforeElement={<Edit size={2.5 * UNIT} />}
-            inline
-            linkProps={{
-              as: `/pipelines/${pipelineUUID}/edit`,
-              href: '/pipelines/[pipeline]/edit',
-            }}
-            noHoverUnderline
-            sameColorAsText
-            uuid="PipelineDetailPage/edit"
-          >
-            Edit Pipeline
-          </KeyboardShortcutButton>
-        </FlexContainer>
+      subheaderChildren={typeof subheader !== 'undefined'
+        ? subheader
+        : (
+          <FlexContainer alignItems="center">
+            <KeyboardShortcutButton
+              blackBorder
+              bold
+              beforeElement={<Edit size={2.5 * UNIT} />}
+              inline
+              linkProps={{
+                as: `/pipelines/${pipelineUUID}/edit`,
+                href: '/pipelines/[pipeline]/edit',
+              }}
+              noHoverUnderline
+              sameColorAsText
+              uuid="PipelineDetailPage/edit"
+            >
+              Edit Pipeline
+            </KeyboardShortcutButton>
+          </FlexContainer>
+        )
       }
       title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
       uuid={uuid}

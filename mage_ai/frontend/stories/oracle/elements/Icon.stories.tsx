@@ -65,6 +65,7 @@ import {
   Sort,
   Stack,
   Switch,
+  TodoList,
   Trash,
 } from '@oracle/icons';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
@@ -136,6 +137,7 @@ const ICONS = [
   Sort,
   Stack,
   Switch,
+  TodoList,
   Trash,
 ];
 

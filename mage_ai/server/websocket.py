@@ -257,7 +257,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                     update_status=False if remote_execution else True,
                     widget=widget,
                 )
-            
+
             msg_id = client.execute(add_internal_output_info(code))
 
             WebSocketServer.running_executions_mapping[msg_id] = value
@@ -343,6 +343,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                             metadata.get('block_uuid') is None:
                             break
                     await asyncio.sleep(1)
-            
+
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)

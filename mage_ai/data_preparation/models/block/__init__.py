@@ -433,7 +433,12 @@ class Block:
             if update_status:
                 self.status = BlockStatus.FAILED
             if logger is not None:
-                logger.exception(f'Failed to execute block {self.uuid}')
+                logger.exception(
+                    f'Failed to execute block {self.uuid}',
+                    block_type=self.type,
+                    block_uuid=self.uuid,
+                    error=err,
+                )
             raise err
         finally:
             if update_status:

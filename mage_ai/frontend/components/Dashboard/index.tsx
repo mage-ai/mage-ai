@@ -135,8 +135,7 @@ function Dashboard({
               afterWidth={afterWidth}
               beforeWidth={VERTICAL_NAVIGATION_WIDTH}
               headerOffset={headerOffset}
-              // mainContainerHeader={mainContainerHeader}
-              // mainContainerRef={mainContainerRef}
+              mainContainerRef={mainContainerRef}
               setAfterMousedownActive={setAfterMousedownActive}
               setAfterWidth={setAfterWidth}
             >

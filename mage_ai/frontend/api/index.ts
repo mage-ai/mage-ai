@@ -35,6 +35,7 @@ export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_version
 export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
+export const LOGS = 'logs';
 export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
@@ -64,6 +65,7 @@ const RESOURCES: any[][] = [
   [KERNELS],
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
+  [LOGS, PIPELINES],
   [PIPELINES],
   [PIPELINE_RUNS],
   [PIPELINE_RUNS, PIPELINE_SCHEDULES],
