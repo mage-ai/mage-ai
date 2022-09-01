@@ -28,7 +28,7 @@ import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
-  buildDependencyTree?: (opts: {
+  buildSidekick?: (opts: {
     height: number;
     pipeline: PipelineType;
   }) => any;
@@ -50,7 +50,7 @@ function PipelineDetailPage({
   after: afterProp,
   afterWidth: afterWidthProp,
   breadcrumbs: breadcrumbsProp,
-  buildDependencyTree,
+  buildSidekick,
   children,
   headline,
   pageName,
@@ -72,8 +72,8 @@ function PipelineDetailPage({
   const after = useMemo(() => {
     if (afterProp) {
       return afterProp;
-    } else if (buildDependencyTree) {
-      return buildDependencyTree({
+    } else if (buildSidekick) {
+      return buildSidekick({
         height,
         pipeline,
       });
@@ -82,7 +82,7 @@ function PipelineDetailPage({
     return null;
   }, [
     afterProp,
-    buildDependencyTree,
+    buildSidekick,
     height,
     pipeline,
   ]);

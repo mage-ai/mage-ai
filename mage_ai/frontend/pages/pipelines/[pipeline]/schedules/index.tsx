@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -18,6 +18,7 @@ import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import VariableOverwrites from '@components/VariableOverwrites';
 
 type PipelineSchedulesProp = {
   pipeline: {
@@ -63,6 +64,30 @@ function PipelineSchedules({
     },
   );
 
+  const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
+  const buildSidekick = useMemo(() => {
+    const showVariables = selectedSchedule &&
+      selectedSchedule.variables &&
+      Object.entries(selectedSchedule.variables).length > 0;
+
+    return props => {
+      const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
+      return (
+        <>
+          {showVariables && (
+            <VariableOverwrites
+              pipelineSchedule={selectedSchedule}
+            />
+          )}
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+          />
+        </>
+      )
+    };
+  }, [selectedSchedule]);
+
   return (
     <PipelineDetailPage
       breadcrumbs={[
@@ -70,7 +95,7 @@ function PipelineSchedules({
           label: () => 'Schedules',
         },
       ]}
-      buildDependencyTree={props => <DependencyGraph {...props} />}
+      buildSidekick={buildSidekick}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
       subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
@@ -96,8 +121,7 @@ function PipelineSchedules({
     >
       <FlexTable
         buildLinkProps={(rowIndex: number) => ({
-          as: `/pipelines/${pipelineUUID}/schedules/${pipelinesSchedules[rowIndex].id}`,
-          href: '/pipelines/[pipeline]/schedules/[...slug]',
+          onClick: () => setSelectedSchedule(pipelinesSchedules[rowIndex])
         })}
         columnHeaders={[
           null,
