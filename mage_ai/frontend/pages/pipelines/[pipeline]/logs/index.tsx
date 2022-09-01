@@ -14,6 +14,7 @@ import Divider from '@oracle/elements/Divider';
 import Filter from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import LogType, { LogDataType, LogLevelEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
@@ -28,11 +29,14 @@ import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { goToWithQuery } from '@utils/routing';
 import { indexBy, sortByKey } from '@utils/array';
 import { initializeLogs } from '@utils/models/log';
 import { isEmptyObject, isEqual } from '@utils/hash';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+
+const ITEMS_PER_PAGE = 40;
 
 type BlockRunsProp = {
   pipeline: {
@@ -45,6 +49,8 @@ function BlockRuns({
 }: BlockRunsProp) {
   const themeContext = useContext(ThemeContext);
   const pipelineUUID = pipelineProp.uuid;
+
+  const [offset, setOffset] = useState(ITEMS_PER_PAGE);
   const [query, setQuery] = useState<{
     pipeline_run_id?: number;
   }>(null);
@@ -126,6 +132,7 @@ function BlockRuns({
   const qPrev = usePrevious(q);
   useEffect(() => {
     if (!isEqual(q, qPrev)) {
+      setOffset(ITEMS_PER_PAGE);
       setQuery(q);
     }
   }, [
@@ -202,7 +209,7 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
-          rows={logs.slice(0, 40).map(({
+          rows={logs.slice(0, offset).map(({
             content,
             createdAt,
             data,
@@ -285,6 +292,20 @@ function BlockRuns({
           })}
           uuid="logs"
         />
+      )}
+
+      {offset < logs.length && (
+        <Spacing p={PADDING_UNITS}>
+          <KeyboardShortcutButton
+            blackBorder
+            inline
+            onClick={() => setOffset(prev => prev + ITEMS_PER_PAGE)}
+            sameColorAsText
+            uuid="logs/load_more"
+          >
+            Load more logs
+          </KeyboardShortcutButton>
+        </Spacing>
       )}
     </PipelineDetailPage>
   );
