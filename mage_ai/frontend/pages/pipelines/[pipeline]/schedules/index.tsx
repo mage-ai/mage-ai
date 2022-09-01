@@ -11,7 +11,7 @@ import PipelineScheduleType, { ScheduleStatusEnum } from '@interfaces/PipelineSc
 import Text from '@oracle/elements/Text';
 import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
-import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Add, Edit, Pause, PlayButtonFilled } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
@@ -195,7 +195,7 @@ function PipelineSchedules({
               noBackground
               onClick={(e) => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
             >
-              <ChevronRight muted size={2 * UNIT} />
+              <Edit muted size={2 * UNIT} />
             </Button>
           ];
         })}
