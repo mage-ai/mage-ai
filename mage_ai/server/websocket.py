@@ -111,8 +111,8 @@ def publish_pipeline_message(
     WebSocketServer.send_message(
         dict(
             data=message,
+            execution_metadata=metadata,
             execution_state=execution_state,
-            metadata=metadata,
             msg_id=msg_id,
             msg_type=msg_type,
             type=DataType.TEXT_PLAIN,
@@ -179,8 +179,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         if msg_id is None:
             return
 
-        metadata = message.get('metadata')
-        msg_id_value = metadata if metadata is not None \
+        execution_metadata = message.get('execution_metadata')
+        msg_id_value = execution_metadata if execution_metadata is not None \
             else WebSocketServer.running_executions_mapping.get(msg_id, dict())
         block_uuid = msg_id_value.get('block_uuid')
         pipeline_uuid = msg_id_value.get('pipeline_uuid')
@@ -227,15 +227,12 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         value = dict(block_uuid=block_uuid)
 
         if not custom_code and BlockType.SCRATCHPAD == block_type:
-            msg_id = client.execute('')
-
-            WebSocketServer.running_executions_mapping[msg_id] = value
-
             self.send_message(
                 dict(
                     data='',
+                    execution_metadata=value,
                     execution_state='idle',
-                    msg_id=msg_id,
+                    msg_id=str(uuid.uuid4()),
                     type=DataType.TEXT_PLAIN,
                 ),
             )
