@@ -102,7 +102,7 @@ function ScheduleDetailPage({
       let linkProps;
       if (subpath === PAGE_NAME_EDIT) {
         linkProps = {
-          as: `/pipelines/${pipelineUUID}/schedules/${pipelineSchedule.id}/edit`,
+          as: `/pipelines/${pipelineUUID}/schedules/${pipelineSchedule.id}`,
           href: '/pipelines/[pipeline]/schedules/[...slug]',
         };
       }
@@ -112,6 +112,12 @@ function ScheduleDetailPage({
         linkProps,
       });
 
+    }
+
+    if (subpath === PAGE_NAME_EDIT) {
+      arr.push({
+        label: () => 'Edit',
+      });
     }
 
     return arr;
