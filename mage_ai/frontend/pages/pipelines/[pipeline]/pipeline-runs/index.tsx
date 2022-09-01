@@ -31,7 +31,7 @@ function PipelineRuns({
 
   return (
     <PipelineDetailPage
-      buildDependencyTree={props => <DependencyGraph {...props} />}
+      buildSidekick={props => <DependencyGraph {...props} />}
       breadcrumbs={[
         {
           label: () => 'Pipeline runs',
