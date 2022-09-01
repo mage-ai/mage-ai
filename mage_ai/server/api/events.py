@@ -3,6 +3,12 @@ from mage_ai.orchestration.db.models import EventMatcher, PipelineSchedule
 from mage_ai.orchestration.triggers.event_trigger import EventTrigger
 
 
+class ApiAwsEventRuleListHandler(BaseHandler):
+    def get(self):
+        from mage_ai.services.aws.events.events import get_all_event_rules
+        self.write(dict(event_rules=get_all_event_rules()))
+
+
 class ApiEventHandler(BaseHandler):
     def post(self):
         payload = self.get_payload()
