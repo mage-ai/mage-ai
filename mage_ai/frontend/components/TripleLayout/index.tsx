@@ -52,12 +52,14 @@ type TripleLayoutProps = {
   afterWidth?: number;
   before?: any;
   beforeHeader?: any;
+  beforeHeightOffset?: number;
   beforeHidden: boolean;
   beforeMousedownActive: boolean;
   beforeWidth?: number;
   children: any;
   header?: any;
   headerOffset?: number;
+  leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
   setAfterHidden?: (value: boolean) => void;
@@ -79,12 +81,14 @@ function TripleLayout({
   afterWidth = 0,
   before,
   beforeHeader,
+  beforeHeightOffset,
   beforeHidden,
   beforeMousedownActive,
   beforeWidth = 0,
   children,
   header,
   headerOffset = 0,
+  leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
   setAfterHidden,
@@ -128,6 +132,8 @@ function TripleLayout({
         if (newWidth + MAIN_MIN_WIDTH > width - afterWidth) {
           newWidth = (width - afterWidth) - MAIN_MIN_WIDTH;
         }
+        // Not sure why we need to multiply by 2, but we do.
+        newWidth -= (leftOffset * 2);
         setBeforeWidth(Math.max(newWidth, BEFORE_MIN_WIDTH));
       }
     };
@@ -155,6 +161,7 @@ function TripleLayout({
     };
   }, [
     afterWidth,
+    leftOffset,
     refBeforeInner,
     refBeforeInnerDraggable,
     setBeforeMousedownActive,
@@ -207,6 +214,7 @@ function TripleLayout({
 
   const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
+  const mainWidth = `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
   return (
     <ClientOnly>
@@ -232,7 +240,9 @@ function TripleLayout({
 
       {before && (
         <BeforeStyle
+          heightOffset={beforeHeightOffset}
           style={{
+            left: leftOffset,
             width: beforeWidthFinal,
           }}
         >
@@ -243,57 +253,59 @@ function TripleLayout({
             right={0}
           />
 
-          <AsideHeaderStyle
-            style={{
-              width: beforeWidthFinal,
-            }}
-            visible={beforeHidden}
-          >
-            <FlexContainer
-              alignItems="center"
-              fullHeight
-              fullWidth
-              justifyContent="space-between"
+          {setBeforeHidden && (
+            <AsideHeaderStyle
+              style={{
+                width: beforeWidthFinal,
+              }}
+              visible={beforeHidden}
             >
-              <Flex>
-                <Spacing pl={beforeHidden ? 1 : 0} />
+              <FlexContainer
+                alignItems="center"
+                fullHeight
+                fullWidth
+                justifyContent="space-between"
+              >
+                <Flex>
+                  <Spacing pl={beforeHidden ? 1 : 0} />
 
-                {!beforeHidden && beforeHeader}
-              </Flex>
+                  {!beforeHidden && beforeHeader}
+                </Flex>
 
-              <Flex>
-                <Tooltip
-                  block
-                  key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
-                  label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
-                  size={null}
-                  widthFitContent
-                >
-                  <Button
-                    noBackground
-                    noBorder
-                    noPadding
-                    onClick={() => toggleBefore()}
+                <Flex>
+                  <Tooltip
+                    block
+                    key={beforeHidden ? 'before-is-hidden' : 'before-is-visible'}
+                    label={beforeHidden ? 'Show sidebar' : 'Hide sidebar'}
+                    size={null}
+                    widthFitContent
                   >
-                    {beforeHidden && (
-                      <ChevronRight
-                        neutral
-                        size={UNIT * 2}
-                      />
-                    )}
-                    {!beforeHidden && (
-                      <ChevronLeft
-                        neutral
-                        size={UNIT * 2}
-                      />
-                    )}
-                  </Button>
-                </Tooltip>
+                    <Button
+                      noBackground
+                      noBorder
+                      noPadding
+                      onClick={() => toggleBefore()}
+                    >
+                      {beforeHidden && (
+                        <ChevronRight
+                          neutral
+                          size={UNIT * 2}
+                        />
+                      )}
+                      {!beforeHidden && (
+                        <ChevronLeft
+                          neutral
+                          size={UNIT * 2}
+                        />
+                      )}
+                    </Button>
+                  </Tooltip>
 
-                <Spacing pr={beforeHidden ? 1 : 2} />
-              </Flex>
-            </FlexContainer>
-          </AsideHeaderStyle>
+                  <Spacing pr={beforeHidden ? 1 : 2} />
+                </Flex>
+              </FlexContainer>
+            </AsideHeaderStyle>
+          )}
 
           <BeforeInnerStyle
             noScrollbarTrackBackground
@@ -306,8 +318,8 @@ function TripleLayout({
 
       <MainWrapper
         style={{
-          left: beforeWidthFinal,
-          width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
+          left: beforeWidthFinal + leftOffset,
+          width: mainWidth,
         }}
       >
         {mainContainerHeader}
@@ -315,7 +327,7 @@ function TripleLayout({
         <MainContentStyle
           headerOffset={(mainContainerHeader ? ALL_HEADERS_HEIGHT : ASIDE_HEADER_HEIGHT) + headerOffset}
           style={{
-            width: `calc(100% - ${beforeWidthFinal + afterWidthFinal}px)`,
+            width: mainWidth,
           }}
         >
           <MainContentInnerStyle

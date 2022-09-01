@@ -49,6 +49,8 @@ type PipelineDetailPageProps = {
 function PipelineDetailPage({
   after: afterProp,
   afterWidth: afterWidthProp,
+  before,
+  beforeWidth,
   breadcrumbs: breadcrumbsProp,
   buildSidekick,
   children,
@@ -132,6 +134,8 @@ function PipelineDetailPage({
     <Dashboard
       after={after}
       afterWidth={afterWidth}
+      before={before}
+      beforeWidth={beforeWidth}
       breadcrumbs={breadcrumbs}
       navigationItems={[
         {

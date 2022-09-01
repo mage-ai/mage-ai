@@ -10,6 +10,16 @@ export enum LogLevelEnum {
   WARNING = 'WARNING',
 }
 
+export const LOG_LEVELS = [
+  LogLevelEnum.CRITICAL,
+  LogLevelEnum.DEBUG,
+  LogLevelEnum.ERROR,
+  LogLevelEnum.EXCEPTION,
+  LogLevelEnum.INFO,
+  LogLevelEnum.LOG,
+  LogLevelEnum.WARNING,
+];
+
 export interface LogDataType {
   block_run_id?: number;
   block_type?: BlockTypeEnum;

@@ -15,6 +15,7 @@ import {
   VerticalNavigationStyle,
 } from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { UNIT } from '@oracle/styles/units/spacing';
 import {
   get,
   set,
@@ -25,6 +26,8 @@ import { useWindowSize } from '@utils/sizes';
 export type DashboardSharedProps = {
   after?: any;
   afterWidth?: number;
+  before?: any;
+  beforeWidth?: number;
   uuid?: string;
 };
 
@@ -37,7 +40,9 @@ type DashboardProps = {
 
 function Dashboard({
   after,
-  afterWidth: afterWidthProp = 300,
+  afterWidth: afterWidthProp = 40 * UNIT,
+  before,
+  beforeWidth: beforeWidthProp = 35 * UNIT,
   breadcrumbs: breadcrumbsProp,
   children,
   navigationItems,
@@ -48,13 +53,16 @@ function Dashboard({
   const {
     width: widthWindow,
   } = useWindowSize();
-  const localStorageKey = `dashboard_after_width_${uuid}`;
+  const localStorageKeyAfter = `dashboard_after_width_${uuid}`;
+  const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
   const refSubheader = useRef(null);
 
-  const [afterWidth, setAfterWidth] = useState(after ? get(localStorageKey, afterWidthProp) : null);
+  const [afterWidth, setAfterWidth] = useState(after ? get(localStorageKeyAfter, afterWidthProp) : null);
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
+  const [beforeWidth, setBeforeWidth] = useState(before ? get(localStorageKeyBefore, beforeWidthProp) : null);
+  const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [headerOffset, setHeaderOffset] = useState<number>(null);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
@@ -82,12 +90,14 @@ function Dashboard({
   }, []);
 
   useEffect(() => {
-    if (mainContainerRef?.current && !afterMousedownActive) {
+    if (mainContainerRef?.current && !(afterMousedownActive || beforeMousedownActive)) {
       setMainContainerWidth?.(mainContainerRef.current.getBoundingClientRect().width);
     }
   }, [
     afterMousedownActive,
     afterWidth,
+    beforeMousedownActive,
+    beforeWidth,
     mainContainerRef?.current,
     setMainContainerWidth,
     widthWindow,
@@ -95,11 +105,20 @@ function Dashboard({
 
   useEffect(() => {
     if (!afterMousedownActive) {
-      set(localStorageKey, afterWidth);
+      set(localStorageKeyAfter, afterWidth);
     }
   }, [
     afterMousedownActive,
     afterWidth,
+  ]);
+
+  useEffect(() => {
+    if (!beforeMousedownActive) {
+      set(localStorageKeyBefore, beforeWidth);
+    }
+  }, [
+    beforeMousedownActive,
+    beforeWidth,
   ]);
 
   return (
@@ -133,11 +152,17 @@ function Dashboard({
               afterHeightOffset={HEADER_HEIGHT}
               afterMousedownActive={afterMousedownActive}
               afterWidth={afterWidth}
-              beforeWidth={VERTICAL_NAVIGATION_WIDTH}
+              before={before}
+              beforeHeightOffset={HEADER_HEIGHT}
+              beforeMousedownActive={beforeMousedownActive}
+              beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
               headerOffset={headerOffset}
+              leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
               mainContainerRef={mainContainerRef}
               setAfterMousedownActive={setAfterMousedownActive}
               setAfterWidth={setAfterWidth}
+              setBeforeMousedownActive={setBeforeMousedownActive}
+              setBeforeWidth={setBeforeWidth}
             >
               {children}
             </TripleLayout>
