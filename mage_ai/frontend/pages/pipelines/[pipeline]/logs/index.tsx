@@ -65,7 +65,7 @@ function BlockRuns({
       const {
         block_run_logs: brLogs,
         pipeline_run_logs: prLogs,
-      } = dataLogs.logs.[0];
+      } = dataLogs.logs?.[0] || {};
 
       return {
         blockRunLogs: brLogs.reduce((acc, log) => acc.concat(initializeLogs(log)), []),
@@ -150,7 +150,7 @@ function BlockRuns({
             content,
             createdAt,
             data,
-          }: BlockRunType) => {
+          }: LogType) => {
             const {
               block_run_id: blockRunId,
               block_uuid: blockUUID,
@@ -172,17 +172,30 @@ function BlockRuns({
 
                 idEl = (
                   <FlexContainer alignItems="center">
-                    <Circle
-                      color={color}
-                      size={UNIT * 1.5}
-                      square
-                    />
+                    <NextLink
+                      as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
+                      href="/pipelines/[pipeline]/edit"
+                      passHref
+                    >
+                      <Link
+                        block
+                        default
+                        fullWidth
+                        verticalAlignContent
+                      >
+                        <Circle
+                          color={color}
+                          size={UNIT * 1.5}
+                          square
+                        />
 
-                    <Spacing mr={1} />
+                        <Spacing mr={1} />
 
-                    <Text monospace muted>
-                      {blockUUID}
-                    </Text>
+                        <Text default monospace>
+                          {blockUUID}
+                        </Text>
+                      </Link>
+                    </NextLink>
                   </FlexContainer>
                 );
               }
@@ -201,17 +214,17 @@ function BlockRuns({
                   warning={LogLevelEnum.WARNING === level}
                 />
               </Flex>,
-              <Text monospace>
+              <Text default monospace>
                 {timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss')}
               </Text>,
               idEl,
               <Text monospace textOverflow>
                 {message || content}
               </Text>,
-              <Text monospace>
+              <Text default monospace>
                 {pipelineRunId}
               </Text>,
-              <Text monospace>
+              <Text default monospace>
                 {blockRunId}
               </Text>,
               <Flex flex={1} justifyContent="flex-end">

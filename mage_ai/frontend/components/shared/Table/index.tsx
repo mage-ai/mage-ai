@@ -62,6 +62,7 @@ function Table({
       <TableRowStyle
         key={`${uuid}-row-${rowIndex}`}
         noHover={!(linkProps || onClickRow)}
+        // @ts-ignore
         onClick={onClickRow ? onClickRow(rowIndex) : null}
       >
         {cellEls}
@@ -78,6 +79,7 @@ function Table({
             fullWidth
             noHoverUnderline
             noOutline
+            // @ts-ignore
             style={{
               display: 'table-row-group',
             }}
