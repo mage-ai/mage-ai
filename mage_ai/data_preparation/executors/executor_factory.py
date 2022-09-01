@@ -29,7 +29,7 @@ class ExecutorFactory:
         pipeline: Pipeline,
         block_uuid: str,
         execution_partition: str = None,
-        executor_type: ExecutorType = None
+        executor_type: ExecutorType = None,
     ) -> BlockExecutor:
         executor_kwargs = dict(
             pipeline=pipeline,

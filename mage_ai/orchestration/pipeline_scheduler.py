@@ -117,6 +117,7 @@ class PipelineScheduler:
                     update_status=False,
                     on_complete=self.on_block_complete,
                     on_failure=self.on_block_failure,
+                    tags=self.__build_tags(**tags),
                 )
 
             proc = multiprocessing.Process(target=__run_block)

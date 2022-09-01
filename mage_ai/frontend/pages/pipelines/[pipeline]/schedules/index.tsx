@@ -169,7 +169,7 @@ function PipelineSchedules({
             </Text>,
             <Flex flex={1} justifyContent="flex-end">
               <ChevronRight muted size={2 * UNIT} />
-            </Flex>
+            </Flex>,
           ];
         })}
       />

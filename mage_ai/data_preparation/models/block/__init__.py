@@ -435,7 +435,7 @@ class Block:
             if logger is not None:
                 logger.exception(
                     f'Failed to execute block {self.uuid}',
-                    block_type=self.block_type,
+                    block_type=self.type,
                     block_uuid=self.uuid,
                     error=err,
                 )

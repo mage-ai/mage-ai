@@ -29,7 +29,9 @@ class BlockExecutor:
         on_failure: Callable[[str], None] = None,
         **kwargs,
     ) -> None:
-        self.logger.info('Start executing block.', **self.__build_tags())
+        tags = self.__build_tags(**kwargs.get('tags', {}))
+
+        self.logger.info('Start executing block.', **tags)
         try:
             self.block.execute_sync(
                 analyze_outputs=analyze_outputs,
@@ -39,19 +41,19 @@ class BlockExecutor:
                 update_status=update_status,
             )
         except Exception as e:
-            self.logger.info('Failed to execute block.', **self.__build_tags())
+            self.logger.info('Failed to execute block.', **tags)
             if on_failure is not None:
                 on_failure(self.block_uuid)
             elif callback_url is not None:
                 self.__update_block_run_status(callback_url, 'failed')
             raise e
-        self.logger.info('Finish executing block.', **self.__build_tags())
+        self.logger.info('Finish executing block.', **tags)
         if on_complete is not None:
             on_complete(self.block_uuid)
         elif callback_url is not None:
-            self.__update_block_run_status(callback_url, 'completed')
+            self.__update_block_run_status(callback_url, 'completed', tags)
 
-    def __update_block_run_status(self, callback_url: str, status: str):
+    def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
         response = requests.put(
             callback_url,
             data=json.dumps({
@@ -65,7 +67,7 @@ class BlockExecutor:
         )
         self.logger.info(
             f'Callback response: {response.text}',
-            **self.__build_tags(),
+            **tags,
         )
 
     def __build_tags(self, **kwargs):

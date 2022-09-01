@@ -48,9 +48,13 @@ class File:
         return traverse(os.path.basename(repo_path), True, repo_path)
 
     def content(self):
-        with open(self.file_path) as fp:
-            file_content = fp.read()
-        return file_content
+        try:
+            with open(self.file_path) as fp:
+                file_content = fp.read()
+            return file_content
+        except FileNotFoundError as err:
+            print(err)
+        return ''
 
     def update_content(self, content):
         with open(self.file_path, 'w') as fp:
