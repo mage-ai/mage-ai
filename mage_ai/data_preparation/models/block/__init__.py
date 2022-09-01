@@ -432,6 +432,8 @@ class Block:
         except Exception as err:
             if update_status:
                 self.status = BlockStatus.FAILED
+            if logger is not None:
+                logger.exception(f'Failed to execute block {self.uuid}')
             raise err
         finally:
             if update_status:
