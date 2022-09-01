@@ -4,7 +4,7 @@ ARG PIP=pip3
 USER root
 
 # Install Mage
-RUN ${PIP} install "mage-ai[all]"
+RUN ${PIP} install git+https://github.com/mage-ai/mage-ai.git@xiaoyou/s3-triggers#egg="mage-ai[all]"
 
 # Set up spark kernel
 RUN ${PIP} install sparkmagic
