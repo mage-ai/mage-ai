@@ -10,6 +10,7 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import PipelineType from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
+import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 import {
   BlocksSeparated,
@@ -168,7 +169,7 @@ function PipelineDetailPage({
         },
         {
           Icon: TodoList,
-          IconSelected: BlocksSeparatedGradient,
+          IconSelected: TodoListGradient,
           id: PageNameEnum.PIPELINE_LOGS,
           label: () => 'Logs',
           linkProps: {

@@ -121,7 +121,7 @@ function BlockRuns({
               };
             }
           }}
-          columnFlex={[null, null, null, 1, null, null, null]}
+          columnFlex={[null, null, null, 1, null]}
           columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
           columns={[
             {
@@ -137,12 +137,7 @@ function BlockRuns({
               uuid: 'Message',
             },
             {
-              uuid: 'Run',
-            },
-            {
-              uuid: 'Block run',
-            },
-            {
+              label: () => '',
               uuid: '>',
             },
           ]}
@@ -152,14 +147,14 @@ function BlockRuns({
             data,
           }: LogType) => {
             const {
-              block_run_id: blockRunId,
+              // block_run_id: blockRunId,
               block_uuid: blockUUID,
               // error,
               // error_stack,
               // error_stacktrace,
               level,
               message,
-              pipeline_run_id: pipelineRunId,
+              // pipeline_run_id: pipelineRunId,
               pipeline_uuid: pUUID,
               timestamp,
             } = data || {};
@@ -179,7 +174,7 @@ function BlockRuns({
                     >
                       <Link
                         block
-                        default
+                        muted
                         fullWidth
                         verticalAlignContent
                       >
@@ -191,7 +186,7 @@ function BlockRuns({
 
                         <Spacing mr={1} />
 
-                        <Text default monospace>
+                        <Text muted monospace>
                           {blockUUID}
                         </Text>
                       </Link>
@@ -214,18 +209,12 @@ function BlockRuns({
                   warning={LogLevelEnum.WARNING === level}
                 />
               </Flex>,
-              <Text default monospace>
+              <Text muted monospace>
                 {timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss')}
               </Text>,
               idEl,
               <Text monospace textOverflow>
                 {message || content}
-              </Text>,
-              <Text default monospace>
-                {pipelineRunId}
-              </Text>,
-              <Text default monospace>
-                {blockRunId}
               </Text>,
               <Flex flex={1} justifyContent="flex-end">
                 <ChevronRight muted size={2 * UNIT} />
