@@ -128,7 +128,7 @@ export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
 };
 
 export type SetEditingBlockType = {
-  setEditingBlock: (data: {
+  setEditingBlock?: (data: {
     upstreamBlocks: {
       block: BlockType;
       values: BlockType[];

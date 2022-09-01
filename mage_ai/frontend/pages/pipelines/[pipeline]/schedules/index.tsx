@@ -18,18 +18,18 @@ import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import { useWindowSize } from '@utils/sizes';
+
+type PipelineSchedulesProp = {
+  pipeline: {
+    uuid: string;
+  };
+};
 
 function PipelineSchedules({
-  pipeline: pipelineProp,
-}) {
-  const { height } = useWindowSize();
-  const pipelineUUID = pipelineProp.uuid;
-  const { data } = api.pipelines.detail(pipelineUUID);
-  const pipeline = {
-    ...pipelineProp,
-    ...data?.pipeline,
-  };
+  pipeline,
+}: PipelineSchedulesProp) {
+  const pipelineUUID = pipeline.uuid;
+
   const {
     data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
@@ -65,18 +65,12 @@ function PipelineSchedules({
 
   return (
     <PipelineDetailPage
-      after={
-        <DependencyGraph
-          height={height}
-          pipeline={pipeline}
-        />
-      }
-      afterWidth={300}
       breadcrumbs={[
         {
           label: () => 'Schedules',
         },
       ]}
+      buildDependencyTree={props => <DependencyGraph {...props} />}
       pageName={PageNameEnum.SCHEDULES}
       pipeline={pipeline}
       subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'

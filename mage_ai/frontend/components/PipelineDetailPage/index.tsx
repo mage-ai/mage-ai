@@ -22,9 +22,14 @@ import { BreadcrumbType } from '@components/shared/Header';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
+  buildDependencyTree?: (opts: {
+    height: number;
+    pipeline: PipelineType;
+  }) => any;
   children: any;
   headline?: string;
   pageName: PageNameEnum,
@@ -39,9 +44,10 @@ type PipelineDetailPageProps = {
 } & DashboardSharedProps;
 
 function PipelineDetailPage({
-  after,
-  afterWidth,
+  after: afterProp,
+  afterWidth: afterWidthProp,
   breadcrumbs: breadcrumbsProp,
+  buildDependencyTree,
   children,
   headline,
   pageName,
@@ -53,9 +59,30 @@ function PipelineDetailPage({
   title,
   uuid,
 }: PipelineDetailPageProps) {
+  const { height } = useWindowSize();
+
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
   const pipeline = data?.pipeline;
+
+  const after = useMemo(() => {
+    if (afterProp) {
+      return afterProp;
+    } else if (buildDependencyTree) {
+      return buildDependencyTree({
+        height,
+        pipeline,
+      });
+    }
+
+    return null;
+  }, [
+    afterProp,
+    buildDependencyTree,
+    height,
+    pipeline,
+  ]);
+  const afterWidth = afterWidthProp || (after ? 400 : null);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];

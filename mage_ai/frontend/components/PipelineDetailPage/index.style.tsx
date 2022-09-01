@@ -12,6 +12,7 @@ type ContainerProps = {
 
 export const BannerStyle = styled.div<{
   background?: string;
+  backgroundImage?: string;
 }>`
   border-radius: ${BORDER_RADIUS}px;
   padding: ${3 * UNIT}px;

@@ -111,6 +111,7 @@ def process_pipeline_runs(
     b = aliased(PipelineSchedule, name='b')
     c = aliased(BlockRun, name='c')
     columns = [
+        a.completed_at,
         a.created_at,
         a.execution_date,
         a.id,

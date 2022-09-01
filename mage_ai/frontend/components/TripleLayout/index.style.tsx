@@ -75,7 +75,9 @@ export const TabStyle = styled.div<{
   `}
 `;
 
-const ASIDE_STYLE = css`
+const ASIDE_STYLE = css<{
+  heightOffset?: number;
+}>`
   position: fixed;
   z-index: 2;
 

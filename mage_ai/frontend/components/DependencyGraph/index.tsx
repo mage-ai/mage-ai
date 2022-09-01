@@ -86,17 +86,17 @@ export type DependencyGraphProps = {
   blockRefs?: {
     [current: string]: any;
   };
-  editingBlock: {
+  editingBlock?: {
     upstreamBlocks: {
       block: BlockType;
       values: BlockType[];
     };
   };
-  fetchPipeline: () => void;
+  fetchPipeline?: () => void;
   height: number;
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
-  selectedBlock: BlockType;
+  selectedBlock?: BlockType;
   setSelectedBlock?: (block: BlockType) => void;
 } & SetEditingBlockType;
 
@@ -144,7 +144,7 @@ function DependencyGraph({
             setEditingBlock({
               upstreamBlocks: null,
             });
-            fetchPipeline();
+            fetchPipeline?.();
           },
           onErrorCallback: ({
             error: {
