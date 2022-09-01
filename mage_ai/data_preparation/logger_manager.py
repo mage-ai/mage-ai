@@ -35,7 +35,8 @@ class LoggerManager:
         if not len(logger.handlers):
             logger.setLevel(logging.INFO)
             formatter = logging.Formatter(
-                '%(levelname)s %(asctime)s - %(message)s'
+                '%(asctime)s %(message)s',
+                '%Y-%m-%dT%H:%M:%S',
             )
 
             file_handler = logging.FileHandler(log_filepath)

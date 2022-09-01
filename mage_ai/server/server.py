@@ -22,6 +22,7 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockOutputHandler,
 )
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
+from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
     ApiAllPipelineRunListHandler,
@@ -458,6 +459,7 @@ def make_app():
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/projects', ApiProjectsHandler),
+        (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
     ]
     return tornado.web.Application(
         routes,

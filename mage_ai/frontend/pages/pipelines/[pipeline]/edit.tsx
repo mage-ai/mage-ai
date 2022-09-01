@@ -549,12 +549,16 @@ function PipelineDetailPage({
     }).then((resp) => {
       if (resp?.data?.pipeline) {
         const { uuid } = resp.data.pipeline;
-        fetchFileTree();
-        if (type !== pipeline?.type) {
-          fetchPipeline();
+
+        if (pipelineUUID !== uuid) {
+          window.location.href = `/pipelines/${uuid}/edit`;
+        } else {
+          fetchFileTree();
+          if (type !== pipeline?.type) {
+            fetchPipeline();
+          }
+          updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
         }
-        updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
-        router.push(`/pipelines/${uuid}`);
       }
     });
   }, [
@@ -1603,7 +1607,7 @@ function PipelineDetailPage({
               active={selectedFilePath === filePath}
               addNewBlock={(b: BlockRequestPayloadType) => {
                 addNewBlockAtIndex(b, blocks.length, setSelectedBlock, b.name);
-                router.push(`/pipelines/${pipelineUUID}`);
+                router.push(`/pipelines/${pipelineUUID}/edit`);
               }}
               filePath={filePath}
               pipeline={pipeline}
