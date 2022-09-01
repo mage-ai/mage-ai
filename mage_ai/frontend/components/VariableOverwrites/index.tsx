@@ -1,10 +1,10 @@
+import React from 'react';
+
 import PipelineScheduleType from '@interfaces/PipelineScheduleType';
-import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { LIME_DARK } from '@oracle/styles/colors/main';
-import React from 'react';
 import { CardsStyle, ContainerStyle, VariableCardStyle } from './index.style';
+import { LIME_DARK } from '@oracle/styles/colors/main';
 
 type VariableOverwritesProps = {
   pipelineSchedule: PipelineScheduleType;

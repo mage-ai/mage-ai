@@ -10,9 +10,8 @@ import { transition } from '@oracle/styles/mixins';
 
 export type FlexTableProps = {
   buildLinkProps?: (rowIndex: number) => {
-    as?: string;
-    href?: string;
-    onClick?: () => void;
+    as: string;
+    href: string;
   };
   borderRadius?: boolean;
   columnFlex: number[];
@@ -102,38 +101,22 @@ function FlexTable({
     if (buildLinkProps) {
       const linkProps = buildLinkProps(rowIndex)
       return (
-        <>
-          {linkProps.as ? (
-            <NextLink
-              {...linkProps}
-              key={`row-${rowIndex}`}
-              passHref
-            >
-              <Link
-                fullWidth
-                noHoverUnderline
-                noOutline
-                verticalAlignContent
-              >
-                <RowStyle>
-                  {cellEls}
-                </RowStyle>
-              </Link>
-            </NextLink>
-          ) : (
-            <Link
-              fullWidth
-              noHoverUnderline
-              noOutline
-              onClick={linkProps.onClick}
-              verticalAlignContent
-            >
-              <RowStyle>
-                {cellEls}
-              </RowStyle>
-            </Link>
-          )}
-        </>
+        <NextLink
+          {...linkProps}
+          key={`row-${rowIndex}`}
+          passHref
+        >
+          <Link
+            fullWidth
+            noHoverUnderline
+            noOutline
+            verticalAlignContent
+          >
+            <RowStyle>
+              {cellEls}
+            </RowStyle>
+          </Link>
+        </NextLink>
       );
     }
 

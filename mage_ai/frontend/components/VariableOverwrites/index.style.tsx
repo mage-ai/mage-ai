@@ -1,8 +1,9 @@
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import styled from 'styled-components';
+
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { PADDING, UNIT } from '@oracle/styles/units/spacing';
-import styled from 'styled-components';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 
 export const ContainerStyle = styled.div`
   border-bottom: 1px solid ${dark.borders.medium};
