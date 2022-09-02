@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components';
+import NextLink from 'next/link';
+import styled, { css } from 'styled-components';
 
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -7,7 +8,6 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
-
 import { BLUE_GRADIENT, PURPLE_PINK_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
@@ -17,6 +17,7 @@ import {
 } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
+import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export function selectOutlineColor(props) {
@@ -44,6 +45,10 @@ export type ButtonProps = {
   iconOnly?: boolean;
   id?: string;
   large?: boolean;
+  linkProps?: {
+    as?: string;
+    href: string;
+  };
   loading?: boolean;
   minWidth?: number;
   noBackground?: boolean;
@@ -68,7 +73,7 @@ export type ButtonProps = {
   width?: number;
 };
 
-const ButtonStyle = styled.button<{
+const SHARED_STYLES = css<{
   hasOnClick?: boolean;
 } & ButtonProps>`
   border: none;
@@ -246,6 +251,15 @@ const ButtonStyle = styled.button<{
   `}
 `;
 
+const ButtonStyle = styled.button`
+  ${SHARED_STYLES};
+`;
+
+const AnchorStyle = styled.a`
+  ${SHARED_STYLES};
+  ${SHARED_LINK_STYLES}
+`;
+
 const Button = ({
   afterIcon,
   beforeIcon,
@@ -253,6 +267,7 @@ const Button = ({
   disabled,
   iconOnly,
   id,
+  linkProps,
   loading,
   onClick,
   ...props
@@ -262,17 +277,26 @@ const Button = ({
     size: UNIT * 1.5,
   };
 
-  return (
-    <ButtonStyle
+  const {
+    as: asHref,
+    href: linkHref,
+  } = linkProps || {};
+  const ElToUse = (asHref || linkHref) ? AnchorStyle : ButtonStyle;
+
+  const el = (
+    <ElToUse
       {...props}
       disabled={disabled}
-      hasOnClick={!!onClick}
+      hasOnClick={!!onClick || asHref || linkHref}
       iconOnly={iconOnly}
       id={id}
-      onClick={(e) => {
-        e?.preventDefault();
-        onClick?.(e);
-      }}
+      onClick={onClick
+        ? (e) => {
+          e?.preventDefault();
+          onClick?.(e);
+        }
+        : null
+      }
       ref={ref}
     >
       <FlexContainer
@@ -310,8 +334,21 @@ const Button = ({
           </Spacing>
         )}
       </FlexContainer>
-    </ButtonStyle>
+    </ElToUse>
   );
+
+  if (asHref || linkHref) {
+    return (
+      <NextLink
+        {...linkProps}
+        passHref
+      >
+        {el}
+      </NextLink>
+    );
+  }
+
+  return el;
 };
 
 export default React.forwardRef(Button);

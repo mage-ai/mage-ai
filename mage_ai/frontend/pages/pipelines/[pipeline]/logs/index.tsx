@@ -102,7 +102,7 @@ function BlockRuns({
     blockRunLogs,
     pipelineRunLogs,
   ]);
-  const logs: LogType[] = useMemo(() => {
+  const logsFiltered: LogType[] = useMemo(() => {
     return logsAll
       .filter(({ data }: LogType) => {
         const evals = [];
@@ -125,6 +125,10 @@ function BlockRuns({
     logsAll,
     query,
   ]);
+  const logs: LogType[] = useMemo(() => logsFiltered.slice(0, offset), [
+      logsFiltered,
+      offset,
+    ]);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -157,10 +161,10 @@ function BlockRuns({
       title={({ name }) => `${name} logs`}
     >
       <Spacing px={PADDING_UNITS} py={1}>
-        <Text rightAligned>
+        <Text>
           {!isLoading && (
             <>
-              {numberWithCommas(logs.length)} logs of {numberWithCommas(logsAll.length)} found
+              {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
             </>
           )}
           {isLoading && 'Searching...'}
@@ -187,7 +191,8 @@ function BlockRuns({
               };
             }
           }}
-          columnFlex={[null, null, null, 1, null]}
+          compact
+          columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
           columns={[
             {
@@ -208,7 +213,7 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
-          rows={logs.slice(0, offset).map(({
+          rows={logs.map(({
             content,
             createdAt,
             data,
@@ -241,8 +246,8 @@ function BlockRuns({
                     >
                       <Link
                         block
-                        muted
                         fullWidth
+                        sameColorAsText
                         verticalAlignContent
                       >
                         <Circle
@@ -253,7 +258,7 @@ function BlockRuns({
 
                         <Spacing mr={1} />
 
-                        <Text muted monospace>
+                        <Text monospace>
                           {blockUUID}
                         </Text>
                       </Link>
@@ -293,7 +298,7 @@ function BlockRuns({
         />
       )}
 
-      {offset < logs.length && (
+      {offset < logsFiltered.length && (
         <Spacing p={PADDING_UNITS}>
           <KeyboardShortcutButton
             blackBorder

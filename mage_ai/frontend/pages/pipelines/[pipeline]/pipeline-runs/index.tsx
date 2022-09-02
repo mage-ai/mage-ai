@@ -1,17 +1,22 @@
+import Router from 'next/router';
 import NextLink from 'next/link';
 import { useMemo, useState } from 'react';
 
+import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
+import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
-import FlexTable from '@oracle/components/FlexTable';
+import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import { ChevronRight } from '@oracle/icons';
+import { ChevronRight, TodoList } from '@oracle/icons';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 
 type PipelineRunsProp = {
   pipeline: {
@@ -63,37 +68,51 @@ function PipelineRuns({
       title={({ name }) => `${name} pipeline runs`}
       uuid={`${PageNameEnum.PIPELINE_RUNS}_${pipelineUUID}`}
     >
-      <FlexTable
-        columnHeaders={[
-          <Text bold monospace muted>
-            Run date
-          </Text>,
-          <Text bold monospace muted>
-            Status
-          </Text>,
-          <Text bold monospace muted>
-            Schedule
-          </Text>,
-          <Text bold monospace muted>
-            Block runs
-          </Text>,
-          <Text bold monospace muted>
-            Completed at
-          </Text>,
-          null
+      <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+        <Headline level={5}>
+          Pipeline runs
+        </Headline>
+        <Divider light mt={PADDING_UNITS} short />
+      </Spacing>
+
+      <Table
+        columnFlex={[null, 1, 2, 1, 2, null, null]}
+        columns={[
+          {
+            uuid: 'Date',
+          },
+          {
+            uuid: 'Status',
+          },
+          {
+            uuid: 'Schedule',
+          },
+          {
+            uuid: 'Block runs',
+          },
+          {
+            uuid: 'Completed',
+          },
+          {
+            uuid: 'Logs',
+          },
+          {
+            label: () => '',
+            uuid: 'action',
+          },
         ]}
-        columnFlex={[3, 2, 2, 3, 3, 1]}
         onClickRow={(rowIndex) => setSelectedRun(pipelineRuns[rowIndex])}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           completed_at: completedAt,
           created_at: createdAt,
+          id,
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
           pipeline_uuid: pipelineUUID,
           status,
         }: PipelineRunType) => [
-          <Text monospace>
+          <Text monospace muted>
             {createdAt}
           </Text>,
           <Text
@@ -114,16 +133,26 @@ function PipelineRuns({
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text>
+          <Text muted>
             {blockRunsCount}
           </Text>,
           <Text monospace muted={!completedAt}>
             {completedAt || '-'}
           </Text>,
+          <Button
+            iconOnly
+            noBackground
+            onClick={() => Router.push(
+              `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+            )}
+          >
+            <TodoList size={2 * UNIT} />
+          </Button>,
           <Flex flex={1} justifyContent="flex-end">
             <ChevronRight muted size={2 * UNIT} />
-          </Flex>
+          </Flex>,
         ])}
+        uuid="pipeline-runs"
       />
     </PipelineDetailPage>
   );

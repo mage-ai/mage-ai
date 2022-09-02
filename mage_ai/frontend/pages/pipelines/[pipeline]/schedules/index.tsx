@@ -1,19 +1,25 @@
+import NextLink from 'next/link';
+import Router from 'next/router';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
-import Router from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
+import Divider from '@oracle/elements/Divider';
 import FlexTable from '@oracle/components/FlexTable';
+import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import Spacing from '@oracle/elements/Spacing';
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
-import { Add, Edit, Pause, PlayButtonFilled } from '@oracle/icons';
+import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
@@ -115,29 +121,43 @@ function PipelineSchedules({
       title={({ name }) => `${name} schedules`}
       uuid={`${PageNameEnum.SCHEDULES}_${pipelineUUID}`}
     >
-      <FlexTable
-        columnHeaders={[
-          null,
-          <Text bold monospace muted>
-            Status
-          </Text>,
-          <Text bold monospace muted>
-            Start time
-          </Text>,
-          <Text bold monospace muted>
-            Name
-          </Text>,
-          <Text bold monospace muted>
-            Frequency
-          </Text>,
-          <Text bold monospace muted>
-            Runs
-          </Text>,
-          <Text bold monospace muted>
-            Edit
-          </Text>,,
+      <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+        <Headline level={5}>
+          Pipeline schedules
+        </Headline>
+        <Divider light mt={PADDING_UNITS} short />
+      </Spacing>
+
+      <Table
+        columnFlex={[null, 2, 4, 10, 4, 2, null, null]}
+        columns={[
+          {
+            label: () => '',
+            uuid: 'action',
+          },
+          {
+            uuid: 'Status',
+          },
+          {
+            uuid: 'Start time',
+          },
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Frequency',
+          },
+          {
+            uuid: 'Runs',
+          },
+          {
+            uuid: 'Logs',
+          },
+          {
+            label: () => '',
+            uuid: 'edit',
+          },
         ]}
-        columnFlex={[1, 3, 10, 10, 4, 2, 1]}
         onClickRow={(rowIndex: number) => setSelectedSchedule(pipelinesSchedules[rowIndex])}
         rows={pipelinesSchedules.map((pipelineSchedule: PipelineScheduleType) => {
           const {
@@ -176,27 +196,43 @@ function PipelineSchedules({
             >
               {status}
             </Text>,
-            <Text monospace>
+            <Text monospace muted>
               {startTime}
             </Text>,
-            <Text>
-              {name}
-            </Text>,
-            <Text>
+            <NextLink
+              as={`/pipelines/${pipelineUUID}/schedules/${id}`}
+              href={'/pipelines/[pipeline]/schedules/[...slug]'}
+              passHref
+            >
+              <Link bold sameColorAsText>
+                {name}
+              </Link>
+            </NextLink>,
+            <Text muted>
               {scheduleInterval}
             </Text>,
-            <Text>
+            <Text muted>
               {pipelineRunsCount}
             </Text>,
             <Button
               iconOnly
               noBackground
-              onClick={(e) => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
+              onClick={() => Router.push(
+                `/pipelines/${pipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
+              )}
+            >
+              <TodoList muted size={2 * UNIT} />
+            </Button>,
+            <Button
+              iconOnly
+              noBackground
+              onClick={() => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
             >
               <Edit muted size={2 * UNIT} />
-            </Button>
+            </Button>,
           ];
         })}
+        uuid="pipeline-schedules"
       />
     </PipelineDetailPage>
   );
