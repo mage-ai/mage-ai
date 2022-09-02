@@ -13,6 +13,8 @@ export const ContainerStyle = styled.div`
 export const CardsStyle = styled.div`
   ${ScrollbarStyledCss}
 
+  height: 80px;
+
   display: flex;
   overflow-x: scroll;
 `;

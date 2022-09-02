@@ -63,9 +63,7 @@ function PipelineSchedules({
 
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
-    const showVariables = selectedSchedule &&
-      selectedSchedule.variables &&
-      Object.entries(selectedSchedule.variables).length > 0;
+    const showVariables = selectedSchedule;
 
     return props => {
       const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
