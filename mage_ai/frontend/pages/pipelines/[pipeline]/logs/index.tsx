@@ -63,8 +63,8 @@ function BlockRuns({
     dataPipeline,
     pipelineUUID,
   ]);
-  const blocksByUUID =
-    useMemo(() => indexBy(pipeline.blocks || [], ({ uuid }) => uuid), [pipeline]);
+  const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
+  const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const { data: dataLogs } = api.logs.pipelines.list(pipelineUUID, query, {}, {
     pauseFetch: !query,
@@ -144,6 +144,7 @@ function BlockRuns({
     <PipelineDetailPage
       before={(
         <Filter
+          blocks={blocks}
           query={query}
         />
       )}

@@ -1,6 +1,7 @@
 import { ThemeContext } from 'styled-components';
 import { useCallback, useContext } from 'react';
 
+import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import Circle from '@oracle/elements/Circle';
@@ -18,9 +19,17 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 
+type FilterProps = {
+  blocks: BlockType[];
+  query: {
+    [key: string]: number | string;
+  };
+};
+
 function Filter({
+  blocks,
   query,
-}) {
+}: FilterProps) {
   const themeContext = useContext(ThemeContext);
   const goTo = useCallback((q1, { isList }) => {
     let q2 = { ...query };
@@ -118,6 +127,42 @@ function Filter({
                 <Spacing mr={1} />
                 <Text muted monospace>
                   {blockType}
+                </Text>
+              </FlexContainer>
+            </FilterRowStyle>
+          </Button>
+        ))}
+      </Spacing>
+
+      <Spacing mb={3}>
+        <Spacing mb={1}>
+          <Text bold default large>
+            Block
+          </Text>
+        </Spacing>
+
+        {blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).map((block: BlockType) => (
+          <Button
+            noBackground
+            noBorder
+            noPadding
+            key={block.uuid}
+            onClick={() => goTo({ block_uuid: block.uuid }, { isList: true })}
+          >
+            <FilterRowStyle>
+              <FlexContainer alignItems="center">
+                <Checkbox
+                  checked={query['block_uuid[]']?.includes(block.uuid)}
+                />
+                <Spacing mr={1} />
+                <Circle
+                  color={getColorsForBlockType(block.type, { theme: themeContext }).accent}
+                  size={UNIT * 1.5}
+                  square
+                />
+                <Spacing mr={1} />
+                <Text muted monospace>
+                  {block.uuid}
                 </Text>
               </FlexContainer>
             </FilterRowStyle>
