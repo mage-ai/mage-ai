@@ -107,7 +107,7 @@ function CreateSchedule({
       if (variables) {
         const formattedVariables = getFormattedVariables(variables, block => block.uuid === 'global');
         if (overwriteVariables) {
-          setRuntimeVariables(formattedVariables.reduce(
+          setRuntimeVariables(formattedVariables?.reduce(
             (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
             {},
           ));

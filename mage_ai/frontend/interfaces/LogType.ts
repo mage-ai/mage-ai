@@ -33,6 +33,7 @@ export interface LogDataType {
   pipeline_schedule_id?: number;
   pipeline_uuid?: string;
   timestamp: number;
+  uuid: string;
 }
 
 export default interface LogType {

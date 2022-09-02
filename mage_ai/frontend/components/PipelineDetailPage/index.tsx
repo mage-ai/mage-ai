@@ -48,6 +48,7 @@ type PipelineDetailPageProps = {
 
 function PipelineDetailPage({
   after: afterProp,
+  afterHidden,
   afterWidth: afterWidthProp,
   before,
   beforeWidth,
@@ -133,6 +134,7 @@ function PipelineDetailPage({
   return (
     <Dashboard
       after={after}
+      afterHidden={afterHidden}
       afterWidth={afterWidth}
       before={before}
       beforeWidth={beforeWidth}

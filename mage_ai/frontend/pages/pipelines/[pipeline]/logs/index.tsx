@@ -16,6 +16,7 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
+import LogDetail from '@components/Logs/Detail';
 import LogType, { LogDataType, LogLevelEnum } from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
@@ -30,13 +31,14 @@ import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
+import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { initializeLogs } from '@utils/models/log';
-import { isEmptyObject, isEqual } from '@utils/hash';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
 const ITEMS_PER_PAGE = 40;
+const LOG_UUID_PARAM = 'log_uuid';
 
 type BlockRunsProp = {
   pipeline: {
@@ -52,6 +54,7 @@ function BlockRuns({
 
   const [offset, setOffset] = useState(ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
+  const [selectedLog, setSelectedLog] = useState<LogType>(null);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
   const pipeline = useMemo(() => ({
@@ -64,9 +67,13 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const { data: dataLogs } = api.logs.pipelines.list(pipelineUUID, query, {}, {
-    pauseFetch: !query,
-  });
+  const { data: dataLogs } = api.logs.pipelines.list(
+    pipelineUUID,
+    ignoreKeys(query, [LOG_UUID_PARAM]),
+    {},
+    {
+      pauseFetch: !query,
+    });
   const isLoading = !dataLogs;
   const {
     blockRunLogs,
@@ -142,8 +149,27 @@ function BlockRuns({
     qPrev,
   ]);
 
+  const selectedLogPrev = usePrevious(selectedLog);
+  useEffect(() => {
+    const logUUID = q[LOG_UUID_PARAM];
+    if (logUUID && !selectedLog && !selectedLogPrev) {
+      setSelectedLog(logsAll.find(({ data }) => data?.uuid === logUUID))
+    }
+  }, [
+    logsAll,
+    q,
+    selectedLog,
+    selectedLogPrev,
+  ]);
+
   return (
     <PipelineDetailPage
+      after={selectedLog && (
+        <LogDetail
+          log={selectedLog}
+        />
+      )}
+      afterHidden={!selectedLog}
       before={(
         <Filter
           blocks={blocks}
@@ -159,6 +185,7 @@ function BlockRuns({
       pipeline={pipeline}
       subheader={null}
       title={({ name }) => `${name} logs`}
+      uuid="pipeline/logs"
     >
       <Spacing px={PADDING_UNITS} py={1}>
         <Text>
@@ -181,16 +208,6 @@ function BlockRuns({
 
       {!isLoading && logs.length >= 1 && (
         <Table
-          buildLinkProps={(rowIndex: number) => {
-            const id = logs[rowIndex].data?.pipeline_schedule_id;
-
-            if (id) {
-              return {
-                as: `/pipelines/${pipelineUUID}/schedules/${id}`,
-                href: '/pipelines/[pipeline]/schedules/[...slug]',
-              };
-            }
-          }}
           compact
           columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
@@ -213,6 +230,17 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
+          onClickRow={(rowIndex: number) => {
+            const log = logs[rowIndex];
+            let logUUID = log.data?.uuid;
+
+            if (query[LOG_UUID_PARAM] === logUUID) {
+              logUUID = null;
+            }
+
+            goToWithQuery({ [LOG_UUID_PARAM]: logUUID });
+            setSelectedLog(logUUID ? log : null);
+          }}
           rows={logs.map(({
             content,
             createdAt,
@@ -267,8 +295,6 @@ function BlockRuns({
                 );
               }
             }
-
-            // Click to show error
 
             return [
               <Flex alignItems="center" justifyContent="center">

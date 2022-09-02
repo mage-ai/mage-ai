@@ -66,7 +66,7 @@ function Table({
         key={`${uuid}-row-${rowIndex}`}
         noHover={!(linkProps || onClickRow)}
         // @ts-ignore
-        onClick={onClickRow ? onClickRow(rowIndex) : null}
+        onClick={onClickRow ? () => onClickRow(rowIndex) : null}
       >
         {cellEls}
       </TableRowStyle>

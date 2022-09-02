@@ -3,6 +3,7 @@ from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.hash import merge_dict
 import simplejson
 import traceback
+import uuid
 
 
 class Logger():
@@ -43,6 +44,7 @@ class Logger():
             level=method_name.upper(),
             message=message,
             timestamp=int(now.timestamp()),
+            uuid=uuid.uuid4().hex,
         )
 
         if error:

@@ -25,6 +25,7 @@ import { useWindowSize } from '@utils/sizes';
 
 export type DashboardSharedProps = {
   after?: any;
+  afterHidden?: boolean;
   afterWidth?: number;
   before?: any;
   beforeWidth?: number;
@@ -40,6 +41,7 @@ type DashboardProps = {
 
 function Dashboard({
   after,
+  afterHidden,
   afterWidth: afterWidthProp = 40 * UNIT,
   before,
   beforeWidth: beforeWidthProp = 35 * UNIT,
@@ -59,9 +61,9 @@ function Dashboard({
   const mainContainerRef = useRef(null);
   const refSubheader = useRef(null);
 
-  const [afterWidth, setAfterWidth] = useState(after ? get(localStorageKeyAfter, afterWidthProp) : null);
+  const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, afterWidthProp));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
-  const [beforeWidth, setBeforeWidth] = useState(before ? get(localStorageKeyBefore, beforeWidthProp) : null);
+  const [beforeWidth, setBeforeWidth] = useState(get(localStorageKeyBefore, beforeWidthProp));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
   const [headerOffset, setHeaderOffset] = useState<number>(null);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
@@ -108,6 +110,7 @@ function Dashboard({
       set(localStorageKeyAfter, afterWidth);
     }
   }, [
+    afterHidden,
     afterMousedownActive,
     afterWidth,
   ]);
@@ -150,6 +153,7 @@ function Dashboard({
             <TripleLayout
               after={after}
               afterHeightOffset={HEADER_HEIGHT}
+              afterHidden={afterHidden}
               afterMousedownActive={afterMousedownActive}
               afterWidth={afterWidth}
               before={before}
@@ -157,6 +161,7 @@ function Dashboard({
               beforeMousedownActive={beforeMousedownActive}
               beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
               headerOffset={headerOffset}
+              hideAfterCompletely
               leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
               mainContainerRef={mainContainerRef}
               setAfterMousedownActive={setAfterMousedownActive}

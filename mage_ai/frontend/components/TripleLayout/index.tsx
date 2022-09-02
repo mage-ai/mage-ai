@@ -59,6 +59,7 @@ type TripleLayoutProps = {
   children: any;
   header?: any;
   headerOffset?: number;
+  hideAfterCompletely?: boolean;
   leftOffset?: number;
   mainContainerHeader?: any;
   mainContainerRef: any;
@@ -88,6 +89,7 @@ function TripleLayout({
   children,
   header,
   headerOffset = 0,
+  hideAfterCompletely,
   leftOffset = 0,
   mainContainerHeader,
   mainContainerRef,
@@ -161,6 +163,7 @@ function TripleLayout({
     };
   }, [
     afterWidth,
+    beforeHidden,
     leftOffset,
     refBeforeInner,
     refBeforeInnerDraggable,
@@ -204,6 +207,7 @@ function TripleLayout({
       removeMousemove();
     };
   }, [
+    afterHidden,
     beforeWidth,
     refAfterInner,
     refAfterInnerDraggable,
@@ -212,9 +216,14 @@ function TripleLayout({
     width,
   ]);
 
-  const afterWidthFinal = afterHidden ? UNIT * 4 : afterWidth;
+
+  const shouldHideAfterWrapper = hideAfterCompletely && afterHidden;
+  const afterWidthFinal = shouldHideAfterWrapper
+    ? 0
+    : (afterHidden ? UNIT * 4 : afterWidth);
   const beforeWidthFinal = beforeHidden ? UNIT * 4 : beforeWidth;
-  const mainWidth = `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
+  const mainWidth =
+    `calc(100% - ${beforeWidthFinal + afterWidthFinal + leftOffset}px)`;
 
   return (
     <ClientOnly>
@@ -339,7 +348,7 @@ function TripleLayout({
         </MainContentStyle>
       </MainWrapper>
 
-      {after && (
+      {after && !shouldHideAfterWrapper && (
         <AfterStyle
           heightOffset={afterHeightOffset}
           style={{
