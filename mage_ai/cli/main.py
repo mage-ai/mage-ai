@@ -123,7 +123,7 @@ Commands:
             )
 
     elif command == 'create_spark_cluster':
-        from mage_ai.services.emr.launcher import create_cluster
+        from mage_ai.services.aws.emr.launcher import create_cluster
 
         project_path = os.path.abspath(sys.argv[2])
         create_cluster(project_path)

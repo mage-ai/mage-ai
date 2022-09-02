@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from mage_ai.orchestration.pipeline_scheduler import schedule
+from mage_ai.orchestration.pipeline_scheduler import schedule_all
 
 
 class TimeTrigger(ABC):
@@ -7,7 +7,7 @@ class TimeTrigger(ABC):
         self.trigger_interval = trigger_interval
 
     def run(self) -> None:
-        schedule()
+        schedule_all()
 
     @abstractmethod
     def start(self) -> None:

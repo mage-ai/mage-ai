@@ -1,4 +1,4 @@
-from mage_ai.services.ecs.config import EcsConfig
+from mage_ai.services.aws.ecs.config import EcsConfig
 import boto3
 import json
 

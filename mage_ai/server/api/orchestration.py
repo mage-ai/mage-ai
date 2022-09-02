@@ -1,4 +1,4 @@
-from .base import BaseHandler
+from .base import BaseDetailHandler, BaseHandler
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 from sqlalchemy import func
@@ -200,14 +200,15 @@ class ApiPipelineRunLogHandler(BaseHandler):
         )
 
 
-class ApiPipelineScheduleDetailHandler(BaseHandler):
+class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
     datetime_keys = ['start_time']
     model_class = PipelineSchedule
 
     def get(self, pipeline_schedule_id):
-        pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
-
-        self.write(dict(pipeline_schedule=pipeline_schedule.to_dict()))
+        include_attributes = []
+        if self.get_bool_argument('include_event_matchers', False):
+            include_attributes.append('event_matchers')
+        super().get(pipeline_schedule_id, include_attributes=include_attributes)
 
     def put(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
@@ -218,9 +219,7 @@ class ApiPipelineScheduleDetailHandler(BaseHandler):
         self.write(dict(pipeline_schedule=pipeline_schedule.to_dict()))
 
     def delete(self, pipeline_schedule_id):
-        pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
-        pipeline_schedule.delete()
-        self.write(dict(pipeline_schedule=pipeline_schedule.to_dict()))
+        super().delete(pipeline_schedule_id)
 
 
 class ApiPipelineScheduleListHandler(BaseHandler):

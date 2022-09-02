@@ -3,8 +3,9 @@ from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import Logger
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
+from typing import Dict
 import multiprocessing
 
 
@@ -131,7 +132,7 @@ class PipelineScheduler:
         ))
 
 
-def schedule():
+def schedule_all():
     """
     1. Check whether any new pipeline runs need to be scheduled.
     2. In active pipeline runs, check whether any block runs need to be scheduled.
@@ -150,3 +151,22 @@ def schedule():
     active_pipeline_runs = PipelineRun.active_runs()
     for r in active_pipeline_runs:
         PipelineScheduler(r).schedule()
+
+
+def schedule_with_event(event: Dict = dict()):
+    print(f'Schedule with event {event}')
+    all_event_matchers = EventMatcher.active_event_matchers()
+    for e in all_event_matchers:
+        if e.match(event):
+            print(f'Event matched with {e}')
+            pipeline_schedules = e.active_pipeline_schedules()
+            for p in pipeline_schedules:
+                payload = dict(
+                    execution_date=datetime.now(),
+                    pipeline_schedule_id=p.id,
+                    pipeline_uuid=p.pipeline_uuid,
+                )
+                pipeline_run = PipelineRun.create(**payload)
+                PipelineScheduler(pipeline_run).start(should_schedule=True)
+        else:
+            print(f'Event not matched with {e}')
