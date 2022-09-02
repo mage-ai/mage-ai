@@ -106,10 +106,9 @@ function Table({
 
   return (
     <TableStyle>
-      {columns?.length && (
+      {columns?.length >= 1 && (
         <TableRowStyle noHover>
-          {columns.map((col, idx) =>
-          (
+          {columns.map((col, idx) => (
             <TableHeadStyle
               compact={compact}
               key={`${uuid}-col-${col.uuid}-${idx}`}

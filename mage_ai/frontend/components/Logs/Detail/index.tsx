@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -16,12 +17,15 @@ import { Close } from '@oracle/icons';
 import { LogLevelIndicatorStyle } from '../index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp } from '@utils/models/log';
+import { sortByKey } from '@utils/array';
 
 const KEYS_TO_SKIP = [
   'error',
   'error_stack',
   'error_stacktrace',
 ];
+const TAB_DETAILS = { uuid: 'Details' };
+const TAB_ERRORS = { uuid: 'Errors' };
 
 type LogDetailProps = {
   log: LogType;
@@ -32,12 +36,16 @@ function LogDetail({
   log,
   onClose,
 }: LogDetailProps) {
+  const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const {
     data = {},
     name,
     path,
   } = log;
   const {
+    error,
+    error_stack: errorStack,
+    error_stacktrace: errorStackTrace,
     level,
     timestamp,
   } = data;
@@ -55,11 +63,37 @@ function LogDetail({
       }
     });
 
-    return arr;
+    if (errorStackTrace) {
+      arr.push(['error', errorStackTrace]);
+    }
+
+    return sortByKey(arr, ([k, _]) => k);
   }, [
     data,
+    errorStackTrace,
     name,
     path,
+  ]);
+
+  const buttonTabs = useMemo(() => {
+    const tabs = [TAB_DETAILS];
+    if (error) {
+      tabs.push(TAB_ERRORS);
+    }
+
+    return (
+      <ButtonTabs
+        onClickTab={setSelectedTab}
+        selectedTabUUID={selectedTab?.uuid}
+        tabs={tabs}
+      />
+    );
+  }, [
+    error,
+    errorStack,
+    errorStackTrace,
+    selectedTab,
+    setSelectedTab,
   ]);
 
   return (
@@ -97,23 +131,67 @@ function LogDetail({
 
       <Divider medium />
 
-      <Table
-        columnFlex={[null, 1]}
-        columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
-        rows={rows.map(([k, v]) => [
-          <Text monospace muted>
-            {k}
-          </Text>,
-          <Text
-            monospace
-            textOverflow
-            title={v}
-          >
-            {v}
-          </Text>,
-        ])}
-        uuid="LogDetail"
-      />
+      <Spacing
+        pr={PADDING_UNITS}
+        py={PADDING_UNITS}
+        style={{
+          paddingLeft: 1.5 * UNIT,
+        }}
+      >
+        {buttonTabs}
+      </Spacing>
+
+      {TAB_DETAILS.uuid === selectedTab?.uuid && (
+        <Table
+          columnFlex={[null, 1]}
+          columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
+          rows={rows.map(([k, v]) => [
+            <Text monospace muted>
+              {k}
+            </Text>,
+            <Text
+              monospace
+              textOverflow
+              title={v}
+            >
+              {v}
+            </Text>,
+          ])}
+          uuid="LogDetail"
+        />
+      )}
+
+      {TAB_ERRORS.uuid === selectedTab?.uuid && (
+        <Spacing mb={5} px={PADDING_UNITS}>
+          <Spacing mb={1}>
+            <Text bold>
+              Error
+            </Text>
+          </Spacing>
+
+          {error.map((lines: string) => lines.split('\n').map((line: string) => (
+            <Text default key={line} monospace small>
+              {line.split('\n')}
+            </Text>
+          )))}
+
+          {errorStack && (
+            <Spacing mt={3}>
+              <Spacing mb={1}>
+                <Text bold>
+                  Stack trace
+                </Text>
+              </Spacing>
+
+              {errorStack.map((lines: string) => lines.map((line: string) => (
+                <Text default key={line} monospace small>
+                  {line}
+                </Text>
+              )))}
+            </Spacing>
+          )}
+        </Spacing>
+      )}
     </div>
   );
 }
