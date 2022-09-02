@@ -1,5 +1,5 @@
 import { ThemeContext } from 'styled-components';
-import { useCallback, useContext } from 'react';
+import { useCallback, useMemo, useContext } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -19,11 +19,15 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 
+export type FilterQueryType = {
+  'block_type[]'?: string[];
+  'block_uuid[]'?: string[];
+  'level[]'?: string[];
+};
+
 type FilterProps = {
   blocks: BlockType[];
-  query: {
-    [key: string]: number | string;
-  };
+  query: FilterQueryType;
 };
 
 function Filter({
@@ -36,16 +40,18 @@ function Filter({
 
     if (isList) {
       Object.entries(q1).forEach(([k1, v]) => {
+        const value = String(v);
         const k2 = `${k1}[]`;
-        const arr = q2[k2];
-        if (arr) {
-          if (arr.includes(v)) {
-            q2[k2] = remove(arr, val => val === v);
+        let arr = q2[k2];
+        if (arr && Array.isArray(arr)) {
+          arr = arr.map(String)
+          if (arr.includes(value)) {
+            q2[k2] = remove(arr, val => val === value);
           } else {
-            q2[k2] = arr.concat(v);
+            q2[k2] = arr.concat(value);
           }
         } else {
-          q2[k2] = [v];
+          q2[k2] = [value];
         }
       });
     } else {
@@ -59,6 +65,10 @@ function Filter({
   }, [
     query,
   ]);
+
+  const queryLevels: string[] = useMemo(() => query['level[]'], [query]);
+  const queryBlockTypes: string[] = useMemo(() => query['block_type[]'], [query]);
+  const queryBlockUUIDs: string[] = useMemo(() => query['block_uuid[]'], [query]);
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -80,7 +90,7 @@ function Filter({
             <FilterRowStyle>
               <FlexContainer alignItems="center">
                 <Checkbox
-                  checked={query['level[]']?.includes(level)}
+                  checked={Array.isArray(queryLevels) && queryLevels?.includes(String(level))}
                 />
                 <Spacing mr={1} />
                 <LogLevelIndicatorStyle {...{[level.toLowerCase()]: true}} />
@@ -116,7 +126,9 @@ function Filter({
             <FilterRowStyle>
               <FlexContainer alignItems="center">
                 <Checkbox
-                  checked={query['block_type[]']?.includes(blockType)}
+                  checked={Array.isArray(queryBlockTypes)
+                    && queryBlockTypes?.includes(String(blockType))
+                  }
                 />
                 <Spacing mr={1} />
                 <Circle
@@ -152,7 +164,9 @@ function Filter({
             <FilterRowStyle>
               <FlexContainer alignItems="center">
                 <Checkbox
-                  checked={query['block_uuid[]']?.includes(block.uuid)}
+                  checked={Array.isArray(queryBlockUUIDs)
+                    && queryBlockUUIDs?.includes(String(block.uuid))
+                  }
                 />
                 <Spacing mr={1} />
                 <Circle

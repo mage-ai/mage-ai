@@ -8,7 +8,11 @@ class ApiPipelineLogListHandler(BaseHandler):
         pipeline_schedule_id = self.get_argument('pipeline_schedule_id', None)
         pipeline_run_id = self.get_argument('pipeline_run_id', None)
         block_uuid = self.get_argument('block_uuid', None)
-        block_uuids = self.get_argument('block_uuid[]', '').split(',')
+        block_uuids = self.get_argument('block_uuid[]', None)
+        if block_uuids:
+            block_uuids = block_uuids.split(',')
+        else:
+            block_uuids = []
         block_run_id = self.get_argument('block_run_id', None)
 
         a = aliased(PipelineRun, name='a')
