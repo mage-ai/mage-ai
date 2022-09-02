@@ -11,7 +11,7 @@ import {
 import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
-import Filter from '@components/Logs/Filter';
+import Filter, { FilterQueryType } from '@components/Logs/Filter';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
@@ -51,9 +51,7 @@ function BlockRuns({
   const pipelineUUID = pipelineProp.uuid;
 
   const [offset, setOffset] = useState(ITEMS_PER_PAGE);
-  const [query, setQuery] = useState<{
-    pipeline_run_id?: number;
-  }>(null);
+  const [query, setQuery] = useState<FilterQueryType>(null);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
   const pipeline = useMemo(() => ({
@@ -63,8 +61,8 @@ function BlockRuns({
     dataPipeline,
     pipelineUUID,
   ]);
-  const blocksByUUID =
-    useMemo(() => indexBy(pipeline.blocks || [], ({ uuid }) => uuid), [pipeline]);
+  const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
+  const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const { data: dataLogs } = api.logs.pipelines.list(pipelineUUID, query, {}, {
     pauseFetch: !query,
@@ -144,6 +142,7 @@ function BlockRuns({
     <PipelineDetailPage
       before={(
         <Filter
+          blocks={blocks}
           query={query}
         />
       )}

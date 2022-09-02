@@ -8,6 +8,11 @@ class ApiPipelineLogListHandler(BaseHandler):
         pipeline_schedule_id = self.get_argument('pipeline_schedule_id', None)
         pipeline_run_id = self.get_argument('pipeline_run_id', None)
         block_uuid = self.get_argument('block_uuid', None)
+        block_uuids = self.get_argument('block_uuid[]', None)
+        if block_uuids:
+            block_uuids = block_uuids.split(',')
+        else:
+            block_uuids = []
         block_run_id = self.get_argument('block_run_id', None)
 
         a = aliased(PipelineRun, name='a')
@@ -39,16 +44,17 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.id == int(pipeline_run_id))
             )
 
-        rows = query.all()
         pipeline_run_logs = []
-        for row in rows:
-            model = PipelineRun()
-            model.execution_date = row.execution_date
-            model.pipeline_schedule_id = row.pipeline_schedule_id
-            model.pipeline_schedule_id = row.pipeline_schedule_id
-            model.pipeline_uuid = row.pipeline_uuid
+        if not block_uuid and not len(block_uuids):
+            rows = query.all()
+            for row in rows:
+                model = PipelineRun()
+                model.execution_date = row.execution_date
+                model.pipeline_schedule_id = row.pipeline_schedule_id
+                model.pipeline_schedule_id = row.pipeline_schedule_id
+                model.pipeline_uuid = row.pipeline_uuid
 
-            pipeline_run_logs.append(model.log_file.to_dict(include_content=True))
+                pipeline_run_logs.append(model.log_file.to_dict(include_content=True))
 
         c = aliased(BlockRun, name='c')
         query = (
@@ -65,6 +71,12 @@ class ApiPipelineLogListHandler(BaseHandler):
             query = (
                 query.
                 filter(c.block_uuid == block_uuid)
+            )
+
+        if len(block_uuids):
+            query = (
+                query.
+                filter(c.block_uuid.in_(block_uuids))
             )
 
         if block_run_id:
