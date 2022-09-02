@@ -8,7 +8,6 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
-
 import { BLUE_GRADIENT, PURPLE_PINK_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
@@ -46,6 +45,10 @@ export type ButtonProps = {
   iconOnly?: boolean;
   id?: string;
   large?: boolean;
+  linkProps?: {
+    as?: string;
+    href: string;
+  };
   loading?: boolean;
   minWidth?: number;
   noBackground?: boolean;
