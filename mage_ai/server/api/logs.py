@@ -5,15 +5,29 @@ from sqlalchemy.orm import aliased
 
 class ApiPipelineLogListHandler(BaseHandler):
     def get(self, pipeline_uuid):
-        pipeline_schedule_id = self.get_argument('pipeline_schedule_id', None)
-        pipeline_run_id = self.get_argument('pipeline_run_id', None)
-        block_uuid = self.get_argument('block_uuid', None)
+        pipeline_schedule_ids = self.get_argument('pipeline_schedule_id[]', None)
+        if pipeline_schedule_ids:
+            pipeline_schedule_ids = pipeline_schedule_ids.split(',')
+        else:
+            pipeline_schedule_ids = []
+
         block_uuids = self.get_argument('block_uuid[]', None)
         if block_uuids:
             block_uuids = block_uuids.split(',')
         else:
             block_uuids = []
-        block_run_id = self.get_argument('block_run_id', None)
+
+        pipeline_run_ids = self.get_argument('pipeline_run_id[]', None)
+        if pipeline_run_ids:
+            pipeline_run_ids = pipeline_run_ids.split(',')
+        else:
+            pipeline_run_ids = []
+
+        block_run_ids = self.get_argument('block_run_id[]', None)
+        if block_run_ids:
+            block_run_ids = block_run_ids.split(',')
+        else:
+            block_run_ids = []
 
         a = aliased(PipelineRun, name='a')
         b = aliased(PipelineSchedule, name='b')
@@ -32,20 +46,20 @@ class ApiPipelineLogListHandler(BaseHandler):
             filter(b.pipeline_uuid == pipeline_uuid)
         )
 
-        if pipeline_schedule_id:
+        if len(pipeline_schedule_ids):
             query = (
                 query.
-                filter(a.pipeline_schedule_id == int(pipeline_schedule_id))
+                filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
             )
 
-        if pipeline_run_id:
+        if len(pipeline_run_ids):
             query = (
                 query.
-                filter(a.id == int(pipeline_run_id))
+                filter(a.id.in_(pipeline_run_ids))
             )
 
         pipeline_run_logs = []
-        if not block_uuid and not len(block_uuids):
+        if not len(block_uuids) and not len(block_run_ids):
             rows = query.all()
             for row in rows:
                 model = PipelineRun()
@@ -67,34 +81,28 @@ class ApiPipelineLogListHandler(BaseHandler):
             filter(b.pipeline_uuid == pipeline_uuid)
         )
 
-        if block_uuid:
-            query = (
-                query.
-                filter(c.block_uuid == block_uuid)
-            )
-
         if len(block_uuids):
             query = (
                 query.
                 filter(c.block_uuid.in_(block_uuids))
             )
 
-        if block_run_id:
+        if len(block_run_ids):
             query = (
                 query.
-                filter(c.id == int(block_run_id))
+                filter(c.id.in_(block_run_ids))
             )
 
-        if pipeline_schedule_id:
+        if len(pipeline_schedule_ids):
             query = (
                 query.
-                filter(a.pipeline_schedule_id == int(pipeline_schedule_id))
+                filter(a.pipeline_schedule_id.in_(pipeline_schedule_ids))
             )
 
-        if pipeline_run_id:
+        if len(pipeline_run_ids):
             query = (
                 query.
-                filter(a.id == int(pipeline_run_id))
+                filter(a.id.in_(pipeline_run_ids))
             )
 
         rows = query.all()

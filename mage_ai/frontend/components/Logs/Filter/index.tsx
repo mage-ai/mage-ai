@@ -20,9 +20,12 @@ import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 
 export type FilterQueryType = {
+  'block_run_id[]'?: string[];
   'block_type[]'?: string[];
   'block_uuid[]'?: string[];
   'level[]'?: string[];
+  'pipeline_run_id[]'?: string[];
+  'pipeline_schedule_id[]'?: string[];
 };
 
 type FilterProps = {
@@ -69,6 +72,10 @@ function Filter({
   const queryLevels: string[] = useMemo(() => query['level[]'], [query]);
   const queryBlockTypes: string[] = useMemo(() => query['block_type[]'], [query]);
   const queryBlockUUIDs: string[] = useMemo(() => query['block_uuid[]'], [query]);
+  const queryPipelineScheduleIDs: string[] =
+    useMemo(() => query['pipeline_schedule_id[]'], [query]);
+  const queryPipelineRunIDs: string[] = useMemo(() => query['pipeline_run_id[]'], [query]);
+  const queryBlockRunIDs: string[] = useMemo(() => query['block_run_id[]'], [query]);
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -183,6 +190,108 @@ function Filter({
           </Button>
         ))}
       </Spacing>
+
+      {queryPipelineScheduleIDs?.length && (
+        <Spacing mb={3}>
+          <Spacing mb={1}>
+            <Text bold default large>
+              Schedule
+            </Text>
+          </Spacing>
+
+          {queryPipelineScheduleIDs.map((pipelineScheduleID: string) => (
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              key={`pipeline-schedule-${pipelineScheduleID}`}
+              onClick={() => goTo({ pipeline_schedule_id: pipelineScheduleID }, { isList: true })}
+            >
+              <FilterRowStyle>
+                <FlexContainer alignItems="center">
+                  <Checkbox
+                    checked={Array.isArray(queryPipelineScheduleIDs)
+                      && queryPipelineScheduleIDs?.includes(pipelineScheduleID)
+                    }
+                  />
+                  <Spacing mr={1} />
+                  <Text monospace>
+                    {pipelineScheduleID}
+                  </Text>
+                </FlexContainer>
+              </FilterRowStyle>
+            </Button>
+          ))}
+        </Spacing>
+      )}
+
+      {queryPipelineRunIDs?.length && (
+        <Spacing mb={3}>
+          <Spacing mb={1}>
+            <Text bold default large>
+              Pipeline run
+            </Text>
+          </Spacing>
+
+          {queryPipelineRunIDs.map((id: string) => (
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              key={`pipeline-run-${id}`}
+              onClick={() => goTo({ pipeline_run_id: id }, { isList: true })}
+            >
+              <FilterRowStyle>
+                <FlexContainer alignItems="center">
+                  <Checkbox
+                    checked={Array.isArray(queryPipelineRunIDs)
+                      && queryPipelineRunIDs?.includes(id)
+                    }
+                  />
+                  <Spacing mr={1} />
+                  <Text monospace>
+                    {id}
+                  </Text>
+                </FlexContainer>
+              </FilterRowStyle>
+            </Button>
+          ))}
+        </Spacing>
+      )}
+
+      {queryBlockRunIDs?.length && (
+        <Spacing mb={3}>
+          <Spacing mb={1}>
+            <Text bold default large>
+              Block run
+            </Text>
+          </Spacing>
+
+          {queryBlockRunIDs.map((id: string) => (
+            <Button
+              noBackground
+              noBorder
+              noPadding
+              key={`block-run-${id}`}
+              onClick={() => goTo({ block_run_id: id }, { isList: true })}
+            >
+              <FilterRowStyle>
+                <FlexContainer alignItems="center">
+                  <Checkbox
+                    checked={Array.isArray(queryBlockRunIDs)
+                      && queryBlockRunIDs?.includes(id)
+                    }
+                  />
+                  <Spacing mr={1} />
+                  <Text monospace>
+                    {id}
+                  </Text>
+                </FlexContainer>
+              </FilterRowStyle>
+            </Button>
+          ))}
+        </Spacing>
+      )}
     </Spacing>
   );
 }
