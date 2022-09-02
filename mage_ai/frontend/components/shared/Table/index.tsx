@@ -23,6 +23,7 @@ type TableProps = {
   columnFlex: number[];
   columnMaxWidth?: (col: string) => string;
   columns: ColumnType[];
+  compact?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
   uuid?: string;
@@ -33,6 +34,7 @@ function Table({
   columnFlex,
   columnMaxWidth,
   columns,
+  compact,
   onClickRow,
   rows,
   uuid,
@@ -51,6 +53,7 @@ function Table({
     const linkProps = buildLinkProps?.(rowIndex);
     const cellEls = cells.map((cell, colIndex) => (
       <TableDataStyle
+        compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
         maxWidth={columnMaxWidth?.(columns[colIndex].uuid)}
         width={calculateCellWidth(colIndex)}
@@ -97,16 +100,20 @@ function Table({
     calculateCellWidth,
     columnMaxWidth,
     columns,
+    compact,
     onClickRow,
   ]);
 
   return (
     <TableStyle>
       {columns && (
-        <TableRowStyle>
+        <TableRowStyle noHover>
           {columns.map((col, idx) =>
           (
-            <TableHeadStyle key={`${uuid}-col-${col.uuid}-${idx}`}>
+            <TableHeadStyle
+              compact={compact}
+              key={`${uuid}-col-${col.uuid}-${idx}`}
+            >
               <Text bold leftAligned monospace muted>
                 {col.label ? col.label() : col.uuid}
               </Text>

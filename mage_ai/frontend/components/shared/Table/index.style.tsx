@@ -21,15 +21,24 @@ export const TableRowStyle = styled.tr<{
 
 
 const SHARED_STYLES = css<{
+  compact?: boolean;
   maxWidth?: string;
 }>`
-  padding: ${UNIT / 2}px ${UNIT}px;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: middle;
   white-space: nowrap;
 
   ${props => `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
+  `}
+
+  ${props => props.compact && `
+    padding: ${UNIT / 2}px ${UNIT}px;
+  `}
+
+  ${props => !props.compact && `
+    padding: ${UNIT}px ${2 * UNIT}px;
   `}
 
   ${props => props.maxWidth && `

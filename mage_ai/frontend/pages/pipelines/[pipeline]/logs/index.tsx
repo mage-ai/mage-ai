@@ -191,7 +191,8 @@ function BlockRuns({
               };
             }
           }}
-          columnFlex={[null, null, null, 1, null]}
+          compact
+          columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
           columns={[
             {
@@ -245,8 +246,8 @@ function BlockRuns({
                     >
                       <Link
                         block
-                        muted
                         fullWidth
+                        sameColorAsText
                         verticalAlignContent
                       >
                         <Circle
@@ -257,7 +258,7 @@ function BlockRuns({
 
                         <Spacing mr={1} />
 
-                        <Text muted monospace>
+                        <Text monospace>
                           {blockUUID}
                         </Text>
                       </Link>

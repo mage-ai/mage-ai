@@ -89,7 +89,7 @@ function VerticalNavigation({
                 backgroundPanel
                 basic
                 borderWidth={2}
-                notClickable
+                linkProps={linkProps}
                 paddingUnits={1}
               >
                 <div
