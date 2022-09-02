@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Calendar from 'react-calendar';
 import styled from 'styled-components';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlexTable from '@oracle/components/FlexTable';
@@ -17,11 +20,11 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import { BLUE_TEXT, LIME_DARK } from '@oracle/styles/colors/main';
+import { DateSelectionContainer } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
-import { onSuccess } from '@api/utils/response';
 import { queryFromUrl, queryString } from '@utils/url';
-import { useMutation } from 'react-query';
+import { onSuccess } from '@api/utils/response';
 
 const ContainerStyle = styled.div<any>`
   padding: ${3 * UNIT}px;
@@ -46,6 +49,10 @@ function CreateSchedule({
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+
+  const [date, setDate] = useState<Date>(new Date());
+  const [time, setTime] = useState<string>('00:00');
 
   const [createSchedule] = useMutation(
     api.pipeline_schedules.pipelines.useCreate(pipeline?.uuid),
@@ -95,12 +102,24 @@ function CreateSchedule({
 
   useEffect(
     () => {
+      if (start_time) {
+        const dateTimeSplit = start_time.split(' ');
+        const timePart = dateTimeSplit[1];
+        setDate(new Date(start_time));
+        setTime(timePart.substring(0, 5));
+      }
+    },
+    [start_time],
+  );
+
+  useEffect(
+    () => {
       if (scheduleVariables && Object.keys(scheduleVariables).length > 0) {
         setOverwriteVariables(true);
       }
     },
     [scheduleVariables],
-  )
+  );
 
   useEffect(
     () => {
@@ -126,12 +145,12 @@ function CreateSchedule({
       }
     },
     [pipelineSchedule],
-  )
+  );
 
   const onSave = useCallback(() => {
     const updatedSchedule = {
       name,
-      start_time,
+      start_time: `${date.toISOString().split('T')[0]} ${time}:00`,
       schedule_interval,
       variables: parseVariables(runtimeVariables),
     };
@@ -145,11 +164,12 @@ function CreateSchedule({
   }, [
     createSchedule,
     editSchedule,
+    date,
     updateSchedule,
     name,
     runtimeVariables,
-    start_time,
     schedule_interval,
+    time,
   ])
 
   const detailsMemo = useMemo(() => {
@@ -229,27 +249,53 @@ function CreateSchedule({
                   start date
                 </Text>
               </Spacing>,
-              <TextInput
-                borderless
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    start_time: e.target.value,
-                  }))
-                }}
-                paddingHorizontal={16}
-                paddingVertical={12}
-                placeholder="YYYY-MM-DD HH:MM:SS"
-                value={start_time}
-              />
+              <Flex flexDirection="column">
+                <TextInput
+                  borderless
+                  monospace
+                  onClick={() => setShowCalendar(val => !val)}
+                  paddingHorizontal={16}
+                  paddingVertical={12}
+                  placeholder="YYYY-MM-DD HH:MM"
+                  value={`${date.toISOString().split('T')[0]} ${time}`}
+                />
+                <div style={{ position: 'absolute', zIndex: 100 }}>
+                  <ClickOutside
+                    disableEscape
+                    onClickOutside={() => setShowCalendar(false)}
+                    open={showCalendar}
+                  >
+                    <DateSelectionContainer>
+                      <Calendar
+                        onChange={setDate}
+                        value={date}
+                      />
+                      <Spacing mb={2} />
+                      <TextInput
+                        label="Time (UTC)"
+                        monospace
+                        onChange={e => {
+                          e.preventDefault();
+                          setTime(e.target.value);
+                        }}
+                        paddingVertical={12}
+                        value={time}
+                      />
+                    </DateSelectionContainer>
+                  </ClickOutside>
+                </div>
+              </Flex>
             ],
           ]}
         />
       </>
     )
-  }, [schedule]);
+  }, [
+    date,
+    schedule,
+    showCalendar,
+    time,
+  ]);
 
   // TODO: allow users to set their own custom runtime variables.
   const variablesMemo = useMemo(() => {

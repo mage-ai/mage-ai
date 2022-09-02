@@ -70,6 +70,7 @@ export type InputWrapperProps = {
   noBlinkingCursor?: boolean;
   onBlur?: (e: any) => void;
   onChange?: (e: any) => void;
+  onClick?: (e: any) => void;
   onFocus?: (e: any) => void;
   onKeyDown?: (e: any) => void;
   onKeyPress?: (e: any) => void;
@@ -582,6 +583,7 @@ const InputWrapper = ({
   meta,
   name,
   onChange,
+  onClick,
   passwordrules,
   placeholder,
   readOnly,
@@ -705,6 +707,7 @@ const InputWrapper = ({
             onChange(e);
           }
         },
+        onClick,
         onFocus: (e) => {
           if (props.onFocus) {
             props.onFocus(e);
