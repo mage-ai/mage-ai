@@ -1,5 +1,4 @@
 import NextLink from 'next/link';
-import moment from 'moment';
 import { ThemeContext } from 'styled-components';
 import {
   useContext,
@@ -29,11 +28,11 @@ import { ChevronRight } from '@oracle/icons';
 import { LogLevelIndicatorStyle } from '@components/Logs/index.style';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
-import { initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
@@ -167,6 +166,10 @@ function BlockRuns({
       after={selectedLog && (
         <LogDetail
           log={selectedLog}
+          onClose={() => {
+            goToWithQuery({ [LOG_UUID_PARAM]: null });
+            setSelectedLog(null);
+          }}
         />
       )}
       afterHidden={!selectedLog}
@@ -210,7 +213,7 @@ function BlockRuns({
         <Table
           compact
           columnFlex={[null, null, 1, 9, null]}
-          columnMaxWidth={(col: string) => col === 'Message' ? '100px' : null}
+          columnMaxWidth={(idx: number) => idx === 3 ? '100px' : null}
           columns={[
             {
               label: () => '',
@@ -298,18 +301,10 @@ function BlockRuns({
 
             return [
               <Flex alignItems="center" justifyContent="center">
-                <LogLevelIndicatorStyle
-                  critical={LogLevelEnum.CRITICAL === level}
-                  debug={LogLevelEnum.DEBUG === level}
-                  error={LogLevelEnum.ERROR === level}
-                  exception={LogLevelEnum.EXCEPTION === level}
-                  info={LogLevelEnum.INFO === level}
-                  log={LogLevelEnum.LOG === level}
-                  warning={LogLevelEnum.WARNING === level}
-                />
+                <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
               </Flex>,
               <Text muted monospace>
-                {timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss')}
+                {formatTimestamp(timestamp)}
               </Text>,
               idEl,
               <Text monospace textOverflow>
