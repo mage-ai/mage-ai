@@ -59,5 +59,8 @@ class ApiEventMatcherListHandler(BaseHandler):
                 PipelineSchedule.id.in_(pipeline_schedule_ids),
             ).all()
             event_matcher.update(pipeline_schedules=pipeline_schedules)
-        # TODO: For AWS event, update related AWS infra (add trigger to lambda function)
+        if event_matcher.event_type == EventMatcher.EventType.AWS_EVENT:
+            from mage_ai.services.aws.events.events import update_event_rule_targets
+            # For AWS event, update related AWS infra (add trigger to lambda function)
+            update_event_rule_targets(event_matcher.name)
         self.write(dict(event_matcher=event_matcher.to_dict()))
