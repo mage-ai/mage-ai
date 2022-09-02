@@ -38,7 +38,7 @@ function LogDetail({
 }: LogDetailProps) {
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const {
-    data = {},
+    data,
     name,
     path,
   } = log;
@@ -48,7 +48,7 @@ function LogDetail({
     error_stacktrace: errorStackTrace,
     level,
     timestamp,
-  } = data;
+  } = data || {};
   const sharedProps =  { [level.toLowerCase()]: true };
 
   const rows = useMemo(() => {
@@ -183,7 +183,7 @@ function LogDetail({
                 </Text>
               </Spacing>
 
-              {errorStack.map((lines: string) => lines.map((line: string) => (
+              {errorStack.map((lines: string[]) => lines.map((line: string) => (
                 <Text default key={line} monospace small>
                   {line}
                 </Text>

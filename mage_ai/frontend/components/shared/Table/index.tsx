@@ -21,7 +21,7 @@ type TableProps = {
     href: string;
   };
   columnFlex: number[];
-  columnMaxWidth?: (col: string) => string;
+  columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
   onClickRow?: (index: number) => void;

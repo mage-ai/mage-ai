@@ -24,7 +24,7 @@ function ButtonTabs({
 }: ButtonTabsProps) {
   const tabEls = useMemo(() => {
     const tabCount: number = tabs.length;
-    const arr: TabType[] = [];
+    const arr = [];
 
     tabs.forEach((tab: TabType, idx: number) => {
       const {
@@ -63,9 +63,9 @@ function ButtonTabs({
             <Button
               borderLess
               default
+              key={`button-tab-${uuid}`}
               onClick={() => onClickTab(tab)}
               outline
-              uuid={`button-tab-${uuid}`}
             >
               {displayText}
             </Button>

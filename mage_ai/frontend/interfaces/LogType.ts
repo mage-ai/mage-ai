@@ -24,8 +24,8 @@ export interface LogDataType {
   block_run_id?: number;
   block_type?: BlockTypeEnum;
   block_uuid?: string;
-  error?: string;
-  error_stack?: string[];
+  error?: string[];
+  error_stack?: string[][];
   error_stacktrace: string;
   level: LogLevelEnum;
   message: string;
