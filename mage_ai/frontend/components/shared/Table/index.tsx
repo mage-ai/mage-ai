@@ -21,8 +21,8 @@ type TableProps = {
     href: string;
   };
   columnFlex: number[];
-  columnMaxWidth?: (col: string) => string;
-  columns: ColumnType[];
+  columnMaxWidth?: (colIndex: number) => string;
+  columns?: ColumnType[];
   compact?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
@@ -33,7 +33,7 @@ function Table({
   buildLinkProps,
   columnFlex,
   columnMaxWidth,
-  columns,
+  columns = [],
   compact,
   onClickRow,
   rows,
@@ -55,7 +55,7 @@ function Table({
       <TableDataStyle
         compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
-        maxWidth={columnMaxWidth?.(columns[colIndex].uuid)}
+        maxWidth={columnMaxWidth?.(colIndex)}
         width={calculateCellWidth(colIndex)}
       >
         {cell}
@@ -106,10 +106,9 @@ function Table({
 
   return (
     <TableStyle>
-      {columns && (
+      {columns?.length >= 1 && (
         <TableRowStyle noHover>
-          {columns.map((col, idx) =>
-          (
+          {columns.map((col, idx) => (
             <TableHeadStyle
               compact={compact}
               key={`${uuid}-col-${col.uuid}-${idx}`}

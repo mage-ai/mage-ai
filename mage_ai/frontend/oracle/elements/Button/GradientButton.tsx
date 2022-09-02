@@ -13,6 +13,8 @@ type GradientButtonProps = {
   borderWidth?: number;
   children: any;
   paddingUnits?: number;
+  paddingUnitsHorizontal?: number;
+  paddingUnitsVertical?: number;
 } & ButtonProps;
 
 const ButtonContentStyle = styled.div<{
@@ -35,9 +37,18 @@ function GradientButton({
   backgroundPanel,
   borderWidth = 1,
   children,
-  paddingUnits = 2,
+  paddingUnits,
+  paddingUnitsHorizontal: paddingUnitsHorizontalProp = 1.5,
+  paddingUnitsVertical: paddingUnitsVerticalProp = 1.25,
   ...props
 }: GradientButtonProps) {
+  let paddingUnitsHorizontal = paddingUnitsHorizontalProp;
+  let paddingUnitsVertical = paddingUnitsVerticalProp;
+  if (paddingUnits) {
+    paddingUnitsHorizontal = paddingUnits;
+    paddingUnitsVertical = paddingUnits;
+  }
+
   return (
     <Button
       {...props}
@@ -51,7 +62,10 @@ function GradientButton({
       >
         <div
           style={{
-            padding: (paddingUnits * UNIT) - borderWidth,
+            paddingBottom: (paddingUnitsVertical * UNIT) - borderWidth,
+            paddingLeft: (paddingUnitsHorizontal * UNIT) - borderWidth,
+            paddingRight: (paddingUnitsHorizontal * UNIT) - borderWidth,
+            paddingTop: (paddingUnitsVertical * UNIT) - borderWidth,
           }}
         >
           {children}

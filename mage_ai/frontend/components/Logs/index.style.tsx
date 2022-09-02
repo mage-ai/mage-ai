@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
@@ -18,11 +18,7 @@ type LogLevelIndictorProps = {
   warning?: boolean;
 };
 
-export const LogLevelIndicatorStyle = styled.div<LogLevelIndictorProps>`
-  border-radius: ${BORDER_RADIUS}px;
-  height: 12px;
-  width: 5px;
-
+export const SHARED_COLOR_STYLES = css<LogLevelIndictorProps>`
   ${props => (props.critical || props.error || props.exception) && `
     background-color: ${RED};
   `}
@@ -34,4 +30,12 @@ export const LogLevelIndicatorStyle = styled.div<LogLevelIndictorProps>`
   ${props => (props.info || props.log) && `
     background-color: ${BLUE_HIGHLIGHT};
   `}
+`;
+
+export const LogLevelIndicatorStyle = styled.div<LogLevelIndictorProps>`
+  ${SHARED_COLOR_STYLES}
+
+  border-radius: ${BORDER_RADIUS}px;
+  height: 12px;
+  width: 5px;
 `;

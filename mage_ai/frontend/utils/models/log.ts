@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 import LogType, { LogDataType } from '@interfaces/LogType';
 import { isJsonString } from '@utils/string';
 
@@ -46,4 +48,8 @@ export function initializeLogs(log: LogType) {
     ...log,
     content: content2,
   }));
+}
+
+export function formatTimestamp(timestamp: number) {
+  return timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
 }

@@ -13,6 +13,7 @@ import {
   BORDER_RADIUS,
   BORDER_RADIUS_SMALL,
   BORDER_STYLE,
+  OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
@@ -25,7 +26,7 @@ export function selectOutlineColor(props) {
     return props.outlineBackgroundColorSelector(props.theme || dark);
   }
 
-  return (props.theme.background || dark.background).page;
+  return (props.theme.background || dark.background).panel;
 }
 
 export type ButtonProps = {
@@ -35,10 +36,12 @@ export type ButtonProps = {
   basic?: boolean;
   beforeIcon?: any;
   borderColor?: string;
+  borderLess?: boolean;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
   danger?: boolean;
+  default?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
   highlightOnHover?: boolean;
@@ -56,6 +59,7 @@ export type ButtonProps = {
   noBorderRight?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
+  outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
   pointerEventsEnabled?: boolean;
@@ -79,7 +83,7 @@ const SHARED_STYLES = css<{
   border: none;
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
-  padding: 7px ${UNIT}px;
+  padding: ${1 * UNIT}px ${1.5 * UNIT}px;
   position: relative;
   z-index: 0;
 
@@ -91,7 +95,14 @@ const SHARED_STYLES = css<{
 
   ${props => `
     border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
+  `}
+
+  ${props => !props.default && `
     color: ${(props.theme.content || light.content).active};
+  `}
+
+  ${props => props.default && `
+    color: ${(props.theme.content || light.content).default};
   `}
 
   ${props => props.borderColor && `
@@ -138,7 +149,7 @@ const SHARED_STYLES = css<{
     border-radius: ${BORDER_RADIUS}px;
   `}
 
-  ${props => props.noBorder && `
+  ${props => (props.noBorder || props.borderLess) && `
     border: none;
   `}
 
@@ -196,7 +207,25 @@ const SHARED_STYLES = css<{
     }
   `}
 
-  ${props => !props.disabled && !props.notClickable && `
+  ${props => props.outline && !props.disabled && !props.notClickable && `
+    &:hover {
+      box-shadow:
+        0 0 0 ${OUTLINE_OFFSET}px ${selectOutlineColor(props)},
+        0 0 0 ${OUTLINE_OFFSET + OUTLINE_WIDTH}px ${(props.theme.interactive || dark.interactive).hoverOverlay};
+    }
+
+    &:focus {
+      box-shadow:
+        0 0 0 ${OUTLINE_OFFSET}px ${selectOutlineColor(props)},
+        0 0 0 ${OUTLINE_OFFSET + OUTLINE_WIDTH}px ${(props.theme.interactive || dark.interactive).focusBorder};
+    }
+
+    &:active {
+      box-shadow: none;
+    }
+  `}
+
+  ${props => !props.disabled && !props.notClickable && !props.outline && `
     &:hover {
       border-color: ${(props.theme.interactive || light.interactive).hoverBorder};
     }
@@ -205,7 +234,7 @@ const SHARED_STYLES = css<{
     }
   `}
 
-  ${props => props.primary && !props.disabled && `
+  ${props => props.primary && !props.disabled && !props.outline && `
     background-color: ${(props.theme.interactive || light.interactive).linkPrimary};
     color: ${(props.theme.monotone || light.monotone).white};
     border-color: ${(props.theme.interactive || light.interactive).linkPrimary};

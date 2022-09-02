@@ -1,26 +1,22 @@
 import styled from 'styled-components';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { transition } from '@oracle/styles/mixins';
+import { SHARED_COLOR_STYLES } from '../index.style';
 
-type ContainerProps = {
-  noBorder?: boolean;
-  shadow?: boolean;
-};
+export const BarStyle = styled.div`
+  ${SHARED_COLOR_STYLES}
 
-export const ContainerStyle = styled.div<ContainerProps>`
-  ${(props: any) => !props.noBorder && `
-    border-radius: ${BORDER_RADIUS}px;
-    border: 1px solid ${(props.theme.brand || light.brand).water300};
-  `}
+  height: ${0.5 * UNIT}px;
+  width: 100%;
+`;
 
-  ${props => `
-    background-color: ${(props.theme.monotone || light.monotone).white};
-  `}
+export const BadgeStyle = styled.div`
+  ${SHARED_COLOR_STYLES}
 
-  ${props => props.shadow && `
-    box-shadow: ${(props.theme.shadow || light.shadow).popup};
-  `}
+  border-radius: ${BORDER_RADIUS_SMALL}px;
+  display: inline-block;
+  padding: ${0.25 * UNIT}px ${0.5 * UNIT}px;
 `;

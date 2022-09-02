@@ -172,6 +172,7 @@ export default {
     focusBorder: BLUE_HIGHLIGHT,
     hoverBackground: GRAY_HIGHLIGHT,
     hoverBorder: DARK_GRAY_LINES,
+    hoverOverlay: 'rgba(255, 255, 255, 0.05)',
     linkPrimary: BLUE,
     linkSecondary: PURPLE,
     linkSecondaryDisabled: PURPLE_LIGHT,
