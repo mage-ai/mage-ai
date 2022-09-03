@@ -80,7 +80,8 @@ function Dashboard({
         label: () => projects[0]?.name,
       },
       {
-        gradientColor: PURPLE_BLUE,
+        // gradientColor: PURPLE_BLUE,
+        bold: true,
         label: () => title,
       },
     ]);

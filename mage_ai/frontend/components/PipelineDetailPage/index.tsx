@@ -114,12 +114,14 @@ function PipelineDetailPage({
         });
         arr.push(...breadcrumbsProp);
 
-        if (!arr[arr.length - 1].gradientColor) {
-          arr[arr.length - 1].gradientColor = PURPLE_BLUE;
-        }
+        // if (!arr[arr.length - 1].gradientColor) {
+        //   arr[arr.length - 1].gradientColor = PURPLE_BLUE;
+        // }
+        arr[arr.length - 1].bold = true;
       } else {
         arr.push({
-          gradientColor: PURPLE_BLUE,
+          // gradientColor: PURPLE_BLUE,
+          bold: true,
           label: () => pipeline.name,
         });
       }
@@ -190,7 +192,7 @@ function PipelineDetailPage({
         : (
           <FlexContainer alignItems="center">
             <KeyboardShortcutButton
-              blackBorder
+              background={PURPLE_BLUE}
               bold
               beforeElement={<Edit size={2.5 * UNIT} />}
               inline

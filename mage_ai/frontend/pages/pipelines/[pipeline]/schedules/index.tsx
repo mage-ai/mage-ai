@@ -191,12 +191,12 @@ function PipelineSchedules({
               }
             </Button>,
             <Text
-              muted={ScheduleStatusEnum.INACTIVE === status}
+              default={ScheduleStatusEnum.INACTIVE === status}
               success={ScheduleStatusEnum.ACTIVE === status}
             >
               {status}
             </Text>,
-            <Text monospace muted>
+            <Text monospace default>
               {startTime}
             </Text>,
             <NextLink
@@ -208,27 +208,29 @@ function PipelineSchedules({
                 {name}
               </Link>
             </NextLink>,
-            <Text muted>
+            <Text default>
               {scheduleInterval}
             </Text>,
-            <Text muted>
+            <Text default>
               {pipelineRunsCount}
             </Text>,
             <Button
+              default
               iconOnly
               noBackground
               onClick={() => Router.push(
                 `/pipelines/${pipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
               )}
             >
-              <TodoList muted size={2 * UNIT} />
+              <TodoList default size={2 * UNIT} />
             </Button>,
             <Button
+              default
               iconOnly
               noBackground
               onClick={() => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
             >
-              <Edit muted size={2 * UNIT} />
+              <Edit default size={2 * UNIT} />
             </Button>,
           ];
         })}

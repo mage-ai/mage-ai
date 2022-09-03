@@ -20,6 +20,7 @@ import { PURPLE } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export type BreadcrumbType = {
+  bold?: boolean;
   gradientColor?: string;
   label: () => string;
   linkProps?: {
@@ -42,21 +43,35 @@ function Header({
     const arr = [];
 
     breadcrumbs.forEach(({
+      bold,
       gradientColor,
       label,
       linkProps,
     }, idx: Number) => {
-      const showDivider = count >= 2 && idx >= 1;
       const title = label();
+      const showDivider = count >= 2 && idx >= 1;
+
+      if (showDivider) {
+        arr.push(
+          <Text
+            inline
+            key={`divider-${title}`}
+            monospace
+            muted
+          >
+            &nbsp;
+            /
+            &nbsp;
+          </Text>
+        );
+      }
+
       const titleEl = (
-        <Text monospace>
-          {showDivider && (
-            <Text inline monospace muted={!gradientColor}>
-              &nbsp;
-              /
-              &nbsp;
-            </Text>
-          )}
+        <Text
+          bold={bold}
+          default={!bold}
+          monospace
+        >
           {title}
         </Text>
       );
@@ -83,9 +98,9 @@ function Header({
           >
             <Link
               block
-              noHoverUnderline
+              default={!bold}
               noOutline
-              sameColorAsText
+              sameColorAsText={bold}
             >
               {el}
             </Link>

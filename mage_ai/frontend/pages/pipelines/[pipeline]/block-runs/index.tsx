@@ -115,13 +115,13 @@ function BlockRuns({
           pipeline_schedule_name: pipelineScheduleName,
           status,
         }: BlockRunType) => [
-          <Text monospace muted>
+          <Text monospace default>
             {createdAt}
           </Text>,
           <Text
             danger={RunStatus.FAILED === status}
             info={RunStatus.INITIAL === status}
-            muted={RunStatus.CANCELLED === status}
+            default={RunStatus.CANCELLED === status}
             success={RunStatus.COMPLETED === status}
             warning={RunStatus.RUNNING === status}
           >
@@ -159,17 +159,18 @@ function BlockRuns({
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text monospace muted>
+          <Text monospace default>
             {completedAt || '-'}
           </Text>,
           <Button
+            default
             iconOnly
             noBackground
             onClick={() => Router.push(
               `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
             )}
           >
-            <TodoList size={2 * UNIT} />
+            <TodoList default size={2 * UNIT} />
           </Button>,
         ])}
       />
