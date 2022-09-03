@@ -250,14 +250,9 @@ function BlockRuns({
             data,
           }: LogType) => {
             const {
-              // block_run_id: blockRunId,
               block_uuid: blockUUID,
-              // error,
-              // error_stack,
-              // error_stacktrace,
               level,
               message,
-              // pipeline_run_id: pipelineRunId,
               pipeline_uuid: pUUID,
               timestamp,
             } = data || {};
@@ -303,7 +298,7 @@ function BlockRuns({
               <Flex alignItems="center" justifyContent="center">
                 <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
               </Flex>,
-              <Text muted monospace>
+              <Text default monospace>
                 {formatTimestamp(timestamp)}
               </Text>,
               idEl,
@@ -311,7 +306,7 @@ function BlockRuns({
                 {message || content}
               </Text>,
               <Flex flex={1} justifyContent="flex-end">
-                <ChevronRight muted size={2 * UNIT} />
+                <ChevronRight default size={2 * UNIT} />
               </Flex>,
             ];
           })}
