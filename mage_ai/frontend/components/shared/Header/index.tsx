@@ -48,6 +48,7 @@ function Header({
       label,
       linkProps,
     }, idx: Number) => {
+      const title = label();
       const showDivider = count >= 2 && idx >= 1;
 
       if (showDivider) {
@@ -65,7 +66,6 @@ function Header({
         );
       }
 
-      const title = label();
       const titleEl = (
         <Text
           bold={bold}
@@ -81,10 +81,7 @@ function Header({
           ml={idx === 0 ? 2 : 0}
         >
           {gradientColor && (
-            <GradientText
-              backgroundGradient={gradientColor}
-              bold={bold}
-            >
+            <GradientText backgroundGradient={gradientColor}>
               {titleEl}
             </GradientText>
           )}
