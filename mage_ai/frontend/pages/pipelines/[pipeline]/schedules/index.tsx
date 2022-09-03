@@ -208,10 +208,10 @@ function PipelineSchedules({
                 {name}
               </Link>
             </NextLink>,
-            <Text default>
+            <Text default monospace>
               {scheduleInterval}
             </Text>,
-            <Text default>
+            <Text default monospace>
               {pipelineRunsCount}
             </Text>,
             <Button

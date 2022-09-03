@@ -133,7 +133,7 @@ function PipelineRuns({
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text default>
+          <Text default monospace>
             {blockRunsCount}
           </Text>,
           <Text monospace default={!completedAt}>

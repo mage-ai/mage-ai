@@ -4,8 +4,12 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import {
   BLUE_HIGHLIGHT,
+  GRAY_LINES,
   RED,
+  RED_LIGHT,
+  PINK,
   YELLOW,
+  YELLOW_LIGHT,
 } from '@oracle/styles/colors/main';
 
 type LogLevelIndictorProps = {
@@ -18,17 +22,37 @@ type LogLevelIndictorProps = {
   warning?: boolean;
 };
 
+function getColor({
+  critical,
+  debug,
+  error,
+  exception,
+  info,
+  log,
+  warning,
+}) {
+  if (critical) {
+    return RED_LIGHT;
+  } else if (debug) {
+    return YELLOW_LIGHT;
+  } else if (error) {
+    return RED;
+  } else if (exception) {
+    return PINK;
+  } else if (info) {
+    return BLUE_HIGHLIGHT;
+  } else if (log) {
+    return GRAY_LINES;
+  } else if (warning) {
+    return YELLOW;
+  }
+
+  return 'transparent';
+}
+
 export const SHARED_COLOR_STYLES = css<LogLevelIndictorProps>`
-  ${props => (props.critical || props.error || props.exception) && `
-    background-color: ${RED};
-  `}
-
-  ${props => (props.debug || props.warning) && `
-    background-color: ${YELLOW};
-  `}
-
-  ${props => (props.info || props.log) && `
-    background-color: ${BLUE_HIGHLIGHT};
+  ${props => `
+    background-color: ${getColor(props)};
   `}
 `;
 

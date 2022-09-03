@@ -248,9 +248,10 @@ function BlockRuns({
             content,
             createdAt,
             data,
+            name,
           }: LogType) => {
             const {
-              block_uuid: blockUUID,
+              block_uuid: blockUUIDProp,
               level,
               message,
               pipeline_uuid: pUUID,
@@ -258,40 +259,39 @@ function BlockRuns({
             } = data || {};
 
             let idEl;
-            if (blockUUID) {
-              const block = blocksByUUID[blockUUID];
-              if (block) {
-                const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
+            const blockUUID = blockUUIDProp || name.split('.log')[0];
+            const block = blocksByUUID[blockUUID];
+            if (block) {
+              const color = getColorsForBlockType(block.type, { theme: themeContext }).accent;
 
-                idEl = (
-                  <FlexContainer alignItems="center">
-                    <NextLink
-                      as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
-                      href="/pipelines/[pipeline]/edit"
-                      passHref
+              idEl = (
+                <FlexContainer alignItems="center">
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
+                    href="/pipelines/[pipeline]/edit"
+                    passHref
+                  >
+                    <Link
+                      block
+                      fullWidth
+                      sameColorAsText
+                      verticalAlignContent
                     >
-                      <Link
-                        block
-                        fullWidth
-                        sameColorAsText
-                        verticalAlignContent
-                      >
-                        <Circle
-                          color={color}
-                          size={UNIT * 1.5}
-                          square
-                        />
+                      <Circle
+                        color={color}
+                        size={UNIT * 1.5}
+                        square
+                      />
 
-                        <Spacing mr={1} />
+                      <Spacing mr={1} />
 
-                        <Text monospace>
-                          {blockUUID}
-                        </Text>
-                      </Link>
-                    </NextLink>
-                  </FlexContainer>
-                );
-              }
+                      <Text monospace>
+                        {blockUUID}
+                      </Text>
+                    </Link>
+                  </NextLink>
+                </FlexContainer>
+              );
             }
 
             return [
