@@ -30,7 +30,7 @@ function getColor({
   info,
   log,
   warning,
-}) {
+}: LogLevelIndictorProps) {
   if (critical) {
     return RED_LIGHT;
   } else if (debug) {
