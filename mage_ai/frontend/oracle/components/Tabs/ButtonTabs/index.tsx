@@ -3,21 +3,26 @@ import { useMemo } from 'react';
 import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
 import GradientButton from '@oracle/elements/Button/GradientButton';
+import Spacing from '@oracle/elements/Spacing';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import { UNIT } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 export type TabType = {
+  Icon?: any;
+  IconSelected?: any;
   label?: () => string;
   uuid: string;
 };
 
 type ButtonTabsProps = {
+  contained?: boolean;
   onClickTab: (tab: TabType) => void;
   selectedTabUUID?: string;
   tabs: TabType[];
 };
 
 function ButtonTabs({
+  contained,
   onClickTab,
   selectedTabUUID,
   tabs,
@@ -28,10 +33,29 @@ function ButtonTabs({
 
     tabs.forEach((tab: TabType, idx: number) => {
       const {
+        Icon,
+        IconSelected,
         label,
         uuid,
       } = tab;
+      const selected = uuid === selectedTabUUID;
+      const IconToUse = selected ? (IconSelected || Icon) : Icon;
       const displayText = label ? label() : uuid;
+      const el = (
+        <FlexContainer alignItems="center">
+          {IconToUse && (
+            <>
+              <IconToUse
+                default={!selected}
+                size={2 * UNIT}
+              />
+              <Spacing mr={1} />
+            </>
+          )}
+
+          {displayText}
+        </FlexContainer>
+      );
 
       if (idx >= 1 && tabCount >= 2) {
         arr.push(
@@ -42,7 +66,7 @@ function ButtonTabs({
         );
       }
 
-      if (uuid === selectedTabUUID) {
+      if (selected) {
         arr.push(
           <GradientButton
             backgroundGradient={PURPLE_BLUE}
@@ -54,7 +78,7 @@ function ButtonTabs({
             paddingUnitsHorizontal={2}
             paddingUnitsVertical={1.25}
           >
-            {displayText}
+            {el}
           </GradientButton>
         );
       } else {
@@ -67,7 +91,7 @@ function ButtonTabs({
               onClick={() => onClickTab(tab)}
               outline
             >
-              {displayText}
+              {el}
             </Button>
           </div>
         );
@@ -79,12 +103,27 @@ function ButtonTabs({
     onClickTab,
     selectedTabUUID,
     tabs,
-  ])
+  ]);
 
-  return (
+  const el = (
     <FlexContainer alignItems="center">
       {tabEls}
     </FlexContainer>
+  );
+
+  if (contained) {
+    return el;
+  }
+
+  return (
+    <div
+      style={{
+        paddingLeft: PADDING_UNITS * UNIT,
+        paddingRight: PADDING_UNITS * UNIT,
+      }}
+    >
+      {el}
+    </div>
   );
 }
 
