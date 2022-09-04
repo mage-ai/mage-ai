@@ -60,6 +60,10 @@ export const BORDER_COLOR_SHARED_STYLES = css<BorderColorShareProps>`
     border-color: ${getColorsForBlockType(props.blockType, props).accent};
   `}
 
+  ${props => !props.selected && props.hasError && `
+    border-color: ${(props.theme.accent || dark.accent).negativeTransparent};
+  `}
+
   ${props => props.selected && props.hasError && `
     border-color: ${(props.theme.borders || dark.borders).danger};
   `}
