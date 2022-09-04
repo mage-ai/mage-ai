@@ -79,7 +79,7 @@ function PipelineSchedules({
             noHoverUnderline
             noOutline
             onClick={() => Router.push({
-              pathname: `/pipelines/${pipelineUuid}/schedules/new`,
+              pathname: `/pipelines/${pipelineUuid}/triggers/new`,
               query: queryFromUrl(),
             })}
           >
@@ -95,7 +95,7 @@ function PipelineSchedules({
             noHoverUnderline
             noOutline
             onClick={() => Router.push({
-              pathname: `/pipelines/${pipelineUuid}/schedules/${id}`,
+              pathname: `/pipelines/${pipelineUuid}/triggers/${id}`,
               query: queryFromUrl(),
             })}
           >

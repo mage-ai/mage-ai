@@ -7,7 +7,7 @@ function PipelineDetail({
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/pipelines/[pipeline]/schedules', `/pipelines/${pipeline.uuid}/schedules`);
+    router.replace('/pipelines/[pipeline]/triggers', `/pipelines/${pipeline.uuid}/triggers`);
   }, []);
 }
 

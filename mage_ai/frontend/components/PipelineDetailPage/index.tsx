@@ -107,8 +107,8 @@ function PipelineDetailPage({
         arr.push({
           label: () => pipeline.name,
           linkProps: {
-            as: `/pipelines/${pipelineUUID}/schedules`,
-            href: '/pipelines/[pipeline]/schedules',
+            as: `/pipelines/${pipelineUUID}/triggers`,
+            href: '/pipelines/[pipeline]/triggers',
           },
         });
         arr.push(...breadcrumbsProp);
@@ -144,19 +144,19 @@ function PipelineDetailPage({
         {
           Icon: Schedule,
           IconSelected: ScheduleGradient,
-          id: PageNameEnum.SCHEDULES,
-          label: () => 'Schedules',
+          id: PageNameEnum.TRIGGERS,
+          label: () => 'Triggers',
           linkProps: {
-            as: `/pipelines/${pipelineUUID}/schedules`,
-            href: '/pipelines/[pipeline]/schedules',
+            as: `/pipelines/${pipelineUUID}/triggers`,
+            href: '/pipelines/[pipeline]/triggers',
           },
-          isSelected: () => PageNameEnum.SCHEDULES === pageName,
+          isSelected: () => PageNameEnum.TRIGGERS === pageName,
         },
         {
           Icon: BlocksStacked,
           IconSelected: BlocksStackedGradient,
           id: PageNameEnum.RUNS,
-          label: () => 'Pipeline runs',
+          label: () => 'Runs',
           linkProps: {
             as: `/pipelines/${pipelineUUID}/runs`,
             href: '/pipelines/[pipeline]/runs',

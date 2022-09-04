@@ -94,11 +94,11 @@ function PipelineSchedules({
     <PipelineDetailPage
       breadcrumbs={[
         {
-          label: () => 'Schedules',
+          label: () => 'Triggers',
         },
       ]}
       buildSidekick={buildSidekick}
-      pageName={PageNameEnum.SCHEDULES}
+      pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       subheaderBackgroundImage='/images/banner-shape-purple-peach.jpg'
       subheaderButton={
@@ -107,8 +107,8 @@ function PipelineSchedules({
           beforeElement={<Add size={2.5 * UNIT} />}
           inline
           linkProps={{
-            as: `/pipelines/${pipelineUUID}/schedules/new`,
-            href: '/pipelines/[pipeline]/schedules/[...slug]',
+            as: `/pipelines/${pipelineUUID}/triggers/new`,
+            href: '/pipelines/[pipeline]/triggers/[...slug]',
           }}
           noHoverUnderline
           sameColorAsText
@@ -117,13 +117,13 @@ function PipelineSchedules({
           Create
         </KeyboardShortcutButton>
       }
-      subheaderText={<Text bold large>Set up a new schedule for this pipeline.</Text>}
-      title={({ name }) => `${name} schedules`}
-      uuid={`${PageNameEnum.SCHEDULES}_${pipelineUUID}`}
+      subheaderText={<Text bold large>Set up a new trigger for this pipeline.</Text>}
+      title={({ name }) => `${name} triggers`}
+      uuid={`${PageNameEnum.TRIGGERS}_${pipelineUUID}`}
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>
-          Pipeline schedules
+          Pipeline triggers
         </Headline>
         <Divider light mt={PADDING_UNITS} short />
       </Spacing>
@@ -200,8 +200,8 @@ function PipelineSchedules({
               {startTime}
             </Text>,
             <NextLink
-              as={`/pipelines/${pipelineUUID}/schedules/${id}`}
-              href={'/pipelines/[pipeline]/schedules/[...slug]'}
+              as={`/pipelines/${pipelineUUID}/triggers/${id}`}
+              href={'/pipelines/[pipeline]/triggers/[...slug]'}
               passHref
             >
               <Link bold sameColorAsText>
@@ -228,7 +228,7 @@ function PipelineSchedules({
               default
               iconOnly
               noBackground
-              onClick={() => Router.push(`/pipelines/${pipelineUUID}/schedules/${id}/edit`)}
+              onClick={() => Router.push(`/pipelines/${pipelineUUID}/triggers/${id}/edit`)}
             >
               <Edit default size={2 * UNIT} />
             </Button>,

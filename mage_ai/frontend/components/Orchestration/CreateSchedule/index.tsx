@@ -60,8 +60,8 @@ function CreateSchedule({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => router.push(
-            '/pipelines/[pipeline]/schedules',
-            `/pipelines/${pipeline?.uuid}/schedules`,
+            '/pipelines/[pipeline]/triggers',
+            `/pipelines/${pipeline?.uuid}/triggers`,
           ),
           onErrorCallback: (response, errors) => setErrors({
             errors,
@@ -80,7 +80,7 @@ function CreateSchedule({
           callback:
             (res) =>
               window.location.href =
-                `/pipelines/${pipeline?.uuid}/schedules/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
+                `/pipelines/${pipeline?.uuid}/triggers/${res?.pipeline_schedule?.id}?${queryString(queryFromUrl())}`,
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
