@@ -34,7 +34,7 @@ function RunListPage() {
             Pipeline
           </Text>,
           <Text bold monospace muted>
-            Schedule
+            Trigger
           </Text>,
           <Text bold monospace muted>
             Block runs
@@ -71,8 +71,8 @@ function RunListPage() {
             </Link>
           </NextLink>,
           <NextLink
-            as={`/pipelines/${pipelineUUID}/schedules/${pipelineScheduleId}`}
-            href={'/pipelines/[pipeline]/schedules/[...slug]'}
+            as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+            href={'/pipelines/[pipeline]/triggers/[...slug]'}
             passHref
           >
             <Link bold sameColorAsText>

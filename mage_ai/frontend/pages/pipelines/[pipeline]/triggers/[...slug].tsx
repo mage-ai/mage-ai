@@ -86,10 +86,10 @@ function ScheduleDetailPage({
   const breadcrumbs = useMemo(() => {
     const arr: BreadcrumbType[] = [
       {
-        label: () => 'Schedules',
+        label: () => 'Triggers',
         linkProps: {
-          as: `/pipelines/${pipelineUUID}/schedules`,
-          href: '/pipelines/[pipeline]/schedules',
+          as: `/pipelines/${pipelineUUID}/triggers`,
+          href: '/pipelines/[pipeline]/triggers',
         },
       },
     ];
@@ -102,8 +102,8 @@ function ScheduleDetailPage({
       let linkProps;
       if (subpath === PAGE_NAME_EDIT) {
         linkProps = {
-          as: `/pipelines/${pipelineUUID}/schedules/${pipelineSchedule.id}`,
-          href: '/pipelines/[pipeline]/schedules/[...slug]',
+          as: `/pipelines/${pipelineUUID}/triggers/${pipelineSchedule.id}`,
+          href: '/pipelines/[pipeline]/triggers/[...slug]',
         };
       }
 
@@ -130,7 +130,7 @@ function ScheduleDetailPage({
   return (
     <PipelineDetailPage
       breadcrumbs={breadcrumbs}
-      pageName={PageNameEnum.SCHEDULES}
+      pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
     >
       {content}

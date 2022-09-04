@@ -100,14 +100,14 @@ function OrchestrationDetail({
               blackBorder
               inline
               linkProps={{
-                as: `/pipelines/${pipelineUUID}/schedules/${id}/edit`,
-                href: '/pipelines/[pipeline]/schedules/[...slug]',
+                as: `/pipelines/${pipelineUUID}/triggers/${id}/edit`,
+                href: '/pipelines/[pipeline]/triggers/[...slug]',
               }}
               noHoverUnderline
               sameColorAsText
               uuid="PipelineDetailPage/edit_schedule"
             >
-              Edit schedule
+              Edit trigger
             </KeyboardShortcutButton>
           </div>
         </FlexContainer>

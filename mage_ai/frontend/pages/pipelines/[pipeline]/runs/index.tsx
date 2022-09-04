@@ -158,7 +158,7 @@ function PipelineRuns({
           uuid: 'Status',
         },
         {
-          uuid: 'Schedule',
+          uuid: 'Trigger',
         },
         {
           uuid: 'Block runs',
@@ -198,8 +198,8 @@ function PipelineRuns({
           {status}
         </Text>,
         <NextLink
-          as={`/pipelines/${pipelineUUID}/schedules/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/schedules/[...slug]'}
+          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+          href={'/pipelines/[pipeline]/triggers/[...slug]'}
           passHref
         >
           <Link bold sameColorAsText>
@@ -253,7 +253,7 @@ function PipelineRuns({
           uuid: 'Block',
         },
         {
-          uuid: 'Schedule',
+          uuid: 'Trigger',
         },
         {
           uuid: 'Completed',
@@ -307,8 +307,8 @@ function PipelineRuns({
           </Link>
         </NextLink>,
         <NextLink
-          as={`/pipelines/${pipelineUUID}/schedules/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/schedules/[...slug]'}
+          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+          href={'/pipelines/[pipeline]/triggers/[...slug]'}
           passHref
         >
           <Link bold sameColorAsText>

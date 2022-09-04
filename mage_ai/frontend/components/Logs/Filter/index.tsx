@@ -195,7 +195,7 @@ function Filter({
         <Spacing mb={3}>
           <Spacing mb={1}>
             <Text bold default large>
-              Schedule
+              Trigger
             </Text>
           </Spacing>
 
