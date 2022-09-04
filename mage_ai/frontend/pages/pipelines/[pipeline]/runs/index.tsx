@@ -4,14 +4,15 @@ import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
+import BlockRunType from '@interfaces/BlockRunType';
 import Button from '@oracle/elements/Button';
-import ButtonTabs from '@oracle/components/Tabs/ButtonTabs';
+import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Circle from '@oracle/elements/Circle';
 import DependencyGraph from '@components/DependencyGraph';
-import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
+import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
@@ -356,18 +357,15 @@ function PipelineRuns({
       title={({ name }) => `${name} runs`}
       uuid={`${PageNameEnum.RUNS}_${pipelineUUID}`}
     >
-      <ButtonTabs
-        onClickTab={({ uuid }) => goToWithQuery({ tab: uuid })}
-        selectedTabUUID={selectedTab?.uuid}
-        tabs={TABS}
-      />
-
-      <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-        <Headline level={5}>
-          {selectedTab?.uuid}
-        </Headline>
-        <Divider light mt={PADDING_UNITS} short />
-      </Spacing>
+      <PageSectionHeader>
+        <Spacing py={1}>
+          <ButtonTabs
+            onClickTab={({ uuid }) => goToWithQuery({ tab: uuid })}
+            selectedTabUUID={selectedTab?.uuid}
+            tabs={TABS}
+          />
+        </Spacing>
+      </PageSectionHeader>
 
       {TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid && tablePipelineRuns}
       {TAB_BLOCK_RUNS.uuid === selectedTab?.uuid && tableBlockRuns}
