@@ -88,7 +88,7 @@ function PipelineDetailPage({
     height,
     pipeline,
   ]);
-  const afterWidth = afterWidthProp || (after ? 400 : null);
+  const afterWidth = afterWidthProp || (after ? 50 * UNIT : null);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];

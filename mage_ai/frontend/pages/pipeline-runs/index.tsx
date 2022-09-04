@@ -1,12 +1,15 @@
 import NextLink from 'next/link';
+import Router from 'next/router';
 import { useMemo } from 'react';
 
+import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
-import FlexTable from '@oracle/components/FlexTable';
 import Link from '@oracle/elements/Link';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import { TodoList } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { indexBy } from '@utils/array';
 
@@ -21,35 +24,40 @@ function RunListPage() {
   return (
     <Dashboard
       title="Pipeline runs"
+      uuid="pipeline_runs/index"
     >
-      <FlexTable
-        columnHeaders={[
-          <Text bold monospace muted>
-            Run date
-          </Text>,
-          <Text bold monospace muted>
-            Status
-          </Text>,
-          <Text bold monospace muted>
-            Pipeline
-          </Text>,
-          <Text bold monospace muted>
-            Trigger
-          </Text>,
-          <Text bold monospace muted>
-            Block runs
-          </Text>,
+      <Table
+        columnFlex={[null, null, 1, 1, null, null]}
+        columns={[
+          {
+            uuid: 'Date',
+          },
+          {
+            uuid: 'Status',
+          },
+          {
+            uuid: 'Pipeline',
+          },
+          {
+            uuid: 'Trigger',
+          },
+          {
+            uuid: 'Block runs',
+          },
+          {
+            uuid: 'Logs',
+          }
         ]}
-        columnFlex={[3, 2, 2, 3, 2]}
         rows={pipelineRuns.map(({
           block_runs_count: blockRunsCount,
           created_at: createdAt,
+          id,
           pipeline_schedule_id: pipelineScheduleId,
           pipeline_schedule_name: pipelineScheduleName,
           pipeline_uuid: pipelineUUID,
           status,
         }: PipelineRunType) => [
-          <Text monospace>
+          <Text default monospace>
             {createdAt}
           </Text>,
           <Text
@@ -79,9 +87,19 @@ function RunListPage() {
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text>
+          <Text default monospace>
             {blockRunsCount}
           </Text>,
+          <Button
+            default
+            iconOnly
+            noBackground
+            onClick={() => Router.push(
+              `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+            )}
+          >
+            <TodoList default size={2 * UNIT} />
+          </Button>,
         ])}
       />
     </Dashboard>
