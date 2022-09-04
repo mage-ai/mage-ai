@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
@@ -156,24 +155,13 @@ function PipelineDetailPage({
         {
           Icon: BlocksStacked,
           IconSelected: BlocksStackedGradient,
-          id: PageNameEnum.PIPELINE_RUNS,
+          id: PageNameEnum.RUNS,
           label: () => 'Pipeline runs',
           linkProps: {
-            as: `/pipelines/${pipelineUUID}/pipeline-runs`,
-            href: '/pipelines/[pipeline]/pipeline-runs',
+            as: `/pipelines/${pipelineUUID}/runs`,
+            href: '/pipelines/[pipeline]/runs',
           },
-          isSelected: () => PageNameEnum.PIPELINE_RUNS === pageName,
-        },
-        {
-          Icon: BlocksSeparated,
-          IconSelected: BlocksSeparatedGradient,
-          id: PageNameEnum.BLOCK_RUNS,
-          label: () => 'Block runs',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/block-runs`,
-            href: '/pipelines/[pipeline]/block-runs',
-          },
-          isSelected: () => PageNameEnum.BLOCK_RUNS === pageName,
+          isSelected: () => PageNameEnum.RUNS === pageName,
         },
         {
           Icon: TodoList,

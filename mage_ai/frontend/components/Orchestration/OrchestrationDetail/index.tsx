@@ -122,8 +122,8 @@ function OrchestrationDetail({
 
       <FlexTable
         buildLinkProps={(rowIndex: number) => ({
-          as: `/pipelines/${pipelineUUID}/block-runs?pipeline_run_id=${pipelineRuns[rowIndex].id}`,
-          href: '/pipelines/[pipeline]/block-runs',
+          as: `/pipelines/${pipelineUUID}/runs?pipeline_run_id=${pipelineRuns[rowIndex].id}&tab=block_runs`,
+          href: '/pipelines/[pipeline]/runs',
         })}
         columnHeaders={[
           <Text bold monospace muted>

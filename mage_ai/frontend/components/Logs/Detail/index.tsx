@@ -131,13 +131,7 @@ function LogDetail({
 
       <Divider medium />
 
-      <Spacing
-        pr={PADDING_UNITS}
-        py={PADDING_UNITS}
-        style={{
-          paddingLeft: 1.5 * UNIT,
-        }}
-      >
+      <Spacing py={PADDING_UNITS}>
         {buttonTabs}
       </Spacing>
 
