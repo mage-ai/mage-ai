@@ -459,16 +459,22 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
+          let outputs = block.outputs;
+          const messagesForBlock = messages[block.uuid];
+          const hasError = messagesForBlock?.find(({ error }) => error);
+
+          if (messagesForBlock && (BlockTypeEnum.SCRATCHPAD === block.type || hasError)) {
+            // @ts-ignore
+            outputs = messagesForBlock.map((d: KernelOutputType, idx: number) => ({
+              text_data: JSON.stringify(d),
+              variable_uuid: `${block.uuid}_${idx}`,
+            }));
+          }
+
           const blockPayload: BlockType = {
             ...block,
             content: contentToSave,
-            // @ts-ignore
-            outputs: (BlockTypeEnum.SCRATCHPAD === block.type && messages[block.uuid])
-              ? messages[block.uuid].map((d: KernelOutputType, idx: number) => ({
-                text_data: JSON.stringify(d),
-                variable_uuid: `${block.uuid}_${idx}`,
-              }))
-              : block.outputs,
+            outputs,
           };
 
           if (blockOverride?.uuid === block.uuid) {
