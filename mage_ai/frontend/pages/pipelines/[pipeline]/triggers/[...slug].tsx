@@ -111,13 +111,6 @@ function ScheduleDetailPage({
         label: () => pipelineSchedule.name,
         linkProps,
       });
-
-    }
-
-    if (subpath === PAGE_NAME_EDIT) {
-      arr.push({
-        label: () => 'Edit',
-      });
     }
 
     return arr;

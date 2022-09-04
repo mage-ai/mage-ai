@@ -51,7 +51,7 @@ function CreateSchedule({
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<string>('00:00');
 
   const [createSchedule] = useMutation(
@@ -257,7 +257,10 @@ function CreateSchedule({
                   paddingHorizontal={16}
                   paddingVertical={12}
                   placeholder="YYYY-MM-DD HH:MM"
-                  value={`${date.toISOString().split('T')[0]} ${time}`}
+                  value={date
+                    ? `${date.toISOString().split('T')[0]} ${time}`
+                    : ''
+                  }
                 />
                 <div style={{ position: 'absolute', zIndex: 100 }}>
                   <ClickOutside

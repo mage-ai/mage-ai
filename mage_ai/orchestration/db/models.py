@@ -98,9 +98,9 @@ class PipelineSchedule(BaseModel):
 
     name = Column(String(255))
     pipeline_uuid = Column(String(255))
-    schedule_type = Column(Enum(ScheduleType), default=ScheduleType.TIME)
-    start_time = Column(DateTime(timezone=True))
-    schedule_interval = Column(String(50), default='@once')
+    schedule_type = Column(Enum(ScheduleType))
+    start_time = Column(DateTime(timezone=True), default=None)
+    schedule_interval = Column(String(50))
     status = Column(Enum(ScheduleStatus), default=ScheduleStatus.INACTIVE)
     variables = Column(JSON)
 
