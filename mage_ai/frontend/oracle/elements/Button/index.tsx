@@ -179,11 +179,12 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.danger && `
-    background-color: ${(props.theme.background || dark.background).danger};
+    background-color: ${(props.theme.accent || dark.accent).negative};
   `}
 
   ${props => props.success && `
     background-color: ${(props.theme.background || dark.background).success};
+    color: ${(props.theme.content || dark.content).inverted};
   `}
 
   ${props => !props.iconOnly && props.large && `

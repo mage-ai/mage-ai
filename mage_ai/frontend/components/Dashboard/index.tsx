@@ -65,7 +65,6 @@ function Dashboard({
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeWidth, setBeforeWidth] = useState(get(localStorageKeyBefore, beforeWidthProp));
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
-  const [headerOffset, setHeaderOffset] = useState<number>(null);
   const [mainContainerWidth, setMainContainerWidth] = useState<number>(null);
 
   const { data: dataProjects } = api.projects.list();
@@ -86,11 +85,6 @@ function Dashboard({
       },
     ]);
   }
-
-  useEffect(() => {
-    const height = refSubheader?.current?.getBoundingClientRect?.()?.height;
-    setHeaderOffset(height || 0);
-  }, []);
 
   useEffect(() => {
     if (mainContainerRef?.current && !(afterMousedownActive || beforeMousedownActive)) {
@@ -143,36 +137,33 @@ function Dashboard({
           flex={1}
           flexDirection="column"
         >
-          {subheaderChildren && (
-            <Subheader ref={refSubheader}>
-              {subheaderChildren}
-            </Subheader>
-          )}
+          {/* @ts-ignore */}
+          <TripleLayout
+            after={after}
+            afterHeightOffset={HEADER_HEIGHT}
+            afterHidden={afterHidden}
+            afterMousedownActive={afterMousedownActive}
+            afterWidth={afterWidth}
+            before={before}
+            beforeHeightOffset={HEADER_HEIGHT}
+            beforeMousedownActive={beforeMousedownActive}
+            beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
+            hideAfterCompletely
+            leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
+            mainContainerRef={mainContainerRef}
+            setAfterMousedownActive={setAfterMousedownActive}
+            setAfterWidth={setAfterWidth}
+            setBeforeMousedownActive={setBeforeMousedownActive}
+            setBeforeWidth={setBeforeWidth}
+          >
+            {subheaderChildren && (
+              <Subheader>
+                {subheaderChildren}
+              </Subheader>
+            )}
 
-          {headerOffset !== null && (
-            // @ts-ignore
-            <TripleLayout
-              after={after}
-              afterHeightOffset={HEADER_HEIGHT}
-              afterHidden={afterHidden}
-              afterMousedownActive={afterMousedownActive}
-              afterWidth={afterWidth}
-              before={before}
-              beforeHeightOffset={HEADER_HEIGHT}
-              beforeMousedownActive={beforeMousedownActive}
-              beforeWidth={VERTICAL_NAVIGATION_WIDTH + (before ? beforeWidth : 0)}
-              headerOffset={headerOffset}
-              hideAfterCompletely
-              leftOffset={before ? VERTICAL_NAVIGATION_WIDTH : null}
-              mainContainerRef={mainContainerRef}
-              setAfterMousedownActive={setAfterMousedownActive}
-              setAfterWidth={setAfterWidth}
-              setBeforeMousedownActive={setBeforeMousedownActive}
-              setBeforeWidth={setBeforeWidth}
-            >
-              {children}
-            </TripleLayout>
-          )}
+            {children}
+          </TripleLayout>
         </Flex>
       </ContainerStyle>
     </>

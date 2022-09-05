@@ -22,7 +22,11 @@ import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -201,7 +205,11 @@ function PipelineDetailPage({
       uuid={uuid}
     >
       {(subheaderButton || subheaderText) && (
-        <Spacing mb={PADDING_UNITS} mx={PADDING_UNITS}>
+        <Spacing
+          mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
+          mt={PADDING_UNITS}
+          mx={PADDING_UNITS}
+        >
           <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
             <FlexContainer alignItems="center">
               {subheaderButton}

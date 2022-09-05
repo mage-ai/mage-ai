@@ -1,3 +1,4 @@
+import TriggerDetail from '@components/Triggers/Detail';
 import TriggerEdit from '@components/Triggers/Edit';
 import api from '@api';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
@@ -20,7 +21,7 @@ function TriggerDetailPage({
 
   const {
     data: pipelineScheduleData,
-    mutate: fetchPipelinesSchedule,
+    mutate: fetchPipelineSchedule,
   } = api.pipeline_schedules.detail(pipelineScheduleId);
   const pipelineSchedule = pipelineScheduleData?.pipeline_schedule;
 
@@ -33,7 +34,7 @@ function TriggerDetailPage({
   if (PAGE_NAME_EDIT === subpath) {
     return (
       <TriggerEdit
-        fetchPipelinesSchedule={fetchPipelinesSchedule}
+        fetchPipelineSchedule={fetchPipelineSchedule}
         pipeline={pipeline}
         pipelineSchedule={pipelineSchedule}
         variables={globalVariables}
@@ -41,7 +42,14 @@ function TriggerDetailPage({
     );
   }
 
-  return <div />;
+  return (
+    <TriggerDetail
+      fetchPipelineSchedule={fetchPipelineSchedule}
+      pipeline={pipeline}
+      pipelineSchedule={pipelineSchedule}
+      variables={globalVariables}
+    />
+  );
 }
 
 TriggerDetailPage.getInitialProps= async(ctx: any) => {
