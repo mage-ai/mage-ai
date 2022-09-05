@@ -29,6 +29,7 @@ import { CardStyle, DateSelectionContainer } from './index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
+import { getTriggerType } from '@utils/models/trigger';
 import { onSuccess } from '@api/utils/response';
 import { useMutation } from 'react-query';
 
@@ -144,9 +145,7 @@ function Edit({
     () => {
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
-        if (pipelineSchedule.schedule_interval && pipelineSchedule.start_time) {
-          setTriggerType(TriggerTypeEnum.SCHEDULE);
-        }
+        setTriggerType(getTriggerType(pipelineSchedule));
       }
     },
     [pipelineSchedule],
