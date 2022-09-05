@@ -134,6 +134,7 @@ function PipelineSchedules({
           inline
           loading={isLoadingCreateSchedule}
           noHoverUnderline
+          // @ts-ignore
           onClick={() => createSchedule({
             pipeline_schedule: {
               name: randomNameGenerator(),

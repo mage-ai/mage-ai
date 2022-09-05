@@ -21,5 +21,5 @@ export default interface PipelineType {
   name?: string;
   schedules?: PipelineScheduleType[];
   type?: PipelineTypeEnum;
-  uuid?: string;
+  uuid: string;
 }

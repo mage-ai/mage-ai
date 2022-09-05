@@ -43,6 +43,7 @@ export type HeadlineProps = {
   lineHeightAuto?: boolean;
   marketing?: boolean;
   monospace?: boolean;
+  muted?: boolean;
   spacingBelow?: boolean;
   warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;

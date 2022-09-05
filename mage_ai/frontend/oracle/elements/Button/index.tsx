@@ -58,6 +58,7 @@ export type ButtonProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
   outline?: boolean;
@@ -66,6 +67,7 @@ export type ButtonProps = {
   pointerEventsEnabled?: boolean;
   primary?: boolean;
   primaryGradient?: boolean;
+  sameColorAsText?: boolean;
   secondaryGradient?: boolean;
   selected?: boolean;
   selectedAlt?: boolean;

@@ -18,6 +18,7 @@ const PipelineContext = React.createContext<PipelineContextType>({
     actions: [],
     blocks: [],
     metadata: null,
+    uuid: null,
   },
   savePipelineContent: null,
   updatePipeline: null,

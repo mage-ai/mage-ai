@@ -106,6 +106,7 @@ function PipelineListPage() {
         </KeyboardShortcutButton>
       }
       title="Pipelines"
+      uuid="pipelines/index"
     >
       <Table
         buildLinkProps={(rowIndex: number) => ({

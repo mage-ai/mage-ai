@@ -24,8 +24,9 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
+import { Alphabet, CalendarDate, Schedule } from '@oracle/icons';
 import { CardStyle, DateSelectionContainer } from './index.style';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { onSuccess } from '@api/utils/response';
@@ -49,14 +50,12 @@ type EditProps = {
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
   variables?: PipelineVariableType[];
-  setErrors?: (errors: any) => void;
 };
 
 function Edit({
   fetchPipelinesSchedule,
   pipeline,
   pipelineSchedule,
-  setErrors,
   variables,
 }: EditProps) {
   const router = useRouter();
@@ -92,10 +91,10 @@ function Edit({
               `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
             );
           },
-          onErrorCallback: (response, errors) => setErrors({
+          onErrorCallback: (response, errors) => console.log(
             errors,
             response,
-          }),
+          ),
         }
       )
     }
@@ -145,7 +144,7 @@ function Edit({
     () => {
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
-        if (pipelineSchedule.schedule_interval && pipelineSchedule.start_time) {
+        if (pipelineSchedule.schedule_interval || pipelineSchedule.start_time) {
           setTriggerType(TriggerTypeEnum.SCHEDULE);
         }
       }
@@ -197,9 +196,13 @@ function Edit({
           columnFlex={[null, 1]}
           rows={[
             [
-              <Text default>
-                Trigger name
-              </Text>,
+              <FlexContainer alignItems="center">
+                <Alphabet default size={1.5 * UNIT} />
+                <Spacing mr={1} />
+                <Text default>
+                  Trigger name
+                </Text>
+              </FlexContainer>,
               <TextInput
                 monospace
                 onChange={(e) => {
@@ -214,9 +217,13 @@ function Edit({
               />,
             ],
             [
-              <Text default>
-                Frequency
-              </Text>,
+              <FlexContainer alignItems="center">
+                <Schedule default size={1.5 * UNIT} />
+                <Spacing mr={1} />
+                <Text default>
+                  Frequency
+                </Text>
+              </FlexContainer>,
               <Select
                 monospace
                 onChange={(e) => {
@@ -238,9 +245,13 @@ function Edit({
               </Select>,
             ],
             [
-              <Text default>
-                Start date and time
-              </Text>,
+              <FlexContainer alignItems="center">
+                <CalendarDate default size={1.5 * UNIT} />
+                <Spacing mr={1} />
+                <Text default>
+                  Start date and time
+                </Text>
+              </FlexContainer>,
               <Flex flexDirection="column">
                 <TextInput
                   monospace
@@ -308,9 +319,13 @@ function Edit({
           columnFlex={[null, 1]}
           rows={[
             [
-              <Text default>
-                Trigger name
-              </Text>,
+              <FlexContainer alignItems="center">
+                <Alphabet default size={1.5 * UNIT} />
+                <Spacing mr={1} />
+                <Text default>
+                  Trigger name
+                </Text>
+              </FlexContainer>,
               <TextInput
                 monospace
                 onChange={(e) => {
@@ -363,34 +378,38 @@ function Edit({
           && Object.entries(runtimeVariables).length > 0 && (
           <Spacing mt={2}>
             <Table
-              columnFlex={[1, 2]}
+              columnFlex={[null, 1]}
+              columns={[
+                {
+                  uuid: 'Variable',
+                },
+                {
+                  uuid: 'Value',
+                },
+              ]}
               rows={Object.entries(runtimeVariables).map(([uuid, value]) => {
                 return [
-                  <Spacing px={2}>
-                    <Text
-                      monospace
-                    >
-                      {uuid}
-                    </Text>
-                  </Spacing>,
-                  <Spacing px={2}>
-                    <TextInput
-                      compact
-                      borderless
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setRuntimeVariables(vars => ({
-                          ...vars,
-                          [uuid]: e.target.value,
-                        }));
-                      }}
-                      paddingHorizontal={0}
-                      placeholder="variable"
-                      value={value}
-                    />
-                  </Spacing>,
-                ]
+                  <Text
+                    default
+                    monospace
+                  >
+                    {uuid}
+                  </Text>,
+                  <TextInput
+                    borderless
+                    monospace
+                    onChange={(e) => {
+                      e.preventDefault();
+                      setRuntimeVariables(vars => ({
+                        ...vars,
+                        [uuid]: e.target.value,
+                      }));
+                    }}
+                    paddingHorizontal={0}
+                    placeholder="Variable value"
+                    value={value}
+                  />,
+                ];
               })}
             />
           </Spacing>
@@ -438,7 +457,6 @@ function Edit({
           <Spacing mr={1} />
 
           <Button
-            blackBorder
             noHoverUnderline
             linkProps={{
               href: '/pipelines/[pipeline]/triggers/[...slug]',
@@ -452,6 +470,7 @@ function Edit({
         </FlexContainer>
       )}
       title={() => `Edit ${pipelineSchedule?.name}`}
+      uuid="triggers/edit"
     >
       <Spacing p={PADDING_UNITS}>
         <Spacing mb={2}>
@@ -496,7 +515,6 @@ function Edit({
                       <Headline
                         default={!selected && !othersSelected}
                         bold
-                        large
                         level={5}
                         muted={!selected && othersSelected}
                       >
