@@ -119,6 +119,7 @@ def process_pipeline_runs(
         a.pipeline_schedule_id,
         a.pipeline_uuid,
         a.status,
+        a.variables,
         a.updated_at,
     ]
 

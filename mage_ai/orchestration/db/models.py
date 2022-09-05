@@ -164,9 +164,9 @@ class PipelineRun(BaseModel):
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
     completed_at = Column(DateTime(timezone=True))
+    variables = Column(JSON)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
-
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
 
     @property
@@ -292,7 +292,7 @@ class EventMatcher(BaseModel):
                 if type(v) is list:
                     if sub_config[k] not in v:
                         return False
-                elif not __match_dict(v, sub_config[v]):
+                elif not __match_dict(v, sub_config[k]):
                     return False
             return True
         return __match_dict(self.pattern, config)
