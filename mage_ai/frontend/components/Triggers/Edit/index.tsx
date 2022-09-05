@@ -45,6 +45,7 @@ const TRIGGER_TYPES = [
 ];
 
 type EditProps = {
+  fetchPipelinesSchedule: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
   variables?: PipelineVariableType[];
@@ -55,8 +56,8 @@ function Edit({
   fetchPipelinesSchedule,
   pipeline,
   pipelineSchedule,
-  variables,
   setErrors,
+  variables,
 }: EditProps) {
   const router = useRouter();
   const pipelineUUID = pipeline?.uuid;
@@ -153,10 +154,14 @@ function Edit({
   );
 
   const onSave = useCallback(() => {
+    const st = date && time
+      ? `${date.toISOString().split('T')[0]} ${time}:00`
+      : null;
+
     const updatedSchedule = {
       name,
       schedule_interval: scheduleInterval,
-      start_time: `${date.toISOString().split('T')[0]} ${time}:00`,
+      start_time: st,
       variables: parseVariables(runtimeVariables),
     };
 
@@ -177,7 +182,7 @@ function Edit({
     return (
       <>
         <Spacing mb={2} px={PADDING_UNITS}>
-          <Headline level={5}>
+          <Headline>
             Settings
           </Headline>
 
@@ -284,6 +289,61 @@ function Edit({
     time,
   ]);
 
+  const eventsMemo = useMemo(() => {
+    return (
+      <>
+        <Spacing mb={2} px={PADDING_UNITS}>
+          <Headline>
+            Settings
+          </Headline>
+
+          <Text muted>
+            Configure trigger details.
+          </Text>
+        </Spacing>
+
+        <Divider light short />
+
+        <Table
+          columnFlex={[null, 1]}
+          rows={[
+            [
+              <Text default>
+                Trigger name
+              </Text>,
+              <TextInput
+                monospace
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSchedule(s => ({
+                    ...s,
+                    name: e.target.value,
+                  }));
+                }}
+                placeholder="Name this trigger"
+                value={name}
+              />,
+            ],
+          ]}
+        />
+
+        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+          <Headline>
+            Events
+          </Headline>
+
+          <Text muted>
+            Add 1 or more event that will trigger this pipeline to run.
+          </Text>
+        </Spacing>
+
+        <Divider light short />
+      </>
+    );
+  }, [
+    name,
+  ]);
+
   // TODO: allow users to set their own custom runtime variables.
   const variablesMemo = useMemo(() => {
     return (
@@ -341,7 +401,11 @@ function Edit({
 
   return (
     <PipelineDetailPage
-      after={variablesMemo}
+      after={(
+        <Spacing p={PADDING_UNITS}>
+          {variablesMemo}
+        </Spacing>
+      )}
       breadcrumbs={[
         {
           label: () => 'Triggers',
@@ -391,7 +455,7 @@ function Edit({
     >
       <Spacing p={PADDING_UNITS}>
         <Spacing mb={2}>
-          <Headline level={5}>
+          <Headline>
             Trigger type
           </Headline>
 
@@ -405,43 +469,59 @@ function Edit({
             label,
             description,
             uuid,
-          }) => (
-            <Button
-              key={uuid}
-              noBackground
-              noBorder
-              noPadding
-              onClick={() => setTriggerType(uuid)}
-            >
-              <CardStyle selected={triggerType === uuid}>
-                <FlexContainer alignItems="center">
-                  <div>
-                    <input checked={triggerType === uuid} type="radio" />
-                  </div>
+          }) => {
+            const selected = triggerType === uuid;
+            const othersSelected = triggerType && !selected;
 
-                  <Spacing mr={PADDING_UNITS} />
+            return (
+              <Button
+                key={uuid}
+                noBackground
+                noBorder
+                noPadding
+                onClick={() => setTriggerType(uuid)}
+              >
+                <CardStyle selected={selected}>
+                  <FlexContainer alignItems="center">
+                    <Flex>
+                      <input checked={selected} type="radio" />
+                    </Flex>
 
-                  <Flex
-                    alignItems="flex-start"
-                    flexDirection="column"
-                  >
-                    <Headline bold large>
-                      {label()}
-                    </Headline>
+                    <Spacing mr={PADDING_UNITS} />
 
-                    <Text leftAligned muted>
-                      {description()}
-                    </Text>
-                  </Flex>
-                </FlexContainer>
-              </CardStyle>
-            </Button>
-          ))}
+                    <Flex
+                      alignItems="flex-start"
+                      flexDirection="column"
+                    >
+                      <Headline
+                        default={!selected && !othersSelected}
+                        bold
+                        large
+                        level={5}
+                        muted={!selected && othersSelected}
+                      >
+                        {label()}
+                      </Headline>
+
+                      <Text
+                        default={!selected && !othersSelected}
+                        leftAligned
+                        muted={othersSelected}
+                      >
+                        {description()}
+                      </Text>
+                    </Flex>
+                  </FlexContainer>
+                </CardStyle>
+              </Button>
+            );
+          })}
         </FlexContainer>
       </Spacing>
 
       <Spacing mt={5}>
         {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
+        {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
       </Spacing>
     </PipelineDetailPage>
   );
