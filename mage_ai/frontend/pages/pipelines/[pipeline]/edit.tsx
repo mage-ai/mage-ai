@@ -440,7 +440,10 @@ function PipelineDetailPage({
 
   const savePipelineContent = useCallback((payload?: {
     block?: BlockType;
-    pipeline?: PipelineType;
+    pipeline?: PipelineType | {
+      name: string;
+      type: string;
+    };
   }) => {
     const {
       block: blockOverride,

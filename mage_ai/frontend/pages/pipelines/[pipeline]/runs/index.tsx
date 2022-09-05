@@ -1,5 +1,5 @@
-import Router from 'next/router';
 import NextLink from 'next/link';
+import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
 
@@ -209,7 +209,7 @@ function PipelineRuns({
         <Text default monospace>
           {blockRunsCount}
         </Text>,
-        <Text monospace default={!completedAt}>
+        <Text default monospace>
           {completedAt || '-'}
         </Text>,
         <Button

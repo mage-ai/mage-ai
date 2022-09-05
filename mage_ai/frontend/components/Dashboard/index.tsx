@@ -29,7 +29,7 @@ export type DashboardSharedProps = {
   afterWidth?: number;
   before?: any;
   beforeWidth?: number;
-  uuid?: string;
+  uuid: string;
 };
 
 type DashboardProps = {
@@ -42,9 +42,9 @@ type DashboardProps = {
 function Dashboard({
   after,
   afterHidden,
-  afterWidth: afterWidthProp = 40 * UNIT,
+  afterWidth: afterWidthProp,
   before,
-  beforeWidth: beforeWidthProp = 35 * UNIT,
+  beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
   children,
   navigationItems,

@@ -20,6 +20,7 @@ import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { transition } from '@oracle/styles/mixins';
 
 export function selectOutlineColor(props) {
   if (props.outlineBackgroundColorSelector) {
@@ -57,6 +58,7 @@ export type ButtonProps = {
   noBackground?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
   outline?: boolean;
@@ -65,6 +67,7 @@ export type ButtonProps = {
   pointerEventsEnabled?: boolean;
   primary?: boolean;
   primaryGradient?: boolean;
+  sameColorAsText?: boolean;
   secondaryGradient?: boolean;
   selected?: boolean;
   selectedAlt?: boolean;
@@ -80,6 +83,8 @@ export type ButtonProps = {
 const SHARED_STYLES = css<{
   hasOnClick?: boolean;
 } & ButtonProps>`
+  ${transition()}
+
   border: none;
   display: block;
   font-family: ${FONT_FAMILY_BOLD};
@@ -94,15 +99,15 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => `
-    border-color: ${(props.theme.interactive || light.interactive).defaultBorder};
+    border-color: ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
   ${props => !props.default && `
-    color: ${(props.theme.content || light.content).active};
+    color: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.default && `
-    color: ${(props.theme.content || light.content).default};
+    color: ${(props.theme.content || dark.content).default};
   `}
 
   ${props => props.borderColor && `
@@ -110,7 +115,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => !props.noBackground && `
-    background-color: ${(props.theme.background || light.background).row};
+    background-color: ${(props.theme.background || dark.background).row};
   `}
 
   ${props => props.pointerEventsEnabled && `
@@ -174,11 +179,11 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.danger && `
-    background-color: ${(props.theme.background || light.background).danger};
+    background-color: ${(props.theme.background || dark.background).danger};
   `}
 
   ${props => props.success && `
-    background-color: ${(props.theme.background || light.background).success};
+    background-color: ${(props.theme.background || dark.background).success};
   `}
 
   ${props => !props.iconOnly && props.large && `
@@ -203,7 +208,7 @@ const SHARED_STYLES = css<{
 
   ${props => props.highlightOnHover && `
     &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBorder};
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
     }
   `}
 
@@ -227,19 +232,21 @@ const SHARED_STYLES = css<{
 
   ${props => !props.disabled && !props.notClickable && !props.outline && `
     &:hover {
-      border-color: ${(props.theme.interactive || light.interactive).hoverBorder};
+      border-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
     }
     &:active {
-      border-color: ${(props.theme.content || light.content).active};
+      border-color: ${(props.theme.content || dark.content).active};
     }
   `}
 
-  ${props => props.primary && !props.disabled && !props.outline && `
-    background-color: ${(props.theme.interactive || light.interactive).linkPrimary};
-    color: ${(props.theme.monotone || light.monotone).white};
-    border-color: ${(props.theme.interactive || light.interactive).linkPrimary};
+  ${props => props.primary && !props.disabled && `
+    background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    color: ${(props.theme.monotone || dark.monotone).white};
+
     &:hover {
-      border-color: ${(props.theme.monotone || light.monotone).black};
+      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
+      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     }
   `}
 
@@ -252,19 +259,19 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.disabled && `
-    color: ${(props.theme.interactive || light.interactive).disabledBorder};
+    color: ${(props.theme.interactive || dark.interactive).disabledBorder};
     &:hover {
       cursor: not-allowed;
     }
   `}
 
   ${props => props.selected && `
-    border-color: ${(props.theme.content || light.content).active};
+    border-color: ${(props.theme.content || dark.content).active};
   `}
 
   ${props => props.selectedAlt && `
-    border: ${OUTLINE_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).white};
-    box-shadow: 0 0 0 0.5px ${(props.theme.interactive || light.interactive).defaultBorder};
+    border: ${OUTLINE_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).white};
+    box-shadow: 0 0 0 0.5px ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
   ${props => props.width && `

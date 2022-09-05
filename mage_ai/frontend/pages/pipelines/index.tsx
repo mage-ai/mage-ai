@@ -9,6 +9,7 @@ import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineType from '@interfaces/PipelineType'
+import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
@@ -105,29 +106,37 @@ function PipelineListPage() {
         </KeyboardShortcutButton>
       }
       title="Pipelines"
+      uuid="pipelines/index"
     >
-      <FlexTable
+      <Table
         buildLinkProps={(rowIndex: number) => ({
           as: `/pipelines/${pipelines[rowIndex].uuid}`,
           href: '/pipelines/[pipeline]',
         })}
-        columnHeaders={[
-          null,
-          <Text bold monospace muted>
-            Status
-          </Text>,
-          <Text bold monospace muted>
-            Name
-          </Text>,
-          <Text bold monospace muted>
-            Blocks
-          </Text>,
-          <Text bold monospace muted>
-            Schedules
-          </Text>,
-          null,
+        columns={[
+          {
+            label: () => '',
+            uuid: 'action',
+          },
+          {
+            uuid: 'Status',
+          },
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Blocks',
+          },
+          {
+            uuid: 'Triggers',
+          },
+
+          {
+            label: () => '',
+            uuid: 'view',
+          },
         ]}
-        columnFlex={[1, 4, 10, 2, 2, 1]}
+        columnFlex={[null, 1, 7, 1, 1, null]}
         rows={pipelines.map((pipeline) => {
           const {
             blocks,
@@ -170,7 +179,7 @@ function PipelineListPage() {
               )
               : null
             ,
-            <Text muted={!isActive} success={isActive}>
+            <Text default={!isActive} success={isActive}>
               {isActive
                 ? ScheduleStatusEnum.ACTIVE
                 : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
@@ -179,14 +188,14 @@ function PipelineListPage() {
             <Text>
               {name}
             </Text>,
-            <Text muted={blocksCount === 0}>
+            <Text default={blocksCount === 0} monospace>
               {blocksCount}
             </Text>,
-            <Text muted={schedulesCount === 0}>
+            <Text default={schedulesCount === 0} monospace>
               {schedulesCount}
             </Text>,
             <Flex flex={1} justifyContent="flex-end">
-              <ChevronRight muted size={2 * UNIT} />
+              <ChevronRight default size={2 * UNIT} />
             </Flex>
           ];
         })}

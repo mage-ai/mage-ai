@@ -1,7 +1,7 @@
 import NextLink from 'next/link';
-import Router from 'next/router';
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
@@ -22,6 +22,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { randomNameGenerator } from '@utils/string';
 
 type PipelineSchedulesProp = {
   pipeline: {
@@ -32,6 +33,7 @@ type PipelineSchedulesProp = {
 function PipelineSchedules({
   pipeline,
 }: PipelineSchedulesProp) {
+  const router = useRouter();
   const pipelineUUID = pipeline.uuid;
 
   const {
@@ -41,6 +43,32 @@ function PipelineSchedules({
   const pipelinesSchedules: PipelineScheduleType[] =
     useMemo(() => dataPipelineSchedules?.pipeline_schedules || [], [dataPipelineSchedules]);
 
+  const [createSchedule, { isLoading: isLoadingCreateSchedule }] = useMutation(
+    api.pipeline_schedules.pipelines.useCreate(pipelineUUID),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline_schedule: {
+              id,
+            },
+          }) => router.push(
+            '/pipelines/[pipeline]/triggers/[...slug]',
+            `/pipelines/${pipeline?.uuid}/triggers/${id}/edit`,
+          ),
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        }
+      )
+    }
+  );
+
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
       api.pipeline_schedules.useUpdate(pipelineSchedule.id)({
@@ -49,9 +77,7 @@ function PipelineSchedules({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            pipeline_schedule,
-          }) => {
+          callback: () => {
             fetchPipelineSchedules();
           },
           onErrorCallback: ({
@@ -106,11 +132,14 @@ function PipelineSchedules({
           blackBorder
           beforeElement={<Add size={2.5 * UNIT} />}
           inline
-          linkProps={{
-            as: `/pipelines/${pipelineUUID}/triggers/new`,
-            href: '/pipelines/[pipeline]/triggers/[...slug]',
-          }}
+          loading={isLoadingCreateSchedule}
           noHoverUnderline
+          // @ts-ignore
+          onClick={() => createSchedule({
+            pipeline_schedule: {
+              name: randomNameGenerator(),
+            },
+          })}
           sameColorAsText
           uuid="PipelineDetailPage/add_new_schedule"
         >
@@ -218,7 +247,7 @@ function PipelineSchedules({
               default
               iconOnly
               noBackground
-              onClick={() => Router.push(
+              onClick={() => router.push(
                 `/pipelines/${pipelineUUID}/logs?pipeline_schedule_id[]=${id}`,
               )}
             >
@@ -228,13 +257,13 @@ function PipelineSchedules({
               default
               iconOnly
               noBackground
-              onClick={() => Router.push(`/pipelines/${pipelineUUID}/triggers/${id}/edit`)}
+              onClick={() => router.push(`/pipelines/${pipelineUUID}/triggers/${id}/edit`)}
             >
               <Edit default size={2 * UNIT} />
             </Button>,
           ];
         })}
-        uuid="pipeline-schedules"
+        uuid="pipeline-triggers"
       />
     </PipelineDetailPage>
   );

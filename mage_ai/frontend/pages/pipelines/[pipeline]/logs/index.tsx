@@ -173,12 +173,14 @@ function BlockRuns({
         />
       )}
       afterHidden={!selectedLog}
+      afterWidth={80 * UNIT}
       before={(
         <Filter
           blocks={blocks}
           query={query}
         />
       )}
+      beforeWidth={20 * UNIT}
       breadcrumbs={[
         {
           label: () => 'Logs',

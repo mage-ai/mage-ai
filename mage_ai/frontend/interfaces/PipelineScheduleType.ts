@@ -1,3 +1,8 @@
+export enum TriggerTypeEnum {
+  EVENT = 'event',
+  SCHEDULE = 'schedule',
+};
+
 export enum ScheduleTypeEnum {
   TIME = 'time',
 }

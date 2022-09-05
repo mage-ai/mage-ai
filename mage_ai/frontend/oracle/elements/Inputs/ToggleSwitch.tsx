@@ -75,16 +75,21 @@ const ToggleSwitch = ({
     <InputWrapper
       {...props}
       input={
-        <ToggleSwitchStyle {...props} noBorder>
+        <ToggleSwitchStyle
+          {...props}
+          noBackground
+          noBorder
+        >
           <input
             checked={checked}
             type="checkbox"
           />
-          <span 
+          <span
             onClick={() => onCheck(value => !value)}
           />
         </ToggleSwitchStyle>
       }
+      noBackground
       ref={ref}
     />
   );
