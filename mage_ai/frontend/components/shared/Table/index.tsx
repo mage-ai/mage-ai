@@ -10,7 +10,7 @@ import {
   TableStyle,
 } from './index.style';
 
-type ColumnType = {
+export type ColumnType = {
   label?: () => string;
   uuid: string;
 };

@@ -15,9 +15,12 @@ import PipelineScheduleType, {
   ScheduleStatusEnum,
   TriggerTypeEnum,
 } from '@interfaces/PipelineScheduleType';
+import PipelineType from '@interfaces/PipelineType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import {
@@ -225,6 +228,29 @@ function TriggerDetail({
     variables,
   ]);
 
+  const buildSidekick = useMemo(() => {
+    const showVariables = pipelineSchedule;
+
+    return props => {
+      const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
+
+      return (
+        <>
+          {showVariables && (
+            <VariableOverwrites
+              pipelineSchedule={pipelineSchedule}
+            />
+          )}
+          <DependencyGraph
+            {...props}
+            height={dependencyGraphHeight}
+            noStatus
+          />
+        </>
+      )
+    };
+  }, [pipelineSchedule]);
+
   return (
     <PipelineDetailPage
       before={(
@@ -281,12 +307,7 @@ function TriggerDetail({
           },
         },
       ]}
-      buildSidekick={props => (
-        <DependencyGraph
-          {...props}
-          noStatus
-        />
-      )}
+      buildSidekick={buildSidekick}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       subheader={(
@@ -297,7 +318,6 @@ function TriggerDetail({
               : <PlayButtonFilled inverted size={2 * UNIT} />
             }
             danger={isActive}
-            inline
             loading={isLoadingUpdatePipelineSchedule}
             onClick={(e) => {
               pauseEvent(e);
@@ -310,7 +330,6 @@ function TriggerDetail({
             }}
             outline
             success={!isActive}
-            uuid="TriggerDetail/update_trigger"
           >
             {isActive
               ? 'Pause trigger'

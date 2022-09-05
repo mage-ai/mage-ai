@@ -6,7 +6,7 @@ import Flex from '@oracle/components/Flex';
 import Link from '@oracle/elements/Link';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
-import Table from '@components/shared/Table';
+import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import { ChevronRight, TodoList } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -27,7 +27,7 @@ function PipelineRunsTable({
   } = pipeline || {};
 
   const columnFlex = [null, 1, 2, 1, 2, null];
-  const columns = [
+  const columns: ColumnType[] = [
     {
       uuid: 'Date',
     },
