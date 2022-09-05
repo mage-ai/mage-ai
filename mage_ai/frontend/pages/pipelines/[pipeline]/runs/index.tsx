@@ -16,6 +16,7 @@ import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
+import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -147,96 +148,15 @@ function PipelineRuns({
     selectedTabPrev,
   ]);
 
-  const tablePipelineRuns = useMemo(() => {
-    const tableProps = {
-      columnFlex: [null, 1, 2, 1, 2, null, null],
-      columns: [
-        {
-          uuid: 'Date',
-        },
-        {
-          uuid: 'Status',
-        },
-        {
-          uuid: 'Trigger',
-        },
-        {
-          uuid: 'Block runs',
-        },
-        {
-          uuid: 'Completed',
-        },
-        {
-          uuid: 'Logs',
-        },
-        {
-          label: () => '',
-          uuid: 'action',
-        },
-      ],
-      onClickRow: (rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex]),
-      rows: pipelineRuns.map(({
-        block_runs_count: blockRunsCount,
-        completed_at: completedAt,
-        created_at: createdAt,
-        id,
-        pipeline_schedule_id: pipelineScheduleId,
-        pipeline_schedule_name: pipelineScheduleName,
-        pipeline_uuid: pipelineUUID,
-        status,
-      }: PipelineRunType) => [
-        <Text monospace default>
-          {createdAt}
-        </Text>,
-        <Text
-          danger={RunStatus.FAILED === status}
-          info={RunStatus.INITIAL === status}
-          default={RunStatus.CANCELLED === status}
-          success={RunStatus.COMPLETED === status}
-          warning={RunStatus.RUNNING === status}
-        >
-          {status}
-        </Text>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/triggers/[...slug]'}
-          passHref
-        >
-          <Link bold sameColorAsText>
-            {pipelineScheduleName}
-          </Link>
-        </NextLink>,
-        <Text default monospace>
-          {blockRunsCount}
-        </Text>,
-        <Text default monospace>
-          {completedAt || '-'}
-        </Text>,
-        <Button
-          default
-          iconOnly
-          noBackground
-          onClick={() => Router.push(
-            `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-          )}
-        >
-          <TodoList default size={2 * UNIT} />
-        </Button>,
-        <Flex flex={1} justifyContent="flex-end">
-          <ChevronRight default size={2 * UNIT} />
-        </Flex>,
-      ]),
-    };
-
-    return (
-      <Table
-        {...tableProps}
-        uuid="pipeline-runs"
-      />
-    );
-  }, [
+  const tablePipelineRuns = useMemo(() => (
+    <PipelineRunsTable
+      onClickRow={(rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex])}
+      pipeline={pipeline}
+      pipelineRuns={pipelineRuns}
+    />
+  ), [
+    pipeline,
     pipelineRuns,
-    pipelineUUID,
   ]);
 
   const tableBlockRuns = useMemo(() => {

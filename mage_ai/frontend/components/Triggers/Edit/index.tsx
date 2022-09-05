@@ -46,14 +46,14 @@ const TRIGGER_TYPES = [
 ];
 
 type EditProps = {
-  fetchPipelinesSchedule: () => void;
+  fetchPipelineSchedule: () => void;
   pipeline: PipelineType;
   pipelineSchedule?: PipelineScheduleType;
   variables?: PipelineVariableType[];
 };
 
 function Edit({
-  fetchPipelinesSchedule,
+  fetchPipelineSchedule,
   pipeline,
   pipelineSchedule,
   variables,
@@ -85,7 +85,7 @@ function Edit({
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
-            fetchPipelinesSchedule();
+            fetchPipelineSchedule();
             router.push(
               '/pipelines/[pipeline]/triggers/[...slug]',
               `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
@@ -144,7 +144,7 @@ function Edit({
     () => {
       if (pipelineSchedule) {
         setSchedule(pipelineSchedule);
-        if (pipelineSchedule.schedule_interval || pipelineSchedule.start_time) {
+        if (pipelineSchedule.schedule_interval && pipelineSchedule.start_time) {
           setTriggerType(TriggerTypeEnum.SCHEDULE);
         }
       }
@@ -303,7 +303,7 @@ function Edit({
   const eventsMemo = useMemo(() => {
     return (
       <>
-        <Spacing mb={2} px={PADDING_UNITS}>
+        <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
           <Headline>
             Settings
           </Headline>
@@ -374,6 +374,7 @@ function Edit({
             Overwrite global variables
           </Text>
         </FlexContainer>
+
         {overwriteVariables && runtimeVariables
           && Object.entries(runtimeVariables).length > 0 && (
           <Spacing mt={2}>

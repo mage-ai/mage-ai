@@ -154,8 +154,9 @@ function PipelineSchedules({
         <Headline level={5}>
           Pipeline triggers
         </Headline>
-        <Divider light mt={PADDING_UNITS} short />
       </Spacing>
+
+      <Divider light mt={PADDING_UNITS} short />
 
       <Table
         columnFlex={[null, 2, 4, 10, 4, 2, null, null]}
