@@ -292,7 +292,7 @@ class EventMatcher(BaseModel):
                 if type(v) is list:
                     if sub_config[k] not in v:
                         return False
-                elif not __match_dict(v, sub_config[v]):
+                elif not __match_dict(v, sub_config[k]):
                     return False
             return True
         return __match_dict(self.pattern, config)
