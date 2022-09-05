@@ -226,6 +226,7 @@ function PipelineSchedules({
             </Button>,
             <Text
               default={ScheduleStatusEnum.INACTIVE === status}
+              monospace
               success={ScheduleStatusEnum.ACTIVE === status}
             >
               {status}
@@ -244,7 +245,17 @@ function PipelineSchedules({
               href={'/pipelines/[pipeline]/triggers/[...slug]'}
               passHref
             >
-              <Link bold sameColorAsText>
+              <Link
+                bold
+                onClick={(e) => {
+                  pauseEvent(e);
+                  router.push(
+                    '/pipelines/[pipeline]/triggers/[...slug]',
+                    `/pipelines/${pipelineUUID}/triggers/${id}`,
+                  );
+                }}
+                sameColorAsText
+              >
                 {name}
               </Link>
             </NextLink>,

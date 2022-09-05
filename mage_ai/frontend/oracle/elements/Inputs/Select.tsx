@@ -16,8 +16,13 @@ export type SelectProps = {
 } & InputWrapperProps;
 
 const ArrowDownElString = `
-  <svg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'>
-    <path d='M4.70096 9.75c.57735 1 2.02073 1 2.59808 0l2.59807-4.5C10.4745 4.25 9.75278 3 8.59808 3H3.40192c-1.1547 0-1.87638 1.25-1.29903 2.25l2.59807 4.5z' fill='%23B1B8C4'/>
+  <svg width='12' height='12' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'>
+    <path
+      clip-rule='evenodd'
+      d='M8.0015 11.7109L14.0022 5.71017L12.588 4.29597L7.99485 8.88914L3.40754 4.34482L2 5.76567L8.0015 11.7109Z'
+      fill='%23B4B8C0'
+      fill-rule='evenodd'
+    />
   </svg>`;
 
 const SelectStyle = styled.select<SelectProps>`

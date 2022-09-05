@@ -77,8 +77,9 @@ function PipelineRunsTable({
           </Text>,
           <Text
             danger={RunStatus.FAILED === status}
-            info={RunStatus.INITIAL === status}
             default={RunStatus.CANCELLED === status}
+            info={RunStatus.INITIAL === status}
+            monospace
             success={RunStatus.COMPLETED === status}
             warning={RunStatus.RUNNING === status}
           >
