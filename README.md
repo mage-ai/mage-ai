@@ -19,21 +19,21 @@ import pandas as pd
 
 
 @data_loader
-def load_data():
+def load_csv_from_file():
     return pd.read_csv('default_repo/titanic.csv')
 ```
 
 ```python
 # transformers/select_columns.py
 @transformer
-def transform_df(df, *args):
+def select_columns_from_df(df, *args):
     return df[['Age', 'Fare', 'Survived']]
 ```
 
 ```python
 # data_exporters/export_to_file.py
 @data_exporter
-def export_data(df) -> None:
+def export_titanic_data_to_disk(df) -> None:
     df.to_csv('default_repo/titanic_transformed.csv')
 ```
 
