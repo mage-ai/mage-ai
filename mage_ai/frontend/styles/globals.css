@@ -387,13 +387,13 @@ input[type="radio"] {
   /* background-color only for content */
   background-clip: content-box;
   border: 1px solid #B3B3BB;
-  background-color: #F8F8F8;
+  background-color: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
 }
 
 /* appearance for checked radiobutton */
 input[type="radio"]:checked {
-  background-color: #00916E;
+  background-color: #2A60FE;
 }
 
 /**
@@ -718,4 +718,4 @@ textarea {
 .react-calendar--selectRange .react-calendar__tile--hover {
   background-color: #4E4E4E;
 }
-  
+
