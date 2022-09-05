@@ -114,7 +114,8 @@ class PipelineScheduler:
                 ).execute(
                     analyze_outputs=False,
                     block_run_id=b.id,
-                    global_vars=self.pipeline_run.pipeline_schedule.variables or dict(),
+                    global_vars=self.pipeline_run.variables or
+                                 self.pipeline_run.pipeline_schedule.variables or dict(),
                     update_status=False,
                     on_complete=self.on_block_complete,
                     on_failure=self.on_block_failure,
@@ -145,6 +146,7 @@ def schedule_all():
                 execution_date=pipeline_schedule.current_execution_date(),
                 pipeline_schedule_id=pipeline_schedule.id,
                 pipeline_uuid=pipeline_schedule.pipeline_uuid,
+                variables=pipeline_schedule.variables,
             )
             pipeline_run = PipelineRun.create(**payload)
             PipelineScheduler(pipeline_run).start(should_schedule=False)
@@ -165,6 +167,7 @@ def schedule_with_event(event: Dict = dict()):
                     execution_date=datetime.now(),
                     pipeline_schedule_id=p.id,
                     pipeline_uuid=p.pipeline_uuid,
+                    variables=merge_dict(p.variables or dict(), dict(event=event)),
                 )
                 pipeline_run = PipelineRun.create(**payload)
                 PipelineScheduler(pipeline_run).start(should_schedule=True)

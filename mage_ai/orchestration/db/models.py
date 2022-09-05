@@ -164,9 +164,9 @@ class PipelineRun(BaseModel):
     execution_date = Column(DateTime(timezone=True))
     status = Column(Enum(PipelineRunStatus), default=PipelineRunStatus.INITIAL)
     completed_at = Column(DateTime(timezone=True))
+    variables = Column(JSON)
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
-
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
 
     @property
