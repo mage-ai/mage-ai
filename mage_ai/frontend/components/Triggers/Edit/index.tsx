@@ -49,7 +49,6 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
-import { getTriggerType } from '@utils/models/trigger';
 import { indexBy, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { selectKeys } from '@utils/hash';
@@ -704,10 +703,17 @@ function Edit({
                   noBackground
                   noBorder
                   noPadding
-                  onClick={() => setSchedule(s => ({
-                    ...s,
-                    schedule_type: uuid,
-                  }))}
+                  onClick={() => {
+                    if (ScheduleTypeEnum.EVENT === uuid && !eventMatchers?.length) {
+                      // @ts-ignore
+                      setEventMatchers([{}]);
+                    }
+
+                    setSchedule(s => ({
+                      ...s,
+                      schedule_type: uuid,
+                    }));
+                  }}
                 >
                   <CardStyle selected={selected}>
                     <FlexContainer alignItems="center">
