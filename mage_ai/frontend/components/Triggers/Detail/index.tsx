@@ -39,7 +39,6 @@ import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
 import {
   getFormattedVariable,
   getFormattedVariables,
-  parseVariables,
 } from '@components/Sidekick/utils';
 import { getTriggerType } from '@utils/models/trigger';
 import { isEmptyObject } from '@utils/hash';
