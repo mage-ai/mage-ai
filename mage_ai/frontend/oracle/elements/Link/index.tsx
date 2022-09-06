@@ -1,7 +1,7 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 
-import light from '@oracle/styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import {
   BORDER_STYLE,
   BORDER_WIDTH,
@@ -77,7 +77,7 @@ export const SHARED_LINK_STYLES = css<any>`
     !props.secondary &&
     !props.color &&
     `
-    color: ${(props.theme.interactive || light.interactive).linkPrimary};
+    color: ${(props.theme.interactive || dark.interactive).linkPrimary};
   `}
 
   ${(props) => props.color && `
@@ -105,29 +105,29 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
 
   ${props => props.danger && `
-    color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
 
     &:active,
     &:focus,
     &:hover {
-      color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+      color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
     }
   `}
 
   ${props => props.secondary && `
-    color: ${(props.theme.interactive || light.interactive).linkSecondary};
+    color: ${(props.theme.interactive || dark.interactive).linkSecondary};
     &:hover {
-      color: ${(props.theme.interactive || light.interactive).linkSecondary};
+      color: ${(props.theme.interactive || dark.interactive).linkSecondary};
     }
   `}
 
   ${props => props.selected && `
-    background: ${(props.theme.interactive || light.monotone.black)};
-    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || light.monotone).focusBorder};
+    background: ${(props.theme.interactive || dark.monotone.black)};
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).focusBorder};
   `}
 
   ${props => props.danger && `
-    color: ${(props.theme.interactive || light.interactive).dangerBorder} !important;
+    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
   `}
 
   ${props => props.transparentBorder && `
@@ -155,7 +155,7 @@ export const SHARED_LINK_STYLES = css<any>`
 
   ${props => !props.disabled && !props.noOutline && !props.selected && `
     &:focus {
-      box-shadow: 0 0 0 ${OUTLINE_OFFSET}px ${(props.theme.interactive || light.interactive).focusBorder};
+      box-shadow: 0 0 0 ${OUTLINE_OFFSET}px ${(props.theme.interactive || dark.interactive).focusBorder};
     }
   `}
 
@@ -164,47 +164,47 @@ export const SHARED_LINK_STYLES = css<any>`
   `}
 
   ${props => props.sameColorAsText && !props.disabled && `
-    color: ${(props.theme.content || light.content).active};
+    color: ${(props.theme.content || dark.content).active};
 
     &:hover {
-      color: ${(props.theme.content || light.content).active};
+      color: ${(props.theme.content || dark.content).active};
     }
   `}
 
   ${props => props.muted && !props.disabled && `
-    color: ${(props.theme.content || light.content).disabled};
+    color: ${(props.theme.content || dark.content).disabled};
 
     &:hover,
     &:focus {
-      color: ${(props.theme.content || light.content).disabled};
+      color: ${(props.theme.content || dark.content).disabled};
     }
   `}
 
   ${props => props.disabled && `
-    color: ${(props.theme.content || light.content).disabled};
+    color: ${(props.theme.content || dark.content).disabled};
     cursor: not-allowed;
 
     &:focus,
     &:hover {
-      color: ${(props.theme.content || light.content).disabled};
+      color: ${(props.theme.content || dark.content).disabled};
     }
   `}
 
   ${props => props.disabled && `
-    color: ${(props.theme.monotone || light.monotone).gray};
+    color: ${(props.theme.monotone || dark.monotone).gray};
     cursor: not-allowed;
 
     &:focus,
     &:hover {
-      color: ${(props.theme.monotone || light.monotone).gray};
+      color: ${(props.theme.monotone || dark.monotone).gray};
     }
   `}
 
   ${props => props.default && !props.disabled && `
-    color: ${(props.theme.monotone || light.monotone).gray};
+    color: ${(props.theme.monotone || dark.monotone).gray};
 
     &:hover {
-      color: ${(props.theme.monotone || light.monotone).gray};
+      color: ${(props.theme.monotone || dark.monotone).gray};
     }
   `}
 

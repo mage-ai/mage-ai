@@ -7,7 +7,9 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 export const ErrorPopupStyle = styled.div`
   bottom: 0;
   left: 0;
+  max-height: 100vh;
   max-width: 100vw;
+  overflow: auto;
   padding: ${UNIT * PADDING_UNITS}px;
   position: fixed;
   z-index: 100;

@@ -390,7 +390,7 @@ def make_app():
             {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
         ),
         (r'/websocket/', WebSocketServer),
-        (r'/api/aws_event_rules', ApiAwsEventRuleListHandler),
+        (r'/api/event_rules/(?P<provider>\w+)', ApiAwsEventRuleListHandler),
         (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)', ApiBlockRunDetailHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),

@@ -106,6 +106,7 @@ function Table({
     compact,
     noBorder,
     onClickRow,
+    rows,
   ]);
 
   return (

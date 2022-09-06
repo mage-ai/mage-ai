@@ -689,7 +689,7 @@ const InputWrapper = ({
         beforeIcon,
         compact,
         danger: hasError,
-        hasContent: content,
+        hasContent: !!content,
         isFocused: showLabel,
         label: (label === 0 ? '0' : label),
         name,

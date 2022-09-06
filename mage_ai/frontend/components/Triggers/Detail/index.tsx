@@ -27,13 +27,21 @@ import {
 import {
   CalendarDate,
   MultiShare,
+  MusicNotes,
   Pause,
   PlayButtonFilled,
   Schedule,
+  Sun,
   Switch,
 } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { getFormattedVariable, getFormattedVariables } from '@components/Sidekick/utils';
+import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
+import {
+  getFormattedVariable,
+  getFormattedVariables,
+  parseVariables,
+} from '@components/Sidekick/utils';
+import { getTriggerType } from '@utils/models/trigger';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -56,6 +64,7 @@ function TriggerDetail({
   } = pipeline || {};
   const {
     id: pipelineScheduleID,
+    event_matchers: eventMatchers,
     name: pipelineScheduleName,
     schedule_interval: scheduleInterval,
     start_time: startTime,
@@ -103,6 +112,7 @@ function TriggerDetail({
   );
 
   const isActive = useMemo(() => ScheduleStatusEnum.ACTIVE === status, [status]);
+  const triggerType = useMemo(() => getTriggerType(pipelineSchedule), [pipelineSchedule]);
 
   const detailsMemo = useMemo(() => {
     const iconProps = {
@@ -120,7 +130,7 @@ function TriggerDetail({
           </Text>
         </FlexContainer>,
         <Text monospace>
-          {scheduleInterval && startTime ? TriggerTypeEnum.SCHEDULE : TriggerTypeEnum.EVENT}
+          {triggerType}
         </Text>
       ],
       [
@@ -132,7 +142,7 @@ function TriggerDetail({
           </Text>
         </FlexContainer>,
         <Text
-          default={!isActive}
+          danger={!isActive}
           monospace
           success={isActive}
         >
@@ -181,6 +191,7 @@ function TriggerDetail({
     isActive,
     scheduleInterval,
     startTime,
+    triggerType,
   ]);
 
   const scheduleVariables = useMemo(() => scheduleVariablesInit || {}, [scheduleVariablesInit]);
@@ -223,14 +234,30 @@ function TriggerDetail({
     variables,
   ]);
 
-  const buildSidekick = useMemo(() => {
-    return props => (
-      <DependencyGraph
-        {...props}
-        noStatus
-      />
-    );
-  }, [pipelineSchedule]);
+  const eventsTable = useMemo(() => (
+    <Table
+      columnFlex={[null, 1]}
+      columns={[
+        {
+          uuid: 'Provider',
+        },
+        {
+          uuid: 'Event',
+        }
+      ]}
+      rows={eventMatchers?.map(({
+        event_type: eventType,
+        name,
+      }) => [
+        <Text default monospace>
+          {PROVIDER_EVENTS_BY_UUID[eventType].label()}
+        </Text>,
+        <Text monospace>
+          {name}
+        </Text>,
+      ])}
+    />
+  ), [eventMatchers]);
 
   return (
     <PipelineDetailPage
@@ -241,6 +268,18 @@ function TriggerDetail({
             pt={PADDING_UNITS}
             px={PADDING_UNITS}
           >
+            <Spacing mb={PADDING_UNITS}>
+              {TriggerTypeEnum.SCHEDULE === triggerType && (
+                <Sun size={5 * UNIT} />
+              )}
+              {TriggerTypeEnum.EVENT === triggerType && (
+                <MusicNotes size={5 * UNIT} />
+              )}
+              {!triggerType && (
+                <MultiShare size={5 * UNIT} />
+              )}
+            </Spacing>
+
             <Headline>
               {pipelineScheduleName}
             </Headline>
@@ -269,6 +308,20 @@ function TriggerDetail({
               {variablesTable}
             </Spacing>
           )}
+
+          {eventMatchers?.length >= 1 && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  Events
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              {eventsTable}
+            </Spacing>
+          )}
         </BeforeStyle>
       )}
       beforeWidth={34 * UNIT}
@@ -288,7 +341,12 @@ function TriggerDetail({
           },
         },
       ]}
-      buildSidekick={buildSidekick}
+      buildSidekick={props => (
+        <DependencyGraph
+          {...props}
+          noStatus
+        />
+      )}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       subheader={(

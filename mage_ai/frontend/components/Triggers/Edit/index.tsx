@@ -5,14 +5,20 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
+import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
+import EventRuleType from '@interfaces/EventRuleType';
 import Divider from '@oracle/elements/Divider';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
+import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineScheduleType, { ScheduleIntervalEnum, TriggerTypeEnum } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
@@ -24,13 +30,24 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
-import { Alphabet, CalendarDate, Schedule } from '@oracle/icons';
+import {
+  Add,
+  Alphabet,
+  CalendarDate,
+  Schedule,
+  Trash,
+} from '@oracle/icons';
 import { CardStyle, DateSelectionContainer } from './index.style';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import {
+  PADDING_UNITS,
+  UNIT,
+  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
+} from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
+import { getTriggerType } from '@utils/models/trigger';
+import { indexBy, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
 
 const TRIGGER_TYPES = [
   {
@@ -62,6 +79,9 @@ function Edit({
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
 
+  const [errors, setErrors] = useState(null);
+
+  const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
   const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
@@ -79,6 +99,10 @@ function Edit({
   const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<string>('00:00');
 
+  const { data: dataEventRules } = api.event_rules.detail('aws');
+  const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rules || [], [dataEventRules]);
+  const eventRulesByName = useMemo(() => indexBy(eventRules, ({ name }) => name), [eventRules]);
+
   const [updateSchedule, { isLoading: isLoadingUpdate }] = useMutation(
     api.pipeline_schedules.useUpdate(pipelineScheduleID),
     {
@@ -91,13 +115,13 @@ function Edit({
               `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
             );
           },
-          onErrorCallback: (response, errors) => console.log(
+          onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
-          ),
-        }
-      )
-    }
+          }),
+        },
+      ),
+    },
   );
 
   const scheduleVariables = useMemo(() => schedule_variables || {}, [schedule_variables]);
@@ -149,14 +173,15 @@ function Edit({
   useEffect(
     () => {
       if (pipelineSchedule) {
+        setEventMatchers(pipelineSchedule.event_matchers);
         setSchedule(pipelineSchedule);
-        if (pipelineSchedule.schedule_interval && pipelineSchedule.start_time) {
-          setTriggerType(TriggerTypeEnum.SCHEDULE);
-        }
+        setTriggerType(getTriggerType(pipelineSchedule));
       }
     },
     [pipelineSchedule],
   );
+
+  console.log(eventRulesByName)
 
   const onSave = useCallback(() => {
     const st = date && time
@@ -164,6 +189,15 @@ function Edit({
       : null;
 
     const updatedSchedule = {
+      event_matchers: eventMatchers?.map((eventMatcher) => {
+        const patternString = eventRulesByName[eventMatcher.name]?.event_pattern;
+        const pattern = patternString ? JSON.parse(patternString) : null;
+
+        return {
+          ...eventMatcher,
+          pattern,
+        };
+      }),
       name,
       schedule_interval: scheduleInterval,
       start_time: st,
@@ -176,11 +210,13 @@ function Edit({
     });
   }, [
     date,
-    updateSchedule,
+    eventMatchers,
+    eventRulesByName,
     name,
     runtimeVariables,
     scheduleInterval,
     time,
+    updateSchedule,
   ]);
 
   const detailsMemo = useMemo(() => {
@@ -306,6 +342,20 @@ function Edit({
     time,
   ]);
 
+
+
+  const updateEventMatcher = useCallback((idx, data: {
+    [key: string]: string;
+  }) => {
+    setEventMatchers(prev => {
+      Object.entries(data).forEach(([k, v]) => {
+        prev[idx][k] = v;
+      });
+
+      return [...prev];
+    });
+  }, [setEventMatchers]);
+
   const eventsMemo = useMemo(() => {
     return (
       <>
@@ -355,13 +405,136 @@ function Edit({
 
           <Text muted>
             Add 1 or more event that will trigger this pipeline to run.
+            <br />
+            If you add more than 1 event,
+            this pipeline will trigger if any of the events are received.
           </Text>
+
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <Text bold large>
+              AWS events
+            </Text>
+
+            <Text muted>
+              In order to retrieve all the possible AWS events you can trigger your pipeline from,
+              <br />
+              you’ll need to set 3 environment variables (<Link
+                href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html"
+                openNewWindow
+                underline
+              >
+                more info here
+              </Link>):
+            </Text>
+
+            <Spacing mt={1}>
+              <List monospace ordered>
+                <Text monospace>
+                  AWS_REGION_NAME
+                </Text>
+                <Text monospace>
+                  AWS_ACCESS_KEY_ID
+                </Text>
+                <Text monospace>
+                  AWS_SECRET_ACCESS_KEY
+                </Text>
+              </List>
+            </Spacing>
+          </Spacing>
         </Spacing>
 
         <Divider light short />
+
+        {eventMatchers?.length >= 1 && (
+          <Table
+            columnFlex={[1, 1, null]}
+            columns={[
+              {
+                uuid: 'Provider',
+              },
+              {
+                uuid: 'Event',
+              },
+              {
+                label: () => '',
+                uuid: 'delete',
+              },
+            ]}
+            rows={eventMatchers?.map((eventMatcher: EventMatcherType, idx: number) => {
+              const {
+                event_type: provider,
+                name: eventName,
+                pattern = {},
+              } = eventMatcher;
+              const eventID =
+                eventMatcher.id || `${provider}-${eventName}-${idx}-${JSON.stringify(pattern)}`;
+
+              return [
+                <Select
+                  key={`event-provider-${eventID}`}
+                  monospace
+                  noBorder
+                  onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
+                  paddingHorizontal={0}
+                  placeholder="Event provider"
+                  value={provider || ''}
+                >
+                  {!provider && <option value="" />}
+                  {PROVIDER_EVENTS.map(({
+                    label,
+                    uuid,
+                  }) => (
+                    <option key={uuid} value={uuid}>
+                      {label()}
+                    </option>
+                  ))}
+                </Select>,
+                <Select
+                  key={`event-name-${eventID}`}
+                  monospace
+                  noBorder
+                  onChange={e => updateEventMatcher(idx, { name: e.target.value })}
+                  paddingHorizontal={0}
+                  placeholder="Event name"
+                  value={eventName}
+                >
+                  {!eventName && <option value="" />}
+                  {eventRules.map(({
+                    name,
+                  }) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>,
+                <Button
+                  default
+                  iconOnly
+                  noBackground
+                  onClick={() => setEventMatchers(prev => removeAtIndex(prev, idx))}
+                >
+                  <Trash default size={2 * UNIT} />
+                </Button>,
+              ];
+            })}
+          />
+        )}
+
+        <Spacing p={PADDING_UNITS}>
+          <Button
+            beforeIcon={<Add size={2 * UNIT} />}
+            // @ts-ignore
+            onClick={() => setEventMatchers(prev => prev.concat({}))}
+            outline
+          >
+            Add event matcher
+          </Button>
+        </Spacing>
       </>
     );
   }, [
+    eventMatchers,
+    eventRules,
     name,
   ]);
 
@@ -426,129 +599,138 @@ function Edit({
   }, [overwriteVariables, runtimeVariables, setOverwriteVariables]);
 
   return (
-    <PipelineDetailPage
-      after={(
-        <Spacing p={PADDING_UNITS}>
-          {variablesMemo}
-        </Spacing>
-      )}
-      breadcrumbs={[
-        {
-          label: () => 'Triggers',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers`,
-            href: '/pipelines/[pipeline]/triggers',
+    <>
+      <PipelineDetailPage
+        after={(
+          <Spacing p={PADDING_UNITS}>
+            {variablesMemo}
+          </Spacing>
+        )}
+        breadcrumbs={[
+          {
+            label: () => 'Triggers',
+            linkProps: {
+              as: `/pipelines/${pipelineUUID}/triggers`,
+              href: '/pipelines/[pipeline]/triggers',
+            },
           },
-        },
-        {
-          label: () => pipelineSchedule?.name,
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
-            href: '/pipelines/[pipeline]/triggers/[...slug]',
-          },
-        },
-      ]}
-      pageName={PageNameEnum.TRIGGERS}
-      pipeline={pipeline}
-      subheader={(
-        <FlexContainer alignItems="center">
-          <Button
-            loading={isLoadingUpdate}
-            onClick={() => onSave()}
-            outline
-            primary
-          >
-            Save changes
-          </Button>
-
-          <Spacing mr={1} />
-
-          <Button
-            noHoverUnderline
-            linkProps={{
-              href: '/pipelines/[pipeline]/triggers/[...slug]',
+          {
+            label: () => pipelineSchedule?.name,
+            linkProps: {
               as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
-            }}
-            outline
-            sameColorAsText
-          >
-            Cancel
-          </Button>
-        </FlexContainer>
-      )}
-      title={() => `Edit ${pipelineSchedule?.name}`}
-      uuid="triggers/edit"
-    >
-      <Spacing p={PADDING_UNITS}>
-        <Spacing mb={2}>
-          <Headline>
-            Trigger type
-          </Headline>
+              href: '/pipelines/[pipeline]/triggers/[...slug]',
+            },
+          },
+        ]}
+        pageName={PageNameEnum.TRIGGERS}
+        pipeline={pipeline}
+        subheader={(
+          <FlexContainer alignItems="center">
+            <Button
+              loading={isLoadingUpdate}
+              onClick={() => onSave()}
+              outline
+              primary
+            >
+              Save changes
+            </Button>
 
-          <Text muted>
-            How would you like this pipeline to be triggered?
-          </Text>
+            <Spacing mr={1} />
+
+            <Button
+              noHoverUnderline
+              linkProps={{
+                href: '/pipelines/[pipeline]/triggers/[...slug]',
+                as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+              }}
+              outline
+              sameColorAsText
+            >
+              Cancel
+            </Button>
+          </FlexContainer>
+        )}
+        title={() => `Edit ${pipelineSchedule?.name}`}
+        uuid="triggers/edit"
+      >
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mb={2}>
+            <Headline>
+              Trigger type
+            </Headline>
+
+            <Text muted>
+              How would you like this pipeline to be triggered?
+            </Text>
+          </Spacing>
+
+          <FlexContainer>
+            {TRIGGER_TYPES.map(({
+              label,
+              description,
+              uuid,
+            }) => {
+              const selected = triggerType === uuid;
+              const othersSelected = triggerType && !selected;
+
+              return (
+                <Button
+                  key={uuid}
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setTriggerType(uuid)}
+                >
+                  <CardStyle selected={selected}>
+                    <FlexContainer alignItems="center">
+                      <Flex>
+                        <input checked={selected} type="radio" />
+                      </Flex>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <Flex
+                        alignItems="flex-start"
+                        flexDirection="column"
+                      >
+                        <Headline
+                          default={!selected && !othersSelected}
+                          bold
+                          level={5}
+                          muted={!selected && othersSelected}
+                        >
+                          {label()}
+                        </Headline>
+
+                        <Text
+                          default={!selected && !othersSelected}
+                          leftAligned
+                          muted={othersSelected}
+                        >
+                          {description()}
+                        </Text>
+                      </Flex>
+                    </FlexContainer>
+                  </CardStyle>
+                </Button>
+              );
+            })}
+          </FlexContainer>
         </Spacing>
 
-        <FlexContainer>
-          {TRIGGER_TYPES.map(({
-            label,
-            description,
-            uuid,
-          }) => {
-            const selected = triggerType === uuid;
-            const othersSelected = triggerType && !selected;
+        <Spacing mt={5}>
+          {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
+          {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
+        </Spacing>
 
-            return (
-              <Button
-                key={uuid}
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setTriggerType(uuid)}
-              >
-                <CardStyle selected={selected}>
-                  <FlexContainer alignItems="center">
-                    <Flex>
-                      <input checked={selected} type="radio" />
-                    </Flex>
-
-                    <Spacing mr={PADDING_UNITS} />
-
-                    <Flex
-                      alignItems="flex-start"
-                      flexDirection="column"
-                    >
-                      <Headline
-                        default={!selected && !othersSelected}
-                        bold
-                        level={5}
-                        muted={!selected && othersSelected}
-                      >
-                        {label()}
-                      </Headline>
-
-                      <Text
-                        default={!selected && !othersSelected}
-                        leftAligned
-                        muted={othersSelected}
-                      >
-                        {description()}
-                      </Text>
-                    </Flex>
-                  </FlexContainer>
-                </CardStyle>
-              </Button>
-            );
-          })}
-        </FlexContainer>
-      </Spacing>
-
-      <Spacing mt={5}>
-        {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
-        {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
-      </Spacing>
-    </PipelineDetailPage>
+      </PipelineDetailPage>
+      {errors && (
+        <ErrorPopup
+          {...errors}
+          onClose={() => setErrors(null)}
+        />
+      )}
+    </>
   );
 }
 

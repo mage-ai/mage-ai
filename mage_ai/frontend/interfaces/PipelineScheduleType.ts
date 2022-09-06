@@ -1,3 +1,5 @@
+import EventMatcherType from './EventMatcherType';
+
 export enum TriggerTypeEnum {
   EVENT = 'event',
   SCHEDULE = 'schedule',
@@ -25,9 +27,9 @@ export interface SelectedScheduleType {
   scheduleName?: string;
 }
 
-
 export default interface PipelineScheduleType {
   created_at?: string;
+  event_matchers?: EventMatcherType[];
   id?: string;
   name?: string;
   pipeline_runs_count?: number;

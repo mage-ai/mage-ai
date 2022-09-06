@@ -20,6 +20,7 @@ import api from '@api';
 import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { getTriggerType } from '@utils/models/trigger';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
@@ -159,7 +160,7 @@ function PipelineSchedules({
       <Divider light mt={PADDING_UNITS} short />
 
       <Table
-        columnFlex={[null, 2, 4, 10, 4, 2, null, null]}
+        columnFlex={[null, null, 1, 1, 3, 1, null, null, null]}
         columns={[
           {
             label: () => '',
@@ -167,6 +168,9 @@ function PipelineSchedules({
           },
           {
             uuid: 'Status',
+          },
+          {
+            uuid: 'Type',
           },
           {
             uuid: 'Start time',
@@ -222,9 +226,16 @@ function PipelineSchedules({
             </Button>,
             <Text
               default={ScheduleStatusEnum.INACTIVE === status}
+              monospace
               success={ScheduleStatusEnum.ACTIVE === status}
             >
               {status}
+            </Text>,
+            <Text
+              default
+              monospace
+            >
+              {getTriggerType(pipelineSchedule)}
             </Text>,
             <Text monospace default>
               {startTime}
@@ -234,7 +245,17 @@ function PipelineSchedules({
               href={'/pipelines/[pipeline]/triggers/[...slug]'}
               passHref
             >
-              <Link bold sameColorAsText>
+              <Link
+                bold
+                onClick={(e) => {
+                  pauseEvent(e);
+                  router.push(
+                    '/pipelines/[pipeline]/triggers/[...slug]',
+                    `/pipelines/${pipelineUUID}/triggers/${id}`,
+                  );
+                }}
+                sameColorAsText
+              >
                 {name}
               </Link>
             </NextLink>,
