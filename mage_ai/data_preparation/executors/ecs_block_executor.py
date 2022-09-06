@@ -12,7 +12,10 @@ class EcsBlockExecutor(BlockExecutor):
         **kwargs,
     ) -> None:
         cmd = f'mage run {self.pipeline.repo_config.repo_name} {self.pipeline.uuid}'
-        options = [f'--block_uuid {self.block_uuid}']
+        options = [
+            f'--block_uuid {self.block_uuid}',
+            '--executor_type local_python',
+        ]
         if self.execution_partition is not None:
             options.append(f'--execution_partition {self.execution_partition}')
         if block_run_id is not None:
