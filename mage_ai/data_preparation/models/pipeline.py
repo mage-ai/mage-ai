@@ -1,6 +1,7 @@
 from mage_ai.data_preparation.models.block import Block, run_blocks, run_blocks_sync
 from mage_ai.data_preparation.models.constants import (
     BlockType,
+    ExecutorType,
     PipelineType,
     PIPELINE_CONFIG_FILE,
     PIPELINES_FOLDER,
@@ -261,6 +262,7 @@ class Pipeline:
                 block_type,
                 configuration=c.get('configuration'),
                 content=c.get('content'),
+                executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
                 language=c.get('language'),
                 pipeline=self,
                 status=c.get('status'),

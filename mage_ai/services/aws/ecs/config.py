@@ -21,6 +21,8 @@ class EcsConfig(BaseConfig):
     @classmethod
     def load_extra_config(self):
         ecs_container_metadata_uri = os.getenv(ECS_CONTAINER_METADATA_URI_VAR)
+        if ecs_container_metadata_uri is None:
+            return dict()
 
         container_metadata = requests.get(ecs_container_metadata_uri).json()
         container_name = container_metadata['Name']

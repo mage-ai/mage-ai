@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
     BlockType,
+    ExecutorType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
@@ -160,6 +161,7 @@ class Block:
         uuid,
         block_type,
         content=None,
+        executor_type=ExecutorType.LOCAL_PYTHON,
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language=BlockLanguage.PYTHON,
@@ -170,6 +172,7 @@ class Block:
         self.type = block_type
         self._content = content
         self._outputs = None
+        self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
         self.upstream_blocks = []
@@ -751,6 +754,7 @@ class Block:
             ),
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
+            executor_type=self.executor_type,
             name=self.name,
             language=language,
             status=self.status.value if type(self.status) is not str else self.status,
