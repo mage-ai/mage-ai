@@ -435,7 +435,7 @@ function Edit({
                 uuid: 'Provider',
               },
               {
-                uuid: 'Name',
+                uuid: 'Event',
               },
               {
                 label: () => '',
@@ -455,7 +455,9 @@ function Edit({
                 <Select
                   key={`event-provider-${eventID}`}
                   monospace
+                  noBorder
                   onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
+                  paddingHorizontal={0}
                   placeholder="Event provider"
                   value={provider || ''}
                 >
@@ -472,7 +474,9 @@ function Edit({
                 <Select
                   key={`event-name-${eventID}`}
                   monospace
+                  noBorder
                   onChange={e => updateEventMatcher(idx, { name: e.target.value })}
+                  paddingHorizontal={0}
                   placeholder="Event name"
                   value={eventName}
                 >
