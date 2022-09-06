@@ -1,22 +1,17 @@
 import {
-  CATEGORICAL_TYPES,
-  DATE_TYPES,
-  DISTRIBUTION_COLUMNS,
-  DISTRIBUTION_STATS,
   HUMAN_READABLE_MAPPING,
   METRICS_KEYS,
   METRICS_RATE_KEY_MAPPING,
   METRICS_SORTED_MAPPING,
   METRICS_SUCCESS_DIRECTION_MAPPING,
   METRICS_WARNING_MAPPING,
-  NUMBER_TYPES,
   PERCENTAGE_KEYS,
   STAT_KEYS,
 } from '@components/datasets/constants';
 import { StatRow as StatRowType } from '@components/datasets/StatsTable';
-import { calculateChange, transformNumber } from '@utils/number';
 import { getColumnTypeCounts } from '@components/datasets/overview/utils';
 import { numberWithCommas } from '@utils/string';
+import { transformNumber } from '@utils/number';
 
 export function createMetricsSample({
   statistics,

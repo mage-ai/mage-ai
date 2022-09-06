@@ -372,8 +372,9 @@ class KernelsHandler(BaseHandler):
 def make_app():
     routes = [
         (r'/', MainHandler),
-        # (r'/pipelines', MainHandler),
+        (r'/pipelines', MainHandler),
         (r'/pipelines/(.*)', MainHandler),
+        (r'/pipeline-runs', MainHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -383,6 +384,11 @@ def make_app():
             r'/fonts/(.*)',
             tornado.web.StaticFileHandler,
             {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
+        ),
+        (
+            r'/images/(.*)',
+            tornado.web.StaticFileHandler,
+            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/images')},
         ),
         (
             r'/(favicon.ico)',
