@@ -4,12 +4,9 @@ import { useMutation } from 'react-query';
 import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
-import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineScheduleType, {
   ScheduleStatusEnum,
@@ -20,7 +17,6 @@ import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import {
@@ -29,7 +25,6 @@ import {
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import {
-  Alphabet,
   CalendarDate,
   MultiShare,
   Pause,
@@ -38,7 +33,7 @@ import {
   Switch,
 } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
+import { getFormattedVariable, getFormattedVariables } from '@components/Sidekick/utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -196,7 +191,7 @@ function TriggerDetail({
       Object.entries(scheduleVariables).forEach(([k, v]) => {
         arr.push({
           uuid: k,
-          value: v,
+          value: getFormattedVariable(v),
         });
       });
     } else {
@@ -229,26 +224,12 @@ function TriggerDetail({
   ]);
 
   const buildSidekick = useMemo(() => {
-    const showVariables = pipelineSchedule;
-
-    return props => {
-      const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
-
-      return (
-        <>
-          {showVariables && (
-            <VariableOverwrites
-              pipelineSchedule={pipelineSchedule}
-            />
-          )}
-          <DependencyGraph
-            {...props}
-            height={dependencyGraphHeight}
-            noStatus
-          />
-        </>
-      )
-    };
+    return props => (
+      <DependencyGraph
+        {...props}
+        noStatus
+      />
+    );
   }, [pipelineSchedule]);
 
   return (

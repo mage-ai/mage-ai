@@ -123,6 +123,10 @@ export function createStatisticsSample({
   return rowData;
 }
 
+export function getFormattedVariable(variable) {
+  return typeof variable === 'string' ? variable : JSON.stringify(variable);
+}
+
 export function getFormattedVariables(variables, filterBlock) {
   return variables
     ?.find(({ block }) => filterBlock(block))
@@ -131,7 +135,7 @@ export function getFormattedVariables(variables, filterBlock) {
       const variableValue = variable.value;
       return {
         ...variable,
-        value: typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue),
+        value: getFormattedVariable(variableValue),
       }
     })
 }

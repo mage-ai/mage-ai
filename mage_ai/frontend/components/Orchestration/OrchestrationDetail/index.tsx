@@ -44,31 +44,6 @@ function OrchestrationDetail({
     start_time,
   } = pipelineSchedule || {};
 
-  const runData = useMemo(() => {
-    if (pipelineRuns) {
-      return pipelineRuns.map(pipelineRun => [
-        <Text monospace muted>
-          {pipelineRun?.execution_date}
-        </Text>,
-        <Text monospace muted>
-          {pipelineRun?.status}
-        </Text>,
-        <Link
-          onClick={() => console.log('show block runs')}
-        >
-          <FlexContainer justifyContent="end">
-            <Text inline monospace muted>
-              View
-            </Text>
-            <Spacing ml={1} />
-            <ChevronRight size={2 * UNIT} muted />
-          </FlexContainer>
-        </Link>,
-      ]);
-    }
-  }, [pipelineRuns])
-
-
   return (
     <>
       <HeaderStyle>
