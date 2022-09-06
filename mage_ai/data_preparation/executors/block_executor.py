@@ -38,6 +38,7 @@ class BlockExecutor:
                 execution_partition=self.execution_partition,
                 global_vars=global_vars,
                 logger=self.logger,
+                run_all_blocks=True,
                 update_status=update_status,
             )
         except Exception as e:
