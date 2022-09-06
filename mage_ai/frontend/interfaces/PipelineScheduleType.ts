@@ -1,4 +1,4 @@
-import EventMatcherType from '.EventMatcherType';
+import EventMatcherType from './EventMatcherType';
 
 export enum TriggerTypeEnum {
   EVENT = 'event',

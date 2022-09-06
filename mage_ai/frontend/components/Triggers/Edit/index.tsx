@@ -517,6 +517,7 @@ function Edit({
         <Spacing p={PADDING_UNITS}>
           <Button
             beforeIcon={<Add size={2 * UNIT} />}
+            // @ts-ignore
             onClick={() => setEventMatchers(prev => prev.concat({}))}
             outline
           >

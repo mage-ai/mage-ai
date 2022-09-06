@@ -25,7 +25,7 @@ type ListProps = {
   small?: boolean;
 };
 
-const SHARED_STYLES = css`
+const SHARED_STYLES = css<ListProps>`
   ${props => !props.muted && `
     color: ${(props.theme.content || dark.content).default};
   `}
@@ -75,7 +75,9 @@ const OrderedListStyle = styled.ol`
   ${SHARED_STYLES}
 `;
 
-const ListItemStyle = styled.li`
+const ListItemStyle = styled.li<ListProps & {
+  marginTop: boolean;
+}>`
   ${props => props.large && props.marginTop && `
     margin-top: ${UNIT * 1}px;
   `}
