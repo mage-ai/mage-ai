@@ -116,10 +116,13 @@ Commands:
                 update_status=False,
             )
         else:
-            ExecutorFactory.get_block_executor(pipeline, block_uuid).execute(
-                analyze_outputs=False,
+            ExecutorFactory.get_block_executor(
+                pipeline,
+                block_uuid,
                 execution_partition=execution_partition,
                 executor_type=executor_type,
+            ).execute(
+                analyze_outputs=False,
                 callback_url=callback_url,
                 global_vars=global_vars,
                 update_status=False,
