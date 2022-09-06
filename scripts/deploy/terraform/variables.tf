@@ -37,6 +37,16 @@ variable "docker_image" {
   default     = "mageai/mageai:latest"
 }
 
+variable "ecs_task_cpu" {
+  description = "ECS task cpu"
+  default     = 512
+}
+
+variable "ecs_task_memory" {
+  description = "ECS task memory"
+  default     = 1024
+}
+
 variable "public_subnets" {
   description = "List of public subnets"
   default     = ["10.32.100.0/24", "10.32.101.0/24"]

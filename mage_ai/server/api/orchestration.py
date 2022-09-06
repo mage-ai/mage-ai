@@ -170,6 +170,13 @@ class ApiAllPipelineRunListHandler(BaseHandler):
         process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
 
 
+class ApiPipelineRunDetailHandler(BaseDetailHandler):
+    model_class = PipelineRun
+
+    def put(self, pipeline_run_id):
+        super().put(pipeline_run_id)
+
+
 class ApiPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
