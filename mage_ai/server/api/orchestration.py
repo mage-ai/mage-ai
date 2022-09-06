@@ -1,6 +1,12 @@
 from .base import BaseDetailHandler, BaseHandler
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.models import (
+    BlockRun,
+    EventMatcher,
+    PipelineRun,
+    PipelineSchedule,
+)
+from mage_ai.shared.hash import merge_dict
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
 
@@ -215,9 +221,29 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
         payload = self.get_payload()
 
+        arr = payload.pop('event_matchers', [])
+        event_matchers = []
+        if len(arr) >= 1:
+            event_matchers = EventMatcher.upsert_batch(
+                [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
+            )
+
         pipeline_schedule.update(**payload)
 
-        self.write(dict(pipeline_schedule=pipeline_schedule.to_dict()))
+        extra_data = {}
+        include_attributes = []
+
+        if len(event_matchers) >= 1:
+            extra_data['event_matchers'] = [em.to_dict() for em in event_matchers]
+        else:
+            include_attributes.append('event_matchers')
+
+        pipeline_schedule_data = merge_dict(
+            pipeline_schedule.to_dict(include_attributes=include_attributes),
+            extra_data,
+        )
+
+        self.write(dict(pipeline_schedule=pipeline_schedule_data))
 
     def delete(self, pipeline_schedule_id):
         super().delete(pipeline_schedule_id)

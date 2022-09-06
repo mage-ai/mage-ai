@@ -27,6 +27,7 @@ export const BLOCKS: 'blocks' = 'blocks';
 export const COLUMNS: 'columns' = 'columns';
 export const DATA_PROVIDERS: 'data_providers' = 'data_providers';
 export const DOWNLOADS: 'downloads' = 'downloads';
+export const EVENT_MATCHERS = 'event_matchers';
 export const EVENT_RULES = 'event_rules';
 export const FEATURES: 'features' = 'features';
 export const FILE_CONTENTS: 'file_contents' = 'file_contents';
@@ -60,6 +61,7 @@ const RESOURCES: any[][] = [
   [COLUMNS, FEATURE_SETS],
   [DATA_PROVIDERS],
   [DOWNLOADS, FEATURE_SETS],
+  [EVENT_MATCHERS],
   [EVENT_RULES],
   [FEATURE_SETS],
   [FILES],

@@ -4,11 +4,12 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import Session, session
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
+from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.collections import InstrumentedList
-from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
@@ -276,6 +277,62 @@ class EventMatcher(BaseModel):
                 PipelineSchedule.status == PipelineSchedule.ScheduleStatus.ACTIVE
             )
         ).all()
+
+    @classmethod
+    def upsert_batch(self, event_matchers_payload):
+        keys_to_ignore = [
+            'created_at',
+            'id',
+            'updated_at',
+        ]
+
+        new_arr = []
+        existing_arr = []
+
+        pipeline_schedule_ids = []
+        for payload in event_matchers_payload:
+            pipeline_schedule_ids += payload.get('pipeline_schedule_ids', [])
+            if payload.get('id'):
+                existing_arr.append(payload)
+            else:
+                new_arr.append(payload)
+
+        pipeline_schedules_by_id = index_by(
+            lambda x: x.id,
+            PipelineSchedule.query.filter(
+                PipelineSchedule.id.in_(pipeline_schedule_ids),
+            ).all(),
+        )
+
+        event_matchers_and_pipeline_schedule_ids = []
+        event_matchers_by_id = index_by(
+            lambda x: x.id,
+            self.query.filter(
+                self.id.in_([p['id'] for p in existing_arr]),
+            ).all(),
+        )
+        for payload in existing_arr:
+            ids = payload.pop('pipeline_schedule_ids', None)
+            event_matcher = event_matchers_by_id[payload['id']]
+            event_matcher.update(**ignore_keys(payload, keys_to_ignore))
+            event_matchers_and_pipeline_schedule_ids.append((event_matcher, ids))
+
+        for payload in new_arr:
+            ids = payload.pop('pipeline_schedule_ids', None)
+            event_matcher = self.create(**ignore_keys(payload, keys_to_ignore))
+            event_matchers_and_pipeline_schedule_ids.append((event_matcher, ids))
+
+        for event_matcher, ids in event_matchers_and_pipeline_schedule_ids:
+            if ids is not None:
+                ps = [pipeline_schedules_by_id[i] for i in [int(i) for i in ids]]
+                event_matcher.update(pipeline_schedules=ps)
+
+            if event_matcher.event_type == EventMatcher.EventType.AWS_EVENT:
+                from mage_ai.services.aws.events.events import update_event_rule_targets
+                # For AWS event, update related AWS infra (add trigger to lambda function)
+                update_event_rule_targets(event_matcher.name)
+
+        return [t[0] for t in event_matchers_and_pipeline_schedule_ids]
 
     def active_pipeline_schedules(self) -> List[PipelineSchedule]:
         return [p for p in self.pipeline_schedules

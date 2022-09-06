@@ -5,10 +5,12 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ErrorPopup from '@components/ErrorPopup';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
 import Divider from '@oracle/elements/Divider';
@@ -46,7 +48,6 @@ import { getFormattedVariables, parseVariables } from '@components/Sidekick/util
 import { getTriggerType } from '@utils/models/trigger';
 import { onSuccess } from '@api/utils/response';
 import { removeAtIndex } from '@utils/array';
-import { useMutation } from 'react-query';
 
 const TRIGGER_TYPES = [
   {
@@ -77,6 +78,8 @@ function Edit({
   const router = useRouter();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
+
+  const [errors, setErrors] = useState(null);
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
@@ -111,13 +114,13 @@ function Edit({
               `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
             );
           },
-          onErrorCallback: (response, errors) => console.log(
+          onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
-          ),
-        }
-      )
-    }
+          }),
+        },
+      ),
+    },
   );
 
   const scheduleVariables = useMemo(() => schedule_variables || {}, [schedule_variables]);
@@ -163,9 +166,9 @@ function Edit({
   useEffect(
     () => {
       if (pipelineSchedule) {
+        setEventMatchers(pipelineSchedule.event_matchers);
         setSchedule(pipelineSchedule);
         setTriggerType(getTriggerType(pipelineSchedule));
-        setTriggerType(TriggerTypeEnum.EVENT)
       }
     },
     [pipelineSchedule],
@@ -177,6 +180,7 @@ function Edit({
       : null;
 
     const updatedSchedule = {
+      event_matchers: eventMatchers,
       name,
       schedule_interval: scheduleInterval,
       start_time: st,
@@ -189,11 +193,12 @@ function Edit({
     });
   }, [
     date,
-    updateSchedule,
+    eventMatchers,
     name,
     runtimeVariables,
     scheduleInterval,
     time,
+    updateSchedule,
   ]);
 
   const detailsMemo = useMemo(() => {
@@ -576,129 +581,138 @@ function Edit({
   }, [overwriteVariables, runtimeVariables, setOverwriteVariables]);
 
   return (
-    <PipelineDetailPage
-      after={(
-        <Spacing p={PADDING_UNITS}>
-          {variablesMemo}
-        </Spacing>
-      )}
-      breadcrumbs={[
-        {
-          label: () => 'Triggers',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers`,
-            href: '/pipelines/[pipeline]/triggers',
+    <>
+      <PipelineDetailPage
+        after={(
+          <Spacing p={PADDING_UNITS}>
+            {variablesMemo}
+          </Spacing>
+        )}
+        breadcrumbs={[
+          {
+            label: () => 'Triggers',
+            linkProps: {
+              as: `/pipelines/${pipelineUUID}/triggers`,
+              href: '/pipelines/[pipeline]/triggers',
+            },
           },
-        },
-        {
-          label: () => pipelineSchedule?.name,
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
-            href: '/pipelines/[pipeline]/triggers/[...slug]',
-          },
-        },
-      ]}
-      pageName={PageNameEnum.TRIGGERS}
-      pipeline={pipeline}
-      subheader={(
-        <FlexContainer alignItems="center">
-          <Button
-            loading={isLoadingUpdate}
-            onClick={() => onSave()}
-            outline
-            primary
-          >
-            Save changes
-          </Button>
-
-          <Spacing mr={1} />
-
-          <Button
-            noHoverUnderline
-            linkProps={{
-              href: '/pipelines/[pipeline]/triggers/[...slug]',
+          {
+            label: () => pipelineSchedule?.name,
+            linkProps: {
               as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
-            }}
-            outline
-            sameColorAsText
-          >
-            Cancel
-          </Button>
-        </FlexContainer>
-      )}
-      title={() => `Edit ${pipelineSchedule?.name}`}
-      uuid="triggers/edit"
-    >
-      <Spacing p={PADDING_UNITS}>
-        <Spacing mb={2}>
-          <Headline>
-            Trigger type
-          </Headline>
+              href: '/pipelines/[pipeline]/triggers/[...slug]',
+            },
+          },
+        ]}
+        pageName={PageNameEnum.TRIGGERS}
+        pipeline={pipeline}
+        subheader={(
+          <FlexContainer alignItems="center">
+            <Button
+              loading={isLoadingUpdate}
+              onClick={() => onSave()}
+              outline
+              primary
+            >
+              Save changes
+            </Button>
 
-          <Text muted>
-            How would you like this pipeline to be triggered?
-          </Text>
+            <Spacing mr={1} />
+
+            <Button
+              noHoverUnderline
+              linkProps={{
+                href: '/pipelines/[pipeline]/triggers/[...slug]',
+                as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
+              }}
+              outline
+              sameColorAsText
+            >
+              Cancel
+            </Button>
+          </FlexContainer>
+        )}
+        title={() => `Edit ${pipelineSchedule?.name}`}
+        uuid="triggers/edit"
+      >
+        <Spacing p={PADDING_UNITS}>
+          <Spacing mb={2}>
+            <Headline>
+              Trigger type
+            </Headline>
+
+            <Text muted>
+              How would you like this pipeline to be triggered?
+            </Text>
+          </Spacing>
+
+          <FlexContainer>
+            {TRIGGER_TYPES.map(({
+              label,
+              description,
+              uuid,
+            }) => {
+              const selected = triggerType === uuid;
+              const othersSelected = triggerType && !selected;
+
+              return (
+                <Button
+                  key={uuid}
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setTriggerType(uuid)}
+                >
+                  <CardStyle selected={selected}>
+                    <FlexContainer alignItems="center">
+                      <Flex>
+                        <input checked={selected} type="radio" />
+                      </Flex>
+
+                      <Spacing mr={PADDING_UNITS} />
+
+                      <Flex
+                        alignItems="flex-start"
+                        flexDirection="column"
+                      >
+                        <Headline
+                          default={!selected && !othersSelected}
+                          bold
+                          level={5}
+                          muted={!selected && othersSelected}
+                        >
+                          {label()}
+                        </Headline>
+
+                        <Text
+                          default={!selected && !othersSelected}
+                          leftAligned
+                          muted={othersSelected}
+                        >
+                          {description()}
+                        </Text>
+                      </Flex>
+                    </FlexContainer>
+                  </CardStyle>
+                </Button>
+              );
+            })}
+          </FlexContainer>
         </Spacing>
 
-        <FlexContainer>
-          {TRIGGER_TYPES.map(({
-            label,
-            description,
-            uuid,
-          }) => {
-            const selected = triggerType === uuid;
-            const othersSelected = triggerType && !selected;
+        <Spacing mt={5}>
+          {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
+          {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
+        </Spacing>
 
-            return (
-              <Button
-                key={uuid}
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setTriggerType(uuid)}
-              >
-                <CardStyle selected={selected}>
-                  <FlexContainer alignItems="center">
-                    <Flex>
-                      <input checked={selected} type="radio" />
-                    </Flex>
-
-                    <Spacing mr={PADDING_UNITS} />
-
-                    <Flex
-                      alignItems="flex-start"
-                      flexDirection="column"
-                    >
-                      <Headline
-                        default={!selected && !othersSelected}
-                        bold
-                        level={5}
-                        muted={!selected && othersSelected}
-                      >
-                        {label()}
-                      </Headline>
-
-                      <Text
-                        default={!selected && !othersSelected}
-                        leftAligned
-                        muted={othersSelected}
-                      >
-                        {description()}
-                      </Text>
-                    </Flex>
-                  </FlexContainer>
-                </CardStyle>
-              </Button>
-            );
-          })}
-        </FlexContainer>
-      </Spacing>
-
-      <Spacing mt={5}>
-        {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
-        {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
-      </Spacing>
-    </PipelineDetailPage>
+      </PipelineDetailPage>
+      {errors && (
+        <ErrorPopup
+          {...errors}
+          onClose={() => setErrors(null)}
+        />
+      )}
+    </>
   );
 }
 
