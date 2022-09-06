@@ -36,7 +36,11 @@ import {
 } from '@oracle/icons';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
-import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
+import {
+  getFormattedVariable,
+  getFormattedVariables,
+  parseVariables,
+} from '@components/Sidekick/utils';
 import { getTriggerType } from '@utils/models/trigger';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
