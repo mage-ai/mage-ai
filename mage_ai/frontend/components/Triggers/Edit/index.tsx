@@ -46,8 +46,8 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { getTriggerType } from '@utils/models/trigger';
+import { indexBy, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { removeAtIndex } from '@utils/array';
 
 const TRIGGER_TYPES = [
   {
@@ -101,6 +101,7 @@ function Edit({
 
   const { data: dataEventRules } = api.event_rules.detail('aws');
   const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rules || [], [dataEventRules]);
+  const eventRulesByName = useMemo(() => indexBy(eventRules, ({ name }) => name), [eventRules]);
 
   const [updateSchedule, { isLoading: isLoadingUpdate }] = useMutation(
     api.pipeline_schedules.useUpdate(pipelineScheduleID),
@@ -174,13 +175,23 @@ function Edit({
     [pipelineSchedule],
   );
 
+  console.log(eventRulesByName)
+
   const onSave = useCallback(() => {
     const st = date && time
       ? `${date.toISOString().split('T')[0]} ${time}:00`
       : null;
 
     const updatedSchedule = {
-      event_matchers: eventMatchers,
+      event_matchers: eventMatchers?.map((eventMatcher) => {
+        const patternString = eventRulesByName[eventMatcher.name]?.event_pattern;
+        const pattern = patternString ? JSON.parse(patternString) : null;
+
+        return {
+          ...eventMatcher,
+          pattern,
+        };
+      }),
       name,
       schedule_interval: scheduleInterval,
       start_time: st,
@@ -194,6 +205,7 @@ function Edit({
   }, [
     date,
     eventMatchers,
+    eventRulesByName,
     name,
     runtimeVariables,
     scheduleInterval,
@@ -493,11 +505,7 @@ function Edit({
                   default
                   iconOnly
                   noBackground
-                  onClick={() => setEventMatchers(prev => {
-                    // It’s removing the wrong item
-                    console.log(removeAtIndex(prev, idx), prev)
-                    return removeAtIndex(prev, idx);
-                  })}
+                  onClick={() => setEventMatchers(prev => removeAtIndex(prev, idx))}
                 >
                   <Trash default size={2 * UNIT} />
                 </Button>,
@@ -509,7 +517,6 @@ function Edit({
         <Spacing p={PADDING_UNITS}>
           <Button
             beforeIcon={<Add size={2 * UNIT} />}
-            blackBorder
             onClick={() => setEventMatchers(prev => prev.concat({}))}
             outline
           >
