@@ -295,20 +295,6 @@ function TriggerDetail({
 
           {detailsMemo}
 
-          {variablesTable && (
-            <Spacing my={UNITS_BETWEEN_SECTIONS}>
-              <Spacing px={PADDING_UNITS}>
-                <Headline level={5}>
-                  Runtime variables
-                </Headline>
-              </Spacing>
-
-              <Divider light mt={1} short />
-
-              {variablesTable}
-            </Spacing>
-          )}
-
           {eventMatchers?.length >= 1 && (
             <Spacing my={UNITS_BETWEEN_SECTIONS}>
               <Spacing px={PADDING_UNITS}>
@@ -320,6 +306,20 @@ function TriggerDetail({
               <Divider light mt={1} short />
 
               {eventsTable}
+            </Spacing>
+          )}
+
+          {variablesTable && (
+            <Spacing my={UNITS_BETWEEN_SECTIONS}>
+              <Spacing px={PADDING_UNITS}>
+                <Headline level={5}>
+                  Runtime variables
+                </Headline>
+              </Spacing>
+
+              <Divider light mt={1} short />
+
+              {variablesTable}
             </Spacing>
           )}
         </BeforeStyle>

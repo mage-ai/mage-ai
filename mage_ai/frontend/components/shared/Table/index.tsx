@@ -16,6 +16,7 @@ export type ColumnType = {
 };
 
 type TableProps = {
+  alignTop?: boolean;
   buildLinkProps?: (rowIndex: number) => {
     as: string;
     href: string;
@@ -31,6 +32,7 @@ type TableProps = {
 }
 
 function Table({
+  alignTop,
   buildLinkProps,
   columnFlex,
   columnMaxWidth,
@@ -55,6 +57,7 @@ function Table({
     const linkProps = buildLinkProps?.(rowIndex);
     const cellEls = cells.map((cell, colIndex) => (
       <TableDataStyle
+        alignTop={alignTop}
         compact={compact}
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
         maxWidth={columnMaxWidth?.(colIndex)}
@@ -99,6 +102,7 @@ function Table({
 
     return rowEl;
   }), [
+    alignTop,
     buildLinkProps,
     calculateCellWidth,
     columnMaxWidth,

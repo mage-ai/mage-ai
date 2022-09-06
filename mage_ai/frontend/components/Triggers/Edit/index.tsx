@@ -10,6 +10,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
+import CodeBlock from '@oracle/components/CodeBlock';
 import ErrorPopup from '@components/ErrorPopup';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
@@ -181,23 +182,13 @@ function Edit({
     [pipelineSchedule],
   );
 
-  console.log(eventRulesByName)
-
   const onSave = useCallback(() => {
     const st = date && time
       ? `${date.toISOString().split('T')[0]} ${time}:00`
       : null;
 
     const updatedSchedule = {
-      event_matchers: eventMatchers?.map((eventMatcher) => {
-        const patternString = eventRulesByName[eventMatcher.name]?.event_pattern;
-        const pattern = patternString ? JSON.parse(patternString) : null;
-
-        return {
-          ...eventMatcher,
-          pattern,
-        };
-      }),
+      event_matchers: eventMatchers,
       name,
       schedule_interval: scheduleInterval,
       start_time: st,
@@ -211,7 +202,6 @@ function Edit({
   }, [
     date,
     eventMatchers,
-    eventRulesByName,
     name,
     runtimeVariables,
     scheduleInterval,
@@ -447,13 +437,17 @@ function Edit({
 
         {eventMatchers?.length >= 1 && (
           <Table
-            columnFlex={[1, 1, null]}
+            alignTop
+            columnFlex={[1, 1, 2, null]}
             columns={[
               {
                 uuid: 'Provider',
               },
               {
                 uuid: 'Event',
+              },
+              {
+                uuid: 'Pattern',
               },
               {
                 label: () => '',
@@ -464,18 +458,22 @@ function Edit({
               const {
                 event_type: provider,
                 name: eventName,
-                pattern = {},
+                pattern,
               } = eventMatcher;
               const eventID =
                 eventMatcher.id || `${provider}-${eventName}-${idx}-${JSON.stringify(pattern)}`;
+              const patternDisplay = [];
+              if (pattern) {
+                JSON.stringify(pattern, null, 2).split('\n').forEach((line) => {
+                  patternDisplay.push(`    ${line}`);
+                });
+              }
 
               return [
                 <Select
                   key={`event-provider-${eventID}`}
                   monospace
-                  noBorder
                   onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
-                  paddingHorizontal={0}
                   placeholder="Event provider"
                   value={provider || ''}
                 >
@@ -492,9 +490,15 @@ function Edit({
                 <Select
                   key={`event-name-${eventID}`}
                   monospace
-                  noBorder
-                  onChange={e => updateEventMatcher(idx, { name: e.target.value })}
-                  paddingHorizontal={0}
+                  onChange={(e) => {
+                    const eventName = e.target.value;
+                    const patternString = eventRulesByName[eventName]?.event_pattern;
+
+                    updateEventMatcher(idx, {
+                      name: eventName,
+                      pattern: patternString ? JSON.parse(patternString) : null,
+                    });
+                  }}
                   placeholder="Event name"
                   value={eventName}
                 >
@@ -507,6 +511,13 @@ function Edit({
                     </option>
                   ))}
                 </Select>,
+                pattern && (
+                  <CodeBlock
+                    language="json"
+                    small
+                    source={patternDisplay.join('\n')}
+                  />
+                ),
                 <Button
                   default
                   iconOnly
