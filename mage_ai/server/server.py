@@ -31,6 +31,7 @@ from mage_ai.server.api.events import (
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.orchestration import (
     ApiAllBlockRunListHandler,
+    ApiPipelineRunDetailHandler,
     ApiAllPipelineRunListHandler,
     ApiBlockRunDetailHandler,
     ApiBlockRunListHandler,
@@ -435,6 +436,10 @@ def make_app():
         (
             r'/api/pipelines/(?P<pipeline_uuid>\w+)/widgets',
             ApiPipelineWidgetListHandler,
+        ),
+        (
+            r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)',
+            ApiPipelineRunDetailHandler,
         ),
         (
             r'/api/pipeline_runs/(?P<pipeline_run_id>\w+)/block_runs',

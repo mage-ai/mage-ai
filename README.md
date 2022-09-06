@@ -15,9 +15,6 @@ Mage is an open-source tool for building and running data pipelines that <b>tran
 
 ```python
 # data_loaders/load_data_from_file.py
-import pandas as pd
-
-
 @data_loader
 def load_csv_from_file():
     return pd.read_csv('default_repo/titanic.csv')

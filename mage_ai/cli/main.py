@@ -82,6 +82,7 @@ Commands:
         parser.add_argument('pipeline_uuid', type=str)
         parser.add_argument('--block_uuid', nargs='?', type=str)
         parser.add_argument('--execution_partition', nargs='?', type=str)
+        parser.add_argument('--executor_type', nargs='?', type=str)
         parser.add_argument('--callback_url', nargs='?', type=str)
         parser.add_argument('--block_run_id', nargs='?', type=int)
         parser.add_argument('--runtime-vars', nargs="+")
@@ -91,6 +92,7 @@ Commands:
         pipeline_uuid = args['pipeline_uuid']
         block_uuid = args.get('block_uuid')
         execution_partition = args.get('execution_partition')
+        executor_type = args.get('executor_type')
         callback_url = args.get('callback_url')
         runtime_vars = args.get('runtime_vars')
 
@@ -114,9 +116,13 @@ Commands:
                 update_status=False,
             )
         else:
-            ExecutorFactory.get_block_executor(pipeline, block_uuid).execute(
-                analyze_outputs=False,
+            ExecutorFactory.get_block_executor(
+                pipeline,
+                block_uuid,
                 execution_partition=execution_partition,
+                executor_type=executor_type,
+            ).execute(
+                analyze_outputs=False,
                 callback_url=callback_url,
                 global_vars=global_vars,
                 update_status=False,

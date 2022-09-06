@@ -5,6 +5,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { CardsStyle, ContainerStyle, VariableCardStyle } from './index.style';
 import { LIME_DARK } from '@oracle/styles/colors/main';
+import { getFormattedVariable } from '@components/Sidekick/utils';
 
 type VariableOverwritesProps = {
   pipelineSchedule: PipelineScheduleType;
@@ -19,7 +20,7 @@ function VariableOverwrites({
     <ContainerStyle>
       <Spacing mb={2}>
         <Text bold large monospace muted>
-          Variable overwrites  
+          Runtime variables
         </Text>
       </Spacing>
       <CardsStyle noScrollbarTrackBackground>
@@ -29,7 +30,7 @@ function VariableOverwrites({
               {variable}
             </Text>
             <Text color={LIME_DARK} monospace>
-              {typeof value === 'string' ? value : JSON.stringify(value)}
+              {getFormattedVariable(value)}
             </Text>
           </VariableCardStyle>
         ))}

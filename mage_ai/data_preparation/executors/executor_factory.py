@@ -40,7 +40,7 @@ class ExecutorFactory:
             if pipeline.type == PipelineType.PYSPARK:
                 executor_type = ExecutorType.PYSPARK
             else:
-                executor_type = ExecutorType.LOCAL_PYTHON
+                executor_type = pipeline.get_block(block_uuid).executor_type
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_block_executor \
                 import PySparkBlockExecutor

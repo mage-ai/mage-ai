@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.strings import camel_to_snake_case
 from typing import Dict
 import os
@@ -26,4 +27,10 @@ class BaseConfig:
 
         if config_class_key in config:
             config = config[config_class_key]
+        extra_config = self.load_extra_config()
+        config = merge_dict(config, extra_config)
         return self(**config)
+
+    @classmethod
+    def load_extra_config(self):
+        return dict()

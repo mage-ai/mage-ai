@@ -10,6 +10,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockStatus,
     BlockType,
+    ExecutorType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
@@ -160,6 +161,7 @@ class Block:
         uuid,
         block_type,
         content=None,
+        executor_type=ExecutorType.LOCAL_PYTHON,
         status=BlockStatus.NOT_EXECUTED,
         pipeline=None,
         language=BlockLanguage.PYTHON,
@@ -170,6 +172,7 @@ class Block:
         self.type = block_type
         self._content = content
         self._outputs = None
+        self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
         self.upstream_blocks = []
@@ -745,16 +748,20 @@ class Block:
         if language and type(self.language) is not str:
             language = self.language.value
 
+        def __format_enum(v):
+            return v.value if type(v) is not str else v
+
         data = dict(
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
             ),
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
+            executor_type=__format_enum(self.executor_type),
             name=self.name,
             language=language,
-            status=self.status.value if type(self.status) is not str else self.status,
-            type=self.type.value if type(self.type) is not str else self.type,
+            status=__format_enum(self.status),
+            type=__format_enum(self.type),
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
         )
@@ -777,6 +784,9 @@ class Block:
             self.upstream_block_uuids
         ):
             self.__update_upstream_blocks(data['upstream_blocks'])
+        if 'executor_type' in data and data['executor_type'] != self.executor_type:
+            self.executor_type = data['executor_type']
+            self.__update_pipeline_block()
         return self
 
     def update_content(self, content, widget=False):
