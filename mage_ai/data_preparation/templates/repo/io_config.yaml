@@ -2,8 +2,8 @@ version: 0.1.1
 default:
   # Default profile created for data IO access.
   # Add your credentials for the source you use, and delete the rest.
-  AWS_ACCESS_KEY_ID: access_key_id
-  AWS_SECRET_ACCESS_KEY: secret_access_key
+  AWS_ACCESS_KEY_ID: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
   AWS_SESSION_TOKEN: session_token (Used to generate Redshift credentials)
   AWS_REGION: region
   GOOGLE_SERVICE_ACC_KEY:
