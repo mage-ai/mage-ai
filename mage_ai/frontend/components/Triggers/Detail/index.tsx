@@ -9,8 +9,9 @@ import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineScheduleType, {
+  SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
-  TriggerTypeEnum,
+  ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
@@ -40,7 +41,6 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { getTriggerType } from '@utils/models/trigger';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -66,6 +66,7 @@ function TriggerDetail({
     event_matchers: eventMatchers,
     name: pipelineScheduleName,
     schedule_interval: scheduleInterval,
+    schedule_type: scheduleType,
     start_time: startTime,
     status,
     variables: scheduleVariablesInit = {},
@@ -111,7 +112,6 @@ function TriggerDetail({
   );
 
   const isActive = useMemo(() => ScheduleStatusEnum.ACTIVE === status, [status]);
-  const triggerType = useMemo(() => getTriggerType(pipelineSchedule), [pipelineSchedule]);
 
   const detailsMemo = useMemo(() => {
     const iconProps = {
@@ -129,7 +129,7 @@ function TriggerDetail({
           </Text>
         </FlexContainer>,
         <Text monospace>
-          {triggerType}
+          {SCHEDULE_TYPE_TO_LABEL[scheduleType]?.()}
         </Text>
       ],
       [
@@ -190,7 +190,7 @@ function TriggerDetail({
     isActive,
     scheduleInterval,
     startTime,
-    triggerType,
+    scheduleType,
   ]);
 
   const scheduleVariables = useMemo(() => scheduleVariablesInit || {}, [scheduleVariablesInit]);
@@ -268,13 +268,13 @@ function TriggerDetail({
             px={PADDING_UNITS}
           >
             <Spacing mb={PADDING_UNITS}>
-              {TriggerTypeEnum.SCHEDULE === triggerType && (
+              {ScheduleTypeEnum.TIME === scheduleType && (
                 <Sun size={5 * UNIT} />
               )}
-              {TriggerTypeEnum.EVENT === triggerType && (
+              {ScheduleTypeEnum.EVENT === scheduleType && (
                 <MusicNotes size={5 * UNIT} />
               )}
-              {!triggerType && (
+              {!scheduleType && (
                 <MultiShare size={5 * UNIT} />
               )}
             </Spacing>
