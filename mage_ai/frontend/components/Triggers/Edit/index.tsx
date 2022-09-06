@@ -473,9 +473,7 @@ function Edit({
                 <Select
                   key={`event-provider-${eventID}`}
                   monospace
-                  noBorder
                   onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
-                  paddingHorizontal={0}
                   placeholder="Event provider"
                   value={provider || ''}
                 >
@@ -492,7 +490,6 @@ function Edit({
                 <Select
                   key={`event-name-${eventID}`}
                   monospace
-                  noBorder
                   onChange={(e) => {
                     const eventName = e.target.value;
                     const patternString = eventRulesByName[eventName]?.event_pattern;
@@ -502,7 +499,6 @@ function Edit({
                       pattern: patternString ? JSON.parse(patternString) : null,
                     });
                   }}
-                  paddingHorizontal={0}
                   placeholder="Event name"
                   value={eventName}
                 >

@@ -16,6 +16,7 @@ export type ColumnType = {
 };
 
 type TableProps = {
+  alignTop?: boolean;
   buildLinkProps?: (rowIndex: number) => {
     as: string;
     href: string;
