@@ -137,6 +137,11 @@ class PipelineSchedule(BaseModel):
         if self.start_time is not None and datetime.now() < self.start_time:
             return False
 
+        try:
+            Pipeline.get(self.pipeline_uuid)
+        except Exception:
+            return False
+
         if self.schedule_interval == '@once':
             if len(self.pipeline_runs) == 0:
                 return True
@@ -169,6 +174,10 @@ class PipelineRun(BaseModel):
 
     pipeline_schedule = relationship(PipelineSchedule, back_populates='pipeline_runs')
     block_runs = relationship('BlockRun', back_populates='pipeline_run')
+
+    def __repr__(self):
+        return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
+               f' execution_date={self.execution_date})'
 
     @property
     def execution_partition(self) -> str:

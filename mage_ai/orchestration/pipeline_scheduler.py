@@ -154,7 +154,11 @@ def schedule_all():
             PipelineScheduler(pipeline_run).start(should_schedule=False)
     active_pipeline_runs = PipelineRun.active_runs()
     for r in active_pipeline_runs:
-        PipelineScheduler(r).schedule()
+        try:
+            PipelineScheduler(r).schedule()
+        except Exception:
+            print(f'Failed to schedule {r}')
+            continue
 
 
 def schedule_with_event(event: Dict = dict()):
