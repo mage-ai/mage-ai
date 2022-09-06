@@ -107,7 +107,13 @@ function Edit({
       if (startTime) {
         const dateTimeSplit = startTime.split(' ');
         const timePart = dateTimeSplit[1];
-        setDate(new Date(startTime));
+        const startTimeDate = new Date(startTime);
+        const utcTs = Date.UTC(
+          startTimeDate.getFullYear(),
+          startTimeDate.getMonth(),
+          startTimeDate.getDate(),
+        );
+        setDate(new Date(utcTs));
         setTime(timePart.substring(0, 5));
       }
     },
