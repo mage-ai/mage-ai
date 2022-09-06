@@ -21,14 +21,22 @@ export const TableRowStyle = styled.tr<{
 
 
 const SHARED_STYLES = css<{
+  alignTop?: boolean;
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
 }>`
   overflow: hidden;
   text-overflow: ellipsis;
-  vertical-align: middle;
   white-space: nowrap;
+
+  ${props => !props.alignTop && `
+    vertical-align: middle;
+  `}
+
+  ${props => props.alignTop && `
+    vertical-align: top;
+  `}
 
   ${props => !props.noBorder && `
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).light};
