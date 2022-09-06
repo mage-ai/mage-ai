@@ -11,7 +11,10 @@ import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineScheduleType, { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
+import PipelineScheduleType, {
+  SCHEDULE_TYPE_TO_LABEL,
+  ScheduleStatusEnum,
+} from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
@@ -20,7 +23,6 @@ import api from '@api';
 import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { getTriggerType } from '@utils/models/trigger';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
@@ -235,7 +237,7 @@ function PipelineSchedules({
               default
               monospace
             >
-              {getTriggerType(pipelineSchedule)}
+              {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
             </Text>,
             <Text monospace default>
               {startTime}

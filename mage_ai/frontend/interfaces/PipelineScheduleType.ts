@@ -1,13 +1,14 @@
 import EventMatcherType from './EventMatcherType';
 
-export enum TriggerTypeEnum {
-  EVENT = 'event',
-  SCHEDULE = 'schedule',
-};
-
 export enum ScheduleTypeEnum {
+  EVENT = 'event',
   TIME = 'time',
 }
+
+export const SCHEDULE_TYPE_TO_LABEL = {
+  [ScheduleTypeEnum.EVENT]: () => 'event',
+  [ScheduleTypeEnum.TIME]: () => 'schedule',
+};
 
 export enum ScheduleStatusEnum {
   ACTIVE = 'active',

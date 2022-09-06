@@ -21,7 +21,10 @@ import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import List from '@oracle/elements/List';
 import PipelineDetailPage from '@components/PipelineDetailPage';
-import PipelineScheduleType, { ScheduleIntervalEnum, TriggerTypeEnum } from '@interfaces/PipelineScheduleType';
+import PipelineScheduleType, {
+  ScheduleIntervalEnum,
+  ScheduleTypeEnum,
+} from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
@@ -49,17 +52,18 @@ import { getFormattedVariables, parseVariables } from '@components/Sidekick/util
 import { getTriggerType } from '@utils/models/trigger';
 import { indexBy, removeAtIndex } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
+import { selectKeys } from '@utils/hash';
 
 const TRIGGER_TYPES = [
   {
     label: () => 'Schedule',
     description: () => 'This pipeline will run continuously on an interval or just once.',
-    uuid: TriggerTypeEnum.SCHEDULE,
+    uuid: ScheduleTypeEnum.TIME,
   },
   {
     label: () => 'Event',
     description: () => 'This pipeline will run when a specific event occurs',
-    uuid: TriggerTypeEnum.EVENT,
+    uuid: ScheduleTypeEnum.EVENT,
   },
 ];
 
@@ -91,11 +95,10 @@ function Edit({
   const {
     name,
     schedule_interval: scheduleInterval,
-    schedule_type,
+    schedule_type: scheduleType,
     start_time: startTime,
     variables: schedule_variables = {},
   } = schedule || {};
-  const [triggerType, setTriggerType] = useState<TriggerTypeEnum>(null);
 
   const [date, setDate] = useState<Date>(null);
   const [time, setTime] = useState<string>('00:00');
@@ -176,7 +179,6 @@ function Edit({
       if (pipelineSchedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
         setSchedule(pipelineSchedule);
-        setTriggerType(getTriggerType(pipelineSchedule));
       }
     },
     [pipelineSchedule],
@@ -188,9 +190,12 @@ function Edit({
       : null;
 
     const updatedSchedule = {
+      ...selectKeys(schedule, [
+        'name',
+        'schedule_interval',
+        'schedule_type',
+      ]),
       event_matchers: eventMatchers,
-      name,
-      schedule_interval: scheduleInterval,
       start_time: st,
       variables: parseVariables(runtimeVariables),
     };
@@ -202,9 +207,8 @@ function Edit({
   }, [
     date,
     eventMatchers,
-    name,
     runtimeVariables,
-    scheduleInterval,
+    schedule,
     time,
     updateSchedule,
   ]);
@@ -549,6 +553,15 @@ function Edit({
     name,
   ]);
 
+  const saveButtonDisabled = !scheduleType || (
+    ScheduleTypeEnum.TIME === scheduleType && !(scheduleInterval && date)
+  ) || (
+    ScheduleTypeEnum.EVENT === scheduleType && (
+      !eventMatchers?.length
+        || !eventMatchers.every(({ event_type: et, name }) => et && name)
+    )
+  );
+
   // TODO: allow users to set their own custom runtime variables.
   const variablesMemo = useMemo(() => {
     return (
@@ -638,6 +651,7 @@ function Edit({
         subheader={(
           <FlexContainer alignItems="center">
             <Button
+              disabled={saveButtonDisabled}
               loading={isLoadingUpdate}
               onClick={() => onSave()}
               outline
@@ -681,8 +695,8 @@ function Edit({
               description,
               uuid,
             }) => {
-              const selected = triggerType === uuid;
-              const othersSelected = triggerType && !selected;
+              const selected = scheduleType === uuid;
+              const othersSelected = scheduleType && !selected;
 
               return (
                 <Button
@@ -690,7 +704,10 @@ function Edit({
                   noBackground
                   noBorder
                   noPadding
-                  onClick={() => setTriggerType(uuid)}
+                  onClick={() => setSchedule(s => ({
+                    ...s,
+                    schedule_type: uuid,
+                  }))}
                 >
                   <CardStyle selected={selected}>
                     <FlexContainer alignItems="center">
@@ -730,8 +747,8 @@ function Edit({
         </Spacing>
 
         <Spacing mt={5}>
-          {TriggerTypeEnum.SCHEDULE === triggerType && detailsMemo}
-          {TriggerTypeEnum.EVENT === triggerType && eventsMemo}
+          {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
+          {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
         </Spacing>
 
       </PipelineDetailPage>
