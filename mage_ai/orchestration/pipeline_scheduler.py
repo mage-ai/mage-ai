@@ -7,6 +7,7 @@ from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun,
 from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import multiprocessing
+import traceback
 
 
 class PipelineScheduler:
@@ -158,6 +159,7 @@ def schedule_all():
             PipelineScheduler(r).schedule()
         except Exception:
             print(f'Failed to schedule {r}')
+            traceback.print_exc()
             continue
 
 
