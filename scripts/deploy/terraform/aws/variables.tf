@@ -1,3 +1,13 @@
+variable "AWS_ACCESS_KEY_ID" {
+  type = string
+  default = "AWS_ACCESS_KEY_ID"
+}
+
+variable "AWS_SECRET_ACCESS_KEY" {
+  type = string
+  default = "AWS_SECRET_ACCESS_KEY"
+}
+
 variable "app_count" {
   type = number
   default = 1
