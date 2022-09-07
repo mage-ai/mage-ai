@@ -7,10 +7,13 @@
 - [Using Mage in production](production/README.md)
 - [Kernels supported](kernels/README.md)
 - [Spark and Mage](spark/setup/README.md)
+- [Install](#install)
 - [Templates](#templates)
 - [Using Mage with other tools](#using-mage-with-other-tools)
 
-## Installing extra packages
+## Install
+
+### Installing extra packages
 
 Mage also has the following extras:
 
@@ -27,7 +30,7 @@ Mage also has the following extras:
 pip install "mage-ai[spark]"
 ```
 
-## Install errors
+### Errors
 
 You may need to install development libraries for MIT Kerberos to use some Mage features.
 On Ubuntu, this can be installed as:
