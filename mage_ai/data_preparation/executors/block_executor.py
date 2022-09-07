@@ -1,5 +1,5 @@
 from mage_ai.data_preparation.logger_manager import LoggerManager
-from mage_ai.data_preparation.logging.logger import Logger
+from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.shared.hash import merge_dict
 from typing import Callable, Dict
 import json
@@ -17,7 +17,7 @@ class BlockExecutor:
             block_uuid=self.block_uuid,
             partition=self.execution_partition,
         )
-        self.logger = Logger(logger_manager)
+        self.logger = DictLogger(logger_manager)
 
     def execute(
         self,

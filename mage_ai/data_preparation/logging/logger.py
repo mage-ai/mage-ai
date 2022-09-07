@@ -1,13 +1,14 @@
 from datetime import datetime
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.hash import merge_dict
+import logging
 import simplejson
 import traceback
 import uuid
 
 
-class Logger():
-    def __init__(self, logger):
+class DictLogger():
+    def __init__(self, logger: logging.Logger):
         self.logger = logger
 
     def critical(self, message, **kwargs):

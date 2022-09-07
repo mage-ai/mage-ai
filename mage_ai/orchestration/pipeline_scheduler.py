@@ -1,12 +1,13 @@
 from datetime import datetime
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logger_manager import LoggerManager
-from mage_ai.data_preparation.logging.logger import Logger
+from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import multiprocessing
+import traceback
 
 
 class PipelineScheduler:
@@ -17,7 +18,7 @@ class PipelineScheduler:
             pipeline_uuid=self.pipeline.uuid,
             partition=self.pipeline_run.execution_partition,
         )
-        self.logger = Logger(logger_manager)
+        self.logger = DictLogger(logger_manager)
 
     def start(self, should_schedule: bool = True) -> None:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
@@ -102,29 +103,15 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-
-            def __run_block():
-                self.logger.info(f'Execute PipelineRun {self.pipeline_run.id}, BlockRun {b.id}: '
-                                 f'pipeline {self.pipeline.uuid} block {b.block_uuid}',
-                                 **self.__build_tags(**tags))
-                variables = merge_dict(self.pipeline_run.pipeline_schedule.variables or dict(),
-                                       self.pipeline_run.variables or dict())
-                variables['execution_date'] = self.pipeline_run.execution_date
-                ExecutorFactory.get_block_executor(
-                    self.pipeline,
-                    b.block_uuid,
-                    execution_partition=self.pipeline_run.execution_partition,
-                ).execute(
-                    analyze_outputs=False,
-                    block_run_id=b.id,
-                    global_vars=variables,
-                    update_status=False,
-                    on_complete=self.on_block_complete,
-                    on_failure=self.on_block_failure,
-                    tags=self.__build_tags(**tags),
-                )
-
-            proc = multiprocessing.Process(target=__run_block)
+            variables = merge_dict(self.pipeline_run.pipeline_schedule.variables or dict(),
+                                   self.pipeline_run.variables or dict())
+            variables['execution_date'] = self.pipeline_run.execution_date
+            proc = multiprocessing.Process(target=run_block, args=(
+                self.pipeline_run.id,
+                b.id,
+                variables,
+                self.__build_tags(**tags),
+            ))
             proc.start()
 
     def __build_tags(self, **kwargs):
@@ -133,6 +120,30 @@ class PipelineScheduler:
             pipeline_schedule_id=self.pipeline_run.pipeline_schedule_id,
             pipeline_uuid=self.pipeline.uuid,
         ))
+
+
+def run_block(pipeline_run_id, block_run_id, variables, tags):
+    pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+    pipeline = pipeline_scheduler.pipeline
+    block_run = BlockRun.query.get(block_run_id)
+    pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
+                                   f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
+                                   **tags)
+
+    ExecutorFactory.get_block_executor(
+        pipeline,
+        block_run.block_uuid,
+        execution_partition=pipeline_run.execution_partition,
+    ).execute(
+        analyze_outputs=False,
+        block_run_id=block_run.id,
+        global_vars=variables,
+        update_status=False,
+        on_complete=pipeline_scheduler.on_block_complete,
+        on_failure=pipeline_scheduler.on_block_failure,
+        tags=tags,
+    )
 
 
 def schedule_all():
@@ -158,6 +169,7 @@ def schedule_all():
             PipelineScheduler(r).schedule()
         except Exception:
             print(f'Failed to schedule {r}')
+            traceback.print_exc()
             continue
 
 
