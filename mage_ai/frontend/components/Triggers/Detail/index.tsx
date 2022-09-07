@@ -75,7 +75,10 @@ function TriggerDetail({
 
   const {
     data: dataPipelineRuns,
-  } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID);
+  } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID, {}, {
+    refreshInterval: 3000,
+    revalidateOnFocus: true,
+  });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
@@ -183,7 +186,7 @@ function TriggerDetail({
           </Text>
         </FlexContainer>,
         <Text monospace>
-          {scheduleInterval}
+          {scheduleInterval.replace('@', '')}
         </Text>
       ]);
     }

@@ -20,6 +20,7 @@ import {
 } from '@oracle/icons';
 import { BannerStyle } from './index.style';
 import { BreadcrumbType } from '@components/shared/Header';
+import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
@@ -33,6 +34,7 @@ type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
   buildSidekick?: (opts: {
     height: number;
+    heightOffset?: number;
     pipeline: PipelineType;
   }) => any;
   children: any;
@@ -81,6 +83,7 @@ function PipelineDetailPage({
     } else if (buildSidekick) {
       return buildSidekick({
         height,
+        heightOffset: HEADER_HEIGHT,
         pipeline,
       });
     }

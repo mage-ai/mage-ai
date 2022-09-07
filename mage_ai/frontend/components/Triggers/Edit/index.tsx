@@ -50,8 +50,8 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
 import { indexBy, removeAtIndex } from '@utils/array';
+import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
-import { selectKeys } from '@utils/hash';
 
 const TRIGGER_TYPES = [
   {
@@ -91,12 +91,20 @@ function Edit({
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
 
+
+  const formattedVariables = useMemo(() => getFormattedVariables(
+    variables,
+    block => block.uuid === 'global',
+  ), [
+    variables,
+  ]);
+
   const {
     name,
     schedule_interval: scheduleInterval,
     schedule_type: scheduleType,
     start_time: startTime,
-    variables: schedule_variables = {},
+    variables: scheduleVariablesInit = {},
   } = schedule || {};
 
   const [date, setDate] = useState<Date>(null);
@@ -127,7 +135,7 @@ function Edit({
     },
   );
 
-  const scheduleVariables = useMemo(() => schedule_variables || {}, [schedule_variables]);
+  const scheduleVariables = useMemo(() => scheduleVariablesInit || {}, [scheduleVariablesInit]);
 
   useEffect(
     () => {
@@ -158,19 +166,19 @@ function Edit({
 
   useEffect(
     () => {
-      if (variables) {
-        const formattedVariables = getFormattedVariables(variables, block => block.uuid === 'global');
-        if (overwriteVariables) {
-          setRuntimeVariables(formattedVariables?.reduce(
-            (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
-            {},
-          ));
-        } else {
-          setRuntimeVariables(null);
-        }
+      if (overwriteVariables) {
+        setRuntimeVariables(formattedVariables?.reduce(
+          (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
+          {},
+        ));
+      } else {
+        setRuntimeVariables(null);
       }
     },
-    [overwriteVariables],
+    [
+      formattedVariables,
+      overwriteVariables,
+    ],
   );
 
   useEffect(
@@ -184,24 +192,29 @@ function Edit({
   );
 
   const onSave = useCallback(() => {
-    const st = date && time
-      ? `${date.toISOString().split('T')[0]} ${time}:00`
-      : null;
-
-    const updatedSchedule = {
+    const data = {
       ...selectKeys(schedule, [
         'name',
-        'schedule_interval',
         'schedule_type',
       ]),
-      event_matchers: eventMatchers,
-      start_time: st,
+      event_matchers: [],
+      schedule_interval: null,
+      start_time: null,
       variables: parseVariables(runtimeVariables),
     };
 
+    if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
+      data.event_matchers = eventMatchers;
+    } else {
+      data.schedule_interval = schedule.schedule_interval;
+      data.start_time = date && time
+        ? `${date.toISOString().split('T')[0]} ${time}:00`
+        : null;
+    }
+
     // @ts-ignore
     updateSchedule({
-      pipeline_schedule: updatedSchedule,
+      pipeline_schedule: data,
     });
   }, [
     date,
@@ -219,10 +232,6 @@ function Edit({
           <Headline>
             Settings
           </Headline>
-
-          <Text muted>
-            Configure schedule details.
-          </Text>
         </Spacing>
 
         <Divider light short />
@@ -356,10 +365,6 @@ function Edit({
           <Headline>
             Settings
           </Headline>
-
-          <Text muted>
-            Configure trigger details.
-          </Text>
         </Spacing>
 
         <Divider light short />
@@ -562,73 +567,72 @@ function Edit({
   );
 
   // TODO: allow users to set their own custom runtime variables.
-  const variablesMemo = useMemo(() => {
-    return (
-      <>
-        <FlexContainer alignItems="center">
-          <Spacing mr={2}>
-            <ToggleSwitch
-              checked={overwriteVariables}
-              onCheck={setOverwriteVariables}
-            />
-          </Spacing>
-          <Text monospace muted>
-            Overwrite global variables
-          </Text>
-        </FlexContainer>
+  const variablesMemo = useMemo(() => !isEmptyObject(formattedVariables) && (
+    <Spacing p={PADDING_UNITS}>
+      <FlexContainer alignItems="center">
+        <Spacing mr={2}>
+          <ToggleSwitch
+            checked={overwriteVariables}
+            onCheck={setOverwriteVariables}
+          />
+        </Spacing>
+        <Text monospace muted>
+          Overwrite global variables
+        </Text>
+      </FlexContainer>
 
-        {overwriteVariables && runtimeVariables
-          && Object.entries(runtimeVariables).length > 0 && (
-          <Spacing mt={2}>
-            <Table
-              columnFlex={[null, 1]}
-              columns={[
-                {
-                  uuid: 'Variable',
-                },
-                {
-                  uuid: 'Value',
-                },
-              ]}
-              rows={Object.entries(runtimeVariables).map(([uuid, value]) => {
-                return [
-                  <Text
-                    default
-                    monospace
-                  >
-                    {uuid}
-                  </Text>,
-                  <TextInput
-                    borderless
-                    monospace
-                    onChange={(e) => {
-                      e.preventDefault();
-                      setRuntimeVariables(vars => ({
-                        ...vars,
-                        [uuid]: e.target.value,
-                      }));
-                    }}
-                    paddingHorizontal={0}
-                    placeholder="Variable value"
-                    value={value}
-                  />,
-                ];
-              })}
-            />
-          </Spacing>
-        )}
-      </>
-    )
-  }, [overwriteVariables, runtimeVariables, setOverwriteVariables]);
+      {overwriteVariables && runtimeVariables
+        && Object.entries(runtimeVariables).length > 0 && (
+        <Spacing mt={2}>
+          <Table
+            columnFlex={[null, 1]}
+            columns={[
+              {
+                uuid: 'Variable',
+              },
+              {
+                uuid: 'Value',
+              },
+            ]}
+            rows={Object.entries(runtimeVariables).map(([uuid, value]) => {
+              return [
+                <Text
+                  default
+                  monospace
+                >
+                  {uuid}
+                </Text>,
+                <TextInput
+                  borderless
+                  monospace
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setRuntimeVariables(vars => ({
+                      ...vars,
+                      [uuid]: e.target.value,
+                    }));
+                  }}
+                  paddingHorizontal={0}
+                  placeholder="Variable value"
+                  value={value}
+                />,
+              ];
+            })}
+          />
+        </Spacing>
+      )}
+    </Spacing>
+  ), [
+    formattedVariables,
+    overwriteVariables,
+    runtimeVariables,
+    setOverwriteVariables,
+  ]);
 
   return (
     <>
       <PipelineDetailPage
-        after={(
-          <Spacing p={PADDING_UNITS}>
-            {variablesMemo}
-          </Spacing>
-        )}
+        after={variablesMemo}
         breadcrumbs={[
           {
             label: () => 'Triggers',

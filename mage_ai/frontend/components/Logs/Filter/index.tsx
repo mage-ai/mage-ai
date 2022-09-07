@@ -104,7 +104,7 @@ function Filter({
                   <Spacing mr={1} />
                   <LogLevelIndicatorStyle {...{[level.toLowerCase()]: true}} />
                   <Spacing mr={1} />
-                  <Text>
+                  <Text disableWordBreak>
                     {capitalize(level.toLowerCase())}
                   </Text>
                 </FlexContainer>
@@ -146,7 +146,7 @@ function Filter({
                     square
                   />
                   <Spacing mr={1} />
-                  <Text muted monospace>
+                  <Text disableWordBreak muted monospace>
                     {blockType}
                   </Text>
                 </FlexContainer>
@@ -184,7 +184,7 @@ function Filter({
                     square
                   />
                   <Spacing mr={1} />
-                  <Text muted monospace>
+                  <Text disableWordBreak muted monospace>
                     {block.uuid}
                   </Text>
                 </FlexContainer>
@@ -217,7 +217,7 @@ function Filter({
                       }
                     />
                     <Spacing mr={1} />
-                    <Text monospace>
+                    <Text disableWordBreak monospace>
                       {pipelineScheduleID}
                     </Text>
                   </FlexContainer>
@@ -251,7 +251,7 @@ function Filter({
                       }
                     />
                     <Spacing mr={1} />
-                    <Text monospace>
+                    <Text disableWordBreak monospace>
                       {id}
                     </Text>
                   </FlexContainer>
@@ -285,7 +285,7 @@ function Filter({
                       }
                     />
                     <Spacing mr={1} />
-                    <Text monospace>
+                    <Text disableWordBreak monospace>
                       {id}
                     </Text>
                   </FlexContainer>

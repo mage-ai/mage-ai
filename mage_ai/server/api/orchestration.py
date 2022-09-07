@@ -231,10 +231,22 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
 
         arr = payload.pop('event_matchers', [])
         event_matchers = []
-        if len(arr) >= 1:
+        if arr and len(arr) >= 1:
             event_matchers = EventMatcher.upsert_batch(
                 [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
             )
+        else:
+            ems = (
+                EventMatcher.
+                query.
+                join(pipeline_schedule_event_matcher_association_table, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id).
+                join(PipelineSchedule, PipelineSchedule.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id).
+                filter(PipelineSchedule.id == int(pipeline_schedule_id))
+            )
+            for em in ems:
+                new_ids = [schedule for schedule in em.pipeline_schedules if schedule.id != int(pipeline_schedule_id)]
+                ps = [p for p in PipelineSchedule.query.filter(PipelineSchedule.id.in_(new_ids))]
+                em.update(pipeline_schedules=ps)
 
         pipeline_schedule.update(**payload)
 
@@ -304,6 +316,8 @@ class ApiPipelineScheduleListHandler(BaseHandler):
 
                 collection = []
                 for pipeline_schedule_id, arr in group_by(lambda x: x.id, results).items():
+                    schedule = arr[0]
+
                     event_matchers = []
                     for schedule in arr:
                         if schedule.event_id:
@@ -314,9 +328,11 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                                 pattern=schedule.event_pattern,
                             ))
 
-                    data = dict(event_matchers=event_matchers)
+                    data = dict(
+                        event_matchers=event_matchers,
+                        pipeline_runs_count=schedule.pipeline_runs_count,
+                    )
 
-                    schedule = arr[0]
                     for col in pipeline_schedule_columns:
                         data[col] = getattr(schedule, col)
                     collection.append(data)

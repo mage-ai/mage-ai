@@ -98,6 +98,7 @@ export type DependencyGraphProps = {
   };
   fetchPipeline?: () => void;
   height: number;
+  heightOffset?: number;
   noStatus?: boolean;
   pipeline: PipelineType;
   runningBlocks?: BlockType[];
@@ -111,6 +112,7 @@ function DependencyGraph({
   editingBlock,
   fetchPipeline,
   height,
+  heightOffset = UNIT * 10,
   noStatus,
   pipeline,
   runningBlocks = [],
@@ -383,7 +385,7 @@ function DependencyGraph({
         </Spacing>
       )}
 
-      <GraphContainerStyle height={height - (UNIT * 10) }>
+      <GraphContainerStyle height={height - (heightOffset)}>
         <Canvas
           arrow={null}
           disabled={false}

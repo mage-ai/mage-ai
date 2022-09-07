@@ -161,7 +161,7 @@ function PipelineRuns({
 
   const tableBlockRuns = useMemo(() => {
     const tableProps = {
-      columnFlex: [null, 1, 2, 4, null, null],
+      columnFlex: [null, 1, 3, 2, null, null],
       columns: [
         {
           uuid: 'Date',
@@ -170,10 +170,10 @@ function PipelineRuns({
           uuid: 'Status',
         },
         {
-          uuid: 'Block',
+          uuid: 'Trigger',
         },
         {
-          uuid: 'Trigger',
+          uuid: 'Block',
         },
         {
           uuid: 'Completed',
@@ -198,11 +198,21 @@ function PipelineRuns({
           danger={RunStatus.FAILED === status}
           info={RunStatus.INITIAL === status}
           default={RunStatus.CANCELLED === status}
+          monospace
           success={RunStatus.COMPLETED === status}
           warning={RunStatus.RUNNING === status}
         >
           {status}
         </Text>,
+        <NextLink
+          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+          href={'/pipelines/[pipeline]/triggers/[...slug]'}
+          passHref
+        >
+          <Link bold sameColorAsText>
+            {pipelineScheduleName}
+          </Link>
+        </NextLink>,
         <NextLink
           as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
           href={'/pipelines/[pipeline]/edit'}
@@ -224,15 +234,6 @@ function PipelineRuns({
             <Text monospace>
               {blockUUID}
             </Text>
-          </Link>
-        </NextLink>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/triggers/[...slug]'}
-          passHref
-        >
-          <Link bold sameColorAsText>
-            {pipelineScheduleName}
           </Link>
         </NextLink>,
         <Text monospace default>
