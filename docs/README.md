@@ -2,8 +2,13 @@
 
 ## Table of contents
 
+- [Blocks: Scratchpad, Data loader, Transformer, Data exporter](blocks/README.md)
+- [Deploying Mage to cloud](deploy/README.md)
+- [Using Mage in production](production/README.md)
+- [Kernels supported](kernels/README.md)
 - [Spark and Mage](spark/setup/README.md)
 - [Templates](#templates)
+- [Using Mage with other tools](#using-mage-with-other-tools)
 
 ## Installing extra packages
 
@@ -33,3 +38,8 @@ apt install libkrb5-dev
 ## Templates
 
 - [`io_config.yaml`](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/data_preparation/templates/repo/io_config.yaml)
+
+## Using Mage with other tools
+
+- [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
+- [Prefect](production/prefect.md)
