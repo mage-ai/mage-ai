@@ -107,9 +107,9 @@ class PipelineScheduler:
                                    self.pipeline_run.variables or dict())
             variables['execution_date'] = self.pipeline_run.execution_date
             proc = multiprocessing.Process(target=run_block, args=(
-                self.pipeline,
+                self.pipeline_run.id,
+                b.id,
                 variables,
-                self,
                 self.__build_tags(**tags),
             ))
             proc.start()
@@ -122,9 +122,11 @@ class PipelineScheduler:
         ))
 
 
-def run_block(pipeline_scheduler, block_run, variables, tags):
-    pipeline_run = pipeline_scheduler.pipeline_run
+def run_block(pipeline_run_id, block_run_id, variables, tags):
+    pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
     pipeline = pipeline_scheduler.pipeline
+    block_run = BlockRun.query.get(block_run_id)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
                                    f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
                                    **tags)

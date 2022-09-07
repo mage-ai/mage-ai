@@ -64,16 +64,16 @@ class DictLogger():
         else:
             getattr(self.logger, method_name)(log_level, msg)
 
-    # def __getattr__(self, method_name):
-    #     if method_name not in [
-    #         '__send_message',
-    #         'critical',
-    #         'debug',
-    #         'error',
-    #         'exception',
-    #         'info',
-    #         'log',
-    #         'warning',
-    #     ]:
-    #         return getattr(self.logger, method_name)
-    #     return super().__getattr__(method_name)
+    def __getattr__(self, method_name):
+        if method_name not in [
+            '__send_message',
+            'critical',
+            'debug',
+            'error',
+            'exception',
+            'info',
+            'log',
+            'warning',
+        ]:
+            return getattr(self.logger, method_name)
+        return getattr(self, method_name)
