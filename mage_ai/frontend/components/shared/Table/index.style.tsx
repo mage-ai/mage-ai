@@ -25,6 +25,7 @@ const SHARED_STYLES = css<{
   compact?: boolean;
   maxWidth?: string;
   noBorder?: boolean;
+  selected?: boolean;
 }>`
   overflow: hidden;
   text-overflow: ellipsis;
@@ -59,9 +60,7 @@ export const TableHeadStyle = styled.th`
   ${SHARED_STYLES}
 `;
 
-export const TableDataStyle = styled.td<{
-  selected: boolean;
-}>`
+export const TableDataStyle = styled.td`
   ${SHARED_STYLES}
 
   ${props => props.selected && `

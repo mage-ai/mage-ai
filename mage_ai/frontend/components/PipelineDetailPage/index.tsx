@@ -34,6 +34,7 @@ type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
   buildSidekick?: (opts: {
     height: number;
+    heightOffset?: number;
     pipeline: PipelineType;
   }) => any;
   children: any;
