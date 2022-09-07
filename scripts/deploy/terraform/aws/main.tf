@@ -34,6 +34,8 @@ data "template_file" "env_vars" {
   template = file("env_vars.json")
 
   vars = {
+    aws_access_key_id = var.AWS_ACCESS_KEY_ID
+    aws_secret_access_key = var.AWS_SECRET_ACCESS_KEY
     lambda_func_arn = "${aws_lambda_function.terraform_lambda_func.arn}"
     lambda_func_name = "${aws_lambda_function.terraform_lambda_func.function_name}"
   }
