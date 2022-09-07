@@ -150,17 +150,6 @@ function GlobalVariables({
     [variables],
   );
 
-  const optionalGlobalVariables = useMemo(
-    () => {
-      const vars = [];
-      Object.values(ScheduleTypeEnum).forEach(val => addTriggerVariables(vars, val));
-      return vars;
-    },
-    [],
-  );
-
-  console.log('test:', optionalGlobalVariables);
-
   const blockVariables = useMemo(
     () => getFormattedVariables(variables, (block) => block.uuid === selectedBlock?.uuid),
     [selectedBlock, variables],

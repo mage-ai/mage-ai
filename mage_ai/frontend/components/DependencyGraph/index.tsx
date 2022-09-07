@@ -90,7 +90,7 @@ export type DependencyGraphProps = {
   blockStatus?: {
     [uuid: string]: {
       status: RunStatus,
-      runTime?: number,
+      runtime?: number,
     };
   };
   editingBlock?: {
