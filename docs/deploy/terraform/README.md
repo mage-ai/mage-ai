@@ -43,6 +43,15 @@ docker pull hashicorp/terraform:latest
 
 ## Configurable settings
 
+<b>Docker image</b>
+
+```
+variable "docker_image" {
+  description = "Docker image url used in ECS task."
+  default     = "mageai/mageai:latest"
+}
+```
+
 ### AWS
 
 <b>Region</b>
