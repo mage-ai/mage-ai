@@ -14,8 +14,6 @@ import { NodeStyle, RuntimeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import Flex from '@oracle/components/Flex';
-import { roundNumber } from '@utils/string';
 import { getRuntimeText } from './utils';
 
 type GraphNodeProps = {

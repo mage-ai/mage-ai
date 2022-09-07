@@ -43,10 +43,10 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
+import { createBlockStatus } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import { createBlockStatus } from '../utils';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;

@@ -21,10 +21,10 @@ import { Add, Copy } from '@oracle/icons';
 import { CellStyle, TableStyle } from './index.style';
 import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
-import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
-import { capitalize, capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
