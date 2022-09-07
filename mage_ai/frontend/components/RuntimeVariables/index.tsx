@@ -1,42 +1,33 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import PipelineScheduleType, { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { CardsStyle, ContainerStyle, VariableCardStyle } from './index.style';
 import { LIME_DARK } from '@oracle/styles/colors/main';
+import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/utils';
-import { isEmptyObject } from '@utils/hash';
 
-type VariableOverwritesProps = {
+type RuntimeVariablesProps = {
   hasOverride?: boolean;
   variables: {
     [key: string]: string;
   };
+  scheduleType: ScheduleTypeEnum;
 };
 
-function VariableOverwrites({
+function RuntimeVariables({
   hasOverride,
+  scheduleType,
   variables,
-}: VariableOverwritesProps) {
-  // const { schedule_type: scheduleType, variables } = pipelineSchedule || {};
-
-  // const variableArr = useMemo(() => {
-  //   let arr = [];
-
-  //   if (!isEmptyObject(variables)) {
-  //     Object.entries(variables).forEach(([k, v]) => {
-  //       arr.push({
-  //         uuid: k,
-  //         value: getFormattedVariable(v),
-  //       });
-  //     });
-  //   }
-    
-  //   arr = addTriggerVariables(arr, scheduleType);
-
-  //   return arr;
-  // }, [scheduleType, variables]);
+}: RuntimeVariablesProps) {
+  const variablesArr = [];
+  Object.entries(variables).forEach(([k, v]) => {
+    variablesArr.push({
+      uuid: k,
+      value: getFormattedVariable(v),
+    });
+  });
+  addTriggerVariables(variablesArr, scheduleType);
 
   return (
     <ContainerStyle>
@@ -46,10 +37,10 @@ function VariableOverwrites({
         </Text>
       </Spacing>
       <CardsStyle noScrollbarTrackBackground>
-        {variables && Object.entries(variables).map(([variable, value]) => (
+        {variables && variablesArr.map(({ uuid, value }) => (
           <VariableCardStyle>
             <Text monospace small>
-              {variable}
+              {uuid}
             </Text>
             <Text color={LIME_DARK} monospace small>
               {getFormattedVariable(value)}
@@ -61,4 +52,4 @@ function VariableOverwrites({
   );
 }
 
-export default VariableOverwrites;
+export default RuntimeVariables;
