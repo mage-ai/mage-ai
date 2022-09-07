@@ -30,8 +30,6 @@ function FileBrowser({
   const themeContext = useContext(ThemeContext);
   const pipelineBlockUuids = blocks.concat(widgets).map(({ uuid }) => uuid);
 
-  console.log(files)
-
   return (
     <ContainerStyle ref={ref}>
       {files?.map((file: FileType) => (

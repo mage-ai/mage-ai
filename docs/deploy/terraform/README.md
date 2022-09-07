@@ -43,6 +43,9 @@ docker pull hashicorp/terraform:latest
 
 ## Environment variables
 
+Set these environment variables on your machine
+so that Terraform can use your credentials to perform all necessary operations
+
 ### AWS
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
@@ -69,6 +72,23 @@ provider "aws" {
   region  = "us-west-2"
 }
 ```
+
+<br />
+
+## Configurable variables
+
+In the [`mage-ai/scripts/deploy/terraform/aws/env_vars.json`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/env_vars.json)
+file, you can edit the following variables, which are used by the tool while running in the cloud:
+
+### AWS
+
+Change the value of the variables with the following names to match the actual values you want
+the tool to use while running in the cloud:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+These variable values are used by the tool to retrieve AWS resources like CloudWatch events, etc.
 
 <br />
 
