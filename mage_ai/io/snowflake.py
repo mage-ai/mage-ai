@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from snowflake.connector import connect
@@ -130,25 +130,30 @@ class Snowflake(BaseSQLConnection):
         def __process():
             with self._ctx.cursor() as cur:
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
-                if cur.rowcount == 1:
-                    if if_exists == 'fail':
+
+                table_doesnt_exist = cur.rowcount == 1
+                if cur.rowcount > 1:
+                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
+                elif not table_doesnt_exist:
+                    if ExportWritePolicy.FAIL == if_exists:
                         raise RuntimeError(
                             f'Table {table_name} already exists in the current warehouse, database, schema scenario.'
                         )
-                    elif if_exists == 'replace':
+                    elif ExportWritePolicy.REPLACE == if_exists:
                         cur.execute(f'USE DATABASE {database}')
                         cur.execute(f'DROP TABLE "{schema}"."{table_name}"')
-                    elif if_exists != 'append':
-                        raise ValueError(
-                            f'Invalid policy specified for handling existence of table: \'{if_exists}\''
-                        )
-                elif cur.rowcount > 1:
-                    raise ValueError(f'Two or more tables with the name {table_name} are found.')
 
                 if query_string:
-                    if if_exists == 'replace':
+                    if table_doesnt_exist:
+                        cur.execute(f'USE DATABASE {database}')
                         cur.execute(f"""
 CREATE TABLE IF NOT EXISTS "{database}"."{schema}"."{table_name}" AS
+{query_string}
+""")
+                    elif not table_doesnt_exist:
+                        cur.execute(f'USE DATABASE {database}')
+                        cur.execute(f"""
+INSERT INTO "{database}"."{schema}"."{table_name}"
 {query_string}
 """)
 

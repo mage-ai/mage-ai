@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.block.sql import (
 )
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
-from mage_ai.io.base import DataSource
+from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
 from os import path
 from time import sleep
@@ -20,6 +20,8 @@ def execute_sql_code(block, query):
     data_provider = block.configuration.get('data_provider')
     database = block.configuration.get('data_provider_database')
     schema = block.configuration.get('data_provider_schema')
+    export_write_policy = block.configuration.get('export_write_policy', ExportWritePolicy.APPEND)
+
     table_name = block.table_name
     should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
 
@@ -34,7 +36,7 @@ def execute_sql_code(block, query):
             None,
             f'{schema}.{table_name}',
             database=database,
-            if_exists='replace',
+            if_exists=export_write_policy,
             query_string=query_string,
             verbose=BlockType.DATA_EXPORTER == block.type,
         )
@@ -67,7 +69,7 @@ def execute_sql_code(block, query):
                 schema,
                 table_name,
                 drop_table_on_replace=True,
-                if_exists='replace',
+                if_exists=export_write_policy,
                 index=False,
                 query_string=query_string,
                 verbose=BlockType.DATA_EXPORTER == block.type,
@@ -90,7 +92,7 @@ def execute_sql_code(block, query):
             loader.export(
                 None,
                 table_name,
-                if_exists='replace',
+                if_exists=export_write_policy,
                 query_string=query_string,
                 schema=schema,
                 verbose=BlockType.DATA_EXPORTER == block.type,
@@ -119,7 +121,7 @@ def execute_sql_code(block, query):
                 table_name,
                 database,
                 schema,
-                if_exists='replace',
+                if_exists=export_write_policy,
                 query_string=query_string,
                 verbose=BlockType.DATA_EXPORTER == block.type,
             )

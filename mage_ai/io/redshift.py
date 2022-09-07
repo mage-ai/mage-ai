@@ -1,4 +1,4 @@
-from mage_ai.io.base import BaseSQLConnection, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
@@ -142,7 +142,7 @@ class Redshift(BaseSQLConnection):
                 ) for col in df.columns]
 
             with self.conn.cursor() as cur:
-                if if_exists == 'replace':
+                if ExportWritePolicy.REPLACE == if_exists:
                     # TODO: DELETE FROM to support partitions
                     # https://docs.aws.amazon.com/redshift/latest/dg/r_DELETE.html
                     cur.execute(f'DROP TABLE IF EXISTS {full_table_name}')
@@ -154,6 +154,11 @@ WHERE table_schema = '{schema}'
 AND table_name = '{table_name}'
 """)
                 table_doesnt_exist = len(cur.fetchall()) == 0
+                if ExportWritePolicy.FAIL and not table_doesnt_exist:
+                    raise ValueError(
+                        f'Table \'{full_table_name}\' already exists in database.',
+                    )
+
                 if table_doesnt_exist and not query_string:
                     col_with_types = ', '.join(
                         [f'{col} {col_type}' for col, col_type in columns_with_type],
@@ -162,14 +167,14 @@ AND table_name = '{table_name}'
                     cur.execute(sql)
 
                 if query_string:
-                    if table_doesnt_exist:
+                    if ExportWritePolicy.APPEND == if_exists:
                         sql = f"""
-CREATE TABLE {full_table_name} AS
+INSERT INTO {full_table_name}
 {query_string}
 """
                     else:
                         sql = f"""
-INSERT INTO {full_table_name}
+CREATE TABLE {full_table_name} AS
 {query_string}
 """
                     cur.execute(sql)
@@ -197,8 +202,7 @@ VALUES {values}
                 error_message = json.loads(raw_string).get('M')
                 if error_message:
                     print(f'\n\nError: {error_message}')
-                else:
-                    raise e
+                raise e
             except json.JSONDecodeError:
                 raise e
 

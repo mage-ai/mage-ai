@@ -149,11 +149,11 @@ class Postgres(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
                 if table_exists:
-                    if if_exists == ExportWritePolicy.FAIL:
+                    if ExportWritePolicy.FAIL == if_exists:
                         raise ValueError(
-                            f'Table \'{full_table_name}\' already exists in database'
+                            f'Table \'{full_table_name}\' already exists in database.'
                         )
-                    elif if_exists == ExportWritePolicy.REPLACE:
+                    elif ExportWritePolicy.REPLACE == if_exists:
                         if drop_table_on_replace:
                             cur.execute(f'DROP TABLE {full_table_name}')
                         else:
@@ -164,10 +164,16 @@ class Postgres(BaseSQLConnection):
                     cur.execute(query)
 
                 if query_string:
-                    query = 'CREATE TABLE {} AS\n{}'.format(
-                        full_table_name,
-                        query_string,
-                    )
+                    if ExportWritePolicy.APPEND == if_exists:
+                        query = 'INSERT INTO {}\n{}'.format(
+                            full_table_name,
+                            query_string,
+                        )
+                    else:
+                        query = 'CREATE TABLE {} AS\n{}'.format(
+                            full_table_name,
+                            query_string,
+                        )
                     cur.execute(query)
                 else:
                     df.to_csv(buffer, index=False, header=False)
