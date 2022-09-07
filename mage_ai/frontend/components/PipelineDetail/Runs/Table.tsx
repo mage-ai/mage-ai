@@ -26,7 +26,7 @@ function PipelineRunsTable({
     uuid: pipelineUUID,
   } = pipeline || {};
 
-  const columnFlex = [null, 1, 2, 1, 2, null];
+  const columnFlex = [null, 1, 3, 1, 1, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Date',

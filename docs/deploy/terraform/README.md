@@ -102,3 +102,9 @@ docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" 
   --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   hashicorp/terraform:latest apply
 ```
+
+<br />
+
+## [WIP] Security
+
+- Update security group name `mage-data-prep-sg` to whitelist IPs

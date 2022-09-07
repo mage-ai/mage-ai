@@ -179,7 +179,11 @@ function PipelineListPage() {
               )
               : null
             ,
-            <Text default={!isActive} success={isActive}>
+            <Text
+              default={!isActive}
+              monospace
+              success={isActive}
+            >
               {isActive
                 ? ScheduleStatusEnum.ACTIVE
                 : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'

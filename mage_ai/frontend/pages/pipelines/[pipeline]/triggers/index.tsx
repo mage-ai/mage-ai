@@ -23,6 +23,8 @@ import api from '@api';
 import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { getFormattedVariables } from '@components/Sidekick/utils';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { randomNameGenerator } from '@utils/string';
@@ -39,6 +41,10 @@ function PipelineSchedules({
   const router = useRouter();
   const pipelineUUID = pipeline.uuid;
 
+  const {
+    data: dataGlobalVariables,
+  } = api.variables.pipelines.list(pipelineUUID);
+  const globalVariables = dataGlobalVariables?.variables;
   const {
     data: dataPipelineSchedules,
     mutate: fetchPipelineSchedules,
@@ -98,16 +104,52 @@ function PipelineSchedules({
 
   const [selectedSchedule, setSelectedSchedule] = useState<PipelineScheduleType>();
   const buildSidekick = useMemo(() => {
-    const showVariables = selectedSchedule;
+    const variablesOrig =
+      getFormattedVariables(
+        globalVariables,
+        block => block.uuid === 'global',
+      )?.reduce((acc, { uuid, value }) => ({
+        ...acc,
+        [uuid]: value,
+      }), {});
+    const variablesOverride = selectedSchedule?.variables;
+    const hasOverride = !isEmptyObject(variablesOverride);
+
+    const showVariables = hasOverride
+      ? selectedSchedule?.variables
+      : !isEmptyObject(variablesOrig) ? variablesOrig : null
 
     return props => {
-      const dependencyGraphHeight = props.height - (showVariables ? 150 : 0);
+      const dependencyGraphHeight = props.height - (showVariables ? 151 : 0);
+
       return (
         <>
           {showVariables && (
             <VariableOverwrites
-              pipelineSchedule={selectedSchedule}
+              hasOverride={hasOverride}
+              variables={showVariables}
             />
+          )}
+          {!showVariables && (
+            <Spacing p={PADDING_UNITS}>
+              <Text>
+                This pipeline has no runtime variables.
+              </Text>
+
+              <Spacing mt={1}>
+                <NextLink
+                  as={`/pipelines/${pipelineUUID}/edit?sideview=variables`}
+                  href={'/pipelines/[pipeline]/edit'}
+                  passHref
+                >
+                  <Link>
+                    Click here
+                  </Link>
+                </NextLink> <Text inline>
+                  to add variables to this pipeline.
+                </Text>
+              </Spacing>
+            </Spacing>
           )}
           <DependencyGraph
             {...props}
@@ -117,7 +159,10 @@ function PipelineSchedules({
         </>
       )
     };
-  }, [selectedSchedule]);
+  }, [
+    globalVariables,
+    selectedSchedule,
+  ]);
 
   return (
     <PipelineDetailPage
@@ -162,7 +207,7 @@ function PipelineSchedules({
       <Divider light mt={PADDING_UNITS} short />
 
       <Table
-        columnFlex={[null, null, 1, 1, 3, 1, null, null, null]}
+        columnFlex={[null, 1, 1, 3, 1, null, null, null]}
         columns={[
           {
             label: () => '',
@@ -173,9 +218,6 @@ function PipelineSchedules({
           },
           {
             uuid: 'Type',
-          },
-          {
-            uuid: 'Start time',
           },
           {
             uuid: 'Name',
@@ -194,6 +236,7 @@ function PipelineSchedules({
             uuid: 'edit',
           },
         ]}
+        isSelectedRow={(rowIndex: number) => pipelinesSchedules[rowIndex].id === selectedSchedule?.id}
         onClickRow={(rowIndex: number) => setSelectedSchedule(pipelinesSchedules[rowIndex])}
         rows={pipelinesSchedules.map((pipelineSchedule: PipelineScheduleType) => {
           const {
@@ -201,7 +244,6 @@ function PipelineSchedules({
             pipeline_runs_count: pipelineRunsCount,
             name,
             schedule_interval: scheduleInterval,
-            start_time: startTime,
             status,
           } = pipelineSchedule;
 
@@ -238,9 +280,6 @@ function PipelineSchedules({
               monospace
             >
               {SCHEDULE_TYPE_TO_LABEL[pipelineSchedule.schedule_type]?.()}
-            </Text>,
-            <Text monospace default>
-              {startTime}
             </Text>,
             <NextLink
               as={`/pipelines/${pipelineUUID}/triggers/${id}`}

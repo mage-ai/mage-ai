@@ -27,7 +27,7 @@ function RunListPage() {
       uuid="pipeline_runs/index"
     >
       <Table
-        columnFlex={[null, null, 1, 1, null, null]}
+        columnFlex={[null, 1, 1, 1, null, null]}
         columns={[
           {
             uuid: 'Date',
@@ -63,6 +63,7 @@ function RunListPage() {
           <Text
             danger={RunStatus.FAILED === status}
             info={RunStatus.INITIAL === status}
+            monospace
             muted={RunStatus.CANCELLED === status}
             success={RunStatus.COMPLETED === status}
             warning={RunStatus.RUNNING === status}

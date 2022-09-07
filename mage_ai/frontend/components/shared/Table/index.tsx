@@ -25,6 +25,7 @@ type TableProps = {
   columnMaxWidth?: (colIndex: number) => string;
   columns?: ColumnType[];
   compact?: boolean;
+  isSelectedRow?: (rowIndex: number) => boolean;
   noBorder?: boolean;
   onClickRow?: (index: number) => void;
   rows: any[][];
@@ -38,6 +39,7 @@ function Table({
   columnMaxWidth,
   columns = [],
   compact,
+  isSelectedRow,
   noBorder,
   onClickRow,
   rows,
@@ -62,6 +64,7 @@ function Table({
         key={`${uuid}-row-${rowIndex}-cell-${colIndex}`}
         maxWidth={columnMaxWidth?.(colIndex)}
         noBorder={noBorder}
+        selected={isSelectedRow?.(rowIndex)}
         width={calculateCellWidth(colIndex)}
       >
         {cell}
@@ -108,6 +111,7 @@ function Table({
     columnMaxWidth,
     columns,
     compact,
+    isSelectedRow,
     noBorder,
     onClickRow,
     rows,

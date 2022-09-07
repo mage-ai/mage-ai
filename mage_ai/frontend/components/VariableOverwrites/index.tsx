@@ -8,19 +8,21 @@ import { LIME_DARK } from '@oracle/styles/colors/main';
 import { getFormattedVariable } from '@components/Sidekick/utils';
 
 type VariableOverwritesProps = {
-  pipelineSchedule: PipelineScheduleType;
+  hasOverride?: boolean;
+  variables: {
+    [key: string]: string;
+  };
 };
 
 function VariableOverwrites({
-  pipelineSchedule,
+  hasOverride,
+  variables,
 }: VariableOverwritesProps) {
-  const { variables } = pipelineSchedule || {};
-
   return (
     <ContainerStyle>
       <Spacing mb={2}>
         <Text bold large monospace muted>
-          Runtime variables
+          Runtime variables{hasOverride && ' (override)'}
         </Text>
       </Spacing>
       <CardsStyle noScrollbarTrackBackground>

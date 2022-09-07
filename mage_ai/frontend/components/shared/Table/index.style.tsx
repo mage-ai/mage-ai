@@ -59,6 +59,12 @@ export const TableHeadStyle = styled.th`
   ${SHARED_STYLES}
 `;
 
-export const TableDataStyle = styled.td`
+export const TableDataStyle = styled.td<{
+  selected: boolean;
+}>`
   ${SHARED_STYLES}
+
+  ${props => props.selected && `
+    background-color: ${(props.theme.interactive || dark.interactive).activeBorder};
+  `}
 `;

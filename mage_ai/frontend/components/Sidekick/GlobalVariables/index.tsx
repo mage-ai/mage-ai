@@ -246,13 +246,13 @@ function GlobalVariables({
   ]);
 
   const blockVariableTable = useMemo(() => {
-    const copyText = (uuid) => 
+    const copyText = (uuid) =>
       `from mage_ai.data_preparation.variable_manager import (
     get_variable,
 )
-        
+
 ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
-      
+
     return (
       <TableStyle width={tableWidth}>
         {blockVariables?.map((variable: VariableType) => (
@@ -287,6 +287,16 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
             New
           </KeyboardShortcutButton>
         </FlexContainer>
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text muted>
+          Press <Text bold default inline monospace>
+            Enter
+          </Text> or <Text bold default inline monospace>
+            Return
+          </Text> to save changes.
+        </Text>
       </Spacing>
 
       <Spacing mb={PADDING_UNITS}>
@@ -326,7 +336,7 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
                 inline
                 monospace
               >
-                {BlockTypeEnum.SCRATCHPAD}  
+                {BlockTypeEnum.SCRATCHPAD}
               </Text> block.
             </Text>
           </Spacing>
