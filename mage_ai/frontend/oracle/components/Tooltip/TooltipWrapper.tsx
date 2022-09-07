@@ -17,7 +17,7 @@ export type TooltipWrapperProps = {
   center?: boolean;
   children?: any;
   default?: boolean;
-  description?: string;
+  description?: any | string;
   height?: number;
   inline?: boolean;
   label?: string | any;
