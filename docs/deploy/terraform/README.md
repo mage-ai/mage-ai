@@ -15,6 +15,14 @@ Cloud providers currently supported with Mage Terraform scripts:
 
 <br />
 
+## Pre-install
+
+Clone this repository:
+
+```bash
+git clone https://github.com/mage-ai/mage-ai.git
+```
+
 ## Install Terraform CLI
 
 <b>Using Homebrew</b>
@@ -88,6 +96,8 @@ terraform apply
 <br />
 
 <b>Using Docker</b>
+
+From the root directory of Mage, run the following commands:
 
 1. Initialize Terraform:
 ```bash
