@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -44,6 +44,7 @@ import {
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import PipelineRunType from '@interfaces/PipelineRunType';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;
@@ -77,8 +78,10 @@ function TriggerDetail({
   } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID);
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
 
+  const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
+      onClickRow={(rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex])}
       pipeline={pipeline}
       pipelineRuns={pipelineRuns}
     />
@@ -86,6 +89,26 @@ function TriggerDetail({
     pipeline,
     pipelineRuns,
   ]);
+
+  const buildSidekick = useMemo(() => {
+    return props => {
+      const updatedProps = { ...props };
+      if (selectedRun) {
+        updatedProps['blockStatus'] = selectedRun.block_runs?.reduce(
+          (prev, { block_uuid, status }) => ({ ...prev, [block_uuid]: status }),
+          {},
+        );
+      } else {
+        updatedProps['noStatus'] = true;
+      }
+
+      return (
+        <DependencyGraph
+          {...updatedProps}
+        />
+      );
+    };
+  }, [selectedRun]);
 
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -340,12 +363,7 @@ function TriggerDetail({
           },
         },
       ]}
-      buildSidekick={props => (
-        <DependencyGraph
-          {...props}
-          noStatus
-        />
-      )}
+      buildSidekick={buildSidekick}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       subheader={(
