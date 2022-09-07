@@ -46,6 +46,7 @@ import {
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { createBlockStatus } from '../utils';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;

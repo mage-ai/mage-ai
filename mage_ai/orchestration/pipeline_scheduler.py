@@ -77,6 +77,10 @@ class PipelineScheduler:
 
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
+    def on_block_start(self, block_uuid: str) -> None:
+        block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
+        block_run.update(started_at=datetime.now())
+
     def __schedule_blocks(self) -> None:
         executable_block_runs = [b for b in self.pipeline_run.block_runs
                                  if b.status == BlockRun.BlockRunStatus.INITIAL]
@@ -142,6 +146,7 @@ def run_block(pipeline_run_id, block_run_id, variables, tags):
         update_status=False,
         on_complete=pipeline_scheduler.on_block_complete,
         on_failure=pipeline_scheduler.on_block_failure,
+        on_start=pipeline_scheduler.on_block_start,
         tags=tags,
     )
 

@@ -27,11 +27,14 @@ class BlockExecutor:
         update_status: bool = False,
         on_complete: Callable[[str], None] = None,
         on_failure: Callable[[str], None] = None,
+        on_start: Callable[[str], None] = None,
         **kwargs,
     ) -> None:
         tags = self.__build_tags(**kwargs.get('tags', {}))
 
         self.logger.info('Start executing block.', **tags)
+        if on_start is not None:
+            on_start(self.block_uuid)
         try:
             self.block.execute_sync(
                 analyze_outputs=analyze_outputs,

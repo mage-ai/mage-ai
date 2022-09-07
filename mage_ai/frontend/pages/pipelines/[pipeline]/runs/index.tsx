@@ -38,6 +38,7 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { indexBy } from '@utils/array';
 import { queryFromUrl } from '@utils/url';
+import { createBlockStatus } from '@components/Triggers/utils';
 
 const TAB_URL_PARAM = 'tab';
 

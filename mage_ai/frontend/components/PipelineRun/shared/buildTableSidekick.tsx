@@ -11,6 +11,7 @@ import {
   PADDING_UNITS,
   UNITS_BETWEEN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { createBlockStatus } from '@components/Triggers/utils';
 
 const TAB_DETAILS = { uuid: 'Run details' };
 const TAB_TREE = { uuid: 'Dependency tree' };
@@ -38,10 +39,7 @@ export default function({
   const updatedProps = { ...props };
 
   if (selectedRun) {
-    updatedProps['blockStatus'] = selectedRun.block_runs?.reduce(
-      (prev, { block_uuid, status }) => ({ ...prev, [block_uuid]: status }),
-      {},
-    );
+    updatedProps['blockStatus'] = createBlockStatus(selectedRun?.block_runs);
   } else {
     updatedProps['noStatus'] = true;
   }

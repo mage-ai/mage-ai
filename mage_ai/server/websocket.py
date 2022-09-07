@@ -1,3 +1,4 @@
+from datetime import datetime
 from distutils.dir_util import copy_tree
 from mage_ai.data_preparation.models.constants import (
     BlockType,
@@ -156,6 +157,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
         global_vars = message.get('global_vars', get_global_variables(pipeline_uuid))
+        global_vars['execution_date'] = datetime.now()
+        global_vars['event'] = dict()
 
         if cancel_pipeline:
             cancel_pipeline_execution(pipeline, publish_pipeline_message)
