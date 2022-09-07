@@ -296,17 +296,19 @@ function Edit({
                   Start date and time
                 </Text>
               </FlexContainer>,
-              <Flex flexDirection="column">
-                <TextInput
-                  monospace
-                  onClick={() => setShowCalendar(val => !val)}
-                  placeholder="YYYY-MM-DD HH:MM"
-                  value={date
-                    ? `${date.toISOString().split('T')[0]} ${time}`
-                    : ''
-                  }
-                />
-                <div style={{ position: 'absolute', zIndex: 100 }}>
+              <div>
+                {!showCalendar && (
+                  <TextInput
+                    monospace
+                    onClick={() => setShowCalendar(val => !val)}
+                    placeholder="YYYY-MM-DD HH:MM"
+                    value={date
+                      ? `${date.toISOString().split('T')[0]} ${time}`
+                      : ''
+                    }
+                  />
+                )}
+                <div style={{ width: '400px' }}>
                   <ClickOutside
                     disableEscape
                     onClickOutside={() => setShowCalendar(false)}
@@ -331,7 +333,7 @@ function Edit({
                     </DateSelectionContainer>
                   </ClickOutside>
                 </div>
-              </Flex>,
+              </div>,
             ],
           ]}
         />
@@ -656,7 +658,7 @@ function Edit({
             <Button
               disabled={saveButtonDisabled}
               loading={isLoadingUpdate}
-              onClick={() => onSave()}
+              onClick={onSave}
               outline
               primary
             >
