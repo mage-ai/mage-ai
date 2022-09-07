@@ -25,7 +25,10 @@ import CodeEditor, {
 } from '@components/CodeEditor';
 import CodeOutput from './CodeOutput';
 import CommandButtons, { CommandButtonsSharedProps } from './CommandButtons';
-import DataProviderType from '@interfaces/DataProviderType';
+import DataProviderType, {
+  EXPORT_WRITE_POLICIES,
+  ExportWritePolicyEnum,
+} from '@interfaces/DataProviderType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -49,6 +52,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileFill,
+  Info,
   Stack,
 } from '@oracle/icons';
 import {
@@ -62,6 +66,7 @@ import {
   CONFIG_KEY_DATA_PROVIDER_DATABASE,
   CONFIG_KEY_DATA_PROVIDER_PROFILE,
   CONFIG_KEY_DATA_PROVIDER_SCHEMA,
+  CONFIG_KEY_EXPORT_WRITE_POLICY,
 } from '@interfaces/ChartBlockType';
 import {
   ContainerStyle,
@@ -79,12 +84,12 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SINGLE_LINE_HEIGHT } from '@components/CodeEditor/index.style';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { buildConvertBlockMenuItems, getUpstreamBlockUuids } from './utils';
+import { capitalize, pluralize } from '@utils/string';
 import { executeCode } from '@components/CodeEditor/keyboard_shortcuts/shortcuts';
 import { get, set } from '@storage/localStorage';
 import { indexBy } from '@utils/array';
 import { onError, onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pluralize } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 import { initializeContentAndMessages } from '@components/PipelineDetail/utils';
 
@@ -180,6 +185,8 @@ function CodeBlockProps({
     [CONFIG_KEY_DATA_PROVIDER_DATABASE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_DATABASE],
     [CONFIG_KEY_DATA_PROVIDER_PROFILE]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_PROFILE],
     [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: block?.configuration?.[CONFIG_KEY_DATA_PROVIDER_SCHEMA],
+    [CONFIG_KEY_EXPORT_WRITE_POLICY]: block?.configuration?.[CONFIG_KEY_EXPORT_WRITE_POLICY]
+      || ExportWritePolicyEnum.APPEND,
   });
   const [errorMessages, setErrorMessages] = useState(null);
   const [isEditingBlock, setIsEditingBlock] = useState(false);
@@ -614,6 +621,10 @@ function CodeBlockProps({
     savePipelineContent,
   ]);
 
+  const requiresDatabaseName = (DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
+    || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
+  );
+
   return (
     <div ref={ref} style={{
       position: 'relative',
@@ -841,108 +852,160 @@ function CodeBlockProps({
         >
           {BlockLanguageEnum.SQL === block.language && !codeCollapsed && (
             <CodeHelperStyle>
-              <FlexContainer>
-                <Select
-                  compact
-                  label="Data provider"
-                  // @ts-ignore
-                  onChange={e => updateDataProviderConfig({
-                    [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
-                  })}
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
-                >
-                  <option value="" />
-                  {dataProviders?.map(({
-                    id,
-                    value,
-                  }: DataProviderType) => (
-                    <option key={id} value={value}>
-                      {id}
-                    </option>
-                  ))}
-                </Select>
+              <FlexContainer justifyContent="space-between">
+                <FlexContainer>
+                  <Select
+                    compact
+                    label="Data provider"
+                    // @ts-ignore
+                    onChange={e => updateDataProviderConfig({
+                      [CONFIG_KEY_DATA_PROVIDER]: e.target.value,
+                    })}
+                    small
+                    value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]}
+                  >
+                    <option value="" />
+                    {dataProviders?.map(({
+                      id,
+                      value,
+                    }: DataProviderType) => (
+                      <option key={id} value={value}>
+                        {id}
+                      </option>
+                    ))}
+                  </Select>
 
-                <Spacing mr={1} />
+                  <Spacing mr={1} />
 
-                <Select
-                  compact
-                  label="Profile"
-                  // @ts-ignore
-                  onChange={e => updateDataProviderConfig({
-                    [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
-                  })}
-                  small
-                  value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
-                >
-                  <option value="" />
-                  {dataProviderProfiles?.map((id: string) => (
-                    <option key={id} value={id}>
-                      {id}
-                    </option>
-                  ))}
-                </Select>
+                  <Select
+                    compact
+                    label="Profile"
+                    // @ts-ignore
+                    onChange={e => updateDataProviderConfig({
+                      [CONFIG_KEY_DATA_PROVIDER_PROFILE]: e.target.value,
+                    })}
+                    small
+                    value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_PROFILE]}
+                  >
+                    <option value="" />
+                    {dataProviderProfiles?.map((id: string) => (
+                      <option key={id} value={id}>
+                        {id}
+                      </option>
+                    ))}
+                  </Select>
 
-                {(DataSourceTypeEnum.BIGQUERY === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
-                  || DataSourceTypeEnum.SNOWFLAKE === dataProviderConfig[CONFIG_KEY_DATA_PROVIDER]
-                ) && (
-                  <>
-                    <Spacing mr={1} />
+                  {requiresDatabaseName && (
+                    <>
+                      <Spacing mr={1} />
 
-                    <FlexContainer alignItems="center">
-                      <Text monospace muted small>
-                        Database:
-                      </Text>
-                      <span>&nbsp;</span>
-                      <TextInput
-                        compact
-                        monospace
-                        onBlur={() => setTimeout(() => {
-                          setAnyInputFocused(false);
-                        }, 300)}
-                        onChange={(e) => {
-                          // @ts-ignore
-                          updateDataProviderConfig({
-                            [CONFIG_KEY_DATA_PROVIDER_DATABASE]: e.target.value,
-                          });
-                          e.preventDefault();
-                        }}
-                        onFocus={() => {
-                          setAnyInputFocused(true);
-                        }}
-                        small
-                        value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
-                      />
-                    </FlexContainer>
-                  </>
-                )}
+                      <FlexContainer alignItems="center">
+                        <Text monospace muted small>
+                          Database:
+                        </Text>
+                        <span>&nbsp;</span>
+                        <TextInput
+                          compact
+                          monospace
+                          onBlur={() => setTimeout(() => {
+                            setAnyInputFocused(false);
+                          }, 300)}
+                          onChange={(e) => {
+                            // @ts-ignore
+                            updateDataProviderConfig({
+                              [CONFIG_KEY_DATA_PROVIDER_DATABASE]: e.target.value,
+                            });
+                            e.preventDefault();
+                          }}
+                          onFocus={() => {
+                            setAnyInputFocused(true);
+                          }}
+                          small
+                          value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_DATABASE]}
+                          width={10 * UNIT}
+                        />
+                      </FlexContainer>
+                    </>
+                  )}
 
-                <Spacing mr={1} />
+                  <Spacing mr={1} />
+
+                  <FlexContainer alignItems="center">
+                    <Text monospace muted small>
+                      Save to schema:
+                    </Text>
+                    <span>&nbsp;</span>
+                    <TextInput
+                      compact
+                      monospace
+                      onBlur={() => setTimeout(() => {
+                        setAnyInputFocused(false);
+                      }, 300)}
+                      onChange={(e) => {
+                        // @ts-ignore
+                        updateDataProviderConfig({
+                          [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
+                        });
+                        e.preventDefault();
+                      }}
+                      onFocus={() => {
+                        setAnyInputFocused(true);
+                      }}
+                      small
+                      value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
+                      width={10 * UNIT}
+                    />
+                  </FlexContainer>
+                </FlexContainer>
 
                 <FlexContainer alignItems="center">
-                  <Text monospace muted small>
-                    Schema to save data:
-                  </Text>
-                  <span>&nbsp;</span>
-                  <TextInput
+                  <Tooltip
+                    appearBefore
+                    block
+                    description={
+                      <Text default inline>
+                        How do you want to handle existing data with the
+                        same{requiresDatabaseName ? ' database,' : ''} schema, and table name?
+                        <br />
+                        <Text bold inline monospace>Append</Text>: add rows to the existing table.
+                        <br />
+                        <Text bold inline monospace>Replace</Text>: delete the existing data.
+                        <br />
+                        <Text bold inline monospace>Fail</Text>: raise an error during execution.
+                      </Text>
+                    }
+                    size={null}
+                    widthFitContent
+                  >
+                    <FlexContainer alignItems="center">
+                      <Info muted />
+                      <span>&nbsp;</span>
+                      <Text monospace muted small>
+                        Write policy:
+                      </Text>
+                      <span>&nbsp;</span>
+                    </FlexContainer>
+                  </Tooltip>
+
+                  <Select
                     compact
-                    monospace
-                    onBlur={() => setTimeout(() => {
-                      setAnyInputFocused(false);
-                    }, 300)}
-                    onChange={(e) => {
-                      // @ts-ignore
-                      updateDataProviderConfig({
-                        [CONFIG_KEY_DATA_PROVIDER_SCHEMA]: e.target.value,
-                      });
-                      e.preventDefault();
-                    }}
-                    onFocus={() => {
-                      setAnyInputFocused(true);
-                    }}
+                    label="strategy"
+                    // @ts-ignore
+                    onChange={e => updateDataProviderConfig({
+                      [CONFIG_KEY_EXPORT_WRITE_POLICY]: e.target.value,
+                    })}
                     small
-                    value={dataProviderConfig[CONFIG_KEY_DATA_PROVIDER_SCHEMA]}
-                  />
+                    value={dataProviderConfig[CONFIG_KEY_EXPORT_WRITE_POLICY]}
+                  >
+                    <option value="" />
+                    {EXPORT_WRITE_POLICIES?.map(value => (
+                      <option key={value} value={value}>
+                        {capitalize(value)}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <Spacing mr={5} />
                 </FlexContainer>
               </FlexContainer>
             </CodeHelperStyle>

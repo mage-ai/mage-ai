@@ -1,6 +1,6 @@
 from google.cloud.bigquery import Client, LoadJobConfig, WriteDisposition
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseSQLDatabase, QUERY_ROW_LIMIT
+from mage_ai.io.base import BaseSQLDatabase, ExportWritePolicy, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
 from typing import Mapping
@@ -135,18 +135,25 @@ FROM `{database}.{schema}.__TABLES_SUMMARY__`
 WHERE table_id = '{table_name}'
 """).to_dataframe()
 
+                full_table_name = f'{database}.{schema}.{table_name}'
+
                 table_doesnt_exist = df_existing.empty
 
-                if table_doesnt_exist:
+                if ExportWritePolicy.FAIL == if_exists and not table_doesnt_exist:
+                    raise ValueError(
+                        f'Table \'{full_table_name}\' already exists in database.',
+                    )
+
+                if ExportWritePolicy.REPLACE == if_exists:
+                    self.client.query(f'DROP TABLE {full_table_name}')
                     command = 'CREATE TABLE'
-                elif if_exists == 'replace':
-                    self.client.query(f'DROP TABLE {database}.{schema}.{table_name}')
+                elif table_doesnt_exist:
                     command = 'CREATE TABLE'
                 else:
                     command = 'INSERT INTO'
 
                 sql = f"""
-{command} {table_id} AS
+{command} {table_id}
 {query_string}
 """
                 self.client.query(sql)
