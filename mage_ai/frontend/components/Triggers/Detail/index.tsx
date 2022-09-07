@@ -8,6 +8,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
+import PipelineRunType from '@interfaces/PipelineRunType';
 import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
@@ -44,7 +45,6 @@ import {
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import PipelineRunType from '@interfaces/PipelineRunType';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;
