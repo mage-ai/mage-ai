@@ -1,13 +1,14 @@
 from datetime import datetime
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.hash import merge_dict
+import logging
 import simplejson
 import traceback
 import uuid
 
 
-class Logger():
-    def __init__(self, logger):
+class DictLogger():
+    def __init__(self, logger: logging.Logger):
         self.logger = logger
 
     def critical(self, message, **kwargs):
@@ -63,16 +64,16 @@ class Logger():
         else:
             getattr(self.logger, method_name)(log_level, msg)
 
-    def __getattr__(self, method_name):
-        if method_name not in [
-            '__send_message',
-            'critical',
-            'debug',
-            'error',
-            'exception',
-            'info',
-            'log',
-            'warning',
-        ]:
-            return getattr(self.logger, method_name)
-        return getattr(self, method_name)
+    # def __getattr__(self, method_name):
+    #     if method_name not in [
+    #         '__send_message',
+    #         'critical',
+    #         'debug',
+    #         'error',
+    #         'exception',
+    #         'info',
+    #         'log',
+    #         'warning',
+    #     ]:
+    #         return getattr(self.logger, method_name)
+    #     return super().__getattr__(method_name)
