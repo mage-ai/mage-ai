@@ -622,7 +622,9 @@ class Block:
             else:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
                 if block_function is not None:
-                    if global_vars is not None and len(global_vars) != 0:
+                    sig = signature(block_function)
+                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
                         outputs = block_function(*input_vars, **global_vars)
                     else:
                         outputs = block_function(*input_vars)
