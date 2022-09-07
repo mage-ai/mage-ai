@@ -75,12 +75,12 @@ provider "aws" {
 cd scripts/deploy/terraform/aws
 ```
 
-1. Initialize Terraform:
+2. Initialize Terraform:
 ```bash
 terraform init
 ```
 
-1. Deploy:
+3. Deploy:
 ```bash
 terraform apply
 ```
@@ -95,7 +95,7 @@ docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" 
   hashicorp/terraform:latest init
 ```
 
-1. Deploy:
+2. Deploy:
 ```bash
 docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" \
   --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
