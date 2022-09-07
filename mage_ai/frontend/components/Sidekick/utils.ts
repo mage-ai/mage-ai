@@ -8,11 +8,11 @@ import {
   PERCENTAGE_KEYS,
   STAT_KEYS,
 } from '@components/datasets/constants';
+import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import { getColumnTypeCounts } from '@components/datasets/overview/utils';
 import { numberWithCommas } from '@utils/string';
 import { transformNumber } from '@utils/number';
-import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 
 export function createMetricsSample({
   statistics,
