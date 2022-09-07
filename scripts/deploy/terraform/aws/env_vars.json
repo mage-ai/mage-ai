@@ -10,5 +10,13 @@
     {
         "name": "AWS_SECRET_ACCESS_KEY",
         "value": "AWS_SECRET_ACCESS_KEY"
+    },
+    {
+        "name": "LAMBDA_FUNCTION_ARN",
+        "value": "${lambda_func_arn}"
+    },
+    {
+        "name": "LAMBDA_FUNCTION_NAME",
+        "value": "${lambda_func_name}"
     }
 ]

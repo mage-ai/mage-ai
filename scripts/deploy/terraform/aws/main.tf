@@ -32,6 +32,11 @@ resource "aws_cloudwatch_log_group" "log-group" {
 
 data "template_file" "env_vars" {
   template = file("env_vars.json")
+
+  vars = {
+    lambda_func_arn = "${aws_lambda_function.terraform_lambda_func.arn}"
+    lambda_func_name = "${aws_lambda_function.terraform_lambda_func.function_name}"
+  }
 }
 
 resource "aws_ecs_task_definition" "aws-ecs-task" {
@@ -92,6 +97,8 @@ resource "aws_ecs_task_definition" "aws-ecs-task" {
     Name        = "${var.app_name}-ecs-td"
     Environment = var.app_environment
   }
+
+  depends_on = [aws_lambda_function.terraform_lambda_func]
 }
 
 data "aws_ecs_task_definition" "main" {
