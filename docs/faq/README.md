@@ -1,2 +1,0 @@
-# Frequently asked questions
-WIP

@@ -1,4 +1,5 @@
-# Tutorials
+# 👩‍🏫 Tutorials
 
-1. [Data cleaning aka data cleansing 101](data_cleaning.md)
-1. [Data cleaning workflow](data_cleaning_workflow.md)
+- [Train model on Titanic dataset](quick_start/train_titanic_model/README.md)
+- [Load data from API, transform it, and export it to PostgreSQL](quick_start/etl_restaurant/README.md)
+- [Integrate Mage into an existing Airflow project](airflow/integrate_into_existing_project/README.md)
