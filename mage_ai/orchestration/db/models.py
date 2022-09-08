@@ -138,7 +138,9 @@ class PipelineSchedule(BaseModel):
             return None
 
         now = datetime.now()
-        if self.schedule_interval == '@daily':
+        if self.schedule_interval == '@once':
+            return now
+        elif self.schedule_interval == '@daily':
             return now.replace(second=0, microsecond=0, minute=0, hour=0)
         elif self.schedule_interval == '@hourly':
             return now.replace(second=0, microsecond=0, minute=0)
