@@ -1,3 +1,4 @@
+from croniter import croniter
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.models.file import File
@@ -13,6 +14,7 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+
 
 Base = declarative_base()
 Base.query = Session.query_property()
@@ -128,8 +130,9 @@ class PipelineSchedule(BaseModel):
                 timedelta(days=now.weekday())
         elif self.schedule_interval == '@monthly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
-        # TODO: Support cron syntax
-        return None
+        else:
+            cron_itr = croniter(self.schedule_interval, now)
+            return cron_itr.get_prev(datetime)
 
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
@@ -150,6 +153,7 @@ class PipelineSchedule(BaseModel):
             TODO: Implement other schedule interval checks
             """
             current_execution_date = self.current_execution_date()
+            
             if current_execution_date is None:
                 return False
             if not find(lambda x: x.execution_date == current_execution_date, self.pipeline_runs):

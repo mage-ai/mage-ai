@@ -90,7 +90,7 @@ function Edit({
   const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
-
+  const [customInterval, setCustomInterval] = useState<string>(null);
 
   const formattedVariables = useMemo(() => getFormattedVariables(
     variables,
@@ -185,7 +185,15 @@ function Edit({
     () => {
       if (pipelineSchedule) {
         setEventMatchers(pipelineSchedule.event_matchers);
-        setSchedule(pipelineSchedule);
+        if (isCustomInterval) {
+          setSchedule({
+            ...pipelineSchedule,
+            schedule_interval: 'custom',
+          });
+          setCustomInterval(scheduleInterval);
+        } else {
+          setSchedule(pipelineSchedule);
+        }
       }
     },
     [pipelineSchedule],
@@ -206,7 +214,7 @@ function Edit({
     if (ScheduleTypeEnum.EVENT === schedule.schedule_type) {
       data.event_matchers = eventMatchers;
     } else {
-      data.schedule_interval = schedule.schedule_interval;
+      data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
       data.start_time = date && time
         ? `${date.toISOString().split('T')[0]} ${time}:00`
         : null;
@@ -217,6 +225,7 @@ function Edit({
       pipeline_schedule: data,
     });
   }, [
+    customInterval,
     date,
     eventMatchers,
     runtimeVariables,
@@ -225,7 +234,141 @@ function Edit({
     updateSchedule,
   ]);
 
+  const isCustomInterval = useMemo(
+    () => scheduleInterval &&
+      !Object.values(ScheduleIntervalEnum).includes(scheduleInterval as ScheduleIntervalEnum),
+    [scheduleInterval],
+  );
+
   const detailsMemo = useMemo(() => {
+    const rows = [
+      [
+        <FlexContainer alignItems="center">
+          <Alphabet default size={1.5 * UNIT} />
+          <Spacing mr={1} />
+          <Text default>
+            Trigger name
+          </Text>
+        </FlexContainer>,
+        <TextInput
+          monospace
+          onChange={(e) => {
+            e.preventDefault();
+            setSchedule(s => ({
+              ...s,
+              name: e.target.value,
+            }));
+          }}
+          placeholder="Name this trigger"
+          value={name}
+        />,
+      ],
+      [
+        <FlexContainer alignItems="center">
+          <Schedule default size={1.5 * UNIT} />
+          <Spacing mr={1} />
+          <Text default>
+            Frequency
+          </Text>
+        </FlexContainer>,
+        <Select
+          monospace
+          onChange={(e) => {
+            e.preventDefault();
+            const interval = e.target.value;
+            setSchedule(s => ({
+              ...s,
+              schedule_interval: interval,
+            }))
+          }}
+          placeholder="Choose the frequency to run"
+          value={scheduleInterval}
+        >
+          {!scheduleInterval && <option value="" />}
+          {Object.values(ScheduleIntervalEnum).map(value => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+          <option key="custom" value="custom">
+            custom
+          </option>
+        </Select>,
+      ],
+      [
+        <FlexContainer alignItems="center">
+          <CalendarDate default size={1.5 * UNIT} />
+          <Spacing mr={1} />
+          <Text default>
+            Start date and time
+          </Text>
+        </FlexContainer>,
+        <div>
+          {!showCalendar && (
+            <TextInput
+              monospace
+              onClick={() => setShowCalendar(val => !val)}
+              placeholder="YYYY-MM-DD HH:MM"
+              value={date
+                ? `${date.toISOString().split('T')[0]} ${time}`
+                : ''
+              }
+            />
+          )}
+          <div style={{ width: '400px' }}>
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowCalendar(false)}
+              open={showCalendar}
+            >
+              <DateSelectionContainer>
+                <Calendar
+                  onChange={setDate}
+                  value={date}
+                />
+                <Spacing mb={2} />
+                <TextInput
+                  label="Time (UTC)"
+                  monospace
+                  onChange={e => {
+                    e.preventDefault();
+                    setTime(e.target.value);
+                  }}
+                  paddingVertical={12}
+                  value={time}
+                />
+              </DateSelectionContainer>
+            </ClickOutside>
+          </div>
+        </div>,
+      ],
+    ];
+
+    if (isCustomInterval) {
+      rows.splice(
+        2,
+        0,
+        [
+          <FlexContainer alignItems="center">
+            <Alphabet default size={1.5 * UNIT} />
+            <Spacing mr={1} />
+            <Text default>
+              Cron Expression
+            </Text>
+          </FlexContainer>,
+          <TextInput
+            monospace
+            onChange={(e) => {
+              e.preventDefault();
+              setCustomInterval(e.target.value);
+            }}
+            placeholder="* * * * *"
+            value={customInterval}
+          />,
+        ]
+      )
+    }
+
     return (
       <>
         <Spacing mb={2} px={PADDING_UNITS}>
@@ -238,108 +381,12 @@ function Edit({
 
         <Table
           columnFlex={[null, 1]}
-          rows={[
-            [
-              <FlexContainer alignItems="center">
-                <Alphabet default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Trigger name
-                </Text>
-              </FlexContainer>,
-              <TextInput
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
-                placeholder="Name this trigger"
-                value={name}
-              />,
-            ],
-            [
-              <FlexContainer alignItems="center">
-                <Schedule default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Frequency
-                </Text>
-              </FlexContainer>,
-              <Select
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    schedule_interval: e.target.value,
-                  }))
-                }}
-                placeholder="Choose the frequency to run"
-                value={scheduleInterval}
-              >
-                {!scheduleInterval && <option value="" />}
-                {Object.values(ScheduleIntervalEnum).map(value => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </Select>,
-            ],
-            [
-              <FlexContainer alignItems="center">
-                <CalendarDate default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Start date and time
-                </Text>
-              </FlexContainer>,
-              <div>
-                {!showCalendar && (
-                  <TextInput
-                    monospace
-                    onClick={() => setShowCalendar(val => !val)}
-                    placeholder="YYYY-MM-DD HH:MM"
-                    value={date
-                      ? `${date.toISOString().split('T')[0]} ${time}`
-                      : ''
-                    }
-                  />
-                )}
-                <div style={{ width: '400px' }}>
-                  <ClickOutside
-                    disableEscape
-                    onClickOutside={() => setShowCalendar(false)}
-                    open={showCalendar}
-                  >
-                    <DateSelectionContainer>
-                      <Calendar
-                        onChange={setDate}
-                        value={date}
-                      />
-                      <Spacing mb={2} />
-                      <TextInput
-                        label="Time (UTC)"
-                        monospace
-                        onChange={e => {
-                          e.preventDefault();
-                          setTime(e.target.value);
-                        }}
-                        paddingVertical={12}
-                        value={time}
-                      />
-                    </DateSelectionContainer>
-                  </ClickOutside>
-                </div>
-              </div>,
-            ],
-          ]}
+          rows={rows}
         />
       </>
     );
   }, [
+    customInterval,
     date,
     schedule,
     showCalendar,
