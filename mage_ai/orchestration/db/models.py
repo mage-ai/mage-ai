@@ -134,6 +134,9 @@ class PipelineSchedule(BaseModel):
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
 
     def current_execution_date(self) -> datetime:
+        if self.schedule_interval is None:
+            return None
+
         now = datetime.now()
         if self.schedule_interval == '@daily':
             return now.replace(second=0, microsecond=0, minute=0, hour=0)
