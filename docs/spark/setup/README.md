@@ -4,7 +4,7 @@ Want to become a [Sparkmage](https://c1.scryfall.com/file/scryfall-cards/large/f
 
 <img
   alt="Sparkmage"
-  height="300"
+  height="500"
   src="https://static.wikia.nocookie.net/mtgsalvation_gamepedia/images/f/fd/Rowan_key_art.jpg/revision/latest"
 />
 
