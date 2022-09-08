@@ -6,6 +6,8 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
+from mage_ai.orchestration.notification.config import NotificationConfig
+from mage_ai.orchestration.notification.sender import NotificationSender
 from typing import Dict
 import multiprocessing
 import traceback
@@ -20,6 +22,9 @@ class PipelineScheduler:
             partition=self.pipeline_run.execution_partition,
         )
         self.logger = DictLogger(logger_manager)
+        self.notification_sender = NotificationSender(
+            NotificationConfig.load(config=self.pipeline.repo_config.notification_config),
+        )
 
     def start(self, should_schedule: bool = True) -> None:
         if self.pipeline_run.status == PipelineRun.PipelineRunStatus.RUNNING:
@@ -37,6 +42,12 @@ class PipelineScheduler:
 
     def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
+            self.notification_sender.send(
+                f'Succuessfully running Pipeline `{self.pipeline.uuid}` '
+                f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
+                f'`{self.pipeline_run.pipeline_schedule.name}` '
+                f'at execution time `{self.pipeline_run.execution_date}`.'
+            )
             self.pipeline_run.update(
                 status=PipelineRun.PipelineRunStatus.COMPLETED,
                 completed_at=datetime.now(),
@@ -75,7 +86,12 @@ class PipelineScheduler:
                 block_uuid=block_run.block_uuid,
             ),
         )
-
+        self.notification_sender.send(
+            f'Failed to run Pipeline `{self.pipeline.uuid}` '
+            f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
+            f'`{self.pipeline_run.pipeline_schedule.name}` '
+            f'at execution time `{self.pipeline_run.execution_date}`.'
+        )
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
     def __schedule_blocks(self) -> None:

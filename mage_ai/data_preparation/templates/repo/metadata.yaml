@@ -9,3 +9,7 @@ emr_config:
     # ec2_key_name must be configured during cluster launch to enable SSH access.
     # You can create a key pair in page https://console.aws.amazon.com/ec2#KeyPairs and download the key file.
     ec2_key_name: '[ec2_key_pair_name]'
+
+notification_config:
+  slack_config:
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}""
