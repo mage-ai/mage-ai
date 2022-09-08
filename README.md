@@ -144,9 +144,9 @@ These are the fundamental concepts that Mage uses to operate.
 - [Project](docs/core/abstractions.md#project)
 - [Pipeline](docs/core/abstractions.md#pipeline)
 - [Block](docs/core/abstractions.md#block)
-- [Run](docs/core/abstractions.md#run)
-- [Trigger](docs/core/abstractions.md#trigger)
 - [Data product](docs/core/abstractions.md#data-product)
+- [Trigger](docs/core/abstractions.md#trigger)
+- [Run](docs/core/abstractions.md#run)
 
 <sub>Read more [<b>here</b>](docs/core/abstractions.md).</sub>
 

@@ -7,16 +7,17 @@ These are the fundamental concepts that Mage uses to operate.
 - [Project](#project)
 - [Pipeline](#pipeline)
 - [Block](#block)
-- [Run](#run)
-- [Trigger](#trigger)
 - [Data product](#data-product)
+- [Trigger](#trigger)
+- [Run](#run)
+
+<!-- - [Log](#log)
+- [Event](#event)
+- [Metric](#metric)
 - [Version](#version)
 - [Partition](#partition)
-- [Event](#event)
-- [Log](#log)
-- [Metric](#metric)
-- [Service](#service)
 - [Backfill](#backfill)
+- [Service](#service) -->
 
 <br />
 
@@ -112,42 +113,79 @@ Each block file is stored in a folder that matches its respective type
 
 <br />
 
-## Run
+## Data product
+
+Every block produces data after its been executed. These are called <b>data products</b> in Mage.
+
+Data validation occurs whenever a block is executed.
+
+Additionally, each data product produced by a block can be automatically
+partitioned, versioned, and backfilled.
+
+Some examples of data products produced by blocks:
+
+- 📋 Dataset/Table in a database, data warehouse, etc.
+- 🖼️ Image
+- 📹 Video
+- 📝 Text file
+- 🎧 Audio file
 
 <br />
 
 ## Trigger
 
+A trigger is a set of instructions that determine when or how a pipeline should run.
+A pipeline can have 1 or more triggers.
+
+There are 2 types of triggers:
+
+1. Schedule
+1. Event
+
+#### Schedule
+
+A schedule type trigger will instruct the pipeline to run after a start date and on a set interval.
+
+Currently, the frequency pipelines can be scheduled for include:
+
+- Run exactly once
+- Hourly
+- Daily
+- Weekly
+- Monthly
+- Every N minutes (coming soon)
+
+#### Event
+
+An event type trigger will instruct the pipeline to run whenever a specific event occurs.
+
+For example, you can have a pipeline start running when a database query is finished executing or
+when a new object is created in Amazon S3 or Google Storage.
+
+You can also trigger a pipeline using your own custom event by making a `POST` request to
+the `http://localhost/api/events` endpoint with a custom event payload.
+
+<sub>Check out this [<b>tutorial</b>]() on how to create an event trigger.</sub>
+
 <br />
 
-## Data product
+## Run
 
-<br />
+Every time a pipeline or a block is executed
+(outside of the notebook while building the pipeline and block),
+a run record is created in a database.
 
-## Version
+A run record stores information about when it was started, its status, when it was completed,
+any runtime variables used in the execution of the pipeline or block, etc.
 
-<br />
+There are 2 types of runs:
 
-## Partition
+#### Pipeline run
 
-<br />
+This contain information about the entire pipeline execution
 
-## Event
+#### Block run
 
-<br />
-
-## Log
-
-<br />
-
-## Metric
-
-<br />
-
-## Service
-
-<br />
-
-## Backfill
+Every time a pipeline is executed, each block in the pipeline will be executed and potentially create a block run record.
 
 <br />
