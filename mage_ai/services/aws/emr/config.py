@@ -2,8 +2,12 @@ from dataclasses import dataclass
 from mage_ai.shared.config import BaseConfig
 from typing import Dict
 
+DEFAULT_DRIVER_MEMORY = '32000M'
 DEFAULT_INSTANCE_TYPE = 'r5.4xlarge'
-# MAX_CLUSTERS_ON_SPOT_INSTANCES = 40
+INSTANCE_DRIVER_MEMORY_MAPPING = {
+    'r5.2xlarge': '16000M',
+    'r5.xlarge': '8000M',
+}
 
 
 @dataclass
@@ -34,9 +38,13 @@ class EmrConfig(BaseConfig):
                         {
                             'Classification': 'spark-defaults',
                             'Properties': {
-                                'spark.driver.memory': '32000M',
+                                'spark.driver.memory': self.__driver_memory(
+                                    self.master_instance_type,
+                                ),
                                 'spark.driver.maxResultSize': '0',
-                                'spark.executor.memory': '32000M',
+                                'spark.executor.memory': self.__driver_memory(
+                                    self.master_instance_type,
+                                ),
                             },
                         },
                     ],
@@ -51,9 +59,13 @@ class EmrConfig(BaseConfig):
                         {
                             'Classification': 'spark-defaults',
                             'Properties': {
-                                'spark.driver.memory': '32000M',
+                                'spark.driver.memory': self.__driver_memory(
+                                    self.slave_instance_type,
+                                ),
                                 'spark.driver.maxResultSize': '0',
-                                'spark.executor.memory': '32000M',
+                                'spark.executor.memory': self.__driver_memory(
+                                    self.slave_instance_type,
+                                ),
                             },
                         },
                     ],
@@ -67,3 +79,6 @@ class EmrConfig(BaseConfig):
         if self.slave_security_group is not None:
             instances_config['EmrManagedSlaveSecurityGroup'] = self.slave_security_group
         return instances_config
+
+    def __driver_memory(self, instance_size: str) -> str:
+        return INSTANCE_DRIVER_MEMORY_MAPPING.get(instance_size, DEFAULT_DRIVER_MEMORY)
