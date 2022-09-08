@@ -105,6 +105,13 @@ emr_config:
   ec2_key_name: aws-ec2
 ```
 
+<b>Note</b>
+
+You may need to request an increase in quota limits for using those instance types.
+
+For more information on how to view your quota limits and request an increase, 
+check out this [AWS document](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).
+
 ### 5. Launch EMR cluster
 
 You’ll need an AWS Access Key ID and an AWS Secret Access Key.
