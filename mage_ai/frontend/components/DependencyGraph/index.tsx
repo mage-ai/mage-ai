@@ -88,7 +88,10 @@ export type DependencyGraphProps = {
     [current: string]: any;
   };
   blockStatus?: {
-    [uuid: string]: RunStatus;
+    [uuid: string]: {
+      status: RunStatus,
+      runtime?: number,
+    };
   };
   editingBlock?: {
     upstreamBlocks: {
@@ -286,13 +289,17 @@ function DependencyGraph({
     if (noStatus) {
       return {};
     } else if (blockStatus) {
-      const status = blockStatus[block.uuid];
+      const {
+        status,
+        runtime,
+      } = blockStatus[block.uuid] || {};
       return {
         hasFailed: RunStatus.FAILED === status,
         isCancelled: RunStatus.CANCELLED === status,
         isInProgress: RunStatus.RUNNING === status,
         isQueued: RunStatus.INITIAL === status,
         isSuccessful: RunStatus.COMPLETED === status,
+        runtime,
       };
     } else {
       return {
@@ -437,6 +444,8 @@ function DependencyGraph({
                   },
                 } = event;
 
+                const blockStatus = getBlockStatus(block);
+
                 return (
                   <foreignObject
                     height={event.height}
@@ -444,7 +453,7 @@ function DependencyGraph({
                       // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
                       pointerEvents: 'none',
                     }}
-                    width={event.width}
+                    width={event.width + (typeof blockStatus.runtime !== 'undefined' ? 50 : 0)}
                     x={0}
                     y={0}
                   >
@@ -456,7 +465,7 @@ function DependencyGraph({
                         ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
                         : selectedBlock?.uuid === block.uuid
                       }
-                      {...getBlockStatus(block)}
+                      {...blockStatus}
                     >
                       {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
                     </GraphNode>

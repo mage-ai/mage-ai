@@ -1,23 +1,34 @@
 import React from 'react';
 
-import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { CardsStyle, ContainerStyle, VariableCardStyle } from './index.style';
 import { LIME_DARK } from '@oracle/styles/colors/main';
-import { getFormattedVariable } from '@components/Sidekick/utils';
+import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
+import { addTriggerVariables, getFormattedVariable } from '@components/Sidekick/utils';
 
-type VariableOverwritesProps = {
+type RuntimeVariablesProps = {
   hasOverride?: boolean;
   variables: {
     [key: string]: string;
   };
+  scheduleType: ScheduleTypeEnum;
 };
 
-function VariableOverwrites({
+function RuntimeVariables({
   hasOverride,
+  scheduleType,
   variables,
-}: VariableOverwritesProps) {
+}: RuntimeVariablesProps) {
+  const variablesArr = [];
+  Object.entries(variables).forEach(([k, v]) => {
+    variablesArr.push({
+      uuid: k,
+      value: getFormattedVariable(v),
+    });
+  });
+  addTriggerVariables(variablesArr, scheduleType);
+
   return (
     <ContainerStyle>
       <Spacing mb={2}>
@@ -26,12 +37,12 @@ function VariableOverwrites({
         </Text>
       </Spacing>
       <CardsStyle noScrollbarTrackBackground>
-        {variables && Object.entries(variables).map(([variable, value]) => (
+        {variables && variablesArr.map(({ uuid, value }) => (
           <VariableCardStyle>
-            <Text monospace>
-              {variable}
+            <Text monospace small>
+              {uuid}
             </Text>
-            <Text color={LIME_DARK} monospace>
+            <Text color={LIME_DARK} monospace small>
               {getFormattedVariable(value)}
             </Text>
           </VariableCardStyle>
@@ -41,4 +52,4 @@ function VariableOverwrites({
   );
 }
 
-export default VariableOverwrites;
+export default RuntimeVariables;

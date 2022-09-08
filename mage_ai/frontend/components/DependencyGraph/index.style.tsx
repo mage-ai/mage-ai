@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export const GraphContainerStyle = styled.div<{
   height?: number;
@@ -22,7 +23,6 @@ export const NodeStyle = styled.div<{
   isCancelled: boolean;
   selected: boolean;
 }>`
-  border: 2px solid transparent;
   border-radius: ${BORDER_RADIUS_SMALL}px;
   min-width: fit-content;
 
@@ -44,3 +44,16 @@ export const NodeStyle = styled.div<{
     }
   `}
 `;
+
+export const RuntimeStyle = styled.div<{
+  backgroundColor?:string;
+}>`
+  margin-right: ${2 * UNIT}px;
+  padding: 12px 4px;
+
+  height: 100%;
+  width: 50px;
+
+  background: rgba(0, 0, 0, 0.2);
+  background-blend-mode: soft-light;
+`

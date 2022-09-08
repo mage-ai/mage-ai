@@ -21,8 +21,10 @@ import { Add, Copy } from '@oracle/icons';
 import { CellStyle, TableStyle } from './index.style';
 import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { getFormattedVariables } from '../utils';
+import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
+import { addTriggerVariables, getFormattedVariables } from '../utils';
 import { onSuccess } from '@api/utils/response';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -316,6 +318,31 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
           source={SAMPLE_KWARGS_SOURCE}
         />
       </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Headline level={4} monospace>
+          Trigger Runtime Variables
+        </Headline>
+        <Spacing mb={PADDING_UNITS} />
+        <Text>
+          Depending on what kind of trigger you use for this pipeline, some default runtime variables will be provided.
+        </Text>
+      </Spacing>
+
+      {Object.values(ScheduleTypeEnum).map((value) => (
+        <Spacing mb={PADDING_UNITS}>
+          <Spacing mb={PADDING_UNITS}>
+            <Text large monospace>
+              {capitalizeRemoveUnderscoreLower(SCHEDULE_TYPE_TO_LABEL[value]?.())}
+            </Text>
+          </Spacing>
+          {addTriggerVariables([], value).map((variable) => (
+            <VariableRow
+              variable={variable}
+            />
+          ))}
+        </Spacing>
+      ))}
 
       {blockVariables && blockVariables.length > 0 && (
         <>

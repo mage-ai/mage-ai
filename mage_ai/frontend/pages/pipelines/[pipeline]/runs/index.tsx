@@ -9,8 +9,6 @@ import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import Circle from '@oracle/elements/Circle';
 import DependencyGraph from '@components/DependencyGraph';
-import Flex from '@oracle/components/Flex';
-import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import PipelineDetailPage from '@components/PipelineDetailPage';
@@ -26,13 +24,13 @@ import buildTableSidekick, {
 } from '@components/PipelineRun/shared/buildTableSidekick';
 import {
   BlocksSeparated,
-  ChevronRight,
   PipelineRun,
   TodoList,
 } from '@oracle/icons';
 import usePrevious from '@utils/usePrevious';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { createBlockStatus } from '@components/Triggers/utils';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';

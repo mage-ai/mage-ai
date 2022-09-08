@@ -8,6 +8,7 @@ import {
   PERCENTAGE_KEYS,
   STAT_KEYS,
 } from '@components/datasets/constants';
+import { ScheduleTypeEnum } from '@interfaces/PipelineScheduleType';
 import { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import { getColumnTypeCounts } from '@components/datasets/overview/utils';
 import { numberWithCommas } from '@utils/string';
@@ -133,6 +134,22 @@ export function getFormattedVariables(variables, filterBlock) {
         value: getFormattedVariable(variableValue),
       }
     })
+}
+
+export function addTriggerVariables(variablesArr, scheduleType) {
+  if (scheduleType === ScheduleTypeEnum.TIME) {
+    variablesArr.push({
+      uuid: 'execution_date',
+      value: '<run datetime>'
+    });
+  } else if (scheduleType === ScheduleTypeEnum.EVENT) {
+    variablesArr.push({
+      uuid: 'event',
+      value: '<trigger event>'
+    });
+  }
+
+  return variablesArr;
 }
 
 export function parseVariables(variables) {

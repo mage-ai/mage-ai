@@ -15,10 +15,10 @@ import PipelineScheduleType, {
   SCHEDULE_TYPE_TO_LABEL,
   ScheduleStatusEnum,
 } from '@interfaces/PipelineScheduleType';
+import RuntimeVariables from '@components/RuntimeVariables';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
-import VariableOverwrites from '@components/VariableOverwrites';
 import api from '@api';
 import { Add, Edit, Pause, PlayButtonFilled, TodoList } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -125,9 +125,10 @@ function PipelineSchedules({
       return (
         <>
           {showVariables && (
-            <VariableOverwrites
+            <RuntimeVariables
               hasOverride={hasOverride}
               variables={showVariables}
+              scheduleType={selectedSchedule?.schedule_type}
             />
           )}
           {!showVariables && (

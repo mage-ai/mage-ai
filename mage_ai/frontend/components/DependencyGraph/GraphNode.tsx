@@ -10,10 +10,11 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import { Check, Close } from '@oracle/icons';
 import { INVERTED_TEXT_COLOR_BLOCK_TYPES } from './constants';
-import { NodeStyle } from './index.style';
+import { NodeStyle, RuntimeStyle } from './index.style';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getRuntimeText } from './utils';
 
 type GraphNodeProps = {
   block: BlockType;
@@ -25,6 +26,7 @@ type GraphNodeProps = {
   isQueued?: boolean;
   isSuccessful?: boolean;
   onClick?: (block: BlockType) => void;
+  runtime?: number;
   selected?: boolean;
 };
 
@@ -38,6 +40,7 @@ function GraphNode({
   isQueued,
   isSuccessful,
   onClick,
+  runtime,
   selected,
 }: GraphNodeProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -70,50 +73,69 @@ function GraphNode({
       key={uuid}
       selected={selected}
     >
-      <Spacing p={1}>
-        <FlexContainer alignItems="center">
-          <FlexContainer
-            alignItems="center"
-            justifyContent="center"
-            style={{
-              height: UNIT * 2,
-              width: UNIT * 2,
-            }}
-            title={tooltipText}
+      <FlexContainer alignItems="center">
+        {runtime && (
+          <RuntimeStyle
+            backgroundColor={getColorsForBlockType(type, { theme: themeContext }).accent}
           >
-            {isInProgress && (
-              <Spinner
-                color={(themeContext || dark).content.active}
-                small
-              />
-            )}
-            {success && <Check size={UNIT * 2} success />}
-            {failed && <Close danger size={UNIT * 1.5} />}
-            {noStatus && (
-              <Circle
-                borderSize={1}
-                size={UNIT * 1}
-              />
-            )}
-          </FlexContainer>
+            <FlexContainer justifyContent="center">
+              <Text
+                inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+                xsmall
+              >
+                {getRuntimeText(runtime)}
+              </Text>
+            </FlexContainer>
+          </RuntimeStyle>
+        )}
+        {!runtime && (
+          <Spacing ml={2} />
+        )}
 
-          <Spacing ml={1} />
-
-          <FlexContainer
-            alignItems="center"
-            fullWidth
-            justifyContent="center"
-          >
-            <Text
-              inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
-              monospace
+        <FlexContainer
+          alignItems="center"
+          justifyContent="center"
+          style={{
+            height: UNIT * 2,
+            width: UNIT * 2,
+          }}
+          title={tooltipText}
+        >
+          {isInProgress && (
+            <Spinner
+              color={(themeContext || dark).content.active}
               small
-            >
-              {children}
-            </Text>
-          </FlexContainer>
+            />
+          )}
+          {success && <Check size={UNIT * 2} success />}
+          {failed && <Close danger size={UNIT * 1.5} />}
+          {noStatus && (
+            <Circle
+              borderSize={1}
+              size={UNIT * 1}
+            />
+          )}
         </FlexContainer>
-      </Spacing>
+
+        <Spacing ml={1} />
+
+        <FlexContainer
+          alignItems="center"
+          justifyContent="center"
+          style={{
+            padding: '8px 0',
+            height: '100%',
+          }}
+        >
+          <Text
+            inverted={INVERTED_TEXT_COLOR_BLOCK_TYPES.includes(type)}
+            monospace
+            small
+          >
+            {children}
+          </Text>
+        </FlexContainer>
+      </FlexContainer>
     </NodeStyle>
   );
 }

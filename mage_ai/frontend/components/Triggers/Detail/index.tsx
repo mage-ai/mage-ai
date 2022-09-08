@@ -39,9 +39,11 @@ import {
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PROVIDER_EVENTS_BY_UUID } from '@interfaces/EventMatcherType';
 import {
+  addTriggerVariables,
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
+import { createBlockStatus } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -221,6 +223,8 @@ function TriggerDetail({
     } else {
       arr = getFormattedVariables(variables, block => block.uuid === 'global');
     }
+    
+    arr = addTriggerVariables(arr || [], scheduleType);
 
     if (typeof arr === 'undefined' || !arr?.length) {
       return null;
@@ -233,16 +237,17 @@ function TriggerDetail({
           uuid,
           value,
         }) => [
-          <Text default monospace>
+          <Text default monospace small>
             {uuid}
           </Text>,
-          <Text monospace>
+          <Text monospace small>
             {value}
           </Text>,
         ])}
       />
     );
   }, [
+    scheduleType,
     scheduleVariablesInit,
     variables,
   ]);

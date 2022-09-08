@@ -1,3 +1,4 @@
+from datetime import datetime
 from distutils.dir_util import copy_tree
 from mage_ai.data_preparation.models.constants import (
     BlockType,
@@ -42,6 +43,7 @@ import uuid
 def run_pipeline(
     pipeline: Pipeline,
     config_copy_path: str,
+    global_vars: Dict[str, any],
     queue: multiprocessing.Queue,
 ) -> None:
     """
@@ -83,7 +85,6 @@ def run_pipeline(
         )
 
     try:
-        global_vars = get_global_variables(pipeline.uuid)
         pipeline.execute_sync(
             global_vars=global_vars,
             log_func=add_block_message,
@@ -155,7 +156,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline_uuid = message.get('pipeline_uuid')
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
+        # Add default trigger runtime variables so the code can run successfully.
         global_vars = message.get('global_vars', get_global_variables(pipeline_uuid))
+        global_vars['execution_date'] = datetime.now()
+        global_vars['event'] = dict()
 
         if cancel_pipeline:
             cancel_pipeline_execution(pipeline, publish_pipeline_message)
@@ -322,7 +326,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             queue = multiprocessing.Queue()
             proc = multiprocessing.Process(
                 target=run_pipeline,
-                args=(pipeline, config_copy_path, queue)
+                args=(pipeline, config_copy_path, global_vars, queue)
             )
             proc.start()
             set_current_pipeline_process(proc)

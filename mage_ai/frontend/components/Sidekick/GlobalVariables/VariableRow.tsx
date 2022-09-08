@@ -31,7 +31,7 @@ function VariableRow({
     value,
   } = variable;
 
-  const copyText = copyTextProp || uuid;
+  const copyText = copyTextProp || `kwargs['${uuid}']`;
 
   return (
     <div

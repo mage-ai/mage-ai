@@ -3,6 +3,7 @@ from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.hash import merge_dict
 from typing import Dict
@@ -97,13 +98,16 @@ class PipelineScheduler:
                 block_uuid=b.block_uuid,
             )
 
-            b.update(status=BlockRun.BlockRunStatus.RUNNING)
+            b.update(
+                started_at=datetime.now(),
+                status=BlockRun.BlockRunStatus.RUNNING,
+            )
 
             self.logger.info(
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            variables = merge_dict(self.pipeline_run.pipeline_schedule.variables or dict(),
+            variables = merge_dict(get_global_variables(self.pipeline.uuid) or dict(),
                                    self.pipeline_run.variables or dict())
             variables['execution_date'] = self.pipeline_run.execution_date
             proc = multiprocessing.Process(target=run_block, args=(

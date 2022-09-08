@@ -236,6 +236,7 @@ def add_execution_code(
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.shared.array import find
+import datetime
 import pandas as pd
 
 def execute_custom_code():
