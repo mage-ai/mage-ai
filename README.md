@@ -56,6 +56,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Core design principles](#%EF%B8%8F-core-design-principles)
+1. [Core abstractions](#-core-abstractions)
 1. [Features](#-features)
 1. [Documentation](docs/README.md)
 
