@@ -1,3 +1,4 @@
+from croniter import croniter
 from datetime import datetime, timedelta
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.models.file import File
@@ -8,7 +9,7 @@ from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
@@ -97,6 +98,13 @@ class PipelineSchedule(BaseModel):
         TIME = 'time'
         EVENT = 'event'
 
+    class ScheduleInterval(str, enum.Enum):
+        ONCE = '@once'
+        HOURLY = '@hourly'
+        DAILY = '@daily'
+        WEEKLY = '@weekly'
+        MONTHLY = '@monthly'
+
     name = Column(String(255))
     pipeline_uuid = Column(String(255))
     schedule_type = Column(Enum(ScheduleType))
@@ -113,11 +121,22 @@ class PipelineSchedule(BaseModel):
         back_populates='pipeline_schedules'
     )
 
+    @validates('schedule_interval')
+    def validate_schedule_interval(self, key, schedule_interval):
+        if schedule_interval not in [e.value for e in self.__class__.ScheduleInterval]:
+            if not croniter.is_valid(schedule_interval):
+                raise ValueError('Cron expression is invalid.')
+
+        return schedule_interval
+
     @classmethod
     def active_schedules(self) -> List['PipelineSchedule']:
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
 
     def current_execution_date(self) -> datetime:
+        if self.schedule_interval is None:
+            return None
+
         now = datetime.now()
         if self.schedule_interval == '@daily':
             return now.replace(second=0, microsecond=0, minute=0, hour=0)
@@ -128,8 +147,9 @@ class PipelineSchedule(BaseModel):
                 timedelta(days=now.weekday())
         elif self.schedule_interval == '@monthly':
             return now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
-        # TODO: Support cron syntax
-        return None
+        else:
+            cron_itr = croniter(self.schedule_interval, now)
+            return cron_itr.get_prev(datetime)
 
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
