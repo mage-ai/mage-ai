@@ -40,6 +40,12 @@ You can create new global variables from the Mage UI through the "Variables" tab
   src="../../media/configure_runtime_variables.png"
 />
 
+## Default Runtime Variables
+
+Mage provides some default variables to give context on the pipeline execution.
+* `execution_date`: A datetime object that the pipeline is executed at.
+* `event`: If the pipeline is triggered by event, the `event` variable contains the event payload.
+
 ## Running Pipeline with Runtime Variables
 
 ### Run from command line
