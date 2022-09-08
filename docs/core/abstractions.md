@@ -10,8 +10,9 @@ These are the fundamental concepts that Mage uses to operate.
 - [Data product](#data-product)
 - [Trigger](#trigger)
 - [Run](#run)
+- [Log](#log)
 
-<!-- - [Log](#log)
+<!-- -
 - [Event](#event)
 - [Metric](#metric)
 - [Version](#version)
@@ -187,5 +188,28 @@ This contain information about the entire pipeline execution
 #### Block run
 
 Every time a pipeline is executed, each block in the pipeline will be executed and potentially create a block run record.
+
+<br />
+
+## Log
+
+A log is a file that contains system output information.
+
+It’s created whenever a pipeline or block is ran.
+
+Logs can contain information about the internal state of a run,
+text that is outputted by loggers or `print` statements in blocks,
+or errors and stack traces during code execution.
+
+Here is an example of a log in the
+[<b>Data pipeline management</b>](../features/orchestration/README.md) UI:
+
+<img
+  alt="Log detail"
+  src="https://github.com/mage-ai/assets/blob/main/logs/log-detail.png?raw=true"
+/>
+
+Logs are stored on disk wherever Mage is running.
+However, you can configure where you want log files written to (e.g. Amazon S3, Google Storage, etc).
 
 <br />
