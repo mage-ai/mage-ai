@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
-from mage_ai.services.emr.launcher import create_cluster
+from mage_ai.services.aws.emr.launcher import create_cluster
 
 
 if __name__ == '__main__':
