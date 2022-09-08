@@ -122,9 +122,20 @@ The following steps will create 2 IAM roles required for EMR.
 aws emr create-default-roles
 ```
 
-#### 5b. Run script in Docker container
+#### 5b. Run script to create cluster
 Using your AWS Access Key ID and an AWS Secret Access Key,
 run the following command in your terminal to launch an EMR cluster:
+
+<b>Using `pip`:</b>
+
+Note: You must have your AWS Access Key ID and an AWS Secret Access Key in your environment variables 
+as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` respectively.
+
+```bash
+mage create_spark_cluster demo_project
+```
+
+<b>Using Docker:</b>
 
 ```bash
 docker run -it \
@@ -212,6 +223,8 @@ wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/spark
 mv example_config.json ~/.sparkmagic/config.json
 sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
 ```
+
+<br />
 
 1. Create a new pipeline by going to `File` in the top left corner of the page and then clicking `New pipeline`.
 1. Change the pipeline’s kernel from `python` to `pyspark`. Click the button with the green dot and the word `python` next to it. This is located at the top of the page on the right side of your header.
