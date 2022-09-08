@@ -224,7 +224,7 @@ function TriggerDetail({
       arr = getFormattedVariables(variables, block => block.uuid === 'global');
     }
     
-    arr = addTriggerVariables(arr, scheduleType);
+    arr = addTriggerVariables(arr || [], scheduleType);
 
     if (typeof arr === 'undefined' || !arr?.length) {
       return null;
