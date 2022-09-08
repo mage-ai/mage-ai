@@ -203,6 +203,16 @@ ssh -i ~/.ssh/aws-ec2.pem \
 
 ### 7. Sample pipeline with PySpark code
 
+If you aren’t using Docker and you installed Mage using `pip`, you must run the following commands in your terminal to use the `pyspark` kernel:
+
+```bash
+pip install sparkmagic
+mkdir ~/.sparkmagic
+wget https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json
+mv example_config.json ~/.sparkmagic/config.json
+sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
+```
+
 1. Create a new pipeline by going to `File` in the top left corner of the page and then clicking `New pipeline`.
 1. Change the pipeline’s kernel from `python` to `pyspark`. Click the button with the green dot and the word `python` next to it. This is located at the top of the page on the right side of your header.
 1. Click `+ Data loader`, then `Generic (no template)` to add a new data loader block.
