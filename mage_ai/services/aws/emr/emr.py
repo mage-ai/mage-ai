@@ -82,7 +82,11 @@ def create_a_new_cluster(
         ]
     response = emr_client.run_job_flow(**emr_kwargs)
     print('\n')
-    print(json.dumps(json.loads(response), indent=2))
+
+    if type(response) is not dict:
+        response = json.loads(response)
+
+    print(json.dumps(response, indent=2))
     print('\n')
     cluster_id = response['JobFlowId']
     print(f'Cluster ID: {cluster_id}')
