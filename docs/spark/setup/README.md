@@ -109,7 +109,7 @@ emr_config:
 
 You may need to request an increase in quota limits for using those instance types.
 
-For more information on how to view your quota limits and request an increase, 
+For more information on how to view your quota limits and request an increase,
 check out this [AWS document](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).
 
 ### 5. Launch EMR cluster
@@ -135,7 +135,7 @@ run the following command in your terminal to launch an EMR cluster:
 
 <b>Using `pip`:</b>
 
-Note: You must have your AWS Access Key ID and an AWS Secret Access Key in your environment variables 
+Note: You must have your AWS Access Key ID and an AWS Secret Access Key in your environment variables
 as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` respectively.
 
 ```bash
@@ -201,17 +201,16 @@ Add an inbound rule to the EMR master node’s security group to allow SSH acces
 1. Go to [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
 1. Click on the cluster you just created.
 1. Find the **Master public DNS**, it should look something like this: `ec2-some-ip.us-west-2.compute.amazonaws.com`.
-1. Make sure your EC2 key pair is read-only. Run the following command (change the location to wherever you saved your EC2 key pair locally):
-```bash
+1. Make sure your EC2 key pair is read-only. Run the following command (change the location to wherever you saved your EC2 key pair locally):```bash
 chmod 400 ~/.ssh/aws-ec2.pem
 ```
+
 1. In a separate terminal session, run the following command:
 ```bash
 ssh -i [location of EC2 key pair file] \
   -L 0.0.0.0:9999:localhost:8998 \
   hadoop@[Master public DNS]
 ```
-
 The command could look like this:
 ```bash
 ssh -i ~/.ssh/aws-ec2.pem \
