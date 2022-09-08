@@ -57,9 +57,7 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Tutorials](#-tutorials)
 1. [Core design principles](#%EF%B8%8F-core-design-principles)
 1. [Features](#-features)
-1. [Documentation](#-documentation)
-1. [Contributing](#%EF%B8%8F-contributing)
-1. [Community](#-community)
+1. [Documentation](docs/README.md)
 
 # 🏃‍♀️ Quick start
 
@@ -129,24 +127,47 @@ Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai
 
 Every user experience and technical design decision adheres to these principles.
 
-1. [Easy developer experience](docs/features/README.md#-easy-developer-experience)
-1. [Engineering best practices built-in](docs/features/README.md#engineering-best-practices-built-in)
-1. [Data is a first-class citizen](docs/features/README.md#data-is-a-first-class-citizen)
-1. [Scaling made simple](docs/features/README.md#scaling-made-simple)
+1. [Easy developer experience](docs/core/design_principles.md#-easy-developer-experience)
+1. [Engineering best practices built-in](docs/core/design_principles.md#engineering-best-practices-built-in)
+1. [Data is a first-class citizen](docs/core/design_principles.md#data-is-a-first-class-citizen)
+1. [Scaling made simple](docs/core/design_principles.md#scaling-made-simple)
+
+<sub>Read more [<b>here</b>](docs/core/design_principles.md).</sub>
+
+<br />
+
+# 🛸 Core abstractions
+
+These are the fundamental concepts that Mage uses to operate.
+
+- [Project](docs/core/abstractions.md#project)
+- [Pipeline](docs/core/abstractions.md#pipeline)
+- [Block](docs/core/abstractions.md#block)
+- [Run](docs/core/abstractions.md#run)
+- [Trigger](docs/core/abstractions.md#trigger)
+- [Data product](docs/core/abstractions.md#data-product)
+
+<sub>Read more [<b>here</b>](docs/core/abstractions.md).</sub>
 
 <br />
 
 # 🔮 Features
 
-- [Features overview](docs/features/README.md)
-- [Roadmap](https://airtable.com/shrJS0cDOmQywb8vp)
-- [Changelog](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c)
+- [Data pipeline management](docs/features/orchestration/README.md)
+- [Notebook for building data pipelines](docs/features/README.md#notebook-for-building-data-pipelines)
+
+<sub>Read more [<b>here</b>](docs/features/README.md.md).</sub>
+
+<img
+  alt="Mage"
+  src="docs/features/media/tool-overview.png"
+/>
 
 <br />
 
 # 📚 Documentation
 
-Read more docs [here](docs/README.md).
+Read more [<b>here</b>](docs/README.md).
 
 <br />
 
