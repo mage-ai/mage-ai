@@ -11,14 +11,12 @@ These are the fundamental concepts that Mage uses to operate.
 - [Trigger](#trigger)
 - [Run](#run)
 - [Log](#log)
-
-<!-- -
-- [Event](#event)
-- [Metric](#metric)
-- [Version](#version)
-- [Partition](#partition)
-- [Backfill](#backfill)
-- [Service](#service) -->
+- *Event (WIP)*
+- *Metric (WIP)*
+- *Partition (WIP)*
+- *Version (WIP)*
+- *Backfill (WIP)*
+- *Service (WIP)*
 
 <br />
 
