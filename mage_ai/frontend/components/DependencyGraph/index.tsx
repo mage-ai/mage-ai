@@ -271,7 +271,8 @@ function DependencyGraph({
         ports,
         width: (block.uuid.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
           + (UNIT * 5)
-          + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0),
+          + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
+          + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
       });
 
     });
@@ -282,6 +283,7 @@ function DependencyGraph({
     };
   }, [
     blockEditing,
+    blockStatus,
     blocks,
   ]);
 
@@ -453,7 +455,7 @@ function DependencyGraph({
                       // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
                       pointerEvents: 'none',
                     }}
-                    width={event.width + (typeof blockStatus.runtime !== 'undefined' ? 50 : 0)}
+                    width={event.width}
                     x={0}
                     y={0}
                   >
