@@ -15,12 +15,14 @@ type PipelineRunsTableProps = {
   onClickRow?: (rowIndex: number) => void;
   pipeline: PipelineType;
   pipelineRuns: PipelineRunType[];
+  selectedRun?: PipelineRunType;
 };
 
 function PipelineRunsTable({
   onClickRow,
   pipeline,
   pipelineRuns,
+  selectedRun,
 }: PipelineRunsTableProps) {
   const {
     uuid: pipelineUUID,
@@ -60,6 +62,7 @@ function PipelineRunsTable({
     <Table
       columnFlex={columnFlex}
       columns={columns}
+      isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
       onClickRow={onClickRow}
       rows={pipelineRuns.map(({
         block_runs_count: blockRunsCount,

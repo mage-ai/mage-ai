@@ -84,13 +84,19 @@ function TriggerDetail({
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
-      onClickRow={(rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex])}
+      onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
+        const run = pipelineRuns[rowIndex];
+
+        return prev?.id !== run.id ? run : null
+      })}
       pipeline={pipeline}
       pipelineRuns={pipelineRuns}
+      selectedRun={selectedRun}
     />
   ), [
     pipeline,
     pipelineRuns,
+    selectedRun,
   ]);
 
   const buildSidekick = useMemo(() => {
