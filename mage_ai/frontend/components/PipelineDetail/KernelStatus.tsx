@@ -14,6 +14,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import KernelType from '@interfaces/KernelType';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import KeyboardText from '@oracle/elements/KeyboardText';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
 import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
@@ -26,6 +27,8 @@ import { FileTabStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
   KEY_CODE_META,
+  KEY_SYMBOL_META,
+  KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
@@ -387,9 +390,40 @@ function KernelStatus({
             <Flex alignItems="center">
               {kernelStatus}
               <Spacing ml={2}/>
-              <Text muted>
-                {saveStatus}
-              </Text>
+              <Tooltip
+                appearBefore
+                block
+                description={
+                  <>
+                    <FlexContainer alignItems="center">
+                      <Text default inline>Press</Text>&nbsp;<KeyboardText
+                        inline
+                        keyText={KEY_SYMBOL_META}
+                      />&nbsp;<Text default inline>+</Text>&nbsp;<KeyboardText
+                        inline
+                        keyText={KEY_SYMBOL_S}
+                      />&nbsp;<Text default inline>to save changes.</Text>
+                      <br />
+                    </FlexContainer>
+
+                    <Spacing mt={1}>
+                      <Text default>
+                        Or, go to <Text inline monospace>
+                          File
+                        </Text>{' › '}<Text inline monospace>
+                          Save pipeline
+                        </Text>.
+                      </Text>
+                    </Spacing>
+                  </>
+                }
+                size={null}
+                widthFitContent
+              >
+                <Text muted>
+                  {saveStatus}
+                </Text>
+              </Tooltip>
             </Flex>
           </Spacing>
         )}

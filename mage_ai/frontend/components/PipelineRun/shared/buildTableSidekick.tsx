@@ -2,6 +2,7 @@ import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import CodeBlock from '@oracle/components/CodeBlock';
 import DependencyGraph from '@components/DependencyGraph';
 import Headline from '@oracle/elements/Headline';
+import PipelineType from '@interfaces/PipelineType';
 import PipelineRunType from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -19,11 +20,17 @@ export const TABS = [
 ];
 
 export default function({
+  height,
+  heightOffset,
+  pipeline,
   selectedRun,
   selectedTab,
   setSelectedTab,
   ...props
 }: {
+  height: number;
+  heightOffset?: number;
+  pipeline: PipelineType;
   selectedRun?: PipelineRunType;
   selectedTab?: TabType;
   setSelectedTab?: (tab: TabType) => void;
@@ -39,7 +46,7 @@ export default function({
     updatedProps['noStatus'] = true;
   }
 
-  const { variables: pattern } = selectedRun || {};
+  const pattern = selectedRun?.variables;
   const patternDisplay = [];
   if (pattern) {
     JSON.stringify(pattern, null, 2).split('\n').forEach((line) => {
@@ -70,7 +77,6 @@ export default function({
           <Text
             monospace
             textOverflow
-            title={v}
           >
             {v}
           </Text>,
@@ -97,7 +103,9 @@ export default function({
       {(!showTabs || TAB_TREE.uuid === selectedTab?.uuid) && (
         <DependencyGraph
           {...updatedProps}
-          heightOffset={(updatedProps?.heightOffset || 0) + (showTabs ? 76 : 0)}
+          height={height}
+          heightOffset={(heightOffset || 0) + (showTabs ? 76 : 0)}
+          pipeline={pipeline}
         />
       )}
 

@@ -14,4 +14,7 @@ export default interface PipelineRunType {
   pipeline_uuid: string;
   status: RunStatusEnum;
   updated_at: string;
+  variables?: {
+    [key: string]: string;
+  };
 }
