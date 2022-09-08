@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
-import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
@@ -20,6 +19,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import buildTableSidekick, { TABS } from '@components/PipelineRun/shared/buildTableSidekick';
 import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
 import {
   PADDING_UNITS,
@@ -84,34 +84,22 @@ function TriggerDetail({
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
-      onClickRow={(rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex])}
+      onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
+        const run = pipelineRuns[rowIndex];
+
+        return prev?.id !== run.id ? run : null
+      })}
       pipeline={pipeline}
       pipelineRuns={pipelineRuns}
+      selectedRun={selectedRun}
     />
   ), [
     pipeline,
     pipelineRuns,
+    selectedRun,
   ]);
 
-  const buildSidekick = useMemo(() => {
-    return props => {
-      const updatedProps = { ...props };
-      if (selectedRun) {
-        updatedProps['blockStatus'] = selectedRun.block_runs?.reduce(
-          (prev, { block_uuid, status }) => ({ ...prev, [block_uuid]: status }),
-          {},
-        );
-      } else {
-        updatedProps['noStatus'] = true;
-      }
-
-      return (
-        <DependencyGraph
-          {...updatedProps}
-        />
-      );
-    };
-  }, [selectedRun]);
+  const [selectedTab, setSelectedTab] = useState(TABS[0]);
 
   const [updatePipelineSchedule, { isLoading: isLoadingUpdatePipelineSchedule }] = useMutation(
     (pipelineSchedule: PipelineScheduleType) =>
@@ -286,6 +274,7 @@ function TriggerDetail({
 
   return (
     <PipelineDetailPage
+      afterHidden={!selectedRun}
       before={(
         <BeforeStyle>
           <Spacing
@@ -366,7 +355,12 @@ function TriggerDetail({
           },
         },
       ]}
-      buildSidekick={buildSidekick}
+      buildSidekick={props => buildTableSidekick({
+        ...props,
+        selectedRun,
+        selectedTab,
+        setSelectedTab,
+      })}
       pageName={PageNameEnum.TRIGGERS}
       pipeline={pipeline}
       subheader={(
@@ -416,7 +410,7 @@ function TriggerDetail({
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>
-          Pipeline runs
+          Runs for this trigger
         </Headline>
       </Spacing>
 

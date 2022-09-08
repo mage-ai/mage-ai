@@ -21,6 +21,9 @@ import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import buildTableSidekick, {
+  TABS as TABS_SIDEKICK,
+} from '@components/PipelineRun/shared/buildTableSidekick';
 import {
   BlocksSeparated,
   ChevronRight,
@@ -66,6 +69,7 @@ function PipelineRuns({
 }: PipelineRunsProp) {
   const themeContext = useContext(ThemeContext);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_PIPELINE_RUNS);
+  const [selectedTabSidekick, setSelectedTabSidekick] = useState<TabType>(TABS_SIDEKICK[0]);
   const [query, setQuery] = useState<{
     pipeline_run_id?: number;
     pipeline_uuid?: string;
@@ -94,25 +98,6 @@ function PipelineRuns({
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
-  const buildSidekick = useMemo(() => {
-    return props => {
-      const updatedProps = { ...props };
-      if (selectedRun) {
-        updatedProps['blockStatus'] = selectedRun.block_runs?.reduce(
-          (prev, { block_uuid, status }) => ({ ...prev, [block_uuid]: status }),
-          {},
-        );
-      } else {
-        updatedProps['noStatus'] = true;
-      }
-
-      return (
-        <DependencyGraph
-          {...updatedProps}
-        />
-      );
-    };
-  }, [selectedRun]);
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -150,13 +135,19 @@ function PipelineRuns({
 
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
-      onClickRow={(rowIndex: number) => setSelectedRun(pipelineRuns[rowIndex])}
+      onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
+        const run = pipelineRuns[rowIndex];
+
+        return prev?.id !== run.id ? run : null
+      })}
       pipeline={pipeline}
       pipelineRuns={pipelineRuns}
+      selectedRun={selectedRun}
     />
   ), [
     pipeline,
     pipelineRuns,
+    selectedRun,
   ]);
 
   const tableBlockRuns = useMemo(() => {
@@ -267,7 +258,16 @@ function PipelineRuns({
 
   return (
     <PipelineDetailPage
-      buildSidekick={buildSidekick}
+      afterHidden={TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid && !selectedRun}
+      buildSidekick={TAB_PIPELINE_RUNS.uuid === selectedTab?.uuid
+        ? props => buildTableSidekick({
+          ...props,
+          selectedRun,
+          selectedTab: selectedTabSidekick,
+          setSelectedTab: setSelectedTabSidekick,
+        })
+        : props => buildTableSidekick(props)
+      }
       breadcrumbs={[
         {
           label: () => 'Runs',

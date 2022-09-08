@@ -265,7 +265,7 @@ function PipelineSchedules({
             >
               {ScheduleStatusEnum.ACTIVE === status
                 ? <Pause muted size={2 * UNIT} />
-                : <PlayButtonFilled size={2 * UNIT} success />
+                : <PlayButtonFilled default size={2 * UNIT} />
               }
             </Button>,
             <Text
