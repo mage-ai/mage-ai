@@ -1,5 +1,7 @@
 # 🏔️ Core design principles
 
+Every user experience and technical design decision adheres to these principles.
+
 ## 💻 Easy developer experience
 Open-source engine that comes with a custom notebook UI for building data pipelines.
 
