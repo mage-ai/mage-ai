@@ -229,19 +229,23 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
         payload = self.get_payload()
 
-        arr = payload.pop('event_matchers', [])
+        arr = payload.pop('event_matchers', None)
         event_matchers = []
-        if arr and len(arr) >= 1:
-            event_matchers = EventMatcher.upsert_batch(
-                [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
-            )
-        else:
+        if arr is not None:
+            if len(arr) >= 1:
+                event_matchers = EventMatcher.upsert_batch(
+                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
+                )
+
             ems = (
                 EventMatcher.
                 query.
                 join(pipeline_schedule_event_matcher_association_table, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id).
                 join(PipelineSchedule, PipelineSchedule.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id).
-                filter(PipelineSchedule.id == int(pipeline_schedule_id))
+                filter(
+                    PipelineSchedule.id == int(pipeline_schedule_id),
+                    EventMatcher.id.not_in([em.id for em in event_matchers]),
+                )
             )
             for em in ems:
                 new_ids = [schedule for schedule in em.pipeline_schedules if schedule.id != int(pipeline_schedule_id)]

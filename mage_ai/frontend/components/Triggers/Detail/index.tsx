@@ -416,7 +416,7 @@ function TriggerDetail({
     >
       <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
         <Headline level={5}>
-          Pipeline runs
+          Runs for this trigger
         </Headline>
       </Spacing>
 
