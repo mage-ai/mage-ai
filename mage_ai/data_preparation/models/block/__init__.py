@@ -112,6 +112,7 @@ def run_blocks_sync(
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
 ) -> None:
+    tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
 
@@ -121,8 +122,18 @@ def run_blocks_sync(
 
     while not blocks.empty():
         block = blocks.get()
-        if block.type == BlockType.SCRATCHPAD:
+
+        if block.type in [BlockType.CHART, BlockType.SCRATCHPAD]:
             continue
+
+        if tries_by_block_uuid.get(block.uuid, None) is None:
+            tries_by_block_uuid[block.uuid] = 0
+
+        tries_by_block_uuid[block.uuid] += 1
+        tries = tries_by_block_uuid[block.uuid]
+        if tries >= 1000:
+            raise Exception(f'Block {block.uuid} has tried to execute {tries} times; exiting.')
+
         skip = False
         for upstream_block in block.upstream_blocks:
             upstream_task_status = tasks.get(upstream_block.uuid)

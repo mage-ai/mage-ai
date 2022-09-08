@@ -225,7 +225,11 @@ class Pipeline:
         """
         root_blocks = []
         for block in self.blocks_by_uuid.values():
-            if len(block.upstream_blocks) == 0:
+            if len(block.upstream_blocks) == 0 and block.type in [
+                BlockType.DATA_EXPORTER,
+                BlockType.DATA_LOADER,
+                BlockType.TRANSFORMER,
+            ]:
                 root_blocks.append(block)
 
         run_blocks_sync(
