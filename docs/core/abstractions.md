@@ -170,22 +170,23 @@ the `http://localhost/api/events` endpoint with a custom event payload.
 
 ## Run
 
+A run record stores information about when it was started, its status, when it was completed,
+any runtime variables used in the execution of the pipeline or block, etc.
+
 Every time a pipeline or a block is executed
 (outside of the notebook while building the pipeline and block),
 a run record is created in a database.
-
-A run record stores information about when it was started, its status, when it was completed,
-any runtime variables used in the execution of the pipeline or block, etc.
 
 There are 2 types of runs:
 
 #### Pipeline run
 
-This contain information about the entire pipeline execution
+This contain information about the entire pipeline execution.
 
 #### Block run
 
-Every time a pipeline is executed, each block in the pipeline will be executed and potentially create a block run record.
+Every time a pipeline is executed,
+each block in the pipeline will be executed and potentially create a block run record.
 
 <br />
 
@@ -209,5 +210,35 @@ Here is an example of a log in the
 
 Logs are stored on disk wherever Mage is running.
 However, you can configure where you want log files written to (e.g. Amazon S3, Google Storage, etc).
+
+<br />
+
+## Event
+*WIP*
+
+<br />
+
+## Metric
+*WIP*
+
+<br />
+
+## Partition
+*WIP*
+
+<br />
+
+## Version
+*WIP*
+
+<br />
+
+## Backfill
+*WIP*
+
+<br />
+
+## Service
+*WIP*
 
 <br />
