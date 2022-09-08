@@ -6,7 +6,7 @@
     - [Setup and install](tutorials/quick_start/setup.md)
     - [Tutorials](tutorials/README.md)
     - Concepts
-        - [Core abstractions](docs/core/abstractions.md)
+        - [Core abstractions](core/abstractions.md)
         - [Blocks](blocks/README.md)
     - [Kernels](kernels/README.md)
         - [Spark and PySpark](spark/setup/README.md)
