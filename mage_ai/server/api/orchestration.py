@@ -234,21 +234,31 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
         if arr is not None:
             if len(arr) >= 1:
                 event_matchers = EventMatcher.upsert_batch(
-                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
+                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id]))
+                     for p in arr],
                 )
 
             ems = (
                 EventMatcher.
                 query.
-                join(pipeline_schedule_event_matcher_association_table, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id).
-                join(PipelineSchedule, PipelineSchedule.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id).
+                join(
+                    pipeline_schedule_event_matcher_association_table,
+                    EventMatcher.id ==
+                    pipeline_schedule_event_matcher_association_table.c.event_matcher_id
+                ).
+                join(
+                    PipelineSchedule,
+                    PipelineSchedule.id ==
+                    pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id
+                ).
                 filter(
                     PipelineSchedule.id == int(pipeline_schedule_id),
                     EventMatcher.id.not_in([em.id for em in event_matchers]),
                 )
             )
             for em in ems:
-                new_ids = [schedule for schedule in em.pipeline_schedules if schedule.id != int(pipeline_schedule_id)]
+                new_ids = [schedule for schedule in em.pipeline_schedules
+                           if schedule.id != int(pipeline_schedule_id)]
                 ps = [p for p in PipelineSchedule.query.filter(PipelineSchedule.id.in_(new_ids))]
                 em.update(pipeline_schedules=ps)
 
@@ -311,8 +321,18 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                     PipelineSchedule.
                     select(*columns, func.count(distinct(b.id)).label('pipeline_runs_count')).
                     join(b, a.id == b.pipeline_schedule_id, isouter=True).
-                    join(pipeline_schedule_event_matcher_association_table, a.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id, isouter=True).
-                    join(EventMatcher, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id, isouter=True).
+                    join(
+                        pipeline_schedule_event_matcher_association_table,
+                        a.id ==
+                        pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id,
+                        isouter=True,
+                    ).
+                    join(
+                        EventMatcher,
+                        EventMatcher.id ==
+                        pipeline_schedule_event_matcher_association_table.c.event_matcher_id,
+                        isouter=True,
+                    ).
                     filter(a.pipeline_uuid == pipeline.uuid).
                     group_by(*columns).
                     order_by(a.start_time.desc(), a.id.desc())
