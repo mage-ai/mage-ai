@@ -25,7 +25,7 @@ class RepoConfig:
             self.remote_variables_dir = repo_config.get('remote_variables_dir')
             self.ecs_config = repo_config.get('ecs_config')
             self.emr_config = repo_config.get('emr_config')
-            self.notification_config = repo_config.get('notification_config')
+            self.notification_config = repo_config.get('notification_config', dict())
 
             self.s3_bucket = None
             self.s3_path_prefix = None
