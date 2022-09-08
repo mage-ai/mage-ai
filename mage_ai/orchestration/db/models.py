@@ -15,7 +15,6 @@ from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
 
-
 Base = declarative_base()
 Base.query = Session.query_property()
 Base.select = Session.query
@@ -129,6 +128,7 @@ class PipelineSchedule(BaseModel):
                 raise ValueError('Cron expression is invalid.')
 
         return schedule_interval
+
     @classmethod
     def active_schedules(self) -> List['PipelineSchedule']:
         return self.query.filter(self.status == self.ScheduleStatus.ACTIVE).all()
@@ -167,7 +167,6 @@ class PipelineSchedule(BaseModel):
             TODO: Implement other schedule interval checks
             """
             current_execution_date = self.current_execution_date()
-            
             if current_execution_date is None:
                 return False
             if not find(lambda x: x.execution_date == current_execution_date, self.pipeline_runs):
