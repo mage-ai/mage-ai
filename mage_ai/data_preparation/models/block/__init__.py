@@ -48,6 +48,7 @@ async def run_blocks(
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
+    tries_by_block_uuid = {}
     tasks = dict()
     blocks = Queue()
 
@@ -78,8 +79,18 @@ async def run_blocks(
 
     while not blocks.empty():
         block = blocks.get()
+
         if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
             continue
+
+        if tries_by_block_uuid.get(block.uuid, None) is None:
+            tries_by_block_uuid[block.uuid] = 0
+
+        tries_by_block_uuid[block.uuid] += 1
+        tries = tries_by_block_uuid[block.uuid]
+        if tries >= 1000:
+            raise Exception(f'Block {block.uuid} has tried to execute {tries} times; exiting.')
+
         skip = False
         for upstream_block in block.upstream_blocks:
             if tasks.get(upstream_block.uuid) is None:
@@ -123,7 +134,7 @@ def run_blocks_sync(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in [BlockType.CHART, BlockType.SCRATCHPAD]:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
