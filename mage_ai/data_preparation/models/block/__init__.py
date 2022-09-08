@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout as redirect_stdout_func
 from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
@@ -44,6 +44,7 @@ async def run_blocks(
     log_func: Callable = None,
     parallel: bool = True,
     redirect_outputs: bool = False,
+    redirect_stdout=None,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
@@ -64,6 +65,7 @@ async def run_blocks(
                     global_vars=global_vars,
                     log_func=log_func,
                     redirect_outputs=redirect_outputs,
+                    redirect_stdout=redirect_stdout,
                     run_all_blocks=True,
                     update_status=update_status,
                     parallel=parallel,
@@ -120,6 +122,7 @@ def run_blocks_sync(
     log_func: Callable = None,
     global_vars: Dict = None,
     redirect_outputs: bool = False,
+    redirect_stdout=None,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
 ) -> None:
@@ -163,6 +166,7 @@ def run_blocks_sync(
                 analyze_outputs=analyze_outputs,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
+                redirect_stdout=redirect_stdout,
                 run_all_blocks=True,
             )
             if run_tests:
@@ -406,6 +410,7 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         redirect_outputs: bool = False,
+        redirect_stdout=None,
         run_all_blocks: bool = False,
         update_status: bool = True,
     ):
@@ -426,6 +431,7 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 redirect_outputs=redirect_outputs,
+                redirect_stdout=redirect_stdout,
             )
             block_output = output['output']
             if BlockType.CHART == self.type:
@@ -478,6 +484,7 @@ class Block:
         global_vars=None,
         log_func: Callable = None,
         redirect_outputs: bool = False,
+        redirect_stdout=None,
         run_all_blocks: bool = False,
         update_status: bool = True,
         parallel: bool = True,
@@ -492,6 +499,7 @@ class Block:
                     custom_code=custom_code,
                     global_vars=global_vars,
                     redirect_outputs=redirect_outputs,
+                    redirect_stdout=redirect_stdout,
                     run_all_blocks=run_all_blocks,
                     update_status=update_status,
                 )
@@ -502,6 +510,7 @@ class Block:
                 custom_code=custom_code,
                 global_vars=global_vars,
                 redirect_outputs=redirect_outputs,
+                redirect_stdout=redirect_stdout,
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,
             )
@@ -576,6 +585,7 @@ class Block:
         execution_partition: str = None,
         logger: Logger = None,
         redirect_outputs: bool = False,
+        redirect_stdout=None,
         global_vars: Dict = None,
     ) -> Dict:
         upstream_block_uuids = []
@@ -600,7 +610,7 @@ class Block:
         if logger is not None:
             stdout = StreamToLogger(logger)
         elif redirect_outputs:
-            stdout = StringIO()
+            stdout =  StringIO() if redirect_stdout is None else redirect_stdout 
         else:
             stdout = sys.stdout
         results = {}
@@ -611,7 +621,7 @@ class Block:
             outputs_from_input_vars[upstream_block_uuid] = input_var
             outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
-        with redirect_stdout(stdout):
+        with redirect_stdout_func(stdout):
             results = {
                 self.type: self.__block_decorator(decorated_functions),
                 'test': self.__block_decorator(test_functions),

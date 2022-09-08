@@ -88,6 +88,13 @@ def run_pipeline(
         pipeline.execute_sync(
             global_vars=global_vars,
             log_func=add_block_message,
+            redirect_outputs=True,
+            redirect_stdout=StreamToQueue(
+                queue,
+                metadata=dict(
+                    pipeline_uuid=pipeline.uuid,
+                ),
+            ),
         )
         add_pipeline_message(
             f'Pipeline {pipeline.uuid} execution complete.\n'
@@ -350,3 +357,28 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
+
+class StreamToQueue(object):
+    """
+    Fake file-like stream object that redirects writes to a queue.
+    """
+    def __init__(
+        self,
+        queue, 
+        execution_state='busy',
+        metadata=dict(),
+        msg_type='stream_pipeline',
+    ):
+        self.queue = queue
+        self.execution_state = execution_state
+        self.metadata = metadata
+        self.msg_type = msg_type
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.queue.put(dict(
+                message=line.rstrip(),
+                execution_state=self.execution_state,
+                metadata=self.metadata,
+                msg_type=self.msg_type,
+            ))

@@ -183,6 +183,7 @@ class Pipeline:
         log_func: Callable[[str], None] = None,
         parallel: bool = True,
         redirect_outputs: bool = False,
+        redirect_stdout=None,
         run_tests: bool = False,
         update_status: bool = True,
     ) -> None:
@@ -204,6 +205,7 @@ class Pipeline:
                 log_func=log_func,
                 parallel=parallel,
                 redirect_outputs=redirect_outputs,
+                redirect_stdout=redirect_stdout,
                 run_tests=run_tests,
                 update_status=update_status,
             )
@@ -216,10 +218,11 @@ class Pipeline:
         global_vars=None,
         log_func: Callable[[str], None] = None,
         redirect_outputs: bool = False,
+        redirect_stdout=None,
         run_tests: bool = False,
     ) -> None:
         """
-        Async function for parallel processing
+        Function for synchronous block processing.
         This function will schedule the block execution in topological
         order based on a block's upstream dependencies.
         """
@@ -238,6 +241,7 @@ class Pipeline:
             global_vars=global_vars,
             log_func=log_func,
             redirect_outputs=redirect_outputs,
+            redirect_stdout=redirect_stdout,
             run_tests=run_tests,
         )
 
