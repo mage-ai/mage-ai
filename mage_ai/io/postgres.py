@@ -164,13 +164,13 @@ class Postgres(BaseSQLConnection):
                     cur.execute(query)
 
                 if query_string:
-                    if ExportWritePolicy.APPEND == if_exists:
+                    query = 'CREATE TABLE {} AS\n{}'.format(
+                        full_table_name,
+                        query_string,
+                    )
+
+                    if ExportWritePolicy.APPEND == if_exists and table_exists:
                         query = 'INSERT INTO {}\n{}'.format(
-                            full_table_name,
-                            query_string,
-                        )
-                    else:
-                        query = 'CREATE TABLE {} AS\n{}'.format(
                             full_table_name,
                             query_string,
                         )
