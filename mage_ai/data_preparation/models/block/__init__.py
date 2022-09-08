@@ -610,7 +610,7 @@ class Block:
         if logger is not None:
             stdout = StreamToLogger(logger)
         elif redirect_outputs:
-            stdout =  StringIO() if redirect_stdout is None else redirect_stdout 
+            stdout =  StringIO() if redirect_stdout is None else redirect_stdout(self.uuid) 
         else:
             stdout = sys.stdout
         results = {}
@@ -666,10 +666,6 @@ class Block:
                         outputs = [outputs]
 
         output_message = dict(output=outputs)
-        if redirect_outputs:
-            output_message['stdout'] = stdout.getvalue()
-        else:
-            output_message['stdout'] = ''
 
         return output_message
 

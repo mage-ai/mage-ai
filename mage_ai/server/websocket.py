@@ -89,8 +89,9 @@ def run_pipeline(
             global_vars=global_vars,
             log_func=add_block_message,
             redirect_outputs=True,
-            redirect_stdout=StreamToQueue(
+            redirect_stdout=lambda block_uuid: StreamToQueue(
                 queue,
+                block_uuid,
                 metadata=dict(
                     pipeline_uuid=pipeline.uuid,
                 ),
@@ -164,7 +165,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
         # Add default trigger runtime variables so the code can run successfully.
-        global_vars = message.get('global_vars', get_global_variables(pipeline_uuid))
+        global_vars = message.get(
+            'global_vars',
+            get_global_variables(pipeline_uuid, pipeline.repo_path),
+        )
         global_vars['execution_date'] = datetime.now()
         global_vars['event'] = dict()
 
@@ -326,6 +330,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             reset_execution_manager()
 
+            publish_pipeline_message(
+                'Saving current pipeline config for backup. This may take some time...',
+                metadata=dict(pipeline_uuid=pipeline_uuid),
+            )
+
             # The pipeline state can potentially break when the execution is cancelled,
             # so we save the pipeline config before execution if the user cancels the excecution.
             config_copy_path = save_pipeline_config()
@@ -339,8 +348,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             set_current_pipeline_process(proc)
 
             async def check_for_messages():
-                while True:
-                    if not queue.empty():
+                loop = True
+                while loop:
+                    while not queue.empty():
                         msg = queue.get()
                         metadata = msg.get('metadata')
                         execution_state = msg.get('execution_state')
@@ -352,8 +362,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         )
                         if execution_state == 'idle' and \
                             metadata.get('block_uuid') is None:
+                            loop = False
                             break
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(0.5)
 
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
@@ -364,12 +375,14 @@ class StreamToQueue(object):
     """
     def __init__(
         self,
-        queue, 
+        queue,
+        block_uuid,
         execution_state='busy',
         metadata=dict(),
         msg_type='stream_pipeline',
     ):
         self.queue = queue
+        self.block_uuid = block_uuid
         self.execution_state = execution_state
         self.metadata = metadata
         self.msg_type = msg_type
@@ -377,7 +390,7 @@ class StreamToQueue(object):
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.queue.put(dict(
-                message=line.rstrip(),
+                message=f'[{self.block_uuid}] {line.rstrip()}',
                 execution_state=self.execution_state,
                 metadata=self.metadata,
                 msg_type=self.msg_type,
