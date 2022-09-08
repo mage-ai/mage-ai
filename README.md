@@ -55,9 +55,9 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Quick start](#%EF%B8%8F-quick-start)
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
+1. [Features](#-features)
 1. [Core design principles](#%EF%B8%8F-core-design-principles)
 1. [Core abstractions](#-core-abstractions)
-1. [Features](#-features)
 1. [Documentation](docs/README.md)
 
 # 🏃‍♀️ Quick start
@@ -124,6 +124,15 @@ Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai
 
 <br />
 
+# 🔮 Features
+
+- [Data pipeline management](docs/features/orchestration/README.md)
+- [Notebook for building data pipelines](docs/features/README.md#notebook-for-building-data-pipelines)
+
+<sub>Read more [<b>here</b>](docs/features/README.md).</sub>
+
+<br />
+
 # 🏔️ Core design principles
 
 Every user experience and technical design decision adheres to these principles.
@@ -149,20 +158,6 @@ These are the fundamental concepts that Mage uses to operate.
 - [Run](docs/core/abstractions.md#run)
 
 <sub>Read more [<b>here</b>](docs/core/abstractions.md).</sub>
-
-<br />
-
-# 🔮 Features
-
-- [Data pipeline management](docs/features/orchestration/README.md)
-- [Notebook for building data pipelines](docs/features/README.md#notebook-for-building-data-pipelines)
-
-<sub>Read more [<b>here</b>](docs/features/README.md.md).</sub>
-
-<img
-  alt="Mage"
-  src="docs/features/media/tool-overview.png"
-/>
 
 <br />
 
