@@ -38,6 +38,7 @@ import {
   Add,
   Alphabet,
   CalendarDate,
+  Code,
   Schedule,
   Trash,
 } from '@oracle/icons';
@@ -287,7 +288,7 @@ function Edit({
           {!scheduleInterval && <option value="" />}
           {Object.values(ScheduleIntervalEnum).map(value => (
             <option key={value} value={value}>
-              {value}
+              {value.substring(1)}
             </option>
           ))}
           <option key="custom" value="custom">
@@ -350,10 +351,10 @@ function Edit({
         0,
         [
           <FlexContainer alignItems="center">
-            <Alphabet default size={1.5 * UNIT} />
+            <Code default size={1.5 * UNIT} />
             <Spacing mr={1} />
             <Text default>
-              Cron Expression
+              Cron expression
             </Text>
           </FlexContainer>,
           <TextInput
