@@ -6,6 +6,7 @@
     - [Setup and install](tutorials/quick_start/setup.md)
     - [Tutorials](tutorials/README.md)
     - Concepts
+        - [Core design principles](core/design_principles.md)
         - [Core abstractions](core/abstractions.md)
         - [Blocks](blocks/README.md)
     - Data pipeline management
