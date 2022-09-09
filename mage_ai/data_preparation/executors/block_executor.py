@@ -44,6 +44,10 @@ class BlockExecutor:
                 run_all_blocks=True,
                 update_status=update_status,
             )
+            self.block.run_tests(
+                logger=self.logger,
+                update_tests=False,
+            )
         except Exception as e:
             self.logger.info('Failed to execute block.', **tags)
             if on_failure is not None:

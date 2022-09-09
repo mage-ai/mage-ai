@@ -43,7 +43,7 @@ async def run_blocks(
     build_block_output_stdout: Callable[..., object] = None,
     global_vars=None,
     parallel: bool = True,
-    run_tests: bool = False,
+    run_tests: bool = True,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
 ) -> None:
@@ -120,7 +120,7 @@ def run_blocks_sync(
     analyze_outputs: bool = True,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
-    run_tests: bool = False,
+    run_tests: bool = True,
     selected_blocks: Set[str] = None,
 ) -> None:
     tries_by_block_uuid = {}
@@ -841,7 +841,13 @@ class Block:
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
-    def run_tests(self, build_block_output_stdout=None, custom_code=None, update_tests=True) -> str:
+    def run_tests(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        custom_code: str = None,
+        logger: Logger = None,
+        update_tests: bool = True,
+    ) -> None:
         test_functions = []
         if update_tests:
             results = {
@@ -865,7 +871,13 @@ class Block:
             for variable in self.output_variables.keys()
         ]
 
-        stdout = build_block_output_stdout(self.uuid) if build_block_output_stdout else sys.stdout
+        if logger is not None:
+            stdout = StreamToLogger(logger)
+        elif build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
+        else:
+            stdout = sys.stdout
+
         with redirect_stdout(stdout):
             tests_passed = 0
             for func in test_functions:
@@ -879,6 +891,8 @@ class Block:
                     print(traceback.format_exc())
             print('--------------------------------------------------------------')
             print(f'{tests_passed}/{len(test_functions)} tests passed.')
+        if tests_passed != len(test_functions):
+            raise Exception(f'Failed to pass tests for block {self.uuid}')
 
     def analyze_outputs(self, variable_mapping):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
