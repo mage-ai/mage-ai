@@ -6,6 +6,9 @@ import simplejson
 import tornado.web
 import traceback
 
+META_KEY_LIMIT = '_limit'
+META_KEY_OFFSET = '_offset'
+
 
 class BaseHandler(tornado.web.RequestHandler):
     datetime_keys = []
@@ -93,3 +96,15 @@ class BaseDetailHandler(BaseHandler):
         model = self.model_class.query.get(int(model_id))
         model.delete()
         self.write_model(model)
+
+
+class BaseListHandler(BaseHandler):
+    def get(self, **kwargs):
+        limit = self.get_argument(META_KEY_LIMIT, None)
+        offset = self.get_argument(META_KEY_OFFSET, None)
+        models = self.model_class.query.filter()
+        if limit is not None:
+            models = models.limit(limit)
+        if offset is not None:
+            models = models.offset(offset)
+        self.write_models(models, **kwargs)

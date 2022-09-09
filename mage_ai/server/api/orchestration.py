@@ -1,4 +1,8 @@
-from .base import BaseDetailHandler, BaseHandler
+from .base import (
+    BaseDetailHandler,
+    BaseHandler,
+    BaseListHandler,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import (
     BlockRun,
@@ -113,6 +117,8 @@ def process_pipeline_runs(
     handler,
     pipeline_schedule_id=None,
     pipeline_uuid=None,
+    limit=None,
+    offset=None,
 ):
     a = aliased(PipelineRun, name='a')
     b = aliased(PipelineSchedule, name='b')
@@ -168,13 +174,14 @@ def process_pipeline_runs(
     handler.finish()
 
 
-class ApiAllPipelineRunListHandler(BaseHandler):
+class ApiAllPipelineRunListHandler(BaseListHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
 
     def get(self):
-        pipeline_uuid = self.get_argument('pipeline_uuid', None)
-        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
+        super().get()
+        # pipeline_uuid = self.get_argument('pipeline_uuid', None)
+        # process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
 
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
