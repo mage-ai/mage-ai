@@ -43,10 +43,11 @@ class PipelineScheduler:
     def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
             self.notification_sender.send(
-                f'Succuessfully running Pipeline `{self.pipeline.uuid}` '
+                message=f'Succuessfully running Pipeline `{self.pipeline.uuid}` '
                 f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
                 f'`{self.pipeline_run.pipeline_schedule.name}` '
-                f'at execution time `{self.pipeline_run.execution_date}`.'
+                f'at execution time `{self.pipeline_run.execution_date}`.',
+                subject=f'Succuessfully running Pipeline {self.pipeline.uuid}',
             )
             self.pipeline_run.update(
                 status=PipelineRun.PipelineRunStatus.COMPLETED,
@@ -87,10 +88,11 @@ class PipelineScheduler:
             ),
         )
         self.notification_sender.send(
-            f'Failed to run Pipeline `{self.pipeline.uuid}` '
+            message=f'Failed to run Pipeline `{self.pipeline.uuid}` '
             f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
             f'`{self.pipeline_run.pipeline_schedule.name}` '
-            f'at execution time `{self.pipeline_run.execution_date}`.'
+            f'at execution time `{self.pipeline_run.execution_date}`.',
+            subject=f'Failed to run Mage pipeline {self.pipeline.uuid}',
         )
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
