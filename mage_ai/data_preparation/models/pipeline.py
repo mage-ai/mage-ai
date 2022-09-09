@@ -182,7 +182,7 @@ class Pipeline:
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
         parallel: bool = True,
-        run_tests: bool = False,
+        run_tests: bool = True,
         update_status: bool = True,
     ) -> None:
         """
@@ -213,7 +213,7 @@ class Pipeline:
         analyze_outputs: bool = True,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
-        run_tests: bool = False,
+        run_tests: bool = True,
     ) -> None:
         """
         Function for synchronous block processing.
