@@ -7,5 +7,5 @@ class NotificationSender:
         self.config = config
 
     def send(self, message: str) -> None:
-        if self.config.slack_config is not None:
+        if self.config.slack_config is not None and self.config.slack_config.is_valid:
             send_slack_message(self.config.slack_config, message)
