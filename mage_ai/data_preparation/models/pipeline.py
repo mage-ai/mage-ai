@@ -179,10 +179,9 @@ class Pipeline:
     async def execute(
         self,
         analyze_outputs: bool = True,
+        build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
-        log_func: Callable[[str], None] = None,
         parallel: bool = True,
-        redirect_outputs: bool = False,
         run_tests: bool = False,
         update_status: bool = True,
     ) -> None:
@@ -200,10 +199,9 @@ class Pipeline:
             run_blocks(
                 root_blocks,
                 analyze_outputs=analyze_outputs,
+                build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
-                log_func=log_func,
                 parallel=parallel,
-                redirect_outputs=redirect_outputs,
                 run_tests=run_tests,
                 update_status=update_status,
             )
@@ -213,13 +211,12 @@ class Pipeline:
     def execute_sync(
         self,
         analyze_outputs: bool = True,
+        build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
-        log_func: Callable[[str], None] = None,
-        redirect_outputs: bool = False,
         run_tests: bool = False,
     ) -> None:
         """
-        Async function for parallel processing
+        Function for synchronous block processing.
         This function will schedule the block execution in topological
         order based on a block's upstream dependencies.
         """
@@ -235,9 +232,8 @@ class Pipeline:
         run_blocks_sync(
             root_blocks,
             analyze_outputs=analyze_outputs,
+            build_block_output_stdout=build_block_output_stdout,
             global_vars=global_vars,
-            log_func=log_func,
-            redirect_outputs=redirect_outputs,
             run_tests=run_tests,
         )
 
