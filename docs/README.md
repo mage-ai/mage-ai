@@ -15,7 +15,6 @@
         - [Spark and PySpark](spark/setup/README.md)
     - Testing
         - [Data validation (WIP)](testing/README.md)
-    - [Install](#install)
     - [Templates](#templates)
 
 - <b>Operating in production</b>
