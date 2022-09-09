@@ -179,8 +179,39 @@ class ApiAllPipelineRunListHandler(BaseListHandler):
     model_class = PipelineRun
 
     def get(self):
-        super().get()
-        # pipeline_uuid = self.get_argument('pipeline_uuid', None)
+        pipeline_uuid = self.get_argument('pipeline_uuid', None)
+        filter_conditions = None
+        if pipeline_uuid is not None:
+            filter_conditions = PipelineRun.pipeline_uuid == pipeline_uuid
+        super().get(
+            filter_conditions=filter_conditions,
+            include_attributes=[
+                dict(
+                    attr='pipeline_schedule',
+                    sub_attrs=[
+                        dict(
+                            attr='id',
+                            label='pipeline_schedule_id',
+                        ),
+                        dict(
+                            attr='name',
+                            label='pipeline_schedule_name',
+                        ),
+                    ]
+                ),
+                dict(
+                    attr='block_runs',
+                    all_sub_attrs=True,
+                    derived_attrs=[
+                        dict(
+                            attr='id',
+                            derive_method=func.count,
+                            label='block_runs_count',
+                        ),
+                    ],
+                ),
+            ],
+        )
         # process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
 
 
