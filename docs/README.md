@@ -8,8 +8,12 @@
     - Concepts
         - [Core abstractions](core/abstractions.md)
         - [Blocks](blocks/README.md)
+    - Data pipeline management
+        - [UI overview](features/orchestration/README.md)
     - [Kernels](kernels/README.md)
         - [Spark and PySpark](spark/setup/README.md)
+    - Testing
+        - [Data validation (WIP)](testing/README.md)
     - [Install](#install)
     - [Templates](#templates)
 
@@ -20,6 +24,10 @@
     - Configuring production settings
         - [Compute resource](production/compute_resource.md)
         - [Runtime variables](production/runtime_variables.md)
+    - Triggering pipelines
+        - [Trigger pipeline from AWS Event (WIP)](tutorials/triggers/events/aws.md)
+    - Monitoring and alerting
+        - [Pipeline run updates in Slack (WIP)](monitoring/alerting/slack.md)
     - Integrating with other tools
         - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
         - [Prefect](production/prefect.md)
