@@ -1,7 +1,8 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 from typing import Callable
 
 import logging
+import sys
 import time
 
 logger = logging.getLogger(__name__)
@@ -34,33 +35,24 @@ class VerboseFunctionExec:
     def __init__(
         self,
         message: str,
-        log_func: Callable[[str], None] = None,
         prefix: str = '',
         verbose: bool = True,
     ):
         self.message = message
         self.verbose = verbose
         self.prefix = prefix
-        self.log_func = log_func
 
     def __enter__(self):
         if self.verbose:
             enter_message = f'{self.prefix} {self.message}...'
-            if self.log_func is None:
-                print_kwargs=dict()
-                if self.prefix is None or len(self.prefix) == 0:
-                    print_kwargs['end'] = ''
-                print(enter_message, **print_kwargs)
-            else:
-                self.log_func(enter_message)
+            print(enter_message, end='')
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.verbose:
-            log_func = self.log_func or print
             if exc_type is None:
-                log_func(f'{self.prefix} DONE')
+                print(f'{self.prefix} DONE')
             else:
-                log_func(f'{self.prefix} FAILED')
+                print(f'{self.prefix} FAILED')
 
 
 class VerbosePrintHandler:
@@ -87,25 +79,23 @@ class BlockFunctionExec:
         self,
         block_uuid: str,
         message: str,
-        log_func: Callable[..., None],
+        build_block_output_stdout: Callable[..., object] = None,
     ):
         self.message = message
-        self.log_func = log_func
+        self.build_block_output_stdout = build_block_output_stdout
         self.block_uuid = block_uuid
-        self.prefix = f'[{block_uuid}]'
 
     def __enter__(self):
-        if self.log_func is not None:
-            self.log_func(
-                f'{self.prefix} {self.message}',
-                execution_state='busy',
-                block_uuid=self.block_uuid,
-            )
+        if self.build_block_output_stdout is not None:
+            stdout = self.build_block_output_stdout(self.block_uuid)
+            with redirect_stdout(stdout):
+                print(self.message)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.log_func is not None:
-            self.log_func(
-                f'{self.prefix} DONE',
+        if self.build_block_output_stdout is not None:
+            stdout = self.build_block_output_stdout(
+                self.block_uuid,
                 execution_state='idle',
-                block_uuid=self.block_uuid,
             )
+            with redirect_stdout(stdout):
+                print('DONE')

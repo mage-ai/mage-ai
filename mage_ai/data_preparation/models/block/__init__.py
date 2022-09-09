@@ -40,9 +40,8 @@ import traceback
 async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
-    block_output_stdout: Callable[[str], object] = None,
+    build_block_output_stdout: Callable[..., object] = None,
     global_vars=None,
-    log_func: Callable = None,
     parallel: bool = True,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
@@ -57,20 +56,19 @@ async def run_blocks(
             with BlockFunctionExec(
                 block.uuid,
                 f'Executing {block.type} block...',
-                log_func,
+                build_block_output_stdout=build_block_output_stdout,
             ):
                 await block.execute(
                     analyze_outputs=analyze_outputs,
-                    block_output_stdout=block_output_stdout,
+                    build_block_output_stdout=build_block_output_stdout,
                     global_vars=global_vars,
-                    log_func=log_func,
                     run_all_blocks=True,
                     update_status=update_status,
                     parallel=parallel,
                 )
                 if run_tests:
                     block.run_tests(
-                        block_output_stdout=block_output_stdout,
+                        build_block_output_stdout=build_block_output_stdout,
                         update_tests=False,
                     )
 
@@ -120,8 +118,7 @@ async def run_blocks(
 def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
-    block_output_stdout: Callable[[str], object] = None,
-    log_func: Callable = None,
+    build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
@@ -160,17 +157,17 @@ def run_blocks_sync(
         with BlockFunctionExec(
             block.uuid,
             f'Executing {block.type} block...',
-            log_func,
+            build_block_output_stdout=build_block_output_stdout,
         ):
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
-                block_output_stdout=block_output_stdout,
+                build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
                 run_all_blocks=True,
             )
             if run_tests:
                 block.run_tests(
-                    block_output_stdout=block_output_stdout,
+                    build_block_output_stdout=build_block_output_stdout,
                     update_tests=False,
                 )
         tasks[block.uuid] = True
@@ -407,7 +404,7 @@ class Block:
     def execute_sync(
         self,
         analyze_outputs: bool = True,
-        block_output_stdout: Callable[[str], object] = None,
+        build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
         global_vars: Dict = None,
@@ -427,7 +424,7 @@ class Block:
                         'before running the current block.'
                     )
             output = self.execute_block(
-                block_output_stdout=block_output_stdout,
+                build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
                 execution_partition=execution_partition,
                 global_vars=global_vars,
@@ -480,10 +477,9 @@ class Block:
     async def execute(
         self,
         analyze_outputs: bool = True,
-        block_output_stdout: Callable[[str], object] = None,
+        build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         global_vars=None,
-        log_func: Callable = None,
         run_all_blocks: bool = False,
         update_status: bool = True,
         parallel: bool = True,
@@ -495,7 +491,7 @@ class Block:
                 functools.partial(
                     self.execute_sync,
                     analyze_outputs=analyze_outputs,
-                    block_output_stdout=block_output_stdout,
+                    build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
@@ -505,7 +501,7 @@ class Block:
         else:
             self.execute_sync(
                 analyze_outputs=analyze_outputs,
-                block_output_stdout=block_output_stdout,
+                build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
@@ -571,7 +567,7 @@ class Block:
 
     def execute_block(
         self,
-        block_output_stdout: Callable[[str], object] = None,
+        build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
         logger: Logger = None,
@@ -598,8 +594,8 @@ class Block:
         test_functions = []
         if logger is not None:
             stdout = StreamToLogger(logger)
-        elif block_output_stdout:
-            stdout = block_output_stdout(self.uuid) 
+        elif build_block_output_stdout:
+            stdout = build_block_output_stdout(self.uuid)
         else:
             stdout = sys.stdout
         results = {}
@@ -845,7 +841,7 @@ class Block:
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
-    def run_tests(self, block_output_stdout=None, custom_code=None, update_tests=True) -> str:
+    def run_tests(self, build_block_output_stdout=None, custom_code=None, update_tests=True) -> str:
         test_functions = []
         if update_tests:
             results = {
@@ -869,7 +865,7 @@ class Block:
             for variable in self.output_variables.keys()
         ]
 
-        stdout = block_output_stdout(self.uuid) if block_output_stdout else sys.stdout
+        stdout = build_block_output_stdout(self.uuid) if build_block_output_stdout else sys.stdout
         with redirect_stdout(stdout):
             tests_passed = 0
             for func in test_functions:

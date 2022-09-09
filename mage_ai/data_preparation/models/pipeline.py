@@ -179,9 +179,8 @@ class Pipeline:
     async def execute(
         self,
         analyze_outputs: bool = True,
-        block_output_stdout: Callable[[str], object] = None,
+        build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
-        log_func: Callable[[str], None] = None,
         parallel: bool = True,
         run_tests: bool = False,
         update_status: bool = True,
@@ -200,9 +199,8 @@ class Pipeline:
             run_blocks(
                 root_blocks,
                 analyze_outputs=analyze_outputs,
-                block_output_stdout=block_output_stdout,
+                build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
-                log_func=log_func,
                 parallel=parallel,
                 run_tests=run_tests,
                 update_status=update_status,
@@ -213,9 +211,8 @@ class Pipeline:
     def execute_sync(
         self,
         analyze_outputs: bool = True,
-        block_output_stdout: Callable[[str], object] = None,
+        build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
-        log_func: Callable[[str], None] = None,
         run_tests: bool = False,
     ) -> None:
         """
@@ -235,9 +232,8 @@ class Pipeline:
         run_blocks_sync(
             root_blocks,
             analyze_outputs=analyze_outputs,
-            block_output_stdout=block_output_stdout,
+            build_block_output_stdout=build_block_output_stdout,
             global_vars=global_vars,
-            log_func=log_func,
             run_tests=run_tests,
         )
 

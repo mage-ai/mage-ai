@@ -68,33 +68,24 @@ def run_pipeline(
         )
         queue.put(msg)
 
-    def add_block_message(
-        message: str,
+    def build_block_output_stdout(
+        block_uuid: str,
         execution_state: str = 'busy',
-        msg_type: str = 'stream_pipeline',
-        block_uuid: str = None,
     ):
-        add_pipeline_message(
-            message,
+        return StreamBlockOutputToQueue(
+            queue,
+            block_uuid,
             execution_state=execution_state,
             metadata=dict(
                 block_uuid=block_uuid,
                 pipeline_uuid=pipeline.uuid,
             ),
-            msg_type=msg_type,
         )
 
     try:
         pipeline.execute_sync(
             global_vars=global_vars,
-            log_func=add_block_message,
-            block_output_stdout=lambda block_uuid: StreamBlockOutputToQueue(
-                queue,
-                block_uuid,
-                metadata=dict(
-                    pipeline_uuid=pipeline.uuid,
-                ),
-            ),
+            build_block_output_stdout=build_block_output_stdout,
         )
         add_pipeline_message(
             f'Pipeline {pipeline.uuid} execution complete.\n'
