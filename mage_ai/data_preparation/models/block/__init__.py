@@ -1,4 +1,4 @@
-from contextlib import redirect_stdout as redirect_stdout_func
+from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from io import StringIO
@@ -69,7 +69,10 @@ async def run_blocks(
                     parallel=parallel,
                 )
                 if run_tests:
-                    block.run_tests(update_tests=False)
+                    block.run_tests(
+                        block_output_stdout=block_output_stdout,
+                        update_tests=False,
+                    )
 
         return asyncio.create_task(execute_and_run_tests())
 
@@ -166,7 +169,10 @@ def run_blocks_sync(
                 run_all_blocks=True,
             )
             if run_tests:
-                block.run_tests(update_tests=False)
+                block.run_tests(
+                    block_output_stdout=block_output_stdout,
+                    update_tests=False,
+                )
         tasks[block.uuid] = True
         for downstream_block in block.downstream_blocks:
             if downstream_block.uuid not in tasks and (
@@ -484,7 +490,7 @@ class Block:
     ) -> None:
         if parallel:
             loop = asyncio.get_event_loop()
-            output = await loop.run_in_executor(
+            await loop.run_in_executor(
                 None,
                 functools.partial(
                     self.execute_sync,
@@ -497,7 +503,7 @@ class Block:
                 )
             )
         else:
-            output = self.execute_sync(
+            self.execute_sync(
                 analyze_outputs=analyze_outputs,
                 block_output_stdout=block_output_stdout,
                 custom_code=custom_code,
@@ -505,13 +511,6 @@ class Block:
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,
             )
-        stdout = output['stdout']
-        if log_func is not None and len(stdout) > 0:
-            stdout_stripped = stdout.strip('\n')
-            prefixed_stdout = '\n'.join(
-                [f'[{self.uuid}] {s}' for s in stdout_stripped.split('\n')]
-            )
-            log_func(prefixed_stdout, block_uuid=self.uuid)
 
     def __validate_execution(self, decorated_functions, input_vars):
         if self.type not in CUSTOM_EXECUTION_BLOCK_TYPES:
@@ -600,8 +599,7 @@ class Block:
         if logger is not None:
             stdout = StreamToLogger(logger)
         elif block_output_stdout:
-            stdout = StringIO() if block_output_stdout is None \
-                                else block_output_stdout(self.uuid) 
+            stdout = block_output_stdout(self.uuid) 
         else:
             stdout = sys.stdout
         results = {}
@@ -612,7 +610,7 @@ class Block:
             outputs_from_input_vars[upstream_block_uuid] = input_var
             outputs_from_input_vars[f'df_{idx + 1}'] = input_var
 
-        with redirect_stdout_func(stdout):
+        with redirect_stdout(stdout):
             results = {
                 self.type: self.__block_decorator(decorated_functions),
                 'test': self.__block_decorator(test_functions),
@@ -847,7 +845,7 @@ class Block:
 
         run_blocks_sync(root_blocks, selected_blocks=upstream_block_uuids)
 
-    def run_tests(self, custom_code=None, redirect_outputs=False, update_tests=True) -> str:
+    def run_tests(self, block_output_stdout=None, custom_code=None, update_tests=True) -> str:
         test_functions = []
         if update_tests:
             results = {
@@ -870,7 +868,8 @@ class Block:
             )
             for variable in self.output_variables.keys()
         ]
-        stdout = StringIO() if redirect_outputs else sys.stdout
+
+        stdout = block_output_stdout(self.uuid) if block_output_stdout else sys.stdout
         with redirect_stdout(stdout):
             tests_passed = 0
             for func in test_functions:
@@ -884,8 +883,6 @@ class Block:
                     print(traceback.format_exc())
             print('--------------------------------------------------------------')
             print(f'{tests_passed}/{len(test_functions)} tests passed.')
-        if redirect_outputs:
-            return stdout.getvalue()
 
     def analyze_outputs(self, variable_mapping):
         from mage_ai.data_cleaner.data_cleaner import clean as clean_data
