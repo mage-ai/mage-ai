@@ -121,6 +121,10 @@ class PipelineSchedule(BaseModel):
         back_populates='pipeline_schedules'
     )
 
+    @property
+    def pipeline_runs_count(self) -> int:
+        return len(self.pipeline_runs)
+
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
         if schedule_interval not in [e.value for e in self.__class__.ScheduleInterval]:
@@ -200,6 +204,10 @@ class PipelineRun(BaseModel):
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
                f' execution_date={self.execution_date})'
+
+    @property
+    def block_runs_count(self) -> int:
+        return len(self.block_runs)
 
     @property
     def execution_partition(self) -> str:
