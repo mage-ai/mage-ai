@@ -52,7 +52,7 @@ class ApiPipelineBlockExecuteHandler(BaseHandler):
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        asyncio.run(block.execute(redirect_outputs=True))
+        asyncio.run(block.execute())
         self.write(
             dict(
                 block=block.to_dict(

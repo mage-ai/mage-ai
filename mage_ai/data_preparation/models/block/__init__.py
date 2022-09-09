@@ -40,11 +40,10 @@ import traceback
 async def run_blocks(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
+    block_output_stdout: Callable[[str], object] = None,
     global_vars=None,
     log_func: Callable = None,
     parallel: bool = True,
-    redirect_outputs: bool = False,
-    redirect_stdout=None,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
@@ -62,10 +61,9 @@ async def run_blocks(
             ):
                 await block.execute(
                     analyze_outputs=analyze_outputs,
+                    block_output_stdout=block_output_stdout,
                     global_vars=global_vars,
                     log_func=log_func,
-                    redirect_outputs=redirect_outputs,
-                    redirect_stdout=redirect_stdout,
                     run_all_blocks=True,
                     update_status=update_status,
                     parallel=parallel,
@@ -119,10 +117,9 @@ async def run_blocks(
 def run_blocks_sync(
     root_blocks: List['Block'],
     analyze_outputs: bool = True,
+    block_output_stdout: Callable[[str], object] = None,
     log_func: Callable = None,
     global_vars: Dict = None,
-    redirect_outputs: bool = False,
-    redirect_stdout=None,
     run_tests: bool = False,
     selected_blocks: Set[str] = None,
 ) -> None:
@@ -164,9 +161,8 @@ def run_blocks_sync(
         ):
             block.execute_sync(
                 analyze_outputs=analyze_outputs,
+                block_output_stdout=block_output_stdout,
                 global_vars=global_vars,
-                redirect_outputs=redirect_outputs,
-                redirect_stdout=redirect_stdout,
                 run_all_blocks=True,
             )
             if run_tests:
@@ -405,12 +401,11 @@ class Block:
     def execute_sync(
         self,
         analyze_outputs: bool = True,
+        block_output_stdout: Callable[[str], object] = None,
         custom_code: str = None,
         execution_partition: str = None,
         global_vars: Dict = None,
         logger: Logger = None,
-        redirect_outputs: bool = False,
-        redirect_stdout=None,
         run_all_blocks: bool = False,
         update_status: bool = True,
     ):
@@ -426,12 +421,11 @@ class Block:
                         'before running the current block.'
                     )
             output = self.execute_block(
+                block_output_stdout=block_output_stdout,
                 custom_code=custom_code,
                 execution_partition=execution_partition,
                 global_vars=global_vars,
                 logger=logger,
-                redirect_outputs=redirect_outputs,
-                redirect_stdout=redirect_stdout,
             )
             block_output = output['output']
             if BlockType.CHART == self.type:
@@ -480,11 +474,10 @@ class Block:
     async def execute(
         self,
         analyze_outputs: bool = True,
+        block_output_stdout: Callable[[str], object] = None,
         custom_code: str = None,
         global_vars=None,
         log_func: Callable = None,
-        redirect_outputs: bool = False,
-        redirect_stdout=None,
         run_all_blocks: bool = False,
         update_status: bool = True,
         parallel: bool = True,
@@ -496,10 +489,9 @@ class Block:
                 functools.partial(
                     self.execute_sync,
                     analyze_outputs=analyze_outputs,
+                    block_output_stdout=block_output_stdout,
                     custom_code=custom_code,
                     global_vars=global_vars,
-                    redirect_outputs=redirect_outputs,
-                    redirect_stdout=redirect_stdout,
                     run_all_blocks=run_all_blocks,
                     update_status=update_status,
                 )
@@ -507,10 +499,9 @@ class Block:
         else:
             output = self.execute_sync(
                 analyze_outputs=analyze_outputs,
+                block_output_stdout=block_output_stdout,
                 custom_code=custom_code,
                 global_vars=global_vars,
-                redirect_outputs=redirect_outputs,
-                redirect_stdout=redirect_stdout,
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,
             )
@@ -581,11 +572,10 @@ class Block:
 
     def execute_block(
         self,
+        block_output_stdout: Callable[[str], object] = None,
         custom_code: str = None,
         execution_partition: str = None,
         logger: Logger = None,
-        redirect_outputs: bool = False,
-        redirect_stdout=None,
         global_vars: Dict = None,
     ) -> Dict:
         upstream_block_uuids = []
@@ -609,8 +599,9 @@ class Block:
         test_functions = []
         if logger is not None:
             stdout = StreamToLogger(logger)
-        elif redirect_outputs:
-            stdout =  StringIO() if redirect_stdout is None else redirect_stdout(self.uuid) 
+        elif block_output_stdout:
+            stdout = StringIO() if block_output_stdout is None \
+                                else block_output_stdout(self.uuid) 
         else:
             stdout = sys.stdout
         results = {}

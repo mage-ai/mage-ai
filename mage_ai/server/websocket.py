@@ -88,8 +88,7 @@ def run_pipeline(
         pipeline.execute_sync(
             global_vars=global_vars,
             log_func=add_block_message,
-            redirect_outputs=True,
-            redirect_stdout=lambda block_uuid: StreamToQueue(
+            block_output_stdout=lambda block_uuid: StreamBlockOutputToQueue(
                 queue,
                 block_uuid,
                 metadata=dict(
@@ -369,9 +368,10 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
 
-class StreamToQueue(object):
+class StreamBlockOutputToQueue(object):
     """
-    Fake file-like stream object that redirects writes to a queue.
+    Fake file-like stream object that redirects block output to a queue
+    to be streamed to the websocket.
     """
     def __init__(
         self,
