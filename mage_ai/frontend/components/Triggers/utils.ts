@@ -30,3 +30,16 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
     {},
   );
 }
+
+export function getTimeInUTC(dateTime: string) {
+  const date = new Date(dateTime);
+  const utcTs = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+  );
+  return new Date(utcTs);
+}

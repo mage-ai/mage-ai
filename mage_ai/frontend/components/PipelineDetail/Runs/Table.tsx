@@ -8,27 +8,60 @@ import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineType from '@interfaces/PipelineType';
 import Table, { ColumnType } from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import api from '@api';
+import { BLUE_SKY } from '@oracle/styles/colors/main';
 import { ChevronRight, TodoList } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { useMutation } from 'react-query';
+import { onSuccess } from '@api/utils/response';
+import { getTimeInUTC } from '@components/Triggers/utils';
 
 type PipelineRunsTableProps = {
+  fetchPipelineRuns: () => void,
   onClickRow?: (rowIndex: number) => void;
   pipeline: PipelineType;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
+  showTrigger?: boolean;
 };
 
 function PipelineRunsTable({
+  fetchPipelineRuns,
   onClickRow,
   pipeline,
   pipelineRuns,
   selectedRun,
+  showTrigger,
 }: PipelineRunsTableProps) {
   const {
     uuid: pipelineUUID,
   } = pipeline || {};
 
-  const columnFlex = [null, 1, 2, 2, 1, null];
+  const [updatePipelineRun, { isLoading: isLoadingUpdatePipelineRun }] = useMutation(
+    (pipelineRun: PipelineRunType) =>
+      api.pipeline_runs.useUpdate(pipelineRun.id)({
+        pipeline_run: pipelineRun,
+      }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineRuns();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
+  const columnFlex = [null, 1, 1, 1, 1, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Date',
@@ -37,18 +70,23 @@ function PipelineRunsTable({
       uuid: 'Status',
     },
     {
-      uuid: 'Trigger',
-    },
-    {
       uuid: 'Block runs',
     },
     {
       uuid: 'Completed',
     },
     {
+      uuid: 'Action',
+    },
+    {
       uuid: 'Logs',
     },
   ];
+
+  if (showTrigger) {
+    columnFlex.splice(2, 0, 3);
+    columns.splice(2, 0, { uuid: 'Trigger' });
+  }
 
   if (onClickRow) {
     columnFlex.push(null);
@@ -88,6 +126,7 @@ function PipelineRunsTable({
           >
             {status}
           </Text>,
+<<<<<<< HEAD
           <NextLink
             as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
             href={'/pipelines/[pipeline]/triggers/[...slug]'}
@@ -106,9 +145,29 @@ function PipelineRunsTable({
               {`See block runs (${blockRunsCount})`}
             </Link>
           </NextLink>,
+=======
           <Text default monospace>
-            {completedAt || '-'}
+            {blockRunsCount}
           </Text>,
+>>>>>>> c289d709 ([dy] Add pipeline run rerun)
+          <Text default monospace>
+            {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+          </Text>,
+          <>
+            {status !== RunStatus.COMPLETED && (
+              <Link
+                color={BLUE_SKY}
+                monospace
+                onClick={() => updatePipelineRun({
+                  id,
+                  status: RunStatus.RUNNING,
+                })}
+                underline
+              >
+                rerun
+              </Link>
+            )}
+          </>,
           <Button
             default
             iconOnly
@@ -120,6 +179,22 @@ function PipelineRunsTable({
             <TodoList default size={2 * UNIT} />
           </Button>,
         ];
+
+        if (showTrigger) {
+          arr.splice(
+            2,
+            0, 
+            <NextLink
+              as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+              href={'/pipelines/[pipeline]/triggers/[...slug]'}
+              passHref
+            >
+              <Link bold sameColorAsText>
+                {pipelineScheduleName}
+              </Link>
+            </NextLink>,
+          );
+        }
 
         if (onClickRow) {
           arr.push(

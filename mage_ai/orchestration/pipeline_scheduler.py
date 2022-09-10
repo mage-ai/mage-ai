@@ -126,8 +126,13 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            variables = merge_dict(get_global_variables(self.pipeline.uuid) or dict(),
-                                   self.pipeline_run.variables or dict())
+            variables = merge_dict(
+                merge_dict(
+                    get_global_variables(self.pipeline.uuid) or dict(),
+                    self.pipeline_run.pipeline_schedule.variables or dict(),
+                ),
+                self.pipeline_run.variables or dict(),
+            )
             variables['env'] = ENV_PROD
             variables['execution_date'] = self.pipeline_run.execution_date
             proc = multiprocessing.Process(target=run_block, args=(
