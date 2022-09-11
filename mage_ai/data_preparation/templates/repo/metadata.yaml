@@ -12,4 +12,4 @@ emr_config:
 
 notification_config:
   slack_config:
-    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}""
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
