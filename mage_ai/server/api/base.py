@@ -6,6 +6,9 @@ import simplejson
 import tornado.web
 import traceback
 
+META_KEY_LIMIT = '_limit'
+META_KEY_OFFSET = '_offset'
+
 
 class BaseHandler(tornado.web.RequestHandler):
     datetime_keys = []
@@ -19,6 +22,15 @@ class BaseHandler(tornado.web.RequestHandler):
         if type(value) is not str:
             return value
         return value.lower() in ('yes', 'true', 't', '1')
+
+    def limit(self, results):
+        limit = self.get_argument(META_KEY_LIMIT, None)
+        offset = self.get_argument(META_KEY_OFFSET, None)
+        if limit is not None:
+            results = results.limit(limit)
+        if offset is not None:
+            results = results.offset(offset)
+        return results
 
     def options(self, **kwargs):
         self.set_status(204)

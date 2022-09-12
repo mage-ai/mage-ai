@@ -1,4 +1,7 @@
-from .base import BaseDetailHandler, BaseHandler
+from .base import (
+    BaseDetailHandler,
+    BaseHandler,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import (
     BlockRun,
@@ -7,9 +10,8 @@ from mage_ai.orchestration.db.models import (
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
-from mage_ai.shared.hash import group_by, merge_dict
-from sqlalchemy import distinct, func
-from sqlalchemy.orm import aliased
+from mage_ai.shared.hash import merge_dict
+from sqlalchemy.orm import aliased, joinedload
 
 
 class ApiBlockRunDetailHandler(BaseHandler):
@@ -114,55 +116,26 @@ def process_pipeline_runs(
     pipeline_schedule_id=None,
     pipeline_uuid=None,
 ):
-    a = aliased(PipelineRun, name='a')
-    b = aliased(PipelineSchedule, name='b')
-    c = aliased(BlockRun, name='c')
-    columns = [
-        a.completed_at,
-        a.created_at,
-        a.execution_date,
-        a.id,
-        b.name.label('pipeline_schedule_name'),
-        a.pipeline_schedule_id,
-        a.pipeline_uuid,
-        a.status,
-        a.variables,
-        a.updated_at,
-    ]
-
-    pipeline_runs = (
+    results = (
         PipelineRun.
-        select(*columns, func.count(c.id).label('block_runs_count')).
-        join(b, a.pipeline_schedule_id == b.id).
-        join(c, a.id == c.pipeline_run_id, isouter=True)
+        query.
+        options(joinedload(PipelineRun.block_runs)).
+        options(joinedload(PipelineRun.pipeline_schedule))
     )
+    if pipeline_schedule_id is not None:
+        results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
+    if pipeline_uuid is not None:
+        results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)            
+    results = results.order_by(PipelineRun.created_at.desc())
 
-    if pipeline_schedule_id:
-        pipeline_runs = (
-            pipeline_runs.
-            filter(a.pipeline_schedule_id == pipeline_schedule_id)
-        )
+    results = handler.limit(results)
 
-    if pipeline_uuid:
-        pipeline_runs = (
-            pipeline_runs.
-            filter(b.pipeline_uuid == pipeline_uuid)
-        )
-
-    pipeline_runs = (
-        pipeline_runs.
-        group_by(*columns).
-        order_by(a.created_at.desc())
-    ).all()
-
-    collection = []
-    for r in pipeline_runs:
-        run_dict = dict(r._mapping)
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == int(r.id),
-        ).all()
-        run_dict['block_runs'] = [r.to_dict() for r in block_runs]
-        collection.append(run_dict)
+    collection = [r.to_dict(include_attributes=[
+                                'block_runs',
+                                'block_runs_count',
+                                'pipeline_schedule_name',
+                            ])
+                  for r in results]
 
     handler.write(dict(pipeline_runs=collection))
     handler.finish()
@@ -234,21 +207,31 @@ class ApiPipelineScheduleDetailHandler(BaseDetailHandler):
         if arr is not None:
             if len(arr) >= 1:
                 event_matchers = EventMatcher.upsert_batch(
-                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id])) for p in arr],
+                    [merge_dict(p, dict(pipeline_schedule_ids=[pipeline_schedule_id]))
+                     for p in arr],
                 )
 
             ems = (
                 EventMatcher.
                 query.
-                join(pipeline_schedule_event_matcher_association_table, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id).
-                join(PipelineSchedule, PipelineSchedule.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id).
+                join(
+                    pipeline_schedule_event_matcher_association_table,
+                    EventMatcher.id ==
+                    pipeline_schedule_event_matcher_association_table.c.event_matcher_id
+                ).
+                join(
+                    PipelineSchedule,
+                    PipelineSchedule.id ==
+                    pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id
+                ).
                 filter(
                     PipelineSchedule.id == int(pipeline_schedule_id),
                     EventMatcher.id.not_in([em.id for em in event_matchers]),
                 )
             )
             for em in ems:
-                new_ids = [schedule for schedule in em.pipeline_schedules if schedule.id != int(pipeline_schedule_id)]
+                new_ids = [schedule for schedule in em.pipeline_schedules
+                           if schedule.id != int(pipeline_schedule_id)]
                 ps = [p for p in PipelineSchedule.query.filter(PipelineSchedule.id.in_(new_ids))]
                 em.update(pipeline_schedules=ps)
 
@@ -284,62 +267,17 @@ class ApiPipelineScheduleListHandler(BaseHandler):
                 collection = [s.to_dict() for s in results]
             else:
                 pipeline = Pipeline.get(pipeline_uuid)
-
-                a = aliased(PipelineSchedule, name='a')
-                b = aliased(PipelineRun, name='b')
-
-                pipeline_schedule_columns = [
-                    'created_at',
-                    'id',
-                    'name',
-                    'pipeline_uuid',
-                    'schedule_interval',
-                    'schedule_type',
-                    'start_time',
-                    'status',
-                    'updated_at',
-                    'variables',
-                ]
-                columns = [getattr(a, col) for col in pipeline_schedule_columns] + [
-                    EventMatcher.event_type,
-                    EventMatcher.id.label('event_id'),
-                    EventMatcher.name.label('event_matcher_name'),
-                    EventMatcher.pattern.label('event_pattern'),
-                ]
-
                 results = (
                     PipelineSchedule.
-                    select(*columns, func.count(distinct(b.id)).label('pipeline_runs_count')).
-                    join(b, a.id == b.pipeline_schedule_id, isouter=True).
-                    join(pipeline_schedule_event_matcher_association_table, a.id == pipeline_schedule_event_matcher_association_table.c.pipeline_schedule_id, isouter=True).
-                    join(EventMatcher, EventMatcher.id == pipeline_schedule_event_matcher_association_table.c.event_matcher_id, isouter=True).
-                    filter(a.pipeline_uuid == pipeline.uuid).
-                    group_by(*columns).
-                    order_by(a.start_time.desc(), a.id.desc())
+                    query.
+                    options(joinedload(PipelineSchedule.event_matchers)).
+                    options(joinedload(PipelineSchedule.pipeline_runs)).
+                    filter(PipelineSchedule.pipeline_uuid == pipeline.uuid).
+                    order_by(PipelineSchedule.start_time.desc(), PipelineSchedule.id.desc())
                 )
-
-                collection = []
-                for pipeline_schedule_id, arr in group_by(lambda x: x.id, results).items():
-                    schedule = arr[0]
-
-                    event_matchers = []
-                    for schedule in arr:
-                        if schedule.event_id:
-                            event_matchers.append(dict(
-                                event_type=schedule.event_type,
-                                id=schedule.event_id,
-                                name=schedule.event_matcher_name,
-                                pattern=schedule.event_pattern,
-                            ))
-
-                    data = dict(
-                        event_matchers=event_matchers,
-                        pipeline_runs_count=schedule.pipeline_runs_count,
-                    )
-
-                    for col in pipeline_schedule_columns:
-                        data[col] = getattr(schedule, col)
-                    collection.append(data)
+                results = self.limit(results)
+                collection = [r.to_dict(include_attributes=['event_matchers', 'pipeline_runs_count'])
+                              for r in results]
                 collection.sort(key=lambda d: d['id'], reverse=True)
         except Exception as err:
             raise err
