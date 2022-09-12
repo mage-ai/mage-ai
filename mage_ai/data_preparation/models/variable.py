@@ -56,6 +56,10 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
+        elif self.variable_type == VariableType.DATAFRAME and os.path.exists(
+            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh')
+        ):
+            self.variable_type = VariableType.GEO_DATAFRAME
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
@@ -98,6 +102,8 @@ class Variable:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
@@ -154,11 +160,11 @@ class Variable:
             return gpd.GeoDataFrame()
         if sample and os.path.exists(sample_file_path):
             try:
-                df = gpd.read_file(sample_file_path, engine='pyarrow')
+                df = gpd.read_file(sample_file_path)
             except Exception:
-                df = gpd.read_file(file_path, engine='pyarrow')
+                df = gpd.read_file(file_path)
         else:
-            df = gpd.read_file(file_path, engine='pyarrow')
+            df = gpd.read_file(file_path)
         if sample:
             sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
             if df.shape[0] > sample_count:
