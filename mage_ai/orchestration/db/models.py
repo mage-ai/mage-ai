@@ -226,6 +226,10 @@ class PipelineRun(BaseModel):
             partition=self.execution_partition,
         ))
 
+    @property
+    def pipeline_schedule_name(self):
+        return self.pipeline_schedule.name
+
     @classmethod
     def active_runs(self) -> List['PipelineRun']:
         return self.query.filter(self.status == self.PipelineRunStatus.RUNNING).all()

@@ -11,8 +11,7 @@ from mage_ai.orchestration.db.models import (
     PipelineSchedule,
     pipeline_schedule_event_matcher_association_table,
 )
-from mage_ai.shared.hash import group_by, merge_dict
-from sqlalchemy import distinct, func
+from mage_ai.shared.hash import merge_dict
 from sqlalchemy.orm import aliased, joinedload
 
 
@@ -120,99 +119,36 @@ def process_pipeline_runs(
     limit=None,
     offset=None,
 ):
-    a = aliased(PipelineRun, name='a')
-    b = aliased(PipelineSchedule, name='b')
-    c = aliased(BlockRun, name='c')
-    columns = [
-        a.completed_at,
-        a.created_at,
-        a.execution_date,
-        a.id,
-        b.name.label('pipeline_schedule_name'),
-        a.pipeline_schedule_id,
-        a.pipeline_uuid,
-        a.status,
-        a.variables,
-        a.updated_at,
-    ]
-
-    pipeline_runs = (
+    results = (
         PipelineRun.
-        select(*columns, func.count(c.id).label('block_runs_count')).
-        join(b, a.pipeline_schedule_id == b.id).
-        join(c, a.id == c.pipeline_run_id, isouter=True)
+        query.
+        options(joinedload(PipelineRun.block_runs)).
+        options(joinedload(PipelineRun.pipeline_schedule))
     )
+    if pipeline_uuid is not None:
+        results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)            
+    results = results.order_by(PipelineRun.created_at.desc())
 
-    if pipeline_schedule_id:
-        pipeline_runs = (
-            pipeline_runs.
-            filter(a.pipeline_schedule_id == pipeline_schedule_id)
-        )
+    results = handler.limit(results)
 
-    if pipeline_uuid:
-        pipeline_runs = (
-            pipeline_runs.
-            filter(b.pipeline_uuid == pipeline_uuid)
-        )
-
-    pipeline_runs = (
-        pipeline_runs.
-        group_by(*columns).
-        order_by(a.created_at.desc())
-    ).all()
-
-    collection = []
-    for r in pipeline_runs:
-        run_dict = dict(r._mapping)
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == int(r.id),
-        ).all()
-        run_dict['block_runs'] = [r.to_dict() for r in block_runs]
-        collection.append(run_dict)
+    collection = [r.to_dict(include_attributes=[
+                                'block_runs',
+                                'block_runs_count',
+                                'pipeline_schedule_name',
+                            ])
+                  for r in results]
 
     handler.write(dict(pipeline_runs=collection))
     handler.finish()
 
 
-class ApiAllPipelineRunListHandler(BaseListHandler):
+class ApiAllPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
     model_class = PipelineRun
 
     def get(self):
         pipeline_uuid = self.get_argument('pipeline_uuid', None)
-        filter_conditions = None
-        if pipeline_uuid is not None:
-            filter_conditions = PipelineRun.pipeline_uuid == pipeline_uuid
-        super().get(
-            filter_conditions=filter_conditions,
-            include_attributes=[
-                dict(
-                    attr='pipeline_schedule',
-                    sub_attrs=[
-                        dict(
-                            attr='id',
-                            label='pipeline_schedule_id',
-                        ),
-                        dict(
-                            attr='name',
-                            label='pipeline_schedule_name',
-                        ),
-                    ]
-                ),
-                dict(
-                    attr='block_runs',
-                    all_sub_attrs=True,
-                    derived_attrs=[
-                        dict(
-                            attr='id',
-                            derive_method=func.count,
-                            label='block_runs_count',
-                        ),
-                    ],
-                ),
-            ],
-        )
-        # process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
+        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
 
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
