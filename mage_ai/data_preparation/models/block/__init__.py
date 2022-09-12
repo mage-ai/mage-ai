@@ -732,7 +732,11 @@ class Block:
                 )
             elif is_geo_dataframe(data):
                 data = dict(
-                    text_data=data.to_json(),
+                    text_data=f''' Use the following code in a scratchpad to get the output of the block:
+
+from mage_ai.data_preparation.variable_manager import get_variable
+df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
+''',
                     type=DataType.TEXT,
                     variable_uuid=v,
                 )
