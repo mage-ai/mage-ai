@@ -66,11 +66,15 @@ def clean_dataframe(df, column_types, dropna=True):
 
 
 def is_dataframe(df):
-    return type(df) is pd.DataFrame or is_spark_dataframe(df)
+    return type(df) is pd.DataFrame or is_spark_dataframe(df) or is_geo_dataframe(df)
 
 
 def is_numeric_dtype(df, column, column_type):
     return column_type in NUMBER_TYPES or issubclass(df[column].dtype.type, np.number)
+
+
+def is_geo_dataframe(df):
+    return type(df).__module__ == 'geopandas.geodataframe' and type(df).__name__ == 'GeoDataFrame'
 
 
 def is_spark_dataframe(df):
