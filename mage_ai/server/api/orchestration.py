@@ -1,7 +1,6 @@
 from .base import (
     BaseDetailHandler,
     BaseHandler,
-    BaseListHandler,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import (
@@ -116,8 +115,6 @@ def process_pipeline_runs(
     handler,
     pipeline_schedule_id=None,
     pipeline_uuid=None,
-    limit=None,
-    offset=None,
 ):
     results = (
         PipelineRun.
