@@ -122,6 +122,8 @@ def process_pipeline_runs(
         options(joinedload(PipelineRun.block_runs)).
         options(joinedload(PipelineRun.pipeline_schedule))
     )
+    if pipeline_schedule_id is not None:
+        results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
     if pipeline_uuid is not None:
         results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)            
     results = results.order_by(PipelineRun.created_at.desc())
