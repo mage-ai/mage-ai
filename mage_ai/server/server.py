@@ -68,9 +68,14 @@ import tornado.web
 import urllib.parse
 
 
-class MainHandler(tornado.web.RequestHandler):
+class MainPageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('index.html')
+
+
+class PipelineRunsPageHandler(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.render('pipeline-runs.html')
 
 
 class ApiBlockHandler(BaseHandler):
@@ -371,10 +376,10 @@ class KernelsHandler(BaseHandler):
 
 def make_app():
     routes = [
-        (r'/', MainHandler),
-        (r'/pipelines', MainHandler),
-        (r'/pipelines/(.*)', MainHandler),
-        (r'/pipeline-runs', MainHandler),
+        (r'/', MainPageHandler),
+        (r'/pipelines', MainPageHandler),
+        (r'/pipelines/(.*)', MainPageHandler),
+        (r'/pipeline-runs', PipelineRunsPageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
