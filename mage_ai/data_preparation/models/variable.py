@@ -56,9 +56,9 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
-        elif self.variable_type == VariableType.DATAFRAME and os.path.exists(
-            os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh')
-        ):
+        elif ((self.variable_type == VariableType.DATAFRAME or self.variable_type is None)
+                and os.path.exists(
+                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
             self.variable_type = VariableType.GEO_DATAFRAME
 
     @classmethod
