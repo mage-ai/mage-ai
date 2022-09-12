@@ -1,5 +1,5 @@
 from datetime import datetime
-from distutils.dir_util import copy_tree
+from distutils.file_util import copy_file
 from mage_ai.data_preparation.models.constants import (
     BlockType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
@@ -31,7 +31,7 @@ from mage_ai.server.utils.output_display import (
 )
 from mage_ai.shared.hash import merge_dict
 from jupyter_client import KernelClient
-from typing import Callable, Dict, List
+from typing import Dict
 import asyncio
 import json
 import multiprocessing
@@ -39,6 +39,7 @@ import os
 import tornado.websocket
 import traceback
 import uuid
+
 
 def run_pipeline(
     pipeline: Pipeline,
@@ -100,6 +101,7 @@ def run_pipeline(
 
     delete_pipeline_copy_config(config_copy_path)
 
+
 def publish_pipeline_message(
     message: str,
     execution_state: str = 'busy',
@@ -117,6 +119,7 @@ def publish_pipeline_message(
             type=DataType.TEXT_PLAIN,
         )
     )
+
 
 class WebSocketServer(tornado.websocket.WebSocketHandler):
     """Simple WebSocket handler to serve clients."""
@@ -205,7 +208,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         for client in self.clients:
             client.write_message(json.dumps(message_final))
 
-
     def __execute_block(
         self,
         message: Dict[str, any],
@@ -285,7 +287,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                         uuid=block.uuid,
                     )))
 
-
     def __execute_pipeline(
         self,
         pipeline: Pipeline,
@@ -314,7 +315,11 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             def save_pipeline_config() -> str:
                 pipeline_copy = f'{pipeline.uuid}_{str(uuid.uuid4())}'
                 new_pipeline_directory = os.path.join(pipeline.repo_path, PIPELINES_FOLDER, pipeline_copy)
-                copy_tree(pipeline.dir_path, new_pipeline_directory)
+                os.makedirs(new_pipeline_directory, exist_ok=True)
+                copy_file(
+                    os.path.join(pipeline.dir_path, 'metadata.yaml'),
+                    os.path.join(new_pipeline_directory, 'metadata.yaml'),
+                )
                 set_previous_config_path(new_pipeline_directory)
                 return new_pipeline_directory
 
@@ -351,13 +356,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
                             msg_type=msg.get('msg_type'),
                         )
                         if execution_state == 'idle' and \
-                            metadata.get('block_uuid') is None:
+                                metadata.get('block_uuid') is None:
                             loop = False
                             break
                     await asyncio.sleep(0.5)
 
             task = asyncio.create_task(check_for_messages())
             set_current_message_task(task)
+
 
 class StreamBlockOutputToQueue(object):
     """
