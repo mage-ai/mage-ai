@@ -252,7 +252,7 @@ class ApiPipelineVariableListHandler(BaseHandler):
 
         def get_variable_value(block_uuid, variable_uuid):
             variable = variable_manager.get_variable_object(pipeline_uuid, block_uuid, variable_uuid)
-            if variable.variable_type == VariableType.DATAFRAME:
+            if variable.variable_type in [VariableType.DATAFRAME, VariableType.GEO_DATAFRAME]:
                 value = 'DataFrame'
                 variable_type = 'pandas.DataFrame'
             else:

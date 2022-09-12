@@ -1,4 +1,7 @@
-from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
+from mage_ai.data_cleaner.shared.utils import (
+    is_geo_dataframe,
+    is_spark_dataframe,
+)
 from mage_ai.data_preparation.models.variable import Variable, VariableType, VARIABLE_DIR
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from typing import Any, Dict, List
@@ -28,6 +31,8 @@ class VariableManager:
             variable_type = VariableType.DATAFRAME
         elif is_spark_dataframe(data):
             variable_type = VariableType.SPARK_DATAFRAME
+        elif is_geo_dataframe(data):
+            variable_type = VariableType.GEO_DATAFRAME
         variable = Variable(
             variable_uuid,
             self.__pipeline_path(pipeline_uuid),

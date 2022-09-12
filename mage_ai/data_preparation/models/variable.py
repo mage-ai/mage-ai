@@ -1,5 +1,8 @@
 from enum import Enum
-from mage_ai.data_cleaner.shared.utils import is_spark_dataframe
+from mage_ai.data_cleaner.shared.utils import (
+    is_geo_dataframe,
+    is_spark_dataframe,
+)
 from mage_ai.data_preparation.models.constants import (
     DATAFRAME_ANALYSIS_KEYS,
     DATAFRAME_SAMPLE_COUNT,
@@ -16,6 +19,7 @@ import pandas as pd
 class VariableType(str, Enum):
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
+    GEO_DATAFRAME = 'geo_dataframe'
     SPARK_DATAFRAME = 'spark_dataframe'
 
 
@@ -52,6 +56,10 @@ class Variable:
         ):
             # If parquet file exists for given variable, set the variable type to DATAFRAME
             self.variable_type = VariableType.DATAFRAME
+        elif ((self.variable_type == VariableType.DATAFRAME or self.variable_type is None)
+                and os.path.exists(
+                os.path.join(self.variable_dir_path, f'{self.uuid}', 'data.sh'))):
+            self.variable_type = VariableType.GEO_DATAFRAME
 
     @classmethod
     def dir_path(self, pipeline_path, block_uuid):
@@ -74,11 +82,14 @@ class Variable:
             self.variable_type = VariableType.DATAFRAME
         elif is_spark_dataframe(data):
             self.variable_type = VariableType.SPARK_DATAFRAME
-
+        elif is_geo_dataframe(data):
+            self.variable_type = VariableType.GEO_DATAFRAME
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             self.__write_spark_parquet(data)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            self.__write_geo_dataframe(data)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             self.__write_dataframe_analysis(data)
         else:
@@ -91,6 +102,8 @@ class Variable:
             return self.__read_parquet(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
             return self.__read_spark_parquet(sample=sample, sample_count=sample_count, spark=spark)
+        elif self.variable_type == VariableType.GEO_DATAFRAME:
+            return self.__read_geo_dataframe(sample=sample, sample_count=sample_count)
         elif self.variable_type == VariableType.DATAFRAME_ANALYSIS:
             return self.__read_dataframe_analysis()
         return self.__read_json()
@@ -137,6 +150,27 @@ class Variable:
                 ignore_nan=True,
             )
 
+    def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
+        import geopandas as gpd
+
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
+        file_path = os.path.join(variable_path, 'data.sh')
+        sample_file_path = os.path.join(variable_path, 'sample_data.sh')
+        if not os.path.exists(file_path):
+            return gpd.GeoDataFrame()
+        if sample and os.path.exists(sample_file_path):
+            try:
+                df = gpd.read_file(sample_file_path)
+            except Exception:
+                df = gpd.read_file(file_path)
+        else:
+            df = gpd.read_file(file_path)
+        if sample:
+            sample_count = sample_count or DATAFRAME_SAMPLE_COUNT
+            if df.shape[0] > sample_count:
+                df = df.iloc[:sample_count]
+        return df
+
     def __read_parquet(self, sample: bool = False, sample_count: int = None) -> pd.DataFrame:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
         file_path = os.path.join(variable_path, 'data.parquet')
@@ -168,6 +202,13 @@ class Variable:
             .option('delimiter', ',')
             .load(variable_path)
         )
+
+    def __write_geo_dataframe(self, data) -> None:
+        variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
+        os.makedirs(variable_path, exist_ok=True)
+        data.to_file(os.path.join(variable_path, 'data.sh'))
+        df_sample_output = data.iloc[:DATAFRAME_SAMPLE_COUNT]
+        df_sample_output.to_file(os.path.join(variable_path, 'sample_data.sh'))
 
     def __write_parquet(self, data: pd.DataFrame) -> None:
         df_output = data.copy()

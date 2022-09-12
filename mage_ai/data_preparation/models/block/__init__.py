@@ -1,9 +1,11 @@
 from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
-from io import StringIO
 from logging import Logger
-from mage_ai.data_cleaner.shared.utils import is_dataframe
+from mage_ai.data_cleaner.shared.utils import (
+    is_dataframe,
+    is_geo_dataframe,
+)
 from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.block.sql import execute_sql_code
 from mage_ai.data_preparation.models.constants import (
@@ -726,6 +728,16 @@ class Block:
                     ),
                     shape=[row_count, len(column_types)],
                     type=DataType.TABLE,
+                    variable_uuid=v,
+                )
+            elif is_geo_dataframe(data):
+                data = dict(
+                    text_data=f''' Use the following code in a scratchpad to get the output of the block:
+
+from mage_ai.data_preparation.variable_manager import get_variable
+df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
+''',
+                    type=DataType.TEXT,
                     variable_uuid=v,
                 )
             elif type(data) is str:
