@@ -146,7 +146,9 @@ def __custom_output():
 
     _internal_output_return = {last_line}
 
-    if isinstance(_internal_output_return, pd.DataFrame):
+    if isinstance(_internal_output_return, pd.DataFrame) and (
+        type(_internal_output_return).__module__ != 'geopandas.geodataframe'
+    ):
         _sample = _internal_output_return.iloc[:{DATAFRAME_SAMPLE_COUNT_PREVIEW}]
         _columns = _sample.columns.tolist()[:{DATAFRAME_ANALYSIS_MAX_COLUMNS}]
         _rows = json.loads(_sample.to_json(orient='split'))['data']
