@@ -13,6 +13,7 @@ from mage_ai.server.active_kernel import (
     get_active_kernel_name,
     switch_active_kernel,
 )
+from mage_ai.shared.constants import ENV_DEV
 from mage_ai.server.execution_manager import (
     cancel_pipeline_execution,
     delete_pipeline_copy_config,
@@ -162,6 +163,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             'global_vars',
             get_global_variables(pipeline_uuid, pipeline.repo_path),
         )
+        global_vars['env'] = ENV_DEV
         global_vars['execution_date'] = datetime.now()
         global_vars['event'] = dict()
 

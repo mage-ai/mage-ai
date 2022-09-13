@@ -5,6 +5,7 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
+from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -127,6 +128,7 @@ class PipelineScheduler:
             )
             variables = merge_dict(get_global_variables(self.pipeline.uuid) or dict(),
                                    self.pipeline_run.variables or dict())
+            variables['env'] = ENV_PROD
             variables['execution_date'] = self.pipeline_run.execution_date
             proc = multiprocessing.Process(target=run_block, args=(
                 self.pipeline_run.id,
