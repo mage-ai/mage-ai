@@ -14,6 +14,7 @@ import json
 import simplejson
 import os
 import pandas as pd
+import shutil
 
 
 class VariableType(str, Enum):
@@ -84,6 +85,7 @@ class Variable:
             self.variable_type = VariableType.SPARK_DATAFRAME
         elif is_geo_dataframe(data):
             self.variable_type = VariableType.GEO_DATAFRAME
+
         if self.variable_type == VariableType.DATAFRAME:
             self.__write_parquet(data)
         elif self.variable_type == VariableType.SPARK_DATAFRAME:
@@ -125,6 +127,7 @@ class Variable:
         file_path = os.path.join(variable_path, 'data.parquet')
         if os.path.exists(file_path):
             os.remove(file_path)
+            shutil.rmtree(variable_path)
 
     def __read_json(self, default_value={}) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')

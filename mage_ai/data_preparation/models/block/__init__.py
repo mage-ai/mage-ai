@@ -444,11 +444,15 @@ class Block:
                 )
             else:
                 self.__verify_outputs(block_output)
-                variable_mapping = dict(zip(self.output_variables.keys(), block_output))
+                variable_keys = list(self.output_variables.keys())
+                extra_output_count = len(block_output) - len(variable_keys)
+                variable_keys += [f'output_{idx}' for idx in range(extra_output_count)]
+                variable_mapping = dict(zip(variable_keys, block_output))
 
             self.store_variables(
                 variable_mapping,
                 execution_partition=execution_partition,
+                override_outputs=True,
                 spark=(global_vars or dict()).get('spark'),
             )
             # Reset outputs cache
@@ -692,8 +696,6 @@ class Block:
         if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
             if self.status == BlockStatus.NOT_EXECUTED:
                 return []
-            if len(self.output_variables) == 0:
-                return []
         outputs = []
         variable_manager = self.pipeline.variable_manager
 
@@ -916,7 +918,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if self.pipeline is None:
             return
         for uuid, data in variable_mapping.items():
-            vtype = self.output_variables[uuid]
+            vtype = self.output_variables.get(uuid)
             if vtype is pd.DataFrame:
                 if data.shape[1] > DATAFRAME_ANALYSIS_MAX_COLUMNS:
                     continue
@@ -956,6 +958,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_mapping: Dict,
         execution_partition: str = None,
         override: bool = False,
+        override_outputs: bool = False,
         spark=None,
     ):
         if self.pipeline is None:
@@ -965,9 +968,15 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.uuid,
             partition=execution_partition,
         )
-        # Not remove dataframe variables
-        removed_variables = [v for v in all_variables
-                             if v not in variable_mapping.keys() and v != 'df']
+        removed_variables = []
+        if override:
+            # Not remove dataframe variables
+            removed_variables = [v for v in all_variables
+                                 if v not in variable_mapping.keys() and v != 'df'
+                                 and not v.startswith('output')]
+        elif override_outputs:
+            removed_variables = [v for v in all_variables
+                                 if v not in variable_mapping.keys() and v.startswith('output')]
         for uuid, data in variable_mapping.items():
             if spark is not None and type(data) is pd.DataFrame:
                 data = spark.createDataFrame(data)
@@ -978,13 +987,12 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data,
                 partition=execution_partition,
             )
-        if override:
-            for uuid in removed_variables:
-                self.pipeline.variable_manager.delete_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    uuid,
-                )
+        for uuid in removed_variables:
+            self.pipeline.variable_manager.delete_variable(
+                self.pipeline.uuid,
+                self.uuid,
+                uuid,
+            )
 
     # TODO: Update all pipelines that use this block
     def __update_name(self, name):
@@ -1051,7 +1059,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         )
 
     def __verify_outputs(self, outputs):
-        if len(outputs) != len(self.output_variables):
+        if len(outputs) < len(self.output_variables):
             raise Exception(
                 f'Validation error for block {self.uuid}: '
                 f'the number of output variables does not match the block type: {self.type} ',
@@ -1059,6 +1067,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         variable_names = list(self.output_variables.keys())
         variable_dtypes = list(self.output_variables.values())
         for idx, output in enumerate(outputs):
+            if idx >= len(variable_dtypes):
+                break
             actual_dtype = type(output)
             expected_dtype = variable_dtypes[idx]
             if (expected_dtype != pd.DataFrame and actual_dtype is not expected_dtype) or (
