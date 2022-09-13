@@ -1,23 +1,16 @@
-import NextLink from 'next/link';
-import Router from 'next/router';
 import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
+import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
 import BlockRunType from '@interfaces/BlockRunType';
-import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import Circle from '@oracle/elements/Circle';
-import DependencyGraph from '@components/DependencyGraph';
-import Link from '@oracle/elements/Link';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunGradient from '@oracle/icons/custom/PipelineRunGradient';
 import PipelineRunType, { RunStatus } from '@interfaces/PipelineRunType';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import Spacing from '@oracle/elements/Spacing';
-import Table from '@components/shared/Table';
-import Text from '@oracle/elements/Text';
 import api from '@api';
 import buildTableSidekick, {
   TABS as TABS_SIDEKICK,
@@ -25,13 +18,9 @@ import buildTableSidekick, {
 import {
   BlocksSeparated,
   PipelineRun,
-  TodoList,
 } from '@oracle/icons';
 import usePrevious from '@utils/usePrevious';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { createBlockStatus } from '@components/Triggers/utils';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { indexBy } from '@utils/array';
@@ -96,6 +85,7 @@ function PipelineRuns({
   const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>();
+  const [selectedBlockRun, setSelectedBlockRun] = useState<BlockRunType>();
 
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
@@ -148,110 +138,14 @@ function PipelineRuns({
     selectedRun,
   ]);
 
-  const tableBlockRuns = useMemo(() => {
-    const tableProps = {
-      columnFlex: [null, 1, 3, 2, null, null],
-      columns: [
-        {
-          uuid: 'Date',
-        },
-        {
-          uuid: 'Status',
-        },
-        {
-          uuid: 'Trigger',
-        },
-        {
-          uuid: 'Block',
-        },
-        {
-          uuid: 'Completed',
-        },
-        {
-          uuid: 'Logs',
-        },
-      ],
-      rows: blockRuns.map(({
-        block_uuid: blockUUID,
-        completed_at: completedAt,
-        created_at: createdAt,
-        id,
-        pipeline_schedule_id: pipelineScheduleId,
-        pipeline_schedule_name: pipelineScheduleName,
-        status,
-      }: BlockRunType) => [
-        <Text monospace default>
-          {createdAt}
-        </Text>,
-        <Text
-          danger={RunStatus.FAILED === status}
-          info={RunStatus.INITIAL === status}
-          default={RunStatus.CANCELLED === status}
-          monospace
-          success={RunStatus.COMPLETED === status}
-          warning={RunStatus.RUNNING === status}
-        >
-          {status}
-        </Text>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-          href={'/pipelines/[pipeline]/triggers/[...slug]'}
-          passHref
-        >
-          <Link bold sameColorAsText>
-            {pipelineScheduleName}
-          </Link>
-        </NextLink>,
-        <NextLink
-          as={`/pipelines/${pipelineUUID}/edit?block_uuid=${blockUUID}`}
-          href={'/pipelines/[pipeline]/edit'}
-          passHref
-        >
-          <Link
-            bold
-            sameColorAsText
-            verticalAlignContent
-          >
-            <Circle
-              color={getColorsForBlockType(blocksByUUID[blockUUID]?.type, {
-                theme: themeContext,
-              }).accent}
-              size={UNIT * 1.5}
-              square
-            />
-            <Spacing mr={1} />
-            <Text monospace>
-              {blockUUID}
-            </Text>
-          </Link>
-        </NextLink>,
-        <Text monospace default>
-          {completedAt || '-'}
-        </Text>,
-        <Button
-          default
-          iconOnly
-          noBackground
-          onClick={() => Router.push(
-            `/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`,
-          )}
-        >
-          <TodoList default size={2 * UNIT} />
-        </Button>,
-      ]),
-    };
-
-    return (
-      <Table
-        {...tableProps}
-        uuid="block-runs"
-      />
-    );
-  }, [
+  const tableBlockRuns = useMemo(() => (
+    <BlockRunsTable
+      blockRuns={blockRuns}
+      pipeline={pipeline}
+    />
+  ), [
     blockRuns,
-    blocksByUUID,
-    pipelineUUID,
-    themeContext,
+    pipeline,
   ]);
 
   return (

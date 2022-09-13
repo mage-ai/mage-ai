@@ -28,7 +28,7 @@ function PipelineRunsTable({
     uuid: pipelineUUID,
   } = pipeline || {};
 
-  const columnFlex = [null, 1, 3, 1, 1, null];
+  const columnFlex = [null, 1, 2, 2, 1, null];
   const columns: ColumnType[] = [
     {
       uuid: 'Date',
@@ -97,9 +97,15 @@ function PipelineRunsTable({
               {pipelineScheduleName}
             </Link>
           </NextLink>,
-          <Text default monospace>
-            {blockRunsCount}
-          </Text>,
+          <NextLink
+            as={`/pipelines/${pipelineUUID}/runs/${id}`}
+            href={'/pipelines/[pipeline]/runs/[run]'}
+            passHref
+          >
+            <Link bold sameColorAsText>
+              {`See block runs (${blockRunsCount})`}
+            </Link>
+          </NextLink>,
           <Text default monospace>
             {completedAt || '-'}
           </Text>,
