@@ -44,7 +44,7 @@ class PipelineScheduler:
     def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
             self.notification_sender.send(
-                message=f'Succuessfully running Pipeline `{self.pipeline.uuid}` '
+                message=f'Successfully running Pipeline `{self.pipeline.uuid}` '
                 f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
                 f'`{self.pipeline_run.pipeline_schedule.name}` '
                 f'at execution time `{self.pipeline_run.execution_date}`.',
