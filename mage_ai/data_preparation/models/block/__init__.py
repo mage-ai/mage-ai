@@ -618,7 +618,11 @@ class Block:
             outputs = []
 
             if BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
-                outputs = execute_sql_code(self, custom_code or self.content)
+                outputs = execute_sql_code(
+                    self,
+                    custom_code or self.content,
+                    global_vars=global_vars,
+                )
             elif custom_code is not None:
                 if BlockType.CHART != self.type or (not self.group_by_columns or not self.metrics):
                     exec(custom_code, results)
