@@ -40,6 +40,9 @@ class VariableManager:
             partition=partition,
             variable_type=variable_type,
         )
+        # Delete data if it exists
+        variable.delete()
+        variable.variable_type = variable_type
         variable.write_data(data)
 
     def delete_variable(
