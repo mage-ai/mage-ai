@@ -42,11 +42,7 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
-RUN \
-  tag=$(tail -n 1 /tmp/constants.py) && \
-  VERSION=$(echo "$tag" | tr -d "'") && \
-  pip3 install --no-cache-dir "mage-ai[all]==$VERSION" && \
-  rm /tmp/constants.py
+RUN pip3 install --no-cache git+https://github.com/mage-ai/mage-ai.git#egg="mage-ai[all]"
 
 ## Startup Script
 COPY --chmod=+x ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
