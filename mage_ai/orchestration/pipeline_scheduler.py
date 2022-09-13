@@ -48,7 +48,7 @@ class PipelineScheduler:
                 f'with Trigger {self.pipeline_run.pipeline_schedule.id} '
                 f'`{self.pipeline_run.pipeline_schedule.name}` '
                 f'at execution time `{self.pipeline_run.execution_date}`.',
-                subject=f'Succuessfully running Pipeline {self.pipeline.uuid}',
+                subject=f'Successfully running Pipeline {self.pipeline.uuid}',
             )
             self.pipeline_run.update(
                 status=PipelineRun.PipelineRunStatus.COMPLETED,
