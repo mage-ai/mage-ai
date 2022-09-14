@@ -1,4 +1,8 @@
 {% extends "transformers/transformer_actions/action.jinja" %}
+{% block imports %}
+from mage_ai.data_cleaner.transformer_actions.constants import ImputationStrategy
+{{ super() -}}
+{% endblock %}
 {% block action %}
     """
     Execute Transformer Action: ActionType.IMPUTE
