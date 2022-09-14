@@ -182,9 +182,7 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
     
     def get(self, pipeline_run_id):
         pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == int(pipeline_run_id),
-        ).all()
+        block_runs = pipeline_run.block_runs
 
         pipeline_run_dict = pipeline_run.to_dict()
         block_runs_json = []
