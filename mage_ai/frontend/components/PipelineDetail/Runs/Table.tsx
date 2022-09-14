@@ -67,7 +67,7 @@ function PipelineRunsTable({
       rows={pipelineRuns.map(({
         block_runs_count: blockRunsCount,
         completed_at: completedAt,
-        created_at: createdAt,
+        execution_date: executionDate,
         id,
         pipeline_schedule_id: pipelineScheduleId,
         pipeline_schedule_name: pipelineScheduleName,
@@ -76,7 +76,7 @@ function PipelineRunsTable({
       }: PipelineRunType) => {
         const arr = [
           <Text monospace default>
-            {createdAt}
+            {executionDate}
           </Text>,
           <Text
             danger={RunStatus.FAILED === status}

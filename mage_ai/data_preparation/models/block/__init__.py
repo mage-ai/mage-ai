@@ -442,6 +442,8 @@ class Block:
                         ignore_nan=True,
                     )
                 )
+            elif BlockType.SENSOR == self.type:
+                variable_mapping = dict()
             else:
                 self.__verify_outputs(block_output)
                 variable_keys = list(self.output_variables.keys())
