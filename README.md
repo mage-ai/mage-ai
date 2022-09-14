@@ -7,7 +7,8 @@
 
 # Intro
 
-Mage is an open-source tool for building and running data pipelines that <b>transform</b> your data.
+Mage is an open-source tool for building and [running](https://github.com/mage-ai/mage-ai/blob/master/docs/features/orchestration/README.md)
+data pipelines that <b>transform</b> your data.
 
 <br />
 
