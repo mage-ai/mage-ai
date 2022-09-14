@@ -32,7 +32,7 @@ Designed from the ground up specifically for running data-intensive workflows.
 
 <br />
 
-## 🪐 Scaling made simple
+## 🪐 Scaling is made simple
 Analyze and process large data quickly for rapid iteration.
 
 - Transform very large datasets through a native integration with Spark.
