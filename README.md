@@ -7,7 +7,8 @@
 
 # Intro
 
-Mage is an open-source tool for building and [running](https://github.com/mage-ai/mage-ai/blob/master/docs/features/orchestration/README.md)
+Mage is an open-source tool for [building](docs/features/README.md#notebook-for-building-data-pipelines) 
+and [running](docs/features/orchestration/README.md)
 data pipelines that <b>transform</b> your data.
 
 <br />
@@ -141,7 +142,7 @@ Every user experience and technical design decision adheres to these principles.
 1. [Easy developer experience](docs/core/design_principles.md#-easy-developer-experience)
 1. [Engineering best practices built-in](docs/core/design_principles.md#engineering-best-practices-built-in)
 1. [Data is a first-class citizen](docs/core/design_principles.md#data-is-a-first-class-citizen)
-1. [Scaling made simple](docs/core/design_principles.md#scaling-made-simple)
+1. [Scaling made simple](docs/core/design_principles.md#scaling-is-made-simple)
 
 <sub>Read more [<b>here</b>](docs/core/design_principles.md).</sub>
 
