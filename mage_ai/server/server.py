@@ -58,6 +58,7 @@ from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
+from tornado.httpserver import HTTPServer
 from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
@@ -73,6 +74,10 @@ class MainPageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('index.html')
 
+class AddSlashHandler(tornado.web.RequestHandler):
+    @tornado.web.addslash
+    def get(self):
+        pass
 
 class PipelineRunsPageHandler(tornado.web.RequestHandler):
     def get(self, *args):
@@ -386,27 +391,6 @@ def make_app():
         (r'/', MainPageHandler),
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
-        (r'/pipeline-runs', PipelineRunsPageHandler),
-        (
-            r'/_next/static/(.*)',
-            tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')},
-        ),
-        (
-            r'/fonts/(.*)',
-            tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/fonts')},
-        ),
-        (
-            r'/images/(.*)',
-            tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/images')},
-        ),
-        (
-            r'/(favicon.ico)',
-            tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'frontend_dist')},
-        ),
         (r'/websocket/', WebSocketServer),
         (r'/api/event_rules/(?P<provider>\w+)', ApiAwsEventRuleListHandler),
         (r'/api/blocks/(?P<block_type_and_uuid_encoded>.+)', ApiBlockHandler),
@@ -494,11 +478,27 @@ def make_app():
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/projects', ApiProjectsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
+        # (
+        #     r'/(.*)',
+        #     tornado.web.StaticFileHandler,
+        #     {
+        #         'path': os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static'),
+        #         'default_filename': 'index.html',
+        #     },
+        # ),
     ]
+
+    static_path = os.path.join(os.path.dirname(__file__), 'frontend_dist/_next/static')
+    template_path = os.path.join(os.path.dirname(__file__), 'frontend_dist')
+
+    print('static path:', static_path)
+    print('template path:', template_path)
     return tornado.web.Application(
         routes,
         autoreload=True,
-        template_path=os.path.join(os.path.dirname(__file__), 'frontend_dist'),
+        static_path=static_path,
+        static_url_prefix='/_next/static/',
+        template_path=template_path,
     )
 
 
@@ -510,6 +510,8 @@ async def main(
     switch_active_kernel(DEFAULT_KERNEL_NAME)
 
     app = make_app()
+
+    http_server = HTTPServer(app)
 
     def is_port_in_use(port: int) -> bool:
         print(f'Checking port {port}...')
@@ -525,7 +527,7 @@ async def main(
             )
         port += 1
 
-    app.listen(
+    http_server.listen(
         port,
         address=host,
     )
