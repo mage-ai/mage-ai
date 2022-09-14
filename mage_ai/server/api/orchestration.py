@@ -152,6 +152,21 @@ class ApiAllPipelineRunListHandler(BaseHandler):
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
     model_class = PipelineRun
+    
+    def get(self, pipeline_run_id):
+        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
+        block_runs = pipeline_run.block_runs
+
+        pipeline_run_dict = pipeline_run.to_dict()
+        block_runs_json = []
+        for r in block_runs:
+            block_run = r.to_dict()
+            block_run['pipeline_schedule_id'] = pipeline_run.pipeline_schedule_id
+            block_run['pipeline_schedule_name'] = pipeline_run.pipeline_schedule.name
+            block_runs_json.append(block_run)
+        pipeline_run_dict['block_runs'] = block_runs_json
+
+        self.write(dict(pipeline_run=pipeline_run_dict))
 
     def put(self, pipeline_run_id):
         super().put(pipeline_run_id)
