@@ -21,15 +21,23 @@ class EmrClusterManager(ClusterManager):
         ) for c in clusters]
 
     def create_cluster(self):
-        cluster_id = create_cluster(get_repo_path(), done_status=None)
-        cluster_info = describe_cluster(cluster_id)
-        print(cluster_info)
+        create_cluster(
+            get_repo_path(),
+            done_status=None,
+            tags=dict(name='mage-data-prep'),
+        )
 
-    def set_active_cluster(self, cluster_id=None):
-        self.active_cluster_id = cluster_id
-
+    def set_active_cluster(self, auto_selection=False, cluster_id=None):
+        if cluster_id is None and auto_selection:
+            clusters = self.list_clusters()
+            if len(clusters) > 0:
+                cluster_id = clusters[0]['id']
+            else:
+                self.create_cluster()
         if cluster_id is None:
             return
+
+        self.active_cluster_id = cluster_id
 
         # Fetch cluster master instance public DNS
         cluster_info = describe_cluster(cluster_id)

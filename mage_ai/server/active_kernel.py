@@ -13,6 +13,7 @@ active_kernel = ActiveKernel()
 
 
 def switch_active_kernel(kernel_name: KernelName) -> None:
+    print(f'Switch active kernel: {kernel_name}')
     if kernel_managers[kernel_name].is_alive():
         return
 
@@ -25,6 +26,9 @@ def switch_active_kernel(kernel_name: KernelName) -> None:
         new_kernel.start_kernel()
         active_kernel.kernel = new_kernel
         active_kernel.kernel_client = new_kernel.client()
+        if kernel_name == KernelName.PYSPARK:
+            from mage_ai.cluster_manager.aws.emr_cluster_manager import emr_cluster_manager
+            emr_cluster_manager.set_active_cluster(auto_selection=True)
     except NoSuchKernel as e:
         if kernel_name == KernelName.PYSPARK:
             raise Exception(
