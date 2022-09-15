@@ -111,6 +111,9 @@ def create_a_new_cluster(
     #        }
     #    )
 
+    if done_status is None:
+        return cluster_id
+
     __status_poller(
         'Waiting for cluster, this typically takes several minutes...',
         done_status,
@@ -125,6 +128,22 @@ def describe_cluster(cluster_id):
     config = Config(region_name=region_name)
     emr_client = boto3.client('emr', config=config)
     return emr_basics.describe_cluster(cluster_id, emr_client)
+
+
+def list_clusters():
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    config = Config(region_name=region_name)
+    emr_client = boto3.client('emr', config=config)
+
+    clusters = emr_client.list_clusters(
+        ClusterStates=[
+            'BOOTSTRAPPING',
+            'RUNNING',
+            'STARTING',
+            'WAITING',
+        ],
+    )
+    return clusters
 
 
 def submit_spark_job(
