@@ -12,7 +12,7 @@ Current block types:
 1. [Data exporter](#4-data-exporter)
 1. [Sensor](#5-sensor)
 
-### 1. Scratchpad
+## 1. Scratchpad
 
 Use these blocks to experiment and write throw away code.
 Scratchpad blocks aren’t used when executing a pipeline.
@@ -24,7 +24,7 @@ Scratchpad blocks aren’t used when executing a pipeline.
 
 <br />
 
-### 2. Data loader
+## 2. Data loader
 
 Write your code for fetching data from a remote source or loading it from disk.
 
@@ -51,7 +51,7 @@ To read about Mage's data loading clients that interface with popular data stora
 
 <br />
 
-### 3. Transformer
+## 3. Transformer
 
 Use these blocks to clean, transform, and enhance data from other blocks.
 
@@ -82,7 +82,7 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
 
 <br />
 
-### 4. Data exporter
+## 4. Data exporter
 
 Once you’re done transforming your data, write code in these types of blocks to store that data or
 to train models and store those models elsewhere.
@@ -109,7 +109,7 @@ To read about Mage's data loading clients that interface with popular data stora
 
 <br />
 
-### 5. Sensor
+## 5. Sensor
 
 Read more about sensors in [Core abstractions](../core/abstractions.md#sensor).
 
