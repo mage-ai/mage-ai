@@ -35,6 +35,9 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.SCRATCHPAD === blockType) {
     accent = (theme.content || dark.content).default;
     accentLight = (theme.accent || dark.accent).contentDefaultTransparent;
+  } else if (BlockTypeEnum.SENSOR === blockType) {
+    accent = (theme.accent || dark.accent).pink;
+    accentLight = (theme.accent || dark.accent).pinkLight;
   }
 
   return {

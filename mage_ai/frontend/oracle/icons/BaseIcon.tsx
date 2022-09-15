@@ -1,7 +1,6 @@
 import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import light from '@oracle/styles/themes/light';
 import { DEFAULT_SIZE } from './shared/constants';
 
 export type BaseIconProps = {
@@ -16,6 +15,7 @@ export type BaseIconProps = {
   neutral?: boolean;
   muted?: boolean;
   opacity?: number;
+  pink?: boolean;
   primary?: boolean;
   secondary?: boolean;
   size?: number;
@@ -67,11 +67,11 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.muted && !props.disabled && `
-    fill: ${(props.theme.content || light.content).muted} !important;
+    fill: ${(props.theme.content || dark.content).muted} !important;
   `}
 
   ${props => !props.useStroke && props.default && !props.disabled && `
-    fill: ${(props.theme.monotone || light.monotone).gray};
+    fill: ${(props.theme.monotone || dark.monotone).gray};
   `}
 
   ${props => !props.useStroke && props.disabled && `
@@ -79,55 +79,59 @@ export const SHARED_STYLES = css<any>`
   `}
 
   ${props => !props.useStroke && props.black && `
-    fill: ${(props.theme.content || light.content).inverted};
+    fill: ${(props.theme.content || dark.content).inverted};
+  `}
+
+  ${props => !props.useStroke && props.pink && `
+    fill: ${(props.theme.accent || dark.accent).pink};
   `}
 
   ${props => !props.useStroke && props.highlight && `
-    fill: ${(props.theme.background || light.background).menu};
+    fill: ${(props.theme.background || dark.background).menu};
   `}
 
   ${props => props.useStroke && props.black && `
-    stroke: ${(props.theme.content || light.content).inverted};
+    stroke: ${(props.theme.content || dark.content).inverted};
   `}
 
   ${props => props.useStroke && props.muted && !props.disabled && `
-    stroke: ${(props.theme.monotone || light.monotone).gray} !important;
+    stroke: ${(props.theme.monotone || dark.monotone).gray} !important;
   `}
 
   ${props => props.useStroke && props.default && !props.disabled && `
-    stroke: ${(props.theme.monotone || light.monotone).gray};
+    stroke: ${(props.theme.monotone || dark.monotone).gray};
   `}
 
   ${props => props.useStroke && props.disabled && `
-    stroke: ${(props.theme.content || light.content).disabled};
+    stroke: ${(props.theme.content || dark.content).disabled};
   `}
 
   ${props => props.useStroke && !props.disabled && props.primary && `
-    stroke: ${(props.theme.interactive || light.interactive).linkPrimary};
+    stroke: ${(props.theme.interactive || dark.interactive).linkPrimary};
   `}
 
   ${props => !props.useStroke && !props.disabled && props.primary && `
-    fill: ${(props.theme.interactive || light.interactive).linkPrimary};
+    fill: ${(props.theme.interactive || dark.interactive).linkPrimary};
   `}
 
   ${props => props.useStroke && !props.disabled && props.secondary && `
-    stroke: ${(props.theme.interactive || light.interactive).linkSecondary};
+    stroke: ${(props.theme.interactive || dark.interactive).linkSecondary};
   `}
 
   ${props => !props.useStroke && !props.disabled && props.secondary && `
-    fill: ${(props.theme.interactive || light.interactive).linkSecondary};
+    fill: ${(props.theme.interactive || dark.interactive).linkSecondary};
   `}
 
   ${props => !props.disabled && props.earth && `
-    fill: ${(props.theme.brand || light.brand).earth500};
+    fill: ${(props.theme.brand || dark.brand).earth500};
   `}
 
   ${props => !props.disabled && props.danger && `
-    fill: ${(props.theme.status || light.status).negative};
+    fill: ${(props.theme.status || dark.status).negative};
   `}
 
   ${props => !props.disabled && props.success && `
-    fill: ${(props.theme.status || light.status).positive};
+    fill: ${(props.theme.status || dark.status).positive};
   `}
 `;
 
