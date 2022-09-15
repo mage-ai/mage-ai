@@ -266,6 +266,7 @@ def execute_custom_code():
         global_vars=global_vars,
         analyze_outputs={analyze_outputs},
         update_status={update_status},
+        test_execution=True,
     )
     if {run_tests}:
         block.run_tests(custom_code=code, update_tests=False)

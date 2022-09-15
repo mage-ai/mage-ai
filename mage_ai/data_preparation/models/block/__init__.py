@@ -417,6 +417,7 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         run_all_blocks: bool = False,
+        test_execution: bool = False,
         update_status: bool = True,
     ):
         try:
@@ -436,6 +437,7 @@ class Block:
                 execution_partition=execution_partition,
                 global_vars=global_vars,
                 logger=logger,
+                test_execution=test_execution,
             )
             block_output = output['output']
             if BlockType.CHART == self.type:
@@ -585,6 +587,7 @@ class Block:
         execution_partition: str = None,
         logger: Logger = None,
         global_vars: Dict = None,
+        test_execution: bool = False,
     ) -> Dict:
         upstream_block_uuids = []
         input_vars = []
@@ -655,24 +658,8 @@ class Block:
                 )
             else:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
-
-                def execute_block_function():
-                    if block_function is not None:
-                        sig = signature(block_function)
-                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                            output = block_function(*input_vars, **global_vars)
-                        else:
-                            output = block_function(*input_vars)
-                        return output
-
-                if BlockType.SENSOR == self.type:
-                    while True:
-                        if execute_block_function():
-                            break
-                        time.sleep(60)
-                else:
-                    outputs = execute_block_function()
+                if block_function is not None:
+                    outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
 
                 if outputs is None:
                     outputs = []
@@ -682,6 +669,21 @@ class Block:
         output_message = dict(output=outputs)
 
         return output_message
+
+    def execute_block_function(
+        self,
+        block_function: Callable,
+        input_vars: List,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+    ) -> Dict:
+        sig = signature(block_function)
+        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+            output = block_function(*input_vars, **global_vars)
+        else:
+            output = block_function(*input_vars)
+        return output
 
     def exists(self):
         return os.path.exists(self.file_path)
@@ -1125,9 +1127,41 @@ class TransformerBlock(Block):
         return dict(df=pd.DataFrame)
 
 
+class SensorBlock(Block):
+    @property
+    def output_variables(self):
+        return dict()
+
+    def execute_block_function(
+        self,
+        block_function: Callable,
+        input_vars: List,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+    ) -> List:
+        if test_execution:
+            return super().execute_block_function(
+                block_function,
+                input_vars,
+                global_vars=global_vars,
+                test_execution=True,
+            )
+        else:
+            sig = signature(block_function)
+            has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+            use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
+            while True:
+                condition = block_function(**global_vars) if use_global_vars else block_function()
+                if condition:
+                    break
+                time.sleep(60)
+            return []
+
+
 BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: DataExporterBlock,
     BlockType.DATA_LOADER: DataLoaderBlock,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: TransformerBlock,
+    BlockType.SENSOR: SensorBlock,
 }
