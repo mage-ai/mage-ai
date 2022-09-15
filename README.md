@@ -7,7 +7,7 @@
 
 # Intro
 
-Mage is an open-source tool for [building](docs/features/README.md#notebook-for-building-data-pipelines) 
+Mage is an open-source tool for [building](docs/features/README.md#notebook-for-building-data-pipelines)
 and [running](docs/features/orchestration/README.md)
 data pipelines that <b>transform</b> your data.
 
@@ -86,7 +86,7 @@ pip install mage-ai
 
 <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](docs/README.md#installing-extra-packages).</sub>
 
-<sub>If you run into errors, please see [Install errors](docs/README.md#install-errors).</sub>
+<sub>If you run into errors, please see [Install errors](docs/tutorials/quick_start/setup.md#errors).</sub>
 
 ##### 2. Create new project and launch tool (change `demo_project` to any other name if you want):
 

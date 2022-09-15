@@ -10,6 +10,7 @@ Current block types:
 1. [Data loader](#2-data-loader)
 1. [Transformer](#3-transformer)
 1. [Data exporter](#4-data-exporter)
+1. [Sensor](#5-sensor)
 
 ### 1. Scratchpad
 
@@ -20,6 +21,8 @@ Scratchpad blocks aren’t used when executing a pipeline.
   alt="Scratchpad"
   src="../../media/scratchpad.png"
 />
+
+<br />
 
 ### 2. Data loader
 
@@ -45,6 +48,8 @@ def load_data() -> DataFrame:
 ```
 
 To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).
+
+<br />
 
 ### 3. Transformer
 
@@ -75,6 +80,8 @@ def transform_df(df: DataFrame, *args) -> DataFrame:
     return df
 ```
 
+<br />
+
 ### 4. Data exporter
 
 Once you’re done transforming your data, write code in these types of blocks to store that data or
@@ -99,3 +106,32 @@ def export_data(df: DataFrame) -> None:
 ```
 
 To read about Mage's data loading clients that interface with popular data storage systems, see docs on [Data Loading](./data_loading.md).
+
+<br />
+
+### 5. Sensor
+
+Read more about sensors in [Core abstractions](../core/abstractions.md#sensor).
+
+You can add sensors to a pipeline the same way you add other types of blocks.
+
+```python
+from mage_ai.orchestration.run_status_checker import check_status
+
+if 'sensor' not in globals():
+    from mage_ai.data_preparation.decorators import sensor
+
+
+@sensor
+def check_condition(**kwargs) -> bool:
+    """
+    Template code for checking if block or pipeline run completed.
+    """
+    return check_status(
+        'pipeline_uuid',
+        kwargs['execution_date'],
+        block_uuid='block_uuid',  # optional
+    )
+```
+
+<br />
