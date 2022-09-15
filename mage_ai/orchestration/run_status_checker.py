@@ -15,9 +15,10 @@ def check_status(
         .filter(PipelineRun.execution_date == execution_date)
         .first()
     )
-    pipeline_run.refresh()
     if pipeline_run is None:
         return False
+
+    pipeline_run.refresh()
 
     if block_uuid is not None:
         block_run = next(filter(lambda run: run.block_uuid == block_uuid, pipeline_run.block_runs))
