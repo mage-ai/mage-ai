@@ -21,7 +21,9 @@ class EmrClusterManager(ClusterManager):
         ) for c in clusters]
 
     def create_cluster(self):
-        create_cluster(get_repo_path(), done_status=None)
+        cluster_id = create_cluster(get_repo_path(), done_status=None)
+        cluster_info = describe_cluster(cluster_id)
+        print(cluster_info)
 
     def set_active_cluster(self, cluster_id=None):
         self.active_cluster_id = cluster_id
