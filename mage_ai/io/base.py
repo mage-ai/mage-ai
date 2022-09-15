@@ -78,19 +78,19 @@ class BaseIO(ABC):
         """
         pass
 
-    @abstractmethod
-    def exists(self, *args, **kwargs) -> bool:
-        """
-        Checks if content exists at the specified path.
-        """
-        pass
-
 
 class BaseFile(BaseIO):
     """
     Data loader for file-like data sources (for example, loading from local
     filesystem or external file storages such as AWS S3)
     """
+
+    @abstractmethod
+    def exists(self, *args, **kwargs) -> bool:
+        """
+        Checks if content exists at the specified path.
+        """
+        pass
 
     def _get_file_format(self, filepath):
         return os.path.splitext(os.path.basename(filepath))[-1][1:]
