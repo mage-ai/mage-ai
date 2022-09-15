@@ -7,6 +7,7 @@ These are the fundamental concepts that Mage uses to operate.
 - [Project](#project)
 - [Pipeline](#pipeline)
 - [Block](#block)
+- [Sensor](#sensor)
 - [Data product](#data-product)
 - [Trigger](#trigger)
 - [Run](#run)
@@ -85,12 +86,16 @@ You can find all the pipelines in a project under the `[project_name]/pipelines/
 
 A block is a file with code that can be executed independently or within a pipeline.
 
+Blocks can depend on each other.
+A block won’t start running in a pipeline until all its upstream dependencies are met.
+
 There are 5 types of blocks.
 
 1. Data loader
 1. Transformer
 1. Data exporter
 1. Scratchpad
+1. Sensor
 1. Chart
 
 <sub>For more information, please see the [<b>documentation on blocks</b>](../blocks/README.md)</sub>
@@ -101,7 +106,7 @@ and a snippet of its code:
 ```python
 @data_loader
 def load_data_from_api() -> DataFrame:
-    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/restaurant_user_transactions.csv'
+    url = 'https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv'
 
     response = requests.get(url)
     return pd.read_csv(io.StringIO(response.text), sep=',')
@@ -109,6 +114,47 @@ def load_data_from_api() -> DataFrame:
 
 Each block file is stored in a folder that matches its respective type
 (e.g. transformers are stored in `[project_name]/transformers/`.
+
+<br />
+
+## Sensor
+
+A sensor is a block that continuously evaluates a condition until it’s met or
+until a period of time has elapsed.
+
+If there is a block with a sensor as an upstream dependency, that block won’t start running
+until the sensor has evaluated its condition successfully.
+
+Sensors can check for anything. Examples of common sensors check for:
+
+- Does a table exist (e.g. `mage.users_v1`)?
+- Does a partition of a table exist (e.g. `ds = 2022-12-31`)?
+- Does a file in a remote location exist (e.g. `S3`)?
+- Has another pipeline finished running successfully?
+- Has a block from another pipeline finished running successfully?
+- Has a pipeline run or block run failed?
+
+<br />
+
+Here is an example of a sensor that will keep checking to see if pipeline `transform_users`
+has finished running successfully for the current execution date:
+
+```python
+from mage_ai.orchestration.run_status_checker import check_status
+
+
+@sensor
+def check_condition(**kwargs) -> bool:
+    return check_status(
+        'pipeline_uuid',
+        kwargs['execution_date'],
+    )
+```
+
+> Note
+>
+> This example is using a helper function called `check_status` that handles the logic for
+retrieving the status of a pipeline run for `transform_users` on the current execution date.
 
 <br />
 
