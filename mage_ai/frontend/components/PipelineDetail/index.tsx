@@ -430,7 +430,6 @@ function PipelineDetail({
 
                 if (BlockTypeEnum.CHART !== block.type
                   && BlockTypeEnum.SCRATCHPAD !== block.type
-                  && BlockTypeEnum.DATA_LOADER !== newBlock.type
                   && BlockTypeEnum.CHART !== newBlock.type
                   && BlockTypeEnum.SCRATCHPAD !== newBlock.type
                 ) {

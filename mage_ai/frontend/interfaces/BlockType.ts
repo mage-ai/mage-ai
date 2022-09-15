@@ -34,6 +34,10 @@ export const BLOCK_TYPES_NO_DATA_TABLE = [
   BlockTypeEnum.SENSOR,
 ];
 
+export const BLOCK_TYPES_WITH_NO_PARENTS = [
+  BlockTypeEnum.SCRATCHPAD,
+];
+
 export enum StatusTypeEnum {
   EXECUTED = 'executed',
   FAILED = 'failed',

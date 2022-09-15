@@ -464,7 +464,7 @@ function DependencyGraph({
                       disabled={blockEditing?.uuid === block.uuid}
                       key={block.uuid}
                       selected={blockEditing
-                        ? find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
+                        ? !!find(upstreamBlocksEditing, ({ uuid }) => uuid === block.uuid)
                         : selectedBlock?.uuid === block.uuid
                       }
                       {...blockStatus}
