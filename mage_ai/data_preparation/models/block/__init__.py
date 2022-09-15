@@ -36,6 +36,7 @@ import os
 import pandas as pd
 import simplejson
 import sys
+import time
 import traceback
 
 
@@ -654,17 +655,29 @@ class Block:
                 )
             else:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
-                if block_function is not None:
-                    sig = signature(block_function)
-                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        outputs = block_function(*input_vars, **global_vars)
-                    else:
-                        outputs = block_function(*input_vars)
-                    if outputs is None:
-                        outputs = []
-                    if type(outputs) is not list:
-                        outputs = [outputs]
+
+                def execute_block_function():
+                    if block_function is not None:
+                        sig = signature(block_function)
+                        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+                        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                            output = block_function(*input_vars, **global_vars)
+                        else:
+                            output = block_function(*input_vars)
+                        return output
+
+                if BlockType.SENSOR == self.type:
+                    while True:
+                        if execute_block_function():
+                            break
+                        time.sleep(60)
+                else:
+                    outputs = execute_block_function()
+
+                if outputs is None:
+                    outputs = []
+                if type(outputs) is not list:
+                    outputs = [outputs]
 
         output_message = dict(output=outputs)
 
