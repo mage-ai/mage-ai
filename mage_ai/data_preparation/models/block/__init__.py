@@ -1148,7 +1148,7 @@ class SensorBlock(Block):
                 block_function,
                 input_vars,
                 global_vars=global_vars,
-                test_execution=True,
+                test_execution=test_execution,
             )
         else:
             sig = signature(block_function)
