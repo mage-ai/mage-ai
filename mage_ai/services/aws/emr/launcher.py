@@ -3,7 +3,7 @@ from mage_ai.services.aws.emr.emr import create_a_new_cluster
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 
 
-def create_cluster(project_path):
+def create_cluster(project_path, done_status='WAITING'):
     print(f'Creating EMR cluster for project: {project_path}')
     repo_config = RepoConfig(project_path)
     # Upload bootstrap script
@@ -19,7 +19,7 @@ def create_cluster(project_path):
         [],
         repo_config.emr_config,
         bootstrap_script_path=resource_manager.bootstrap_script_path,
-        done_status='WAITING',
+        done_status=done_status,
         keep_alive=True,
         log_uri=resource_manager.log_uri,
     )
