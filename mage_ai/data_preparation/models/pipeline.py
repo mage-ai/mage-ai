@@ -229,6 +229,7 @@ class Pipeline:
                 BlockType.DATA_EXPORTER,
                 BlockType.DATA_LOADER,
                 BlockType.TRANSFORMER,
+                BlockType.SENSOR,
             ]:
                 root_blocks.append(block)
 

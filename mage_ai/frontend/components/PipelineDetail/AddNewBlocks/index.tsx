@@ -322,6 +322,7 @@ function AddNewBlocks({
           onClick={(e) => {
             e.preventDefault();
             addNewBlock({
+              language: BlockLanguageEnum.PYTHON,
               type: BlockTypeEnum.SENSOR,
             });
           }}
