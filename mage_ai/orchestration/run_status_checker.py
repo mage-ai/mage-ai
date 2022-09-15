@@ -4,27 +4,18 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSched
 
 def check_status(
     pipeline_uuid: str,
-    partition: datetime,
+    execution_date: datetime,
     block_uuid: str = None,
-    trigger_id: int = None,
 ) -> bool:
-    if trigger_id is not None:
-        pipeline_run = (
-            PipelineRun
-            .query
-            .filter(PipelineRun.pipeline_schedule_id == trigger_id)
-            .filter(PipelineRun.execution_date == partition)
-            .first()
-        )
-    else:
-        pipeline_run = (
-            PipelineRun
-            .query
-            .join(PipelineRun.pipeline_schedule)
-            .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
-            .filter(PipelineRun.execution_date == partition)
-            .first()
-        )
+    pipeline_run = (
+        PipelineRun
+        .query
+        .join(PipelineRun.pipeline_schedule)
+        .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+        .filter(PipelineRun.execution_date == execution_date)
+        .first()
+    )
+    pipeline_run.refresh()
     if pipeline_run is None:
         return False
 
