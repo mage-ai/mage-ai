@@ -67,6 +67,7 @@ async def run_blocks(
                     build_block_output_stdout=build_block_output_stdout,
                     global_vars=global_vars,
                     run_all_blocks=True,
+                    run_sensors=run_sensors,
                     update_status=update_status,
                     parallel=parallel,
                 )
@@ -140,8 +141,7 @@ def run_blocks_sync(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
-            not run_sensors and block.type == BlockType.SENSOR:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -171,6 +171,7 @@ def run_blocks_sync(
                 build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
                 run_all_blocks=True,
+                test_execution=not run_sensors,
             )
             if run_tests:
                 block.run_tests(
@@ -496,6 +497,7 @@ class Block:
         custom_code: str = None,
         global_vars=None,
         run_all_blocks: bool = False,
+        run_sensors: bool = True,
         update_status: bool = True,
         parallel: bool = True,
     ) -> None:
@@ -510,6 +512,7 @@ class Block:
                     custom_code=custom_code,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
+                    test_execution=not run_sensors,
                     update_status=update_status,
                 )
             )
@@ -520,6 +523,7 @@ class Block:
                 custom_code=custom_code,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
+                test_execution=not run_sensors,
                 update_status=update_status,
             )
 
@@ -1154,6 +1158,7 @@ class SensorBlock(Block):
                 condition = block_function(**global_vars) if use_global_vars else block_function()
                 if condition:
                     break
+                print('Sensor sleeping for 1 minute...')
                 time.sleep(60)
             return []
 

@@ -5,6 +5,7 @@ from os import path
 
 import time
 
+
 if 'sensor' not in globals():
     from mage_ai.data_preparation.decorators import sensor
 
