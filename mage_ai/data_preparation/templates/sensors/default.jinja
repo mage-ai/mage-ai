@@ -1,35 +1,32 @@
 {% extends "testable.jinja" %}
 {% block imports %}
-from mage_ai.orchestration.db.models import BlockRun
 from mage_ai.orchestration.run_status_checker import check_status
-from pandas import DataFrame
 
 if 'sensor' not in globals():
-    from mage_ai.data_preparation.decorators import data_loader
+    from mage_ai.data_preparation.decorators import sensor
 {% endblock %}
 
 {% block content %}
 @sensor
-def sense_condition(**kwargs) -> None:
+def check_condition(**kwargs) -> None:
     """
-    Template code for checking if block output exists or if block/pipeline
-    run completed.
+    Template code for checking if block or pipeline run completed.
     """
 
     while True:
-        # Method to check outputs or status of a pipeline or block run
+        # Method to check status of a pipeline or block run
         # check_status(
-        #     <trigger_id>,
+        #     <pipeline_uuid>,
         #     <partition>,
         #     block_uuid=<optional_block_uuid>,
-        #     status=<optional_status>,
+        #     trigger_id=<optional_trigger_id>,
         # )
 
-        # # check previous day's partition
-        # partition = kwargs['execution_date'] - timedelta(days=1)
-        # check_status(1, partition, block_uuid='my_block', status=BlockRun.BlockRunStatus.COMPLETED)
+        # # check today's partition for a different pipeline
+        # partition = kwargs['execution_date']
+        # check_status('test_pipeline', partition, block_uuid='test_block', trigger_id=1)
 
-        time.sleep(1)
+        time.sleep(60)
 
     
 {% endblock %}

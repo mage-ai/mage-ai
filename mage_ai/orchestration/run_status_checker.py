@@ -1,20 +1,34 @@
 from datetime import datetime
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun
+from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 
 
 def check_status(
-    pipeline_schedule_id: int,
+    pipeline_uuid: int,
     partition: datetime,
     block_uuid: str = None,
-    status: BlockRun.BlockRunStatus = None,
+    trigger_id: int = None,
 ) -> bool:
-    pipeline_run = (
-        PipelineRun
-        .query
-        .filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
-        .filter(PipelineRun.execution_date == partition)
-        .first()
-    )
+    if trigger_id is not None:
+        pipeline_run = (
+            PipelineRun
+            .query
+            .filter(PipelineRun.pipeline_schedule_id == trigger_id)
+            .filter(PipelineRun.execution_date == partition)
+            .first()
+        )
+    else:
+        pipeline_schedule = (
+            PipelineSchedule
+            .query
+            .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+            .first()
+        )
+        pipeline_run = next(
+            filter(
+                lambda run: run.execution_date == partition,
+                pipeline_schedule.pipeline_runs,
+            )
+        )
     if pipeline_run is None:
         return False
 
@@ -22,15 +36,6 @@ def check_status(
         block_run = next(filter(lambda run: run.block_uuid == block_uuid, pipeline_run.block_runs))
         if block_run is None:
             return False
-        if status is not None:
-            return block_run.status == status
-        else:
-            outputs = block_run.get_outputs()
-            return len(outputs) > 0
+        return block_run.status == BlockRun.BlockRunStatus.COMPLETED
     else:
-        if status is not None:
-            return pipeline_run.status.value == status.value
-        else:
-            # what to check for if we only have pipeline_schedule_id and partition
-            return False
-    
+        return pipeline_run.status == PipelineRun.PipelineRunStatus.COMPLETED

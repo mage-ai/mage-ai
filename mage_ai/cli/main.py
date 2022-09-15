@@ -86,6 +86,7 @@ Commands:
         parser.add_argument('--callback_url', nargs='?', type=str)
         parser.add_argument('--block_run_id', nargs='?', type=int)
         parser.add_argument('--runtime-vars', nargs="+")
+        parser.add_argument('--skip-sensors', type=bool)
 
         args = vars(parser.parse_args(sys.argv[2:]))
         project_path = args['repo_path']
@@ -95,6 +96,7 @@ Commands:
         executor_type = args.get('executor_type')
         callback_url = args.get('callback_url')
         runtime_vars = args.get('runtime_vars')
+        skip_sensors = args.get('skip_sensors', False)
 
         runtime_variables = dict()
         if runtime_vars is not None:
@@ -112,6 +114,7 @@ Commands:
             ExecutorFactory.get_pipeline_executor(pipeline).execute(
                 analyze_outputs=False,
                 global_vars=global_vars,
+                run_sensors=not skip_sensors,
                 run_tests=command == 'test',
                 update_status=False,
             )

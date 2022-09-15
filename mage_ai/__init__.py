@@ -124,6 +124,7 @@ def run(
     pipeline_uuid: str,
     project_path: str = None,
     block_uuid: str = None,
+    run_sensors: bool = True,
     **global_vars,
 ) -> None:
     from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -136,6 +137,7 @@ def run(
         ExecutorFactory.get_pipeline_executor(pipeline).execute(
             analyze_outputs=False,
             global_vars=global_vars,
+            run_sensors=run_sensors,
             update_status=False,
         )
     else:

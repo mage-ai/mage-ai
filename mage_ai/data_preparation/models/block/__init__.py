@@ -45,6 +45,7 @@ async def run_blocks(
     build_block_output_stdout: Callable[..., object] = None,
     global_vars=None,
     parallel: bool = True,
+    run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
@@ -83,7 +84,8 @@ async def run_blocks(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
+            not run_sensors and block.type == BlockType.SENSOR:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -122,6 +124,7 @@ def run_blocks_sync(
     analyze_outputs: bool = True,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
+    run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
 ) -> None:
@@ -136,7 +139,8 @@ def run_blocks_sync(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
+            not run_sensors and block.type == BlockType.SENSOR:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
