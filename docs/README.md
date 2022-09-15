@@ -25,6 +25,7 @@
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
 - Triggering pipelines
+    - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
     - [Trigger pipeline from AWS Event (WIP)](tutorials/triggers/events/aws.md)
 - Monitoring and alerting
     - [Status updates in Slack](monitoring/alerting/slack.md)

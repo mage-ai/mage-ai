@@ -129,6 +129,8 @@ Pausing the trigger will prevent it from running the pipeline.
   pausing 1 trigger may not stop the pipeline from running since other triggers can also run the pipeline.
 </sub>
 
+<br />
+
 ![Trigger detail](https://github.com/mage-ai/assets/blob/main/pipelines/trigger-detail.jpg?raw=true)
 
 You can also edit the trigger after creating it by clicking the <b>`[Edit trigger]`</b> button.
