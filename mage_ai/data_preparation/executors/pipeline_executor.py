@@ -11,12 +11,14 @@ class PipelineExecutor:
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
+        run_sensors: bool = True,
         run_tests: bool = True,
         update_status: bool = False,
     ) -> None:
         asyncio.run(self.pipeline.execute(
             analyze_outputs=analyze_outputs,
             global_vars=global_vars,
+            run_sensors=run_sensors,
             run_tests=run_tests,
             update_status=update_status,
         ))

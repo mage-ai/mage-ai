@@ -1,6 +1,7 @@
 from mage_ai.io.base import BaseFile, FileFormat
 from pandas import DataFrame
 from typing import Union
+import os
 
 
 class FileIO(BaseFile):
@@ -46,3 +47,9 @@ class FileIO(BaseFile):
             format = self._get_file_format(filepath)
         with self.printer.print_msg(f'Exporting data frame to \'{filepath}\''):
             self._write(df, format, filepath, **kwargs)
+
+
+    def exists(
+        self, filepath: str
+    ) -> bool:
+        return os.path.exists(filepath)

@@ -36,6 +36,7 @@ import os
 import pandas as pd
 import simplejson
 import sys
+import time
 import traceback
 
 
@@ -45,6 +46,7 @@ async def run_blocks(
     build_block_output_stdout: Callable[..., object] = None,
     global_vars=None,
     parallel: bool = True,
+    run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
     update_status: bool = True,
@@ -83,7 +85,8 @@ async def run_blocks(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
+            not run_sensors and block.type == BlockType.SENSOR:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -122,6 +125,7 @@ def run_blocks_sync(
     analyze_outputs: bool = True,
     build_block_output_stdout: Callable[..., object] = None,
     global_vars: Dict = None,
+    run_sensors: bool = True,
     run_tests: bool = True,
     selected_blocks: Set[str] = None,
 ) -> None:
@@ -136,7 +140,8 @@ def run_blocks_sync(
     while not blocks.empty():
         block = blocks.get()
 
-        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES:
+        if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
+            not run_sensors and block.type == BlockType.SENSOR:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -412,6 +417,7 @@ class Block:
         global_vars: Dict = None,
         logger: Logger = None,
         run_all_blocks: bool = False,
+        test_execution: bool = False,
         update_status: bool = True,
     ):
         try:
@@ -431,6 +437,7 @@ class Block:
                 execution_partition=execution_partition,
                 global_vars=global_vars,
                 logger=logger,
+                test_execution=test_execution,
             )
             block_output = output['output']
             if BlockType.CHART == self.type:
@@ -442,6 +449,8 @@ class Block:
                         ignore_nan=True,
                     )
                 )
+            elif BlockType.SENSOR == self.type:
+                variable_mapping = dict()
             else:
                 self.__verify_outputs(block_output)
                 variable_keys = list(self.output_variables.keys())
@@ -578,6 +587,7 @@ class Block:
         execution_partition: str = None,
         logger: Logger = None,
         global_vars: Dict = None,
+        test_execution: bool = False,
     ) -> Dict:
         upstream_block_uuids = []
         input_vars = []
@@ -649,20 +659,31 @@ class Block:
             else:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
                 if block_function is not None:
-                    sig = signature(block_function)
-                    has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
-                    if has_kwargs and global_vars is not None and len(global_vars) != 0:
-                        outputs = block_function(*input_vars, **global_vars)
-                    else:
-                        outputs = block_function(*input_vars)
-                    if outputs is None:
-                        outputs = []
-                    if type(outputs) is not list:
-                        outputs = [outputs]
+                    outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
+
+                if outputs is None:
+                    outputs = []
+                if type(outputs) is not list:
+                    outputs = [outputs]
 
         output_message = dict(output=outputs)
 
         return output_message
+
+    def execute_block_function(
+        self,
+        block_function: Callable,
+        input_vars: List,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+    ) -> Dict:
+        sig = signature(block_function)
+        has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+        if has_kwargs and global_vars is not None and len(global_vars) != 0:
+            output = block_function(*input_vars, **global_vars)
+        else:
+            output = block_function(*input_vars)
+        return output
 
     def exists(self):
         return os.path.exists(self.file_path)
@@ -1106,9 +1127,41 @@ class TransformerBlock(Block):
         return dict(df=pd.DataFrame)
 
 
+class SensorBlock(Block):
+    @property
+    def output_variables(self):
+        return dict()
+
+    def execute_block_function(
+        self,
+        block_function: Callable,
+        input_vars: List,
+        global_vars: Dict = None,
+        test_execution: bool = False,
+    ) -> List:
+        if test_execution:
+            return super().execute_block_function(
+                block_function,
+                input_vars,
+                global_vars=global_vars,
+                test_execution=True,
+            )
+        else:
+            sig = signature(block_function)
+            has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
+            use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
+            while True:
+                condition = block_function(**global_vars) if use_global_vars else block_function()
+                if condition:
+                    break
+                time.sleep(60)
+            return []
+
+
 BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: DataExporterBlock,
     BlockType.DATA_LOADER: DataLoaderBlock,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: TransformerBlock,
+    BlockType.SENSOR: SensorBlock,
 }

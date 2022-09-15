@@ -182,6 +182,7 @@ class Pipeline:
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
         parallel: bool = True,
+        run_sensors: bool = True,
         run_tests: bool = True,
         update_status: bool = True,
     ) -> None:
@@ -202,6 +203,7 @@ class Pipeline:
                 build_block_output_stdout=build_block_output_stdout,
                 global_vars=global_vars,
                 parallel=parallel,
+                run_sensors=run_sensors,
                 run_tests=run_tests,
                 update_status=update_status,
             )
@@ -213,6 +215,7 @@ class Pipeline:
         analyze_outputs: bool = True,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars=None,
+        run_sensors: bool = True,
         run_tests: bool = True,
     ) -> None:
         """
@@ -234,6 +237,7 @@ class Pipeline:
             analyze_outputs=analyze_outputs,
             build_block_output_stdout=build_block_output_stdout,
             global_vars=global_vars,
+            run_sensors=run_sensors,
             run_tests=run_tests,
         )
 

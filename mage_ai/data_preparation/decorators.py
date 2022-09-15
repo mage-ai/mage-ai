@@ -13,6 +13,10 @@ def data_loader(function):
     return function
 
 
+def sensor(function):
+    return function
+
+
 def transformer(function):
     return function
 
