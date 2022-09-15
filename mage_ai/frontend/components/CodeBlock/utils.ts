@@ -15,7 +15,6 @@ export const getUpstreamBlockUuids = (
 
   if (BlockTypeEnum.CHART !== currentBlock.type
     && BlockTypeEnum.SCRATCHPAD !== currentBlock.type
-    && BlockTypeEnum.DATA_LOADER !== newBlock?.type
     && BlockTypeEnum.CHART !== newBlock?.type
     && BlockTypeEnum.SCRATCHPAD !== newBlock?.type
   ) {

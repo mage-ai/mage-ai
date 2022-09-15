@@ -24,6 +24,7 @@ export const NodeStyle = styled.div<{
   selected: boolean;
 }>`
   border-radius: ${BORDER_RADIUS_SMALL}px;
+  border: 1px solid transparent;
   min-width: fit-content;
 
   ${props => props.selected && `

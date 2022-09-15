@@ -12,6 +12,7 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
+  BLOCK_TYPES_WITH_NO_PARENTS,
   BLOCK_TYPES_WITH_UPSTREAM_INPUTS,
   BLOCK_TYPE_NAME_MAPPING,
   BlockLanguageEnum,
@@ -742,7 +743,7 @@ function CodeBlockProps({
           </FlexContainer>
         </Flex>
 
-        {BlockTypeEnum.DATA_LOADER !== block.type && BlockTypeEnum.SCRATCHPAD !== block.type && (
+        {!BLOCK_TYPES_WITH_NO_PARENTS.includes(block.type) && (
           <FlexContainer alignItems="center">
             <Tooltip
               appearBefore
