@@ -109,10 +109,16 @@ export default interface BlockType {
   uuid?: string;
 }
 
+export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
+  [BlockTypeEnum.SENSOR]: 'Sensor',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
@@ -127,6 +133,7 @@ export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: 'DE',
   [BlockTypeEnum.DATA_LOADER]: 'DL',
   [BlockTypeEnum.SCRATCHPAD]: 'SP',
+  [BlockTypeEnum.SENSOR]: 'SR',
   [BlockTypeEnum.TRANSFORMER]: 'TF',
 };
 

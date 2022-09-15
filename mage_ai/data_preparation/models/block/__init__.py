@@ -1162,6 +1162,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.DATA_EXPORTER: DataExporterBlock,
     BlockType.DATA_LOADER: DataLoaderBlock,
     BlockType.SCRATCHPAD: Block,
+    BlockType.SENSOR: Block,
     BlockType.TRANSFORMER: TransformerBlock,
     BlockType.SENSOR: SensorBlock,
 }

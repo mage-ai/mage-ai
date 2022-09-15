@@ -12,6 +12,8 @@ import { useMutation } from 'react-query';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import AutocompleteItemType from '@interfaces/AutocompleteItemType';
 import BlockType, {
+  BLOCK_TYPES_WITH_UPSTREAM_INPUTS,
+  BLOCK_TYPE_NAME_MAPPING,
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
@@ -659,39 +661,23 @@ function CodeBlockProps({
                 color={color}
                 monospace
               >
-                {BlockTypeEnum.DATA_EXPORTER === block.type && (
-                  <>
-                    DATA EXPORTER
-                  </>
-                )}
-                {BlockTypeEnum.DATA_LOADER === block.type && (
-                  <>
-                    DATA LOADER&nbsp;
-                  </>
-                )}
-                {BlockTypeEnum.SCRATCHPAD === block.type && (
-                  <>
-                    SCRATCHPAD&nbsp;
-                  </>
-                )}
-                {BlockTypeEnum.TRANSFORMER === block.type && (
-                  <>
-                    TRANSFORMER&nbsp;
-                  </>
-                )}
+                {BLOCK_TYPE_NAME_MAPPING[block.type]?.toUpperCase()}
               </Text>
             </FlyoutMenuWrapper>
 
             {BlockTypeEnum.SCRATCHPAD === block.type && (
-              <Button
-                basic
-                iconOnly
-                noPadding
-                onClick={() => setBlockMenuVisible(true)}
-                transparent
-              >
-                <ArrowDown muted />
-              </Button>
+              <>
+                &nbsp;
+                <Button
+                  basic
+                  iconOnly
+                  noPadding
+                  onClick={() => setBlockMenuVisible(true)}
+                  transparent
+                >
+                  <ArrowDown muted />
+                </Button>
+              </>
             )}
 
             <Spacing mr={1} />
@@ -1011,7 +997,10 @@ function CodeBlockProps({
             </CodeHelperStyle>
           )}
 
-          {block.upstream_blocks.length >= 1 && !codeCollapsed && (
+          {block.upstream_blocks.length >= 1
+            && !codeCollapsed
+            && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
+            && (
             <CodeHelperStyle>
               <Text small>
                 {BlockLanguageEnum.SQL !== block.language && 'Positional arguments for decorated function:'}
