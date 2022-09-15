@@ -40,6 +40,7 @@ def create_a_new_cluster(
     idle_timeout=0,
     keep_alive=False,
     log_uri=None,
+    tags=dict(),
 ):
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)
@@ -67,6 +68,7 @@ def create_a_new_cluster(
         JobFlowRole='EMR_EC2_DefaultRole',
         ServiceRole='EMR_DefaultRole',
         EbsRootVolumeSize=10,
+        Tags=[dict(Key=k, Value=v) for k, v in tags.items()],
         VisibleToAllUsers=True,
     )
     if log_uri is not None:
