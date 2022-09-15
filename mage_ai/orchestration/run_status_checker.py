@@ -3,7 +3,7 @@ from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSched
 
 
 def check_status(
-    pipeline_uuid: int,
+    pipeline_uuid: str,
     partition: datetime,
     block_uuid: str = None,
     trigger_id: int = None,
@@ -17,17 +17,13 @@ def check_status(
             .first()
         )
     else:
-        pipeline_schedule = (
-            PipelineSchedule
+        pipeline_run = (
+            PipelineRun
             .query
+            .join(PipelineRun.pipeline_schedule)
             .filter(PipelineSchedule.pipeline_uuid == pipeline_uuid)
+            .filter(PipelineRun.execution_date == partition)
             .first()
-        )
-        pipeline_run = next(
-            filter(
-                lambda run: run.execution_date == partition,
-                pipeline_schedule.pipeline_runs,
-            )
         )
     if pipeline_run is None:
         return False

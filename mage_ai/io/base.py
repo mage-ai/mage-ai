@@ -78,6 +78,13 @@ class BaseIO(ABC):
         """
         pass
 
+    @abstractmethod
+    def exists(self, *args, **kwargs) -> bool:
+        """
+        Checks if content exists at the specified path.
+        """
+        pass
+
 
 class BaseFile(BaseIO):
     """

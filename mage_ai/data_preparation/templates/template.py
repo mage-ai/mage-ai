@@ -56,6 +56,8 @@ def fetch_template_source(
             template_source = __fetch_transformer_templates(config)
         elif block_type == BlockType.DATA_EXPORTER:
             template_source = __fetch_data_exporter_templates(config)
+        elif block_type == BlockType.SENSOR:
+            template_source = __fetch_sensor_templates(config)
 
     return template_source
 
@@ -147,6 +149,21 @@ def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
         template_path = f'data_exporters/{data_source.lower()}.py'
     except ValueError:
         template_path = 'data_exporters/default.jinja'
+
+    return (
+        template_env.get_template(template_path).render(
+            code=config.get('existing_code', ''),
+        )
+        + '\n'
+    )
+
+def __fetch_sensor_templates(config: Mapping[str, str]) -> str:
+    data_source = config.get('data_source')
+    try:
+        _ = DataSource(data_source)
+        template_path = f'sensors/{data_source.lower()}.py'
+    except ValueError:
+        template_path = 'sensors/default.py'
 
     return (
         template_env.get_template(template_path).render(
