@@ -15,6 +15,7 @@ export enum BlockTypeEnum {
   DATA_EXPORTER = 'data_exporter',
   DATA_LOADER = 'data_loader',
   SCRATCHPAD = 'scratchpad',
+  SENSOR = 'sensor',
   TRANSFORMER = 'transformer',
 }
 
@@ -23,12 +24,14 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
   BlockTypeEnum.TRANSFORMER,
 ];
 
 export const BLOCK_TYPES_NO_DATA_TABLE = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
 ];
 
 export enum StatusTypeEnum {
@@ -106,10 +109,16 @@ export default interface BlockType {
   uuid?: string;
 }
 
+export const BLOCK_TYPES_WITH_UPSTREAM_INPUTS = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.TRANSFORMER,
+];
+
 export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: 'Data exporter',
   [BlockTypeEnum.DATA_LOADER]: 'Data loader',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
+  [BlockTypeEnum.SENSOR]: 'Sensor',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',
 };
 
@@ -124,6 +133,7 @@ export const BLOCK_TYPE_ABBREVIATION_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: 'DE',
   [BlockTypeEnum.DATA_LOADER]: 'DL',
   [BlockTypeEnum.SCRATCHPAD]: 'SP',
+  [BlockTypeEnum.SENSOR]: 'SR',
   [BlockTypeEnum.TRANSFORMER]: 'TF',
 };
 

@@ -7,7 +7,8 @@ import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButt
 import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import { Add } from '@oracle/icons';
+import Tooltip from '@oracle/components/Tooltip';
+import { Add, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -55,6 +56,8 @@ function AddNewBlocks({
     compact,
     inline: true,
   };
+
+  const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
 
   const dataSourceMenuItems = useMemo(() => (
     Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
@@ -153,7 +156,7 @@ function AddNewBlocks({
               {...sharedProps}
               beforeElement={
                 <IconContainerStyle blue compact={compact}>
-                  <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
+                  <Add size={iconSize} />
                 </IconContainerStyle>
               }
               onClick={(e) => {
@@ -202,7 +205,7 @@ function AddNewBlocks({
               {...sharedProps}
               beforeElement={
                 <IconContainerStyle compact={compact} purple>
-                  <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
+                  <Add size={iconSize} />
                 </IconContainerStyle>
               }
               onClick={(e) => {
@@ -253,7 +256,7 @@ function AddNewBlocks({
                 <IconContainerStyle compact={compact} yellow>
                   <Add
                     inverted
-                    size={compact ? ICON_SIZE / 2 : ICON_SIZE}
+                    size={iconSize}
                   />
                 </IconContainerStyle>
               }
@@ -276,23 +279,57 @@ function AddNewBlocks({
 
       <Spacing ml={1} />
 
-      <KeyboardShortcutButton
-        {...sharedProps}
-        beforeElement={
-          <IconContainerStyle border compact={compact}>
-            <Add size={compact ? ICON_SIZE / 2 : ICON_SIZE} />
-          </IconContainerStyle>
-        }
-        onClick={(e) => {
-          e.preventDefault();
-          addNewBlock({
-            type: BlockTypeEnum.SCRATCHPAD,
-          });
-        }}
-        uuid="AddNewBlocks/Scratchpad"
+      <Tooltip
+        block
+        label="Write experimental code that doesn’t get executed when you run your pipeline."
+        size={null}
+        widthFitContent
       >
-        Scratchpad
-      </KeyboardShortcutButton>
+        <KeyboardShortcutButton
+          {...sharedProps}
+          beforeElement={
+            <IconContainerStyle border compact={compact}>
+              <Add size={iconSize} />
+            </IconContainerStyle>
+          }
+          onClick={(e) => {
+            e.preventDefault();
+            addNewBlock({
+              type: BlockTypeEnum.SCRATCHPAD,
+            });
+          }}
+          uuid="AddNewBlocks/Scratchpad"
+        >
+          Scratchpad
+        </KeyboardShortcutButton>
+      </Tooltip>
+
+      <Spacing ml={1} />
+
+      <Tooltip
+        block
+        label="Add a sensor so that other blocks only run when sensor is complete."
+        size={null}
+        widthFitContent
+      >
+        <KeyboardShortcutButton
+          {...sharedProps}
+          beforeElement={
+            <IconContainerStyle compact={compact}>
+              <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+            </IconContainerStyle>
+          }
+          onClick={(e) => {
+            e.preventDefault();
+            addNewBlock({
+              type: BlockTypeEnum.SENSOR,
+            });
+          }}
+          uuid="AddNewBlocks/Sensor"
+        >
+          Sensor
+        </KeyboardShortcutButton>
+      </Tooltip>
 
       <Spacing ml={1} />
 
