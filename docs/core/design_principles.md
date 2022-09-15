@@ -36,7 +36,7 @@ Designed from the ground up specifically for running data-intensive workflows.
 Analyze and process large data quickly for rapid iteration.
 
 - Transform very large datasets through a native integration with Spark.
-- Handle data intensive transformations with built-in distributed computing (e.g. Dask, Ray).
+- Handle data intensive transformations with built-in distributed computing (e.g. Dask, Ray) [coming soon].
 - Run thousands of pipelines simultaneously and manage transparently through a collaborative UI.
 - Execute SQL queries in your data warehouse to process heavy workloads.
 
