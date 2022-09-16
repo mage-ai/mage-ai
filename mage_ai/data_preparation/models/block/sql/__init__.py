@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.block.sql import (
     redshift,
     snowflake,
 )
+from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_vars
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource, ExportWritePolicy
@@ -25,6 +26,9 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
     export_write_policy = block.configuration.get('export_write_policy', ExportWritePolicy.APPEND)
     env = (global_vars or dict()).get('env')
 
+    if 'execution_date' in global_vars:
+        global_vars['ds'] = global_vars['execution_date'].strftime('%Y-%m-%d')
+
     if env == ENV_DEV:
         table_name = f'dev_{block.table_name}'
     else:
@@ -38,6 +42,7 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         bigquery.create_upstream_block_tables(loader, block)
 
         query_string = bigquery.interpolate_input_data(block, query)
+        query_string = interpolate_vars(query_string, global_vars=global_vars)
         loader.export(
             None,
             f'{schema}.{table_name}',
@@ -70,6 +75,7 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
             postgres.create_upstream_block_tables(loader, block)
 
             query_string = postgres.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
             loader.export(
                 None,
                 schema,
@@ -95,6 +101,7 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
             redshift.create_upstream_block_tables(loader, block)
 
             query_string = redshift.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
             loader.export(
                 None,
                 table_name,
@@ -122,6 +129,7 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
             snowflake.create_upstream_block_tables(loader, block)
 
             query_string = snowflake.interpolate_input_data(block, query)
+            query_string = interpolate_vars(query_string, global_vars=global_vars)
             loader.export(
                 None,
                 table_name,

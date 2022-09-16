@@ -1,3 +1,4 @@
+from jinja2 import Template
 from mage_ai.data_preparation.models.constants import BlockLanguage
 import re
 
@@ -32,3 +33,7 @@ def interpolate_input(block, query, replace_func=None):
         )
 
     return query
+
+
+def interpolate_vars(query, global_vars=dict()):
+    return Template(query).render(**global_vars)
