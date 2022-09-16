@@ -14,6 +14,12 @@ from os import path
 from time import sleep
 from typing import Dict
 
+PREVIEWABLE_BLOCK_TYPES = [
+    BlockType.DATA_LOADER,
+    BlockType.TRANSFORMER,
+    BlockType.DATA_EXPORTER,
+]
+
 
 def execute_sql_code(block, query: str, global_vars: Dict = None):
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -33,7 +39,7 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         table_name = f'dev_{block.table_name}'
     else:
         table_name = block.table_name
-    should_query = BlockType.DATA_LOADER == block.type or BlockType.TRANSFORMER == block.type
+    should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
     if DataSource.BIGQUERY.value == data_provider:
         from mage_ai.io.bigquery import BigQuery
