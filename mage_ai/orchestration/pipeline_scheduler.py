@@ -110,7 +110,6 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(b)
 
-        # TODO: Support processing queued block runs in separate instances
         for b in queued_block_runs:
             tags = dict(
                 block_run_id=b.id,
