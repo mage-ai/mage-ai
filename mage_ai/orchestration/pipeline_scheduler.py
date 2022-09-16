@@ -106,7 +106,8 @@ class PipelineScheduler:
         for b in executable_block_runs:
             completed_block_uuids = set(b.block_uuid for b in completed_block_runs)
             block = self.pipeline.get_block(b.block_uuid)
-            if block.all_upstream_blocks_completed(completed_block_uuids):
+            if block is not None and \
+                block.all_upstream_blocks_completed(completed_block_uuids):
                 b.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(b)
 
