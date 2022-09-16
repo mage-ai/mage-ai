@@ -1,7 +1,12 @@
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-from mage_ai.data_preparation.models.constants import ExecutorType, PipelineType
+from mage_ai.data_preparation.models.constants import (
+    BlockType,
+    ExecutorType,
+    PipelineType,
+)
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.shared.code import is_pyspark_code
 
 
 class ExecutorFactory:
@@ -37,10 +42,13 @@ class ExecutorFactory:
             execution_partition=execution_partition,
         )
         if executor_type is None:
-            if pipeline.type == PipelineType.PYSPARK:
+            block = pipeline.get_block(block_uuid)
+            if pipeline.type == PipelineType.PYSPARK and (
+                block.type != BlockType.SENSOR or is_pyspark_code(block.content)
+            ):
                 executor_type = ExecutorType.PYSPARK
             else:
-                executor_type = pipeline.get_block(block_uuid).executor_type
+                executor_type = block.executor_type
         if executor_type == ExecutorType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_block_executor \
                 import PySparkBlockExecutor

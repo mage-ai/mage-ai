@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
 )
 from mage_ai.server.kernels import KernelName
+from mage_ai.shared.code import is_pyspark_code
 from typing import Dict, List
 import re
 
@@ -225,7 +226,9 @@ def add_execution_code(
     global_vars_spark = ''
     magic_header = ''
     if kernel_name == KernelName.PYSPARK:
-        if block_type == BlockType.CHART:
+        if block_type == BlockType.CHART or (
+            block_type == BlockType.SENSOR and not is_pyspark_code(code)
+        ):
             global_vars_spark = ''
             magic_header = '%%local'
             run_upstream = False
