@@ -22,6 +22,11 @@ Here is an example of a transformer block with 2 tests:
 ```python
 from pandas import DataFrame
 
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
 COLUMNS_TO_USE = ['name']
 
 
@@ -31,12 +36,12 @@ def transform_df(df: DataFrame, *args, **kwargs) -> DataFrame:
 
 
 @test
-def test_output(df) -> None:
+def test_number_of_rows(df) -> None:
     assert len(df.index) >= 2, 'The output has more than 1 row.'
 
 
 @test
-def test_output(df) -> None:
+def test_columns(df) -> None:
     assert df.columns[0] != COLUMNS_TO_USE[0], 'The output columns don’t match.'
 ```
 
