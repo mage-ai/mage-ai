@@ -14,7 +14,7 @@
 - [Kernels](kernels/README.md)
     - [Spark and PySpark](spark/setup/README.md)
 - Testing
-    - [Data validation (WIP)](testing/README.md)
+    - [Data validation](testing/README.md#data-validation)
 - [Templates](#templates)
 
 ### Production
