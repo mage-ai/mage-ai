@@ -17,7 +17,6 @@ variable "container_memory" {
 variable "project_id" {
   description = "The name of the project"
   type        = string
-  default     = "arched-glass-305223"
 }
 
 variable "region" {
