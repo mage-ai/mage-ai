@@ -15,7 +15,7 @@ def create_cluster(project_path, done_status='WAITING', tags=dict()):
 
     # Create EMR cluster
     cluster_id = create_a_new_cluster(
-        'mage-data-prepartion',
+        'mage-data-preparation',
         [],
         repo_config.emr_config,
         bootstrap_script_path=resource_manager.bootstrap_script_path,
