@@ -5,12 +5,12 @@ variable "app_name" {
 }
 
 variable "container_cpu" {
-  description = "ECS task cpu"
+  description = "Container cpu"
   default     = "2"
 }
 
 variable "container_memory" {
-  description = "ECS task memory"
+  description = "Container memory"
   default     = "1G"
 }
 
