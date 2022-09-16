@@ -142,6 +142,12 @@ resource "google_cloud_run_service" "run_service" {
         ports {
           container_port = 6789
         }
+        resources {
+          limits = {
+            "memory" = var.container_memory
+            "cpu" = var.container_cpu
+          }
+        }
       }
     }
   }

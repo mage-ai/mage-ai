@@ -4,6 +4,16 @@ variable "app_name" {
   default     = "mage-data-prep"
 }
 
+variable "container_cpu" {
+  description = "ECS task cpu"
+  default     = "2"
+}
+
+variable "container_memory" {
+  description = "ECS task memory"
+  default     = "1G"
+}
+
 variable "project_id" {
   description = "The name of the project"
   type        = string
