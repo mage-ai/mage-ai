@@ -31,7 +31,6 @@ def check_status(
     )
     if pipeline_run is None:
         return False
-
     pipeline_run.refresh()
 
     if block_uuid is not None:
@@ -39,6 +38,7 @@ def check_status(
         if block_run is None:
             return False
 
+        block_run.refresh()
         if block_run.status in BLOCK_FAILURE_STATUSES:
             raise Exception('Upstream block run failed, stopping sensor...')
         else:
