@@ -28,6 +28,7 @@ import {
   HTMLOutputStyle,
   OutputRowStyle,
 } from './index.style';
+import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
@@ -82,7 +83,6 @@ function CodeOutput({
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
 
-  const internalOutputRegex = /\[__internal_output__\]/;
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
   const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
@@ -90,10 +90,10 @@ function CodeOutput({
 
     if (DATA_TYPE_TEXTLIKE.includes(last?.type)
       && last?.type === curr.type
-      && !combineTextData(curr?.data).match(internalOutputRegex)) {
+      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)) {
       last.data += combineTextData(curr.data);
     } else if (DATA_TYPE_TEXTLIKE.includes(curr?.type)
-      && !combineTextData(curr?.data).match(internalOutputRegex)) {
+      && !combineTextData(curr?.data).match(INTERNAL_OUTPUT_REGEX)) {
       arr.push({
         ...curr,
         data: combineTextData(curr.data),
@@ -168,7 +168,7 @@ function CodeOutput({
 
         const borderTop = idx >= 1;
 
-        if (typeof data === 'string' && data.match(internalOutputRegex)) {
+        if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
           const parts = data.split('[__internal_output__]')
           const rawString = parts[parts.length - 1];
           if (isJsonString(rawString)) {

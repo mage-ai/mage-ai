@@ -148,6 +148,9 @@ class Postgres(BaseSQLConnection):
 
             with self.conn.cursor() as cur:
                 cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+
+                should_create_table = not table_exists
+
                 if table_exists:
                     if ExportWritePolicy.FAIL == if_exists:
                         raise ValueError(
@@ -156,12 +159,9 @@ class Postgres(BaseSQLConnection):
                     elif ExportWritePolicy.REPLACE == if_exists:
                         if drop_table_on_replace:
                             cur.execute(f'DROP TABLE {full_table_name}')
+                            should_create_table = True
                         else:
                             cur.execute(f'DELETE FROM {full_table_name}')
-                elif not query_string:
-                    db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
-                    query = gen_table_creation_query(db_dtypes, schema_name, table_name)
-                    cur.execute(query)
 
                 if query_string:
                     query = 'CREATE TABLE {} AS\n{}'.format(
@@ -176,6 +176,11 @@ class Postgres(BaseSQLConnection):
                         )
                     cur.execute(query)
                 else:
+                    if should_create_table:
+                        db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
+                        query = gen_table_creation_query(db_dtypes, schema_name, table_name)
+                        cur.execute(query)
+
                     df.to_csv(buffer, index=False, header=False)
                     buffer.seek(0)
                     cur.copy_expert(

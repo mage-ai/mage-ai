@@ -205,6 +205,7 @@ class Block:
         self.type = block_type
         self._content = content
         self._outputs = None
+        self._outputs_loaded = False
         self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
@@ -238,8 +239,9 @@ class Block:
 
     @property
     def outputs(self):
-        if self._outputs is None or len(self._outputs) == 0:
-            self._outputs = self.get_outputs()
+        if not self._outputs_loaded:
+            if self._outputs is None or len(self._outputs) == 0:
+                self._outputs = self.get_outputs()
         return self._outputs
 
     @property
@@ -721,6 +723,8 @@ class Block:
         if self.type != BlockType.SCRATCHPAD and BlockType.CHART != self.type:
             if self.status == BlockStatus.NOT_EXECUTED:
                 return []
+
+        data_products = []
         outputs = []
         variable_manager = self.pipeline.variable_manager
 
@@ -761,6 +765,8 @@ class Block:
                     type=DataType.TABLE,
                     variable_uuid=v,
                 )
+                data_products.append(data)
+                continue
             elif is_geo_dataframe(data):
                 data = dict(
                     text_data=f''' Use the following code in a scratchpad to get the output of the block:
@@ -788,7 +794,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                     variable_uuid=v,
                 )
             outputs.append(data)
-        return outputs
+        return outputs + data_products
 
     def save_outputs(self, outputs, override=False):
         variable_mapping = dict()
@@ -798,7 +804,9 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             if all(k in o for k in ['variable_uuid', 'text_data']) and \
                     o['variable_uuid'] != 'df':
                 variable_mapping[o['variable_uuid']] = o['text_data']
+
         self._outputs = outputs
+        self._outputs_loaded = True
         self.store_variables(variable_mapping, override=override)
 
     def to_dict(self, include_content=False, include_outputs=False, sample_count=None):
@@ -997,7 +1005,8 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if override:
             # Not remove dataframe variables
             removed_variables = [v for v in all_variables
-                                 if v not in variable_mapping.keys() and v != 'df'
+                                 if v not in variable_mapping.keys()
+                                 and v != 'df'
                                  and not v.startswith('output')]
         elif override_outputs:
             removed_variables = [v for v in all_variables
@@ -1012,6 +1021,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                 data,
                 partition=execution_partition,
             )
+
         for uuid in removed_variables:
             self.pipeline.variable_manager.delete_variable(
                 self.pipeline.uuid,
