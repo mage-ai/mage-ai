@@ -18,6 +18,7 @@ def create_upstream_block_tables(loader, block):
                 df,
                 schema_name,
                 upstream_block.table_name,
+                drop_table_on_replace=True,
                 if_exists='replace',
                 index=False,
                 verbose=False,

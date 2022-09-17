@@ -509,12 +509,16 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data(df: DataFrame, **kwargs) -> None:
+def export_data(df: DataFrame, **kwargs):
     \"\"\"
     Exports data to some source
 
     Args:
         df (DataFrame): Data frame to export to
+
+    Output (optional):
+        Optionally return any object and it'll be logged and
+        displayed when inspecting the block run.
     \"\"\"
     # Specify your data exporting logic here
 

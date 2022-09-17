@@ -43,6 +43,11 @@ import SuggestionType from '@interfaces/SuggestionType';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add, Close } from '@oracle/icons';
+import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN,
+  get,
+} from '@storage/localStorage';
 import {
   NAV_ICON_MAPPING,
   SIDEKICK_VIEWS,
@@ -64,6 +69,7 @@ import {
 import { equals, pushAtIndex, removeAtIndex } from '@utils/array';
 import { getWebSocket } from '@api/utils/url';
 import { goToWithQuery } from '@utils/routing';
+import { isEmptyObject } from '@utils/hash';
 import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { queryFromUrl } from '@utils/url';
 import { useWindowSize } from '@utils/sizes';
@@ -84,7 +90,7 @@ function PipelineDetailPage({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const [afterHidden, setAfterHidden] = useState<boolean>(false);
+  const [afterHidden, setAfterHidden] = useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN))
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
@@ -356,7 +362,9 @@ function PipelineDetailPage({
     data,
     isLoading,
     mutate: fetchPipeline,
-  } = api.pipelines.detail(pipelineUUID);
+  } = api.pipelines.detail(pipelineUUID, {
+    include_outputs: isEmptyObject(messages),
+  });
   const { data: filesData, mutate: fetchFileTree } = api.files.list();
   const projectName = useMemo(() => filesData?.files?.[0]?.name, [filesData]);
   const pipeline = data?.pipeline;
@@ -462,13 +470,36 @@ function PipelineDetailPage({
             contentToSave = block.content;
           }
 
-          let outputs = block.outputs;
-          const messagesForBlock = messages[block.uuid];
+          let outputs;
+          let messagesForBlock = messages[block.uuid];
           const hasError = messagesForBlock?.find(({ error }) => error);
 
-          if (messagesForBlock && (BlockTypeEnum.SCRATCHPAD === block.type || hasError)) {
+          if (messagesForBlock) {
+            const arr2 = [];
+
+            messagesForBlock.forEach((d: KernelOutputType) => {
+              const {
+                data,
+                type,
+              } = d;
+
+              if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
+                if (Array.isArray(data)) {
+                  d.data = data.reduce((acc, text: string) => {
+                    if (text.match(INTERNAL_OUTPUT_REGEX)) {
+                      return acc;
+                    }
+
+                    return acc.concat(text);
+                  }, []);
+                }
+
+                arr2.push(d);
+              }
+            });
+
             // @ts-ignore
-            outputs = messagesForBlock.map((d: KernelOutputType, idx: number) => ({
+            outputs = arr2.map((d: KernelOutputType, idx: number) => ({
               text_data: JSON.stringify(d),
               variable_uuid: `${block.uuid}_${idx}`,
             }));
