@@ -138,9 +138,14 @@ function ChartBlock({
 }: ChartBlockType, ref) {
   const refChartContainer = useRef(null);
   const themeContext = useContext(ThemeContext);
+
   const {
-    outputs = [],
-  } = block;
+    data: dataBlock,
+  } = api.blocks.pipelines.detail(
+    pipeline?.uuid,
+    block?.upstream_blocks[0],
+  );
+  const outputs = dataBlock?.block?.outputs || block?.outputs || [];
 
   const [autocompleteProviders, setAutocompleteProviders] = useState(null);
   const [chartType, setChartType] = useState<ChartTypeEnum>(block.configuration?.chart_type);
@@ -548,18 +553,34 @@ function ChartBlock({
           value: configuration?.[uuid] || '',
         };
 
-        const blocks: BlockType[] = upstreamBlocks.reduce((acc, blockUUID) => {
-          const b = blocksMapping[blockUUID];
+        // const blocks: BlockType[] = upstreamBlocks.reduce((acc, blockUUID) => {
+        //   const b = blocksMapping[blockUUID];
 
-          if (b) {
-            return acc.concat(b);
-          }
+        //   if (b) {
+        //     return acc.concat(b);
+        //   }
 
-          return acc;
-        }, []);
+        //   return acc;
+        // }, []);
+        const blocks = dataBlock?.block ? [dataBlock.block] : [];
+
         const columns = blocks.reduce((acc, {
           outputs,
-        }) => acc.concat(outputs?.[0]?.sample_data?.columns), []);
+        }) => {
+          if (!outputs) {
+            return acc;
+          }
+
+          return acc.concat(outputs.reduce((acc2, {
+            sample_data: sampleData,
+          }) => {
+            if (sampleData?.columns) {
+              return acc2.concat(sampleData.columns);
+            }
+
+            return acc2;
+          }, []));
+        }, []);
 
         if (ConfigurationItemType.COLUMNS === type) {
           const columnsFromConfig = configuration[uuid] || [];
