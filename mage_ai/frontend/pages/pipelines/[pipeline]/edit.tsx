@@ -484,7 +484,7 @@ function PipelineDetailPage({
               } = d;
 
               if (BlockTypeEnum.SCRATCHPAD === block.type || hasError || 'table' !== type) {
-                if (data) {
+                if (Array.isArray(data)) {
                   d.data = data.reduce((acc, text: string) => {
                     if (text.match(INTERNAL_OUTPUT_REGEX)) {
                       return acc;
