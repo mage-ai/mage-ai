@@ -24,6 +24,7 @@ from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.templates.template import load_template
 from mage_ai.server.kernel_output_parser import DataType
+from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.utils import clean_name
@@ -214,6 +215,7 @@ class Block:
         self.test_functions = []
         self.language = language
         self.configuration = configuration
+        self.global_vars = {}
 
     @property
     def content(self):
@@ -268,7 +270,13 @@ class Block:
 
     @property
     def table_name(self):
-        return f'{self.pipeline.uuid}_{self.uuid}_{self.pipeline.version_name}'
+        table_name = f'{self.pipeline.uuid}_{self.uuid}_{self.pipeline.version_name}'
+
+        env = (self.global_vars or dict()).get('env')
+        if env == ENV_DEV:
+            table_name = f'dev_{table_name}'
+
+        return table_name
 
     @classmethod
     def block_class_from_type(self, block_type: str) -> str:
@@ -985,6 +993,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
                     # TODO: we use to silently fail, but it looks bad when using BigQuery
                     # print('\nFailed to analyze dataframe:')
                     # print(traceback.format_exc())
+
+    def set_global_vars(self, global_vars):
+        self.global_vars = global_vars
+        for upstream_block in self.upstream_blocks:
+            upstream_block.global_vars = global_vars
 
     def store_variables(
         self,

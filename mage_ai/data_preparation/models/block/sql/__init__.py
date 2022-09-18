@@ -9,7 +9,6 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.io.base import DataSource, ExportWritePolicy
 from mage_ai.io.config import ConfigFileLoader
-from mage_ai.shared.constants import ENV_DEV
 from os import path
 from time import sleep
 from typing import Dict
@@ -30,15 +29,13 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
     database = block.configuration.get('data_provider_database')
     schema = block.configuration.get('data_provider_schema')
     export_write_policy = block.configuration.get('export_write_policy', ExportWritePolicy.APPEND)
-    env = (global_vars or dict()).get('env')
 
     if 'execution_date' in global_vars:
         global_vars['ds'] = global_vars['execution_date'].strftime('%Y-%m-%d')
 
-    if env == ENV_DEV:
-        table_name = f'dev_{block.table_name}'
-    else:
-        table_name = block.table_name
+    block.set_global_vars(global_vars)
+
+    table_name = block.table_name
     should_query = block.type in PREVIEWABLE_BLOCK_TYPES
 
     if DataSource.BIGQUERY.value == data_provider:
