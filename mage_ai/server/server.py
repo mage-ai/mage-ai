@@ -205,7 +205,13 @@ class ApiPipelineListHandler(BaseHandler):
         include_schedules = self.get_argument('include_schedules', False)
 
         pipeline_uuids = Pipeline.get_all_pipelines(get_repo_path())
-        pipelines = [Pipeline.get(uuid) for uuid in pipeline_uuids]
+        pipelines = []
+        for uuid in pipeline_uuids:
+            try:
+                pipeline = Pipeline.get(uuid)
+                pipelines.append(pipeline)
+            except Exception:
+                pass
 
         mapping = {}
         if include_schedules:
