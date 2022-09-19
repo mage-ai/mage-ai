@@ -147,8 +147,10 @@ class VariableManager:
 
 def get_global_variables(
     pipeline_uuid: str,
-    repo_path: str = get_repo_path(),
+    repo_path: str = None,
 ) -> Dict[str, Any]:
+    if repo_path is None:
+        repo_path = get_repo_path()
     variables = VariableManager(repo_path).get_variables_by_block(pipeline_uuid, 'global')
     global_variables = dict()
     for variable in variables:
@@ -160,8 +162,10 @@ def get_global_variables(
 def get_global_variable(
     pipeline_uuid: str,
     key: str,
-    repo_path: str = get_repo_path(),
+    repo_path: str = None,
 ) -> Any:
+    if repo_path is None:
+        repo_path = get_repo_path()
     return VariableManager(repo_path).get_variable(pipeline_uuid, 'global', key)
 
 
@@ -183,14 +187,18 @@ def set_global_variable(
     pipeline_uuid: str,
     key: str,
     value: Any,
-    repo_path: str = get_repo_path(),
+    repo_path: str = None,
 ) -> None:
+    if repo_path is None:
+        repo_path = get_repo_path()
     VariableManager(repo_path).add_variable(pipeline_uuid, 'global', key, value)
 
 
 def delete_global_variable(
     pipeline_uuid: str,
     key: str,
-    repo_path: str = get_repo_path(),
+    repo_path: str = None,
 ) -> None:
+    if repo_path is None:
+        repo_path = get_repo_path()
     VariableManager(repo_path).delete_variable(pipeline_uuid, 'global', key)
