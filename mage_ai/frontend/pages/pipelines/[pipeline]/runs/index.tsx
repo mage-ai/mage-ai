@@ -76,7 +76,7 @@ function PipelineRuns({
 
   const {
     data: dataPipelineRuns,
-    mutadata: fetchPipelineRuns,
+    mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list({
     pipeline_uuid: pipelineUUID,
   });
@@ -132,12 +132,11 @@ function PipelineRuns({
 
         return prev?.id !== run.id ? run : null
       })}
-      pipeline={pipeline}
       pipelineRuns={pipelineRuns}
       selectedRun={selectedRun}
-      showTrigger
     />
   ), [
+    fetchPipelineRuns,
     pipeline,
     pipelineRuns,
     selectedRun,

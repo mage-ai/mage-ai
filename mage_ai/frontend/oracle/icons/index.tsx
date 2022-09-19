@@ -627,6 +627,16 @@ export const Switch = build([{
   viewBox: '0 0 16 16',
 });
 
+export const Subitem = build([{
+  d: 'M3 3V7.5C3 8.60457 3.89543 9.5 5 9.5H9',
+  // stroke: '#787A85',
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+}], {
+  fill: 'none',
+  viewBox: '0 0 12 13',
+});
+
 export const Pause = build([{
   Style: RectStyle,
   height: 12,

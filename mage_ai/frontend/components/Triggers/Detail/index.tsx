@@ -93,11 +93,11 @@ function TriggerDetail({
 
         return prev?.id !== run.id ? run : null
       })}
-      pipeline={pipeline}
       pipelineRuns={pipelineRuns}
       selectedRun={selectedRun}
     />
   ), [
+    fetchPipelineRuns,
     pipeline,
     pipelineRuns,
     selectedRun,

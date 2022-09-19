@@ -168,31 +168,6 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
 
         self.write(dict(pipeline_run=pipeline_run_dict))
 
-    def get(self, pipeline_run_id):
-        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
-        block_runs = BlockRun.query.filter(
-            BlockRun.pipeline_run_id == int(pipeline_run_id),
-        ).all()
-
-        pipeline_run_dict = pipeline_run.to_dict()
-        pipeline_run_dict['block_runs'] = [r.to_dict() for r in block_runs]
-
-        self.write(dict(pipeline_run=pipeline_run_dict))   
-
-    def put(self, pipeline_run_id):
-        payload = self.get_payload()
-        status = payload.get('status')
-        if status == PipelineRun.PipelineRunStatus.INITIAL or \
-            status == PipelineRun.PipelineRunStatus.RUNNING:
-            
-            block_runs = BlockRun.query.filter(
-                BlockRun.pipeline_run_id == int(pipeline_run_id),
-            ).all()
-            for block_run in block_runs:
-                block_run.update(status=BlockRun.BlockRunStatus.INITIAL)
-        
-        super().put(pipeline_run_id, payload)
-
 
 class ApiPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
@@ -213,7 +188,6 @@ class ApiPipelineRunListHandler(BaseHandler):
         PipelineScheduler(pipeline_run).start()
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
-
 
 class ApiPipelineRunLogHandler(BaseHandler):
     def get(self, pipeline_run_id):

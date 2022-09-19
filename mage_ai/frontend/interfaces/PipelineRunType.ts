@@ -2,6 +2,14 @@ import BlockRunType, { RunStatus as RunStatusEnum } from './BlockRunType';
 
 export const RunStatus = RunStatusEnum;
 
+export const RUN_STATUS_TO_LABEL = {
+  [RunStatus.COMPLETED]: 'Done',
+  [RunStatus.CANCELLED]: 'Cancelled',
+  [RunStatus.FAILED]: 'Failed',
+  [RunStatus.RUNNING]: 'Running',
+  [RunStatus.INITIAL]: 'Ready',
+};
+
 export default interface PipelineRunType {
   block_runs?: BlockRunType[];
   block_runs_count?: number;
