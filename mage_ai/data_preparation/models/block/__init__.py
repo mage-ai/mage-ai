@@ -649,6 +649,7 @@ class Block:
                 outputs = execute_sql_code(
                     self,
                     custom_code or self.content,
+                    execution_partition=execution_partition,
                     global_vars=global_vars,
                 )
             elif custom_code is not None:

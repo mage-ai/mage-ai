@@ -20,7 +20,12 @@ PREVIEWABLE_BLOCK_TYPES = [
 ]
 
 
-def execute_sql_code(block, query: str, global_vars: Dict = None):
+def execute_sql_code(
+    block,
+    query: str,
+    execution_partition: str = None,
+    global_vars: Dict = None,
+):
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = block.configuration.get('data_provider_profile')
     config_file_loader = ConfigFileLoader(config_path, config_profile)
@@ -42,7 +47,11 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         from mage_ai.io.bigquery import BigQuery
 
         loader = BigQuery.with_config(config_file_loader)
-        bigquery.create_upstream_block_tables(loader, block)
+        bigquery.create_upstream_block_tables(
+            loader,
+            block,
+            execution_partition=execution_partition,
+        )
 
         query_string = bigquery.interpolate_input_data(block, query)
         query_string = interpolate_vars(query_string, global_vars=global_vars)
@@ -75,7 +84,11 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         from mage_ai.io.postgres import Postgres
 
         with Postgres.with_config(config_file_loader) as loader:
-            postgres.create_upstream_block_tables(loader, block)
+            postgres.create_upstream_block_tables(
+                loader,
+                block,
+                execution_partition=execution_partition,
+            )
 
             query_string = postgres.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
@@ -101,7 +114,11 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         from mage_ai.io.redshift import Redshift
 
         with Redshift.with_config(config_file_loader) as loader:
-            redshift.create_upstream_block_tables(loader, block)
+            redshift.create_upstream_block_tables(
+                loader,
+                block,
+                execution_partition=execution_partition,
+            )
 
             query_string = redshift.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
@@ -129,7 +146,11 @@ def execute_sql_code(block, query: str, global_vars: Dict = None):
         schema = schema.upper()
 
         with Snowflake.with_config(config_file_loader, database=database, schema=schema) as loader:
-            snowflake.create_upstream_block_tables(loader, block)
+            snowflake.create_upstream_block_tables(
+                loader,
+                block,
+                execution_partition=execution_partition,
+            )
 
             query_string = snowflake.interpolate_input_data(block, query)
             query_string = interpolate_vars(query_string, global_vars=global_vars)
