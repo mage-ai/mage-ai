@@ -165,7 +165,8 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             get_global_variables(pipeline_uuid, pipeline.repo_path),
         )
         global_vars['env'] = ENV_DEV
-        global_vars['execution_date'] = datetime.now()
+        if 'execution_date' not in global_vars:
+            global_vars['execution_date'] = datetime.now()
         global_vars['event'] = dict()
 
         if cancel_pipeline:
