@@ -26,6 +26,8 @@ function PipelineListPage() {
     [uuid: string]: boolean;
   }>({});
 
+  console.log('HERE!');
+
   const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);

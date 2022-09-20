@@ -42,7 +42,7 @@ function getHost(){
   and replace the placeholder when the mage_ai tool is launched. We may not
   know the base path until the tool is launched.
   */
-  const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
+  const CLOUD_BASE_PATH = '/proxy/6789';
   const host = getHostCore(windowDefined, LOCALHOST, PORT);
   const protocol = getProtocol(windowDefined, host, LOCALHOST);
 
