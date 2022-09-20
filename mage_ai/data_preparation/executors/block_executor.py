@@ -30,13 +30,19 @@ class BlockExecutor:
         on_start: Callable[[str], None] = None,
         **kwargs,
     ) -> None:
-        tags = self.__build_tags(**kwargs.get('tags', {}))
+        tags = self._build_tags(**kwargs.get('tags', {}))
 
         self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
         if on_start is not None:
             on_start(self.block_uuid)
         try:
-            self._execute()
+            self._execute(
+                analyze_outputs=analyze_outputs,
+                callback_url=callback_url,
+                global_vars=global_vars,
+                update_status=update_status,
+                **kwargs,
+            )
         except Exception as e:
             self.logger.info('Failed to execute block.', **tags)
             if on_failure is not None:
@@ -56,6 +62,7 @@ class BlockExecutor:
         callback_url: str = None,
         global_vars: Dict = None,
         update_status: bool = False,
+        **kwargs,
     ):
         self.block.execute_sync(
             analyze_outputs=analyze_outputs,
@@ -87,7 +94,7 @@ class BlockExecutor:
             **tags,
         )
 
-    def __build_tags(self, **kwargs):
+    def _build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
             block_type=self.block.type,
             block_uuid=self.block.uuid,
