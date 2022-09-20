@@ -54,3 +54,19 @@ def write_template(template_source: str, dest_path: str) -> None:
     with open(dest_path, 'w') as foutput:
         foutput.write(template_source)
 
+
+def template_exists(template_path: str) -> bool:
+    """
+    Check whether a template exists
+
+    Args:
+        template_path (str): File path of template to check
+
+    Returns:
+        (bool) Returns true if the template exists, otherwise returns false
+    """
+    template_path = os.path.join(
+        os.path.dirname(__file__),
+        template_path,
+    )
+    return os.path.exists(template_path)

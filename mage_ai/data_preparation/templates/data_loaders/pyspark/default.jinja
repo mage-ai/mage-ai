@@ -1,0 +1,19 @@
+{% extends "testable.jinja" %}
+{% block imports %}
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+{% endblock %}
+
+{% block content %}
+@data_loader
+def load_data(**kwargs):
+    """
+    Template code for loading data from any source.
+
+    Returns:
+        DataFrame: Returned pandas data frame.
+    """
+    # Specify your data loading logic here
+{{ code }}
+    return None
+{% endblock %}
