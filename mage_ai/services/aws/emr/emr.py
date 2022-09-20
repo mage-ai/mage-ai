@@ -312,12 +312,12 @@ def __status_poller(intro, done_status, func):
         done_status,
     ]
 
-    base_sleep_time = 60
+    base_sleep_time = 30
     tries = 0
 
     random.seed()
     time.sleep(random.randrange(base_sleep_time))
-    while status not in statuses:
+    while True:
         tries += 1
         prev_status = status
         try:
@@ -335,6 +335,8 @@ def __status_poller(intro, done_status, func):
         else:
             print(status, end='')
         sys.stdout.flush()
+        if status in statuses:
+            break
         time.sleep(sleep_time)
     print()
     emr_basics.logger.setLevel(logging.INFO)
