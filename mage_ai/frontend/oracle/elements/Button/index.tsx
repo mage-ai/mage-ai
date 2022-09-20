@@ -11,7 +11,6 @@ import light from '@oracle/styles/themes/light';
 import { BLUE_GRADIENT, PURPLE_PINK_GRADIENT } from '@oracle/styles/colors/main';
 import {
   BORDER_RADIUS,
-  BORDER_RADIUS_SMALL,
   BORDER_STYLE,
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
@@ -38,6 +37,7 @@ export type ButtonProps = {
   beforeIcon?: any;
   borderColor?: string;
   borderLess?: boolean;
+  borderRadius?: number;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
@@ -72,11 +72,11 @@ export type ButtonProps = {
   selected?: boolean;
   selectedAlt?: boolean;
   small?: boolean;
-  smallBorderRadius?: boolean;
   success?: boolean;
   target?: string;
   title?: string;
   transparent?: boolean;
+  warning?: boolean;
   width?: number;
 };
 
@@ -158,8 +158,8 @@ const SHARED_STYLES = css<{
     border: none;
   `}
 
-  ${props => props.smallBorderRadius && `
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+  ${props => props.borderRadius && `
+    border-radius: ${props.borderRadius}px;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `
@@ -184,6 +184,11 @@ const SHARED_STYLES = css<{
 
   ${props => props.success && `
     background-color: ${(props.theme.background || dark.background).success};
+    color: ${(props.theme.content || dark.content).inverted};
+  `}
+
+  ${props => props.warning && `
+    background-color: ${(props.theme.accent || dark.accent).warning};
     color: ${(props.theme.content || dark.content).inverted};
   `}
 

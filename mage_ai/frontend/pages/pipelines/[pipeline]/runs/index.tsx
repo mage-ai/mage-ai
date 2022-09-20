@@ -74,7 +74,10 @@ function PipelineRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const { data: dataPipelineRuns } = api.pipeline_runs.list({
+  const {
+    data: dataPipelineRuns,
+    mutate: fetchPipelineRuns,
+  } = api.pipeline_runs.list({
     pipeline_uuid: pipelineUUID,
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
@@ -123,16 +126,17 @@ function PipelineRuns({
 
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
+      fetchPipelineRuns={fetchPipelineRuns}
       onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
         const run = pipelineRuns[rowIndex];
 
         return prev?.id !== run.id ? run : null
       })}
-      pipeline={pipeline}
       pipelineRuns={pipelineRuns}
       selectedRun={selectedRun}
     />
   ), [
+    fetchPipelineRuns,
     pipeline,
     pipelineRuns,
     selectedRun,

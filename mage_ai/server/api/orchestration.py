@@ -168,9 +168,6 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
 
         self.write(dict(pipeline_run=pipeline_run_dict))
 
-    def put(self, pipeline_run_id):
-        super().put(pipeline_run_id)
-
 
 class ApiPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
@@ -191,7 +188,6 @@ class ApiPipelineRunListHandler(BaseHandler):
         PipelineScheduler(pipeline_run).start()
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
-
 
 class ApiPipelineRunLogHandler(BaseHandler):
     def get(self, pipeline_run_id):

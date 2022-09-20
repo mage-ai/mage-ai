@@ -27,7 +27,6 @@ const SHARED_STYLES = css<{
   noBorder?: boolean;
   selected?: boolean;
 }>`
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 

@@ -53,6 +53,7 @@ import { getFormattedVariables, parseVariables } from '@components/Sidekick/util
 import { indexBy, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
+import { getTimeInUTC } from '../utils';
 
 const TRIGGER_TYPES = [
   {
@@ -143,13 +144,7 @@ function Edit({
       if (startTime) {
         const dateTimeSplit = startTime.split(' ');
         const timePart = dateTimeSplit[1];
-        const startTimeDate = new Date(startTime);
-        const utcTs = Date.UTC(
-          startTimeDate.getFullYear(),
-          startTimeDate.getMonth(),
-          startTimeDate.getDate(),
-        );
-        setDate(new Date(utcTs));
+        setDate(getTimeInUTC(startTime));
         setTime(timePart.substring(0, 5));
       }
     },
@@ -354,7 +349,7 @@ function Edit({
             <Code default size={1.5 * UNIT} />
             <Spacing mr={1} />
             <Text default>
-              Cron expression
+              Cron e  xpression
             </Text>
           </FlexContainer>,
           <TextInput

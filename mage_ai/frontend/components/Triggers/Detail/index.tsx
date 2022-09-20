@@ -77,6 +77,7 @@ function TriggerDetail({
 
   const {
     data: dataPipelineRuns,
+    mutate: fetchPipelineRuns,
   } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID, {}, {
     refreshInterval: 3000,
     revalidateOnFocus: true,
@@ -86,16 +87,17 @@ function TriggerDetail({
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
   const tablePipelineRuns = useMemo(() => (
     <PipelineRunsTable
+      fetchPipelineRuns={fetchPipelineRuns}
       onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
         const run = pipelineRuns[rowIndex];
 
         return prev?.id !== run.id ? run : null
       })}
-      pipeline={pipeline}
       pipelineRuns={pipelineRuns}
       selectedRun={selectedRun}
     />
   ), [
+    fetchPipelineRuns,
     pipeline,
     pipelineRuns,
     selectedRun,
