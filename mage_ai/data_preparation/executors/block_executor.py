@@ -30,23 +30,18 @@ class BlockExecutor:
         on_start: Callable[[str], None] = None,
         **kwargs,
     ) -> None:
-        tags = self.__build_tags(**kwargs.get('tags', {}))
+        tags = self._build_tags(**kwargs.get('tags', {}))
 
-        self.logger.info('Start executing block.', **tags)
+        self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
         if on_start is not None:
             on_start(self.block_uuid)
         try:
-            self.block.execute_sync(
+            self._execute(
                 analyze_outputs=analyze_outputs,
-                execution_partition=self.execution_partition,
+                callback_url=callback_url,
                 global_vars=global_vars,
-                logger=self.logger,
-                run_all_blocks=True,
                 update_status=update_status,
-            )
-            self.block.run_tests(
-                logger=self.logger,
-                update_tests=False,
+                **kwargs,
             )
         except Exception as e:
             self.logger.info('Failed to execute block.', **tags)
@@ -55,11 +50,32 @@ class BlockExecutor:
             elif callback_url is not None:
                 self.__update_block_run_status(callback_url, 'failed')
             raise e
-        self.logger.info('Finish executing block.', **tags)
+        self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
         if on_complete is not None:
             on_complete(self.block_uuid)
         elif callback_url is not None:
             self.__update_block_run_status(callback_url, 'completed', tags)
+
+    def _execute(
+        self,
+        analyze_outputs: bool = False,
+        callback_url: str = None,
+        global_vars: Dict = None,
+        update_status: bool = False,
+        **kwargs,
+    ):
+        self.block.execute_sync(
+            analyze_outputs=analyze_outputs,
+            execution_partition=self.execution_partition,
+            global_vars=global_vars,
+            logger=self.logger,
+            run_all_blocks=True,
+            update_status=update_status,
+        )
+        self.block.run_tests(
+            logger=self.logger,
+            update_tests=False,
+        )
 
     def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
         response = requests.put(
@@ -78,7 +94,7 @@ class BlockExecutor:
             **tags,
         )
 
-    def __build_tags(self, **kwargs):
+    def _build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
             block_type=self.block.type,
             block_uuid=self.block.uuid,

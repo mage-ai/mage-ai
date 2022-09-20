@@ -295,7 +295,9 @@ def get_block_output_process_code(
             block_type not in [BlockType.DATA_LOADER, BlockType.TRANSFORMER]:
         return None
     return f"""%%local
+from mage_ai.data_preparation.models.constants import BlockStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
+
 import pandas
 
 block_uuid=\'{block_uuid}\'
@@ -306,6 +308,7 @@ block = pipeline.get_block(block_uuid)
 variable_mapping = dict(df=df)
 block.store_variables(variable_mapping)
 block.analyze_outputs(variable_mapping)
+block.update_status(BlockStatus.EXECUTED)
     """
 
 

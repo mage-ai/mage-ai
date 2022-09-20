@@ -122,5 +122,5 @@ class ApiPipelineBlockOutputHandler(BaseHandler):
         block = pipeline.get_block(block_uuid)
         if block is None:
             raise Exception(f'Block {block_uuid} does not exist in pipeline {pipeline_uuid}')
-        outputs = block.get_outputs(sample_count=None)
+        outputs = block.get_outputs(include_print_outputs=False, sample_count=None)
         self.write(dict(outputs=outputs))
