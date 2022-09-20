@@ -9,14 +9,22 @@ import yaml
 
 
 class RepoConfig:
-    def __init__(self, repo_path: str = None):
+    def __init__(self, repo_path: str = None, config_dict: Dict = None):
         self.repo_path = repo_path or get_repo_path()
         self.repo_name = os.path.basename(self.repo_path)
         self.variables_dir = self.repo_path
         try:
-            with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
-                config_file = Template(f.read()).render(env_var=os.getenv)
-                repo_config = yaml.full_load(config_file) or {}
+            if not config_dict:
+                metadata_path = os.path.join(self.repo_path, 'metadata.yaml')
+                if os.path.exists(metadata_path):
+                    with open(os.path.join(self.repo_path, 'metadata.yaml')) as f:
+                        config_file = Template(f.read()).render(env_var=os.getenv)
+                        repo_config = yaml.full_load(config_file) or {}
+                else:
+                    repo_config = dict()
+            else:
+                repo_config = config_dict
+
             self.variables_dir = repo_config.get('variables_dir', self.repo_path)
             if self.variables_dir is not None and not self.variables_dir.startswith('s3'):
                 self.variables_dir = os.path.abspath(
@@ -40,14 +48,8 @@ class RepoConfig:
 
     @classmethod
     def from_dict(self, config_dict: Dict) -> 'RepoConfig':
-        repo_config = RepoConfig()
-        repo_config.ecs_config = config_dict.get('ecs_config')
-        repo_config.emr_config = config_dict.get('emr_config')
-        repo_config.notification_config = config_dict.get('notification_config')
-        repo_config.repo_path = config_dict.get('repo_path')
-        repo_config.repo_name = os.path.basename(repo_config.repo_path)
-        repo_config.variables_dir = config_dict.get('variables_dir')
-        repo_config.remote_variables_dir = config_dict.get('remote_variables_dir')
+        repo_path = config_dict.get('repo_path')
+        repo_config = RepoConfig(repo_path=repo_path, config_dict=config_dict)
         return repo_config
 
     def to_dict(self, remote: bool = False) -> Dict:
