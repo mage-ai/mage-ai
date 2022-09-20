@@ -177,6 +177,12 @@ exploring the code base.
 
 <br />
 
+# 🤔 Frequently Asked Questions (FAQs)
+
+Check out our [FAQ page](https://www.notion.so/mageai/Mage-FAQs-33d93ee65f934ed39568f8a4bc823b39) to find answers to some of our most asked questions.
+
+<br />
+
 # 🧙 Community
 We love the community of Magers (`/ˈmājər/`);
 a group of mages who help each other realize their full potential!
