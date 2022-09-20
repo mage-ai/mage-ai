@@ -36,18 +36,7 @@ class BlockExecutor:
         if on_start is not None:
             on_start(self.block_uuid)
         try:
-            self.block.execute_sync(
-                analyze_outputs=analyze_outputs,
-                execution_partition=self.execution_partition,
-                global_vars=global_vars,
-                logger=self.logger,
-                run_all_blocks=True,
-                update_status=update_status,
-            )
-            self.block.run_tests(
-                logger=self.logger,
-                update_tests=False,
-            )
+            self._execute()
         except Exception as e:
             self.logger.info('Failed to execute block.', **tags)
             if on_failure is not None:
@@ -60,6 +49,26 @@ class BlockExecutor:
             on_complete(self.block_uuid)
         elif callback_url is not None:
             self.__update_block_run_status(callback_url, 'completed', tags)
+
+    def _execute(
+        self,
+        analyze_outputs: bool = False,
+        callback_url: str = None,
+        global_vars: Dict = None,
+        update_status: bool = False,
+    ):
+        self.block.execute_sync(
+            analyze_outputs=analyze_outputs,
+            execution_partition=self.execution_partition,
+            global_vars=global_vars,
+            logger=self.logger,
+            run_all_blocks=True,
+            update_status=update_status,
+        )
+        self.block.run_tests(
+            logger=self.logger,
+            update_tests=False,
+        )
 
     def __update_block_run_status(self, callback_url: str, status: str, tags: dict):
         response = requests.put(

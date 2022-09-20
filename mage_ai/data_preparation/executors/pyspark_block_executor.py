@@ -18,7 +18,7 @@ class PySparkBlockExecutor(BlockExecutor):
         self.s3_bucket = pipeline.repo_config.s3_bucket
         self.s3_path_prefix = pipeline.repo_config.s3_path_prefix
 
-    def execute(
+    def _execute(
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
