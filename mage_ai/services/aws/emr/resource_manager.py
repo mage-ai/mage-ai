@@ -6,7 +6,12 @@ import os
 class EmrResourceManager:
     def __init__(self, s3_bucket, s3_path_prefix):
         self.s3_bucket = s3_bucket
-        self.s3_path_prefix = s3_path_prefix
+        self.s3_path_prefix = s3_path_prefix or ''
+        if self.s3_bucket is None:
+            raise Exception('Please specify the correct s3_bucket to initialize EMR cluster.'
+                            'Add "remote_variables_dir: s3://[bucket]/[path]" to'
+                            ' project\'s metadata.yaml file.'
+                            )
 
     @property
     def bootstrap_script_path(self) -> str:

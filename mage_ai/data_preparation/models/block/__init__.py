@@ -327,7 +327,13 @@ class Block:
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
         else:
-            load_template(block_type, config, file_path, language=language)
+            load_template(
+                block_type,
+                config,
+                file_path,
+                language=language,
+                pipeline_type=pipeline.type if pipeline is not None else None,
+            )
 
         block = self.block_class_from_type(block_type)(
             name,
