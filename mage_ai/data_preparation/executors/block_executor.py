@@ -32,7 +32,7 @@ class BlockExecutor:
     ) -> None:
         tags = self.__build_tags(**kwargs.get('tags', {}))
 
-        self.logger.info('Start executing block.', **tags)
+        self.logger.info(f'Start executing block with {self.__class__.__name__}.', **tags)
         if on_start is not None:
             on_start(self.block_uuid)
         try:
@@ -44,7 +44,7 @@ class BlockExecutor:
             elif callback_url is not None:
                 self.__update_block_run_status(callback_url, 'failed')
             raise e
-        self.logger.info('Finish executing block.', **tags)
+        self.logger.info(f'Finish executing block with {self.__class__.__name__}.', **tags)
         if on_complete is not None:
             on_complete(self.block_uuid)
         elif callback_url is not None:

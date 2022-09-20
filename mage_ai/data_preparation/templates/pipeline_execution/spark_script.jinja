@@ -71,6 +71,7 @@ if __name__ == '__main__':
                 block = pipeline.get_block(block_uuid)
                 block.execute_sync(
                     analyze_outputs=False,
+                    execution_partition={{ execution_partition_str }},
                     global_vars=global_vars,
                     update_status=False,
                 )

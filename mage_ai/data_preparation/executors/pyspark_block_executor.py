@@ -51,6 +51,8 @@ class PySparkBlockExecutor(BlockExecutor):
             'pipeline_execution/spark_script.jinja',
         ).render(
             block_uuid=f'\'{self.block_uuid}\'',
+            execution_partition_str=f'\'{self.execution_partition}\''
+                                    if self.execution_partition is not None else None,
             global_vars=global_vars,
             pipeline_config=self.pipeline.to_dict(include_content=True),
             pipeline_uuid=self.pipeline.uuid,
