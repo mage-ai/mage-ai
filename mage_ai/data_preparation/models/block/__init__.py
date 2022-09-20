@@ -883,6 +883,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.__update_pipeline_block(widget=widget)
         return self
 
+    def update_status(self, status: BlockStatus):
+        self.status = status
+        self.__update_pipeline_block(widget=BlockType.CHART == self.type)
+
     def get_all_upstream_blocks(self) -> List['Block']:
         queue = Queue()
         visited = set()
