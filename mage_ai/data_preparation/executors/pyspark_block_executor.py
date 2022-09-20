@@ -9,8 +9,8 @@ import os
 
 
 class PySparkBlockExecutor(BlockExecutor):
-    def __init__(self, pipeline: Pipeline, block_uuid: str):
-        super().__init__(pipeline, block_uuid)
+    def __init__(self, pipeline: Pipeline, block_uuid: str, execution_partition: str = None):
+        super().__init__(pipeline, block_uuid, execution_partition=execution_partition)
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,
             pipeline.repo_config.s3_path_prefix,
@@ -23,6 +23,7 @@ class PySparkBlockExecutor(BlockExecutor):
         analyze_outputs: bool = False,
         global_vars: Dict = None,
         update_status: bool = False,
+        **kwargs,
     ) -> None:
         """
         Run block in a spark cluster
