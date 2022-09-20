@@ -731,7 +731,8 @@ class Block:
     def get_outputs(
         self,
         execution_partition: str = None,
-        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW
+        include_print_outputs: bool = True,
+        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -748,6 +749,10 @@ class Block:
             self.uuid,
             partition=execution_partition,
         )
+
+        if not include_print_outputs:
+            all_variables = [v for v in all_variables if v in self.output_variables.keys()
+                             or v.startswith('output')]
 
         for v in all_variables:
             data = variable_manager.get_variable(
