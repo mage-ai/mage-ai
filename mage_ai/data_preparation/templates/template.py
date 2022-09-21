@@ -1,13 +1,19 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineType,
+)
 from mage_ai.data_preparation.templates.utils import (
     read_template_file,
     template_env,
+    template_exists,
     write_template,
 )
 from mage_ai.io.base import DataSource
 from typing import Mapping, Union
 import json
+import os
 
 
 MAP_DATASOURCE_TO_HANDLER = {
@@ -46,19 +52,19 @@ def fetch_template_source(
     block_type: Union[BlockType, str],
     config: Mapping[str, str],
     language: BlockLanguage = BlockLanguage.PYTHON,
+    pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     template_source = ''
 
     if BlockLanguage.PYTHON == language:
         if block_type == BlockType.DATA_LOADER:
-            template_source = __fetch_data_loader_templates(config)
+            template_source = __fetch_data_loader_templates(config, pipeline_type=pipeline_type)
         elif block_type == BlockType.TRANSFORMER:
-            template_source = __fetch_transformer_templates(config)
+            template_source = __fetch_transformer_templates(config, pipeline_type=pipeline_type)
         elif block_type == BlockType.DATA_EXPORTER:
-            template_source = __fetch_data_exporter_templates(config)
+            template_source = __fetch_data_exporter_templates(config, pipeline_type=pipeline_type)
         elif block_type == BlockType.SENSOR:
             template_source = __fetch_sensor_templates(config)
-
     return template_source
 
 
@@ -67,19 +73,36 @@ def load_template(
     config: Mapping[str, str],
     dest_path: str,
     language: BlockLanguage = BlockLanguage.PYTHON,
+    pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> None:
-    template_source = fetch_template_source(block_type, config, language=language)
+    template_source = fetch_template_source(
+        block_type,
+        config,
+        language=language,
+        pipeline_type=pipeline_type,
+    )
     write_template(template_source, dest_path)
 
 
-def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
+def __fetch_data_loader_templates(
+    config: Mapping[str, str],
+    pipeline_type: PipelineType = PipelineType.PYTHON,
+) -> str:
     data_source = config.get('data_source')
-    try:
-        _ = DataSource(data_source)
-        template_path = f'data_loaders/{data_source.lower()}.py'
-    except ValueError:
-        template_path = 'data_loaders/default.jinja'
+    if pipeline_type == PipelineType.PYSPARK:
+        template_folder = 'data_loaders/pyspark'
+    else:
+        template_folder = 'data_loaders'
 
+    default_template = os.path.join(template_folder, 'default.jinja')
+    if data_source is None:
+        template_path = default_template
+    else:
+        data_source_template = os.path.join(template_folder, f'{data_source.lower()}.py')
+        if template_exists(data_source_template):
+            template_path = data_source_template
+        else:
+            template_path = default_template
     return (
         template_env.get_template(template_path).render(
             code=config.get('existing_code', ''),
@@ -88,7 +111,10 @@ def __fetch_data_loader_templates(config: Mapping[str, str]) -> str:
     )
 
 
-def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
+def __fetch_transformer_templates(
+    config: Mapping[str, str],
+    pipeline_type: PipelineType = PipelineType.PYTHON,
+) -> str:
     action_type = config.get('action_type')
     axis = config.get('axis')
     data_source = config.get('data_source')
@@ -103,8 +129,12 @@ def __fetch_transformer_templates(config: Mapping[str, str]) -> str:
     elif action_type is not None and axis is not None:
         return __fetch_transformer_action_template(action_type, axis, existing_code)
     else:
+        if pipeline_type == PipelineType.PYSPARK:
+            template_path = 'transformers/default_pyspark.jinja'
+        else:
+            template_path = 'transformers/default.jinja'
         return (
-            template_env.get_template('transformers/default.jinja').render(
+            template_env.get_template(template_path).render(
                 code=existing_code,
             )
             + '\n'
@@ -142,13 +172,25 @@ def __fetch_transformer_action_template(action_type: ActionType, axis: Axis, exi
     return template.render(code=existing_code) + '\n'
 
 
-def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
+def __fetch_data_exporter_templates(
+    config: Mapping[str, str],
+    pipeline_type: PipelineType = PipelineType.PYTHON,
+) -> str:
     data_source = config.get('data_source')
-    try:
-        _ = DataSource(data_source)
-        template_path = f'data_exporters/{data_source.lower()}.py'
-    except ValueError:
-        template_path = 'data_exporters/default.jinja'
+    if pipeline_type == PipelineType.PYSPARK:
+        template_folder = 'data_exporters/pyspark'
+    else:
+        template_folder = 'data_exporters'
+
+    default_template = os.path.join(template_folder, 'default.jinja')
+    if data_source is None:
+        template_path = default_template
+    else:
+        data_source_template = os.path.join(template_folder, f'{data_source.lower()}.py')
+        if template_exists(data_source_template):
+            template_path = data_source_template
+        else:
+            template_path = default_template
 
     return (
         template_env.get_template(template_path).render(
@@ -156,6 +198,7 @@ def __fetch_data_exporter_templates(config: Mapping[str, str]) -> str:
         )
         + '\n'
     )
+
 
 def __fetch_sensor_templates(config: Mapping[str, str]) -> str:
     data_source = config.get('data_source')

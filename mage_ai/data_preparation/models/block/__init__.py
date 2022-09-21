@@ -327,7 +327,13 @@ class Block:
             if pipeline is not None and pipeline.has_block(uuid):
                 raise Exception(f'Block {uuid} already exists. Please use a different name.')
         else:
-            load_template(block_type, config, file_path, language=language)
+            load_template(
+                block_type,
+                config,
+                file_path,
+                language=language,
+                pipeline_type=pipeline.type if pipeline is not None else None,
+            )
 
         block = self.block_class_from_type(block_type)(
             name,
@@ -725,7 +731,8 @@ class Block:
     def get_outputs(
         self,
         execution_partition: str = None,
-        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW
+        include_print_outputs: bool = True,
+        sample_count: int = DATAFRAME_SAMPLE_COUNT_PREVIEW,
     ) -> List[Dict]:
         if self.pipeline is None:
             return
@@ -742,6 +749,10 @@ class Block:
             self.uuid,
             partition=execution_partition,
         )
+
+        if not include_print_outputs:
+            all_variables = [v for v in all_variables if v in self.output_variables.keys()
+                             or v.startswith('output')]
 
         for v in all_variables:
             data = variable_manager.get_variable(
@@ -871,6 +882,10 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             self.file.update_content(content)
             self.__update_pipeline_block(widget=widget)
         return self
+
+    def update_status(self, status: BlockStatus):
+        self.status = status
+        self.__update_pipeline_block(widget=BlockType.CHART == self.type)
 
     def get_all_upstream_blocks(self) -> List['Block']:
         queue = Queue()

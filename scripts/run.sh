@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 PROJECT_NAME="$1"
 PIPELINE="$2"
 

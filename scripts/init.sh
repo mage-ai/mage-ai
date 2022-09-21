@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 PROJECT_NAME="$1"
 
 : "${PROJECT_NAME:="default_repo"}"

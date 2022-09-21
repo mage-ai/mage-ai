@@ -1,0 +1,25 @@
+{% extends "testable.jinja" %}
+{% block imports %}
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+{% endblock %}
+
+{% block content %}
+@transformer
+def transform_df(df, *args, **kwargs):
+    """
+    Template code for a transformer block.
+
+    Add more parameters to this function if this block has multiple parent blocks.
+    There should be one parameter for each output variable from each parent block.
+
+    Args:
+        df: Data frame from parent block.
+
+    Returns:
+        Transformed data frame
+    """
+    # Specify your transformation logic here
+{{ code }}
+    return df
+{% endblock %}

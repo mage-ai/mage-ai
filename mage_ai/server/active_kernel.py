@@ -15,10 +15,12 @@ active_kernel = ActiveKernel()
 def switch_active_kernel(kernel_name: KernelName) -> None:
     print(f'Switch active kernel: {kernel_name}')
     if kernel_managers[kernel_name].is_alive():
+        print(f'Kernel {kernel_name} is already alive.')
         return
 
     for kernel in kernel_managers.values():
         if kernel.is_alive():
+            print(f'Shut down current kernel {kernel}.')
             kernel.request_shutdown()
 
     try:

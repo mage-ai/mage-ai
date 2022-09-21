@@ -2,6 +2,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.models.constants import LOGS_DIR
 import logging
 import os
+import sys
 
 
 class LoggerManager:
@@ -88,7 +89,14 @@ class StreamToLogger(object):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
+        self.terminal = sys.stdout
+
+    def __getattr__(self, attr):
+        return getattr(self.terminal, attr)
 
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self):
+        pass

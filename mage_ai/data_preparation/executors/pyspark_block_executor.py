@@ -1,4 +1,6 @@
+from contextlib import redirect_stdout
 from mage_ai.data_preparation.executors.block_executor import BlockExecutor
+from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.emr import emr
@@ -9,8 +11,8 @@ import os
 
 
 class PySparkBlockExecutor(BlockExecutor):
-    def __init__(self, pipeline: Pipeline, block_uuid: str):
-        super().__init__(pipeline, block_uuid)
+    def __init__(self, pipeline: Pipeline, block_uuid: str, execution_partition: str = None):
+        super().__init__(pipeline, block_uuid, execution_partition=execution_partition)
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,
             pipeline.repo_config.s3_path_prefix,
@@ -18,11 +20,12 @@ class PySparkBlockExecutor(BlockExecutor):
         self.s3_bucket = pipeline.repo_config.s3_bucket
         self.s3_path_prefix = pipeline.repo_config.s3_path_prefix
 
-    def execute(
+    def _execute(
         self,
         analyze_outputs: bool = False,
         global_vars: Dict = None,
         update_status: bool = False,
+        **kwargs,
     ) -> None:
         """
         Run block in a spark cluster
@@ -30,9 +33,11 @@ class PySparkBlockExecutor(BlockExecutor):
         2. Launch or connect to an EMR spark cluster
         3. Submit a spark job
         """
-        self.upload_block_execution_script(global_vars=global_vars)
-        self.resource_manager.upload_bootstrap_script()
-        self.submit_spark_job()
+        stdout = StreamToLogger(self.logger)
+        with redirect_stdout(stdout):
+            self.upload_block_execution_script(global_vars=global_vars)
+            self.resource_manager.upload_bootstrap_script()
+            self.submit_spark_job()
 
     @property
     def spark_script_path(self) -> str:
@@ -50,6 +55,8 @@ class PySparkBlockExecutor(BlockExecutor):
             'pipeline_execution/spark_script.jinja',
         ).render(
             block_uuid=f'\'{self.block_uuid}\'',
+            execution_partition_str=f'\'{self.execution_partition}\''
+                                    if self.execution_partition is not None else None,
             global_vars=global_vars,
             pipeline_config=self.pipeline.to_dict(include_content=True),
             pipeline_uuid=self.pipeline.uuid,
