@@ -1,13 +1,12 @@
 import NextLink from 'next/link';
 import Router from 'next/router';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
-import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import Link from '@oracle/elements/Link';
 import PipelineRunType, { RunStatus, RUN_STATUS_TO_LABEL } from '@interfaces/PipelineRunType';
 import Spacing from '@oracle/elements/Spacing';
@@ -17,14 +16,17 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
+import { PopupContainerStyle } from './Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
 
 function RetryButton({
+  onCancel,
   onSuccess: onSuccessProp,
   pipelineRun,
 }: {
+  onCancel: (run: PipelineRunType) => void;
   onSuccess: () => void;
   pipelineRun: PipelineRunType,
 }) {
@@ -51,11 +53,31 @@ function RetryButton({
     },
   );
   const [showConfirmation, setShowConfirmation] = useState<boolean>();
-  const refConfirmation = useRef(null);
+
+  const retryPipelineRun = useCallback(() => {
+    setShowConfirmation(false);
+    // @ts-ignore
+    createPipelineRun({
+      pipeline_run: {
+        execution_date: pipelineRun?.execution_date,
+        pipeline_schedule_id: pipelineRun?.pipeline_schedule_id,
+        pipeline_uuid: pipelineRun?.pipeline_uuid,
+        variables: pipelineRun?.variables,
+      },
+    });
+  }, [pipelineRun]);
+
+  const cancelPipelineRun = useCallback(() => {
+    setShowConfirmation(false);
+    onCancel({
+      ...pipelineRun,
+      status: RunStatus.CANCELLED,
+    });
+  }, [pipelineRun]);
+                  
 
   return (
     <div
-      ref={refConfirmation}
       style={{
         position: 'relative',
       }}
@@ -66,7 +88,7 @@ function RetryButton({
             <>
               {RunStatus.COMPLETED === status && <Check size={2 * UNIT} />}
               {[RunStatus.FAILED, RunStatus.CANCELLED].includes(status) && (
-                <PlayButtonFilled size={2 * UNIT} />
+                <PlayButtonFilled size={2 * UNIT} inverted={RunStatus.CANCELLED === status} />
               )}
               {[RunStatus.RUNNING].includes(status) && (
                 <Spinner color="white" small />
@@ -76,12 +98,12 @@ function RetryButton({
         }
         borderRadius={BORDER_RADIUS_XXXLARGE}
         danger={RunStatus.FAILED === status}
-        default={RunStatus.CANCELLED === status}
+        default={RunStatus.INITIAL === status}
         notClickable={RunStatus.COMPLETED === status}
         onClick={() => setShowConfirmation(RunStatus.COMPLETED !== status)}
         padding="6px"
         primary={RunStatus.RUNNING === status}
-        warning={RunStatus.INITIAL === status}
+        warning={RunStatus.CANCELLED === status}
       >
         {RUN_STATUS_TO_LABEL[status]}
       </Button>
@@ -89,35 +111,57 @@ function RetryButton({
         onClickOutside={() => setShowConfirmation(false)}
         open={showConfirmation}
       >
-        <FlyoutMenu
-          items={
-            [
-              {
-                label: () => 'Retry pipeline run',
-                // @ts-ignore
-                onClick: () => createPipelineRun({
-                  pipeline_run: {
-                    execution_date: pipelineRun?.execution_date,
-                    pipeline_schedule_id: pipelineRun?.pipeline_schedule_id,
-                    pipeline_uuid: pipelineRun?.pipeline_uuid,
-                    variables: pipelineRun?.variables,
-                  },
-                }),
-                uuid: 'retry_run',
-              },
-              // {
-              //   label: () => 'Cancel',
-              //   onClick: () => setShowConfirmation(false),
-              //   uuid: 'cancel',
-              // },
-            ]
-          }
-          onClickCallback={() => setShowConfirmation(false)}
-          open={showConfirmation}
-          parentRef={refConfirmation}
-          uuid="PipelineRunTable/retry"
-          width={UNIT * 25}
-        />
+        <PopupContainerStyle>
+          {[RunStatus.RUNNING, RunStatus.INITIAL].includes(status) && (
+            <>
+              <Text bold color="#9ECBFF">
+                Run is in progress
+              </Text>
+              <Spacing mb={1} />
+              <Text>
+                This pipeline run is currently ongoing. Retrying will cancel<br />
+                the current pipeline run.
+              </Text>
+              <Text>
+              </Text>
+              <Spacing mt={1}>
+                <FlexContainer>
+                  <Button
+                    onClick={() => {
+                      cancelPipelineRun();
+                      retryPipelineRun();
+                    }}
+                  >
+                    Retry run
+                  </Button>
+                  <Spacing ml={1} />
+                  <Button
+                    onClick={cancelPipelineRun}
+                  >
+                    Cancel run
+                  </Button>
+                </FlexContainer>
+              </Spacing>
+            </>
+          )}
+          {[RunStatus.CANCELLED, RunStatus.FAILED].includes(status) && (
+            <>
+              <Text bold color="#9ECBFF">
+                Run {status}
+              </Text>
+              <Spacing mb={1} />
+              <Text>
+                Retry the run with changes you have made to the pipeline.
+              </Text>
+              <Spacing mb={1} />
+              <Button
+                onClick={retryPipelineRun}
+              >
+                Retry run
+              </Button>
+            </>
+          )}
+        </PopupContainerStyle>
       </ClickOutside>
     </div>
   );
@@ -136,6 +180,30 @@ function PipelineRunsTable({
   pipelineRuns,
   selectedRun,
 }: PipelineRunsTableProps) {
+  const [updatePipelineRun] = useMutation(
+    (pipelineRun: PipelineRunType) =>
+      api.pipeline_runs.useUpdate(pipelineRun.id)({
+        pipeline_run: pipelineRun,
+      }),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            fetchPipelineRuns();
+          },
+          onErrorCallback: ({
+            error: {
+              errors,
+              message,
+            },
+          }) => {
+            console.log(errors, message);
+          },
+        },
+      ),
+    },
+  );
+
   const columnFlex = [null, 1, 2, 1, 1, null];
   const columns: ColumnType[] = [
     {
@@ -246,6 +314,7 @@ function PipelineRunsTable({
         } else {
           arr = [
             <RetryButton
+              onCancel={updatePipelineRun}
               onSuccess={fetchPipelineRuns}
               pipelineRun={pipelineRun}
             />,
