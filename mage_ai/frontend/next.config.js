@@ -1,10 +1,7 @@
 const removeImports = require('next-remove-imports')();
 
 module.exports = removeImports({
-  assetPrefix: "/proxy/6789",
-  publicRuntimeConfig: {
-    basePath: "/proxy/6789",
-  },
+  assetPrefix: "./",
   basePath: "/proxy/6789",
   // async rewrites() {
   //   // Certain cloud notebooks require a base path that affects the app routing.

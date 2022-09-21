@@ -46,10 +46,12 @@ function getHost(){
   const host = getHostCore(windowDefined, LOCALHOST, PORT);
   const protocol = getProtocol(windowDefined, host, LOCALHOST);
 
-  let basePath = '';
-  if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
-    basePath = CLOUD_BASE_PATH;
-  }
+  console.log('host:', host);
+
+  let basePath = CLOUD_BASE_PATH;
+  // if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
+  //   basePath = CLOUD_BASE_PATH;
+  // }
   return `${protocol}${host}${basePath}/api`;
 }
 
