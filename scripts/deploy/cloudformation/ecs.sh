@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 SUBNET="$1"
 PARAMETERS=ParameterKey=SubnetID,ParameterValue=${SUBNET}
