@@ -7,6 +7,7 @@ from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
+from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from typing import Dict
@@ -15,7 +16,10 @@ import traceback
 
 
 class PipelineScheduler:
-    def __init__(self, pipeline_run: PipelineRun) -> None:
+    def __init__(
+        self,
+        pipeline_run: PipelineRun,
+    ) -> None:
         self.pipeline_run = pipeline_run
         self.pipeline = Pipeline.get(pipeline_run.pipeline_uuid)
         logger_manager = LoggerManager.get_logger(
@@ -35,11 +39,20 @@ class PipelineScheduler:
             self.schedule()
 
     def stop(self) -> None:
+        if self.pipeline_run.status not in [PipelineRun.PipelineRunStatus.INITIAL,
+                                            PipelineRun.PipelineRunStatus.RUNNING]:
+            return
+
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
         # Cancel all the block runs
         for b in self.pipeline_run.block_runs:
-            b.update(status=BlockRun.BlockRunStatus.CANCELLED)
+            if b.status in [
+                BlockRun.BlockRunStatus.INITIAL,
+                BlockRun.BlockRunStatus.QUEUED,
+                BlockRun.BlockRunStatus.RUNNING,
+            ]:
+                b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
     def schedule(self) -> None:
         if self.pipeline_run.all_blocks_completed():
@@ -141,6 +154,7 @@ class PipelineScheduler:
                 variables,
                 self.__build_tags(**tags),
             ))
+            execution_process_manager.set_process(self.pipeline_run.id, b.id, proc)
             proc.start()
 
     def __build_tags(self, **kwargs):
@@ -200,6 +214,7 @@ def schedule_all():
             print(f'Failed to schedule {r}')
             traceback.print_exc()
             continue
+    execution_process_manager.clean_up_processes()
 
 
 def schedule_with_event(event: Dict = dict()):
