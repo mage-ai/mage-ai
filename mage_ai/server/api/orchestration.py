@@ -168,6 +168,17 @@ class ApiPipelineRunDetailHandler(BaseDetailHandler):
 
         self.write(dict(pipeline_run=pipeline_run_dict))
 
+    def put(self, pipeline_run_id):
+        """
+        Only allow cancelling a pipeline run with this endpoint
+        """
+        payload = self.get_payload()
+        pipeline_run = PipelineRun.query.get(int(pipeline_run_id))
+        if payload.get('status') == PipelineRun.PipelineRunStatus.CANCELLED:
+            from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+            PipelineScheduler(pipeline_run).stop()
+        self.write(dict(pipeline_run=pipeline_run.to_dict()))
+
 
 class ApiPipelineRunListHandler(BaseHandler):
     datetime_keys = ['execution_date']
@@ -185,9 +196,10 @@ class ApiPipelineRunListHandler(BaseHandler):
         pipeline_run = PipelineRun.create(**payload)
 
         from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
-        PipelineScheduler(pipeline_run).start()
+        PipelineScheduler(pipeline_run).start(should_schedule=False)
 
         self.write(dict(pipeline_run=pipeline_run.to_dict()))
+
 
 class ApiPipelineRunLogHandler(BaseHandler):
     def get(self, pipeline_run_id):
