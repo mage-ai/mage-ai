@@ -2,6 +2,7 @@ from .base import (
     BaseDetailHandler,
     BaseHandler,
 )
+from datetime import datetime
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models import (
     BlockRun,
@@ -193,6 +194,8 @@ class ApiPipelineRunListHandler(BaseHandler):
         payload = self.get_payload()
         payload['pipeline_schedule_id'] = pipeline_schedule.id
         payload['pipeline_uuid'] = pipeline_schedule.pipeline_uuid
+        if payload.get('execution_date') is None:
+            payload['execution_date'] = datetime.now()
         pipeline_run = PipelineRun.create(**payload)
 
         from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
