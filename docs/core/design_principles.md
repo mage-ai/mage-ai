@@ -16,7 +16,7 @@ Open-source engine that comes with a custom notebook UI for building data pipeli
 Build and deploy data pipelines using modular code. No more writing throwaway code or trying to turn notebooks into scripts.
 
 - Writing reusable code is easy because every block in your data pipeline is a standalone file.
-- Data validation is written into each block and tested every time a block is ran.
+- Data validation is written into each block and tested every time a block is run.
 - Operationalizing your data pipelines is easy with built-in observability, data quality monitoring, and lineage.
 - Each block of code has a single responsibility: load data from a source, transform data, or export data anywhere.
 
