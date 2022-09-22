@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from mage_ai.shared.hash import group_by
+from mage_ai.shared.hash import group_by, merge_dict
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun
 from sqlalchemy.orm import joinedload
 from typing import Callable, Dict, List
@@ -31,11 +31,11 @@ class MonitorStats:
             start_time = end_time - timedelta(days=30)
         else:
             start_time = dateutil.parser.parse(start_time)
-        new_kwargs = dict(
+        new_kwargs = merge_dict(dict(
             pipeline_uuid=pipeline_uuid,
             start_time=start_time,
             end_time=end_time,
-        )
+        ), kwargs)
         if stats_type == MonitorStatsType.PIPELINE_RUN_COUNT:
             return self.get_pipeline_run_count(**new_kwargs)
         elif stats_type == MonitorStatsType.PIPELINE_RUN_TIME:
@@ -114,7 +114,13 @@ class MonitorStats:
         block_runs = block_runs.all()
 
         def __stats_func(block_runs):
-            return len(block_runs)
+            count_by_status = dict()
+            for b in block_runs:
+                if b.status in count_by_status:
+                    count_by_status[b.status] += 1
+                else:
+                    count_by_status[b.status] = 1
+            return count_by_status
 
         return self.__cal_block_run_stats(block_runs, __stats_func)
 
@@ -153,6 +159,12 @@ class MonitorStats:
             pipeline_runs = pipeline_runs.filter(PipelineRun.created_at >= start_time)
         if end_time is not None:
             pipeline_runs = pipeline_runs.filter(PipelineRun.created_at <= end_time)
+        pipeline_schedule_id = kwargs.get('pipeline_schedule_id')
+        if pipeline_schedule_id is not None:
+            pipeline_runs = pipeline_runs.filter(
+                PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id)
+            )
+
         return pipeline_runs
 
     def __filter_block_runs(
@@ -178,6 +190,12 @@ class MonitorStats:
             block_runs = block_runs.filter(BlockRun.created_at >= start_time)
         if end_time is not None:
             block_runs = block_runs.filter(BlockRun.created_at <= end_time)
+
+        pipeline_schedule_id = kwargs.get('pipeline_schedule_id')
+        if pipeline_schedule_id is not None:
+            block_runs = block_runs.filter(
+                PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id)
+            )
         return block_runs
 
     def __cal_block_run_stats(
