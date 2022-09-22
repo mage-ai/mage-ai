@@ -303,9 +303,11 @@ class Pipeline:
             block = blocks_by_uuid[b['uuid']]
             block.downstream_blocks = [
                 all_blocks_by_uuid[uuid] for uuid in b.get('downstream_blocks', [])
+                if uuid in all_blocks_by_uuid
             ]
             block.upstream_blocks = [
                 all_blocks_by_uuid[uuid] for uuid in b.get('upstream_blocks', [])
+                if uuid in all_blocks_by_uuid
             ]
 
         return blocks_by_uuid
