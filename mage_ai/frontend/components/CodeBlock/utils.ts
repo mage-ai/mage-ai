@@ -17,6 +17,10 @@ export const getUpstreamBlockUuids = (
     && BlockTypeEnum.SCRATCHPAD !== currentBlock.type
     && BlockTypeEnum.CHART !== newBlock?.type
     && BlockTypeEnum.SCRATCHPAD !== newBlock?.type
+    && (
+      BlockTypeEnum.DATA_LOADER !== newBlock?.type
+        || BlockTypeEnum.SENSOR === currentBlock.type
+    )
   ) {
     upstreamBlocks.push(currentBlock.uuid);
   }

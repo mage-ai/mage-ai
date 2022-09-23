@@ -185,7 +185,8 @@ def load_from_s3_bucket(**kwargs) -> DataFrame:
     object_key = 'your_object_key'
 
     return S3.with_config(ConfigFileLoader(config_path, config_profile)).load(
-        bucket_name, object_key
+        bucket_name,
+        object_key,
     )
 
 
