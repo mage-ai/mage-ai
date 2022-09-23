@@ -769,6 +769,7 @@ function ChartBlock({
     blocksMapping,
     configuration,
     configurationOptions,
+    outputs,
     setSelectedBlock,
     updateConfiguration,
     upstreamBlocks,

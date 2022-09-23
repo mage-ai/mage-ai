@@ -5,7 +5,6 @@
   src="restaurant-food.gif"
 />
 
-
 In this tutorial, we’ll create a data pipeline that does the following:
 
 1. Load data from an online endpoint
@@ -18,6 +17,8 @@ follow [this guide](use_completed_pipeline.md).
 
 If you haven’t setup a project before, check out the [setup guide](../setup.md) before starting.
 
+<br />
+
 ## Table of contents
 
 1. [Create new pipeline](#1-create-new-pipeline)
@@ -25,7 +26,8 @@ If you haven’t setup a project before, check out the [setup guide](../setup.md
 1. [Visualize data](#3-visualize-data)
 1. [Transform data](#4-transform-data)
 1. [Export data to PostgreSQL](#5-export-data-to-postgresql)
-1. [Validate data was exported](#6-validate-data-was-exported)
+
+<br />
 
 ## 1. Create new pipeline
 
@@ -36,6 +38,8 @@ Then, click the name of the pipeline and rename it to `etl demo`.
   alt="create new pipeline"
   src="create-new-pipeline.gif"
 />
+
+<br />
 
 ## 2. Load data
 
@@ -85,6 +89,8 @@ def test_output(df) -> None:
     """
     assert df is not None, 'The output is undefined'
 ```
+
+<br />
 
 ## 3. Visualize data
 
@@ -202,6 +208,8 @@ def test_output(df) -> None:
     assert df is not None, 'The output is undefined'
 ```
 
+<br />
+
 ## 5. Export data to PostgreSQL
 
 ### 5a. Add PostgreSQL credentials in `io_config.yaml` file.
@@ -229,44 +237,48 @@ default:
 
 ### 5b. Export data
 
-1. Click the `+ Data exporter` button, select `Python`, and select the template called `PostgreSQL`.
-1. Set `schema_name` to `public`.
-1. Set `table_name` to `restaurant_data_transformed_something_unique`.
-Note: change the `something_unique` part of the table name to something truly unique since you’ll be writing to the same demo database as others.
+1. Click the `+ Data exporter` button and select `SQL`.
+1. Under the `Data provider` dropdown, select `Postgres`.
+1. Under the `Profile` dropdown, select `default`.
+1. In the input field labeled `Save to schema:`, enter `mage`.
+1. Under the `Write policy` dropdown, select `Replace`.
+1. Enter the following SQL query in the code block: `SELECT * FROM {{ df_1 }}`
 1. Execute the entire pipeline by pressing the `Execute pipeline` button on in your sidekick on the right.
 
-<img
-  alt="export"
-  src="export.gif"
-/>
+![Data exporter SQL](https://github.com/mage-ai/assets/blob/main/pipelines/data-exporter-sql.gif?raw=true)
 
 Your output should look something like this:
 
 ```
+aving current pipeline config for backup. This may take some time...
 [load_dataset] Executing data_loader block...
+[load_dataset] --------------------------------------------------------------
+[load_dataset] 1/1 tests passed.
 [load_dataset] DONE
 [transform_data] Executing transformer block...
+[transform_data] --------------------------------------------------------------
+[transform_data] 1/1 tests passed.
 [transform_data] DONE
-[export_data] Executing data_exporter block...
-[export_data] Postgres initialized
-├─ port_data] └─ Opening connection to PostgreSQL database...DONE
-[export_data] └─ Exporting data frame to table 'public.restaurant_data_transformed_initial_demo'...DONE
-[export_data] DONE
+[morning_sun] Executing data_exporter block...
+[morning_sun] Postgres initialized
+[morning_sun] └─ Opening connection to PostgreSQL database...
+[morning_sun] DONE
+[morning_sun]
+[morning_sun] ├─
+[morning_sun] └─ Exporting data to 'mage.dev_etl_demo_morning_sun_v1'...
+[morning_sun] DONE
+[morning_sun]
+[morning_sun] ├─
+[morning_sun] └─ Loading data...
+[morning_sun] DONE
+[morning_sun] --------------------------------------------------------------
+[morning_sun] 0/0 tests passed.
+[morning_sun] DONE
 Pipeline etl_demo execution complete.
+You can see the code block output in the corresponding code block.
 ```
 
-## 6. Validate data was exported
-
-We can now query the transformed data from PostgreSQL.
-
-1. Click the `+ Data loader` button, select `Python`, and select the template called `PostgreSQL`.
-1. Set `query` to `SELECT * FROM restaurant_data_transformed_initial_demo`.
-1. Run the block.
-
-<img
-  alt="validate"
-  src="validate.gif"
-/>
+<br />
 
 ---
 
