@@ -2,6 +2,12 @@
 
 These are the fundamental concepts that Mage uses to operate.
 
+<img 
+  alt="Wind mage casting" 
+  height="200"
+  src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/earth/thinking.svg"
+/>
+
 ## Table of contents
 
 - [Project](#project)
