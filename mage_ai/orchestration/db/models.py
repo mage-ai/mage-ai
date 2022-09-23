@@ -95,8 +95,9 @@ class PipelineSchedule(BaseModel):
         INACTIVE = 'inactive'
 
     class ScheduleType(str, enum.Enum):
-        TIME = 'time'
+        API = 'api'
         EVENT = 'event'
+        TIME = 'time'
 
     class ScheduleInterval(str, enum.Enum):
         ONCE = '@once'
