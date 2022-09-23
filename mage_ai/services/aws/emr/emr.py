@@ -93,25 +93,13 @@ def create_a_new_cluster(
     cluster_id = response['JobFlowId']
     print(f'Cluster ID: {cluster_id}')
 
-    # There are two levels of auto-termination:
-    #     * Instance level
-    #     * Cluster level
-    # For instance level settings, we already set it to be auto-terminated, i.e.,
-    #
-    #     'KeepJobFlowAliveWhenNoSteps': False,
-    #
-    # which over-writes cluster-level settings at present. For instance level settings,
-    # there were hanging instances if we don’t set it to be auto-terminate somehow. Thus
-    # the cluster-level AutoTerminationPolicy didn’t take effects so far, and would be
-    # commented out for now
-    #
-    # if idle_timeout > 0:
-    #    emr_client.put_auto_termination_policy(
-    #        ClusterId=cluster_id,
-    #        AutoTerminationPolicy={
-    #            'IdleTimeout': idle_timeout
-    #        }
-    #    )
+    if keep_alive and idle_timeout > 0:
+        emr_client.put_auto_termination_policy(
+            ClusterId=cluster_id,
+            AutoTerminationPolicy={
+                'IdleTimeout': idle_timeout
+            }
+        )
 
     if done_status is None:
         return cluster_id
