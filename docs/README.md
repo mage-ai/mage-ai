@@ -26,7 +26,7 @@
     - [Runtime variables](production/runtime_variables.md)
 - Triggering pipelines
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
-    - [Trigger pipeline via API request]()
+    - [Trigger pipeline via API request](triggers/api.md)
     - [Trigger pipeline from AWS Event (WIP)](tutorials/triggers/events/aws.md)
 - Monitoring and alerting
     - [Status updates in Slack](monitoring/alerting/slack.md)
