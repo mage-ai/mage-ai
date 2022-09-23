@@ -36,7 +36,10 @@ export const NodeStyle = styled.div<{
   `}
 
   ${props => (props.isCancelled || props.disabled) && `
-    opacity: 0.5;
+    // opacity doesn’t work on Safari
+    border-color: ${(props.theme.content || dark.content).active};
+    border-style: dashed;
+    cursor: not-allowed;
   `}
 
   ${props => props.disabled && `
