@@ -282,7 +282,11 @@ class ApiPipelineVariableListHandler(BaseHandler):
             dict(
                 block=dict(uuid=uuid),
                 pipeline=dict(uuid=pipeline_uuid),
-                variables=[get_variable_value(uuid, var) for var in arr],
+                variables=[
+                            get_variable_value(uuid, var) for var in arr
+                            # Not return printed outputs
+                            if var == 'df' or var.startswith('output') or uuid == 'global'
+                          ],
             )
             for uuid, arr in variables_dict.items()
         ]

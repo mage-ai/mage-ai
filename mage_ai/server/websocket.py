@@ -190,6 +190,9 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
+        if message.get('data') is None and message.get('error') is None \
+           and message.get('execution_state') is None and message.get('type') is None:
+            return
 
         execution_metadata = message.get('execution_metadata')
         msg_id_value = execution_metadata if execution_metadata is not None \

@@ -84,6 +84,8 @@ def get_content_inside_triple_quotes(parts):
 
 
 def add_internal_output_info(code: str) -> str:
+    if code.startswith('%%sql'):
+        return code
     code_lines = remove_comments(code.split('\n'))
     code_lines = remove_empty_last_lines(code_lines)
 
@@ -118,10 +120,8 @@ def add_internal_output_info(code: str) -> str:
         elif triple_quotes_content:
             return f'{code}\nprint("""\n{triple_quotes_content}\n""")'
 
-    if not last_line or last_line_in_block or re.match('^from|^import', last_line.strip()):
-        return f"""
-{code}
-"""
+    if not last_line or last_line_in_block or re.match('^from|^import|^\%\%', last_line.strip()):
+        return code
     else:
         if matches:
             end_index = len(code_lines)
