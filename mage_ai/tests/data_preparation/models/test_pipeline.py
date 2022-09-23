@@ -38,6 +38,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block1',
                     uuid='block1',
@@ -50,6 +51,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block2',
                     uuid='block2',
@@ -62,6 +64,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block3',
                     uuid='block3',
@@ -74,6 +77,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block4',
                     uuid='block4',
@@ -88,6 +92,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='widget1',
                     uuid='widget1',
@@ -115,6 +120,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block1',
                     uuid='block1',
@@ -127,6 +133,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block2',
                     uuid='block2',
@@ -139,6 +146,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block3',
                     uuid='block3',
@@ -171,6 +179,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block1',
                     uuid='block1',
@@ -183,6 +192,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block2',
                     uuid='block2',
@@ -195,6 +205,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block3',
                     uuid='block3',
@@ -207,6 +218,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block4',
                     uuid='block4',
@@ -245,6 +257,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block1',
                     uuid='block1',
@@ -257,6 +270,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block2',
                     uuid='block2',
@@ -269,6 +283,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block3',
                     uuid='block3',
@@ -281,6 +296,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block4',
                     uuid='block4',
@@ -293,6 +309,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block5',
                     uuid='block5',
@@ -305,6 +322,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block6',
                     uuid='block6',
@@ -317,6 +335,7 @@ class PipelineTest(TestCase):
                 dict(
                     language='python',
                     configuration={},
+                    executor_config=None,
                     executor_type='local_python',
                     name='block7',
                     uuid='block7',
