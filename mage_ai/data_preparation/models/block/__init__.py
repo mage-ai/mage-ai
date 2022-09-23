@@ -88,7 +88,7 @@ async def run_blocks(
         block = blocks.get()
 
         if block.type in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES or \
-            not run_sensors and block.type == BlockType.SENSOR:
+                not run_sensors and block.type == BlockType.SENSOR:
             continue
 
         if tries_by_block_uuid.get(block.uuid, None) is None:
@@ -191,30 +191,33 @@ def run_blocks_sync(
 class Block:
     def __init__(
         self,
-        name,
-        uuid,
-        block_type,
-        content=None,
-        executor_type=ExecutorType.LOCAL_PYTHON,
-        status=BlockStatus.NOT_EXECUTED,
+        name: str,
+        uuid: str,
+        block_type: BlockType,
+        content: str = None,
+        executor_config: Dict = None,
+        executor_type: ExecutorType = ExecutorType.LOCAL_PYTHON,
+        status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
-        language=BlockLanguage.PYTHON,
-        configuration={},
+        language: BlockLanguage = BlockLanguage.PYTHON,
+        configuration: Dict = dict(),
     ):
         self.name = name or uuid
         self.uuid = uuid
         self.type = block_type
         self._content = content
-        self._outputs = None
-        self._outputs_loaded = False
+        self.executor_config = executor_config
         self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
+        self.language = language
+        self.configuration = configuration
+
+        self._outputs = None
+        self._outputs_loaded = False
         self.upstream_blocks = []
         self.downstream_blocks = []
         self.test_functions = []
-        self.language = language
-        self.configuration = configuration
         self.global_vars = {}
 
     @property
@@ -843,6 +846,7 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             ),
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
+            executor_config=self.executor_config,
             executor_type=__format_enum(self.executor_type),
             name=self.name,
             language=language,
