@@ -607,9 +607,18 @@ function Edit({
   ]);
 
   const apiMemo = useMemo(() => {
-    const url = typeof window === 'undefined'
+    let url = typeof window === 'undefined'
       ? ''
       : `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+
+    let port;
+    if (typeof window !== 'undefined') {
+      port = window.location.port;
+
+      if (port) {
+        url = url.replace(port, '6789');
+      }
+    }
 
     return (
       <>
@@ -692,10 +701,10 @@ function Edit({
 }
 `}
             >
-            <CodeBlock
-              language="json"
-              small
-              source={`
+              <CodeBlock
+                language="json"
+                small
+                source={`
     {
       "pipeline_run": {
         "variables": {
@@ -705,8 +714,34 @@ function Edit({
       }
     }
 `}
-            />
+              />
             </CopyToClipboard>
+          </Spacing>
+        </Spacing>
+
+        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+          <Headline>
+            Sample cURL command
+          </Headline>
+
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <CodeBlock
+              language="bash"
+              small
+              source={`
+    curl -X POST ${url} \\
+      --header 'Content-Type: application/json' \\
+      --data '
+    {
+      "pipeline_run": {
+        "variables": {
+          "key1": "value1",
+          "key2": "value2"
+        }
+      }
+    }'
+`}
+            />
           </Spacing>
         </Spacing>
       </>
