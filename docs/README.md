@@ -1,8 +1,18 @@
 # 📚 Documentation
 
+Read more tech docs here. Got questions?
+
+[![Join us on Slack](https://img.shields.io/badge/%20-Join%20us%20on%20Slack-black?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+
+<img 
+  alt="Wind mage looking" 
+  height="200"
+  src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/wind/looking.svg"
+/>
+
 ## Table of contents
 
-### Development experience
+#### Development experience
 - [Setup and install](tutorials/quick_start/setup.md)
 - [Tutorials](tutorials/README.md)
 - Concepts
@@ -17,7 +27,7 @@
     - [Data validation](testing/README.md#data-validation)
 - [Templates](#templates)
 
-### Production
+#### Production
 - Deploying to cloud
     - [Using Terraform](deploy/terraform/README.md)
     - [AWS](deploy/aws/README.md)
