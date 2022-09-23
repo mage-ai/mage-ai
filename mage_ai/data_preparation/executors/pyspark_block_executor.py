@@ -6,6 +6,7 @@ from mage_ai.data_preparation.templates.utils import template_env
 from mage_ai.services.aws.emr import emr
 from mage_ai.services.aws.emr.resource_manager import EmrResourceManager
 from mage_ai.services.aws.s3 import s3
+from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import os
 
@@ -19,6 +20,9 @@ class PySparkBlockExecutor(BlockExecutor):
         )
         self.s3_bucket = pipeline.repo_config.s3_bucket
         self.s3_path_prefix = pipeline.repo_config.s3_path_prefix
+        self.executor_config = self.pipeline.repo_config.emr_config
+        if self.block.executor_config is not None:
+            self.executor_config = merge_dict(self.executor_config, self.block.executor_config)
 
     def _execute(
         self,
@@ -76,6 +80,6 @@ class PySparkBlockExecutor(BlockExecutor):
             cluster_name=step['name'],
             steps=[step],
             bootstrap_script_path=self.resource_manager.bootstrap_script_path,
-            emr_config=self.pipeline.repo_config.emr_config,
+            emr_config=self.executor_config,
             log_uri=self.resource_manager.log_uri,
         )

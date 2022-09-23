@@ -267,6 +267,7 @@ class Pipeline:
                 block_type,
                 configuration=c.get('configuration'),
                 content=c.get('content'),
+                executor_config=c.get('executor_config'),
                 executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
                 language=c.get('language'),
                 pipeline=self,
