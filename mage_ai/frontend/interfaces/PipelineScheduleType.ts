@@ -1,11 +1,13 @@
 import EventMatcherType from './EventMatcherType';
 
 export enum ScheduleTypeEnum {
+  API = 'api',
   EVENT = 'event',
   TIME = 'time',
 }
 
 export const SCHEDULE_TYPE_TO_LABEL = {
+  [ScheduleTypeEnum.API]: () => 'API',
   [ScheduleTypeEnum.EVENT]: () => 'event',
   [ScheduleTypeEnum.TIME]: () => 'schedule',
 };

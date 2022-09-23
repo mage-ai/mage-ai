@@ -128,7 +128,7 @@ class PipelineSchedule(BaseModel):
 
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
-        if schedule_interval not in [e.value for e in self.__class__.ScheduleInterval]:
+        if schedule_interval and schedule_interval not in [e.value for e in self.__class__.ScheduleInterval]:
             if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
 

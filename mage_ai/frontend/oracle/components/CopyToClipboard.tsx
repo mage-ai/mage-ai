@@ -6,7 +6,9 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Link, { LinkProps } from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import Tooltip from '@oracle/components/Tooltip';
 import { Copy } from '@oracle/icons';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 export enum IconPositionEnum {
   LEFT = 'left',
@@ -20,6 +22,7 @@ type CopyProps = {
   inverted?: boolean;
   linkProps?: LinkProps;
   linkText?: string;
+  monospace?: boolean;
   muted?: boolean;
   small?: boolean;
   toastMessage?: string;
@@ -33,6 +36,7 @@ function CopyToClipboard({
   inverted,
   linkProps,
   linkText,
+  monospace,
   muted,
   small,
   toastMessage,
@@ -60,12 +64,12 @@ function CopyToClipboard({
           {iconPosition === IconPositionEnum.LEFT && (
             <Spacing mr={1}>
               <FlexContainer alignItems="center">
-                <Copy inverted={inverted} muted={muted} />
+                <Copy inverted={inverted} muted={muted} size={UNIT * 2} />
               </FlexContainer>
             </Spacing>
           )}
           {linkText && (
-            <Text inverted={inverted} muted={muted} small={small}>
+            <Text inverted={inverted} monospace={monospace} muted={muted} small={small}>
               {linkText}
             </Text>
           )}
@@ -84,18 +88,25 @@ function CopyToClipboard({
   const buildMessage = () => toastMessage || 'Successfully copied to clipboard.';
 
   return (
-    <CopyClipboard
-      onCopy={() => toast.success(
-        buildMessage(),
-        {
-          position: toast.POSITION.BOTTOM_RIGHT,
-          toastId: copiedText,
-        },
-      )}
-      text={copiedText}
+    <Tooltip
+      block
+      label="Copy"
+      size={null}
+      widthFitContent
     >
-      {el}
-    </CopyClipboard>
+      <CopyClipboard
+        onCopy={() => toast.success(
+          buildMessage(),
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: copiedText,
+          },
+        )}
+        text={copiedText}
+      >
+        {el}
+      </CopyClipboard>
+    </Tooltip>
   );
 }
 

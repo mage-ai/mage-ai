@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
+import CopyToClipboard from '@oracle/components/CopyToClipboard';
 import ErrorPopup from '@components/ErrorPopup';
 import EventMatcherType, { PROVIDER_EVENTS } from '@interfaces/EventMatcherType';
 import EventRuleType from '@interfaces/EventRuleType';
@@ -63,8 +64,13 @@ const TRIGGER_TYPES = [
   },
   {
     label: () => 'Event',
-    description: () => 'This pipeline will run when a specific event occurs',
+    description: () => 'This pipeline will run when a specific event occurs.',
     uuid: ScheduleTypeEnum.EVENT,
+  },
+  {
+    label: () => 'API',
+    description: () => 'Run this pipeline when you make an API call.',
+    uuid: ScheduleTypeEnum.API,
   },
 ];
 
@@ -349,7 +355,7 @@ function Edit({
             <Code default size={1.5 * UNIT} />
             <Spacing mr={1} />
             <Text default>
-              Cron e  xpression
+              Cron expression
             </Text>
           </FlexContainer>,
           <TextInput
@@ -388,8 +394,6 @@ function Edit({
     showCalendar,
     time,
   ]);
-
-
 
   const updateEventMatcher = useCallback((idx, data: {
     [key: string]: string;
@@ -602,6 +606,117 @@ function Edit({
     name,
   ]);
 
+  const apiMemo = useMemo(() => {
+    const url = typeof window === 'undefined'
+      ? ''
+      : `${window.origin}/api/pipeline_schedules/${pipelineSchedule?.id}/pipeline_runs`;
+
+    return (
+      <>
+        <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
+          <Headline>
+            Settings
+          </Headline>
+        </Spacing>
+
+        <Divider light short />
+
+        <Table
+          columnFlex={[null, 1]}
+          rows={[
+            [
+              <FlexContainer alignItems="center">
+                <Alphabet default size={1.5 * UNIT} />
+                <Spacing mr={1} />
+                <Text default>
+                  Trigger name
+                </Text>
+              </FlexContainer>,
+              <TextInput
+                monospace
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSchedule(s => ({
+                    ...s,
+                    name: e.target.value,
+                  }));
+                }}
+                placeholder="Name this trigger"
+                value={name}
+              />,
+            ],
+          ]}
+        />
+
+        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+          <Headline>
+            Endpoint
+          </Headline>
+
+          <Text muted>
+            Make a <Text bold inline monospace>
+              POST
+            </Text> request to the following endpoint:
+          </Text>
+
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <CopyToClipboard
+              monospace
+              withCopyIcon
+              copiedText={url}
+              linkText={url}
+            />
+          </Spacing>
+        </Spacing>
+
+        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+          <Headline>
+            Payload
+          </Headline>
+
+          <Text muted>
+            You can optionally include runtime variables in your request payload.
+            These runtime variables are accessible from within each pipeline block.
+          </Text>
+
+          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+            <CopyToClipboard
+              withCopyIcon
+              copiedText={`{
+  "pipeline_run": {
+    "variables": {
+      "key1": "value1",
+      "key2": "value2"
+    }
+  }
+}
+`}
+            >
+            <CodeBlock
+              language="json"
+              small
+              source={`
+    {
+      "pipeline_run": {
+        "variables": {
+          "key1": "value1",
+          "key2": "value2"
+        }
+      }
+    }
+`}
+            />
+            </CopyToClipboard>
+          </Spacing>
+        </Spacing>
+      </>
+    );
+  }, [
+    name,
+    pipelineSchedule,
+    typeof window,
+  ]);
+
   const saveButtonDisabled = !scheduleType || (
     ScheduleTypeEnum.TIME === scheduleType && !(scheduleInterval && date)
   ) || (
@@ -804,6 +919,7 @@ function Edit({
         <Spacing mt={5}>
           {ScheduleTypeEnum.TIME === scheduleType && detailsMemo}
           {ScheduleTypeEnum.EVENT === scheduleType && eventsMemo}
+          {ScheduleTypeEnum.API === scheduleType && apiMemo}
         </Spacing>
 
       </PipelineDetailPage>
