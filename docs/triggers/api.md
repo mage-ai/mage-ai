@@ -76,8 +76,7 @@ you want.
 Here is a sample cURL command using the examples listed above:
 
 ```bash
-curl --request POST \
-  --url http://localhost:6789/api/pipeline_schedules/3/pipeline_runs \
+curl -X POST http://localhost:6789/api/pipeline_schedules/3/pipeline_runs \
   --header 'Content-Type: application/json' \
   --data '
 {
