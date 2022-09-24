@@ -6,6 +6,8 @@
   height="100"
 />
 
+<br />
+
 ## Add credentials in `io_config.yaml`
 
 1. Create a new pipeline or open an existing pipeline.

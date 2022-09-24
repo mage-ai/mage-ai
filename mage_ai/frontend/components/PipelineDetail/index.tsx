@@ -43,6 +43,7 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -423,18 +424,10 @@ function PipelineDetail({
 
               let content = null;
               let configuration = {};
-              const upstreamBlocks = [];
+              let upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
               if (block) {
                 configuration = block.configuration;
-
-                if (BlockTypeEnum.CHART !== block.type
-                  && BlockTypeEnum.SCRATCHPAD !== block.type
-                  && BlockTypeEnum.CHART !== newBlock.type
-                  && BlockTypeEnum.SCRATCHPAD !== newBlock.type
-                ) {
-                  upstreamBlocks.push(block.uuid);
-                }
 
                 if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
                   && BlockTypeEnum.SCRATCHPAD === newBlock.type

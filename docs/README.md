@@ -53,7 +53,7 @@ Read more tech docs here. Got questions?
     - [PostgreSQL](integrations/PostgreSQL.md)
     - [Redshift](integrations/Redshift.md)
     - [S3]()
-    - [Snowflake]()
+    - [Snowflake](integrations/Snowflake.md)
 - Existing tools
     - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
     - [Prefect](production/prefect.md)
