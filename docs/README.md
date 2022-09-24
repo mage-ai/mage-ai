@@ -10,10 +10,11 @@ Read more tech docs here. Got questions?
   src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/wind/looking.svg"
 />
 
+## Directory
+
 #### Getting started
 - [Setup and install](tutorials/quick_start/setup.md)
-- Data pipeline management
-    - [UI overview](features/orchestration/README.md)
+- [Data pipeline management](features/orchestration/README.md)
 - [Kernels](kernels/README.md)
 
 #### Tutorials
@@ -35,9 +36,17 @@ Read more tech docs here. Got questions?
     - [Status updates in Slack](monitoring/alerting/slack.md)
 
 #### Integrations
-- [Spark and PySpark](spark/setup/README.md)
-- [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
-- [Prefect](production/prefect.md)
+- Compute
+    - [Spark / PySpark](spark/setup/README.md)
+- Databases, data warehouses, data lakes, etc.
+    - [BigQuery](integrations/BigQuery.md)
+    - [Postgres]()
+    - [Redshift]()
+    - [S3]()
+    - [Snowflake]()
+- Existing tools
+    - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
+    - [Prefect](production/prefect.md)
 
 #### Guides
 - Triggering pipelines
@@ -53,7 +62,9 @@ Read more tech docs here. Got questions?
 - [Roadmap](https://airtable.com/shrJS0cDOmQywb8vp)
 - [Changelog](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c)
 
-#### Templates
+<br />
+
+## Templates
 
 ##### `io_config.yaml`
 
