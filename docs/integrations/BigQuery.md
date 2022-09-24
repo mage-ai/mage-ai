@@ -8,7 +8,7 @@
 
 <br />
 
-## Add credentials in `io_config.yaml`
+## Add credentials
 
 Before you begin, you’ll need to create a service account key. Please read Google Cloud’s [documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 on how to create that.
@@ -50,7 +50,7 @@ default:
 1. Next to the `Database` label, enter the database name you want this block to save data to.
 1. Next to the `Save to schema` label, enter the schema name you want this block to save data to.
 1. Under the `Write policy` dropdown, select `Replace` or `Append`
-(please see [SQL blocks guide](../guides/blocks/SQL.md) for more information on write policies).
+(please see [SQL blocks guide](../guides/blocks/SQL.md#configure-sql-block) for more information on write policies).
 1. Enter in this test query: `SELECT 1`.
 1. Run the block.
 

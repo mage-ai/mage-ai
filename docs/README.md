@@ -59,6 +59,7 @@ Read more tech docs here. Got questions?
     - [Prefect](production/prefect.md)
 
 ### Guides
+- [SQL blocks](guides/blocks/SQL.md)
 - Triggering pipelines
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
     - [Trigger pipeline via API request](triggers/api.md)
