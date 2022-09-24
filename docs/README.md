@@ -12,20 +12,30 @@ Read more tech docs here. Got questions?
 
 ## Directory
 
-#### Getting started
+1. [Getting started](#getting-started)
+1. [Tutorials](#tutorials)
+1. [Design](#design)
+1. [Production](#production)
+1. [Integrations](#integrations)
+1. [Guides](#guides)
+1. [About](#about)
+
+<br />
+
+### Getting started
 - [Setup and install](tutorials/quick_start/setup.md)
 - [Data pipeline management](features/orchestration/README.md)
 - [Kernels](kernels/README.md)
 
-#### Tutorials
+### Tutorials
 - [Tutorials](tutorials/README.md)
 
-#### Design
+### Design
 - [Core design principles](core/design_principles.md)
 - [Core abstractions](core/abstractions.md)
 - [Blocks](blocks/README.md)
 
-#### Production
+### Production
 - Deploying to cloud
     - [Using Terraform](deploy/terraform/README.md)
     - [AWS](deploy/aws/README.md)
@@ -35,12 +45,12 @@ Read more tech docs here. Got questions?
 - Monitoring and alerting
     - [Status updates in Slack](monitoring/alerting/slack.md)
 
-#### Integrations
+### Integrations
 - Compute
     - [Spark / PySpark](spark/setup/README.md)
 - Databases, data warehouses, data lakes, etc.
     - [BigQuery](integrations/BigQuery.md)
-    - [Postgres]()
+    - [PostgreSQL](integrations/PostgreSQL.md.md)
     - [Redshift]()
     - [S3]()
     - [Snowflake]()
@@ -48,7 +58,7 @@ Read more tech docs here. Got questions?
     - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
     - [Prefect](production/prefect.md)
 
-#### Guides
+### Guides
 - Triggering pipelines
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
     - [Trigger pipeline via API request](triggers/api.md)
@@ -57,10 +67,14 @@ Read more tech docs here. Got questions?
     - [Data validation](testing/README.md#data-validation)
 - [Templates](#templates)
 
-#### About
+### About
 - [Features](features/README.md)
 - [Roadmap](https://airtable.com/shrJS0cDOmQywb8vp)
 - [Changelog](https://mageai.notion.site/What-s-new-7cc355e38e9c42839d23fdbef2dabd2c)
+
+<br />
+
+---
 
 <br />
 
