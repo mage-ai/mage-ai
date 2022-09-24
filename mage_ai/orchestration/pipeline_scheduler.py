@@ -112,7 +112,10 @@ class PipelineScheduler:
 
     def __schedule_blocks(self) -> None:
         executable_block_runs = [b for b in self.pipeline_run.block_runs
-                                 if b.status == BlockRun.BlockRunStatus.INITIAL]
+                                 if b.status in [
+                                        BlockRun.BlockRunStatus.INITIAL,
+                                        BlockRun.BlockRunStatus.QUEUED,
+                                    ]]
         completed_block_runs = [b for b in self.pipeline_run.block_runs
                                 if b.status == BlockRun.BlockRunStatus.COMPLETED]
         queued_block_runs = []
