@@ -59,7 +59,8 @@ default:
 ## Using Python block
 
 1. Create a new pipeline or open an existing pipeline.
-1. Add a data loader, transformer, or data exporter block.
+1. Add a data loader, transformer, or data exporter block
+(the code snippet below is for a data loader).
 1. Select `Generic (no template)`.
 1. Enter this code snippet
 (note: change the `config_profile` from `default` if you have a different profile):

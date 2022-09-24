@@ -52,7 +52,7 @@ Read more tech docs here. Got questions?
     - [BigQuery](integrations/BigQuery.md)
     - [PostgreSQL](integrations/PostgreSQL.md)
     - [Redshift](integrations/Redshift.md)
-    - [S3]()
+    - [S3](integrations/S3.md)
     - [Snowflake](integrations/Snowflake.md)
 - Existing tools
     - [Airflow](tutorials/airflow/integrate_into_existing_project/README.md)
