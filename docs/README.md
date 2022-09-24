@@ -50,8 +50,8 @@ Read more tech docs here. Got questions?
     - [Spark / PySpark](spark/setup/README.md)
 - Databases, data warehouses, data lakes, etc.
     - [BigQuery](integrations/BigQuery.md)
-    - [PostgreSQL](integrations/PostgreSQL.md.md)
-    - [Redshift]()
+    - [PostgreSQL](integrations/PostgreSQL.md)
+    - [Redshift](integrations/Redshift.md)
     - [S3]()
     - [Snowflake]()
 - Existing tools

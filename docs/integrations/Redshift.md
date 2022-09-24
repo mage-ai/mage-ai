@@ -1,0 +1,72 @@
+# Redshift
+
+<img
+  alt="Redshift"
+  src="data:image/png;base64,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"
+  height="100"
+/>
+
+## Add credentials in `io_config.yaml`
+
+1. Create a new pipeline or open an existing pipeline.
+1. Expand the left side of your screen to view the file browser.
+1. Scroll down and click on a file named `io_config.yaml`.
+1. Enter the following keys and values under the key named `default` (you can have multiple
+profiles, add it under whichever is relevant to you)
+```yaml
+version: 0.1.1
+default:
+  REDSHIFT_DBNAME: ...
+  REDSHIFT_HOST: ...
+  REDSHIFT_PORT: ...
+  REDSHIFT_TEMP_CRED_USER: ...
+  REDSHIFT_TEMP_CRED_PASSWORD: ...
+```
+
+<br />
+
+## Using SQL block
+
+1. Create a new pipeline or open an existing pipeline.
+1. Add a data loader, transformer, or data exporter block.
+1. Select `SQL`.
+1. Under the `Data provider` dropdown, select `Redshift`.
+1. Under the `Profile` dropdown, select `default` (or the profile you added credentials underneath).
+1. Next to the `Save to schema` label, enter the schema name you want this block to save data to.
+1. Under the `Write policy` dropdown, select `Replace` or `Append`
+(please see [SQL blocks guide](../guides/blocks/SQL.md) for more information on write policies).
+1. Enter in this test query: `SELECT 1`.
+1. Run the block.
+
+<br />
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+1. Add a data loader, transformer, or data exporter block.
+1. Select `Generic (no template)`.
+1. Enter this code snippet
+(note: change the `config_profile` from `default` if you have a different profile):
+```python
+from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.redshift import Redshift
+from os import path
+from pandas import DataFrame
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_redshift(**kwargs) -> DataFrame:
+    query = 'SELECT 1'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        return loader.load(query)
+```
+1. Run the block.
+
+<br />
