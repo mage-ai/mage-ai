@@ -17,14 +17,22 @@ resource "azurerm_container_group" "container_group" {
   os_type             = "Linux"
 
   container {
-    name   = "${var.app_name}-${var.app_environment}-container"
-    image  = "${var.docker_image}"
-    cpu    = "0.5"
-    memory = "1.5"
+    name      = "${var.app_name}-${var.app_environment}-container"
+    image     = "${var.docker_image}"
+    cpu       = "1"
+    memory    = "1.5"
 
     ports {
       port     = 6789
       protocol = "TCP"
+    }
+
+    volume {
+      name                 = "${var.app_name}-fs"
+      mount_path           = "/home/src"
+      storage_account_name = azurerm_storage_account.aci_storage.name
+      storage_account_key  = azurerm_storage_account.aci_storage.primary_access_key
+      share_name           = azurerm_storage_share.container_share.name
     }
   }
 
