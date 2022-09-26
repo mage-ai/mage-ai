@@ -14,6 +14,7 @@ import api from '@api';
 import {
   BlocksSeparated,
   BlocksStacked,
+  Chart,
   Edit,
   Schedule,
   TodoList,
@@ -29,6 +30,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
+import ChartGradient from '@oracle/icons/custom/ChartGradient';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];
@@ -180,6 +182,17 @@ function PipelineDetailPage({
             href: '/pipelines/[pipeline]/logs',
           },
           isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
+        },
+        {
+          Icon: Chart,
+          IconSelected: ChartGradient,
+          id: PageNameEnum.MONITOR,
+          label: () => 'Monitor',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/monitors`,
+            href: '/pipelines/[pipeline]/monitors',
+          },
+          isSelected: () => PageNameEnum.MONITOR === pageName,
         },
       ]}
       subheaderChildren={typeof subheader !== 'undefined'
