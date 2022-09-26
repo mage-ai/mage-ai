@@ -130,8 +130,7 @@ class Snowflake(BaseSQLConnection):
         def __process():
             with self._ctx.cursor() as cur:
                 cur.execute(f'SHOW TABLES LIKE \'{table_name}\' IN SCHEMA {database}.{schema}')
-
-                table_doesnt_exist = cur.rowcount == 1
+                table_doesnt_exist = cur.rowcount == 0
                 if cur.rowcount > 1:
                     raise ValueError(f'Two or more tables with the name {table_name} are found.')
                 elif not table_doesnt_exist:
