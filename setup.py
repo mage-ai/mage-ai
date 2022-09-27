@@ -25,7 +25,7 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type='text/markdown',
     url='https://github.com/mage-ai/mage-ai',
-    packages=setuptools.find_packages('./'),
+    packages=setuptools.find_packages('.'),
     include_package_data=True,
     classifiers=[
         'Programming Language :: Python :: 3',
