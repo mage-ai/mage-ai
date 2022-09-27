@@ -8,19 +8,35 @@ resource "azurerm_resource_group" "resource_group" {
   location = "West US 2"
 }
 
+resource "azurerm_network_profile" "containergroup_profile" {
+  name                = "${var.app_name}-${var.app_environment}-profile"
+  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = azurerm_resource_group.resource_group.name
+
+  container_network_interface {
+    name = "${var.app_name}-${var.app_environment}-nic"
+
+    ip_configuration {
+      name      = "aciipconfig"
+      subnet_id = azurerm_subnet.sn-aci.id
+    }
+  }
+}
+
+
 resource "azurerm_container_group" "container_group" {
   name                = "${var.app_name}-${var.app_environment}"
   location            = azurerm_resource_group.resource_group.location
   resource_group_name = azurerm_resource_group.resource_group.name
-  ip_address_type     = "Public"
-  dns_name_label      = "${var.app_name}-${var.app_environment}"
+  ip_address_type     = "Private"
   os_type             = "Linux"
+  network_profile_id  = azurerm_network_profile.containergroup_profile.id
 
   container {
     name      = "${var.app_name}-${var.app_environment}-container"
     image     = "${var.docker_image}"
-    cpu       = "1"
-    memory    = "1.5"
+    cpu       = "${var.container_cpu}"
+    memory    = "${var.container_memory}"
 
     ports {
       port     = 6789
@@ -41,12 +57,8 @@ resource "azurerm_container_group" "container_group" {
   }
 }
 
-output "fqdn" {
-  value = azurerm_container_group.container_group.fqdn
-}
-
 output "ip" {
-  value = azurerm_container_group.container_group.ip_address
+  value = azurerm_public_ip.public_ip.ip_address
 }
 
 output "id" {
