@@ -1,4 +1,5 @@
-import BlockRunType from "@interfaces/BlockRunType";
+import moment from 'moment';
+import BlockRunType from '@interfaces/BlockRunType';
 
 export function createBlockStatus(blockRuns: BlockRunType[]) {
   return blockRuns?.reduce(
@@ -13,8 +14,8 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
       let runtime = null;
 
       if (startedAt && completedAt) {
-        const completedAtTs = new Date(completedAt).getTime();
-        const startedAtTs = new Date(startedAt).getTime();
+        const completedAtTs = moment(completedAt).valueOf();
+        const startedAtTs = moment(startedAt).valueOf();
         
         runtime = completedAtTs - startedAtTs;
       }
@@ -32,7 +33,11 @@ export function createBlockStatus(blockRuns: BlockRunType[]) {
 }
 
 export function getTimeInUTC(dateTime: string) {
-  const date = new Date(dateTime);
+  if (!dateTime) {
+    return null;
+  }
+  const date = new Date(moment(dateTime).valueOf());
+
   const utcTs = Date.UTC(
     date.getFullYear(),
     date.getMonth(),
