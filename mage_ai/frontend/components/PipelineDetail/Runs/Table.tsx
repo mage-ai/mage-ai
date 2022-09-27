@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
 import Router from 'next/router';
+import moment from 'moment';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 
@@ -236,7 +237,7 @@ function PipelineRunsTable({
 
   const sortedPipelineRuns = useMemo(() => {
     const sortedRuns = [ ...pipelineRuns ];
-    sortedRuns.sort((a, b) => Date.parse(b.execution_date) - Date.parse(a.execution_date));
+    sortedRuns.sort((a, b) => moment(b.execution_date).valueOf() - moment(a.execution_date).valueOf());
 
     return sortedRuns;
   }, [
