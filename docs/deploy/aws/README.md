@@ -2,21 +2,63 @@
 
 Just like a traditional notebook, Mage supports execution in native cloud environments. Below are guides on how to integrate with native cloud resources.
 
--   [Amazon EC2](#amazon-ec2)
--   [Amazon ECS](#amazon-ecs)
+- [Amazon EC2](#amazon-ec2)
+- [Amazon ECS](#amazon-ecs). For Amazon ECS, we recommend using Terraform. Here is the [guide](../terraform/README.md).
+
+<br />
 
 # Amazon EC2
 
 Mage can be run in an Amazon EC2 instance, either by
 
--   using SSH to port forward localhost requests to your EC2 instance
--   opening port 6789 on your EC2 instance for access
+- using SSH to port forward localhost requests to your EC2 instance
+- opening port 6789 on your EC2 instance for access
+
+<br />
 
 ## Prerequistes
 
 Your EC2 instance must have `python3` installed. All Python versions between 3.7.0 (inclusive) and 3.10.0 (exclusive) are supported.
 
+When launching an EC2 instance, we suggest using the following AMI:
+
+| AMI ID | AMI name |
+| --- | --- |
+| `ami-0d70546e43a941d70` | `ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-20220609` |
+
+<br />
+
 ## Quick Connection via SSH
+
+### Install Python
+
+Once the EC2 instance is in a running state, SSH into the instance.
+You can SSH using the UI in AWS or you can SSH from your terminal using a command like
+the following:
+
+```bash
+ssh -i [path_to_key_pair] [ec2_username]@[ec2_public_dns_name]
+```
+
+Note: the `ec2_username` is typically `ubuntu` if you used the AMI we recommended above.
+
+An example SSH command could look like this:
+
+```bash
+ssh -i ~/.ssh/aws-ec2.pem ubuntu@ec2-55-186-46-136.us-west-2.compute.amazonaws.com
+```
+
+Once you SSH into the instance, run the following command to install Python and pip:
+
+```bash
+sudo apt update && \
+  sudo apt install -y software-properties-common && \
+  sudo add-apt-repository -y ppa:deadsnakes/ppa && \
+  sudo apt install -y python3.7 \
+  sudo apt install -y python3-pip
+```
+
+### Run script to start Mage
 
 We provide the `scripts/run_ec2.sh` script to launch Mage in an EC2 instance. Currently only connections via SSH are supported. To access this script clone this repository.
 
@@ -27,7 +69,18 @@ To run Mage in an EC2 instance, you need to provide
 -   Your EC2 public DNS name
 
 ```bash
-./scripts/run_ec2.sh path_to_key_pair ec2_user_name ec2_public_dns_name [--name custom_repo_name]
+./scripts/run_ec2.sh [path_to_key_pair] [ec2_user_name] [ec2_public_dns_name]
+```
+
+Note: the `ec2_username` is typically `ubuntu` if you used the AMI we recommended above.
+
+You can optionally add `--name custom_repo_name` to the end of the command above to name your
+project something different than the default of `default_repo`.
+
+An example command could look like this:
+
+```bash
+./scripts/run_ec2.sh ~/.ssh/aws-ec2.pem ubuntu@ec2-55-186-46-136.us-west-2.compute.amazonaws.com --name demo_project
 ```
 
 This script will
@@ -40,6 +93,8 @@ This script will
 To access the Mage tool, open [localhost:6789](http://localhost:6789). All actions made here will be forwarded to your EC2 instance for execution.
 
 To quit out of Mage, stop execution in your current terminal window (Ctrl+C). This will shutdown the Mage tool alongside closing the connection to your EC2 instance.
+
+<br />
 
 ## Manual connection via Open Port
 
@@ -59,6 +114,8 @@ You can also connect to the Mage app running on your EC2 instance by editing you
     ```
 
 4. Then from your browser, access `<ec2-instance-public-ip>:6789` to access the Mage app, where `ec2-instance-public-ip` is the Public IPv4 address of your EC2 instance.
+
+    <br />
 
 ## Manual connection via SSH
 
@@ -98,6 +155,8 @@ You can also manually start a connection to the Mage tool running on an EC2 inst
     - The `-N` option tells your SSH client to not send user commands to the EC2 server through this connection since this connection is only for port forwarding
 
 Now you can access the Mage tool at [localhost:6789](http://localhost:6789) on your computer, and all executions will be processed on your EC2 instance!
+
+<br />
 
 # Amazon ECS
 
