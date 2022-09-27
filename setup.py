@@ -18,14 +18,14 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.4.12',
+    version='0.4.13',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
     long_description=readme(),
     long_description_content_type='text/markdown',
     url='https://github.com/mage-ai/mage-ai',
-    packages=setuptools.find_packages('./'),
+    packages=setuptools.find_packages('.'),
     include_package_data=True,
     classifiers=[
         'Programming Language :: Python :: 3',
