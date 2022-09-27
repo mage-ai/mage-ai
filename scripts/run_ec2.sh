@@ -1,4 +1,4 @@
-#!bin/bash
+# !bin/bash
 MAGE_CLI="python3 -m mage_ai.cli.main"
 PIP="python3 -m pip"
 
