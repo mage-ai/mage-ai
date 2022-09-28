@@ -43,7 +43,8 @@ Read more tech docs here. Got questions?
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
 - Monitoring and alerting
-    - [Status updates in Slack](monitoring/alerting/slack.md)
+    - [Status updates in Slack](monitoring/alerting/Slack.md)
+    - [Status updates in Email](monitoring/alerting/Email.md)
 
 ### Integrations
 - Compute
