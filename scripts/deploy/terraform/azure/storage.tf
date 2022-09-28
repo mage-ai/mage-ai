@@ -1,5 +1,9 @@
 # storage.tf | Shared Storage Configuration
 
+resource "azurerm_resource_provider_registration" "storage" {
+  name = "Microsoft.Storage"
+}
+
 resource "azurerm_storage_account" "aci_storage" {
   name                     = "magedataprepproduction"
   resource_group_name      = azurerm_resource_group.resource_group.name

@@ -1,5 +1,9 @@
 # networking.tf | Network Configuration
 
+resource "azurerm_resource_provider_registration" "network" {
+  name = "Microsoft.Network"
+}
+
 resource "azurerm_virtual_network" "virtual_network" {
   name                = "${var.app_name}-${var.app_environment}"
   location            = azurerm_resource_group.resource_group.location
