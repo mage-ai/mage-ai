@@ -25,3 +25,7 @@ variable "docker_image" {
   default     = "mageai/mageai:latest"
 }
 
+variable "storage_account_name" {
+  description = "Storage account name. It must be globally unique across Azure."
+  default     = "magedataprepstorage"
+}
