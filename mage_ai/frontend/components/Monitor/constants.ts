@@ -3,4 +3,3 @@ export enum MonitorTypeEnum {
   BLOCK_RUNTIME = 'block_runtime',
   PIPELINE_RUNS = 'pipeline_runs',
 }
-  

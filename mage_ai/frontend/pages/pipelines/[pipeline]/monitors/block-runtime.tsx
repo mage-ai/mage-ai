@@ -1,27 +1,26 @@
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import moment from 'moment';
+
+import Circle from '@oracle/elements/Circle';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
+import LineSeries from '@components/charts/LineSeries';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import api, { MONITOR_STATS } from '@api';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
 import Spacing from '@oracle/elements/Spacing';
-import LineSeries from '@components/charts/LineSeries';
-import Headline from '@oracle/elements/Headline';
-import moment from 'moment';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import dark from '@oracle/styles/themes/dark';
-import Text from '@oracle/elements/Text';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Circle from '@oracle/elements/Circle';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { singularize } from '@utils/string';
-import { indexBy } from '@utils/array';
-import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import { useMutation } from 'react-query';
-import buildUrl from '@api/utils/url';
-import { onSuccess } from '@api/utils/response';
 import Select from '@oracle/elements/Inputs/Select';
+import Text from '@oracle/elements/Text';
+import api, { MONITOR_STATS } from '@api';
+import buildUrl from '@api/utils/url';
+import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { ICON_SIZE } from '@components/FileBrowser/index.style';
+import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { ThemeContext } from 'styled-components';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { indexBy } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
+import { useMutation } from 'react-query';
 
 type BlockRuntimeMonitorProps = {
   pipeline: PipelineType;

@@ -1,27 +1,25 @@
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import moment from 'moment';
+import { ThemeContext } from 'styled-components';
+
+import BarStackChart from '@components/charts/BarStack';
+import Circle from '@oracle/elements/Circle';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import api, { MONITOR_STATS } from '@api';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
-import Spacing from '@oracle/elements/Spacing';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Circle from '@oracle/elements/Circle';
-import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { indexBy, sortByKey } from '@utils/array';
-import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import Headline from '@oracle/elements/Headline';
-import BarStackChart from '@components/charts/BarStack';
-import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
-import moment from 'moment';
-import dark from '@oracle/styles/themes/dark';
-import Text from '@oracle/elements/Text';
-import Button from '@oracle/elements/Button';
-import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import Select from '@oracle/elements/Inputs/Select';
-import { useMutation } from 'react-query';
-import { buildUrl } from '@api/utils/url';
+import Spacing from '@oracle/elements/Spacing';
+import api, { MONITOR_STATS } from '@api';
+import buildUrl from '@api/utils/url';
+import dark from '@oracle/styles/themes/dark';
+import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
+import { ICON_SIZE } from '@components/FileBrowser/index.style';
+import { MonitorTypeEnum } from '@components/Monitor/constants';
+import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 type BlockRunsMonitorProps = {
   pipeline: PipelineType;
@@ -179,8 +177,8 @@ function BlockRunsMonitor({
                   // @ts-ignore
                   data={blockData}
                   getXValue={(data) => data['date']}
-                  keys={BAR_STACK_STATUSES}
                   height={200}
+                  keys={BAR_STACK_STATUSES}
                   margin={{
                     top: 10,
                     bottom: 30,

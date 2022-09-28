@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
+import ChartGradient from '@oracle/icons/custom/ChartGradient';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,7 +13,6 @@ import Spacing from '@oracle/elements/Spacing';
 import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 import {
-  BlocksSeparated,
   BlocksStacked,
   Chart,
   Edit,
@@ -30,7 +30,6 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { useWindowSize } from '@utils/sizes';
-import ChartGradient from '@oracle/icons/custom/ChartGradient';
 
 type PipelineDetailPageProps = {
   breadcrumbs: BreadcrumbType[];

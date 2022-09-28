@@ -1,22 +1,22 @@
-import { Group } from '@visx/group';
-import { Tooltip, defaultStyles, useTooltip } from '@visx/tooltip';
-import { BarStack } from '@visx/shape';
 import React from 'react';
-import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
-import { localPoint } from '@visx/event';
 import { AxisBottom, AxisLeft } from '@visx/axis';
-import { Grid, GridRows } from '@visx/grid';
-import { marginLeft } from 'styled-system';
+import { BarStack } from '@visx/shape';
+import { GridRows } from '@visx/grid';
+import { Group } from '@visx/group';
 import { LegendOrdinal } from '@visx/legend';
+import { Tooltip, defaultStyles, useTooltip } from '@visx/tooltip';
+import { localPoint } from '@visx/event';
+import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
+
 import FlexContainer from '@oracle/components/FlexContainer';
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import Text from '@oracle/elements/Text';
 import YAxisLabelContainer from './shared/YAxisLabelContainer';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { formatNumberLabel } from './utils/label';
-import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
+import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { formatNumberLabel } from './utils/label';
 
 type TooltipData = {
   bar: any;

@@ -1,16 +1,17 @@
-import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
-import PipelineDetailPage from '@components/PipelineDetailPage';
-import { PageNameEnum } from '@components/PipelineDetailPage/constants';
-import { BreadcrumbType } from '@components/shared/Header';
-import PipelineType from '@interfaces/PipelineType';
+import React from 'react';
+import { useRouter } from 'next/router';
+
 import Headline from '@oracle/elements/Headline';
+import PipelineDetailPage from '@components/PipelineDetailPage';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import { useRouter } from 'next/router';
-import React from 'react';
-import { MonitorTypeEnum } from './constants';
+import { BeforeStyle } from '@components/PipelineDetail/shared/index.style';
+import { BreadcrumbType } from '@components/shared/Header';
 import { LinkStyle } from './index.style';
+import { MonitorTypeEnum } from './constants';
+import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 
 type MonitorProps = {
   breadcrumbs: BreadcrumbType[];

@@ -1,20 +1,23 @@
-import Monitor from '@components/Monitor';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
-import PipelineType from '@interfaces/PipelineType';
-import Headline from '@oracle/elements/Headline';
-import Histogram from '@components/charts/Histogram';
 import React, { useMemo } from 'react';
-import BarStackChart from '@components/charts/BarStack';
-import api from '@api';
-import FlexContainer from '@oracle/components/FlexContainer';
-import styled from 'styled-components';
-import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
-import { capitalize } from '@utils/string';
-import Text from '@oracle/elements/Text';
-import { UNIT } from '@oracle/styles/units/spacing';
-import Spacing from '@oracle/elements/Spacing';
-import dark from '@oracle/styles/themes/dark';
+import NextLink from 'next/link';
 import moment from 'moment';
+import styled from 'styled-components';
+
+import BarStackChart from '@components/charts/BarStack';
+import FlexContainer from '@oracle/components/FlexContainer';
+import Headline from '@oracle/elements/Headline';
+import Link from '@oracle/elements/Link';
+import Monitor from '@components/Monitor';
+import PipelineType from '@interfaces/PipelineType';
+import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import api from '@api';
+import dark from '@oracle/styles/themes/dark';
+import { ChevronRight } from '@oracle/icons';
+import { MonitorTypeEnum } from '@components/Monitor/constants';
+import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
+import { UNIT } from '@oracle/styles/units/spacing';
+import { capitalize } from '@utils/string';
 
 const GradientTextStyle = styled.div<any>`
   background: linear-gradient(90deg, #7D55EC 28.12%, #2AB2FE 100%);
@@ -181,8 +184,8 @@ function PipelineRunsMonitor({
             colors={BAR_STACK_COLORS}
             data={totalPipelineRunData}
             getXValue={(data) => data['date']}
-            keys={BAR_STACK_STATUSES}
             height={200}
+            keys={BAR_STACK_STATUSES}
             margin={{
               top: 10,
               bottom: 30,
@@ -200,13 +203,25 @@ function PipelineRunsMonitor({
                 <Spacing mx={1}>
                   <GradientTextStyle>
                     <Text bold large>
-                      {capitalize(SCHEDULE_TYPE_TO_LABEL[pipelineSchedule?.schedule_type]())}
+                      {capitalize(SCHEDULE_TYPE_TO_LABEL[pipelineSchedule?.schedule_type]?.())}
                     </Text>
                   </GradientTextStyle>
                 </Spacing>
-                <Headline level={5}>
-                  {pipelineSchedule?.name || id}
-                </Headline>
+                <NextLink
+                  as={`/pipelines/${pipelineUUID}/triggers/${pipelineSchedule?.id}`}
+                  href="/pipelines/[pipeline]/triggers/[...slug]"
+                  passHref
+                >
+                  <Link>
+                    <FlexContainer alignItems="center">
+                      <Headline level={5}>
+                        {pipelineSchedule?.name || id}
+                      </Headline>
+                      <Spacing ml={1} />
+                      <ChevronRight default size={2 * UNIT} />
+                    </FlexContainer>
+                  </Link>
+                </NextLink>
               </FlexContainer>
               <Spacing mt={1}>
                 <BarStackChart
@@ -214,8 +229,8 @@ function PipelineRunsMonitor({
                   // @ts-ignore
                   data={stats}
                   getXValue={(data) => data['date']}
-                  keys={BAR_STACK_STATUSES}
                   height={200}
+                  keys={BAR_STACK_STATUSES}
                   margin={{
                     top: 10,
                     bottom: 30,
