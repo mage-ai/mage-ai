@@ -27,7 +27,7 @@ class NotificationSender:
 
     def send_pipeline_run_success_message(self, pipeline, pipeline_run) -> None:
         message = (
-            f'Successfully running Pipeline `{pipeline.uuid}` '
+            f'Successfully ran Pipeline `{pipeline.uuid}` '
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`.'
@@ -38,7 +38,7 @@ class NotificationSender:
                                 'to check pipeline run results and logs.'
         self.send(
             message=message,
-            email_subject=f'Successfully running Pipeline {pipeline.uuid}',
+            email_subject=f'Successfully ran Pipeline {pipeline.uuid}',
             email_content=email_content,
         )
 
