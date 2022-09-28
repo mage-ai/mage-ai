@@ -103,8 +103,6 @@ can also be customized to your needs.
 
 ## 4. Deploy
 
-<b>Using CLI</b>
-
 1. Change directory into scripts folder:
 ```bash
 cd scripts/deploy/terraform/azure
@@ -145,26 +143,6 @@ commands will detect it and remind you to do so if necessary.
 3. Deploy:
 ```bash
 terraform apply
-```
-
-<br />
-
-<b>Using Docker</b>
-
-From the root directory of Mage, run the following commands:
-
-1. Initialize Terraform:
-```bash
-docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/azure" \
-  hashicorp/terraform:latest init
-```
-
-2. Deploy:
-```bash
-docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/azure" \
-  --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  hashicorp/terraform:latest apply
 ```
 
 <br />
