@@ -10,6 +10,7 @@
 1. [Log into Azure from CLI](#2-log-into-azure-from-cli)
 1. [Customize Terraform settings](#3-customize-terraform-settings)
 1. [Deploy](#4-deploy)
+1. [Misc](#5-misc)
 
 <br />
 
@@ -39,12 +40,37 @@ Your browser will open
 <b>Docker image</b>
 
 In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
-you can change the default Docker image:
+you can change the `default` value under `docker_image`:
 
 ```
 variable "docker_image" {
   description = "Docker image url."
   default     = "mageai/mageai:latest"
+}
+```
+
+<b>Region</b>
+
+In the file [./scripts/deploy/terraform/azure/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/main.tf),
+you can change the `location` value under `resource_group`:
+
+```
+resource "azurerm_resource_group" "resource_group" {
+  name     = "${var.app_name}-${var.app_environment}"
+  location = "West US 2"
+}
+```
+
+<b>Name of virtual network</b>
+
+In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
+you can change the `default` value under `app_name`:
+
+```
+variable "app_name" {
+  type        = string
+  description = "Application Name"
+  default     = "mage-data-prep"
 }
 ```
 
@@ -119,6 +145,23 @@ docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/azure
   --env AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
   --env AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
   hashicorp/terraform:latest apply
+```
+
+<br />
+
+## Misc
+
+### Terminate all resources
+
+If you want to delete all resources created from deploying, run the following command:
+
+```bash
+terraform destroy
+```
+
+A sample output could look like this:
+```
+Destroy complete! Resources: 10 destroyed.
 ```
 
 <br />
