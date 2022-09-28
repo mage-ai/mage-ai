@@ -31,7 +31,7 @@ Once you created an account, from your terminal run the following command to log
 az login
 ```
 
-Your browser will open and have you sign in with an existing Azure account. 
+Your browser will open and have you sign in with an existing Azure account.
 Once completed, your terminal will output something like this:
 
 ```
@@ -57,6 +57,33 @@ Once completed, your terminal will output something like this:
 
 ## 3. Customize Terraform settings
 
+<b>Storage account name (REQUIRED)</b>
+
+The `storage_account_name` must be unique globally. Before running any Terraform commands,
+please change the `default` value of variable named `storage_account_name` in the
+[./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf)
+file.
+
+```
+variable "storage_account_name" {
+  description = "Storage account name. It must be globally unique across Azure."
+  default     = "something_very_unique"
+}
+```
+
+<b>Virtual network name</b>
+
+In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
+you can change the `default` value under `app_name`:
+
+```
+variable "app_name" {
+  type        = string
+  description = "Application Name"
+  default     = "mage-data-prep"
+}
+```
+
 <b>Docker image</b>
 
 In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
@@ -78,19 +105,6 @@ you can change the `location` value under `resource_group`:
 resource "azurerm_resource_group" "resource_group" {
   name     = "${var.app_name}-${var.app_environment}"
   location = "West US 2"
-}
-```
-
-<b>Name of virtual network</b>
-
-In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
-you can change the `default` value under `app_name`:
-
-```
-variable "app_name" {
-  type        = string
-  description = "Application Name"
-  default     = "mage-data-prep"
 }
 ```
 
@@ -144,10 +158,39 @@ commands will detect it and remind you to do so if necessary.
 ```bash
 terraform apply
 ```
+A sample output could look like this:
+```
+Apply complete! Resources: 4 added, 2 changed, 0 destroyed.
+
+Outputs:
+
+id = "/subscriptions/d17fcd12-b89c-4f81-a221-40b8e768a0e8/resourceGroups/mage-data-prep2-production/providers/Microsoft.ContainerInstance/containerGroups/mage-data-prep-production"
+ip = "20.3.85.62"
+```
+
+In your browser, go to [`http://[IP_address]/`](http://IP_address/).
+
+> Note
+>
+> Change the `IP_address` to the IP address that was output in your terminal after successfully running `terraform apply`.
 
 <br />
 
 ## Misc
+
+### Security
+
+By default, `terraform apply` will attempt to add your current workstation’s IP address to
+the above mentioned security group.
+
+In order to access Mage on Azure from another local workstation,
+you must add that IP address to the security group named `mage-data-prep-production-nsg-public`.
+
+> Security group name
+>
+> Your security group might be named differently because you may have changed your
+virtual network name (e.g. `app_name`). The security group you must add the IP to
+will end with `-nsg-public`.
 
 ### Terminate all resources
 
