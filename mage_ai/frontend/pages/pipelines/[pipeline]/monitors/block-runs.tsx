@@ -4,32 +4,32 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import api, { MONITOR_STATS } from '@api';
 import { MonitorTypeEnum } from '@components/Monitor/constants';
 import Spacing from '@oracle/elements/Spacing';
-import LineSeries from '@components/charts/LineSeries';
-import Headline from '@oracle/elements/Headline';
-import moment from 'moment';
-import { UNIT } from '@oracle/styles/units/spacing';
-import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import dark from '@oracle/styles/themes/dark';
-import Text from '@oracle/elements/Text';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Circle from '@oracle/elements/Circle';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { singularize } from '@utils/string';
-import { indexBy } from '@utils/array';
+import { indexBy, sortByKey } from '@utils/array';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import { useMutation } from 'react-query';
-import buildUrl from '@api/utils/url';
-import { onSuccess } from '@api/utils/response';
+import Headline from '@oracle/elements/Headline';
+import BarStackChart from '@components/charts/BarStack';
+import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
+import moment from 'moment';
+import dark from '@oracle/styles/themes/dark';
+import Text from '@oracle/elements/Text';
+import Button from '@oracle/elements/Button';
+import PipelineScheduleType from '@interfaces/PipelineScheduleType';
 import Select from '@oracle/elements/Inputs/Select';
+import { useMutation } from 'react-query';
+import { buildUrl } from '@api/utils/url';
+import { onSuccess } from '@api/utils/response';
 import { ThemeContext } from 'styled-components';
 
-type BlockRuntimeMonitorProps = {
+type BlockRunsMonitorProps = {
   pipeline: PipelineType;
-};
+}
 
-function BlockRuntimeMonitor({
+function BlockRunsMonitor({
   pipeline: pipelineProp,
-}: BlockRuntimeMonitorProps) {
+}: BlockRunsMonitorProps) {
   const theme = useContext(ThemeContext);
   const [pipelineSchedule, setPipelineSchedule] = useState<number>(null);
 
@@ -54,8 +54,8 @@ function BlockRuntimeMonitor({
 
   const [dataMonitor, setDataMonitor] = useState<any>(null);
   const [fetchStats] = useMutation(
-    async (id: number) => {
-      let url = `${buildUrl(MONITOR_STATS)}/block_run_time?pipeline_uuid=${pipelineUUID}`;
+    async (id) => {
+      let url = `${buildUrl(MONITOR_STATS)}/block_run_count?pipeline_uuid=${pipelineUUID}`;
       if (id || id === 0) {
         url += `&pipeline_schedule_id=${id}`;
       }
@@ -74,15 +74,8 @@ function BlockRuntimeMonitor({
   );
 
   useEffect(() => {
-    fetchStats(pipelineSchedule);
+    fetchStats();
   }, [fetchStats]);
-
-  // const { data: dataMonitor } = api.monitor_stats.detail(
-  //   'block_run_time',
-  //   {
-  //     pipeline_uuid: pipeline?.uuid,
-  //   },
-  // );
 
   const {
     stats: monitorStats,
@@ -98,25 +91,24 @@ function BlockRuntimeMonitor({
     return dateRange;
   }, []);
 
-  const blockRuntimeData = useMemo(() => {
+  const blockRunData = useMemo(() => {
     if (monitorStats) {
       return Object.entries(monitorStats).reduce(
         // @ts-ignore
-        (obj, [blockUuid, { data: runtimeStats }]) => {
+        (obj, [blockUuid, { data: blockRunStats }]) => {
+          const updated = dateRange.map(date => ({
+            date,
+            ...(blockRunStats[date] || {}),
+          }));
           return {
             ...obj,
-            [blockUuid]: dateRange.map(date => ({
-              x: date,
-              y: date in runtimeStats ? [runtimeStats[date]] : null,
-            }))
+            [blockUuid]: updated,
           };
-        }, 
+        },
         {},
       );
     }
-  }, [
-    monitorStats,
-  ]);
+  }, [monitorStats]);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
@@ -134,7 +126,7 @@ function BlockRuntimeMonitor({
   return (
     <Monitor
       breadcrumbs={breadcrumbs}
-      monitorType={MonitorTypeEnum.BLOCK_RUNTIME}
+      monitorType={MonitorTypeEnum.BLOCK_RUNS}
       pipeline={pipeline}
       subheader={
         <FlexContainer>
@@ -166,9 +158,9 @@ function BlockRuntimeMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRuntimeData &&
-          Object.entries(blockRuntimeData).map(([blockUuid, data]) => (
-            <Spacing mt={2}>
+        {blockRunData && Object.entries(blockRunData).map(([blockUuid, blockData]) => {
+          return (
+            <Spacing mt={3}>
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <Circle
@@ -181,58 +173,32 @@ function BlockRuntimeMonitor({
                   {blockUuid}
                 </Headline>
               </FlexContainer>
-              <div
-                style={{
-                  backgroundColor: dark.background.chartBlock,
-                  borderRadius: `${BORDER_RADIUS_LARGE}px`,
-                  marginTop: '8px',
-                }}
-              >
-                <LineSeries
+              <Spacing mt={1}>
+                <BarStackChart
+                  colors={BAR_STACK_COLORS}
                   // @ts-ignore
-                  data={data}
-                  gridProps={{
-                    stroke: "black",
-                    strokeDasharray: null,
-                    strokeOpacity: 0.2,
-                  }}
+                  data={blockData}
+                  getXValue={(data) => data['date']}
+                  keys={BAR_STACK_STATUSES}
                   height={200}
-                  hideGridX
                   margin={{
                     top: 10,
                     bottom: 30,
                     left: 30,
-                    right: -1,
+                    right: 0
                   }}
-                  noCurve
-                  renderXTooltipContent={data => (
-                    <Text center small>
-                      {moment(data.x).format('MMM DD')}
-                    </Text>
-                  )}
-                  renderYTooltipContent={data => {
-                    const yValue = data?.y?.[0];
-                    return yValue != undefined && (
-                      <Text center small>
-                        {yValue.toFixed ? yValue.toFixed(3) : yValue}
-                      </Text>
-                    );
-                  }}
-                  getX={data => moment(data.x).valueOf()}
-                  xLabelFormat={val => moment(val).format('MMM DD')}
-                  xLabelRotate={false}
-                  yLabelFormat={val => val.toFixed ? val.toFixed(0) : val}
+                  xLabelFormat={label => moment(label).format('MMM DD')}
                 />
-              </div>
+              </Spacing>
             </Spacing>
-          )
-        )}
+          );
+        })}
       </Spacing>
     </Monitor>
-  )
+  );
 }
 
-BlockRuntimeMonitor.getInitialProps = async (ctx: any) => {
+BlockRunsMonitor.getInitialProps = async (ctx: any) => {
   const {
     pipeline: pipelineUUID,
   }: {
@@ -246,4 +212,4 @@ BlockRuntimeMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRuntimeMonitor;
+export default BlockRunsMonitor;

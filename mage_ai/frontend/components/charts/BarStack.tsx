@@ -1,11 +1,11 @@
 import { Group } from '@visx/group';
-import { Tooltip, useTooltip } from '@visx/tooltip';
+import { Tooltip, defaultStyles, useTooltip } from '@visx/tooltip';
 import { BarStack } from '@visx/shape';
 import React from 'react';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 import { localPoint } from '@visx/event';
 import { AxisBottom, AxisLeft } from '@visx/axis';
-import { Grid } from '@visx/grid';
+import { Grid, GridRows } from '@visx/grid';
 import { marginLeft } from 'styled-system';
 import { LegendOrdinal } from '@visx/legend';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -15,6 +15,8 @@ import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { formatNumberLabel } from './utils/label';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 
 type TooltipData = {
   bar: any;
@@ -35,6 +37,7 @@ type BarStackChartProps = {
   height?: number;
   keys: string[];
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
+  numYTicks?: number;
   renderXTooltipContent?: (opts: any, index: number) => any | number | string;
   renderYTooltipContent?: (opts: any, index: number) => any | number | string;
   showLegend?: boolean;
@@ -56,6 +59,7 @@ function BarStackChart({
   height,
   keys,
   margin,
+  numYTicks,
   showLegend,
   width,
   xLabelFormat,
@@ -107,11 +111,10 @@ function BarStackChart({
     <div style={{ position: 'relative' }}>
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill="#2E3036" rx={14} />
-        <Grid
+        <GridRows
           top={margin.top}
           left={margin.left}
-          xScale={xScale}
-          yScale={yScale}
+          scale={yScale}
           width={xMax}
           height={yMax}
           stroke="black"
@@ -159,27 +162,30 @@ function BarStackChart({
           </BarStack>
         </Group>
         <AxisLeft
+          hideTicks
           left={margin.left}
+          numTicks={numYTicks}
           scale={yScale}
-          stroke="black"
+          stroke={dark.content.muted}
           tickFormat={label => yLabelFormat ? yLabelFormat(label) : formatNumberLabel(label)}
           tickLabelProps={() => ({
-            fill: "#787A85",
+            fill: dark.content.muted,
             fontFamily: FONT_FAMILY_REGULAR,
             fontSize: 11,
             textAnchor: 'end',
-            transform: 'translate(-2,2.5)',
+            transform: 'translate(0,2.5)',
           })}
           top={margin.top}
         />
         <AxisBottom
+          hideTicks
           left={margin.left}
           top={yMax + margin.top}
           scale={xScale}
-          stroke="black"
+          stroke={dark.content.muted}
           tickFormat={xLabelFormat}
           tickLabelProps={() => ({
-            fill: "#787A85",
+            fill: dark.content.muted,
             fontFamily: FONT_FAMILY_REGULAR,
             fontSize: 11,
             textAnchor: 'middle',
@@ -202,14 +208,22 @@ function BarStackChart({
       )}
 
       {tooltipOpen && tooltipData && (
-        <Tooltip top={tooltipTop} left={tooltipLeft}>
-          <div style={{ color: colorScale(tooltipData.key) }}>
-            <strong>{tooltipData.key}</strong>
-          </div>
-          <div>{tooltipData.bar.data[tooltipData.key]}</div>
-          <div>
-            <small>{getXValue(tooltipData.bar.data)}</small>
-          </div>
+        <Tooltip
+          top={tooltipTop}
+          left={tooltipLeft}
+          style={{
+            ...defaultStyles,
+            backgroundColor: dark.background.page,
+            borderRadius: `${BORDER_RADIUS_LARGE}px`,
+          }}
+        >
+          <Text bold color={colorScale(tooltipData.key)}>
+            {tooltipData.key}
+          </Text>
+          <Text>{tooltipData.bar.data[tooltipData.key]}</Text>
+          <Text>
+            {getXValue(tooltipData.bar.data)}
+          </Text>
         </Tooltip>
       )}
     </div>

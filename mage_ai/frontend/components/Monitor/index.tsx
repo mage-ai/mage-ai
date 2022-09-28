@@ -17,6 +17,7 @@ type MonitorProps = {
   children: any;
   monitorType: MonitorTypeEnum;
   pipeline: PipelineType;
+  subheader?: any;
 };
 
 function Monitor({
@@ -24,6 +25,7 @@ function Monitor({
   children,
   monitorType,
   pipeline,
+  subheader,
 }: MonitorProps) {
   const router = useRouter();
 
@@ -44,8 +46,8 @@ function Monitor({
               e.preventDefault();
 
               router.push(
-                '/pipelines/[pipeline]/monitor',
-                `/pipelines/${pipeline?.uuid}/monitor`,
+                '/pipelines/[pipeline]/monitors',
+                `/pipelines/${pipeline?.uuid}/monitors`,
               )
             }}
             selected={MonitorTypeEnum.PIPELINE_RUNS == monitorType}
@@ -59,8 +61,23 @@ function Monitor({
               e.preventDefault();
 
               router.push(
-                '/pipelines/[pipeline]/monitor/block-runtime',
-                `/pipelines/${pipeline?.uuid}/monitor`,
+                '/pipelines/[pipeline]/monitors/block-runs',
+                `/pipelines/${pipeline?.uuid}/monitors/block-runs`,
+              )
+            }}
+            selected={MonitorTypeEnum.BLOCK_RUNS == monitorType}
+          >
+            <Text>
+              Block runs
+            </Text>
+          </LinkStyle>
+          <LinkStyle
+            onClick={(e) => {
+              e.preventDefault();
+
+              router.push(
+                '/pipelines/[pipeline]/monitors/block-runtime',
+                `/pipelines/${pipeline?.uuid}/monitors/block-runtime`,
               )
             }}
             selected={MonitorTypeEnum.BLOCK_RUNTIME == monitorType}
@@ -74,6 +91,7 @@ function Monitor({
       breadcrumbs={breadcrumbs}
       pageName={PageNameEnum.MONITOR}
       pipeline={pipeline}
+      subheader={subheader}
       uuid="pipeline/monitor"
     >
       {children}

@@ -28,14 +28,14 @@ type PipelineRunsMonitorProps = {
   pipeline: PipelineType;
 };
 
-const BAR_STACK_COLORS = [
+export const BAR_STACK_COLORS = [
   dark.accent.warning,
   dark.background.success,
   dark.accent.negative,
   dark.content.active,
   dark.interactive.linkPrimary,
 ];
-const BAR_STACK_STATUSES = ['cancelled', 'completed', 'failed', 'initial', 'running'];
+export const BAR_STACK_STATUSES = ['cancelled', 'completed', 'failed', 'initial', 'running'];
 
 function PipelineRunsMonitor({
   pipeline: pipelineProp,
@@ -76,64 +76,6 @@ function PipelineRunsMonitor({
     stats: monitorStats,
   } = dataMonitor?.monitor_stats || {};
 
-  const breadcrumbs = useMemo(() => {
-    const arr = [];
-
-    arr.push({
-      bold: true,
-      label: () => 'Monitors',
-    });
-
-    return arr;
-  }, [
-    pipeline,
-  ])
-
-  const pipelineRunData = useMemo(() => {
-    if (monitorStats) {
-      let date = new Date()
-      const dateRange = []
-      for (let i = 0; i < 90; i++) {
-        dateRange.unshift(date.toISOString().split('T')[0]);
-        date.setDate(date.getDate() - 1);
-      }
-      const allPipelineRunData = Object.entries(monitorStats).reduce(
-        ((obj, [id, { data: scheduleStats }]) => {
-          const updated = {};
-          Object.entries(scheduleStats).forEach(([date, dateStats]) => {
-            let currentStats = {};
-            if (date in obj) {
-              currentStats = obj[date];
-            }
-            const updatedStats = {};
-            Object.entries(dateStats).forEach(([status, num]) => {
-              const currentNum = currentStats?.[status] ? currentStats[status] : 0;
-              updatedStats[status] = currentNum + num;
-            });
-            updated[date] = {
-              ...currentStats,
-              ...updatedStats,
-            };
-          });
-  
-          return {
-            ...obj,
-            ...updated,
-          };
-        }),
-        {},
-      );
-      return dateRange.map(date => ({
-        date,
-        ...(allPipelineRunData[date] || {}),
-      }));
-    } else {
-      return [];
-    }
-  }, [
-    monitorStats,
-  ]);
-
   const dateRange = useMemo(() => {
     let date = new Date()
     const dateRange = []
@@ -147,6 +89,7 @@ function PipelineRunsMonitor({
   const totalPipelineRunData = useMemo(() => {
     if (monitorStats) {
       const allPipelineRunData = Object.entries(monitorStats).reduce(
+        // @ts-ignore
         (obj, [id, { data: scheduleStats }]) => {
           const updated = {};
           Object.entries(scheduleStats).forEach(([date, dateStats]) => {
@@ -187,6 +130,7 @@ function PipelineRunsMonitor({
   const pipelineRunsData = useMemo(() => {
     if (monitorStats) {
       return Object.entries(monitorStats).reduce(
+        // @ts-ignore
         (obj, [id, { data: scheduleStats }]) => {
           const updated = dateRange.map(date => ({
             date,
@@ -205,19 +149,34 @@ function PipelineRunsMonitor({
     monitorStats,
   ]);
 
+  const breadcrumbs = useMemo(() => {
+    const arr = [];
+
+    arr.push({
+      bold: true,
+      label: () => 'Monitors',
+    });
+
+    return arr;
+  }, [
+    pipeline,
+  ]);
+
   return (
     <Monitor
       breadcrumbs={breadcrumbs}
       monitorType={MonitorTypeEnum.PIPELINE_RUNS}
       pipeline={pipeline}
     > 
-      <Spacing mx={2}>
-        <GradientTextStyle>
-          <Headline>
-            All pipeline runs
-          </Headline>
-        </GradientTextStyle>
-        <Spacing mt={2}>
+      <Spacing mt={2} mx={2}>
+        <Spacing ml={1}>
+          <GradientTextStyle>
+            <Headline>
+              All pipeline runs
+            </Headline>
+          </GradientTextStyle>
+        </Spacing>
+        <Spacing mt={1}>
           <BarStackChart
             colors={BAR_STACK_COLORS}
             data={totalPipelineRunData}
@@ -238,19 +197,21 @@ function PipelineRunsMonitor({
           return (
             <Spacing mt={3}>
               <FlexContainer alignItems="center">
+                <Spacing mx={1}>
+                  <GradientTextStyle>
+                    <Text bold large>
+                      {capitalize(SCHEDULE_TYPE_TO_LABEL[pipelineSchedule?.schedule_type]())}
+                    </Text>
+                  </GradientTextStyle>
+                </Spacing>
                 <Headline level={5}>
                   {pipelineSchedule?.name || id}
                 </Headline>
-                <Spacing ml={1} />
-                <GradientTextStyle>
-                  <Headline level={5}>
-                    {capitalize(SCHEDULE_TYPE_TO_LABEL[pipelineSchedule?.schedule_type]())}
-                  </Headline>
-                </GradientTextStyle>
               </FlexContainer>
-              <Spacing mt={2}>
+              <Spacing mt={1}>
                 <BarStackChart
                   colors={BAR_STACK_COLORS}
+                  // @ts-ignore
                   data={stats}
                   getXValue={(data) => data['date']}
                   keys={BAR_STACK_STATUSES}

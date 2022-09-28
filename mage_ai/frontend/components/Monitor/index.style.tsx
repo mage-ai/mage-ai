@@ -11,8 +11,6 @@ export const LinkStyle = styled.div<any>`
   `}
 
   ${props => !props.selected && `
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).checked};
-    }
+    cursor: pointer;
   `}
 `;

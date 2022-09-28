@@ -44,8 +44,6 @@ function PipelineBlockRuns({
     mutate: fetchOutput,
   } = api.outputs.block_runs.list(selectedRun?.id);
 
-  console.log('data output:', dataOutput);
-
   const {
     sample_data: blockSampleData
   } = dataOutput?.outputs?.[0] || {};
