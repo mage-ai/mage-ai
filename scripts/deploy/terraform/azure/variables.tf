@@ -10,6 +10,16 @@ variable "app_name" {
   default     = "mage-data-prep"
 }
 
+variable "container_cpu" {
+  description = "Container cpu"
+  default     = "1"
+}
+
+variable "container_memory" {
+  description = "Container memory"
+  default     = "1.5"
+}
+
 variable "docker_image" {
   description = "Docker image url."
   default     = "mageai/mageai:latest"
