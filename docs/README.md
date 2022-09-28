@@ -61,6 +61,7 @@ Read more tech docs here. Got questions?
 
 ### Guides
 - [SQL blocks](guides/blocks/SQL.md)
+- [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)
 - Triggering pipelines
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
     - [Trigger pipeline via API request](triggers/api.md)
