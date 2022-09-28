@@ -22,7 +22,6 @@ resource "azurerm_network_profile" "containergroup_profile" {
   }
 }
 
-
 resource "azurerm_container_group" "container_group" {
   name                = "${var.app_name}-${var.app_environment}"
   location            = azurerm_resource_group.resource_group.location
