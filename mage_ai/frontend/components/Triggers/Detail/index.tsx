@@ -47,6 +47,9 @@ import { createBlockStatus } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
+import { queryFromUrl, queryString } from '@utils/url';
+import Paginate from '@components/shared/Paginate';
+import { useRouter } from 'next/router';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;
@@ -55,12 +58,15 @@ type TriggerDetailProps = {
   variables?: PipelineVariableType[];
 };
 
+const LIMIT = 30;
+
 function TriggerDetail({
   fetchPipelineSchedule,
   pipeline,
   pipelineSchedule,
   variables,
 }: TriggerDetailProps) {
+  const router = useRouter();
   const {
     uuid: pipelineUUID,
   } = pipeline || {};
@@ -75,28 +81,58 @@ function TriggerDetail({
     variables: scheduleVariablesInit = {},
   } = pipelineSchedule || {};
 
+  const q = queryFromUrl();
+
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
-  } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID, {}, {
+  } = api.pipeline_runs.pipeline_schedules.list(pipelineScheduleID, {
+    _limit: LIMIT,
+    _offset: (q?.page ? q.page : 0) * LIMIT,
+  }, {
     refreshInterval: 3000,
     revalidateOnFocus: true,
   });
   const pipelineRuns = useMemo(() => dataPipelineRuns?.pipeline_runs || [], [dataPipelineRuns]);
+  const totalRuns = useMemo(() => dataPipelineRuns?.total_count || [], [dataPipelineRuns]);
 
   const [selectedRun, setSelectedRun] = useState<PipelineRunType>(null);
-  const tablePipelineRuns = useMemo(() => (
-    <PipelineRunsTable
-      fetchPipelineRuns={fetchPipelineRuns}
-      onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
-        const run = pipelineRuns[rowIndex];
+  const tablePipelineRuns = useMemo(() => {
+    const page = q?.page ? q.page : 0;
 
-        return prev?.id !== run.id ? run : null
-      })}
-      pipelineRuns={pipelineRuns}
-      selectedRun={selectedRun}
-    />
-  ), [
+    return (
+      <>
+        <PipelineRunsTable
+          fetchPipelineRuns={fetchPipelineRuns}
+          onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
+            const run = pipelineRuns[rowIndex];
+
+            return prev?.id !== run.id ? run : null
+          })}
+          pipelineRuns={pipelineRuns}
+          selectedRun={selectedRun}
+        />
+        <Spacing p={2}>
+          <Paginate
+            page={Number(page)}
+            maxPages={9}
+            onUpdate={(p) => {
+              const newPage = Number(p);
+              const updatedQuery = {
+                ...q,
+                page: newPage >= 0 ? newPage : 0,
+              }
+              router.push(
+                '/pipelines/[pipeline]/triggers/[...slug]',
+                `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}?${queryString(updatedQuery)}`,
+              );
+            }}
+            totalPages={Math.ceil(totalRuns / LIMIT)}
+          />
+        </Spacing>
+      </>
+    )
+  }, [
     fetchPipelineRuns,
     pipeline,
     pipelineRuns,

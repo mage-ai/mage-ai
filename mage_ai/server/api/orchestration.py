@@ -1,4 +1,5 @@
 from .base import (
+    META_KEY_LIMIT,
     BaseDetailHandler,
     BaseHandler,
 )
@@ -127,9 +128,10 @@ def process_pipeline_runs(
         results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
     if pipeline_uuid is not None:
         results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)            
-    results = results.order_by(PipelineRun.created_at.desc())
+    initial_results = \
+        results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
 
-    results = handler.limit(results)
+    results = handler.limit(initial_results)
 
     collection = [r.to_dict(include_attributes=[
                                 'block_runs',
@@ -138,7 +140,34 @@ def process_pipeline_runs(
                             ])
                   for r in results]
 
-    handler.write(dict(pipeline_runs=collection))
+    # need to do this because we group retries in the frontend
+    if handler.get_argument(META_KEY_LIMIT) is not None and \
+        len(collection) > 0 and \
+        (pipeline_uuid is not None or pipeline_schedule_id is not None):
+
+        first_execution_date = results[0].execution_date
+        additional_results = \
+            initial_results.filter(PipelineRun.execution_date == first_execution_date)
+        filter_dates = []
+        if additional_results[0].id != results[0].id:
+            filter_dates.append(collection[0]['execution_date'])
+
+        last_execution_date = results[-1].execution_date
+        additional_results = \
+            initial_results.filter(PipelineRun.execution_date == last_execution_date)
+        addons = [
+            r.to_dict(include_attributes=[
+                        'block_runs',
+                        'block_runs_count',
+                        'pipeline_schedule_name',
+                    ])
+            for r in additional_results
+        ]
+        filter_dates.append(collection[-1]['execution_date'])
+        collection = \
+            list(filter(lambda x: x['execution_date'] not in filter_dates, collection)) + addons
+
+    handler.write(dict(pipeline_runs=collection, total_count=initial_results.count()))
     handler.finish()
 
 
