@@ -31,7 +31,27 @@ Once you created an account, from your terminal run the following command to log
 az login
 ```
 
-Your browser will open
+Your browser will open and have you sign in with an existing Azure account. 
+Once completed, your terminal will output something like this:
+
+```
+[
+  {
+    "cloudName": "AzureCloud",
+    "homeTenantId": "7712a6c4-1684-402f-8d1a-f1bb656e5d40",
+    "id": "d17fcd32-b98c-4f81-a881-42b8e811a0e8",
+    "isDefault": true,
+    "managedByTenants": [],
+    "name": "Azure subscription 1",
+    "state": "Enabled",
+    "tenantId": "7712a6c4-1684-402f-8d1a-f1bb656e5d40",
+    "user": {
+      "name": "eng@mage.com",
+      "type": "user"
+    }
+  }
+]
+```
 
 <br />
 
