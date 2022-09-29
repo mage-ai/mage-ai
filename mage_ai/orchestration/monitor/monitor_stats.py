@@ -93,7 +93,10 @@ class MonitorStats:
         pipeline_run_by_date = group_by(lambda p: p.created_at.strftime('%Y-%m-%d'), pipeline_runs)
 
         def __mean_runtime(pipeline_runs):
-            runtime_list = [(p.completed_at - p.created_at).total_seconds() for p in pipeline_runs]
+            runtime_list = [(p.completed_at - p.created_at).total_seconds()
+                            for p in pipeline_runs if p.completed_at > p.created_at]
+            if len(runtime_list) == 0:
+                return 0
             return sum(runtime_list) / len(runtime_list)
         pipeline_run_time_by_date = {k: __mean_runtime(v) for k, v in pipeline_run_by_date.items()}
         return {pipeline_uuid: dict(name=pipeline_uuid, data=pipeline_run_time_by_date)}
@@ -140,7 +143,10 @@ class MonitorStats:
         block_runs = block_runs.filter(BlockRun.completed_at != None).all()
 
         def __stats_func(block_runs):
-            runtime_list = [(b.completed_at - b.created_at).total_seconds() for b in block_runs]
+            runtime_list = [(b.completed_at - b.created_at).total_seconds()
+                            for b in block_runs if b.completed_at > b.created_at]
+            if len(runtime_list) == 0:
+                return 0
             return sum(runtime_list) / len(runtime_list)
 
         return self.__cal_block_run_stats(block_runs, __stats_func)
