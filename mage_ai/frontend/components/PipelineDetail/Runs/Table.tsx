@@ -169,7 +169,8 @@ function RetryButton({
 }
 
 type PipelineRunsTableProps = {
-  fetchPipelineRuns: () => void,
+  fetchPipelineRuns: () => void;
+  height?: number;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
@@ -177,6 +178,7 @@ type PipelineRunsTableProps = {
 
 function PipelineRunsTable({
   fetchPipelineRuns,
+  height,
   onClickRow,
   pipelineRuns,
   selectedRun,
@@ -235,139 +237,137 @@ function PipelineRunsTable({
     });
   }
 
-  const sortedPipelineRuns = useMemo(() => {
-    const sortedRuns = [ ...pipelineRuns ];
-    sortedRuns.sort((a, b) => moment(b.execution_date).valueOf() - moment(a.execution_date).valueOf());
-
-    return sortedRuns;
-  }, [
-    pipelineRuns,
-  ]);
-
   return (
-    <Table
-      columnFlex={columnFlex}
-      columns={columns}
-      isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
-      onClickRow={onClickRow}
-      rows={sortedPipelineRuns.map((pipelineRun, index) => {
-        const {
-          block_runs_count: blockRunsCount,
-          completed_at: completedAt,
-          execution_date: executionDate,
-          id,
-          pipeline_schedule_id: pipelineScheduleId,
-          pipeline_schedule_name: pipelineScheduleName,
-          pipeline_uuid: pipelineUUID,
-          status,
-        } = pipelineRun;
+    <div
+      style={{
+        height,
+        overflowY: 'scroll',
+      }}
+    >
+      <Table
+        columnFlex={columnFlex}
+        columns={columns}
+        isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
+        onClickRow={onClickRow}
+        rows={pipelineRuns.map((pipelineRun, index) => {
+          const {
+            block_runs_count: blockRunsCount,
+            completed_at: completedAt,
+            execution_date: executionDate,
+            id,
+            pipeline_schedule_id: pipelineScheduleId,
+            pipeline_schedule_name: pipelineScheduleName,
+            pipeline_uuid: pipelineUUID,
+            status,
+          } = pipelineRun;
 
-        const isRetry =
-          index > 0 && sortedPipelineRuns[index - 1].execution_date == pipelineRun.execution_date;
+          const isRetry =
+            index > 0 && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date;
 
-        let arr = [];
-        if (isRetry) {
-          arr = [
-            <Spacing ml={1}>
-              <FlexContainer alignItems="center">
-                <Subitem size={2 * UNIT} useStroke/>
-                <Button
-                  borderRadius={BORDER_RADIUS_XXXLARGE}
-                  notClickable
-                  padding="6px"
-                >
-                  <Text muted>
-                    {RUN_STATUS_TO_LABEL[status]}
-                  </Text>
-                </Button>
-              </FlexContainer>
-            </Spacing>,
-            <Text default monospace muted>
-              -
-            </Text>,
-            <Text default monospace muted>
-              -
-            </Text>,
-            <NextLink
-              as={`/pipelines/${pipelineUUID}/runs/${id}`}
-              href={'/pipelines/[pipeline]/runs/[run]'}
-              passHref
-            >
-              <Link bold muted>
-                {`See block runs (${blockRunsCount})`}
-              </Link>
-            </NextLink>,
-            <Text monospace muted>
-              {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
-            </Text>,
-            <Button
-              default
-              iconOnly
-              noBackground
-              onClick={() => Router.push(
-                `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-              )}
-            >
-              <TodoList default size={2 * UNIT} />
-            </Button>,
-          ];
+          let arr = [];
+          if (isRetry) {
+            arr = [
+              <Spacing ml={1}>
+                <FlexContainer alignItems="center">
+                  <Subitem size={2 * UNIT} useStroke/>
+                  <Button
+                    borderRadius={BORDER_RADIUS_XXXLARGE}
+                    notClickable
+                    padding="6px"
+                  >
+                    <Text muted>
+                      {RUN_STATUS_TO_LABEL[status]}
+                    </Text>
+                  </Button>
+                </FlexContainer>
+              </Spacing>,
+              <Text default monospace muted>
+                -
+              </Text>,
+              <Text default monospace muted>
+                -
+              </Text>,
+              <NextLink
+                as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                href={'/pipelines/[pipeline]/runs/[run]'}
+                passHref
+              >
+                <Link bold muted>
+                  {`See block runs (${blockRunsCount})`}
+                </Link>
+              </NextLink>,
+              <Text monospace muted>
+                {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+              </Text>,
+              <Button
+                default
+                iconOnly
+                noBackground
+                onClick={() => Router.push(
+                  `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                )}
+              >
+                <TodoList default size={2 * UNIT} />
+              </Button>,
+            ];
 
-        } else {
-          arr = [
-            <RetryButton
-              onCancel={updatePipelineRun}
-              onSuccess={fetchPipelineRuns}
-              pipelineRun={pipelineRun}
-            />,
-            <Text monospace default>
-              {executionDate}
-            </Text>,
-            <NextLink
-              as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
-              href={'/pipelines/[pipeline]/triggers/[...slug]'}
-              passHref
-            >
-              <Link bold sameColorAsText>
-                {pipelineScheduleName}
-              </Link>
-            </NextLink>,
-            <NextLink
-              as={`/pipelines/${pipelineUUID}/runs/${id}`}
-              href={'/pipelines/[pipeline]/runs/[run]'}
-              passHref
-            >
-              <Link bold sameColorAsText>
-                {`See block runs (${blockRunsCount})`}
-              </Link>
-            </NextLink>,
-            <Text default monospace>
-              {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
-            </Text>,
-            <Button
-              default
-              iconOnly
-              noBackground
-              onClick={() => Router.push(
-                `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
-              )}
-            >
-              <TodoList default size={2 * UNIT} />
-            </Button>,
-          ];
-        }
+          } else {
+            arr = [
+              <RetryButton
+                onCancel={updatePipelineRun}
+                onSuccess={fetchPipelineRuns}
+                pipelineRun={pipelineRun}
+              />,
+              <Text monospace default>
+                {executionDate}
+              </Text>,
+              <NextLink
+                as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
+                href={'/pipelines/[pipeline]/triggers/[...slug]'}
+                passHref
+              >
+                <Link bold sameColorAsText>
+                  {pipelineScheduleName}
+                </Link>
+              </NextLink>,
+              <NextLink
+                as={`/pipelines/${pipelineUUID}/runs/${id}`}
+                href={'/pipelines/[pipeline]/runs/[run]'}
+                passHref
+              >
+                <Link bold sameColorAsText>
+                  {`See block runs (${blockRunsCount})`}
+                </Link>
+              </NextLink>,
+              <Text default monospace>
+                {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
+              </Text>,
+              <Button
+                default
+                iconOnly
+                noBackground
+                onClick={() => Router.push(
+                  `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
+                )}
+              >
+                <TodoList default size={2 * UNIT} />
+              </Button>,
+            ];
+          }
 
-        if (onClickRow) {
-          arr.push(
-            <Flex flex={1} justifyContent="flex-end">
-              <ChevronRight default size={2 * UNIT} />
-            </Flex>
-          );
-        }
+          if (onClickRow) {
+            arr.push(
+              <Flex flex={1} justifyContent="flex-end">
+                <ChevronRight default size={2 * UNIT} />
+              </Flex>
+            );
+          }
 
-        return arr;
-      })}
-      uuid="pipeline-runs"
-    />
+          return arr;
+        })}
+        uuid="pipeline-runs"
+      />
+    </div>
   );
 }
 
