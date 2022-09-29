@@ -46,6 +46,7 @@ function Paginate({
   return (
     <FlexContainer alignItems="center">
       <Button
+        disabled={page === 0}
         onClick={() => onUpdate(page - 1)}
       >
         <PaginateArrowLeft size={1.5 * UNIT} stroke='#AEAEAE' />
@@ -117,6 +118,7 @@ function Paginate({
       )}
       <Spacing ml={1} />
       <Button
+        disabled={page === totalPages - 1}
         onClick={() => onUpdate(page + 1)}
       >
         <PaginateArrowRight size={1.5 * UNIT} stroke='#AEAEAE' />
