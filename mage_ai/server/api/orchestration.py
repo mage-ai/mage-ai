@@ -141,9 +141,9 @@ def process_pipeline_runs(
                   for r in results]
 
     # need to do this because we group retries in the frontend
-    if handler.get_argument(META_KEY_LIMIT) is not None and \
+    if handler.get_argument(META_KEY_LIMIT, None) is not None and \
         len(collection) > 0 and \
-        (pipeline_uuid is not None or pipeline_schedule_id is not None):
+            (pipeline_uuid is not None or pipeline_schedule_id is not None):
 
         first_execution_date = results[0].execution_date
         additional_results = \
