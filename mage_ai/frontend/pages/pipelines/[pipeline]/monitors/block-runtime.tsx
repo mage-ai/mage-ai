@@ -76,13 +76,6 @@ function BlockRuntimeMonitor({
     fetchStats(pipelineSchedule);
   }, [fetchStats]);
 
-  // const { data: dataMonitor } = api.monitor_stats.detail(
-  //   'block_run_time',
-  //   {
-  //     pipeline_uuid: pipeline?.uuid,
-  //   },
-  // );
-
   const {
     stats: monitorStats,
   } = dataMonitor?.monitor_stats || {};
@@ -190,6 +183,7 @@ function BlockRuntimeMonitor({
                 <LineSeries
                   // @ts-ignore
                   data={data}
+                  getX={data => moment(data.x).valueOf()}
                   gridProps={{
                     stroke: "black",
                     strokeDasharray: null,
@@ -200,7 +194,7 @@ function BlockRuntimeMonitor({
                   margin={{
                     top: 10,
                     bottom: 30,
-                    left: 30,
+                    left: 35,
                     right: -1,
                   }}
                   noCurve
@@ -217,10 +211,9 @@ function BlockRuntimeMonitor({
                       </Text>
                     );
                   }}
-                  getX={data => moment(data.x).valueOf()}
+                  thickStroke
                   xLabelFormat={val => moment(val).format('MMM DD')}
                   xLabelRotate={false}
-                  yLabelFormat={val => val.toFixed ? val.toFixed(0) : val}
                 />
               </div>
             </Spacing>
