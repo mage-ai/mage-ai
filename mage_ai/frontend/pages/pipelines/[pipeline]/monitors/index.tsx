@@ -189,7 +189,7 @@ function PipelineRunsMonitor({
             margin={{
               top: 10,
               bottom: 30,
-              left: 30,
+              left: 35,
               right: 0
             }}
             xLabelFormat={label => moment(label).format('MMM DD')}
@@ -234,7 +234,7 @@ function PipelineRunsMonitor({
                   margin={{
                     top: 10,
                     bottom: 30,
-                    left: 30,
+                    left: 35,
                     right: 0
                   }}
                   xLabelFormat={label => moment(label).format('MMM DD')}

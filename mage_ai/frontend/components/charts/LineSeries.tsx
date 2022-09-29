@@ -29,7 +29,9 @@ import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary'
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
+import { formatNumberLabel } from './utils/label';
 import { getChartColors } from './constants';
+
 const tooltipStyles = {
   ...defaultStyles,
   backgroundColor: dark.background.page,
@@ -303,7 +305,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             numTicks={numYTicks}
             scale={yScale}
             stroke={axisStrokeColor}
-            tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
+            tickFormat={label => yLabelFormat ? yLabelFormat(label) : formatNumberLabel(label)}
             tickLabelProps={label => ({
               dx: (String(label).length > 4) ? 3 : 0,
               fill: text,
