@@ -1,5 +1,6 @@
 import { ThemeContext } from 'styled-components';
 import { useContext, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import BlocksSeparatedGradient from '@oracle/icons/custom/BlocksSeparatedGradient';
 import BlockRunsTable from '@components/PipelineDetail/BlockRuns/Table';
@@ -26,8 +27,6 @@ import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEqual } from '@utils/hash';
 import { indexBy } from '@utils/array';
 import { queryFromUrl, queryString } from '@utils/url';
-import { useRouter } from 'next/router';
-import { useWindowSize } from '@utils/sizes';
 
 const TAB_URL_PARAM = 'tab';
 

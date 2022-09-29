@@ -237,15 +237,6 @@ function PipelineRunsTable({
     });
   }
 
-  const sortedPipelineRuns = useMemo(() => {
-    const sortedRuns = [ ...pipelineRuns ];
-    // sortedRuns.sort((a, b) => moment(a.execution_date).valueOf() - moment(b.execution_date).valueOf());
-
-    return sortedRuns;
-  }, [
-    pipelineRuns,
-  ]);
-
   return (
     <div
       style={{
@@ -258,7 +249,7 @@ function PipelineRunsTable({
         columns={columns}
         isSelectedRow={(rowIndex: number) => pipelineRuns[rowIndex].id === selectedRun?.id}
         onClickRow={onClickRow}
-        rows={sortedPipelineRuns.map((pipelineRun, index) => {
+        rows={pipelineRuns.map((pipelineRun, index) => {
           const {
             block_runs_count: blockRunsCount,
             completed_at: completedAt,
@@ -271,7 +262,7 @@ function PipelineRunsTable({
           } = pipelineRun;
 
           const isRetry =
-            index > 0 && sortedPipelineRuns[index - 1].execution_date == pipelineRun.execution_date;
+            index > 0 && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date;
 
           let arr = [];
           if (isRetry) {

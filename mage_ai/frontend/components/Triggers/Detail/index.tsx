@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
+import Paginate from '@components/shared/Paginate';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineRunsTable from '@components/PipelineDetail/Runs/Table';
 import PipelineRunType from '@interfaces/PipelineRunType';
@@ -48,8 +50,6 @@ import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { queryFromUrl, queryString } from '@utils/url';
-import Paginate from '@components/shared/Paginate';
-import { useRouter } from 'next/router';
 
 type TriggerDetailProps = {
   fetchPipelineSchedule: () => void;
