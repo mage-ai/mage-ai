@@ -1,3 +1,4 @@
+import ssl
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import DATAFRAME_SAMPLE_COUNT_PREVIEW
 from mage_ai.data_preparation.models.file import File
@@ -59,13 +60,13 @@ from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
+from tornado.ioloop import IOLoop
 from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
 import json
 import os
 import socket
-import tornado.ioloop
 import tornado.web
 import urllib.parse
 
@@ -530,6 +531,18 @@ async def main(
                 'Unable to find an open port, please clear your running processes if possible.'
             )
         port += 1
+
+    # test = os.path.join(os.path.dirname(__file__), "cert/localhost.crt")
+    # print('test:', test)
+
+    # app.listen(
+    #     6800,
+    #     address=host,
+    #     ssl_options={
+    #         'certfile': os.path.join(os.path.dirname(__file__), "cert/localhost.crt"),
+    #         'keyfile': os.path.join(os.path.dirname(__file__), "cert/localhost.key"),
+    #     },
+    # )
 
     app.listen(
         port,

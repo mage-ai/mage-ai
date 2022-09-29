@@ -1027,6 +1027,8 @@ function PipelineDetailPage({
     selectedBlock,
   ]);
 
+  console.log('test:', getWebSocket());
+
   // WebSocket
   const {
     lastMessage,
