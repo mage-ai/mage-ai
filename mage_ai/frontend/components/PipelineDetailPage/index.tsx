@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
+import ChartGradient from '@oracle/icons/custom/ChartGradient';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -12,8 +13,8 @@ import Spacing from '@oracle/elements/Spacing';
 import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
 import {
-  BlocksSeparated,
   BlocksStacked,
+  Chart,
   Edit,
   Schedule,
   TodoList,
@@ -180,6 +181,17 @@ function PipelineDetailPage({
             href: '/pipelines/[pipeline]/logs',
           },
           isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
+        },
+        {
+          Icon: Chart,
+          IconSelected: ChartGradient,
+          id: PageNameEnum.MONITOR,
+          label: () => 'Monitor',
+          linkProps: {
+            as: `/pipelines/${pipelineUUID}/monitors`,
+            href: '/pipelines/[pipeline]/monitors',
+          },
+          isSelected: () => PageNameEnum.MONITOR === pageName,
         },
       ]}
       subheaderChildren={typeof subheader !== 'undefined'

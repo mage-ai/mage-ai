@@ -51,7 +51,7 @@ type TooltipData = {
 
 export type HistogramProps = {
   columnType?: string;
-  data: any[] | any[];
+  data: any[];
   events?: boolean;
   getBarColor?: (opts: any) => string;
   getXValue?: (opts: any) => any;

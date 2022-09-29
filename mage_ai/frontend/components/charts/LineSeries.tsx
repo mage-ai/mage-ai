@@ -32,7 +32,7 @@ import { binarySearch } from '@utils/array';
 import { getChartColors } from './constants';
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: dark.background.navigation,
+  backgroundColor: dark.background.page,
   border: 'none',
 };
 
@@ -47,15 +47,19 @@ type SharedProps = {
   events?: boolean;
   getX?: (opts: any) => number;
   getY?: (opts: any) => number;
+  gridProps?: any;
   height: number;
+  hideGridX?: boolean;
   increasedXTicks?: boolean;
   lineLegendNames?: string[];
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   noCurve?: boolean;
+  numYTicks?: number;
   renderXTooltipContent?: (opts: any, index: number) => any | number | string;
   renderYTooltipContent?: (opts: any, index: number) => any | number | string;
   thickStroke?: boolean;
   xLabelFormat?: any;
+  xLabelRotate?: boolean;
   yLabelFormat?: any;
 };
 
@@ -75,12 +79,15 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   events = false,
   getX: getXProp,
   getY: getYProp,
+  gridProps = {},
   height,
+  hideGridX,
   hideTooltip,
   increasedXTicks,
   lineLegendNames,
   margin,
   noCurve,
+  numYTicks,
   renderXTooltipContent,
   renderYTooltipContent,
   showTooltip,
@@ -90,6 +97,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   tooltipTop = [],
   width,
   xLabelFormat,
+  xLabelRotate = true,
   yLabelFormat,
   // @ts-ignore
 }: LineSeriesProps & WithTooltipProvidedProps) => {
@@ -100,7 +108,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
   const border = dark.monotone.gray;
   const purplePastel = dark.brand.wind200;
-  const text = dark.content.active;
+  const text = dark.content.muted;
   const { black, gray } = dark.monotone;
 
   const xValues = data.map(d => Number(getX(d)));
@@ -112,7 +120,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
 
-  const maxNumberOfYValues = Math.max(...data.map(({ y }) => y.length));
+  const maxNumberOfYValues = Math.max(...data.map(({ y }) => y?.length || 0));
   const xScale = useMemo(() => scaleLinear<number>({
     domain: [Math.min(...xValues), Math.max(...xValues)],
     range: [0, xMax],
@@ -120,8 +128,8 @@ const LineSeries = withTooltip<LineSeriesProps>(({
     xMax,
     xValues,
   ]);
-  const yScaleMin = Math.min(...data.map(({ y }) => Math.min(...y)));
-  const yScaleMax = Math.max(...data.map(({ y }) => Math.max(...y)));
+  const yScaleMin = Math.min(...data.map(({ y }) => Math.min(...(y || []))));
+  const yScaleMax = Math.max(...data.map(({ y }) => Math.max(...(y || []))));
   const yScale = useMemo(() => scaleLinear<number>({
     domain: [
       yScaleMin,
@@ -167,6 +175,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
       const tooltipTopData = range(0, maxNumberOfYValues).map(i => yScale(getY(d, i)));
 
+      if (getY(d))
       showTooltip({
         tooltipData: {
           ...d,
@@ -245,6 +254,19 @@ const LineSeries = withTooltip<LineSeriesProps>(({
         )}
 
         <Group left={margin.left} top={margin.top}>
+          {!hideGridX && (
+            <GridColumns
+              height={yMax}
+              pointerEvents="none"
+              scale={xScale}
+              stroke={border}
+              strokeDasharray="3,3"
+              strokeOpacity={0.4}
+              width={xMax}
+              {...gridProps}
+            />
+          )}
+
           <GridRows
             height={yMax}
             pointerEvents="none"
@@ -253,17 +275,9 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             strokeDasharray="3,3"
             strokeOpacity={0.4}
             width={xMax}
+            {...gridProps}
           />
 
-          <GridColumns
-            height={yMax}
-            pointerEvents="none"
-            scale={xScale}
-            stroke={border}
-            strokeDasharray="3,3"
-            strokeOpacity={0.4}
-            width={xMax}
-          />
 
           {/* This is a vertical line at the end of the x-axis */}
           <line stroke={border} x1={xMax} x2={xMax} y1={0} y2={yMax} />
@@ -278,7 +292,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               fontFamily,
               fontSize: SMALL_FONT_SIZE,
               textAnchor: 'middle',
-              transform: `rotate(-45, ${xScale(val)}, 0) translate(-32, 4)`,
+              transform: xLabelRotate && `rotate(-45, ${xScale(val)}, 0) translate(-32, 4)`,
             })}
             tickStroke={axisStrokeColor}
             top={yMax}
@@ -286,6 +300,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
           <AxisLeft
             hideTicks
+            numTicks={numYTicks}
             scale={yScale}
             stroke={axisStrokeColor}
             tickFormat={label => yLabelFormat ? yLabelFormat(label) : label}
@@ -295,6 +310,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
               fontFamily,
               fontSize: SMALL_FONT_SIZE,
               textAnchor: 'end',
+              transform: 'translate(0,2.5)',
             })}
             tickStroke={axisStrokeColor}
           />
@@ -329,13 +345,13 @@ const LineSeries = withTooltip<LineSeriesProps>(({
           {range(0, maxNumberOfYValues).map((i) => (
             <LinePath
               {...curveProps}
-              data={data}
+              data={data.filter(d => d.y != undefined)}
               key={i}
               pointerEvents="none"
               strokeWidth={thickStroke ? 2 : 1}
               x={d => xScale(getX(d))}
               // @ts-ignore
-              y={d => yScale(i >= d.y.length ? yScaleMin : getY(d, i))}
+              y={d => yScale(d.y && (i >= d.y.length ? yScaleMin : getY(d, i)))}
               {...linePathProps[i]}
             />
           ))}
@@ -396,12 +412,12 @@ const LineSeries = withTooltip<LineSeriesProps>(({
                 key={idx}
                 left={tooltipLeft + unit}
                 style={tooltipStyles}
-                top={top - unit}
+                top={top - 2 * unit}
               >
                 {renderYTooltipContent && renderYTooltipContent(tooltipData, idx)}
                 {!renderYTooltipContent && (
                   <Text center small>
-                    {yValue.toFixed ? yValue.toFixed(3) : yValue} {lineLegendNames[idx]}
+                    {yValue.toFixed ? yValue.toFixed(3) : yValue} {lineLegendNames?.[idx]}
                   </Text>
                 )}
               </Tooltip>
@@ -411,7 +427,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
           <Tooltip
             left={tooltipLeft}
             style={{
-              ...defaultStyles,
+              ...tooltipStyles,
               transform: 'translateX(-65%)',
             }}
             top={yMax + margin.top}

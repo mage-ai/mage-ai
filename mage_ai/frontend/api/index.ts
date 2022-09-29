@@ -38,6 +38,7 @@ export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
 export const LOGS = 'logs';
+export const MONITOR_STATS = 'monitor_stats';
 export const OUTPUTS = 'outputs';
 export const PIPELINES: 'pipelines' = 'pipelines';
 export const PIPELINE_RUNS: 'pipeline_runs' = 'pipeline_runs';
@@ -70,6 +71,7 @@ const RESOURCES: any[][] = [
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
   [LOGS, PIPELINES],
+  [MONITOR_STATS],
   [OUTPUTS, BLOCK_RUNS],
   [PIPELINES],
   [PIPELINE_RUNS],
