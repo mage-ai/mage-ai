@@ -44,86 +44,90 @@ function Paginate({
   }
 
   return (
-    <FlexContainer alignItems="center">
-      <Button
-        disabled={page === 0}
-        onClick={() => onUpdate(page - 1)}
-      >
-        <PaginateArrowLeft size={1.5 * UNIT} stroke='#AEAEAE' />
-      </Button>
-      {!pageArray.includes(0) && (
-        <>
-          <Spacing ml={1} key={0}>
-            <Button
-              onClick={() => onUpdate(0)}
-              borderLess
-              noBackground
-            >
-              {1}
-            </Button>
-          </Spacing>
-          {!pageArray.includes(1) && (
-            <Spacing ml={1} key={0}>
-              <Button
-                notClickable
-                noBackground
-                noPadding
-              >
-                ...
-              </Button>
-            </Spacing>
-          )}
-        </>
-      )}
-      {pageArray.map((p) => (
-        <Spacing ml={1} key={p}>
+    <>
+      {totalPages > 0 && (
+        <FlexContainer alignItems="center">
           <Button
-            onClick={() => {
-              if (p !== page) {
-                onUpdate(p);
-              }
-            }}
-            notClickable={p === page}
-            backgroundColor={p === page && PURPLE}
-            borderLess
-            noBackground
+            disabled={page === 0}
+            onClick={() => onUpdate(page - 1)}
           >
-            {p + 1}
+            <PaginateArrowLeft size={1.5 * UNIT} stroke='#AEAEAE' />
           </Button>
-        </Spacing>
-      ))}
-      {!pageArray.includes(totalPages - 1) && (
-        <>
-          {!pageArray.includes(totalPages - 2) && (
-            <Spacing ml={1} key={0}>
+          {!pageArray.includes(0) && (
+            <>
+              <Spacing ml={1} key={0}>
+                <Button
+                  onClick={() => onUpdate(0)}
+                  borderLess
+                  noBackground
+                >
+                  {1}
+                </Button>
+              </Spacing>
+              {!pageArray.includes(1) && (
+                <Spacing ml={1} key={0}>
+                  <Button
+                    notClickable
+                    noBackground
+                    noPadding
+                  >
+                    ...
+                  </Button>
+                </Spacing>
+              )}
+            </>
+          )}
+          {pageArray.map((p) => (
+            <Spacing ml={1} key={p}>
               <Button
-                notClickable
+                onClick={() => {
+                  if (p !== page) {
+                    onUpdate(p);
+                  }
+                }}
+                notClickable={p === page}
+                backgroundColor={p === page && PURPLE}
+                borderLess
                 noBackground
-                noPadding
               >
-                ...
+                {p + 1}
               </Button>
             </Spacing>
+          ))}
+          {!pageArray.includes(totalPages - 1) && (
+            <>
+              {!pageArray.includes(totalPages - 2) && (
+                <Spacing ml={1} key={0}>
+                  <Button
+                    notClickable
+                    noBackground
+                    noPadding
+                  >
+                    ...
+                  </Button>
+                </Spacing>
+              )}
+              <Spacing ml={1} key={totalPages - 1}>
+                <Button
+                  onClick={() => onUpdate(totalPages - 1)}
+                  borderLess
+                  noBackground
+                >
+                  {totalPages}
+                </Button>
+              </Spacing>
+            </>
           )}
-          <Spacing ml={1} key={totalPages - 1}>
-            <Button
-              onClick={() => onUpdate(totalPages - 1)}
-              borderLess
-              noBackground
-            >
-              {totalPages}
-            </Button>
-          </Spacing>
-        </>
+          <Spacing ml={1} />
+          <Button
+            disabled={page === totalPages - 1}
+            onClick={() => onUpdate(page + 1)}
+          >
+            <PaginateArrowRight size={1.5 * UNIT} stroke='#AEAEAE' />
+          </Button>
+        </FlexContainer>
       )}
-      <Spacing ml={1} />
-      <Button
-        disabled={page === totalPages - 1}
-        onClick={() => onUpdate(page + 1)}
-      >
-        <PaginateArrowRight size={1.5 * UNIT} stroke='#AEAEAE' />
-      </Button>
-    </FlexContainer>
+    </>
   )
 }
 
