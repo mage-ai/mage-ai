@@ -140,7 +140,9 @@ def process_pipeline_runs(
                             ])
                   for r in results]
 
-    # need to do this because we group retries in the frontend
+    # If runs from a certain execution date are included in the results, then
+    # we want to include all of the attempts for that execution date. We need
+    # to do this because the frontend groups retries.
     if handler.get_argument(META_KEY_LIMIT, None) is not None and \
         len(collection) > 0 and \
             (pipeline_uuid is not None or pipeline_schedule_id is not None):
