@@ -36,11 +36,17 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 
 <br />
 
-### Using pip
+### Using `pip` or [`conda`](https://github.com/conda-forge/mage-ai-feedstock)
 
 ##### 1. Install Mage
 ```bash
 pip install mage-ai
+```
+
+or
+
+```bash
+conda install -c conda-forge mage-ai
 ```
 
 <sub>If you run into errors, see the [errors section](#errors) below.</sub>

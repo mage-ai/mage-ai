@@ -77,11 +77,17 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
 
 <sub>Follow the [guide](docs/spark/setup/README.md) if you want to use PySpark kernel in your notebook.</sub>
 
-### Using pip
+### Using `pip` or `conda`
 
 ##### 1. Install Mage
 ```bash
 pip install mage-ai
+```
+
+or
+
+```bash
+conda install -c conda-forge mage-ai
 ```
 
 <sub>For additional packages (e.g. `spark`, `postgres`, etc), please see [Installing extra packages](docs/README.md#installing-extra-packages).</sub>
