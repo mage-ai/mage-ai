@@ -6,6 +6,7 @@
 - [Client APIs](#client-apis)
   - [Redshift](#redshift)
   - [S3](#s3)
+  - [GoogleCloudStorage](#google-cloud-storage)
   - [FileIO](#fileio)
   - [BigQuery](#bigquery)
   - [PostgreSQL](#postgresql)
@@ -24,6 +25,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 -   AWS S3
 -   Filesystem
 -   Google BigQuery
+-   Google Cloud Storage
 -   PostgreSQL Database
 -   Snowflake
 
@@ -411,6 +413,9 @@ Loads the data frame from the filepath specified. This function will load at max
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
+## GoogleCloudStorage
+WIP
 
 ## BigQuery
 

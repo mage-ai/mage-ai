@@ -13,6 +13,7 @@ class DataSource(str, Enum):
     API = 'api'
     BIGQUERY = 'bigquery'
     FILE = 'file'
+    GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
     POSTGRES = 'postgres'
     REDSHIFT = 'redshift'
     S3 = 's3'
