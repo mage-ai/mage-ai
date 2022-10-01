@@ -18,7 +18,7 @@ class S3(BaseFile):
     - ".hdf5"
 
     If profile is stored on file (in `~/.aws`), no further arguments are needed other than those
-    specified below. Otherwise, use the factory method `with_credentials` to construct
+    specified below. Otherwise, use the factory method `with_config` to construct
     the data loader using manually specified credentials.
     """
 

@@ -47,7 +47,7 @@ class BigQuery(BaseSQLDatabase):
                     credentials = service_account.Credentials.from_service_account_file(path)
             if 'credentials' in kwargs:
                 kwargs.pop('credentials')
-        with self.printer.print_msg(f'Connecting to BigQuery warehouse'):
+        with self.printer.print_msg('Connecting to BigQuery warehouse'):
             self.client = Client(credentials=credentials, **kwargs)
 
     def load(
