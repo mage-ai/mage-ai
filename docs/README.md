@@ -9,6 +9,10 @@ Read more tech docs here. Got questions?
   height="200"
   src="https://raw.githubusercontent.com/mage-ai/assets/main/mascots/wind/looking.svg"
 />
+<img
+  referrerpolicy="no-referrer-when-downgrade"
+  src="https://static.scarf.sh/a.png?x-pxid=166cb008-7c31-4e95-909a-0f5fdc1d375a"
+/>
 
 ## Directory
 
