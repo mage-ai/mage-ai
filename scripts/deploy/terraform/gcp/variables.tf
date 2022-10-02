@@ -6,7 +6,7 @@ variable "app_name" {
 
 variable "container_cpu" {
   description = "Container cpu"
-  default     = "2"
+  default     = "2000m"
 }
 
 variable "container_memory" {
