@@ -53,6 +53,7 @@ setuptools.setup(
             'boto3==1.24.19',
             'db-dtypes==1.0.2',
             'google-cloud-bigquery==3.2.0',
+            'google-cloud-storage==2.5.0',
             'psycopg2-binary==2.9.3',
             'redshift-connector==2.0.907',
             'snowflake-connector-python==2.7.9',
