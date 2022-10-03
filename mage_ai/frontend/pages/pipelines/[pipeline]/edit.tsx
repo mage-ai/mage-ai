@@ -1393,6 +1393,7 @@ function PipelineDetailPage({
           restartKernel={restartKernel}
           savePipelineContent={savePipelineContent}
           selectedFilePath={selectedFilePath}
+          setErrors={setErrors}
           updatePipelineMetadata={updatePipelineMetadata}
         />
       );
@@ -1410,6 +1411,7 @@ function PipelineDetailPage({
     savePipelineContent,
     selectedFilePath,
     selectedFilePaths,
+    setErrors,
     updatePipelineMetadata,
   ]);
 

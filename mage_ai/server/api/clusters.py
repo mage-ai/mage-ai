@@ -41,12 +41,12 @@ class ApiClustersHandler(BaseHandler):
             if cluster_payload is None:
                 raise Exception('Please include cluster info in the request payload')
             action = cluster_payload.get('action')
-            if action == 'set_active_cluster':
-                cluster_id = cluster_payload.get('cluster_id')
-                if cluster_id is None:
-                    raise Exception('Please include cluster_id in thhe request payhload')
-                emr_cluster_manager.set_active_cluster(cluster_id)
-                success = True
+
+            cluster_id = cluster_payload.get('id')
+            if cluster_id is None:
+                raise Exception('Please include cluster_id in thhe request payhload')
+            emr_cluster_manager.set_active_cluster(cluster_id)
+            success = True
 
         self.write(dict(
             cluster=merge_dict(dict(id=cluster_id), cluster_payload),

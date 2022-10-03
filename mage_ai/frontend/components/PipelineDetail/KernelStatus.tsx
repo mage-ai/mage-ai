@@ -56,6 +56,10 @@ type KernelStatusProps = {
   restartKernel: () => void;
   savePipelineContent: () => void;
   selectedFilePath?: string;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -71,6 +75,7 @@ function KernelStatus({
   restartKernel,
   savePipelineContent,
   selectedFilePath,
+  setErrors,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -103,14 +108,10 @@ function KernelStatus({
           callback: (response) => {
             fetchClusters();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -259,7 +260,13 @@ function KernelStatus({
                       ),
                       onClick: isActive || ClusterStatusEnum.WAITING !== status
                         ? null
-                        : () => updateCluster({ cluster: { is_active: true } }),
+                        // @ts-ignore
+                        : () => updateCluster({
+                            cluster: {
+                              id,
+                              is_active: true,
+                            },
+                          }),
                       uuid: id,
                     };
                   }),
