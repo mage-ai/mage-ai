@@ -201,10 +201,7 @@ Add an inbound rule to the EMR master node’s security group to allow SSH acces
 1. Go to [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
 1. Click on the cluster you just created.
 1. Find the **Master public DNS**, it should look something like this: `ec2-some-ip.us-west-2.compute.amazonaws.com`.
-1. Make sure your EC2 key pair is read-only. Run the following command (change the location to wherever you saved your EC2 key pair locally):```bash
-chmod 400 ~/.ssh/aws-ec2.pem
-```
-
+1. Make sure your EC2 key pair is read-only. Run the following command (change the location to wherever you saved your EC2 key pair locally): `chmod 400 ~/.ssh/aws-ec2.pem`
 1. In a separate terminal session, run the following command:
 ```bash
 ssh -i [location of EC2 key pair file] \
