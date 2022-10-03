@@ -22,8 +22,8 @@ EXPOSE 6789
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
-COPY ./scripts/run_app.sh ./
 
-RUN chmod +x /home/src/run_app.sh
+COPY ./scripts/run_app.sh /app/run_app.sh
+RUN chmod +x /app/run_app.sh
 
-CMD ["/home/src/run_app.sh"]
+CMD ["/bin/sh", "-c", "/app/run_app.sh"]
