@@ -19,7 +19,7 @@ Here is an overview of the steps required to use Mage locally with Spark in AWS:
 1. [Start Mage](#3-start-mage)
 1. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
 1. [Launch EMR cluster](#5-launch-emr-cluster)
-1. [SSH into EMR master node](#6-ssh-into-emr-master-node)
+1. [Allow EMR connection permissions](#6-ssh-into-emr-master-node)
 1. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
 1. [Debugging](#8-debugging)
 1. [Clean up](#9-clean-up)
@@ -181,9 +181,29 @@ Current status: STARTING..BOOTSTRAPPING.....WAITING
 Cluster j-3500M6WJOND9Q is created
 ```
 
-### 6. SSH into EMR master node
+### 6. Allow EMR connection permissions
 
-#### 6a. Allow SSH access to EMR
+There are 2 ways to connect to your EMR remotely:
+
+1. Whitelist your IP
+1. SSH into EMR master node
+
+#### Whitelist your IP
+
+1. Open the EC2 dashboard in AWS
+1. Click on "Security Groups" on the left side panel under the section "Network & Security"
+1. Find the security group named "ElasticMapReduce-master"
+1. Add a new inbound rule with the following values:
+
+| Type | Protocol | Port range | Source |
+| --- | --- | --- | --- |
+| Custom TCP | TCP | 8998 | My IP |
+
+This will allow your locally running Mage to remotely access AWS EMR.
+
+#### SSH into EMR master node
+
+##### 1. Allow SSH access to EMR
 
 Add an inbound rule to the EMR master node’s security group to allow SSH access by following these steps:
 
@@ -197,7 +217,7 @@ Add an inbound rule to the EMR master node’s security group to allow SSH acces
 1. Change the "Source" dropdown from `Custom` to `My IP`.
 1. Click "Save rules" in the bottom right corner of the page.
 
-#### 6b. SSH into master node
+##### 2. SSH into master node
 1. Go to [Amazon EMR](https://us-west-2.console.aws.amazon.com/elasticmapreduce/home).
 1. Click on the cluster you just created.
 1. Find the **Master public DNS**, it should look something like this: `ec2-some-ip.us-west-2.compute.amazonaws.com`.
