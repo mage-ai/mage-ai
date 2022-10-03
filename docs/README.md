@@ -49,6 +49,7 @@ Read more tech docs here. Got questions?
 - Monitoring and alerting
     - [Status updates in Slack](monitoring/alerting/Slack.md)
     - [Status updates in Email](monitoring/alerting/Email.md)
+    - [Logging](features/orchestration/README.md#logs)
 
 ### Integrations
 - Compute
