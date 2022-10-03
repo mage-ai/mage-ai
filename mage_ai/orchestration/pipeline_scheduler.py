@@ -3,6 +3,7 @@ from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.shared.constants import ENV_PROD
@@ -191,7 +192,10 @@ def schedule_all():
     1. Check whether any new pipeline runs need to be scheduled.
     2. In active pipeline runs, check whether any block runs need to be scheduled.
     """
-    active_pipeline_schedules = PipelineSchedule.active_schedules()
+    repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+
+    active_pipeline_schedules = \
+        list(filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.active_schedules()))
 
     for pipeline_schedule in active_pipeline_schedules:
         if pipeline_schedule.should_schedule():
@@ -203,7 +207,10 @@ def schedule_all():
             )
             pipeline_run = PipelineRun.create(**payload)
             PipelineScheduler(pipeline_run).start(should_schedule=False)
-    active_pipeline_runs = PipelineRun.active_runs()
+
+    active_pipeline_runs = \
+        list(filter(lambda r: r.pipeline_uuid in repo_pipelines, PipelineRun.active_runs()))
+
     for r in active_pipeline_runs:
         try:
             PipelineScheduler(r).schedule()
