@@ -6,6 +6,10 @@ USER root
 # Install Mage
 RUN ${PIP} install "mage-ai[all]"
 
+# Install NFS dependencies
+RUN apt -y update && apt -y install nfs-common
+
+
 # Set up spark kernel
 RUN ${PIP} install sparkmagic
 RUN mkdir ~/.sparkmagic
@@ -18,5 +22,8 @@ EXPOSE 6789
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
+COPY ./scripts/run_app.sh ./
 
-CMD mage start default_repo
+RUN chmod +x /home/src/run_app.sh
+
+CMD ["/home/src/run_app.sh"]
