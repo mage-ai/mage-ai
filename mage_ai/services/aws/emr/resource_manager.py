@@ -28,5 +28,5 @@ class EmrResourceManager:
     def upload_bootstrap_script(self) -> None:
         bootstrap_script_code = template_env.get_template(
             'pipeline_execution/emr_bootstrap.sh',
-        ).render()        
+        ).render()
         s3.Client(self.s3_bucket).upload(self.bootstrap_script_path_key, bootstrap_script_code)

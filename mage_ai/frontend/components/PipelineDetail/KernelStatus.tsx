@@ -6,9 +6,11 @@ import {
   useState,
 } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useMutation } from 'react-query';
 
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
+import ClusterType, { ClusterStatusEnum } from '@interfaces/ClusterType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenu from '@oracle/components/FlyoutMenu';
@@ -21,8 +23,10 @@ import PipelineType, { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@i
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import { Close, FileFill } from '@oracle/icons';
+import { Check, Close, FileFill } from '@oracle/icons';
+import { CloudProviderSparkClusterEnum } from '@interfaces/CloudProviderType';
 import { FileTabStyle, PipelineHeaderStyle } from './index.style';
 import {
   KEY_CODE_ENTER,
@@ -33,8 +37,9 @@ import {
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { dateFormatLongFromUnixTimestamp } from '@utils/string';
+import { find, remove } from '@utils/array';
 import { goToWithQuery } from '@utils/routing';
-import { remove } from '@utils/array';
+import { onSuccess } from '@api/utils/response';
 import { useKeyboardContext } from '@context/Keyboard';
 
 type KernelStatusProps = {
@@ -51,6 +56,10 @@ type KernelStatusProps = {
   restartKernel: () => void;
   savePipelineContent: () => void;
   selectedFilePath?: string;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   updatePipelineMetadata: (name: string, type?: string) => void;
 };
 
@@ -66,6 +75,7 @@ function KernelStatus({
   restartKernel,
   savePipelineContent,
   selectedFilePath,
+  setErrors,
   updatePipelineMetadata,
 }: KernelStatusProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
@@ -75,9 +85,37 @@ function KernelStatus({
   } = kernel || {};
   const [isEditingPipeline, setIsEditingPipeline] = useState(false);
   const [newPipelineName, setNewPipelineName] = useState('');
+  const [selectedSparkClusterType, setSelectedSparkClusterType] =
+    useState(CloudProviderSparkClusterEnum.EMR);
+  const [showSelectCluster, setShowSelectCluster] = useState(false);
   const [showSelectKernel, setShowSelectKernel] = useState(false);
 
   const refSelectKernel = useRef(null);
+
+  // TODO (tommy dang): how do we make this dynamic based on the cloud provider they choose?
+  const {
+    data: dataClusters,
+    mutate: fetchClusters,
+  } = api.clusters.detail(selectedSparkClusterType);
+  const clusters: ClusterType[] = useMemo(() => dataClusters?.clusters || [], dataClusters);
+  const selectedCluster = find(clusters, ({ is_active: isActive }) => isActive);
+
+  const [updateCluster, { isLoading: isLoadingUpdateCluster }] = useMutation(
+    api.clusters.useUpdate(selectedSparkClusterType),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+            fetchClusters();
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   useEffect(() => {
     if (pipeline?.uuid) {
@@ -160,63 +198,152 @@ function KernelStatus({
         position: 'relative',
       }}
     >
-      <KeyboardShortcutButton
-        beforeElement={
-          <Circle
-            color={isBusy
-              ? (themeContext || dark).borders.info
-              : (alive
-                ? (themeContext || dark).borders.success
-                : (themeContext || dark).borders.danger
-              )
-            }
-            size={UNIT}
-          />
-        }
-        blackBorder
-        compact
-        inline
-        onClick={() => setShowSelectKernel(true)}
-        uuid="Pipeline/KernelStatus/kernel"
-      >
-        {pipeline?.type || PipelineTypeEnum.PYTHON}
-      </KeyboardShortcutButton>
+      <FlexContainer alignItems="center">
+        {pipeline?.type === PipelineTypeEnum.PYSPARK && (
+          <Spacing mr={1}>
+            <Link
+              muted={!!selectedCluster}
+              onClick={() => setShowSelectCluster(true)}
+              preventDefault
+              sameColorAsText={!selectedCluster}
+              underline={!selectedCluster}
+            >
+              {selectedCluster && selectedCluster.id}
+              {!selectedCluster && 'Select cluster'}
+            </Link>
 
-      <ClickOutside
-        disableEscape
-        onClickOutside={() => setShowSelectKernel(false)}
-        open={showSelectKernel}
-      >
-        <FlyoutMenu
-          items={[
-            {
-              isGroupingTitle: true,
-              label: () => 'Select kernel',
-              uuid: 'select_kernel',
-            },
-            ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME)
-              .filter(type => pipeline?.type != type)
-              .map(type => ({
-                label: () => type,
-                onClick: () => updatePipelineMetadata(pipeline?.name, type),
-                uuid: type,
-              }))
-          ]}
-          onClickCallback={() => setShowSelectKernel(false)}
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowSelectCluster(false)}
+              open={showSelectCluster}
+            >
+              <FlyoutMenu
+                items={[
+                  {
+                    isGroupingTitle: true,
+                    label: () => 'Select cluster',
+                    uuid: 'select_cluster',
+                  },
+                  ...clusters.map(({
+                    id,
+                    is_active: isActive,
+                    status,
+                  }) => {
+                    return {
+                      label: () => (
+                        <FlexContainer
+                          alignItems="center"
+                          fullWidth
+                          justifyContent="space-between"
+                        >
+                          <Flex flex={1}>
+                            <Text
+                              muted={!isActive && ClusterStatusEnum.WAITING !== status}
+                            >
+                              {id}
+                            </Text>
+                          </Flex>
+
+                          {isActive && (
+                            <Check
+                              size={2 * UNIT}
+                              success
+                            />
+                          )}
+
+                          {!isActive && (
+                            <Text monospace muted>
+                              {status}
+                            </Text>
+                          )}
+                        </FlexContainer>
+                      ),
+                      onClick: isActive || ClusterStatusEnum.WAITING !== status
+                        ? null
+                        // @ts-ignore
+                        : () => updateCluster({
+                            cluster: {
+                              id,
+                              is_active: true,
+                            },
+                          }),
+                      uuid: id,
+                    };
+                  }),
+                ]}
+                onClickCallback={() => setShowSelectCluster(false)}
+                open={showSelectCluster}
+                parentRef={refSelectKernel}
+                uuid="KernelStatus/select_cluster"
+                width={UNIT * 40}
+              />
+            </ClickOutside>
+          </Spacing>
+        )}
+
+        <KeyboardShortcutButton
+          beforeElement={
+            <Circle
+              color={isBusy
+                ? (themeContext || dark).borders.info
+                : (alive
+                  ? (themeContext || dark).borders.success
+                  : (themeContext || dark).borders.danger
+                )
+              }
+              size={UNIT}
+            />
+          }
+          blackBorder
+          compact
+          inline
+          onClick={() => setShowSelectKernel(true)}
+          uuid="Pipeline/KernelStatus/kernel"
+        >
+          {pipeline?.type || PipelineTypeEnum.PYTHON}
+        </KeyboardShortcutButton>
+
+        <ClickOutside
+          disableEscape
+          onClickOutside={() => setShowSelectKernel(false)}
           open={showSelectKernel}
-          parentRef={refSelectKernel}
-          uuid="KernelStatus/select_kernel"
-          width={UNIT * 25}
-        />
-      </ClickOutside>
+        >
+          <FlyoutMenu
+            items={[
+              {
+                isGroupingTitle: true,
+                label: () => 'Select kernel',
+                uuid: 'select_kernel',
+              },
+              ...Object.keys(PIPELINE_TYPE_TO_KERNEL_NAME)
+                .filter(type => pipeline?.type != type)
+                .map(type => ({
+                  label: () => type,
+                  onClick: () => updatePipelineMetadata(pipeline?.name, type),
+                  uuid: type,
+                }))
+            ]}
+            onClickCallback={() => setShowSelectKernel(false)}
+            open={showSelectKernel}
+            parentRef={refSelectKernel}
+            uuid="KernelStatus/select_kernel"
+            width={UNIT * 25}
+          />
+        </ClickOutside>
+      </FlexContainer>
     </div>
   ), [
     alive,
+    clusters,
     isBusy,
     pipeline,
-    showSelectKernel,
+    selectedCluster,
+    setShowSelectCluster,
     setShowSelectKernel,
+    showSelectCluster,
+    showSelectKernel,
     themeContext,
+    updateCluster,
   ]);
 
   const pipelineName = useMemo(() => (

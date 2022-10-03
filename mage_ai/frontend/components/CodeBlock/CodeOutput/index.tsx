@@ -170,7 +170,17 @@ function CodeOutput({
 
         if (typeof data === 'string' && data.match(INTERNAL_OUTPUT_REGEX)) {
           const parts = data.split('[__internal_output__]')
-          const rawString = parts[parts.length - 1];
+          let rawString = parts[parts.length - 1];
+
+          // Sometimes the FloatProgress is appended to the end of the table data
+          // without a newline character \n
+          // e.g.
+          // \"type\": \"table\"}FloatProgress(value=0.0
+          const parts2 = rawString.split('FloatProgress');
+          if (parts.length >= 2) {
+            rawString = parts2[0];
+          }
+
           if (isJsonString(rawString)) {
             const {
               data: dataDisplay,
@@ -229,11 +239,13 @@ function CodeOutput({
           );
         }
 
-        arr.push(
-          <div key={`code-output-${idx}-${idxInner}`}>
-            {displayElement}
-          </div>
-        );
+        if (displayElement) {
+          arr.push(
+            <div key={`code-output-${idx}-${idxInner}`}>
+              {displayElement}
+            </div>
+          );
+        }
       });
 
       return arr;

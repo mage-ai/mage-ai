@@ -3,6 +3,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.services.aws.emr.emr import describe_cluster, list_clusters
 from mage_ai.services.aws.emr.launcher import create_cluster
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
 from pathlib import Path
 import json
 import os
@@ -33,7 +34,7 @@ class EmrClusterManager(ClusterManager):
         ) for c in valid_clusters]
 
     def create_cluster(self):
-        create_cluster(
+        return create_cluster(
             get_repo_path(),
             done_status=None,
             tags=dict(name=CLUSTER_NAME),
@@ -55,7 +56,7 @@ class EmrClusterManager(ClusterManager):
         cluster_info = describe_cluster(cluster_id)
         emr_dns = cluster_info['MasterPublicDnsName']
 
-        # Get cluster information and update cluster url in sparkmagic config 
+        # Get cluster information and update cluster url in sparkmagic config
         home_dir = str(Path.home())
         sparkmagic_config_path = os.path.join(home_dir, '.sparkmagic/config.json')
         with open(sparkmagic_config_path) as f:
@@ -68,6 +69,8 @@ class EmrClusterManager(ClusterManager):
 
         with open(sparkmagic_config_path, 'w') as f:
             f.write(json.dumps(config))
+
+        return merge_dict(cluster_info, dict(cluster_id=cluster_id))
 
 
 emr_cluster_manager = EmrClusterManager()
