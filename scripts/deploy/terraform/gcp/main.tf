@@ -42,6 +42,13 @@ resource "google_project_service" "resourcemanager" {
   disable_on_destroy = false
 }
 
+# Enable VCP Access API
+resource "google_project_service" "resourcemanager" {
+  service            = "vpcaccess.googleapis.com"
+  disable_on_destroy = false
+}
+
+
 # #############################################
 # #    Google Artifact Registry Repository    #
 # #############################################
