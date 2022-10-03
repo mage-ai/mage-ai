@@ -19,7 +19,7 @@ Here is an overview of the steps required to use Mage locally with Spark in AWS:
 1. [Start Mage](#3-start-mage)
 1. [Configure project’s metadata settings](#4-configure-projects-metadata-settings)
 1. [Launch EMR cluster](#5-launch-emr-cluster)
-1. [Allow EMR connection permissions](#6-ssh-into-emr-master-node)
+1. [Allow EMR connection permissions](#6-allow-emr-connection-permissions)
 1. [Sample pipeline with PySpark code](#7-sample-pipeline-with-pyspark-code)
 1. [Debugging](#8-debugging)
 1. [Clean up](#9-clean-up)
