@@ -71,7 +71,7 @@ function FlyoutMenu({
   } = parentRef?.current?.getBoundingClientRect?.() || {};
   const menuRefs = useRef({});
   const keyTextGroupRef = useRef(null);
-  
+
   const {
     registerOnKeyDown,
     unregisterOnKeyDown,
@@ -174,12 +174,17 @@ function FlyoutMenu({
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
 
+          const labelToRender = label();
+
           return (isGroupingTitle
             ?
               <TitleContainerStyle>
-                <Text bold key={uuid} muted noWrapping>
-                  {label()}
-                </Text>
+                {typeof labelToRender === 'string' && (
+                  <Text bold key={uuid} muted noWrapping>
+                    {labelToRender}
+                  </Text>
+                )}
+                {typeof labelToRender !== 'string' && labelToRender}
               </TitleContainerStyle>
             :
               <LinkStyle
@@ -189,7 +194,7 @@ function FlyoutMenu({
                 key={uuid}
                 onClick={(e) => {
                   e.preventDefault();
-                  
+
                   if (onClick && !disabled) {
                     onClick?.();
                     onClickCallback?.();
@@ -219,13 +224,17 @@ function FlyoutMenu({
                   fullWidth
                   justifyContent="space-between"
                 >
-                  <Text
-                    bold={bold}
-                    disabled={disabled}
-                    noWrapping
-                  >
-                    {label()}
-                  </Text>
+                  {typeof labelToRender === 'string' && (
+                    <Text
+                      bold={bold}
+                      disabled={disabled}
+                      noWrapping
+                    >
+                      {labelToRender}
+                    </Text>
+                  )}
+                  {typeof labelToRender !== 'string' && labelToRender}
+
                   {items && (
                     <Spacing ml={2}>
                       <ArrowRight />

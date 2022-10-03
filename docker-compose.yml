@@ -6,6 +6,9 @@ services:
       context: .
       dockerfile: ./dev.Dockerfile
     command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT}"
+    environment:
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
     ports:
       - 6789:6789
     volumes:

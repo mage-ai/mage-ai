@@ -96,14 +96,17 @@ def build_file_content_mapping(paths, files):
         methods_for_class = {}
         all_classes = extract_all_classes(file_content)
         for class_name in all_classes:
-            klass = getattr(
-                importlib.import_module(module_name),
-                class_name,
-            )
-            methods_for_class[class_name] = list(filter(
-                lambda x: not re.match('^_', x),
-                dir(klass),
-            ))
+            try:
+                klass = getattr(
+                    importlib.import_module(module_name),
+                    class_name,
+                )
+                methods_for_class[class_name] = list(filter(
+                    lambda x: not re.match('^_', x),
+                    dir(klass),
+                ))
+            except ImportError as err:
+                print(err)
 
         file_content_mapping[file_name] = dict(
             classes=all_classes,

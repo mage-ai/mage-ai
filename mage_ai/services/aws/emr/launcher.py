@@ -32,3 +32,5 @@ def create_cluster(
         tags=tags,
     )
     print(f'Cluster {cluster_id} is created')
+
+    return dict(cluster_id=cluster_id)

@@ -7,6 +7,16 @@ do
 key="$2"
 
 case $key in
+    --aws_access_key_id)
+    AWS_ACCESS_KEY_ID="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --aws_secret_access_key)
+    AWS_SECRET_ACCESS_KEY="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --host)
     HOST="$3"
     shift # past argument
@@ -28,6 +38,9 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 : "${HOST:="''"}"
 : "${PORT:="''"}"
 : "${PROJECT_NAME:="''"}"
+
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
 HOST=$HOST \
 PORT=$PORT \
