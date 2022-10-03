@@ -90,6 +90,21 @@ resource "google_cloud_run_service" "run_service" {
             memory  = var.container_memory
           }
         }
+        env {
+          name  = "FILESTORE_IP_ADDRESS"
+          value = google_filestore_instance.instance.networks[0].ip_addresses[0]
+        }
+        env {
+          name  = "FILE_SHARE_NAME"
+          value = "share1"
+        }
+      }
+    }
+    metadata {
+      annotations = {
+        "run.googleapis.com/execution-environment" = "gen2"
+        "run.googleapis.com/vpc-access-connector"  = google_vpc_access_connector.connector.id
+        "run.googleapis.com/vpc-access-egress"     = "private-ranges-only"
       }
     }
   }
@@ -97,6 +112,13 @@ resource "google_cloud_run_service" "run_service" {
   traffic {
     percent         = 100
     latest_revision = true
+  }
+
+  metadata {
+    annotations = {
+      "run.googleapis.com/launch-stage" = "BETA"
+      "run.googleapis.com/ingress"      = "all"
+    }
   }
 
   # Waits for the Cloud Run API to be enabled

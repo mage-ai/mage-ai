@@ -38,7 +38,7 @@ variable "repository" {
 }
 
 variable "docker_image" {
-  description = "The name of the Docker image in the Artifact Registry repository to be deployed to Cloud Run"
+  description = "The Docker image url in the Artifact Registry repository to be deployed to Cloud Run"
   type        = string
   default     = "mageai"
 }
