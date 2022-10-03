@@ -1,5 +1,37 @@
 # load_balancer.tf | Load Balancer Configuration
 
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
+resource "google_compute_security_policy" "policy" {
+  name = "${var.app_name}-security-policy"
+
+  rule {
+    action   = "allow"
+    priority = "100"
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = ["${chomp(data.http.myip.response_body)}/32"]
+      }
+    }
+    description = "Whitelist IP"
+  }
+
+  rule {
+    action   = "deny(403)"
+    priority = "2147483647"
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = ["*"]
+      }
+    }
+    description = "default rule"
+  }
+}
+
 resource "google_compute_global_address" "ip" {
   name = "${var.app_name}-service-ip"
 }
@@ -23,6 +55,8 @@ resource "google_compute_backend_service" "backend" {
   backend {
     group = google_compute_region_network_endpoint_group.cloudrun_neg.id
   }
+
+  security_policy = google_compute_security_policy.policy.name
 }
 
 resource "google_compute_url_map" "url_map" {
