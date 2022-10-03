@@ -43,7 +43,7 @@ resource "google_project_service" "resourcemanager" {
 }
 
 # Enable VCP Access API
-resource "google_project_service" "resourcemanager" {
+resource "google_project_service" "vpcaccess" {
   service            = "vpcaccess.googleapis.com"
   disable_on_destroy = false
 }
@@ -127,6 +127,8 @@ resource "google_cloud_run_service" "run_service" {
       "run.googleapis.com/ingress"      = "all"
     }
   }
+
+  autogenerate_revision_name = true
 
   # Waits for the Cloud Run API to be enabled
   depends_on = [google_project_service.cloudrun]
