@@ -124,7 +124,7 @@ resource "google_cloud_run_service" "run_service" {
   metadata {
     annotations = {
       "run.googleapis.com/launch-stage" = "BETA"
-      "run.googleapis.com/ingress"      = "all"
+      "run.googleapis.com/ingress"      = "internal-and-cloud-load-balancing"
     }
   }
 
@@ -142,7 +142,7 @@ resource "google_cloud_run_service_iam_member" "run_all_users" {
   member   = "allUsers"
 }
 
-# Display the service URL
-output "service_url" {
-  value = google_cloud_run_service.run_service.status[0].url
+# Display the service IP
+output "service_ip" {
+  value = google_compute_global_address.ip.address
 }
