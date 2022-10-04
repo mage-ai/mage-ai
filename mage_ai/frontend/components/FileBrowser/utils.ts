@@ -5,7 +5,7 @@ import FileType, {
   METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { BLOCK_TYPES } from '@interfaces/BlockType';
-import { prependArray, removeAtIndex } from '@utils/array';
+import { prependArray, removeAtIndex, sortByKey } from '@utils/array';
 import { singularize } from '@utils/string';
 
 export function getFullPath(
@@ -93,9 +93,17 @@ export function replacePipelinesFolderWithConfig(
     name: 'config',
   };
   const pipelinesFolderIdx = files?.findIndex(f => f.name === FOLDER_NAME_PIPELINES);
+  const filesWithChildren = [];
+  const filesWithoutChildren = [];
+  removeAtIndex(files, pipelinesFolderIdx).forEach(f => {
+    if (!f.children) {
+      filesWithoutChildren.push(f);
+    } else {
+      filesWithChildren.push(f);
+    }
+  });
 
-  return [
-    configFolder,
-    ...removeAtIndex(files, pipelinesFolderIdx),
-  ];
+  return [configFolder]
+    .concat(filesWithChildren)
+    .concat(filesWithoutChildren);
 }

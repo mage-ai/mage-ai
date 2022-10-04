@@ -1516,7 +1516,6 @@ function PipelineDetailPage({
       <FileBrowser
         blocks={blocks}
         files={filesData?.files}
-        // onlyShowChildren
         onSelectBlockFile={onSelectBlockFile}
         openFile={openFile}
         openPipeline={(uuid: string) => {
