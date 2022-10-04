@@ -8,10 +8,10 @@
 
 1. [Install gcloud CLI](#1-install-gcloud-cli)
 1. [Log into GCP from CLI](#2-log-into-gcp-from-cli)
-1. [Push Docker image to GCP Artifact Registry]
-1. [Customize Terraform settings](#3-customize-terraform-settings)
-1. [Deploy](#4-deploy)
-1. [Misc](#5-misc)
+1. [Push Docker image to GCP Artifact Registry](#3-push-docker-image-to-gcp-artifact-registry)
+1. [Customize Terraform settings](#4-customize-terraform-settings)
+1. [Deploy](#5-deploy)
+1. [Misc](#misc)
 
 <br />
 
@@ -97,7 +97,7 @@ docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
 
 <br />
 
-## 3. Customize Terraform settings
+## 4. Customize Terraform settings
 
 <b>Project ID (REQUIRED)</b>
 
@@ -164,7 +164,7 @@ can also be customized to your needs.
 
 <br />
 
-## 4. Deploy
+## 5. Deploy
 
 1. Change directory into scripts folder:
 ```bash
