@@ -1,9 +1,8 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
-import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PADDING, PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   BORDER_COLOR_SHARED_STYLES,
   BorderColorShareProps,
@@ -20,6 +19,8 @@ export const ContainerStyle = styled.div<{
   border-right-style: solid;
   border-right-width: 2px;
   overflow: hidden;
+
+  padding-bottom: ${2 * PADDING}px;
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).table};

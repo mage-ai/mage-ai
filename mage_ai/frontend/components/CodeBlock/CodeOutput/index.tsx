@@ -273,13 +273,13 @@ function CodeOutput({
     });
     
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
-      arrContent.unshift((
+      arrContent.unshift([
         <OutputRowStyle contained>
           <Spacing mt={1}>
             {progressBar}
           </Spacing>
         </OutputRowStyle>
-      ));
+      ]);
     }
 
     return arrContent;
