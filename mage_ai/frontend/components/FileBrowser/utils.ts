@@ -20,6 +20,15 @@ export function getFullPath(
   return currentPath;
 }
 
+export function getFullPathWithoutRootFolder(
+  file: FileType,
+  currentPathInit: string = null,
+): string {
+  const fullPath = getFullPath(file, currentPathInit);
+
+  return fullPath.split('/').slice(1).join('/');
+}
+
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,

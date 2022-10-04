@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
   FOLDER_NAME_CHARTS,
   FOLDER_NAME_PIPELINES,
+  METADATA_FILENAME,
   SpecialFileEnum,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
@@ -31,7 +33,7 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getBlockUUIDFromFile,
-  getFullPath,
+  getFullPathWithoutRootFolder,
 } from './utils';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -73,6 +75,8 @@ function Folder({
     name,
     parent: parentFile,
   } = file;
+  const router = useRouter();
+  const { pipeline: pipelineName } = router.query;
   const disabled = disabledProp
     || name === '__init__.py'
     || !!name.match(/^\./);
@@ -157,13 +161,17 @@ function Folder({
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file).split('/').slice(1).join('/'),
+                  getFullPathWithoutRootFolder(file),
                 );
               }
             }
 
             if (isPipelineFolder) {
-              openPipeline(name);
+              if (name === pipelineName) {
+                openFile(METADATA_FILENAME);
+              } else {
+                openPipeline(name);
+              }
             } else if (children) {
               setCollapsed((collapsedPrev) => {
                 set(uuid, !collapsedPrev);
@@ -172,14 +180,14 @@ function Folder({
               });
             } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
               // WARNING: this assumes the first part of a path is the default_repo
-              openFile(getFullPath(file).split('/').slice(1).join('/'));
+              openFile(getFullPathWithoutRootFolder(file));
             } else {
               const block = getBlockFromFile(file);
               if (block) {
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file).split('/').slice(1).join('/'),
+                  getFullPathWithoutRootFolder(file),
                 );
               }
             }
