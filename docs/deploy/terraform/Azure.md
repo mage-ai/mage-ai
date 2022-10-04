@@ -1,4 +1,4 @@
-# Terraform Azure
+# Terraform Microsoft Azure
 
 <img
   alt="Azure"

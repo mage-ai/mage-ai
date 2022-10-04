@@ -1,4 +1,4 @@
-# Terraform AWS
+# Terraform Amazon Web Services (AWS)
 
 ## Environment variables
 

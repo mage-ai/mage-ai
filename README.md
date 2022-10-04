@@ -79,7 +79,7 @@ docker run -it -p 6789:6789 -v $(pwd):/home/src \
   mageai/mageai mage start demo_project
 ```
 
-<sub>Follow the [guide](docs/spark/setup/README.md) if you want to use PySpark kernel in your notebook.</sub>
+<sub>Want to use Spark or other integrations? Read more about [integrations](docs/README.md#integrations).</sub>
 
 ### Using `pip` or `conda`
 
