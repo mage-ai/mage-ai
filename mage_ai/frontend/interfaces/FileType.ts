@@ -31,13 +31,15 @@ export default interface FileType {
   children: FileType[];
   content?: string;
   disabled?: boolean;
-  name: string;
+  name?: string;
   parent?: FileType;
   path?: string;
 }
 
 export const FOLDER_NAME_CHARTS = 'charts';
+export const FOLDER_NAME_CONFIG = 'config';
 export const FOLDER_NAME_PIPELINES = 'pipelines';
+export const METADATA_FILENAME = 'metadata.yaml';
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
   [FileExtensionEnum.PY]: BlockLanguageEnum.PYTHON,
   [FileExtensionEnum.SQL]: BlockLanguageEnum.SQL,

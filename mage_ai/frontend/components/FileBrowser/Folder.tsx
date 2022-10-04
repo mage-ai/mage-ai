@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Circle from '@oracle/elements/Circle';
 import FileType, {
   FOLDER_NAME_CHARTS,
+  FOLDER_NAME_CONFIG,
   FOLDER_NAME_PIPELINES,
   SpecialFileEnum,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
@@ -32,9 +34,12 @@ import {
   getBlockFromFile,
   getBlockUUIDFromFile,
   getFullPath,
+  getPipelineConfigPath,
 } from './utils';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
+
+const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
   onlyShowChildren?: boolean;
@@ -73,10 +78,15 @@ function Folder({
     name,
     parent: parentFile,
   } = file;
+  if (!name) {
+    file.name = DEFAULT_NAME;
+  }
+  const router = useRouter();
+  const { pipeline: currentPipelineName }: any = router.query;
   const disabled = disabledProp
     || name === '__init__.py'
-    || !!name.match(/^\./);
-  const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
+    || !!name?.match(/^\./);
+  const isPipelineFolder = parentFile?.name === FOLDER_NAME_CONFIG;
   const children = useMemo(() =>
     isPipelineFolder
       ? null
@@ -85,7 +95,7 @@ function Folder({
           ? sortByKey(childrenProp, ({
             children: arr,
             name: nameChild,
-          }) => name === FOLDER_NAME_PIPELINES
+          }) => name === FOLDER_NAME_CONFIG
             ? nameChild
             : (arr ? 0 : 1))
           : childrenProp
@@ -97,13 +107,10 @@ function Folder({
   );
   const uuid = `${level}/${name}`;
   const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
-  const parentFolderName = parentFile?.name || '';
-  const isEditableCodeBlock = BLOCK_TYPES.includes(singularize(parentFolderName));
-
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
   let IconEl = FileFill;
-  if ((isPipelineFolder && !disabled) || (level === 1 && name === FOLDER_NAME_PIPELINES)) {
+  if (level === 1 && name === FOLDER_NAME_PIPELINES) {
     IconEl = Pipeline;
   } else if (name === FOLDER_NAME_CHARTS) {
     IconEl = NavGraph;
@@ -122,7 +129,7 @@ function Folder({
         ...f,
         parent: file,
       }}
-      key={`${uuid}/${f.name}`}
+      key={`${uuid}/${f?.name || DEFAULT_NAME}`}
       level={onlyShowChildren ? level : level + 1}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
@@ -157,13 +164,14 @@ function Folder({
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file).split('/').slice(1).join('/'),
+                  getFullPath(file),
                 );
               }
             }
 
             if (isPipelineFolder) {
-              openPipeline(name);
+              const pipelineMetadataFilePath = getPipelineConfigPath(file, currentPipelineName);
+              openFile(pipelineMetadataFilePath);
             } else if (children) {
               setCollapsed((collapsedPrev) => {
                 set(uuid, !collapsedPrev);
@@ -171,15 +179,14 @@ function Folder({
                 return !collapsedPrev;
               });
             } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
-              // WARNING: this assumes the first part of a path is the default_repo
-              openFile(getFullPath(file).split('/').slice(1).join('/'));
+              openFile(getFullPath(file));
             } else {
               const block = getBlockFromFile(file);
               if (block) {
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPath(file).split('/').slice(1).join('/'),
+                  getFullPath(file),
                 );
               }
             }
