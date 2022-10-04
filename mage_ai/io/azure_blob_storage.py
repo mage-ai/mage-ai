@@ -1,10 +1,9 @@
-
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobClient, BlobServiceClient
+from azure.identity import DefaultAzureCredential, ClientSecretCredential
+from azure.storage.blob import BlobServiceClient
 from io import BytesIO
 from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-
+from mage_ai.shared.hash import extract, merge_dict
 from pandas import DataFrame
 
 
@@ -16,6 +15,11 @@ class AzureBlobStorage(BaseFile):
     - ".json"
     - ".parquet"
     """
+    AUTHENTICATION_KEYS = [
+        ConfigKey.AZURE_CLIENT_ID,
+        ConfigKey.AZURE_CLIENT_SECRET,
+        ConfigKey.AZURE_TENANT_ID,
+    ]
 
     def __init__(
         self,
@@ -28,9 +32,16 @@ class AzureBlobStorage(BaseFile):
 
         super().__init__(verbose=kwargs.get('verbose', True))
 
-        self.creds = DefaultAzureCredential()
+        if all(key in kwargs for key in self.AUTHENTICATION_KEYS):
+            self.creds = ClientSecretCredential(
+                kwargs[ConfigKey.AZURE_TENANT_ID],
+                kwargs[ConfigKey.AZURE_CLIENT_ID],
+                kwargs[ConfigKey.AZURE_CLIENT_SECRET],
+            )
+        else:
+            self.creds = DefaultAzureCredential()
         self.service_client = BlobServiceClient(
-            account_url=kwargs['account_url'],
+            account_url=f'https://{kwargs["storage_account_name"]}.blob.core.windows.net',
             credential=self.creds,
         )
 
@@ -116,12 +127,15 @@ class AzureBlobStorage(BaseFile):
         Args:
             config (BaseConfigLoader): Configuration loader object
         """
-        if ConfigKey.AZURE_BLOB_ACCOUNT_URL not in config:
+        if ConfigKey.AZURE_STORAGE_ACCOUNT_NAME not in config:
             raise ValueError(
-                'Require AZURE_BLOB_ACCOUNT_URL to be specified for Azure Blob Storage.'
+                'Require AZURE_STORAGE_ACCOUNT_NAME to be specified for Azure Blob Storage.'
             )
 
         return cls(
-            account_url=config[ConfigKey.AZURE_BLOB_ACCOUNT_URL],
-            **kwargs,
+            storage_account_name=config[ConfigKey.AZURE_STORAGE_ACCOUNT_NAME],
+            **merge_dict(
+                extract(config, cls.AUTHENTICATION_KEYS),
+                kwargs,
+            ),
         )

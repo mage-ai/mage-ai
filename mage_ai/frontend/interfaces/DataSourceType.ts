@@ -2,6 +2,7 @@ import { BlockTypeEnum } from './BlockType';
 
 export enum DataSourceTypeEnum {
   API = 'api',
+  AZURE_BLOB_STORAGE = 'azure_blob_storage',
   BIGQUERY = 'bigquery',
   FILE = 'file',
   GENERIC = 'generic',
@@ -14,6 +15,8 @@ export enum DataSourceTypeEnum {
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.API]: 'API',
+  [DataSourceTypeEnum.AZURE_BLOB_STORAGE]: 'Azure Blob Storage',
+  [DataSourceTypeEnum.GOOGLE_CLOUD_STORAGE]: 'Google Cloud Storage',
   [DataSourceTypeEnum.BIGQUERY]: 'Google BigQuery',
   [DataSourceTypeEnum.FILE]: 'Local file',
   [DataSourceTypeEnum.GENERIC]: 'Generic (no template)',
@@ -34,6 +37,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.POSTGRES,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
+    DataSourceTypeEnum.AZURE_BLOB_STORAGE,
     DataSourceTypeEnum.SNOWFLAKE,
   ],
   [BlockTypeEnum.DATA_EXPORTER]: [
@@ -44,6 +48,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.POSTGRES,
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.S3,
+    DataSourceTypeEnum.AZURE_BLOB_STORAGE,
     DataSourceTypeEnum.SNOWFLAKE,
   ],
   [BlockTypeEnum.TRANSFORMER]: [

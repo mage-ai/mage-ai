@@ -58,7 +58,8 @@ def ignore_keys_with_blank_values(d):
 
 def extract(d, keys):
     def _build(obj, key):
-        val = d.get(key, None)
+        if key in d:
+            val = d[key]
         if val is not None:
             obj[key] = val
         return obj
