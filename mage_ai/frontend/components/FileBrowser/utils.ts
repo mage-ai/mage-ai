@@ -5,7 +5,7 @@ import FileType, {
   METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { BLOCK_TYPES } from '@interfaces/BlockType';
-import { prependArray, removeAtIndex, sortByKey } from '@utils/array';
+import { prependArray, removeAtIndex } from '@utils/array';
 import { singularize } from '@utils/string';
 
 export function getFullPath(
