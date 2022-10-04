@@ -71,19 +71,32 @@ These variable values are used by the tool to retrieve AWS resources like CloudW
 <b>Using CLI</b>
 
 1. Change directory into scripts folder:
-```bash
-cd scripts/deploy/terraform/aws
-```
-
-2. Initialize Terraform:
-```bash
-terraform init
-```
-
-3. Deploy:
-```bash
-terraform apply
-```
+    ```bash
+    cd scripts/deploy/terraform/aws
+    ```
+1. Initialize Terraform:
+    ```bash
+    terraform init
+    ```
+    - If you run into errors like the following:
+        ```
+        │ Error: Failed to install provider
+        │
+        │ Error while installing hashicorp/template v2.2.0: the local package for registry.terraform.io/hashicorp/template 2.2.0 doesn't match any of the checksums previously recorded in the dependency lock file (this might be because the available checksums are for packages targeting different
+        │ platforms); for more information: https://www.terraform.io/language/provider-checksum-verification
+        ```
+        then run the following commands to resolve this:
+        ```
+        brew install kreuzwerker/taps/m1-terraform-provider-helper
+        m1-terraform-provider-helper activate
+        m1-terraform-provider-helper install hashicorp/template -v v2.2.0
+        rm .terraform.lock.hcl
+        terraform init --upgrade
+        ```
+1. Deploy:
+    ```bash
+    terraform apply
+    ```
 
 <br />
 
