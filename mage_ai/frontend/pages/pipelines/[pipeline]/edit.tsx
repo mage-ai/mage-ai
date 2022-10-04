@@ -1558,7 +1558,7 @@ function PipelineDetailPage({
     restartKernel,
     savePipelineContent,
     setMessages,
-  ])
+  ]);
 
   return (
     <>
