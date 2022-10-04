@@ -42,7 +42,10 @@ Read more tech docs here. Got questions?
 ### Production
 - Deploying to cloud
     - [Using Terraform](deploy/terraform/README.md)
-    - [AWS](deploy/aws/README.md)
+        - [Amazon Web Services (AWS)](deploy/terraform/AWS.md)
+        - [Microsoft Azure](deploy/terraform/Azure.md)
+        - [Google Cloud Platform (GCP)](deploy/terraform/GCP.md)
+    - [AWS (without Terraform)](deploy/aws/README.md)
 - Configuring production settings
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
