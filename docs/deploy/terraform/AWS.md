@@ -30,12 +30,14 @@ variable "docker_image" {
 
 <b>Region</b>
 
-In the file [./scripts/deploy/terraform/aws/main.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/main.tf),
+In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
 you can change the region:
 
 ```
-provider "aws" {
-  region  = "us-west-2"
+variable "aws_region" {
+  type        = string
+  description = "AWS Region"
+  default     = "us-west-2"
 }
 ```
 
@@ -93,6 +95,14 @@ These variable values are used by the tool to retrieve AWS resources like CloudW
     terraform apply
     ```
 
+Once it’s finished deploying, you can access Mage in your browser.
+
+1. Open your EC2 dashboard.
+1. View all load balancers.
+1. Click on the load balancer with the name `mage-data-prep` in it
+(if you changed the app name, then find the load balancer with that app name).
+1. Find the public DNS name, copy that, and paste it in your browser.
+
 <br />
 
 <b>Using Docker</b>
@@ -115,8 +125,24 @@ docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" 
 
 <br />
 
+### Errors
+
+<b>Page isn’t loading</b>
+If you run into connection issues, check to see if your IP is whitelisted in the appropriate
+[security group](#security).
+
+<b>503 Forbidden</b>
+Check to see if the service task in your EMR cluster is running or if it stopped.
+
+503 typically means that the service task isn’t running and that can be caused by a variety of things.
+
+Open the service task that stopped running and click on the "Logs" tab to see what issues occurred.
+
+<br />
+
 ## Security
 
-- Update security group name `mage-data-prep-sg` to whitelist IPs
+- Update security group name `mage-data-prep-sg` to whitelist IPs. Add a new inbound rule for
+HTTP port 80 and use your IP address.
 
 <br />
