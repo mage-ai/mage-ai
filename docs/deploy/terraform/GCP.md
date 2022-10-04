@@ -61,35 +61,35 @@ by clicking the <b>`+ CREATE REPOSITORY`</b> button.
 or read these [instructions](https://cloud.google.com/artifact-registry/docs/docker/authentication)
 to set up authentication for Docker.
     - <b>TLDR</b> - Run the following command in your terminal:
-```bash
-gcloud auth configure-docker [region]-docker.pkg.dev
-```
+    ```bash
+    gcloud auth configure-docker [region]-docker.pkg.dev
+    ```
     - An example command could look like this:
     ```bash
     gcloud auth configure-docker us-west2-docker.pkg.dev
     ```
 1. Pull the Mage Docker image:
-```bash
-docker pull mageai/mageai:latest
-```
+    ```bash
+    docker pull mageai/mageai:latest
+    ```
     - If you’re local workstation is using macOS and a silicon chip (e.g. M1, M2, etc),
     then run this command instead:
-```bash
-docker pull --platform linux/amd64 mageai/mageai:latest
-```
+    ```bash
+    docker pull --platform linux/amd64 mageai/mageai:latest
+    ```
 1. Tag the pulled Mage docker image:
-```bash
-docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-```
+    ```bash
+    docker tag mageai/mageai:latest [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
+    ```
     - An example command could look like this:
     ```bash
     docker tag mageai/mageai:latest \
       us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
     ```
 1. Push the local Docker image to GCP Artifact Registry:
-```bash
-docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
-```
+    ```bash
+    docker push [region]-docker.pkg.dev/[project_id]/[repository]/mageai:latest
+    ```
     - An example command could look like this:
     ```bash
     docker push us-west2-docker.pkg.dev/materia-284023/mage-docker/mageai:latest
@@ -167,60 +167,58 @@ can also be customized to your needs.
 ## 5. Deploy
 
 1. Change directory into scripts folder:
-```bash
-cd scripts/deploy/terraform/gcp
-```
+    ```bash
+    cd scripts/deploy/terraform/gcp
+    ```
+1. Initialize Terraform:
+    ```bash
+    terraform init
+    ```
+    A sample output could look like this:
+    ```
+    Initializing the backend...
 
-2. Initialize Terraform:
-```bash
-terraform init
-```
-A sample output could look like this:
-```
-Initializing the backend...
+    Initializing provider plugins...
+    - Finding hashicorp/google versions matching ">= 3.3.0"...
+    - Finding latest version of hashicorp/http...
+    - Installing hashicorp/google v4.38.0...
+    - Installed hashicorp/google v4.38.0 (signed by HashiCorp)
+    - Installing hashicorp/http v3.1.0...
+    - Installed hashicorp/http v3.1.0 (signed by HashiCorp)
 
-Initializing provider plugins...
-- Finding hashicorp/google versions matching ">= 3.3.0"...
-- Finding latest version of hashicorp/http...
-- Installing hashicorp/google v4.38.0...
-- Installed hashicorp/google v4.38.0 (signed by HashiCorp)
-- Installing hashicorp/http v3.1.0...
-- Installed hashicorp/http v3.1.0 (signed by HashiCorp)
+    Terraform has created a lock file .terraform.lock.hcl to record the provider
+    selections it made above. Include this file in your version control repository
+    so that Terraform can guarantee to make the same selections by default when
+    you run "terraform init" in the future.
 
-Terraform has created a lock file .terraform.lock.hcl to record the provider
-selections it made above. Include this file in your version control repository
-so that Terraform can guarantee to make the same selections by default when
-you run "terraform init" in the future.
+    Terraform has been successfully initialized!
 
-Terraform has been successfully initialized!
+    You may now begin working with Terraform. Try running "terraform plan" to see
+    any changes that are required for your infrastructure. All Terraform commands
+    should now work.
 
-You may now begin working with Terraform. Try running "terraform plan" to see
-any changes that are required for your infrastructure. All Terraform commands
-should now work.
+    If you ever set or change modules or backend configuration for Terraform,
+    rerun this command to reinitialize your working directory. If you forget, other
+    commands will detect it and remind you to do so if necessary.
+    ```
+1. Deploy:
+    ```bash
+    terraform apply
+    ```
+    A sample output could look like this:
+    ```
+    Apply complete! Resources: 7 added, 1 changed, 0 destroyed.
 
-If you ever set or change modules or backend configuration for Terraform,
-rerun this command to reinitialize your working directory. If you forget, other
-commands will detect it and remind you to do so if necessary.
-```
+    Outputs:
 
-3. Deploy:
-```bash
-terraform apply
-```
-A sample output could look like this:
-```
-Apply complete! Resources: 7 added, 1 changed, 0 destroyed.
+    service_ip = "34.107.187.208"
+    ```
 
-Outputs:
+    In your browser, go to [`http://[IP_address]/`](http://IP_address/).
 
-service_ip = "34.107.187.208"
-```
-
-In your browser, go to [`http://[IP_address]/`](http://IP_address/).
-
-> Note
->
-> Change the `IP_address` to the IP address that was output in your terminal after successfully running `terraform apply`.
+    > Note
+    >
+    > Change the `IP_address` to the IP address that was output in your terminal after successfully running `terraform apply`.
 
 ### Errors
 
