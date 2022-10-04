@@ -39,6 +39,8 @@ import {
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 
+const DEFAULT_NAME = 'default_repo';
+
 export type FolderSharedProps = {
   onlyShowChildren?: boolean;
   onSelectBlockFile: (
@@ -76,11 +78,14 @@ function Folder({
     name,
     parent: parentFile,
   } = file;
+  if (!name) {
+    file.name = DEFAULT_NAME;
+  }
   const router = useRouter();
   const { pipeline: currentPipelineName }: any = router.query;
   const disabled = disabledProp
     || name === '__init__.py'
-    || !!name.match(/^\./);
+    || !!name?.match(/^\./);
   const isPipelineFolder = parentFile?.name === FOLDER_NAME_CONFIG;
   const children = useMemo(() =>
     isPipelineFolder
@@ -90,7 +95,7 @@ function Folder({
           ? sortByKey(childrenProp, ({
             children: arr,
             name: nameChild,
-          }) => name === FOLDER_NAME_PIPELINES
+          }) => name === FOLDER_NAME_CONFIG
             ? nameChild
             : (arr ? 0 : 1))
           : childrenProp
@@ -124,7 +129,7 @@ function Folder({
         ...f,
         parent: file,
       }}
-      key={`${uuid}/${f.name}`}
+      key={`${uuid}/${f?.name || DEFAULT_NAME}`}
       level={onlyShowChildren ? level : level + 1}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}

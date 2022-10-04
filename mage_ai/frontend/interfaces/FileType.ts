@@ -31,7 +31,7 @@ export default interface FileType {
   children: FileType[];
   content?: string;
   disabled?: boolean;
-  name: string;
+  name?: string;
   parent?: FileType;
   path?: string;
 }
