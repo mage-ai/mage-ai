@@ -14,6 +14,19 @@
 
 <br />
 
+## Terraform plan
+
+You can run the following command to see all the resources that will be created by Terraform:
+
+```bash
+cd scripts/deploy/terraform/azure
+terraform plan
+```
+
+By default, here are the <b>[resources](./Azure/Resources.md)</b> that will be created.
+
+<br />
+
 ## 1. Install Azure CLI
 
 Follow these [instructions](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
