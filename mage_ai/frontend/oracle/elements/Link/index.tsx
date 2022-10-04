@@ -298,9 +298,10 @@ const Link = ({
     onFocus={e => onFocus?.(e)}
     preventDefault={preventDefault}
     ref={ref}
+    rel={openNewWindow ? 'noopener noreferrer' : null}
     sameColorAsText={sameColorAsText}
     selected={selected}
-    target={target || (openNewWindow ? '_blank noopener noreferrer' : null)}
+    target={target || (openNewWindow ? '_blank' : null)}
     transparentBorder={transparentBorder}
     weightStyle={weightStyle}
   >
