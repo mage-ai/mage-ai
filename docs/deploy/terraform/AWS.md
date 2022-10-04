@@ -1,6 +1,33 @@
 # Terraform Amazon Web Services (AWS)
 
-## Environment variables
+<img
+  alt="AWS"
+  src="https://www.zencos.com/wp-content/uploads/2021/11/aws-logo.png"
+  width="300"
+/>
+
+1. [Environment variables](#1-environment-variables)
+1. [Customize Terraform settings](#2-customize-terraform-settings)
+1. [Configurable variables](#3-configurable-variables)
+1. [Deploy](#4-deploy)
+1. [Misc](#misc)
+
+<br />
+
+## Terraform plan
+
+You can run the following command to see all the resources that will be created by Terraform:
+
+```bash
+cd scripts/deploy/terraform/aws
+terraform plan
+```
+
+By default, here are the <b>[resources](./AWS/Resources.md)</b> that will be created.
+
+<br />
+
+## 1. Environment variables
 
 If you don’t have the AWS CLI installed, you’ll need to create this file: `~/.aws/credentials`.
 
@@ -14,9 +41,9 @@ aws_secret_access_key = XXX
 
 <br />
 
-## Configurable settings
+## 2. Customize Terraform settings
 
-<b>Docker image</b>
+<b>Docker image (optional)</b>
 
 In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
 you can change the default Docker image:
@@ -28,7 +55,7 @@ variable "docker_image" {
 }
 ```
 
-<b>Region</b>
+<b>Region (optional)</b>
 
 In the file [./scripts/deploy/terraform/aws/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/variables.tf),
 you can change the region:
@@ -48,7 +75,7 @@ can also be customized to your needs.
 
 <br />
 
-## Configurable variables
+## 3. Configurable variables
 
 In the [`mage-ai/scripts/deploy/terraform/aws/env_vars.json`](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/aws/env_vars.json)
 file, you can edit the following variables, which are used by the tool while running in the cloud:
@@ -63,7 +90,7 @@ These variable values are used by the tool to retrieve AWS resources like CloudW
 
 <br />
 
-## Deploying
+## 4. Deploy
 
 <b>Using CLI</b>
 
@@ -128,10 +155,12 @@ docker run -i -t -v $(pwd):/mage --workdir="/mage/scripts/deploy/terraform/aws" 
 ### Errors
 
 <b>Page isn’t loading</b>
+
 If you run into connection issues, check to see if your IP is whitelisted in the appropriate
 [security group](#security).
 
 <b>503 Forbidden</b>
+
 Check to see if the service task in your EMR cluster is running or if it stopped.
 
 503 typically means that the service task isn’t running and that can be caused by a variety of things.
@@ -140,9 +169,26 @@ Open the service task that stopped running and click on the "Logs" tab to see wh
 
 <br />
 
-## Security
+## Misc
 
-- Update security group name `mage-data-prep-sg` to whitelist IPs. Add a new inbound rule for
-HTTP port 80 and use your IP address.
+### Security
+
+To enable other IP addresses access to Mage, open the security group named
+`mage-data-prep-sg` to whitelist IPs.
+
+Add a new inbound rule for HTTP port 80 and use your IP address.
+
+### Terminate all resources
+
+If you want to delete all resources created from deploying, run the following command:
+
+```bash
+terraform destroy
+```
+
+A sample output could look like this:
+```
+Destroy complete! Resources: 10 destroyed.
+```
 
 <br />
