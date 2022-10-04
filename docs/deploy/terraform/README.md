@@ -46,8 +46,8 @@ docker pull hashicorp/terraform:latest
 
 Read the following documentation for the cloud provider of your choice:
 
-- [AWS](./AWS.md)
-- [Azure](./Azure.md)
-- *GCP (coming soon)*
+- [Amazon Web Services (AWS)](./AWS.md)
+- [Microsoft Azure](./Azure.md)
+- [Google Cloud Platform (GCP)](./GCP.md)
 
 <br />

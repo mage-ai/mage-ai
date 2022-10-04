@@ -15,30 +15,31 @@ variable "container_memory" {
 }
 
 variable "project_id" {
-  description = "The name of the project"
   type        = string
+  description = "The name of the project"
+  default     = "unique-gcp-project-id"
 }
 
 variable "region" {
-  description = "The default compute region"
   type        = string
+  description = "The default compute region"
   default     = "us-west2"
 }
 
 variable "zone" {
-  description = "The default compute zone"
   type        = string
+  description = "The default compute zone"
   default     = "us-west2-a"
 }
 
 variable "repository" {
-  description = "The name of the Artifact Registry repository to be created"
   type        = string
+  description = "The name of the Artifact Registry repository to be created"
   default     = "mage-data-prep"
 }
 
 variable "docker_image" {
-  description = "The Docker image url in the Artifact Registry repository to be deployed to Cloud Run"
   type        = string
-  default     = "mageai"
+  description = "The Docker image url in the Artifact Registry repository to be deployed to Cloud Run"
+  default     = "region-docker.pkg.dev/project_id/repository_name/mageai"
 }
