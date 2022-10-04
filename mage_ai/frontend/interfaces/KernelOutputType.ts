@@ -6,6 +6,7 @@ export enum ExecutionStateEnum {
 
 export enum DataTypeEnum {
   IMAGE_PNG = 'image/png',
+  PROGRESS = 'progress',
   TABLE = 'table',
   TEXT = 'text',
   TEXT_HTML = 'text/html',

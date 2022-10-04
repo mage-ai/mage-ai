@@ -187,11 +187,29 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_message(self, message: dict) -> None:
+        def should_filter_message(message):
+            if message.get('data') is None and message.get('error') is None \
+                and message.get('execution_state') is None and message.get('type') is None:
+                return True
+
+            try:
+                # Filter out messages meant for jupyter widgets that we can't render
+                if message.get('msg_type') == 'display_data' and \
+                    message.get('data')[0].startswith('FloatProgress'):
+                    return True
+            except IndexError:
+                pass
+
+            return False
+
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
         if message.get('data') is None and message.get('error') is None \
            and message.get('execution_state') is None and message.get('type') is None:
+            return
+
+        if should_filter_message(message):
             return
 
         execution_metadata = message.get('execution_metadata')
@@ -214,6 +232,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         for client in self.clients:
             client.write_message(json.dumps(message_final))
+
 
     def __execute_block(
         self,
