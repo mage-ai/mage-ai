@@ -12,7 +12,7 @@ Cloud providers currently supported with Mage Terraform scripts:
 
 - AWS
 - Azure
-- *GCP (coming soon)*
+- GCP
 
 <br />
 
