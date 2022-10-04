@@ -6,7 +6,8 @@
 - [Client APIs](#client-apis)
   - [Redshift](#redshift)
   - [S3](#s3)
-  - [GoogleCloudStorage](#google-cloud-storage)
+  - [GoogleCloudStorage](#googlecloudstorage)
+  - [AzureBlobStorage](#azureblobstorage)
   - [FileIO](#fileio)
   - [BigQuery](#bigquery)
   - [PostgreSQL](#postgresql)
@@ -23,6 +24,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 
 -   AWS Redshift
 -   AWS S3
+-   Azure Blob Storage
 -   Filesystem
 -   Google BigQuery
 -   Google Cloud Storage
@@ -415,6 +417,9 @@ Loads the data frame from the filepath specified. This function will load at max
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
 ## GoogleCloudStorage
+WIP
+
+## AzureBlobStorage
 WIP
 
 ## BigQuery

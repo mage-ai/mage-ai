@@ -25,7 +25,7 @@ class GoogleCloudStorage(BaseFile):
         **kwargs,
     ) -> None:
         """
-        Initializes data loader from an Google Cloud Storage bucket.
+        Initializes data loader from a Google Cloud Storage bucket.
 
         To authenticate (and authorize) access to Google Cloud Storage, credentials must be provided.
         Below are the different ways to access those credentials:
@@ -100,7 +100,7 @@ class GoogleCloudStorage(BaseFile):
         self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
     ) -> None:
         """
-        Exports data frame to an Google Cloud Storage bucket.
+        Exports data frame to a Google Cloud Storage bucket.
 
         Args:
             df (DataFrame): Data frame to export
@@ -149,7 +149,7 @@ class GoogleCloudStorage(BaseFile):
         elif ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH in config:
             kwargs['path_to_credentials'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH]
         else:
-            ValueError(
+            raise ValueError(
                 'No valid configuration settings found for Google Cloud Storage. You must specify '
                 'either your service account key or the filepath to your service account key.'
             )

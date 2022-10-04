@@ -203,7 +203,7 @@ WHERE table_id = '{table_name}'
         elif ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH in config:
             kwargs['path_to_credentials'] = config[ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH]
         else:
-            ValueError(
+            raise ValueError(
                 'No valid configuration settings found for Google BigQuery. You must specify '
                 'either your service account key or the filepath to your service account key.'
             )
