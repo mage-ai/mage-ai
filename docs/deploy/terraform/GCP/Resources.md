@@ -224,7 +224,7 @@ Terraform will perform the following actions:
 
               + config {
                   + src_ip_ranges = [
-                      + "98.207.95.145/32",
+                      + "11.111.11.111/32",
                     ]
                 }
             }
