@@ -2,20 +2,15 @@
 
 ## Environment variables
 
-Set these environment variables on your machine
-so that Terraform can use your credentials to perform all necessary operations
+If you don’t have the AWS CLI installed, you’ll need to create this file: `~/.aws/credentials`.
 
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+In that file, add the following values:
 
-Here is an example entry in `~/.bash_profile`:
-
-```text
-AWS_ACCESS_KEY_ID=XXXX
-AWS_SECRET_ACCESS_KEY=XXXX
 ```
-
-In your terminal, run `source ~/.bash_profile`.
+[default]
+aws_access_key_id = XXX
+aws_secret_access_key = XXX
+```
 
 <br />
 
