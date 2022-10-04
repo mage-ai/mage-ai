@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@amplitude/react-amplitude": "^1.0.0",
+    "@jupyter-widgets/controls": "^5.0.1",
     "@monaco-editor/react": "^4.4.5",
     "@types/react-table": "^7.7.12",
     "@visx/axis": "^2.10.0",

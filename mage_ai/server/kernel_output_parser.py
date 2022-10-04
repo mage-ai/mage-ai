@@ -4,10 +4,17 @@ from enum import Enum
 class DataType(str, Enum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
+    PROGRESS = 'progress'
     TABLE = 'table'
     TEXT = 'text'
     TEXT_HTML = 'text/html'
     TEXT_PLAIN = 'text/plain'
+
+COMMS_MESSAGE_TYPES = [
+    'comm_open',
+    'comm_msg',
+    'comm_close',
+]
 
 
 def parse_output_message(message: dict) -> dict:
@@ -54,6 +61,11 @@ def parse_output_message(message: dict) -> dict:
     elif code:
         data_content = code
         data_type = DataType.TEXT
+    elif msg_type in COMMS_MESSAGE_TYPES:
+        if data.get('method') == 'update':
+            progress_data = f"{data.get('state', dict()).get('value', 0) * 100}"
+            data_content = progress_data
+            data_type = DataType.PROGRESS
 
     return dict(
         data=data_content,

@@ -34,6 +34,7 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
+import ProgressBar from '@oracle/components/ProgressBar';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -82,6 +83,7 @@ function CodeOutput({
     || (!isInProgress && runCount >= 1 && runEndTime >= runStartTime);
 
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
+  const [progress, setProgress] = useState<number>();
 
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
@@ -105,6 +107,19 @@ function CodeOutput({
     return arr;
   }, []), [
     messages,
+  ]);
+
+  console.log('messages:', messages);
+  console.log('combined messages:', combinedMessages);
+
+  const progressBar = useMemo(() => {
+    return (
+      <ProgressBar
+        progress={progress}
+      />
+    )
+  }, [
+    progress,
   ]);
 
   const content = useMemo(() => {
@@ -237,6 +252,15 @@ function CodeOutput({
               />
             </div>
           );
+        } else if (dataType === DataTypeEnum.PROGRESS) {
+          if (!progress) {
+            displayElement = (
+              <OutputRowStyle {...outputRowSharedProps}>
+                {progressBar}
+              </OutputRowStyle>
+            );
+          }
+          setProgress(parseInt(data));
         }
 
         if (displayElement) {
@@ -251,11 +275,19 @@ function CodeOutput({
       return arr;
     });
 
+    arrContent.unshift((
+      <OutputRowStyle contained>
+        {progressBar}
+      </OutputRowStyle>
+    ));
+
     return arrContent;
   }, [
     combinedMessages,
     contained,
     mainContainerWidth,
+    progress,
+    progressBar,
     selected,
   ]);
 
