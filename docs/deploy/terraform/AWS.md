@@ -8,6 +8,15 @@ so that Terraform can use your credentials to perform all necessary operations
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 
+Here is an example entry in `~/.bash_profile`:
+
+```text
+AWS_ACCESS_KEY_ID=XXXX
+AWS_SECRET_ACCESS_KEY=XXXX
+```
+
+In your terminal, run `source ~/.bash_profile`.
+
 <br />
 
 ## Configurable settings
