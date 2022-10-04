@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Ansi from 'ansi-to-react';
 
 import BlockType, {
@@ -14,7 +14,8 @@ import KernelOutputType, {
   DataTypeEnum,
   DATA_TYPE_TEXTLIKE,
 } from '@interfaces/KernelOutputType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
+import ProgressBar from '@oracle/components/ProgressBar';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
@@ -34,7 +35,6 @@ import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
 import { addDataOutputBlockUUID } from '@components/PipelineDetail/utils';
 import { isJsonString } from '@utils/string';
-import ProgressBar from '@oracle/components/ProgressBar';
 
 type CodeOutputProps = {
   block: BlockType;
@@ -85,6 +85,12 @@ function CodeOutput({
   const [dataFrameShape, setDataFrameShape] = useState<number[]>();
   const [progress, setProgress] = useState<number>();
 
+  useEffect(() => {
+    if (!isInProgress) {
+      setProgress(100);
+    }
+  }, [isInProgress]);
+
   const combineTextData = (data) => (Array.isArray(data) ? data.join('\n') : data);
 
   const combinedMessages = useMemo(() => messages.reduce((arr, curr) => {
@@ -108,9 +114,6 @@ function CodeOutput({
   }, []), [
     messages,
   ]);
-
-  console.log('messages:', messages);
-  console.log('combined messages:', combinedMessages);
 
   const progressBar = useMemo(() => {
     return (
@@ -253,14 +256,8 @@ function CodeOutput({
             </div>
           );
         } else if (dataType === DataTypeEnum.PROGRESS) {
-          if (!progress) {
-            displayElement = (
-              <OutputRowStyle {...outputRowSharedProps}>
-                {progressBar}
-              </OutputRowStyle>
-            );
-          }
-          setProgress(parseInt(data));
+          const percent = parseInt(data);
+          setProgress(percent > 90 ? 90 : percent);
         }
 
         if (displayElement) {
@@ -274,12 +271,16 @@ function CodeOutput({
 
       return arr;
     });
-
-    arrContent.unshift((
-      <OutputRowStyle contained>
-        {progressBar}
-      </OutputRowStyle>
-    ));
+    
+    if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
+      arrContent.unshift((
+        <OutputRowStyle contained>
+          <Spacing mt={1}>
+            {progressBar}
+          </Spacing>
+        </OutputRowStyle>
+      ));
+    }
 
     return arrContent;
   }, [

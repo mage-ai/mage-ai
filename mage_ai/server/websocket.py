@@ -190,12 +190,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         msg_id = message.get('msg_id')
         if msg_id is None:
             return
-        # if message.get('data') is None and message.get('error') is None \
-        #    and message.get('execution_state') is None and message.get('type') is None:
-        #     return
+        if message.get('data') is None and message.get('error') is None \
+           and message.get('execution_state') is None and message.get('type') is None:
+            return
 
-        # if message.get('msg_type') == 'display_data':
-        #     return
+        # Filter out messages meant for jupyter widgets that we can't render
+        if message.get('msg_type') == 'display_data' and \
+            message.get('data').startswith('FloatProgress'):
+            return
 
         execution_metadata = message.get('execution_metadata')
         msg_id_value = execution_metadata if execution_metadata is not None \
@@ -279,14 +281,14 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             WebSocketServer.running_executions_mapping[msg_id] = value
 
-            # block_output_process_code = get_block_output_process_code(
-            #     pipeline_uuid,
-            #     block_uuid,
-            #     block_type=block_type,
-            #     kernel_name=kernel_name,
-            # )
-            # if block_output_process_code is not None:
-            #     client.execute(block_output_process_code)
+            block_output_process_code = get_block_output_process_code(
+                pipeline_uuid,
+                block_uuid,
+                block_type=block_type,
+                kernel_name=kernel_name,
+            )
+            if block_output_process_code is not None:
+                client.execute(block_output_process_code)
 
             if run_downstream:
                 for block in block.downstream_blocks:
