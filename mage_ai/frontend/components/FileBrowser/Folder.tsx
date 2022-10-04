@@ -4,8 +4,8 @@ import { useRouter } from 'next/router';
 import Circle from '@oracle/elements/Circle';
 import FileType, {
   FOLDER_NAME_CHARTS,
+  FOLDER_NAME_CONFIG,
   FOLDER_NAME_PIPELINES,
-  METADATA_FILENAME,
   SpecialFileEnum,
   SUPPORTED_FILE_EXTENSIONS_REGEX,
 } from '@interfaces/FileType';
@@ -33,7 +33,8 @@ import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import {
   getBlockFromFile,
   getBlockUUIDFromFile,
-  getFullPathWithoutRootFolder,
+  getFullPath,
+  getPipelineConfigPath,
 } from './utils';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -76,11 +77,11 @@ function Folder({
     parent: parentFile,
   } = file;
   const router = useRouter();
-  const { pipeline: pipelineName } = router.query;
+  const { pipeline: currentPipelineName }: any = router.query;
   const disabled = disabledProp
     || name === '__init__.py'
     || !!name.match(/^\./);
-  const isPipelineFolder = parentFile?.name === FOLDER_NAME_PIPELINES;
+  const isPipelineFolder = parentFile?.name === FOLDER_NAME_CONFIG;
   const children = useMemo(() =>
     isPipelineFolder
       ? null
@@ -101,13 +102,10 @@ function Folder({
   );
   const uuid = `${level}/${name}`;
   const fileUsedByPipeline = pipelineBlockUuids.includes(getBlockUUIDFromFile(file));
-  const parentFolderName = parentFile?.name || '';
-  const isEditableCodeBlock = BLOCK_TYPES.includes(singularize(parentFolderName));
-
   const [collapsed, setCollapsed] = useState<boolean>(get(uuid, false));
 
   let IconEl = FileFill;
-  if ((isPipelineFolder && !disabled) || (level === 1 && name === FOLDER_NAME_PIPELINES)) {
+  if (level === 1 && name === FOLDER_NAME_PIPELINES) {
     IconEl = Pipeline;
   } else if (name === FOLDER_NAME_CHARTS) {
     IconEl = NavGraph;
@@ -161,17 +159,14 @@ function Folder({
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPathWithoutRootFolder(file),
+                  getFullPath(file),
                 );
               }
             }
 
             if (isPipelineFolder) {
-              if (name === pipelineName) {
-                openFile(METADATA_FILENAME);
-              } else {
-                openPipeline(name);
-              }
+              const pipelineMetadataFilePath = getPipelineConfigPath(file, currentPipelineName);
+              openFile(pipelineMetadataFilePath);
             } else if (children) {
               setCollapsed((collapsedPrev) => {
                 set(uuid, !collapsedPrev);
@@ -179,15 +174,14 @@ function Folder({
                 return !collapsedPrev;
               });
             } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
-              // WARNING: this assumes the first part of a path is the default_repo
-              openFile(getFullPathWithoutRootFolder(file));
+              openFile(getFullPath(file));
             } else {
               const block = getBlockFromFile(file);
               if (block) {
                 onSelectBlockFile(
                   block.uuid,
                   block.type,
-                  getFullPathWithoutRootFolder(file),
+                  getFullPath(file),
                 );
               }
             }

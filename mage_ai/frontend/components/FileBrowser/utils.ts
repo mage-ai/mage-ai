@@ -2,6 +2,7 @@ import FileType, {
   CODE_BLOCK_FILE_EXTENSIONS,
   FileExtensionEnum,
   FOLDER_NAME_PIPELINES,
+  METADATA_FILENAME,
 } from '@interfaces/FileType';
 import { BLOCK_TYPES } from '@interfaces/BlockType';
 import { prependArray, removeAtIndex } from '@utils/array';
@@ -29,13 +30,20 @@ export function getFullPathWithoutRootFolder(
   return fullPath.split('/').slice(1).join('/');
 }
 
+export function getPipelineConfigPath(
+  file: FileType,
+  currentPipelineName: string,
+): string {
+  return `${FOLDER_NAME_PIPELINES}/${currentPipelineName}/${file.name}`;
+}
+
 export function getBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
 ) {
   const parts = getFullPath(file, currentPathInit).split('/');
-  // This assumes path default_repo/[block_type]s/..
-  const blockType = singularize(parts[1]);
+  // This assumes path [block_type]s/[filename]
+  const blockType = singularize(parts[0]);
   const fileName = parts[parts.length - 1];
 
   const pyRegex = new RegExp(`\.${FileExtensionEnum.PY}$`);
@@ -71,4 +79,23 @@ export function rearrangePipelinesFolderToTop(
   );
 
   return rearrangedFiles;
+}
+
+export function replacePipelinesFolderWithConfig(
+  files: FileType[] = [],
+  currentPipelineName: string,
+) {
+  const pipelinesFolder = files?.find(f => f.name === FOLDER_NAME_PIPELINES);
+  const currentPipelineFolder = pipelinesFolder?.children?.find(f => f.name === currentPipelineName);
+  const metadataFile = currentPipelineFolder?.children?.find(f => f.name === METADATA_FILENAME);
+  const configFolder = {
+    children: [metadataFile],
+    name: 'config',
+  };
+  const pipelinesFolderIdx = files?.findIndex(f => f.name === FOLDER_NAME_PIPELINES);
+
+  return [
+    configFolder,
+    ...removeAtIndex(files, pipelinesFolderIdx),
+  ];
 }

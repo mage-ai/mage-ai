@@ -37,6 +37,7 @@ export default interface FileType {
 }
 
 export const FOLDER_NAME_CHARTS = 'charts';
+export const FOLDER_NAME_CONFIG = 'config';
 export const FOLDER_NAME_PIPELINES = 'pipelines';
 export const METADATA_FILENAME = 'metadata.yaml';
 export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
