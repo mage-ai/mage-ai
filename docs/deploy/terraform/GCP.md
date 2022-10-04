@@ -15,6 +15,19 @@
 
 <br />
 
+## Terraform plan
+
+You can run the following command to see all the resources that will be created by Terraform:
+
+```bash
+cd scripts/deploy/terraform/gcp
+terraform plan
+```
+
+By default, here are the <b>[resources](./GCP/Resources.md)</b> that will be created.
+
+<br />
+
 ## 1. Install `gcloud` CLI
 
 Follow these [instructions](https://cloud.google.com/sdk/docs/install)
