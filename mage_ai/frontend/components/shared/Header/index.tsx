@@ -216,6 +216,12 @@ function Header({
               </>
             }
 
+            <Spacing mr={2}>
+              <Text default>
+                {`V${version}`}
+              </Text>
+            </Spacing>
+
             <Circle
               color={PURPLE}
               size={4 * UNIT}
