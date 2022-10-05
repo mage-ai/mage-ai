@@ -84,6 +84,20 @@ variable "storage_account_name" {
 }
 ```
 
+<b>Key vault name (REQUIRED)</b>
+
+The `key_vault_name` must be unique globally. Before running any Terraform commands,
+please change the `default` value of variable named `key_vault_name` in the
+[./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf)
+file.
+
+```
+variable "key_vault_name" {
+  description = "Key vault name. It must be globally unique across Azure."
+  default     = "something_very_unique"
+}
+```
+
 <b>Virtual network name</b>
 
 In the file [./scripts/deploy/terraform/azure/variables.tf](https://github.com/mage-ai/mage-ai/blob/master/scripts/deploy/terraform/azure/variables.tf),
