@@ -2,6 +2,12 @@ provider "azurerm" {
   features {}
 }
 
+data "azuread_client_config" "current" {}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_subscription" "current" {}
+
 resource "azurerm_resource_group" "resource_group" {
   name     = "${var.app_name}-${var.app_environment}"
   location = "West US 2"
@@ -47,6 +53,13 @@ resource "azurerm_container_group" "container_group" {
       storage_account_name = azurerm_storage_account.aci_storage.name
       storage_account_key  = azurerm_storage_account.aci_storage.primary_access_key
       share_name           = azurerm_storage_share.container_share.name
+    }
+
+    environment_variables = {
+      "AZURE_CLIENT_ID"             = azuread_service_principal.app.application_id
+      "AZURE_CLIENT_SECRET"         = azuread_service_principal_password.app.value
+      "AZURE_STORAGE_ACCOUNT_NAME"  = var.storage_account_name
+      "AZURE_TENANT_ID"             = azuread_service_principal.app.application_tenant_id
     }
   }
 
