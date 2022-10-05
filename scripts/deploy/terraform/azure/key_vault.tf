@@ -12,18 +12,18 @@ resource "azurerm_key_vault" "kv" {
 
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = azuread_application.app.id
+    object_id = azuread_service_principal.app.id
 
-    certificate_permissions - [
-      "get", "list",
+    certificate_permissions = [
+      "Get", "List",
     ]
 
     key_permissions = [
-      "get", "list",
+      "Get", "List",
     ]
 
     secret_permissions = [
-      "get", "list",
+      "Get", "List",
     ]
   }
 }

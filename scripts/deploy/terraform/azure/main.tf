@@ -2,9 +2,11 @@ provider "azurerm" {
   features {}
 }
 
-data "azurerm_subscription" "current" {}
-
 data "azuread_client_config" "current" {}
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_subscription" "current" {}
 
 resource "azurerm_resource_group" "resource_group" {
   name     = "${var.app_name}-${var.app_environment}"
