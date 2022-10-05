@@ -6,6 +6,10 @@ default:
   AWS_SECRET_ACCESS_KEY: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
   AWS_SESSION_TOKEN: session_token (Used to generate Redshift credentials)
   AWS_REGION: region
+  AZURE_CLIENT_ID: "{{ env_var('AZURE_CLIENT_ID') }}"
+  AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
+  AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
+  AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
   GOOGLE_SERVICE_ACC_KEY:
     type: service_account
     project_id: project-id

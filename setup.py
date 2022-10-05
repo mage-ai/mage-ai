@@ -40,6 +40,12 @@ setuptools.setup(
         ],
     },
     extras_require={
+        'azure': [
+            'azure-identity',
+            'azure-keyvault-secrets',
+            'azure-keyvault-certificates',
+            'azure-storage-blob',
+        ],
         'bigquery': ['google-cloud-bigquery==3.2.0', 'db-dtypes==1.0.2'],
         'google-cloud-storage': ['google-cloud-storage==2.5.0'],
         'hdf5': ['tables==3.7.0'],
@@ -49,6 +55,10 @@ setuptools.setup(
         'spark': ['botocore==1.27.19', 'boto3==1.24.19'],
         'snowflake': ['snowflake-connector-python==2.7.9'],
         'all': [
+            'azure-identity',
+            'azure-keyvault-secrets',
+            'azure-keyvault-certificates',
+            'azure-storage-blob',
             'botocore==1.27.19',
             'boto3==1.24.19',
             'db-dtypes==1.0.2',

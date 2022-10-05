@@ -35,3 +35,9 @@ psycopg2-binary==2.9.3
 redshift-connector==2.0.907
 snowflake-connector-python==2.7.9
 tables==3.7.0
+
+# Azure
+azure-identity
+azure-keyvault-secrets
+azure-keyvault-certificates
+azure-storage-blob
