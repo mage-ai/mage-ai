@@ -19,7 +19,6 @@ import {
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
-import { alignItems } from 'styled-system';
 
 const NUMBER_OF_TOP_MENU_ITEMS: number = 2;
 
