@@ -11,9 +11,8 @@
 
 # 🧙 Mage
 
-Mage is an open-source tool for [building](docs/features/README.md#notebook-for-building-data-pipelines)
-and [running](docs/features/orchestration/README.md)
-data pipelines that <b>transform</b> your data.
+Mage is an open-source data pipeline tool for
+<b>transforming</b> and <b>integrating</b> data.
 
 <br />
 
