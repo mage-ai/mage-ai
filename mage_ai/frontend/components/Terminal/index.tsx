@@ -66,7 +66,12 @@ function Terminal({
     {
       command: true,
       data: INIT_COMMAND,
+      execution_state: null,
+      msg_id: null,
+      msg_type: null,
+      pipeline_uuid: null,
       type: DataTypeEnum.TEXT,
+      uuid: terminalUUID,
     },
   ]);
 
