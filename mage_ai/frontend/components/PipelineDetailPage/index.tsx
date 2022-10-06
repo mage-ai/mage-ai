@@ -33,6 +33,7 @@ import {
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
+import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -83,8 +84,8 @@ function PipelineDetailPage({
   const { data } = api.pipelines.detail(pipelineUUID);
   const pipeline = data?.pipeline;
 
-  const [deletePipeline] = useMutation(
-    (uuid: string) => api.pipelines.useDelete(uuid)(),
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
@@ -93,15 +94,19 @@ function PipelineDetailPage({
               uuid,
             },
           }) => {
-            router.push('/pipelines');
+            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
+        },
+      ),
+    },
+  );
+  const [deletePipeline] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            router.push('/pipelines');
           },
         },
       ),
@@ -109,6 +114,16 @@ function PipelineDetailPage({
   );
 
   const headerMenuItems: MenuItemType[] = [
+    {
+      label: () => 'New pipeline',
+      // @ts-ignore
+      onClick: () => createPipeline({
+        pipeline: {
+          name: randomNameGenerator(),
+        },
+      }),
+      uuid: 'PipelineDetail/Header/new_pipeline',
+    },
     {
       label: () => 'Delete pipeline',
       onClick: () => deletePipeline(pipelineUUID),
