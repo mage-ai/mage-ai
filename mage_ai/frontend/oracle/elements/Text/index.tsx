@@ -238,7 +238,7 @@ export const SHARED_STYLES = css<TextProps>`
   `}
 
   ${props => props.warning && `
-    color: ${(props.theme.accent || dark.accent).warning};
+    color: ${(props.theme.accent || dark.accent).yellow};
   `}
 
   ${props => props.success && `

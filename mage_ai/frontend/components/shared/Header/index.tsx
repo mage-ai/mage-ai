@@ -1,5 +1,6 @@
 import NextLink from 'next/link';
 import { useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Circle from '@oracle/elements/Circle';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -10,6 +11,7 @@ import FlyoutMenu from '@oracle/components/FlyoutMenu';
 import GradientText from '@oracle/elements/Text/GradientText';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
+import PopupMenu from '@oracle/components/PopupMenu';
 import GradientLogoIcon from '@oracle/icons/GradientLogo';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -33,9 +35,10 @@ export type BreadcrumbType = {
 };
 
 export type MenuItemType = {
-  label: () => string,
-  onClick: () => void,
-  uuid: string,
+  label: () => string;
+  onClick: () => void;
+  openConfirmationDialogue?: boolean;
+  uuid: string;
 };
 
 type HeaderProps = {
@@ -50,7 +53,11 @@ function Header({
   version,
 }: HeaderProps) {
   const [highlightedMenuIndex, setHighlightedMenuIndex] = useState(null);
+  const [confirmationDialogueOpen, setConfirmationDialogueOpen] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState(null);
   const menuRef = useRef(null);
+  const router = useRouter();
+  const { pipeline: pipelineUUID } = router.query;
   const breadcrumbEls = useMemo(() => {
     const count = breadcrumbs.length;
     const arr = [];
@@ -208,9 +215,26 @@ function Header({
                       onClickCallback={() => setHighlightedMenuIndex(null)}
                       open={highlightedMenuIndex === 0}
                       parentRef={menuRef}
+                      setConfirmationAction={setConfirmationAction}
+                      setConfirmationDialogueOpen={setConfirmationDialogueOpen}
                       uuid="PipelineDetail/Header/menu"
                     />
                   </FlexContainer>
+                </ClickOutside>
+
+                <ClickOutside
+                  onClickOutside={() => setConfirmationDialogueOpen(false)}
+                  open={confirmationDialogueOpen}
+                >
+                  <PopupMenu
+                    danger
+                    onCancel={() => setConfirmationDialogueOpen(false)}
+                    onClick={confirmationAction}
+                    right={UNIT * 16}
+                    subtitle="This is irreversible and will immediately delete everything associated with the pipeline, including its blocks, triggers, runs, logs, and history."
+                    title={`Are you sure you want to delete the pipeline ${pipelineUUID}?`}
+                    width={UNIT * 40}
+                  />
                 </ClickOutside>
 
                 <Spacing mr={2} />
