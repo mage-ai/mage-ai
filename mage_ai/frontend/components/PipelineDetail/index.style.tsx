@@ -34,7 +34,6 @@ export const OverlayStyle = styled.div`
 
 export const PipelineHeaderStyle = styled.div`
   height: ${ASIDE_HEADER_HEIGHT}px;
-  overflow-x: auto;
   position: sticky;
   top: ${ASIDE_HEADER_HEIGHT}px;
   width: 100%;
