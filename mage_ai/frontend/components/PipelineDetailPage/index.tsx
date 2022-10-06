@@ -112,6 +112,7 @@ function PipelineDetailPage({
     {
       label: () => 'Delete pipeline',
       onClick: () => deletePipeline(pipelineUUID),
+      openConfirmationDialogue: true,
       uuid: 'PipelineDetail/Header/delete_pipeline',
     },
   ];

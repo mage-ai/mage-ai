@@ -16,7 +16,6 @@ import {
   KEY_CODE_ARROW_UP,
   KEY_CODE_ENTER,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -32,6 +31,7 @@ export type FlyoutMenuItemType = {
     as?: string;
     href: string;
   };
+  openConfirmationDialogue?: boolean;
   isGroupingTitle?: boolean;
   onClick?: () => void;
   uuid: string;
@@ -46,6 +46,8 @@ export type FlyoutMenuProps = {
   open: boolean;
   parentRef: any;
   rightOffset?: number;
+  setConfirmationDialogueOpen?: (open: boolean) => void;
+  setConfirmationAction?: (action: any) => void;
   topOffset?: number;
   uuid: string;
   width?: number;
@@ -60,6 +62,8 @@ function FlyoutMenu({
   open,
   parentRef,
   rightOffset,
+  setConfirmationAction,
+  setConfirmationDialogueOpen,
   topOffset = 0,
   uuid: uuidKeyboard,
   width,
@@ -172,6 +176,7 @@ function FlyoutMenu({
           keyTextGroups,
           label,
           onClick,
+          openConfirmationDialogue,
           uuid,
         }: FlyoutMenuItemType, idx0: number) => {
           refArg.current[uuid] = createRef();
@@ -198,7 +203,11 @@ function FlyoutMenu({
                 onClick={(e) => {
                   e.preventDefault();
 
-                  if (onClick && !disabled) {
+                  if (openConfirmationDialogue) {
+                    setConfirmationDialogueOpen(true);
+                    setConfirmationAction(() => onClick);
+                    onClickCallback?.();
+                  } else if (onClick && !disabled) {
                     onClick?.();
                     onClickCallback?.();
                   }
