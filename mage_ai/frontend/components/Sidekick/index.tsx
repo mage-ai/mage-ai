@@ -66,6 +66,7 @@ export type SidekickProps = {
   fetchPipeline: () => void;
   fetchVariables: () => void;
   insights: InsightType[][];
+  interruptKernel: () => void;
   isPipelineExecuting: boolean;
   globalVariables: PipelineVariableType[];
   metadata: MetadataType;
@@ -93,6 +94,7 @@ function Sidekick({
   fetchVariables,
   globalVariables,
   insights,
+  interruptKernel,
   isPipelineExecuting,
   messages,
   metadata,
@@ -359,6 +361,7 @@ function Sidekick({
 
         {ViewKeyEnum.TERMINAL === activeView && (
           <Terminal
+            interruptKernel={interruptKernel}
             onFocus={() => setSelectedBlock(null)}
             width={afterWidth}
           />

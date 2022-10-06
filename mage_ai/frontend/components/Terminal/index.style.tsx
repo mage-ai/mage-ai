@@ -5,7 +5,9 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 export const ROW_HEIGHT = 20;
 
-const SHARED_STYLES = css`
+const SHARED_STYLES = css<{
+  width?: number;
+}>`
   ${props => !props.width && `
     width: 100%;
   `}

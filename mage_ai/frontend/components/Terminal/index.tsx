@@ -38,12 +38,14 @@ import { useKeyboardContext } from '@context/Keyboard';
 const DEFAULT_TERMINAL_UUID = 'terminal';
 
 type TerminalProps = {
+  interruptKernel: () => void;
   onFocus?: () => void;
   uuid?: string;
   width?: number;
 };
 
 function Terminal({
+  interruptKernel,
   onFocus,
   uuid: terminalUUID = DEFAULT_TERMINAL_UUID,
   width,
@@ -132,6 +134,7 @@ function Terminal({
             type: DataTypeEnum.TEXT,
           }));
           setCommand('');
+          interruptKernel();
         } else if (!busy) {
           if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
             setCommand(prev => prev.slice(0, prev.length - 1));
@@ -177,6 +180,7 @@ function Terminal({
       commandHistory,
       commandIndex,
       focus,
+      interruptKernel,
       setBusy,
       setCommand,
       setCommandHistory,
@@ -229,7 +233,6 @@ function Terminal({
               dataArray = [dataInit];
             }
             dataArray = dataArray.filter(d => d);
-
 
             const arr = [];
 

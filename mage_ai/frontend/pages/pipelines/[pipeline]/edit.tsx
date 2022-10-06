@@ -1221,6 +1221,7 @@ function PipelineDetailPage({
       fetchVariables={fetchVariables}
       globalVariables={globalVariables}
       insights={insights}
+      interruptKernel={interruptKernel}
       isPipelineExecuting={isPipelineExecuting}
       messages={messages}
       metadata={metadata}
@@ -1254,6 +1255,7 @@ function PipelineDetailPage({
     fetchVariables,
     globalVariables,
     insights,
+    interruptKernel,
     messages,
     metadata,
     onChangeChartBlock,
