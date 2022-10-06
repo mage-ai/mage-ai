@@ -58,7 +58,9 @@ function Terminal({
   const [commandIndex, setCommandIndex] = useState<number>(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [focus, setFocus] = useState<boolean>(false);
-  const [kernelOutputs, setKernelOutputs] = useState<KernelOutputType[]>([]);
+  const [kernelOutputs, setKernelOutputs] = useState<(KernelOutputType & {
+    command: boolean;
+  })[]>([]);
 
   const {
     lastMessage,
@@ -128,6 +130,7 @@ function Terminal({
 
         if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
           setBusy(false);
+          // @ts-ignore
           setKernelOutputs(prev => prev.concat({
             command: true,
             data: command?.trim()?.length >= 1 ? command : '\n',
@@ -160,6 +163,7 @@ function Terminal({
               setCommandIndex(commandHistory.length + 1);
               setCommandHistory(prev => prev.concat(command));
             }
+            // @ts-ignore
             setKernelOutputs(prev => prev.concat({
               command: true,
               data: command?.trim()?.length >= 1 ? command : '\n',
@@ -219,7 +223,9 @@ function Terminal({
           ref={refInner}
           width={width}
         >
-          {kernelOutputs?.reduce((acc, kernelOutput: KernelOutputType, idx: number) => {
+          {kernelOutputs?.reduce((acc, kernelOutput: KernelOutputType & {
+            command: boolean;
+          }, idx: number) => {
             const {
               command,
               data: dataInit,
