@@ -90,7 +90,7 @@ function PipelineDetailPage({
   const {
     height: heightWindow,
   } = useWindowSize();
-  const [afterHidden, setAfterHidden] = useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN))
+  const [afterHidden, setAfterHidden] = useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
   const [afterWidthForChildren, setAfterWidthForChildren] = useState<number>(null);
   const [errors, setErrors] = useState(null);
   const [recentlyAddedChart, setRecentlyAddedChart] = useState(null);
@@ -108,9 +108,6 @@ function PipelineDetailPage({
   // Pipeline
   const [pipelineLastSaved, setPipelineLastSaved] = useState<Date>(null);
   const [pipelineContentTouched, setPipelineContentTouched] = useState<boolean>(false);
-  const { data: pipelinesData, mutate: fetchPipelines } = api.pipelines.list();
-  const pipelines = useMemo(() => pipelinesData?.pipelines, [pipelinesData]);
-  const numPipelines = useMemo(() => pipelines?.length || 0, [pipelines]);
 
   const qUrl = queryFromUrl();
   const {
@@ -416,7 +413,6 @@ function PipelineDetailPage({
           }) => {
             router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
             fetchFileTree();
-            fetchPipelines();
           },
           onErrorCallback: ({
             error: {
@@ -471,7 +467,7 @@ function PipelineDetailPage({
           }
 
           let outputs;
-          let messagesForBlock = messages[block.uuid];
+          const messagesForBlock = messages[block.uuid];
           const hasError = messagesForBlock?.find(({ error }) => error);
 
           if (messagesForBlock) {
@@ -580,8 +576,7 @@ function PipelineDetailPage({
     savePipelineContent,
   ]);
 
-  const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => {
-    return savePipelineContent({
+  const updatePipelineMetadata = useCallback((name: string, type?: PipelineTypeEnum) => savePipelineContent({
       pipeline: {
         name,
         type,
@@ -600,43 +595,13 @@ function PipelineDetailPage({
           updateCollapsedBlockStates(blocks, pipelineUUID, uuid);
         }
       }
-    });
-  }, [
+    }), [
     blocks,
     fetchFileTree,
     pipelineUUID,
     savePipelineContent,
     updateCollapsedBlockStates,
   ]);
-  const [deletePipeline] = useMutation(
-    (uuid: string) => api.pipelines.useDelete(uuid)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            if (uuid === pipelineUUID) {
-              redirectToFirstPipeline(pipelines, router);
-            }
-            removeCollapsedBlockStates(blocks, pipelineUUID);
-            fetchFileTree();
-            fetchPipelines();
-          },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
-        },
-      ),
-    },
-  );
 
   const [deleteBlock] = useMutation(
     ({ uuid }: BlockType) => api.blocks.pipelines.useDelete(pipelineUUID, uuid)(),
@@ -763,9 +728,6 @@ function PipelineDetailPage({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: (response) => {
-
-          },
           onErrorCallback: (response, errors) => setErrors({
             errors,
             response,
@@ -1507,10 +1469,8 @@ function PipelineDetailPage({
       areaRef={fileTreeRef}
       createPipeline={createPipeline}
       deleteBlockFile={deleteBlockFile}
-      deletePipeline={deletePipeline}
       deleteWidget={deleteWidget}
       enableContextItem
-      numPipelines={numPipelines}
       type={ContextMenuEnum.FILE_BROWSER}
     >
       <FileBrowser
