@@ -47,6 +47,8 @@ Read more tech docs here. Got questions?
         - [Microsoft Azure](deploy/terraform/Azure.md)
         - [Google Cloud Platform (GCP)](deploy/terraform/GCP.md)
     - [AWS (without Terraform)](deploy/aws/README.md)
+- Version control
+    - [Setting up Git on cloud](guides/version_control/Git.md)
 - Configuring production settings
     - [Compute resource](production/compute_resource.md)
     - [Runtime variables](production/runtime_variables.md)
