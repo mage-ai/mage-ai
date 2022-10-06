@@ -17,6 +17,7 @@ import {
   KEY_CODE_ARROW_RIGHT,
   KEY_CODE_ARROW_UP,
   KEY_CODE_BACKSPACE,
+  KEY_CODE_C,
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
   KEY_CODE_META,
@@ -26,6 +27,7 @@ import {
   ContainerStyle,
   InnerStyle,
   InputStyle,
+  LineStyle,
 } from './index.style';
 import { getWebSocket } from '@api/utils/url';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
@@ -76,18 +78,22 @@ function Terminal({
 
         return prev;
       });
-
-      if (refContainer.current && refInner.current) {
-        const height = refInner.current.getBoundingClientRect().height;
-        refContainer.current.scrollTo(0, height);
-      }
     }
   }, [
     lastMessage,
-    refContainer,
-    refInner,
     setBusy,
     setKernelOutputs,
+  ]);
+
+  useEffect(() => {
+    if (refContainer.current && refInner.current) {
+      const height = refInner.current.getBoundingClientRect().height;
+      refContainer.current.scrollTo(0, height);
+    }
+  }, [
+    kernelOutputs,
+    refContainer,
+    refInner,
   ]);
 
   const {
@@ -107,47 +113,53 @@ function Terminal({
         key,
       } = event;
 
-      if (busy) {
-        return;
-      }
-
-      if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
-        setCommand(prev => prev.slice(0, prev.length - 1));
-      } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
-        event.preventDefault();
-        if (commandHistory.length >= 1) {
-          const idx = Math.max(0, commandIndex - 1);
-          setCommand(commandHistory[idx]);
-          setCommandIndex(idx);
-        }
-      } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
-        event.preventDefault();
-        if (commandHistory.length >= 1) {
-          const idx = Math.min(commandHistory.length, commandIndex + 1);
-          setCommand(commandHistory[idx] || '');
-          setCommandIndex(idx);
-        }
-      } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-        event.preventDefault();
-        if (command?.length >= 1) {
-          setBusy(true);
-          sendMessage(JSON.stringify({
-            code: `!${command}`,
-            uuid: terminalUUID,
-          }));
-          setCommandIndex(commandHistory.length + 1);
-          setCommandHistory(prev => prev.concat(command));
-        }
+      if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
+        setBusy(false);
         setKernelOutputs(prev => prev.concat({
           command: true,
           data: command?.trim()?.length >= 1 ? command : '\n',
           type: DataTypeEnum.TEXT,
         }));
         setCommand('');
-      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
-        navigator.clipboard.readText().then(clipText => setCommand(prev => prev + clipText));
-      } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
-        setCommand(prev => prev + key);
+      } else if (!busy) {
+        if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
+          setCommand(prev => prev.slice(0, prev.length - 1));
+        } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+          event.preventDefault();
+          if (commandHistory.length >= 1) {
+            const idx = Math.max(0, commandIndex - 1);
+            setCommand(commandHistory[idx]);
+            setCommandIndex(idx);
+          }
+        } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+          event.preventDefault();
+          if (commandHistory.length >= 1) {
+            const idx = Math.min(commandHistory.length, commandIndex + 1);
+            setCommand(commandHistory[idx] || '');
+            setCommandIndex(idx);
+          }
+        } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
+          event.preventDefault();
+          if (command?.length >= 1) {
+            setBusy(true);
+            sendMessage(JSON.stringify({
+              code: `!${command}`,
+              uuid: terminalUUID,
+            }));
+            setCommandIndex(commandHistory.length + 1);
+            setCommandHistory(prev => prev.concat(command));
+          }
+          setKernelOutputs(prev => prev.concat({
+            command: true,
+            data: command?.trim()?.length >= 1 ? command : '\n',
+            type: DataTypeEnum.TEXT,
+          }));
+          setCommand('');
+        } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)) {
+          navigator.clipboard.readText().then(clipText => setCommand(prev => prev + clipText));
+        } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
+          setCommand(prev => prev + key);
+        }
       }
     },
     [
@@ -202,7 +214,7 @@ function Terminal({
                 <Text
                   monospace
                   noWrapping
-                  preWrap
+                  pre
                 >
                   {data && (
                     <Ansi>
@@ -219,18 +231,20 @@ function Terminal({
 
               if (command) {
                 arr.push(
-                  <FlexContainer key={key}>
-                    <Text inline monospace warning>
-                      →&nbsp;
-                    </Text>
-                    {displayElement}
-                  </FlexContainer>
+                  <LineStyle key={key}>
+                    <FlexContainer alignItems="center">
+                      <Text inline monospace warning>
+                        →&nbsp;
+                      </Text>
+                      {displayElement}
+                    </FlexContainer>
+                  </LineStyle>
                 );
               } else {
                 arr.push(
-                  <div key={key}>
+                  <LineStyle key={key}>
                     {displayElement}
-                  </div>
+                  </LineStyle>
                 );
               }
             }

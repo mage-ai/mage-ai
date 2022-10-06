@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
-export const ROW_HEIGHT = 2 * UNIT;
+export const ROW_HEIGHT = 20;
 
 export const ContainerStyle = styled.div`
   height: 100%;
@@ -27,6 +27,10 @@ export const InnerStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
 `;
 
+export const LineStyle = styled.div`
+  height: ${ROW_HEIGHT}px;
+`;
+
 export const InputStyle = styled.div`
   @keyframes cursor-blink {
     0% {
@@ -44,7 +48,7 @@ export const InputStyle = styled.div`
     content: "";
     display: inline-block;
     height: ${ROW_HEIGHT}px;
-    width: ${UNIT * 0.5}px;
+    width: ${UNIT * 0.75}px;
 
     ${props => `
       background-color: ${(props.theme.accent || dark.accent).warning};
