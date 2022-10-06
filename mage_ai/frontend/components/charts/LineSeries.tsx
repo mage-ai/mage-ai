@@ -29,12 +29,12 @@ import { FONT_FAMILY_REGULAR as fontFamily } from '@oracle/styles/fonts/primary'
 import { SMALL_FONT_SIZE } from '@oracle/styles/fonts/sizes';
 import { UNIT, UNIT as unit } from '@oracle/styles/units/spacing';
 import { binarySearch } from '@utils/array';
-import { formatNumberLabel } from './utils/label';
+import { formatNumberLabel, getTooltipContentLength } from './utils/label';
 import { getChartColors } from './constants';
 
 const tooltipStyles = {
   ...defaultStyles,
-  backgroundColor: dark.background.page,
+  backgroundColor: dark.background.muted,
   border: 'none',
 };
 
@@ -111,7 +111,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
   const border = dark.monotone.gray;
   const purplePastel = dark.brand.wind200;
   const text = dark.content.muted;
-  const { black, gray } = dark.monotone;
+  const { gray } = dark.monotone;
 
   const xValues = data.map(d => Number(getX(d)));
 
@@ -121,6 +121,7 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
   const xMax = width - margin.left - margin.right;
   const yMax = height - margin.top - margin.bottom;
+  const xHalfwayPoint = xMax / 2;
 
   const maxNumberOfYValues = Math.max(...data.map(({ y }) => y?.length || 0));
   const xScale = useMemo(() => scaleLinear<number>({
@@ -177,15 +178,16 @@ const LineSeries = withTooltip<LineSeriesProps>(({
 
       const tooltipTopData = range(0, maxNumberOfYValues).map(i => yScale(getY(d, i)));
 
-      if (getY(d))
-      showTooltip({
-        tooltipData: {
-          ...d,
-          index,
-        },
-        tooltipLeft: x,
-        tooltipTop: tooltipTopData,
-      });
+      if (getY(d)) {
+        showTooltip({
+          tooltipData: {
+            ...d,
+            index,
+          },
+          tooltipLeft: x,
+          tooltipTop: tooltipTopData,
+        });
+      }
     },
     [
       data,
@@ -412,7 +414,10 @@ const LineSeries = withTooltip<LineSeriesProps>(({
             return (
               <Tooltip
                 key={idx}
-                left={tooltipLeft + unit}
+                left={tooltipLeft > xHalfwayPoint
+                  ? (tooltipLeft - (getTooltipContentLength(renderYTooltipContent, tooltipData, idx) * unit))
+                  : (tooltipLeft + unit)
+                }
                 style={tooltipStyles}
                 top={top - 2 * unit}
               >
@@ -427,7 +432,9 @@ const LineSeries = withTooltip<LineSeriesProps>(({
           })}
 
           <Tooltip
-            left={tooltipLeft}
+            left={tooltipLeft > xHalfwayPoint
+              ? (tooltipLeft - (getTooltipContentLength(renderXTooltipContent, tooltipData) * 4))
+              : tooltipLeft}
             style={{
               ...tooltipStyles,
               transform: 'translateX(-65%)',
