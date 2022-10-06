@@ -359,6 +359,7 @@ function Sidekick({
             </FlexContainer>
         )}
 
+
         {ViewKeyEnum.TERMINAL === activeView && (
           <Terminal
             interruptKernel={interruptKernel}
