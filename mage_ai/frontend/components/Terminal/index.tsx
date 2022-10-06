@@ -164,6 +164,13 @@ function Terminal({
     ],
   );
 
+  const commandToDisplay = command?.split('').map(((char: string, idx: number) => (
+    <span key={`command-${idx}-${char}`}>
+      {char === ' ' && <>&nbsp;</>}
+      {char !== ' ' && char}
+    </span>
+  )));
+
   return (
     <ContainerStyle
       ref={refContainer}
@@ -244,7 +251,7 @@ function Terminal({
               <Text inline monospace warning>
                 →&nbsp;
               </Text>
-              {command}
+              {commandToDisplay}
             </Text>
           </InputStyle>
         )}
