@@ -36,6 +36,8 @@ import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
 
 const DEFAULT_TERMINAL_UUID = 'terminal';
+const INIT_COMMAND =
+  'echo https://github.com/mage-ai/mage-ai/blob/master/docs/guides/version_control/Git.md';
 
 type TerminalProps = {
   interruptKernel: () => void;
@@ -56,11 +58,22 @@ function Terminal({
   const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
   const [commandIndex, setCommandIndex] = useState<number>(0);
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [commandHistory, setCommandHistory] = useState<string[]>([INIT_COMMAND]);
   const [focus, setFocus] = useState<boolean>(false);
   const [kernelOutputs, setKernelOutputs] = useState<(KernelOutputType & {
     command: boolean;
-  })[]>([]);
+  })[]>([
+    {
+      command: true,
+      data: INIT_COMMAND,
+      execution_state: null,
+      msg_id: null,
+      msg_type: null,
+      pipeline_uuid: null,
+      type: DataTypeEnum.TEXT,
+      uuid: terminalUUID,
+    },
+  ]);
 
   const {
     lastMessage,
