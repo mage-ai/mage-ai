@@ -2,19 +2,19 @@ import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType'
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
 import FlexTable from '@oracle/components/FlexTable';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType from '@interfaces/PipelineType'
+import PipelineType from '@interfaces/PipelineType';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
-import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType'
+import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -90,8 +90,8 @@ function PipelineListPage() {
       subheaderChildren={
         <KeyboardShortcutButton
           background={BUTTON_GRADIENT}
-          bold
           beforeElement={<Add size={2.5 * UNIT} />}
+          bold
           inline
           loading={isLoading}
           // @ts-ignore

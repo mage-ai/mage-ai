@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
 import ChartGradient from '@oracle/icons/custom/ChartGradient';
@@ -12,6 +14,7 @@ import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
 import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
+
 import {
   BlocksStacked,
   Chart,
@@ -20,7 +23,7 @@ import {
   TodoList,
 } from '@oracle/icons';
 import { BannerStyle } from './index.style';
-import { BreadcrumbType } from '@components/shared/Header';
+import { BreadcrumbType, MenuItemType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
@@ -29,6 +32,8 @@ import {
   UNIT,
   UNITS_BETWEEN_ITEMS_IN_SECTIONS,
 } from '@oracle/styles/units/spacing';
+import { onSuccess } from '@api/utils/response';
+import { randomNameGenerator } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -72,11 +77,60 @@ function PipelineDetailPage({
   title,
   uuid,
 }: PipelineDetailPageProps) {
+  const router = useRouter();
   const { height } = useWindowSize();
 
   const pipelineUUID = pipelineProp.uuid;
   const { data } = api.pipelines.detail(pipelineUUID);
   const pipeline = data?.pipeline;
+
+  const [createPipeline] = useMutation(
+    api.pipelines.useCreate(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            pipeline: {
+              uuid,
+            },
+          }) => {
+            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
+          },
+        },
+      ),
+    },
+  );
+  const [deletePipeline] = useMutation(
+    (uuid: string) => api.pipelines.useDelete(uuid)(),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: () => {
+            router.push('/pipelines');
+          },
+        },
+      ),
+    },
+  );
+
+  const headerMenuItems: MenuItemType[] = [
+    {
+      label: () => 'New pipeline',
+      // @ts-ignore
+      onClick: () => createPipeline({
+        pipeline: {
+          name: randomNameGenerator(),
+        },
+      }),
+      uuid: 'PipelineDetail/Header/new_pipeline',
+    },
+    {
+      label: () => 'Delete pipeline',
+      onClick: () => deletePipeline(pipelineUUID),
+      openConfirmationDialogue: true,
+      uuid: 'PipelineDetail/Header/delete_pipeline',
+    },
+  ];
 
   const after = useMemo(() => {
     if (afterProp) {
@@ -148,6 +202,7 @@ function PipelineDetailPage({
       before={before}
       beforeWidth={beforeWidth}
       breadcrumbs={breadcrumbs}
+      headerMenuItems={headerMenuItems}
       navigationItems={[
         {
           Icon: Schedule,

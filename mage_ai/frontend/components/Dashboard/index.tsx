@@ -2,25 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 
 import Flex from '@oracle/components/Flex';
 import Head from '@oracle/elements/Head';
-import Header, { BreadcrumbType } from '@components/shared/Header';
-import ProjectType from '@interfaces/ProjectType';
+import Header, { BreadcrumbType, MenuItemType } from '@components/shared/Header';
 import Subheader from './Subheader';
 import TripleLayout from '@components/TripleLayout';
 import VerticalNavigation, { VerticalNavigationProps } from './VerticalNavigation';
 import api from '@api';
-import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import {
   ContainerStyle,
   VERTICAL_NAVIGATION_WIDTH,
   VerticalNavigationStyle,
 } from './index.style';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import {
   get,
   set,
 } from '@storage/localStorage';
-import { removeUnderscore } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 export type DashboardSharedProps = {
@@ -35,6 +31,7 @@ export type DashboardSharedProps = {
 type DashboardProps = {
   breadcrumbs?: BreadcrumbType[];
   children?: any;
+  headerMenuItems?: MenuItemType[];
   subheaderChildren?: any;
   title: string;
 } & DashboardSharedProps;
@@ -47,6 +44,7 @@ function Dashboard({
   beforeWidth: beforeWidthProp,
   breadcrumbs: breadcrumbsProp,
   children,
+  headerMenuItems,
   navigationItems,
   subheaderChildren,
   title,
@@ -59,7 +57,6 @@ function Dashboard({
   const localStorageKeyBefore = `dashboard_before_width_${uuid}`;
 
   const mainContainerRef = useRef(null);
-  const refSubheader = useRef(null);
 
   const [afterWidth, setAfterWidth] = useState(get(localStorageKeyAfter, afterWidthProp));
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
@@ -125,6 +122,7 @@ function Dashboard({
 
       <Header
         breadcrumbs={breadcrumbs}
+        menuItems={headerMenuItems}
         version={projects?.[0]?.version}
       />
 
