@@ -271,7 +271,7 @@ function CodeOutput({
 
       return arr;
     });
-    
+
     if (isInProgress && pipeline?.type === PipelineTypeEnum.PYSPARK) {
       arrContent.unshift([
         <OutputRowStyle contained>

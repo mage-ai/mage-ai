@@ -1432,7 +1432,7 @@ function PipelineDetailPage({
             return (
               <Spacing key={key} pl={1}>
                 <KeyboardShortcutButton
-                  beforeElement={<Icon />}
+                  beforeElement={Icon && <Icon />}
                   blackBorder
                   compact
                   onClick={() => setActiveSidekickView(key)}

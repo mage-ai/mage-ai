@@ -23,7 +23,7 @@ import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
 import Text from '@oracle/elements/Text';
-
+import Terminal from '@components/Terminal';
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { Close } from '@oracle/icons';
 import {
@@ -39,6 +39,7 @@ import {
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
+import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { createMetricsSample, createStatisticsSample } from './utils';
 import { indexBy } from '@utils/array';
@@ -207,7 +208,10 @@ function Sidekick({
           ))}
         </Spacing>
       }
-      <SidekickContainerStyle fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}>
+      <SidekickContainerStyle
+        fullWidth={FULL_WIDTH_VIEWS.includes(activeView)}
+        heightOffset={ViewKeyEnum.TERMINAL === activeView ? 0 : SCROLLBAR_WIDTH}
+      >
         {activeView === ViewKeyEnum.TREE &&
           <>
             <DependencyGraph
@@ -351,6 +355,12 @@ function Sidekick({
               <EmptyCharts size={358} />
               <Spacing pr={1} />
             </FlexContainer>
+        )}
+
+        {ViewKeyEnum.TERMINAL === activeView && (
+          <Terminal
+            width={afterWidth}
+          />
         )}
       </SidekickContainerStyle>
     </>
