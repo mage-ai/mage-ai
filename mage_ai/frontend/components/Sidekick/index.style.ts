@@ -12,6 +12,7 @@ export const SidekickContainerStyle = styled.div<{
   fullWidth: boolean;
   heightOffset: number;
 }>`
+  position: relative;
   width: fit-content;
 
   ${props => `

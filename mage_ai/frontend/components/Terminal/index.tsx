@@ -8,9 +8,14 @@ import KernelOutputType, {
   DATA_TYPE_TEXTLIKE,
   ExecutionStateEnum,
 } from '@interfaces/KernelOutputType';
+import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import {
+  KEY_CODE_ARROW_DOWN,
+  KEY_CODE_ARROW_LEFT,
+  KEY_CODE_ARROW_RIGHT,
+  KEY_CODE_ARROW_UP,
   KEY_CODE_BACKSPACE,
   KEY_CODE_CONTROL,
   KEY_CODE_ENTER,
@@ -42,6 +47,8 @@ function Terminal({
 
   const [busy, setBusy] = useState<boolean>(false);
   const [command, setCommand] = useState<string>('');
+  const [commandIndex, setCommandIndex] = useState<number>(0);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [kernelOutputs, setKernelOutputs] = useState<KernelOutputType[]>([]);
 
   const {
@@ -100,8 +107,26 @@ function Terminal({
         key,
       } = event;
 
+      if (busy) {
+        return;
+      }
+
       if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
         setCommand(prev => prev.slice(0, prev.length - 1));
+      } else if (onlyKeysPresent([KEY_CODE_ARROW_UP], keyMapping)) {
+        event.preventDefault();
+        if (commandHistory.length >= 1) {
+          const idx = Math.max(0, commandIndex - 1);
+          setCommand(commandHistory[idx]);
+          setCommandIndex(idx);
+        }
+      } else if (onlyKeysPresent([KEY_CODE_ARROW_DOWN], keyMapping)) {
+        event.preventDefault();
+        if (commandHistory.length >= 1) {
+          const idx = Math.min(commandHistory.length, commandIndex + 1);
+          setCommand(commandHistory[idx] || '');
+          setCommandIndex(idx);
+        }
       } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
         event.preventDefault();
         if (command?.length >= 1) {
@@ -110,6 +135,8 @@ function Terminal({
             code: `!${command}`,
             uuid: terminalUUID,
           }));
+          setCommandIndex(commandHistory.length + 1);
+          setCommandHistory(prev => prev.concat(command));
         }
         setKernelOutputs(prev => prev.concat({
           command: true,
@@ -124,9 +151,14 @@ function Terminal({
       }
     },
     [
+      busy,
       command,
+      commandHistory,
+      commandIndex,
       setBusy,
       setCommand,
+      setCommandHistory,
+      setCommandIndex,
       setKernelOutputs,
       terminalUUID,
     ],
@@ -181,8 +213,8 @@ function Terminal({
               if (command) {
                 arr.push(
                   <FlexContainer key={key}>
-                    <Text inline monospace>
-                      $&nbsp;
+                    <Text inline monospace warning>
+                      →&nbsp;
                     </Text>
                     {displayElement}
                   </FlexContainer>
@@ -201,12 +233,18 @@ function Terminal({
         }, [])}
 
         {busy && (
-          <Spinner />
+          <Spacing mt={1}>
+            <Spinner />
+          </Spacing>
         )}
+
         {!busy && (
           <InputStyle>
             <Text monospace>
-              $&nbsp;{command}
+              <Text inline monospace warning>
+                →&nbsp;
+              </Text>
+              {command}
             </Text>
           </InputStyle>
         )}
