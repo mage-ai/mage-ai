@@ -14,6 +14,7 @@ export enum ViewKeyEnum {
   DATA = 'data',
   GRAPHS = 'graphs',
   REPORTS = 'reports',
+  TERMINAL = 'terminal',
   TREE = 'tree',
   VARIABLES = 'variables',
 }
@@ -36,6 +37,7 @@ export const SIDEKICK_VIEWS = [
   { key: ViewKeyEnum.CHARTS, label: 'Charts' },
   { key: ViewKeyEnum.VARIABLES, label: 'Variables' },
   { key: ViewKeyEnum.DATA, label: 'Data' },
+  { key: ViewKeyEnum.TERMINAL, label: 'Terminal' },
   // { key: ViewKeyEnum.REPORTS, label: 'Reports' },
   // { key: ViewKeyEnum.GRAPHS, label: 'Graphs' },
 ];

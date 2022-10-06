@@ -5,6 +5,7 @@ export const KEY_CODE_ARROW_RIGHT = 39;
 export const KEY_CODE_ARROW_UP = 38;
 export const KEY_CODE_BRACKET_LEFT = 219;
 export const KEY_CODE_BRACKET_RIGHT = 221;
+export const KEY_CODE_BACKSPACE = 'Backspace';
 export const KEY_CODE_CONTROL = 'ctrlKey';
 export const KEY_CODE_CONTROLS = [
   17,
@@ -57,11 +58,15 @@ export const KEY_CODE_SHIFT = 'shiftKey';
 export const KEY_CODE_SHIFTS = [16];
 export const KEY_CODE_TAB = 9;
 export const KEY_CODE_Z = 90;
+export const KEY_CODE_SHIFT_LEFT = 'ShiftLeft';
+export const KEY_CODE_SHIFT_RIGHT = 'ShiftRight';
 export const KEY_CODES_SYSTEM = [
   KEY_CODE_ALT,
   KEY_CODE_CONTROL,
   KEY_CODE_META,
   KEY_CODE_SHIFT,
+  KEY_CODE_SHIFT_LEFT,
+  KEY_CODE_SHIFT_RIGHT,
 ];
 export const KEY_CODE_NUMBERS = [
   KEY_CODE_NUMBER_0,

@@ -12,6 +12,7 @@ type ClickOutsideProps = {
   disableClickOutside?: boolean;
   disableEscape?: boolean;
   isOpen?: boolean;
+  onClick?: (event: any) => void;
   onClickOutside?: (event: any) => void;
   open?: boolean;
   style?: {
@@ -26,6 +27,7 @@ function ClickOutside({
   disableClickOutside = false,
   disableEscape,
   isOpen,
+  onClick,
   onClickOutside,
   open: openProp,
   style: styleProp,
@@ -90,6 +92,7 @@ function ClickOutside({
 
   return (
     <div
+      onClick={onClick}
       ref={node}
       style={styleProp}
     >

@@ -23,7 +23,7 @@ from mage_ai.server.execution_manager import (
     set_previous_config_path,
 )
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.kernels import KernelName
+from mage_ai.server.kernels import DEFAULT_KERNEL_NAME, KernelName
 from mage_ai.server.utils.output_display import (
     add_internal_output_info,
     add_execution_code,
@@ -157,13 +157,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         execute_pipeline = message.get('execute_pipeline')
         kernel_name = message.get('kernel_name', get_active_kernel_name())
         pipeline_uuid = message.get('pipeline_uuid')
-        pipeline = Pipeline(pipeline_uuid, get_repo_path())
+        pipeline = None
+        if pipeline_uuid:
+            pipeline = Pipeline(pipeline_uuid, get_repo_path())
 
         # Add default trigger runtime variables so the code can run successfully.
-        global_vars = message.get(
-            'global_vars',
-            get_global_variables(pipeline_uuid, pipeline.repo_path),
-        )
+        global_vars = {}
+        if pipeline_uuid:
+            global_vars = message.get(
+                'global_vars',
+                get_global_variables(pipeline_uuid, pipeline.repo_path),
+            )
         global_vars['env'] = ENV_DEV
         if 'execution_date' not in global_vars:
             global_vars['execution_date'] = datetime.now()
@@ -171,6 +175,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
         if cancel_pipeline:
             cancel_pipeline_execution(pipeline, publish_pipeline_message)
+        elif not pipeline:
+            code = message.get('code')
+            client = self.init_kernel_client(DEFAULT_KERNEL_NAME)
+            msg_id = client.execute(code)
+            uuid = message.get('uuid')
+            value = dict(block_uuid=uuid)
+            WebSocketServer.running_executions_mapping[msg_id] = value
         elif execute_pipeline:
             self.__execute_pipeline(
                 pipeline,
