@@ -44,7 +44,7 @@ function PopupMenu({
     >
       <FlexContainer alignItems="center" flexDirection="column">
         <Spacing pb={1}>
-          <Text bold center large warning>
+          <Text bold large warning>
             {title}
           </Text>
         </Spacing>
