@@ -38,6 +38,7 @@ export type FlyoutMenuItemType = {
 };
 
 export type FlyoutMenuProps = {
+  alternateBackground?: boolean;
   disableKeyboardShortcuts?: boolean;
   items: FlyoutMenuItemType[];
   left?: number;
@@ -51,6 +52,7 @@ export type FlyoutMenuProps = {
 };
 
 function FlyoutMenu({
+  alternateBackground,
   disableKeyboardShortcuts,
   items,
   left,
@@ -188,6 +190,7 @@ function FlyoutMenu({
               </TitleContainerStyle>
             :
               <LinkStyle
+                alternateBackground={alternateBackground}
                 disabled={disabled}
                 highlighted={highlightedIndices[0] === idx0}
                 indent={indent}

@@ -4,6 +4,7 @@ import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
+  alternateBackground?: boolean;
   disabled?: boolean;
   highlighted: boolean;
   indent?: boolean;
@@ -51,6 +52,10 @@ export const LinkStyle = styled.div<LinkProps>`
 
   ${props => `
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.alternateBackground && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
   `}
 
   ${props => props.disabled && `

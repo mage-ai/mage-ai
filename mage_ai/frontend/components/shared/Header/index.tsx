@@ -203,6 +203,7 @@ function Header({
                     </LinkStyle>
 
                     <FlyoutMenu
+                      alternateBackground
                       items={menuItems}
                       onClickCallback={() => setHighlightedMenuIndex(null)}
                       open={highlightedMenuIndex === 0}
