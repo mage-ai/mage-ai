@@ -23,6 +23,7 @@ Read more tech docs here. Got questions?
 1. [Integrations](#integrations)
 1. [Guides](#guides)
 1. [About](#about)
+1. [Use cases](use_cases/README.md)
 
 <br />
 
