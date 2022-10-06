@@ -138,8 +138,9 @@ function ChartController({
 
             return ts;
           }}
+          xNumTicks={xy.length}
           yAxisLabel={yAxisLabel}
-          yNumTicks={3}
+          yNumTicks={5}
         />
       );
     }
