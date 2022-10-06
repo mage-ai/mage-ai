@@ -359,6 +359,7 @@ function Sidekick({
 
         {ViewKeyEnum.TERMINAL === activeView && (
           <Terminal
+            onFocus={() => setSelectedBlock(null)}
             width={afterWidth}
           />
         )}

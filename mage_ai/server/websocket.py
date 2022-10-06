@@ -180,7 +180,7 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
             client = self.init_kernel_client(DEFAULT_KERNEL_NAME)
             msg_id = client.execute(code)
             uuid = message.get('uuid')
-            value = dict(uuid=uuid)
+            value = dict(block_uuid=uuid)
             WebSocketServer.running_executions_mapping[msg_id] = value
         elif execute_pipeline:
             self.__execute_pipeline(

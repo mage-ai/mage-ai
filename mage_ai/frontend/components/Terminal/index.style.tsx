@@ -5,15 +5,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 
 export const ROW_HEIGHT = 20;
 
-export const ContainerStyle = styled.div`
-  height: 100%;
-  overflow: auto;
-  position: absolute;
-
-  ${props => `
-    background-color: ${(props.theme.background || dark.background).codeTextarea};
-  `}
-
+const SHARED_STYLES = css`
   ${props => !props.width && `
     width: 100%;
   `}
@@ -23,7 +15,21 @@ export const ContainerStyle = styled.div`
   `}
 `;
 
+export const ContainerStyle = styled.div`
+  ${SHARED_STYLES}
+
+  height: 100%;
+  overflow: auto;
+  position: absolute;
+
+  ${props => `
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
+  `}
+`;
+
 export const InnerStyle = styled.div`
+  ${SHARED_STYLES}
+
   padding: ${PADDING_UNITS * UNIT}px;
 `;
 
@@ -31,7 +37,9 @@ export const LineStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 `;
 
-export const InputStyle = styled.div`
+export const InputStyle = styled.div<{
+  focused: boolean;
+}>`
   @keyframes cursor-blink {
     0% {
       opacity: 0;
@@ -44,14 +52,13 @@ export const InputStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 
   ::after {
-    animation: cursor-blink 1.5s steps(2) infinite;
-    content: "";
-    display: inline-block;
-    height: ${ROW_HEIGHT}px;
-    width: ${UNIT * 0.75}px;
-
-    ${props => `
+    ${props => props.focused && `
+      animation: cursor-blink 1.5s steps(2) infinite;
       background-color: ${(props.theme.accent || dark.accent).warning};
+      content: "";
+      display: inline-block;
+      height: ${ROW_HEIGHT}px;
+      width: ${UNIT * 0.75}px;
     `}
   }
 `;
