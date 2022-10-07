@@ -27,7 +27,7 @@ import PipelineScheduleType, {
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
+import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -58,18 +58,18 @@ import { getTimeInUTC } from '../utils';
 
 const TRIGGER_TYPES = [
   {
-    label: () => 'Schedule',
     description: () => 'This pipeline will run continuously on an interval or just once.',
+    label: () => 'Schedule',
     uuid: ScheduleTypeEnum.TIME,
   },
   {
-    label: () => 'Event',
     description: () => 'This pipeline will run when a specific event occurs.',
+    label: () => 'Event',
     uuid: ScheduleTypeEnum.EVENT,
   },
   {
-    label: () => 'API',
     description: () => 'Run this pipeline when you make an API call.',
+    label: () => 'API',
     uuid: ScheduleTypeEnum.API,
   },
 ];
@@ -95,7 +95,7 @@ function Edit({
 
   const [eventMatchers, setEventMatchers] = useState<EventMatcherType[]>([]);
   const [overwriteVariables, setOverwriteVariables] = useState<boolean>(false);
-  const [runtimeVariables, setRuntimeVariables] = useState<{[ variable: string ]: string}>({});
+  const [runtimeVariables, setRuntimeVariables] = useState<{ [ variable: string ]: string }>({});
   const [schedule, setSchedule] = useState<PipelineScheduleType>(pipelineSchedule);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [customInterval, setCustomInterval] = useState<string>(null);
@@ -245,7 +245,10 @@ function Edit({
   const detailsMemo = useMemo(() => {
     const rows = [
       [
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="trigger_name_detail"
+        >
           <Alphabet default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
@@ -253,6 +256,7 @@ function Edit({
           </Text>
         </FlexContainer>,
         <TextInput
+          key="trigger_name_input_detail"
           monospace
           onChange={(e) => {
             e.preventDefault();
@@ -266,7 +270,10 @@ function Edit({
         />,
       ],
       [
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="frequency"
+        >
           <Schedule default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
@@ -274,6 +281,7 @@ function Edit({
           </Text>
         </FlexContainer>,
         <Select
+          key="frequency_input"
           monospace
           onChange={(e) => {
             e.preventDefault();
@@ -281,7 +289,7 @@ function Edit({
             setSchedule(s => ({
               ...s,
               schedule_interval: interval,
-            }))
+            }));
           }}
           placeholder="Choose the frequency to run"
           value={scheduleInterval}
@@ -298,14 +306,17 @@ function Edit({
         </Select>,
       ],
       [
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="start_time"
+        >
           <CalendarDate default size={1.5 * UNIT} />
           <Spacing mr={1} />
           <Text default>
             Start date and time
           </Text>
         </FlexContainer>,
-        <div>
+        <div key="start_time_input">
           {!showCalendar && (
             <TextInput
               monospace
@@ -351,7 +362,10 @@ function Edit({
         2,
         0,
         [
-          <FlexContainer alignItems="center">
+          <FlexContainer
+            alignItems="center"
+            key="cron_expression"
+          >
             <Code default size={1.5 * UNIT} />
             <Spacing mr={1} />
             <Text default>
@@ -359,6 +373,7 @@ function Edit({
             </Text>
           </FlexContainer>,
           <TextInput
+            key="cron_expression_input"
             monospace
             onChange={(e) => {
               e.preventDefault();
@@ -367,8 +382,8 @@ function Edit({
             placeholder="* * * * *"
             value={customInterval}
           />,
-        ]
-      )
+        ],
+      );
     }
 
     return (
@@ -407,200 +422,203 @@ function Edit({
     });
   }, [setEventMatchers]);
 
-  const eventsMemo = useMemo(() => {
-    return (
-      <>
-        <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
-          <Headline>
-            Settings
-          </Headline>
-        </Spacing>
+  const eventsMemo = useMemo(() => (
+    <>
+      <Spacing mb={PADDING_UNITS} px={PADDING_UNITS}>
+        <Headline>
+          Settings
+        </Headline>
+      </Spacing>
 
-        <Divider light short />
+      <Divider light short />
 
-        <Table
-          columnFlex={[null, 1]}
-          rows={[
-            [
-              <FlexContainer alignItems="center">
-                <Alphabet default size={1.5 * UNIT} />
-                <Spacing mr={1} />
-                <Text default>
-                  Trigger name
-                </Text>
-              </FlexContainer>,
-              <TextInput
-                monospace
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSchedule(s => ({
-                    ...s,
-                    name: e.target.value,
-                  }));
-                }}
-                placeholder="Name this trigger"
-                value={name}
-              />,
-            ],
-          ]}
-        />
+      <Table
+        columnFlex={[null, 1]}
+        rows={[
+          [
+            <FlexContainer
+              alignItems="center"
+              key="trigger_name_event"
+            >
+              <Alphabet default size={1.5 * UNIT} />
+              <Spacing mr={1} />
+              <Text default>
+                Trigger name
+              </Text>
+            </FlexContainer>,
+            <TextInput
+              key="trigger_name_input_event"
+              monospace
+              onChange={(e) => {
+                e.preventDefault();
+                setSchedule(s => ({
+                  ...s,
+                  name: e.target.value,
+                }));
+              }}
+              placeholder="Name this trigger"
+              value={name}
+            />,
+          ],
+        ]}
+      />
 
-        <Spacing mb={2} mt={5} px={PADDING_UNITS}>
-          <Headline>
-            Events
-          </Headline>
+      <Spacing mb={2} mt={5} px={PADDING_UNITS}>
+        <Headline>
+          Events
+        </Headline>
 
-          <Text muted>
-            Add 1 or more event that will trigger this pipeline to run.
-            <br />
-            If you add more than 1 event,
-            this pipeline will trigger if any of the events are received.
+        <Text muted>
+          Add 1 or more event that will trigger this pipeline to run.
+          <br />
+          If you add more than 1 event,
+          this pipeline will trigger if any of the events are received.
+        </Text>
+
+        <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          <Text bold large>
+            AWS events
           </Text>
 
-          <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            <Text bold large>
-              AWS events
-            </Text>
+          <Text muted>
+            In order to retrieve all the possible AWS events you can trigger your pipeline from,
+            <br />
+            you’ll need to set 3 environment variables (<Link
+              href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html"
+              openNewWindow
+              underline
+            >
+              more info here
+            </Link>):
+          </Text>
 
-            <Text muted>
-              In order to retrieve all the possible AWS events you can trigger your pipeline from,
-              <br />
-              you’ll need to set 3 environment variables (<Link
-                href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html"
-                openNewWindow
-                underline
-              >
-                more info here
-              </Link>):
-            </Text>
-
-            <Spacing mt={1}>
-              <List monospace ordered>
-                <Text monospace>
-                  AWS_REGION_NAME
-                </Text>
-                <Text monospace>
-                  AWS_ACCESS_KEY_ID
-                </Text>
-                <Text monospace>
-                  AWS_SECRET_ACCESS_KEY
-                </Text>
-              </List>
-            </Spacing>
+          <Spacing mt={1}>
+            <List monospace ordered>
+              <Text monospace>
+                AWS_REGION_NAME
+              </Text>
+              <Text monospace>
+                AWS_ACCESS_KEY_ID
+              </Text>
+              <Text monospace>
+                AWS_SECRET_ACCESS_KEY
+              </Text>
+            </List>
           </Spacing>
         </Spacing>
+      </Spacing>
 
-        <Divider light short />
+      <Divider light short />
 
-        {eventMatchers?.length >= 1 && (
-          <Table
-            alignTop
-            columnFlex={[1, 1, 2, null]}
-            columns={[
-              {
-                uuid: 'Provider',
-              },
-              {
-                uuid: 'Event',
-              },
-              {
-                uuid: 'Pattern',
-              },
-              {
-                label: () => '',
-                uuid: 'delete',
-              },
-            ]}
-            rows={eventMatchers?.map((eventMatcher: EventMatcherType, idx: number) => {
-              const {
-                event_type: provider,
-                name: eventName,
-                pattern,
-              } = eventMatcher;
-              const eventID =
-                eventMatcher.id || `${provider}-${eventName}-${idx}-${JSON.stringify(pattern)}`;
-              const patternDisplay = [];
-              if (pattern) {
-                JSON.stringify(pattern, null, 2).split('\n').forEach((line) => {
-                  patternDisplay.push(`    ${line}`);
-                });
-              }
+      {eventMatchers?.length >= 1 && (
+        <Table
+          alignTop
+          columnFlex={[1, 1, 2, null]}
+          columns={[
+            {
+              uuid: 'Provider',
+            },
+            {
+              uuid: 'Event',
+            },
+            {
+              uuid: 'Pattern',
+            },
+            {
+              label: () => '',
+              uuid: 'delete',
+            },
+          ]}
+          rows={eventMatchers?.map((eventMatcher: EventMatcherType, idx: number) => {
+            const {
+              event_type: provider,
+              name: eventName,
+              pattern,
+            } = eventMatcher;
+            const eventID =
+              eventMatcher.id || `${provider}-${eventName}-${idx}-${JSON.stringify(pattern)}`;
+            const patternDisplay = [];
+            if (pattern) {
+              JSON.stringify(pattern, null, 2).split('\n').forEach((line) => {
+                patternDisplay.push(`    ${line}`);
+              });
+            }
 
-              return [
-                <Select
-                  key={`event-provider-${eventID}`}
-                  monospace
-                  onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
-                  placeholder="Event provider"
-                  value={provider || ''}
-                >
-                  {!provider && <option value="" />}
-                  {PROVIDER_EVENTS.map(({
-                    label,
-                    uuid,
-                  }) => (
-                    <option key={uuid} value={uuid}>
-                      {label()}
-                    </option>
-                  ))}
-                </Select>,
-                <Select
-                  key={`event-name-${eventID}`}
-                  monospace
-                  onChange={(e) => {
-                    const eventName = e.target.value;
-                    const patternString = eventRulesByName[eventName]?.event_pattern;
+            return [
+              <Select
+                key={`event-provider-${eventID}`}
+                monospace
+                onChange={e => updateEventMatcher(idx, { event_type: e.target.value })}
+                placeholder="Event provider"
+                value={provider || ''}
+              >
+                {!provider && <option value="" />}
+                {PROVIDER_EVENTS.map(({
+                  label,
+                  uuid,
+                }) => (
+                  <option key={uuid} value={uuid}>
+                    {label()}
+                  </option>
+                ))}
+              </Select>,
+              <Select
+                key={`event-name-${eventID}`}
+                monospace
+                onChange={(e) => {
+                  const eventName = e.target.value;
+                  const patternString = eventRulesByName[eventName]?.event_pattern;
 
-                    updateEventMatcher(idx, {
-                      name: eventName,
-                      pattern: patternString ? JSON.parse(patternString) : null,
-                    });
-                  }}
-                  placeholder="Event name"
-                  value={eventName}
-                >
-                  {!eventName && <option value="" />}
-                  {eventRules.map(({
-                    name,
-                  }) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </Select>,
-                pattern && (
-                  <CodeBlock
-                    language="json"
-                    small
-                    source={patternDisplay.join('\n')}
-                  />
-                ),
-                <Button
-                  default
-                  iconOnly
-                  noBackground
-                  onClick={() => setEventMatchers(prev => removeAtIndex(prev, idx))}
-                >
-                  <Trash default size={2 * UNIT} />
-                </Button>,
-              ];
-            })}
-          />
-        )}
+                  updateEventMatcher(idx, {
+                    name: eventName,
+                    pattern: patternString ? JSON.parse(patternString) : null,
+                  });
+                }}
+                placeholder="Event name"
+                value={eventName}
+              >
+                {!eventName && <option value="" />}
+                {eventRules.map(({
+                  name,
+                }) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>,
+              pattern && (
+                <CodeBlock
+                  language="json"
+                  small
+                  source={patternDisplay.join('\n')}
+                />
+              ),
+              <Button
+                default
+                key="remove_event"
+                iconOnly
+                noBackground
+                onClick={() => setEventMatchers(prev => removeAtIndex(prev, idx))}
+              >
+                <Trash default size={2 * UNIT} />
+              </Button>,
+            ];
+          })}
+        />
+      )}
 
-        <Spacing p={PADDING_UNITS}>
-          <Button
-            beforeIcon={<Add size={2 * UNIT} />}
-            // @ts-ignore
-            onClick={() => setEventMatchers(prev => prev.concat({}))}
-            outline
-          >
-            Add event matcher
-          </Button>
-        </Spacing>
-      </>
-    );
-  }, [
+      <Spacing p={PADDING_UNITS}>
+        <Button
+          beforeIcon={<Add size={2 * UNIT} />}
+          // @ts-ignore
+          onClick={() => setEventMatchers(prev => prev.concat({}))}
+          outline
+        >
+          Add event matcher
+        </Button>
+      </Spacing>
+    </>
+  ), [
     eventMatchers,
     eventRules,
     name,
@@ -634,7 +652,10 @@ function Edit({
           columnFlex={[null, 1]}
           rows={[
             [
-              <FlexContainer alignItems="center">
+              <FlexContainer
+                alignItems="center"
+                key="trigger_name_api"
+              >
                 <Alphabet default size={1.5 * UNIT} />
                 <Spacing mr={1} />
                 <Text default>
@@ -642,6 +663,7 @@ function Edit({
                 </Text>
               </FlexContainer>,
               <TextInput
+                key="trigger_name_input_api"
                 monospace
                 onChange={(e) => {
                   e.preventDefault();
@@ -670,10 +692,10 @@ function Edit({
 
           <Spacing mt={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             <CopyToClipboard
-              monospace
-              withCopyIcon
               copiedText={url}
               linkText={url}
+              monospace
+              withCopyIcon
             />
           </Spacing>
         </Spacing>
@@ -789,30 +811,30 @@ function Edit({
                 uuid: 'Value',
               },
             ]}
-            rows={Object.entries(runtimeVariables).map(([uuid, value]) => {
-              return [
-                <Text
-                  default
-                  monospace
-                >
-                  {uuid}
-                </Text>,
-                <TextInput
-                  borderless
-                  monospace
-                  onChange={(e) => {
-                    e.preventDefault();
-                    setRuntimeVariables(vars => ({
-                      ...vars,
-                      [uuid]: e.target.value,
-                    }));
-                  }}
-                  paddingHorizontal={0}
-                  placeholder="Variable value"
-                  value={value}
-                />,
-              ];
-            })}
+            rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
+              <Text
+                default
+                key="variable_uuid"
+                monospace
+              >
+                {uuid}
+              </Text>,
+              <TextInput
+                borderless
+                key="variable_uuid_input"
+                monospace
+                onChange={(e) => {
+                  e.preventDefault();
+                  setRuntimeVariables(vars => ({
+                    ...vars,
+                    [uuid]: e.target.value,
+                  }));
+                }}
+                paddingHorizontal={0}
+                placeholder="Variable value"
+                value={value}
+              />,
+            ])}
           />
         </Spacing>
       )}
@@ -861,11 +883,11 @@ function Edit({
             <Spacing mr={1} />
 
             <Button
-              noHoverUnderline
               linkProps={{
                 href: '/pipelines/[pipeline]/triggers/[...slug]',
                 as: `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}`,
               }}
+              noHoverUnderline
               outline
               sameColorAsText
             >
@@ -927,8 +949,8 @@ function Edit({
                         flexDirection="column"
                       >
                         <Headline
-                          default={!selected && !othersSelected}
                           bold
+                          default={!selected && !othersSelected}
                           level={5}
                           muted={!selected && othersSelected}
                         >
