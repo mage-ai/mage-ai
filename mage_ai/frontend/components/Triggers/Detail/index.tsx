@@ -45,7 +45,6 @@ import {
   getFormattedVariable,
   getFormattedVariables,
 } from '@components/Sidekick/utils';
-import { createBlockStatus } from '../utils';
 import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
@@ -107,7 +106,7 @@ function TriggerDetail({
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
 
-            return prev?.id !== run.id ? run : null
+            return prev?.id !== run.id ? run : null;
           })}
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
@@ -121,7 +120,7 @@ function TriggerDetail({
               const updatedQuery = {
                 ...q,
                 page: newPage >= 0 ? newPage : 0,
-              }
+              };
               router.push(
                 '/pipelines/[pipeline]/triggers/[...slug]',
                 `/pipelines/${pipelineUUID}/triggers/${pipelineScheduleID}?${queryString(updatedQuery)}`,
@@ -131,7 +130,7 @@ function TriggerDetail({
           />
         </Spacing>
       </>
-    )
+    );
   }, [
     fetchPipelineRuns,
     pipeline,
@@ -175,19 +174,28 @@ function TriggerDetail({
 
     const rows = [
       [
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="trigger_type_label"
+        >
           <MultiShare {...iconProps} />
           <Spacing mr={1} />
           <Text default>
             Trigger type
           </Text>
         </FlexContainer>,
-        <Text monospace>
+        <Text
+          key="trigger_type"
+          monospace
+        >
           {SCHEDULE_TYPE_TO_LABEL[scheduleType]?.()}
         </Text>
       ],
       [
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="trigger_status_label"
+        >
           <Switch {...iconProps} />
           <Spacing mr={1} />
           <Text default>
@@ -196,6 +204,7 @@ function TriggerDetail({
         </FlexContainer>,
         <Text
           danger={!isActive}
+          key="trigger_status"
           monospace
           success={isActive}
         >
@@ -206,29 +215,41 @@ function TriggerDetail({
 
     if (scheduleInterval) {
       rows.push([
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="trigger_frequency_label"
+        >
           <Schedule {...iconProps} />
           <Spacing mr={1} />
           <Text default>
             Frequency
           </Text>
         </FlexContainer>,
-        <Text monospace>
+        <Text
+          key="trigger_frequency"
+          monospace
+        >
           {scheduleInterval.replace('@', '')}
-        </Text>
+        </Text>,
       ]);
     }
 
     if (startTime) {
       rows.push([
-        <FlexContainer alignItems="center">
+        <FlexContainer
+          alignItems="center"
+          key="trigger_start_date_label"
+        >
           <CalendarDate {...iconProps} />
           <Spacing mr={1} />
           <Text default>
             Start date
           </Text>
         </FlexContainer>,
-        <Text monospace>
+        <Text
+          key="trigger_start_date"
+          monospace
+        >
           {startTime}
         </Text>,
       ]);
@@ -275,10 +296,19 @@ function TriggerDetail({
           uuid,
           value,
         }) => [
-          <Text default monospace small>
+          <Text
+            default
+            key={`settings_variable_label_${uuid}`}
+            monospace
+            small
+          >
             {uuid}
           </Text>,
-          <Text monospace small>
+          <Text
+            key={`settings_variable_${uuid}`}
+            monospace
+            small
+          >
             {value}
           </Text>,
         ])}
@@ -304,11 +334,18 @@ function TriggerDetail({
       rows={eventMatchers?.map(({
         event_type: eventType,
         name,
-      }) => [
-        <Text default monospace>
+      }, idx) => [
+        <Text
+          default
+          key={`${eventType}_${idx}_label`}
+          monospace
+        >
           {PROVIDER_EVENTS_BY_UUID[eventType].label()}
         </Text>,
-        <Text monospace>
+        <Text
+          key={`${eventType}_${idx}_name`}
+          monospace
+        >
           {name}
         </Text>,
       ])}

@@ -814,14 +814,14 @@ function Edit({
             rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
               <Text
                 default
-                key="variable_uuid"
+                key={`variable_${uuid}`}
                 monospace
               >
                 {uuid}
               </Text>,
               <TextInput
                 borderless
-                key="variable_uuid_input"
+                key={`variable_uuid_input_${uuid}`}
                 monospace
                 onChange={(e) => {
                   e.preventDefault();
