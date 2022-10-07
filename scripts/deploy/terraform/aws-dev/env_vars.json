@@ -1,0 +1,22 @@
+[
+    {
+        "name": "ENV",
+        "value": "production"
+    },
+    {
+        "name": "AWS_ACCESS_KEY_ID",
+        "value": "${aws_access_key_id}"
+    },
+    {
+        "name": "AWS_SECRET_ACCESS_KEY",
+        "value": "${aws_secret_access_key}"
+    },
+    {
+        "name": "LAMBDA_FUNCTION_ARN",
+        "value": "${lambda_func_arn}"
+    },
+    {
+        "name": "LAMBDA_FUNCTION_NAME",
+        "value": "${lambda_func_name}"
+    }
+]
