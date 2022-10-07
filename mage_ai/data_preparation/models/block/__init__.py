@@ -767,16 +767,23 @@ class Block:
                 sample_count=sample_count,
             )
             if type(data) is pd.DataFrame:
-                analysis = variable_manager.get_variable(
-                    self.pipeline.uuid,
-                    self.uuid,
-                    v,
-                    partition=execution_partition,
-                    variable_type=VariableType.DATAFRAME_ANALYSIS,
-                )
-                stats = analysis.get('statistics', {})
-                column_types = analysis.get('metadata', {}).get('column_types', {})
-                row_count = stats.get('original_row_count', stats.get('count'))
+                try:
+                    analysis = variable_manager.get_variable(
+                        self.pipeline.uuid,
+                        self.uuid,
+                        v,
+                        partition=execution_partition,
+                        variable_type=VariableType.DATAFRAME_ANALYSIS,
+                    )
+                except Exception:
+                    analysis = None
+                if analysis is not None:
+                    stats = analysis.get('statistics', {})
+                    column_types = analysis.get('metadata', {}).get('column_types', {})
+                    row_count = stats.get('original_row_count', stats.get('count'))
+                    column_count = len(column_types)
+                else:
+                    row_count, column_count = data.shape
 
                 columns_to_display = data.columns.tolist()[:DATAFRAME_ANALYSIS_MAX_COLUMNS]
                 data = dict(
@@ -784,7 +791,7 @@ class Block:
                         columns=columns_to_display,
                         rows=json.loads(data[columns_to_display].to_json(orient='split'))['data']
                     ),
-                    shape=[row_count, len(column_types)],
+                    shape=[row_count, column_count],
                     type=DataType.TABLE,
                     variable_uuid=v,
                 )
