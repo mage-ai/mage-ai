@@ -1,10 +1,6 @@
 # Sensors: blocks depending on external pipelines
 
-<img
-  alt="Sensors"
-  height="300"
-  src="https://memegenerator.net/img/instances/47193607.jpg"
-/>
+![sense](https://user-images.githubusercontent.com/97557538/194637618-db3840bc-0d15-400d-9796-20e53b0616a5.gif)
 
 In your pipeline, you can add sensors that run continuously and only complete
 when an external pipeline or external block is successfully ran for a particular partition.
