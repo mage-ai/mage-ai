@@ -67,12 +67,10 @@ function BlockRuns({
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
   const { data: dataLogs } = api.logs.pipelines.list(
-    pipelineUUID,
+    query ? pipelineUUID : null,
     ignoreKeys(query, [LOG_UUID_PARAM]),
     {},
-    {
-      pauseFetch: !query,
-    });
+  );
   const isLoading = !dataLogs;
   const {
     blockRunLogs,
