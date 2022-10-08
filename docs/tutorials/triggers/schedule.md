@@ -7,7 +7,8 @@ You can schedule your pipeline to run on these intervals:
 - Weekly
 - Monthly
 - Custom schedule using [CRON Expression](https://en.wikipedia.org/wiki/Cron#CRON_expression)
-- Every N seconds *(coming soon)*
+- Every minute using CRON expression: `* * * * *`
+- *Streaming pipeline*: coming soon
 
 <br />
 
