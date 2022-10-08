@@ -448,11 +448,15 @@ function PipelineDetailPage({
       name: string;
       type: string;
     };
+  }, opts?: {
+    contentOnly?: boolean;
   }) => {
     const {
       block: blockOverride,
       pipeline: pipelineOverride = {},
     } = payload || {};
+    const { contentOnly } = opts || {};
+
     setPipelineLastSaved(new Date());
 
     // @ts-ignore
@@ -520,6 +524,14 @@ function PipelineDetailPage({
                 blockPayload[k] = v;
               }
             });
+          }
+
+          if (contentOnly) {
+            return {
+              content: blockPayload.content,
+              outputs: blockPayload.outputs,
+              uuid: blockPayload.uuid,
+            };
           }
 
           return blockPayload;
@@ -1157,6 +1169,8 @@ function PipelineDetailPage({
         outputs: [],
         uuid: block.uuid,
       },
+    }, {
+      contentOnly: true,
     }).then(() => runBlockOrig(payload));
   }, [
     runBlockOrig,
