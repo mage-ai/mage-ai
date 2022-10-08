@@ -75,6 +75,7 @@ export type InputWrapperProps = {
   onKeyDown?: (e: any) => void;
   onKeyPress?: (e: any) => void;
   paddingHorizontal?: number;
+  paddingRight?: number;
   paddingVertical?: number;
   passwordrules?: string;
   placeholder?: string;
@@ -376,9 +377,13 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
     padding-right: ${props.paddingHorizontal}px;
   `}
 
-  ${props => typeof props.paddingHorizontal !== 'undefined' && `
+  ${props => typeof props.paddingVertical !== 'undefined' && `
     padding-bottom: ${props.paddingVertical}px;
     padding-top: ${props.paddingVertical}px;
+  `}
+
+  ${props => typeof props.paddingRight !== 'undefined' && `
+    padding-right: ${props.paddingRight}px !important;
   `}
 
   ${props => props.basic && !props.noBackground && `
