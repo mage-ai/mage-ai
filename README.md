@@ -61,9 +61,9 @@ learning from a [hands-on tutorial](docs/tutorials/quick_start/etl_restaurant/RE
 1. [Demo](#-demo)
 1. [Tutorials](#-tutorials)
 1. [Features](#-features)
+1. [Documentation](docs/README.md)
 1. [Core design principles](#%EF%B8%8F-core-design-principles)
 1. [Core abstractions](#-core-abstractions)
-1. [Documentation](docs/README.md)
 
 # 🏃‍♀️ Quick start
 
@@ -144,6 +144,12 @@ Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai
 
 <br />
 
+# 📚 Documentation
+
+Read more [<b>here</b>](docs/README.md).
+
+<br />
+
 # 🏔️ Core design principles
 
 Every user experience and technical design decision adheres to these principles.
@@ -172,12 +178,6 @@ These are the fundamental concepts that Mage uses to operate.
 
 <br />
 
-# 📚 Documentation
-
-Read more [<b>here</b>](docs/README.md).
-
-<br />
-
 # 🙋‍♀️ Contributing
 
 Check out the [🎁 contributing guide](/docs/contributing/README.md) to get started
@@ -203,6 +203,7 @@ To live chat with the Mage team and community:
 <br />
 
 For real-time news, fun memes, data engineering topics, and more, join us on:
+
 - [<img alt="Twitter" height="20" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Twitter-logo.svg/2491px-Twitter-logo.svg.png" style="position: relative; top: 4px;" /> Twitter](https://twitter.com/mage_ai)
 - [<img alt="LinkedIn" height="20" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/800px-LinkedIn_logo_initials.png" style="position: relative; top: 4px;" /> LinkedIn](https://www.linkedin.com/company/magetech/mycompany)
 - [<img alt="GitHub" height="20" src="https://github.githubassets.com/images/modules/logos_page/Octocat.png" style="position: relative; top: 4px;" /> GitHub](https://github.com/mage-ai/mage-ai)
