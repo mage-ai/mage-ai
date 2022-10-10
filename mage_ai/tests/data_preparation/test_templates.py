@@ -1,6 +1,10 @@
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.io.base import DataSource
-from mage_ai.data_preparation.models.block import BlockType
+from mage_ai.data_preparation.models.constants import (
+    BlockLanguage,
+    BlockType,
+    PipelineType,
+)
 from mage_ai.data_preparation.templates.template import (
     build_template_from_suggestion,
     fetch_template_source,
@@ -238,6 +242,20 @@ def test_output(df) -> None:
         config = {'data_source': DataSource.API}
         api_template = fetch_template_source(BlockType.DATA_LOADER, config)
         self.assertEqual(api_template, expected_template)
+
+    def test_template_generation_data_loader_streaming(self):
+        kafka_template = """connector_type: kafka
+broker_url: localhost:9092
+topic: topic_name
+"""
+        config = {'data_source': DataSource.KAFKA}
+        new_kafka_template = fetch_template_source(
+            BlockType.DATA_LOADER,
+            config,
+            language=BlockLanguage.YAML,
+            pipeline_type=PipelineType.STREAMING,
+        )
+        self.assertEqual(kafka_template, new_kafka_template)
 
     def test_template_generation_transformer_default(self):
         expected_template = """from pandas import DataFrame
@@ -601,6 +619,20 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
         new_snowflake_template = fetch_template_source(BlockType.DATA_EXPORTER, config2)
         self.assertEqual(bigquery_template, new_bigquery_template)
         self.assertEqual(snowflake_template, new_snowflake_template)
+
+    def test_template_generation_data_exporter_streaming(self):
+        opensearch_template = """connector_type: opensearch
+host: https://[cluster_name].[region].es.amazonaws.com
+index_name: test_index
+"""
+        config = {'data_source': DataSource.OPENSEARCH}
+        new_opensearch_template = fetch_template_source(
+            BlockType.DATA_EXPORTER,
+            config,
+            language=BlockLanguage.YAML,
+            pipeline_type=PipelineType.STREAMING,
+        )
+        self.assertEqual(opensearch_template, new_opensearch_template)
 
     def test_template_generation_transformer_dwh(self):
         postgres_template = """from mage_ai.data_preparation.repo_manager import get_repo_path
