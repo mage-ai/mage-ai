@@ -103,7 +103,10 @@ class VariableManagerTest(TestCase):
         self.assertEqual(get_global_variable('test_pipeline_3', 'var4'), dict(k1='v1', k2='v2'))
 
     def __create_pipeline(self, name):
-        pipeline = Pipeline.create(name, self.repo_path)
+        pipeline = Pipeline.create(
+            name,
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('block1', 'data_loader', self.repo_path)
         block2 = Block.create('block2', 'transformer', self.repo_path)
         pipeline.add_block(block1)

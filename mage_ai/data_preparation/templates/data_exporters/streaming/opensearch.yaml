@@ -1,0 +1,3 @@
+connector_type: opensearch
+host: https://[cluster_name].[region].es.amazonaws.com
+index_name: test_index

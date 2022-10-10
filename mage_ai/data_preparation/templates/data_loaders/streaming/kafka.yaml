@@ -1,0 +1,3 @@
+connector_type: kafka
+broker_url: localhost:9092
+topic: topic_name
