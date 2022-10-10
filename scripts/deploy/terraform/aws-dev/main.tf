@@ -38,6 +38,9 @@ data "template_file" "env_vars" {
     aws_secret_access_key = var.AWS_SECRET_ACCESS_KEY
     lambda_func_arn       = "${aws_lambda_function.terraform_lambda_func.arn}"
     lambda_func_name      = "${aws_lambda_function.terraform_lambda_func.function_name}"
+    cluster_name          = "${var.app_name}-${var.app_environment}-cluster"
+    task_definition       = "${var.app_name}-dev-task"
+    container_name        = "${var.app_name}-${var.app_environment}-container"
   }
 }
 
@@ -49,6 +52,7 @@ resource "aws_ecs_task_definition" "manager-task" {
     {
       "name": "${var.app_name}-${var.app_environment}-container",
       "image": "${var.docker_image}",
+      "command": ["mage", "start", "default_repo", "--manage-instance", "true"],
       "environment": ${data.template_file.env_vars.rendered},
       "essential": true,
       "mountPoints": [

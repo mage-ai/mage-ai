@@ -1,6 +1,8 @@
 from .base import BaseHandler
 from mage_ai.shared.hash import merge_dict
 
+import os
+
 
 class ApiClustersHandler(BaseHandler):
     def get(self, cluster_type):
@@ -59,7 +61,8 @@ class ApiInstancesHandler(BaseHandler):
         instances = []
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
-            cluster_name = self.get_argument('cluster_name')
+
+            cluster_name = self.get_argument('cluster_name', os.getenv('CLUSTER_NAME'))
             ecs_instance_manager = EcsTaskManager(cluster_name)
             instances = ecs_instance_manager.list_tasks()
         self.write(dict(instances=instances))
@@ -69,9 +72,9 @@ class ApiInstancesHandler(BaseHandler):
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             instance_payload = self.get_payload().get('instance')
             name = instance_payload.get('name')
-            cluster_name = instance_payload.get('cluster_name')
-            task_definition = instance_payload.get('task_definition')
-            container_name = instance_payload.get('container_name')
+            cluster_name = instance_payload.get('cluster_name', os.getenv('CLUSTER_NAME'))
+            task_definition = instance_payload.get('task_definition', os.getenv('TASK_DEFINITION'))
+            container_name = instance_payload.get('container_name', os.getenv('CONTAINER_NAME'))
 
             ecs_instance_manager = EcsTaskManager(cluster_name)
 

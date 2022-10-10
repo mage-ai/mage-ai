@@ -18,5 +18,17 @@
     {
         "name": "LAMBDA_FUNCTION_NAME",
         "value": "${lambda_func_name}"
+    },
+    {
+        "name": "CLUSTER_NAME",
+        "value": "${cluster_name}"
+    },
+    {
+        "name": "TASK_DEFINITION",
+        "value": "${task_definition}"
+    },
+    {
+        "name": "CONTAINER_NAME",
+        "value": "${container_name}"
     }
 ]

@@ -35,6 +35,7 @@ export const FILE_CONTENTS: 'file_contents' = 'file_contents';
 export const FILES: 'files' = 'files';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
+export const INSTANCES: 'instances' = 'instances';
 export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
@@ -69,6 +70,7 @@ const RESOURCES: any[][] = [
   [FEATURE_SETS],
   [FILES],
   [FILE_CONTENTS],
+  [INSTANCES, CLUSTERS],
   [KERNELS],
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
