@@ -21,9 +21,8 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockListHandler,
     ApiPipelineBlockOutputHandler,
 )
-from mage_ai.server.api.clusters import ApiClustersHandler
+from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstancesHandler
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
-from mage_ai.server.api.environments import ApiEnvironmentsHandler
 from mage_ai.server.api.events import (
     ApiAwsEventRuleListHandler,
     ApiEventHandler,
@@ -420,7 +419,7 @@ def make_app():
         (r'/api/block_runs/(?P<block_run_id>\w+)/outputs', ApiBlockRunOutputHandler),
         (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)', ApiClustersHandler),
-        (r'/api/environments/(?P<env_type>\w+)', ApiEnvironmentsHandler),
+        (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),

@@ -15,6 +15,7 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
+    tags: List
     cpu: int = 512
     memory: int = 1024
 
@@ -73,6 +74,7 @@ class EcsConfig(BaseConfig):
                     'securityGroups': self.security_groups,
                 }
             },
+            tags=self.tags,
         )
         if command is not None:
             task_config['overrides'] = {

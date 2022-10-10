@@ -1,17 +1,17 @@
-from typing import List
 from botocore.config import Config
-from mage_ai.services.aws.ecs.ecs import create_environment_task, list_tasks
+from mage_ai.services.aws.ecs.config import EcsConfig
+from mage_ai.services.aws.ecs.ecs import list_tasks, run_task
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import dig
+from typing import List
 
 import boto3
 import os
 
-from mage_ai.shared.hash import dig
-
 
 CLUSTER_NAME = 'mage-data-prep-development-cluster'
 
-class EcsTaskManager():
+class EcsTaskManager:
     def __init__(self, cluster_name=CLUSTER_NAME):
         self.cluster_name = cluster_name
 
@@ -28,58 +28,23 @@ class EcsTaskManager():
         for index, task in enumerate(response):
             public_ip = dig(network_interfaces[index], 'Association.PublicIp')
 
+            tags = task['tags']
+            name = find(lambda tag: tag.get('key') == 'name', tags)
+
             tasks.append(dict(
                 ip=public_ip,
                 group=task['group'],
+                name=name.get('value') if name is not None else None,
                 status=task['lastStatus'],
                 type=task['launchType'],
             ))
 
         return tasks
 
-    def create_task(self, name: str):
+    def create_task(self, name: str, task_definition: str, container_name: str):
         region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
         config = Config(region_name=region_name)
         ec2_client = boto3.client('ec2', config=config)
-        ecs_client = boto3.client('ecs', config=config)
-
-        # create new task definition
-        base_td = \
-            ecs_client.describe_task_definition(
-                taskDefinition='mage-dev-dev-task'
-            )['taskDefinition']
-        remove_args = [
-            'compatibilities',
-            'registeredAt',
-            'registeredBy',
-            'requiresAttributes',
-            'revision',
-            'status',
-            'taskDefinitionArn',
-        ]
-        for arg in remove_args:
-            base_td.pop(arg)
-
-        container_path = f'/home/src/{name}'
-        container_definition = next(iter(base_td.get('containerDefinitions', [])))
-        mount_point = next(iter(container_definition.get('mountPoints', [])))
-        mount_points = [{
-            **mount_point,
-            'containerPath': container_path,
-        }]
-
-        new_td_name = f'{base_td["family"]}_{name}'
-
-        updated_td = {
-            **base_td,
-            'family': new_td_name,
-            'containerDefinitions': list(map(
-                lambda x: { **x, 'mountPoints': mount_points },
-                base_td['containerDefinitions'],
-            )),
-        }
-
-        ecs_client.register_task_definition(**updated_td)
 
         # create new task
         response = list_tasks(self.cluster_name)['tasks']
@@ -88,12 +53,21 @@ class EcsTaskManager():
         subnets = [network_interface['SubnetId']]
         security_groups = [g['GroupId'] for g in network_interface['Groups']]
 
-        return create_environment_task(
+        ecs_config = EcsConfig(
+            task_definition,
+            container_name,
             self.cluster_name,
-            subnets,
-            security_groups,
-            new_td_name,
+            security_groups=security_groups,
+            subnets=subnets,
+            tags=[
+                {
+                    'key': 'name',
+                    'value': name,
+                }
+            ],
         )
+
+        return run_task(f'mage start {name}', ecs_config=ecs_config)
 
     def __get_network_interface_id(self, task: str):
         attachment = \
