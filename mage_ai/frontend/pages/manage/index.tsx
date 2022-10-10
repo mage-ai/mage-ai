@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useMemo, useRef, useState } from 'react';
+=======
+import React, { useMemo, useState } from 'react';
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -11,11 +15,16 @@ import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
+<<<<<<< HEAD
 import { Add, Ellipsis, Expand } from '@oracle/icons';
+=======
+import { Add, Expand } from '@oracle/icons';
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
 import { BLUE_SKY, PURPLE } from '@oracle/styles/colors/main';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { UNIT } from '@oracle/styles/units/spacing';
+<<<<<<< HEAD
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { addUnderscores, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
@@ -195,6 +204,10 @@ function MoreActions({
     </>
   );
 }
+=======
+import { addUnderscores, capitalizeRemoveUnderscoreLower, randomNameGenerator } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
 
 function InstanceListPage() {
   const [create, setCreate] = useState<boolean>();
@@ -238,6 +251,7 @@ function InstanceListPage() {
 
   return (
     <Dashboard
+<<<<<<< HEAD
       afterWidth={VERTICAL_NAVIGATION_WIDTH}
       beforeWidth={VERTICAL_NAVIGATION_WIDTH}
       breadcrumbs={[
@@ -247,6 +261,8 @@ function InstanceListPage() {
         },
       ]}
       navigationItems={[]}
+=======
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
       subheaderChildren={
         <>
           {create ? (
@@ -341,6 +357,7 @@ function InstanceListPage() {
           },
           {
             uuid: 'Open',
+<<<<<<< HEAD
           },
           {
             label: () => '',
@@ -348,6 +365,11 @@ function InstanceListPage() {
           },
         ]}
         columnFlex={[2, 4, 2, 3, 1, null]}
+=======
+          }
+        ]}
+        columnFlex={[2, 4, 2, 4, 1]}
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
         rows={instances?.map(instance => {
 
           const {
@@ -383,11 +405,15 @@ function InstanceListPage() {
               onClick={() => window.open(`http://${ip}:6789`)}
             >
               <Expand size={2 * UNIT} />
+<<<<<<< HEAD
             </Button>,
             <MoreActions
               fetchInstances={fetchInstances}
               instance={instance}
             />
+=======
+            </Button>
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
           ]
         })}
       />

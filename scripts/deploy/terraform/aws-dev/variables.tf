@@ -28,7 +28,7 @@ variable "aws_cloudwatch_retention_in_days" {
 variable "app_name" {
   type        = string
   description = "Application Name"
-  default     = "mage-data-prep"
+  default     = "mage-dev"
 }
 
 variable "app_environment" {
@@ -44,7 +44,7 @@ variable "cidr" {
 
 variable "docker_image" {
   description = "Docker image url used in ECS task."
-  default     = "mageai/mageai:latest"
+  default     = "mageai/mageai-manage-instance-test:latest"
 }
 
 variable "ecs_task_cpu" {

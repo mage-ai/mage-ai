@@ -1,7 +1,10 @@
 from botocore.config import Config
 from functools import reduce
+<<<<<<< HEAD
 
 from mage_ai.data_preparation.repo_manager import get_repo_path
+=======
+>>>>>>> cc38c1aa ([dy] Add frontend support for managing instances)
 from mage_ai.services.aws.ecs.config import EcsConfig
 from mage_ai.services.aws.ecs.ecs import list_tasks, run_task, stop_task
 from mage_ai.shared.array import difference, find
