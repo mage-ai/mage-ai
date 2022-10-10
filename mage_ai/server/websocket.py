@@ -200,13 +200,13 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
     def send_message(self, message: dict) -> None:
         def should_filter_message(message):
             if message.get('data') is None and message.get('error') is None \
-                and message.get('execution_state') is None and message.get('type') is None:
+                    and message.get('execution_state') is None and message.get('type') is None:
                 return True
 
             try:
                 # Filter out messages meant for jupyter widgets that we can't render
                 if message.get('msg_type') == 'display_data' and \
-                    message.get('data')[0].startswith('FloatProgress'):
+                        message.get('data')[0].startswith('FloatProgress'):
                     return True
             except IndexError:
                 pass

@@ -27,6 +27,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from queue import Queue
 from typing import Callable, Dict, List, Set
@@ -844,9 +845,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if language and type(self.language) is not str:
             language = self.language.value
 
-        def __format_enum(v):
-            return v.value if type(v) is not str else v
-
         data = dict(
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
@@ -854,11 +852,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
-            executor_type=__format_enum(self.executor_type),
+            executor_type=format_enum(self.executor_type),
             name=self.name,
             language=language,
-            status=__format_enum(self.status),
-            type=__format_enum(self.type),
+            status=format_enum(self.status),
+            type=format_enum(self.type),
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
         )

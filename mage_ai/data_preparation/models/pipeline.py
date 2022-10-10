@@ -11,8 +11,9 @@ from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_config, get_repo_path
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.shared.utils import clean_name
 from mage_ai.shared.hash import extract
+from mage_ai.shared.strings import format_enum
+from mage_ai.shared.utils import clean_name
 from typing import Callable, List
 import asyncio
 import os
@@ -27,13 +28,13 @@ METADATA_FILE_NAME = 'metadata.yaml'
 class Pipeline:
     pipelines_cache = dict()
 
-    def __init__(self, uuid, pipeline_type=None, repo_path=None, config=None, repo_config=None):
+    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
-        self.type = pipeline_type or PipelineType.PYTHON
+        self.type = PipelineType.PYTHON
         self.widget_configs = []
         if config is None:
             self.load_config_from_yaml()
@@ -94,11 +95,10 @@ class Pipeline:
             yaml.dump(dict(
                 name=name,
                 uuid=uuid,
-                type=pipeline_type or PipelineType.PYTHON,
+                type=format_enum(pipeline_type or PipelineType.PYTHON),
             ), fp)
         pipeline = Pipeline(
             uuid,
-            pipeline_type=pipeline_type,
             repo_path=repo_path,
         )
         self.pipelines_cache[pipeline.uuid] = pipeline
@@ -106,7 +106,11 @@ class Pipeline:
 
     @classmethod
     def duplicate(cls, source_pipeline: 'Pipeline', duplicate_pipeline_name: str):
-        duplicate_pipeline = cls.create(duplicate_pipeline_name, source_pipeline.repo_path)
+        duplicate_pipeline = cls.create(
+            duplicate_pipeline_name,
+            pipeline_type=source_pipeline.type,
+            repo_path=source_pipeline.repo_path,
+        )
         # first pass to load blocks
         for block_uuid in source_pipeline.blocks_by_uuid:
             source_block = source_pipeline.blocks_by_uuid[block_uuid]
@@ -164,7 +168,7 @@ class Pipeline:
         for entry in os.scandir(pipelines_folder):
             if entry.is_dir():
                 try:
-                    p = Pipeline(entry.name, repo_path)
+                    p = Pipeline(entry.name, repo_path=repo_path)
                     mapping = p.widgets_by_uuid if widget else p.blocks_by_uuid
                     if block.uuid in mapping:
                         pipelines.append(p)

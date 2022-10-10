@@ -19,7 +19,10 @@ class PipelineTest(TestCase):
         return super().tearDown()
 
     def test_create(self):
-        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline',
+            repo_path=self.repo_path,
+        )
         self.assertEqual(pipeline.uuid, 'test_pipeline')
         self.assertEqual(pipeline.name, 'test pipeline')
         self.assertEqual(pipeline.blocks_by_uuid, dict())
@@ -161,7 +164,10 @@ class PipelineTest(TestCase):
         ))
 
     def test_execute(self):
-        pipeline = Pipeline.create('test pipeline 3', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline 3',
+            repo_path=self.repo_path,
+        )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
         block2 = self.__create_dummy_transformer_block('block2', pipeline)
         block3 = self.__create_dummy_transformer_block('block3', pipeline)
@@ -233,7 +239,10 @@ class PipelineTest(TestCase):
         ))
 
     def test_execute_multiple_paths(self):
-        pipeline = Pipeline.create('test pipeline 4', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline 4',
+            repo_path=self.repo_path,
+        )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
         block2 = self.__create_dummy_transformer_block('block2', pipeline)
         block3 = self.__create_dummy_transformer_block('block3', pipeline)
@@ -350,7 +359,10 @@ class PipelineTest(TestCase):
         ))
 
     def test_delete(self):
-        pipeline = Pipeline.create('test pipeline 4', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline 4',
+            repo_path=self.repo_path,
+        )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
         block2 = self.__create_dummy_transformer_block('block2', pipeline)
         block3 = self.__create_dummy_data_exporter_block('block3', pipeline)
@@ -409,7 +421,10 @@ class PipelineTest(TestCase):
             pipeline.update_block(block4)
 
     def __create_pipeline_with_blocks(self, name):
-        pipeline = Pipeline.create(name, self.repo_path)
+        pipeline = Pipeline.create(
+            name,
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('block1', 'data_loader', self.repo_path, language='python')
         block2 = Block.create('block2', 'transformer', self.repo_path, language='python')
         block3 = Block.create('block3', 'transformer', self.repo_path, language='python')
