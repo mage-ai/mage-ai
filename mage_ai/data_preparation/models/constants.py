@@ -23,6 +23,7 @@ LOGS_DIR = '.logs'
 class BlockLanguage(str, Enum):
     PYTHON = 'python'
     SQL = 'sql'
+    YAML = 'yaml'
 
 
 class BlockStatus(str, Enum):
@@ -53,6 +54,12 @@ class PipelineType(str, Enum):
     PYSPARK = 'pyspark'
     STREAMING = 'streaming'
 
+
+BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
+    BlockLanguage.PYTHON: 'py',
+    BlockLanguage.SQL: 'sql',
+    BlockLanguage.YAML: 'yaml',
+}
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.CHART,

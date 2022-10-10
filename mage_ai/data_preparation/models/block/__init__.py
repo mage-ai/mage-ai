@@ -13,6 +13,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
     ExecutorType,
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
@@ -211,7 +212,7 @@ class Block:
         self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
-        self.language = language
+        self.language = language or BlockLanguage.PYTHON
         self.configuration = configuration
 
         self._outputs = None
@@ -261,7 +262,7 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
-        file_extension = 'sql' if BlockLanguage.SQL == self.language else 'py'
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
 
         return os.path.join(
             repo_path or os.getcwd(),
@@ -325,7 +326,8 @@ class Block:
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
 
-        file_extension = 'sql' if BlockLanguage.SQL == language else 'py'
+        language = language or BlockLanguage.PYTHON
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
         file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):

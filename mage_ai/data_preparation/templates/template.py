@@ -56,7 +56,7 @@ def fetch_template_source(
 ) -> str:
     template_source = ''
 
-    if BlockLanguage.PYTHON == language:
+    if language in [BlockLanguage.PYTHON, BlockLanguage.YAML]:
         if block_type == BlockType.DATA_LOADER:
             template_source = __fetch_data_loader_templates(config, pipeline_type=pipeline_type)
         elif block_type == BlockType.TRANSFORMER:
@@ -89,8 +89,12 @@ def __fetch_data_loader_templates(
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     data_source = config.get('data_source')
+    file_extension = 'py'
     if pipeline_type == PipelineType.PYSPARK:
         template_folder = 'data_loaders/pyspark'
+    elif pipeline_type == PipelineType.STREAMING:
+        template_folder = 'data_loaders/streaming'
+        file_extension = 'yaml'
     else:
         template_folder = 'data_loaders'
 
@@ -98,7 +102,10 @@ def __fetch_data_loader_templates(
     if data_source is None:
         template_path = default_template
     else:
-        data_source_template = os.path.join(template_folder, f'{data_source.lower()}.py')
+        data_source_template = os.path.join(
+            template_folder,
+            f'{data_source.lower()}.{file_extension}',
+        )
         if template_exists(data_source_template):
             template_path = data_source_template
         else:
@@ -177,8 +184,12 @@ def __fetch_data_exporter_templates(
     pipeline_type: PipelineType = PipelineType.PYTHON,
 ) -> str:
     data_source = config.get('data_source')
+    file_extension = 'py'
     if pipeline_type == PipelineType.PYSPARK:
         template_folder = 'data_exporters/pyspark'
+    elif pipeline_type == PipelineType.STREAMING:
+        template_folder = 'data_exporters/streaming'
+        file_extension = 'yaml'
     else:
         template_folder = 'data_exporters'
 
@@ -186,7 +197,10 @@ def __fetch_data_exporter_templates(
     if data_source is None:
         template_path = default_template
     else:
-        data_source_template = os.path.join(template_folder, f'{data_source.lower()}.py')
+        data_source_template = os.path.join(
+            template_folder,
+            f'{data_source.lower()}.{file_extension}',
+        )
         if template_exists(data_source_template):
             template_path = data_source_template
         else:
