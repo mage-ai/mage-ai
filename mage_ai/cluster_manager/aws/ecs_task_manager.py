@@ -47,8 +47,8 @@ class EcsTaskManager:
         ec2_client = boto3.client('ec2', config=config)
 
         # create new task
-        response = list_tasks(self.cluster_name)['tasks']
-        network_interface = self.__get_network_interfaces(response, ec2_client)[0]
+        task = list_tasks(self.cluster_name)['tasks'][0]
+        network_interface = self.__get_network_interfaces([task], ec2_client)[0]
 
         subnets = [network_interface['SubnetId']]
         security_groups = [g['GroupId'] for g in network_interface['Groups']]

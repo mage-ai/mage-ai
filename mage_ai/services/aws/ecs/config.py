@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import boto3
@@ -15,7 +15,7 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
-    tags: List
+    tags: List = field(default_factory=list)
     cpu: int = 512
     memory: int = 1024
 
