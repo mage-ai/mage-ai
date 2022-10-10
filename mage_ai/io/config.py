@@ -158,12 +158,15 @@ class AWSSecretLoader(BaseConfigLoader):
         """
         from botocore.exceptions import ClientError
 
+        secret_kwargs = dict(SecretId=secret_id)
+
+        if version_id is not None:
+            secret_kwargs['VersionId'] = version_id
+        if version_stage_label is not None:
+            secret_kwargs['VersionStage'] = version_stage_label
+
         try:
-            return self.client.get_secret_value(
-                SecretID=secret_id,
-                VersionId=version_id,
-                VersionStage=version_stage_label,
-            )
+            return self.client.get_secret_value(**secret_kwargs)
         except ClientError as error:
             if error.response['Error']['Code'] == 'ResourceNotFoundException':
                 return None
