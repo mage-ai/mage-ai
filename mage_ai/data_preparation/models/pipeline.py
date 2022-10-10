@@ -27,13 +27,13 @@ METADATA_FILE_NAME = 'metadata.yaml'
 class Pipeline:
     pipelines_cache = dict()
 
-    def __init__(self, uuid, repo_path=None, config=None, repo_config=None):
+    def __init__(self, uuid, pipeline_type=None, repo_path=None, config=None, repo_config=None):
         self.block_configs = []
         self.blocks_by_uuid = {}
         self.name = None
         self.repo_path = repo_path or get_repo_path()
         self.uuid = uuid
-        self.type = PipelineType.PYTHON
+        self.type = pipeline_type or PipelineType.PYTHON
         self.widget_configs = []
         if config is None:
             self.load_config_from_yaml()
@@ -77,7 +77,7 @@ class Pipeline:
         return f'v{self.version}'
 
     @classmethod
-    def create(self, name, repo_path):
+    def create(self, name, pipeline_type=PipelineType.PYTHON, repo_path=None):
         """
         1. Create a new folder for pipeline
         2. Create a new yaml file to store pipeline config
@@ -91,8 +91,16 @@ class Pipeline:
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, METADATA_FILE_NAME), 'w') as fp:
-            yaml.dump(dict(name=name, uuid=uuid), fp)
-        pipeline = Pipeline(uuid, repo_path)
+            yaml.dump(dict(
+                name=name,
+                uuid=uuid,
+                type=pipeline_type or PipelineType.PYTHON,
+            ), fp)
+        pipeline = Pipeline(
+            uuid,
+            pipeline_type=pipeline_type,
+            repo_path=repo_path,
+        )
         self.pipelines_cache[pipeline.uuid] = pipeline
         return pipeline
 

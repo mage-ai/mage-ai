@@ -48,7 +48,6 @@ class FileIO(BaseFile):
         with self.printer.print_msg(f'Exporting data frame to \'{filepath}\''):
             self._write(df, format, filepath, **kwargs)
 
-
     def exists(
         self, filepath: str
     ) -> bool:

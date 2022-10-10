@@ -251,8 +251,13 @@ class ApiPipelineListHandler(BaseHandler):
         pipeline = json.loads(self.request.body).get('pipeline', {})
         clone_pipeline_uuid = pipeline.get('clone_pipeline_uuid')
         name = pipeline.get('name')
+        pipeline_type = pipeline.get('type')
         if clone_pipeline_uuid is None:
-            pipeline = Pipeline.create(name, get_repo_path())
+            pipeline = Pipeline.create(
+                name,
+                pipeline_type=pipeline_type,
+                repo_path=get_repo_path(),
+            )
         else:
             source = Pipeline.get(clone_pipeline_uuid)
             pipeline = Pipeline.duplicate(source, name)

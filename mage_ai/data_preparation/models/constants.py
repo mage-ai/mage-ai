@@ -51,6 +51,7 @@ class ExecutorType(str, Enum):
 class PipelineType(str, Enum):
     PYTHON = 'python'
     PYSPARK = 'pyspark'
+    STREAMING = 'streaming'
 
 
 CUSTOM_EXECUTION_BLOCK_TYPES = [
