@@ -129,6 +129,7 @@ function PipelineListPage() {
           onClickOutside={closeNewPipelineMenu}
           open={newPipelineMenuOpen}
           parentRef={newPipelineMenuRef}
+          roundedStyle
           uuid="pipelines/new_pipeline_menu"
         >
           <KeyboardShortcutButton

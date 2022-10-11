@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
@@ -8,6 +9,7 @@ type LinkProps = {
   disabled?: boolean;
   highlighted: boolean;
   indent?: boolean;
+  largePadding?: boolean;
 };
 
 export const FlyoutMenuContainerStyle = styled.div<any>`
@@ -27,6 +29,19 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
     }
   `}
 
+  ${props => props.roundedStyle && `
+    border-radius: ${BORDER_RADIUS}px;
+
+    div:first-child {
+      border-top-left-radius: ${BORDER_RADIUS}px;
+      border-top-right-radius: ${BORDER_RADIUS}px;
+    }
+
+    div:last-child {
+      border-bottom-left-radius: ${BORDER_RADIUS}px;
+      border-bottom-right-radius: ${BORDER_RADIUS}px;
+    }
+  `}
 `;
 
 export const TitleContainerStyle = styled.div`
@@ -42,6 +57,11 @@ export const LinkStyle = styled.div<LinkProps>`
   align-items: center;
   justify-content: space-between;
   padding: ${UNIT}px;
+
+  ${props => props.largePadding && `
+    padding: ${UNIT * 2}px;
+    padding-right: ${UNIT * 6}px;
+  `}
 
   ${props => !props.disabled && `  
     &:hover {
