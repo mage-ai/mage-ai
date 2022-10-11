@@ -1,0 +1,3 @@
+python-dateutil==2.8.2
+requests==2.27.0
+simplejson
