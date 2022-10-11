@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from mage_ai.shared.config import BaseConfig
 from typing import Dict, List
 import boto3
@@ -15,6 +15,7 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
+    tags: List = field(default_factory=list)
     cpu: int = 512
     memory: int = 1024
 
@@ -73,6 +74,7 @@ class EcsConfig(BaseConfig):
                     'securityGroups': self.security_groups,
                 }
             },
+            tags=self.tags,
         )
         if command is not None:
             task_config['overrides'] = {

@@ -52,3 +52,36 @@ class ApiClustersHandler(BaseHandler):
             cluster=merge_dict(dict(id=cluster_id), cluster_payload),
             success=success,
         ))
+
+
+class ApiInstancesHandler(BaseHandler):
+    def get(self, cluster_type):
+        instances = []
+        if cluster_type == 'ecs':
+            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            cluster_name = self.get_argument('cluster_name')
+            ecs_instance_manager = EcsTaskManager(cluster_name)
+            instances = ecs_instance_manager.list_tasks()
+        self.write(dict(instances=instances))
+
+    def post(self, cluster_type):
+        if cluster_type == 'ecs':
+            from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
+            instance_payload = self.get_payload().get('instance')
+            name = instance_payload.get('name')
+            cluster_name = instance_payload.get('cluster_name')
+            task_definition = instance_payload.get('task_definition')
+            container_name = instance_payload.get('container_name')
+
+            ecs_instance_manager = EcsTaskManager(cluster_name)
+
+            instance = ecs_instance_manager.create_task(
+                name,
+                task_definition,
+                container_name,
+            )
+
+        self.write(dict(
+            instance=instance,
+            success=True,
+        ))

@@ -1,6 +1,9 @@
+from botocore.config import Config
 from mage_ai.services.aws.ecs.config import EcsConfig
+from typing import List
 import boto3
 import json
+import os
 
 
 def run_task(command: str, ecs_config: EcsConfig) -> None:
@@ -8,4 +11,24 @@ def run_task(command: str, ecs_config: EcsConfig) -> None:
         ecs_config = EcsConfig.load(config=ecs_config)
     client = boto3.client('ecs')
     response = client.run_task(**ecs_config.get_task_config(command=command))
+    
     print(json.dumps(response, indent=4, default=str))
+    return response
+
+
+def list_tasks(cluster):
+    region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
+    config = Config(region_name=region_name)
+    ecs_client = boto3.client('ecs', config=config)
+
+    task_arns = ecs_client.list_tasks(
+        cluster=cluster,
+    )['taskArns']
+
+    return ecs_client.describe_tasks(
+        cluster=cluster,
+        include=[
+            'TAGS',
+        ],
+        tasks=task_arns,
+    )
