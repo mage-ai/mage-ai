@@ -1,3 +1,4 @@
+google-analytics-data==0.14.2
 python-dateutil==2.8.2
 requests==2.27.0
-simplejson
+simplejson==3.17.6
