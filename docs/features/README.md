@@ -16,7 +16,7 @@
 
 ## Data pipeline management
 
-Read more [details here](orchestration/README.md).
+👉 See more [<b>details here</b>](orchestration/README.md).
 
 <img
   alt="Mage orchestration"
