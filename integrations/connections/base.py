@@ -6,7 +6,7 @@ import simplejson
 
 class Connection():
     def build_tags(self, **kwargs):
-        return {}
+        return {k: v for k, v in kwargs.items() if v}
 
     def error(self, message, tags={}, **kwargs):
         self.log(LOG_LEVEL_ERROR, message, tags, **kwargs)

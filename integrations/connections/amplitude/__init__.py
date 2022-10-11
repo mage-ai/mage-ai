@@ -39,7 +39,7 @@ class Amplitude(Connection):
             sample=sample,
             start_date=start_date,
         )
-        self.info('Loading data started.', tags=tags)
+        self.info('Loading started.', tags=tags)
 
         if start_date is None and end_date is None:
             self.error('No start date and no end date.', tags=tags)
@@ -52,7 +52,7 @@ class Amplitude(Connection):
             if zip_file:
                 data += self.__build_data_from_zip_file(zip_file)
 
-        self.info('Loading data completed.', tags=merge_dict(tags, dict(count=len(data))))
+        self.info('Loading completed.', tags=merge_dict(tags, dict(count=len(data))))
 
         return data
 
@@ -85,6 +85,7 @@ class Amplitude(Connection):
                                         file_content += decompressed_file.read().decode('utf-8')
                         except zipfile.BadZipFile as err:
                             self.exception(f'{err} when unzipping file.', tags=dict(
+                                error=err,
                                 filename=filename1,
                             ))
 
@@ -97,6 +98,7 @@ class Amplitude(Connection):
                     data.append(flatten(json.loads(i)))
                 except Exception as err:
                     self.exception(f'{err} when loading from JSON string.', tags=dict(
+                        error=err,
                         json_string=i,
                     ))
 
