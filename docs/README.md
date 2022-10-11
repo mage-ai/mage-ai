@@ -73,8 +73,9 @@ Read more tech docs here. Got questions?
 ### Guides
 - [SQL blocks](guides/blocks/SQL.md)
 - [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)
-- Triggering pipelines
+- [Triggering pipelines](core/abstractions.md#trigger)
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
+    - [Trigger pipeline from event](core/abstractions.md#event)
     - [Trigger pipeline via API request](triggers/api.md)
     - [Trigger pipeline from AWS Event (WIP)](tutorials/triggers/events/aws.md)
 - Testing
