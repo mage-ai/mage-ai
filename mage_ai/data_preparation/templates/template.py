@@ -138,6 +138,8 @@ def __fetch_transformer_templates(
     else:
         if pipeline_type == PipelineType.PYSPARK:
             template_path = 'transformers/default_pyspark.jinja'
+        elif pipeline_type == PipelineType.STREAMING:
+            template_path = 'transformers/default_streaming.jinja'
         else:
             template_path = 'transformers/default.jinja'
         return (

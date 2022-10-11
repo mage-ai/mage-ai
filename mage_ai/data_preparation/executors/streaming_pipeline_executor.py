@@ -14,26 +14,49 @@ class StreamingPipelineExecutor(PipelineExecutor):
 
     def parse_and_validate_blocks(self):
         """
-        Validate whether the block
+        Find the first valid streaming pipeline is in the structure:
+        source -> transformer -> sink
         """
         blocks = self.pipeline.blocks_by_uuid.values()
         source_blocks = []
         sink_blocks = []
+        transformer_blocks = []
         for b in blocks:
             if b.type == BlockType.DATA_LOADER:
                 if len(b.upstream_blocks or []) > 0:
-                    raise Exception('Data loader can\'t have upstream blocks.')
+                    raise Exception(f'Data loader {b.uuid} can\'t have upstream blocks.')
+                if len(b.downstream_blocks or []) != 1:
+                    raise Exception(f'Data loader {b.uuid} must have one transformer or data'
+                                    ' exporter as the downstream block.')
                 source_blocks.append(b)
             if b.type == BlockType.DATA_EXPORTER:
                 if len(b.downstream_blocks or []) > 0:
-                    raise Exception('Data expoter can\'t have downstream blocks.')
+                    raise Exception(f'Data expoter {b.uuid} can\'t have downstream blocks.')
+                if len(b.upstream_blocks or []) != 1:
+                    raise Exception(f'Data loader {b.uuid} must have a transformer or data'
+                                    ' exporter as the upstream block.')
                 sink_blocks.append(b)
-        if len(source_blocks) == 0:
-            raise Exception('Please provide a data loader block as the source.')
-        if len(sink_blocks) == 0:
-            raise Exception('Please provide a data expoter block as the sink.')
+            if b.type == BlockType.TRANSFORMER:
+                if len(b.downstream_blocks or []) != 1:
+                    raise Exception(
+                        f'Transformer {b.uuid} should (only) have one downstream block.',
+                    )
+                if len(b.upstream_blocks or []) != 1:
+                    raise Exception(f'Transformer {b.uuid} should (only) have one upstream block.')
+                transformer_blocks.append(b)
+
+        if len(source_blocks) != 1:
+            raise Exception('Please provide (only) one data loader block as the source.')
+
+        if len(transformer_blocks) > 1:
+            raise Exception('Please provide no more than one transformer block.')
+
+        if len(sink_blocks) != 1:
+            raise Exception('Please provide (only) one data expoter block as the sink.')
+
         self.source_block = source_blocks[0]
         self.sink_block = sink_blocks[0]
+        self.transformer_block = transformer_blocks[0] if len(transformer_blocks) > 0 else None
 
     def execute(
         self,
@@ -58,8 +81,14 @@ class StreamingPipelineExecutor(PipelineExecutor):
         source = SourceFactory.get_source(source_config)
         sink = SinkFactory.get_sink(sink_config)
         for message in source.read():
-            # TODO: Support transformation
+            if self.transformer_block is not None:
+                message = self.transformer_block.execute_block(
+                    input_args=[[message]],
+                )['output'][0]
             sink.write(message)
 
     def __excute_in_flink(self):
+        """
+        TODO: Implement this method
+        """
         pass
