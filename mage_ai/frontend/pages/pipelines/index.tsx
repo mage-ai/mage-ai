@@ -11,14 +11,15 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { capitalize, randomNameGenerator } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
-import { randomNameGenerator } from '@utils/string';
 
 function PipelineListPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ function PipelineListPage() {
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
 
-  const pipelines = useMemo(() => data?.pipelines || [], [data]);
+  const pipelines: PipelineType[] = useMemo(() => data?.pipelines || [], [data]);
   const closeNewPipelineMenu = useCallback(() => setNewPipelineMenuOpen(false), []);
 
   const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
@@ -154,7 +155,7 @@ function PipelineListPage() {
           as: `/pipelines/${pipelines[rowIndex].uuid}`,
           href: '/pipelines/[pipeline]',
         })}
-        columnFlex={[null, 1, 7, 1, 1, null]}
+        columnFlex={[null, 1, 7, 1, 1, 1, null]}
         columns={[
           {
             label: () => '',
@@ -167,12 +168,14 @@ function PipelineListPage() {
             uuid: 'Name',
           },
           {
+            uuid: 'Type',
+          },
+          {
             uuid: 'Blocks',
           },
           {
             uuid: 'Triggers',
           },
-
           {
             label: () => '',
             uuid: 'view',
@@ -183,6 +186,7 @@ function PipelineListPage() {
             blocks,
             name,
             schedules,
+            type,
             uuid,
           } = pipeline;
           const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
@@ -224,7 +228,7 @@ function PipelineListPage() {
               default={!isActive}
               key={`pipeline_status_${idx}`}
               monospace
-              success={isActive}
+              success={!!isActive}
             >
               {isActive
                 ? ScheduleStatusEnum.ACTIVE
@@ -235,6 +239,11 @@ function PipelineListPage() {
               key={`pipeline_name_${idx}`}
             >
               {name}
+            </Text>,
+            <Text
+              key={`pipeline_type_${idx}`}
+            >
+              {type === PipelineTypeEnum.PYTHON ? 'Standard' : capitalize(type)}
             </Text>,
             <Text
               default={blocksCount === 0}
