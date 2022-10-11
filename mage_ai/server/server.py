@@ -85,7 +85,6 @@ class ManagePageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('manage.html')
 
-
 class ApiBlockHandler(BaseHandler):
     def delete(self, block_type_and_uuid_encoded):
         block_type_and_uuid = urllib.parse.unquote(block_type_and_uuid_encoded)
@@ -577,8 +576,6 @@ def start_server(
 ):
     if manage:
         os.environ[MANAGE_ENV_VAR] = '1'
-
-    print(os.environ)
 
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
