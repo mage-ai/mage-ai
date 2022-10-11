@@ -9,7 +9,7 @@ import Divider from '@oracle/elements/Divider';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
 import Spacing from '@oracle/elements/Spacing';
 import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
@@ -115,17 +115,28 @@ function PipelineDetailPage({
 
   const headerMenuItems: MenuItemType[] = [
     {
-      label: () => 'New pipeline',
+      label: () => 'New standard pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
         pipeline: {
           name: randomNameGenerator(),
         },
       }),
-      uuid: 'PipelineDetail/Header/new_pipeline',
+      uuid: 'PipelineDetail/Header/new_standard_pipeline',
     },
     {
-      label: () => 'Delete pipeline',
+      label: () => 'New streaming pipeline',
+      // @ts-ignore
+      onClick: () => createPipeline({
+        pipeline: {
+          name: randomNameGenerator(),
+          type: PipelineTypeEnum.STREAMING,
+        },
+      }),
+      uuid: 'PipelineDetail/Header/new_streaming_pipeline',
+    },
+    {
+      label: () => 'Delete current pipeline',
       onClick: () => deletePipeline(pipelineUUID),
       openConfirmationDialogue: true,
       uuid: 'PipelineDetail/Header/delete_pipeline',
