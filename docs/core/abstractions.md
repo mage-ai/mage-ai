@@ -216,7 +216,7 @@ when a new object is created in Amazon S3 or Google Storage.
 You can also trigger a pipeline using your own custom event by making a `POST` request to
 the `http://localhost/api/events` endpoint with a custom event payload.
 
-<sub>Check out this [<b>tutorial</b>]() on how to create an event trigger.</sub>
+<sub>Check out this [<b>tutorial</b>](../features/orchestration/README.md#create-trigger) on how to create an event trigger.</sub>
 
 <br />
 
