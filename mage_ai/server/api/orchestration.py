@@ -221,7 +221,8 @@ class ApiPipelineRunListHandler(BaseHandler):
     model_class = PipelineRun
 
     def get(self, pipeline_schedule_id):
-        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id))
+        status = self.get_argument('status', None)
+        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
 
     def post(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
