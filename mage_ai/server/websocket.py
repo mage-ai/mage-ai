@@ -2,6 +2,7 @@ from datetime import datetime
 from distutils.file_util import copy_file
 from mage_ai.data_preparation.models.constants import (
     BlockType,
+    PipelineType,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     PIPELINES_FOLDER,
 )
@@ -101,7 +102,8 @@ def run_pipeline(
         add_pipeline_message(f'Pipeline {pipeline.uuid} execution failed with error:', metadata=metadata)
         add_pipeline_message(trace, execution_state='idle', metadata=metadata)
 
-    delete_pipeline_copy_config(config_copy_path)
+    if pipeline.type == PipelineType.PYTHON:
+        delete_pipeline_copy_config(config_copy_path)
 
 
 def publish_pipeline_message(
@@ -244,7 +246,6 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
         for client in self.clients:
             client.write_message(json.dumps(message_final))
 
-
     def __execute_block(
         self,
         message: Dict[str, any],
@@ -362,14 +363,17 @@ class WebSocketServer(tornado.websocket.WebSocketHandler):
 
             reset_execution_manager()
 
-            publish_pipeline_message(
-                'Saving current pipeline config for backup. This may take some time...',
-                metadata=dict(pipeline_uuid=pipeline_uuid),
-            )
+            if pipeline.type == PipelineType.PYTHON:
+                publish_pipeline_message(
+                    'Saving current pipeline config for backup. This may take some time...',
+                    metadata=dict(pipeline_uuid=pipeline_uuid),
+                )
 
-            # The pipeline state can potentially break when the execution is cancelled,
-            # so we save the pipeline config before execution if the user cancels the excecution.
-            config_copy_path = save_pipeline_config()
+                # The pipeline state can potentially break when the execution is cancelled,
+                # so we save the pipeline config before execution if the user cancels the excecution.
+                config_copy_path = save_pipeline_config()
+            else:
+                config_copy_path = None
 
             queue = multiprocessing.Queue()
             proc = multiprocessing.Process(

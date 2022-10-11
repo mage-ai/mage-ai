@@ -235,24 +235,31 @@ class Pipeline:
         This function will schedule the block execution in topological
         order based on a block's upstream dependencies.
         """
-        root_blocks = []
-        for block in self.blocks_by_uuid.values():
-            if len(block.upstream_blocks) == 0 and block.type in [
-                BlockType.DATA_EXPORTER,
-                BlockType.DATA_LOADER,
-                BlockType.TRANSFORMER,
-                BlockType.SENSOR,
-            ]:
-                root_blocks.append(block)
+        if self.type == PipelineType.STREAMING:
+            from mage_ai.data_preparation.executors.streaming_pipeline_executor \
+                import StreamingPipelineExecutor
+            StreamingPipelineExecutor(self).execute(
+                build_block_output_stdout=build_block_output_stdout,
+            )
+        else:
+            root_blocks = []
+            for block in self.blocks_by_uuid.values():
+                if len(block.upstream_blocks) == 0 and block.type in [
+                    BlockType.DATA_EXPORTER,
+                    BlockType.DATA_LOADER,
+                    BlockType.TRANSFORMER,
+                    BlockType.SENSOR,
+                ]:
+                    root_blocks.append(block)
 
-        run_blocks_sync(
-            root_blocks,
-            analyze_outputs=analyze_outputs,
-            build_block_output_stdout=build_block_output_stdout,
-            global_vars=global_vars,
-            run_sensors=run_sensors,
-            run_tests=run_tests,
-        )
+            run_blocks_sync(
+                root_blocks,
+                analyze_outputs=analyze_outputs,
+                build_block_output_stdout=build_block_output_stdout,
+                global_vars=global_vars,
+                run_sensors=run_sensors,
+                run_tests=run_tests,
+            )
 
     def get_config_from_yaml(self):
         if not os.path.exists(self.config_path):
