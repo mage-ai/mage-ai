@@ -84,8 +84,6 @@ This is what it could look like in the notebook UI:
   src="https://github.com/mage-ai/mage-ai/raw/master/media/data-pipeline-overview.jpg"
 />
 
-You can find all the pipelines in a project under the `[project_name]/pipelines/` folder.
-
 <br />
 
 ## Block
@@ -166,7 +164,7 @@ retrieving the status of a pipeline run for `transform_users` on the current exe
 
 ## Data product
 
-Every block produces data after its been executed. These are called <b>data products</b> in Mage.
+Every block produces data after it's been executed. These are called <b>data products</b> in Mage.
 
 Data validation occurs whenever a block is executed.
 
@@ -188,14 +186,15 @@ Some examples of data products produced by blocks:
 A trigger is a set of instructions that determine when or how a pipeline should run.
 A pipeline can have 1 or more triggers.
 
-There are 2 types of triggers:
+There are 3 types of triggers:
 
 1. Schedule
 1. Event
+1. API
 
 #### Schedule
 
-A schedule type trigger will instruct the pipeline to run after a start date and on a set interval.
+A schedule-type trigger will instruct the pipeline to run after a start date and on a set interval.
 
 Currently, the frequency pipelines can be scheduled for include:
 
@@ -208,7 +207,7 @@ Currently, the frequency pipelines can be scheduled for include:
 
 #### Event
 
-An event type trigger will instruct the pipeline to run whenever a specific event occurs.
+An event-type trigger will instruct the pipeline to run whenever a specific event occurs.
 
 For example, you can have a pipeline start running when a database query is finished executing or
 when a new object is created in Amazon S3 or Google Storage.
@@ -217,6 +216,12 @@ You can also trigger a pipeline using your own custom event by making a `POST` r
 the `http://localhost/api/events` endpoint with a custom event payload.
 
 <sub>Check out this [<b>tutorial</b>](../features/orchestration/README.md#create-trigger) on how to create an event trigger.</sub>
+
+#### API
+
+An API-type trigger will instruct the pipeline to run after a specific API call is made. 
+
+You can make a POST request to an endpoint provided in the UI when creating or editing a trigger. You can optionally include runtime variables in your request payload.
 
 <br />
 
@@ -233,7 +238,7 @@ There are 2 types of runs:
 
 #### Pipeline run
 
-This contain information about the entire pipeline execution.
+This contains information about the entire pipeline execution.
 
 #### Block run
 
