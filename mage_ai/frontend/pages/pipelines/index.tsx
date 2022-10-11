@@ -1,18 +1,18 @@
-import { useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
+import { MutateFunction, useMutation } from 'react-query';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import Flex from '@oracle/components/Flex';
-import FlexTable from '@oracle/components/FlexTable';
+import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
 import { Add, ChevronRight, Pause, PlayButtonFilled } from '@oracle/icons';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { BUTTON_GRADIENT } from '@oracle/styles/colors/gradients';
 import { ScheduleStatusEnum } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -25,12 +25,15 @@ function PipelineListPage() {
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
   }>({});
+  const [newPipelineMenuOpen, setNewPipelineMenuOpen] = useState(false);
+  const newPipelineMenuRef = useRef(null);
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({ include_schedules: 1 });
 
   const pipelines = useMemo(() => data?.pipelines || [], [data]);
+  const closeNewPipelineMenu = useCallback(() => setNewPipelineMenuOpen(false), []);
 
-  const [createPipeline, { isLoading }] = useMutation(
+  const [createPipeline, { isLoading }]: [MutateFunction<any>, { isLoading: boolean }] = useMutation(
     api.pipelines.useCreate(),
     {
       onSuccess: (response: any) => onSuccess(
@@ -88,22 +91,60 @@ function PipelineListPage() {
   return (
     <Dashboard
       subheaderChildren={
-        <KeyboardShortcutButton
-          background={BUTTON_GRADIENT}
-          beforeElement={<Add size={2.5 * UNIT} />}
-          bold
-          inline
-          loading={isLoading}
-          // @ts-ignore
-          onClick={() => createPipeline({
-            pipeline: {
-              name: randomNameGenerator(),
+        <FlyoutMenuWrapper
+          disableKeyboardShortcuts
+          items={[
+            {
+              label: () => 'Standard (batch)',
+              onClick: () => createPipeline({
+                pipeline: {
+                  name: randomNameGenerator(),
+                },
+              }),
+              uuid: 'Pipelines/NewPipelineMenu/standard',
             },
-          })}
-          uuid="PipelineListPage/new_pipeline"
+            {
+              label: () => 'Streaming',
+              onClick: () => createPipeline({
+                pipeline: {
+                  name: randomNameGenerator(),
+                  type: PipelineTypeEnum.STREAMING,
+                },
+              }),
+              uuid: 'Pipelines/NewPipelineMenu/streaming',
+            },
+            // {
+            //   label: () => 'Data integration',
+            //   onClick: () => createPipeline({
+            //     pipeline: {
+            //       name: randomNameGenerator(),
+            //       type: PipelineTypeEnum.INTEGRATION,
+            //     },
+            //   }),
+            //   uuid: 'Pipelines/NewPipelineMenu/data_integration',
+            // },
+          ]}
+          onClickCallback={closeNewPipelineMenu}
+          onClickOutside={closeNewPipelineMenu}
+          open={newPipelineMenuOpen}
+          parentRef={newPipelineMenuRef}
+          uuid="pipelines/new_pipeline_menu"
         >
-          New pipeline
-        </KeyboardShortcutButton>
+          <KeyboardShortcutButton
+            background={BUTTON_GRADIENT}
+            beforeElement={<Add size={2.5 * UNIT} />}
+            bold
+            inline
+            loading={isLoading}
+            onClick={e => {
+              e.preventDefault();
+              setNewPipelineMenuOpen(prevOpenState => !prevOpenState);
+            }}
+            uuid="pipelines/new_pipeline_button"
+          >
+            New pipeline
+          </KeyboardShortcutButton>
+        </FlyoutMenuWrapper>
       }
       title="Pipelines"
       uuid="pipelines/index"
@@ -113,6 +154,7 @@ function PipelineListPage() {
           as: `/pipelines/${pipelines[rowIndex].uuid}`,
           href: '/pipelines/[pipeline]',
         })}
+        columnFlex={[null, 1, 7, 1, 1, null]}
         columns={[
           {
             label: () => '',
@@ -136,8 +178,7 @@ function PipelineListPage() {
             uuid: 'view',
           },
         ]}
-        columnFlex={[null, 1, 7, 1, 1, null]}
-        rows={pipelines.map((pipeline) => {
+        rows={pipelines.map((pipeline, idx) => {
           const {
             blocks,
             name,
@@ -152,8 +193,8 @@ function PipelineListPage() {
             schedulesCount >= 1
               ? (
                 <Button
+                iconOnly
                   loading={!!pipelinesEditing[uuid]}
-                  iconOnly
                   noBackground
                   noBorder
                   noPadding
@@ -181,6 +222,7 @@ function PipelineListPage() {
             ,
             <Text
               default={!isActive}
+              key={`pipeline_status_${idx}`}
               monospace
               success={isActive}
             >
@@ -189,18 +231,31 @@ function PipelineListPage() {
                 : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
               }
             </Text>,
-            <Text>
+            <Text
+              key={`pipeline_name_${idx}`}
+            >
               {name}
             </Text>,
-            <Text default={blocksCount === 0} monospace>
+            <Text
+              default={blocksCount === 0}
+              key={`pipeline_block_count_${idx}`}
+              monospace
+            >
               {blocksCount}
             </Text>,
-            <Text default={schedulesCount === 0} monospace>
+            <Text
+              default={schedulesCount === 0}
+              key={`pipeline_trigger_count_${idx}`}
+              monospace
+            >
               {schedulesCount}
             </Text>,
-            <Flex flex={1} justifyContent="flex-end">
+            <Flex
+              flex={1} justifyContent="flex-end"
+              key={`chevron_icon_${idx}`}
+            >
               <ChevronRight default size={2 * UNIT} />
-            </Flex>
+            </Flex>,
           ];
         })}
       />
