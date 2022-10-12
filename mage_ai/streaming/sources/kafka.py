@@ -24,6 +24,7 @@ class KafkaSource:
             self.config.topic,
             group_id=self.config.consumer_group,
             bootstrap_servers=self.config.bootstrap_server,
+            enable_auto_commit=True,
         )
         print('Finish initializing kafka consumer.')
 
