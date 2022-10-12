@@ -213,7 +213,7 @@ function CommandButtons({
           </>
         )}
 
-        {BlockTypeEnum.SCRATCHPAD === block.type && (
+        {(BlockTypeEnum.SCRATCHPAD === block.type && !isStreamingPipeline) && (
           <Spacing mt={PADDING_UNITS}>
             <FlyoutMenuWrapper
               items={convertBlockMenuItems}
@@ -296,7 +296,7 @@ function CommandButtons({
           </>
         )}
 
-        <Spacing mt={PADDING_UNITS}>
+        <Spacing mt={isStreamingPipeline ? 0 : PADDING_UNITS}>
           <Tooltip
             appearBefore
             default
@@ -343,8 +343,8 @@ function CommandButtons({
                   &nbsp;
                   <KeyboardTextGroup
                     inline
-                    monospace
                     keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}
+                    monospace
                     uuidForKey={uuid}
                   />
                 </Text>
