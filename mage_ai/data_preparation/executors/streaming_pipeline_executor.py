@@ -80,12 +80,12 @@ class StreamingPipelineExecutor(PipelineExecutor):
         sink_config = yaml.safe_load(self.sink_block.content)
         source = SourceFactory.get_source(source_config)
         sink = SinkFactory.get_sink(sink_config)
-        for message in source.read():
+        for messages in source.batch_read():
             if self.transformer_block is not None:
-                message = self.transformer_block.execute_block(
-                    input_args=[[message]],
-                )['output'][0]
-            sink.write(message)
+                messages = self.transformer_block.execute_block(
+                    input_args=[messages],
+                )['output']
+            sink.batch_write(messages)
 
     def __excute_in_flink(self):
         """
