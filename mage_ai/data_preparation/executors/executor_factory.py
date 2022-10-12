@@ -14,17 +14,16 @@ class ExecutorFactory:
     def get_pipeline_executor(
         self,
         pipeline: Pipeline,
-        executor_type: ExecutorType = None
+        execution_partition: str = None,
     ) -> PipelineExecutor:
-        if executor_type is None:
-            if pipeline.type == PipelineType.PYSPARK:
-                executor_type = ExecutorType.PYSPARK
-            else:
-                executor_type = ExecutorType.LOCAL_PYTHON
-        if executor_type == ExecutorType.PYSPARK:
+        if pipeline.type == PipelineType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_pipeline_executor \
                 import PySparkPipelineExecutor
             return PySparkPipelineExecutor(pipeline)
+        elif pipeline.type == PipelineType.STREAMING:
+            from mage_ai.data_preparation.executors.streaming_pipeline_executor \
+                import StreamingPipelineExecutor
+            return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             return PipelineExecutor(pipeline)
 

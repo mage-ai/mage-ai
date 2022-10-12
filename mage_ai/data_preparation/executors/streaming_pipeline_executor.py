@@ -1,15 +1,15 @@
 from contextlib import redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from typing import Callable, Dict
-import sys
 import yaml
 
 
 class StreamingPipelineExecutor(PipelineExecutor):
-    def __init__(self, pipeline: Pipeline):
-        super().__init__(pipeline)
+    def __init__(self, pipeline: Pipeline, **kwargs):
+        super().__init__(pipeline, **kwargs)
         self.parse_and_validate_blocks()
 
     def parse_and_validate_blocks(self):
@@ -62,6 +62,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None,
+        **kwargs,
     ) -> None:
         # TODOs:
         # 1. Support multiple sources and sinks
@@ -69,7 +70,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         if build_block_output_stdout:
             stdout = build_block_output_stdout(self.pipeline.uuid)
         else:
-            stdout = sys.stdout
+            stdout = StreamToLogger(self.logger)
         with redirect_stdout(stdout):
             self.__execute_in_python()
 
