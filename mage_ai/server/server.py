@@ -22,7 +22,7 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockListHandler,
     ApiPipelineBlockOutputHandler,
 )
-from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstancesHandler
+from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstanceDetailHandler, ApiInstancesHandler
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
     ApiAwsEventRuleListHandler,
@@ -399,7 +399,7 @@ class KernelsHandler(BaseHandler):
 class ApiStatusHandler(BaseHandler):
     def get(self):
         status = {
-            'manage': os.getenv(MANAGE_VAR) == '1',
+            'manage': os.getenv(MANAGE_ENV_VAR) == '1',
         }
         self.write(dict(status=status))
 
@@ -439,6 +439,7 @@ def make_app():
         (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)', ApiClustersHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
+        (r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)', ApiInstanceDetailHandler),
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),

@@ -157,8 +157,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource][parentResource].useUpdate = (parentId: string, id: string, opts?: any) => async (body: any) =>
       fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
 
-    apis[resource][parentResource].useDelete = (parentId: string, id: string) => async () => {
-      const response = await useDeleteWithParent(resource, parentResource, parentId, id);
+    apis[resource][parentResource].useDelete = (parentId: string, id: string, query?: object) => async () => {
+      const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
 
       return await handle(response);
     },
@@ -210,8 +210,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource].useCreate = (opts?: any) =>
       async (body: any) => fetchCreate(resource, body, opts);
 
-    apis[resource].useDelete = (id: string) => async () => {
-      const response = await useDelete(resource, id);
+    apis[resource].useDelete = (id: string) => async (body?: any) => {
+      const response = await useDelete(resource, id, query);
 
       return await handle(response);
     },
