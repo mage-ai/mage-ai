@@ -71,8 +71,16 @@ class StreamingPipelineExecutor(PipelineExecutor):
             stdout = build_block_output_stdout(self.pipeline.uuid)
         else:
             stdout = StreamToLogger(self.logger)
-        with redirect_stdout(stdout):
-            self.__execute_in_python()
+        try:
+            with redirect_stdout(stdout):
+                self.__execute_in_python()
+        except Exception as e:
+            if not build_block_output_stdout:
+                self.logger.exception(
+                        f'Failed to execute streaming pipeline {self.pipeline.uuid}',
+                        error=e,
+                    )
+            raise e
 
     def __execute_in_python(self):
         from mage_ai.streaming.sources.source_factory import SourceFactory
