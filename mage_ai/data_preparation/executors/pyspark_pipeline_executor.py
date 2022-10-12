@@ -24,6 +24,7 @@ class PySparkPipelineExecutor(PipelineExecutor):
         global_vars: Dict = None,
         run_tests: bool = False,
         update_status: bool = False,
+        **kwargs,
     ) -> None:
         """
         Run pipeline in a spark cluster

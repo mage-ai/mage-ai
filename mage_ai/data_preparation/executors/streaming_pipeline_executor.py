@@ -62,6 +62,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self,
         build_block_output_stdout: Callable[..., object] = None,
         global_vars: Dict = None,
+        **kwargs,
     ) -> None:
         # TODOs:
         # 1. Support multiple sources and sinks
