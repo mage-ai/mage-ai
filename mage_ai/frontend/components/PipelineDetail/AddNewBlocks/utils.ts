@@ -8,33 +8,99 @@ import {
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
+  CONVERTIBLE_BLOCK_TYPES,
 } from '@interfaces/BlockType';
 import DataSourceTypeEnum, {
   DATA_SOURCE_TYPES,
   DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING,
 } from '@interfaces/DataSourceType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { addUnderscores } from '@utils/string';
+
+const getDataSourceTypes = (
+  pipelineType?: PipelineTypeEnum,
+): { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } => {
+  if (pipelineType === PipelineTypeEnum.STREAMING) {
+    return {
+      [BlockTypeEnum.DATA_LOADER]: [
+        DataSourceTypeEnum.KAFKA,
+      ],
+      [BlockTypeEnum.DATA_EXPORTER]: [
+        DataSourceTypeEnum.OPENSEARCH,
+      ],
+      [BlockTypeEnum.TRANSFORMER]: [
+        DataSourceTypeEnum.GENERIC,
+      ],
+    };
+  }
+
+  return DATA_SOURCE_TYPES;
+};
 
 export const createDataSourceMenuItems = (
   blockType: BlockTypeEnum,
   blockCallback: (block: BlockRequestPayloadType) => void,
-) => (
-  DATA_SOURCE_TYPES[blockType].map((sourceType: DataSourceTypeEnum) => ({
-    indent: blockType === BlockTypeEnum.TRANSFORMER,
-    label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
-    onClick: () => {
-      blockCallback({
-        config: {
-          data_source: sourceType === DataSourceTypeEnum.GENERIC ? null : sourceType,
-        },
-        language: BlockLanguageEnum.PYTHON,
-        type: blockType,
-      });
-    },
-    uuid: `${blockType}/${sourceType}`,
-  }))
-);
+  pipelineType?: PipelineTypeEnum,
+) => {
+  const requiresConfigFile = (pipelineType === PipelineTypeEnum.STREAMING)
+    && (blockType === BlockTypeEnum.DATA_LOADER || blockType === BlockTypeEnum.DATA_EXPORTER);
+
+  return (getDataSourceTypes(pipelineType)[blockType])
+    .map((sourceType: DataSourceTypeEnum) => ({
+      indent: blockType === BlockTypeEnum.TRANSFORMER,
+      label: () => DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
+      onClick: () => {
+        blockCallback({
+          config: {
+            data_source: (sourceType === DataSourceTypeEnum.GENERIC) ? null : sourceType,
+          },
+          language: requiresConfigFile
+            ? BlockLanguageEnum.YAML
+            : BlockLanguageEnum.PYTHON,
+          priority: requiresConfigFile ? 1 : null,
+          type: blockType,
+        });
+      },
+      uuid: `${blockType}/${sourceType}`,
+    }));
+};
+
+export const getdataSourceMenuItems = (
+  addNewBlock: (block: BlockRequestPayloadType) => void,
+  blockType: BlockTypeEnum,
+  pipelineType?: PipelineTypeEnum,
+) => {
+  const dataSourceMenuItemsMapping = Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
+      (blockType: BlockTypeEnum) => ([
+        blockType,
+        createDataSourceMenuItems(blockType, addNewBlock, pipelineType),
+      ]),
+    ),
+  );
+
+  if (pipelineType === PipelineTypeEnum.PYSPARK
+    || (pipelineType === PipelineTypeEnum.PYTHON && blockType === BlockTypeEnum.TRANSFORMER)
+    || (pipelineType === PipelineTypeEnum.STREAMING)) {
+    return dataSourceMenuItemsMapping[blockType];
+  } else {
+    return [
+      {
+        label: () => 'SQL',
+        onClick: () => addNewBlock({
+          language: BlockLanguageEnum.SQL,
+          type: blockType,
+        }),
+        uuid: `${blockType}/sql`,
+      },
+      {
+        items: dataSourceMenuItemsMapping[blockType],
+        label: () => 'Python',
+        uuid: `${blockType}/python`,
+      },
+    ];
+  }
+};
 
 export function createActionMenuItems(
   actions: ActionTypeEnum[],

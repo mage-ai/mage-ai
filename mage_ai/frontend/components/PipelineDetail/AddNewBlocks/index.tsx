@@ -25,7 +25,11 @@ import {
   ICON_SIZE,
   IconContainerStyle,
 } from './index.style';
-import { createActionMenuGroupings, createDataSourceMenuItems } from './utils';
+import {
+  createActionMenuGroupings,
+  createDataSourceMenuItems,
+  getdataSourceMenuItems,
+} from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -56,19 +60,8 @@ function AddNewBlocks({
     compact,
     inline: true,
   };
-
+  const pipelineType = pipeline?.type;
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
-
-  const dataSourceMenuItems = useMemo(() => (
-    Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
-      (blockType: BlockTypeEnum) => ([
-        blockType,
-        createDataSourceMenuItems(blockType, addNewBlock),
-      ]),
-    ),
-  )), [
-    addNewBlock,
-  ]);
 
   const columnActionMenuItems = createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
@@ -94,7 +87,7 @@ function AddNewBlocks({
     },
     {
       bold: true,
-      items: dataSourceMenuItems[BlockTypeEnum.TRANSFORMER],
+      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
       label: () => 'Data sources',
       uuid: 'data_sources_grouping',
     },
@@ -118,7 +111,7 @@ function AddNewBlocks({
     [blockIdx, setAddNewBlockMenuOpenIdx],
   );
 
-  const isPySpark = PipelineTypeEnum.PYSPARK === pipeline?.type;
+  const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
 
   return (
     <FlexContainer inline>
@@ -129,24 +122,7 @@ function AddNewBlocks({
         <FlexContainer>
           <FlyoutMenuWrapper
             disableKeyboardShortcuts
-            items={isPySpark
-              ? dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]
-              : [
-                  {
-                    label: () => 'SQL',
-                    onClick: () => addNewBlock({
-                      language: BlockLanguageEnum.SQL,
-                      type: BlockTypeEnum.DATA_LOADER,
-                    }),
-                    uuid: 'data_loaders/sql',
-                  },
-                  {
-                    items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
-                    label: () => 'Python',
-                    uuid: 'data_loaders/python',
-                  },
-                ]
-            }
+            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
@@ -190,7 +166,9 @@ function AddNewBlocks({
                   uuid: 'transformers/sql',
                 },
                 {
-                  items: allActionMenuItems,
+                  items: (pipelineType === PipelineTypeEnum.STREAMING)
+                    ? getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType)
+                    : allActionMenuItems,
                   label: () => 'Python',
                   uuid: 'transformers/python',
                 },
@@ -227,24 +205,7 @@ function AddNewBlocks({
 
           <FlyoutMenuWrapper
             disableKeyboardShortcuts
-            items={isPySpark
-              ? dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]
-              : [
-                {
-                  label: () => 'SQL',
-                  onClick: () => addNewBlock({
-                    language: BlockLanguageEnum.SQL,
-                    type: BlockTypeEnum.DATA_EXPORTER,
-                  }),
-                  uuid: 'data_exporters/sql',
-                },
-                {
-                  label: () => 'Python',
-                  items: dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER],
-                  uuid: 'data_exporters/python',
-                },
-              ]
-            }
+            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
             parentRef={dataExporterButtonRef}
