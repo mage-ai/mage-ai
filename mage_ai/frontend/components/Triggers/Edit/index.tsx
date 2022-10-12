@@ -26,7 +26,7 @@ import PipelineScheduleType, {
   ScheduleIntervalEnum,
   ScheduleTypeEnum,
 } from '@interfaces/PipelineScheduleType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
@@ -57,23 +57,35 @@ import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { getTimeInUTC } from '../utils';
 
-const TRIGGER_TYPES = [
-  {
-    description: () => 'This pipeline will run continuously on an interval or just once.',
-    label: () => 'Schedule',
-    uuid: ScheduleTypeEnum.TIME,
-  },
-  {
-    description: () => 'This pipeline will run when a specific event occurs.',
-    label: () => 'Event',
-    uuid: ScheduleTypeEnum.EVENT,
-  },
-  {
-    description: () => 'Run this pipeline when you make an API call.',
-    label: () => 'API',
-    uuid: ScheduleTypeEnum.API,
-  },
-];
+const getTriggerTypes = (
+  isStreamingPipeline?: boolean,
+): {
+  description: () => string;
+  label: () => string;
+  uuid: ScheduleTypeEnum;
+}[] => {
+  const triggerTypes = [
+    {
+      description: () => 'This pipeline will run continuously on an interval or just once.',
+      label: () => 'Schedule',
+      uuid: ScheduleTypeEnum.TIME,
+    },
+    {
+      description: () => 'This pipeline will run when a specific event occurs.',
+      label: () => 'Event',
+      uuid: ScheduleTypeEnum.EVENT,
+    },
+    {
+      description: () => 'Run this pipeline when you make an API call.',
+      label: () => 'API',
+      uuid: ScheduleTypeEnum.API,
+    },
+  ];
+
+  return isStreamingPipeline
+    ? triggerTypes.slice(0, 1)
+    : triggerTypes;
+};
 
 type EditProps = {
   fetchPipelineSchedule: () => void;
@@ -91,6 +103,7 @@ function Edit({
   const router = useRouter();
   const pipelineUUID = pipeline?.uuid;
   const pipelineScheduleID = pipelineSchedule?.id;
+  const isStreamingPipeline = pipeline?.type === PipelineTypeEnum.STREAMING;
 
   const [errors, setErrors] = useState(null);
 
@@ -403,6 +416,10 @@ function Edit({
         </div>,
       ],
     ];
+
+    if (isStreamingPipeline) {
+      rows.splice(1, 1);
+    }
 
     if (isCustomInterval) {
       rows.splice(
@@ -823,7 +840,8 @@ function Edit({
   ]);
 
   const saveButtonDisabled = !scheduleType || (
-    ScheduleTypeEnum.TIME === scheduleType && !(scheduleInterval && date)
+    ScheduleTypeEnum.TIME === scheduleType
+      && !((isStreamingPipeline && date) || (!isStreamingPipeline && date && scheduleInterval))
   ) || (
     ScheduleTypeEnum.EVENT === scheduleType && (
       !eventMatchers?.length
@@ -958,7 +976,7 @@ function Edit({
           </Spacing>
 
           <FlexContainer>
-            {TRIGGER_TYPES.map(({
+            {getTriggerTypes(isStreamingPipeline).map(({
               label,
               description,
               uuid,

@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import DependencyGraph from '@components/DependencyGraph';
 import Divider from '@oracle/elements/Divider';
-import FlexTable from '@oracle/components/FlexTable';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';

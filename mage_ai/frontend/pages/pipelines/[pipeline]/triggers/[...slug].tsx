@@ -66,7 +66,7 @@ TriggerDetailPage.getInitialProps= async(ctx: any) => {
 
   if (Array.isArray(slugArray)) {
     const [pipelineScheduleId, subpath] = slugArray;
-;
+
     return {
       pipelineScheduleId,
       pipelineUUID,
