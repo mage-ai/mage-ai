@@ -41,7 +41,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import LabelWithValueClicker from '@oracle/components/LabelWithValueClicker';
 import Link from '@oracle/elements/Link';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -824,10 +824,10 @@ function CodeBlockProps({
           deleteBlock={deleteBlock}
           executionState={executionState}
           interruptKernel={interruptKernel}
+          pipelineType={pipeline?.type}
           runBlock={runBlockAndTrack}
           savePipelineContent={savePipelineContent}
           setOutputCollapsed={setOutputCollapsed}
-          updateBlock={updateBlock}
         />
       )}
 
@@ -1001,6 +1001,7 @@ function CodeBlockProps({
           {block.upstream_blocks.length >= 1
             && !codeCollapsed
             && BLOCK_TYPES_WITH_UPSTREAM_INPUTS.includes(block.type)
+            && (pipeline?.type !== PipelineTypeEnum.STREAMING)
             && (
             <CodeHelperStyle>
               <Text small>

@@ -35,6 +35,7 @@ import {
   KEY_SYMBOL_META,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { buildConvertBlockMenuItems } from '../utils';
 import { getColorsForBlockType } from '../index.style';
 
@@ -51,6 +52,7 @@ export type CommandButtonsSharedProps = {
 type CommandButtonsProps = {
   addNewBlock: (block: BlockType) => Promise<any>;
   block: BlockType;
+  pipelineType?: PipelineTypeEnum;
   runBlock: (payload: {
     block: BlockType;
     code?: string;
@@ -64,7 +66,6 @@ type CommandButtonsProps = {
     pipeline?: PipelineType;
   }) => Promise<any>;
   setOutputCollapsed: (value: boolean) => void;
-  updateBlock: ({ block: BlockType }) => void;
 } & CommandButtonsSharedProps;
 
 function CommandButtons({
@@ -75,10 +76,10 @@ function CommandButtons({
   deleteBlock,
   executionState,
   interruptKernel,
+  pipelineType,
   runBlock,
   savePipelineContent,
   setOutputCollapsed,
-  updateBlock,
 }: CommandButtonsProps) {
   const {
     all_upstream_blocks_executed: upstreamBlocksExecuted = true,
@@ -98,6 +99,7 @@ function CommandButtons({
   const themeContext = useContext(ThemeContext);
   const isInProgress = ExecutionStateEnum.IDLE !== executionState;
   const color = getColorsForBlockType(type, { theme: themeContext }).accent;
+  const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
 
   const convertBlockMenuItems =
     useMemo(() => buildConvertBlockMenuItems(
@@ -134,7 +136,7 @@ function CommandButtons({
           />
         )}
 
-        {!isInProgress && (
+        {(!isInProgress && !isStreamingPipeline) &&  (
           <>
             <Tooltip
               appearAbove
@@ -248,10 +250,10 @@ function CommandButtons({
           </Spacing>
         )}
 
-        {[
+        {([
           BlockTypeEnum.DATA_LOADER,
           BlockTypeEnum.TRANSFORMER,
-        ].includes(block.type) && (
+        ].includes(block.type) && !isStreamingPipeline) && (
           <>
             <Spacing
               mt={PADDING_UNITS}
@@ -366,64 +368,69 @@ function CommandButtons({
             </Tooltip>
           </Spacing>
         )}
-        <div ref={refMoreActions}>
-          <Spacing mt={PADDING_UNITS}>
-            <Tooltip
-              appearBefore
-              default
-              label={(
-                <Text>
-                  More actions
-                </Text>
-              )}
-              size={UNIT * 2.5}
-              widthFitContent
-            >
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setShowMoreActions(!showMoreActions)}
-              >
-                <Circle
-                  borderSize={1.5}
+
+        {!isStreamingPipeline &&
+          <>
+            <div ref={refMoreActions}>
+              <Spacing mt={PADDING_UNITS}>
+                <Tooltip
+                  appearBefore
+                  default
+                  label={(
+                    <Text>
+                      More actions
+                    </Text>
+                  )}
                   size={UNIT * 2.5}
+                  widthFitContent
                 >
-                  <Ellipsis size={UNIT} />
-                </Circle>
-              </Button>
-            </Tooltip>
-          </Spacing>
-        </div>
-        <ClickOutside
-          disableEscape
-          onClickOutside={() => setShowMoreActions(false)}
-          open={showMoreActions}
-        >
-          <FlyoutMenu
-            items={
-              [
-                {
-                  label: () => 'Execute with upstream blocks',
-                  onClick: () => runBlock({ block, runUpstream: true }),
-                  uuid: 'execute_upstream',
-                },
-                {
-                  label: () => 'Execute block and run tests',
-                  onClick: () => runBlock({ block, runTests: true }),
-                  uuid: 'run_tests',
-                },
-              ]
-            }
-            left={-UNIT * 25}
-            onClickCallback={() => setShowMoreActions(false)}
-            open={showMoreActions}
-            parentRef={refMoreActions}
-            topOffset={UNIT * 6}
-            uuid="FileHeaderMenu/file_items"
-            width={UNIT * 25}
-          />
-        </ClickOutside>
+                  <Button
+                    noBackground
+                    noBorder
+                    noPadding
+                    onClick={() => setShowMoreActions(!showMoreActions)}
+                  >
+                    <Circle
+                      borderSize={1.5}
+                      size={UNIT * 2.5}
+                    >
+                      <Ellipsis size={UNIT} />
+                    </Circle>
+                  </Button>
+                </Tooltip>
+              </Spacing>
+            </div>
+            <ClickOutside
+              disableEscape
+              onClickOutside={() => setShowMoreActions(false)}
+              open={showMoreActions}
+            >
+              <FlyoutMenu
+                items={
+                  [
+                    {
+                      label: () => 'Execute with upstream blocks',
+                      onClick: () => runBlock({ block, runUpstream: true }),
+                      uuid: 'execute_upstream',
+                    },
+                    {
+                      label: () => 'Execute block and run tests',
+                      onClick: () => runBlock({ block, runTests: true }),
+                      uuid: 'run_tests',
+                    },
+                  ]
+                }
+                left={-UNIT * 25}
+                onClickCallback={() => setShowMoreActions(false)}
+                open={showMoreActions}
+                parentRef={refMoreActions}
+                topOffset={UNIT * 6}
+                uuid="FileHeaderMenu/file_items"
+                width={UNIT * 25}
+              />
+            </ClickOutside>
+          </>
+        }
       </FlexContainer>
     </ContainerStyle>
   );

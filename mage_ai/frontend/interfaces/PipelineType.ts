@@ -6,6 +6,7 @@ import { PipelineMetadataType } from './MetadataType';
 export enum PipelineTypeEnum {
   PYTHON = 'python',
   PYSPARK = 'pyspark',
+  STREAMING = 'streaming',
 }
 
 export const PIPELINE_TYPE_TO_KERNEL_NAME = {

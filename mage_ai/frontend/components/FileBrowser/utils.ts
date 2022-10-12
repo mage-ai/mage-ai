@@ -4,7 +4,10 @@ import FileType, {
   FOLDER_NAME_PIPELINES,
   METADATA_FILENAME,
 } from '@interfaces/FileType';
-import { BLOCK_TYPES } from '@interfaces/BlockType';
+import BlockType, {
+  BLOCK_TYPES,
+  YAML_BLOCK_TYPES,
+} from '@interfaces/BlockType';
 import { prependArray, removeAtIndex } from '@utils/array';
 import { singularize } from '@utils/string';
 
@@ -51,6 +54,24 @@ export function getBlockFromFile(
     return {
       type: blockType,
       uuid: fileName.replace(pyRegex, ''),
+    };
+  }
+}
+
+export function getYamlBlockFromFile(
+  file: FileType,
+  currentPathInit: string = null,
+): BlockType {
+  const parts = getFullPath(file, currentPathInit).split('/');
+  // This assumes path [block_type]s/[filename]
+  const blockType = singularize(parts[0]);
+  const fileName = parts[parts.length - 1];
+
+  const yamlRegex = new RegExp(`\.${FileExtensionEnum.YAML}$`);
+  if (YAML_BLOCK_TYPES.includes(blockType) && fileName.match(yamlRegex)) {
+    return {
+      type: blockType,
+      uuid: fileName.replace(yamlRegex, ''),
     };
   }
 }
