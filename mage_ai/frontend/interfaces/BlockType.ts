@@ -8,6 +8,7 @@ import { DataTypeEnum } from './KernelOutputType';
 export enum BlockLanguageEnum {
   PYTHON = 'python',
   SQL = 'sql',
+  YAML = 'yaml',
 }
 
 export enum BlockTypeEnum {
@@ -92,6 +93,7 @@ export interface BlockRequestPayloadType {
   converted_from?: string;
   language?: BlockLanguageEnum;
   name?: string;
+  priority?: number;
   type: BlockTypeEnum;
   upstream_blocks?: string[];
 }
