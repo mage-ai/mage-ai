@@ -35,6 +35,7 @@ import {
   getBlockUUIDFromFile,
   getFullPath,
   getPipelineConfigPath,
+  getYamlBlockFromFile,
 } from './utils';
 import { singularize } from '@utils/string';
 import { sortByKey } from '@utils/array';
@@ -169,6 +170,8 @@ function Folder({
               }
             }
 
+            const yamlBlockFromFile = getYamlBlockFromFile(file);
+
             if (isPipelineFolder) {
               const pipelineMetadataFilePath = getPipelineConfigPath(file, currentPipelineName);
               openFile(pipelineMetadataFilePath);
@@ -178,6 +181,12 @@ function Folder({
 
                 return !collapsedPrev;
               });
+            } else if (yamlBlockFromFile) {
+              onSelectBlockFile(
+                yamlBlockFromFile.uuid,
+                yamlBlockFromFile.type,
+                getFullPath(file),
+              );
             } else if (name.match(SUPPORTED_FILE_EXTENSIONS_REGEX)) {
               openFile(getFullPath(file));
             } else {

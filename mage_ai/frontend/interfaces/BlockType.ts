@@ -29,6 +29,11 @@ export const BLOCK_TYPES = [
   BlockTypeEnum.TRANSFORMER,
 ];
 
+export const YAML_BLOCK_TYPES = [
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+];
+
 export const BLOCK_TYPES_NO_DATA_TABLE = [
   BlockTypeEnum.CHART,
   BlockTypeEnum.SCRATCHPAD,
