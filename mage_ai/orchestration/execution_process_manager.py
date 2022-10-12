@@ -28,6 +28,11 @@ class ExecutionProcessManager:
         pipeline_run_id: int,
         proc: multiprocessing.Process,
     ):
+        if self.has_pipeline_process(
+            pipeline_run_id in self.pipeline_processes
+            and self.pipeline_processes[pipeline_run_id].is_alive()
+        ):
+            self.pipeline_processes[pipeline_run_id].terminate()
         self.pipeline_processes[pipeline_run_id] = proc
 
     def clean_up_processes(self):
