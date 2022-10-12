@@ -73,7 +73,7 @@ class Source():
                 bookmark = singer.get_bookmark(state, tap_stream_id, bookmark_column)
 
             max_bookmark = None
-            for row in self.load_data(bookmark=bookmark):
+            for row in self.load_data(bookmark=bookmark, bookmark_column=bookmark_column):
                 singer.write_records(tap_stream_id, [row])
 
                 if bookmark_column:
@@ -115,7 +115,7 @@ class Source():
             kwargs,
         ))
 
-    def load_data(self, bookmark=None, **kwargs):
+    def load_data(self, bookmark: str = None, bookmark_column: str = None, **kwargs) -> List[dict]:
         raise Exception('Subclasses must implement the load_data method.')
 
     def get_key_properties(self, stream_id: str) -> List[str]:

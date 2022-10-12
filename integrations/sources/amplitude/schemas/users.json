@@ -4,7 +4,7 @@
     "object"
   ],
   "properties": {
-    "id": {
+    "amplitude_id": {
       "type": [
         "null",
         "string"

@@ -2,12 +2,13 @@
   "streams": [
     {
       "tap_stream_id": "users",
+      "replication_key": "amplitude_id",
       "key_properties": [
-        "id"
+        "amplitude_id"
       ],
       "schema": {
         "properties": {
-          "id": {
+          "amplitude_id": {
             "type": [
               "null",
               "string"
@@ -71,9 +72,11 @@
           "metadata": {
             "selected": true,
             "table-key-properties": [
-              "id"
+              "amplitude_id"
             ],
-            "valid-replication-keys": [],
+            "valid-replication-keys": [
+              "amplitude_id"
+            ],
             "inclusion": "available",
             "schema-name": "users"
           }
@@ -81,7 +84,7 @@
         {
           "breadcrumb": [
             "properties",
-            "id"
+            "amplitude_id"
           ],
           "metadata": {
             "inclusion": "automatic"
