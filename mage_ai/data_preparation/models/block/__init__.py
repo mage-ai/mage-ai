@@ -611,26 +611,30 @@ class Block:
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        input_args: List = None,
         logger: Logger = None,
         global_vars: Dict = None,
         test_execution: bool = False,
     ) -> Dict:
         upstream_block_uuids = []
-        input_vars = []
-        if self.pipeline is not None:
-            for upstream_block_uuid, variables in self.input_variables.items():
-                upstream_block_uuids.append(upstream_block_uuid)
-                input_vars += [
-                    self.pipeline.variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        upstream_block_uuid,
-                        var,
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME,
-                        spark=(global_vars or dict()).get('spark'),
-                    )
-                    for var in variables
-                ]
+        if input_args is None:
+            input_vars = []
+            if self.pipeline is not None:
+                for upstream_block_uuid, variables in self.input_variables.items():
+                    upstream_block_uuids.append(upstream_block_uuid)
+                    input_vars += [
+                        self.pipeline.variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            upstream_block_uuid,
+                            var,
+                            partition=execution_partition,
+                            variable_type=VariableType.DATAFRAME,
+                            spark=(global_vars or dict()).get('spark'),
+                        )
+                        for var in variables
+                    ]
+        else:
+            input_vars = input_args
         outputs = []
         decorated_functions = []
         test_functions = []
@@ -643,10 +647,13 @@ class Block:
         results = {}
         outputs_from_input_vars = {}
 
-        for idx, input_var in enumerate(input_vars):
-            upstream_block_uuid = upstream_block_uuids[idx]
-            outputs_from_input_vars[upstream_block_uuid] = input_var
-            outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        if input_args is None:
+            for idx, input_var in enumerate(input_vars):
+                upstream_block_uuid = upstream_block_uuids[idx]
+                outputs_from_input_vars[upstream_block_uuid] = input_var
+                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        else:
+            outputs_from_input_vars = dict()
 
         with redirect_stdout(stdout):
             results = {

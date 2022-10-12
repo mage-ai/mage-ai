@@ -1,3 +1,4 @@
 connector_type: kafka
-broker_url: localhost:9092
+bootstrap_server: "localhost:9092"
 topic: topic_name
+consumer_group: unique_consumer_group

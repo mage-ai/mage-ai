@@ -245,8 +245,9 @@ def test_output(df) -> None:
 
     def test_template_generation_data_loader_streaming(self):
         kafka_template = """connector_type: kafka
-broker_url: localhost:9092
+bootstrap_server: "localhost:9092"
 topic: topic_name
+consumer_group: unique_consumer_group
 """
         config = {'data_source': DataSource.KAFKA}
         new_kafka_template = fetch_template_source(

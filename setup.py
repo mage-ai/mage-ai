@@ -52,8 +52,13 @@ setuptools.setup(
         'postgres': ['psycopg2-binary==2.9.3'],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.907'],
         's3': ['botocore==1.27.19', 'boto3==1.24.19'],
-        'spark': ['botocore==1.27.19', 'boto3==1.24.19'],
         'snowflake': ['snowflake-connector-python==2.7.9'],
+        'spark': ['botocore==1.27.19', 'boto3==1.24.19'],
+        'streaming': [
+            'kafka-python',
+            'opensearch-py',
+            'requests_aws4auth',
+        ],
         'all': [
             'azure-identity',
             'azure-keyvault-secrets',

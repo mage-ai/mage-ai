@@ -43,3 +43,8 @@ azure-keyvault-certificates
 azure-storage-blob
 
 integrations/
+
+# Streaming
+kafka-python
+opensearch-py
+requests_aws4auth
