@@ -85,6 +85,7 @@ class ManagePageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('manage.html')
 
+
 class ApiBlockHandler(BaseHandler):
     def delete(self, block_type_and_uuid_encoded):
         block_type_and_uuid = urllib.parse.unquote(block_type_and_uuid_encoded)

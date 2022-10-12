@@ -66,6 +66,8 @@ Commands:
         else:
             repo_path = os.getcwd()
 
+        print('arguments:', args)
+
         start_server(
             host=args.get('host'),
             manage=args.get('manage_instance') == '1',
