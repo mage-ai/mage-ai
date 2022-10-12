@@ -267,49 +267,53 @@ function AddNewBlocks({
 
       <Spacing ml={1} />
 
-      <Tooltip
-        block
-        label="Add a sensor so that other blocks only run when sensor is complete."
-        size={null}
-        widthFitContent
-      >
-        <KeyboardShortcutButton
-          {...sharedProps}
-          beforeElement={
-            <IconContainerStyle compact={compact}>
-              <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-            </IconContainerStyle>
-          }
-          onClick={(e) => {
-            e.preventDefault();
-            addNewBlock({
-              language: BlockLanguageEnum.PYTHON,
-              type: BlockTypeEnum.SENSOR,
-            });
-          }}
-          uuid="AddNewBlocks/Sensor"
-        >
-          Sensor
-        </KeyboardShortcutButton>
-      </Tooltip>
+      {pipelineType !== PipelineTypeEnum.STREAMING &&
+        <>
+          <Tooltip
+            block
+            label="Add a sensor so that other blocks only run when sensor is complete."
+            size={null}
+            widthFitContent
+          >
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle compact={compact}>
+                  <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                addNewBlock({
+                  language: BlockLanguageEnum.PYTHON,
+                  type: BlockTypeEnum.SENSOR,
+                });
+              }}
+              uuid="AddNewBlocks/Sensor"
+            >
+              Sensor
+            </KeyboardShortcutButton>
+          </Tooltip>
 
-      <Spacing ml={1} />
+          <Spacing ml={1} />
 
-      <KeyboardShortcutButton
-        {...sharedProps}
-        beforeElement={
-          <IconContainerStyle compact={compact}>
-            <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-          </IconContainerStyle>
-        }
-        onClick={(e) => {
-          e.preventDefault();
-          setRecsWindowOpenBlockIdx(blockIdx);
-        }}
-        uuid="AddNewBlocks/Recommendations"
-      >
-        Recs
-      </KeyboardShortcutButton>
+          <KeyboardShortcutButton
+            {...sharedProps}
+            beforeElement={
+              <IconContainerStyle compact={compact}>
+                <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+              </IconContainerStyle>
+            }
+            onClick={(e) => {
+              e.preventDefault();
+              setRecsWindowOpenBlockIdx(blockIdx);
+            }}
+            uuid="AddNewBlocks/Recommendations"
+          >
+            Recs
+          </KeyboardShortcutButton>
+        </>
+      }
     </FlexContainer>
   );
 }
