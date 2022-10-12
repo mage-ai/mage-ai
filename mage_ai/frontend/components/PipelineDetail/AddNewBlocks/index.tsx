@@ -14,7 +14,6 @@ import {
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
-  CONVERTIBLE_BLOCK_TYPES,
 } from '@interfaces/BlockType';
 import {
   COLUMN_ACTION_GROUPINGS,
@@ -27,7 +26,6 @@ import {
 } from './index.style';
 import {
   createActionMenuGroupings,
-  createDataSourceMenuItems,
   getdataSourceMenuItems,
 } from './utils';
 
@@ -61,6 +59,7 @@ function AddNewBlocks({
     inline: true,
   };
   const pipelineType = pipeline?.type;
+  const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
 
   const columnActionMenuItems = createActionMenuGroupings(
@@ -156,23 +155,32 @@ function AddNewBlocks({
             disableKeyboardShortcuts
             items={isPySpark
               ? allActionMenuItems
-              : [
-                {
-                  label: () => 'SQL',
-                  onClick: () => addNewBlock({
-                    language: BlockLanguageEnum.SQL,
-                    type: BlockTypeEnum.TRANSFORMER,
-                  }),
-                  uuid: 'transformers/sql',
-                },
-                {
-                  items: (pipelineType === PipelineTypeEnum.STREAMING)
-                    ? getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType)
-                    : allActionMenuItems,
-                  label: () => 'Python',
-                  uuid: 'transformers/python',
-                },
-              ]
+              : (isStreamingPipeline
+                ? 
+                  [
+                    {
+                      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+                      label: () => 'Python',
+                      uuid: 'transformers/python',
+                    },
+                  ]
+                :
+                  [
+                    {
+                      label: () => 'SQL',
+                      onClick: () => addNewBlock({
+                        language: BlockLanguageEnum.SQL,
+                        type: BlockTypeEnum.TRANSFORMER,
+                      }),
+                      uuid: 'transformers/sql',
+                    },
+                    {
+                      items: allActionMenuItems,
+                      label: () => 'Python',
+                      uuid: 'transformers/python_all',
+                    },
+                  ]
+              )
             }
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
@@ -267,7 +275,7 @@ function AddNewBlocks({
 
       <Spacing ml={1} />
 
-      {pipelineType !== PipelineTypeEnum.STREAMING &&
+      {!isStreamingPipeline &&
         <>
           <Tooltip
             block
