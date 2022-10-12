@@ -828,7 +828,6 @@ function CodeBlockProps({
           runBlock={runBlockAndTrack}
           savePipelineContent={savePipelineContent}
           setOutputCollapsed={setOutputCollapsed}
-          updateBlock={updateBlock}
         />
       )}
 
