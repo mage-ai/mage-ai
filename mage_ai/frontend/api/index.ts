@@ -210,7 +210,7 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource].useCreate = (opts?: any) =>
       async (body: any) => fetchCreate(resource, body, opts);
 
-    apis[resource].useDelete = (id: string) => async (body?: any) => {
+    apis[resource].useDelete = (id: string, query?: object) => async () => {
       const response = await useDelete(resource, id, query);
 
       return await handle(response);

@@ -52,7 +52,7 @@ resource "aws_ecs_task_definition" "manager-task" {
     {
       "name": "${var.app_name}-${var.app_environment}-container",
       "image": "${var.docker_image}",
-      "command": ["mage", "start", ".", "--manage-instance", "true"],
+      "command": ["mage", "start", ".", "--manage-instance", "1"],
       "environment": ${data.template_file.env_vars.rendered},
       "essential": true,
       "mountPoints": [
