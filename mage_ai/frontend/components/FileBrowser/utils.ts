@@ -60,8 +60,9 @@ export function getBlockFromFile(
 
 export function getYamlBlockFromFile(
   file: FileType,
+  currentPathInit: string = null,
 ): BlockType {
-  const parts = getFullPath(file).split('/');
+  const parts = getFullPath(file, currentPathInit).split('/');
   // This assumes path [block_type]s/[filename]
   const blockType = singularize(parts[0]);
   const fileName = parts[parts.length - 1];
