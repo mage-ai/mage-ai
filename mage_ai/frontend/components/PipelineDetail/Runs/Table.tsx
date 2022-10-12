@@ -1,7 +1,6 @@
 import NextLink from 'next/link';
 import Router from 'next/router';
-import moment from 'moment';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -17,7 +16,7 @@ import Text from '@oracle/elements/Text';
 import api from '@api';
 import { BORDER_RADIUS_XXXLARGE } from '@oracle/styles/units/borders';
 import { Check, ChevronRight, PlayButtonFilled, Subitem, TodoList } from '@oracle/icons';
-import { PopupContainerStyle } from './Table.style';
+import { PopupContainerStyle, TableContainerStyle } from './Table.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { getTimeInUTC } from '@components/Triggers/utils';
 import { onSuccess } from '@api/utils/response';
@@ -170,7 +169,6 @@ function RetryButton({
 
 type PipelineRunsTableProps = {
   fetchPipelineRuns: () => void;
-  height?: number;
   onClickRow?: (rowIndex: number) => void;
   pipelineRuns: PipelineRunType[];
   selectedRun?: PipelineRunType;
@@ -178,7 +176,6 @@ type PipelineRunsTableProps = {
 
 function PipelineRunsTable({
   fetchPipelineRuns,
-  height,
   onClickRow,
   pipelineRuns,
   selectedRun,
@@ -238,12 +235,7 @@ function PipelineRunsTable({
   }
 
   return (
-    <div
-      style={{
-        height,
-        overflowY: 'scroll',
-      }}
-    >
+    <TableContainerStyle minHeight={UNIT * 30}>
       <Table
         columnFlex={columnFlex}
         columns={columns}
@@ -267,7 +259,7 @@ function PipelineRunsTable({
           let arr = [];
           if (isRetry) {
             arr = [
-              <Spacing ml={1}>
+              <Spacing key="row_item_1" ml={1}>
                 <FlexContainer alignItems="center">
                   <Subitem size={2 * UNIT} useStroke/>
                   <Button
@@ -281,27 +273,29 @@ function PipelineRunsTable({
                   </Button>
                 </FlexContainer>
               </Spacing>,
-              <Text default monospace muted>
+              <Text default key="row_item_2" monospace muted>
                 -
               </Text>,
-              <Text default monospace muted>
+              <Text default key="row_item_3" monospace muted>
                 -
               </Text>,
               <NextLink
                 as={`/pipelines/${pipelineUUID}/runs/${id}`}
                 href={'/pipelines/[pipeline]/runs/[run]'}
+                key="row_item_4"
                 passHref
               >
                 <Link bold muted>
                   {`See block runs (${blockRunsCount})`}
                 </Link>
               </NextLink>,
-              <Text monospace muted>
+              <Text key="row_item_5" monospace muted>
                 {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
               </Text>,
               <Button
                 default
                 iconOnly
+                key="row_item_6"
                 noBackground
                 onClick={() => Router.push(
                   `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
@@ -314,16 +308,18 @@ function PipelineRunsTable({
           } else {
             arr = [
               <RetryButton
+                key="row_item_7"
                 onCancel={updatePipelineRun}
                 onSuccess={fetchPipelineRuns}
                 pipelineRun={pipelineRun}
               />,
-              <Text monospace default>
+              <Text default key="row_item_8" monospace>
                 {executionDate}
               </Text>,
               <NextLink
                 as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
                 href={'/pipelines/[pipeline]/triggers/[...slug]'}
+                key="row_item_9"
                 passHref
               >
                 <Link bold sameColorAsText>
@@ -333,18 +329,20 @@ function PipelineRunsTable({
               <NextLink
                 as={`/pipelines/${pipelineUUID}/runs/${id}`}
                 href={'/pipelines/[pipeline]/runs/[run]'}
+                key="row_item_10"
                 passHref
               >
                 <Link bold sameColorAsText>
                   {`See block runs (${blockRunsCount})`}
                 </Link>
               </NextLink>,
-              <Text default monospace>
+              <Text default key="row_item_11" monospace>
                 {(completedAt && getTimeInUTC(completedAt).toISOString().split('.')[0]) || '-'}
               </Text>,
               <Button
                 default
                 iconOnly
+                key="row_item_12"
                 noBackground
                 onClick={() => Router.push(
                   `/pipelines/${pipelineUUID}/logs?pipeline_run_id[]=${id}`,
@@ -367,7 +365,7 @@ function PipelineRunsTable({
         })}
         uuid="pipeline-runs"
       />
-    </div>
+    </TableContainerStyle>
   );
 }
 

@@ -145,7 +145,7 @@ function PipelineRuns({
           onClickRow={(rowIndex: number) => setSelectedRun((prev) => {
             const run = pipelineRuns[rowIndex];
 
-            return prev?.id !== run.id ? run : null
+            return prev?.id !== run.id ? run : null;
           })}
           pipelineRuns={pipelineRuns}
           selectedRun={selectedRun}
