@@ -578,8 +578,6 @@ def start_server(
     if manage:
         os.environ[MANAGE_ENV_VAR] = '1'
 
-    print(os.environ)
-
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
     project = project if project else None

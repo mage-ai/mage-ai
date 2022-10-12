@@ -39,6 +39,11 @@ function MoreActions({
     task_arn,
   } = instance;
 
+  const query = {};
+  if (task_arn) {
+    query['task_arn'] = task_arn;
+  }
+
   const [updateInstance] = useMutation(
     api.instances.clusters.useUpdate('ecs', name),
     {
@@ -46,6 +51,7 @@ function MoreActions({
         response, {
           callback: () => {
             fetchInstances();
+            setShowMoreActions(false);
           },
           onErrorCallback: ({
             error: {
@@ -61,12 +67,13 @@ function MoreActions({
   )
 
   const [deleteInstance] = useMutation(
-    () => api.instances.clusters.useDelete('ecs', name, { task_arn })(),
+    api.instances.clusters.useDelete('ecs', name, query),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
             fetchInstances();
+            setShowMoreActions(false);
           },
           onErrorCallback: ({
             error: {
