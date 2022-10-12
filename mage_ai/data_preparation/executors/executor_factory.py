@@ -14,6 +14,7 @@ class ExecutorFactory:
     def get_pipeline_executor(
         self,
         pipeline: Pipeline,
+        execution_partition: str = None,
     ) -> PipelineExecutor:
         if pipeline.type == PipelineType.PYSPARK:
             from mage_ai.data_preparation.executors.pyspark_pipeline_executor \
@@ -22,7 +23,7 @@ class ExecutorFactory:
         elif pipeline.type == PipelineType.STREAMING:
             from mage_ai.data_preparation.executors.streaming_pipeline_executor \
                 import StreamingPipelineExecutor
-            return StreamingPipelineExecutor(pipeline)
+            return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             return PipelineExecutor(pipeline)
 

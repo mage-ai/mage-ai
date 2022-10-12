@@ -13,6 +13,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
     ExecutorType,
+    PipelineType,
     BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
@@ -230,7 +231,10 @@ class Block:
 
     @property
     def executable(self):
-        return self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+        return (
+            self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+            and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
+        )
 
     @property
     def input_variables(self):
