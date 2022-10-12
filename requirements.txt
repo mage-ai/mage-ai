@@ -48,4 +48,3 @@ integrations/
 kafka-python
 opensearch-py
 requests_aws4auth
->>>>>>> 2d033d16 ([xy] Add streaming dependencies.)
