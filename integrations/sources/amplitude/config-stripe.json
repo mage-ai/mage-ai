@@ -1,9 +1,0 @@
-{
-  "client_secret": "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",
-  "account_id": "acct_1HnsOdGvKudj32lm",
-  "start_date": "2022-01-01T00:00:00Z",
-  "request_timeout": 300,
-  "lookback_window": 600,
-  "event_date_window_size": 7,
-  "date_window_size": 30
-}
