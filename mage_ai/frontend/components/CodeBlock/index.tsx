@@ -824,6 +824,7 @@ function CodeBlockProps({
           deleteBlock={deleteBlock}
           executionState={executionState}
           interruptKernel={interruptKernel}
+          pipelineType={pipeline?.type}
           runBlock={runBlockAndTrack}
           savePipelineContent={savePipelineContent}
           setOutputCollapsed={setOutputCollapsed}
