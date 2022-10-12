@@ -15,6 +15,7 @@ URL = 'https://amplitude.com/api/2/export'
 
 class Amplitude(Connection):
     def __init__(self, api_key, secret_key):
+        super().__init__()
         self.api_key = api_key
         self.secret_key = secret_key
 

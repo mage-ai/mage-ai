@@ -16,6 +16,7 @@ DATE_STRING_PATTERN = r'[0-9]{4}-[0-9]{2}-[0-9]{2}|today'
 
 class GoogleAnalytics(Connection):
     def __init__(self, property_id, path_to_credentials_json_file):
+        super().__init__()
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.property_id = property_id
 
