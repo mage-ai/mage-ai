@@ -58,7 +58,6 @@ export const createDataSourceMenuItems = (
           language: requiresConfigFile
             ? BlockLanguageEnum.YAML
             : BlockLanguageEnum.PYTHON,
-          priority: requiresConfigFile ? 1 : null,
           type: blockType,
         });
       },
