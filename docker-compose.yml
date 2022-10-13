@@ -17,6 +17,8 @@ services:
     restart: on-failure:5
     stdin_open: true # used for interactive debugging
     tty: true # used for interactive debugging
+    networks:
+      - kafka
   app:
     image: mage/data
     build:
@@ -49,3 +51,7 @@ services:
       - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
       - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
     working_dir: /home/src/mage_ai/frontend
+networks:
+  kafka:
+    name: kafka-docker_default
+    external: true

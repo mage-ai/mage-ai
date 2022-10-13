@@ -42,8 +42,6 @@ azure-keyvault-secrets
 azure-keyvault-certificates
 azure-storage-blob
 
-integrations/
-
 # Streaming
 kafka-python
 opensearch-py
