@@ -128,6 +128,21 @@ do the following:
 
 1. Clone Mage: `git clone https://github.com/mage-ai/mage-ai.git`.
 1. Change directory into Mage: `cd mage-ai`.
+1. Edit the `docker-compose.yml` file to match this:
+    ```yaml
+    version: '3'
+    services:
+      server:
+        ... (original config)
+        networks:
+          - kafka
+      app:
+        ... (original config)
+    networks:
+      kafka:
+        name: kafka-docker_default
+        external: true
+    ```
 1. Run the following script in your terminal: `./scripts/dev.sh`.
 
 This will run Mage in development mode; which runs it in a Docker container using `docker compose`
