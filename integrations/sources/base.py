@@ -4,6 +4,7 @@ from singer.metadata import get_standard_metadata
 from singer.schema import Schema
 from sources.utils import get_abs_path
 from typing import List
+from utils.array import find_index
 from utils.dictionary import merge_dict
 from utils.logger import Logger
 import inspect
@@ -91,18 +92,24 @@ class Source():
                 })
 
     def build_catalog_entry(self, stream_id, schema, **kwargs):
+        # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
+        metadata = get_standard_metadata(
+            schema.to_dict(),
+            stream_id,
+            self.get_key_properties(stream_id),
+            self.get_valid_replication_keys(stream_id),
+            self.get_replication_method(stream_id),
+        )
+        idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
+        if idx >= 0:
+            metadata[idx]['metadata']['selected'] = False
+
         return CatalogEntry(**merge_dict(
             dict(
                 database=None,
                 is_view=None,
                 key_properties=self.key_properties,
-                metadata=get_standard_metadata(
-                    schema.to_dict(),
-                    stream_id,
-                    self.get_key_properties(stream_id),
-                    self.get_valid_replication_keys(stream_id),
-                    self.get_replication_method(stream_id),
-                ),
+                metadata=metadata,
                 replication_key=self.replication_key,
                 replication_method=self.replication_method,
                 row_count=None,

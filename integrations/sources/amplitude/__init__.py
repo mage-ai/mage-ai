@@ -1,4 +1,4 @@
-from connections.amplitude import Amplitude as AmplitudeSource
+from connections.amplitude import Amplitude as AmplitudeConnection
 from datetime import datetime, timedelta
 from singer import utils
 from sources.base import Source
@@ -10,7 +10,7 @@ LOGGER = singer.get_logger()
 
 class Amplitude(Source):
     def load_data(self, bookmark: str = None, bookmark_column: str = None, **kwargs) -> List[dict]:
-        connection = AmplitudeSource(self.config['api_key'], self.config['secret_key'])
+        connection = AmplitudeConnection(self.config['api_key'], self.config['secret_key'])
         results = connection.load(
             start_date=datetime.now() - timedelta(days=1),
             end_date=datetime.now(),
@@ -35,7 +35,7 @@ def main():
     source = Amplitude(
         args.config,
         args.state,
-        catalog=args.catalog,
+        args.catalog,
         discover_mode=args.discover,
         key_properties=['amplitude_id'],
         replication_key='amplitude_id',
