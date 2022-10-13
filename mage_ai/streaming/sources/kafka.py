@@ -28,8 +28,9 @@ class KafkaSourceConfig(BaseConfig):
 
     @classmethod
     def parse_config(self, config: Dict) -> Dict:
-        if config.get('ssl_config') is not None:
-            config['ssl_config'] = SSLConfig(**config['ssl_config'])
+        ssl_config = config.get('ssl_config')
+        if ssl_config is not None and type(ssl_config) is dict:
+            config['ssl_config'] = SSLConfig(**ssl_config)
         return config
 
 
@@ -51,6 +52,7 @@ class KafkaSource:
             consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
             consumer_kwargs['ssl_certfile'] = self.config.ssl_config.certfile
             consumer_kwargs['ssl_keyfile'] = self.config.ssl_config.keyfile
+            consumer_kwargs['ssl_password'] = self.config.ssl_config.password
             consumer_kwargs['ssl_check_hostname'] = self.config.ssl_config.check_hostname
 
         self.consumer = KafkaConsumer(
