@@ -1,0 +1,132 @@
+{
+  "streams": [
+    {
+      "tap_stream_id": "users",
+      "replication_key": "amplitude_id",
+      "key_properties": [
+        "amplitude_id"
+      ],
+      "schema": {
+        "properties": {
+          "amplitude_id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "country": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "created": {
+            "format": "date-time",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "livemode": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "verification": {
+            "properties": {
+              "status": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "verified_address": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              },
+              "verified_name": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            },
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        },
+        "type": [
+          "null",
+          "object"
+        ]
+      },
+      "stream": "users",
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "selected": true,
+            "table-key-properties": [
+              "amplitude_id"
+            ],
+            "valid-replication-keys": [
+              "amplitude_id"
+            ],
+            "inclusion": "available",
+            "schema-name": "users"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "amplitude_id"
+          ],
+          "metadata": {
+            "inclusion": "automatic"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "country"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "created"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "livemode"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        },
+        {
+          "breadcrumb": [
+            "properties",
+            "verification"
+          ],
+          "metadata": {
+            "inclusion": "available"
+          }
+        }
+      ]
+    }
+  ]
+}

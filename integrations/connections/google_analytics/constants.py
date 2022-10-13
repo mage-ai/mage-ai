@@ -1,3 +1,7 @@
+from typing import TypedDict
+
+DATE_STRING_PATTERN = r'[0-9]{4}-[0-9]{2}-[0-9]{2}|today'
+
 DIMENSIONS = [
     'achievementId',
     'adFormat',
@@ -262,3 +266,15 @@ METRICS = [
     'userEngagementDuration',
     'wauPerMau',
 ]
+
+class CredentialsInfoType(TypedDict):
+    auth_provider_x509_cert_url: str
+    auth_uri: str
+    client_email: str
+    client_id: str
+    client_x509_cert_url: str
+    private_key: str
+    private_key_id: str
+    project_id: str
+    token_uri: str
+    type: str

@@ -1,21 +1,34 @@
 from connections.base import Connection
-from connections.google_analytics.constants import DIMENSIONS, METRICS
+from connections.google_analytics.constants import (
+    CredentialsInfoType,
+    DATE_STRING_PATTERN,
+    DIMENSIONS,
+    METRICS,
+)
 from connections.google_analytics.utils import parse_response
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange
 from google.analytics.data_v1beta.types import Dimension
 from google.analytics.data_v1beta.types import Metric
 from google.analytics.data_v1beta.types import RunReportRequest
-from typing import Literal
+from typing import Literal, TypedDict
 import os
 from utils.dictionary import merge_dict
 import re
 
-DATE_STRING_PATTERN = r'[0-9]{4}-[0-9]{2}-[0-9]{2}|today'
-
 
 class GoogleAnalytics(Connection):
-    def __init__(self, property_id, path_to_credentials_json_file):
+    def __init__(
+        self,
+        property_id: int,
+        credentials_info: CredentialsInfoType = None,
+        path_to_credentials_json_file: str = None,
+    ):
+        if not credentials_info and not path_to_credentials_json_file:
+            raise Exception('GoogleAnalytics connection requires credentials_info or path_to_credentials_json_file.')
+
+        super().__init__()
+        self.credentials_info = credentials_info
         self.path_to_credentials_json_file = path_to_credentials_json_file
         self.property_id = property_id
 
@@ -40,8 +53,11 @@ class GoogleAnalytics(Connection):
             start_date=start_date,
         )
 
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.path_to_credentials_json_file
-        client = BetaAnalyticsDataClient()
+        if self.credentials_info:
+            client = BetaAnalyticsDataClient.from_service_account_info(self.credentials_info)
+        elif self.path_to_credentials_json_file:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.path_to_credentials_json_file
+            client = BetaAnalyticsDataClient()
 
         self.info('Loading started.', tags=tags)
         request = RunReportRequest(
