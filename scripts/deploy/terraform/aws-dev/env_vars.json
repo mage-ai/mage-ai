@@ -20,15 +20,15 @@
         "value": "${lambda_func_name}"
     },
     {
-        "name": "CLUSTER_NAME",
-        "value": "${cluster_name}"
+        "name": "ECS_CLUSTER_NAME",
+        "value": "${ecs_cluster_name}"
     },
     {
-        "name": "TASK_DEFINITION",
-        "value": "${task_definition}"
+        "name": "ECS_TASK_DEFINITION",
+        "value": "${ecs_task_definition}"
     },
     {
-        "name": "CONTAINER_NAME",
-        "value": "${container_name}"
+        "name": "ECS_CONTAINER_NAME",
+        "value": "${ecs_container_name}"
     }
 ]
