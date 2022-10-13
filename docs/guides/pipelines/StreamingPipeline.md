@@ -4,8 +4,7 @@ Build pipelines that ingest data from event streaming sources like Kafka.
 
 <img
   alt="Streaming pipeline"
-  src="https://i.gifer.com/2M9c.gif"
-  width="700"
+  src="https://c.tenor.com/sezVCSw-n7sAAAAC/waterfall-stream.gif"
 />
 
 1. [Set up Kafka](#set-up-kafka)
