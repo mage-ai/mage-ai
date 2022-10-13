@@ -210,7 +210,14 @@ function Edit({
           });
           setCustomInterval(scheduleInterval);
         } else {
-          setSchedule(pipelineSchedule);
+          if (isStreamingPipeline) {
+            setSchedule({
+              ...pipelineSchedule,
+              schedule_interval: ScheduleIntervalEnum.ONCE,
+            });
+          } else {
+            setSchedule(pipelineSchedule);
+          }
         }
       }
     },
