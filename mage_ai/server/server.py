@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
+from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
 from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
@@ -21,7 +22,7 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockListHandler,
     ApiPipelineBlockOutputHandler,
 )
-from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstancesHandler
+from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstanceDetailHandler, ApiInstancesHandler
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
     ApiAwsEventRuleListHandler,
@@ -78,6 +79,11 @@ class MainPageHandler(tornado.web.RequestHandler):
 class PipelineRunsPageHandler(tornado.web.RequestHandler):
     def get(self, *args):
         self.render('pipeline-runs.html')
+
+
+class ManagePageHandler(tornado.web.RequestHandler):
+    def get(self, *args):
+        self.render('manage.html')
 
 
 class ApiBlockHandler(BaseHandler):
@@ -390,6 +396,13 @@ class KernelsHandler(BaseHandler):
         self.write(r)
         self.finish()
 
+class ApiStatusHandler(BaseHandler):
+    def get(self):
+        status = {
+            'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
+        }
+        self.write(dict(status=status))
+
 
 def make_app():
     routes = [
@@ -397,6 +410,7 @@ def make_app():
         (r'/pipelines', MainPageHandler),
         (r'/pipelines/(.*)', MainPageHandler),
         (r'/pipeline-runs', PipelineRunsPageHandler),
+        (r'/manage', ManagePageHandler),
         (
             r'/_next/static/(.*)',
             tornado.web.StaticFileHandler,
@@ -425,6 +439,7 @@ def make_app():
         (r'/api/block_runs/(?P<block_run_id>\w+)/logs', ApiBlockRunLogHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)', ApiClustersHandler),
         (r'/api/clusters/(?P<cluster_type>\w+)/instances', ApiInstancesHandler),
+        (r'/api/clusters/(?P<cluster_type>\w+)/instances/(?P<instance_name>\w+)', ApiInstanceDetailHandler),
         (r'/api/events', ApiEventHandler),
         (r'/api/event_matchers', ApiEventMatcherListHandler),
         (r'/api/event_matchers/(?P<event_matcher_id>\w+)', ApiEventMatcherDetailHandler),
@@ -506,6 +521,7 @@ def make_app():
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/projects', ApiProjectsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
+        (r'/api/status', ApiStatusHandler),
     ]
     return tornado.web.Application(
         routes,
@@ -557,7 +573,9 @@ def start_server(
     host: str = None,
     port: str = None,
     project: str = None,
+    manage: bool = False,
 ):
+
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
     project = project if project else None
@@ -572,8 +590,11 @@ def start_server(
         init_repo(project)
     set_repo_path(project)
 
-    # Start a subprocess for scheduler
-    scheduler_manager.start_scheduler()
+    if manage:
+        os.environ[MANAGE_ENV_VAR] = '1'
+    else:
+        # Start a subprocess for scheduler
+        scheduler_manager.start_scheduler()
 
     enable_pretty_logging()
 
@@ -592,14 +613,17 @@ if __name__ == '__main__':
     parser.add_argument('--host', type=str, default=None)
     parser.add_argument('--port', type=str, default=None)
     parser.add_argument('--project', type=str, default=None)
+    parser.add_argument('--manage-instance', type=str, default='0')
     args = parser.parse_args()
 
     host = args.host
     port = args.port
     project = args.project
+    manage = args.manage_instance == '1'
 
     start_server(
         host=host,
         port=port,
         project=project,
+        manage=manage,
     )

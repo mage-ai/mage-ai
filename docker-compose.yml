@@ -5,10 +5,13 @@ services:
     build:
       context: .
       dockerfile: ./dev.Dockerfile
-    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT}"
+    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
     environment:
       - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
+      - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
+      - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
     ports:
       - 6789:6789
     volumes:
