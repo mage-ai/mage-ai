@@ -575,8 +575,6 @@ def start_server(
     project: str = None,
     manage: bool = False,
 ):
-    if manage:
-        os.environ[MANAGE_ENV_VAR] = '1'
 
     host = host if host else None
     port = port if port else DATA_PREP_SERVER_PORT
@@ -592,8 +590,11 @@ def start_server(
         init_repo(project)
     set_repo_path(project)
 
-    # Start a subprocess for scheduler
-    scheduler_manager.start_scheduler()
+    if manage:
+        os.environ[MANAGE_ENV_VAR] = '1'
+    else:
+        # Start a subprocess for scheduler
+        scheduler_manager.start_scheduler()
 
     enable_pretty_logging()
 
