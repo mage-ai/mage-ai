@@ -2,7 +2,7 @@ from utils.logger import Logger
 
 
 class Connection():
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.logger = Logger(caller=self)
 
     def build_tags(self, **kwargs):
