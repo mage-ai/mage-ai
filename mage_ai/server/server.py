@@ -399,7 +399,7 @@ class KernelsHandler(BaseHandler):
 class ApiStatusHandler(BaseHandler):
     def get(self):
         status = {
-            'manage': os.getenv(MANAGE_ENV_VAR) == '1',
+            'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
         }
         self.write(dict(status=status))
 

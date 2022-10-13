@@ -76,9 +76,9 @@ class ApiInstancesHandler(BaseHandler):
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             instance_payload = self.get_payload().get('instance')
             name = instance_payload.get('name')
-            cluster_name = instance_payload.get('cluster_name', os.getenv('CLUSTER_NAME'))
-            task_definition = instance_payload.get('task_definition', os.getenv('TASK_DEFINITION'))
-            container_name = instance_payload.get('container_name', os.getenv('CONTAINER_NAME'))
+            cluster_name = instance_payload.get('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
+            task_definition = instance_payload.get('task_definition', os.getenv('ECS_TASK_DEFINITION'))
+            container_name = instance_payload.get('container_name', os.getenv('ECS_CONTAINER_NAME'))
 
             ecs_instance_manager = EcsTaskManager(cluster_name)
 
@@ -100,9 +100,9 @@ class ApiInstanceDetailHandler(BaseHandler):
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             instance_payload = self.get_payload().get('instance')
             task_arn = instance_payload.get('task_arn')
-            cluster_name = instance_payload.get('cluster_name', os.getenv('CLUSTER_NAME'))
-            task_definition = instance_payload.get('task_definition', os.getenv('TASK_DEFINITION'))
-            container_name = instance_payload.get('container_name', os.getenv('CONTAINER_NAME'))
+            cluster_name = instance_payload.get('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
+            task_definition = instance_payload.get('task_definition', os.getenv('ECS_TASK_DEFINITION'))
+            container_name = instance_payload.get('container_name', os.getenv('ECS_CONTAINER_NAME'))
 
             action = instance_payload.get('action')
 
@@ -127,7 +127,7 @@ class ApiInstanceDetailHandler(BaseHandler):
         if cluster_type == 'ecs':
             from mage_ai.cluster_manager.aws.ecs_task_manager import EcsTaskManager
             task_arn = self.get_argument('task_arn', None)
-            cluster_name = self.get_argument('cluster_name', os.getenv('CLUSTER_NAME'))
+            cluster_name = self.get_argument('cluster_name', os.getenv('ECS_CLUSTER_NAME'))
 
             print('name:', instance_name)
 
