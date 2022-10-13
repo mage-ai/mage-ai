@@ -101,6 +101,16 @@ Start Mage using Docker. Run the following command:
 TBD
 ```
 
+If you can’t connect to Kafka locally in a Docker container using Mage in a Docker container,
+do the following:
+
+1. Clone Mage: `git clone https://github.com/mage-ai/mage-ai.git`.
+1. Change directory into Mage: `cd mage-ai`.
+1. Run the following script in your terminal: `./scripts/dev.sh`.
+
+This will run Mage in development mode; which runs it in a Docker container using `docker compose`
+instead of `docker run`.
+
 #### Using Kafka without a Docker container
 
 Start Mage using Docker. If you haven’t done this before,
