@@ -95,11 +95,34 @@ of instructions.</sub>
 
 #### Using Kafka locally in a Docker container
 
-Start Mage using Docker. Run the following command:
+Start Mage using Docker. Run the following command to run Docker in network mode:
 
 ```bash
-TBD
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
+  --env AWS_ACCESS_KEY_ID=your_access_key_id \
+  --env AWS_SECRET_ACCESS_KEY=your_secret_access_key \
+  --env AWS_REGION=your_region \
+  --network kafka-docker_default \
+  mageai/mageai mage start default_repo
 ```
+
+> NOTE: different cloud providers
+>
+> Change the environment variables argument depending on your cloud provider.
+
+If the network named `kafka-docker_default` doesn’t exist, create a new network:
+
+```bash
+docker network create -d bridge kafka-docker_default
+```
+
+Check that it exists:
+
+```bash
+docker network ls
+```
+
+<br />
 
 If you can’t connect to Kafka locally in a Docker container using Mage in a Docker container,
 do the following:
