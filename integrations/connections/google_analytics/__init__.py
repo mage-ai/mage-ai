@@ -12,8 +12,8 @@ from google.analytics.data_v1beta.types import Dimension
 from google.analytics.data_v1beta.types import Metric
 from google.analytics.data_v1beta.types import RunReportRequest
 from typing import Literal, TypedDict
-import os
 from utils.dictionary import merge_dict
+import os
 import re
 
 
