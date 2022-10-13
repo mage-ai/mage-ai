@@ -1,10 +1,8 @@
 from botocore.config import Config
 from functools import reduce
-
-from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.services.aws.ecs.config import EcsConfig
 from mage_ai.services.aws.ecs.ecs import list_tasks, run_task, stop_task
-from mage_ai.shared.array import difference, find
+from mage_ai.shared.array import find
 from mage_ai.shared.hash import dig
 from typing import Dict, List
 
@@ -12,11 +10,8 @@ import boto3
 import json
 import os
 
-
-CLUSTER_NAME = 'mage-data-prep-development-cluster'
-
 class EcsTaskManager:
-    def __init__(self, cluster_name=CLUSTER_NAME):
+    def __init__(self, cluster_name):
         self.cluster_name = cluster_name
 
         self.metadata_file = os.path.join(
@@ -24,11 +19,20 @@ class EcsTaskManager:
             'instance_metadata.json',
         )
 
-        print(self.metadata_file)
-
         if not os.path.exists(self.metadata_file):
-            with open(self.metadata_file, 'w', encoding='utf-8') as file:
-                json.dump({}, file)
+            self.instance_metadata = {}
+
+    @property
+    def instance_metadata(self):
+        metadata = {}
+        with open(self.metadata_file, 'r', encoding='utf-8') as file:
+            metadata = json.load(file)
+        return metadata
+
+    @instance_metadata.setter
+    def instance_metadata(self, metadata):
+        with open(self.metadata_file, 'w', encoding='utf-8') as file:
+            json.dump(metadata, file)
 
     def list_tasks(self):
         region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
@@ -36,7 +40,6 @@ class EcsTaskManager:
         ec2_client = boto3.client('ec2', config=config)
 
         response = list_tasks(self.cluster_name)['tasks']
-
         network_interfaces = self.__get_network_interfaces(response, ec2_client)
 
         tasks = []
@@ -54,15 +57,10 @@ class EcsTaskManager:
                 type=task['launchType'],
             ))
 
-        instance_metadata = {}
-
-        with open(self.metadata_file, 'r', encoding='utf-8') as file:
-            instance_metadata = json.load(file)
-
         running_instance_names = set(map(lambda x: x['name'], tasks))
 
         stopped_instance_names = \
-            [name for name in list(instance_metadata.keys()) if name not in running_instance_names]
+            [name for name in list(self.instance_metadata.keys()) if name not in running_instance_names]
         stopped_instances = \
             list(
                 map(
@@ -102,19 +100,12 @@ class EcsTaskManager:
             ],
         )
 
-        instance_metadata = {}
+        self.instance_metadata = {
+            **self.instance_metadata,
+            name: dict()
+        }
 
-        with open(self.metadata_file, 'r', encoding='utf-8') as file:
-            instance_metadata = json.load(file)
-
-        instance_metadata[name] = dict()
-
-        with open(self.metadata_file, 'w', encoding='utf-8') as file:
-            json.dump(instance_metadata, file)
-
-        response = run_task(f'mage start {name}', ecs_config=ecs_config)
-
-        return response
+        return run_task(f'mage start {name}', ecs_config=ecs_config)
 
     def stop_task(self, task_arn: str):
         return stop_task(task_arn, self.cluster_name)
@@ -123,16 +114,11 @@ class EcsTaskManager:
         if task_arn:
             self.stop_task(task_arn)
 
-        instance_metadata = {}
-        with open(self.metadata_file, 'r', encoding='utf-8') as file:
-            instance_metadata = json.load(file)
+        updated_metadata = self.instance_metadata
 
-        if name in instance_metadata:
-            del instance_metadata[name]
-        
-        with open(self.metadata_file, 'w', encoding='utf-8') as file:
-            json.dump(instance_metadata, file)
-
+        if name in updated_metadata:
+            del updated_metadata[name]
+            self.instance_metadata = updated_metadata
 
     def __get_network_interface_id(self, task):
         if task.get('lastStatus') != 'RUNNING':
@@ -143,7 +129,6 @@ class EcsTaskManager:
         network_interface = \
             find(lambda d: d['name'] == 'networkInterfaceId', attachment.get('details', []))
         return network_interface.get('value', None)
-
 
     def __get_network_interfaces(self, tasks: List, ec2_client) -> Dict:
         task_mapping = dict()
