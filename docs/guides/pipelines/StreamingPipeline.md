@@ -169,7 +169,7 @@ refer to the [setup guide](../../tutorials/quick_start/setup.md).
 1. Add a data exporter block, select `OpenSearch` and paste the following:
     ```yaml
     connector_type: opensearch
-    host: https://search-magetest-jimbpbqaczovk443un2uolav4i.us-west-2.es.amazonaws.com/
+    host: https://search-something-abcdefg123456.us-west-1.es.amazonaws.com/
     index_name: python-test-index
     ```
     1. Change the `host` to match your OpenSearch domain’s endpoint.
