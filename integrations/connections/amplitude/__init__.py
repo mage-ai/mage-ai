@@ -129,7 +129,5 @@ class Amplitude(Connection):
                 status_code=response.status_code,
             )))
 
-        self.info('Fetch files completed.', tags=tags)
-
         return None
 
