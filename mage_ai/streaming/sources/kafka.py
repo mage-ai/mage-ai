@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from kafka import KafkaConsumer
+from mage_ai.shared.config import BaseConfig
 from typing import Dict
 import json
 import time
@@ -8,26 +9,55 @@ DEFAULT_BATCH_SIZE = 100
 
 
 @dataclass
-class KafkaSourceConfig:
+class SSLConfig:
+    cafile: str = None
+    certfile: str = None
+    keyfile: str = None
+    password: str = None
+    check_hostname: bool = False
+
+
+@dataclass
+class KafkaSourceConfig(BaseConfig):
     bootstrap_server: str
     consumer_group: str
     topic: str
     batch_size: int = DEFAULT_BATCH_SIZE
+    security_protocol: str = None
+    ssl_config: SSLConfig = None
+
+    @classmethod
+    def parse_config(self, config: Dict) -> Dict:
+        ssl_config = config.get('ssl_config')
+        if ssl_config is not None and type(ssl_config) is dict:
+            config['ssl_config'] = SSLConfig(**ssl_config)
+        return config
 
 
 class KafkaSource:
     def __init__(self, config: Dict):
         if 'connector_type' in config:
             config.pop('connector_type')
-        self.config = KafkaSourceConfig(**config)
+        self.config = KafkaSourceConfig.load(config=config)
 
         print('Start initializing kafka consumer.')
         # Initialize kafka consumer
-        self.consumer = KafkaConsumer(
-            self.config.topic,
+        consumer_kwargs = dict(
             group_id=self.config.consumer_group,
             bootstrap_servers=self.config.bootstrap_server,
             enable_auto_commit=True,
+        )
+        if self.config.security_protocol == 'SSL':
+            consumer_kwargs['security_protocol'] = 'SSL'
+            consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
+            consumer_kwargs['ssl_certfile'] = self.config.ssl_config.certfile
+            consumer_kwargs['ssl_keyfile'] = self.config.ssl_config.keyfile
+            consumer_kwargs['ssl_password'] = self.config.ssl_config.password
+            consumer_kwargs['ssl_check_hostname'] = self.config.ssl_config.check_hostname
+
+        self.consumer = KafkaConsumer(
+            self.config.topic,
+            **consumer_kwargs
         )
         print('Finish initializing kafka consumer.')
 

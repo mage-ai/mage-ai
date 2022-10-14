@@ -248,6 +248,15 @@ def test_output(df) -> None:
 bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
+
+# Uncomment the config below to use SSL config
+# security_protocol: "SSL"
+# ssl_config:
+#   cafile: "CARoot.pem"
+#   certfile: "certificate.pem"
+#   keyfile: "key.pem"
+#   password: password
+#   check_hostname: true
 """
         config = {'data_source': DataSource.KAFKA}
         new_kafka_template = fetch_template_source(

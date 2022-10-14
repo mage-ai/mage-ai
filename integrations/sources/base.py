@@ -1,12 +1,19 @@
+from datetime import datetime
 from os.path import isfile
-from singer.catalog import Catalog, CatalogEntry
-from singer.metadata import get_standard_metadata
 from singer.schema import Schema
-from sources.utils import get_abs_path
+from sources.catalog import Catalog, CatalogEntry
+from sources.constants import (
+    REPLICATION_METHOD_FULL_TABLE,
+    REPLICATION_METHOD_INCREMENTAL,
+)
+from sources.messages import write_schema
+from sources.utils import get_abs_path, get_standard_metadata, parse_args
 from typing import List
 from utils.array import find_index
-from utils.dictionary import merge_dict
+from utils.dictionary import extract, merge_dict
 from utils.logger import Logger
+from utils.schema_helpers import extract_selected_columns
+import dateutil.parser
 import inspect
 import json
 import os
@@ -17,26 +24,33 @@ LOGGER = singer.get_logger()
 
 class Source():
     def __init__(self,
-        config: dict,
-        state: dict,
-        catalog: Catalog,
+        args = None,
+        catalog: Catalog = None,
+        config: dict = None,
         discover_mode: bool = False,
         is_sorted: bool = True,
-        key_properties: List[str] = None,
         logger = LOGGER,
-        replication_key: str = None,
-        replication_method: str = None, # INCREMENTAL or FULL_TABLE
         schemas_folder: str = 'schemas',
+        state: dict = None,
+        verbose: int = 1,
     ):
+        args = parse_args([])
+        if args:
+            if args.catalog:
+                catalog = args.catalog
+            if args.config:
+                config = args.config
+            if args.discover:
+                discover_mode = args.discover
+            if args.state:
+                state = args.state
+
         self.catalog = catalog
         self.config = config
         self.discover_mode = discover_mode
-        self.key_properties = key_properties
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
-        self.logger = Logger(caller=self, logger=logger)
-        self.replication_key = replication_key
-        self.replication_method = replication_method
+        self.logger = Logger(caller=self, logger=logger, verbose=verbose)
         self.schemas_folder = schemas_folder
         self.state = state
 
@@ -62,43 +76,75 @@ class Source():
 
             self.logger.info(f'Syncing stream {tap_stream_id}.')
 
-            singer.write_schema(
+            bookmarks = None
+            bookmark_properties = []
+            replication_method = stream.replication_method
+            incremental = REPLICATION_METHOD_INCREMENTAL == replication_method
+            if incremental:
+                bookmarks = state.get('bookmarks', {}).get(tap_stream_id, None)
+                if stream.replication_key:
+                    bookmark_properties = [stream.replication_key]
+                else:
+                    bookmark_properties = stream.to_dict().get('bookmark_properties', [])
+            elif REPLICATION_METHOD_FULL_TABLE != replication_method:
+                message = f'Invalid replication_method {replication_method}'
+                self.logger.exception(message)
+                raise Exception(message)
+
+            start_date = None
+            if not incremental and self.config.get('start_date'):
+                start_date = dateutil.parser.parse(self.config.get('start_date'))
+
+            selected_columns = extract_selected_columns(stream.metadata)
+            schema_dict = stream.schema.to_dict()
+            schema_dict['properties'] = extract(schema_dict['properties'], selected_columns)
+
+            write_schema(
+                bookmark_properties=bookmark_properties,
                 key_properties=stream.key_properties,
-                schema=stream.schema.to_dict(),
+                replication_method=replication_method,
+                schema=schema_dict,
                 stream_name=tap_stream_id,
             )
 
-            bookmark = None
-            bookmark_column = stream.replication_key
-            if bookmark_column:
-                bookmark = singer.get_bookmark(state, tap_stream_id, bookmark_column)
-
             max_bookmark = None
-            for row in self.load_data(bookmark=bookmark, bookmark_column=bookmark_column):
-                singer.write_records(tap_stream_id, [row])
+            for row in self.load_data(
+                bookmarks=bookmarks,
+                start_date=start_date,
+            ):
+                singer.write_records(
+                    tap_stream_id,
+                    [
+                        {col: row[col] for col in selected_columns},
+                    ],
+                )
 
-                if bookmark_column:
+                if incremental and bookmark_properties:
                     if self.is_sorted:
                         singer.write_state({
-                            tap_stream_id: row[bookmark_column],
+                            tap_stream_id: {col: row[col] for col in bookmark_properties},
                         })
                     else:
                         # If data unsorted, save max value until end of writes
-                        max_bookmark = max(max_bookmark, row[bookmark_column])
+                        max_bookmark = max(
+                            max_bookmark,
+                            [row[col] for col in bookmark_properties],
+                        )
 
-            if bookmark_column and not self.is_sorted:
-                singer.write_state({
-                    tap_stream_id: max_bookmark,
-                })
+            if bookmark_properties and not self.is_sorted:
+                if max_bookmark:
+                    singer.write_state({
+                        tap_stream_id: {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
+                    })
 
     def build_catalog_entry(self, stream_id, schema, **kwargs):
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
         metadata = get_standard_metadata(
-            schema.to_dict(),
-            stream_id,
-            self.get_key_properties(stream_id),
-            self.get_valid_replication_keys(stream_id),
-            self.get_replication_method(stream_id),
+            key_properties=self.get_table_key_properties(stream_id),
+            replication_method=self.get_forced_replication_method(stream_id),
+            schema=schema.to_dict(),
+            stream_id=stream_id,
+            valid_replication_keys=self.get_valid_replication_keys(stream_id),
         )
         idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
         if idx >= 0:
@@ -108,10 +154,10 @@ class Source():
             dict(
                 database=None,
                 is_view=None,
-                key_properties=self.key_properties,
+                key_properties=[], # User customizes this after creating catalog from discover.
                 metadata=metadata,
-                replication_key=self.replication_key,
-                replication_method=self.replication_method,
+                replication_key='', # User customizes this after creating catalog from discover.
+                replication_method=self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,
                 stream=stream_id,
@@ -122,16 +168,26 @@ class Source():
             kwargs,
         ))
 
-    def load_data(self, bookmark: str = None, bookmark_column: str = None, **kwargs) -> List[dict]:
+
+    def load_data(
+        self,
+        bookmarks: dict = None,
+        start_date: datetime = None,
+        **kwargs,
+    ) -> List[dict]:
         raise Exception('Subclasses must implement the load_data method.')
 
-    def get_key_properties(self, stream_id: str) -> List[str]:
-        return []
+    def get_forced_replication_method(self, stream_id: str) -> str:
+        # INCREMENTAL or FULL_TABLE
+        raise Exception('Subclasses must implement the get_forced_replication_method method.')
+        return ''
 
-    def get_replication_method(self, stream_id: str) -> List[str]:
+    def get_table_key_properties(self, stream_id: str) -> List[str]:
+        raise Exception('Subclasses must implement the get_table_key_properties method.')
         return []
 
     def get_valid_replication_keys(self, stream_id: str) -> List[str]:
+        raise Exception('Subclasses must implement the get_valid_replication_keys method.')
         return []
 
     def __load_schemas(self) -> dict:

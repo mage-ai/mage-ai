@@ -2,8 +2,9 @@ from utils.logger import Logger
 
 
 class Connection():
-    def __init__(self, **kwargs):
-        self.logger = Logger(caller=self)
+    def __init__(self, verbose: int = 1, **kwargs):
+        self.logger = Logger(caller=self, verbose=verbose)
+        self.verbose = verbose
 
     def build_tags(self, **kwargs):
         return self.logger.build_tags(**kwargs)
