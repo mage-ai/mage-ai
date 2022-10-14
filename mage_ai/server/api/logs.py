@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from mage_ai.orchestration.db.models import BlockRun, PipelineRun, PipelineSchedule
 from mage_ai.server.api.base import BaseHandler
 from sqlalchemy.orm import aliased
@@ -5,6 +7,19 @@ from sqlalchemy.orm import aliased
 
 class ApiPipelineLogListHandler(BaseHandler):
     def get(self, pipeline_uuid):
+        start_timestamp = self.get_argument('start_timestamp', None)
+        end_timestamp = self.get_argument('end_timestamp', None)
+        if start_timestamp:
+            try:
+                start_timestamp = datetime.fromtimestamp(int(start_timestamp))
+            except (ValueError, OverflowError):
+                raise Exception(f'Value is invalid for start_timestamp')
+        if end_timestamp:
+            try:
+                end_timestamp = datetime.fromtimestamp(int(end_timestamp))
+            except (ValueError, OverflowError):
+                raise Exception(f'Value is invalid for end_timestamp')
+
         pipeline_schedule_ids = self.get_argument('pipeline_schedule_id[]', None)
         if pipeline_schedule_ids:
             pipeline_schedule_ids = pipeline_schedule_ids.split(',')
@@ -58,6 +73,18 @@ class ApiPipelineLogListHandler(BaseHandler):
                 filter(a.id.in_(pipeline_run_ids))
             )
 
+        if start_timestamp:
+            query = (
+                query.
+                filter(a.execution_date >= start_timestamp)
+            )
+
+        if end_timestamp:
+            query = (
+                query.
+                filter(a.execution_date <= end_timestamp)
+            )
+
         pipeline_run_logs = []
         if not len(block_uuids) and not len(block_run_ids):
             rows = query.all()
@@ -103,6 +130,18 @@ class ApiPipelineLogListHandler(BaseHandler):
             query = (
                 query.
                 filter(a.id.in_(pipeline_run_ids))
+            )
+
+        if start_timestamp:
+            query = (
+                query.
+                filter(a.execution_date >= start_timestamp)
+            )
+
+        if end_timestamp:
+            query = (
+                query.
+                filter(a.execution_date <= end_timestamp)
             )
 
         rows = query.all()
