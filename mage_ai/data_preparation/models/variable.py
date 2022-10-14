@@ -228,11 +228,14 @@ class Variable:
             df_output,
             os.path.join(variable_path, 'data.parquet'),
         )
-        df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
-        self.storage.write_parquet(
-            df_sample_output,
-            os.path.join(variable_path, 'sample_data.parquet'),
-        )
+        try:
+            df_sample_output = df_output.iloc[:DATAFRAME_SAMPLE_COUNT]
+            self.storage.write_parquet(
+                df_sample_output,
+                os.path.join(variable_path, 'sample_data.parquet'),
+            )
+        except Exception:
+            pass
 
     def __write_spark_parquet(self, data) -> None:
         variable_path = os.path.join(self.variable_dir_path, f'{self.uuid}')
