@@ -38,9 +38,9 @@ data "template_file" "env_vars" {
     aws_secret_access_key = var.AWS_SECRET_ACCESS_KEY
     lambda_func_arn       = "${aws_lambda_function.terraform_lambda_func.arn}"
     lambda_func_name      = "${aws_lambda_function.terraform_lambda_func.function_name}"
-    cluster_name          = "${var.app_name}-${var.app_environment}-cluster"
-    task_definition       = "${var.app_name}-dev-task"
-    container_name        = "${var.app_name}-${var.app_environment}-container"
+    ecs_cluster_name      = "${var.app_name}-${var.app_environment}-cluster"
+    ecs_task_definition   = "${var.app_name}-dev-task"
+    ecs_container_name    = "${var.app_name}-${var.app_environment}-container"
   }
 }
 
