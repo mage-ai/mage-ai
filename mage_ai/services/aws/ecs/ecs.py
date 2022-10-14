@@ -16,6 +16,14 @@ def run_task(command: str, ecs_config: EcsConfig) -> None:
     return response
 
 
+def stop_task(task_arn: str, cluster: str = None) -> None:
+    client = boto3.client('ecs')
+    return client.stop_task(
+        cluster=cluster,
+        task=task_arn,
+    )
+
+
 def list_tasks(cluster):
     region_name = os.getenv('AWS_REGION_NAME', 'us-west-2')
     config = Config(region_name=region_name)

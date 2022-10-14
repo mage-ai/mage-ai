@@ -18,5 +18,17 @@
     {
         "name": "LAMBDA_FUNCTION_NAME",
         "value": "${lambda_func_name}"
+    },
+    {
+        "name": "ECS_CLUSTER_NAME",
+        "value": "${ecs_cluster_name}"
+    },
+    {
+        "name": "ECS_TASK_DEFINITION",
+        "value": "${ecs_task_definition}"
+    },
+    {
+        "name": "ECS_CONTAINER_NAME",
+        "value": "${ecs_container_name}"
     }
 ]

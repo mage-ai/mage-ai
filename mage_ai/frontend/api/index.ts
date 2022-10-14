@@ -35,6 +35,7 @@ export const FILE_CONTENTS: 'file_contents' = 'file_contents';
 export const FILES: 'files' = 'files';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
+export const INSTANCES: 'instances' = 'instances';
 export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
@@ -69,6 +70,7 @@ const RESOURCES: any[][] = [
   [FEATURE_SETS],
   [FILES],
   [FILE_CONTENTS],
+  [INSTANCES, CLUSTERS],
   [KERNELS],
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],
@@ -155,8 +157,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource][parentResource].useUpdate = (parentId: string, id: string, opts?: any) => async (body: any) =>
       fetchUpdateWithParent(resource, parentResource, parentId, id, body, opts);
 
-    apis[resource][parentResource].useDelete = (parentId: string, id: string) => async () => {
-      const response = await useDeleteWithParent(resource, parentResource, parentId, id);
+    apis[resource][parentResource].useDelete = (parentId: string, id: string, query?: object) => async () => {
+      const response = await useDeleteWithParent(resource, parentResource, parentId, id, query);
 
       return await handle(response);
     },
@@ -208,8 +210,8 @@ RESOURCES.forEach(([resource, parentResource, grandchildResource, swrOptions]) =
     apis[resource].useCreate = (opts?: any) =>
       async (body: any) => fetchCreate(resource, body, opts);
 
-    apis[resource].useDelete = (id: string) => async () => {
-      const response = await useDelete(resource, id);
+    apis[resource].useDelete = (id: string, query?: object) => async () => {
+      const response = await useDelete(resource, id, query);
 
       return await handle(response);
     },

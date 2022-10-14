@@ -57,6 +57,7 @@ Commands:
         parser.add_argument('repo_path', metavar='project_path', type=str)
         parser.add_argument('--host', nargs='?', type=str)
         parser.add_argument('--port', nargs='?', type=int)
+        parser.add_argument('--manage-instance', nargs='?', type=str)
 
         args = dict()
         if len(sys.argv) >= 3:
@@ -67,6 +68,7 @@ Commands:
 
         start_server(
             host=args.get('host'),
+            manage=args.get('manage_instance') == '1',
             port=args.get('port'),
             project=repo_path,
         )

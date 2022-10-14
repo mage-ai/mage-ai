@@ -115,16 +115,17 @@ export function useDetailWithParent(
   };
 }
 
-export function useDelete(resource: string, id: string) {
-  return buildFetch(buildUrl(resource, id), { method: DELETE });
+export function useDelete(resource: string, id: string, query: object = {}) {
+  return buildFetch(buildUrl(resource, id), { query, method: DELETE });
 }
 
 export function useDeleteWithParent(resource: string,
   parentResource: string,
   parentId: string,
   id: string,
+  query: object = {},
 ) {
-  return buildFetch(buildUrl(parentResource, parentId, resource, id), { method: DELETE });
+  return buildFetch(buildUrl(parentResource, parentId, resource, id), { query, method: DELETE });
 }
 
 export function useList(

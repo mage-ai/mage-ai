@@ -30,4 +30,15 @@ export const PopupContainerStyle = styled.div<any>`
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
   `}
 
+  ${props => props.leftOffset && `
+    left: ${props.leftOffset}px;
+  `}
+
+  ${props => props.topOffset && `
+    top: ${props.topOffset}px;
+  `}
+
+  ${props => props.width && `
+    width: ${props.width}px;
+  `}
 `;
