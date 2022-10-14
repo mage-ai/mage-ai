@@ -1,0 +1,315 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "$insert_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "$schema": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "adid": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "amplitude_attribution_ids": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "amplitude_event_type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "amplitude_id": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "app": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "city": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "client_event_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "client_upload_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "country": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "data": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "device_brand": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_carrier": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_family": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_manufacturer": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_model": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "device_type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "dma": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "event_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "event_properties": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "event_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "group_properties": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "groups": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "idfa": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ip_address": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "is_attribution_event": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "language": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "library": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "location_lat": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "location_lng": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "os_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "os_version": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "paying": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "platform": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "processed_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "region": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "sample_rate": {
+      "type": [
+        "null",
+        "number",
+        "string"
+      ]
+    },
+    "server_received_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "server_upload_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "session_id": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "start_version": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "user_creation_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "user_id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "user_properties": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "uuid": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "version_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

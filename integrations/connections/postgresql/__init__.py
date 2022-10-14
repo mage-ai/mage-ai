@@ -22,14 +22,15 @@ class PostgreSQL(Connection):
         self.username = username
 
     def execute(self, query_strings: List[str], commit=False) -> List[List[tuple]]:
-        connection = self.__build_connection()
+        connection = self.build_connection()
 
         data = []
 
         with connection.cursor() as cursor:
             for query_string in query_strings:
                 cursor.execute(clean_query(query_string))
-                data.append(cursor.fetchall())
+                if not commit:
+                    data.append(cursor.fetchall())
 
         if commit:
             connection.commit()
@@ -39,15 +40,15 @@ class PostgreSQL(Connection):
 
     def load(self, query_string: str) -> List[List[tuple]]:
         tags = self.build_tags()
-        self.info('Loading started.', tags=tags)
+        self.info('Load started.', tags=tags)
         data = self.execute([
             query_string,
         ])
-        self.info('Loading completed.', tags=merge_dict(tags, dict(count=len(data))))
+        self.info('Load completed.', tags=merge_dict(tags, dict(count=len(data))))
 
         return data[0]
 
-    def __build_connection(self):
+    def build_connection(self):
         return connect(
             dbname=self.database,
             host=self.host,
