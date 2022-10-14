@@ -32,6 +32,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --database_connection_url)
+    DATABASE_CONNECTION_URL="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --host)
     HOST="$3"
     shift # past argument
@@ -66,6 +71,8 @@ export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+
+export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
 
 HOST=$HOST \
 PORT=$PORT \

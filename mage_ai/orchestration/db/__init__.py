@@ -1,8 +1,7 @@
+from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import os
-
-from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
  
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
