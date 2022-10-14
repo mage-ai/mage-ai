@@ -2,8 +2,15 @@ from mage_ai.data_cleaner.shared.utils import (
     is_geo_dataframe,
     is_spark_dataframe,
 )
-from mage_ai.data_preparation.models.variable import Variable, VariableType, VARIABLE_DIR
+from mage_ai.data_preparation.models.variable import (
+    Variable,
+    VariableType,
+    VARIABLE_DIR,
+)
+from mage_ai.data_preparation.storage.local_storage import LocalStorage
+from mage_ai.data_preparation.storage.s3_storage import S3Storage
 from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.shared.constants import S3_PREFIX
 from typing import Any, Dict, List
 import os
 import pandas as pd
@@ -16,7 +23,23 @@ class VariableManager:
             self.variables_dir = self.repo_path
         else:
             self.variables_dir = variables_dir
+        self.storage = LocalStorage()
         # TODO: implement caching logic
+
+    @classmethod
+    def get_manager(
+        self,
+        repo_path: str = None,
+        variables_dir: str = None,
+    ) -> 'VariableManager':
+        manager_args = dict(
+            repo_path=repo_path,
+            variables_dir=variables_dir,
+        )
+        if variables_dir is not None and variables_dir.startswith(S3_PREFIX):
+            return S3VariableManager(**manager_args)
+        else:
+            return VariableManager(**manager_args)
 
     def add_variable(
         self,
@@ -38,6 +61,7 @@ class VariableManager:
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,
+            storage=self.storage,
             variable_type=variable_type,
         )
         # Delete data if it exists
@@ -58,6 +82,7 @@ class VariableManager:
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,
+            storage=self.storage,
             variable_type=variable_type,
         ).delete()
 
@@ -66,6 +91,7 @@ class VariableManager:
         pipeline_uuid: str,
         block_uuid: str,
         variable_uuid: str,
+        dataframe_analysis_keys: List[str] = None,
         partition: str = None,
         variable_type: VariableType = None,
         sample: bool = False,
@@ -80,7 +106,12 @@ class VariableManager:
             variable_type=variable_type,
             spark=spark,
         )
-        return variable.read_data(sample=sample, sample_count=sample_count, spark=spark)
+        return variable.read_data(
+            dataframe_analysis_keys=dataframe_analysis_keys,
+            sample=sample,
+            sample_count=sample_count,
+            spark=spark,
+        )
 
     def get_variable_object(
         self,
@@ -98,6 +129,7 @@ class VariableManager:
             self.__pipeline_path(pipeline_uuid),
             block_uuid,
             partition=partition,
+            storage=self.storage,
             variable_type=variable_type,
         )
 
@@ -105,18 +137,18 @@ class VariableManager:
         from mage_ai.data_preparation.models.pipeline import Pipeline
         pipeline = Pipeline.get(pipeline_uuid, repo_path=self.repo_path)
         variable_dir_path = os.path.join(self.__pipeline_path(pipeline_uuid), VARIABLE_DIR)
-        if not os.path.exists(variable_dir_path):
+        if not self.storage.path_exists(variable_dir_path):
             return dict()
-        block_dirs = os.listdir(variable_dir_path)
+        block_dirs = self.storage.listdir(variable_dir_path)
         variables_by_block = dict()
         for d in block_dirs:
             if not pipeline.has_block(d) and d != 'global':
                 continue
             block_variables_path = os.path.join(variable_dir_path, d)
-            if not os.path.isdir(block_variables_path):
+            if not self.storage.isdir(block_variables_path):
                 variables_by_block[d] = []
             else:
-                variables = os.listdir(os.path.join(variable_dir_path, d))
+                variables = self.storage.listdir(os.path.join(variable_dir_path, d))
                 variable_names = sorted([v.split('.')[0] for v in variables])
                 variables_by_block[d] = [v for v in variable_names if v != '']
         return variables_by_block
@@ -133,16 +165,23 @@ class VariableManager:
             partition or '',
             block_uuid,
         )
-        if not os.path.exists(variable_dir_path):
+        if not self.storage.path_exists(variable_dir_path):
             return []
-        variables = os.listdir(variable_dir_path)
+        variables = self.storage.listdir(variable_dir_path)
         return sorted([v.split('.')[0] for v in variables])
 
     def __pipeline_path(self, pipeline_uuid: str) -> str:
         path = os.path.join(self.variables_dir, 'pipelines', pipeline_uuid)
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
+        if type(self.storage) is LocalStorage:
+            if not self.storage.path_exists(path):
+                self.storage.makedirs(path, exist_ok=True)
         return path
+
+
+class S3VariableManager(VariableManager):
+    def __init__(self, repo_path=None, variables_dir=None):
+        super().__init__(repo_path=repo_path, variables_dir=variables_dir)
+        self.storage = S3Storage(dirpath=variables_dir)
 
 
 def get_global_variables(

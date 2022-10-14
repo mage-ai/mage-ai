@@ -46,7 +46,10 @@ class Pipeline:
             self.repo_config = RepoConfig.from_dict(repo_config)
         else:
             self.repo_config = repo_config
-        self.variable_manager = VariableManager(self.repo_path, self.variables_dir)
+        self.variable_manager = VariableManager.get_manager(
+            self.repo_path,
+            self.variables_dir,
+        )
 
     @property
     def config_path(self):
