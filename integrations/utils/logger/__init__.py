@@ -5,9 +5,10 @@ import simplejson
 
 
 class Logger():
-    def __init__(self, caller=None, logger=None):
+    def __init__(self, caller=None, logger=None, verbose: int = 1):
         self.caller = caller
         self.logger = logger
+        self.verbose = verbose
 
     def build_tags(self, **kwargs):
         return {k: v for k, v in kwargs.items() if v}
@@ -21,10 +22,21 @@ class Logger():
     def info(self, message, tags={}, **kwargs):
         self.__log(LOG_LEVEL_INFO, message, tags, **kwargs)
 
-    def __log(self, level, message, tags, **kwargs):
+    def __log(self, level, message, tags, **kwargs) -> None:
+        if self.verbose == 0:
+            return
+
         timestamp = datetime.utcnow().isoformat()
+        if self.caller:
+            if type(self.caller) is str:
+                caller_string = self.caller
+            else:
+                caller_string = self.caller.__class__.__name__
+        else:
+            caller_string = self.__class__.__name__
+
         data = dict(
-            caller=self.caller.__class__.__name__ if self.caller else self.__class__.__name__,
+            caller=caller_string,
             level=level,
             message=message,
             tags=tags,
@@ -54,5 +66,5 @@ class Logger():
                 data,
                 default=encode_complex,
                 ignore_nan=True,
-                indent=2,
+                # indent=2,
             ))
