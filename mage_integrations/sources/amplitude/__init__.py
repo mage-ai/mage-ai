@@ -1,11 +1,11 @@
-from connections.amplitude import Amplitude as AmplitudeConnection
 from datetime import datetime, timedelta
+from mage_integrations.connections.amplitude import Amplitude as AmplitudeConnection
+from mage_integrations.utils.array import find_index
 from singer import utils
 from sources.amplitude.constants import TABLE_KEY_PROPERTIES, VALID_REPLICATION_KEYS
 from sources.base import Source
 from sources.constants import REPLICATION_METHOD_INCREMENTAL
 from typing import List
-from utils.array import find_index
 import dateutil.parser
 import singer
 

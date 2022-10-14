@@ -1,15 +1,15 @@
-from singer.metadata import to_list, write
-from singer.utils import check_config, load_json
-from sources.catalog import Catalog
-from sources.constants import (
+from mage_integrations.sources.catalog import Catalog
+from mage_integrations.sources.constants import (
     INCLUSION_AUTOMATIC,
     INCLUSION_AVAILABLE,
     INCLUSION_UNSUPPORTED,
     METADATA_KEY_INCLUSION,
     METADATA_KEY_SELECTED,
 )
+from mage_integrations.utils.array import find
+from singer.metadata import to_list, write
+from singer.utils import check_config, load_json
 from typing import List
-from utils.array import find
 import argparse
 import json
 import os

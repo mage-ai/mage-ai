@@ -1,7 +1,7 @@
-from connections.postgresql import PostgreSQL as PostgreSQLConnection
-from destinations.base import Destination
-from destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
-from destinations.postgresql.utils import build_create_table_command, build_insert_command
+from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
+from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
+from mage_integrations.destinations.postgresql.utils import build_create_table_command, build_insert_command
 from typing import List
 import argparse
 import sys

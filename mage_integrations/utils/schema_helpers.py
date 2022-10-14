@@ -1,4 +1,4 @@
-from sources.constants import (
+from mage_integrations.sources.constants import (
     INCLUSION_AUTOMATIC,
     INCLUSION_UNSUPPORTED,
     METADATA_KEY_INCLUSION,

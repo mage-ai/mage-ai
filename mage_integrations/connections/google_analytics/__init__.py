@@ -1,18 +1,18 @@
-from connections.base import Connection
-from connections.google_analytics.constants import (
-    CredentialsInfoType,
-    DATE_STRING_PATTERN,
-    DIMENSIONS,
-    METRICS,
-)
-from connections.google_analytics.utils import parse_response
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange
 from google.analytics.data_v1beta.types import Dimension
 from google.analytics.data_v1beta.types import Metric
 from google.analytics.data_v1beta.types import RunReportRequest
+from mage_integrations.connections.base import Connection
+from mage_integrations.connections.google_analytics.constants import (
+    CredentialsInfoType,
+    DATE_STRING_PATTERN,
+    DIMENSIONS,
+    METRICS,
+)
+from mage_integrations.connections.google_analytics.utils import parse_response
 from typing import Literal, TypedDict
-from utils.dictionary import merge_dict
+from mage_integrations.utils.dictionary import merge_dict
 import os
 import re
 

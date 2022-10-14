@@ -1,4 +1,4 @@
-from utils.logger import Logger
+from mage_integrations.utils.logger import Logger
 
 
 class Connection():

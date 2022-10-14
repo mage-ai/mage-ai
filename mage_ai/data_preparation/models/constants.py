@@ -50,6 +50,7 @@ class ExecutorType(str, Enum):
 
 
 class PipelineType(str, Enum):
+    INTEGRATION = 'integration'
     PYTHON = 'python'
     PYSPARK = 'pyspark'
     STREAMING = 'streaming'

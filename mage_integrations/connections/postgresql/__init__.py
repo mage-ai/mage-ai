@@ -1,8 +1,8 @@
-from connections.base import Connection
-from connections.utils.sql import clean_query
+from mage_integrations.connections.base import Connection
+from mage_integrations.connections.utils.sql import clean_query
+from mage_integrations.utils.dictionary import merge_dict
 from psycopg2 import connect
 from typing import List
-from utils.dictionary import merge_dict
 
 
 class PostgreSQL(Connection):

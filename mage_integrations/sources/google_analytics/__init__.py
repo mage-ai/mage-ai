@@ -1,11 +1,10 @@
-from connections.google_analytics import GoogleAnalytics as GoogleAnalyticsConnection
-from connections.google_analytics.constants import DIMENSIONS, METRICS
+from mage_integrations.connections.google_analytics import GoogleAnalytics as GoogleAnalyticsConnection
+from mage_integrations.connections.google_analytics.constants import DIMENSIONS, METRICS
+from mage_integrations.sources.base import Source
+from mage_integrations.utils.dictionary import merge_dict
 from singer import utils
 from singer.schema import Schema
-from sources.base import Source
 from typing import List
-from utils.dictionary import merge_dict
-from utils.dictionary import merge_dict
 import singer
 
 LOGGER = singer.get_logger()

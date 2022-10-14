@@ -1,17 +1,14 @@
 from contextlib import redirect_stdout
+from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutMixin
+from mage_ai.data_preparation.executors.mixins.validation import ValidateBlockMixin
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from typing import Callable, Dict
 import yaml
 
 
-class StreamingPipelineExecutor(PipelineExecutor):
-    def __init__(self, pipeline: Pipeline, **kwargs):
-        super().__init__(pipeline, **kwargs)
-        self.parse_and_validate_blocks()
-
+class StreamingPipelineExecutor(PipelineExecutor, ExecuteWithOutMixin, ValidateBlockMixin):
     def parse_and_validate_blocks(self):
         """
         Find the first valid streaming pipeline is in the structure:
@@ -58,31 +55,7 @@ class StreamingPipelineExecutor(PipelineExecutor):
         self.sink_block = sink_blocks[0]
         self.transformer_block = transformer_blocks[0] if len(transformer_blocks) > 0 else None
 
-    def execute(
-        self,
-        build_block_output_stdout: Callable[..., object] = None,
-        global_vars: Dict = None,
-        **kwargs,
-    ) -> None:
-        # TODOs:
-        # 1. Support multiple sources and sinks
-        # 2. Support flink pipeline
-        if build_block_output_stdout:
-            stdout = build_block_output_stdout(self.pipeline.uuid)
-        else:
-            stdout = StreamToLogger(self.logger)
-        try:
-            with redirect_stdout(stdout):
-                self.__execute_in_python()
-        except Exception as e:
-            if not build_block_output_stdout:
-                self.logger.exception(
-                        f'Failed to execute streaming pipeline {self.pipeline.uuid}',
-                        error=e,
-                    )
-            raise e
-
-    def __execute_in_python(self):
+    def execute_in_python(self):
         from mage_ai.streaming.sources.source_factory import SourceFactory
         from mage_ai.streaming.sinks.sink_factory import SinkFactory
         source_config = yaml.safe_load(self.source_block.content)

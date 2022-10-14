@@ -1,4 +1,4 @@
-from destinations.constants import (
+from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
@@ -7,7 +7,7 @@ from destinations.constants import (
     COLUMN_TYPE_STRING,
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
-from destinations.utils import clean_column_name
+from mage_integrations.destinations.utils import clean_column_name
 from typing import List
 
 

@@ -1,8 +1,8 @@
-from connections.amplitude.utils import build_date_range
-from connections.base import Connection
 from datetime import timedelta
-from utils.dates import date_intervals
-from utils.dictionary import flatten, merge_dict
+from mage_integrations.connections.amplitude.utils import build_date_range
+from mage_integrations.connections.base import Connection
+from mage_integrations.utils.dates import date_intervals
+from mage_integrations.utils.dictionary import flatten, merge_dict
 import gzip
 import io
 import json

@@ -1,4 +1,5 @@
-from destinations.constants import (
+from jsonschema.validators import Draft4Validator
+from mage_integrations.destinations.constants import (
     KEY_BOOKMARK_PROPERTIES,
     KEY_KEY_PROPERTIES,
     KEY_RECORD,
@@ -13,10 +14,9 @@ from destinations.constants import (
     TYPE_SCHEMA,
     TYPE_STATE,
 )
-from destinations.utils import flatten_record
-from jsonschema.validators import Draft4Validator
-from utils.dictionary import merge_dict
-from utils.logger import Logger
+from mage_integrations.destinations.utils import flatten_record
+from mage_integrations.utils.dictionary import merge_dict
+from mage_integrations.utils.logger import Logger
 import io
 import json
 import singer

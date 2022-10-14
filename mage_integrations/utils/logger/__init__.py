@@ -1,6 +1,6 @@
 from datetime import datetime
-from utils.logger.constants import LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION, LOG_LEVEL_INFO
-from utils.parsers import encode_complex
+from mage_integrations.utils.logger.constants import LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION, LOG_LEVEL_INFO
+from mage_integrations.utils.parsers import encode_complex
 import simplejson
 
 
