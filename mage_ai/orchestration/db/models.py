@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.orchestration.db import Session, session
+from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
@@ -14,11 +14,14 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
+import pytz
+
 
 Base = declarative_base()
-Base.query = Session.query_property()
-Base.select = Session.query
 
+class classproperty(property):
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
 
 class BaseModel(Base):
     __abstract__ = True
@@ -26,6 +29,18 @@ class BaseModel(Base):
     @declared_attr
     def __tablename__(cls):
         return camel_to_snake_case(cls.__name__)
+
+    @classproperty
+    def query(cls):
+        return db_connection.Session.query(cls)
+    
+    @property
+    def select(self):
+        return db_connection.Session.query
+
+    @property
+    def session(self):
+        return db_connection.session
 
     id = Column(
         Integer,
@@ -36,33 +51,33 @@ class BaseModel(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     @classmethod
-    def create(self, **kwargs):
-        model = self(**kwargs)
+    def create(cls, **kwargs):
+        model = cls(**kwargs)
         model.save()
         return model
 
     def save(self, commit=True) -> None:
-        session.add(self)
+        self.session.add(self)
         if commit:
             try:
-                session.commit()
+                self.session.commit()
             except Exception as e:
-                session.rollback()
+                self.session.rollback()
                 raise e
 
     def update(self, **kwargs) -> None:
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
-        session.commit()
+        self.session.commit()
 
     def delete(self, commit: bool = True) -> None:
-        session.delete(self)
+        self.session.delete(self)
         if commit:
-            session.commit()
+            self.session.commit()
 
     def refresh(self):
-        session.refresh(self)
+        self.session.refresh(self)
 
     def to_dict(self, include_attributes=[]) -> Dict:
         def __format_value(value):
@@ -161,8 +176,12 @@ class PipelineSchedule(BaseModel):
     def should_schedule(self) -> bool:
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
-        if self.start_time is not None and datetime.now() < self.start_time:
-            return False
+
+        if self.start_time is not None:
+            now_dt = datetime.now().replace(tzinfo=pytz.UTC)
+            start_time_dt = self.start_time.replace(tzinfo=pytz.UTC)
+            if now_dt < start_time_dt:
+                return False
 
         try:
             Pipeline.get(self.pipeline_uuid)

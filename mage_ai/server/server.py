@@ -10,6 +10,7 @@ from mage_ai.data_preparation.variable_manager import (
     delete_global_variable,
     set_global_variable,
 )
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -612,6 +613,8 @@ def start_server(
     else:
         # Start a subprocess for scheduler
         scheduler_manager.start_scheduler()
+
+    # db_connection.start_session()
 
     enable_pretty_logging()
 

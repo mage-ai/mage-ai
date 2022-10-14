@@ -9,7 +9,9 @@ SCHEDULER_AUTO_RESTART_INTERVAL = 10
 
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+    from mage_ai.orchestration.db import db_connection
 
+    db_connection.start_session()
     database_manager.run_migrations()
     while True:
         try:
