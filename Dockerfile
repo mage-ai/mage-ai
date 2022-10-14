@@ -4,7 +4,7 @@ ARG PIP=pip3
 USER root
 
 # Install Mage
-RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git@dy--check_environment_variables"
+RUN ${PIP} install "mage-ai[all]"
 
 # Install NFS dependencies
 RUN apt -y update && apt -y install nfs-common
