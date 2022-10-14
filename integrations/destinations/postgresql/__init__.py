@@ -24,10 +24,17 @@ class PostgreSQL(Destination):
         full_table_name = f'{schema_name}.{table_name}'
         does_table_exist = self.__does_table_exist(schema_name, table_name)
 
-        create_table_command = build_create_table_command(schema_name, table_name, schema)
+        unique_constraints = self.unique_constraints.get(stream)
+
         query_strings = [
             f'CREATE SCHEMA IF NOT EXISTS {schema_name}',
         ]
+        create_table_command = build_create_table_command(
+            schema_name,
+            table_name,
+            schema,
+            unique_constraints=unique_constraints,
+        )
 
         replication_method = self.replication_methods[stream]
         if REPLICATION_METHOD_INCREMENTAL == replication_method:
@@ -42,7 +49,14 @@ class PostgreSQL(Destination):
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        query_strings.append(build_insert_command(schema_name, table_name, schema, record))
+        query_strings.append(build_insert_command(
+            schema_name,
+            table_name,
+            schema,
+            record,
+            unique_conflict_method=self.unique_conflict_methods.get(stream),
+            unique_constraints=unique_constraints,
+        ))
 
         connection = self.__build_connection()
         connection.execute(query_strings, commit=True)

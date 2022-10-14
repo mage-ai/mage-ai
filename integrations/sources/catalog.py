@@ -4,14 +4,27 @@ import json
 
 
 class CatalogEntry(CatalogEntryParent):
-    def __init__(self, bookmark_properties: List[str] = None, **kwargs):
+    def __init__(
+        self,
+        bookmark_properties: List[str] = None,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.bookmark_properties = bookmark_properties
+        self.unique_conflict_method = unique_conflict_method
+        self.unique_constraints = unique_constraints
 
     def to_dict(self):
         result = super().to_dict()
+
         if self.bookmark_properties:
             result['bookmark_properties'] = self.bookmark_properties
+        if self.unique_conflict_method:
+            result['unique_conflict_method'] = self.unique_conflict_method
+        if self.unique_constraints:
+            result['unique_constraints'] = self.unique_constraints
 
         return result
 
@@ -44,5 +57,7 @@ class Catalog(CatalogParent):
             entry.stream_alias = stream.get('stream_alias')
             entry.table = stream.get('table_name')
             entry.tap_stream_id = stream.get('tap_stream_id')
+            entry.unique_conflict_method = stream.get('unique_conflict_method')
+            entry.unique_constraints = stream.get('unique_constraints')
             streams.append(entry)
         return Catalog(streams)

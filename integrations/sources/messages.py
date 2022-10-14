@@ -3,14 +3,27 @@ from typing import List
 
 
 class SchemaMessage(SchemaMessageOriginal):
-    def __init__(self, replication_method: str = None, **kwargs):
+    def __init__(
+        self,
+        replication_method: str = None,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.replication_method = replication_method
+        self.unique_conflict_method = unique_conflict_method
+        self.unique_constraints = unique_constraints
 
     def asdict(self):
         result = super().asdict()
+
         if self.replication_method:
             result['replication_method'] = self.replication_method
+        if self.unique_conflict_method:
+            result['unique_conflict_method'] = self.unique_conflict_method
+        if self.unique_constraints:
+            result['unique_constraints'] = self.unique_constraints
 
         return result
 
@@ -22,6 +35,8 @@ def write_schema(
     bookmark_properties: List[str] = None,
     replication_method: str = None,
     stream_alias: str = None,
+    unique_conflict_method: str = None,
+    unique_constraints: List[str] = None,
 ) -> None:
     """Write a schema message.
 
@@ -42,5 +57,7 @@ def write_schema(
             replication_method=replication_method,
             schema=schema,
             stream=(stream_alias or stream_name),
+            unique_conflict_method=unique_conflict_method,
+            unique_constraints=unique_constraints,
         ),
     )

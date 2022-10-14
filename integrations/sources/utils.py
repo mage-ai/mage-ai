@@ -53,10 +53,12 @@ def update_catalog(
     stream_id: str,
     key_properties: List[str],
     replication_method: str,
+    bookmark_properties: List[str] = [],
     deselected_columns: List[str] = [],
-    replication_keys: List[str] = [],
     select_stream: bool = False,
     selected_columns: List[str] = None,
+    unique_conflict_method: str = None,
+    unique_constraints: List[str] = [],
 ) -> None:
     with open(absolute_path_to_catalog, 'r') as f:
         catalog = json.loads(f.read())
@@ -65,8 +67,10 @@ def update_catalog(
         stream = find(lambda x: x['tap_stream_id'] == stream_id, catalog['streams'])
 
         stream['key_properties'] = key_properties
-        stream['replication_keys'] = replication_keys
+        stream['bookmark_properties'] = bookmark_properties
         stream['replication_method'] = replication_method
+        stream['unique_conflict_method'] = unique_conflict_method
+        stream['unique_constraints'] = unique_constraints
 
         for d in stream['metadata']:
             breadcrumb = d.get('breadcrumb')
@@ -118,10 +122,11 @@ def update_source_state_from_destination_state(
         with open(absolute_path_to_destination_state, 'w') as f:
             f.write('')
 
-    if destination_state and len(destination_state) >= 1:
-        line = destination_state[len(destination_state) - 1]
-        with open(absolute_path_to_source_state, 'w') as f:
-            f.write(json.dumps(dict(bookmarks=json.loads(line))))
+    with open(absolute_path_to_source_state, 'w') as f:
+        line = '{}'
+        if destination_state and len(destination_state) >= 1:
+            line = destination_state[len(destination_state) - 1]
+        f.write(json.dumps(dict(bookmarks=json.loads(line))))
 
 
 def parse_args(required_config_keys):
@@ -164,6 +169,10 @@ def parse_args(required_config_keys):
         action='store_true',
         help='Do schema discovery')
 
+    parser.add_argument(
+        '--query',
+        help='Query file containing query parameters for source’s load_data method.')
+
     args = parser.parse_args()
     if args.config:
         setattr(args, 'config_path', args.config)
@@ -179,6 +188,9 @@ def parse_args(required_config_keys):
     if args.catalog:
         setattr(args, 'catalog_path', args.catalog)
         args.catalog = Catalog.load(args.catalog)
+    if args.query:
+        setattr(args, 'query_path', args.query)
+        args.query = load_json(args.query)
 
     check_config(args.config, required_config_keys)
 

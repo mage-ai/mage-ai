@@ -6,6 +6,7 @@ from sources.base import Source
 from sources.constants import REPLICATION_METHOD_INCREMENTAL
 from typing import List
 from utils.array import find_index
+import dateutil.parser
 import singer
 
 LOGGER = singer.get_logger()
@@ -15,13 +16,26 @@ class Amplitude(Source):
     def load_data(
         self,
         bookmarks: dict = None,
-        start_date: datetime = None,
+        query: dict = None,
         **kwargs,
     ) -> List[dict]:
-        connection = AmplitudeConnection(self.config['api_key'], self.config['secret_key'])
+        connection = AmplitudeConnection(
+            self.config['api_key'],
+            self.config['secret_key'],
+        )
+
+        today = datetime.utcnow()
+        start_date = today - timedelta(days=1)
+        if query.get('start_date'):
+            start_date = dateutil.parser.parse(query['start_date'])
+
+        end_date = today
+        if query.get('end_date'):
+            end_date = dateutil.parser.parse(query['end_date'])
+
         results = connection.load(
-            start_date=datetime.now() - timedelta(days=1),
-            end_date=datetime.now(),
+            start_date=start_date,
+            end_date=end_date,
         )
 
         if bookmarks:

@@ -30,6 +30,7 @@ class Source():
         discover_mode: bool = False,
         is_sorted: bool = True,
         logger = LOGGER,
+        query: dict = None,
         schemas_folder: str = 'schemas',
         state: dict = None,
         verbose: int = 1,
@@ -42,6 +43,8 @@ class Source():
                 config = args.config
             if args.discover:
                 discover_mode = args.discover
+            if args.query:
+                query = args.query
             if args.state:
                 state = args.state
 
@@ -51,6 +54,7 @@ class Source():
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
         self.logger = Logger(caller=self, logger=logger, verbose=verbose)
+        self.query = query
         self.schemas_folder = schemas_folder
         self.state = state
 
@@ -105,11 +109,14 @@ class Source():
                 replication_method=replication_method,
                 schema=schema_dict,
                 stream_name=tap_stream_id,
+                unique_conflict_method=stream.unique_conflict_method,
+                unique_constraints=stream.unique_constraints,
             )
 
             max_bookmark = None
             for row in self.load_data(
                 bookmarks=bookmarks,
+                query=self.query,
                 start_date=start_date,
             ):
                 singer.write_records(
@@ -172,6 +179,7 @@ class Source():
     def load_data(
         self,
         bookmarks: dict = None,
+        query: dict = None,
         start_date: datetime = None,
         **kwargs,
     ) -> List[dict]:

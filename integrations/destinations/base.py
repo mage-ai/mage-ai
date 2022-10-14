@@ -6,6 +6,8 @@ from destinations.constants import (
     KEY_SCHEMA,
     KEY_STREAM,
     KEY_TYPE,
+    KEY_UNIQUE_CONFLICT_METHOD,
+    KEY_UNIQUE_CONSTRAINTS,
     KEY_VALUE,
     TYPE_RECORD,
     TYPE_SCHEMA,
@@ -49,6 +51,8 @@ class Destination():
         self.replication_methods = None
         self.schemas = None
         self.state_file_path = state_file_path
+        self.unique_conflict_methods = None
+        self.unique_constraints = None
         self.validators = None
 
     @property
@@ -123,6 +127,8 @@ class Destination():
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
         self.schemas[stream] = schema
+        self.unique_conflict_methods[stream] = row.get(KEY_UNIQUE_CONFLICT_METHOD)
+        self.unique_constraints[stream] = row.get(KEY_UNIQUE_CONSTRAINTS)
         self.validators[stream] = Draft4Validator(schema)
 
     def process_state(self, row: dict, tags: dict = {}) -> None:
@@ -141,6 +147,8 @@ class Destination():
         self.records_count = 0
         self.replication_methods = {}
         self.schemas = {}
+        self.unique_conflict_methods = {}
+        self.unique_constraints = {}
         self.validators = {}
 
         text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')

@@ -5,8 +5,10 @@ from destinations.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from destinations.utils import clean_column_name
+from typing import List
 
 
 def column_type_mapping(schema) -> dict:
@@ -42,17 +44,35 @@ def convert_column_to_type(value, column_type):
     return f"CAST('{value}' AS {column_type})"
 
 
-def build_create_table_command(schema_name: str, table_name: str, schema: dict) -> str:
+def build_create_table_command(
+    schema_name: str,
+    table_name: str,
+    schema: dict,
+    unique_constraints: List[str] = None,
+) -> str:
     mapping = column_type_mapping(schema)
     columns_and_types = [
         f"{clean_column_name(col)} {mapping[col]['type_converted']}" for col
         in schema['properties'].keys()
     ]
 
+    if unique_constraints:
+        index_name = '_'.join(unique_constraints)
+        columns_and_types.append(
+            f"CONSTRAINT {index_name}_unique UNIQUE ({', '.join(unique_constraints)})",
+        )
+
     return f"CREATE TABLE {schema_name}.{table_name} ({', '.join(columns_and_types)})"
 
 
-def build_insert_command(schema_name: str, table_name: str, schema: dict, record: dict) -> str:
+def build_insert_command(
+    schema_name: str,
+    table_name: str,
+    schema: dict,
+    record: dict,
+    unique_conflict_method: str = None,
+    unique_constraints: List[str] = None,
+) -> str:
     mapping = column_type_mapping(schema)
     columns = schema['properties'].keys()
 
@@ -67,7 +87,15 @@ def build_insert_command(schema_name: str, table_name: str, schema: dict, record
             ) if v is not None else 'NULL')
         values.append(f"({', '.join(vals)})")
 
-    return '\n'.join([
+    commands = [
         f"INSERT INTO {schema_name}.{table_name}({', '.join([clean_column_name(col) for col in columns])})",
         f"VALUES {', '.join(values)}",
-    ])
+    ]
+
+    if unique_constraints and unique_conflict_method:
+        conflict_method = 'DO NOTHING'
+        if UNIQUE_CONFLICT_METHOD_UPDATE == conflict_method:
+            conflict_method = 'UPDATE'
+        commands.append(f'ON CONFLICT {conflict_method}')
+
+    return '\n'.join(commands)
