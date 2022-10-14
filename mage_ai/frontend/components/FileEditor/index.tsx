@@ -20,6 +20,7 @@ import {
   KEY_CODE_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { getBlockType, getBlockUUID } from './utils';
+import { getYamlBlockFromFile } from '@components/FileBrowser/utils';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { useKeyboardContext } from '@context/Keyboard';
@@ -139,7 +140,8 @@ function FileEditor({
     setFilesTouched,
   ]);
 
-  const addToPipelineEl = (fileExtension === FileExtensionEnum.PY || fileExtension === FileExtensionEnum.SQL)
+  const addToPipelineEl = (fileExtension === FileExtensionEnum.PY || fileExtension === FileExtensionEnum.SQL
+    || (fileExtension === FileExtensionEnum.YAML && getYamlBlockFromFile(file, file?.path)))
     && getBlockType(file.path.split('/')) !== BlockTypeEnum.SCRATCHPAD && (
     <Spacing p={2}>
       <KeyboardShortcutButton

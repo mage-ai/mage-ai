@@ -424,7 +424,7 @@ function PipelineDetail({
 
               let content = null;
               let configuration = {};
-              let upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+              const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
 
               if (block) {
                 configuration = block.configuration;

@@ -13,6 +13,8 @@ from mage_ai.data_preparation.models.constants import (
     BlockStatus,
     BlockType,
     ExecutorType,
+    PipelineType,
+    BLOCK_LANGUAGE_TO_FILE_EXTENSION,
     CUSTOM_EXECUTION_BLOCK_TYPES,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_ANALYSIS_MAX_ROWS,
@@ -27,6 +29,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.logger import BlockFunctionExec
 from mage_ai.shared.parsers import encode_complex
+from mage_ai.shared.strings import format_enum
 from mage_ai.shared.utils import clean_name
 from queue import Queue
 from typing import Callable, Dict, List, Set
@@ -210,7 +213,7 @@ class Block:
         self.executor_type = executor_type
         self.status = status
         self.pipeline = pipeline
-        self.language = language
+        self.language = language or BlockLanguage.PYTHON
         self.configuration = configuration
 
         self._outputs = None
@@ -228,7 +231,10 @@ class Block:
 
     @property
     def executable(self):
-        return self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+        return (
+            self.type not in NON_PIPELINE_EXECUTABLE_BLOCK_TYPES
+            and (self.pipeline is None or self.pipeline.type != PipelineType.STREAMING)
+        )
 
     @property
     def input_variables(self):
@@ -260,7 +266,7 @@ class Block:
     @property
     def file_path(self):
         repo_path = self.pipeline.repo_path if self.pipeline is not None else get_repo_path()
-        file_extension = 'sql' if BlockLanguage.SQL == self.language else 'py'
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[self.language]
 
         return os.path.join(
             repo_path or os.getcwd(),
@@ -324,7 +330,8 @@ class Block:
             with open(os.path.join(block_dir_path, '__init__.py'), 'w'):
                 pass
 
-        file_extension = 'sql' if BlockLanguage.SQL == language else 'py'
+        language = language or BlockLanguage.PYTHON
+        file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
         file_path = os.path.join(block_dir_path, f'{uuid}.{file_extension}')
         if os.path.exists(file_path):
             if pipeline is not None and pipeline.has_block(uuid):
@@ -608,26 +615,30 @@ class Block:
         build_block_output_stdout: Callable[..., object] = None,
         custom_code: str = None,
         execution_partition: str = None,
+        input_args: List = None,
         logger: Logger = None,
         global_vars: Dict = None,
         test_execution: bool = False,
     ) -> Dict:
         upstream_block_uuids = []
-        input_vars = []
-        if self.pipeline is not None:
-            for upstream_block_uuid, variables in self.input_variables.items():
-                upstream_block_uuids.append(upstream_block_uuid)
-                input_vars += [
-                    self.pipeline.variable_manager.get_variable(
-                        self.pipeline.uuid,
-                        upstream_block_uuid,
-                        var,
-                        partition=execution_partition,
-                        variable_type=VariableType.DATAFRAME,
-                        spark=(global_vars or dict()).get('spark'),
-                    )
-                    for var in variables
-                ]
+        if input_args is None:
+            input_vars = []
+            if self.pipeline is not None:
+                for upstream_block_uuid, variables in self.input_variables.items():
+                    upstream_block_uuids.append(upstream_block_uuid)
+                    input_vars += [
+                        self.pipeline.variable_manager.get_variable(
+                            self.pipeline.uuid,
+                            upstream_block_uuid,
+                            var,
+                            partition=execution_partition,
+                            variable_type=VariableType.DATAFRAME,
+                            spark=(global_vars or dict()).get('spark'),
+                        )
+                        for var in variables
+                    ]
+        else:
+            input_vars = input_args
         outputs = []
         decorated_functions = []
         test_functions = []
@@ -640,10 +651,13 @@ class Block:
         results = {}
         outputs_from_input_vars = {}
 
-        for idx, input_var in enumerate(input_vars):
-            upstream_block_uuid = upstream_block_uuids[idx]
-            outputs_from_input_vars[upstream_block_uuid] = input_var
-            outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        if input_args is None:
+            for idx, input_var in enumerate(input_vars):
+                upstream_block_uuid = upstream_block_uuids[idx]
+                outputs_from_input_vars[upstream_block_uuid] = input_var
+                outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+        else:
+            outputs_from_input_vars = dict()
 
         with redirect_stdout(stdout):
             results = {
@@ -844,9 +858,6 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
         if language and type(self.language) is not str:
             language = self.language.value
 
-        def __format_enum(v):
-            return v.value if type(v) is not str else v
-
         data = dict(
             all_upstream_blocks_executed=all(
                 block.status == BlockStatus.EXECUTED for block in self.get_all_upstream_blocks()
@@ -854,11 +865,11 @@ df = get_variable('{self.pipeline.uuid}', '{self.uuid}', 'df')
             configuration=self.configuration or {},
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
-            executor_type=__format_enum(self.executor_type),
+            executor_type=format_enum(self.executor_type),
             name=self.name,
             language=language,
-            status=__format_enum(self.status),
-            type=__format_enum(self.type),
+            status=format_enum(self.status),
+            type=format_enum(self.type),
             upstream_blocks=self.upstream_block_uuids,
             uuid=self.uuid,
         )

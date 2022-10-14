@@ -18,6 +18,9 @@ RUN mv example_config.json ~/.sparkmagic/config.json
 RUN sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json
 RUN jupyter-kernelspec install --user $(pip show sparkmagic | grep Location | cut -d" " -f2)/sparkmagic/kernels/pysparkkernel
 
+COPY integrations integrations
+RUN ${PIP} install integrations/
+
 EXPOSE 6789
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"

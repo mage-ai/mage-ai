@@ -127,9 +127,11 @@ function Dashboard({
       />
 
       <ContainerStyle>
-        <VerticalNavigationStyle>
-          <VerticalNavigation navigationItems={navigationItems} />
-        </VerticalNavigationStyle>
+        {navigationItems?.length !== 0 && (
+          <VerticalNavigationStyle>
+            <VerticalNavigation navigationItems={navigationItems} />
+          </VerticalNavigationStyle>
+        )}
 
         <Flex
           flex={1}

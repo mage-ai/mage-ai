@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_ai.data_preparation.executors.executor_factory import ExecutorFactory
 from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
+from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
@@ -56,16 +57,20 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
     def schedule(self) -> None:
-        if self.pipeline_run.all_blocks_completed():
-            self.notification_sender.send_pipeline_run_success_message(
-                pipeline=self.pipeline,
-                pipeline_run=self.pipeline_run,
-            )
-            self.pipeline_run.update(
-                status=PipelineRun.PipelineRunStatus.COMPLETED,
-                completed_at=datetime.now(),
-            )
-        self.__schedule_blocks()
+        if self.pipeline.type != PipelineType.STREAMING:
+            if self.pipeline_run.all_blocks_completed():
+                self.notification_sender.send_pipeline_run_success_message(
+                    pipeline=self.pipeline,
+                    pipeline_run=self.pipeline_run,
+                )
+                self.pipeline_run.update(
+                    status=PipelineRun.PipelineRunStatus.COMPLETED,
+                    completed_at=datetime.now(),
+                )
+            else:
+                self.__schedule_blocks()
+        else:
+            self.__schedule_pipeline()
 
     def on_block_complete(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
@@ -122,6 +127,7 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(b)
 
+        # TODO: implement queueing logic
         for b in queued_block_runs:
             tags = dict(
                 block_run_id=b.id,
@@ -152,8 +158,32 @@ class PipelineScheduler:
                 variables,
                 self.__build_tags(**tags),
             ))
-            execution_process_manager.set_process(self.pipeline_run.id, b.id, proc)
+            execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
             proc.start()
+
+    def __schedule_pipeline(self) -> None:
+        if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
+            return
+        self.logger.info(
+            f'Start a process for PipelineRun {self.pipeline_run.id}',
+            **self.__build_tags(),
+        )
+        variables = merge_dict(
+            merge_dict(
+                get_global_variables(self.pipeline.uuid) or dict(),
+                self.pipeline_run.pipeline_schedule.variables or dict(),
+            ),
+            self.pipeline_run.variables or dict(),
+        )
+        variables['env'] = ENV_PROD
+        variables['execution_date'] = self.pipeline_run.execution_date
+        proc = multiprocessing.Process(target=run_pipeline, args=(
+            self.pipeline_run.id,
+            variables,
+            self.__build_tags(),
+        ))
+        execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
+        proc.start()
 
     def __build_tags(self, **kwargs):
         return merge_dict(kwargs, dict(
@@ -183,6 +213,23 @@ def run_block(pipeline_run_id, block_run_id, variables, tags):
         update_status=False,
         on_complete=pipeline_scheduler.on_block_complete,
         on_failure=pipeline_scheduler.on_block_failure,
+        tags=tags,
+    )
+
+
+def run_pipeline(pipeline_run_id, variables, tags):
+    pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+    pipeline = pipeline_scheduler.pipeline
+    pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
+                                   f'pipeline {pipeline.uuid}',
+                                   **tags)
+
+    ExecutorFactory.get_pipeline_executor(
+        pipeline,
+        execution_partition=pipeline_run.execution_partition,
+    ).execute(
+        global_vars=variables,
         tags=tags,
     )
 

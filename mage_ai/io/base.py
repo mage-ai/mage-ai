@@ -14,6 +14,8 @@ class DataSource(str, Enum):
     BIGQUERY = 'bigquery'
     FILE = 'file'
     GOOGLE_CLOUD_STORAGE = 'google_cloud_storage'
+    KAFKA = 'kafka'
+    OPENSEARCH = 'opensearch'
     POSTGRES = 'postgres'
     REDSHIFT = 'redshift'
     S3 = 's3'
@@ -35,7 +37,7 @@ class ExportWritePolicy(str, Enum):
 
 class BaseIO(ABC):
     """
-    Data loader interface. All data loaders must inherit from this interface.
+    Data connector interface. All data connectors must inherit from this interface.
     """
 
     def __init__(self, verbose=False) -> None:
@@ -82,7 +84,7 @@ class BaseIO(ABC):
 
 class BaseFile(BaseIO):
     """
-    Data loader for file-like data sources (for example, loading from local
+    Data connector for file-like data sources (for example, loading from local
     filesystem or external file storages such as AWS S3)
     """
 
@@ -218,7 +220,7 @@ class BaseFile(BaseIO):
 
 class BaseSQLDatabase(BaseIO):
     """
-    Base data loader for connecting to a SQL database. This adds `query` method which allows a user
+    Base data connector for connecting to a SQL database. This adds `query` method which allows a user
     to send queries to the database server.
     """
 
@@ -264,16 +266,19 @@ class BaseSQLDatabase(BaseIO):
 
 class BaseSQLConnection(BaseSQLDatabase):
     """
-    Data loader for connected SQL data sources. Can be used as a context manager or by manually opening or closing the connection
-    to the SQL data source after data loading is complete.
+    Data connector for connected SQL data sources. Can be used as a context manager or by
+    manually opening or closing the connection to the SQL data source after data loading
+    is complete.
 
-    WARNING: queries may continue to run on data source unless connection manually closed. For this reason it is recommended to use a context
+    WARNING: queries may continue to run on data source unless connection manually closed.
+    For this reason it is recommended to use a context
     manager when connecting to external data sources.
     """
 
     def __init__(self, verbose=False, **kwargs) -> None:
         """
-        Initializes the connection with the settings given as keyword arguments. Specific data loaders will have access to different settings.
+        Initializes the connection with the settings given as keyword arguments.
+        Specific data connectors will have access to different settings.
         """
         super().__init__(verbose=verbose)
         self.settings = kwargs
@@ -298,7 +303,7 @@ class BaseSQLConnection(BaseSQLDatabase):
     def conn(self) -> Any:
         """
         Returns the connection object to the SQL data source. The exact connection type depends
-        on the source and the definition of the data loader.
+        on the source and the definition of the data connector.
         """
         try:
             return self._ctx

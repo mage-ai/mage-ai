@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.4.19',
+    version='0.5.1',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -52,8 +52,13 @@ setuptools.setup(
         'postgres': ['psycopg2-binary==2.9.3'],
         'redshift': ['boto3==1.24.19', 'redshift-connector==2.0.907'],
         's3': ['botocore==1.27.19', 'boto3==1.24.19'],
-        'spark': ['botocore==1.27.19', 'boto3==1.24.19'],
         'snowflake': ['snowflake-connector-python==2.7.9'],
+        'spark': ['botocore==1.27.19', 'boto3==1.24.19'],
+        'streaming': [
+            'kafka-python',
+            'opensearch-py',
+            'requests_aws4auth',
+        ],
         'all': [
             'azure-identity',
             'azure-keyvault-secrets',
@@ -64,8 +69,11 @@ setuptools.setup(
             'db-dtypes==1.0.2',
             'google-cloud-bigquery==3.2.0',
             'google-cloud-storage==2.5.0',
+            'kafka-python',
+            'opensearch-py',
             'psycopg2-binary==2.9.3',
             'redshift-connector==2.0.907',
+            'requests_aws4auth',
             'snowflake-connector-python==2.7.9',
         ],
     },

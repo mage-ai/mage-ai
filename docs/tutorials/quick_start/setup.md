@@ -111,3 +111,11 @@ To setup a development environment for editing source code,
 please check out this [document](../../contributing/README.md).
 
 <br />
+
+## Building your own Docker image
+
+```bash
+docker build -t mage/dangerous .
+```
+
+<br />

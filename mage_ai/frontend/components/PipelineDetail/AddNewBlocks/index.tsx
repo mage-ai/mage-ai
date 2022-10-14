@@ -14,7 +14,6 @@ import {
   BlockLanguageEnum,
   BlockRequestPayloadType,
   BlockTypeEnum,
-  CONVERTIBLE_BLOCK_TYPES,
 } from '@interfaces/BlockType';
 import {
   COLUMN_ACTION_GROUPINGS,
@@ -25,7 +24,10 @@ import {
   ICON_SIZE,
   IconContainerStyle,
 } from './index.style';
-import { createActionMenuGroupings, createDataSourceMenuItems } from './utils';
+import {
+  createActionMenuGroupings,
+  getdataSourceMenuItems,
+} from './utils';
 
 type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
@@ -56,19 +58,9 @@ function AddNewBlocks({
     compact,
     inline: true,
   };
-
+  const pipelineType = pipeline?.type;
+  const isStreamingPipeline = pipelineType === PipelineTypeEnum.STREAMING;
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
-
-  const dataSourceMenuItems = useMemo(() => (
-    Object.fromEntries(CONVERTIBLE_BLOCK_TYPES.map(
-      (blockType: BlockTypeEnum) => ([
-        blockType,
-        createDataSourceMenuItems(blockType, addNewBlock),
-      ]),
-    ),
-  )), [
-    addNewBlock,
-  ]);
 
   const columnActionMenuItems = createActionMenuGroupings(
     COLUMN_ACTION_GROUPINGS,
@@ -94,7 +86,7 @@ function AddNewBlocks({
     },
     {
       bold: true,
-      items: dataSourceMenuItems[BlockTypeEnum.TRANSFORMER],
+      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
       label: () => 'Data sources',
       uuid: 'data_sources_grouping',
     },
@@ -118,7 +110,7 @@ function AddNewBlocks({
     [blockIdx, setAddNewBlockMenuOpenIdx],
   );
 
-  const isPySpark = PipelineTypeEnum.PYSPARK === pipeline?.type;
+  const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
 
   return (
     <FlexContainer inline>
@@ -129,24 +121,7 @@ function AddNewBlocks({
         <FlexContainer>
           <FlyoutMenuWrapper
             disableKeyboardShortcuts
-            items={isPySpark
-              ? dataSourceMenuItems[BlockTypeEnum.DATA_LOADER]
-              : [
-                  {
-                    label: () => 'SQL',
-                    onClick: () => addNewBlock({
-                      language: BlockLanguageEnum.SQL,
-                      type: BlockTypeEnum.DATA_LOADER,
-                    }),
-                    uuid: 'data_loaders/sql',
-                  },
-                  {
-                    items: dataSourceMenuItems[BlockTypeEnum.DATA_LOADER],
-                    label: () => 'Python',
-                    uuid: 'data_loaders/python',
-                  },
-                ]
-            }
+            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
             parentRef={dataLoaderButtonRef}
@@ -180,21 +155,32 @@ function AddNewBlocks({
             disableKeyboardShortcuts
             items={isPySpark
               ? allActionMenuItems
-              : [
-                {
-                  label: () => 'SQL',
-                  onClick: () => addNewBlock({
-                    language: BlockLanguageEnum.SQL,
-                    type: BlockTypeEnum.TRANSFORMER,
-                  }),
-                  uuid: 'transformers/sql',
-                },
-                {
-                  items: allActionMenuItems,
-                  label: () => 'Python',
-                  uuid: 'transformers/python',
-                },
-              ]
+              : (isStreamingPipeline
+                ? 
+                  [
+                    {
+                      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+                      label: () => 'Python',
+                      uuid: 'transformers/python',
+                    },
+                  ]
+                :
+                  [
+                    {
+                      label: () => 'SQL',
+                      onClick: () => addNewBlock({
+                        language: BlockLanguageEnum.SQL,
+                        type: BlockTypeEnum.TRANSFORMER,
+                      }),
+                      uuid: 'transformers/sql',
+                    },
+                    {
+                      items: allActionMenuItems,
+                      label: () => 'Python',
+                      uuid: 'transformers/python_all',
+                    },
+                  ]
+              )
             }
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
@@ -227,24 +213,7 @@ function AddNewBlocks({
 
           <FlyoutMenuWrapper
             disableKeyboardShortcuts
-            items={isPySpark
-              ? dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER]
-              : [
-                {
-                  label: () => 'SQL',
-                  onClick: () => addNewBlock({
-                    language: BlockLanguageEnum.SQL,
-                    type: BlockTypeEnum.DATA_EXPORTER,
-                  }),
-                  uuid: 'data_exporters/sql',
-                },
-                {
-                  label: () => 'Python',
-                  items: dataSourceMenuItems[BlockTypeEnum.DATA_EXPORTER],
-                  uuid: 'data_exporters/python',
-                },
-              ]
-            }
+            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
             onClickCallback={closeButtonMenu}
             open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
             parentRef={dataExporterButtonRef}
@@ -306,49 +275,53 @@ function AddNewBlocks({
 
       <Spacing ml={1} />
 
-      <Tooltip
-        block
-        label="Add a sensor so that other blocks only run when sensor is complete."
-        size={null}
-        widthFitContent
-      >
-        <KeyboardShortcutButton
-          {...sharedProps}
-          beforeElement={
-            <IconContainerStyle compact={compact}>
-              <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-            </IconContainerStyle>
-          }
-          onClick={(e) => {
-            e.preventDefault();
-            addNewBlock({
-              language: BlockLanguageEnum.PYTHON,
-              type: BlockTypeEnum.SENSOR,
-            });
-          }}
-          uuid="AddNewBlocks/Sensor"
-        >
-          Sensor
-        </KeyboardShortcutButton>
-      </Tooltip>
+      {!isStreamingPipeline &&
+        <>
+          <Tooltip
+            block
+            label="Add a sensor so that other blocks only run when sensor is complete."
+            size={null}
+            widthFitContent
+          >
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle compact={compact}>
+                  <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                addNewBlock({
+                  language: BlockLanguageEnum.PYTHON,
+                  type: BlockTypeEnum.SENSOR,
+                });
+              }}
+              uuid="AddNewBlocks/Sensor"
+            >
+              Sensor
+            </KeyboardShortcutButton>
+          </Tooltip>
 
-      <Spacing ml={1} />
+          <Spacing ml={1} />
 
-      <KeyboardShortcutButton
-        {...sharedProps}
-        beforeElement={
-          <IconContainerStyle compact={compact}>
-            <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-          </IconContainerStyle>
-        }
-        onClick={(e) => {
-          e.preventDefault();
-          setRecsWindowOpenBlockIdx(blockIdx);
-        }}
-        uuid="AddNewBlocks/Recommendations"
-      >
-        Recs
-      </KeyboardShortcutButton>
+          <KeyboardShortcutButton
+            {...sharedProps}
+            beforeElement={
+              <IconContainerStyle compact={compact}>
+                <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+              </IconContainerStyle>
+            }
+            onClick={(e) => {
+              e.preventDefault();
+              setRecsWindowOpenBlockIdx(blockIdx);
+            }}
+            uuid="AddNewBlocks/Recommendations"
+          >
+            Recs
+          </KeyboardShortcutButton>
+        </>
+      }
     </FlexContainer>
   );
 }

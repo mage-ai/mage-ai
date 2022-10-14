@@ -41,3 +41,8 @@ azure-identity
 azure-keyvault-secrets
 azure-keyvault-certificates
 azure-storage-blob
+
+# Streaming
+kafka-python
+opensearch-py
+requests_aws4auth
