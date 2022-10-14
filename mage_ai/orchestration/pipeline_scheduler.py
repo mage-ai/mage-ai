@@ -8,7 +8,9 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.wtf import test
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -81,26 +83,31 @@ class PipelineScheduler:
             self.__schedule_pipeline()
 
     def on_block_complete(self, block_uuid: str) -> None:
-        block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(
-            status=BlockRun.BlockRunStatus.COMPLETED,
-            completed_at=datetime.now(),
-        )
-        self.logger.info(
-            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
-            **self.__build_tags(
-                block_run_id=block_run.id,
-                block_uuid=block_run.block_uuid,
-            ),
-        )
+        print('in on block complete!')
 
-        self.pipeline_run.refresh()
-        if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
-            return
-        else:
-            for b in self.pipeline_run.block_runs:
-                b.refresh()
-            self.schedule()
+        try:
+            block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
+            block_run.update(
+                status=BlockRun.BlockRunStatus.COMPLETED,
+                completed_at=datetime.now(),
+            )
+            self.logger.info(
+                f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+                **self.__build_tags(
+                    block_run_id=block_run.id,
+                    block_uuid=block_run.block_uuid,
+                ),
+            )
+
+            self.pipeline_run.refresh()
+            if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+                return
+            else:
+                for b in self.pipeline_run.block_runs:
+                    b.refresh()
+                self.schedule()
+        except:
+            traceback.print_exc()
 
     def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
@@ -174,8 +181,13 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-
-            proc = multiprocessing.Process(target=run_block, args=(
+            # proc = multiprocessing.Process(target=run_block, args=(
+            #     self.pipeline_run.id,
+            #     b.id,
+            #     variables,
+            #     self.__build_tags(**tags),
+            # ))
+            proc = test(run_block, (
                 self.pipeline_run.id,
                 b.id,
                 self.__get_variables(),
@@ -212,8 +224,22 @@ class PipelineScheduler:
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.__build_tags(),
         )
+        variables = merge_dict(
+            merge_dict(
+                get_global_variables(self.pipeline.uuid) or dict(),
+                self.pipeline_run.pipeline_schedule.variables or dict(),
+            ),
+            self.pipeline_run.variables or dict(),
+        )
+        variables['env'] = ENV_PROD
+        variables['execution_date'] = self.pipeline_run.execution_date
+        # proc = multiprocessing.Process(target=run_pipeline, args=(
+        #     self.pipeline_run.id,
+        #     variables,
+        #     self.__build_tags(),
+        # ))
 
-        proc = multiprocessing.Process(target=run_pipeline, args=(
+        proc = test(run_pipeline, (
             self.pipeline_run.id,
             self.__get_variables(),
             self.__build_tags(),
@@ -384,6 +410,8 @@ def schedule_all():
     2. In active pipeline runs, check whether any block runs need to be scheduled.
     """
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
+
+    print('scheduling...')
 
     active_pipeline_schedules = \
         list(filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.active_schedules()))

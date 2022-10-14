@@ -614,7 +614,7 @@ def start_server(
         # Start a subprocess for scheduler
         scheduler_manager.start_scheduler()
 
-    # db_connection.start_session()
+    db_connection.start_session()
 
     enable_pretty_logging()
 

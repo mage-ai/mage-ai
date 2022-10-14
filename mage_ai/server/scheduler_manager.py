@@ -11,6 +11,8 @@ def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
     from mage_ai.orchestration.db import db_connection
 
+    print('run scheduler')
+
     db_connection.start_session()
     database_manager.run_migrations()
     while True:
