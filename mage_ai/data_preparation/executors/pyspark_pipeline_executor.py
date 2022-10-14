@@ -9,8 +9,8 @@ import os
 
 
 class PySparkPipelineExecutor(PipelineExecutor):
-    def __init__(self, pipeline: Pipeline):
-        super().__init__(pipeline)
+    def __init__(self, pipeline: Pipeline, **kwargs):
+        super().__init__(pipeline, **kwargs)
         self.resource_manager = EmrResourceManager(
             pipeline.repo_config.s3_bucket,
             pipeline.repo_config.s3_path_prefix,
@@ -24,6 +24,7 @@ class PySparkPipelineExecutor(PipelineExecutor):
         global_vars: Dict = None,
         run_tests: bool = False,
         update_status: bool = False,
+        **kwargs,
     ) -> None:
         """
         Run pipeline in a spark cluster

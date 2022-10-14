@@ -36,7 +36,10 @@ class BlockTest(TestCase):
         self.assertEqual(block2.type, 'data_loader')
 
     def test_execute(self):
-        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline',
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('test_data_loader', 'data_loader', self.repo_path, pipeline=pipeline)
         block2 = Block.create(
             'test_transformer',
@@ -86,7 +89,10 @@ def remove_duplicate_rows(df):
         self.assertTrue(len(analysis['insights']) > 0)
 
     def test_execute_multiple_upstream_blocks(self):
-        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline',
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
         block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
         block3 = Block.create(
@@ -150,7 +156,10 @@ def union_datasets(df1, df2):
         self.assertTrue(len(analysis['suggestions']) == 0)
 
     def test_execute_validation(self):
-        pipeline = Pipeline.create('test pipeline', self.repo_path)
+        pipeline = Pipeline.create(
+            'test pipeline',
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
         block2 = Block.create('test_data_loader_2', 'data_loader', self.repo_path, pipeline=pipeline)
         block3 = Block.create(

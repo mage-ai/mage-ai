@@ -30,6 +30,7 @@ export const VerticalNavigationStyle = styled.div`
 `;
 
 export const SubheaderStyle = styled.div`
+  width: fit-content;
   padding: ${PADDING_UNITS * UNIT}px;
   position: relative;
   z-index: 2;

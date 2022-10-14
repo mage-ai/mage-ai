@@ -17,6 +17,21 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --ecs_cluster_name)
+    ECS_CLUSTER_NAME="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --ecs_task_definition)
+    ECS_TASK_DEFINITION="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --ecs_container_name)
+    ECS_CONTAINER_NAME="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --host)
     HOST="$3"
     shift # past argument
@@ -24,6 +39,11 @@ case $key in
     ;;
     --port)
     PORT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --manage-instance)
+    MANAGE_INSTANCE=1
     shift # past argument
     shift # past value
     ;;
@@ -38,11 +58,17 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 : "${HOST:="''"}"
 : "${PORT:="''"}"
 : "${PROJECT_NAME:="''"}"
+: "${MANAGE_INSTANCE:="''"}"
 
 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
+export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
+export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
+export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+
 HOST=$HOST \
 PORT=$PORT \
 PROJECT=$PROJECT_NAME \
+MANAGE_INSTANCE=$MANAGE_INSTANCE \
 docker-compose -f docker-compose.yml up

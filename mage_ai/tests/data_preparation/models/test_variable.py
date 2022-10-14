@@ -107,7 +107,10 @@ class VariableTest(TestCase):
         self.assertEquals(variable.read_data(), data)
 
     def __create_pipeline(self, name):
-        pipeline = Pipeline.create(name, self.repo_path)
+        pipeline = Pipeline.create(
+            name,
+            repo_path=self.repo_path,
+        )
         block1 = Block.create('block1', 'data_loader', self.repo_path)
         block2 = Block.create('block2', 'transformer', self.repo_path)
         pipeline.add_block(block1)

@@ -1,0 +1,4 @@
+connector_type: kafka
+bootstrap_server: "localhost:9092"
+topic: topic_name
+consumer_group: unique_consumer_group

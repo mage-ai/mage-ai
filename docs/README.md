@@ -24,6 +24,7 @@ Read more tech docs here. Got questions?
 1. [Guides](#guides)
 1. [About](#about)
 1. [Use cases](use_cases/README.md)
+1. *Best practices (coming soon)*
 
 <br />
 
@@ -71,10 +72,15 @@ Read more tech docs here. Got questions?
     - [Prefect](production/prefect.md)
 
 ### Guides
+- Building pipelines
+    - [Batch pipeline](tutorials/quick_start/etl_restaurant/README.md)
+    - [Streaming pipeline](guides/pipelines/StreamingPipeline.md)
+    - *Data integration pipeline (coming soon)*
 - [SQL blocks](guides/blocks/SQL.md)
 - [Sensors: blocks depending on external pipelines](guides/blocks/Sensors.md)
-- Triggering pipelines
+- [Triggering pipelines](core/abstractions.md#trigger)
     - [Schedule pipelines to run periodically](tutorials/triggers/schedule.md)
+    - [Trigger pipeline from event](core/abstractions.md#event)
     - [Trigger pipeline via API request](triggers/api.md)
     - [Trigger pipeline from AWS Event (WIP)](tutorials/triggers/events/aws.md)
 - Testing

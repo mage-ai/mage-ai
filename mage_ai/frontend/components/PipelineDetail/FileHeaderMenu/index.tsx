@@ -12,11 +12,12 @@ import {
   KEY_SYMBOL_META,
   KEY_SYMBOL_S,
 } from '@utils/hooks/keyboardShortcuts/constants';
-import { LinkStyle } from './index.style';
 import {
   KEY_CODE_ARROW_LEFT,
   KEY_CODE_ARROW_RIGHT,
 } from '@utils/hooks/keyboardShortcuts/constants';
+import { LinkStyle } from './index.style';
+import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { randomNameGenerator } from '@utils/string';
 import { useKeyboardContext } from '@context/Keyboard';
 
@@ -51,20 +52,31 @@ function FileHeaderMenu({
 
   const fileItems = [
     {
-      label: () => 'New pipeline',
+      label: () => 'New standard pipeline',
       // @ts-ignore
       onClick: () => createPipeline({
         pipeline: {
           name: randomNameGenerator(),
         },
       }),
-      uuid: 'new pipeline',
+      uuid: 'new_standard_pipeline',
+    },
+    {
+      label: () => 'New streaming pipeline',
+      // @ts-ignore
+      onClick: () => createPipeline({
+        pipeline: {
+          name: randomNameGenerator(),
+          type: PipelineTypeEnum.STREAMING,
+        },
+      }),
+      uuid: 'new_streaming_pipeline',
     },
     {
       label: () => 'Save pipeline',
       keyTextGroups: [[KEY_SYMBOL_META, KEY_SYMBOL_S]],
       onClick: () => savePipelineContent(),
-      uuid: 'save pipeline',
+      uuid: 'save_pipeline',
     },
   ];
   const runItems = useMemo(() => {

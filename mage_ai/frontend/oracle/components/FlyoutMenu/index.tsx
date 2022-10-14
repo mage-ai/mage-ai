@@ -46,6 +46,7 @@ export type FlyoutMenuProps = {
   open: boolean;
   parentRef: any;
   rightOffset?: number;
+  roundedStyle?: boolean;
   setConfirmationDialogueOpen?: (open: boolean) => void;
   setConfirmationAction?: (action: any) => void;
   topOffset?: number;
@@ -62,6 +63,7 @@ function FlyoutMenu({
   open,
   parentRef,
   rightOffset,
+  roundedStyle,
   setConfirmationAction,
   setConfirmationDialogueOpen,
   topOffset = 0,
@@ -149,6 +151,7 @@ function FlyoutMenu({
 
     return (
       <FlyoutMenuContainerStyle
+        roundedStyle={roundedStyle}
         style={{
           display: (visible || submenuVisible[uuid]) ? null : 'none',
           left: typeof rightOffset === 'undefined' && (
@@ -195,11 +198,12 @@ function FlyoutMenu({
               </TitleContainerStyle>
             :
               <LinkStyle
-                alternateBackground={alternateBackground}
+                alternateBackground={alternateBackground || roundedStyle}
                 disabled={disabled}
                 highlighted={highlightedIndices[0] === idx0}
                 indent={indent}
                 key={uuid}
+                largePadding={roundedStyle}
                 onClick={(e) => {
                   e.preventDefault();
 

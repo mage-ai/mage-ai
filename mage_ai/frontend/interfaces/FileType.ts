@@ -44,6 +44,6 @@ export const FILE_EXTENSION_TO_LANGUAGE_MAPPING = {
   [FileExtensionEnum.PY]: BlockLanguageEnum.PYTHON,
   [FileExtensionEnum.SQL]: BlockLanguageEnum.SQL,
   [FileExtensionEnum.TXT]: 'text',
-  [FileExtensionEnum.YAML]: 'yaml',
-  [FileExtensionEnum.YML]: 'yaml',
+  [FileExtensionEnum.YAML]: BlockLanguageEnum.YAML,
+  [FileExtensionEnum.YML]: BlockLanguageEnum.YAML,
 };
