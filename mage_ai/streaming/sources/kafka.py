@@ -10,11 +10,11 @@ DEFAULT_BATCH_SIZE = 100
 
 @dataclass
 class SSLConfig:
-    cafile: str
-    certfile: str
-    keyfile: str
-    password: str
-    check_hostname: bool = True
+    cafile: str = None
+    certfile: str = None
+    keyfile: str = None
+    password: str = None
+    check_hostname: bool = False
 
 
 @dataclass
