@@ -13,7 +13,6 @@ from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from typing import Any, Dict, List
 import os
 import pandas as pd
-import shutil
 
 
 class VariableType(str, Enum):
@@ -133,7 +132,7 @@ class Variable:
 
         if self.storage.path_exists(file_path):
             self.storage.remove(file_path)
-            # TODO: Remove variable dir
+            self.storage.remove_dir(variable_path)
 
     def __read_json(self, default_value={}) -> Dict:
         file_path = os.path.join(self.variable_dir_path, f'{self.uuid}.json')
@@ -142,7 +141,10 @@ class Variable:
     def __write_json(self, data) -> None:
         if not self.storage.isdir(self.variable_dir_path):
             self.storage.makedirs(self.variable_dir_path)
-        self.storage.write_json_file(os.path.join(self.variable_dir_path, f'{self.uuid}.json'), data)
+        self.storage.write_json_file(
+            os.path.join(self.variable_dir_path, f'{self.uuid}.json'),
+            data,
+        )
 
     def __read_geo_dataframe(self, sample: bool = False, sample_count: int = None):
         import geopandas as gpd

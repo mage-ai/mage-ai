@@ -4,6 +4,7 @@ from typing import Dict, List
 import json
 import os
 import pandas as pd
+import shutil
 import simplejson
 
 
@@ -22,6 +23,9 @@ class LocalStorage(BaseStorage):
 
     def remove(self, path: str) -> None:
         os.remove(path)
+
+    def remove_dir(self, path: str) -> None:
+        shutil.rmtree(path)
 
     def read_json_file(self, file_path: str, default_value={}) -> Dict:
         if not self.path_exists(file_path):
