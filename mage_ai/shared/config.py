@@ -27,10 +27,15 @@ class BaseConfig:
 
         if config_class_key in config:
             config = config[config_class_key]
+        config = self.parse_config(config)
         extra_config = self.load_extra_config()
         config = merge_dict(config, extra_config)
         return self(**config)
 
     @classmethod
-    def load_extra_config(self):
+    def parse_config(self, config: Dict = None) -> Dict:
+        return config
+
+    @classmethod
+    def load_extra_config(self) -> Dict:
         return dict()
