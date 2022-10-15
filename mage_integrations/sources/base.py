@@ -12,7 +12,7 @@ from mage_integrations.sources.messages import write_schema
 from mage_integrations.sources.utils import get_abs_path, get_standard_metadata, parse_args
 from os.path import isfile
 from singer.schema import Schema
-from typing import List
+from typing import Dict, List
 import dateutil.parser
 import inspect
 import json
@@ -26,13 +26,14 @@ class Source():
     def __init__(self,
         args = None,
         catalog: Catalog = None,
-        config: dict = None,
+        config: Dict = None,
         discover_mode: bool = False,
         is_sorted: bool = True,
         logger = LOGGER,
-        query: dict = None,
+        query: Dict = {},
         schemas_folder: str = 'schemas',
-        state: dict = None,
+        settings: Dict = None,
+        state: Dict = None,
         verbose: int = 1,
     ):
         args = parse_args([])
@@ -54,9 +55,14 @@ class Source():
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
         self.logger = Logger(caller=self, logger=logger, verbose=verbose)
-        self.query = query
         self.schemas_folder = schemas_folder
+        self.settings = settings
         self.state = state
+
+        if type(query) is str:
+            self.query = json.loads(query)
+        else:
+            self.query = query
 
     def discover(self) -> Catalog:
         streams = []
@@ -74,7 +80,7 @@ class Source():
             catalog = self.catalog or self.discover()
             self.sync(self.config, self.state, catalog)
 
-    def sync(self, config: dict, state: dict, catalog: Catalog) -> None:
+    def sync(self, config: Dict, state: Dict, catalog: Catalog) -> None:
         for stream in catalog.get_selected_streams(state):
             tap_stream_id = stream.tap_stream_id
 
@@ -122,20 +128,20 @@ class Source():
                 singer.write_records(
                     tap_stream_id,
                     [
-                        {col: row[col] for col in selected_columns},
+                        {col: row.get(col) for col in selected_columns},
                     ],
                 )
 
                 if incremental and bookmark_properties:
                     if self.is_sorted:
                         singer.write_state({
-                            tap_stream_id: {col: row[col] for col in bookmark_properties},
+                            tap_stream_id: {col: row.get(col) for col in bookmark_properties},
                         })
                     else:
                         # If data unsorted, save max value until end of writes
                         max_bookmark = max(
                             max_bookmark,
-                            [row[col] for col in bookmark_properties],
+                            [row.get(col) for col in bookmark_properties],
                         )
 
             if bookmark_properties and not self.is_sorted:
@@ -178,11 +184,11 @@ class Source():
 
     def load_data(
         self,
-        bookmarks: dict = None,
-        query: dict = None,
+        bookmarks: Dict = None,
+        query: Dict = {},
         start_date: datetime = None,
         **kwargs,
-    ) -> List[dict]:
+    ) -> List[Dict]:
         raise Exception('Subclasses must implement the load_data method.')
 
     def get_forced_replication_method(self, stream_id: str) -> str:

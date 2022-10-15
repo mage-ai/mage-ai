@@ -1,7 +1,8 @@
 from mage_ai.data_preparation.logger_manager import StreamToLogger
+from typing import Callable, Dict
 
 
-class ExecuteWithOutMixin()
+class ExecuteWithOutputMixin():
     def execute(
         self,
         build_block_output_stdout: Callable[..., object] = None,

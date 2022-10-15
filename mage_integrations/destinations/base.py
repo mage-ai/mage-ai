@@ -17,10 +17,12 @@ from mage_integrations.destinations.constants import (
 from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.logger import Logger
+from typing import Dict
 import io
 import json
 import singer
 import sys
+import yaml
 
 LOGGER = singer.get_logger()
 
@@ -28,21 +30,28 @@ LOGGER = singer.get_logger()
 class Destination():
     def __init__(self,
         argument_parser = None,
-        config: dict = None,
+        config: Dict = None,
         config_file_path: str = None,
         logger = LOGGER,
+        settings: Dict = None,
+        settings_file_path: str = None,
         state_file_path: str = None,
     ):
         if argument_parser:
             argument_parser.add_argument('--config', type=str, default=None)
+            argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
             args = argument_parser.parse_args()
+
             if args.config:
                 config_file_path = args.config
+            if args.settings:
+                settings_file_path = args.settings
             if args.state:
                 state_file_path = args.state
 
         self._config = config
+        self._settings = settings
         self.bookmark_properties = None
         self.config_file_path = config_file_path
         self.key_properties = None
@@ -50,22 +59,35 @@ class Destination():
         self.records_count = None
         self.replication_methods = None
         self.schemas = None
+        self.settings_file_path = settings_file_path
         self.state_file_path = state_file_path
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
 
     @property
-    def config(self):
+    def config(self) -> Dict:
         if self._config:
             return self._config
         elif self.config_file_path:
             with open(self.config_file_path, 'r') as f:
                 return json.load(f)
+        elif self.settings.get('config'):
+            return self.settings['config']
         else:
             message = 'Config and config file path is missing.'
             self.logger.exception(message)
             raise Exception(message)
+
+    @property
+    def settings(self) -> Dict:
+        if self._settings:
+            return self._settings
+        elif self.settings_file_path:
+            with open(self.settings_file_path) as f:
+                return yaml.safe_load(f.read())
+
+        return {}
 
     def export_data(
         self,

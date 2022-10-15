@@ -1,7 +1,17 @@
-from mage_integrations.sources.utils import update_catalog, update_source_state_from_destination_state
+from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutputMixin
+from mage_ai.data_preparation.executors.mixins.validation import ValidateBlockMixin
+from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.shared.array import find
+from mage_ai.shared.hash import merge_dict
+from mage_integrations.sources.utils import (
+    update_catalog_dict,
+    update_source_state_from_destination_state,
+)
+from typing import Any, Dict, List
+import importlib
 import json
 import os
 import signal
@@ -9,144 +19,162 @@ import subprocess
 import time
 import yaml
 
-pipeline = Pipeline.get('data_integration_test')
-
-blocks = list(pipeline.blocks_by_uuid.values())
-
-data_loader = find(lambda x: BlockType.DATA_LOADER == x.type, blocks)
-data_exporter = find(lambda x: BlockType.DATA_EXPORTER == x.type, blocks)
-
-source_config = yaml.safe_load(data_loader.content)
-destination_config = yaml.safe_load(data_exporter.content)
-
-source = source_config['source']
-if 'amplitude' == source:
-    from mage_integrations.sources import amplitude as source_module
-
-destination = destination_config['destination']
-if 'postgresql' == destination:
-    from mage_integrations.destinations import postgresql as destination_module
-
-pipeline_dir = '/'.join(pipeline.config_path.split('/')[:-1])
-
-filepath = os.path.abspath(source_module.__file__)
-file_dir = '/'.join(filepath.split('/')[:-1])
-
-destination_filepath = os.path.abspath(destination_module.__file__)
-destination_file_dir = '/'.join(destination_filepath.split('/')[:-1])
-
-source_dir = f'{pipeline_dir}/{source}'
-if not os.path.exists(source_dir):
-    os.makedirs(source_dir)
-
-destination_dir = f'{pipeline_dir}/{destination}'
-if not os.path.exists(destination_dir):
-    os.makedirs(destination_dir)
-
-config_file_path = f'{source_dir}/config.json'
-with open(config_file_path, 'w') as f:
-    f.write(json.dumps(source_config['config']))
-
-destination_config_file_path = f'{destination_dir}/config.json'
-with open(destination_config_file_path, 'w') as f:
-    f.write(json.dumps(destination_config['config']))
-
-proc = subprocess.Popen([
-    'python3',
-    filepath,
-    '--config',
-    config_file_path,
-    '--discover',
-], stdout=subprocess.PIPE)
-
-catalog_file_path = f'{source_dir}/catalog.json'
-with open(catalog_file_path, 'w') as f:
-    f.write(proc.stdout.read().decode())
-
-query_file_path = f'{source_dir}/query.json'
-with open(query_file_path, 'w') as f:
-    f.write(json.dumps(source_config['query']))
-
-state_filepath = f'{source_dir}/state.json'
-with open(state_filepath, 'w') as f:
-    f.write(json.dumps(dict(bookmarks={})))
-
-destination_state_filepath = f'{destination_dir}/state'
-if not os.path.exists(destination_state_filepath):
-    with open(destination_state_filepath, 'w') as f:
-        f.write('')
-
-update_catalog(
-    catalog_file_path,
-    'events',
-    ['uuid'],
-    'FULL_TABLE',
-    bookmark_properties=['event_time', 'uuid'],
-    select_stream=True,
-    selected_columns=['amplitude_id', 'amplitude_attribution_ids', 'uuid'],
-    unique_conflict_method='UPDATE',
-    unique_constraints=['uuid'],
-)
-
-update_source_state_from_destination_state(
-    state_filepath,
-    destination_state_filepath,
-)
-
-proc1 = subprocess.Popen([
-    'python3',
-    filepath,
-    '--config',
-    config_file_path,
-    '--catalog',
-    catalog_file_path,
-    '--query',
-    query_file_path,
-    '--state',
-    state_filepath,
-], preexec_fn=os.setsid, stdout=subprocess.PIPE)
-
-proc2 = subprocess.Popen([
-    'python3',
-    destination_filepath,
-    '--config',
-    destination_config_file_path,
-    '--state',
-    destination_state_filepath,
-], stdin=proc1.stdout)
-
-time.sleep(120)
-
-os.killpg(os.getpgid(proc1.pid), signal.SIGTERM)
-os.killpg(os.getpgid(proc2.pid), signal.SIGTERM)
-
-# from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutMixin
-# from mage_ai.data_preparation.executors.mixins.validation import ValidateBlockMixin
-# from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
-# import subprocess
+PYTHON = 'python3'
 
 
-# class IntegrationPipelineExecutor(PipelineExecuto, ExecuteWithOutMixin, ValidateBlockMixin):
-#     def parse_and_validate_blocks(self):
-#         pass
+class IntegrationPipelineExecutor(PipelineExecutor, ExecuteWithOutputMixin, ValidateBlockMixin):
+    @property
+    def blocks(self) -> List[Block]:
+        return list(pipeline.blocks_by_uuid.values())
 
-#     def execute_in_python(self):
-#         pass
-#         self.pipeline
-#         # p1 = subprocess.Popen([
-#         #     'python',
-#         #     'taps/test.py',
-#         #     '--config',
-#         #     'taps/config.json',
-#         #     '--catalog',
-#         #     'taps/catalog.json',
-#         #     '--state',
-#         #     'taps/state.json',
-#         # ], stdout=subprocess.PIPE)
+    @property
+    def data_loader(self) -> Block:
+        return find(lambda x: BlockType.DATA_LOADER == x.type, self.blocks)
 
-#         # fout = open('state.txt', 'wb')
+    @property
+    def data_exporter(self) -> Block:
+        return find(lambda x: BlockType.DATA_EXPORTER == x.type, self.blocks)
 
-#         # p2 = subprocess.run([
-#         #     'python',
-#         #     'targets/test.py',
-#         # ], stdin=p1.stdout, stdout=fout)
+    @property
+    def destination_config(self) -> Dict:
+        return yaml.safe_load(self.data_exporter.content)
+
+    @property
+    def destination_name(self) -> str:
+        return self.destination_config['destination']
+
+    @property
+    def destination_dir(self) -> str:
+        path = f'{self.pipeline_dir}/{self.destination_name}'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
+    @property
+    def destination(self) -> Any:
+        return importlib.import_module(f'mage_integrations.destinations.{self.destination_name}')
+
+    @property
+    def destination_file_path(self) -> str:
+        return os.path.abspath(self.destination.__file__)
+
+    @property
+    def destination_state_file_path(self) -> str:
+        file_path = f'{self.destination_dir}/state'
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write('')
+        return file_path
+
+    @property
+    def source_config(self) -> Dict:
+        return yaml.safe_load(self.data_loader.content)
+
+    @property
+    def source_name(self) -> str:
+        return self.source_config['source']
+
+    @property
+    def source_dir(self) -> str:
+        path = f'{self.pipeline_dir}/{self.source_name}'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
+    @property
+    def source(self) -> Any:
+        return importlib.import_module(f'mage_integrations.sources.{self.source_name}')
+
+    @property
+    def source_file_path(self) -> str:
+        return os.path.abspath(self.source.__file__)
+
+    @property
+    def source_state_file_path(self) -> str:
+        file_path = f'{self.source_dir}/state.json'
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write(json.dumps(dict(bookmarks={})))
+        return file_path
+
+    @property
+    def pipeline_dir(self) -> str:
+        return '/'.join(self.pipeline.config_path.split('/')[:-1])
+
+    def parse_and_validate_blocks(self):
+        if not self.data_loader:
+            raise Exception('Please provide at least 1 data loader block.')
+        if not self.data_exporter:
+            raise Exception('Please provide at least 1 data exporter block.')
+
+    def discover(self) -> dict:
+        proc = subprocess.run([
+            PYTHON,
+            self.source_file_path,
+            '--settings',
+            self.data_loader.file_path,
+            '--discover',
+        ], stdout=subprocess.PIPE)
+
+        return json.loads(proc.stdout)
+
+    def execute_in_python(self, query: Dict = {}):
+        catalog = self.discover()
+        catalog = update_catalog_dict(
+            catalog,
+            catalog['streams'][0]['tap_stream_id'],
+            key_properties=['uuid'],
+            replication_method='FULL_TABLE',
+            bookmark_properties=['event_time', 'uuid'],
+            select_all=True,
+            select_stream=True,
+            unique_conflict_method='UPDATE',
+            unique_constraints=['uuid'],
+        )
+        self.data_loader.update_content(yaml.dump(
+            merge_dict(
+                self.source_config,
+                dict(catalog=catalog),
+            ),
+            allow_unicode=True,
+        ))
+
+        update_source_state_from_destination_state(
+            self.source_state_file_path,
+            self.destination_state_file_path,
+        )
+
+        proc1 = subprocess.Popen([
+            PYTHON,
+            self.source_file_path,
+            '--settings',
+            self.data_loader.file_path,
+            '--state',
+            self.source_state_file_path,
+            '--query',
+            json.dumps(query),
+        ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
+
+        proc2 = subprocess.Popen([
+            PYTHON,
+            self.destination_file_path,
+            '--settings',
+            self.data_exporter.file_path,
+            '--state',
+            self.destination_state_file_path,
+        ], stdin=proc1.stdout)
+
+        # time.sleep(7)
+
+        return os.getpgid(proc1.pid), os.getpgid(proc2.pid)
+
+        # os.killpg(os.getpgid(proc1.pid), signal.SIGTERM)
+        # os.killpg(os.getpgid(proc2.pid), signal.SIGTERM)
+
+
+# pipeline = Pipeline.get('data_integration_test')
+
+# pe = IntegrationPipelineExecutor(pipeline)
+# pe.parse_and_validate_blocks()
+# pe.discover()
+# pe.execute_in_python(query=dict(_start_date='2022-10-01', _end_date='2022-10-02'))

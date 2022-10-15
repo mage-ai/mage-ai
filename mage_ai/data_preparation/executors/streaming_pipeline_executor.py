@@ -1,14 +1,13 @@
 from contextlib import redirect_stdout
-from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutMixin
+from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutputMixin
 from mage_ai.data_preparation.executors.mixins.validation import ValidateBlockMixin
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from typing import Callable, Dict
 import yaml
 
 
-class StreamingPipelineExecutor(PipelineExecutor, ExecuteWithOutMixin, ValidateBlockMixin):
+class StreamingPipelineExecutor(PipelineExecutor, ExecuteWithOutputMixin, ValidateBlockMixin):
     def parse_and_validate_blocks(self):
         """
         Find the first valid streaming pipeline is in the structure:

@@ -9,19 +9,20 @@ from mage_integrations.sources.constants import (
 from mage_integrations.utils.array import find
 from singer.metadata import to_list, write
 from singer.utils import check_config, load_json
-from typing import List
+from typing import Dict, List
 import argparse
 import json
 import os
+import yaml
 
 
 def get_standard_metadata(
     key_properties: List[str] = None,
     replication_method: str = None,
-    schema: dict = None,
+    schema: Dict = None,
     stream_id: str = None,
     valid_replication_keys: List[str] = None,
-) -> List[dict]:
+) -> List[Dict]:
     mdata = {}
 
     if key_properties is not None:
@@ -48,60 +49,70 @@ def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
 
-def update_catalog(
-    absolute_path_to_catalog: str,
+def update_catalog_dict(
+    catalog: Dict,
     stream_id: str,
     key_properties: List[str],
     replication_method: str,
     bookmark_properties: List[str] = [],
     deselected_columns: List[str] = [],
+    select_all: bool = False,
     select_stream: bool = False,
     selected_columns: List[str] = None,
     unique_conflict_method: str = None,
     unique_constraints: List[str] = [],
+) -> Dict:
+    stream = find(lambda x: x['tap_stream_id'] == stream_id, catalog['streams'])
+
+    stream['key_properties'] = key_properties
+    stream['bookmark_properties'] = bookmark_properties
+    stream['replication_method'] = replication_method
+    stream['unique_conflict_method'] = unique_conflict_method
+    stream['unique_constraints'] = unique_constraints
+
+    for d in stream['metadata']:
+        breadcrumb = d.get('breadcrumb')
+        metadata = d.get('metadata')
+
+        if len(breadcrumb) == 0:
+            d['metadata'][METADATA_KEY_SELECTED] = select_stream
+        elif breadcrumb and \
+           metadata and \
+           len(breadcrumb) == 2 and \
+           breadcrumb[0] == 'properties':
+            column = breadcrumb[1]
+
+            inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
+
+            if select_all:
+                selected = True
+            elif INCLUSION_AUTOMATIC == inclusion:
+                selected = True
+            elif INCLUSION_UNSUPPORTED == inclusion:
+                selected = False
+            elif selected_columns is None:
+                selected = True
+            else:
+                selected = column in selected_columns and column not in deselected_columns
+
+            d['metadata'][METADATA_KEY_SELECTED] = selected
+
+    streams = [stream]
+    for s in catalog['streams']:
+        if s['tap_stream_id'] != stream_id:
+            streams.append(s)
+
+    return dict(streams=streams)
+
+def update_catalog(
+    absolute_path_to_catalog: str,
+    **kwargs,
 ) -> None:
     with open(absolute_path_to_catalog, 'r') as f:
         catalog = json.loads(f.read())
 
     with open(absolute_path_to_catalog, 'w') as f:
-        stream = find(lambda x: x['tap_stream_id'] == stream_id, catalog['streams'])
-
-        stream['key_properties'] = key_properties
-        stream['bookmark_properties'] = bookmark_properties
-        stream['replication_method'] = replication_method
-        stream['unique_conflict_method'] = unique_conflict_method
-        stream['unique_constraints'] = unique_constraints
-
-        for d in stream['metadata']:
-            breadcrumb = d.get('breadcrumb')
-            metadata = d.get('metadata')
-
-            if len(breadcrumb) == 0:
-                d['metadata'][METADATA_KEY_SELECTED] = select_stream
-            elif breadcrumb and \
-               metadata and \
-               len(breadcrumb) == 2 and \
-               breadcrumb[0] == 'properties':
-                column = breadcrumb[1]
-
-                inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
-
-                if INCLUSION_AUTOMATIC == inclusion:
-                    selected = True
-                elif INCLUSION_UNSUPPORTED == inclusion:
-                    selected = False
-                elif selected_columns is None:
-                    selected = True
-                else:
-                    selected = column in selected_columns and column not in deselected_columns
-
-                d['metadata'][METADATA_KEY_SELECTED] = selected
-
-        streams = [stream]
-        for s in catalog['streams']:
-            if s['tap_stream_id'] != stream_id:
-                streams.append(s)
-        f.write(json.dumps(dict(streams=streams), indent=2))
+        f.write(json.dumps(update_catalog_dict(catalog.copy(), **kwargs), indent=2))
 
 
 def update_source_state_from_destination_state(
@@ -150,7 +161,7 @@ def parse_args(required_config_keys):
     parser.add_argument(
         '-c', '--config',
         help='Config file',
-        required=True)
+        required=False)
 
     parser.add_argument(
         '-s', '--state',
@@ -171,7 +182,13 @@ def parse_args(required_config_keys):
 
     parser.add_argument(
         '--query',
-        help='Query file containing query parameters for source’s load_data method.')
+        help='Query file containing query parameters for source’s load_data method.',
+    )
+
+    parser.add_argument(
+        '--settings',
+        help='YAML file containing config and catalog information.',
+    )
 
     args = parser.parse_args()
     if args.config:
@@ -188,9 +205,17 @@ def parse_args(required_config_keys):
     if args.catalog:
         setattr(args, 'catalog_path', args.catalog)
         args.catalog = Catalog.load(args.catalog)
+
     if args.query:
-        setattr(args, 'query_path', args.query)
-        args.query = load_json(args.query)
+        args.query = json.loads(args.query)
+
+    if args.settings:
+        with open(args.settings) as f:
+            args.settings = yaml.safe_load(f.read())
+            if args.settings.get('config'):
+                args.config = args.settings['config']
+            if args.settings.get('catalog'):
+                args.catalog = Catalog.from_dict(args.settings['catalog'])
 
     check_config(args.config, required_config_keys)
 
