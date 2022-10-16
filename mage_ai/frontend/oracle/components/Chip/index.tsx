@@ -17,14 +17,19 @@ export type ChipProps = {
   children?: any;
   label?: string | any;
   onClick?: () => void;
+  primary?: boolean;
   small?: boolean;
 };
 
 const ChipStyle = styled.div<ChipProps>`
   display: inline-block;
 
-  ${props => `
+  ${props => !props.primary && `
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.primary && `
+    background-color: ${(props.theme.chart || dark.chart).primary};
   `}
 
   ${props => !props.small && `
@@ -44,9 +49,10 @@ const Chip = ({
   children,
   label,
   onClick,
+  primary,
   small,
 }: ChipProps) => (
-  <ChipStyle small={small}>
+  <ChipStyle primary={primary} small={small}>
     <Button
       basic
       noPadding
@@ -62,7 +68,7 @@ const Chip = ({
           </Text>
         )}
         <Spacing mr={1} />
-        <Close muted size={small ? UNIT : UNIT * 1.25} />
+        <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
       </FlexContainer>
     </Button>
   </ChipStyle>

@@ -64,6 +64,21 @@ class Source():
         else:
             self.query = query
 
+    @classmethod
+    def templates(self) -> List[Dict]:
+        parts = inspect.getfile(self).split('/')
+        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+
+        templates = {}
+        for filename in os.listdir(absolute_path):
+            path = absolute_path + '/' + filename
+            if isfile(path):
+                file_raw = filename.replace('.json', '')
+                with open(path) as file:
+                    templates[file_raw] = json.load(file)
+
+        return templates
+
     def discover(self) -> Catalog:
         streams = []
 
