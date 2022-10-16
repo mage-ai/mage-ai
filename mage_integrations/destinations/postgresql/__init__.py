@@ -42,12 +42,6 @@ class PostgreSQL(Destination):
         query_strings = [
             f'CREATE SCHEMA IF NOT EXISTS {schema_name}',
         ]
-        create_table_command = build_create_table_command(
-            schema_name,
-            table_name,
-            schema,
-            unique_constraints=unique_constraints,
-        )
 
         replication_method = self.replication_methods[stream]
         if replication_method in [
@@ -55,11 +49,18 @@ class PostgreSQL(Destination):
             REPLICATION_METHOD_INCREMENTAL,
         ]:
             if not does_table_exist:
+                create_table_command = build_create_table_command(
+                    schema_name,
+                    table_name,
+                    schema,
+                    unique_constraints=unique_constraints,
+                )
                 query_strings.append(create_table_command)
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
             raise Exception(message)
+
 
         for sub_batch in batch(record_data, 1000):
             query_strings.append(build_insert_command(
@@ -71,8 +72,8 @@ class PostgreSQL(Destination):
                 unique_constraints=unique_constraints,
             ))
 
-            connection = self.__build_connection()
-            connection.execute(query_strings, commit=True)
+        connection = self.__build_connection()
+        connection.execute(query_strings, commit=True)
 
         self.logger.info('Export data completed.', tags=tags)
 

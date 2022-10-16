@@ -4,18 +4,20 @@ from mage_ai.data_preparation.logger_manager import LoggerManager
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
-from typing import Dict
+from mage_integrations.sources.utils import update_source_state_from_destination_state
+from typing import Any, Dict, List
 import multiprocessing
 import os
-import signal
 import traceback
 
 
@@ -59,15 +61,10 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
         if PipelineType.INTEGRATION == self.pipeline.type:
-            for key in ['_source_process_id']:
-                pid = self.pipeline_run.variables.get(key)
-                try:
-                    os.killpg(pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
+            execution_process_manager.terminate_pipeline_process(self.pipeline_run.id)
 
     def schedule(self) -> None:
-        if self.pipeline.type not in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
+        if PipelineType.STREAMING != self.pipeline.type:
             if self.pipeline_run.all_blocks_completed():
                 self.notification_sender.send_pipeline_run_success_message(
                     pipeline=self.pipeline,
@@ -77,6 +74,8 @@ class PipelineScheduler:
                     status=PipelineRun.PipelineRunStatus.COMPLETED,
                     completed_at=datetime.now(),
                 )
+            elif PipelineType.INTEGRATION == self.pipeline.type:
+                self.__schedule_integration_pipeline()
             else:
                 self.__schedule_blocks()
         else:
@@ -120,25 +119,46 @@ class PipelineScheduler:
         )
         self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
-    def __schedule_blocks(self) -> None:
-        executable_block_runs = [b for b in self.pipeline_run.block_runs
-                                 if b.status in [
-                                        BlockRun.BlockRunStatus.INITIAL,
-                                        BlockRun.BlockRunStatus.QUEUED,
-                                    ]]
-        completed_block_runs = [b for b in self.pipeline_run.block_runs
-                                if b.status == BlockRun.BlockRunStatus.COMPLETED]
+    @property
+    def executable_block_runs(self) -> List[BlockRun]:
+        return [b for b in self.pipeline_run.block_runs if b.status in [
+            BlockRun.BlockRunStatus.INITIAL,
+            BlockRun.BlockRunStatus.QUEUED,
+        ]]
+
+    @property
+    def completed_block_runs(self) -> List[BlockRun]:
+        return [b for b in self.pipeline_run.block_runs if b.status == BlockRun.BlockRunStatus.COMPLETED]
+
+    @property
+    def queued_block_runs(self) -> List[BlockRun]:
         queued_block_runs = []
-        for b in executable_block_runs:
-            completed_block_uuids = set(b.block_uuid for b in completed_block_runs)
+        for b in self.executable_block_runs:
+            completed_block_uuids = set(b.block_uuid for b in self.completed_block_runs)
             block = self.pipeline.get_block(b.block_uuid)
             if block is not None and \
                     block.all_upstream_blocks_completed(completed_block_uuids):
                 b.update(status=BlockRun.BlockRunStatus.QUEUED)
                 queued_block_runs.append(b)
 
+        return queued_block_runs
+
+    def __get_block_variables(self) -> Dict:
+        variables = merge_dict(
+            merge_dict(
+                get_global_variables(self.pipeline.uuid) or dict(),
+                self.pipeline_run.pipeline_schedule.variables or dict(),
+            ),
+            self.pipeline_run.variables or dict(),
+        )
+        variables['env'] = ENV_PROD
+        variables['execution_date'] = self.pipeline_run.execution_date
+
+        return variables
+
+    def __schedule_blocks(self) -> None:
         # TODO: implement queueing logic
-        for b in queued_block_runs:
+        for b in self.queued_block_runs:
             tags = dict(
                 block_run_id=b.id,
                 block_uuid=b.block_uuid,
@@ -153,22 +173,33 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            variables = merge_dict(
-                merge_dict(
-                    get_global_variables(self.pipeline.uuid) or dict(),
-                    self.pipeline_run.pipeline_schedule.variables or dict(),
-                ),
-                self.pipeline_run.variables or dict(),
-            )
-            variables['env'] = ENV_PROD
-            variables['execution_date'] = self.pipeline_run.execution_date
+
             proc = multiprocessing.Process(target=run_block, args=(
                 self.pipeline_run.id,
                 b.id,
-                variables,
+                self.__get_block_variables(),
                 self.__build_tags(**tags),
             ))
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
+            proc.start()
+
+    def __schedule_integration_pipeline(self) -> None:
+        if execution_process_manager.has_pipeline_process(self.pipeline_run.id):
+            return
+
+        if len(self.executable_block_runs) >= 2:
+            self.logger.info(
+                f'Start a process for PipelineRun {self.pipeline_run.id}',
+                **self.__build_tags(),
+            )
+
+            proc = multiprocessing.Process(target=run_integration_pipeline, args=(
+                self.pipeline_run.id,
+                [b.id for b in self.executable_block_runs],
+                self.__get_block_variables(),
+                self.__build_tags(),
+            ))
+            execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
             proc.start()
 
     def __schedule_pipeline(self) -> None:
@@ -203,16 +234,84 @@ class PipelineScheduler:
         ))
 
 
-def run_block(pipeline_run_id, block_run_id, variables, tags):
+def run_integration_pipeline(
+    pipeline_run_id: int,
+    executable_block_runs: List[int],
+    variables: Dict,
+    tags: Dict,
+):
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
+    integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
+    pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}: '
+                                   f'pipeline {integration_pipeline.uuid}',
+                                   **tags)
+
+    block_runs = BlockRun.query.filter(BlockRun.id.in_(executable_block_runs))
+    data_loader_block_run = find(
+        lambda b: b.block_uuid == integration_pipeline.data_loader.uuid,
+        block_runs,
+    )
+    data_exporter_block_run = find(
+        lambda b: b.block_uuid == integration_pipeline.data_exporter.uuid,
+        block_runs,
+    )
+
+    outputs = []
+    if data_loader_block_run and data_exporter_block_run:
+        update_source_state_from_destination_state(
+            integration_pipeline.source_state_file_path,
+            integration_pipeline.destination_state_file_path,
+        )
+
+        for idx, block_run in enumerate([data_loader_block_run, data_exporter_block_run]):
+            tags_updated = merge_dict(tags, dict(
+                block_run_id=block_run.id,
+                block_uuid=block_run.block_uuid,
+            ))
+            block_run.update(
+                started_at=datetime.now(),
+                status=BlockRun.BlockRunStatus.RUNNING,
+            )
+            pipeline_scheduler.logger.info(
+                f'Start a process for BlockRun {block_run.id}',
+                **tags_updated,
+            )
+
+            output = run_block(
+                pipeline_run_id,
+                block_run.id,
+                variables,
+                tags_updated,
+                input_from_output=outputs[idx - 1] if idx >= 1 else None,
+                pipeline_type=PipelineType.INTEGRATION,
+                verify_output=False,
+            )
+            outputs.append(output)
+
+
+def run_block(
+    pipeline_run_id,
+    block_run_id,
+    variables,
+    tags,
+    input_from_output: Dict = None,
+    pipeline_type: PipelineType = None,
+    verify_output: bool = True,
+) -> Any:
+    pipeline_run = PipelineRun.query.get(pipeline_run_id)
+    pipeline_scheduler = PipelineScheduler(pipeline_run)
+
     pipeline = pipeline_scheduler.pipeline
+    if PipelineType.INTEGRATION == pipeline_type:
+        pipeline = IntegrationPipeline.get(pipeline.uuid)
+
     block_run = BlockRun.query.get(block_run_id)
     pipeline_scheduler.logger.info(f'Execute PipelineRun {pipeline_run.id}, BlockRun {block_run.id}: '
                                    f'pipeline {pipeline.uuid} block {block_run.block_uuid}',
                                    **tags)
 
-    ExecutorFactory.get_block_executor(
+    return ExecutorFactory.get_block_executor(
         pipeline,
         block_run.block_uuid,
         execution_partition=pipeline_run.execution_partition,
@@ -224,6 +323,8 @@ def run_block(pipeline_run_id, block_run_id, variables, tags):
         on_complete=pipeline_scheduler.on_block_complete,
         on_failure=pipeline_scheduler.on_block_failure,
         tags=tags,
+        input_from_output=input_from_output,
+        verify_output=verify_output,
     )
 
 
@@ -235,21 +336,13 @@ def run_pipeline(pipeline_run_id, variables, tags):
                                    f'pipeline {pipeline.uuid}',
                                    **tags)
 
-    result = ExecutorFactory.get_pipeline_executor(
+    ExecutorFactory.get_pipeline_executor(
         pipeline,
         execution_partition=pipeline_run.execution_partition,
     ).execute(
         global_vars=variables,
         tags=tags,
     )
-
-    if PipelineType.INTEGRATION == pipeline.type:
-        pipeline_run.update(variables=merge_dict(
-            pipeline_run.variables or {},
-            dict(
-                _source_process_id=result.get('source_process_id'),
-            ),
-        ))
 
 
 def schedule_all():
