@@ -16,10 +16,14 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
+from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
-from typing import Dict
+from os.path import isfile
+from typing import Dict, List
+import inspect
 import io
 import json
+import os
 import singer
 import sys
 import yaml
@@ -64,6 +68,21 @@ class Destination():
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
+
+    @classmethod
+    def templates(self) -> List[Dict]:
+        parts = inspect.getfile(self).split('/')
+        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+
+        templates = {}
+        for filename in os.listdir(absolute_path):
+            path = absolute_path + '/' + filename
+            if isfile(path):
+                file_raw = filename.replace('.json', '')
+                with open(path) as file:
+                    templates[file_raw] = json.load(file)
+
+        return templates
 
     @property
     def config(self) -> Dict:

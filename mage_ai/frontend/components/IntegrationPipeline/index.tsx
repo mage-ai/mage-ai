@@ -6,6 +6,7 @@ import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockTy
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import CodeEditor from '@components/CodeEditor';
+import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
@@ -76,6 +77,14 @@ function IntegrationPipeline({
   const integrationSourcesByUUID =
     useMemo(() => indexBy(integrationSources, ({ uuid }) => uuid), [integrationSources]);
 
+  const { data: dataIntegrationDestinations } = api.integration_destinations.list();
+  const integrationDestinations: IntegrationSourceType[] =
+    useMemo(() => dataIntegrationDestinations?.integration_destinations || [], [
+      dataIntegrationDestinations,
+    ]);
+  const integrationDestinationsByUUID =
+    useMemo(() => indexBy(integrationDestinations, ({ uuid }) => uuid), [integrationDestinations]);
+
   const dataLoaderBlock: BlockType =
     useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_LOADER === type), [blocks]);
   const dataLoaderBlockContent = useMemo(() => {
@@ -85,6 +94,16 @@ function IntegrationPipeline({
 
     return parse(dataLoaderBlock.content);
   }, [dataLoaderBlock]);
+
+  const dataExporterBlock: BlockType =
+    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.DATA_EXPORTER === type), [blocks]);
+  const dataExporterBlockContent = useMemo(() => {
+    if (!dataExporterBlock) {
+      return {}
+    }
+
+    return parse(dataExporterBlock.content);
+  }, [dataExporterBlock]);
 
   const {
     data: dataIntegrationSource,
@@ -112,7 +131,7 @@ function IntegrationPipeline({
             }));
           }}
           tabSize={2}
-          value={stringify(dataLoaderBlockContent?.config)}
+          value={stringify(dataLoaderBlockContent?.config || undefined)}
           width="100%"
         />
       </CodeEditorStyle>
@@ -120,6 +139,33 @@ function IntegrationPipeline({
   }, [
     dataLoaderBlock,
     dataLoaderBlockContent,
+  ]);
+
+  const dataExporterEditor = useMemo(() => {
+    if (!dataExporterBlock) {
+      return;
+    }
+
+    return (
+      <CodeEditorStyle>
+        <CodeEditor
+          autoHeight
+          language={BlockLanguageEnum.YAML}
+          onChange={(val: string) => {
+            onChangeCodeBlock(dataExporterBlock.uuid, stringify({
+              ...dataExporterBlockContent,
+              config: parse(val),
+            }));
+          }}
+          tabSize={2}
+          value={stringify(dataExporterBlockContent?.config || undefined)}
+          width="100%"
+        />
+      </CodeEditorStyle>
+    );
+  }, [
+    dataExporterBlock,
+    dataExporterBlockContent,
   ]);
 
   const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
@@ -233,6 +279,9 @@ function IntegrationPipeline({
             <Select
               onChange={(e) => {
                 const sourceUUID = e.target.value;
+                if (!sourceUUID) {
+                  return;
+                }
 
                 if (dataLoaderBlock) {
                   onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
@@ -240,10 +289,17 @@ function IntegrationPipeline({
                     source: sourceUUID,
                   }));
                 } else {
+                  const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
+                  if (config) {
+                    Object.keys(config).forEach((key: string) => {
+                      config[key] = config[key] || null;
+                    });
+                  }
+
                   addNewBlockAtIndex({
                     content: stringify({
                       source: sourceUUID,
-                      config: integrationSourcesByUUID[sourceUUID]?.templates?.['config'],
+                      config,
                     }),
                     language: BlockLanguageEnum.YAML,
                     type: BlockTypeEnum.DATA_LOADER,
@@ -270,71 +326,82 @@ function IntegrationPipeline({
             </Select>
           </Spacing>
 
-          <Spacing mb={5}>
-            <Headline condensed level={4} spacingBelow>
-              Configuration
-            </Headline>
+          {dataLoaderBlock && (
+            <>
+              <Spacing mb={5}>
+                <Headline condensed level={4} spacingBelow>
+                  Configuration
+                </Headline>
 
-            {dataLoaderEditor}
-          </Spacing>
+                {dataLoaderEditor}
+              </Spacing>
 
-          <Spacing mb={5}>
-            <Headline condensed level={4} spacingBelow>
-              Select stream
-            </Headline>
+              <Spacing mb={5}>
+                <Headline condensed level={4} spacingBelow>
+                  Select stream
+                </Headline>
 
-            <Select
-              onChange={(e) => {
-                const uuid = e.target.value;
-                const stream = streamsByUUID[uuid]
-                const catalogData = stream
-                  ? {
-                    streams: [
-                      stream,
-                    ],
-                  }
-                  : null;
+                <Select
+                  onChange={(e) => {
+                    const uuid = e.target.value;
+                    const stream = streamsByUUID[uuid];
+                    const catalogData = stream
+                      ? {
+                        streams: [
+                          stream,
+                        ],
+                      }
+                      : null;
 
-                if (stream) {
-                  stream.metadata.forEach((md, idx: number) => {
-                    const {
-                      metadata,
-                    } = md;
-                    if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
-                      stream.metadata[idx] = {
-                        ...md,
-                        metadata: {
-                          ...metadata,
-                          selected: true,
-                        },
-                      };
+                    if (stream) {
+                      stream.metadata.forEach((md, idx: number) => {
+                        const {
+                          metadata,
+                        } = md;
+                        if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
+                          if (!stream.replication_method) {
+                            stream.replication_method = ReplicationMethodEnum.FULL_TABLE;
+                          }
+                          if (!stream.unique_conflict_method) {
+                            stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
+                          }
+
+                          stream.metadata[idx] = {
+                            ...md,
+                            metadata: {
+                              ...metadata,
+                              selected: true,
+                            },
+                          };
+                        }
+                      });
                     }
-                  });
-                }
 
-                onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                  ...dataLoaderBlockContent,
-                  catalog: catalogData,
-                }));
+                    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                      ...dataLoaderBlockContent,
+                      catalog: catalogData,
+                    }));
 
-                savePipelineContent().then(() => fetchPipeline());
-              }}
-              primary
-              value={catalog?.streams?.[0]?.tap_stream_id || ''}
-            >
-              <option value="" />
-              {streams.map(({
-                tap_stream_id: uuid,
-              }) => (
-                <option
-                  key={uuid}
-                  value={uuid}
+                    savePipelineContent().then(() => fetchPipeline());
+                  }}
+                  primary
+                  value={catalog?.streams?.[0]?.tap_stream_id || ''}
                 >
-                  {uuid}
-                </option>
-              ))}
-            </Select>
-          </Spacing>
+                  <option value="" />
+                  {streams.map(({
+                    tap_stream_id: uuid,
+                  }) => (
+                    <option
+                      key={uuid}
+                      value={uuid}
+                    >
+                      {uuid}
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
+            </>
+          )}
 
           {catalog?.streams?.map(({
             bookmark_properties: bookmarkProperties,
@@ -357,7 +424,7 @@ function IntegrationPipeline({
 
                 <Table
                   alignTop
-                  columnFlex={[null, 3, 1, null, null]}
+                  columnFlex={[null, 2, 1, null, null]}
                   columns={[
                     {
                       uuid: 'Selected',
@@ -372,7 +439,7 @@ function IntegrationPipeline({
                       uuid: 'Unique',
                     },
                     {
-                      uuid: 'Bookmarked',
+                      uuid: 'Bookmark',
                     },
                   ]}
                   rows={Object.entries(properties).map(([
@@ -424,46 +491,50 @@ function IntegrationPipeline({
                       >
                         {columnName}
                       </Text>,
-                      <div
+                      <FlexContainer
                         key={`${streamUUID}/${columnName}/type`}
                       >
-                        <FlexContainer
-                          alignItems="center"
-                          flexWrap
-                          fullWidth
-                        >
-                          {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
-                            <Spacing
-                              key={`${streamUUID}/${columnName}/${columnType}/chip`}
-                              mb={1}
-                              mr={1}
-                            >
-                              <Chip
-                                label={ColumnFormatEnum.DATE_TIME === columnFormat &&
-                                    ColumnTypeEnum.STRING === columnType &&
-                                    indexOfFirstStringType === idx
-                                  ? COLUMN_TYPE_CUSTOM_DATE_TIME
-                                  : columnType
-                                }
-                                onClick={() => {
-                                  const data: SchemaPropertyType = {
-                                    format: columnFormat,
-                                    type: columnTypes.filter((colType: ColumnTypeEnum) =>
-                                      colType !== columnType),
-                                  };
-
-                                  if (ColumnFormatEnum.DATE_TIME === columnFormat &&
-                                    ColumnTypeEnum.STRING === columnType
-                                  ) {
-                                    data.format = null;
+                        <Flex flex={1}>
+                          <FlexContainer
+                            alignItems="center"
+                            flexWrap
+                            fullWidth
+                          >
+                            {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
+                              <Spacing
+                                key={`${streamUUID}/${columnName}/${columnType}/${idx}/chip`}
+                                mb={1}
+                                mr={1}
+                              >
+                                <Chip
+                                  border
+                                  label={ColumnFormatEnum.DATE_TIME === columnFormat &&
+                                      ColumnTypeEnum.STRING === columnType &&
+                                      indexOfFirstStringType === idx
+                                    ? COLUMN_TYPE_CUSTOM_DATE_TIME
+                                    : columnType
                                   }
+                                  onClick={() => {
+                                    const data: SchemaPropertyType = {
+                                      format: columnFormat,
+                                      type: columnTypes.filter((colType: ColumnTypeEnum) =>
+                                        colType !== columnType),
+                                    };
 
-                                  updateSchemaProperty(streamUUID, columnName, data);
-                                }}
-                              />
-                            </Spacing>
-                          ))}
-                        </FlexContainer>
+                                    if (ColumnFormatEnum.DATE_TIME === columnFormat &&
+                                      ColumnTypeEnum.STRING === columnType
+                                    ) {
+                                      data.format = null;
+                                    }
+
+                                    updateSchemaProperty(streamUUID, columnName, data);
+                                  }}
+                                  small
+                                />
+                              </Spacing>
+                            ))}
+                          </FlexContainer>
+                        </Flex>
 
                         {columnTypeOptions.length >= 1 && (
                           <Select
@@ -487,12 +558,13 @@ function IntegrationPipeline({
                             primary
                             small
                             value=""
+                            width={10 * UNIT}
                           >
                             <option value="" />
                             {columnTypeOptions}
                           </Select>
                         )}
-                      </div>,
+                      </FlexContainer>,
                       <Checkbox
                         checked={!!uniqueConstraints?.includes(columnName)}
                         key={`${streamUUID}/${columnName}/unique`}
@@ -582,13 +654,20 @@ function IntegrationPipeline({
                           as the bookmark.
 
                           <br />
-                          <br />
 
                           On the next run, the synchronization will start after the bookmarked record.
                         </Text>
                       </Spacing>
 
                       <FlexContainer alignItems="center" flexWrap>
+                        {!bookmarkProperties?.length && (
+                          <Text italic>
+                            Click the checkbox under the column <Text bold inline italic>
+                              Bookmark
+                            </Text> to
+                            use a specific column as a bookmark property.
+                          </Text>
+                        )}
                         {bookmarkProperties?.map((columnName: string) => (
                           <Spacing
                             key={`bookmark_properties/${columnName}`}
@@ -626,6 +705,14 @@ function IntegrationPipeline({
                     </Spacing>
 
                     <FlexContainer alignItems="center" flexWrap>
+                      {!uniqueConstraints?.length && (
+                          <Text italic>
+                            Click the checkbox under the column <Text bold inline italic>
+                              Unique
+                            </Text> to
+                            use a specific column as a unique constraint.
+                          </Text>
+                        )}
                       {uniqueConstraints?.map((columnName: string) => (
                         <Spacing
                           key={`unique_constraints/${columnName}`}
@@ -670,7 +757,6 @@ function IntegrationPipeline({
                         ))}, how do you want to resolve the conflict?
 
                         <br />
-                        <br />
 
                         The conflict method <Text bold inline monospace>
                           {UniqueConflictMethodEnum.IGNORE}
@@ -710,15 +796,27 @@ function IntegrationPipeline({
         </SectionStyle>
       )}
 
+      <Spacing mb={5} />
+
       <Spacing mb={1}>
         <FlexContainer alignItems="center">
           <Button
+            disabled={!dataLoaderBlock}
             iconOnly
             onClick={() => setDestinationVisible(prev => !prev)}
           >
             <>
-              {destinationVisible && <ChevronUp size={1.5 * UNIT} />}
-              {!destinationVisible && <ChevronDown size={1.5 * UNIT} />}
+              {destinationVisible && dataLoaderBlock && (
+                <ChevronUp
+                  size={1.5 * UNIT}
+                />
+              )}
+              {(!destinationVisible || !dataLoaderBlock) && (
+                <ChevronDown
+                  disabled={!dataLoaderBlock}
+                  size={1.5 * UNIT}
+                />
+              )}
             </>
           </Button>
 
@@ -730,12 +828,84 @@ function IntegrationPipeline({
             </Headline>
             {!destinationVisible && (
               <Headline default inline>
-                &nbsp;TBD
+                &nbsp;{integrationDestinationsByUUID[dataExporterBlockContent?.destination]?.name}
               </Headline>
             )}
           </FlexContainer>
         </FlexContainer>
       </Spacing>
+
+      {destinationVisible && dataLoaderBlock && (
+        <SectionStyle>
+          <Spacing mb={5}>
+            <Headline condensed level={4} spacingBelow>
+              Select destination
+            </Headline>
+
+            <Select
+              onChange={(e) => {
+                const destinationUUID = e.target.value;
+                if (!destinationUUID) {
+                  return;
+                }
+
+                if (dataExporterBlock) {
+                  onChangeCodeBlock(dataExporterBlock.uuid, stringify({
+                    ...dataExporterBlockContent,
+                    destination: destinationUUID,
+                  }));
+                } else {
+                  const config = integrationDestinationsByUUID[destinationUUID]?.templates?.config;
+                  if (config) {
+                    Object.keys(config).forEach((key: string) => {
+                      config[key] = config[key] || null;
+                    });
+                  }
+
+                  addNewBlockAtIndex({
+                    content: stringify({
+                      destination: destinationUUID,
+                      config,
+                    }),
+                    language: BlockLanguageEnum.YAML,
+                    type: BlockTypeEnum.DATA_EXPORTER,
+                    upstream_blocks: [
+                      dataLoaderBlock.uuid,
+                    ],
+                  }, 1, setSelectedBlock);
+                }
+
+                savePipelineContent().then(() => {
+                  fetchIntegrationSource();
+                  fetchPipeline();
+                });
+              }}
+              primary
+              value={dataExporterBlockContent?.destination}
+            >
+              <option value="" />
+              {integrationDestinations.map(({ name, uuid }) => (
+                <option
+                  key={uuid}
+                  value={uuid}
+                >
+                  {name}
+                </option>
+              ))}
+            </Select>
+          </Spacing>
+
+          {dataExporterBlock && (
+            <Spacing mb={5}>
+              <Headline condensed level={4} spacingBelow>
+                Configuration
+              </Headline>
+
+              {dataExporterEditor}
+            </Spacing>
+          )}
+        </SectionStyle>
+      )}
     </>
   );
 }

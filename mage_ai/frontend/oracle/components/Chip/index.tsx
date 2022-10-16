@@ -14,6 +14,7 @@ import {
 } from '@oracle/styles/fonts/sizes';
 
 export type ChipProps = {
+  border?: boolean;
   children?: any;
   label?: string | any;
   onClick?: () => void;
@@ -40,19 +41,24 @@ const ChipStyle = styled.div<ChipProps>`
 
   ${props => props.small && `
     border-radius: ${((UNIT / 2) + SMALL_LINE_HEIGHT) / 2}px;
-    height: ${SMALL_LINE_HEIGHT + (UNIT / 2)}px;
+    height: ${SMALL_LINE_HEIGHT + (UNIT / 2) + 2}px;
     padding: ${UNIT / 4}px ${UNIT}px;
+  `}
+
+  ${props => props.border && `
+    border: 1px solid ${(props.theme.content || dark.content).muted};
   `}
 `;
 
 const Chip = ({
+  border,
   children,
   label,
   onClick,
   primary,
   small,
 }: ChipProps) => (
-  <ChipStyle primary={primary} small={small}>
+  <ChipStyle border={border} primary={primary} small={small}>
     <Button
       basic
       noPadding

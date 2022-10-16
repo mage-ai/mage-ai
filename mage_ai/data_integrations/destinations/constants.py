@@ -1,0 +1,3 @@
+DESTINATIONS = [
+    dict(name='PostgreSQL'),
+]

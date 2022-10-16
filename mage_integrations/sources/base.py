@@ -6,10 +6,11 @@ from mage_integrations.sources.constants import (
 )
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, merge_dict
+from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.schema_helpers import extract_selected_columns
 from mage_integrations.sources.messages import write_schema
-from mage_integrations.sources.utils import get_abs_path, get_standard_metadata, parse_args
+from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from os.path import isfile
 from singer.schema import Schema
 from typing import Dict, List

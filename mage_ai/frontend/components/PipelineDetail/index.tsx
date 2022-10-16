@@ -165,6 +165,8 @@ function PipelineDetail({
   const selectedBlockPrevious = usePrevious(selectedBlock);
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
   const uuidKeyboard = 'PipelineDetail/index';
   const {
     registerOnKeyDown,
@@ -193,7 +195,7 @@ function PipelineDetail({
         } else if (!pipelineContentTouched && !KEY_CODES_SYSTEM.find(key => keyMapping[key])) {
           setPipelineContentTouched(true);
         }
-      } else {
+      } else if (!isIntegration) {
         if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
@@ -264,6 +266,7 @@ function PipelineDetail({
       blockRefs.current,
       blocks,
       interruptKernel,
+      isIntegration,
       numberOfBlocks,
       pipelineContentTouched,
       restartKernel,
@@ -295,7 +298,6 @@ function PipelineDetail({
   useEffect(() => {
     setTimeout(() => setVisible(true), ANIMATION_DURATION * 2);
   }, [pipeline]);
-  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
   const codeBlocks = useMemo(
     () => blocks
