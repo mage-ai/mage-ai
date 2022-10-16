@@ -95,12 +95,6 @@ class IntegrationPipeline(Pipeline):
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
 
-    def parse_and_validate_blocks(self):
-        if not self.data_loader:
-            raise Exception('Please provide at least 1 data loader block.')
-        if not self.data_exporter:
-            raise Exception('Please provide at least 1 data exporter block.')
-
     def discover(self) -> dict:
         if self.source_file_path and self.data_loader.file_path:
             proc = subprocess.run([

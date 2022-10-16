@@ -13,7 +13,6 @@ class PostgreSQL(Destination):
         stream: str,
         schema: dict,
         record: dict,
-        records_count: int,
         tags: dict = {},
         **kwargs,
     ) -> None:
@@ -37,12 +36,11 @@ class PostgreSQL(Destination):
         )
 
         replication_method = self.replication_methods[stream]
-        if REPLICATION_METHOD_INCREMENTAL == replication_method:
+        if replication_method in [
+            REPLICATION_METHOD_FULL_TABLE,
+            REPLICATION_METHOD_INCREMENTAL,
+        ]:
             if not does_table_exist:
-                query_strings.append(create_table_command)
-        elif REPLICATION_METHOD_FULL_TABLE == replication_method:
-            if does_table_exist and records_count == 0:
-                query_strings.append(f'DROP TABLE {full_table_name}')
                 query_strings.append(create_table_command)
         else:
             message = f'Replication method {replication_method} not supported.'

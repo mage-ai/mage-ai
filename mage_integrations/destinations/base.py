@@ -60,7 +60,6 @@ class Destination():
         self.config_file_path = config_file_path
         self.key_properties = None
         self.logger = Logger(caller=self, logger=logger)
-        self.records_count = None
         self.replication_methods = None
         self.schemas = None
         self.settings_file_path = settings_file_path
@@ -113,7 +112,6 @@ class Destination():
         stream: str,
         schema: dict,
         record: dict,
-        records_count: int,
         tags: dict = {},
         **kwargs,
     ) -> None:
@@ -145,12 +143,10 @@ class Destination():
 
         self.export_data(
             record=record,
-            records_count=self.records_count,
             schema=schema,
             stream=stream,
             tags=tags,
         )
-        self.records_count += 1
 
     def process_schema(
         self,
@@ -185,7 +181,6 @@ class Destination():
     def process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.key_properties = {}
-        self.records_count = 0
         self.replication_methods = {}
         self.schemas = {}
         self.unique_conflict_methods = {}

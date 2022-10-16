@@ -57,7 +57,7 @@ def build_create_table_command(
     ]
 
     if unique_constraints:
-        index_name = '_'.join(unique_constraints)
+        index_name = f"{table_name}_{'_'.join(unique_constraints)}"
         columns_and_types.append(
             f"CONSTRAINT {index_name}_unique UNIQUE ({', '.join(unique_constraints)})",
         )

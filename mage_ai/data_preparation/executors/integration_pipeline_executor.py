@@ -1,6 +1,6 @@
-from mage_ai.data_preparation.executors.mixins.execution import ExecuteWithOutputMixin
-from mage_ai.data_preparation.executors.mixins.validation import ValidateBlockMixin
+from contextlib import redirect_stdout
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.data_preparation.logger_manager import StreamToLogger
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline, PYTHON
 from mage_ai.shared.hash import merge_dict
@@ -8,41 +8,48 @@ from mage_integrations.sources.utils import (
     update_catalog_dict,
     update_source_state_from_destination_state,
 )
-from typing import Dict
+from typing import Callable, Dict
 import json
 import os
-import signal
 import subprocess
 import time
 import yaml
 
 
-class IntegrationPipelineExecutor(PipelineExecutor, ExecuteWithOutputMixin, ValidateBlockMixin):
+class IntegrationPipelineExecutor(PipelineExecutor):
     def __init__(self, pipeline: Pipeline, **kwargs):
         super().__init__(pipeline, **kwargs)
-        self.integration_pipeline = IntegrationPipeline(pipeline)
+        self.integration_pipeline = IntegrationPipeline.get(pipeline.uuid)
+        self.parse_and_validate_blocks()
 
-    def execute_in_python(self, query: Dict = {}):
-        catalog = self.integration_pipeline.integration_pipeline.discover()
-        catalog = update_catalog_dict(
-            catalog,
-            catalog['streams'][0]['tap_stream_id'],
-            key_properties=['uuid'],
-            replication_method='FULL_TABLE',
-            bookmark_properties=['event_time', 'uuid'],
-            select_all=True,
-            select_stream=True,
-            unique_conflict_method='UPDATE',
-            unique_constraints=['uuid'],
-        )
-        self.integration_pipeline.data_loader.update_content(yaml.dump(
-            merge_dict(
-                self.integration_pipeline.source_config,
-                dict(catalog=catalog),
-            ),
-            allow_unicode=True,
-        ))
+    def execute(
+        self,
+        build_block_output_stdout: Callable[..., object] = None,
+        global_vars: Dict = None,
+        **kwargs,
+    ) -> None:
+        if build_block_output_stdout:
+            stdout = build_block_output_stdout(self.pipeline.uuid)
+        else:
+            stdout = StreamToLogger(self.logger)
+        try:
+            with redirect_stdout(stdout):
+                return self.__execute_in_python()
+        except Exception as e:
+            if not build_block_output_stdout:
+                self.logger.exception(
+                        f'Failed to execute streaming pipeline {self.pipeline.uuid}',
+                        error=e,
+                    )
+            raise e
 
+    def parse_and_validate_blocks(self):
+        if not self.integration_pipeline.data_loader:
+            raise Exception('Please provide at least 1 data loader block.')
+        if not self.integration_pipeline.data_exporter:
+            raise Exception('Please provide at least 1 data exporter block.')
+
+    def __execute_in_python(self, query: Dict = {}) -> Dict:
         update_source_state_from_destination_state(
             self.integration_pipeline.source_state_file_path,
             self.integration_pipeline.destination_state_file_path,
@@ -68,17 +75,7 @@ class IntegrationPipelineExecutor(PipelineExecutor, ExecuteWithOutputMixin, Vali
             self.integration_pipeline.destination_state_file_path,
         ], stdin=proc1.stdout)
 
-        # time.sleep(7)
-
-        return os.getpgid(proc1.pid), os.getpgid(proc2.pid)
-
-        # os.killpg(os.getpgid(proc1.pid), signal.SIGTERM)
-        # os.killpg(os.getpgid(proc2.pid), signal.SIGTERM)
-
-
-# pipeline = Pipeline.get('data_integration_test')
-
-# pe = IntegrationPipelineExecutor(pipeline)
-# pe.parse_and_validate_blocks()
-# pe.discover()
-# pe.execute_in_python(query=dict(_start_date='2022-10-01', _end_date='2022-10-02'))
+        return dict(
+            destination_process_id=os.getpgid(proc2.pid),
+            source_process_id=os.getpgid(proc1.pid),
+        )

@@ -7,13 +7,15 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
-from mage_ai.shared.constants import ENV_PROD
-from mage_ai.shared.hash import merge_dict
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.hash import merge_dict
 from typing import Dict
 import multiprocessing
+import os
+import signal
 import traceback
 
 
@@ -56,8 +58,13 @@ class PipelineScheduler:
             ]:
                 b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
+        if PipelineType.INTEGRATION == self.pipeline.type:
+            for key in ['_destination_process_id', '_source_process_id']:
+                pid = self.pipeline_run.variables.get(key)
+                os.killpg(pid, signal.SIGTERM)
+
     def schedule(self) -> None:
-        if self.pipeline.type != PipelineType.STREAMING:
+        if self.pipeline.type not in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
             if self.pipeline_run.all_blocks_completed():
                 self.notification_sender.send_pipeline_run_success_message(
                     pipeline=self.pipeline,
@@ -225,13 +232,22 @@ def run_pipeline(pipeline_run_id, variables, tags):
                                    f'pipeline {pipeline.uuid}',
                                    **tags)
 
-    ExecutorFactory.get_pipeline_executor(
+    result = ExecutorFactory.get_pipeline_executor(
         pipeline,
         execution_partition=pipeline_run.execution_partition,
     ).execute(
         global_vars=variables,
         tags=tags,
     )
+
+    if PipelineType.INTEGRATION == pipeline.type:
+        pipeline_run.update(variables=merge_dict(
+            pipeline_run.variables or {},
+            dict(
+                _destination_process_id=result.get('destination_process_id'),
+                _source_process_id=result.get('source_process_id'),
+            ),
+        ))
 
 
 def schedule_all():
