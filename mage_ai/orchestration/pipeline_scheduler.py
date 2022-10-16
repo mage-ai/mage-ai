@@ -59,9 +59,12 @@ class PipelineScheduler:
                 b.update(status=BlockRun.BlockRunStatus.CANCELLED)
 
         if PipelineType.INTEGRATION == self.pipeline.type:
-            for key in ['_destination_process_id', '_source_process_id']:
+            for key in ['_source_process_id']:
                 pid = self.pipeline_run.variables.get(key)
-                os.killpg(pid, signal.SIGTERM)
+                try:
+                    os.killpg(pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
 
     def schedule(self) -> None:
         if self.pipeline.type not in [PipelineType.INTEGRATION, PipelineType.STREAMING]:
@@ -244,7 +247,6 @@ def run_pipeline(pipeline_run_id, variables, tags):
         pipeline_run.update(variables=merge_dict(
             pipeline_run.variables or {},
             dict(
-                _destination_process_id=result.get('destination_process_id'),
                 _source_process_id=result.get('source_process_id'),
             ),
         ))

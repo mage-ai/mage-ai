@@ -33,8 +33,7 @@ class IntegrationPipelineExecutor(PipelineExecutor):
         else:
             stdout = StreamToLogger(self.logger)
         try:
-            with redirect_stdout(stdout):
-                return self.__execute_in_python()
+            return self.__execute_in_python(stdout)
         except Exception as e:
             if not build_block_output_stdout:
                 self.logger.exception(
@@ -49,7 +48,7 @@ class IntegrationPipelineExecutor(PipelineExecutor):
         if not self.integration_pipeline.data_exporter:
             raise Exception('Please provide at least 1 data exporter block.')
 
-    def __execute_in_python(self, query: Dict = {}) -> Dict:
+    def __execute_in_python(self, stdout, query: Dict = {}) -> Dict:
         update_source_state_from_destination_state(
             self.integration_pipeline.source_state_file_path,
             self.integration_pipeline.destination_state_file_path,
@@ -64,18 +63,17 @@ class IntegrationPipelineExecutor(PipelineExecutor):
             self.integration_pipeline.source_state_file_path,
             '--query',
             json.dumps(query),
-        ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
+        ], preexec_fn=os.setsid, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        proc2 = subprocess.Popen([
+        proc2 = subprocess.call([
             PYTHON,
             self.integration_pipeline.destination_file_path,
             '--settings',
             self.integration_pipeline.data_exporter.file_path,
             '--state',
             self.integration_pipeline.destination_state_file_path,
-        ], stdin=proc1.stdout)
+        ], stdin=proc1.stdout, stdout=stdout, stderr=stdout)
 
         return dict(
-            destination_process_id=os.getpgid(proc2.pid),
             source_process_id=os.getpgid(proc1.pid),
         )
