@@ -2,7 +2,7 @@ from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLCon
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.destinations.postgresql.utils import build_create_table_command, build_insert_command
-from typing import List
+from typing import Dict, List
 import argparse
 import sys
 
@@ -16,6 +16,19 @@ class PostgreSQL(Destination):
         tags: dict = {},
         **kwargs,
     ) -> None:
+        self.export_batch_data([dict(
+            record=record,
+            schema=schema,
+            stream=stream,
+            tags=tags,
+        )])
+
+    def export_batch_data(self, record_data: List[Dict]) -> None:
+        data = record_data[0]
+        schema = data['schema']
+        stream = data['stream']
+        tags = data['tags']
+
         self.logger.info('Export data started', tags=tags)
 
         schema_name = self.config['schema']
@@ -51,7 +64,7 @@ class PostgreSQL(Destination):
             schema_name,
             table_name,
             schema,
-            record,
+            [d['record'] for d in record_data],
             unique_conflict_method=self.unique_conflict_methods.get(stream),
             unique_constraints=unique_constraints,
         ))
@@ -82,7 +95,10 @@ class PostgreSQL(Destination):
 
 
 def main():
-    destination = PostgreSQL(argument_parser=argparse.ArgumentParser())
+    destination = PostgreSQL(
+        argument_parser=argparse.ArgumentParser(),
+        batch_processing=True,
+    )
     destination.process(sys.stdin.buffer)
 
 if __name__ == '__main__':

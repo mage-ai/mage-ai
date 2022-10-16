@@ -2,6 +2,7 @@ from datetime import datetime
 from mage_integrations.utils.logger.constants import LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION, LOG_LEVEL_INFO
 from mage_integrations.utils.parsers import encode_complex
 import simplejson
+import uuid
 
 
 class Logger():
@@ -26,7 +27,7 @@ class Logger():
         if self.verbose == 0:
             return
 
-        timestamp = datetime.utcnow().isoformat()
+        now = datetime.utcnow()
         if self.caller:
             if type(self.caller) is str:
                 caller_string = self.caller
@@ -40,7 +41,8 @@ class Logger():
             level=level,
             message=message,
             tags=tags,
-            timestamp=timestamp,
+            timestamp=int(now.timestamp()),
+            uuid=uuid.uuid4().hex,
         )
         data.update(kwargs)
 
@@ -60,11 +62,10 @@ class Logger():
                 default=encode_complex,
                 ignore_nan=True,
             )
-            getattr(self.logger, method)(f'[{timestamp}] {json_string}')
+            getattr(self.logger, method)(f'[{now.isoformat()}] {json_string}')
         else:
             print(simplejson.dumps(
                 data,
                 default=encode_complex,
                 ignore_nan=True,
-                # indent=2,
             ))
