@@ -36,6 +36,9 @@ export const FILES: 'files' = 'files';
 export const FEATURE_SETS: 'feature_sets' = 'feature_sets';
 export const FEATURE_SET_VERSIONS: 'feature_set_versions' = 'feature_set_versions';
 export const INSTANCES: 'instances' = 'instances';
+export const INTEGRATION_DESTINATIONS: 'integration_destinations' = 'integration_destinations';
+export const INTEGRATION_SOURCES = 'integration_sources';
+export const INTEGRATION_SAMPLES = 'integration_samples';
 export const KERNELS: 'kernels' = 'kernels';
 export const KERNEL_ACTION_INTERRUPT: 'interrupt' = 'interrupt';
 export const KERNEL_ACTION_RESTART: 'restart' = 'restart';
@@ -71,6 +74,9 @@ const RESOURCES: any[][] = [
   [FILES],
   [FILE_CONTENTS],
   [INSTANCES, CLUSTERS],
+  [INTEGRATION_DESTINATIONS],
+  [INTEGRATION_SOURCES],
+  [INTEGRATION_SAMPLES, INTEGRATION_SOURCES],
   [KERNELS],
   [KERNEL_ACTION_INTERRUPT, KERNELS],
   [KERNEL_ACTION_RESTART, KERNELS],

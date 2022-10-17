@@ -16,9 +16,10 @@ import BlockType, {
 } from '@interfaces/BlockType';
 import CodeBlock from '@components/CodeBlock';
 import DataProviderType from '@interfaces/DataProviderType';
+import IntegrationPipeline from '@components/IntegrationPipeline';
 import KernelOutputType, { ExecutionStateEnum } from '@interfaces/KernelOutputType';
 import KernelType, { SetMessagesType } from '@interfaces/KernelType';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import usePrevious from '@utils/usePrevious';
 import {
@@ -164,6 +165,8 @@ function PipelineDetail({
   const selectedBlockPrevious = usePrevious(selectedBlock);
   const numberOfBlocks = useMemo(() => blocks.length, [blocks]);
 
+  const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
+
   const uuidKeyboard = 'PipelineDetail/index';
   const {
     registerOnKeyDown,
@@ -192,7 +195,7 @@ function PipelineDetail({
         } else if (!pipelineContentTouched && !KEY_CODES_SYSTEM.find(key => keyMapping[key])) {
           setPipelineContentTouched(true);
         }
-      } else {
+      } else if (!isIntegration) {
         if (selectedBlock) {
           const selectedBlockIndex =
             blocks.findIndex(({ uuid }: BlockType) => selectedBlock.uuid === uuid);
@@ -263,6 +266,7 @@ function PipelineDetail({
       blockRefs.current,
       blocks,
       interruptKernel,
+      isIntegration,
       numberOfBlocks,
       pipelineContentTouched,
       restartKernel,
@@ -296,7 +300,9 @@ function PipelineDetail({
   }, [pipeline]);
 
   const codeBlocks = useMemo(
-    () => blocks.map((block: BlockType, idx: number) => {
+    () => blocks
+    .filter(({ type }) => !isIntegration || BlockTypeEnum.TRANSFORMER === type)
+    .map((block: BlockType, idx: number) => {
       const {
         type,
         uuid,
@@ -375,6 +381,7 @@ function PipelineDetail({
     fetchFileTree,
     fetchPipeline,
     interruptKernel,
+    isIntegration,
     mainContainerRef,
     mainContainerWidth,
     messages,
@@ -399,6 +406,81 @@ function PipelineDetail({
     widgets,
   ]);
 
+  const integrationMemo = useMemo(() => (
+    <IntegrationPipeline
+      addNewBlockAtIndex={addNewBlockAtIndex}
+      onChangeCodeBlock={onChangeCodeBlock}
+      setSelectedBlock={setSelectedBlock}
+      blocks={blocks}
+      savePipelineContent={savePipelineContent}
+      pipeline={pipeline}
+      fetchPipeline={fetchPipeline}
+      codeBlocks={codeBlocks}
+    />
+  ), [
+    codeBlocks,
+    onChangeCodeBlock,
+    blocks,
+    onChangeCodeBlock,
+    pipeline,
+    fetchPipeline,
+    savePipelineContent,
+    setSelectedBlock,
+  ]);
+
+  const addNewBlocksMemo = useMemo(() => (
+    <AddNewBlocks
+      addNewBlock={(newBlock: BlockRequestPayloadType) => {
+        const block = blocks[blocks.length - 1];
+
+        let content = null;
+        let configuration = {};
+        const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
+
+        if (block) {
+          configuration = block.configuration;
+
+          if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
+            && BlockTypeEnum.SCRATCHPAD === newBlock.type
+          ) {
+            content = `from mage_ai.data_preparation.variable_manager import get_variable
+
+
+df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
+`;
+          }
+
+          if (BlockLanguageEnum.SQL === block.language) {
+            configuration = {
+              ...block.configuration,
+              ...configuration,
+            };
+          }
+        }
+
+        addNewBlockAtIndex({
+          ...newBlock,
+          configuration,
+          content,
+          upstream_blocks: upstreamBlocks,
+        }, numberOfBlocks, setSelectedBlock);
+        setTextareaFocused(true);
+      }}
+      hideDataExporter={isIntegration}
+      hideDataLoader={isIntegration}
+      hideRecommendations={isIntegration}
+      hideScratchpad={isIntegration}
+      hideSensor={isIntegration}
+      pipeline={pipeline}
+      setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
+    />
+  ), [
+    blocks,
+    isIntegration,
+    pipeline,
+    setRecsWindowOpenBlockIdx,
+  ]);
+
   return (
     <>
       <PipelineContainerStyle>
@@ -415,50 +497,16 @@ function PipelineDetail({
       </PipelineContainerStyle>
 
       <Spacing mt={1} px={PADDING_UNITS}>
-        {codeBlocks}
+        {isIntegration && integrationMemo}
 
-        <Spacing mt={PADDING_UNITS}>
-          <AddNewBlocks
-            addNewBlock={(newBlock: BlockRequestPayloadType) => {
-              const block = blocks[blocks.length - 1];
-
-              let content = null;
-              let configuration = {};
-              const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];
-
-              if (block) {
-                configuration = block.configuration;
-
-                if ([BlockTypeEnum.DATA_LOADER, BlockTypeEnum.TRANSFORMER].includes(block.type)
-                  && BlockTypeEnum.SCRATCHPAD === newBlock.type
-                ) {
-                  content = `from mage_ai.data_preparation.variable_manager import get_variable
-
-
-df = get_variable('${pipeline.uuid}', '${block.uuid}', 'df')
-`;
-                }
-
-                if (BlockLanguageEnum.SQL === block.language) {
-                  configuration = {
-                    ...block.configuration,
-                    ...configuration,
-                  };
-                }
-              }
-
-              addNewBlockAtIndex({
-                ...newBlock,
-                configuration,
-                content,
-                upstream_blocks: upstreamBlocks,
-              }, numberOfBlocks, setSelectedBlock);
-              setTextareaFocused(true);
-            }}
-            pipeline={pipeline}
-            setRecsWindowOpenBlockIdx={setRecsWindowOpenBlockIdx}
-          />
-        </Spacing>
+        {!isIntegration && (
+          <>
+            {codeBlocks}
+            <Spacing mt={PADDING_UNITS}>
+              {addNewBlocksMemo}
+            </Spacing>
+          </>
+        )}
       </Spacing>
     </>
   );

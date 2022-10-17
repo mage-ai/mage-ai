@@ -14,17 +14,23 @@ import {
 } from '@oracle/styles/fonts/sizes';
 
 export type ChipProps = {
+  border?: boolean;
   children?: any;
   label?: string | any;
   onClick?: () => void;
+  primary?: boolean;
   small?: boolean;
 };
 
 const ChipStyle = styled.div<ChipProps>`
   display: inline-block;
 
-  ${props => `
+  ${props => !props.primary && `
     background-color: ${(props.theme.background || dark.background).popup};
+  `}
+
+  ${props => props.primary && `
+    background-color: ${(props.theme.chart || dark.chart).primary};
   `}
 
   ${props => !props.small && `
@@ -35,18 +41,24 @@ const ChipStyle = styled.div<ChipProps>`
 
   ${props => props.small && `
     border-radius: ${((UNIT / 2) + SMALL_LINE_HEIGHT) / 2}px;
-    height: ${SMALL_LINE_HEIGHT + (UNIT / 2)}px;
+    height: ${SMALL_LINE_HEIGHT + (UNIT / 2) + 2}px;
     padding: ${UNIT / 4}px ${UNIT}px;
+  `}
+
+  ${props => props.border && `
+    border: 1px solid ${(props.theme.content || dark.content).muted};
   `}
 `;
 
 const Chip = ({
+  border,
   children,
   label,
   onClick,
+  primary,
   small,
 }: ChipProps) => (
-  <ChipStyle small={small}>
+  <ChipStyle border={border} primary={primary} small={small}>
     <Button
       basic
       noPadding
@@ -62,7 +74,7 @@ const Chip = ({
           </Text>
         )}
         <Spacing mr={1} />
-        <Close muted size={small ? UNIT : UNIT * 1.25} />
+        <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
       </FlexContainer>
     </Button>
   </ChipStyle>

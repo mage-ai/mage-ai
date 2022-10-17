@@ -407,12 +407,15 @@ export const SHARED_INPUT_STYLES = css<InputWrapperProps>`
   `}
 
   ${props => props.primary && !props.swapBackgroundAndTextColor && `
-    background-color: ${(props.theme.brand || dark.brand).wind200} !important;
+    border-color: ${(props.theme.accent || dark.accent).purpleLight};
 
     &:active,
-    &:focus,
+    &:focus {
+      border-color: ${(props.theme.accent || dark.accent).purple} !important;
+    }
+
     &:hover {
-      background-color: ${(props.theme.brand || dark.brand).wind200} !important;
+      border-color: ${(props.theme.chart || dark.chart).primary} !important;
     }
   `}
 

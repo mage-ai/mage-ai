@@ -55,9 +55,9 @@ class Client():
                 keys.append(obj['Prefix'])
         return keys
 
-    def list_objects(self, prefix):
+    def list_objects(self, prefix, max_keys=MAX_KEYS):
         keys = []
-        response = self.client.list_objects_v2(Bucket=self.bucket, MaxKeys=MAX_KEYS, Prefix=prefix)
+        response = self.client.list_objects_v2(Bucket=self.bucket, MaxKeys=max_keys, Prefix=prefix)
         if response.get('Contents'):
             for obj in response['Contents']:
                 keys.append(obj['Key'])

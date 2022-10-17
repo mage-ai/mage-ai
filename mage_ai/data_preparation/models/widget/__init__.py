@@ -48,7 +48,7 @@ class Widget(Block):
         )
 
     @classmethod
-    def block_class_from_type(self, block_type: str) -> str:
+    def block_class_from_type(self, block_type: str, **kwargs) -> str:
         return BLOCK_TYPE_TO_CLASS.get(block_type)
 
     @property

@@ -221,7 +221,7 @@ You should see an output like this:
 
     topic = 'test'
     producer = KafkaProducer(
-        bootstrap_servers='localhost:9092',
+        bootstrap_servers='kafka:9093',
     )
 
 
@@ -271,7 +271,7 @@ topic = 'test'
 consumer = KafkaConsumer(
     topic,
     group_id='test',
-    bootstrap_servers='localhost:9092',
+    bootstrap_servers='kafka:9093',
 )
 
 for message in consumer:
