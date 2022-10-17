@@ -15,10 +15,8 @@ from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
-from mage_integrations.sources.utils import update_source_state_from_destination_state
 from typing import Any, Dict, List
 import multiprocessing
-import os
 import traceback
 
 
@@ -241,6 +239,8 @@ def run_integration_pipeline(
     variables: Dict,
     tags: Dict,
 ):
+    from mage_integrations.sources.utils import update_source_state_from_destination_state
+
     pipeline_run = PipelineRun.query.get(pipeline_run_id)
     pipeline_scheduler = PipelineScheduler(pipeline_run)
     integration_pipeline = IntegrationPipeline.get(pipeline_scheduler.pipeline.uuid)
