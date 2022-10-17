@@ -14,14 +14,14 @@ if not db_connection_url:
 
 engine = create_engine(db_connection_url, pool_pre_ping=True)
 session_factory = sessionmaker(bind=engine)
-Session = scoped_session(session_factory)
 
 class DBConnection:
     def __init__(self):
         pass
 
     def start_session(self):
-        self.session = Session()
+        self.Session = scoped_session(session_factory)
+        self.session = self.Session()
 
     def close_session(self):
         self.session.remove()

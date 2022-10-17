@@ -411,8 +411,6 @@ def schedule_all():
     """
     repo_pipelines = set(Pipeline.get_all_pipelines(get_repo_path()))
 
-    print('scheduling...')
-
     active_pipeline_schedules = \
         list(filter(lambda s: s.pipeline_uuid in repo_pipelines, PipelineSchedule.active_schedules()))
 

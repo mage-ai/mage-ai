@@ -5,6 +5,7 @@ from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db import db_connection
 from mage_ai.shared.array import find
+from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by
 from mage_ai.shared.strings import camel_to_snake_case
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, JSON, String, Table
@@ -26,17 +27,18 @@ class classproperty(property):
 class BaseModel(Base):
     __abstract__ = True
 
+
     @declared_attr
     def __tablename__(cls):
         return camel_to_snake_case(cls.__name__)
 
     @classproperty
     def query(cls):
-        return db_connection.Session.query(cls)
+        return db_connection.session.query(cls)
     
-    @property
+    @classproperty
     def select(self):
-        return db_connection.Session.query
+        return db_connection.session.query
 
     @property
     def session(self):
@@ -177,11 +179,9 @@ class PipelineSchedule(BaseModel):
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
 
-        if self.start_time is not None:
-            now_dt = datetime.now().replace(tzinfo=pytz.UTC)
-            start_time_dt = self.start_time.replace(tzinfo=pytz.UTC)
-            if now_dt < start_time_dt:
-                return False
+        if self.start_time is not None \
+            and compare(datetime.now(), self.start_time) == -1:
+            return False
 
         try:
             Pipeline.get(self.pipeline_uuid)
@@ -198,7 +198,7 @@ class PipelineSchedule(BaseModel):
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
                 return False
-            if not find(lambda x: x.execution_date == current_execution_date, self.pipeline_runs):
+            if not find(lambda x: compare(x.execution_date, current_execution_date) == 0, self.pipeline_runs):
                 return True
         return False
 
@@ -224,6 +224,10 @@ class PipelineRun(BaseModel):
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
                f' execution_date={self.execution_date})'
+
+    # def execution_date(self, include_tz: bool = False) -> datetime:
+    #     tz_info = pytz.UTC if include_tz else None
+    #     return self.execution_date.replace(tz_info=tz_info)
 
     @property
     def block_runs_count(self) -> int:
