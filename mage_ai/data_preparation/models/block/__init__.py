@@ -457,6 +457,7 @@ class Block:
         store_variables: bool = True,
         verify_output: bool = True,
         input_from_output: Dict = None,
+        runtime_arguments: Dict = None,
     ) -> Dict:
         try:
             if not run_all_blocks:
@@ -477,6 +478,7 @@ class Block:
                 logger=logger,
                 test_execution=test_execution,
                 input_from_output=input_from_output,
+                runtime_arguments=runtime_arguments,
             )
             block_output = output['output']
             variable_mapping = dict()
@@ -633,6 +635,7 @@ class Block:
         global_vars: Dict = None,
         test_execution: bool = False,
         input_from_output: Dict = None,
+        runtime_arguments: Dict = None,
     ) -> Dict:
         upstream_block_uuids = []
         if input_args is None:
@@ -691,8 +694,8 @@ class Block:
                         self.pipeline.data_loader.file_path,
                         '--state',
                         self.pipeline.source_state_file_path,
-                        # '--query',
-                        # json.dumps(query),
+                        '--query',
+                        json.dumps(runtime_arguments or {}),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
                     outputs.append(proc1)
                 elif BlockType.DATA_EXPORTER == self.type:

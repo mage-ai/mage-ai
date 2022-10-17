@@ -30,6 +30,7 @@ class BlockExecutor:
         on_start: Callable[[str], None] = None,
         input_from_output: Dict = None,
         verify_output: bool = True,
+        runtime_arguments: Dict = None,
         **kwargs,
     ) -> Dict:
         result = dict()
@@ -47,6 +48,7 @@ class BlockExecutor:
                 update_status=update_status,
                 input_from_output=input_from_output,
                 verify_output=verify_output,
+                runtime_arguments=runtime_arguments,
                 **kwargs,
             )
         except Exception as e:
@@ -72,6 +74,7 @@ class BlockExecutor:
         update_status: bool = False,
         input_from_output: Dict = None,
         verify_output: bool = True,
+        runtime_arguments: Dict = None,
         **kwargs,
     ) -> Dict:
         result = self.block.execute_sync(
@@ -83,6 +86,7 @@ class BlockExecutor:
             update_status=update_status,
             input_from_output=input_from_output,
             verify_output=verify_output,
+            runtime_arguments=runtime_arguments,
         )
         self.block.run_tests(
             logger=self.logger,
