@@ -46,6 +46,3 @@ azure-storage-blob
 kafka-python
 opensearch-py
 requests_aws4auth
-
-# Mage integrations
-git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations\&subdirectory=mage_integrations
