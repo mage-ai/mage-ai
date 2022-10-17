@@ -145,7 +145,6 @@ class PipelineScheduler:
         return queued_block_runs
 
     def __get_block_variables(self) -> Dict:
-        print('wtf0', self.pipeline_run.variables)
         variables = merge_dict(
             merge_dict(
                 get_global_variables(self.pipeline.uuid) or dict(),
@@ -274,8 +273,6 @@ def run_integration_pipeline(
         start_date = None
         date_diff = None
 
-        print('wtf1', schedule_interval, variables)
-
         if PipelineSchedule.ScheduleInterval.ONCE == schedule_interval:
             end_date = variables.get('_end_date')
             start_date = variables.get('_start_date')
@@ -298,7 +295,6 @@ def run_integration_pipeline(
             _execution_partition=pipeline_run.execution_partition,
             _start_date=start_date,
         )
-        print('wtf2', runtime_arguments)
 
         for idx, block_run in enumerate([data_loader_block_run, data_exporter_block_run]):
             tags_updated = merge_dict(tags, dict(

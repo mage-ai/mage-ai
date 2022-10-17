@@ -10,14 +10,17 @@ from mage_integrations.destinations.constants import (
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
     KEY_VALUE,
-    TYPE_RECORD,
-    TYPE_SCHEMA,
-    TYPE_STATE,
 )
 from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
+from mage_integrations.utils.logger.constants import (
+    TYPE_LOG,
+    TYPE_RECORD,
+    TYPE_SCHEMA,
+    TYPE_STATE,
+)
 from os.path import isfile
 from typing import Dict, List
 import inspect
@@ -37,6 +40,7 @@ class Destination():
         batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
+        log_to_stdout: bool = False,
         logger = LOGGER,
         settings: Dict = None,
         settings_file_path: str = None,
@@ -44,12 +48,15 @@ class Destination():
     ):
         if argument_parser:
             argument_parser.add_argument('--config', type=str, default=None)
+            argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
             args = argument_parser.parse_args()
 
             if args.config:
                 config_file_path = args.config
+            if args.log_to_stdout:
+                log_to_stdout = args.log_to_stdout
             if args.settings:
                 settings_file_path = args.settings
             if args.state:
@@ -60,7 +67,7 @@ class Destination():
         self.bookmark_properties = None
         self.config_file_path = config_file_path
         self.key_properties = None
-        self.logger = Logger(caller=self, logger=logger)
+        self.logger = Logger(caller=self, log_to_stdout=log_to_stdout, logger=logger)
         self.batch_processing = batch_processing
         self.replication_methods = None
         self.schemas = None
@@ -119,7 +126,7 @@ class Destination():
     ) -> None:
         raise Exception('Subclasses must implement the export_data method.')
 
-    def export_batch_data(self, record_data: List[Dict]) -> None:
+    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         raise Exception('Subclasses must implement the export_batch_data method.')
 
     def process_record(
@@ -141,21 +148,14 @@ class Destination():
             tags=tags,
         )
 
-    def process_record_data(self, record_data: List[Dict]) -> None:
-        data = record_data[0]
-        stream = data['stream']
-        schema = data['schema']
-        tags = data['tags']
-
+    def process_record_data(self, record_data: List[Dict], stream: str) -> None:
         batch_data = [dict(
             record=self.__validate_and_prepare_record(**rd),
-            schema=schema,
             stream=stream,
-            tags=tags,
         ) for rd in record_data]
 
         if len(batch_data) >= 1:
-            self.export_batch_data(batch_data)
+            self.export_batch_data(batch_data, stream)
 
     def process_schema(
         self,
@@ -188,6 +188,14 @@ class Destination():
             raise Exception(message)
 
     def process(self, input_buffer) -> None:
+        try:
+            self.__process(input_buffer)
+        except Exception as err:
+            message = f'{self.__class__.__name__} process failed with error {err}.'
+            self.logger.exception(message, tags=dict(error=str(err)))
+            raise Exception(message)
+
+    def __process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.key_properties = {}
         self.replication_methods = {}
@@ -199,8 +207,8 @@ class Destination():
         batches_by_stream = {}
 
         text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')
-        for idx, line in enumerate(text_input):
-            tags = dict(index=idx)
+        for line in text_input:
+            tags = dict()
 
             try:
                 row = json.loads(line)
@@ -233,7 +241,9 @@ class Destination():
                     state_data=[],
                 )
 
-            if TYPE_SCHEMA == row_type:
+            if TYPE_LOG == row_type:
+                continue
+            elif TYPE_SCHEMA == row_type:
                 schema = row.get(KEY_SCHEMA)
                 tags.update(schema=schema)
                 self.process_schema(stream, schema, row, tags=tags)
@@ -264,7 +274,7 @@ class Destination():
         for stream, batches in batches_by_stream.items():
             record_data = batches['record_data']
             if len(record_data) >= 1:
-                self.process_record_data(record_data)
+                self.process_record_data(record_data, stream)
 
             states = batches['state_data']
             for state in states:

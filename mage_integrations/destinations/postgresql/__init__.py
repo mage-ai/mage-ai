@@ -24,11 +24,9 @@ class PostgreSQL(Destination):
             tags=tags,
         )])
 
-    def export_batch_data(self, record_data: List[Dict]) -> None:
-        data = record_data[0]
-        schema = data['schema']
-        stream = data['stream']
-        tags = data['tags']
+    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
+        schema = self.schemas[stream]
+        tags = dict(records=len(record_data), stream=stream)
 
         self.logger.info('Export data started', tags=tags)
 

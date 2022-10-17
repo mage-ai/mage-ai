@@ -2,6 +2,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from logging import Logger
+from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
@@ -690,6 +691,8 @@ class Block:
                     proc1 = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
+                        '--log_to_stdout',
+                        '1',
                         '--settings',
                         self.pipeline.data_loader.file_path,
                         '--state',
@@ -697,17 +700,25 @@ class Block:
                         '--query',
                         json.dumps(runtime_arguments or {}),
                     ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
-                    outputs.append(proc1)
+
+                    output = proc1.stdout.decode()
+                    print_logs_from_output(output)
+                    outputs.append(output)
                 elif BlockType.DATA_EXPORTER == self.type:
-                    proc1 = input_from_output['output'][0]
+                    input_from_previous = input_from_output['output'][0]
+
                     proc2 = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.destination_file_path,
+                        '--log_to_stdout',
+                        '1',
                         '--settings',
                         self.pipeline.data_exporter.file_path,
                         '--state',
                         self.pipeline.destination_state_file_path,
-                    ], input=proc1.stdout.decode(), text=True)
+                    ], input=input_from_previous, capture_output=True, text=True)
+
+                    print_logs_from_output(proc2.stdout)
                     outputs.append(proc2)
             elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
