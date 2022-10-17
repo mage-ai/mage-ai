@@ -314,7 +314,7 @@ function PipelineRunsTable({
                 pipelineRun={pipelineRun}
               />,
               <Text default key="row_item_8" monospace>
-                {executionDate}
+                {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
               </Text>,
               <NextLink
                 as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
