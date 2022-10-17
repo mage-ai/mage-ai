@@ -24,10 +24,6 @@ class ExecutorFactory:
             from mage_ai.data_preparation.executors.streaming_pipeline_executor \
                 import StreamingPipelineExecutor
             return StreamingPipelineExecutor(pipeline, execution_partition=execution_partition)
-        elif pipeline.type == PipelineType.INTEGRATION:
-            from mage_ai.data_preparation.executors.integration_pipeline_executor \
-                import IntegrationPipelineExecutor
-            return IntegrationPipelineExecutor(pipeline, execution_partition=execution_partition)
         else:
             return PipelineExecutor(pipeline)
 

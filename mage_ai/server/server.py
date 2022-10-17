@@ -30,6 +30,11 @@ from mage_ai.server.api.events import (
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
 )
+from mage_ai.server.api.integration_sources import (
+    ApiIntegrationDestinationsHandler,
+    ApiIntegrationSourceHandler,
+    ApiIntegrationSourcesHandler,
+)
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.monitor import ApiMonitorStatsHandler
 from mage_ai.server.api.orchestration import (
@@ -519,6 +524,9 @@ def make_app():
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
+        (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
+        (r'/api/integration_sources', ApiIntegrationSourcesHandler),
+        (r'/api/integration_sources/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceHandler),
         (r'/api/projects', ApiProjectsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
         (r'/api/status', ApiStatusHandler),

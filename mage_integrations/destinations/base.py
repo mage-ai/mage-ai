@@ -16,10 +16,14 @@ from mage_integrations.destinations.constants import (
 )
 from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
+from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
-from typing import Dict
+from os.path import isfile
+from typing import Dict, List
+import inspect
 import io
 import json
+import os
 import singer
 import sys
 import yaml
@@ -30,6 +34,7 @@ LOGGER = singer.get_logger()
 class Destination():
     def __init__(self,
         argument_parser = None,
+        batch_processing: bool = False,
         config: Dict = None,
         config_file_path: str = None,
         logger = LOGGER,
@@ -56,7 +61,7 @@ class Destination():
         self.config_file_path = config_file_path
         self.key_properties = None
         self.logger = Logger(caller=self, logger=logger)
-        self.records_count = None
+        self.batch_processing = batch_processing
         self.replication_methods = None
         self.schemas = None
         self.settings_file_path = settings_file_path
@@ -64,6 +69,21 @@ class Destination():
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
+
+    @classmethod
+    def templates(self) -> List[Dict]:
+        parts = inspect.getfile(self).split('/')
+        absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/templates")
+
+        templates = {}
+        for filename in os.listdir(absolute_path):
+            path = absolute_path + '/' + filename
+            if isfile(path):
+                file_raw = filename.replace('.json', '')
+                with open(path) as file:
+                    templates[file_raw] = json.load(file)
+
+        return templates
 
     @property
     def config(self) -> Dict:
@@ -94,44 +114,48 @@ class Destination():
         stream: str,
         schema: dict,
         record: dict,
-        records_count: int,
         tags: dict = {},
         **kwargs,
     ) -> None:
         raise Exception('Subclasses must implement the export_data method.')
+
+    def export_batch_data(self, record_data: List[Dict]) -> None:
+        raise Exception('Subclasses must implement the export_batch_data method.')
 
     def process_record(
         self,
         stream: str,
         schema: dict,
         row: dict,
-        index: int,
         tags: dict = {},
     ) -> None:
-        if not stream:
-            message = f'Required key {KEY_STREAM} is missing from row.'
-            self.logger.exception(message, tags=tags)
-            raise Exception(message)
-
-        if not schema:
-            message = f'A record for stream {stream} was encountered before a corresponding schema.'
-            self.logger.exception(message, tags=tags)
-            raise Exception(message)
-
-        record = row.get(KEY_RECORD)
-
-        self.validators[stream].validate(record)
-
-        record = flatten_record(record)
-
         self.export_data(
-            record=record,
-            records_count=self.records_count,
+            record=self.__validate_and_prepare_record(
+                stream=stream,
+                schema=schema,
+                row=row,
+                tags=tags,
+            ),
             schema=schema,
             stream=stream,
             tags=tags,
         )
-        self.records_count += 1
+
+    def process_record_data(self, record_data: List[Dict]) -> None:
+        data = record_data[0]
+        stream = data['stream']
+        schema = data['schema']
+        tags = data['tags']
+
+        batch_data = [dict(
+            record=self.__validate_and_prepare_record(**rd),
+            schema=schema,
+            stream=stream,
+            tags=tags,
+        ) for rd in record_data]
+
+        if len(batch_data) >= 1:
+            self.export_batch_data(batch_data)
 
     def process_schema(
         self,
@@ -166,19 +190,17 @@ class Destination():
     def process(self, input_buffer) -> None:
         self.bookmark_properties = {}
         self.key_properties = {}
-        self.records_count = 0
         self.replication_methods = {}
         self.schemas = {}
         self.unique_conflict_methods = {}
         self.unique_constraints = {}
         self.validators = {}
 
+        batches_by_stream = {}
+
         text_input = io.TextIOWrapper(input_buffer, encoding='utf-8')
         for idx, line in enumerate(text_input):
-            tags = dict(
-                index=idx,
-                line=line,
-            )
+            tags = dict(index=idx)
 
             try:
                 row = json.loads(line)
@@ -202,29 +224,51 @@ class Destination():
 
             stream = row.get(KEY_STREAM)
             schema = self.schemas.get(stream)
-            if schema:
-                tags.update(schema=schema)
             if stream:
                 tags.update(stream=stream)
+
+            if not batches_by_stream.get(stream):
+                batches_by_stream[stream] = dict(
+                    record_data=[],
+                    state_data=[],
+                )
 
             if TYPE_SCHEMA == row_type:
                 schema = row.get(KEY_SCHEMA)
                 tags.update(schema=schema)
                 self.process_schema(stream, schema, row, tags=tags)
             elif TYPE_RECORD == row_type:
-                self.process_record(
-                    index=idx,
+                record_data = dict(
                     row=row,
                     schema=schema,
                     stream=stream,
                     tags=tags,
                 )
+
+                if self.batch_processing:
+                    batches_by_stream[stream]['record_data'].append(record_data)
+                else:
+                    self.process_record(**record_data)
             elif TYPE_STATE == row_type:
-                self.process_state(row, tags=tags)
+                state_data = dict(row=row, tags=tags)
+
+                if self.batch_processing:
+                    batches_by_stream[stream]['state_data'].append(state_data)
+                else:
+                    self.process_state(**state_data)
             else:
                 message = f'Unknown message type {row_type} in message {row}.'
                 self.logger.exception(message, tags=tags)
                 raise Exception(message)
+
+        for stream, batches in batches_by_stream.items():
+            record_data = batches['record_data']
+            if len(record_data) >= 1:
+                self.process_record_data(record_data)
+
+            states = batches['state_data']
+            for state in states:
+                self.process_state(**state)
 
     def __emit_state(self, state):
         if state:
@@ -236,3 +280,26 @@ class Destination():
             else:
                 sys.stdout.write()
                 sys.stdout.flush()
+
+    def __validate_and_prepare_record(
+        self,
+        stream: str,
+        schema: dict,
+        row: dict,
+        tags: dict = {},
+    ) -> Dict:
+        if not stream:
+            message = f'Required key {KEY_STREAM} is missing from row.'
+            self.logger.exception(message, tags=tags)
+            raise Exception(message)
+
+        if not schema:
+            message = f'A record for stream {stream} was encountered before a corresponding schema.'
+            self.logger.exception(message, tags=tags)
+            raise Exception(message)
+
+        record = row.get(KEY_RECORD)
+
+        self.validators[stream].validate(record)
+
+        return flatten_record(record)

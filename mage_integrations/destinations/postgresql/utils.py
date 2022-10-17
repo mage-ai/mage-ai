@@ -8,7 +8,7 @@ from mage_integrations.destinations.constants import (
     UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import List
+from typing import Dict, List
 
 
 def column_type_mapping(schema) -> dict:
@@ -47,7 +47,7 @@ def convert_column_to_type(value, column_type):
 def build_create_table_command(
     schema_name: str,
     table_name: str,
-    schema: dict,
+    schema: Dict,
     unique_constraints: List[str] = None,
 ) -> str:
     mapping = column_type_mapping(schema)
@@ -57,7 +57,7 @@ def build_create_table_command(
     ]
 
     if unique_constraints:
-        index_name = '_'.join(unique_constraints)
+        index_name = f"{table_name}_{'_'.join(unique_constraints)}"
         columns_and_types.append(
             f"CONSTRAINT {index_name}_unique UNIQUE ({', '.join(unique_constraints)})",
         )
@@ -68,8 +68,8 @@ def build_create_table_command(
 def build_insert_command(
     schema_name: str,
     table_name: str,
-    schema: dict,
-    record: dict,
+    schema: Dict,
+    records: List[Dict],
     unique_conflict_method: str = None,
     unique_constraints: List[str] = None,
 ) -> str:
@@ -77,12 +77,12 @@ def build_insert_command(
     columns = schema['properties'].keys()
 
     values = []
-    for row in [record]:
+    for row in records:
         vals = []
         for column in columns:
             v = row.get(column, None)
             vals.append(convert_column_to_type(
-                v,
+                str(v).replace("'", "''"),
                 mapping[column]['type_converted'],
             ) if v is not None else 'NULL')
         values.append(f"({', '.join(vals)})")

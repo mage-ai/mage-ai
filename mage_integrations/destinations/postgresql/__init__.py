@@ -2,7 +2,8 @@ from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLCon
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
 from mage_integrations.destinations.postgresql.utils import build_create_table_command, build_insert_command
-from typing import List
+from mage_integrations.utils.array import batch
+from typing import Dict, List
 import argparse
 import sys
 
@@ -13,10 +14,22 @@ class PostgreSQL(Destination):
         stream: str,
         schema: dict,
         record: dict,
-        records_count: int,
         tags: dict = {},
         **kwargs,
     ) -> None:
+        self.export_batch_data([dict(
+            record=record,
+            schema=schema,
+            stream=stream,
+            tags=tags,
+        )])
+
+    def export_batch_data(self, record_data: List[Dict]) -> None:
+        data = record_data[0]
+        schema = data['schema']
+        stream = data['stream']
+        tags = data['tags']
+
         self.logger.info('Export data started', tags=tags)
 
         schema_name = self.config['schema']
@@ -29,34 +42,35 @@ class PostgreSQL(Destination):
         query_strings = [
             f'CREATE SCHEMA IF NOT EXISTS {schema_name}',
         ]
-        create_table_command = build_create_table_command(
-            schema_name,
-            table_name,
-            schema,
-            unique_constraints=unique_constraints,
-        )
 
         replication_method = self.replication_methods[stream]
-        if REPLICATION_METHOD_INCREMENTAL == replication_method:
+        if replication_method in [
+            REPLICATION_METHOD_FULL_TABLE,
+            REPLICATION_METHOD_INCREMENTAL,
+        ]:
             if not does_table_exist:
-                query_strings.append(create_table_command)
-        elif REPLICATION_METHOD_FULL_TABLE == replication_method:
-            if does_table_exist and records_count == 0:
-                query_strings.append(f'DROP TABLE {full_table_name}')
+                create_table_command = build_create_table_command(
+                    schema_name,
+                    table_name,
+                    schema,
+                    unique_constraints=unique_constraints,
+                )
                 query_strings.append(create_table_command)
         else:
             message = f'Replication method {replication_method} not supported.'
             self.logger.exception(message, tags=tags)
             raise Exception(message)
 
-        query_strings.append(build_insert_command(
-            schema_name,
-            table_name,
-            schema,
-            record,
-            unique_conflict_method=self.unique_conflict_methods.get(stream),
-            unique_constraints=unique_constraints,
-        ))
+
+        for sub_batch in batch(record_data, 1000):
+            query_strings.append(build_insert_command(
+                schema_name,
+                table_name,
+                schema,
+                [d['record'] for d in sub_batch],
+                unique_conflict_method=self.unique_conflict_methods.get(stream),
+                unique_constraints=unique_constraints,
+            ))
 
         connection = self.__build_connection()
         connection.execute(query_strings, commit=True)
@@ -84,7 +98,10 @@ class PostgreSQL(Destination):
 
 
 def main():
-    destination = PostgreSQL(argument_parser=argparse.ArgumentParser())
+    destination = PostgreSQL(
+        argument_parser=argparse.ArgumentParser(),
+        batch_processing=True,
+    )
     destination.process(sys.stdin.buffer)
 
 if __name__ == '__main__':

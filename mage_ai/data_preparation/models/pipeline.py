@@ -150,7 +150,7 @@ class Pipeline:
 
     @classmethod
     def get(self, uuid, repo_path: str = None):
-        return Pipeline(uuid, repo_path=repo_path)
+        return self(uuid, repo_path=repo_path)
 
     @classmethod
     def get_all_pipelines(self, repo_path):

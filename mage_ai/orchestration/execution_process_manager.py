@@ -23,16 +23,19 @@ class ExecutionProcessManager:
             self.block_processes[pipeline_run_id] = dict()
         self.block_processes[pipeline_run_id][block_run_id] = proc
 
-    def set_pipeline_process(
-        self,
-        pipeline_run_id: int,
-        proc: multiprocessing.Process,
-    ):
+    def terminate_pipeline_process(self, pipeline_run_id: int) -> None:
         if self.has_pipeline_process(
             pipeline_run_id in self.pipeline_processes
             and self.pipeline_processes[pipeline_run_id].is_alive()
         ):
             self.pipeline_processes[pipeline_run_id].terminate()
+
+    def set_pipeline_process(
+        self,
+        pipeline_run_id: int,
+        proc: multiprocessing.Process,
+    ):
+        self.terminate_pipeline_process(pipeline_run_id)
         self.pipeline_processes[pipeline_run_id] = proc
 
     def clean_up_processes(self):
