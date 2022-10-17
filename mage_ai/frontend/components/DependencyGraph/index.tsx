@@ -228,7 +228,10 @@ function DependencyGraph({
     let displayText = block.uuid;
 
     if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
-      let contentParsed = {};
+      let contentParsed: {
+        destination?: string;
+        source?: string;
+      } = {};
       if (BlockLanguageEnum.YAML === block.language) {
         contentParsed = parse(block.content);
       }
@@ -251,7 +254,7 @@ function DependencyGraph({
     const edgesInner = [];
 
     blocks.forEach((block: BlockType) => {
-      const displayText = displayTextForBlock(block, pipeline);
+      const displayText = displayTextForBlock(block);
 
       const {
         upstream_blocks: upstreamBlocks = [],
@@ -494,7 +497,7 @@ function DependencyGraph({
                       }
                       {...blockStatus}
                     >
-                      {displayTextForBlock(block, pipeline)}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
+                      {displayTextForBlock(block)}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
                     </GraphNode>
                   </foreignObject>
                 );

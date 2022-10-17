@@ -2,7 +2,11 @@ import { parse, stringify } from 'yaml';
 import { useCallback, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
-import BlockType, { BlockLanguageEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, {
+  BlockLanguageEnum,
+  BlockRequestPayloadType,
+  BlockTypeEnum,
+} from '@interfaces/BlockType';
 import Checkbox from '@oracle/elements/Checkbox';
 import Chip from '@oracle/components/Chip';
 import CodeEditor from '@components/CodeEditor';
@@ -46,6 +50,7 @@ type IntegrationPipelineProps = {
     name?: string,
   ) => Promise<any>;
   blocks: BlockType[];
+  codeBlocks?: any;
   fetchPipeline: () => void;
   onChangeCodeBlock: (uuid: string, value: string) => void;
   pipeline: PipelineType;
@@ -59,12 +64,12 @@ type IntegrationPipelineProps = {
 function IntegrationPipeline({
   addNewBlockAtIndex,
   blocks,
-  pipeline,
-  setSelectedBlock,
-  onChangeCodeBlock,
-  fetchPipeline,
   codeBlocks,
+  fetchPipeline,
+  onChangeCodeBlock,
+  pipeline,
   savePipelineContent,
+  setSelectedBlock,
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
@@ -497,7 +502,7 @@ function IntegrationPipeline({
                         <Flex flex={1}>
                           <FlexContainer
                             alignItems="center"
-                            flexWrap
+                            flexWrap="wrap"
                             fullWidth
                           >
                             {columnTypes.map((columnType: ColumnTypeEnum, idx: number) => (
@@ -659,7 +664,7 @@ function IntegrationPipeline({
                         </Text>
                       </Spacing>
 
-                      <FlexContainer alignItems="center" flexWrap>
+                      <FlexContainer alignItems="center" flexWrap="wrap">
                         {!bookmarkProperties?.length && (
                           <Text italic>
                             Click the checkbox under the column <Text bold inline italic>
@@ -704,7 +709,7 @@ function IntegrationPipeline({
                       </Text>
                     </Spacing>
 
-                    <FlexContainer alignItems="center" flexWrap>
+                    <FlexContainer alignItems="center" flexWrap="wrap">
                       {!uniqueConstraints?.length && (
                           <Text italic>
                             Click the checkbox under the column <Text bold inline italic>

@@ -60,7 +60,7 @@ export interface PropertyMetadataType {
   'schema-name'?: string;
   'table-key-properties'?: string[];
   'valid-replication-keys'?: string[];
-  inclusion: InclusionEnum;
+  inclusion?: InclusionEnum;
   selected: boolean;
 }
 

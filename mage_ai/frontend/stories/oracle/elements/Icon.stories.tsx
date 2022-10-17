@@ -23,7 +23,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Chevr  onUp,
+  ChevronUp,
   Close,
   Code,
   Column,

@@ -5,7 +5,6 @@ import { media } from 'styled-bootstrap-grid';
 
 type FlexContainerProps = {
   children: any | any[];
-  flexWrap?: boolean;
   fullHeight?: boolean;
   fullScreenHeight?: boolean;
   fullWidth?: boolean;
@@ -104,10 +103,6 @@ const FlexContainerStyle = styled.div<FlexContainerProps>`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  `}
-
-  ${props => props.flexWrap && `
-    flex-wrap: wrap;
   `}
 `;
 
