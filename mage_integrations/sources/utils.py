@@ -154,31 +154,47 @@ def parse_args(required_config_keys):
     '''
     parser = argparse.ArgumentParser()
 
+    # This can be included in the settings file or in the config_json
     parser.add_argument(
         '-c', '--config',
         help='Config file',
         required=False)
 
     parser.add_argument(
+        '--config_json',
+        help='JSON string containing config values.',
+    )
+
+    parser.add_argument(
         '-s', '--state',
-        help='State file')
+        help='State file',
+    )
 
     parser.add_argument(
         '-p', '--properties',
-        help='Property selections: DEPRECATED, Please use --catalog instead')
+        help='Property selections: DEPRECATED, Please use --catalog instead',
+    )
 
+    # This can be included in the settings file
     parser.add_argument(
         '--catalog',
-        help='Catalog file')
+        help='Catalog file',
+    )
 
     parser.add_argument(
         '-d', '--discover',
         action='store_true',
-        help='Do schema discovery')
+        help='Do schema discovery',
+    )
 
     parser.add_argument(
         '--query',
-        help='Query file containing query parameters for source’s load_data method.',
+        help='File containing query parameters for source’s load_data method.',
+    )
+
+    parser.add_argument(
+        '--query_json',
+        help='JSON string containing query parameters for source’s load_data method.',
     )
 
     parser.add_argument(
@@ -192,31 +208,45 @@ def parse_args(required_config_keys):
     )
 
     args = parser.parse_args()
-    if args.config:
-        setattr(args, 'config_path', args.config)
-        args.config = load_json(args.config)
+
     if args.state:
         setattr(args, 'state_path', args.state)
         args.state = load_json(args.state)
     else:
         args.state = {}
+
     if args.properties:
         setattr(args, 'properties_path', args.properties)
         args.properties = load_json(args.properties)
+
     if args.catalog:
         setattr(args, 'catalog_path', args.catalog)
         args.catalog = Catalog.load(args.catalog)
 
+    query = dict()
+    if args.query_json:
+        query.update(json.loads(args.query_json))
     if args.query:
-        args.query = json.loads(args.query)
+        query.update(json.loads(args.query))
+    args.query = query
+
+    config = dict()
 
     if args.settings:
         with open(args.settings) as f:
             args.settings = yaml.safe_load(f.read())
-            if args.settings.get('config'):
-                args.config = args.settings['config']
+            if args.settings.get('config') and not args.config:
+                config.update(args.settings['config'])
+
             if args.settings.get('catalog'):
                 args.catalog = Catalog.from_dict(args.settings['catalog'])
+
+    if args.config:
+        setattr(args, 'config_path', args.config)
+        config.update(load_json(args.config))
+    if args.config_json:
+        config.update(json.loads(args.config_json))
+    args.config = config
 
     check_config(args.config, required_config_keys)
 
