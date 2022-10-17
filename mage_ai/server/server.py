@@ -608,13 +608,12 @@ def start_server(
         init_repo(project)
     set_repo_path(project)
 
+    db_connection.start_session()
     if manage:
         os.environ[MANAGE_ENV_VAR] = '1'
     else:
         # Start a subprocess for scheduler
         scheduler_manager.start_scheduler()
-
-    db_connection.start_session()
 
     enable_pretty_logging()
 

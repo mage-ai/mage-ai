@@ -15,7 +15,6 @@ from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 from typing import Dict, List
 import enum
-import pytz
 
 
 Base = declarative_base()
@@ -27,7 +26,6 @@ class classproperty(property):
 class BaseModel(Base):
     __abstract__ = True
 
-
     @declared_attr
     def __tablename__(cls):
         return camel_to_snake_case(cls.__name__)
@@ -37,7 +35,7 @@ class BaseModel(Base):
         return db_connection.session.query(cls)
     
     @classproperty
-    def select(self):
+    def select(cls):
         return db_connection.session.query
 
     @property
@@ -179,8 +177,7 @@ class PipelineSchedule(BaseModel):
         if self.status != self.__class__.ScheduleStatus.ACTIVE:
             return False
 
-        if self.start_time is not None \
-            and compare(datetime.now(), self.start_time) == -1:
+        if self.start_time is not None and compare(datetime.now(), self.start_time) == -1:
             return False
 
         try:
@@ -224,10 +221,6 @@ class PipelineRun(BaseModel):
     def __repr__(self):
         return f'PipelineRun(id={self.id}, pipeline_uuid={self.pipeline_uuid},'\
                f' execution_date={self.execution_date})'
-
-    # def execution_date(self, include_tz: bool = False) -> datetime:
-    #     tz_info = pytz.UTC if include_tz else None
-    #     return self.execution_date.replace(tz_info=tz_info)
 
     @property
     def block_runs_count(self) -> int:

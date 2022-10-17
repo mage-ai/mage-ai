@@ -10,7 +10,7 @@ from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
-from mage_ai.orchestration.db.wtf import test
+from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -83,8 +83,6 @@ class PipelineScheduler:
             self.__schedule_pipeline()
 
     def on_block_complete(self, block_uuid: str) -> None:
-        print('in on block complete!')
-
         try:
             block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
             block_run.update(
@@ -181,13 +179,7 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-            # proc = multiprocessing.Process(target=run_block, args=(
-            #     self.pipeline_run.id,
-            #     b.id,
-            #     variables,
-            #     self.__build_tags(**tags),
-            # ))
-            proc = test(run_block, (
+            proc = create_process(run_block, (
                 self.pipeline_run.id,
                 b.id,
                 self.__get_variables(),
@@ -206,7 +198,7 @@ class PipelineScheduler:
                 **self.__build_tags(),
             )
 
-            proc = multiprocessing.Process(target=run_integration_pipeline, args=(
+            proc = create_process(target=run_integration_pipeline, args=(
                 self.pipeline_run.id,
                 [b.id for b in self.executable_block_runs],
                 self.__get_variables(dict(
@@ -233,13 +225,7 @@ class PipelineScheduler:
         )
         variables['env'] = ENV_PROD
         variables['execution_date'] = self.pipeline_run.execution_date
-        # proc = multiprocessing.Process(target=run_pipeline, args=(
-        #     self.pipeline_run.id,
-        #     variables,
-        #     self.__build_tags(),
-        # ))
-
-        proc = test(run_pipeline, (
+        proc = create_process(run_pipeline, (
             self.pipeline_run.id,
             self.__get_variables(),
             self.__build_tags(),

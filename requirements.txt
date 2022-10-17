@@ -26,7 +26,6 @@ tornado==6.1
 
 
 # extras
-asyncpg==0.26.0
 botocore==1.27.19
 boto3==1.24.19
 db-dtypes==1.0.2

@@ -20,8 +20,7 @@ class DBConnection:
         pass
 
     def start_session(self):
-        self.Session = scoped_session(session_factory)
-        self.session = self.Session()
+        self.session = scoped_session(session_factory)
 
     def close_session(self):
         self.session.remove()
