@@ -142,7 +142,7 @@ class PipelineScheduler:
 
         return queued_block_runs
 
-    def __get_block_variables(self) -> Dict:
+    def __get_variables(self, extra_variables: Dict = {}) -> Dict:
         variables = merge_dict(
             merge_dict(
                 get_global_variables(self.pipeline.uuid) or dict(),
@@ -152,6 +152,8 @@ class PipelineScheduler:
         )
         variables['env'] = ENV_PROD
         variables['execution_date'] = self.pipeline_run.execution_date
+        variables['execution_partition'] = self.pipeline_run.execution_partition
+        variables.update(extra_variables)
 
         return variables
 
@@ -176,7 +178,7 @@ class PipelineScheduler:
             proc = multiprocessing.Process(target=run_block, args=(
                 self.pipeline_run.id,
                 b.id,
-                self.__get_block_variables(),
+                self.__get_variables(),
                 self.__build_tags(**tags),
             ))
             execution_process_manager.set_block_process(self.pipeline_run.id, b.id, proc)
@@ -195,7 +197,9 @@ class PipelineScheduler:
             proc = multiprocessing.Process(target=run_integration_pipeline, args=(
                 self.pipeline_run.id,
                 [b.id for b in self.executable_block_runs],
-                self.__get_block_variables(),
+                self.__get_variables(dict(
+                    pipeline_uuid=self.pipeline.uuid,
+                )),
                 self.__build_tags(),
             ))
             execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
@@ -208,18 +212,10 @@ class PipelineScheduler:
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.__build_tags(),
         )
-        variables = merge_dict(
-            merge_dict(
-                get_global_variables(self.pipeline.uuid) or dict(),
-                self.pipeline_run.pipeline_schedule.variables or dict(),
-            ),
-            self.pipeline_run.variables or dict(),
-        )
-        variables['env'] = ENV_PROD
-        variables['execution_date'] = self.pipeline_run.execution_date
+
         proc = multiprocessing.Process(target=run_pipeline, args=(
             self.pipeline_run.id,
-            variables,
+            self.__get_variables(),
             self.__build_tags(),
         ))
         execution_process_manager.set_pipeline_process(self.pipeline_run.id, proc)
@@ -260,6 +256,8 @@ def run_integration_pipeline(
 
     outputs = []
     if data_loader_block_run and data_exporter_block_run:
+        from mage_integrations.sources.utils import update_source_state_from_destination_state
+
         update_source_state_from_destination_state(
             integration_pipeline.source_state_file_path,
             integration_pipeline.destination_state_file_path,

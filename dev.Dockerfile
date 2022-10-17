@@ -14,6 +14,7 @@ RUN apt install nodejs
 COPY requirements.txt requirements.txt
 RUN ${PIP} install -r requirements.txt
 RUN ${PIP} install jupyterlab
+RUN ${PIP} install "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"
 
 COPY ./mage_ai /home/src/mage_ai
 
