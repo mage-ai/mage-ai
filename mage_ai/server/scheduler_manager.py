@@ -17,6 +17,7 @@ def run_scheduler():
         except Exception:
             traceback.print_exc()
             time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL)
+            print('Restarting pipeline scheduler.')
 
 
 class SchedulerManager:
