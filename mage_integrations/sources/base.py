@@ -30,6 +30,7 @@ class Source():
         config: Dict = None,
         discover_mode: bool = False,
         is_sorted: bool = True,
+        log_to_stdout: bool = False,
         logger = LOGGER,
         query: Dict = {},
         schemas_folder: str = 'schemas',
@@ -45,6 +46,8 @@ class Source():
                 config = args.config
             if args.discover:
                 discover_mode = args.discover
+            if args.log_to_stdout:
+                log_to_stdout = args.log_to_stdout
             if args.query:
                 query = args.query
             if args.state:
@@ -55,7 +58,12 @@ class Source():
         self.discover_mode = discover_mode
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
-        self.logger = Logger(caller=self, logger=logger, verbose=verbose)
+        self.logger = Logger(
+            caller=self,
+            log_to_stdout=log_to_stdout,
+            logger=logger,
+            verbose=verbose,
+        )
         self.schemas_folder = schemas_folder
         self.settings = settings
         self.state = state

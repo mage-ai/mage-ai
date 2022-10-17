@@ -1,13 +1,27 @@
 from datetime import datetime
-from mage_integrations.utils.logger.constants import LOG_LEVEL_ERROR, LOG_LEVEL_EXCEPTION, LOG_LEVEL_INFO
+from mage_integrations.utils.logger.constants import (
+    LOG_LEVEL_ERROR,
+    LOG_LEVEL_EXCEPTION,
+    LOG_LEVEL_INFO,
+    TYPE_LOG,
+)
 from mage_integrations.utils.parsers import encode_complex
+from typing import Any
 import simplejson
+import sys
 import uuid
 
 
 class Logger():
-    def __init__(self, caller=None, logger=None, verbose: int = 1):
+    def __init__(
+        self,
+        caller: Any = None,
+        log_to_stdout: bool = False,
+        logger: Any = None,
+        verbose: int = 1,
+    ):
         self.caller = caller
+        self.log_to_stdout = log_to_stdout
         self.logger = logger
         self.verbose = verbose
 
@@ -45,8 +59,18 @@ class Logger():
             uuid=uuid.uuid4().hex,
         )
         data.update(kwargs)
+        data.update(type=TYPE_LOG)
 
-        if self.logger:
+        json_string = simplejson.dumps(
+            data,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+
+        if self.log_to_stdout:
+            sys.stdout.write(f'{json_string}\n')
+            sys.stdout.flush()
+        elif self.logger:
             # log
             # warn
             method = None
@@ -57,15 +81,6 @@ class Logger():
             elif LOG_LEVEL_INFO == level:
                 method = 'info'
 
-            json_string = simplejson.dumps(
-                data,
-                default=encode_complex,
-                ignore_nan=True,
-            )
             getattr(self.logger, method)(f'[{now.isoformat()}] {json_string}')
         else:
-            print(simplejson.dumps(
-                data,
-                default=encode_complex,
-                ignore_nan=True,
-            ))
+            print(json_string)
