@@ -113,7 +113,7 @@ Open [http://localhost:6789](http://localhost:6789) in your browser and build a 
 
 ## Live demo
 
-Try a hosted version of the tool here: [http://demo.mage.ai](http://demo.mage.ai/).
+Try a hosted version of the tool here: [https://demo.mage.ai/](https://demo.mage.ai/).
 
 > WARNING
 >
