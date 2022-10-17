@@ -48,6 +48,7 @@ class Destination():
     ):
         if argument_parser:
             argument_parser.add_argument('--config', type=str, default=None)
+            argument_parser.add_argument('--config_json', type=str, default=None)
             argument_parser.add_argument('--log_to_stdout', type=bool, default=False)
             argument_parser.add_argument('--settings', type=str, default=None)
             argument_parser.add_argument('--state', type=str, default=None)
@@ -55,6 +56,8 @@ class Destination():
 
             if args.config:
                 config_file_path = args.config
+            if args.config_json:
+                config = json.loads(args.config_json)
             if args.log_to_stdout:
                 log_to_stdout = args.log_to_stdout
             if args.settings:
@@ -180,7 +183,6 @@ class Destination():
     def process_state(self, row: dict, tags: dict = {}) -> None:
         state = row.get(KEY_VALUE)
         if state:
-            self.logger.info(f'Setting state to {state}.', tags=tags)
             self.__emit_state(state)
         else:
             message = f'A state message is missing a state value.'
