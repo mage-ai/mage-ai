@@ -57,12 +57,12 @@ class ApiIntegrationSourceHandler(BaseHandler):
     def put(self, pipeline_uuid):
         payload = self.get_payload()
         pipeline = IntegrationPipeline.get(pipeline_uuid)
-        catalog = pipeline.discover(
-            streams=payload.get('integration_source', {}).get('streams'),
-        ) or {}
+        selected_streams = payload.get('integration_source', {}).get('streams')
+        catalog = pipeline.discover(streams=selected_streams) or {}
 
         self.write(dict(
             integration_source=merge_dict(catalog, dict(
+                selected_streams=selected_streams,
                 uuid=pipeline.source_uuid,
             )),
         ))

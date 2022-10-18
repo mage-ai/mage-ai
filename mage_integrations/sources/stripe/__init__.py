@@ -1127,7 +1127,10 @@ def get_date_window_size(param, default_value):
 
 class Stripe(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
-        return Catalog(discover()['streams'])
+        return Catalog(list(filter(
+            lambda x: not streams or x['tap_stream_id'] in streams,
+            discover()['streams'],
+        )))
 
     def sync(self, catalog: Catalog) -> None:
         for catalog_entry in Context.catalog['streams']:

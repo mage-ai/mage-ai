@@ -194,7 +194,13 @@ function IntegrationPipeline({
           callback: ({
             integration_source: integrationSource,
           }) => {
-            const { streams } = integrationSource;
+            const {
+              selected_streams: selectedStreamIDs,
+              streams: streamsInit,
+            } = integrationSource;
+            const streams = streamsInit.filter(({
+              tap_stream_id: streamID,
+            }) => selectedStreamIDs.includes(streamID));
             const catalogData = {
               streams,
             };
