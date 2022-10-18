@@ -85,7 +85,8 @@ def build_state(raw_state, catalog):
             state = singer.write_bookmark(state, tap_stream_id, 'JobHighestBookmarkSeen', current_bookmark)
 
         if replication_method == 'INCREMENTAL':
-            replication_key = catalog_metadata.get((), {}).get('replication-key')
+            bookmark_properties = catalog_entry.get('bookmark_properties')
+            replication_key = bookmark_properties[0] if len(bookmark_properties) else None
             replication_key_value = singer.get_bookmark(raw_state,
                                                         tap_stream_id,
                                                         replication_key)
@@ -307,7 +308,8 @@ def do_sync(sf, catalog, state):
             stream=(stream_alias or stream), version=stream_version)
 
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])
-        replication_key = catalog_metadata.get((), {}).get('replication-key')
+        bookmark_properties = catalog_entry.get('bookmark_properties')
+        replication_key = bookmark_properties[0] if len(bookmark_properties) else None
 
         mdata = metadata.to_map(catalog_entry['metadata'])
 
@@ -329,7 +331,6 @@ def do_sync(sf, catalog, state):
         singer.write_state(state)
         key_properties = metadata.to_map(catalog_entry['metadata']).get((), {}).get('table-key-properties')
 
-        bookmark_properties = catalog_entry.get('bookmark_properties')
         replication_method = catalog_entry.get('replication_method')
         schema = catalog_entry.get('schema')
         unique_conflict_method = catalog_entry.get('unique_conflict_method')
