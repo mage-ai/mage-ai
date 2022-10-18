@@ -66,7 +66,7 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const { data: dataLogs } = api.logs.pipelines.list(
+  const { data: dataLogs, mutate: fetchLogs } = api.logs.pipelines.list(
     query ? pipelineUUID : null,
     ignoreKeys(query, [LOG_UUID_PARAM]),
     {},
@@ -196,6 +196,17 @@ function BlockRuns({
           {!isLoading && (
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
+              <Spacing py={PADDING_UNITS}>
+                <KeyboardShortcutButton
+                  blackBorder
+                  inline
+                  onClick={fetchLogs}
+                  sameColorAsText
+                  uuid="logs/load_newest"
+                >
+                  Load latest logs
+                </KeyboardShortcutButton>
+              </Spacing>
             </>
           )}
           {isLoading && 'Searching...'}
