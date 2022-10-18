@@ -10,6 +10,7 @@ variable "AWS_SECRET_ACCESS_KEY" {
 
 variable "DATABASE_CONNECTION_URL" {
   type    = string
+  default = ""
 }
 
 variable "app_count" {

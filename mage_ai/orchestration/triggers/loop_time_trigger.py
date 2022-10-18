@@ -1,4 +1,3 @@
-from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.triggers.time_trigger import TimeTrigger
 import time
 

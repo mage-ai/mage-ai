@@ -8,7 +8,6 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.pipelines.integration_pipeline import IntegrationPipeline
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
-from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
@@ -18,7 +17,6 @@ from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
 from typing import Any, Dict, List
-import multiprocessing
 import traceback
 
 
@@ -216,15 +214,6 @@ class PipelineScheduler:
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.__build_tags(),
         )
-        variables = merge_dict(
-            merge_dict(
-                get_global_variables(self.pipeline.uuid) or dict(),
-                self.pipeline_run.pipeline_schedule.variables or dict(),
-            ),
-            self.pipeline_run.variables or dict(),
-        )
-        variables['env'] = ENV_PROD
-        variables['execution_date'] = self.pipeline_run.execution_date
         proc = create_process(run_pipeline, (
             self.pipeline_run.id,
             self.__get_variables(),

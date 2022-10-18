@@ -195,7 +195,10 @@ class PipelineSchedule(BaseModel):
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
                 return False
-            if not find(lambda x: compare(x.execution_date, current_execution_date) == 0, self.pipeline_runs):
+            if not find(
+                lambda x: compare(x.execution_date, current_execution_date) == 0,
+                self.pipeline_runs
+            ):
                 return True
         return False
 

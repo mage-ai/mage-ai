@@ -1,12 +1,11 @@
 from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
+from mage_ai.orchestration.db.process import create_process
 import multiprocessing
 import time
 import traceback
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 10
-
-from mage_ai.orchestration.db.process import create_process
 
 
 def run_scheduler():
