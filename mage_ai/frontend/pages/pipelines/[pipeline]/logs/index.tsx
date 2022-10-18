@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react';
 
-import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
@@ -16,7 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
-import LogType, { LogDataType, LogLevelEnum } from '@interfaces/LogType';
+import LogType from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -31,7 +30,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
-import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
+import { ignoreKeys, isEqual } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
