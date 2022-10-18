@@ -91,7 +91,7 @@ function BlockRuns({
     return {
       blockRunLogs: [],
       pipelineRunLogs: [],
-    }
+    };
   }, [
     dataLogs,
   ]);
@@ -101,6 +101,7 @@ function BlockRuns({
         .concat(pipelineRunLogs)
         .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
       ({ data }) => data?.timestamp || 0,
+      { ascending: false },
     );
   }, [
     blockRunLogs,
@@ -150,7 +151,7 @@ function BlockRuns({
   useEffect(() => {
     const logUUID = q[LOG_UUID_PARAM];
     if (logUUID && !selectedLog && !selectedLogPrev) {
-      setSelectedLog(logsAll.find(({ data }) => data?.uuid === logUUID))
+      setSelectedLog(logsAll.find(({ data }) => data?.uuid === logUUID));
     }
   }, [
     logsAll,
@@ -323,7 +324,7 @@ function BlockRuns({
             sameColorAsText
             uuid="logs/load_more"
           >
-            Load more logs
+            Load older logs
           </KeyboardShortcutButton>
         </Spacing>
       )}
