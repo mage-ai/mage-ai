@@ -276,14 +276,22 @@ class Salesforce():
                                                                        self.quota_percent_per_run)
             raise TapSalesforceQuotaExceededException(partial_message)
 
-    # pylint: disable=too-many-arguments
-    @backoff.on_exception(backoff.expo,
-                          (requests.exceptions.ConnectionError, requests.exceptions.Timeout),
-                          max_tries=10,
-                          factor=2,
-                          on_backoff=log_backoff_attempt)
     def _make_request_with_backoff(self, http_method, url, headers=None, body=None, stream=False, params=None):
-        return self._make_request(http_method, url, headers=None, body=None, stream=False, params=None)
+        # pylint: disable=too-many-arguments
+        return backoff.on_exception(
+            backoff.expo,
+            (requests.exceptions.ConnectionError, requests.exceptions.Timeout),
+            max_tries=10,
+            factor=2,
+            on_backoff=log_backoff_attempt,
+        )(self._make_request)(
+            http_method,
+            url,
+            headers=headers,
+            body=body,
+            stream=stream,
+            params=params,
+        )
 
     def _make_request(self, http_method, url, headers=None, body=None, stream=False, params=None):
         request_timeout = 5 * 60 # 5 minute request timeout
