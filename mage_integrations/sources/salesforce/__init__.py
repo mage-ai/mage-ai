@@ -1,13 +1,13 @@
 from datetime import datetime
 from mage_integrations.sources.base import Source
 from mage_integrations.sources.catalog import Catalog
-from mage_integrations.sources.salesforce.lib.tap_salesforce import (
+from mage_integrations.sources.salesforce.client.tap_salesforce import (
     build_state,
     discover_objects,
     do_discover,
     do_sync,
 )
-from mage_integrations.sources.salesforce.lib.tap_salesforce.salesforce import (
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce import (
     Salesforce as SalesforceConnection,
 )
 from singer import utils
