@@ -1,0 +1,504 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "invoice": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "discounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "discount_amounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "amount": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "discount": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "tax_amounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "amount": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "inclusive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "tax_rate": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "subscription_item": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "metadata": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "object": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "discountable": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "quantity": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "amount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "livemode": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "proration": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "proration_details": {
+      "type": [
+        "null",
+        "object"
+      ]
+    },
+    "period": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "start": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "end": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        }
+      }
+    },
+    "tax_rates": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "object": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "active": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "country": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "created": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "inclusive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "jurisdiction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "livemode": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "percentage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "singer.decimal"
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tax_type": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {}
+          }
+        }
+      }
+    },
+    "price": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "object": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "active": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "billing_scheme": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "created": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "currency": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "lookup_key": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "nickname": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "product": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "recurring": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "aggregate_usage": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "interval": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "interval_count": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "usage_type": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        },
+        "tax_behavior": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "tiers": {
+          "type": [
+            "null",
+            "array"
+          ],
+          "items": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "flat_amount": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "flat_amount_decimal": {
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "format": "singer.decimal"
+              },
+              "unit_amount": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "unit_amount_decimal": {
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "format": "singer.decimal"
+              },
+              "up_to": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              }
+            }
+          }
+        },
+        "tiers_mode": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "transform_quantity": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "divide_by": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "round": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        },
+        "type": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "unit_amount": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "unit_amount_decimal": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "singer.decimal"
+        },
+        "livemode": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "metadata": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {}
+        }
+      }
+    },
+    "subscription": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "plan": {"$ref": "shared/plan.json#/"},
+    "invoice_item": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "currency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

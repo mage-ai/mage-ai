@@ -1290,6 +1290,7 @@ function PipelineDetailPage({
       selectedBlock={selectedBlock}
       setAnyInputFocused={setAnyInputFocused}
       setEditingBlock={setEditingBlock}
+      setErrors={setErrors}
       setMessages={setMessages}
       setOutputBlocks={setOutputBlocks}
       setPipelineContentTouched={setPipelineContentTouched}
@@ -1329,6 +1330,7 @@ function PipelineDetailPage({
     selectedBlock,
     setAnyInputFocused,
     setEditingBlock,
+    setErrors,
     setMessages,
     setPipelineContentTouched,
     setRunningBlocks,

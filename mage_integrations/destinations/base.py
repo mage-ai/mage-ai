@@ -29,6 +29,7 @@ import json
 import os
 import singer
 import sys
+import traceback
 import yaml
 
 LOGGER = singer.get_logger()
@@ -194,7 +195,11 @@ class Destination():
             self.__process(input_buffer)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
-            self.logger.exception(message, tags=dict(error=str(err)))
+            self.logger.exception(message, tags=dict(
+                error=str(err),
+                errors=traceback.format_stack(),
+                message=traceback.format_exc(),
+            ))
             raise Exception(message)
 
     def __process(self, input_buffer) -> None:

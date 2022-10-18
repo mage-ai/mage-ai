@@ -41,7 +41,7 @@ class ApiIntegrationSourcesHandler(BaseHandler):
 
 
 class ApiIntegrationSourceHandler(BaseHandler):
-    def get(self, pipeline_uuid):
+    def put(self, pipeline_uuid):
         pipeline = IntegrationPipeline.get(pipeline_uuid)
         catalog = pipeline.discover() or {}
 

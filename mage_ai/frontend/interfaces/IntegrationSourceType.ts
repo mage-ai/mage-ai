@@ -13,6 +13,7 @@ export enum ColumnFormatEnum {
 }
 
 export enum ColumnTypeEnum {
+  ARRAY = 'array',
   BOOLEAN = 'boolean',
   INTEGER = 'integer',
   NULL = 'null',
@@ -24,6 +25,7 @@ export enum ColumnTypeEnum {
 export const COLUMN_TYPE_CUSTOM_DATE_TIME = 'datetime';
 
 export const COLUMN_TYPES = [
+  ColumnTypeEnum.ARRAY,
   ColumnTypeEnum.BOOLEAN,
   COLUMN_TYPE_CUSTOM_DATE_TIME,
   ColumnTypeEnum.INTEGER,

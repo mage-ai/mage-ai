@@ -1,0 +1,494 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "metadata": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "canceled_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "updated_by_event_type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "schedule": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "next_pending_invoice_item_invoice": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "cancel_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "invoice_customer_balance_settings": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "consume_applied_balance_on_void": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      }
+    },
+    "pending_invoice_item_interval": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "interval": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "interval_count": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        }
+      }
+    },
+    "pause_collection": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "behavior": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "resumes_at": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        }
+      }
+    },
+    "transfer_data": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "amount_percent": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "singer.decimal"
+        },
+        "destination": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "latest_invoice": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "billing_thresholds": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "amount_gte": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "reset_billing_cycle_anchor": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      }
+    },
+    "pending_setup_intent": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "start_date": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "collection_method": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "default_source": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "default_payment_method": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "livemode": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "start": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "items": {
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      },
+      "type": [
+        "null",
+        "array"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "trial_start": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "application_fee_percent": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "billing_cycle_anchor": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "cancel_at_period_end": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "tax_percent": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "discount": {
+      "$ref": "shared/discount.json#/"
+    },
+    "current_period_end": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "plan": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "metadata": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {}
+        },
+        "product": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "statement_description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "currency": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "livemode": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "tiers_mode": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "active": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "tiers": {
+          "type": [
+            "null",
+            "array"
+          ],
+          "items": {
+            "type": [
+              "null",
+              "integer",
+              "object"
+            ],
+            "properties": {
+              "flat_amount": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "unit_amount": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              },
+              "up_to": {
+                "type": [
+                  "null",
+                  "integer"
+                ]
+              }
+            }
+          }
+        },
+        "created": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "nickname": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "transform_usage": {
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "interval_count": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "amount": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "interval": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "aggregate_usage": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "trial_period_days": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "billing_scheme": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "statement_descriptor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "usage_type": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "object": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "billing": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "quantity": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "days_until_due": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "status": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "created": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "customer": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "current_period_start": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "trial_end": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "object": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "updated": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    }
+  }
+}
