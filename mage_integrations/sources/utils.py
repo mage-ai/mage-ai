@@ -188,12 +188,23 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--discover_streams',
+        action='store_true',
+        help='Do schema discovery but only return the schema names.',
+    )
+
+    parser.add_argument(
         '--query',
         help='File containing query parameters for source’s load_data method.',
     )
 
     parser.add_argument(
         '--query_json',
+        help='JSON string containing query parameters for source’s load_data method.',
+    )
+
+    parser.add_argument(
+        '--selected_streams_json',
         help='JSON string containing query parameters for source’s load_data method.',
     )
 
@@ -230,8 +241,11 @@ def parse_args(required_config_keys):
         query.update(json.loads(args.query))
     args.query = query
 
-    config = dict()
+    args.selected_streams = []
+    if args.selected_streams_json:
+        args.selected_streams = json.loads(args.selected_streams_json)
 
+    config = dict()
     if args.settings:
         with open(args.settings) as f:
             args.settings = yaml.safe_load(f.read())

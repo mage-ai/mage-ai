@@ -61,3 +61,13 @@ class Catalog(CatalogParent):
             entry.unique_constraints = stream.get('unique_constraints')
             streams.append(entry)
         return Catalog(streams)
+
+    def to_dict(self):
+        arr = []
+        for stream in self.streams:
+            if type(stream) is dict:
+                arr.append(stream)
+            else:
+                arr.append(stream.to_dict())
+
+        return dict(streams=arr)

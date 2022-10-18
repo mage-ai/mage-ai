@@ -33,8 +33,15 @@ def column_type_mapping(schema) -> dict:
     mapping = {}
     for column, column_settings in schema['properties'].items():
         arr = column_settings.get('type', [])
+
+        if type(arr) is not list:
+            arr = [arr]
+
         for any_of in column_settings.get('anyOf', []):
-            arr += any_of.get('type', [])
+            arr2 = any_of.get('type', [])
+            if type(arr2) is not list:
+                arr2 = [arr2]
+            arr += arr2
 
         column_types = [t for t in arr if 'null' != t]
 

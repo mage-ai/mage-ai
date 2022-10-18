@@ -4,13 +4,13 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
 )
+from mage_integrations.sources.messages import write_schema
+from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-from mage_integrations.sources.messages import write_schema
-from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from os.path import isfile
 from singer.schema import Schema
 from typing import Dict, List
@@ -19,6 +19,7 @@ import inspect
 import json
 import os
 import singer
+import sys
 import traceback
 
 LOGGER = singer.get_logger()
@@ -30,11 +31,13 @@ class Source():
         catalog: Catalog = None,
         config: Dict = None,
         discover_mode: bool = False,
+        discover_streams_mode: bool = False,
         is_sorted: bool = True,
         log_to_stdout: bool = False,
         logger = LOGGER,
         query: Dict = {},
         schemas_folder: str = 'schemas',
+        selected_streams: List[str] = None,
         settings: Dict = None,
         state: Dict = None,
         verbose: int = 1,
@@ -47,16 +50,21 @@ class Source():
                 config = args.config
             if args.discover:
                 discover_mode = args.discover
+            if args.discover_streams:
+                discover_streams_mode = args.discover_streams
             if args.log_to_stdout:
                 log_to_stdout = args.log_to_stdout
             if args.query:
                 query = args.query
+            if args.selected_streams:
+                selected_streams = args.selected_streams
             if args.state:
                 state = args.state
 
         self.catalog = catalog
         self.config = config
         self.discover_mode = discover_mode
+        self.discover_streams_mode = discover_streams_mode
         # TODO (tommy dang): indicate whether data is sorted ascending on bookmark value
         self.is_sorted = is_sorted
         self.logger = Logger(
@@ -66,6 +74,7 @@ class Source():
             verbose=verbose,
         )
         self.schemas_folder = schemas_folder
+        self.selected_streams = selected_streams
         self.settings = settings
         self.state = state
 
@@ -89,24 +98,50 @@ class Source():
 
         return templates
 
-    def discover(self) -> Catalog:
+    def discover(self, streams: List[str] = None) -> Catalog:
         streams = []
 
-        for stream_id, schema in self.__load_schemas().items():
-            streams.append(self.build_catalog_entry(stream_id, schema))
+        for stream_id, schema in self.load_schemas_from_folder().items():
+            if not streams or stream_id in streams:
+                streams.append(self.build_catalog_entry(stream_id, schema))
 
         return Catalog(streams)
+
+    def discover_streams(self) -> List[Dict]:
+        return [dict(
+            stream=stream_id,
+            tap_stream_id=stream_id,
+        ) for stream_id in self.get_stream_ids()]
+
+    def get_stream_ids(self) -> List[str]:
+        # If you want to display available stream IDs before getting the stream properties,
+        # override this method to return a list of stream IDs
+        catalog = self.discover()
+
+        stream_ids = []
+        for stream in catalog.streams:
+            if type(stream) is CatalogEntry:
+                stream_ids.append(stream.tap_stream_id)
+            elif type(stream) is dict:
+                stream_ids.append(stream['tap_stream_id'])
+            else:
+                raise Exception(f'Invalid stream class type of {stream.__class__.__name__}.')
+
+        return stream_ids
 
     def process(self) -> None:
         try:
             if self.discover_mode:
-                catalog = self.discover()
-                if type(catalog) is Catalog:
-                    catalog.dump()
-                elif type(catalog) is dict:
-                    print(json.dumps(catalog, indent=2))
+                if self.discover_streams_mode:
+                    json.dump(self.discover_streams(), sys.stdout, indent=2)
+                else:
+                    catalog = self.discover(streams=self.selected_streams)
+                    if type(catalog) is Catalog:
+                        catalog.dump()
+                    elif type(catalog) is dict:
+                        json.dump(catalog, sys.stdout, indent=2)
             else:
-                catalog = self.catalog or self.discover()
+                catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
@@ -256,7 +291,7 @@ class Source():
         raise Exception('Subclasses must implement the get_valid_replication_keys method.')
         return []
 
-    def __load_schemas(self) -> dict:
+    def load_schemas_from_folder(self) -> dict:
         parts = inspect.getfile(self.__class__).split('/')
         absolute_path = get_abs_path(f"{'/'.join(parts[:len(parts) - 1])}/{self.schemas_folder}")
 

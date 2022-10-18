@@ -1,0 +1,10 @@
+{
+  "api_type": "BULK",
+  "client_id": "",
+  "client_secret": "",
+  "is_sandbox": false,
+  "lookback_window": 10,
+  "refresh_token": "",
+  "select_fields_by_default": true,
+  "start_date": ""
+}

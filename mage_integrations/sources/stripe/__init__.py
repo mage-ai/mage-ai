@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from mage_integrations.sources.base import Source
-from mage_integrations.sources.catalog import Catalog, CatalogEntry
+from mage_integrations.sources.catalog import Catalog
 from singer import metadata
 from singer import utils, Transformer, metrics
 from stripe.api_requestor import APIRequestor
@@ -8,7 +8,7 @@ from stripe.api_resources.list_object import ListObject
 from stripe.error import InvalidRequestError
 from stripe.stripe_object import StripeObject
 from stripe.util import convert_to_stripe_object
-from typing import Dict
+from typing import Dict, List
 import backoff
 import json
 import logging
@@ -362,7 +362,7 @@ def get_discovery_metadata(schema, key_properties, replication_method, replicati
     return metadata.to_list(mdata)
 
 
-def discover():
+def discover() -> Dict:
     raw_schemas = load_schemas()
     streams = []
 
@@ -1126,8 +1126,11 @@ def get_date_window_size(param, default_value):
 
 
 class Stripe(Source):
-    def discover(self) -> Catalog:
-        return discover()
+    def discover(self, streams: List[str] = None) -> Catalog:
+        return Catalog(list(filter(
+            lambda x: not streams or x['tap_stream_id'] in streams,
+            discover()['streams'],
+        )))
 
     def sync(self, catalog: Catalog) -> None:
         for catalog_entry in Context.catalog['streams']:

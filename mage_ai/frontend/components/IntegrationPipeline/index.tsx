@@ -1,5 +1,5 @@
 import { parse, stringify } from 'yaml';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
@@ -21,6 +21,7 @@ import IntegrationSourceType, {
   ColumnFormatEnum,
   ColumnTypeEnum,
   InclusionEnum,
+  IntegrationSourceStreamType,
   PropertyMetadataType,
   ReplicationMethodEnum,
   SchemaPropertyType,
@@ -30,9 +31,11 @@ import IntegrationSourceType, {
 import PipelineType from '@interfaces/PipelineType';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
 import {
   CodeEditorStyle,
@@ -117,28 +120,6 @@ function IntegrationPipeline({
     return parse(dataExporterBlock.content);
   }, [dataExporterBlock]);
 
-  const [integrationSource, setIntegrationSource] = useState<IntegrationSourceType>(null);
-  const streams: StreamType[] = useMemo(() => integrationSource?.streams || [], [integrationSource]);
-  const streamsByUUID =
-    useMemo(() => indexBy(streams, ({ tap_stream_id: uuid }) => uuid), [streams]);
-
-  const [fetchIntegrationSource, { isLoading: isLoadingFetchIntegrationSource }] = useMutation(
-    api.integration_sources.useUpdate(pipeline?.uuid),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: (response) => {
-            setIntegrationSource(response.integration_source);
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
   const dataLoaderEditor = useMemo(() => {
     if (!dataLoaderBlock) {
       return;
@@ -196,6 +177,97 @@ function IntegrationPipeline({
   const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
     dataLoaderBlockContent,
   ]);
+
+  const [selectedStreamID, setSelectedStreamID] =
+    useState<string>(catalog?.streams?.[0]?.tap_stream_id);
+
+  const [
+    fetchIntegrationSource,
+    {
+      isLoading: isLoadingFetchIntegrationSource,
+    },
+  ] = useMutation(
+    api.integration_sources.useUpdate(pipeline?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({
+            integration_source: integrationSource,
+          }) => {
+            const {
+              selected_streams: selectedStreamIDs,
+              streams: streamsInit,
+            } = integrationSource;
+            const streams = streamsInit.filter(({
+              tap_stream_id: streamID,
+            }) => selectedStreamIDs.includes(streamID));
+            const catalogData = {
+              streams,
+            };
+
+            streams.forEach((stream: StreamType) => {
+              stream.metadata.forEach((md, idx: number) => {
+                const {
+                  metadata,
+                } = md;
+                if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
+                  if (!stream.replication_method) {
+                    stream.replication_method = ReplicationMethodEnum.FULL_TABLE;
+                  }
+                  if (!stream.unique_conflict_method) {
+                    stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
+                  }
+
+                  stream.metadata[idx] = {
+                    ...md,
+                    metadata: {
+                      ...metadata,
+                      selected: true,
+                    },
+                  };
+                }
+              });
+            });
+
+            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+              ...dataLoaderBlockContent,
+              catalog: catalogData,
+            }));
+
+            savePipelineContent().then(() => fetchPipeline());
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
+  const [integrationSourceStream, setIntegrationSourceStream] =
+    useState<IntegrationSourceStreamType>(null);
+  const [
+    fetchIntegrationSourceStream,
+    {
+      isLoading: isLoadingFetchIntegrationSourceStream,
+    },
+  ] = useMutation(
+    api.integration_source_streams.useUpdate(pipeline?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+            setIntegrationSourceStream(response.integration_source_stream);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const updateStream = useCallback((
     streamUUID: string,
@@ -318,6 +390,7 @@ function IntegrationPipeline({
                 if (dataLoaderBlock) {
                   onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
                     ...dataLoaderBlockContent,
+                    catalog: {},
                     config,
                     source: sourceUUID,
                   }));
@@ -331,6 +404,9 @@ function IntegrationPipeline({
                     type: BlockTypeEnum.DATA_LOADER,
                   }, 0, setSelectedBlock);
                 }
+
+                setIntegrationSourceStream(null);
+                setSelectedStreamID(null);
 
                 savePipelineContent().then(() => {
                   fetchPipeline();
@@ -366,56 +442,34 @@ function IntegrationPipeline({
                   Select stream
                 </Headline>
 
-                {streams.length && (
+                {integrationSourceStream?.streams?.length && (
                   <Spacing mb={2}>
                     <Select
                       onChange={(e) => {
                         const uuid = e.target.value;
-                        const stream = streamsByUUID[uuid];
-                        const catalogData = stream
-                          ? {
-                            streams: [
-                              stream,
-                            ],
-                          }
-                          : null;
-
-                        if (stream) {
-                          stream.metadata.forEach((md, idx: number) => {
-                            const {
-                              metadata,
-                            } = md;
-                            if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
-                              if (!stream.replication_method) {
-                                stream.replication_method = ReplicationMethodEnum.FULL_TABLE;
-                              }
-                              if (!stream.unique_conflict_method) {
-                                stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
-                              }
-
-                              stream.metadata[idx] = {
-                                ...md,
-                                metadata: {
-                                  ...metadata,
-                                  selected: true,
-                                },
-                              };
-                            }
+                        setSelectedStreamID(uuid);
+                        if (uuid) {
+                          // @ts-ignore
+                          fetchIntegrationSource({
+                            integration_source: {
+                              streams: [
+                                uuid,
+                              ],
+                            },
                           });
+                        } else {
+                          onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                            ...dataLoaderBlockContent,
+                            catalog: {},
+                          }));
+                          savePipelineContent().then(() => fetchPipeline());
                         }
-
-                        onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                          ...dataLoaderBlockContent,
-                          catalog: catalogData,
-                        }));
-
-                        savePipelineContent().then(() => fetchPipeline());
                       }}
                       primary
-                      value={catalog?.streams?.[0]?.tap_stream_id || ''}
+                      value={selectedStreamID || ''}
                     >
                       <option value="" />
-                      {streams.map(({
+                      {integrationSourceStream?.streams?.map(({
                         tap_stream_id: uuid,
                       }) => (
                         <option
@@ -430,8 +484,13 @@ function IntegrationPipeline({
                 )}
 
                 <Button
-                  loading={isLoadingFetchIntegrationSource}
-                  onClick={() => fetchIntegrationSource()}
+                  loading={isLoadingFetchIntegrationSourceStream}
+                  onClick={() => {
+                    savePipelineContent().then(() => {
+                      fetchIntegrationSourceStream();
+                      fetchPipeline();
+                    });
+                  }}
                   primary
                   small
                 >
@@ -441,7 +500,9 @@ function IntegrationPipeline({
             </>
           )}
 
-          {catalog?.streams?.map(({
+          {isLoadingFetchIntegrationSource && <Spinner />}
+
+          {!isLoadingFetchIntegrationSource && catalog?.streams?.map(({
             bookmark_properties: bookmarkProperties,
             metadata,
             replication_method: replicationMethod,
@@ -492,12 +553,19 @@ function IntegrationPipeline({
                       type: columnTypesInit = [],
                     },
                   ]) => {
-                    const columnTypesSet = new Set(columnTypesInit);
+                    const columnTypesSet = new Set(Array.isArray(columnTypesInit)
+                      ? columnTypesInit
+                      : [columnTypesInit]
+                    );
                     columnTypesAnyOf.forEach(({
                       items,
                       type,
                     }) => {
-                      type.forEach(t => columnTypesSet.add(t));
+                      if (Array.isArray(type)) {
+                        type.forEach(t => columnTypesSet.add(t));
+                      } else {
+                        columnTypesSet.add(type);
+                      }
                     });
                     const columnTypes = Array.from(columnTypesSet);
 

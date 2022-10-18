@@ -99,7 +99,30 @@ class IntegrationPipeline(Pipeline):
     def pipeline_dir(self) -> str:
         return '/'.join(self.config_path.split('/')[:-1])
 
-    def discover(self) -> dict:
+    def discover(self, streams: List[str] = None) -> dict:
+        if self.source_file_path and self.data_loader.file_path:
+            try:
+                run_args = [
+                    PYTHON,
+                    self.source_file_path,
+                    '--settings',
+                    self.data_loader.file_path,
+                    '--discover',
+                ]
+                if streams:
+                    run_args += [
+                        '--selected_streams_json',
+                        json.dumps(streams),
+                    ]
+                proc = subprocess.run(run_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc.check_returncode()
+
+                return json.loads(proc.stdout)
+            except subprocess.CalledProcessError as e:
+                message = e.stderr.decode("utf-8")
+                raise Exception(message)
+
+    def discover_streams(self) -> List[str]:
         if self.source_file_path and self.data_loader.file_path:
             try:
                 proc = subprocess.run([
@@ -108,6 +131,7 @@ class IntegrationPipeline(Pipeline):
                     '--settings',
                     self.data_loader.file_path,
                     '--discover',
+                    '--discover_streams',
                 ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 proc.check_returncode()
 
@@ -116,4 +140,3 @@ class IntegrationPipeline(Pipeline):
             except subprocess.CalledProcessError as e:
                 message = e.stderr.decode("utf-8")
                 raise Exception(message)
-

@@ -1,7 +1,1821 @@
 {
+  "properties": {
+    "achievementId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "adFormat": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "adSourceName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "adUnitName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "appVersion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "audienceId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "audienceName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "brandingInterest": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "browser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "campaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "campaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "character": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "city": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cityId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohort": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohortNthDay": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohortNthMonth": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohortNthWeek": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "contentGroup": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "contentId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "contentType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "country": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "countryId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "date": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "dateHour": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "dateHourMinute": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "day": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "dayOfWeek": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "defaultChannelGrouping": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "deviceCategory": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "deviceModel": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "eventName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "fileExtension": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "fileName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstSessionDate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserCampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserCampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserDefaultChannelGrouping": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsAccountName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsAdGroupId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsAdGroupName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsAdNetworkType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsCampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsCampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsCampaignType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsCreativeId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsCustomerId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsKeyword": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserGoogleAdsQuery": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserManualAdContent": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserManualTerm": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserMedium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserSource": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserSourceMedium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstUserSourcePlatform": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "fullPageUrl": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsAccountName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsAdGroupId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsAdGroupName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsAdNetworkType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsCampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsCampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsCampaignType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsCreativeId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsCustomerId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsKeyword": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "googleAdsQuery": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "groupId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "hostName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "hour": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "isConversionEvent": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemAffiliation": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemBrand": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemCategory": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemCategory2": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemCategory3": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemCategory4": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemCategory5": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemListId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemListName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemPromotionCreativeName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemPromotionId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemPromotionName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemVariant": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "landingPage": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "language": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "languageCode": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "level": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "linkClasses": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "linkDomain": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "linkId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "linkText": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "linkUrl": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "manualAdContent": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "manualTerm": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "medium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "method": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "minute": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "mobileDeviceBranding": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "mobileDeviceMarketingName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "mobileDeviceModel": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "month": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "newVsReturning": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthDay": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthHour": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthMinute": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthMonth": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthWeek": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "nthYear": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "operatingSystem": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "operatingSystemVersion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "operatingSystemWithVersion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "orderCoupon": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "outbound": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "pageLocation": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "pagePath": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "pagePathPlusQueryString": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "pageReferrer": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "pageTitle": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "percentScrolled": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "platform": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "platformDeviceCategory": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "region": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "screenResolution": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "searchTerm": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionCampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionCampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionDefaultChannelGrouping": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsAccountName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsAdGroupId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsAdGroupName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsAdNetworkType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsCampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsCampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsCampaignType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsCreativeId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsCustomerId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsKeyword": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionGoogleAdsQuery": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionManualAdContent": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionManualTerm": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionMedium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360AdGroupName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360CampaignId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360CampaignName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360CreativeFormat": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360EngineAccountId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360EngineAccountName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360EngineAccountType": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360Keyword": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360Medium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360Query": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSa360Source": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSource": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSourceMedium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionSourcePlatform": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "shippingTier": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "signedInWithUserId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "source": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sourceMedium": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sourcePlatform": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "streamId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "streamName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "testDataFilterName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "transactionId": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "unifiedPagePathScreen": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "unifiedPageScreen": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "unifiedScreenClass": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "unifiedScreenName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "userAgeBracket": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "userGender": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "videoProvider": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "videoTitle": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "videoUrl": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "virtualCurrencyName": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "visible": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "week": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "year": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "active1DayUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "active28DayUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "active7DayUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "activeUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "adUnitExposure": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "addToCarts": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "advertiserAdClicks": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "advertiserAdCost": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "advertiserAdCostPerClick": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "advertiserAdCostPerConversion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "advertiserAdImpressions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "averagePurchaseRevenue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "averagePurchaseRevenuePerPayingUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "averagePurchaseRevenuePerUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "averageRevenuePerUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "averageSessionDuration": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "bounceRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cartToViewRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "checkouts": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohortActiveUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "cohortTotalUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "conversions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "crashAffectedUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "crashFreeUsersRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "dauPerMau": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "dauPerWau": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "ecommercePurchases": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "engagedSessions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "engagementRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "eventCount": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "eventCountPerUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "eventValue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "eventsPerSession": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstTimePurchaserConversionRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstTimePurchasers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "firstTimePurchasersPerNewUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemListClickEvents": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemListClickThroughRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemListViewEvents": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemPromotionClickThroughRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemRevenue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemViewEvents": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsAddedToCart": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsCheckedOut": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsClickedInList": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsClickedInPromotion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsPurchased": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsViewed": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsViewedInList": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "itemsViewedInPromotion": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "newUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "organicGoogleSearchAveragePosition": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "organicGoogleSearchClickThroughRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "organicGoogleSearchClicks": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "organicGoogleSearchImpressions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "promotionClicks": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "promotionViews": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "publisherAdClicks": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "publisherAdImpressions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "purchaseRevenue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "purchaseToViewRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "purchaserConversionRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "returnOnAdSpend": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "screenPageViews": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "screenPageViewsPerSession": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionConversionRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "sessionsPerUser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "shippingAmount": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "taxAmount": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "totalAdRevenue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "totalPurchasers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "totalRevenue": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "totalUsers": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "transactions": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "transactionsPerPurchaser": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "userConversionRate": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "userEngagementDuration": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    },
+    "wauPerMau": {
+      "type": [
+        "integer",
+        "null",
+        "string"
+      ]
+    }
+  },
   "type": [
     "null",
     "object"
-  ],
-  "properties": {}
+  ]
 }

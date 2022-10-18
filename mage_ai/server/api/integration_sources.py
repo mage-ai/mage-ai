@@ -40,14 +40,29 @@ class ApiIntegrationSourcesHandler(BaseHandler):
         self.write(dict(integration_sources=get_collection('sources', SOURCES)))
 
 
-class ApiIntegrationSourceHandler(BaseHandler):
+class ApiIntegrationSourceStreamHandler(BaseHandler):
     def put(self, pipeline_uuid):
         pipeline = IntegrationPipeline.get(pipeline_uuid)
-        catalog = pipeline.discover() or {}
+        streams = pipeline.discover_streams() or {}
+
+        self.write(dict(
+            integration_source_stream=dict(
+                streams=sorted(streams, key=lambda x: x['tap_stream_id']),
+                uuid=pipeline.source_uuid,
+            ),
+        ))
+
+
+class ApiIntegrationSourceHandler(BaseHandler):
+    def put(self, pipeline_uuid):
+        payload = self.get_payload()
+        pipeline = IntegrationPipeline.get(pipeline_uuid)
+        selected_streams = payload.get('integration_source', {}).get('streams')
+        catalog = pipeline.discover(streams=selected_streams) or {}
 
         self.write(dict(
             integration_source=merge_dict(catalog, dict(
+                selected_streams=selected_streams,
                 uuid=pipeline.source_uuid,
             )),
         ))
-

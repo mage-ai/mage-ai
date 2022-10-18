@@ -40,6 +40,7 @@ from mage_ai.server.api.events import (
 )
 from mage_ai.server.api.integration_sources import (
     ApiIntegrationDestinationsHandler,
+    ApiIntegrationSourceStreamHandler,
     ApiIntegrationSourceHandler,
     ApiIntegrationSourcesHandler,
 )
@@ -535,6 +536,7 @@ def make_app():
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
         (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
+        (r'/api/integration_source_streams/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceStreamHandler),
         (r'/api/integration_sources', ApiIntegrationSourcesHandler),
         (r'/api/integration_sources/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceHandler),
         (r'/api/projects', ApiProjectsHandler),
