@@ -60,7 +60,7 @@ class Salesforce(Source):
     def discover(self, streams: List[str] = None) -> Catalog:
         try:
             if streams:
-                return do_discover(self.client, streams=streams)
+                return Catalog(do_discover(self.client, streams=streams)['streams'])
         finally:
             self.__finally_clean_up()
 

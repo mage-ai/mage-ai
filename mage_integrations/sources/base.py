@@ -116,7 +116,18 @@ class Source():
     def get_stream_ids(self) -> List[str]:
         # If you want to display available stream IDs before getting the stream properties,
         # override this method to return a list of stream IDs
-        return [d['tap_stream_id'] for d in self.discover()]
+        catalog = self.discover()
+
+        stream_ids = []
+        for stream in catalog.streams:
+            if type(stream) is CatalogEntry:
+                stream_ids.append(stream.tap_stream_id)
+            elif type(stream) is dict:
+                stream_ids.append(stream['tap_stream_id'])
+            else:
+                raise Exception(f'Invalid stream class type of {stream.__class__.__name__}.')
+
+        return stream_ids
 
     def process(self) -> None:
         try:

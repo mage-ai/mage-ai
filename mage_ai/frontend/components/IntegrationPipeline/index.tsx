@@ -384,6 +384,7 @@ function IntegrationPipeline({
                 if (dataLoaderBlock) {
                   onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
                     ...dataLoaderBlockContent,
+                    catalog: {},
                     config,
                     source: sourceUUID,
                   }));
@@ -397,6 +398,9 @@ function IntegrationPipeline({
                     type: BlockTypeEnum.DATA_LOADER,
                   }, 0, setSelectedBlock);
                 }
+
+                setIntegrationSourceStream(null);
+                setSelectedStreamID(null);
 
                 savePipelineContent().then(() => {
                   fetchPipeline();
@@ -438,14 +442,22 @@ function IntegrationPipeline({
                       onChange={(e) => {
                         const uuid = e.target.value;
                         setSelectedStreamID(uuid);
-                        // @ts-ignore
-                        fetchIntegrationSource({
-                          integration_source: {
-                            streams: [
-                              uuid,
-                            ],
-                          },
-                        });
+                        if (uuid) {
+                          // @ts-ignore
+                          fetchIntegrationSource({
+                            integration_source: {
+                              streams: [
+                                uuid,
+                              ],
+                            },
+                          });
+                        } else {
+                          onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                            ...dataLoaderBlockContent,
+                            catalog: {},
+                          }));
+                          savePipelineContent().then(() => fetchPipeline());
+                        }
                       }}
                       primary
                       value={selectedStreamID || ''}
@@ -467,7 +479,12 @@ function IntegrationPipeline({
 
                 <Button
                   loading={isLoadingFetchIntegrationSourceStream}
-                  onClick={() => fetchIntegrationSourceStream()}
+                  onClick={() => {
+                    savePipelineContent().then(() => {
+                      fetchIntegrationSourceStream();
+                      fetchPipeline();
+                    });
+                  }}
                   primary
                   small
                 >
