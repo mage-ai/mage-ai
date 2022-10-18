@@ -19,6 +19,7 @@ import inspect
 import json
 import os
 import singer
+import traceback
 
 LOGGER = singer.get_logger()
 
@@ -109,7 +110,11 @@ class Source():
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
-            self.logger.exception(message, tags=dict(error=str(err)))
+            self.logger.exception(message, tags=dict(
+                error=str(err),
+                errors=traceback.format_stack(),
+                message=traceback.format_exc(),
+            ))
             raise Exception(message)
 
     def get_bookmarks_for_stream(self, stream) -> Dict:

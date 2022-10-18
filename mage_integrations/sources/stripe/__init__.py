@@ -199,7 +199,11 @@ class Context():
 
     @classmethod
     def is_selected(cls, stream_name):
+        # TODO (tommy dang): support syncing multiple streams aka sub-streams
         stream = cls.get_catalog_entry(stream_name)
+        if not stream:
+            return False
+
         stream_metadata = metadata.to_map(stream['metadata'])
         return metadata.get(stream_metadata, (), 'selected')
 

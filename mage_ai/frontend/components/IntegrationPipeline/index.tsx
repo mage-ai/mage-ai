@@ -430,6 +430,7 @@ function IntegrationPipeline({
                 )}
 
                 <Button
+                  loading={isLoadingFetchIntegrationSource}
                   onClick={() => fetchIntegrationSource()}
                   primary
                   small
