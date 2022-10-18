@@ -117,6 +117,7 @@ def process_pipeline_runs(
     handler,
     pipeline_schedule_id=None,
     pipeline_uuid=None,
+    status=None,
 ):
     results = (
         PipelineRun.
@@ -127,7 +128,9 @@ def process_pipeline_runs(
     if pipeline_schedule_id is not None:
         results = results.filter(PipelineRun.pipeline_schedule_id == pipeline_schedule_id)
     if pipeline_uuid is not None:
-        results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)            
+        results = results.filter(PipelineRun.pipeline_uuid == pipeline_uuid)
+    if status is not None:
+        results = results.filter(PipelineRun.status == status)
     initial_results = \
         results.order_by(PipelineRun.execution_date.desc(), PipelineRun.id.desc())
 
@@ -179,7 +182,8 @@ class ApiAllPipelineRunListHandler(BaseHandler):
 
     def get(self):
         pipeline_uuid = self.get_argument('pipeline_uuid', None)
-        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid)
+        status = self.get_argument('status', None)
+        process_pipeline_runs(self, pipeline_uuid=pipeline_uuid, status=status)
 
 
 class ApiPipelineRunDetailHandler(BaseDetailHandler):
@@ -217,7 +221,8 @@ class ApiPipelineRunListHandler(BaseHandler):
     model_class = PipelineRun
 
     def get(self, pipeline_schedule_id):
-        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id))
+        status = self.get_argument('status', None)
+        process_pipeline_runs(self, pipeline_schedule_id=int(pipeline_schedule_id), status=status)
 
     def post(self, pipeline_schedule_id):
         pipeline_schedule = PipelineSchedule.query.get(int(pipeline_schedule_id))
