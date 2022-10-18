@@ -94,20 +94,18 @@ function BlockRuns({
   }, [
     dataLogs,
   ]);
-  const logsAll: LogType[] = useMemo(() => {
-    return sortByKey(
+  const logsAll: LogType[] = useMemo(() => sortByKey(
       blockRunLogs
         .concat(pipelineRunLogs)
         .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
       ({ data }) => data?.timestamp || 0,
       { ascending: false },
-    );
-  }, [
+    ), [
     blockRunLogs,
     pipelineRunLogs,
   ]);
-  const logsFiltered: LogType[] = useMemo(() => {
-    return logsAll
+
+  const logsFiltered: LogType[] = useMemo(() => logsAll
       .filter(({ data }: LogType) => {
         const evals = [];
 
@@ -123,8 +121,7 @@ function BlockRuns({
         }
 
         return evals.every(v => v);
-      });
-  }, [
+      }), [
     blocksByUUID,
     logsAll,
     query,
@@ -222,7 +219,6 @@ function BlockRuns({
 
       {!isLoading && logs.length >= 1 && (
         <Table
-          compact
           columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(idx: number) => idx === 3 ? '100px' : null}
           columns={[
@@ -244,6 +240,7 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
+          compact
           onClickRow={(rowIndex: number) => {
             const log = logs[rowIndex];
             let logUUID = log.data?.uuid;
@@ -306,17 +303,33 @@ function BlockRuns({
             }
 
             return [
-              <Flex alignItems="center" justifyContent="center">
+              <Flex
+                alignItems="center"
+                justifyContent="center"
+                key="log_type"
+              >
                 <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
               </Flex>,
-              <Text default monospace>
+              <Text
+                default
+                key="log_timestamp"
+                monospace
+              >
                 {formatTimestamp(timestamp)}
               </Text>,
               idEl,
-              <Text monospace textOverflow>
+              <Text
+                key="log_message"
+                monospace
+                textOverflow
+              >
                 {message || content}
               </Text>,
-              <Flex flex={1} justifyContent="flex-end">
+              <Flex
+                flex={1}
+                justifyContent="flex-end"
+                key="chevron_right_icon"
+              >
                 <ChevronRight default size={2 * UNIT} />
               </Flex>,
             ];
