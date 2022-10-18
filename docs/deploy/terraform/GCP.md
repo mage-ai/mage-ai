@@ -261,6 +261,10 @@ Click on that security group and add a new rule with the following values:
 | --- | --- | --- | --- |
 | Basic mode | [Enter your IP address](https://whatismyipaddress.com/) | Allow | 100 |
 
+### HTTPS enabling
+
+TBD
+
 ### Terminate all resources
 
 If you want to delete all resources created from deploying, run the following command:

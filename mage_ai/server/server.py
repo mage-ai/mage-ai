@@ -5,7 +5,11 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.variable import VariableType
 from mage_ai.data_preparation.repo_manager import get_repo_path, init_repo, set_repo_path
 from mage_ai.data_preparation.shared.constants import MANAGE_ENV_VAR
-from mage_ai.data_preparation.variable_manager import VariableManager, delete_global_variable, set_global_variable
+from mage_ai.data_preparation.variable_manager import (
+    VariableManager,
+    delete_global_variable,
+    set_global_variable,
+)
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -22,13 +26,22 @@ from mage_ai.server.api.blocks import (
     ApiPipelineBlockListHandler,
     ApiPipelineBlockOutputHandler,
 )
-from mage_ai.server.api.clusters import ApiClustersHandler, ApiInstanceDetailHandler, ApiInstancesHandler
+from mage_ai.server.api.clusters import (
+    ApiClustersHandler,
+    ApiInstanceDetailHandler,
+    ApiInstancesHandler,
+)
 from mage_ai.server.api.data_providers import ApiDataProvidersHandler
 from mage_ai.server.api.events import (
     ApiAwsEventRuleListHandler,
     ApiEventHandler,
     ApiEventMatcherDetailHandler,
     ApiEventMatcherListHandler,
+)
+from mage_ai.server.api.integration_sources import (
+    ApiIntegrationDestinationsHandler,
+    ApiIntegrationSourceHandler,
+    ApiIntegrationSourcesHandler,
 )
 from mage_ai.server.api.logs import ApiPipelineLogListHandler
 from mage_ai.server.api.monitor import ApiMonitorStatsHandler
@@ -396,6 +409,7 @@ class KernelsHandler(BaseHandler):
         self.write(r)
         self.finish()
 
+
 class ApiStatusHandler(BaseHandler):
     def get(self):
         status = {
@@ -519,6 +533,9 @@ def make_app():
         (r'/api/kernels/(?P<kernel_id>[\w\-]*)/(?P<action_type>[\w\-]*)', KernelsHandler),
         (r'/api/autocomplete_items', ApiAutocompleteItemsHandler),
         (r'/api/data_providers', ApiDataProvidersHandler),
+        (r'/api/integration_destinations', ApiIntegrationDestinationsHandler),
+        (r'/api/integration_sources', ApiIntegrationSourcesHandler),
+        (r'/api/integration_sources/(?P<pipeline_uuid>\w+)', ApiIntegrationSourceHandler),
         (r'/api/projects', ApiProjectsHandler),
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
         (r'/api/status', ApiStatusHandler),

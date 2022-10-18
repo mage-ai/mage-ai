@@ -161,7 +161,7 @@ If you run into connection issues, check to see if your IP is whitelisted in the
 
 <b>503 Forbidden</b>
 
-Check to see if the service task in your EMR cluster is running or if it stopped.
+Check to see if the service task in your ECS cluster is running or if it stopped.
 
 503 typically means that the service task isn’t running and that can be caused by a variety of things.
 
@@ -177,6 +177,32 @@ To enable other IP addresses access to Mage, open the security group named
 `mage-data-prep-sg` to whitelist IPs.
 
 Add a new inbound rule for HTTP port 80 and use your IP address.
+
+### HTTPS enabling
+
+Terraform creates a load balancer with a HTTP listener by default.
+
+To enable HTTPS for your cloud app, you need to have SSL certificates. You can create a SSL certificate in [AWS Certificate Manager](https://console.aws.amazon.com/acm/home?#/certificates/list).
+
+After you get a certificate, add a HTTPS listener in your load balancer group.
+1. Open your EC2 dashboard.
+1. View all load balancers.
+1. Click on the load balancer with the name `mage-data-prep` in it
+(if you changed the app name, then find the load balancer with that app name).
+1. Click "Listners" tab.
+1. Click "Add listener" button
+1. For "Protocol" and "Port", choose HTTPS and keep the default port or enter a different port.
+1. In "Default actions", select "Forward" and forward to the target group that contains your app name (`mage-data-prep-production-tg` by default)
+1. In "Security Policy", keep the default security policy.
+1. For "Default SSL certificate", do one of the following:
+    1. If you created or imported a certificate using AWS Certificate Manager, choose From ACM and choose the certificate.
+    1. If you uploaded a certificate using IAM, choose From IAM and choose the certificate.
+1. Click "Add" to create the HTTPS listener.
+1. Edit your HTTP listener, change the default action to redirect traffic to your HTTPS listener.
+
+
+The detailed instructions can be found in: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html
+
 
 ### Terminate all resources
 

@@ -105,6 +105,16 @@ function PipelineListPage() {
               uuid: 'Pipelines/NewPipelineMenu/standard',
             },
             {
+              label: () => 'Data integration',
+              onClick: () => createPipeline({
+                pipeline: {
+                  name: randomNameGenerator(),
+                  type: PipelineTypeEnum.INTEGRATION,
+                },
+              }),
+              uuid: 'Pipelines/NewPipelineMenu/integration',
+            },
+            {
               label: () => 'Streaming',
               onClick: () => createPipeline({
                 pipeline: {
@@ -114,16 +124,6 @@ function PipelineListPage() {
               }),
               uuid: 'Pipelines/NewPipelineMenu/streaming',
             },
-            // {
-            //   label: () => 'Data integration',
-            //   onClick: () => createPipeline({
-            //     pipeline: {
-            //       name: randomNameGenerator(),
-            //       type: PipelineTypeEnum.INTEGRATION,
-            //     },
-            //   }),
-            //   uuid: 'Pipelines/NewPipelineMenu/data_integration',
-            // },
           ]}
           onClickCallback={closeNewPipelineMenu}
           onClickOutside={closeNewPipelineMenu}

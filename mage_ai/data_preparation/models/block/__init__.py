@@ -2,6 +2,8 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from logging import Logger
+from mage_ai.data_integrations.utils.config import build_config_json
+from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
     is_geo_dataframe,
@@ -39,9 +41,12 @@ import json
 import os
 import pandas as pd
 import simplejson
+import subprocess
 import sys
 import time
 import traceback
+
+PYTHON_COMMAND = 'python3'
 
 
 async def run_blocks(
@@ -288,7 +293,12 @@ class Block:
         return table_name
 
     @classmethod
-    def block_class_from_type(self, block_type: str) -> str:
+    def block_class_from_type(self, block_type: str, pipeline = None) -> str:
+        if pipeline and PipelineType.INTEGRATION == pipeline.type:
+            if BlockType.DATA_LOADER == block_type:
+                return SourceBlock
+            elif BlockType.DATA_EXPORTER == block_type:
+                return DestinationBlock
         return BLOCK_TYPE_TO_CLASS.get(block_type)
 
     @classmethod
@@ -345,7 +355,7 @@ class Block:
                 pipeline_type=pipeline.type if pipeline is not None else None,
             )
 
-        block = self.block_class_from_type(block_type)(
+        block = self.block_class_from_type(block_type, pipeline=pipeline)(
             name,
             uuid,
             block_type,
@@ -388,7 +398,7 @@ class Block:
         pipeline=None,
         status=BlockStatus.NOT_EXECUTED,
     ):
-        block_class = self.block_class_from_type(block_type) or Block
+        block_class = self.block_class_from_type(block_type, pipeline=pipeline) or Block
         return block_class(
             name,
             uuid,
@@ -446,7 +456,11 @@ class Block:
         run_all_blocks: bool = False,
         test_execution: bool = False,
         update_status: bool = True,
-    ):
+        store_variables: bool = True,
+        verify_output: bool = True,
+        input_from_output: Dict = None,
+        runtime_arguments: Dict = None,
+    ) -> Dict:
         try:
             if not run_all_blocks:
                 not_executed_upstream_blocks = list(
@@ -465,8 +479,12 @@ class Block:
                 global_vars=global_vars,
                 logger=logger,
                 test_execution=test_execution,
+                input_from_output=input_from_output,
+                runtime_arguments=runtime_arguments,
             )
             block_output = output['output']
+            variable_mapping = dict()
+
             if BlockType.CHART == self.type:
                 variable_mapping = block_output
                 output = dict(
@@ -476,21 +494,20 @@ class Block:
                         ignore_nan=True,
                     )
                 )
-            elif BlockType.SENSOR == self.type:
-                variable_mapping = dict()
-            else:
+            elif verify_output:
                 self.__verify_outputs(block_output)
                 variable_keys = list(self.output_variables.keys())
                 extra_output_count = len(block_output) - len(variable_keys)
                 variable_keys += [f'output_{idx}' for idx in range(extra_output_count)]
                 variable_mapping = dict(zip(variable_keys, block_output))
 
-            self.store_variables(
-                variable_mapping,
-                execution_partition=execution_partition,
-                override_outputs=True,
-                spark=(global_vars or dict()).get('spark'),
-            )
+            if store_variables:
+                self.store_variables(
+                    variable_mapping,
+                    execution_partition=execution_partition,
+                    override_outputs=True,
+                    spark=(global_vars or dict()).get('spark'),
+                )
             # Reset outputs cache
             self._outputs = None
 
@@ -619,6 +636,8 @@ class Block:
         logger: Logger = None,
         global_vars: Dict = None,
         test_execution: bool = False,
+        input_from_output: Dict = None,
+        runtime_arguments: Dict = None,
     ) -> Dict:
         upstream_block_uuids = []
         if input_args is None:
@@ -668,7 +687,51 @@ class Block:
 
             outputs = []
 
-            if BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
+            if self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
+                if BlockType.DATA_LOADER == self.type:
+                    proc1 = subprocess.run([
+                        PYTHON_COMMAND,
+                        self.pipeline.source_file_path,
+                        '--config_json',
+                        build_config_json(
+                            self.pipeline.data_loader.file_path,
+                            global_vars,
+                        ),
+                        '--log_to_stdout',
+                        '1',
+                        '--settings',
+                        self.pipeline.data_loader.file_path,
+                        '--state',
+                        self.pipeline.source_state_file_path,
+                        '--query_json',
+                        json.dumps(runtime_arguments or {}),
+                    ], preexec_fn=os.setsid, stdout=subprocess.PIPE)
+
+                    output = proc1.stdout.decode()
+                    print_logs_from_output(output)
+                    outputs.append(output)
+                elif BlockType.DATA_EXPORTER == self.type:
+                    input_from_previous = input_from_output['output'][0]
+
+                    proc2 = subprocess.run([
+                        PYTHON_COMMAND,
+                        self.pipeline.destination_file_path,
+                        '--config_json',
+                        build_config_json(
+                            self.pipeline.data_exporter.file_path,
+                            global_vars,
+                        ),
+                        '--log_to_stdout',
+                        '1',
+                        '--settings',
+                        self.pipeline.data_exporter.file_path,
+                        '--state',
+                        self.pipeline.destination_state_file_path,
+                    ], input=input_from_previous, capture_output=True, text=True)
+
+                    print_logs_from_output(proc2.stdout)
+                    outputs.append(proc2)
+            elif BlockLanguage.SQL == self.language and BlockType.CHART != self.type:
                 outputs = execute_sql_code(
                     self,
                     custom_code or self.content,
@@ -694,7 +757,7 @@ class Block:
                     results=results,
                     upstream_block_uuids=upstream_block_uuids,
                 )
-            else:
+            elif not self.pipeline or PipelineType.INTEGRATION != self.pipeline.type:
                 block_function = self.__validate_execution(decorated_functions, input_vars)
                 if block_function is not None:
                     outputs = self.execute_block_function(block_function, input_vars, global_vars, test_execution)
@@ -786,6 +849,7 @@ class Block:
                         self.pipeline.uuid,
                         self.uuid,
                         v,
+                        dataframe_analysis_keys=['metadata', 'statistics'],
                         partition=execution_partition,
                         variable_type=VariableType.DATAFRAME_ANALYSIS,
                     )
@@ -1222,6 +1286,14 @@ class SensorBlock(Block):
                 print('Sensor sleeping for 1 minute...')
                 time.sleep(60)
             return []
+
+
+class SourceBlock(Block):
+    pass
+
+
+class DestinationBlock(Block):
+    pass
 
 
 BLOCK_TYPE_TO_CLASS = {

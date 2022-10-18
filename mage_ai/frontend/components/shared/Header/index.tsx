@@ -242,9 +242,13 @@ function Header({
             }
 
             <Spacing mr={2}>
-              <Text default>
-                {`V${version}`}
-              </Text>
+              <Link
+                default
+                href="https://mage.ai/changelog"
+                openNewWindow
+              >
+                {`v${version}`}
+              </Link>
             </Spacing>
 
             <Circle

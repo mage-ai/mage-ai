@@ -18,7 +18,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import GlobalVariables from './GlobalVariables';
 import KernelOutputType from '@interfaces/KernelOutputType';
 import PipelineExecution from '@components/PipelineDetail/PipelineExecution';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import Spacing from '@oracle/elements/Spacing';
 import StatsTable, { StatRow as StatRowType } from '@components/datasets/StatsTable';
@@ -227,7 +227,7 @@ function Sidekick({
               setEditingBlock={setEditingBlock}
               setSelectedBlock={setSelectedBlock}
             />
-            {!blockEditing && (
+            {!blockEditing && PipelineTypeEnum.INTEGRATION !== pipeline?.type && (
               <Spacing p={2}>
                 <PipelineExecution
                   cancelPipeline={cancelPipeline}

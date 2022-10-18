@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { ThemeContext } from 'styled-components';
+import { parse } from 'yaml';
 import {
   useCallback,
   useContext,
@@ -8,6 +9,7 @@ import {
 import { useMutation } from 'react-query';
 
 import BlockType, {
+  BlockLanguageEnum,
   BlockTypeEnum,
   SetEditingBlockType,
   StatusTypeEnum,
@@ -15,7 +17,7 @@ import BlockType, {
 import FlexContainer from '@oracle/components/FlexContainer';
 import GraphNode from './GraphNode';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
@@ -221,6 +223,29 @@ function DependencyGraph({
     return mapping;
   }, [blocks]);
 
+
+  const displayTextForBlock = useCallback((block: BlockType): string => {
+    let displayText = block.uuid;
+
+    if (PipelineTypeEnum.INTEGRATION === pipeline?.type && BlockTypeEnum.TRANSFORMER !== block.type) {
+      let contentParsed: {
+        destination?: string;
+        source?: string;
+      } = {};
+      if (BlockLanguageEnum.YAML === block.language) {
+        contentParsed = parse(block.content);
+      }
+
+      if (BlockTypeEnum.DATA_LOADER === block.type) {
+        displayText = `Source: ${contentParsed.source}`;
+      } else if (BlockTypeEnum.DATA_EXPORTER === block.type) {
+        displayText = `Destination: ${contentParsed.destination}`;
+      }
+    }
+
+    return displayText;
+  }, [pipeline])
+
   const {
     edges,
     nodes,
@@ -229,6 +254,8 @@ function DependencyGraph({
     const edgesInner = [];
 
     blocks.forEach((block: BlockType) => {
+      const displayText = displayTextForBlock(block);
+
       const {
         upstream_blocks: upstreamBlocks = [],
         uuid,
@@ -269,7 +296,7 @@ function DependencyGraph({
         height: 37,
         id: uuid,
         ports,
-        width: (block.uuid.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
+        width: (displayText.length * WIDTH_OF_SINGLE_CHARACTER_SMALL)
           + (UNIT * 5)
           + (blockEditing?.uuid === block.uuid ? (19 * WIDTH_OF_SINGLE_CHARACTER_SMALL) : 0)
           + (blockStatus?.[block.uuid]?.runtime ? 50 : 0),
@@ -285,6 +312,7 @@ function DependencyGraph({
     blockEditing,
     blockStatus,
     blocks,
+    pipeline,
   ]);
 
   const getBlockStatus = useCallback((block: BlockType) => {
@@ -469,7 +497,7 @@ function DependencyGraph({
                       }
                       {...blockStatus}
                     >
-                      {block.uuid}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
+                      {displayTextForBlock(block)}{blockEditing?.uuid === block.uuid && ' (currently editing)'}
                     </GraphNode>
                   </foreignObject>
                 );

@@ -4,6 +4,7 @@ import TransformerActionType from './TransformerActionType';
 import { PipelineMetadataType } from './MetadataType';
 
 export enum PipelineTypeEnum {
+  INTEGRATION = 'integration',
   PYTHON = 'python',
   PYSPARK = 'pyspark',
   STREAMING = 'streaming',

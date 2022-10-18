@@ -1,0 +1,952 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "date": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "next_payment_attempt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "updated_by_event_type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "customer_tax_exempt": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "footer": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "customer_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "post_payment_credit_notes_amount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "created": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "status_transitions": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "finalized_at": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "marked_uncollectible_at": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "paid_at": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        },
+        "voided_at": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "format": "date-time"
+        }
+      }
+    },
+    "default_source": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "account_country": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "discounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "account_tax_ids": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "transfer_data": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "amount": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "destination": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "total_discount_amounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "amount": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "discount": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "last_finalization_error": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "code": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "doc_url": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "message": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "param": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "payment_method_type": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "type": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "default_tax_rates": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "object": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "active": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "country": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "created": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "inclusive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "jurisdiction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "livemode": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "null",
+              "object"
+            ]
+          },
+          "percentage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "singer.decimal"
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "customer_tax_ids": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "total_tax_amounts": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "amount": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "inclusive": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "tax_rate": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "customer_address": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "city": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "country": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "line1": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "line2": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "postal_code": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "state": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "customer_shipping": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "address": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "city": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "country": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "line1": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "line2": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "postal_code": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "state": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        },
+        "name": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "phone": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    
+    "customer_phone": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "payment_intent": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "customer_email": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "finalized_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "pre_payment_credit_notes_amount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "collection_method": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "default_payment_method": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "account_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "tax": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "metadata": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {}
+    },
+    "charge": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "receipt_number": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "attempt_count": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "payment": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "amount_paid": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "due_date": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "webhooks_delivered_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "statement_descriptor": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "hosted_invoice_url": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "period_end": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "amount_remaining": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "tax_percent": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "billing": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "auto_advance": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "paid": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "discount": {
+      "$ref": "shared/discount.json#/"
+    },
+    "number": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "billing_reason": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "ending_balance": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "livemode": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "period_start": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "attempted": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "closed": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "invoice_pdf": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "customer": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "subtotal": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "application_fee": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "application_fee_amount": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "lines": {
+      "type": [
+        "null",
+        "array",
+        "object"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      },
+      "properties": {}
+    },
+    "forgiven": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "object": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "starting_balance": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "amount_due": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "currency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "total": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "statement_description": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "subscription": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "status": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "payment_settings": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "payment_method_options": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "acss_debit": {
+              "type": [
+                "null",
+                "object"
+              ],
+              "properties": {
+                "mandate_options": {
+                  "type": [
+                    "null",
+                    "object"
+                  ],
+                  "properties": {
+                    "transaction_type": {
+                      "type": [
+                        "null",
+                        "string"
+                      ]
+                    }
+                  }
+                },
+                "verification_method": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                }
+              }
+            },
+            "bancontact": {
+              "type": [
+                "null",
+                "object"
+              ],
+              "properties": {
+                "preferred_language": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                }
+              }
+            },
+            "card": {
+              "type": [
+                "null",
+                "object"
+              ],
+              "properties": {
+                "request_three_d_secure": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "payment_method_types": {
+          "type": [
+            "null",
+            "array"
+          ],
+          "items": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "on_behalf_of": {
+      "type": [
+        "null",
+        "string",
+        "object"
+      ],
+      "properties": {}
+    },
+    "custom_fields": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ] 
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    },
+    "paid_out_of_band": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "automatic_tax": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "enabled": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "status": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "quote": {
+      "type": [
+        "null",
+        "object",
+        "string"
+      ],
+      "properties": {}
+    },
+    "updated": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    }
+  }
+}

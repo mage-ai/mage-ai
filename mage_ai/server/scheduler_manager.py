@@ -1,13 +1,23 @@
 from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
 import multiprocessing
+import time
+import traceback
+
+SCHEDULER_AUTO_RESTART_INTERVAL = 10
 
 
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
 
     database_manager.run_migrations()
-    LoopTimeTrigger().start()
+    while True:
+        try:
+            LoopTimeTrigger().start()
+        except Exception:
+            traceback.print_exc()
+            time.sleep(SCHEDULER_AUTO_RESTART_INTERVAL)
+            print('Restarting pipeline scheduler.')
 
 
 class SchedulerManager:

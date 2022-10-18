@@ -33,6 +33,12 @@ type AddNewBlocksProps = {
   addNewBlock: (block: BlockRequestPayloadType) => void;
   blockIdx?: number;
   compact?: boolean;
+  hideDataExporter?: boolean;
+  hideDataLoader?: boolean;
+  hideRecommendations?: boolean;
+  hideScratchpad?: boolean;
+  hideSensor?: boolean;
+  hideTransformer?: boolean;
   pipeline: PipelineType;
   setAddNewBlockMenuOpenIdx?: (cb: any) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
@@ -44,8 +50,14 @@ const DATA_EXPORTER_BUTTON_INDEX = 2;
 
 function AddNewBlocks({
   addNewBlock,
-  compact,
   blockIdx,
+  compact,
+  hideDataExporter,
+  hideDataLoader,
+  hideRecommendations,
+  hideScratchpad,
+  hideSensor,
+  hideTransformer,
   pipeline,
   setAddNewBlockMenuOpenIdx,
   setRecsWindowOpenBlockIdx,
@@ -119,207 +131,229 @@ function AddNewBlocks({
         open
       >
         <FlexContainer>
-          <FlyoutMenuWrapper
-            disableKeyboardShortcuts
-            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
-            onClickCallback={closeButtonMenu}
-            open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
-            parentRef={dataLoaderButtonRef}
-            uuid="data_loader_button"
-          >
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle blue compact={compact}>
-                  <Add size={iconSize} />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setButtonMenuOpenIndex(val =>
-                  val === DATA_LOADER_BUTTON_INDEX
-                    ? null
-                    : DATA_LOADER_BUTTON_INDEX,
-                );
-                handleBlockZIndex();
-              }}
-              uuid="AddNewBlocks/Data_loader"
-            >
-              Data loader
-            </KeyboardShortcutButton>
-          </FlyoutMenuWrapper>
+          {!hideDataExporter && (
+            <>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType)}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
+                parentRef={dataLoaderButtonRef}
+                uuid="data_loader_button"
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle blue compact={compact}>
+                      <Add size={iconSize} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === DATA_LOADER_BUTTON_INDEX
+                        ? null
+                        : DATA_LOADER_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex();
+                  }}
+                  uuid="AddNewBlocks/Data_loader"
+                >
+                  Data loader
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
 
-          <Spacing ml={1} />
+              <Spacing ml={1} />
+            </>
+          )}
 
-          <FlyoutMenuWrapper
-            disableKeyboardShortcuts
-            items={isPySpark
-              ? allActionMenuItems
-              : (isStreamingPipeline
-                ? 
-                  [
-                    {
-                      items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-                      label: () => 'Python',
-                      uuid: 'transformers/python',
-                    },
-                  ]
-                :
-                  [
-                    {
-                      label: () => 'SQL',
-                      onClick: () => addNewBlock({
-                        language: BlockLanguageEnum.SQL,
-                        type: BlockTypeEnum.TRANSFORMER,
-                      }),
-                      uuid: 'transformers/sql',
-                    },
-                    {
-                      items: allActionMenuItems,
-                      label: () => 'Python',
-                      uuid: 'transformers/python_all',
-                    },
-                  ]
-              )
-            }
-            onClickCallback={closeButtonMenu}
-            open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
-            parentRef={transformerButtonRef}
-            uuid="transformer_button"
-          >
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle compact={compact} purple>
-                  <Add size={iconSize} />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setButtonMenuOpenIndex(val =>
-                  val === TRANSFORMER_BUTTON_INDEX
-                    ? null
-                    : TRANSFORMER_BUTTON_INDEX,
-                );
-                handleBlockZIndex();
-              }}
-              uuid="AddNewBlocks/Transformer"
-            >
-              Transformer
-            </KeyboardShortcutButton>
-          </FlyoutMenuWrapper>
+          {!hideTransformer && (
+            <>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType
+                  ? allActionMenuItems
+                  : (isStreamingPipeline
+                    ?
+                      [
+                        {
+                          items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+                          label: () => 'Python',
+                          uuid: 'transformers/python',
+                        },
+                      ]
+                    :
+                      [
+                        {
+                          label: () => 'SQL',
+                          onClick: () => addNewBlock({
+                            language: BlockLanguageEnum.SQL,
+                            type: BlockTypeEnum.TRANSFORMER,
+                          }),
+                          uuid: 'transformers/sql',
+                        },
+                        {
+                          items: allActionMenuItems,
+                          label: () => 'Python',
+                          uuid: 'transformers/python_all',
+                        },
+                      ]
+                  )
+                }
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
+                parentRef={transformerButtonRef}
+                uuid="transformer_button"
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact} purple>
+                      <Add size={iconSize} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === TRANSFORMER_BUTTON_INDEX
+                        ? null
+                        : TRANSFORMER_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex();
+                  }}
+                  uuid="AddNewBlocks/Transformer"
+                >
+                  Transformer
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
 
-          <Spacing ml={1} />
+              <Spacing ml={1} />
+            </>
+          )}
 
-          <FlyoutMenuWrapper
-            disableKeyboardShortcuts
-            items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
-            onClickCallback={closeButtonMenu}
-            open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
-            parentRef={dataExporterButtonRef}
-            uuid="data_exporter_button"
-          >
-            <KeyboardShortcutButton
-              {...sharedProps}
-              beforeElement={
-                <IconContainerStyle compact={compact} yellow>
-                  <Add
-                    inverted
-                    size={iconSize}
-                  />
-                </IconContainerStyle>
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                setButtonMenuOpenIndex(val =>
-                  val === DATA_EXPORTER_BUTTON_INDEX
-                    ? null
-                    : DATA_EXPORTER_BUTTON_INDEX,
-                );
-                handleBlockZIndex();
-              }}
-              uuid="AddNewBlocks/Data_exporter"
-            >
-              Data exporter
-            </KeyboardShortcutButton>
-          </FlyoutMenuWrapper>
+          {!hideDataExporter && (
+            <>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType)}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
+                parentRef={dataExporterButtonRef}
+                uuid="data_exporter_button"
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact} yellow>
+                      <Add
+                        inverted
+                        size={iconSize}
+                      />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setButtonMenuOpenIndex(val =>
+                      val === DATA_EXPORTER_BUTTON_INDEX
+                        ? null
+                        : DATA_EXPORTER_BUTTON_INDEX,
+                    );
+                    handleBlockZIndex();
+                  }}
+                  uuid="AddNewBlocks/Data_exporter"
+                >
+                  Data exporter
+                </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
+
+              <Spacing ml={1} />
+            </>
+          )}
         </FlexContainer>
       </ClickOutside>
 
-      <Spacing ml={1} />
-
-      <Tooltip
-        block
-        label="Write experimental code that doesn’t get executed when you run your pipeline."
-        size={null}
-        widthFitContent
-      >
-        <KeyboardShortcutButton
-          {...sharedProps}
-          beforeElement={
-            <IconContainerStyle border compact={compact}>
-              <Add size={iconSize} />
-            </IconContainerStyle>
-          }
-          onClick={(e) => {
-            e.preventDefault();
-            addNewBlock({
-              type: BlockTypeEnum.SCRATCHPAD,
-            });
-          }}
-          uuid="AddNewBlocks/Scratchpad"
-        >
-          Scratchpad
-        </KeyboardShortcutButton>
-      </Tooltip>
-
-      <Spacing ml={1} />
-
-      {!isStreamingPipeline &&
+      {!hideScratchpad && (
         <>
           <Tooltip
             block
-            label="Add a sensor so that other blocks only run when sensor is complete."
+            label="Write experimental code that doesn’t get executed when you run your pipeline."
             size={null}
             widthFitContent
           >
             <KeyboardShortcutButton
               {...sharedProps}
               beforeElement={
-                <IconContainerStyle compact={compact}>
-                  <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                <IconContainerStyle border compact={compact}>
+                  <Add size={iconSize} />
                 </IconContainerStyle>
               }
               onClick={(e) => {
                 e.preventDefault();
                 addNewBlock({
-                  language: BlockLanguageEnum.PYTHON,
-                  type: BlockTypeEnum.SENSOR,
+                  type: BlockTypeEnum.SCRATCHPAD,
                 });
               }}
-              uuid="AddNewBlocks/Sensor"
+              uuid="AddNewBlocks/Scratchpad"
             >
-              Sensor
+              Scratchpad
             </KeyboardShortcutButton>
           </Tooltip>
 
           <Spacing ml={1} />
+        </>
+      )}
 
-          <KeyboardShortcutButton
-            {...sharedProps}
-            beforeElement={
-              <IconContainerStyle compact={compact}>
-                <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-              </IconContainerStyle>
-            }
-            onClick={(e) => {
-              e.preventDefault();
-              setRecsWindowOpenBlockIdx(blockIdx);
-            }}
-            uuid="AddNewBlocks/Recommendations"
-          >
-            Recs
-          </KeyboardShortcutButton>
+      {!isStreamingPipeline &&
+        <>
+          {!hideSensor && (
+            <>
+              <Tooltip
+                block
+                label="Add a sensor so that other blocks only run when sensor is complete."
+                size={null}
+                widthFitContent
+              >
+                <KeyboardShortcutButton
+                  {...sharedProps}
+                  beforeElement={
+                    <IconContainerStyle compact={compact}>
+                      <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                    </IconContainerStyle>
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addNewBlock({
+                      language: BlockLanguageEnum.PYTHON,
+                      type: BlockTypeEnum.SENSOR,
+                    });
+                  }}
+                  uuid="AddNewBlocks/Sensor"
+                >
+                  Sensor
+                </KeyboardShortcutButton>
+              </Tooltip>
+
+              <Spacing ml={1} />
+            </>
+          )}
+
+          {!hideRecommendations && (
+            <KeyboardShortcutButton
+              {...sharedProps}
+              beforeElement={
+                <IconContainerStyle compact={compact}>
+                  <Mage8Bit size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
+                </IconContainerStyle>
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                setRecsWindowOpenBlockIdx(blockIdx);
+              }}
+              uuid="AddNewBlocks/Recommendations"
+            >
+              Recs
+            </KeyboardShortcutButton>
+          )}
         </>
       }
     </FlexContainer>

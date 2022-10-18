@@ -57,6 +57,7 @@ type CodeEditorProps = {
   placeholder?: string;
   shortcuts?: ((monaco: any, editor: any) => void)[];
   showLineNumbers?: boolean;
+  tabSize?: number;
   theme?: any;
   value?: string;
   width?: number | string;
@@ -78,6 +79,7 @@ function CodeEditor({
   setTextareaFocused,
   shortcuts: shortcutsProp,
   showLineNumbers = true,
+  tabSize = 4,
   textareaFocused,
   theme: themeProp,
   value,
@@ -118,7 +120,7 @@ function CodeEditor({
     addKeyboardShortcut(monaco, editor, shortcuts);
 
     editor.getModel().updateOptions({
-      tabSize: 4,
+      tabSize,
     });
 
     if (autoHeight && !height) {
@@ -182,6 +184,7 @@ function CodeEditor({
     setSelected,
     setTextareaFocused,
     shortcutsProp,
+    tabSize,
     textareaFocused,
     value,
   ]);
