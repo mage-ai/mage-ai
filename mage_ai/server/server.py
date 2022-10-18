@@ -414,6 +414,7 @@ class ApiStatusHandler(BaseHandler):
     def get(self):
         status = {
             'is_instance_manager': os.getenv(MANAGE_ENV_VAR) == '1',
+            'scheduler_status': scheduler_manager.get_status(),
         }
         self.write(dict(status=status))
 
