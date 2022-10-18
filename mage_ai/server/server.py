@@ -578,6 +578,8 @@ async def main(
 
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
 
+    db_connection.start_session()
+
     get_messages(
         lambda content: WebSocketServer.send_message(
             parse_output_message(content),
@@ -613,8 +615,6 @@ def start_server(
     else:
         # Start a subprocess for scheduler
         scheduler_manager.start_scheduler()
-    
-    db_connection.start_session()
 
     enable_pretty_logging()
 

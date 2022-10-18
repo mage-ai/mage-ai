@@ -23,6 +23,6 @@ class DBConnection:
         self.session = scoped_session(session_factory)
 
     def close_session(self):
-        self.session.remove()
+        self.session.close()
 
 db_connection = DBConnection()
