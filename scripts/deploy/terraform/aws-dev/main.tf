@@ -41,6 +41,7 @@ data "template_file" "env_vars" {
     ecs_cluster_name      = "${var.app_name}-${var.app_environment}-cluster"
     ecs_task_definition   = "${var.app_name}-dev-task"
     ecs_container_name    = "${var.app_name}-${var.app_environment}-container"
+    database_connection_url = var.DATABASE_CONNECTION_URL
   }
 }
 

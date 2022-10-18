@@ -254,7 +254,9 @@ function PipelineRunsTable({
           } = pipelineRun;
 
           const isRetry =
-            index > 0 && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date;
+            index > 0
+              && pipelineRuns[index - 1].execution_date == pipelineRun.execution_date
+              && pipelineRuns[index - 1].id == pipelineRun.id;
 
           let arr = [];
           if (isRetry) {
@@ -314,7 +316,7 @@ function PipelineRunsTable({
                 pipelineRun={pipelineRun}
               />,
               <Text default key="row_item_8" monospace>
-                {executionDate}
+                {(executionDate && getTimeInUTC(executionDate).toISOString().split('.')[0]) || '-'}
               </Text>,
               <NextLink
                 as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}

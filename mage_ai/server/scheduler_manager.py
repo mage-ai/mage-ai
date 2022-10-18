@@ -1,5 +1,6 @@
 from enum import Enum
 from mage_ai.orchestration.db.database_manager import database_manager
+from mage_ai.orchestration.db.process import create_process
 import multiprocessing
 import threading
 import traceback
@@ -9,7 +10,9 @@ SCHEDULER_AUTO_RESTART_INTERVAL = 30.0
 
 def run_scheduler():
     from mage_ai.orchestration.triggers.loop_time_trigger import LoopTimeTrigger
+    from mage_ai.orchestration.db import db_connection
 
+    db_connection.start_session()
     database_manager.run_migrations()
     try:
         LoopTimeTrigger().start()
@@ -48,7 +51,7 @@ class SchedulerManager:
         if self.is_alive:
             return
 
-        proc = multiprocessing.Process(target=run_scheduler)
+        proc = create_process(target=run_scheduler)
         proc.start()
         self.scheduler_process = proc
         self.status = self.SchedulerStatus.RUNNING

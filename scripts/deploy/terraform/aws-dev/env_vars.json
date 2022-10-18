@@ -30,5 +30,9 @@
     {
         "name": "ECS_CONTAINER_NAME",
         "value": "${ecs_container_name}"
+    },
+    {
+        "name": "MAGE_DATABASE_CONNECTION_URL",
+        "value": "${database_connection_url}"
     }
 ]

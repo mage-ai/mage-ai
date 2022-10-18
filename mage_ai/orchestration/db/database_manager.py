@@ -1,6 +1,6 @@
 from alembic.config import Config
 from alembic import command
-from mage_ai.orchestration.db import DB_CONNECTION_URL
+from mage_ai.orchestration.db import db_connection_url
 import os
 
 
@@ -19,7 +19,7 @@ class DatabaseManager:
             'script_location',
             os.path.join(cur_dirpath, 'migrations'),
         )
-        alembic_cfg.set_main_option('sqlalchemy.url', DB_CONNECTION_URL)
+        alembic_cfg.set_main_option('sqlalchemy.url', db_connection_url)
         command.upgrade(alembic_cfg, 'head')
 
 

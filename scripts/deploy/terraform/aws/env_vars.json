@@ -18,5 +18,9 @@
     {
         "name": "LAMBDA_FUNCTION_NAME",
         "value": "${lambda_func_name}"
+    },
+    {
+        "name": "MAGE_DATABASE_CONNECTION_URL",
+        "value": "${database_connetion_url}"
     }
 ]

@@ -10,6 +10,7 @@ from mage_ai.data_preparation.variable_manager import (
     delete_global_variable,
     set_global_variable,
 )
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models import PipelineSchedule
 from mage_ai.server.active_kernel import (
     interrupt_kernel,
@@ -581,6 +582,8 @@ async def main(
     )
 
     print(f'Mage is running at http://{host or "localhost"}:{port} and serving project {project}')
+
+    db_connection.start_session()
 
     get_messages(
         lambda content: WebSocketServer.send_message(

@@ -9,6 +9,7 @@ from mage_ai.data_preparation.models.pipelines.integration_pipeline import Integ
 from mage_ai.data_preparation.repo_manager import get_repo_path
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db.models import BlockRun, EventMatcher, PipelineRun, PipelineSchedule
+from mage_ai.orchestration.db.process import create_process
 from mage_ai.orchestration.execution_process_manager import execution_process_manager
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -16,7 +17,6 @@ from mage_ai.shared.array import find
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.hash import merge_dict
 from typing import Any, Dict, List
-import multiprocessing
 import traceback
 
 
@@ -81,26 +81,29 @@ class PipelineScheduler:
             self.__schedule_pipeline()
 
     def on_block_complete(self, block_uuid: str) -> None:
-        block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        block_run.update(
-            status=BlockRun.BlockRunStatus.COMPLETED,
-            completed_at=datetime.now(),
-        )
-        self.logger.info(
-            f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
-            **self.__build_tags(
-                block_run_id=block_run.id,
-                block_uuid=block_run.block_uuid,
-            ),
-        )
+        try:
+            block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
+            block_run.update(
+                status=BlockRun.BlockRunStatus.COMPLETED,
+                completed_at=datetime.now(),
+            )
+            self.logger.info(
+                f'BlockRun {block_run.id} (block_uuid: {block_uuid}) completes.',
+                **self.__build_tags(
+                    block_run_id=block_run.id,
+                    block_uuid=block_run.block_uuid,
+                ),
+            )
 
-        self.pipeline_run.refresh()
-        if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
-            return
-        else:
-            for b in self.pipeline_run.block_runs:
-                b.refresh()
-            self.schedule()
+            self.pipeline_run.refresh()
+            if self.pipeline_run.status != PipelineRun.PipelineRunStatus.RUNNING:
+                return
+            else:
+                for b in self.pipeline_run.block_runs:
+                    b.refresh()
+                self.schedule()
+        except:
+            traceback.print_exc()
 
     def on_block_failure(self, block_uuid: str) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
@@ -174,8 +177,7 @@ class PipelineScheduler:
                 f'Start a process for BlockRun {b.id}',
                 **self.__build_tags(**tags),
             )
-
-            proc = multiprocessing.Process(target=run_block, args=(
+            proc = create_process(run_block, (
                 self.pipeline_run.id,
                 b.id,
                 self.__get_variables(),
@@ -194,7 +196,7 @@ class PipelineScheduler:
                 **self.__build_tags(),
             )
 
-            proc = multiprocessing.Process(target=run_integration_pipeline, args=(
+            proc = create_process(target=run_integration_pipeline, args=(
                 self.pipeline_run.id,
                 [b.id for b in self.executable_block_runs],
                 self.__get_variables(dict(
@@ -212,8 +214,7 @@ class PipelineScheduler:
             f'Start a process for PipelineRun {self.pipeline_run.id}',
             **self.__build_tags(),
         )
-
-        proc = multiprocessing.Process(target=run_pipeline, args=(
+        proc = create_process(run_pipeline, (
             self.pipeline_run.id,
             self.__get_variables(),
             self.__build_tags(),
