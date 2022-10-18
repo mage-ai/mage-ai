@@ -45,9 +45,15 @@ export enum InclusionEnum {
   UNSUPPORTED = 'unsupported',
 }
 
-export interface SchemaPropertyType {
-  format?: ColumnFormatEnum;
+interface SchemaPropertyAnyOfType {
   type: ColumnTypeEnum[];
+  items: SchemaType;
+}
+
+export interface SchemaPropertyType {
+  anyOf?: SchemaPropertyAnyOfType[];
+  format?: ColumnFormatEnum;
+  type?: ColumnTypeEnum[];
 }
 
 interface SchemaType {

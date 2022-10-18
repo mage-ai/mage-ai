@@ -118,7 +118,7 @@ function IntegrationPipeline({
   }, [dataExporterBlock]);
 
   const [integrationSource, setIntegrationSource] = useState<IntegrationSourceType>(null);
-  const streams: StreamType[] = useMemo(() => integrationSource?.streams || [], integrationSource);
+  const streams: StreamType[] = useMemo(() => integrationSource?.streams || [], [integrationSource]);
   const streamsByUUID =
     useMemo(() => indexBy(streams, ({ tap_stream_id: uuid }) => uuid), [streams]);
 
