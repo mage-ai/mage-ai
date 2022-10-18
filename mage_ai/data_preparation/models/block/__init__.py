@@ -2,7 +2,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from inspect import Parameter, signature
 from logging import Logger
-from mage_ai.data_integrations.utils.config import interpolate_variables_for_block_settings
+from mage_ai.data_integrations.utils.config import build_config_json
 from mage_ai.data_integrations.logger.utils import print_logs_from_output
 from mage_ai.data_cleaner.shared.utils import (
     is_dataframe,
@@ -689,16 +689,14 @@ class Block:
 
             if self.pipeline and PipelineType.INTEGRATION == self.pipeline.type:
                 if BlockType.DATA_LOADER == self.type:
-                    config_json = json.dumps(interpolate_variables_for_block_settings(
-                        self.pipeline.data_loader.file_path,
-                        global_vars,
-                    )['config'])
-
                     proc1 = subprocess.run([
                         PYTHON_COMMAND,
                         self.pipeline.source_file_path,
                         '--config_json',
-                        config_json,
+                        build_config_json(
+                            self.pipeline.data_loader.file_path,
+                            global_vars,
+                        ),
                         '--log_to_stdout',
                         '1',
                         '--settings',
@@ -719,10 +717,10 @@ class Block:
                         PYTHON_COMMAND,
                         self.pipeline.destination_file_path,
                         '--config_json',
-                        json.dumps(interpolate_variables_for_block_settings(
+                        build_config_json(
                             self.pipeline.data_exporter.file_path,
                             global_vars,
-                        )['config']),
+                        ),
                         '--log_to_stdout',
                         '1',
                         '--settings',

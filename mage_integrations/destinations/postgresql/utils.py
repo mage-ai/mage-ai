@@ -1,5 +1,7 @@
+from ast import literal_eval
 from mage_integrations.destinations.constants import (
     COLUMN_FORMAT_DATETIME,
+    COLUMN_TYPE_ARRAY,
     COLUMN_TYPE_BOOLEAN,
     COLUMN_TYPE_INTEGER,
     COLUMN_TYPE_NUMBER,
@@ -11,28 +13,51 @@ from mage_integrations.destinations.utils import clean_column_name
 from typing import Dict, List
 
 
+def convert_column_type(column_type: str, column_settings: Dict) -> str:
+    if COLUMN_TYPE_BOOLEAN == column_type:
+        return 'BOOLEAN'
+    elif COLUMN_TYPE_INTEGER == column_type:
+        return 'BIGINT'
+    elif COLUMN_TYPE_NUMBER == column_type:
+        return 'DOUBLE PRECISION'
+    elif COLUMN_TYPE_OBJECT == column_type:
+        return 'TEXT'
+    elif COLUMN_TYPE_STRING == column_type:
+        if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
+            # Twice as long as the number of characters in ISO date format
+            return 'VARCHAR(52)'
+        else:
+            return 'VARCHAR(255)'
+
 def column_type_mapping(schema) -> dict:
     mapping = {}
     for column, column_settings in schema['properties'].items():
-        column_types = [t for t in column_settings['type'] if 'null' != t]
-        column_type = column_types[0]
+        arr = column_settings.get('type', [])
+        for any_of in column_settings.get('anyOf', []):
+            arr += any_of.get('type', [])
 
-        if COLUMN_TYPE_BOOLEAN == column_type:
-            column_type_converted = 'BOOLEAN'
-        elif COLUMN_TYPE_INTEGER == column_type:
-            column_type_converted = 'BIGINT'
-        elif COLUMN_TYPE_NUMBER == column_type:
-            column_type_converted = 'DOUBLE PRECISION'
-        elif COLUMN_TYPE_OBJECT == column_type:
-            column_type_converted = 'TEXT'
-        elif COLUMN_TYPE_STRING == column_type:
-            if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                # Twice as long as the number of characters in ISO date format
-                column_type_converted = 'VARCHAR(52)'
-            else:
-                column_type_converted = 'VARCHAR(255)'
+        column_types = [t for t in arr if 'null' != t]
+
+        column_type = column_types[0]
+        if COLUMN_TYPE_ARRAY == column_type and len(column_types) >= 2:
+            column_type = column_types[1]
+
+        column_type_converted = 'VARCHAR(255)'
+        item_type = None
+        item_type_converted = None
+
+        if COLUMN_TYPE_ARRAY == column_type:
+            item_types = [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
+            if len(item_types):
+                item_type = item_types[0]
+                item_type_converted = convert_column_type(item_type, column_settings)
+                column_type_converted = f'{item_type_converted}[]'
+        else:
+            column_type_converted = convert_column_type(column_type, column_settings)
 
         mapping[column] = dict(
+            item_type=item_type,
+            item_type_converted=item_type_converted,
             type=column_type,
             type_converted=column_type_converted,
         )
@@ -81,10 +106,25 @@ def build_insert_command(
         vals = []
         for column in columns:
             v = row.get(column, None)
-            vals.append(convert_column_to_type(
-                str(v).replace("'", "''"),
-                mapping[column]['type_converted'],
-            ) if v is not None else 'NULL')
+            item_type_converted = mapping[column]['item_type_converted']
+            column_type = mapping[column]['type']
+            column_type_converted = mapping[column]['type_converted']
+
+            value_final = 'NULL'
+            if v is not None:
+                if COLUMN_TYPE_ARRAY == column_type:
+                    if type(v) is str:
+                        v = literal_eval(v)
+
+                    value_final = [str(s).replace("'", "''") for s in v]
+                    value_final = f"'{{{', '.join(value_final)}}}'"
+                else:
+                    value_final = convert_column_to_type(
+                        str(v).replace("'", "''"),
+                        column_type_converted,
+                    )
+
+            vals.append(value_final)
         values.append(f"({', '.join(vals)})")
 
     commands = [

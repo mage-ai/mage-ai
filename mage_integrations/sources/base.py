@@ -19,6 +19,7 @@ import inspect
 import json
 import os
 import singer
+import traceback
 
 LOGGER = singer.get_logger()
 
@@ -97,82 +98,109 @@ class Source():
         return Catalog(streams)
 
     def process(self) -> None:
-        if self.discover_mode:
-            catalog = self.discover()
-            catalog.dump()
-        else:
-            catalog = self.catalog or self.discover()
-            self.sync(self.config, self.state, catalog)
+        try:
+            if self.discover_mode:
+                catalog = self.discover()
+                if type(catalog) is Catalog:
+                    catalog.dump()
+                elif type(catalog) is dict:
+                    print(json.dumps(catalog, indent=2))
+            else:
+                catalog = self.catalog or self.discover()
+                self.sync(catalog)
+        except Exception as err:
+            message = f'{self.__class__.__name__} process failed with error {err}.'
+            self.logger.exception(message, tags=dict(
+                error=str(err),
+                errors=traceback.format_stack(),
+                message=traceback.format_exc(),
+            ))
+            raise Exception(message)
 
-    def sync(self, config: Dict, state: Dict, catalog: Catalog) -> None:
-        for stream in catalog.get_selected_streams(state):
-            tap_stream_id = stream.tap_stream_id
+    def get_bookmarks_for_stream(self, stream) -> Dict:
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
-            self.logger.info(f'Syncing stream {tap_stream_id}.')
+    def get_boommark_properties_for_stream(self, stream) -> List[str]:
+        bookmark_properties = []
 
-            bookmarks = None
-            bookmark_properties = []
-            replication_method = stream.replication_method
-            incremental = REPLICATION_METHOD_INCREMENTAL == replication_method
-            if incremental:
-                bookmarks = state.get('bookmarks', {}).get(tap_stream_id, None)
-                if stream.replication_key:
-                    bookmark_properties = [stream.replication_key]
-                else:
-                    bookmark_properties = stream.to_dict().get('bookmark_properties', [])
-            elif REPLICATION_METHOD_FULL_TABLE != replication_method:
-                message = f'Invalid replication_method {replication_method}'
-                self.logger.exception(message)
-                raise Exception(message)
+        if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
+            if stream.replication_key:
+                bookmark_properties = [stream.replication_key]
+            else:
+                bookmark_properties = stream.to_dict().get('bookmark_properties', [])
 
-            start_date = None
-            if not incremental and self.config.get('start_date'):
-                start_date = dateutil.parser.parse(self.config.get('start_date'))
+        return bookmark_properties
 
-            selected_columns = extract_selected_columns(stream.metadata)
-            schema_dict = stream.schema.to_dict()
-            schema_dict['properties'] = extract(schema_dict['properties'], selected_columns)
+    def process_stream(self, stream):
+        self.logger.info(f'Syncing stream {stream.tap_stream_id}.')
 
-            write_schema(
-                bookmark_properties=bookmark_properties,
-                key_properties=stream.key_properties,
-                replication_method=replication_method,
-                schema=schema_dict,
-                stream_name=tap_stream_id,
-                unique_conflict_method=stream.unique_conflict_method,
-                unique_constraints=stream.unique_constraints,
+        if stream.replication_method not in [
+            REPLICATION_METHOD_FULL_TABLE,
+            REPLICATION_METHOD_INCREMENTAL,
+        ]:
+            message = f'Invalid replication_method {stream.replication_method}'
+            self.logger.exception(message)
+            raise Exception(message)
+
+        schema_dict = stream.schema.to_dict()
+        schema_dict['properties'] = extract(
+            schema_dict['properties'],
+            extract_selected_columns(stream.metadata),
+        )
+
+        write_schema(
+            bookmark_properties=self.get_boommark_properties_for_stream(stream),
+            key_properties=stream.key_properties,
+            replication_method=stream.replication_method,
+            schema=schema_dict,
+            stream_name=stream.tap_stream_id,
+            unique_conflict_method=stream.unique_conflict_method,
+            unique_constraints=stream.unique_constraints,
+        )
+
+    def sync_stream(self, stream) -> None:
+        bookmark_properties = self.get_boommark_properties_for_stream(stream)
+
+        start_date = None
+        if not REPLICATION_METHOD_INCREMENTAL == stream.replication_method and self.config.get('start_date'):
+            start_date = dateutil.parser.parse(self.config.get('start_date'))
+
+        max_bookmark = None
+        for row in self.load_data(
+            bookmarks=self.get_bookmarks_for_stream(stream),
+            query=self.query,
+            start_date=start_date,
+        ):
+            singer.write_records(
+                stream.tap_stream_id,
+                [
+                    {col: row.get(col) for col in extract_selected_columns(stream.metadata)},
+                ],
             )
 
-            max_bookmark = None
-            for row in self.load_data(
-                bookmarks=bookmarks,
-                query=self.query,
-                start_date=start_date,
-            ):
-                singer.write_records(
-                    tap_stream_id,
-                    [
-                        {col: row.get(col) for col in selected_columns},
-                    ],
-                )
-
-                if incremental and bookmark_properties:
-                    if self.is_sorted:
-                        singer.write_state({
-                            tap_stream_id: {col: row.get(col) for col in bookmark_properties},
-                        })
-                    else:
-                        # If data unsorted, save max value until end of writes
-                        max_bookmark = max(
-                            max_bookmark,
-                            [row.get(col) for col in bookmark_properties],
-                        )
-
-            if bookmark_properties and not self.is_sorted:
-                if max_bookmark:
+            if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
+                if self.is_sorted:
                     singer.write_state({
-                        tap_stream_id: {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
+                        stream.tap_stream_id: {col: row.get(col) for col in bookmark_properties},
                     })
+                else:
+                    # If data unsorted, save max value until end of writes
+                    max_bookmark = max(
+                        max_bookmark,
+                        [row.get(col) for col in bookmark_properties],
+                    )
+
+        if bookmark_properties and not self.is_sorted:
+            if max_bookmark:
+                singer.write_state({
+                    stream.tap_stream_id: {col: max_bookmark[idx] for idx, col in enumerate(bookmark_properties)},
+                })
+
+    def sync(self, catalog: Catalog) -> None:
+        for stream in catalog.get_selected_streams(self.state):
+            self.process_stream(stream)
+            self.sync_stream(stream)
 
     def build_catalog_entry(self, stream_id, schema, **kwargs):
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata

@@ -13,6 +13,7 @@ export enum ColumnFormatEnum {
 }
 
 export enum ColumnTypeEnum {
+  ARRAY = 'array',
   BOOLEAN = 'boolean',
   INTEGER = 'integer',
   NULL = 'null',
@@ -24,6 +25,7 @@ export enum ColumnTypeEnum {
 export const COLUMN_TYPE_CUSTOM_DATE_TIME = 'datetime';
 
 export const COLUMN_TYPES = [
+  ColumnTypeEnum.ARRAY,
   ColumnTypeEnum.BOOLEAN,
   COLUMN_TYPE_CUSTOM_DATE_TIME,
   ColumnTypeEnum.INTEGER,
@@ -43,9 +45,15 @@ export enum InclusionEnum {
   UNSUPPORTED = 'unsupported',
 }
 
-export interface SchemaPropertyType {
-  format?: ColumnFormatEnum;
+interface SchemaPropertyAnyOfType {
   type: ColumnTypeEnum[];
+  items: SchemaType;
+}
+
+export interface SchemaPropertyType {
+  anyOf?: SchemaPropertyAnyOfType[];
+  format?: ColumnFormatEnum;
+  type?: ColumnTypeEnum[];
 }
 
 interface SchemaType {

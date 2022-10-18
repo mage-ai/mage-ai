@@ -1,0 +1,84 @@
+{
+    "type": [
+      "null",
+      "object"
+    ],
+    "properties":{
+        "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "object": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "country": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "created": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+        },
+        "customer": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "livemode": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+        },
+        "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+        },
+        "verification": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+                "status": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "verified_address": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "verified_name": {
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                }
+            }
+        }
+    }
+}
+  

@@ -1,5 +1,6 @@
 import { parse, stringify } from 'yaml';
 import { useCallback, useMemo, useState } from 'react';
+import { useMutation } from 'react-query';
 
 import Button from '@oracle/elements/Button';
 import BlockType, {
@@ -40,6 +41,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { find, indexBy, remove } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
+import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
 import { pluralize } from '@utils/string';
 
 type IntegrationPipelineProps = {
@@ -58,6 +60,10 @@ type IntegrationPipelineProps = {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setSelectedBlock: (block: BlockType) => void;
 };
 
@@ -69,6 +75,7 @@ function IntegrationPipeline({
   onChangeCodeBlock,
   pipeline,
   savePipelineContent,
+  setErrors,
   setSelectedBlock,
 }: IntegrationPipelineProps) {
   const [destinationVisible, setDestinationVisible] = useState(true);
@@ -110,14 +117,27 @@ function IntegrationPipeline({
     return parse(dataExporterBlock.content);
   }, [dataExporterBlock]);
 
-  const {
-    data: dataIntegrationSource,
-    mutate: fetchIntegrationSource,
-  } = api.integration_sources.detail(pipeline?.uuid);
-  const integrationSource = dataIntegrationSource?.integration_source;
-  const streams: StreamType[] = useMemo(() => integrationSource?.streams || [], integrationSource);
+  const [integrationSource, setIntegrationSource] = useState<IntegrationSourceType>(null);
+  const streams: StreamType[] = useMemo(() => integrationSource?.streams || [], [integrationSource]);
   const streamsByUUID =
     useMemo(() => indexBy(streams, ({ tap_stream_id: uuid }) => uuid), [streams]);
+
+  const [fetchIntegrationSource, { isLoading: isLoadingFetchIntegrationSource }] = useMutation(
+    api.integration_sources.useUpdate(pipeline?.uuid),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: (response) => {
+            setIntegrationSource(response.integration_source);
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
 
   const dataLoaderEditor = useMemo(() => {
     if (!dataLoaderBlock) {
@@ -288,19 +308,20 @@ function IntegrationPipeline({
                   return;
                 }
 
+                const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
+                if (config) {
+                  Object.keys(config).forEach((key: string) => {
+                    config[key] = config[key] || null;
+                  });
+                }
+
                 if (dataLoaderBlock) {
                   onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
                     ...dataLoaderBlockContent,
+                    config,
                     source: sourceUUID,
                   }));
                 } else {
-                  const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
-                  if (config) {
-                    Object.keys(config).forEach((key: string) => {
-                      config[key] = config[key] || null;
-                    });
-                  }
-
                   addNewBlockAtIndex({
                     content: stringify({
                       source: sourceUUID,
@@ -312,7 +333,6 @@ function IntegrationPipeline({
                 }
 
                 savePipelineContent().then(() => {
-                  fetchIntegrationSource();
                   fetchPipeline();
                 });
               }}
@@ -346,64 +366,77 @@ function IntegrationPipeline({
                   Select stream
                 </Headline>
 
-                <Select
-                  onChange={(e) => {
-                    const uuid = e.target.value;
-                    const stream = streamsByUUID[uuid];
-                    const catalogData = stream
-                      ? {
-                        streams: [
-                          stream,
-                        ],
-                      }
-                      : null;
-
-                    if (stream) {
-                      stream.metadata.forEach((md, idx: number) => {
-                        const {
-                          metadata,
-                        } = md;
-                        if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
-                          if (!stream.replication_method) {
-                            stream.replication_method = ReplicationMethodEnum.FULL_TABLE;
+                {streams.length && (
+                  <Spacing mb={2}>
+                    <Select
+                      onChange={(e) => {
+                        const uuid = e.target.value;
+                        const stream = streamsByUUID[uuid];
+                        const catalogData = stream
+                          ? {
+                            streams: [
+                              stream,
+                            ],
                           }
-                          if (!stream.unique_conflict_method) {
-                            stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
-                          }
+                          : null;
 
-                          stream.metadata[idx] = {
-                            ...md,
-                            metadata: {
-                              ...metadata,
-                              selected: true,
-                            },
-                          };
+                        if (stream) {
+                          stream.metadata.forEach((md, idx: number) => {
+                            const {
+                              metadata,
+                            } = md;
+                            if (InclusionEnum.UNSUPPORTED !== metadata.inclusion) {
+                              if (!stream.replication_method) {
+                                stream.replication_method = ReplicationMethodEnum.FULL_TABLE;
+                              }
+                              if (!stream.unique_conflict_method) {
+                                stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
+                              }
+
+                              stream.metadata[idx] = {
+                                ...md,
+                                metadata: {
+                                  ...metadata,
+                                  selected: true,
+                                },
+                              };
+                            }
+                          });
                         }
-                      });
-                    }
 
-                    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                      ...dataLoaderBlockContent,
-                      catalog: catalogData,
-                    }));
+                        onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
+                          ...dataLoaderBlockContent,
+                          catalog: catalogData,
+                        }));
 
-                    savePipelineContent().then(() => fetchPipeline());
-                  }}
-                  primary
-                  value={catalog?.streams?.[0]?.tap_stream_id || ''}
-                >
-                  <option value="" />
-                  {streams.map(({
-                    tap_stream_id: uuid,
-                  }) => (
-                    <option
-                      key={uuid}
-                      value={uuid}
+                        savePipelineContent().then(() => fetchPipeline());
+                      }}
+                      primary
+                      value={catalog?.streams?.[0]?.tap_stream_id || ''}
                     >
-                      {uuid}
-                    </option>
-                  ))}
-                </Select>
+                      <option value="" />
+                      {streams.map(({
+                        tap_stream_id: uuid,
+                      }) => (
+                        <option
+                          key={uuid}
+                          value={uuid}
+                        >
+                          {uuid}
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+                )}
+
+                <Button
+                  loading={isLoadingFetchIntegrationSource}
+                  onClick={() => fetchIntegrationSource()}
+                  primary
+                  small
+                >
+                  Fetch list of streams
+                </Button>
               </Spacing>
             </>
           )}
@@ -420,6 +453,11 @@ function IntegrationPipeline({
             unique_conflict_method: uniqueConflictMethod,
           }: StreamType) => {
             const metadataByColumn = indexBy(metadata, ({ breadcrumb }) => breadcrumb.join('/'));
+
+            const metadataForStream =
+              find(metadata, ({ breadcrumb }) => breadcrumb.length === 0)?.metadata
+            const validKeyProperties = metadataForStream['table-key-properties'] || [];
+            const validReplicationKeys = metadataForStream['valid-replication-keys'] || [];
 
             return (
               <div key={streamUUID}>
@@ -449,10 +487,20 @@ function IntegrationPipeline({
                   ]}
                   rows={Object.entries(properties).map(([
                     columnName, {
+                      anyOf: columnTypesAnyOf = [],
                       format: columnFormat,
-                      type: columnTypes,
+                      type: columnTypesInit = [],
                     },
                   ]) => {
+                    const columnTypesSet = new Set(columnTypesInit);
+                    columnTypesAnyOf.forEach(({
+                      items,
+                      type,
+                    }) => {
+                      type.forEach(t => columnTypesSet.add(t));
+                    });
+                    const columnTypes = Array.from(columnTypesSet);
+
                     const {
                       metadata: {
                         inclusion,
@@ -572,6 +620,7 @@ function IntegrationPipeline({
                       </FlexContainer>,
                       <Checkbox
                         checked={!!uniqueConstraints?.includes(columnName)}
+                        disabled={validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName)}
                         key={`${streamUUID}/${columnName}/unique`}
                         onClick={() => updateStream(streamUUID, (stream: StreamType) => {
                           if (stream.unique_constraints?.includes(columnName)) {
@@ -587,6 +636,7 @@ function IntegrationPipeline({
                       />,
                       <Checkbox
                         checked={!!bookmarkProperties?.includes(columnName)}
+                        disabled={validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName)}
                         key={`${streamUUID}/${columnName}/bookmark`}
                         onClick={() => updateStream(streamUUID, (stream: StreamType) => {
                           if (stream.bookmark_properties?.includes(columnName)) {
@@ -881,7 +931,6 @@ function IntegrationPipeline({
                 }
 
                 savePipelineContent().then(() => {
-                  fetchIntegrationSource();
                   fetchPipeline();
                 });
               }}

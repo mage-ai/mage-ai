@@ -27,7 +27,9 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def destination_config(self) -> Dict:
-        return yaml.safe_load(self.data_exporter.content) or {}
+        if self.data_exporter and self.data_exporter.content:
+            return yaml.safe_load(self.data_exporter.content)
+        return {}
 
     @property
     def destination_uuid(self) -> str:
@@ -60,7 +62,9 @@ class IntegrationPipeline(Pipeline):
 
     @property
     def source_config(self) -> Dict:
-        return yaml.safe_load(self.data_loader.content) or {}
+        if self.data_loader and self.data_loader.content:
+            return yaml.safe_load(self.data_loader.content)
+        return {}
 
     @property
     def source_uuid(self) -> str:
@@ -97,12 +101,19 @@ class IntegrationPipeline(Pipeline):
 
     def discover(self) -> dict:
         if self.source_file_path and self.data_loader.file_path:
-            proc = subprocess.run([
-                PYTHON,
-                self.source_file_path,
-                '--settings',
-                self.data_loader.file_path,
-                '--discover',
-            ], stdout=subprocess.PIPE)
+            try:
+                proc = subprocess.run([
+                    PYTHON,
+                    self.source_file_path,
+                    '--settings',
+                    self.data_loader.file_path,
+                    '--discover',
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc.check_returncode()
 
-            return json.loads(proc.stdout)
+                output = proc.stdout
+                return json.loads(output)
+            except subprocess.CalledProcessError as e:
+                message = e.stderr.decode("utf-8")
+                raise Exception(message)
+

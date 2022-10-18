@@ -93,6 +93,10 @@ type PipelineDetailProps = {
   }) => Promise<any>;
   selectedBlock: BlockType;
   setAnyInputFocused: (value: boolean) => void;
+  setErrors: (opts: {
+    errors: any;
+    response: any;
+  }) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setPipelineContentTouched: (value: boolean) => void;
   setRecsWindowOpenBlockIdx: (idx: number) => void;
@@ -133,6 +137,7 @@ function PipelineDetail({
   selectedBlock,
   setAnyInputFocused,
   setEditingBlock,
+  setErrors,
   setMessages,
   setOutputBlocks,
   setPipelineContentTouched,
@@ -409,22 +414,24 @@ function PipelineDetail({
   const integrationMemo = useMemo(() => (
     <IntegrationPipeline
       addNewBlockAtIndex={addNewBlockAtIndex}
-      onChangeCodeBlock={onChangeCodeBlock}
-      setSelectedBlock={setSelectedBlock}
       blocks={blocks}
-      savePipelineContent={savePipelineContent}
-      pipeline={pipeline}
-      fetchPipeline={fetchPipeline}
       codeBlocks={codeBlocks}
+      fetchPipeline={fetchPipeline}
+      onChangeCodeBlock={onChangeCodeBlock}
+      pipeline={pipeline}
+      savePipelineContent={savePipelineContent}
+      setErrors={setErrors}
+      setSelectedBlock={setSelectedBlock}
     />
   ), [
-    codeBlocks,
-    onChangeCodeBlock,
     blocks,
+    codeBlocks,
+    fetchPipeline,
+    onChangeCodeBlock,
     onChangeCodeBlock,
     pipeline,
-    fetchPipeline,
     savePipelineContent,
+    setErrors,
     setSelectedBlock,
   ]);
 

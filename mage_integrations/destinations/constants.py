@@ -1,5 +1,6 @@
 COLUMN_FORMAT_DATETIME = 'date-time'
 
+COLUMN_TYPE_ARRAY = 'array'
 COLUMN_TYPE_BOOLEAN = 'boolean'
 COLUMN_TYPE_INTEGER = 'integer'
 COLUMN_TYPE_NUMBER = 'number'
