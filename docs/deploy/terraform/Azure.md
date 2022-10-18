@@ -219,6 +219,10 @@ you must add that IP address to the security group named `mage-data-prep-product
 virtual network name (e.g. `app_name`). The security group you must add the IP to
 will end with `-nsg-public`.
 
+### HTTPS enabling
+
+TBD
+
 ### Terminate all resources
 
 If you want to delete all resources created from deploying, run the following command:
