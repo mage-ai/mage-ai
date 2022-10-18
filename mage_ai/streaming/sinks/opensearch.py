@@ -11,6 +11,8 @@ import time
 class OpensearchSinkConfig:
     host: str
     index_name: str
+    verify_certs: bool = True
+    http_auth: str = '@awsauth'
 
 
 class OpenSearchSink():
@@ -20,24 +22,28 @@ class OpenSearchSink():
         self.config = OpensearchSinkConfig(**config)
 
         # Initialize opensearch client
-        session = boto3.Session()
-        credentials = session.get_credentials()
-        awsauth = AWS4Auth(
-          credentials.access_key,
-          credentials.secret_key,
-          session.region_name,
-          'es',
-          session_token=credentials.token,
-        )
+        if self.config.http_auth == '@awsauth':
+            session = boto3.Session()
+            credentials = session.get_credentials()
+            awsauth = AWS4Auth(
+              credentials.access_key,
+              credentials.secret_key,
+              session.region_name,
+              'es',
+              session_token=credentials.token,
+            )
+            http_auth = awsauth
+        else:
+            http_auth = self.config.http_auth
 
         self.client = OpenSearch(
                 hosts=[self.config.host],
-                http_auth=awsauth,
+                http_auth=http_auth,
                 use_ssl=True,
-                verify_certs=True,
+                verify_certs=self.config.verify_certs,
                 ssl_assert_hostname=False,
                 ssl_show_warn=False,
-                connection_class=RequestsHttpConnection
+                connection_class=RequestsHttpConnection,
         )
 
     def test_connection(self):

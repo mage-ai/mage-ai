@@ -634,6 +634,15 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
         opensearch_template = """connector_type: opensearch
 host: https://[cluster_name].[region].es.amazonaws.com
 index_name: test_index
+
+# # Whether to verify SSL certificates to authenticate.
+# verify_certs: true
+
+# # Authentication setting
+# # 1. "@awsauth": Authenticate with AWS Signature Version 4. Need to provide
+# #.             AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in environment variables.
+# # 2. "username:password": Authenticate with username and password.
+# http_auth: "@awsauth"
 """
         config = {'data_source': DataSource.OPENSEARCH}
         new_opensearch_template = fetch_template_source(
