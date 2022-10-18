@@ -74,6 +74,7 @@ from mage_ai.server.subscriber import get_messages
 from mage_ai.server.websocket import WebSocketServer
 from mage_ai.shared.hash import group_by, merge_dict
 from sqlalchemy.orm import aliased
+from tornado import autoreload
 from tornado.log import enable_pretty_logging
 import argparse
 import asyncio
@@ -543,6 +544,7 @@ def make_app():
         (r'/api/pipelines/(?P<pipeline_uuid>\w+)/logs', ApiPipelineLogListHandler),
         (r'/api/status', ApiStatusHandler),
     ]
+    autoreload.add_reload_hook(scheduler_manager.stop_scheduler)
     return tornado.web.Application(
         routes,
         autoreload=True,
