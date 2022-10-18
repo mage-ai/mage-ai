@@ -1,3 +1,4 @@
+from datetime import datetime
 from mage_integrations.sources.base import Source
 from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.salesforce.lib.tap_salesforce import (
@@ -31,9 +32,13 @@ class Salesforce(Source):
         lookback_window = self.config.get('lookback_window')
         lookback_window = int(lookback_window) if lookback_window else None
 
+        start_date = self.config.get('start_date')
+        if type(start_date) is datetime:
+            start_date = start_date.isoformat()
+
         self._client = SalesforceConnection(
             api_type=self.config.get('api_type'),
-            default_start_date=self.config.get('start_date'),
+            default_start_date=start_date,
             is_sandbox=self.config.get('is_sandbox'),
             lookback_window=lookback_window,
             quota_percent_per_run=self.config.get('quota_percent_per_run'),
@@ -53,15 +58,13 @@ class Salesforce(Source):
         do_sync(self.client, catalog_dict, state)
 
     def discover(self, streams: List[str] = None) -> Catalog:
-        arr = []
-
         try:
-            if len(self.query.get('selected_streams', [])) >= 1:
-                arr = do_discover(self.client, streams=self.query.get('selected_streams'))
+            if streams:
+                return do_discover(self.client, streams=streams)
         finally:
             self.__finally_clean_up()
 
-        return arr
+        return Catalog([])
 
     def get_stream_ids(self) -> List[str]:
         return discover_objects(self.client)

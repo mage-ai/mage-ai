@@ -204,6 +204,11 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--selected_streams_json',
+        help='JSON string containing query parameters for source’s load_data method.',
+    )
+
+    parser.add_argument(
         '--settings',
         help='YAML file containing config and catalog information.',
     )
@@ -236,8 +241,11 @@ def parse_args(required_config_keys):
         query.update(json.loads(args.query))
     args.query = query
 
-    config = dict()
+    args.selected_streams = []
+    if args.selected_streams_json:
+        args.selected_streams = json.loads(args.selected_streams_json)
 
+    config = dict()
     if args.settings:
         with open(args.settings) as f:
             args.settings = yaml.safe_load(f.read())

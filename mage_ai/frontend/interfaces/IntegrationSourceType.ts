@@ -94,6 +94,11 @@ export interface CatalogType {
   streams: StreamType[];
 }
 
+export interface IntegrationSourceCatalogType {
+  streams: StreamType[];
+  uuid: string;
+}
+
 export default interface IntegrationSourceType {
   name: string;
   streams: StreamType[];

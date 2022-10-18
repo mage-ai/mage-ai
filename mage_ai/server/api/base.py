@@ -81,12 +81,15 @@ class BaseHandler(tornado.web.RequestHandler):
         if self.model_class:
             key = camel_to_snake_case(self.model_class.__name__)
 
-        payload = json.loads(self.request.body)
-        if key != '':
-            payload = payload.get(key, {})
-        for key in self.datetime_keys:
-            if payload.get(key) is not None:
-                payload[key] = dateutil.parser.parse(payload[key])
+        payload = {}
+        body = self.request.body
+        if body:
+            payload = json.loads(self.request.body)
+            if key != '':
+                payload = payload.get(key, {})
+            for key in self.datetime_keys:
+                if payload.get(key) is not None:
+                    payload[key] = dateutil.parser.parse(payload[key])
         return payload
 
 

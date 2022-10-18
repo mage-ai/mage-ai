@@ -37,6 +37,7 @@ class Source():
         logger = LOGGER,
         query: Dict = {},
         schemas_folder: str = 'schemas',
+        selected_streams: List[str] = None,
         settings: Dict = None,
         state: Dict = None,
         verbose: int = 1,
@@ -55,6 +56,8 @@ class Source():
                 log_to_stdout = args.log_to_stdout
             if args.query:
                 query = args.query
+            if args.selected_streams:
+                selected_streams = args.selected_streams
             if args.state:
                 state = args.state
 
@@ -71,6 +74,7 @@ class Source():
             verbose=verbose,
         )
         self.schemas_folder = schemas_folder
+        self.selected_streams = selected_streams
         self.settings = settings
         self.state = state
 
@@ -104,14 +108,15 @@ class Source():
         return Catalog(streams)
 
     def discover_streams(self) -> List[Dict]:
-        ids = self.get_stream_ids()
-        if ids:
-            return [dict(stream=stream_id, tap_stream_id=stream_id) for stream_id in ids]
+        return [dict(
+            stream=stream_id,
+            tap_stream_id=stream_id,
+        ) for stream_id in self.get_stream_ids()]
 
     def get_stream_ids(self) -> List[str]:
         # If you want to display available stream IDs before getting the stream properties,
         # override this method to return a list of stream IDs
-        return
+        return [d['tap_stream_id'] for d in self.discover()]
 
     def process(self) -> None:
         try:
@@ -119,13 +124,13 @@ class Source():
                 if self.discover_streams_mode:
                     json.dump(self.discover_streams(), sys.stdout, indent=2)
                 else:
-                    catalog = self.discover()
+                    catalog = self.discover(streams=self.selected_streams)
                     if type(catalog) is Catalog:
                         catalog.dump()
                     elif type(catalog) is dict:
                         json.dump(catalog, sys.stdout, indent=2)
             else:
-                catalog = self.catalog or self.discover()
+                catalog = self.catalog or self.discover(streams=self.selected_streams)
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {err}.'
