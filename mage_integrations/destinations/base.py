@@ -10,12 +10,14 @@ from mage_integrations.destinations.constants import (
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
     KEY_VALUE,
+    KEY_VERSION,
 )
 from mage_integrations.destinations.utils import flatten_record
 from mage_integrations.utils.dictionary import merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.logger.constants import (
+    TYPE_ACTIVATE_VERSION,
     TYPE_LOG,
     TYPE_RECORD,
     TYPE_SCHEMA,
@@ -80,6 +82,7 @@ class Destination():
         self.unique_conflict_methods = None
         self.unique_constraints = None
         self.validators = None
+        self.versions = None
 
     @classmethod
     def templates(self) -> List[Dict]:
@@ -210,6 +213,7 @@ class Destination():
         self.unique_conflict_methods = {}
         self.unique_constraints = {}
         self.validators = {}
+        self.versions = {}
 
         batches_by_stream = {}
 
@@ -248,7 +252,9 @@ class Destination():
                     state_data=[],
                 )
 
-            if TYPE_LOG == row_type:
+            if TYPE_ACTIVATE_VERSION == row_type:
+                self.versions[stream] = row.get(KEY_VERSION)
+            elif TYPE_LOG == row_type:
                 continue
             elif TYPE_SCHEMA == row_type:
                 schema = row.get(KEY_SCHEMA)

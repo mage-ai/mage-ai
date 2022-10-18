@@ -6,3 +6,4 @@ requests==2.28.1
 simplejson==3.11.1
 singer-python==5.12.2
 stripe==4.2.0
+xmltodict==0.13.0

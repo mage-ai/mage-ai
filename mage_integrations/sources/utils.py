@@ -188,6 +188,12 @@ def parse_args(required_config_keys):
     )
 
     parser.add_argument(
+        '--discover_streams',
+        action='store_true',
+        help='Do schema discovery but only return the schema names.',
+    )
+
+    parser.add_argument(
         '--query',
         help='File containing query parameters for source’s load_data method.',
     )
