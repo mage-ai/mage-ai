@@ -438,6 +438,7 @@ function IntegrationPipeline({
                       onChange={(e) => {
                         const uuid = e.target.value;
                         setSelectedStreamID(uuid);
+                        // @ts-ignore
                         fetchIntegrationSource({
                           integration_source: {
                             streams: [
