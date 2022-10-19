@@ -1,9 +1,9 @@
-from singer.catalog import Catalog as CatalogParent, CatalogEntry as CatalogEntryParent, Schema
+from singer import catalog
 from typing import List
 import json
 
 
-class CatalogEntry(CatalogEntryParent):
+class CatalogEntry(catalog.CatalogEntry):
     def __init__(
         self,
         bookmark_properties: List[str] = None,
@@ -29,7 +29,7 @@ class CatalogEntry(CatalogEntryParent):
         return result
 
 
-class Catalog(CatalogParent):
+class Catalog(catalog.Catalog):
     @classmethod
     def load(cls, filename):
         with open(filename) as fp:  # pylint: disable=invalid-name
@@ -52,7 +52,7 @@ class Catalog(CatalogParent):
             entry.metadata = stream.get('metadata')
             entry.replication_key = stream.get('replication_key')
             entry.replication_method = stream.get('replication_method')
-            entry.schema = Schema.from_dict(stream.get('schema'))
+            entry.schema = catalog.Schema.from_dict(stream.get('schema'))
             entry.stream = stream.get('stream')
             entry.stream_alias = stream.get('stream_alias')
             entry.table = stream.get('table_name')
@@ -65,9 +65,6 @@ class Catalog(CatalogParent):
     def to_dict(self):
         arr = []
         for stream in self.streams:
-            if type(stream) is dict:
-                arr.append(stream)
-            else:
-                arr.append(stream.to_dict())
+            arr.append(stream if type(stream) is dict else stream.to_dict())
 
         return dict(streams=arr)
