@@ -6,8 +6,8 @@ from unittest import mock
 
 class ConfigLoaderTests(TestCase):
     def setUp(self):
+        super().setUp()
         self.test_path = Path('./test')
-        self.test_path.mkdir(parents=True)
         self.test_config_path = self.test_path / 'io_config.yaml'
         self.test_config_path_verbose = self.test_path / 'old_io_config.yaml'
         sample_yaml = """default:
@@ -50,13 +50,11 @@ template:
             fout.write(sample_yaml)
         with self.test_config_path_verbose.open('w') as fout:
             fout.write(sample_yaml_verbose_format)
-        return super().setUp()
 
     def tearDown(self):
         self.test_config_path.unlink()
         self.test_config_path_verbose.unlink()
-        self.test_path.rmdir()
-        return super().tearDown()
+        super().tearDown()
 
     def test_config_map_contains(self):
         expected_keys = [

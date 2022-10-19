@@ -7,20 +7,9 @@ from mage_ai.tests.base_test import TestCase
 from pandas.util.testing import assert_frame_equal
 import os
 import pandas as pd
-import shutil
 
 
 class BlockTest(TestCase):
-    def setUp(self):
-        self.repo_path = os.getcwd() + '/test'
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
-        return super().setUp()
-
-    def tearDown(self):
-        shutil.rmtree(self.repo_path)
-        return super().tearDown()
-
     def test_create(self):
         block1 = Block.create('test_transformer', 'transformer', self.repo_path)
         block2 = Block.create('test data loader', BlockType.DATA_LOADER, self.repo_path)
@@ -90,7 +79,7 @@ def remove_duplicate_rows(df):
 
     def test_execute_multiple_upstream_blocks(self):
         pipeline = Pipeline.create(
-            'test pipeline',
+            'test pipeline 2',
             repo_path=self.repo_path,
         )
         block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)
@@ -157,7 +146,7 @@ def union_datasets(df1, df2):
 
     def test_execute_validation(self):
         pipeline = Pipeline.create(
-            'test pipeline',
+            'test pipeline 3',
             repo_path=self.repo_path,
         )
         block1 = Block.create('test_data_loader_1', 'data_loader', self.repo_path, pipeline=pipeline)

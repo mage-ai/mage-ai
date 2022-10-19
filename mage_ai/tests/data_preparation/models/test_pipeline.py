@@ -3,20 +3,9 @@ from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipel
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import TestCase
 import os
-import shutil
 
 
 class PipelineTest(TestCase):
-    def setUp(self):
-        self.repo_path = os.getcwd() + '/test'
-        if not os.path.exists(self.repo_path):
-            os.mkdir(self.repo_path)
-        return super().setUp()
-
-    def tearDown(self):
-        shutil.rmtree(self.repo_path)
-        return super().tearDown()
-
     def test_create(self):
         pipeline = Pipeline.create(
             'test pipeline',
@@ -164,7 +153,7 @@ class PipelineTest(TestCase):
 
     def test_execute(self):
         pipeline = Pipeline.create(
-            'test pipeline 3',
+            'test pipeline 4',
             repo_path=self.repo_path,
         )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
@@ -177,8 +166,8 @@ class PipelineTest(TestCase):
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
-            name='test pipeline 3',
-            uuid='test_pipeline_3',
+            name='test pipeline 4',
+            uuid='test_pipeline_4',
             type='python',
             blocks=[
                 dict(
@@ -239,7 +228,7 @@ class PipelineTest(TestCase):
 
     def test_execute_multiple_paths(self):
         pipeline = Pipeline.create(
-            'test pipeline 4',
+            'test pipeline 5',
             repo_path=self.repo_path,
         )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
@@ -258,8 +247,8 @@ class PipelineTest(TestCase):
         pipeline.add_block(block7, upstream_block_uuids=['block2', 'block3', 'block6'])
         pipeline.execute_sync()
         self.assertEqual(pipeline.to_dict(), dict(
-            name='test pipeline 4',
-            uuid='test_pipeline_4',
+            name='test pipeline 5',
+            uuid='test_pipeline_5',
             type='python',
             blocks=[
                 dict(
@@ -359,7 +348,7 @@ class PipelineTest(TestCase):
 
     def test_delete(self):
         pipeline = Pipeline.create(
-            'test pipeline 4',
+            'test pipeline 6',
             repo_path=self.repo_path,
         )
         block1 = self.__create_dummy_data_loader_block('block1', pipeline)
@@ -381,7 +370,7 @@ class PipelineTest(TestCase):
         self.assertFalse(os.access(block5.file_path, os.F_OK))
 
     def test_duplicate(self):
-        pipeline = self.__create_pipeline_with_blocks('test pipeline 4')
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 7')
         duplicate_pipeline = Pipeline.duplicate(pipeline, 'duplicate pipeline')
         for block_uuid in pipeline.blocks_by_uuid:
             original = pipeline.blocks_by_uuid[block_uuid]
@@ -403,7 +392,7 @@ class PipelineTest(TestCase):
             self.assertEqual(original.upstream_block_uuids, duplicate.upstream_block_uuids)
 
     def test_cycle_detection(self):
-        pipeline = self.__create_pipeline_with_blocks('test pipeline 5')
+        pipeline = self.__create_pipeline_with_blocks('test pipeline 8')
         pipeline.validate()
 
         block_new = Block.create('block_new', 'transformer', self.repo_path)
