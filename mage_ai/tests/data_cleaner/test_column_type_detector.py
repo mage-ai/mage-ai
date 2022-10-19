@@ -208,7 +208,7 @@ class ColumnTypeDetectorTests(TestCase):
             too_large_integers='category',
             too_large_integers_version_2='category',
         )
-        self.assertEquals(ctypes, expected_ctypes)
+        self.assertEqual(ctypes, expected_ctypes)
 
     def test_phone_number_recognition(self):
         df = pd.DataFrame(
@@ -276,7 +276,7 @@ class ColumnTypeDetectorTests(TestCase):
             bad_column_name_one='number',
             bad_column_name_two='text',
         )
-        self.assertEquals(ctypes, expected_ctypes)
+        self.assertEqual(ctypes, expected_ctypes)
 
     def test_zip_code_recognition(self):
         df = pd.DataFrame(
@@ -337,7 +337,7 @@ class ColumnTypeDetectorTests(TestCase):
             not_int_zips=ColumnType.NUMBER,
             bad_column_name_two=ColumnType.NUMBER,
         )
-        self.assertEquals(ctypes, expected_ctypes)
+        self.assertEqual(ctypes, expected_ctypes)
 
     def test_datetime_recognition(self):
         df = pd.DataFrame(
@@ -559,4 +559,4 @@ class ColumnTypeDetectorTests(TestCase):
             string_tuples=ColumnType.LIST,
             not_a_list=ColumnType.TEXT,
         )
-        self.assertEquals(ctypes, expected_ctypes)
+        self.assertEqual(ctypes, expected_ctypes)

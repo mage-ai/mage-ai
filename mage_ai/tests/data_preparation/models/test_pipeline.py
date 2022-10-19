@@ -2,7 +2,6 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import InvalidPipelineError, Pipeline
 from mage_ai.data_preparation.models.widget import Widget
 from mage_ai.tests.base_test import TestCase
-import asyncio
 import os
 import shutil
 
@@ -33,7 +32,7 @@ class PipelineTest(TestCase):
         self.__create_pipeline_with_blocks('test pipeline 2')
         pipeline = Pipeline('test_pipeline_2', self.repo_path)
 
-        self.assertEquals(pipeline.to_dict(), dict(
+        self.assertEqual(pipeline.to_dict(), dict(
             name='test pipeline 2',
             uuid='test_pipeline_2',
             type='python',
@@ -115,7 +114,7 @@ class PipelineTest(TestCase):
         pipeline.delete_block(widget, widget=True)
         pipeline.delete_block(block)
         pipeline = Pipeline('test_pipeline_3', self.repo_path)
-        self.assertEquals(pipeline.to_dict(), dict(
+        self.assertEqual(pipeline.to_dict(), dict(
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -177,7 +176,7 @@ class PipelineTest(TestCase):
         pipeline.add_block(block3, upstream_block_uuids=['block1'])
         pipeline.add_block(block4, upstream_block_uuids=['block2', 'block3'])
         pipeline.execute_sync()
-        self.assertEquals(pipeline.to_dict(), dict(
+        self.assertEqual(pipeline.to_dict(), dict(
             name='test pipeline 3',
             uuid='test_pipeline_3',
             type='python',
@@ -258,7 +257,7 @@ class PipelineTest(TestCase):
         pipeline.add_block(block6, upstream_block_uuids=['block5'])
         pipeline.add_block(block7, upstream_block_uuids=['block2', 'block3', 'block6'])
         pipeline.execute_sync()
-        self.assertEquals(pipeline.to_dict(), dict(
+        self.assertEqual(pipeline.to_dict(), dict(
             name='test pipeline 4',
             uuid='test_pipeline_4',
             type='python',

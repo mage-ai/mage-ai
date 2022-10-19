@@ -104,7 +104,7 @@ class VariableTest(TestCase):
             ]
         )
         variable.write_data(data)
-        self.assertEquals(variable.read_data(), data)
+        self.assertEqual(variable.read_data(), data)
 
     def __create_pipeline(self, name):
         pipeline = Pipeline.create(

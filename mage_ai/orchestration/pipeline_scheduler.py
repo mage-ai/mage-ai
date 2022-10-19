@@ -102,7 +102,7 @@ class PipelineScheduler:
                 for b in self.pipeline_run.block_runs:
                     b.refresh()
                 self.schedule()
-        except:
+        except Exception:
             traceback.print_exc()
 
     def on_block_failure(self, block_uuid: str) -> None:
@@ -257,7 +257,6 @@ def run_integration_pipeline(
 
     outputs = []
     if data_loader_block_run and data_exporter_block_run:
-        from mage_integrations.sources.utils import update_source_state_from_destination_state
 
         update_source_state_from_destination_state(
             integration_pipeline.source_state_file_path,
