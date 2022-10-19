@@ -7,10 +7,32 @@ from mage_integrations.destinations.constants import (
     COLUMN_TYPE_NUMBER,
     COLUMN_TYPE_OBJECT,
     COLUMN_TYPE_STRING,
-    UNIQUE_CONFLICT_METHOD_UPDATE,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Dict, List
+from typing import Callable, Dict, List
+
+
+def build_create_table_command(
+    column_type_mapping: Dict,
+    columns: List[str],
+    full_table_name: str,
+    unique_constraints: List[str] = None,
+) -> str:
+    columns_and_types = [
+        f"{clean_column_name(col)} {column_type_mapping[col]['type_converted']}" for col
+        in columns
+    ]
+
+    if unique_constraints:
+        unique_constraints = [clean_column_name(col) for col in unique_constraints]
+        index_name = '_'.join([
+            clean_column_name(full_table_name),
+        ] + unique_constraints)
+        columns_and_types.append(
+            f"CONSTRAINT {index_name}_unique UNIQUE ({', '.join(unique_constraints)})",
+        )
+
+    return f"CREATE TABLE {full_table_name} ({', '.join(columns_and_types)})"
 
 
 def convert_column_type(column_type: str, column_settings: Dict) -> str:
@@ -29,7 +51,12 @@ def convert_column_type(column_type: str, column_settings: Dict) -> str:
         else:
             return 'VARCHAR(255)'
 
-def column_type_mapping(schema) -> dict:
+
+def column_type_mapping(
+    schema: Dict,
+    convert_column_type_func: Callable,
+    convert_array_column_type_func: Callable,
+) -> Dict:
     mapping = {}
     for column, column_settings in schema['properties'].items():
         arr = column_settings.get('type', [])
@@ -57,10 +84,10 @@ def column_type_mapping(schema) -> dict:
             item_types = [t for t in column_settings.get('items', {}).get('type', []) if 'null' != t]
             if len(item_types):
                 item_type = item_types[0]
-                item_type_converted = convert_column_type(item_type, column_settings)
-                column_type_converted = f'{item_type_converted}[]'
+                item_type_converted = convert_column_type_func(item_type, column_settings)
+                column_type_converted = convert_array_column_type_func(item_type_converted)
         else:
-            column_type_converted = convert_column_type(column_type, column_settings)
+            column_type_converted = convert_column_type_func(column_type, column_settings)
 
         mapping[column] = dict(
             item_type=item_type,
@@ -72,50 +99,24 @@ def column_type_mapping(schema) -> dict:
     return mapping
 
 
-def convert_column_to_type(value, column_type):
+def convert_column_to_type(value, column_type) -> str:
     return f"CAST('{value}' AS {column_type})"
 
 
-def build_create_table_command(
-    schema_name: str,
-    table_name: str,
-    schema: Dict,
-    unique_constraints: List[str] = None,
-) -> str:
-    mapping = column_type_mapping(schema)
-    columns_and_types = [
-        f"{clean_column_name(col)} {mapping[col]['type_converted']}" for col
-        in schema['properties'].keys()
-    ]
-
-    if unique_constraints:
-        index_name = f"{table_name}_{'_'.join(unique_constraints)}"
-        columns_and_types.append(
-            f"CONSTRAINT {index_name}_unique UNIQUE ({', '.join(unique_constraints)})",
-        )
-
-    return f"CREATE TABLE {schema_name}.{table_name} ({', '.join(columns_and_types)})"
-
-
 def build_insert_command(
-    schema_name: str,
-    table_name: str,
-    schema: Dict,
+    column_type_mapping: Dict,
+    columns: List[str],
     records: List[Dict],
-    unique_conflict_method: str = None,
-    unique_constraints: List[str] = None,
-) -> str:
-    mapping = column_type_mapping(schema)
-    columns = schema['properties'].keys()
-
+) -> List[str]:
     values = []
     for row in records:
         vals = []
         for column in columns:
             v = row.get(column, None)
-            item_type_converted = mapping[column]['item_type_converted']
-            column_type = mapping[column]['type']
-            column_type_converted = mapping[column]['type_converted']
+
+            column_type_dict = column_type_mapping[column]
+            column_type = column_type_dict['type']
+            column_type_converted = column_type_dict['type_converted']
 
             value_final = 'NULL'
             if v is not None:
@@ -134,15 +135,7 @@ def build_insert_command(
             vals.append(value_final)
         values.append(f"({', '.join(vals)})")
 
-    commands = [
-        f"INSERT INTO {schema_name}.{table_name}({', '.join([clean_column_name(col) for col in columns])})",
-        f"VALUES {', '.join(values)}",
-    ]
+    insert_columns = ', '.join([clean_column_name(col) for col in columns])
+    insert_values = ', '.join(values)
 
-    if unique_constraints and unique_conflict_method:
-        conflict_method = 'DO NOTHING'
-        if UNIQUE_CONFLICT_METHOD_UPDATE == conflict_method:
-            conflict_method = 'UPDATE'
-        commands.append(f'ON CONFLICT {conflict_method}')
-
-    return '\n'.join(commands)
+    return [insert_columns, insert_values]

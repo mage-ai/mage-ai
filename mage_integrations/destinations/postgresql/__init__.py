@@ -1,91 +1,18 @@
 from mage_integrations.connections.postgresql import PostgreSQL as PostgreSQLConnection
-from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.constants import REPLICATION_METHOD_FULL_TABLE, REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.destinations.postgresql.utils import build_create_table_command, build_insert_command
-from mage_integrations.utils.array import batch
-from typing import Dict, List
-import argparse
-import sys
+from mage_integrations.destinations.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+from mage_integrations.destinations.sql.base import Destination, main
+from mage_integrations.destinations.sql.utils import (
+    build_create_table_command,
+    build_insert_command,
+    column_type_mapping,
+    convert_column_type,
+)
+from mage_integrations.destinations.utils import clean_column_name
+from typing import Callable, Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
-    def export_data(
-        self,
-        stream: str,
-        schema: dict,
-        record: dict,
-        tags: dict = {},
-        **kwargs,
-    ) -> None:
-        self.export_batch_data([dict(
-            record=record,
-            schema=schema,
-            stream=stream,
-            tags=tags,
-        )])
-
-    def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
-        schema = self.schemas[stream]
-        tags = dict(records=len(record_data), stream=stream)
-
-        self.logger.info('Export data started', tags=tags)
-
-        schema_name = self.config['schema']
-        table_name = self.config['table']
-        full_table_name = f'{schema_name}.{table_name}'
-        does_table_exist = self.__does_table_exist(schema_name, table_name)
-
-        unique_constraints = self.unique_constraints.get(stream)
-
-        query_strings = [
-            f'CREATE SCHEMA IF NOT EXISTS {schema_name}',
-        ]
-
-        replication_method = self.replication_methods[stream]
-        if replication_method in [
-            REPLICATION_METHOD_FULL_TABLE,
-            REPLICATION_METHOD_INCREMENTAL,
-        ]:
-            if not does_table_exist:
-                create_table_command = build_create_table_command(
-                    schema_name,
-                    table_name,
-                    schema,
-                    unique_constraints=unique_constraints,
-                )
-                query_strings.append(create_table_command)
-        else:
-            message = f'Replication method {replication_method} not supported.'
-            self.logger.exception(message, tags=tags)
-            raise Exception(message)
-
-
-        for sub_batch in batch(record_data, 1000):
-            query_strings.append(build_insert_command(
-                schema_name,
-                table_name,
-                schema,
-                [d['record'] for d in sub_batch],
-                unique_conflict_method=self.unique_conflict_methods.get(stream),
-                unique_constraints=unique_constraints,
-            ))
-
-        connection = self.__build_connection()
-        connection.execute(query_strings, commit=True)
-
-        self.logger.info('Export data completed.', tags=tags)
-
-    def __does_table_exist(self, schema_name, table_name) -> bool:
-        connection = self.__build_connection().build_connection()
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\'',
-            )
-            count = cursor.rowcount
-
-            return bool(count)
-
-    def __build_connection(self) -> PostgreSQLConnection:
+    def build_connection(self) -> PostgreSQLConnection:
         return PostgreSQLConnection(
             database=self.config['database'],
             host=self.config['host'],
@@ -94,13 +21,95 @@ class PostgreSQL(Destination):
             username=self.config['username'],
         )
 
+    def build_create_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        return [
+            build_create_table_command(
+                column_type_mapping=column_type_mapping(
+                    schema,
+                    convert_column_type,
+                    lambda item_type_converted: f'{item_type_converted}[]',
+                ),
+                columns=schema['properties'].keys(),
+                full_table_name=f'{schema_name}.{table_name}',
+                unique_constraints=unique_constraints,
+            ),
+        ]
 
-def main():
-    destination = PostgreSQL(
-        argument_parser=argparse.ArgumentParser(),
-        batch_processing=True,
-    )
-    destination.process(sys.stdin.buffer)
+    def build_insert_commands(
+        self,
+        records: List[Dict],
+        schema: Dict,
+        schema_name: str,
+        table_name: str,
+        insert_command_count_wrapper: Callable,
+        database_name: str = None,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        columns = list(schema['properties'].keys())
+        insert_columns, insert_values = build_insert_command(
+            column_type_mapping=column_type_mapping(
+                schema,
+                convert_column_type,
+                lambda item_type_converted: f'{item_type_converted}[]',
+            ),
+            columns=columns,
+            records=records,
+        )
+
+        commands = [
+            f'INSERT INTO {schema_name}.{table_name} ({insert_columns})',
+            f'VALUES {insert_values}',
+        ]
+
+        if unique_constraints and unique_conflict_method:
+            unique_constraints = [clean_column_name(col) for col in unique_constraints]
+            columns_cleaned = [clean_column_name(col) for col in columns]
+
+            commands.append(f"ON CONFLICT ({', '.join(unique_constraints)})")
+            if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+                update_command = [f'{col} = EXCLUDED.{col}' for col in columns_cleaned]
+                commands.append(
+                    f"DO UPDATE SET {', '.join(update_command)}",
+                )
+            else:
+                commands.append('DO NOTHING')
+
+        return [
+            insert_command_count_wrapper('\n'.join(commands)),
+        ]
+
+    def does_table_exist(
+        self,
+        schema_name: str,
+        table_name: str,
+        database_name: str = None,
+    ) -> bool:
+        connection = self.build_connection().build_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND tablename = \'{table_name}\'',
+            )
+            count = cursor.rowcount
+
+            return bool(count)
+
+    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+        records_inserted = 0
+        for array_of_tuples in data:
+            for t in array_of_tuples:
+                if len(t) >= 1 and type(t[0]) is int:
+                    records_inserted += t[0]
+
+        return records_inserted, 0
+
 
 if __name__ == '__main__':
-    main()
+    main(PostgreSQL)

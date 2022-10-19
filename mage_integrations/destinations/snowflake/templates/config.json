@@ -1,9 +1,9 @@
 {
+  "account": "",
   "database": "",
-  "host": "",
   "password": "",
-  "port": "",
   "schema": "",
   "table": "",
-  "username": ""
+  "username": "",
+  "warehouse": ""
 }
