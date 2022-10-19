@@ -42,3 +42,12 @@ export function calculateChange(endValue, startValue) {
   const difference = endValue - startValue;
   return difference / startValue;
 }
+
+export function calculateStartTimestamp(timeIntervalInSec: number) {
+  const currentTimestampInSec = Math.floor(Date.now() / 1000);
+  if (timeIntervalInSec > 0) {
+    return currentTimestampInSec - timeIntervalInSec;
+  }
+
+  return currentTimestampInSec;
+}
