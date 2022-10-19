@@ -67,7 +67,7 @@ class Destination(BaseDestination):
             raise Exception(message)
 
 
-        for sub_batch in batch(record_data, 1000):
+        for sub_batch in batch(record_data[:300], 100):
             for insert_command in self.build_insert_commands(
                 database_name=database_name,
                 records=[d['record'] for d in sub_batch],
@@ -86,15 +86,13 @@ class Destination(BaseDestination):
         connection = self.build_connection()
         data = connection.execute(query_strings, commit=True)
 
-        records_inserted = 0
-        for array_of_tuples in data:
-            for t in array_of_tuples:
-                if len(t) >= 1 and type(t[0]) is int:
-                    records_inserted += t[0]
+        records_inserted, records_updated = self.calculate_records_inserted_and_updated(data)
+        if records_inserted is not None:
+            tags.update(records_inserted=records_inserted)
+        if records_updated is not None:
+            tags.update(records_updated=records_updated)
 
-        self.logger.info('Export data completed.', tags=merge_dict(tags, dict(
-            records_inserted=records_inserted,
-        )))
+        self.logger.info('Export data completed.', tags=tags)
 
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')
@@ -137,6 +135,9 @@ class Destination(BaseDestination):
         database_name: str = None,
     ) -> bool:
         raise Exception('Subclasses must implement the does_table_exist method.')
+
+    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+        return None, None
 
 
 def main(destination_class):

@@ -8,7 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     convert_column_type,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 
 class PostgreSQL(Destination):
@@ -97,6 +97,15 @@ class PostgreSQL(Destination):
             count = cursor.rowcount
 
             return bool(count)
+
+    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+        records_inserted = 0
+        for array_of_tuples in data:
+            for t in array_of_tuples:
+                if len(t) >= 1 and type(t[0]) is int:
+                    records_inserted += t[0]
+
+        return records_inserted, 0
 
 
 if __name__ == '__main__':

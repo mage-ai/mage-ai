@@ -8,7 +8,7 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.destinations.utils import clean_column_name
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 
 class Snowflake(Destination):
@@ -99,12 +99,9 @@ class Snowflake(Destination):
                 )
                 merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
 
-            merge_values = []
-            for i in range(len(records)):
-                v = ', '.join([f'b.{col}' for col in columns_cleaned])
-                merge_values.append(f'({v})')
+            merge_values = f"({', '.join([f'b.{col}' for col in columns_cleaned])})"
             merge_commands.append(
-                f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {', '.join(merge_values)}",
+                f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}",
             )
             merge_command = '\n'.join(merge_commands)
 
@@ -128,6 +125,18 @@ class Snowflake(Destination):
         ])
 
         return len(data[0]) >= 1
+
+    def calculate_records_inserted_and_updated(self, data: List[List[Tuple]]) -> Tuple:
+        records_inserted = 0
+        records_updated = 0
+
+        for array_of_tuples in data:
+            for t in array_of_tuples:
+                if len(t) == 2 and type(t[0]) is int and type(t[1]) is int:
+                    records_inserted += t[0]
+                    records_updated += t[1]
+
+        return records_inserted, records_updated
 
 
 if __name__ == '__main__':
