@@ -1,9 +1,30 @@
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.services.aws.s3 import s3
+from mage_ai.data_preparation.logging.s3.config import S3Config
+from mage_ai.data_preparation.repo_manager import RepoConfig, get_repo_path
 from mage_ai.data_preparation.models.constants import LOGS_DIR
+import atexit
+import io
 import logging
 import os
 import sys
 
+def test(logging_config, logger: logging.Logger, log_filepath):
+    logging_type = logging_config.get('type')
+    if logging_type == 's3':
+        s3_config = S3Config.load(logging_config.get('config'))
+        prefix = s3_config.prefix
+        s3_client = s3.Client(s3_config.bucket)
+
+        string_io = io.StringIO()
+        handler = logging.StreamHandler(string_io)
+        logger.addHandler(handler)
+
+        atexit.register(
+            s3_client.upload,
+            object_key=f'{prefix}/{log_filepath}',
+            content=string_io.getvalue()
+        )
+    
 
 class LoggerManager:
     @classmethod
@@ -14,6 +35,7 @@ class LoggerManager:
         pipeline_uuid: str = None,
         block_uuid: str = None,
         partition: str = None,
+        repo_config: RepoConfig = None,
     ):
         log_filepath = self.get_log_filepath(
             repo_path=repo_path,
@@ -33,8 +55,10 @@ class LoggerManager:
 
         logger = logging.getLogger(logger_name)
 
-        if not len(logger.handlers):
-            logger.setLevel(logging.INFO)
+        if logger.handlers:
+            # if repo_config is not None and repo_config.logging_config:
+            #     test(repo_config.logging_config, logger, log_filepath)
+            # else:
             formatter = logging.Formatter(
                 '%(asctime)s %(message)s',
                 '%Y-%m-%dT%H:%M:%S',

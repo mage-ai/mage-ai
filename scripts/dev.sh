@@ -37,6 +37,11 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --log_storage_location)
+    LOG_STORAGE_LOCATION="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --host)
     HOST="$3"
     shift # past argument
@@ -73,6 +78,7 @@ export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+export LOG_STORAGE_LOCATION=$LOG_STORAGE_LOCATION
 
 HOST=$HOST \
 PORT=$PORT \
