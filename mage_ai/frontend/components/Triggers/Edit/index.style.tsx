@@ -28,11 +28,20 @@ export const CardStyle = styled.div<CardProps>`
   `}
 `;
 
-export const DateSelectionContainer = styled.div`
+export const DateSelectionContainer = styled.div<{
+  absolute?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
   padding: ${PADDING}px;
 
   ${props => `
     background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+  `}
+
+  ${props => props.absolute && `
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    top: ${UNIT * 2.5}px;
   `}
 `;

@@ -1,16 +1,21 @@
-import { useState } from 'react';
 import Router, { useRouter } from 'next/router';
+import { useState } from 'react';
 
+import Button from '@oracle/elements/Button';
+import Calendar, { TimeType } from '@oracle/components/Calendar';
+import ClickOutside from '@oracle/components/ClickOutside';
 import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
+import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import { LogRangeEnum } from '@interfaces/LogType';
 import { LOG_RANGE_SEC_INTERVAL_MAPPING, SPECIFIC_LOG_RANGES } from './constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
 import { goToWithQuery } from '@utils/routing';
-import { queryFromUrl } from '@utils/url';
+import { utcDateFromDateAndTime } from '@utils/string';
 
 
 enum RangeQueryEnum {
@@ -33,6 +38,13 @@ function LogToolbar({
 }: LogToolbarProps) {
   const router = useRouter();
   const { pipeline: pipelineUUID } = router.query;
+  const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
+  const [startDate, setStartDate] = useState<Date>(null);
+  const [startTime, setStartTime] = useState<TimeType>({ hour: '00', minute: '00' });
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [endTime, setEndTime] = useState<TimeType>({
+    hour: String(new Date().getUTCHours()),
+    minute: String(new Date().getUTCMinutes()) });
 
   return (
     <Spacing py={1}>
@@ -42,7 +54,7 @@ function LogToolbar({
           inline
           onClick={fetchLogs}
           sameColorAsText
-          uuid="logs/load_newest"
+          uuid="logs/toolbar/load_newest"
         >
           Load latest logs
         </KeyboardShortcutButton>
@@ -61,11 +73,9 @@ function LogToolbar({
               goToWithQuery({ [RangeQueryEnum.START]: startTimestamp });
             } else if (range === LogRangeEnum.LAST_40_RUNS) {
               Router.push(`/pipelines/${pipelineUUID}/logs`);
-            } else if (range === LogRangeEnum.CUSTOM_RANGE) {
-              // show time range dropdowns
             }
           }}
-          paddingRight={UNIT * 5}
+          paddingRight={UNIT * 4}
           placeholder="Select time range"
           value={selectedRange}
         >
@@ -75,6 +85,77 @@ function LogToolbar({
             </option>
           ))}
         </Select>
+
+        <Spacing mr={1} />
+
+        {selectedRange === LogRangeEnum.CUSTOM_RANGE && (
+          <>
+            <TextInput
+              compact
+              defaultColor
+              onClick={() => setShowCalendarIndex(0)}
+              paddingRight={0}
+              placeholder="Start"
+              value={startDate
+                ? utcDateFromDateAndTime(startDate, startTime?.hour, startTime?.minute)
+                : ''
+              }
+            />
+            <ClickOutside
+              onClickOutside={() => setShowCalendarIndex(null)}
+              open={showCalendarIndex === 0}
+              style={{ position: 'relative' }}
+            >
+              <Calendar
+                selectedDate={startDate}
+                selectedTime={startTime}
+                setSelectedDate={setStartDate}
+                setSelectedTime={setStartTime}
+              />
+            </ClickOutside>
+
+            <Spacing px={1}>
+              <Text>
+                to
+              </Text>
+            </Spacing>
+
+            <TextInput
+              compact
+              defaultColor
+              onClick={() => setShowCalendarIndex(1)}
+              paddingRight={0}
+              placeholder="End"
+              value={endDate
+                ? utcDateFromDateAndTime(endDate, endTime?.hour, endTime?.minute)
+                : ''
+              }
+            />
+            <ClickOutside
+              onClickOutside={() => setShowCalendarIndex(null)}
+              open={showCalendarIndex === 1}
+              style={{ position: 'relative' }}
+            >
+              <Calendar
+                selectedDate={endDate}
+                selectedTime={endTime}
+                setSelectedDate={setEndDate}
+                setSelectedTime={setEndTime}
+              />
+            </ClickOutside>
+
+            <Spacing mr={1} />
+
+            <Button
+              borderRadius={UNIT / 2}
+              padding={`${UNIT / 2}px`}
+              onClick={() => {}}
+              primary
+            >
+              Search
+            </Button>
+          </>
+        )}
       </FlexContainer>
     </Spacing>
   );

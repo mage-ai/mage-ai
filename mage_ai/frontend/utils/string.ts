@@ -50,6 +50,14 @@ export function dateFormatLongFromUnixTimestamp(text) {
   return moment.unix(text).format('YYYY-MM-DD HH:mm');
 }
 
+export function utcDateFromDateAndTime(
+  date: Date,
+  hour: string,
+  minute: string,
+): string {
+  return `${date.toISOString().split('T')[0]} ${hour}:${minute}`;
+}
+
 export function formattedQuantity(quantity, decimalPlaces = 4) {
   let n = `${quantity}`;
   if (Number.isInteger(quantity)) {
