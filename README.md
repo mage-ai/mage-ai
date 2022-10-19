@@ -139,6 +139,8 @@ Try a hosted version of the tool here: [https://demo.mage.ai/](https://demo.mage
 
 - [Data pipeline management](docs/features/orchestration/README.md)
 - [Notebook for building data pipelines](docs/features/README.md#notebook-for-building-data-pipelines)
+- [Streaming pipelines](docs/guides/pipelines/StreamingPipeline.md)
+- [Data integrations](docs/data_integrations/README.md)
 
 <sub>Read more [<b>here</b>](docs/features/README.md).</sub>
 
