@@ -54,6 +54,7 @@ function BlockRuns({
   const [offset, setOffset] = useState(ITEMS_PER_PAGE);
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
+  const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
   const pipeline = useMemo(() => ({
@@ -195,7 +196,9 @@ function BlockRuns({
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
               <LogToolbar
                 fetchLogs={fetchLogs}
+                selectedRange={selectedRange}
                 setLogCount={setOffset}
+                setSelectedRange={setSelectedRange}
               />
               {/* <Spacing py={PADDING_UNITS}>
                 <KeyboardShortcutButton

@@ -20,14 +20,17 @@ enum RangeQueryEnum {
 
 type LogToolbarProps = {
   fetchLogs: () => void;
+  selectedRange: LogRangeEnum;
   setLogCount: (offset: number) => void;
+  setSelectedRange: (range: LogRangeEnum) => void;
 };
 
 function LogToolbar({
   fetchLogs,
+  selectedRange,
+  setSelectedRange,
   setLogCount,
 }: LogToolbarProps) {
-  const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
   const router = useRouter();
   const { pipeline: pipelineUUID } = router.query;
 
@@ -50,7 +53,7 @@ function LogToolbar({
           compact
           defaultColor
           onChange={e => {
-            // e.preventDefault();
+            e.preventDefault();
             const range = e.target.value;
             setSelectedRange(range);
             if (SPECIFIC_LOG_RANGES.includes(range)) {
