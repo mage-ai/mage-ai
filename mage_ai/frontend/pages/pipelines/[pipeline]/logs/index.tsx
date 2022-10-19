@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react';
 
-import BlockRunType, { RunStatus } from '@interfaces/BlockRunType';
 import Circle from '@oracle/elements/Circle';
 import Divider from '@oracle/elements/Divider';
 import Filter, { FilterQueryType } from '@components/Logs/Filter';
@@ -16,7 +15,7 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Link from '@oracle/elements/Link';
 import LogDetail from '@components/Logs/Detail';
-import LogType, { LogDataType, LogLevelEnum } from '@interfaces/LogType';
+import LogType from '@interfaces/LogType';
 import PipelineDetailPage from '@components/PipelineDetailPage';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
@@ -31,7 +30,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp, initializeLogs } from '@utils/models/log';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { goToWithQuery } from '@utils/routing';
-import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
+import { ignoreKeys, isEqual } from '@utils/hash';
 import { indexBy, sortByKey } from '@utils/array';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
@@ -66,7 +65,7 @@ function BlockRuns({
   const blocks = useMemo(() => pipeline.blocks || [], [pipeline]);
   const blocksByUUID = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
 
-  const { data: dataLogs } = api.logs.pipelines.list(
+  const { data: dataLogs, mutate: fetchLogs } = api.logs.pipelines.list(
     query ? pipelineUUID : null,
     ignoreKeys(query, [LOG_UUID_PARAM]),
     {},
@@ -91,23 +90,22 @@ function BlockRuns({
     return {
       blockRunLogs: [],
       pipelineRunLogs: [],
-    }
+    };
   }, [
     dataLogs,
   ]);
-  const logsAll: LogType[] = useMemo(() => {
-    return sortByKey(
+  const logsAll: LogType[] = useMemo(() => sortByKey(
       blockRunLogs
         .concat(pipelineRunLogs)
         .reduce((acc, log) => acc.concat(initializeLogs(log)), []),
       ({ data }) => data?.timestamp || 0,
-    );
-  }, [
+      { ascending: false },
+    ), [
     blockRunLogs,
     pipelineRunLogs,
   ]);
-  const logsFiltered: LogType[] = useMemo(() => {
-    return logsAll
+
+  const logsFiltered: LogType[] = useMemo(() => logsAll
       .filter(({ data }: LogType) => {
         const evals = [];
 
@@ -123,8 +121,7 @@ function BlockRuns({
         }
 
         return evals.every(v => v);
-      });
-  }, [
+      }), [
     blocksByUUID,
     logsAll,
     query,
@@ -150,7 +147,7 @@ function BlockRuns({
   useEffect(() => {
     const logUUID = q[LOG_UUID_PARAM];
     if (logUUID && !selectedLog && !selectedLogPrev) {
-      setSelectedLog(logsAll.find(({ data }) => data?.uuid === logUUID))
+      setSelectedLog(logsAll.find(({ data }) => data?.uuid === logUUID));
     }
   }, [
     logsAll,
@@ -195,6 +192,17 @@ function BlockRuns({
           {!isLoading && (
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
+              <Spacing py={PADDING_UNITS}>
+                <KeyboardShortcutButton
+                  blackBorder
+                  inline
+                  onClick={fetchLogs}
+                  sameColorAsText
+                  uuid="logs/load_newest"
+                >
+                  Load latest logs
+                </KeyboardShortcutButton>
+              </Spacing>
             </>
           )}
           {isLoading && 'Searching...'}
@@ -211,7 +219,6 @@ function BlockRuns({
 
       {!isLoading && logs.length >= 1 && (
         <Table
-          compact
           columnFlex={[null, null, 1, 9, null]}
           columnMaxWidth={(idx: number) => idx === 3 ? '100px' : null}
           columns={[
@@ -233,6 +240,7 @@ function BlockRuns({
               uuid: '>',
             },
           ]}
+          compact
           onClickRow={(rowIndex: number) => {
             const log = logs[rowIndex];
             let logUUID = log.data?.uuid;
@@ -295,17 +303,33 @@ function BlockRuns({
             }
 
             return [
-              <Flex alignItems="center" justifyContent="center">
+              <Flex
+                alignItems="center"
+                justifyContent="center"
+                key="log_type"
+              >
                 <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
               </Flex>,
-              <Text default monospace>
+              <Text
+                default
+                key="log_timestamp"
+                monospace
+              >
                 {formatTimestamp(timestamp)}
               </Text>,
               idEl,
-              <Text monospace textOverflow>
+              <Text
+                key="log_message"
+                monospace
+                textOverflow
+              >
                 {message || content}
               </Text>,
-              <Flex flex={1} justifyContent="flex-end">
+              <Flex
+                flex={1}
+                justifyContent="flex-end"
+                key="chevron_right_icon"
+              >
                 <ChevronRight default size={2 * UNIT} />
               </Flex>,
             ];
@@ -323,7 +347,7 @@ function BlockRuns({
             sameColorAsText
             uuid="logs/load_more"
           >
-            Load more logs
+            Load older logs
           </KeyboardShortcutButton>
         </Spacing>
       )}

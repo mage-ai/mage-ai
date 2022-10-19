@@ -51,5 +51,5 @@ export function initializeLogs(log: LogType) {
 }
 
 export function formatTimestamp(timestamp: number) {
-  return timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss');
+  return timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
 }

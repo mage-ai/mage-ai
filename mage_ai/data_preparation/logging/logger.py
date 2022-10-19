@@ -44,7 +44,7 @@ class DictLogger():
         data = dict(
             level=method_name.upper(),
             message=message,
-            timestamp=int(now.timestamp()),
+            timestamp=now.timestamp(),
             uuid=uuid.uuid4().hex,
         )
 
