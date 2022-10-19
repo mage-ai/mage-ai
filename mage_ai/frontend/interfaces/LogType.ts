@@ -20,6 +20,14 @@ export const LOG_LEVELS = [
   LogLevelEnum.WARNING,
 ];
 
+export enum LogRangeEnum {
+  LAST_40_RUNS = 'Last 40 runs',
+  LAST_HOUR = 'Last hour',
+  LAST_DAY = 'Last day',
+  LAST_WEEK = 'Last week',
+  CUSTOM_RANGE = 'Custom range',
+}
+
 export interface LogDataType {
   block_run_id?: number;
   block_type?: BlockTypeEnum;

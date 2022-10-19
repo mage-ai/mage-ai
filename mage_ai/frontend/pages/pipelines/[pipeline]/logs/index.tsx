@@ -21,6 +21,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Table from '@components/shared/Table';
 import Text from '@oracle/elements/Text';
+import LogToolbar from '@components/Logs/Toolbar';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronRight } from '@oracle/icons';
@@ -192,7 +193,11 @@ function BlockRuns({
           {!isLoading && (
             <>
               {numberWithCommas(logs.length)} logs of {numberWithCommas(logsFiltered.length)} found
-              <Spacing py={PADDING_UNITS}>
+              <LogToolbar
+                fetchLogs={fetchLogs}
+                setLogCount={setOffset}
+              />
+              {/* <Spacing py={PADDING_UNITS}>
                 <KeyboardShortcutButton
                   blackBorder
                   inline
@@ -202,7 +207,7 @@ function BlockRuns({
                 >
                   Load latest logs
                 </KeyboardShortcutButton>
-              </Spacing>
+              </Spacing> */}
             </>
           )}
           {isLoading && 'Searching...'}
@@ -308,7 +313,7 @@ function BlockRuns({
                 justifyContent="center"
                 key="log_type"
               >
-                <LogLevelIndicatorStyle {...{[level?.toLowerCase()]: true}} />
+                <LogLevelIndicatorStyle {...{ [level?.toLowerCase()]: true }} />
               </Flex>,
               <Text
                 default
