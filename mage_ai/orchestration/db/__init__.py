@@ -6,14 +6,21 @@ import os
 
 db_connection_url = os.getenv(DATABASE_CONNECTION_URL_ENV_VAR)
 
+db_kwargs = dict(pool_pre_ping=True)
+
 if not db_connection_url:
     if os.path.exists('mage_ai/orchestration/db/'):
         db_connection_url = 'sqlite:///mage_ai/orchestration/db/mage-ai.db'
     else:
         db_connection_url = 'sqlite:///mage-ai.db'
+    db_kwargs['connect_args'] = {'check_same_thread': False}
 
-engine = create_engine(db_connection_url, pool_pre_ping=True)
+engine = create_engine(
+    db_connection_url,
+    **db_kwargs,
+)
 session_factory = sessionmaker(bind=engine)
+
 
 class DBConnection:
     def __init__(self):
@@ -24,5 +31,6 @@ class DBConnection:
 
     def close_session(self):
         self.session.close()
+
 
 db_connection = DBConnection()
