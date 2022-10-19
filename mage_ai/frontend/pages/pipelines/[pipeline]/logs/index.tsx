@@ -200,17 +200,6 @@ function BlockRuns({
                 setLogCount={setOffset}
                 setSelectedRange={setSelectedRange}
               />
-              {/* <Spacing py={PADDING_UNITS}>
-                <KeyboardShortcutButton
-                  blackBorder
-                  inline
-                  onClick={fetchLogs}
-                  sameColorAsText
-                  uuid="logs/load_newest"
-                >
-                  Load latest logs
-                </KeyboardShortcutButton>
-              </Spacing> */}
             </>
           )}
           {isLoading && 'Searching...'}

@@ -1,4 +1,3 @@
-import Calendar from 'react-calendar';
 import {
   useCallback,
   useEffect,
@@ -9,6 +8,7 @@ import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
+import Calendar, { TimeType } from '@oracle/components/Calendar';
 import ClickOutside from '@oracle/components/ClickOutside';
 import CodeBlock from '@oracle/components/CodeBlock';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
@@ -44,7 +44,7 @@ import {
   Schedule,
   Trash,
 } from '@oracle/icons';
-import { CardStyle, DateSelectionContainer } from './index.style';
+import { CardStyle } from './index.style';
 import {
   PADDING_UNITS,
   UNIT,
@@ -52,7 +52,7 @@ import {
 } from '@oracle/styles/units/spacing';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { getFormattedVariables, parseVariables } from '@components/Sidekick/utils';
-import { indexBy, rangeSequential, removeAtIndex } from '@utils/array';
+import { indexBy, removeAtIndex } from '@utils/array';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { getTimeInUTC } from '../utils';
@@ -130,8 +130,7 @@ function Edit({
   } = schedule || {};
 
   const [date, setDate] = useState<Date>(null);
-  const [timeHour, setTimeHour] = useState<string>('00');
-  const [timeMinute, setTimeMinute] = useState<string>('00');
+  const [time, setTime] = useState<TimeType>({ hour: '00', minute: '00' });
 
   const { data: dataEventRules } = api.event_rules.detail('aws');
   const eventRules: EventRuleType[] = useMemo(() => dataEventRules?.event_rules || [], [dataEventRules]);
@@ -166,8 +165,10 @@ function Edit({
         const dateTimeSplit = startTime.split(' ');
         const timePart = dateTimeSplit[1];
         setDate(getTimeInUTC(startTime));
-        setTimeHour(timePart.substring(0, 2));
-        setTimeMinute(timePart.substring(3, 5));
+        setTime({
+          hour: timePart.substring(0, 2),
+          minute: timePart.substring(3, 5),
+        });
       }
     },
     [startTime],
@@ -240,8 +241,8 @@ function Edit({
       data.event_matchers = eventMatchers;
     } else {
       data.schedule_interval = isCustomInterval ? customInterval : schedule.schedule_interval;
-      data.start_time = date && timeHour && timeMinute
-        ? `${date.toISOString().split('T')[0]} ${timeHour}:${timeMinute}:00`
+      data.start_time = date && time?.hour && time?.minute
+        ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}:00`
         : null;
     }
 
@@ -255,8 +256,7 @@ function Edit({
     eventMatchers,
     runtimeVariables,
     schedule,
-    timeHour,
-    timeMinute,
+    time,
     updateSchedule,
   ]);
 
@@ -340,14 +340,17 @@ function Edit({
             Start date and time
           </Text>
         </FlexContainer>,
-        <div key="start_time_input">
+        <div
+          key="start_time_input"
+          style={{ minHeight: `${UNIT * 5.75}px` }}
+        >
           {!showCalendar && (
             <TextInput
               monospace
               onClick={() => setShowCalendar(val => !val)}
               placeholder="YYYY-MM-DD HH:MM"
               value={date
-                ? `${date.toISOString().split('T')[0]} ${timeHour}:${timeMinute}`
+                ? `${date.toISOString().split('T')[0]} ${time?.hour}:${time?.minute}`
                 : ''
               }
             />
@@ -357,67 +360,15 @@ function Edit({
               disableEscape
               onClickOutside={() => setShowCalendar(false)}
               open={showCalendar}
+              style={{ position: 'relative' }}
             >
-              <DateSelectionContainer>
-                <Calendar
-                  onChange={setDate}
-                  value={date}
-                />
-                <Spacing mb={2} />
-                <FlexContainer alignItems="center">
-                  <Text default large>
-                    Time (UTC):
-                  </Text>
-                  <Spacing pr={2} />
-                  <Select
-                    compact
-                    key="trigger_schedule_start_time_hour"
-                    monospace
-                    onChange={e => {
-                      e.preventDefault();
-                      setTimeHour(e.target.value);
-                    }}
-                    paddingRight={UNIT * 5}
-                    placeholder="HH"
-                    value={timeHour}
-                  >
-                    {rangeSequential(24, 0)
-                      .map(n => String(n).padStart(2, '0'))
-                      .map((hour: string) => (
-                        <option key={`hour_${hour}`} value={hour}>
-                          {hour}
-                        </option>
-                      ))
-                    }
-                  </Select>
-                  <Spacing px={1}>
-                    <Text bold large>
-                      :
-                    </Text>
-                  </Spacing>
-                  <Select
-                    compact
-                    key="trigger_schedule_start_time_minute"
-                    monospace
-                    onChange={e => {
-                      e.preventDefault();
-                      setTimeMinute(e.target.value);
-                    }}
-                    paddingRight={UNIT * 5}
-                    placeholder="MM"
-                    value={timeMinute}
-                  >
-                    {rangeSequential(60, 0)
-                      .map(n => String(n).padStart(2, '0'))
-                      .map((minute: string) => (
-                        <option key={`minute_${minute}`} value={minute}>
-                          {minute}
-                        </option>
-                      ))
-                    }
-                  </Select>
-                </FlexContainer>
-              </DateSelectionContainer>
+              <Calendar
+                selectedDate={date}
+                selectedTime={time}
+                setSelectedDate={setDate}
+                setSelectedTime={setTime}
+                topPosition
+              />
             </ClickOutside>
           </div>
         </div>,
@@ -478,8 +429,7 @@ function Edit({
     date,
     schedule,
     showCalendar,
-    timeHour,
-    timeMinute,
+    time,
   ]);
 
   const updateEventMatcher = useCallback((idx, data: {
@@ -667,8 +617,8 @@ function Edit({
               ),
               <Button
                 default
-                key="remove_event"
                 iconOnly
+                key="remove_event"
                 noBackground
                 onClick={() => setEventMatchers(prev => removeAtIndex(prev, idx))}
               >

@@ -18,6 +18,7 @@ type CalendarProps = {
   selectedTime: TimeType;
   setSelectedDate: (date: Date) => void;
   setSelectedTime: (timeFunc: any) => void;
+  topPosition?: boolean;
 };
 
 function Calendar({
@@ -25,9 +26,13 @@ function Calendar({
   selectedTime,
   setSelectedDate,
   setSelectedTime,
+  topPosition,
 }: CalendarProps) {
   return (
-    <DateSelectionContainer absolute>
+    <DateSelectionContainer
+      absolute
+      topPosition={topPosition}
+    >
       <ReactCalendar
         onChange={setSelectedDate}
         value={selectedDate}
